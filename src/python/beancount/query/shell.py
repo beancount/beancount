@@ -464,6 +464,32 @@ class BQLShell(DispatchingShell):
         """).strip()
         print(template.format(**generate_env_attribute_list(self.env_postings)))
 
+    def help_attributes(self):
+        template = textwrap.dedent("""
+
+          The attribute names on postings and directives equivalent to the names
+          of columns that we make available for query.
+
+          Entries:
+          {entry_attributes}
+
+          Postings:
+          {posting_attributes}
+
+        """).strip()
+
+        entry_pairs = sorted(
+            (getattr(column_cls, '__equivalent__', '-'), name)
+            for name, column_cls in sorted(self.env_entries.columns.items()))
+
+        posting_pairs = sorted(
+            (getattr(column_cls, '__equivalent__', '-'), name)
+            for name, column_cls in sorted(self.env_postings.columns.items()))
+
+        entry_attributes = ''.join("  {:40}: {}\n".format(*pair) for pair in entry_pairs)
+        posting_attributes = ''.join("  {:40}: {}\n".format(*pair) for pair in posting_pairs)
+        print(template.format(**vars()))
+
 
 def generate_env_attribute_list(env):
     """Generate a dictionary of rendered attribute lists for help.
@@ -532,8 +558,13 @@ def generate_env_attributes(wrapper, field_dict, filter_pred=None):
         if filter_pred and not filter_pred(column_cls):
             continue
         docstring = column_cls.__doc__ or "[See class {}]".format(column_cls.__name__)
+        if issubclass(column_cls, query_compile.EvalColumn):
+            docstring += " Type: {}.".format(column_cls().dtype.__name__)
+            # if hasattr(column_cls, '__equivalent__'):
+            #     docstring += " Attribute:{}.".format(column_cls.__equivalent__)
+
         text = re.sub('[ \t]+', ' ', docstring.strip().replace('\n', ' '))
-        doc = "{}: {}".format(name, text)
+        doc = "'{}': {}".format(name, text)
         oss.write(wrapper.fill(doc))
         oss.write('\n')
 

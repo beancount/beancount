@@ -426,6 +426,7 @@ class TypeEntryColumn(query_compile.EvalColumn):
 
 class FilenameEntryColumn(query_compile.EvalColumn):
     "The filename where the directive was parsed from or created."
+    __equivalent__ = 'entry.source.filename'
     __intypes__ = [data.Transaction]
 
     def __init__(self):
@@ -436,6 +437,7 @@ class FilenameEntryColumn(query_compile.EvalColumn):
 
 class LineNoEntryColumn(query_compile.EvalColumn):
     "The line number from the file the directive was parsed from."
+    __equivalent__ = 'entry.source.lineno'
     __intypes__ = [data.Transaction]
 
     def __init__(self):
@@ -446,6 +448,7 @@ class LineNoEntryColumn(query_compile.EvalColumn):
 
 class DateEntryColumn(query_compile.EvalColumn):
     "The date of the directive."
+    __equivalent__ = 'entry.date'
     __intypes__ = [data.Transaction]
 
     def __init__(self):
@@ -456,6 +459,7 @@ class DateEntryColumn(query_compile.EvalColumn):
 
 class YearEntryColumn(query_compile.EvalColumn):
     "The year of the date of the directive."
+    __equivalent__ = 'entry.date.year'
     __intypes__ = [data.Transaction]
 
     def __init__(self):
@@ -466,6 +470,7 @@ class YearEntryColumn(query_compile.EvalColumn):
 
 class MonthEntryColumn(query_compile.EvalColumn):
     "The month of the date of the directive."
+    __equivalent__ = 'entry.date.month'
     __intypes__ = [data.Transaction]
 
     def __init__(self):
@@ -476,6 +481,7 @@ class MonthEntryColumn(query_compile.EvalColumn):
 
 class DayEntryColumn(query_compile.EvalColumn):
     "The day of the date of the directive."
+    __equivalent__ = 'entry.date.day'
     __intypes__ = [data.Transaction]
 
     def __init__(self):
@@ -486,6 +492,7 @@ class DayEntryColumn(query_compile.EvalColumn):
 
 class FlagEntryColumn(query_compile.EvalColumn):
     "The flag the transaction."
+    __equivalent__ = 'entry.flag'
     __intypes__ = [data.Transaction]
 
     def __init__(self):
@@ -498,6 +505,7 @@ class FlagEntryColumn(query_compile.EvalColumn):
 
 class PayeeEntryColumn(query_compile.EvalColumn):
     "The payee of the transaction."
+    __equivalent__ = 'entry.payee'
     __intypes__ = [data.Transaction]
 
     def __init__(self):
@@ -510,6 +518,7 @@ class PayeeEntryColumn(query_compile.EvalColumn):
 
 class NarrationEntryColumn(query_compile.EvalColumn):
     "The narration of the transaction."
+    __equivalent__ = 'entry.narration'
     __intypes__ = [data.Transaction]
 
     def __init__(self):
@@ -525,6 +534,7 @@ EMPTY_SET = frozenset()
 
 class TagsEntryColumn(query_compile.EvalColumn):
     "The set of tags of the transaction."
+    __equivalent__ = 'entry.tags'
     __intypes__ = [data.Transaction]
 
     def __init__(self):
@@ -537,6 +547,7 @@ class TagsEntryColumn(query_compile.EvalColumn):
 
 class LinksEntryColumn(query_compile.EvalColumn):
     "The set of links of the transaction."
+    __equivalent__ = 'entry.links'
     __intypes__ = [data.Transaction]
 
     def __init__(self):
@@ -619,6 +630,7 @@ class TypeColumn(query_compile.EvalColumn):
 
 class FilenameColumn(query_compile.EvalColumn):
     "The filename where the posting was parsed from or created."
+    __equivalent__ = 'posting.entry.source.filename'
     __intypes__ = [data.Posting]
 
     def __init__(self):
@@ -629,6 +641,7 @@ class FilenameColumn(query_compile.EvalColumn):
 
 class LineNoColumn(query_compile.EvalColumn):
     "The line number from the file the posting was parsed from."
+    __equivalent__ = 'posting.entry.source.lineno'
     __intypes__ = [data.Posting]
 
     def __init__(self):
@@ -639,6 +652,7 @@ class LineNoColumn(query_compile.EvalColumn):
 
 class DateColumn(query_compile.EvalColumn):
     "The date of the parent transaction for this posting."
+    __equivalent__ = 'posting.entry.date'
     __intypes__ = [data.Posting]
 
     def __init__(self):
@@ -649,6 +663,7 @@ class DateColumn(query_compile.EvalColumn):
 
 class YearColumn(query_compile.EvalColumn):
     "The year of the date of the parent transaction for this posting."
+    __equivalent__ = 'posting.entry.date.year'
     __intypes__ = [data.Posting]
 
     def __init__(self):
@@ -659,6 +674,7 @@ class YearColumn(query_compile.EvalColumn):
 
 class MonthColumn(query_compile.EvalColumn):
     "The month of the date of the parent transaction for this posting."
+    __equivalent__ = 'posting.entry.date.month'
     __intypes__ = [data.Posting]
 
     def __init__(self):
@@ -669,6 +685,7 @@ class MonthColumn(query_compile.EvalColumn):
 
 class DayColumn(query_compile.EvalColumn):
     "The day of the date of the parent transaction for this posting."
+    __equivalent__ = 'posting.entry.date.day'
     __intypes__ = [data.Posting]
 
     def __init__(self):
@@ -679,6 +696,7 @@ class DayColumn(query_compile.EvalColumn):
 
 class FlagColumn(query_compile.EvalColumn):
     "The flag of the parent transaction for this posting."
+    __equivalent__ = 'posting.entry.flag'
     __intypes__ = [data.Posting]
 
     def __init__(self):
@@ -689,6 +707,7 @@ class FlagColumn(query_compile.EvalColumn):
 
 class PayeeColumn(query_compile.EvalColumn):
     "The payee of the parent transaction for this posting."
+    __equivalent__ = 'posting.entry.payee'
     __intypes__ = [data.Posting]
 
     def __init__(self):
@@ -699,6 +718,7 @@ class PayeeColumn(query_compile.EvalColumn):
 
 class NarrationColumn(query_compile.EvalColumn):
     "The narration of the parent transaction for this posting."
+    __equivalent__ = 'posting.entry.narration'
     __intypes__ = [data.Posting]
 
     def __init__(self):
@@ -709,6 +729,7 @@ class NarrationColumn(query_compile.EvalColumn):
 
 class TagsColumn(query_compile.EvalColumn):
     "The set of tags of the parent transaction for this posting."
+    __equivalent__ = 'posting.entry.tags'
     __intypes__ = [data.Posting]
 
     def __init__(self):
@@ -719,6 +740,7 @@ class TagsColumn(query_compile.EvalColumn):
 
 class LinksColumn(query_compile.EvalColumn):
     "The set of links of the parent transaction for this posting."
+    __equivalent__ = 'posting.entry.links'
     __intypes__ = [data.Posting]
 
     def __init__(self):
@@ -729,6 +751,7 @@ class LinksColumn(query_compile.EvalColumn):
 
 class PostingFlagColumn(query_compile.EvalColumn):
     "The flag of the posting itself."
+    __equivalent__ = 'posting.flag'
     __intypes__ = [data.Posting]
 
     def __init__(self):
@@ -739,6 +762,7 @@ class PostingFlagColumn(query_compile.EvalColumn):
 
 class AccountColumn(query_compile.EvalColumn):
     "The account of the posting."
+    __equivalent__ = 'posting.account'
     __intypes__ = [data.Posting]
 
     def __init__(self):
@@ -749,6 +773,7 @@ class AccountColumn(query_compile.EvalColumn):
 
 class NumberColumn(query_compile.EvalColumn):
     "The number of units of the posting."
+    __equivalent__ = 'posting.position.number'
     __intypes__ = [data.Posting]
 
     def __init__(self):
@@ -759,6 +784,7 @@ class NumberColumn(query_compile.EvalColumn):
 
 class CurrencyColumn(query_compile.EvalColumn):
     "The currency of the posting."
+    __equivalent__ = 'posting.position.currency'
     __intypes__ = [data.Posting]
 
     def __init__(self):
@@ -769,6 +795,7 @@ class CurrencyColumn(query_compile.EvalColumn):
 
 class CostNumberColumn(query_compile.EvalColumn):
     "The number of cost units of the posting."
+    __equivalent__ = 'posting.position.lot.cost'
     __intypes__ = [data.Posting]
 
     def __init__(self):
@@ -780,6 +807,7 @@ class CostNumberColumn(query_compile.EvalColumn):
 
 class CostCurrencyColumn(query_compile.EvalColumn):
     "The cost currency of the posting."
+    __equivalent__ = 'posting.lot.cost.cost_currency'
     __intypes__ = [data.Posting]
 
     def __init__(self):
@@ -791,6 +819,7 @@ class CostCurrencyColumn(query_compile.EvalColumn):
 
 class PositionColumn(query_compile.EvalColumn):
     "The position for the posting. These can be summed into inventories."
+    __equivalent__ = 'posting.position'
     __intypes__ = [data.Posting]
 
     def __init__(self):
@@ -801,6 +830,7 @@ class PositionColumn(query_compile.EvalColumn):
 
 class PriceColumn(query_compile.EvalColumn):
     "The price attached to the posting."
+    __equivalent__ = 'posting.price'
     __intypes__ = [data.Posting]
 
     def __init__(self):

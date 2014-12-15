@@ -3,8 +3,6 @@ beancount: TODO
 * Query Language
 http://furius.ca/beancount/doc/proposal-query
 
-  - Document mapping from language fields to postings.
-
 
   - Create tests for all the realistic test cases
     Use cases:
