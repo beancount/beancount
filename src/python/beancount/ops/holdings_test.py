@@ -4,9 +4,12 @@ import itertools
 import unittest
 import datetime
 
+from beancount.parser import parser
 from beancount.core.amount import D
 from beancount.core.amount import ZERO
 from beancount.core import position
+from beancount.core import amount
+from beancount.core import data
 from beancount.ops import holdings
 from beancount.ops import prices
 from beancount import loader
@@ -425,3 +428,17 @@ class TestHoldings(unittest.TestCase):
         actual_position = holdings.holding_to_position(test_holding)
         expected_position = position.from_string('100.00 USD')
         self.assertEqual(expected_position, actual_position)
+
+    def test_holding_to_posting(self):
+        test_holding = holdings.Holding(
+            'Assets:US:Checking', D('100'), 'MSFT', D('54.34'), 'USD',
+            D('5434.00'), D('6000.00'), D('60'), datetime.date(2012, 5, 2))
+
+        posting = holdings.holding_to_posting(test_holding)
+        self.assertTrue(isinstance(posting, data.Posting))
+
+        expected_position = position.from_string('100 MSFT {54.34 USD}')
+        self.assertEqual(expected_position, posting.position)
+
+        expected_price = amount.from_string('60.00 USD')
+        self.assertEqual(expected_price, posting.price)

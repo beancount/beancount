@@ -365,3 +365,18 @@ def holding_to_position(holding):
             else None)
     return position.Position(position.Lot(holding.currency, cost, None),
                              holding.number)
+
+
+def holding_to_posting(holding):
+    """Convert the holding to an instance of Posting.
+
+    Args:
+      holding: An instance of Holding.
+    Returns:
+      An instance of Position.
+    """
+    position_ = holding_to_position(holding)
+    price = (amount.Amount(holding.price_number, holding.cost_currency)
+             if holding.price_number
+             else None)
+    return data.Posting(None, holding.account, position_, price, None)
