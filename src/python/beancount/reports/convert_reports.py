@@ -8,7 +8,6 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import re
 import io
 
-from beancount.core import amount
 from beancount.core import data
 from beancount.core import position
 from beancount.core import interpolate
@@ -296,8 +295,8 @@ class HLedgerPrinter(LedgerPrinter):
                      else '')
 
         posting_str = '  {:64} {:>16} {:>16}'.format(flag_posting,
-                                                     quote_currency(amount_str),
-                                                     quote_currency(cost_str))
+                                                     quote_currency(pos_str),
+                                                     quote_currency(price_str))
         oss.write(posting_str.rstrip())
 
         oss.write('\n')

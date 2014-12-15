@@ -5,9 +5,10 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import unittest
 import inspect
-import tempfile
+import re
 import sys
 import subprocess
+import tempfile
 
 from beancount.parser.parser import parsedoc
 from beancount.parser import parser
@@ -16,6 +17,7 @@ from beancount.core import data
 from beancount.core import amount
 from beancount.core import interpolate
 from beancount.core import interpolate_test
+from beancount.utils import test_utils
 
 
 def check_list(test, objlist, explist):
@@ -70,8 +72,10 @@ class TestParserInputs(unittest.TestCase):
         code = ('import beancount.parser.parser_test as p; '
                 'p.TestParserInputs.parse_stdin()')
         pipe = subprocess.Popen([sys.executable, '-c', code, __file__],
+                                env=test_utils.subprocess_env(),
                                 stdin=subprocess.PIPE)
         output, errors = pipe.communicate(self.INPUT.encode('utf-8'))
+        self.assertEqual(0, pipe.returncode)
 
 
 class TestParserEntryTypes(unittest.TestCase):
@@ -290,6 +294,25 @@ class TestUglyBugs(unittest.TestCase):
         """
         self.assertEqual(7, len(entries))
         self.assertEqual([], errors)
+
+
+class TestTagStack(unittest.TestCase):
+
+    @parsedoc
+    def test_tag_left_unclosed(self, entries, errors, _):
+        """
+          pushtag #trip-to-nowhere
+        """
+        self.assertEqual(1, len(errors))
+        self.assertTrue(re.search('Unbalanced tag', errors[0].message))
+
+    @parsedoc
+    def test_pop_invalid_tag(self, entries, errors, _):
+        """
+          poptag #trip-to-nowhere
+        """
+        self.assertTrue(errors)
+        self.assertTrue(re.search('absent tag', errors[0].message))
 
 
 class TestMultipleLines(unittest.TestCase):

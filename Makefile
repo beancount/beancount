@@ -126,8 +126,12 @@ debug:
 test tests unittests:
 	nosetests -v $(SRC)
 
+
 tests-quiet:
 	nosetests $(SRC)
+
+nakedtests:
+	PATH=/bin:/usr/bin PYTHONPATH= /usr/local/bin/nosetests -x $(SRC)
 
 
 # Run the parser and measure its performance.
@@ -143,8 +147,8 @@ demo:
 
 # Generate the tutorial files from the example file.
 EXAMPLE=examples/tutorial/example.beancount
-$(EXAMPLE):
-	./bin/bean-example -s 0 -o $(EXAMPLE)
+example $(EXAMPLE):
+	./bin/bean-example --seed=0 -o $(EXAMPLE)
 
 TUTORIAL=examples/tutorial
 tutorial: $(EXAMPLE)

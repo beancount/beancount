@@ -276,7 +276,7 @@ class TestComputeBalance(unittest.TestCase):
         2014-01-01 open Assets:Bank:Savings
         2014-01-01 open Assets:Investing
 
-        2014-05-26 note Assets:Investing "Buying some Googles"
+        2014-05-26 note Assets:Investing "Buying some shares"
 
         2014-05-30 *
           Assets:Bank:Checking  111.23 USD

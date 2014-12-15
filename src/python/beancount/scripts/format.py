@@ -66,7 +66,7 @@ def align_beancount(contents):
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(__doc__.strip())
+    parser = argparse.ArgumentParser(description=__doc__.strip())
 
     parser.add_argument('filename', help='Beancount filename')
 

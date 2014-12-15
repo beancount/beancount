@@ -150,7 +150,7 @@ def print_features(title, features, currency, relative=False, print_holdings=Fal
     print()
 
 
-def load(holdings_filename, prices_filename, currency):
+def load_csv_and_prices(holdings_filename, prices_filename, currency):
     """Load the holdings and prices from filenames and convert to a common currency.
 
     Args:
@@ -176,28 +176,3 @@ def load(holdings_filename, prices_filename, currency):
                                                  mixed_holdings_list)
 
     return mixed_holdings_list, holdings_list
-
-
-def main():
-    parser = argparse.ArgumentParser(__doc__.strip())
-
-    parser.add_argument('holdings_filename',
-                        help='Holdings CSV filename')
-
-    parser.add_argument('prices_filename',
-                        help='Prices Beancount filename')
-
-    parser.add_argument('currency',
-                        help="Currency to convert all market values to.")
-
-    opts = parser.parse_args()
-
-    holdings_list = load(opts.holdings_filename,
-                         opts.prices_filename,
-                         opts.currency)
-    for holding in holdings_list:
-        print(holding)
-
-
-if __name__ == '__main__':
-    main()

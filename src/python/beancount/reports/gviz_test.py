@@ -31,5 +31,5 @@ class TestGviz(unittest.TestCase):
         self.assertTrue(re.search(r'\bx\b', html))
         self.assertTrue(re.search(r'\by\b', html))
         self.assertTrue(re.search(r'\bz\b', html))
-        self.assertTrue(re.search(r'google\.visualization\.AnnotatedTimeLine', html))
-        self.assertTrue(re.search(r'google.setOnLoadCallback', html))
+        self.assertTrue(re.search(r'\.visualization\.AnnotatedTimeLine', html))
+        self.assertTrue(re.search(r'\.setOnLoadCallback', html))

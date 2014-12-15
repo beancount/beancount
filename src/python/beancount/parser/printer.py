@@ -7,7 +7,6 @@ import re
 import sys
 import textwrap
 
-from beancount.core import amount
 from beancount.core import interpolate
 from beancount.core import data
 from beancount.core import display_context
@@ -46,9 +45,9 @@ def align_position_strings(strings):
     string_items = []
     search = re.compile('[A-Z]').search
     for string in strings:
-        mo = search(string)
-        if mo:
-            index = mo.start()
+        match = search(string)
+        if match:
+            index = match.start()
             if index != 0:
                 max_before = max(index, max_before)
                 max_after = max(len(string) - index, max_after)
@@ -129,7 +128,9 @@ class EntryPrinter:
         rows = [self.render_posting_strings(posting)
                 for posting in entry.postings]
         strs_account = [row[0] for row in rows]
-        width_account = max(len(flag_account) for flag_account in strs_account)
+        width_account = (max(len(flag_account) for flag_account in strs_account)
+                         if strs_account
+                         else 1)
         strs_position, width_position = align_position_strings(row[1] for row in rows)
         strs_weight, width_weight = align_position_strings(row[2] for row in rows)
 
@@ -185,8 +186,10 @@ class EntryPrinter:
 
     def Balance(_, entry, oss):
         comment = '   ; Diff: {}'.format(entry.diff_amount) if entry.diff_amount else ''
-        oss.write(('{e.date} balance {e.account:47} {e.amount:>22}'
-                   '{comment}\n').format(e=entry, comment=comment))
+        oss.write(('{e.date} balance {e.account:47} {amount:>22}'
+                   '{comment}\n').format(e=entry,
+                                         comment=comment,
+                                         amount=str(entry.amount)))
 
     def Note(_, entry, oss):
         oss.write('{e.date} note {e.account} "{e.comment}"\n'.format(e=entry))

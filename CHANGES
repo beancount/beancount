@@ -4,6 +4,36 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2014-12-07
+
+  - After much more work on the SQL query language (in 'shell' branch), I need
+    to access Inventory positions by index, so I removed the getitem ([])
+    operator from Inventory, which was unused in the codebase. (If you have
+    scripts this *may* affect you; translate calls to [] into calls to
+    .get_position()).
+
+
+
+2014-11-29
+
+  - Completed work on calculating returns (merged branch 'returns' into
+    default). I created a new package called "projects" to hold these special
+    tasks, those that don't integrate in the plugins framework, and created a
+    beancount.projects.returns library that can be inovoked as a script, like
+    this:
+
+      python3 -m beancount.projects.returns <filename.beancount> ...
+
+    For the arguments, you will have to read the docstring. You essentially need
+    to provide two or three regular expressions to list the set of accounts
+    that define you portfolio as well as other lists of accounts that should be
+    considered internal flows. See the docstring for details. I will eventually
+    move much of that explanation into a Google Doc and detail it in more depth.
+
+    There is also a script that runs it on the example beancount file, as well
+    as examples in the unit tests.
+
+
 2014-11-27
 
   - Started the "booking" branch which will implement the

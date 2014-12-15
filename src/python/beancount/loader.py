@@ -6,7 +6,6 @@ import functools
 import textwrap
 import importlib
 import collections
-import re
 import io
 import itertools
 
