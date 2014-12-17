@@ -95,6 +95,12 @@ beancount: TODO
 
 ** Documentation / Ongoing
 
+  - As an aside, I see that the grammar supports @@ and {{}} syntaxes, but they
+    don't appear to be documented in the language manual.
+
+      Oh I hadn't noticed... I will document those, thank you for reporting this
+      oversight.
+
   - In the comparison doc: describe how Beancount has asset types
 
   - Comparison w/ Ledger doc: "balance sheet and closing of year"
