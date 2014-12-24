@@ -171,3 +171,24 @@ class TestLedgerConversion(test_utils.TestCase):
                 self.assertEqual(0, result)
 
                 self.check_parses_ledger(lgrfile.name)
+
+class TestHLedgerConversion(test_utils.TestCase):
+
+    def test_example(self):
+        with tempfile.NamedTemporaryFile('w', suffix='.beancount') as beanfile:
+            # Generate an example Beancount file.
+            example.write_example_file(datetime.date(1980, 1, 1),
+                                       datetime.date(2010, 1, 1),
+                                       datetime.date(2014, 1, 1),
+                                       file=beanfile)
+            beanfile.flush()
+
+            # Convert the file to HLedger format.
+            #
+            # Note: don't bother parsing for now, just a smoke test to make sure
+            # we don't fail on run.
+            with tempfile.NamedTemporaryFile('w', suffix='.hledger') as lgrfile:
+                with test_utils.capture() as stdout:
+                    result = test_utils.run_with_args(
+                        report.main, [beanfile.name, '-o', lgrfile.name, 'hledger'])
+                self.assertEqual(0, result)

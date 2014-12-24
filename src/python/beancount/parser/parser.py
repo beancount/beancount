@@ -105,6 +105,23 @@ class Builder(lexer.LexBuilder):
         self.dcbuilder = display_context.DisplayContextBuilder()
         self.dcupdate = self.dcbuilder.update
 
+    def finalize(self):
+        """Finalize the parser, check for final errors and return the triple.
+
+        Returns:
+          A triple of
+            entries: A list of parsed directives, which may need completion.
+            errors: A list of errors, hopefully empty.
+            options_map: A dict of options.
+        """
+        # If the user left some tags unbalanced, issue an error.
+        for tag in self.tags:
+            source = Source(self.options['filename'], 0)
+            self.errors.append(
+                ParserError(source, "Unbalanced tag: '{}'".format(tag), None))
+
+        return (self.get_entries(), self.errors, self.get_options())
+
     def get_entries(self):
         """Return the accumulated entries.
 
@@ -163,7 +180,12 @@ class Builder(lexer.LexBuilder):
         Args:
           tag: A string, a tag to be removed from the current set of tags.
         """
-        self.tags.remove(tag)
+        try:
+            self.tags.remove(tag)
+        except ValueError:
+            source = Source(self.options['filename'], 0)
+            self.errors.append(
+                ParserError(source, "Attempting to pop absent tag: '{}'".format(tag), None))
 
     def option(self, filename, lineno, key, value):
         """Process an option directive.
@@ -726,7 +748,7 @@ def parse_file(filename, **kw):
         abs_filename = path.abspath(filename)
         builder.options["filename"] = abs_filename
     _parser.parse_file(filename, builder, **kw)
-    return (builder.get_entries(), builder.errors, builder.get_options())
+    return builder.finalize()
 
 # Alias, for compatibility.
 # pylint: disable=invalid-name
@@ -745,7 +767,7 @@ def parse_string(string, **kw):
     builder = Builder()
     builder.options["filename"] = "<string>"
     _parser.parse_string(string, builder, **kw)
-    return (builder.get_entries(), builder.errors, builder.get_options())
+    return builder.finalize()
 
 
 def parsedoc(fun):
@@ -770,6 +792,8 @@ def parsedoc(fun):
 
     @functools.wraps(fun)
     def newfun(self):
+        assert fun.__doc__ is not None, (
+            "You need to insert a docstring on {}".format(fun.__name__))
         entries, errors, options_map = parse_string(textwrap.dedent(fun.__doc__),
                                                     report_filename=filename,
                                                     report_firstline=lineno)

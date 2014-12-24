@@ -126,8 +126,12 @@ debug:
 test tests unittests:
 	nosetests -v $(SRC)
 
+
 tests-quiet:
 	nosetests $(SRC)
+
+nakedtests:
+	PATH=/bin:/usr/bin PYTHONPATH= /usr/local/bin/nosetests -x $(SRC)
 
 
 # Run the parser and measure its performance.

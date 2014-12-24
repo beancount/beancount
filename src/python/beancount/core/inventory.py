@@ -169,8 +169,6 @@ class Inventory(list):
             if position.lot == lot:
                 return position
 
-    __getitem__ = get_position
-
     def get_units(self, currency):
         """Fetch the total amount across all the position in the given currency.
         This may sum multiple lots in the same currency denomination.

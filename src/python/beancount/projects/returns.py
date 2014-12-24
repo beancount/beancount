@@ -343,6 +343,10 @@ def segment_periods(entries, accounts_value, accounts_intflows,
             done = True
 
         balance_end = copy.copy(balance)
+
+        ## FIXME: Bring this back in, this fails for now. Something about the
+        ## initialization fails it. assert period_begin <= period_end,
+        ## (period_begin, period_end)
         periods.append((period_begin, period_end, balance_begin, balance_end))
 
         logging.debug(" Balance: %s", balance_end.units())
@@ -369,6 +373,9 @@ def segment_periods(entries, accounts_value, accounts_intflows,
 
         period_begin = period_end
 
+    ## FIXME: Bring this back in, this fails for now.
+    # assert all(period_begin <= period_end
+    #            for period_begin, period_end, _, _ in periods), periods
     return periods, portfolio_entries
 
 
@@ -814,6 +821,10 @@ def main():
                               "considered internal flows to the portfolio (typically "
                               "income and expenses accounts)."))
 
+    parser.add_argument('--internalize_regexp', action='store',
+                        help=("A regular expression string that matches names of internal "
+                              "flow accounts to trigger an internalization."))
+
     parser.add_argument('--transfer-account', action='store',
                         default='Equity:Internalized',
                         help="Default name for subaccount to use for transfer account.")
@@ -836,14 +847,14 @@ def main():
                         format='%(levelname)-8s: %(message)s')
 
     # Load the input file and build the price database.
-    entries, errors, options_map = loader.load(args.filename)
+    entries, errors, options_map = loader.load_file(args.filename, log_errors=logging.error)
 
     # Compute the returns.
     returns, (date_first, date_last), _ = compute_returns_with_regexp(
         entries, options_map,
         args.transfer_account,
-        args.assets_regexp, args.intflows_regexp,
-        args.date_begin, args.date_end)
+        args.assets_regexp, args.intflows_regexp, args.internalize_regexp,
+        date_begin=args.date_begin, date_end=args.date_end)
 
     # Annualize the returns.
     annual_returns = annualize_returns(returns, date_first, date_last)

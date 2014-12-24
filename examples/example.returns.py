@@ -34,8 +34,8 @@ def main():
         logging.basicConfig(level=logging.DEBUG, format='%(levelname)-8s: %(message)s')
 
     # Load the example file.
-    examples_dir = path.dirname(path.dirname(path.abspath(__file__)))
-    filename = path.join(examples_dir, 'tutorial', 'example.beancount')
+    examples_dir = path.dirname(path.abspath(__file__))
+    filename = path.join(examples_dir, 'example.beancount')
     entries, _, options_map = loader.load_file(filename, log_errors=print)
 
     # Figure out the number of years in action.

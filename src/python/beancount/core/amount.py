@@ -121,10 +121,15 @@ class Amount:
     def __format__(self, format_spec):
         """Explicit support for formatting.
 
+        This method is used when you format a string with a non-empty string
+        formatter syntax for an instance of Amount. For example, when you do
+        this: '{:22}'.format(amount).
+
         Args:
           format_spec: A string, the spec for formatting.
         Returns:
           A formatted string object.
+
         """
         # FIXME: I'm not so sure about this. What's up here? I don't think we
         # need this.
