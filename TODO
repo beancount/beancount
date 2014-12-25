@@ -1,17 +1,5 @@
 -*- mode: org -*-
 beancount: TODO
-* Metadata
-
-  - Merge source (filename and lineno) into metadata and simplify all
-    constructors to take this value either at the beginning or at the end.
-
-  - Rename postings to have 'meta' attribute instead of 'metadata'.
-
-  - Rename .source attribute to .meta in b.c.data.new_directive().
-
-  - Clean up AttrDict class with more doc and a unit test (important)
-
-
 * Requirements for Shipping 2.0
 ** Establish Display Precision
 

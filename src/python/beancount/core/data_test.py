@@ -246,6 +246,27 @@ class TestData(unittest.TestCase):
 
 class TestAttrDict(unittest.TestCase):
 
+    def test_construct_empty(self):
+        meta = data.AttrDict()
+        self.assertEqual({}, meta)
+
+    def test_construct_simple(self):
+        meta = data.AttrDict({'a': 1})
+        self.assertEqual({'a': 1}, meta)
+
+    def test_new_metadata(self):
+        meta = data.new_metadata('records.beancount', 563)
+        self.assertEqual('records.beancount', meta['filename'])
+        self.assertEqual(563, meta['lineno'])
+
+    def test_replace(self):
+        meta = data.new_metadata('records.beancount', 563)
+        new_meta = meta._replace(filename='blabla.beancount')
+        self.assertEqual('records.beancount', meta['filename'])
+        self.assertEqual(563, meta['lineno'])
+        self.assertEqual('blabla.beancount', new_meta['filename'])
+        self.assertEqual(563, new_meta['lineno'])
+
     def test_attrdict_copy(self):
         meta = data.new_metadata('records.beancount', 563)
         metacopy = meta.copy()

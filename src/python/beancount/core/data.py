@@ -34,10 +34,11 @@ def new_directive(clsname, fields):
 # within the program. They are all treated as immutable.
 #
 # Common Attributes (prepended to declared list):
-#   meta: A dict of strings to objects, potentially attached to each of the
-#     directive types. The values may be strings, account names, tags, dates,
-#     numbers, amounts and currencies. There are two special attributes which
-#     are always present on all directives: 'filename' and 'lineno'.
+#   meta: An instance of AttrDict, a dict of strings to objects, potentially
+#     attached to each of the directive types. The values may be strings,
+#     account names, tags, dates, numbers, amounts and currencies. There are two
+#     special attributes which are always present on all directives: 'filename'
+#     and 'lineno'.
 #   date: A datetime.date instance; all directives have an associated date. Note:
 #     Beancount does not consider time, only dates. The line where the directive
 #     shows up in the file is used as a secondary sort key beyond the date.
@@ -213,8 +214,6 @@ ALL_DIRECTIVES = (
 )
 
 
-
-
 # The location in a source file where the directive was read from. These are
 # attached to all the directives above.
 #
@@ -228,22 +227,34 @@ ALL_DIRECTIVES = (
 # A dict class that allows access via attributes. This allows us to move from
 # the previous Source namedtuple object to generalized metadata.
 #
-# TODO(blais): needs unit tests.
 class AttrDict(dict):
+    """A dict with attribute access.
+    """
     __getattr__ = dict.__getitem__
     __setattr__ = dict.__setitem__
 
     def _replace(self, **kwds):
+        """A method similar to collections.namedtuple's _replace.
+
+        Args:
+          **kwds: A dict of key/value pairs to be replaced. All keys must be strings.
+        Returns:
+          A new instance (a copy) of AttrDict with the fields from kwds replaced.
+        """
         copy = self.copy()
         for key, value in kwds.items():
             copy.__setattr__(key, value)
         return copy
 
     def copy(self):
+        """Builds a shallow copy of this AttrDict instance.
+
+        Returns:
+          A new instance (a copy) of AttrDict with the same contents.
+        """
         return AttrDict(self.items())
+
     __copy__ = copy
-
-
 
 
 def new_metadata(filename, lineno, kvlist=None):
