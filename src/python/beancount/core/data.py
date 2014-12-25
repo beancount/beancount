@@ -192,7 +192,7 @@ Note = new_new_directive('Note', 'account comment')
 #   description: A free-form string, the value of the variable as of the date
 #     of the transaction.
 #   metadata: See above.
-Event = new_directive('Event', 'type description')
+Event = new_new_directive('Event', 'type description')
 
 # A price declaration directive. This establishes the price of a currency in
 # terms of another currency as of the directive's date. A history of the prices
@@ -399,7 +399,7 @@ def sanity_check_types(entry):
       AssertionError: If there is anything that is unexpected, raises an exception.
     """
     assert isinstance(entry, ALL_DIRECTIVES), "Invalid directive type"
-    if isinstance(entry, (Open, Close, Pad, Balance, Note)):
+    if isinstance(entry, (Open, Close, Pad, Balance, Note, Event)):
         assert isinstance(entry.source, AttrDict), "Invalid type for meta"
     else:
         assert isinstance(entry.source, Source), "Invalid type for source"

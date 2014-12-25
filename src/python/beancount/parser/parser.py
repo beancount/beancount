@@ -422,9 +422,8 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Event object.
         """
-        source = Source(filename, lineno)
-        metadata = None if kvlist is None else dict(kvlist)
-        return Event(source, date, event_type, description, metadata)
+        meta = new_metadata(filename, lineno, kvlist)
+        return Event(meta, date, event_type, description)
 
     def price(self, filename, lineno, date, currency, amount, kvlist):
         """Process a price directive.
