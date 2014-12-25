@@ -89,7 +89,7 @@ BOOKING_METHODS = {'STRICT', 'NONE'}
 #
 # Attributes:
 #   account: A string, the name of the account that is being closed.
-Close = new_directive('Close', 'account')
+Close = new_new_directive('Close', 'account')
 
 # A "pad this account with this other account" directive. This directive
 # automatically inserts transactions that will make the next chronological
@@ -386,7 +386,7 @@ def sanity_check_types(entry):
       AssertionError: If there is anything that is unexpected, raises an exception.
     """
     assert isinstance(entry, ALL_DIRECTIVES), "Invalid directive type"
-    if isinstance(entry, Open):
+    if isinstance(entry, (Open, Close)):
         assert isinstance(entry.source, AttrDict), "Invalid type for meta"
     else:
         assert isinstance(entry.source, Source), "Invalid type for source"

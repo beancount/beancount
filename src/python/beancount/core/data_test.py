@@ -126,7 +126,7 @@ class TestData(unittest.TestCase):
         entries = [
             data.Transaction(data.Source(".", 1100), date3, FLAG,
                              None, "Next day", None, None, [], None),
-            data.Close(data.Source(".", 1000), date2, account, None),
+            data.Close(data.new_metadata(".", 1000), date2, account),
             data.Balance(data.Source(".", 1001), date2, account,
                          amount.Amount(D('200.00'), 'USD"'), None, None),
             data.Open(data.new_metadata(".", 1002), date2, account, 'USD', None),

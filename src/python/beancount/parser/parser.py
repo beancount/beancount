@@ -371,9 +371,10 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Close object.
         """
-        source = Source(filename, lineno)
-        metadata = None if kvlist is None else dict(kvlist)
-        return Close(source, date, account, metadata)
+        meta = new_metadata(filename, lineno)
+        if kvlist is not None:
+            meta.update(kvlist)
+        return Close(meta, date, account)
 
     def pad(self, filename, lineno, date, account, source_account, kvlist):
         """Process a pad directive.

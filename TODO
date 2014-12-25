@@ -9,6 +9,8 @@ beancount: TODO
 
   - Rename .source attribute to .meta in b.c.data.new_new_directive().
 
+  - Clean up AttrDict class with more doc and a unit test (important)
+
 
 * Requirements for Shipping 2.0
 ** Establish Display Precision
