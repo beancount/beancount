@@ -12,7 +12,7 @@ from . import data
 CompareError = collections.namedtuple('CompareError', 'source message entry')
 
 # A list of field names that are being ignored for persistence.
-IGNORED_FIELD_NAMES = {'source', 'entry', 'diff_amount'}
+IGNORED_FIELD_NAMES = {'meta', 'entry', 'diff_amount'}
 
 
 def stable_hash_namedtuple(objtuple, ignore=frozenset()):
@@ -89,7 +89,7 @@ def hash_entries(entries):
             else:
                 other_entry = entry_hash_dict[hash_]
                 errors.append(
-                    CompareError(entry.source,
+                    CompareError(entry.meta,
                                  "Duplicate entry: {} == {}".format(entry, other_entry),
                                  entry))
         entry_hash_dict[hash_] = entry

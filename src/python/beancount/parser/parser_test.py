@@ -3,13 +3,16 @@ Tests for parser.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import datetime
 import unittest
 import inspect
+import tempfile
 import re
 import sys
 import subprocess
 import tempfile
 
+from beancount.core.amount import D
 from beancount.parser.parser import parsedoc
 from beancount.parser import parser
 from beancount.parser import lexer
@@ -387,9 +390,9 @@ class TestLineNumbers(unittest.TestCase):
             TestLineNumbers.test_line_numbers.__wrapped__)
         first_line += 1
 
-        self.assertEqual(2, entries[0].source.lineno - first_line)
-        self.assertEqual(6, entries[1].source.lineno - first_line)
-        self.assertEqual(8, entries[2].source.lineno - first_line)
+        self.assertEqual(2, entries[0].meta.lineno - first_line)
+        self.assertEqual(6, entries[1].meta.lineno - first_line)
+        self.assertEqual(8, entries[2].meta.lineno - first_line)
 
 
 class TestParserOptions(unittest.TestCase):
@@ -722,6 +725,7 @@ class TestMetaData(unittest.TestCase):
             Assets:Investments:Cash
         """
         self.assertEqual(1, len(entries))
+        self.assertEqual('Something', entries[0].meta['test'])
 
     @parsedoc
     def test_metadata_transaction__middle(self, entries, errors, _):
@@ -732,6 +736,8 @@ class TestMetaData(unittest.TestCase):
             Assets:Investments:Cash
         """
         self.assertEqual(1, len(entries))
+        self.assertEqual({'test': 'Something'},
+                         entries[0].postings[0].meta)
 
     @parsedoc
     def test_metadata_transaction__end(self, entries, errors, _):
@@ -742,6 +748,8 @@ class TestMetaData(unittest.TestCase):
             test: "Something"
         """
         self.assertEqual(1, len(entries))
+        self.assertEqual({'test': 'Something'},
+                         entries[0].postings[1].meta)
 
     @parsedoc
     def test_metadata_transaction__many(self, entries, errors, _):
@@ -757,6 +765,31 @@ class TestMetaData(unittest.TestCase):
             test6: "this"
         """
         self.assertEqual(1, len(entries))
+        self.assertEqual('Something', entries[0].meta['test1'])
+        self.assertEqual({'test2': 'has', 'test3': 'to'},
+                         entries[0].postings[0].meta)
+        self.assertEqual({'test4': 'come', 'test5': 'from', 'test6': 'this'},
+                         entries[0].postings[1].meta)
+
+    @parsedoc
+    def test_metadata_transaction__indented(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+              test1: "Something"
+            Assets:Investments:MSFT      10 MSFT @@ 2000 USD
+              test2: "has"
+              test3: "to"
+            Assets:Investments:Cash
+              test4: "come"
+              test5: "from"
+              test6: "this"
+        """
+        self.assertEqual(1, len(entries))
+        self.assertEqual('Something', entries[0].meta['test1'])
+        self.assertEqual({'test2': 'has', 'test3': 'to'},
+                         entries[0].postings[0].meta)
+        self.assertEqual({'test4': 'come', 'test5': 'from', 'test6': 'this'},
+                         entries[0].postings[1].meta)
 
     @parsedoc
     def test_metadata_transaction__repeated(self, entries, errors, _):
@@ -765,8 +798,35 @@ class TestMetaData(unittest.TestCase):
             test: "Bananas"
             test: "Apples"
             test: "Oranges"
+            Assets:Investments   100 USD
+              test: "Bananas"
+              test: "Apples"
+            Income:Investments  -100 USD
         """
         self.assertEqual(1, len(entries))
+        self.assertEqual('Bananas', entries[0].meta['test'])
+        self.assertEqual({'test': 'Bananas'}, entries[0].postings[0].meta)
+        self.assertEqual(3, len(errors))
+        self.assertTrue(all(re.search('Duplicate.*metadata field', error.message)
+                            for error in errors))
+
+    @parsedoc
+    def test_metadata_empty(self, entries, errors, _):
+        """
+          2013-05-18 * "blabla"
+            oranges:
+            bananas:
+
+          2013-05-19 open Assets:Something
+            apples:
+        """
+        self.assertFalse(errors)
+        self.assertEqual(2, len(entries))
+        self.assertEqual({'oranges', 'bananas', 'filename', 'lineno'},
+                         entries[0].meta.keys())
+        self.assertEqual(None, entries[0].meta['oranges'])
+        self.assertEqual(None, entries[0].meta['bananas'])
+        self.assertEqual(entries[1].meta['apples'], None)
 
     @parsedoc
     def test_metadata_other(self, entries, errors, _):
@@ -799,6 +859,33 @@ class TestMetaData(unittest.TestCase):
             test1: "Something"
         """
         self.assertEqual(9, len(entries))
+
+    @parsedoc
+    def test_metadata_data_types(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            string: "Something"
+            account: Assets:Investments:Cash
+            date: 2012-01-01
+            currency: GOOG
+            tag: #trip-florida
+            number: 345.67
+            amount: 345.67 USD
+        """
+        self.assertEqual(1, len(entries))
+        self.assertTrue('filename' in entries[0].meta)
+        self.assertTrue('lineno' in entries[0].meta)
+        del entries[0].meta['filename']
+        del entries[0].meta['lineno']
+        self.assertEqual({
+            'string': 'Something',
+            'account': 'Assets:Investments:Cash',
+            'date': datetime.date(2012, 1, 1),
+            'currency': 'GOOG',
+            'tag': 'trip-florida',
+            'number': D('345.67'),
+            'amount': amount.from_string('345.67 USD'),
+            }, entries[0].meta)
 
 
 class TestLexerErrors(unittest.TestCase):

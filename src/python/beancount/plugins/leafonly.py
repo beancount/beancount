@@ -40,7 +40,7 @@ def validate_leaf_only(entries, unused_options_map):
 
             open_entry = open_close_map[real_account.account][0]
             errors.append(LeafOnlyError(
-                open_entry.source,
+                open_entry.meta,
                 "Non-leaf account '{}' has postings on it".format(real_account.account),
                 open_entry))
 

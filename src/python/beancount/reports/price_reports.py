@@ -110,12 +110,12 @@ class PriceDBReport(report.Report):
     def render_beancount(self, entries, errors, options_map, file):
         dcontext = options_map['display_context']
         price_map = prices.build_price_map(entries)
-        source = data.Source('<report_prices_db>', 0)
+        meta = data.new_metadata('<report_prices_db>', 0)
         for base_quote in price_map.forward_pairs:
             price_list = price_map[base_quote]
             base, quote = base_quote
             for date, price in price_list:
-                entry = data.Price(source, date, base, amount.Amount(price, quote))
+                entry = data.Price(meta, date, base, amount.Amount(price, quote))
                 file.write(printer.format_entry(entry, dcontext))
             file.write('\n')
 

@@ -102,17 +102,17 @@ def get_holdings_entries(entries, options_map):
     holdings_entries = []
 
     for index, holding in enumerate(holdings_list):
-        source = data.Source('report_holdings_print', index)
-        entry = data.Transaction(source, latest_date, flags.FLAG_SUMMARIZE,
+        meta = data.new_metadata('report_holdings_print', index)
+        entry = data.Transaction(meta, latest_date, flags.FLAG_SUMMARIZE,
                                  None, "", None, None, [])
 
         # Convert the holding to a position.
         position_ = holdings.holding_to_position(holding)
 
         entry.postings.append(
-            data.Posting(entry, holding.account, position_, None, None))
+            data.Posting(entry, holding.account, position_, None, None, None))
         entry.postings.append(
-            data.Posting(entry, equity_account, -position_.cost(), None, None))
+            data.Posting(entry, equity_account, -position_.cost(), None, None, None))
 
         holdings_entries.append(entry)
 
@@ -125,8 +125,9 @@ def get_holdings_entries(entries, options_map):
                          if entry.account in used_accounts]
 
     # Add an entry for the equity account we're using.
-    source = data.Source('report_holdings_print', -1)
-    used_open_entries.insert(0, data.Open(source, latest_date, equity_account, None, None))
+    meta = data.new_metadata('report_holdings_print', -1)
+    used_open_entries.insert(0, data.Open(meta, latest_date, equity_account,
+                                          None, None))
 
     # Get the latest price entries.
     price_entries = prices.get_last_price_entries(entries, None)
