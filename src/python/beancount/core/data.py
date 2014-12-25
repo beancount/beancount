@@ -144,8 +144,8 @@ Balance = new_new_directive('Balance', 'account amount diff_amount')
 #   postings: A list of Posting instances, the legs of this transaction. See the
 #     doc under Posting below.
 #   metadata: See above.
-Transaction = new_directive('Transaction',
-                            'flag payee narration tags links postings')
+Transaction = new_new_directive('Transaction',
+                                'flag payee narration tags links postings')
 
 # A note directive, a general note that is attached to an account. These are
 # used to attach text at a particular date in a specific account. The notes can
@@ -399,10 +399,7 @@ def sanity_check_types(entry):
       AssertionError: If there is anything that is unexpected, raises an exception.
     """
     assert isinstance(entry, ALL_DIRECTIVES), "Invalid directive type"
-    if isinstance(entry, (Open, Close, Pad, Balance, Note, Event, Price, Document)):
-        assert isinstance(entry.source, AttrDict), "Invalid type for meta"
-    else:
-        assert isinstance(entry.source, Source), "Invalid type for source"
+    assert isinstance(entry.source, AttrDict), "Invalid type for meta"
     assert isinstance(entry.date, datetime.date), "Invalid date type"
     if isinstance(entry, Transaction):
         assert isinstance(entry.flag, (NoneType, str)), "Invalid flag type"

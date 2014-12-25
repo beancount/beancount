@@ -20,8 +20,7 @@ class TestHTMLFormatter(unittest.TestCase):
         formatter.render_doc('/path/to/my/document.pdf')
         formatter.render_event_type('location')
         formatter.render_commodity(('GOOG', 'USD'))
-        formatter.render_source(
-            data.Source('/path/to/my/input.beancount', 17))
+        formatter.render_source(data.new_metadata('/path/to/my/input.beancount', 17))
 
     def test_render_inventory(self):
         formatter = html_formatter.HTMLFormatter()

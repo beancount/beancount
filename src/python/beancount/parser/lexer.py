@@ -57,8 +57,8 @@ class LexBuilder(object):
         return self.long_string_maxlines_default
 
     def get_lexer_location(self):
-        return data.Source(_parser.get_yyfilename(),
-                           _parser.get_yylineno())
+        return data.new_metadata(_parser.get_yyfilename(),
+                                 _parser.get_yylineno())
 
     def ERROR(self, string):
         self.errors.append(

@@ -105,9 +105,9 @@ def find_documents(directory, input_filename, accounts_only=None, strict=False):
 
     # If the directory does not exist, just generate an error and return.
     if not path.exists(directory):
-        source = data.Source(input_filename, 0)
+        meta = data.new_metadata(input_filename, 0)
         error = DocumentError(
-            source, "Document root '{}' does not exist".format(directory), None)
+            meta, "Document root '{}' does not exist".format(directory), None)
         return ([], [error])
 
     # Walk the hierarchy of files.
@@ -126,12 +126,12 @@ def find_documents(directory, input_filename, accounts_only=None, strict=False):
                 if strict:
                     if any(account_name.startswith(account) for account in accounts_only):
                         errors.append(DocumentError(
-                            data.Source(input_filename, 0),
+                            data.new_metadata(input_filename, 0),
                             "Document '{}' found in child account {}".format(
                                 filename, account_name), None))
                     elif any(account.startswith(account_name) for account in accounts_only):
                         errors.append(DocumentError(
-                            data.Source(input_filename, 0),
+                            data.new_metadata(input_filename, 0),
                             "Document '{}' found in parent account {}".format(
                                 filename, account_name), None))
                 continue

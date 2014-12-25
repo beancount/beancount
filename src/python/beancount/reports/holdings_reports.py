@@ -102,9 +102,9 @@ def get_holdings_entries(entries, options_map):
     holdings_entries = []
 
     for index, holding in enumerate(holdings_list):
-        source = data.Source('report_holdings_print', index)
-        entry = data.Transaction(source, latest_date, flags.FLAG_SUMMARIZE,
-                                 None, "", None, None, [], None)
+        meta = data.new_metadata('report_holdings_print', index)
+        entry = data.Transaction(meta, latest_date, flags.FLAG_SUMMARIZE,
+                                 None, "", None, None, [])
 
         # Convert the holding to a position.
         position_ = holdings.holding_to_position(holding)

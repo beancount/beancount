@@ -41,7 +41,7 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
       at the end, and a list of errors. The new list of entries is still sorted.
     """
     errors = []
-    source = data.Source('<unrealized_gains>', 0)
+    meta = data.new_metadata('<unrealized_gains>', 0)
 
     account_types = options.get_account_types(options_map)
 
@@ -50,7 +50,7 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
         validation_account = account.join(account_types.assets, subaccount)
         if not account.is_valid(validation_account):
             errors.append(
-                UnrealizedError(source,
+                UnrealizedError(meta,
                                 "Invalid subaccount name: '{}'".format(subaccount),
                                 None))
             return entries, errors
@@ -83,7 +83,7 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
         # be available, which is reasonable.
         if holding.price_number is None:
             errors.append(
-                UnrealizedError(source,
+                UnrealizedError(meta,
                                 "A valid price for {h.currency}/{h.cost_currency} "
                                 "could not be found".format(h=holding), None))
             continue
@@ -95,7 +95,7 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
             # If the number of units sum to zero, the holdings should have been
             # zero.
             errors.append(
-                UnrealizedError(source,
+                UnrealizedError(meta,
                                 "Number of units of {} in {} in holdings sum to zero "
                                 "for account {} and should not".format(
                                     currency, cost_currency, account_name),
@@ -117,9 +117,9 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
                      "(price: {h.price_number:.4f} {h.cost_currency} as of {h.price_date}, "
                      "average cost: {h.cost_number:.4f} {h.cost_currency})").format(
                          gain_loss_str, h=holding)
-        entry = data.Transaction(source._replace(lineno=1000 + index),
+        entry = data.Transaction(data.new_metadata(meta.filename, lineno=1000 + index),
                                  latest_date, flags.FLAG_UNREALIZED,
-                                 None, narration, None, None, [], None)
+                                 None, narration, None, None, [])
 
         # Book this as income, converting the account name to be the same, but as income.
         # Note: this is a rather convenient but arbitraty choice--maybe it would be best to
@@ -154,7 +154,7 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
     new_open_entries = []
     for account_ in sorted(new_accounts):
         if account_ not in open_entries:
-            meta = data.new_metadata(source.filename, index)
+            meta = data.new_metadata(meta.filename, index)
             open_entry = data.Open(meta, latest_date, account_, None, None)
             new_open_entries.append(open_entry)
 

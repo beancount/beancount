@@ -175,7 +175,7 @@ def transfer_balances(entries, date, account_pred, transfer_account):
     # Create transfer entries.
     transfer_entries = create_entries_from_balances(
         transfer_balances, transfer_date, transfer_account, False,
-        data.Source('<transfer_balances>', 0), flags.FLAG_TRANSFER,
+        data.new_metadata('<transfer_balances>', 0), flags.FLAG_TRANSFER,
         "Transfer balance for '{account}' (Transfer balance)")
 
     # Remove balance assertions that occur after a transfer on an account that
@@ -221,7 +221,7 @@ def summarize(entries, date, account_opening):
     # Create summarization / opening balance entries.
     summarizing_entries = create_entries_from_balances(
         balances, summarize_date, account_opening, True,
-        data.Source('<summarize>', 0), flags.FLAG_SUMMARIZE,
+        data.new_metadata('<summarize>', 0), flags.FLAG_SUMMARIZE,
         "Opening balance for '{account}' (Summarization)")
 
     # Insert the last price entry for each commodity from before the date.
@@ -269,10 +269,10 @@ def conversions(entries, conversion_account, conversion_currency, date=None):
         index = len(entries)
         last_date = entries[-1].date
 
-    source = data.Source('<conversions>', -1)
+    meta = data.new_metadata('<conversions>', -1)
     narration = 'Conversion for {}'.format(conversion_balance)
-    conversion_entry = Transaction(source, last_date, flags.FLAG_CONVERSIONS,
-                                   None, narration, None, None, [], None)
+    conversion_entry = Transaction(meta, last_date, flags.FLAG_CONVERSIONS,
+                                   None, narration, None, None, [])
     for position in conversion_balance.cost().get_positions():
         # Important note: Set the cost to zero here to maintain the balance
         # invariant. (This is the only single place we cheat on the balance rule
@@ -305,7 +305,7 @@ def truncate(entries, date):
 
 
 def create_entries_from_balances(balances, date, source_account, direction,
-                                 source, flag, narration_template):
+                                 meta, flag, narration_template):
     """"Create a list of entries from a dict of balances.
 
     This method creates a list of new entries to transfer the amounts in the
@@ -324,8 +324,8 @@ def create_entries_from_balances(balances, date, source_account, direction,
       direction: If 'direction' is True, the new entries transfer TO the
         balances account from the source account; otherwise the new entries
         transfer FROM the balances into the source account.
-      source: An instance of data.Source to use to indicate the source of
-        the transactions
+      meta: An instance of data.AttrDict to use to indicate the metadata for
+        the transactions.
       flag: A string, the flag to use for the transactinos.
       narration_template: A format string for creating the narration. It is
         formatted with 'account' and 'date' replacement variables.
@@ -346,7 +346,7 @@ def create_entries_from_balances(balances, date, source_account, direction,
 
         postings = []
         new_entry = Transaction(
-            source, date, flag, None, narration, None, None, postings, None)
+            meta, date, flag, None, narration, None, None, postings)
 
         for position in account_balance.get_positions():
             postings.append(data.Posting(new_entry, account, position, None, None, None))

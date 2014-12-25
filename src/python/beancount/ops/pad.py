@@ -128,8 +128,8 @@ def pad(entries, options_map):
                         narration = ('(Padding inserted for Balance of {} for '
                                      'difference {})').format(check_amount, diff_position)
                         new_entry = data.Transaction(
-                            active_pad.source, active_pad.date, flags.FLAG_PADDING,
-                            None, narration, None, None, [], None)
+                            active_pad.source.copy(), active_pad.date, flags.FLAG_PADDING,
+                            None, narration, None, None, [])
 
                         new_entry.postings.append(
                             data.Posting(new_entry, active_pad.account, diff_position,
