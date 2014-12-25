@@ -229,7 +229,7 @@ Price = new_new_directive('Price', 'currency amount')
 #     with.
 #   filename: The absolute filename of the document file.
 #   metadata: See above.
-Document = new_directive('Document', 'account filename')
+Document = new_new_directive('Document', 'account filename')
 
 
 # A list of all the valid directive types.
@@ -399,7 +399,7 @@ def sanity_check_types(entry):
       AssertionError: If there is anything that is unexpected, raises an exception.
     """
     assert isinstance(entry, ALL_DIRECTIVES), "Invalid directive type"
-    if isinstance(entry, (Open, Close, Pad, Balance, Note, Event, Price)):
+    if isinstance(entry, (Open, Close, Pad, Balance, Note, Event, Price, Document)):
         assert isinstance(entry.source, AttrDict), "Invalid type for meta"
     else:
         assert isinstance(entry.source, Source), "Invalid type for source"

@@ -470,13 +470,11 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Document object.
         """
-        source = Source(filename, lineno)
+        meta = new_metadata(filename, lineno, kvlist)
         if not path.isabs(document_filename):
             document_filename = path.abspath(path.join(path.dirname(filename),
                                                        document_filename))
-
-        metadata = None if kvlist is None else dict(kvlist)
-        return Document(source, date, account, document_filename, metadata)
+        return Document(meta, date, account, document_filename)
 
 
     def key_value(self, key, value):
