@@ -456,9 +456,8 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Note object.
         """
-        source = Source(filename, lineno)
-        metadata = None if kvlist is None else dict(kvlist)
-        return Note(source, date, account, comment, metadata)
+        meta = new_metadata(filename, lineno, kvlist)
+        return Note(meta, date, account, comment)
 
     def document(self, filename, lineno, date, account, document_filename, kvlist):
         """Process a document directive.

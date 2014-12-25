@@ -162,7 +162,7 @@ Transaction = new_directive('Transaction',
 #   comment: A free-form string, the text of the note. This can be logn if you
 #     want it to.
 #   metadata: See above.
-Note = new_directive('Note', 'account comment')
+Note = new_new_directive('Note', 'account comment')
 
 # An "event value change" directive. These directives are used as string
 # variables that have different values over time. You can use these to track an
@@ -399,7 +399,7 @@ def sanity_check_types(entry):
       AssertionError: If there is anything that is unexpected, raises an exception.
     """
     assert isinstance(entry, ALL_DIRECTIVES), "Invalid directive type"
-    if isinstance(entry, (Open, Close, Pad, Balance)):
+    if isinstance(entry, (Open, Close, Pad, Balance, Note)):
         assert isinstance(entry.source, AttrDict), "Invalid type for meta"
     else:
         assert isinstance(entry.source, Source), "Invalid type for source"
