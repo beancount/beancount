@@ -104,7 +104,7 @@ Close = new_new_directive('Close', 'account')
 #   source_account: A string, the anem of the account which is used to debit from
 #     in order to fill 'account'.
 #   metadata: See above.
-Pad = new_directive('Pad', 'account source_account')
+Pad = new_new_directive('Pad', 'account source_account')
 
 # A "check the balance of this account" directive. This directive asserts that
 # the declared account should have a known number of units of a particular
@@ -386,7 +386,7 @@ def sanity_check_types(entry):
       AssertionError: If there is anything that is unexpected, raises an exception.
     """
     assert isinstance(entry, ALL_DIRECTIVES), "Invalid directive type"
-    if isinstance(entry, (Open, Close)):
+    if isinstance(entry, (Open, Close, Pad)):
         assert isinstance(entry.source, AttrDict), "Invalid type for meta"
     else:
         assert isinstance(entry.source, Source), "Invalid type for source"

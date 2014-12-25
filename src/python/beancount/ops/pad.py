@@ -50,7 +50,7 @@ def pad(entries, options_map):
     by_account = realization.postings_by_account(entries)
 
     # A dict of pad -> list of entries to be inserted.
-    new_entries = {pad: [] for pad in pads}
+    new_entries = {id(pad): [] for pad in pads}
 
     # Process each account that has a padding group.
     for account, pad_list in sorted(pad_dict.items()):
@@ -140,7 +140,7 @@ def pad(entries, options_map):
                                          None, None, None))
 
                         # Save it for later insertion after the active pad.
-                        new_entries[active_pad].append(new_entry)
+                        new_entries[id(active_pad)].append(new_entry)
 
                         # Fixup the running balance.
                         position_, _ = pad_balance.add_position(diff_position)
@@ -156,7 +156,7 @@ def pad(entries, options_map):
     for entry in entries:
         padded_entries.append(entry)
         if isinstance(entry, data.Pad):
-            entry_list = new_entries[entry]
+            entry_list = new_entries[id(entry)]
             padded_entries.extend(entry_list)
 
             # Generate errors on unused pad entries.

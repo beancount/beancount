@@ -389,9 +389,10 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Pad object.
         """
-        source = Source(filename, lineno)
-        metadata = None if kvlist is None else dict(kvlist)
-        return Pad(source, date, account, source_account, metadata)
+        meta = new_metadata(filename, lineno)
+        if kvlist is not None:
+            meta.update(kvlist)
+        return Pad(meta, date, account, source_account)
 
     def balance(self, filename, lineno, date, account, amount, kvlist):
         """Process an assertion directive.
