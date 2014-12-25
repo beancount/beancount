@@ -5,6 +5,10 @@ beancount: TODO
   - Merge source (filename and lineno) into metadata and simplify all
     constructors to take this value either at the beginning or at the end.
 
+  - Move b.c.data.new_new_directive() over new_directive().
+
+  - Rename .source attribute to .meta in b.c.data.new_new_directive().
+
 
 * Requirements for Shipping 2.0
 ** Establish Display Precision

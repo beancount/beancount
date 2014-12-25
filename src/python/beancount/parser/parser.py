@@ -26,6 +26,7 @@ from beancount.core.data import Price
 from beancount.core.data import Note
 from beancount.core.data import Document
 from beancount.core.data import Source
+from beancount.core.data import new_metadata
 from beancount.core.data import Posting
 from beancount.core.data import BOOKING_METHODS
 from beancount.core.interpolate import balance_incomplete_postings
@@ -349,9 +350,10 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Open object.
         """
-        source = Source(filename, lineno)
-        metadata = None if kvlist is None else dict(kvlist)
-        entry = Open(source, date, account, currencies, booking, metadata)
+        meta = new_metadata(filename, lineno)
+        if kvlist is not None:
+            meta.update(kvlist)
+        entry = Open(meta, date, account, currencies, booking)
         if booking and booking not in BOOKING_METHODS:
             self.errors.append(
                 ParserError(source, "Invalid booking method: {}".format(booking), entry))

@@ -823,7 +823,7 @@ class TestMetaData(unittest.TestCase):
         self.assertFalse(errors)
         self.assertEqual(2, len(entries))
         self.assertEqual({'oranges': None, 'bananas': None}, entries[0].metadata)
-        self.assertEqual({'apples': None}, entries[1].metadata)
+        self.assertEqual(entries[1].source['apples'], None)
 
     @parsedoc
     def test_metadata_other(self, entries, errors, _):

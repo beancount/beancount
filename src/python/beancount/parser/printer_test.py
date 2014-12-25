@@ -14,19 +14,19 @@ from beancount.core import interpolate
 from beancount.utils import test_utils
 
 
-SOURCE = data.Source('beancount/core/testing.beancount', 12345)
+META = data.new_metadata('beancount/core/testing.beancount', 12345)
 
 class TestPrinter(unittest.TestCase):
 
     def test_render_source(self):
-        source_str = printer.render_source(SOURCE)
+        source_str = printer.render_source(META)
         self.assertTrue(isinstance(source_str, str))
         self.assertTrue(re.search('12345', source_str))
-        self.assertTrue(re.search(SOURCE.filename, source_str))
+        self.assertTrue(re.search(META.filename, source_str))
 
     def test_format_and_print_error(self):
-        entry = data.Open(SOURCE, date(2014, 1, 15), 'Assets:Bank:Checking', [], None, None)
-        error = interpolate.BalanceError(SOURCE, "Example balance error", entry)
+        entry = data.Open(META, date(2014, 1, 15), 'Assets:Bank:Checking', [], None)
+        error = interpolate.BalanceError(META, "Example balance error", entry)
         error_str = printer.format_error(error)
         self.assertTrue(isinstance(error_str, str))
 

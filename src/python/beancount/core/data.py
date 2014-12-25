@@ -30,6 +30,20 @@ def new_directive(clsname, fields):
     return collections.namedtuple(clsname, 'source date {} metadata'.format(fields))
 
 
+def new_new_directive(clsname, fields):
+    """Create a directive class. Do not include default fields.
+    This should probably be carried out through inheritance.
+
+    Args:
+      name: A string, the capitalized name of the directive.
+      fields: A string or the list of strings, names for the fields
+        to add to the base tuple.
+    Returns:
+      A type object for the new directive type.
+    """
+    return collections.namedtuple(clsname, 'source date {}'.format(fields))
+
+
 # All possible types of entries. These are the main data structrues in use
 # within the program. They are all treated as immutable.
 #
@@ -64,7 +78,7 @@ def new_directive(clsname, fields):
 #     unspecified (None) in the vast majority of cases. See BOOKING_METHODS for
 #     valid attribute values when set.
 #   metadata: See above.
-Open = new_directive('Open', 'account currencies booking')
+Open = new_new_directive('Open', 'account currencies booking')
 
 # A set of valid booking method names for positions on accounts.
 # The following methods are not yet implemented:
@@ -235,6 +249,29 @@ ALL_DIRECTIVES = (
 #     automatically created directives, this may be None.
 Source = namedtuple('Source', 'filename lineno')
 
+# A dict class that allows access via attributes. This allows us to move from
+# the previous Source namedtuple object to generalized metadata.
+class AttrDict(dict):
+    __getattr__ = dict.__getitem__
+    __setattr__ = dict.__setitem__
+    def _replace(self, **kwds):
+        copy = self.copy()
+        for key, value in kwds.items():
+            copy.__setattr__(key, value)
+        return copy
+
+def new_metadata(filename, lineno):
+    """Create a new metadata container from the filename and line number.
+
+    Args:
+      filename: A string, the filename for the creator of this directive.
+      lineno: An integer, the line number wher
+    Returns:
+      An instance of AttrDict.
+    """
+    return AttrDict([('filename', filename),
+                     ('lineno', lineno)])
+
 
 # Postings are contained in Transaction entries. These represent the individual
 # legs of a transaction. Note: a posting may only appear within a single entry
@@ -349,7 +386,10 @@ def sanity_check_types(entry):
       AssertionError: If there is anything that is unexpected, raises an exception.
     """
     assert isinstance(entry, ALL_DIRECTIVES), "Invalid directive type"
-    assert isinstance(entry.source, Source), "Invalid type for source"
+    if isinstance(entry, Open):
+        assert isinstance(entry.source, AttrDict), "Invalid type for meta"
+    else:
+        assert isinstance(entry.source, Source), "Invalid type for source"
     assert isinstance(entry.date, datetime.date), "Invalid date type"
     if isinstance(entry, Transaction):
         assert isinstance(entry.flag, (NoneType, str)), "Invalid flag type"

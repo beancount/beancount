@@ -580,9 +580,9 @@ def internalize(entries, transfer_account,
     # correct set of entries you can load cleanly).
     open_close_map = getters.get_account_open_close(new_entries)
     if transfer_account not in open_close_map:
-        open_transfer_entry = data.Open(data.Source("beancount.projects.returns", 0),
+        open_transfer_entry = data.Open(data.new_metadata("beancount.projects.returns", 0),
                                         new_entries[0].date,
-                                        transfer_account, None, None, None)
+                                        transfer_account, None, None)
         new_entries.insert(0, open_transfer_entry)
 
     return new_entries, replaced_entries
