@@ -59,19 +59,22 @@ def add_implicit_prices(entries, unused_options_map):
                 # underlying instrument, e.g.
                 #      Assets:Account    100 GOOG {564.20} @ {581.97} USD
                 if posting.price is not None:
-                    price_entry = data.Price(entry.source, entry.date,
+                    source = entry.source
+                    meta = data.new_metadata(source.filename, source.lineno)
+                    price_entry = data.Price(meta, entry.date,
                                              posting.position.lot.currency,
-                                             posting.price, None)
+                                             posting.price)
 
                 # Add costs, when we're not matching against an existing
                 # position. This happens when we're just specifying the cost,
                 # e.g.
                 #      Assets:Account    100 GOOG {564.20}
                 elif posting.position.lot.cost is not None and not reducing:
-                    price_entry = data.Price(entry.source, entry.date,
+                    source = entry.source
+                    meta = data.new_metadata(source.filename, source.lineno)
+                    price_entry = data.Price(meta, entry.date,
                                              posting.position.lot.currency,
-                                             posting.position.lot.cost,
-                                             None)
+                                             posting.position.lot.cost)
 
                 else:
                     price_entry = None

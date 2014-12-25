@@ -438,9 +438,8 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Price object.
         """
-        source = Source(filename, lineno)
-        metadata = None if kvlist is None else dict(kvlist)
-        return Price(source, date, currency, amount, metadata)
+        meta = new_metadata(filename, lineno, kvlist)
+        return Price(meta, date, currency, amount)
 
     def note(self, filename, lineno, date, account, comment, kvlist):
         """Process a note directive.

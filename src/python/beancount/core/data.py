@@ -210,7 +210,7 @@ Event = new_new_directive('Event', 'type description')
 #  amount: An instance of Amount, the number of units and currency that
 #    'currency' is worth, for instance 1200.12 USD.
 #   metadata: See above.
-Price = new_directive('Price', 'currency amount')
+Price = new_new_directive('Price', 'currency amount')
 
 # A document file declaration directive. This directive is used to attach a
 # statement to an account, at a particular date. A typical usage would be to
@@ -399,7 +399,7 @@ def sanity_check_types(entry):
       AssertionError: If there is anything that is unexpected, raises an exception.
     """
     assert isinstance(entry, ALL_DIRECTIVES), "Invalid directive type"
-    if isinstance(entry, (Open, Close, Pad, Balance, Note, Event)):
+    if isinstance(entry, (Open, Close, Pad, Balance, Note, Event, Price)):
         assert isinstance(entry.source, AttrDict), "Invalid type for meta"
     else:
         assert isinstance(entry.source, Source), "Invalid type for source"
