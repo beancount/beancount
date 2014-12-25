@@ -268,17 +268,17 @@ def print_entries(entries, dcontext=None, render_weights=False, file=None, prefi
         output.write(eprinter(entry))
 
 
-def render_source(source):
+def render_source(meta):
     """Render the source for errors in a way that it will be both detected by
     Emacs and align and rendered nicely.
 
     Args:
-      source: an instance of Source.
+      meta: an instance of AttrDict.
     Returns:
       A string, rendered to be interpretable as a message location for Emacs or
       other editors.
     """
-    return '{}:{:8}'.format(source.filename, '{}:'.format(source.lineno))
+    return '{}:{:8}'.format(meta.filename, '{}:'.format(meta.lineno))
 
 
 def format_error(error):

@@ -27,14 +27,14 @@ def new_directive(clsname, fields):
     Returns:
       A type object for the new directive type.
     """
-    return collections.namedtuple(clsname, 'source date {}'.format(fields))
+    return collections.namedtuple(clsname, 'meta date {}'.format(fields))
 
 
 # All possible types of entries. These are the main data structures in use
 # within the program. They are all treated as immutable.
 #
 # Common Attributes (prepended to declared list):
-#   source: A dict of strings to objects, potentially attached to each of the
+#   meta: A dict of strings to objects, potentially attached to each of the
 #     directive types. The values may be strings, account names, tags, dates,
 #     numbers, amounts and currencies. There are two special attributes which
 #     are always present on all directives: 'filename' and 'lineno'.
@@ -49,7 +49,7 @@ def new_directive(clsname, fields):
 # An "open account" directive.
 #
 # Attributes:
-#   source: See above.
+#   meta: See above.
 #   date: See above.
 #   account: A string, the name of the account that is being opened.
 #   currencies: A list of strings, currencies that are allowed in this account.
@@ -80,7 +80,7 @@ Close = new_directive('Close', 'account')
 # in case you need it, while you're enterering past history into your Ledger.
 #
 # Attributes:
-#   source: See above.
+#   meta: See above.
 #   date: See above.
 #   account: A string, the name of the account which needs to be filled.
 #   source_account: A string, the anem of the account which is used to debit from
@@ -95,7 +95,7 @@ Pad = new_directive('Pad', 'account source_account')
 # transactions correctly.
 #
 # Attributes:
-#   source: See above.
+#   meta: See above.
 #   date: See above.
 #   account: A string, the account whose balance to check at the given date.
 #   amount: An Amount, the number of units of the given currency you're
@@ -109,7 +109,7 @@ Balance = new_directive('Balance', 'account amount diff_amount')
 # representing these types of structures with a spreadsheet is difficult.
 #
 # Attributes:
-#   source: See above.
+#   meta: See above.
 #   date: See above.
 #   flag: A single-character string or None. This user-specified string
 #     represents some custom/user-defined state of the transaction. You can use
@@ -134,7 +134,7 @@ Transaction = new_directive('Transaction',
 # file, which does not get parsed and stored.
 #
 # Attributes:
-#   source: See above.
+#   meta: See above.
 #   date: See above.
 #   account: A string, the account which the note is to be attached to. This is
 #     never None, notes always have an account they correspond to.
@@ -163,7 +163,7 @@ Note = new_directive('Note', 'account comment')
 # in the same input file.
 #
 # Attributes:
-#   source: See above.
+#   meta: See above.
 #   date: See above.
 #   type: A short string, typically a single lowercase word, that defines a
 #     unique variable whose value changes over time. For example, 'location'.
@@ -181,7 +181,7 @@ Event = new_directive('Event', 'type description')
 # trading system, you should probably use something else).
 #
 # Attributes:
-#   source: See above.
+#   meta: See above.
 #   date: See above.
 #  currency: A string, the currency that is being priced, e.g. GOOG.
 #  amount: An instance of Amount, the number of units and currency that
@@ -199,7 +199,7 @@ Price = new_directive('Price', 'currency amount')
 # on the file hierarchy, and you can get them by parsing the list of entries.
 #
 # Attributes:
-#   source: See above.
+#   meta: See above.
 #   date: See above.
 #   account: A string, the accountwhich the statement or document is associated
 #     with.
@@ -377,9 +377,9 @@ def sanity_check_types(entry):
       AssertionError: If there is anything that is unexpected, raises an exception.
     """
     assert isinstance(entry, ALL_DIRECTIVES), "Invalid directive type"
-    assert isinstance(entry.source, AttrDict), "Invalid type for meta"
-    assert 'filename' in entry.source, "Missing filename in metadata"
-    assert 'lineno' in entry.source, "Missing line number in metadata"
+    assert isinstance(entry.meta, AttrDict), "Invalid type for meta"
+    assert 'filename' in entry.meta, "Missing filename in metadata"
+    assert 'lineno' in entry.meta, "Missing line number in metadata"
     assert isinstance(entry.date, datetime.date), "Invalid date type"
     if isinstance(entry, Transaction):
         assert isinstance(entry.flag, (NoneType, str)), "Invalid flag type"
@@ -498,7 +498,7 @@ def entry_sortkey(entry):
       A tuple of (date, integer, integer), that forms the sort key for the
       entry.
     """
-    return (entry.date, SORT_ORDER.get(type(entry), 0), entry.source.lineno)
+    return (entry.date, SORT_ORDER.get(type(entry), 0), entry.meta.lineno)
 
 
 def sort(entries):
@@ -525,7 +525,7 @@ def posting_sortkey(entry):
     """
     if isinstance(entry, Posting):
         entry = entry.entry
-    return (entry.date, SORT_ORDER.get(type(entry), 0), entry.source.lineno)
+    return (entry.date, SORT_ORDER.get(type(entry), 0), entry.meta.lineno)
 
 
 def has_entry_account_component(entry, component):
@@ -559,9 +559,9 @@ def find_closest(entries, filename, lineno):
     min_diffline = sys.maxsize
     closest_entry = None
     for entry in entries:
-        source = entry.source
-        if source.filename == filename and source.lineno > 0:
-            diffline = lineno - source.lineno
+        emeta = entry.meta
+        if emeta.filename == filename and emeta.lineno > 0:
+            diffline = lineno - emeta.lineno
             if diffline >= 0 and diffline < min_diffline:
                 min_diffline = diffline
                 closest_entry = entry

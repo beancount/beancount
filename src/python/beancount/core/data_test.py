@@ -154,7 +154,7 @@ class TestData(unittest.TestCase):
                           data.Transaction], list(map(type, entries)))
 
         self.assertEqual([900, 1002, 1001, 1008, 1009, 1000, 1100],
-                         [entry.source.lineno
+                         [entry.meta.lineno
                           for entry in entries])
 
     def test_entry_sortkey(self):
@@ -184,7 +184,7 @@ class TestData(unittest.TestCase):
                           data.Posting], list(map(type, sorted_postings)))
 
         self.assertEqual([900, 1002, 1001, 1008, 1009, 1000, 1100],
-                         [entry.source.lineno
+                         [entry.meta.lineno
                           for entry in map(data.get_entry, sorted_postings)])
 
     def test_has_entry_account_component(self):

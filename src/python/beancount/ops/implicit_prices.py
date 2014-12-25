@@ -59,8 +59,7 @@ def add_implicit_prices(entries, unused_options_map):
                 # underlying instrument, e.g.
                 #      Assets:Account    100 GOOG {564.20} @ {581.97} USD
                 if posting.price is not None:
-                    source = entry.source
-                    meta = data.new_metadata(source.filename, source.lineno)
+                    meta = data.new_metadata(entry.meta.filename, entry.meta.lineno)
                     price_entry = data.Price(meta, entry.date,
                                              posting.position.lot.currency,
                                              posting.price)
@@ -70,8 +69,7 @@ def add_implicit_prices(entries, unused_options_map):
                 # e.g.
                 #      Assets:Account    100 GOOG {564.20}
                 elif posting.position.lot.cost is not None and not reducing:
-                    source = entry.source
-                    meta = data.new_metadata(source.filename, source.lineno)
+                    meta = data.new_metadata(entry.meta.filename, entry.meta.lineno)
                     price_entry = data.Price(meta, entry.date,
                                              posting.position.lot.currency,
                                              posting.position.lot.cost)
@@ -101,7 +99,7 @@ def add_implicit_prices(entries, unused_options_map):
                         # else:
                         #     errors.append(
                         #         ImplicitPriceError(
-                        #             entry.source,
+                        #             entry.meta,
                         #             "Duplicate prices for {} on {}".format(entry,
                         #                                                    dup_entry),
                         #             entry))

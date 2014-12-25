@@ -112,8 +112,7 @@ def close(entries,
         the source for currency conversions.
     Returns:
       A modified list of entries, with the income and expense accounts
-      transferred..
-
+      transferred.
     """
 
     # Transfer the balances of income and expense accounts as earnings / net

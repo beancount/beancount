@@ -47,7 +47,7 @@ class ErrorReport(report.HTMLReport):
             file.write('<div class="error">\n')
             file.write('<a class="source" href="{}">{}</a><br/>\n'.format(
                 self.formatter.render_source(error.source),
-                printer.render_source(error.source)))
+                printer.render_source(error.meta)))
             file.write('<span class="error-message">{}</span>\n'.format(
                 error.message))
             if error.entry is not None:

@@ -114,7 +114,7 @@ def pad(entries, options_map):
                         for position_ in positions:
                             if position_.lot.cost is not None:
                                 pad_errors.append(
-                                    PadError(entry.source,
+                                    PadError(entry.meta,
                                              ("Attempt to pad an entry with cost for "
                                               "balance: {}".format(pad_balance)),
                                              active_pad))
@@ -128,7 +128,7 @@ def pad(entries, options_map):
                         narration = ('(Padding inserted for Balance of {} for '
                                      'difference {})').format(check_amount, diff_position)
                         new_entry = data.Transaction(
-                            active_pad.source.copy(), active_pad.date, flags.FLAG_PADDING,
+                            active_pad.meta.copy(), active_pad.date, flags.FLAG_PADDING,
                             None, narration, None, None, [])
 
                         new_entry.postings.append(
@@ -162,6 +162,6 @@ def pad(entries, options_map):
             # Generate errors on unused pad entries.
             if not entry_list:
                 pad_errors.append(
-                    PadError(entry.source, "Unused Pad entry", entry))
+                    PadError(entry.meta, "Unused Pad entry", entry))
 
     return padded_entries, pad_errors

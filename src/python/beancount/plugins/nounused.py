@@ -45,7 +45,7 @@ def validate_unused_accounts(entries, unused_options_map):
 
     # Create a list of suitable errors, with the location of the Open directives
     # corresponding to the unused accounts.
-    errors = [UnusedAccountError(open_entry.source,
+    errors = [UnusedAccountError(open_entry.meta,
                                  "Unused account '{}'".format(account),
                                  open_entry)
               for account, open_entry in open_map.items()

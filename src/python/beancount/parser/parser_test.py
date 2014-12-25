@@ -390,9 +390,9 @@ class TestLineNumbers(unittest.TestCase):
             TestLineNumbers.test_line_numbers.__wrapped__)
         first_line += 1
 
-        self.assertEqual(2, entries[0].source.lineno - first_line)
-        self.assertEqual(6, entries[1].source.lineno - first_line)
-        self.assertEqual(8, entries[2].source.lineno - first_line)
+        self.assertEqual(2, entries[0].meta.lineno - first_line)
+        self.assertEqual(6, entries[1].meta.lineno - first_line)
+        self.assertEqual(8, entries[2].meta.lineno - first_line)
 
 
 class TestParserOptions(unittest.TestCase):
@@ -725,7 +725,7 @@ class TestMetaData(unittest.TestCase):
             Assets:Investments:Cash
         """
         self.assertEqual(1, len(entries))
-        self.assertEqual('Something', entries[0].source['test'])
+        self.assertEqual('Something', entries[0].meta['test'])
 
     @parsedoc
     def test_metadata_transaction__middle(self, entries, errors, _):
@@ -765,7 +765,7 @@ class TestMetaData(unittest.TestCase):
             test6: "this"
         """
         self.assertEqual(1, len(entries))
-        self.assertEqual('Something', entries[0].source['test1'])
+        self.assertEqual('Something', entries[0].meta['test1'])
         self.assertEqual({'test2': 'has', 'test3': 'to'},
                          entries[0].postings[0].meta)
         self.assertEqual({'test4': 'come', 'test5': 'from', 'test6': 'this'},
@@ -785,7 +785,7 @@ class TestMetaData(unittest.TestCase):
               test6: "this"
         """
         self.assertEqual(1, len(entries))
-        self.assertEqual('Something', entries[0].source['test1'])
+        self.assertEqual('Something', entries[0].meta['test1'])
         self.assertEqual({'test2': 'has', 'test3': 'to'},
                          entries[0].postings[0].meta)
         self.assertEqual({'test4': 'come', 'test5': 'from', 'test6': 'this'},
@@ -804,7 +804,7 @@ class TestMetaData(unittest.TestCase):
             Income:Investments  -100 USD
         """
         self.assertEqual(1, len(entries))
-        self.assertEqual('Bananas', entries[0].source['test'])
+        self.assertEqual('Bananas', entries[0].meta['test'])
         self.assertEqual({'test': 'Bananas'}, entries[0].postings[0].meta)
         self.assertEqual(3, len(errors))
         self.assertTrue(all(re.search('Duplicate.*metadata field', error.message)
@@ -823,10 +823,10 @@ class TestMetaData(unittest.TestCase):
         self.assertFalse(errors)
         self.assertEqual(2, len(entries))
         self.assertEqual({'oranges', 'bananas', 'filename', 'lineno'},
-                         entries[0].source.keys())
-        self.assertEqual(None, entries[0].source['oranges'])
-        self.assertEqual(None, entries[0].source['bananas'])
-        self.assertEqual(entries[1].source['apples'], None)
+                         entries[0].meta.keys())
+        self.assertEqual(None, entries[0].meta['oranges'])
+        self.assertEqual(None, entries[0].meta['bananas'])
+        self.assertEqual(entries[1].meta['apples'], None)
 
     @parsedoc
     def test_metadata_other(self, entries, errors, _):
@@ -873,10 +873,10 @@ class TestMetaData(unittest.TestCase):
             amount: 345.67 USD
         """
         self.assertEqual(1, len(entries))
-        self.assertTrue('filename' in entries[0].source)
-        self.assertTrue('lineno' in entries[0].source)
-        del entries[0].source['filename']
-        del entries[0].source['lineno']
+        self.assertTrue('filename' in entries[0].meta)
+        self.assertTrue('lineno' in entries[0].meta)
+        del entries[0].meta['filename']
+        del entries[0].meta['lineno']
         self.assertEqual({
             'string': 'Something',
             'account': 'Assets:Investments:Cash',
@@ -885,7 +885,7 @@ class TestMetaData(unittest.TestCase):
             'tag': 'trip-florida',
             'number': D('345.67'),
             'amount': amount.from_string('345.67 USD'),
-            }, entries[0].source)
+            }, entries[0].meta)
 
 
 class TestLexerErrors(unittest.TestCase):

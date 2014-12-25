@@ -93,7 +93,7 @@ def check(entries, options_map):
             diff_amount = amount.amount_sub(balance_amount, expected_amount)
             if abs(diff_amount.number) > tolerance:
                 check_errors.append(
-                    BalanceError(entry.source,
+                    BalanceError(entry.meta,
                                  ("Balance failed for '{}': "
                                   "expected {} != accumulated {} ({} {})").format(
                                       entry.account, expected_amount, balance_amount,
@@ -108,7 +108,7 @@ def check(entries, options_map):
                 # of ideas, maybe leaving the original check intact and insert a
                 # new error entry might be more functional or easier to
                 # understand.
-                entry = Balance(entry.source.copy(), entry.date, entry.account,
+                entry = Balance(entry.meta.copy(), entry.date, entry.account,
                                 entry.amount, diff_amount)
 
         new_entries.append(entry)

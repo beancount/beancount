@@ -52,14 +52,14 @@ class TestContext(test_utils.TestCase):
         """
         self.assertFalse(errors)
 
-        search_filename = entries[0].source.filename
-        search_lineno = entries[-3].source.lineno + 2
+        search_filename = entries[0].meta.filename
+        search_lineno = entries[-3].meta.lineno + 2
         dcontext = options_map['display_context']
         str_context = context.render_entry_context(entries, dcontext,
                                                    search_filename, search_lineno)
 
         self.assertLines(textwrap.dedent("""
-        Hash:d2aa9e1944253186f1d5a676d2d883cb
+        Hash:298dca350249afe0378cf8bac2fb12cf
         Location: <string>:29
 
         ;   Assets:US:ETrade:Cash                       -1411.44 USD

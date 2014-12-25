@@ -69,7 +69,7 @@ def verify_document_files_exist(entries, unused_options_map):
             continue
         if not path.exists(entry.filename):
             errors.append(
-                DocumentError(entry.source,
+                DocumentError(entry.meta,
                               'File does not exist: "{}"'.format(entry.filename),
                               entry))
     return entries, errors
