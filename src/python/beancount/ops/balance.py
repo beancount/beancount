@@ -108,8 +108,8 @@ def check(entries, options_map):
                 # of ideas, maybe leaving the original check intact and insert a
                 # new error entry might be more functional or easier to
                 # understand.
-                entry = Balance(entry.source, entry.date, entry.account,
-                                entry.amount, diff_amount, None)
+                entry = Balance(entry.source.copy(), entry.date, entry.account,
+                                entry.amount, diff_amount)
 
         new_entries.append(entry)
 

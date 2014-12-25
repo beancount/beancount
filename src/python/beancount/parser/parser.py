@@ -350,9 +350,7 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Open object.
         """
-        meta = new_metadata(filename, lineno)
-        if kvlist is not None:
-            meta.update(kvlist)
+        meta = new_metadata(filename, lineno, kvlist)
         entry = Open(meta, date, account, currencies, booking)
         if booking and booking not in BOOKING_METHODS:
             self.errors.append(
@@ -371,9 +369,7 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Close object.
         """
-        meta = new_metadata(filename, lineno)
-        if kvlist is not None:
-            meta.update(kvlist)
+        meta = new_metadata(filename, lineno, kvlist)
         return Close(meta, date, account)
 
     def pad(self, filename, lineno, date, account, source_account, kvlist):
@@ -389,9 +385,7 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Pad object.
         """
-        meta = new_metadata(filename, lineno)
-        if kvlist is not None:
-            meta.update(kvlist)
+        meta = new_metadata(filename, lineno, kvlist)
         return Pad(meta, date, account, source_account)
 
     def balance(self, filename, lineno, date, account, amount, kvlist):
@@ -412,9 +406,8 @@ class Builder(lexer.LexBuilder):
           A new Balance object.
         """
         diff_amount = None
-        source = Source(filename, lineno)
-        metadata = None if kvlist is None else dict(kvlist)
-        return Balance(source, date, account, amount, diff_amount, metadata)
+        meta = new_metadata(filename, lineno, kvlist)
+        return Balance(meta, date, account, amount, diff_amount)
 
     def event(self, filename, lineno, date, event_type, description, kvlist):
         """Process an event directive.

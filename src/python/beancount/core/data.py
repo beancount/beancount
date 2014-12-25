@@ -122,7 +122,7 @@ Pad = new_new_directive('Pad', 'account source_account')
 #   diff_amount: None if the balance check succeeds. This value is set to
 #     an Amount instance if the balance fails, the amount of the difference.
 #   metadata: See above.
-Balance = new_directive('Balance', 'account amount diff_amount')
+Balance = new_new_directive('Balance', 'account amount diff_amount')
 
 # A transaction! This is the main type of object that we manipulate, and the
 # entire reason this whole project exists in the first place, because
@@ -251,26 +251,39 @@ Source = namedtuple('Source', 'filename lineno')
 
 # A dict class that allows access via attributes. This allows us to move from
 # the previous Source namedtuple object to generalized metadata.
+#
+# TODO(blais): needs unit tests.
 class AttrDict(dict):
     __getattr__ = dict.__getitem__
     __setattr__ = dict.__setitem__
+
     def _replace(self, **kwds):
         copy = self.copy()
         for key, value in kwds.items():
             copy.__setattr__(key, value)
         return copy
 
-def new_metadata(filename, lineno):
+    def copy(self):
+        return AttrDict(self.items())
+    __copy__ = copy
+
+
+def new_metadata(filename, lineno, kvlist=None):
     """Create a new metadata container from the filename and line number.
 
     Args:
       filename: A string, the filename for the creator of this directive.
-      lineno: An integer, the line number wher
+      lineno: An integer, the line number where the directive has been created.
+      kvlist: An optional container of key-values.
     Returns:
       An instance of AttrDict.
     """
-    return AttrDict([('filename', filename),
-                     ('lineno', lineno)])
+    meta = AttrDict()
+    meta['filename'] = filename
+    meta['lineno'] = lineno
+    if kvlist:
+        meta.update(kvlist)
+    return meta
 
 
 # Postings are contained in Transaction entries. These represent the individual
@@ -386,7 +399,7 @@ def sanity_check_types(entry):
       AssertionError: If there is anything that is unexpected, raises an exception.
     """
     assert isinstance(entry, ALL_DIRECTIVES), "Invalid directive type"
-    if isinstance(entry, (Open, Close, Pad)):
+    if isinstance(entry, (Open, Close, Pad, Balance)):
         assert isinstance(entry.source, AttrDict), "Invalid type for meta"
     else:
         assert isinstance(entry.source, Source), "Invalid type for source"
