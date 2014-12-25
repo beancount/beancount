@@ -25,7 +25,6 @@ from beancount.core.data import Event
 from beancount.core.data import Price
 from beancount.core.data import Note
 from beancount.core.data import Document
-from beancount.core.data import Source
 from beancount.core.data import new_metadata
 from beancount.core.data import Posting
 from beancount.core.data import BOOKING_METHODS

@@ -27,20 +27,6 @@ def new_directive(clsname, fields):
     Returns:
       A type object for the new directive type.
     """
-    return collections.namedtuple(clsname, 'source date {} metadata'.format(fields))
-
-
-def new_new_directive(clsname, fields):
-    """Create a directive class. Do not include default fields.
-    This should probably be carried out through inheritance.
-
-    Args:
-      name: A string, the capitalized name of the directive.
-      fields: A string or the list of strings, names for the fields
-        to add to the base tuple.
-    Returns:
-      A type object for the new directive type.
-    """
     return collections.namedtuple(clsname, 'source date {}'.format(fields))
 
 
@@ -78,7 +64,7 @@ def new_new_directive(clsname, fields):
 #     unspecified (None) in the vast majority of cases. See BOOKING_METHODS for
 #     valid attribute values when set.
 #   metadata: See above.
-Open = new_new_directive('Open', 'account currencies booking')
+Open = new_directive('Open', 'account currencies booking')
 
 # A set of valid booking method names for positions on accounts.
 # The following methods are not yet implemented:
@@ -89,7 +75,7 @@ BOOKING_METHODS = {'STRICT', 'NONE'}
 #
 # Attributes:
 #   account: A string, the name of the account that is being closed.
-Close = new_new_directive('Close', 'account')
+Close = new_directive('Close', 'account')
 
 # A "pad this account with this other account" directive. This directive
 # automatically inserts transactions that will make the next chronological
@@ -104,7 +90,7 @@ Close = new_new_directive('Close', 'account')
 #   source_account: A string, the anem of the account which is used to debit from
 #     in order to fill 'account'.
 #   metadata: See above.
-Pad = new_new_directive('Pad', 'account source_account')
+Pad = new_directive('Pad', 'account source_account')
 
 # A "check the balance of this account" directive. This directive asserts that
 # the declared account should have a known number of units of a particular
@@ -122,7 +108,7 @@ Pad = new_new_directive('Pad', 'account source_account')
 #   diff_amount: None if the balance check succeeds. This value is set to
 #     an Amount instance if the balance fails, the amount of the difference.
 #   metadata: See above.
-Balance = new_new_directive('Balance', 'account amount diff_amount')
+Balance = new_directive('Balance', 'account amount diff_amount')
 
 # A transaction! This is the main type of object that we manipulate, and the
 # entire reason this whole project exists in the first place, because
@@ -144,7 +130,7 @@ Balance = new_new_directive('Balance', 'account amount diff_amount')
 #   postings: A list of Posting instances, the legs of this transaction. See the
 #     doc under Posting below.
 #   metadata: See above.
-Transaction = new_new_directive('Transaction',
+Transaction = new_directive('Transaction',
                                 'flag payee narration tags links postings')
 
 # A note directive, a general note that is attached to an account. These are
@@ -162,7 +148,7 @@ Transaction = new_new_directive('Transaction',
 #   comment: A free-form string, the text of the note. This can be logn if you
 #     want it to.
 #   metadata: See above.
-Note = new_new_directive('Note', 'account comment')
+Note = new_directive('Note', 'account comment')
 
 # An "event value change" directive. These directives are used as string
 # variables that have different values over time. You can use these to track an
@@ -192,7 +178,7 @@ Note = new_new_directive('Note', 'account comment')
 #   description: A free-form string, the value of the variable as of the date
 #     of the transaction.
 #   metadata: See above.
-Event = new_new_directive('Event', 'type description')
+Event = new_directive('Event', 'type description')
 
 # A price declaration directive. This establishes the price of a currency in
 # terms of another currency as of the directive's date. A history of the prices
@@ -210,7 +196,7 @@ Event = new_new_directive('Event', 'type description')
 #  amount: An instance of Amount, the number of units and currency that
 #    'currency' is worth, for instance 1200.12 USD.
 #   metadata: See above.
-Price = new_new_directive('Price', 'currency amount')
+Price = new_directive('Price', 'currency amount')
 
 # A document file declaration directive. This directive is used to attach a
 # statement to an account, at a particular date. A typical usage would be to
@@ -229,13 +215,15 @@ Price = new_new_directive('Price', 'currency amount')
 #     with.
 #   filename: The absolute filename of the document file.
 #   metadata: See above.
-Document = new_new_directive('Document', 'account filename')
+Document = new_directive('Document', 'account filename')
 
 
 # A list of all the valid directive types.
 ALL_DIRECTIVES = (
     Open, Close, Pad, Balance, Transaction, Note, Event, Price, Document
 )
+
+
 
 
 # The location in a source file where the directive was read from. These are
@@ -247,7 +235,7 @@ ALL_DIRECTIVES = (
 #     name instead.
 #   lineno: An integer, the line number where the directive was found. For
 #     automatically created directives, this may be None.
-Source = namedtuple('Source', 'filename lineno')
+###Source = namedtuple('Source', 'filename lineno')
 
 # A dict class that allows access via attributes. This allows us to move from
 # the previous Source namedtuple object to generalized metadata.
@@ -266,6 +254,8 @@ class AttrDict(dict):
     def copy(self):
         return AttrDict(self.items())
     __copy__ = copy
+
+
 
 
 def new_metadata(filename, lineno, kvlist=None):
