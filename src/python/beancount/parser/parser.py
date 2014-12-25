@@ -654,13 +654,13 @@ class Builder(lexer.LexBuilder):
                                 meta, "Duplicate metadata field on entry: {}".format(
                                     posting_or_kv), None))
                     else:
-                        if last_posting.metadata is None:
-                            last_posting = last_posting._replace(metadata={})
+                        if last_posting.meta is None:
+                            last_posting = last_posting._replace(meta={})
                             postings.pop(-1)
                             postings.append(last_posting)
 
-                        value = last_posting.metadata.setdefault(posting_or_kv.key,
-                                                                 posting_or_kv.value)
+                        value = last_posting.meta.setdefault(posting_or_kv.key,
+                                                             posting_or_kv.value)
                         if value is not posting_or_kv.value:
                             self.errors.append(ParserError(
                                 meta, "Duplicate posting metadata field: {}".format(

@@ -737,7 +737,7 @@ class TestMetaData(unittest.TestCase):
         """
         self.assertEqual(1, len(entries))
         self.assertEqual({'test': 'Something'},
-                         entries[0].postings[0].metadata)
+                         entries[0].postings[0].meta)
 
     @parsedoc
     def test_metadata_transaction__end(self, entries, errors, _):
@@ -749,7 +749,7 @@ class TestMetaData(unittest.TestCase):
         """
         self.assertEqual(1, len(entries))
         self.assertEqual({'test': 'Something'},
-                         entries[0].postings[1].metadata)
+                         entries[0].postings[1].meta)
 
     @parsedoc
     def test_metadata_transaction__many(self, entries, errors, _):
@@ -767,9 +767,9 @@ class TestMetaData(unittest.TestCase):
         self.assertEqual(1, len(entries))
         self.assertEqual('Something', entries[0].source['test1'])
         self.assertEqual({'test2': 'has', 'test3': 'to'},
-                         entries[0].postings[0].metadata)
+                         entries[0].postings[0].meta)
         self.assertEqual({'test4': 'come', 'test5': 'from', 'test6': 'this'},
-                         entries[0].postings[1].metadata)
+                         entries[0].postings[1].meta)
 
     @parsedoc
     def test_metadata_transaction__indented(self, entries, errors, _):
@@ -787,9 +787,9 @@ class TestMetaData(unittest.TestCase):
         self.assertEqual(1, len(entries))
         self.assertEqual('Something', entries[0].source['test1'])
         self.assertEqual({'test2': 'has', 'test3': 'to'},
-                         entries[0].postings[0].metadata)
+                         entries[0].postings[0].meta)
         self.assertEqual({'test4': 'come', 'test5': 'from', 'test6': 'this'},
-                         entries[0].postings[1].metadata)
+                         entries[0].postings[1].meta)
 
     @parsedoc
     def test_metadata_transaction__repeated(self, entries, errors, _):
@@ -805,7 +805,7 @@ class TestMetaData(unittest.TestCase):
         """
         self.assertEqual(1, len(entries))
         self.assertEqual('Bananas', entries[0].source['test'])
-        self.assertEqual({'test': 'Bananas'}, entries[0].postings[0].metadata)
+        self.assertEqual({'test': 'Bananas'}, entries[0].postings[0].meta)
         self.assertEqual(3, len(errors))
         self.assertTrue(all(re.search('Duplicate.*metadata field', error.message)
                             for error in errors))

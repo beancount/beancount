@@ -30,24 +30,21 @@ def new_directive(clsname, fields):
     return collections.namedtuple(clsname, 'source date {}'.format(fields))
 
 
-# All possible types of entries. These are the main data structrues in use
+# All possible types of entries. These are the main data structures in use
 # within the program. They are all treated as immutable.
 #
 # Common Attributes (prepended to declared list):
-#   source: A Source instance, denotes where the directive was parsed from.
+#   source: A dict of strings to objects, potentially attached to each of the
+#     directive types. The values may be strings, account names, tags, dates,
+#     numbers, amounts and currencies. There are two special attributes which
+#     are always present on all directives: 'filename' and 'lineno'.
 #   date: A datetime.date instance; all directives have an associated date. Note:
 #     Beancount does not consider time, only dates. The line where the directive
 #     shows up in the file is used as a secondary sort key beyond the date.
-#
-# Common Attributes (appended to declared list):
-#   metadata: A dict of strings to objects, potentially attached to each of the
-#     directive types. The values may be strings, account names, tags, dates,
-#     numbers, amounts and currencies.
-#
-# All the directives created via new_directive() below are prepended the 'source'
-# and 'date' attributes and appended the 'metadata' attributes.
+
 
 # pylint: disable=invalid-name
+
 
 # An "open account" directive.
 #
@@ -63,7 +60,6 @@ def new_directive(clsname, fields):
 #     None if not specified. In practice, this attribute will be should be left
 #     unspecified (None) in the vast majority of cases. See BOOKING_METHODS for
 #     valid attribute values when set.
-#   metadata: See above.
 Open = new_directive('Open', 'account currencies booking')
 
 # A set of valid booking method names for positions on accounts.
@@ -89,7 +85,6 @@ Close = new_directive('Close', 'account')
 #   account: A string, the name of the account which needs to be filled.
 #   source_account: A string, the anem of the account which is used to debit from
 #     in order to fill 'account'.
-#   metadata: See above.
 Pad = new_directive('Pad', 'account source_account')
 
 # A "check the balance of this account" directive. This directive asserts that
@@ -107,7 +102,6 @@ Pad = new_directive('Pad', 'account source_account')
 #     expecting 'account' to have at this date.
 #   diff_amount: None if the balance check succeeds. This value is set to
 #     an Amount instance if the balance fails, the amount of the difference.
-#   metadata: See above.
 Balance = new_directive('Balance', 'account amount diff_amount')
 
 # A transaction! This is the main type of object that we manipulate, and the
@@ -129,7 +123,6 @@ Balance = new_directive('Balance', 'account amount diff_amount')
 #   links: A set of link strings (without the '^'), or None, if an empty set.
 #   postings: A list of Posting instances, the legs of this transaction. See the
 #     doc under Posting below.
-#   metadata: See above.
 Transaction = new_directive('Transaction',
                                 'flag payee narration tags links postings')
 
@@ -147,7 +140,6 @@ Transaction = new_directive('Transaction',
 #     never None, notes always have an account they correspond to.
 #   comment: A free-form string, the text of the note. This can be logn if you
 #     want it to.
-#   metadata: See above.
 Note = new_directive('Note', 'account comment')
 
 # An "event value change" directive. These directives are used as string
@@ -177,7 +169,6 @@ Note = new_directive('Note', 'account comment')
 #     unique variable whose value changes over time. For example, 'location'.
 #   description: A free-form string, the value of the variable as of the date
 #     of the transaction.
-#   metadata: See above.
 Event = new_directive('Event', 'type description')
 
 # A price declaration directive. This establishes the price of a currency in
@@ -195,7 +186,6 @@ Event = new_directive('Event', 'type description')
 #  currency: A string, the currency that is being priced, e.g. GOOG.
 #  amount: An instance of Amount, the number of units and currency that
 #    'currency' is worth, for instance 1200.12 USD.
-#   metadata: See above.
 Price = new_directive('Price', 'currency amount')
 
 # A document file declaration directive. This directive is used to attach a
@@ -214,7 +204,6 @@ Price = new_directive('Price', 'currency amount')
 #   account: A string, the accountwhich the statement or document is associated
 #     with.
 #   filename: The absolute filename of the document file.
-#   metadata: See above.
 Document = new_directive('Document', 'account filename')
 
 
@@ -235,8 +224,7 @@ ALL_DIRECTIVES = (
 #     name instead.
 #   lineno: An integer, the line number where the directive was found. For
 #     automatically created directives, this may be None.
-###Source = namedtuple('Source', 'filename lineno')
-
+#
 # A dict class that allows access via attributes. This allows us to move from
 # the previous Source namedtuple object to generalized metadata.
 #
@@ -302,7 +290,7 @@ def new_metadata(filename, lineno, kvlist=None):
 #   metadata: A dict of strings to values, the metadata that was attached
 #     specifically to that posting, or None, if not provided. In practice, most
 #     of the instances will be unlikely to have metadata.
-Posting = namedtuple('Posting', 'entry account position price flag metadata')
+Posting = namedtuple('Posting', 'entry account position price flag meta')
 
 
 def strip_back_reference(entry):
@@ -390,6 +378,8 @@ def sanity_check_types(entry):
     """
     assert isinstance(entry, ALL_DIRECTIVES), "Invalid directive type"
     assert isinstance(entry.source, AttrDict), "Invalid type for meta"
+    assert 'filename' in entry.source, "Missing filename in metadata"
+    assert 'lineno' in entry.source, "Missing line number in metadata"
     assert isinstance(entry.date, datetime.date), "Invalid date type"
     if isinstance(entry, Transaction):
         assert isinstance(entry.flag, (NoneType, str)), "Invalid flag type"
