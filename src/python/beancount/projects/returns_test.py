@@ -766,7 +766,7 @@ class TestReturnsExampleScript(test_utils.TestCase):
         # We want to ensure the example script doesn't break unexpectedly, so
         # call it from the unit tests.
         script_name = path.join(test_utils.find_repository_root(__file__),
-                                'examples', 'returns', 'returns-example.py')
+                                'examples', 'example.returns.py')
         self.assertTrue(path.exists(script_name))
 
         pipe = subprocess.Popen(script_name,

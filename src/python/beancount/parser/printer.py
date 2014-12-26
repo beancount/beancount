@@ -187,7 +187,9 @@ class EntryPrinter:
     def Balance(_, entry, oss):
         comment = '   ; Diff: {}'.format(entry.diff_amount) if entry.diff_amount else ''
         oss.write(('{e.date} balance {e.account:47} {amount:>22}'
-                   '{comment}\n').format(e=entry, comment=comment, amount=str(entry.amount)))
+                   '{comment}\n').format(e=entry,
+                                         comment=comment,
+                                         amount=str(entry.amount)))
 
     def Note(_, entry, oss):
         oss.write('{e.date} note {e.account} "{e.comment}"\n'.format(e=entry))
@@ -266,17 +268,17 @@ def print_entries(entries, dcontext=None, render_weights=False, file=None, prefi
         output.write(eprinter(entry))
 
 
-def render_source(source):
+def render_source(meta):
     """Render the source for errors in a way that it will be both detected by
     Emacs and align and rendered nicely.
 
     Args:
-      source: an instance of Source.
+      meta: an instance of AttrDict.
     Returns:
       A string, rendered to be interpretable as a message location for Emacs or
       other editors.
     """
-    return '{}:{:8}'.format(source.filename, '{}:'.format(source.lineno))
+    return '{}:{:8}'.format(meta.filename, '{}:'.format(meta.lineno))
 
 
 def format_error(error):

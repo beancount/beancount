@@ -58,7 +58,7 @@ def validate_one_commodity(entries, unused_options_map):
     for account, currencies in units_map.items():
         if len(currencies) > 1:
             errors.append(OneCommodityError(
-                units_source_map[account].source,
+                units_source_map[account].meta,
                 "More than one currency in account '{}': {}".format(
                     account, ','.join(currencies)),
                 None))
@@ -67,7 +67,7 @@ def validate_one_commodity(entries, unused_options_map):
     for account, currencies in cost_map.items():
         if len(currencies) > 1:
             errors.append(OneCommodityError(
-                cost_source_map[account].source,
+                cost_source_map[account].meta,
                 "More than one cost currency in account '{}': {}".format(
                     account, ','.join(currencies)),
                 None))

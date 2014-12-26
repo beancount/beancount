@@ -184,7 +184,7 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
 
         except ImportError as exc:
             # Upon failure, just issue an error.
-            errors.append(LoadError(data.Source("<load>", 0),
+            errors.append(LoadError(data.new_metadata("<load>", 0),
                                     'Error importing "{}": {}'.format(
                                         plugin_name, str(exc)), None))
 

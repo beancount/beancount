@@ -396,6 +396,12 @@ http://furius.ca/beancount/doc/proposal-query
 
 ** Documentation / Ongoing
 
+  - As an aside, I see that the grammar supports @@ and {{}} syntaxes, but they
+    don't appear to be documented in the language manual.
+
+      Oh I hadn't noticed... I will document those, thank you for reporting this
+      oversight.
+
   - In the comparison doc: describe how Beancount has asset types
 
   - Comparison w/ Ledger doc: "balance sheet and closing of year"
@@ -2640,10 +2646,27 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
     entries.
 
 
-** Tags as Key-Values / Metadata
+** Metadata
 
-  - (reports) Implement account rendering ordering properly. Use meta-data on
-    Open directives (maybe).
+  - If you add tags with values, you could define some special tags, like
+    'document', which could automatically try to find the corresponding
+    document in the repository and insert a link to it in the web page. I
+    already have a managed stash of document filenames... something like this:
+
+      2014-05-20 * "Invoice from Autodesk"
+        #document: 2014-05-20.autodesk.invoice200.pdf
+        Income:US:Autodesk  -3475.20 USD
+        Assets:US:Checking
+
+    A document filename that does not get resolved could spit out a warning in
+    order to keep the file tidy. This is a nice idea... perhaps nicer than just
+    insert entries for documents, an actual link. Not sure if it would make that
+    much of a difference though. Something to ponder.
+
+    Create a plugin that will convert "doc:" metadata to a document file, that
+    will search for a unique string name in all the filenames and associate the
+    filename with this directive via a link or something.
+
 
   - One idea Ledger uses well is the ability to associate key-values meta-data
     to transaction objects, a-la-Common Lisp. See the --pivot feature. It seems
@@ -2701,25 +2724,6 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
       --------------------
                  23.00 GBP
 
-
-  - Is it worthwhile to allow tags to become types and have values, like in
-    Ledger? I'm not sure that's so useful, but it would provide a more powerful
-    mechanism for selecting subsets of transactions.
-
-  - If you add tags with values, you could define some special tags, like
-    'document', which could automatically try to find the corresponding
-    document in the repository and insert a link to it in the web page. I
-    already have a managed stash of document filenames... something like this:
-
-      2014-05-20 * "Invoice from Autodesk"
-        #document: 2014-05-20.autodesk.invoice200.pdf
-        Income:US:Autodesk  -3475.20 USD
-        Assets:US:Checking
-
-    A document filename that does not get resolved could spit out a warning in
-    order to keep the file tidy. This is a nice idea... perhaps nicer than just
-    insert entries for documents, an actual link. Not sure if it would make that
-    much of a difference though. Something to ponder.
 
 
 * Plugins

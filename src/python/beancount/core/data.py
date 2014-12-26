@@ -2,6 +2,7 @@
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import collections
 import datetime
 from collections import namedtuple
 import sys
@@ -15,18 +16,42 @@ from .position import Lot
 from .account import has_component
 
 
-# All possible types of entries. These are the main data structrues in use
+def new_directive(clsname, fields):
+    """Create a directive class. Do not include default fields.
+    This should probably be carried out through inheritance.
+
+    Args:
+      name: A string, the capitalized name of the directive.
+      fields: A string or the list of strings, names for the fields
+        to add to the base tuple.
+    Returns:
+      A type object for the new directive type.
+    """
+    return collections.namedtuple(clsname, 'meta date {}'.format(fields))
+
+
+# All possible types of entries. These are the main data structures in use
 # within the program. They are all treated as immutable.
 #
-# Common Attributes:
-#   source: A Source instance, denotes where the directive was parsed from.
+# Common Attributes (prepended to declared list):
+#   meta: An instance of AttrDict, a dict of strings to objects, potentially
+#     attached to each of the directive types. The values may be strings,
+#     account names, tags, dates, numbers, amounts and currencies. There are two
+#     special attributes which are always present on all directives: 'filename'
+#     and 'lineno'.
 #   date: A datetime.date instance; all directives have an associated date. Note:
 #     Beancount does not consider time, only dates. The line where the directive
 #     shows up in the file is used as a secondary sort key beyond the date.
 
+
+# pylint: disable=invalid-name
+
+
 # An "open account" directive.
 #
 # Attributes:
+#   meta: See above.
+#   date: See above.
 #   account: A string, the name of the account that is being opened.
 #   currencies: A list of strings, currencies that are allowed in this account.
 #     May be None, in which case it means that there are no restrictions on which
@@ -36,7 +61,7 @@ from .account import has_component
 #     None if not specified. In practice, this attribute will be should be left
 #     unspecified (None) in the vast majority of cases. See BOOKING_METHODS for
 #     valid attribute values when set.
-Open = namedtuple('Open', 'source date account currencies booking')
+Open = new_directive('Open', 'account currencies booking')
 
 # A set of valid booking method names for positions on accounts.
 # The following methods are not yet implemented:
@@ -47,7 +72,7 @@ BOOKING_METHODS = {'STRICT', 'NONE'}
 #
 # Attributes:
 #   account: A string, the name of the account that is being closed.
-Close = namedtuple('Close', 'source date account')
+Close = new_directive('Close', 'account')
 
 # A "pad this account with this other account" directive. This directive
 # automatically inserts transactions that will make the next chronological
@@ -56,10 +81,12 @@ Close = namedtuple('Close', 'source date account')
 # in case you need it, while you're enterering past history into your Ledger.
 #
 # Attributes:
+#   meta: See above.
+#   date: See above.
 #   account: A string, the name of the account which needs to be filled.
 #   source_account: A string, the anem of the account which is used to debit from
 #     in order to fill 'account'.
-Pad = namedtuple('Pad', 'source date account source_account')
+Pad = new_directive('Pad', 'account source_account')
 
 # A "check the balance of this account" directive. This directive asserts that
 # the declared account should have a known number of units of a particular
@@ -69,18 +96,22 @@ Pad = namedtuple('Pad', 'source date account source_account')
 # transactions correctly.
 #
 # Attributes:
+#   meta: See above.
+#   date: See above.
 #   account: A string, the account whose balance to check at the given date.
 #   amount: An Amount, the number of units of the given currency you're
 #     expecting 'account' to have at this date.
 #   diff_amount: None if the balance check succeeds. This value is set to
 #     an Amount instance if the balance fails, the amount of the difference.
-Balance = namedtuple('Balance', 'source date account amount diff_amount')
+Balance = new_directive('Balance', 'account amount diff_amount')
 
 # A transaction! This is the main type of object that we manipulate, and the
 # entire reason this whole project exists in the first place, because
 # representing these types of structures with a spreadsheet is difficult.
 #
 # Attributes:
+#   meta: See above.
+#   date: See above.
 #   flag: A single-character string or None. This user-specified string
 #     represents some custom/user-defined state of the transaction. You can use
 #     this for various purposes. Otherwise common, pre-defined flags are defined
@@ -93,8 +124,8 @@ Balance = namedtuple('Balance', 'source date account amount diff_amount')
 #   links: A set of link strings (without the '^'), or None, if an empty set.
 #   postings: A list of Posting instances, the legs of this transaction. See the
 #     doc under Posting below.
-Transaction = namedtuple('Transaction',
-                         'source date flag payee narration tags links postings')
+Transaction = new_directive('Transaction',
+                                'flag payee narration tags links postings')
 
 # A note directive, a general note that is attached to an account. These are
 # used to attach text at a particular date in a specific account. The notes can
@@ -104,11 +135,13 @@ Transaction = namedtuple('Transaction',
 # file, which does not get parsed and stored.
 #
 # Attributes:
+#   meta: See above.
+#   date: See above.
 #   account: A string, the account which the note is to be attached to. This is
 #     never None, notes always have an account they correspond to.
 #   comment: A free-form string, the text of the note. This can be logn if you
 #     want it to.
-Note = namedtuple('Note', 'source date account comment')
+Note = new_directive('Note', 'account comment')
 
 # An "event value change" directive. These directives are used as string
 # variables that have different values over time. You can use these to track an
@@ -131,11 +164,13 @@ Note = namedtuple('Note', 'source date account comment')
 # in the same input file.
 #
 # Attributes:
+#   meta: See above.
+#   date: See above.
 #   type: A short string, typically a single lowercase word, that defines a
 #     unique variable whose value changes over time. For example, 'location'.
 #   description: A free-form string, the value of the variable as of the date
 #     of the transaction.
-Event = namedtuple('Event', 'source date type description')
+Event = new_directive('Event', 'type description')
 
 # A price declaration directive. This establishes the price of a currency in
 # terms of another currency as of the directive's date. A history of the prices
@@ -147,10 +182,12 @@ Event = namedtuple('Event', 'source date type description')
 # trading system, you should probably use something else).
 #
 # Attributes:
+#   meta: See above.
+#   date: See above.
 #  currency: A string, the currency that is being priced, e.g. GOOG.
 #  amount: An instance of Amount, the number of units and currency that
 #    'currency' is worth, for instance 1200.12 USD.
-Price = namedtuple('Price', 'source date currency amount')
+Price = new_directive('Price', 'currency amount')
 
 # A document file declaration directive. This directive is used to attach a
 # statement to an account, at a particular date. A typical usage would be to
@@ -163,10 +200,12 @@ Price = namedtuple('Price', 'source date currency amount')
 # on the file hierarchy, and you can get them by parsing the list of entries.
 #
 # Attributes:
+#   meta: See above.
+#   date: See above.
 #   account: A string, the accountwhich the statement or document is associated
 #     with.
 #   filename: The absolute filename of the document file.
-Document = namedtuple('Document', 'source date account filename')
+Document = new_directive('Document', 'account filename')
 
 
 # A list of all the valid directive types.
@@ -184,7 +223,56 @@ ALL_DIRECTIVES = (
 #     name instead.
 #   lineno: An integer, the line number where the directive was found. For
 #     automatically created directives, this may be None.
-Source = namedtuple('Source', 'filename lineno')
+#
+# A dict class that allows access via attributes. This allows us to move from
+# the previous Source namedtuple object to generalized metadata.
+#
+class AttrDict(dict):
+    """A dict with attribute access.
+    """
+    __getattr__ = dict.__getitem__
+    __setattr__ = dict.__setitem__
+
+    def _replace(self, **kwds):
+        """A method similar to collections.namedtuple's _replace.
+
+        Args:
+          **kwds: A dict of key/value pairs to be replaced. All keys must be strings.
+        Returns:
+          A new instance (a copy) of AttrDict with the fields from kwds replaced.
+        """
+        copy = self.copy()
+        for key, value in kwds.items():
+            copy.__setattr__(key, value)
+        return copy
+
+    def copy(self):
+        """Builds a shallow copy of this AttrDict instance.
+
+        Returns:
+          A new instance (a copy) of AttrDict with the same contents.
+        """
+        return AttrDict(self.items())
+
+    __copy__ = copy
+
+
+def new_metadata(filename, lineno, kvlist=None):
+    """Create a new metadata container from the filename and line number.
+
+    Args:
+      filename: A string, the filename for the creator of this directive.
+      lineno: An integer, the line number where the directive has been created.
+      kvlist: An optional container of key-values.
+    Returns:
+      An instance of AttrDict.
+    """
+    meta = AttrDict()
+    meta['filename'] = filename
+    meta['lineno'] = lineno
+    if kvlist:
+        meta.update(kvlist)
+    return meta
 
 
 # Postings are contained in Transaction entries. These represent the individual
@@ -210,7 +298,10 @@ Source = namedtuple('Source', 'filename lineno')
 #     associated with the posting. Most postings don't have a flag, but it can
 #     be convenient to mark a particular posting as problematic or pending to
 #     be reconciled for a future import of its account.
-Posting = namedtuple('Posting', 'entry account position price flag')
+#   metadata: A dict of strings to values, the metadata that was attached
+#     specifically to that posting, or None, if not provided. In practice, most
+#     of the instances will be unlikely to have metadata.
+Posting = namedtuple('Posting', 'entry account position price flag meta')
 
 
 def strip_back_reference(entry):
@@ -250,7 +341,7 @@ def create_simple_posting(entry, account, number, currency):
         if not isinstance(number, Decimal):
             number = D(number)
         position = Position(Lot(currency, None, None), number)
-    posting = Posting(entry, account, position, None, None)
+    posting = Posting(entry, account, position, None, None, None)
     if entry is not None:
         entry.postings.append(posting)
     return posting
@@ -280,7 +371,7 @@ def create_simple_posting_with_cost(entry, account,
         cost_number = D(cost_number)
     cost = Amount(cost_number, cost_currency)
     position = Position(Lot(currency, cost, None), number)
-    posting = Posting(entry, account, position, None, None)
+    posting = Posting(entry, account, position, None, None, None)
     if entry is not None:
         entry.postings.append(posting)
     return posting
@@ -297,7 +388,9 @@ def sanity_check_types(entry):
       AssertionError: If there is anything that is unexpected, raises an exception.
     """
     assert isinstance(entry, ALL_DIRECTIVES), "Invalid directive type"
-    assert isinstance(entry.source, Source), "Invalid type for source"
+    assert isinstance(entry.meta, AttrDict), "Invalid type for meta"
+    assert 'filename' in entry.meta, "Missing filename in metadata"
+    assert 'lineno' in entry.meta, "Missing line number in metadata"
     assert isinstance(entry.date, datetime.date), "Invalid date type"
     if isinstance(entry, Transaction):
         assert isinstance(entry.flag, (NoneType, str)), "Invalid flag type"
@@ -416,7 +509,7 @@ def entry_sortkey(entry):
       A tuple of (date, integer, integer), that forms the sort key for the
       entry.
     """
-    return (entry.date, SORT_ORDER.get(type(entry), 0), entry.source.lineno)
+    return (entry.date, SORT_ORDER.get(type(entry), 0), entry.meta.lineno)
 
 
 def sort(entries):
@@ -443,7 +536,7 @@ def posting_sortkey(entry):
     """
     if isinstance(entry, Posting):
         entry = entry.entry
-    return (entry.date, SORT_ORDER.get(type(entry), 0), entry.source.lineno)
+    return (entry.date, SORT_ORDER.get(type(entry), 0), entry.meta.lineno)
 
 
 def has_entry_account_component(entry, component):
@@ -477,9 +570,9 @@ def find_closest(entries, filename, lineno):
     min_diffline = sys.maxsize
     closest_entry = None
     for entry in entries:
-        source = entry.source
-        if source.filename == filename and source.lineno > 0:
-            diffline = lineno - source.lineno
+        emeta = entry.meta
+        if emeta.filename == filename and emeta.lineno > 0:
+            diffline = lineno - emeta.lineno
             if diffline >= 0 and diffline < min_diffline:
                 min_diffline = diffline
                 closest_entry = entry

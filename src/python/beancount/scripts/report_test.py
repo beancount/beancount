@@ -1,6 +1,7 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import re
+from os import path
 
 from beancount.utils import test_utils
 from beancount.scripts import report
@@ -134,3 +135,15 @@ class TestScriptPositions(test_utils.TestCase):
         ""
         with test_utils.capture() as stdout:
             test_utils.run_with_args(report.main, [filename, 'accounts'])
+
+    def test_export_portfolio_on_example(self):
+        rootdir = test_utils.find_repository_root(__file__)
+        filename = path.join(rootdir, 'examples/example.beancount')
+        with test_utils.capture() as stdout:
+            test_utils.run_with_args(report.main,
+                                     [filename, 'export_holdings', '--promiscuous'])
+        output = stdout.getvalue()
+        self.assertTrue(output)
+        self.assertTrue(re.search('OFXHEADER:100', output))
+        self.assertTrue(re.search('<SIGNONMSGSRSV1>', output))
+        self.assertTrue(re.search('</OFX>', output))

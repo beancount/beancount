@@ -58,10 +58,6 @@ option "title" "Starter Kit Beancount Ledger"
 ;; We will assume this user operates in US dollars.
 option "operating_currency" "USD"
 
-;; The root of a directory hierarchy that mirrors the account
-;; structure. Note that you may repeat this directive and have
-;; many of these.
-option "documents" "starterdocs"
 
 
 ** General Accounts

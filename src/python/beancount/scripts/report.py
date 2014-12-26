@@ -132,7 +132,8 @@ def main():
                         help="Print the full list of supported formats and exit.")
 
     parser.add_argument('-f', '--format', default=None,
-                        choices=['text', 'csv', 'html', 'htmldiv', 'beancount', 'xls'],
+                        choices=['text', 'csv', 'html', 'htmldiv', 'xls', 'ofx',
+                                 'beancount'],
                         help="Output format.")
 
     parser.add_argument('-o', '--output', action='store',
