@@ -303,8 +303,8 @@ class TestPrinterAlignment(test_utils.TestCase):
         printer.print_entries(entries, dcontext, file=oss)
         expected_str = textwrap.dedent("""
         2014-07-01 * "Something"
-          Expenses:Commissions  20000 USD
-          Expenses:Commissions     10 USD
+          Expenses:Commissions  20000.0000 USD
+          Expenses:Commissions      9.9505 USD
         """)
         self.assertEqual(expected_str, oss.getvalue())
 
@@ -321,8 +321,8 @@ class TestPrinterAlignment(test_utils.TestCase):
         oss.write(eprinter(entries[0]))
         expected_str = textwrap.dedent("""\
         2014-07-01 * "Something"
-          Expenses:Commissions                      20000 USD
-          Expenses:Commissions                         10 USD
+          Expenses:Commissions                      20000.0000 USD
+          Expenses:Commissions                          9.9505 USD
         """)
         self.assertEqual(expected_str, oss.getvalue())
 
@@ -345,7 +345,7 @@ class TestPrinterAlignment(test_utils.TestCase):
             '  Assets:US:Investments:GOOG         45 GOOG {504.30 USD}             \n',
             '  Assets:US:Investments:GOOG          4 GOOG {504.30 USD / 2014-11-11}\n',
             '  Expenses:Commissions             9.95 USD                           \n',
-            '  Assets:US:Investments:Cash  -22473.32 CAD @ 1.10 USD                \n',
+            '  Assets:US:Investments:Cash  -22473.32 CAD @ 1.1000 USD              \n',
             ])
         self.assertEqual(expected_str, oss.getvalue())
 
@@ -356,7 +356,7 @@ class TestPrinterAlignment(test_utils.TestCase):
           Assets:US:Investments:GOOG         45 GOOG {504.30 USD}               ;  22693.50 USD
           Assets:US:Investments:GOOG          4 GOOG {504.30 USD / 2014-11-11}  ;   2017.20 USD
           Expenses:Commissions             9.95 USD                             ;      9.95 USD
-          Assets:US:Investments:Cash  -22473.32 CAD @ 1.10 USD                  ; -24720.65 USD
+          Assets:US:Investments:Cash  -22473.32 CAD @ 1.1000 USD                ; -24720.65 USD
         """)
         self.assertEqual(expected_str, oss.getvalue())
 

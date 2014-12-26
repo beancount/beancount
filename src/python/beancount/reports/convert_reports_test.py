@@ -160,6 +160,7 @@ class TestLedgerConversion(test_utils.TestCase):
             example.write_example_file(datetime.date(1980, 1, 1),
                                        datetime.date(2010, 1, 1),
                                        datetime.date(2014, 1, 1),
+                                       True,
                                        file=beanfile)
             beanfile.flush()
 
@@ -180,6 +181,7 @@ class TestHLedgerConversion(test_utils.TestCase):
             example.write_example_file(datetime.date(1980, 1, 1),
                                        datetime.date(2010, 1, 1),
                                        datetime.date(2014, 1, 1),
+                                       reformat=True,
                                        file=beanfile)
             beanfile.flush()
 

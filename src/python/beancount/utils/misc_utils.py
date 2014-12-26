@@ -433,6 +433,14 @@ class Distribution:
     def __init__(self):
         self.hist = collections.defaultdict(int)
 
+    def empty(self):
+        """Return true if the distribution is empty.
+
+        Returns:
+          A boolean.
+        """
+        return len(self.hist) == 0
+
     def update(self, value):
         """Add a sample to the distribution.
 
@@ -450,6 +458,17 @@ class Distribution:
         if not self.hist:
             return None
         value, _ = sorted(self.hist.items())[0]
+        return value
+
+    def max(self):
+        """Return the minimum value seen in the distribution.
+
+        Returns:
+          An element of the value type, or None, if the distribution was empty.
+        """
+        if not self.hist:
+            return None
+        value, _ = sorted(self.hist.items())[-1]
         return value
 
     def mode(self):

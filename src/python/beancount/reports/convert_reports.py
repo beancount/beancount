@@ -148,6 +148,8 @@ class LedgerPrinter:
 
     def __init__(self, dcontext=None):
         self.dcontext = dcontext or display_context.DEFAULT_DISPLAY_CONTEXT
+        self.dformat = self.dcontext.build(precision=display_context.Precision.MOST_COMMON)
+        self.dformat_max = self.dcontext.build(precision=display_context.Precision.MAXIMUM)
 
     def __call__(self, obj):
         oss = io.StringIO()
@@ -191,12 +193,12 @@ class LedgerPrinter:
 
         flag_posting = '{:}{:62}'.format(flag, posting.account)
 
-        pos_str = (posting.position.to_string(self.dcontext, detail=False)
+        pos_str = (posting.position.to_string(self.dformat, detail=False)
                    if posting.position
                    else '')
 
         if posting.price is not None:
-            price_str = '@ {}'.format(posting.price.to_string(self.dcontext))
+            price_str = '@ {}'.format(posting.price.to_string(self.dformat_max))
         else:
             # Figure out if we need to insert a price on a posting held at cost.
             # See https://groups.google.com/d/msg/ledger-cli/35hA0Dvhom0/WX8gY_5kHy0J
@@ -206,7 +208,7 @@ class LedgerPrinter:
 
             if postings_at_price and postings_at_cost and posting.position.lot.cost:
                 price_str = '@ {}'.format(
-                    posting.position.lot.cost.to_string(self.dcontext))
+                    posting.position.lot.cost.to_string(self.dformat))
             else:
                 price_str = ''
 
@@ -283,14 +285,14 @@ class HLedgerPrinter(LedgerPrinter):
 
         flag_posting = '{:}{:62}'.format(flag, posting.account)
 
-        pos_str = (posting.position.to_string(self.dcontext, detail=False)
+        pos_str = (posting.position.to_string(self.dformat, detail=False)
                    if posting.position
                    else '')
         if pos_str:
             # Convert the cost as a price entry, that's what HLedger appears to want.
             pos_str = pos_str.replace('{', '@ ').replace('}', '')
 
-        price_str = ('@ {}'.format(posting.price.to_string(self.dcontext))
+        price_str = ('@ {}'.format(posting.price.to_string(self.dformat_max))
                      if posting.price is not None
                      else '')
 

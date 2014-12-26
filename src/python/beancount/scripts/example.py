@@ -926,8 +926,8 @@ def generate_clearing_entries(date_iter,
             neg_amount = -pos_amount
             new_entries.extend(parse("""
               {next_date} * "{payee}" "{narration}"
-                {account_clear}     {neg_amount:.2f}
-                {account_from}      {pos_amount:.2f}
+                {account_clear}     {neg_amount.number:.2f} CCY
+                {account_from}      {pos_amount.number:.2f} CCY
             """, **vars()))
             balance_clear.add_amount(neg_amount)
 
@@ -1387,10 +1387,10 @@ def contextualize_file(contents, employer):
         'STK4': 'GLD',
         }
     new_contents = replace(contents, replacements)
-    return format.align_beancount(new_contents), replacements
+    return new_contents, replacements
 
 
-def write_example_file(date_birth, date_begin, date_end, file):
+def write_example_file(date_birth, date_begin, date_end, reformat, file):
     """Generate the example file.
 
     Args:
@@ -1399,6 +1399,7 @@ def write_example_file(date_birth, date_begin, date_end, file):
         transactions.
       date_end: A datetime.date instance, the end date at which to generate
         transactions.
+      reformat: A boolean, true if we should apply global reformatting to this file.
       file: A file object, where to write out the output.
     """
     # The following code entirely writes out the output to generic names, such
@@ -1560,6 +1561,7 @@ def write_example_file(date_birth, date_begin, date_end, file):
 
     logging.info("Outputting and Formatting Entries")
     dcontext = display_context.DisplayContext()
+    default_int_digits = 8
     for currency, precision in {'USD': 2,
                                 'CAD': 2,
                                 'VACHR':0,
@@ -1570,7 +1572,10 @@ def write_example_file(date_birth, date_begin, date_end, file):
                                 'VEA': 0,
                                 'VHT': 0,
                                 'GLD': 0}.items():
-        dcontext.set_precision(precision, currency)
+        int_digits = default_int_digits
+        if precision > 0:
+            int_digits += 1 + precision
+        dcontext.update(D('{{:0{}.{}f}}'.format(int_digits, precision).format(0)), currency)
 
     output = io.StringIO()
     def output_section(title, entries):
@@ -1598,6 +1603,8 @@ def write_example_file(date_birth, date_begin, date_end, file):
 
     logging.info("Contextualizing to Realistic Names")
     contents, replacements = contextualize_file(output.getvalue(), employer_name)
+    if reformat:
+        contents = format.align_beancount(contents)
     file.write(contents)
 
     logging.info("Validating Results")
@@ -1629,6 +1636,10 @@ def main():
     argparser.add_argument('-s', '--seed', action='store', type=int,
                            help="Fix the random seed for debugging.")
 
+    argparser.add_argument('--no-reformat', dest='reformat',
+                           action='store_false', default=True,
+                           help="Don't format the output")
+
     argparser.add_argument('-o', '--output', action='store',
                            help="Output filename (default stdout)")
 
@@ -1643,6 +1654,7 @@ def main():
     write_example_file(opts.date_birth,
                        opts.date_begin,
                        opts.date_end,
+                       opts.reformat,
                        file=output_file)
 
     return 0
