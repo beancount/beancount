@@ -49,7 +49,7 @@ from .amount import Amount
 from .position import Lot
 from .position import Position
 from .position import from_string as position_from_string
-from .display_context import DEFAULT_DISPLAY_CONTEXT
+from .display_context import DEFAULT_FORMATTER
 
 
 class Inventory(list):
@@ -71,15 +71,15 @@ class Inventory(list):
             for position in positions:
                 self.add_position(position)
 
-    def to_string(self, dcontext=DEFAULT_DISPLAY_CONTEXT):
+    def to_string(self, dformat=DEFAULT_FORMATTER):
         """Convert an Inventory instance to a printable string.
 
         Args:
-          dcontext: An instance of DisplayContext.
+          dformat: An instance of DisplayFormatter.
         Returns:
           A formatted string of the quantized amount and symbol.
         """
-        return '({})'.format(', '.join(position_.to_string()
+        return '({})'.format(', '.join(position_.to_string(dformat)
                                        for position_ in sorted(self)))
 
     def __str__(self):

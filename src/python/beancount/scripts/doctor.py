@@ -218,7 +218,7 @@ def do_missing_open(filename, args):
     printer.print_entries(data.sort(new_entries), dcontext)
 
 
-def do_precision(filename, args):
+def do_display_context(filename, args):
     """Print out the precision inferred from the parsed numbers in the input file.
 
     Args:
@@ -228,7 +228,7 @@ def do_precision(filename, args):
     """
     entries, errors, options_map = loader.load_file(filename)
     dcontext = options_map['display_context']
-    dcontext.dump(sys.stdout)
+    sys.stdout.write(str(dcontext))
 
 
 def main():
