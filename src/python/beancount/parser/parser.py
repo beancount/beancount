@@ -9,6 +9,7 @@ import textwrap
 import copy
 import re
 from os import path
+from datetime import date
 
 from beancount.core.amount import ZERO
 from beancount.core.amount import Amount
@@ -262,16 +263,34 @@ class Builder(lexer.LexBuilder):
         self.dcupdate(number, currency)
         return Amount(number, currency)
 
-    def lot_cost_date(self, cost, lot_date, istotal):
+    def lot_spec(self, lot_comp_list):
         """Process a lot_cost_date grammar rule.
 
         Args:
-          cost: an instance of Amount.
-          lot_date: either None or a datetime instance.
+          lot_comp_list: A list of Amount, a datetime.date, or label ID strings.
         Returns:
           A pair of the input. We do very little here.
         """
-        assert isinstance(cost, Amount)
+        assert isinstance(lot_comp_list, list)
+
+        cost = None
+        lot_date = None
+        label = None
+        istotal = False
+        for comp in lot_comp_list:
+            if isinstance(comp, Amount):
+                cost = comp
+            elif isinstance(comp, date):
+                lot_date = comp
+            else:
+                assert isinstance(comp, str)
+                label = comp
+
+        if label is not None:
+            self.errors.append(
+                ParserError(self.get_lexer_location(),
+                            "Labels not supported yet: '{}'.".format(label), None))
+
         return (cost, lot_date, istotal)
 
     def position(self, filename, lineno, amount, lot_cost_date):

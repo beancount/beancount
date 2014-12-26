@@ -224,7 +224,7 @@ class TestInventory(unittest.TestCase):
     POSITIONS_ALL_KINDS = [
         position.from_string('40.50 USD'),
         position.from_string('40.50 USD {1.10 CAD}'),
-        position.from_string('40.50 USD {1.10 CAD / 2012-01-01}')]
+        position.from_string('40.50 USD {1.10 CAD, 2012-01-01}')]
 
     def test_cost(self):
         inv = Inventory(self.POSITIONS_ALL_KINDS +
@@ -258,7 +258,7 @@ class TestInventory(unittest.TestCase):
             position.from_string('40.50 USD {1.10 CAD}'),
             inv.get_position(Lot('USD', A('1.10 CAD'), None)))
         self.assertEqual(
-            position.from_string('40.50 USD {1.10 CAD / 2012-01-01}'),
+            position.from_string('40.50 USD {1.10 CAD, 2012-01-01}'),
             inv.get_position(Lot('USD', A('1.10 CAD'), date(2012, 1, 1))))
 
     def test_add(self):
@@ -340,7 +340,7 @@ class TestInventory(unittest.TestCase):
 
         # Test adding to a position that does exist.
         inv = Inventory.from_string(
-            '10 USD, 10 USD {1.10 CAD}, 10 USD {1.10 CAD / 2012-01-01}')
+            '10 USD, 10 USD {1.10 CAD}, 10 USD {1.10 CAD, 2012-01-01}')
         check_allow_negative(inv)
 
     def test_add_position(self):

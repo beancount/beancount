@@ -99,7 +99,7 @@ const char* getTokenName(int token);
 %token <pyobj> NUMBER      /* A floating-point number */
 %token <pyobj> TAG         /* A tag that can be associated with a transaction */
 %token <pyobj> LINK        /* A link that can be associated with a transaction */
-%token <pyobj> KEY         /* A key in a key-value pair */
+%token <pyobj> ID          /* A label or a key in a key-value pair */
 
 /* Types for non-terminal symbols. */
 %type <character> txn
@@ -117,7 +117,9 @@ const char* getTokenName(int token);
 %type <pyobj> pad
 %type <pyobj> amount
 %type <pyobj> position
-%type <pyobj> lot_cost_date
+%type <pyobj> lot_comp
+%type <pyobj> lot_comp_list
+%type <pyobj> lot_spec
 %type <pyobj> price
 %type <pyobj> event
 %type <pyobj> note
@@ -222,7 +224,7 @@ posting : INDENT optflag ACCOUNT position eol
             DECREF1($3);
         }
 
-key_value : INDENT KEY key_value_value eol
+key_value : INDENT ID  key_value_value eol
           {
               $$ = BUILD("key_value", "OO", $2, $3);
               DECREF2($2, $3);
@@ -346,31 +348,45 @@ position : amount
              $$ = BUILD("position", "siOO", FILE_LINE_ARGS, $1, Py_None);
              DECREF1($1);
          }
-         | amount lot_cost_date
+         | amount lot_spec
          {
              $$ = BUILD("position", "siOO", FILE_LINE_ARGS, $1, $2);
              DECREF2($1, $2);
          }
 
-lot_cost_date : LCURL amount RCURL
+lot_spec : LCURL lot_comp_list RCURL
          {
-             $$ = BUILD("lot_cost_date", "OOO", $2, Py_None, Py_False);
+             $$ = BUILD("lot_spec", "O", $2);
              DECREF1($2);
          }
-         | LCURL amount SLASH DATE RCURL
+
+lot_comp_list : empty
+              {
+                  Py_INCREF(Py_None);
+                  $$ = Py_None;
+              }
+              | lot_comp
+              {
+                  $$ = BUILD("handle_list", "OO", Py_None, $1);
+                  DECREF1($1);
+              }
+              | lot_comp_list COMMA lot_comp
+              {
+                  $$ = BUILD("handle_list", "OO", $1, $3);
+                  DECREF2($1, $3);
+              }
+
+lot_comp : amount
          {
-             $$ = BUILD("lot_cost_date", "OOO", $2, $4, Py_False);
-             DECREF2($2, $4);
+             $$ = $1;
          }
-         | LCURLCURL amount RCURLCURL
+         | DATE
          {
-             $$ = BUILD("lot_cost_date", "OOO", $2, Py_None, Py_True);
-             DECREF1($2);
+             $$ = $1;
          }
-         | LCURLCURL amount SLASH DATE RCURLCURL
+         | ID
          {
-             $$ = BUILD("lot_cost_date", "OOO", $2, $4, Py_True);
-             DECREF2($2, $4);
+             $$ = $1;
          }
 
 
@@ -504,7 +520,7 @@ const char* getTokenName(int token)
         case NUMBER   : return "NUMBER";
         case TAG      : return "TAG";
         case LINK     : return "LINK";
-        case KEY      : return "KEY";
+        case ID       : return "ID";
     }
     return 0;
 }

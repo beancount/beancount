@@ -34,7 +34,7 @@ class TestPosition(unittest.TestCase):
         cost = Amount(D('532.43'), 'USD')
         self.assertEqual(Position(Lot("GOOG", cost, None), D('2.2')), pos)
 
-        pos = from_string('2.2 GOOG {532.43 USD / 2014-06-15}')
+        pos = from_string('2.2 GOOG {532.43 USD, 2014-06-15}')
         cost = Amount(D('532.43'), 'USD')
         lot_date = datetime.date(2014, 6, 15)
         self.assertEqual(Position(Lot("GOOG", cost, lot_date), D('2.2')), pos)
@@ -44,15 +44,15 @@ class TestPosition(unittest.TestCase):
             pos = from_string('2.2 GOOG {532.43}')
 
     def test_str(self):
-        pos = from_string('2.2 GOOG {532.43 USD / 2014-06-15}')
-        self.assertEqual(('2.2 GOOG {532.43 USD / 2014-06-15}'), str(pos))
+        pos = from_string('2.2 GOOG {532.43 USD, 2014-06-15}')
+        self.assertEqual(('2.2 GOOG {532.43 USD, 2014-06-15}'), str(pos))
 
     def test_to_string(self):
-        pos = from_string('2.2 GOOG {532.43 USD / 2014-06-15}')
-        self.assertEqual(('2.2 GOOG {532.43 USD / 2014-06-15}'), pos.to_string())
+        pos = from_string('2.2 GOOG {532.43 USD, 2014-06-15}')
+        self.assertEqual(('2.2 GOOG {532.43 USD, 2014-06-15}'), pos.to_string())
 
     def test_to_string_no_detail(self):
-        pos = from_string('2.2 GOOG {532.43 USD / 2014-06-15}')
+        pos = from_string('2.2 GOOG {532.43 USD, 2014-06-15}')
         self.assertEqual(('2.2 GOOG {532.43 USD}'), pos.to_string(detail=False))
 
     def test_from_amounts(self):

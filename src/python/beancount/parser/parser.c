@@ -229,7 +229,7 @@ PyObject* lexer_next(PyObject *self, PyObject *args)
         token == NUMBER ||
         token == TAG ||
         token == LINK ||
-        token == KEY) {
+        token == ID) {
 
         obj = yylval.pyobj;
     }

@@ -1,5 +1,17 @@
 -*- mode: org -*-
 beancount: TODO
+* Booking Parser
+
+  - You need explicit parser tests for all cases, tests that includes the empty list.
+
+  - In the parser, be backwards compatible and keep supporting {{ }} with just
+    an amount in it.
+
+  - Support {...  + ...} syntax to replace the {{...}} syntax.
+
+  - Add tests for label, out-of-order list comps.
+
+
 * Requirements for Shipping 2.0
 ** Establish Display Precision
 

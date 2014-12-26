@@ -23,7 +23,7 @@ def align_position_strings(strings):
     be aligned around the column marked with '^':
 
               45 GOOG {504.30 USD}
-               4 GOOG {504.30 USD / 2014-11-11}
+               4 GOOG {504.30 USD, 2014-11-11}
             9.95 USD
        -22473.32 CAD @ 1.10 USD
                  ^

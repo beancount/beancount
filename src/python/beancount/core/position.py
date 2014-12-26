@@ -117,7 +117,7 @@ class Position:
                     cost_str_list.append(
                         Amount(lot.cost.number, lot.cost.currency).to_string(dformat))
                 if lot.lot_date:
-                    cost_str_list.append(' / {}'.format(lot.lot_date))
+                    cost_str_list.append(', {}'.format(lot.lot_date))
                 cost_str_list.append('}')
                 pos_str = '{} {}'.format(pos_str, ''.join(cost_str_list))
 
@@ -295,7 +295,7 @@ class Position:
         match = re.match(
             (r'\s*([-+]?[0-9.]+)\s+({currency})'
              r'(\s+{{([-+]?[0-9.]+)\s+({currency})'
-             r'(\s*/\s*(\d\d\d\d-\d\d-\d\d))?}})?'
+             r'(\s*,\s*(\d\d\d\d-\d\d-\d\d))?}})?'
              r'\s*$').format(currency=CURRENCY_RE),
             string)
         if not match:
