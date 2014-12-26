@@ -11,7 +11,7 @@ Note: This file contains only changes in the 'default' branch.
 
     * Metadata can be created on all directives and postings. An attribute of
       '.meta' can be used to access all parsed metadata. The object is a dict
-      which can also have its fields access via attributes.
+      which can also have its fields accessed via attributes.
 
     * The '.source' attribute on all directives has been removed and '.meta' now
       replaces it. The 'filename' and 'lineno' attributes which were previously
