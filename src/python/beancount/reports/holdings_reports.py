@@ -5,9 +5,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import csv
 import datetime
 import io
-import logging
 import re
-import sys
 import textwrap
 
 from beancount.core.amount import D
@@ -404,10 +402,10 @@ class ExportPortfolioReport(report.TableReport):
         for entry in entries:
             if not isinstance(entry, data.Note):
                 continue
-            mo = re.match("Export (.*): (IGNORE|MUTUAL_FUND)", entry.comment)
-            if mo is None:
+            match = re.match("Export (.*): (IGNORE|MUTUAL_FUND)", entry.comment)
+            if match is None:
                 continue
-            commodity, action = mo.group(1, 2)
+            commodity, action = match.group(1, 2)
             action_set = ignore if action == 'IGNORE' else mutual_fund
             action_set.add(commodity)
         return ignore, mutual_fund
@@ -428,9 +426,9 @@ class ExportPortfolioReport(report.TableReport):
         invtranlist_io = io.StringIO()
         commodities = set()
         for index, holding in enumerate(holdings_list):
-            txntype =  ('BUYMF'
-                        if holding.currency in mutual_funds_commodities
-                        else 'BUYSTOCK')
+            txntype = ('BUYMF'
+                       if holding.currency in mutual_funds_commodities
+                       else 'BUYSTOCK')
             fitid = index + 1
             dttrade = render_ofx_date(trade_date)
             memo = holding.account if self.args.promiscuous else ''
@@ -454,7 +452,7 @@ class ExportPortfolioReport(report.TableReport):
         # Create a list of security.
         seclist_io = io.StringIO()
         for currency in commodities:
-            infotype =  'MFINFO' if currency in mutual_funds_commodities else 'STOCKINFO'
+            infotype = 'MFINFO' if currency in mutual_funds_commodities else 'STOCKINFO'
             uniqueid = currency
             secname = currency
             ticker = currency

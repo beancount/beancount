@@ -10,7 +10,6 @@ import tempfile
 import re
 import sys
 import subprocess
-import tempfile
 
 from beancount.core.amount import D
 from beancount.parser.parser import parsedoc
