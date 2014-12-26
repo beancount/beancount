@@ -557,7 +557,7 @@ def internalize(entries, transfer_account,
 
             # Create internal flows posting.
             postings_transfer_int = [
-                data.Posting(None, transfer_account, position_, None, None)
+                data.Posting(None, transfer_account, position_, None, None, None)
                 for position_ in balance_transfer.get_positions()]
             new_entries.append(data.entry_replace(prototype_entry,
                                                   postings=(postings_assets +
@@ -566,7 +566,7 @@ def internalize(entries, transfer_account,
 
             # Create external flows posting.
             postings_transfer_ext = [
-                data.Posting(None, transfer_account, -position_, None, None)
+                data.Posting(None, transfer_account, -position_, None, None, None)
                 for position_ in balance_transfer.get_positions()]
             new_entries.append(data.entry_replace(prototype_entry,
                                                   postings=(postings_transfer_ext +
@@ -580,7 +580,7 @@ def internalize(entries, transfer_account,
     # correct set of entries you can load cleanly).
     open_close_map = getters.get_account_open_close(new_entries)
     if transfer_account not in open_close_map:
-        open_transfer_entry = data.Open(data.Source("beancount.projects.returns", 0),
+        open_transfer_entry = data.Open(data.new_metadata("beancount.projects.returns", 0),
                                         new_entries[0].date,
                                         transfer_account, None, None)
         new_entries.insert(0, open_transfer_entry)

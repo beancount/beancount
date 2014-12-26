@@ -52,7 +52,7 @@ def validate_unique_prices(entries, unused_options_map):
                 # reporting. (Later.)
                 error_entry = next(iter(number_map.values()))
                 errors.append(
-                    UniquePricesError(error_entry.source,
+                    UniquePricesError(error_entry.meta,
                                       "Disagreeing price entries",
                                       price_entries))
 

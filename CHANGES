@@ -4,6 +4,68 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2014-12-25
+
+  - The 'metadata' branch has been merged into 'default'. Metadata is now
+    officially supported in Beancount.
+
+    * Metadata can be created on all directives and postings. An attribute of
+      '.meta' can be used to access all parsed metadata. The object is a dict
+      which can also have its fields accessed via attributes.
+
+    * The '.source' attribute on all directives has been removed and '.meta' now
+      replaces it. The 'filename' and 'lineno' attributes which were previously
+      available on the beancount.core.data.Source tuple have been folded into
+      the metadata dict under the same names.
+
+    * Metadata values can be of various datatypes and these will be parsed and
+      available in Python:
+
+      - Strings
+      - Account names (appears as str)
+      - Currency (appears as str)
+      - Dates (a datetime.date instance)
+      - Tags (appears as str)
+      - Numbers (a decimal.Decimal instance)
+      - Amount (a beancount.core.amount.Amount instance)
+
+    * Attributes without a value will be parsed and have a value of 'None'. If
+      an attribute is repeated multiple times, only the first value for this
+      attribute will be parsed and retained.
+
+    * Apart from the 'filename' and 'lineno' attributes, no other "special"
+      usage of metadata will be made by Beancount. Metadata is intended to be
+      for the user to attach arbitrary data to directives. The query language
+      will eventually support query arbitrary metadata attributes, but no special
+      meaning will be assumed.
+
+
+
+2014-12-19
+
+  - Created a new "export_holdings" report type that spits out an OFX format of
+    the holdings that can be consumed by external portfolio definition services
+    such as Google Finance (for example). This is useful, as it allows you to
+    monitor changes in your portfolio from a mobile device.
+
+    Note that in some of these services, a commodity that isn't a valid ticker
+    symbol fails the import process. Also, a commodity that is a mutual fund
+    recorded in the OFX file as a stock will similar fail the import process. We
+    need to find a way to fetch this info from the file itself. When metadata
+    will get merged, we should be able to get it from the account names, where
+    we could attach a property to the account's corresponding Open directive.
+
+    In the meantime, and as a kludge to start using this right away, place a
+    note for each currency (at any date, in any account) with the text in the
+    following format:
+
+       YYYY-MM-DD note <account> "Export <commodity>: IGNORE"
+       YYYY-MM-DD note <account> "Export <commodity>: MUTUAL_FUND"
+
+    This will get removed later.
+
+
+
 2014-12-07
 
   - After much more work on the SQL query language (in 'shell' branch), I need

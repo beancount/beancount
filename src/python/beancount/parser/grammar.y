@@ -108,7 +108,8 @@ const char* getTokenName(int token);
 %type <pyobj> posting
 %type <pyobj> key_value
 %type <pyobj> key_value_list
-%type <pyobj> posting_list
+%type <pyobj> key_value_value
+%type <pyobj> posting_or_kv_list
 %type <pyobj> currency_list
 %type <pyobj> open
 %type <pyobj> close
@@ -131,7 +132,7 @@ const char* getTokenName(int token);
 /* Start symbol. */
 %start file
 
-/* We have four expected shift/reduce conflicts at 'eol'. */
+/* We have some number of expected shift/reduce conflicts at 'eol'. */
 %expect 11
 
 
@@ -188,7 +189,7 @@ txn_fields : empty
                DECREF1($1);
            }
 
-transaction : DATE txn txn_fields eol posting_list
+transaction : DATE txn txn_fields eol posting_or_kv_list
             {
                 $$ = BUILD("transaction", "siObOO", FILE_LINE_ARGS, $1, $2, $3, $5);
                 DECREF4($1, $2, $3, $5);
@@ -221,27 +222,44 @@ posting : INDENT optflag ACCOUNT position eol
             DECREF1($3);
         }
 
-key_value : INDENT KEY STRING eol
+key_value : INDENT KEY key_value_value eol
           {
               $$ = BUILD("key_value", "OO", $2, $3);
               DECREF2($2, $3);
           }
 
-posting_list : empty
-             {
-                 Py_INCREF(Py_None);
-                 $$ = Py_None;
-             }
-             | posting_list key_value
-             {
-                 $$ = BUILD("handle_list", "OO", $1, $2);
-                 DECREF2($1, $2);
-             }
-             | posting_list posting
-             {
-                 $$ = BUILD("handle_list", "OO", $1, $2);
-                 DECREF2($1, $2);
-             }
+key_value_value : STRING
+                | ACCOUNT
+                | DATE
+                | CURRENCY
+                | TAG
+                | NUMBER
+                | amount
+                {
+                    $$ = $1;
+                    DECREF1($1);
+                }
+                | empty
+                {
+                    Py_INCREF(Py_None);
+                    $$ = Py_None;
+                }
+
+posting_or_kv_list : empty
+                   {
+                       Py_INCREF(Py_None);
+                       $$ = Py_None;
+                   }
+                   | posting_or_kv_list key_value
+                   {
+                       $$ = BUILD("handle_list", "OO", $1, $2);
+                       DECREF2($1, $2);
+                   }
+                   | posting_or_kv_list posting
+                   {
+                       $$ = BUILD("handle_list", "OO", $1, $2);
+                       DECREF2($1, $2);
+                   }
 
 key_value_list : empty
                {

@@ -25,7 +25,7 @@ from beancount.core.data import Event
 from beancount.core.data import Price
 from beancount.core.data import Note
 from beancount.core.data import Document
-from beancount.core.data import Source
+from beancount.core.data import new_metadata
 from beancount.core.data import Posting
 from beancount.core.data import BOOKING_METHODS
 from beancount.core.interpolate import balance_incomplete_postings
@@ -116,9 +116,9 @@ class Builder(lexer.LexBuilder):
         """
         # If the user left some tags unbalanced, issue an error.
         for tag in self.tags:
-            source = Source(self.options['filename'], 0)
+            meta = new_metadata(self.options['filename'], 0)
             self.errors.append(
-                ParserError(source, "Unbalanced tag: '{}'".format(tag), None))
+                ParserError(meta, "Unbalanced tag: '{}'".format(tag), None))
 
         return (self.get_entries(), self.errors, self.get_options())
 
@@ -183,9 +183,9 @@ class Builder(lexer.LexBuilder):
         try:
             self.tags.remove(tag)
         except ValueError:
-            source = Source(self.options['filename'], 0)
+            meta = new_metadata(self.options['filename'], 0)
             self.errors.append(
-                ParserError(source, "Attempting to pop absent tag: '{}'".format(tag), None))
+                ParserError(meta, "Attempting to pop absent tag: '{}'".format(tag), None))
 
     def option(self, filename, lineno, key, value):
         """Process an option directive.
@@ -197,13 +197,13 @@ class Builder(lexer.LexBuilder):
           value: option's value
         """
         if key not in self.options:
-            source = Source(filename, lineno)
+            meta = new_metadata(filename, lineno)
             self.errors.append(
-                ParserError(source, "Invalid option: '{}'".format(key), None))
+                ParserError(meta, "Invalid option: '{}'".format(key), None))
         elif key in options.READ_ONLY_OPTIONS:
-            source = Source(filename, lineno)
+            meta = new_metadata(filename, lineno)
             self.errors.append(
-                ParserError(source, "Option '{}' may not be set".format(key), None))
+                ParserError(meta, "Option '{}' may not be set".format(key), None))
         else:
             option = self.options[key]
             if isinstance(option, list):
@@ -224,9 +224,9 @@ class Builder(lexer.LexBuilder):
                 # Validate some option values.
                 if key == 'plugin_processing_mode':
                     if value not in ('raw', 'default'):
-                        source = Source(filename, lineno)
+                        meta = new_metadata(filename, lineno)
                         self.errors.append(
-                            ParserError(source,
+                            ParserError(meta,
                                         ("Invalid value for '{}': '{}'").format(key, value),
                                         None))
                         return
@@ -296,15 +296,15 @@ class Builder(lexer.LexBuilder):
         # a price of zero as the only special case, but never for costs.)
         if cost is not None:
             if amount.number == ZERO:
-                source = Source(filename, lineno)
+                meta = new_metadata(filename, lineno)
                 self.errors.append(
-                    ParserError(source,
+                    ParserError(meta,
                                 "Amount is zero or negative: {}".format(cost), None))
 
             if cost.number <= ZERO:
-                source = Source(filename, lineno)
+                meta = new_metadata(filename, lineno)
                 self.errors.append(
-                    ParserError(source, "Cost is zero or negative: {}".format(cost), None))
+                    ParserError(meta, "Cost is zero or negative: {}".format(cost), None))
 
         return Position(lot, amount.number)
 
@@ -332,8 +332,8 @@ class Builder(lexer.LexBuilder):
           lineno: the current line number
         Returns:
         """
-        source = Source(filename, lineno)
-        self.errors.append(ParserSyntaxError(source, message, None))
+        meta = new_metadata(filename, lineno)
+        self.errors.append(ParserSyntaxError(meta, message, None))
 
     def open(self, filename, lineno, date, account, currencies, booking, kvlist):
         """Process an open directive.
@@ -349,8 +349,8 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Open object.
         """
-        source = Source(filename, lineno)
-        entry = Open(source, date, account, currencies, booking)
+        meta = new_metadata(filename, lineno, kvlist)
+        entry = Open(meta, date, account, currencies, booking)
         if booking and booking not in BOOKING_METHODS:
             self.errors.append(
                 ParserError(source, "Invalid booking method: {}".format(booking), entry))
@@ -368,8 +368,8 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Close object.
         """
-        source = Source(filename, lineno)
-        return Close(source, date, account)
+        meta = new_metadata(filename, lineno, kvlist)
+        return Close(meta, date, account)
 
     def pad(self, filename, lineno, date, account, source_account, kvlist):
         """Process a pad directive.
@@ -384,8 +384,8 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Pad object.
         """
-        source = Source(filename, lineno)
-        return Pad(source, date, account, source_account)
+        meta = new_metadata(filename, lineno, kvlist)
+        return Pad(meta, date, account, source_account)
 
     def balance(self, filename, lineno, date, account, amount, kvlist):
         """Process an assertion directive.
@@ -405,8 +405,8 @@ class Builder(lexer.LexBuilder):
           A new Balance object.
         """
         diff_amount = None
-        source = Source(filename, lineno)
-        return Balance(source, date, account, amount, diff_amount)
+        meta = new_metadata(filename, lineno, kvlist)
+        return Balance(meta, date, account, amount, diff_amount)
 
     def event(self, filename, lineno, date, event_type, description, kvlist):
         """Process an event directive.
@@ -421,8 +421,8 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Event object.
         """
-        source = Source(filename, lineno)
-        return Event(source, date, event_type, description)
+        meta = new_metadata(filename, lineno, kvlist)
+        return Event(meta, date, event_type, description)
 
     def price(self, filename, lineno, date, currency, amount, kvlist):
         """Process a price directive.
@@ -437,8 +437,8 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Price object.
         """
-        source = Source(filename, lineno)
-        return Price(source, date, currency, amount)
+        meta = new_metadata(filename, lineno, kvlist)
+        return Price(meta, date, currency, amount)
 
     def note(self, filename, lineno, date, account, comment, kvlist):
         """Process a note directive.
@@ -453,8 +453,8 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Note object.
         """
-        source = Source(filename, lineno)
-        return Note(source, date, account, comment)
+        meta = new_metadata(filename, lineno, kvlist)
+        return Note(meta, date, account, comment)
 
     def document(self, filename, lineno, date, account, document_filename, kvlist):
         """Process a document directive.
@@ -469,12 +469,11 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Document object.
         """
-        source = Source(filename, lineno)
+        meta = new_metadata(filename, lineno, kvlist)
         if not path.isabs(document_filename):
             document_filename = path.abspath(path.join(path.dirname(filename),
                                                        document_filename))
-
-        return Document(source, date, account, document_filename)
+        return Document(meta, date, account, document_filename)
 
 
     def key_value(self, key, value):
@@ -515,11 +514,11 @@ class Builder(lexer.LexBuilder):
 
         # Note: Allow zero prices becuase we need them for round-trips.
         # if price is not None and price.number == ZERO:
-        #     source = Source(filename, lineno)
+        #     meta = new_metadata(filename, lineno)
         #     self.errors.append(
-        #         ParserError(source, "Price is zero: {}".format(price), None))
+        #         ParserError(meta, "Price is zero: {}".format(price), None))
 
-        return Posting(None, account, position, price, chr(flag) if flag else None)
+        return Posting(None, account, position, price, chr(flag) if flag else None, None)
 
 
     def txn_field_new(self):
@@ -583,12 +582,12 @@ class Builder(lexer.LexBuilder):
         txn_fields.has_pipe.append(1)
         return txn_fields
 
-    def unpack_txn_strings(self, txn_fields, source):
+    def unpack_txn_strings(self, txn_fields, meta):
         """Unpack a txn_fields accumulator to its payee and narration fields.
 
         Args:
           txn_fields: The current TxnFields accumulator.
-          stirng: A string, the new string to insert in the list.
+          meta: An AttrDict metadata for errors generated in this routine.
         Returns:
           A pair of (payee, narration) strings or None objects, or None, if
           there was an error.
@@ -598,7 +597,7 @@ class Builder(lexer.LexBuilder):
             payee, narration = None, txn_fields.strings[0]
             if txn_fields.has_pipe:
                 self.errors.append(
-                    ParserError(source,
+                    ParserError(meta,
                                 "One string with a | symbol yields only a narration: "
                                 "{}".format(txn_fields.strings), None))
         elif num_strings == 2:
@@ -607,13 +606,13 @@ class Builder(lexer.LexBuilder):
             payee, narration = None, ""
         else:
             self.errors.append(
-                ParserError(source,
+                ParserError(meta,
                             "Too many strings on transaction description: {}".format(
                                 txn_fields.strings), None))
             return None
         return payee, narration
 
-    def transaction(self, filename, lineno, date, flag, txn_fields, postings_and_kv):
+    def transaction(self, filename, lineno, date, flag, txn_fields, posting_or_kv_list):
         """Process a transaction directive.
 
         All the postings of the transaction are available at this point, and so the
@@ -631,25 +630,44 @@ class Builder(lexer.LexBuilder):
           flag: a str, one-character, the flag associated with this transaction.
           txn_fields: A tuple of transaction fields, which includes descriptions
             (payee and narration), tags, and links.
-          postings_and_kv: a list of Posting or KeyValue instances, to be inserted in this
-            transaction, or None, if no postings have been declared.
+          posting_or_kv_list: a list of Posting or KeyValue instances, to be inserted in
+            this transaction, or None, if no postings have been declared.
         Returns:
           A new Transaction object.
         """
-        source = Source(filename, lineno)
+        meta = new_metadata(filename, lineno)
 
         # Separate postings and key-valus.
         postings = []
-        key_values = []
-        if postings_and_kv:
-            for posting in postings_and_kv:
-                if isinstance(posting, Posting):
-                    postings.append(posting)
+        if posting_or_kv_list:
+            last_posting = None
+            for posting_or_kv in posting_or_kv_list:
+                if isinstance(posting_or_kv, Posting):
+                    postings.append(posting_or_kv)
+                    last_posting = posting_or_kv
                 else:
-                    key_values.append(posting)
+                    if last_posting is None:
+                        value = meta.setdefault(posting_or_kv.key,
+                                                posting_or_kv.value)
+                        if value is not posting_or_kv.value:
+                            self.errors.append(ParserError(
+                                meta, "Duplicate metadata field on entry: {}".format(
+                                    posting_or_kv), None))
+                    else:
+                        if last_posting.meta is None:
+                            last_posting = last_posting._replace(meta={})
+                            postings.pop(-1)
+                            postings.append(last_posting)
+
+                        value = last_posting.meta.setdefault(posting_or_kv.key,
+                                                             posting_or_kv.value)
+                        if value is not posting_or_kv.value:
+                            self.errors.append(ParserError(
+                                meta, "Duplicate posting metadata field: {}".format(
+                                    posting_or_kv), None))
 
         # Unpack the transaction fields.
-        payee_narration = self.unpack_txn_strings(txn_fields, source)
+        payee_narration = self.unpack_txn_strings(txn_fields, meta)
         if payee_narration is None:
             return None
         payee, narration = payee_narration
@@ -662,7 +680,7 @@ class Builder(lexer.LexBuilder):
         # # Detect when a transaction does not have at least two legs.
         # if postings is None or len(postings) < 2:
         #     self.errors.append(
-        #         ParserError(source,
+        #         ParserError(meta,
         #                     "Transaction with only one posting: {}".format(postings),
         #                     None))
         #     return None
@@ -684,7 +702,7 @@ class Builder(lexer.LexBuilder):
         links = frozenset(links) if links else None
 
         # Create the transaction. Note: we need to parent the postings.
-        entry = Transaction(source, date, chr(flag),
+        entry = Transaction(meta, date, chr(flag),
                             payee, narration, tags, links, postings)
 
         # Balance incomplete auto-postings and set the parent link to this entry as well.

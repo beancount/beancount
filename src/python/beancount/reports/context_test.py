@@ -52,8 +52,8 @@ class TestContext(test_utils.TestCase):
         """
         self.assertFalse(errors)
 
-        search_filename = entries[0].source.filename
-        search_lineno = entries[-3].source.lineno + 2
+        search_filename = entries[0].meta.filename
+        search_lineno = entries[-3].meta.lineno + 2
         dcontext = options_map['display_context']
         str_context = context.render_entry_context(entries, dcontext,
                                                    search_filename, search_lineno)

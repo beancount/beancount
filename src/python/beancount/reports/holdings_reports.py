@@ -3,8 +3,13 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import csv
+import datetime
+import io
+import re
+import textwrap
 
 from beancount.core.amount import D
+from beancount.core.amount import ZERO
 from beancount.core import amount
 from beancount.core import account
 from beancount.core import data
@@ -95,17 +100,17 @@ def get_holdings_entries(entries, options_map):
     holdings_entries = []
 
     for index, holding in enumerate(holdings_list):
-        source = data.Source('report_holdings_print', index)
-        entry = data.Transaction(source, latest_date, flags.FLAG_SUMMARIZE,
+        meta = data.new_metadata('report_holdings_print', index)
+        entry = data.Transaction(meta, latest_date, flags.FLAG_SUMMARIZE,
                                  None, "", None, None, [])
 
         # Convert the holding to a position.
         position_ = holdings.holding_to_position(holding)
 
         entry.postings.append(
-            data.Posting(entry, holding.account, position_, None, None))
+            data.Posting(entry, holding.account, position_, None, None, None))
         entry.postings.append(
-            data.Posting(entry, equity_account, -position_.cost(), None, None))
+            data.Posting(entry, equity_account, -position_.cost(), None, None, None))
 
         holdings_entries.append(entry)
 
@@ -118,8 +123,9 @@ def get_holdings_entries(entries, options_map):
                          if entry.account in used_accounts]
 
     # Add an entry for the equity account we're using.
-    source = data.Source('report_holdings_print', -1)
-    used_open_entries.insert(0, data.Open(source, latest_date, equity_account, None, None))
+    meta = data.new_metadata('report_holdings_print', -1)
+    used_open_entries.insert(0, data.Open(meta, latest_date, equity_account,
+                                          None, None))
 
     # Get the latest price entries.
     price_entries = prices.get_last_price_entries(entries, None)
@@ -263,6 +269,223 @@ class HoldingsReport(report.TableReport):
         printer.print_entries(holdings_entries, dcontext, file=file)
 
 
+class ExportPortfolioReport(report.TableReport):
+    """Holdings lists that can be exported to external portfolio management software."""
+
+    names = ['export_holdings', 'export_portfolio', 'pfexport', 'exportpf']
+    default_format = 'ofx'
+
+    PREFIX = textwrap.dedent("""\
+        OFXHEADER:100
+        DATA:OFXSGML
+        VERSION:102
+        SECURITY:NONE
+        ENCODING:USASCII
+        CHARSET:1252
+        COMPRESSION:NONE
+        OLDFILEUID:NONE
+        NEWFILEUID:NONE
+
+    """)
+
+    TEMPLATE = textwrap.dedent("""
+        <OFX>
+          <SIGNONMSGSRSV1>
+            <SONRS>
+              <STATUS>
+                <CODE>0
+                <SEVERITY>INFO
+              </STATUS>
+              <DTSERVER>{dtserver}
+              <LANGUAGE>ENG
+            </SONRS>
+          </SIGNONMSGSRSV1>
+          <INVSTMTMSGSRSV1>
+            <INVSTMTTRNRS>
+              <TRNUID>1001
+              <STATUS>
+                <CODE>0
+                <SEVERITY>INFO
+              </STATUS>
+              <INVSTMTRS>
+                <DTASOF>{dtasof}
+                <CURDEF>USD
+                <INVACCTFROM>
+                  <BROKERID>{broker}
+                  <ACCTID>{account}
+                </INVACCTFROM>
+                <INVTRANLIST>
+                  <DTSTART>{dtstart}
+                  <DTEND>{dtend}
+                  {invtranlist}
+                </INVTRANLIST>
+              </INVSTMTRS>
+            </INVSTMTTRNRS>
+          </INVSTMTMSGSRSV1>
+          <SECLISTMSGSRSV1>
+            <SECLIST>
+             {seclist}
+            </SECLIST>
+          </SECLISTMSGSRSV1>
+        </OFX>
+    """)
+
+    TRANSACTION = textwrap.dedent("""
+                  <{txntype}>
+                    <INVBUY>
+                      <INVTRAN>
+                        <FITID>{fitid}
+                        <DTTRADE>{dttrade}
+                        <MEMO>{memo}
+                      </INVTRAN>
+                      <SECID>
+                        <UNIQUEID>{uniqueid}
+                        <UNIQUEIDTYPE>TICKER
+                      </SECID>
+                      <UNITS>{units}
+                      <UNITPRICE>{unitprice}
+                      <COMMISSION>{fee}
+                      <TOTAL>{total}
+                      <SUBACCTSEC>CASH
+                      <SUBACCTFUND>CASH
+                    </INVBUY>
+                    <BUYTYPE>{buytype}
+                  </{txntype}>
+    """)
+
+    SECURITY = textwrap.dedent("""
+              <{infotype}>
+                <SECINFO>
+                  <SECID>
+                    <UNIQUEID>{uniqueid}
+                    <UNIQUEIDTYPE>TICKER
+                  </SECID>
+                  <SECNAME>{secname}
+                  <TICKER>{ticker}
+                </SECINFO>
+              </{infotype}>
+    """)
+
+    @classmethod
+    def add_args(cls, parser):
+        parser.add_argument('-p', '--promiscuous', action='store_true',
+                            help=("Include title and account names in memos. "
+                                  "Use this if you trust wherever you upload."))
+
+    def get_commodity_classifications(self, entries):
+        """In GFinance, a commodity that isn't a valid ticker symbol fails the import
+        process. Also, a commodity that is a mutual fund recorded in the OFX
+        file as a stock will similar fail the import process. We need to find a
+        way to fetch this info from the file itself. When metadata will get
+        merged, we should be able to get it from the account names, where we
+        could attach a property to the account's corresponding Open directive.
+
+        In the meantime, and as a kludge to start using this right away, place
+        a note for each currency (at any date, in any account) with the text
+        in the following format:
+
+           YYYY-MM-DD note <account> "Export <commodity>: IGNORE"
+           YYYY-MM-DD note <account> "Export <commodity>: MUTUAL_FUND"
+
+        This will get removed later.
+
+        Args:
+          entries: A list of directives which should include the notes.
+        Returns:
+          Two sets of commodity strings: a set of commodities to be ignored,
+          and a set of commodities which are mutual funds. All other commodities
+          are assume to be regular stock.
+
+        """
+        ignore = set()
+        mutual_fund = set()
+        for entry in entries:
+            if not isinstance(entry, data.Note):
+                continue
+            match = re.match("Export (.*): (IGNORE|MUTUAL_FUND)", entry.comment)
+            if match is None:
+                continue
+            commodity, action = match.group(1, 2)
+            action_set = ignore if action == 'IGNORE' else mutual_fund
+            action_set.add(commodity)
+        return ignore, mutual_fund
+
+    def render_ofx(self, entries, errors, options_map, file):
+        holdings_list, _ = get_assets_holdings(entries, options_map)
+
+        (ignored_commodities,
+         mutual_funds_commodities) = self.get_commodity_classifications(entries)
+
+        # Create a list of purchases.
+        #
+        # Note: we'll enter the positions two days ago. When we have lot-dates
+        # on all lots, put these transactions at the correct dates.
+        now = datetime.datetime.now()
+        trade_date = now - datetime.timedelta(days=2)
+
+        invtranlist_io = io.StringIO()
+        commodities = set()
+        for index, holding in enumerate(holdings_list):
+            txntype = ('BUYMF'
+                       if holding.currency in mutual_funds_commodities
+                       else 'BUYSTOCK')
+            fitid = index + 1
+            dttrade = render_ofx_date(trade_date)
+            memo = holding.account if self.args.promiscuous else ''
+            uniqueid = holding.currency
+            units = holding.number
+            unitprice = holding.cost_number
+            fee = ZERO
+            if holding.currency == holding.cost_currency or unitprice is None:
+                continue
+            if holding.currency in ignored_commodities:
+                # logging.warning("Commodity ignored: %s %s",
+                #                 holding.currency, holding.cost_currency)
+                continue
+
+            total = -(units * unitprice + fee)
+            buytype = 'BUY'
+            invtranlist_io.write(self.TRANSACTION.format(**vars()))
+            commodities.add(holding.currency)
+        invtranlist = invtranlist_io.getvalue()
+
+        # Create a list of security.
+        seclist_io = io.StringIO()
+        for currency in commodities:
+            infotype = 'MFINFO' if currency in mutual_funds_commodities else 'STOCKINFO'
+            uniqueid = currency
+            secname = currency
+            ticker = currency
+            seclist_io.write(self.SECURITY.format(**vars()))
+        seclist = seclist_io.getvalue()
+
+        # Create the top-level template.
+        broker = 'Beancount'
+        account = options_map['title'] if self.args.promiscuous else ''
+        dtserver = dtasof = dtstart = dtend = render_ofx_date(now)
+        contents = self.TEMPLATE.format(**vars())
+
+        # Clean up final contents and output it.
+        stripped_contents = '\n'.join(line.lstrip()
+                                      for line in contents.splitlines()
+                                      if line.strip())
+        file.write(self.PREFIX + stripped_contents)
+
+
+def render_ofx_date(dtime):
+    """Render a datetime to the OFX format.
+
+    Args:
+      dtime: A datetime.datetime instance.
+    Returns:
+      A string, rendered to milliseconds.
+    """
+    return '{}.{:03d}'.format(dtime.strftime('%Y%m%d%H%M%S'),
+                              int(dtime.microsecond / 1000))
+
+
+
+
 class CashReport(report.TableReport):
     """The list of cash holdings (defined as currency = cost-currency)."""
 
@@ -336,17 +559,19 @@ class NetWorthReport(report.TableReport):
 
 
 
-            ## FIXME: remove - conversion
-            print(holdings_list[0])
-            pholdings_list = list(map(holdings.holding_to_posting, holdings_list))
+
+            # ## FIXME: remove - conversion
+            # if holdings_list:
+            #     print(holdings_list[0])
+            # pholdings_list = list(map(holdings.holding_to_posting, holdings_list))
 
             # If after conversion there are no valid holdings, skip the currency
             # altogether.
-            if not pholdings_list:
+            if not holdings_list:
                 continue
 
             net_worths.append(
-                (currency, holdings.get_pholding_market_value(pholdings_list[0])))
+                (currency, holdings_list[0].market_value))
 
         field_spec = [
             (0, 'Currency'),
@@ -359,4 +584,5 @@ __reports__ = [
     HoldingsReport,
     CashReport,
     NetWorthReport,
+    ExportPortfolioReport,
     ]

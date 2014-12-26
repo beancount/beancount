@@ -326,7 +326,7 @@ def source():
         contents.write("Source hidden.")
     else:
         contents.write('<div id="source">')
-        for i, line in enumerate(app.source.splitlines()):
+        for i, line in enumerate(app.meta.splitlines()):
             lineno = i+1
             contents.write(
                 '<pre id="{}">{}  {}</pre>\n'.format(
@@ -378,7 +378,7 @@ def context_(ehash=None):
         oss.write("<pre>\n")
         for entry in matching_entries:
             oss.write(context.render_entry_context(
-                app.entries, dcontext, entry.source.filename, entry.source.lineno))
+                app.entries, dcontext, entry.meta.filename, entry.meta.lineno))
         oss.write("</pre>\n")
 
     return render_global(
@@ -906,7 +906,7 @@ def auto_reload_input_file(callback):
 
             # Save the source for later, to render.
             with open(filename, encoding='utf8') as f:
-                app.source = f.read()
+                app.meta = f.read()
 
             # Parse the beancount file.
             entries, errors, options_map = loader.load_file(filename)

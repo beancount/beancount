@@ -1324,8 +1324,8 @@ def generate_prices(date_begin, date_end, currencies, cost_currency):
                                                   dtstart=date_begin, until=date_end),
                                       price_series(start_price, mu, sigma)):
             price = D(price_float).quantize(digits)
-            source = data.Source(generate_prices.__name__, next(counter))
-            entry = data.Price(source, dtime.date(), currency,
+            meta = data.new_metadata(generate_prices.__name__, next(counter))
+            entry = data.Price(meta, dtime.date(), currency,
                                amount.Amount(price, cost_currency))
             entries.append(entry)
     return entries
