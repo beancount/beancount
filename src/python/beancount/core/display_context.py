@@ -211,7 +211,9 @@ class DisplayContext:
         fmtstrings = {}
         for currency, ccontext in self.ccontexts.items():
             num_fractional_digits = ccontext.get_fractional(precision)
-            fmtfmt = '{{:{comma}}}' if num_fractional_digits is None else '{{:{comma}.{frac}f}}'
+            fmtfmt = ('{{:{comma}}}'
+                      if num_fractional_digits is None
+                      else '{{:{comma}.{frac}f}}')
             fmtstrings[currency] = fmtfmt.format(comma=comma_str,
                                                  frac=num_fractional_digits)
         return fmtstrings

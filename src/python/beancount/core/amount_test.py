@@ -83,8 +83,8 @@ class TestAmount(unittest.TestCase):
 
         self.assertEqual('100034.023 USD', str(amount))
 
-        dc = display_context.DisplayContext()
-        dformat = dc.build(commas=True)
+        dcontext = display_context.DisplayContext()
+        dformat = dcontext.build(commas=True)
         self.assertEqual('100,034.023 USD', amount.to_string(dformat))
 
     def test_comparisons(self):

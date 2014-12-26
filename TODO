@@ -614,6 +614,14 @@ http://furius.ca/beancount/doc/proposal-inter
 
 
 
+  - Amount and Inventory and other basic classes: You could eventually support
+    an implementation of __format__ which attempts to make sense of the
+    different components, e.g., apply the format specifier to the number
+    excluding the space required to render the currency.
+
+
+
+
   (query)
 
   - Journal rendering: add terminal colors (easy).
