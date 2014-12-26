@@ -11,12 +11,12 @@ from beancount.core import data
 from beancount.core import interpolate
 
 
-def render_entry_context(entries, display_context, filename, lineno):
+def render_entry_context(entries, dcontext, filename, lineno):
     """Render the context before and after a particular transaction is applied.
 
     Args:
       entries: A list of directives.
-      display_context: An instance of DisplayContext used to format the numbers.
+      dcontext: An instance of DisplayContext used to format the numbers.
       filename: A string, the name of the file from which the transaction was parsed.
       lineno: An integer, the line number in the file the transacation was parsed from.
     Returns:
@@ -63,7 +63,7 @@ def render_entry_context(entries, display_context, filename, lineno):
 
     # Print the entry itself.
     print(file=oss)
-    printer.print_entry(closest_entry, display_context, render_weights=True, file=oss)
+    printer.print_entry(closest_entry, dcontext, render_weights=True, file=oss)
 
     # Print the context after.
     print(file=oss)

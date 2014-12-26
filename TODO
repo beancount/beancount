@@ -3,57 +3,31 @@ beancount: TODO
 * Requirements for Shipping 2.0
 ** Establish Display Precision
 
-  - Rewrite DisplayContext to have all the info into per-currency objects.
-    Move as much as you can there.
-    Derive common max/info about signs and integer to the common object.
-    Move all set_*() methods to the builder.
-    We can remove that optional update=boolean madness too.
-    Convert callers of these methods (example.py) to use the builder.
-    Add a new per-currency format string that will align with all other currenceis.
-    Add integer width to the formats, as an option.
-    Add docstrings to DisplayContext.
-    Add tests for signs.
+  - Make setting the precision from bean-example easier (provide a method to
+    create that format and update without conversion on the DisplayContext
+    itself).
 
-  - In the EntryPrinter(), figure out the maximum width of accounts and set it
-    up.
+  - In the DisplayContext, implement caching of the formatters created to
+    increase speed, especially for printing a single entry repeatedly.
 
-  - Render prices at maximum precision... this is important for round-trip!
+  - Implement reserved number of digits.
 
-  - Enhance the DisplayContext to store the longuest possible number of integral
-    digits required.
+  - Add docstrings to DisplayContext.
 
+  - Make the query_render routines use a DisplayContext object to compute their alignment.
+
+  - In the EntryPrinter(), figure out the maximum width of accounts and set it up.
   - Add a "target num columns" instead of a "min_width_account" to the
     EntryPrinter and figure out the min_width_account automatically from it,
     depending on whether we've got render_weights on or not. Use hte longest
     possible number of integral digits required from the DisplayContext in
     order to make this tight.
 
-  - Remove __format__ from Amount.
-
   - Add an option for the DisplayContext to issue a warning if numbers are
     rendered through it that lose some precision.
 
-  - Figure out where the vanilla __str__ methods for Amount and Position are
-    being used and make sure they're not anywhere that we care about precision.
-    Perhaps remove them even (raise exception, run tests).
-
-  (web)
-  - Make the web interface not render postings anymore by default.
-  - Rename /context to /entry
-
-  - Add "display_precision" option whereby the user can set the precision to be
-    used by each currency.
-
-  - Figure out if rendering commas in numbers is meant to be handled by the
-    locale. If so, figure out MAYBE how to avoid having a render_commas option
-    at all, and to initialize the value from the locale setting.
-
-  - Create Inventory.from_string() and simplify a lot of the tests with it.
-
-  - Simplify all tests by using their from_string() converters. All
-    constructors should accept a single string, and that should call
-    from_string() automatically, Amount, Position, Inventory, etc.
-
+  - Add "display_precision" input file option whereby the user can set the
+    precision to be used by each currency.
 
 
 ** Misc
@@ -83,6 +57,10 @@ beancount: TODO
   - Don't install all the _test.py files, make sure they're not installed, + add
     a lint check that ensures the non-test files are never importing any of othe
     test files.
+
+  (web)
+  - Make the web interface not render postings anymore by default.
+  - Rename /context to /entry
 
   - USEFUL. Issue warnings if the price date is too far from the requested
     market value date. This will help with returns, a lot. You should likely do
@@ -430,6 +408,8 @@ http://furius.ca/beancount/doc/proposal-inventory
     flex one. I think we can do a much better job at error reporting by writing
     our own, but I'm unsure how the performance compares.
 
+  - Optimize the main update() routine that is called in display_context.
+
 
 * Dashboard
 
@@ -634,6 +614,14 @@ http://furius.ca/beancount/doc/proposal-inter
 
 
 
+  - Amount and Inventory and other basic classes: You could eventually support
+    an implementation of __format__ which attempts to make sense of the
+    different components, e.g., apply the format specifier to the number
+    excluding the space required to render the currency.
+
+
+
+
   (query)
 
   - Journal rendering: add terminal colors (easy).
@@ -660,11 +648,15 @@ http://furius.ca/beancount/doc/proposal-inter
 
 
 
+  - (docs) Write a script to download and bake all my PDFs docs in a printable
+    and mobile-friendly formats.
   - Eventually you want to clean up the locations of the example files. I think
     the basic.beancount and starterkit.beancount files aren't really that useful
     anymore, other than for automated testing.
     examples/tutorial/example.beancount should move away from the tutorial files.
 
+  - (docs) I'd like the documentation links to open in "View" mode by default,
+    YET still allowing the user to switch to "Suggestion" mode if they want to.
 
 
 

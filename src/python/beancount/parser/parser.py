@@ -102,8 +102,8 @@ class Builder(lexer.LexBuilder):
         self.account_regexp = valid_account_regexp(self.options)
 
         # A display context builder.
-        self.dcbuilder = display_context.DisplayContextBuilder()
-        self.dcupdate = self.dcbuilder.update
+        self.dcontext = display_context.DisplayContext()
+        self.dcupdate = self.dcontext.update
 
     def finalize(self):
         """Finalize the parser, check for final errors and return the triple.
@@ -136,14 +136,12 @@ class Builder(lexer.LexBuilder):
         Returns:
           A dict of option names to options.
         """
-        # Normalize the option to a boolean object.
+        # Normalize the commas rendering option to a boolean object.
         self.options['render_commas'] = (
             self.options['render_commas'].lower() in ('1', 'true'))
 
         # Build and store the inferred DisplayContext instance.
-        dcontext = self.dcbuilder.build()
-        dcontext.set_commas(self.options['render_commas'])
-        self.options['display_context'] = dcontext
+        self.options['display_context'] = self.dcontext
 
         return self.options
 

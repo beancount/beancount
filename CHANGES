@@ -4,6 +4,15 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2014-12-26
+
+  - Merged the latest version of the 'display_context' branch into 'default'.
+    These changes make the DisplayContext object a factory for DisplayFormatter
+    objects which are then used to render numbers. This is a little more
+    sophisticated than the previous approach and will be reusable in the
+    rendering routines for the interactive SQL shell's result.
+
+
 2014-12-25
 
   - The 'metadata' branch has been merged into 'default'. Metadata is now

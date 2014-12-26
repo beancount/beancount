@@ -141,3 +141,27 @@ class TestScriptMissingOpen(cmptest.TestCase):
             2014-04-04 open Expenses:Alcohol
 
         """, stdout.getvalue())
+
+
+class TestScriptDisplayContext(cmptest.TestCase):
+
+    @test_utils.docfile
+    def test_display_context(self, filename):
+        """
+            2013-01-01 open Expenses:Movie
+            2013-01-01 open Assets:Cash
+
+            2014-03-03 * "Something"
+              Expenses:Restaurant   50.02 USD
+              Expenses:Movie        25.00 USD
+              Assets:Cash
+
+            2014-04-04 * "Something"
+              Expenses:Alcohol      10.30 USD
+              Expenses:Movie        25.00 USD
+              Assets:Cash
+        """
+        with test_utils.capture() as stdout:
+            test_utils.run_with_args(doctor.main, ['display-context', filename])
+        # FIXME: This probably deserves a little better.
+        self.assertTrue(stdout.getvalue())
