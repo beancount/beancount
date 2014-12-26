@@ -90,7 +90,7 @@ class TestLexer(unittest.TestCase):
             ('EOL', 10, '\n', None),
             ('LINK', 10, '^sometag123', 'sometag123'),
             ('EOL', 11, '\n', None),
-            ('ID', 11, 'somekey:', 'somekey'),
+            ('KEY', 11, 'somekey:', 'somekey'),
             ('EOL', 12, '\n', None),
             ('EOL', 12, '\x00', None)
             ], tokens)

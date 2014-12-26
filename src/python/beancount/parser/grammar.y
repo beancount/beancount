@@ -78,6 +78,7 @@ const char* getTokenName(int token);
 %token <string> EQUAL      /* = */
 %token <string> COMMA      /* , */
 %token <string> SLASH      /* / */
+%token <string> PLUS       /* + */
 %token <character> FLAG    /* Valid characters for flags */
 %token TXN                 /* 'txn' keyword */
 %token BALANCE             /* 'balance' keyword */
@@ -500,6 +501,7 @@ const char* getTokenName(int token)
         case EQUAL    : return "EQUAL";
         case COMMA    : return "COMMA";
         case SLASH    : return "SLASH";
+        case PLUS     : return "PLUS";
         case FLAG     : return "FLAG";
         case TXN      : return "TXN";
         case BALANCE  : return "BALANCE";

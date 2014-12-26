@@ -182,8 +182,8 @@ class LexBuilder(object):
         """
         return link
 
-    def ID(self, ident):
-        """Process an ID token.
+    def KEY(self, ident):
+        """Process an identifier token.
 
         Args:
           ident: a str, the name of the key string.

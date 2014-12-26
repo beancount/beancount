@@ -101,6 +101,7 @@ int strtonl(const char* buf, size_t nchars);
 \}		{ return RCURL; }
 ,		{ return COMMA; }
 \/		{ return SLASH; }
+\+		{ return PLUS; }
 
  /* Skip commented output (but not the accompanying newline). */
 ;+.*		{
