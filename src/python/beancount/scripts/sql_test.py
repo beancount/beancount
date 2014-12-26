@@ -63,5 +63,5 @@ class TestScriptSQL(test_utils.TestCase):
     def test_example(self):
         # Run the SQL translation on our pretty substantial example file.
         root_dir = test_utils.find_repository_root(__file__)
-        tutorial_filename = path.join(root_dir, 'examples/tutorial/example.beancount')
-        self.convert_to_sql(tutorial_filename)
+        filename = path.join(root_dir, 'examples/example.beancount')
+        self.convert_to_sql(filename)

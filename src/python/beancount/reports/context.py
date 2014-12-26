@@ -31,9 +31,9 @@ def render_entry_context(entries, dcontext, filename, lineno):
     closest_entry = data.find_closest(entries, filename, lineno)
     if closest_entry is None:
         raise SystemExit("No entry could be found before {}:{}".format(filename, lineno))
-    source = closest_entry.source
+    meta = closest_entry.meta
     print("Hash:{}".format(compare.hash_entry(closest_entry)), file=oss)
-    print("Location: {}:{}".format(source.filename, source.lineno), file=oss)
+    print("Location: {}:{}".format(meta.filename, meta.lineno), file=oss)
 
     # Get the entry's accounts and accumulate the balances of these accounts up
     # to the entry.

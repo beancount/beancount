@@ -3,12 +3,15 @@ Tests for parser.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import datetime
 import unittest
 import inspect
 import tempfile
+import re
 import sys
 import subprocess
 
+from beancount.core.amount import D
 from beancount.parser.parser import parsedoc
 from beancount.parser import parser
 from beancount.parser import lexer
@@ -16,6 +19,7 @@ from beancount.core import data
 from beancount.core import amount
 from beancount.core import interpolate
 from beancount.core import interpolate_test
+from beancount.utils import test_utils
 
 
 def check_list(test, objlist, explist):
@@ -70,8 +74,10 @@ class TestParserInputs(unittest.TestCase):
         code = ('import beancount.parser.parser_test as p; '
                 'p.TestParserInputs.parse_stdin()')
         pipe = subprocess.Popen([sys.executable, '-c', code, __file__],
+                                env=test_utils.subprocess_env(),
                                 stdin=subprocess.PIPE)
         output, errors = pipe.communicate(self.INPUT.encode('utf-8'))
+        self.assertEqual(0, pipe.returncode)
 
 
 class TestParserEntryTypes(unittest.TestCase):
@@ -130,6 +136,23 @@ class TestParserEntryTypes(unittest.TestCase):
           2013-05-18 open Assets:Cash   USD,CAD,EUR
         """
         check_list(self, entries, [data.Open])
+        self.assertEqual(entries[0].booking, None)
+
+    @parsedoc
+    def test_entry_open_4(self, entries, errors, __):
+        """
+          2013-05-18 open Assets:US:Vanguard:VIIPX  VIIPX  "STRICT"
+        """
+        check_list(self, entries, [data.Open])
+        self.assertEqual(entries[0].booking, 'STRICT')
+
+    @parsedoc
+    def test_entry_open_5(self, entries, errors, __):
+        """
+          2013-05-18 open Assets:US:Vanguard:VIIPX    "STRICT"
+        """
+        check_list(self, entries, [data.Open])
+        self.assertEqual(entries[0].booking, 'STRICT')
 
     @parsedoc
     def test_entry_close(self, entries, _, __):
@@ -275,6 +298,25 @@ class TestUglyBugs(unittest.TestCase):
         self.assertEqual([], errors)
 
 
+class TestTagStack(unittest.TestCase):
+
+    @parsedoc
+    def test_tag_left_unclosed(self, entries, errors, _):
+        """
+          pushtag #trip-to-nowhere
+        """
+        self.assertEqual(1, len(errors))
+        self.assertTrue(re.search('Unbalanced tag', errors[0].message))
+
+    @parsedoc
+    def test_pop_invalid_tag(self, entries, errors, _):
+        """
+          poptag #trip-to-nowhere
+        """
+        self.assertTrue(errors)
+        self.assertTrue(re.search('absent tag', errors[0].message))
+
+
 class TestMultipleLines(unittest.TestCase):
 
     @parsedoc
@@ -347,9 +389,9 @@ class TestLineNumbers(unittest.TestCase):
             TestLineNumbers.test_line_numbers.__wrapped__)
         first_line += 1
 
-        self.assertEqual(2, entries[0].source.lineno - first_line)
-        self.assertEqual(6, entries[1].source.lineno - first_line)
-        self.assertEqual(8, entries[2].source.lineno - first_line)
+        self.assertEqual(2, entries[0].meta.lineno - first_line)
+        self.assertEqual(6, entries[1].meta.lineno - first_line)
+        self.assertEqual(8, entries[2].meta.lineno - first_line)
 
 
 class TestParserOptions(unittest.TestCase):
@@ -669,6 +711,180 @@ class TestBalance(unittest.TestCase):
             posting = entry.postings[0]
             self.assertEqual(amount.from_string('200 USD'), posting.position.lot.cost)
             self.assertEqual(None, posting.price)
+
+
+class TestMetaData(unittest.TestCase):
+
+    @parsedoc
+    def test_metadata_transaction__begin(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            test: "Something"
+            Assets:Investments:MSFT      10 MSFT @@ 2000 USD
+            Assets:Investments:Cash
+        """
+        self.assertEqual(1, len(entries))
+        self.assertEqual('Something', entries[0].meta['test'])
+
+    @parsedoc
+    def test_metadata_transaction__middle(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            Assets:Investments:MSFT      10 MSFT @@ 2000 USD
+            test: "Something"
+            Assets:Investments:Cash
+        """
+        self.assertEqual(1, len(entries))
+        self.assertEqual({'test': 'Something'},
+                         entries[0].postings[0].meta)
+
+    @parsedoc
+    def test_metadata_transaction__end(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            Assets:Investments:MSFT      10 MSFT @@ 2000 USD
+            Assets:Investments:Cash
+            test: "Something"
+        """
+        self.assertEqual(1, len(entries))
+        self.assertEqual({'test': 'Something'},
+                         entries[0].postings[1].meta)
+
+    @parsedoc
+    def test_metadata_transaction__many(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            test1: "Something"
+            Assets:Investments:MSFT      10 MSFT @@ 2000 USD
+            test2: "has"
+            test3: "to"
+            Assets:Investments:Cash
+            test4: "come"
+            test5: "from"
+            test6: "this"
+        """
+        self.assertEqual(1, len(entries))
+        self.assertEqual('Something', entries[0].meta['test1'])
+        self.assertEqual({'test2': 'has', 'test3': 'to'},
+                         entries[0].postings[0].meta)
+        self.assertEqual({'test4': 'come', 'test5': 'from', 'test6': 'this'},
+                         entries[0].postings[1].meta)
+
+    @parsedoc
+    def test_metadata_transaction__indented(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+              test1: "Something"
+            Assets:Investments:MSFT      10 MSFT @@ 2000 USD
+              test2: "has"
+              test3: "to"
+            Assets:Investments:Cash
+              test4: "come"
+              test5: "from"
+              test6: "this"
+        """
+        self.assertEqual(1, len(entries))
+        self.assertEqual('Something', entries[0].meta['test1'])
+        self.assertEqual({'test2': 'has', 'test3': 'to'},
+                         entries[0].postings[0].meta)
+        self.assertEqual({'test4': 'come', 'test5': 'from', 'test6': 'this'},
+                         entries[0].postings[1].meta)
+
+    @parsedoc
+    def test_metadata_transaction__repeated(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            test: "Bananas"
+            test: "Apples"
+            test: "Oranges"
+            Assets:Investments   100 USD
+              test: "Bananas"
+              test: "Apples"
+            Income:Investments  -100 USD
+        """
+        self.assertEqual(1, len(entries))
+        self.assertEqual('Bananas', entries[0].meta['test'])
+        self.assertEqual({'test': 'Bananas'}, entries[0].postings[0].meta)
+        self.assertEqual(3, len(errors))
+        self.assertTrue(all(re.search('Duplicate.*metadata field', error.message)
+                            for error in errors))
+
+    @parsedoc
+    def test_metadata_empty(self, entries, errors, _):
+        """
+          2013-05-18 * "blabla"
+            oranges:
+            bananas:
+
+          2013-05-19 open Assets:Something
+            apples:
+        """
+        self.assertFalse(errors)
+        self.assertEqual(2, len(entries))
+        self.assertEqual({'oranges', 'bananas', 'filename', 'lineno'},
+                         entries[0].meta.keys())
+        self.assertEqual(None, entries[0].meta['oranges'])
+        self.assertEqual(None, entries[0].meta['bananas'])
+        self.assertEqual(entries[1].meta['apples'], None)
+
+    @parsedoc
+    def test_metadata_other(self, entries, errors, _):
+        """
+          2013-01-01 open Equity:Other
+
+          2013-01-01 open Assets:Investments
+            test1: "Something"
+            test2: "Something"
+
+          2014-01-01 close Assets:Investments
+            test1: "Something"
+
+          2013-01-10 note Assets:Investments "Bla"
+            test1: "Something"
+
+          2013-01-31 pad Assets:Investments Equity:Other
+            test1: "Something"
+
+          2013-02-01 balance Assets:Investments  111.00 USD
+            test1: "Something"
+
+          2013-03-01 event "location" "Nowhere"
+            test1: "Something"
+
+          2013-03-01 document Assets:Investments "/path/to/something.pdf"
+            test1: "Something"
+
+          2013-03-01 price  GOOG  500 USD
+            test1: "Something"
+        """
+        self.assertEqual(9, len(entries))
+
+    @parsedoc
+    def test_metadata_data_types(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            string: "Something"
+            account: Assets:Investments:Cash
+            date: 2012-01-01
+            currency: GOOG
+            tag: #trip-florida
+            number: 345.67
+            amount: 345.67 USD
+        """
+        self.assertEqual(1, len(entries))
+        self.assertTrue('filename' in entries[0].meta)
+        self.assertTrue('lineno' in entries[0].meta)
+        del entries[0].meta['filename']
+        del entries[0].meta['lineno']
+        self.assertEqual({
+            'string': 'Something',
+            'account': 'Assets:Investments:Cash',
+            'date': datetime.date(2012, 1, 1),
+            'currency': 'GOOG',
+            'tag': 'trip-florida',
+            'number': D('345.67'),
+            'amount': amount.from_string('345.67 USD'),
+            }, entries[0].meta)
 
 
 class TestLexerErrors(unittest.TestCase):

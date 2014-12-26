@@ -210,18 +210,31 @@ def get_leveln_parent_accounts(account_names, level, nrepeats=0):
     return sorted(levels)
 
 
-def get_min_max_dates(entries):
+def get_min_max_dates(entries, types=None):
     """Return the minimum and amximum dates in the list of entries.
 
     Args:
       entries: A list of directive instances.
+      types: An optional tuple of types to restrict the entries to.
     Returns:
       A pair of datetime.date dates, the minimum and maximum dates seen in the
       directives.
     """
-    if not entries:
-        return (None, None)
-    return (entries[0].date, entries[-1].date)
+    date_first = date_last = None
+
+    for entry in entries:
+        if types and not isinstance(entry, types):
+            continue
+        date_first = entry.date
+        break
+
+    for entry in reversed(entries):
+        if types and not isinstance(entry, types):
+            continue
+        date_last = entry.date
+        break
+
+    return (date_first, date_last)
 
 
 def get_active_years(entries):

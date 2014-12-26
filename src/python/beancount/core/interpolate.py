@@ -96,7 +96,7 @@ def fill_residual_posting(entry, account_rounding):
     else:
         new_postings = list(entry.postings)
         for position in residual.get_positions():
-            rounding_posting = Posting(None, account_rounding, -position, None, None)
+            rounding_posting = Posting(None, account_rounding, -position, None, None, None)
             new_postings.append(rounding_posting)
         return entry_replace(entry, postings=new_postings)
 
@@ -162,11 +162,11 @@ def get_incomplete_postings(entry):
         # If there are too many such postings, we can't do anything, barf.
         if len(auto_postings_indices) > 1:
             balance_errors.append(
-                BalanceError(entry.source,
+                BalanceError(entry.meta,
                              "Too many auto-postings; cannot fill in",
                              entry))
             # Delete the redundant auto-postings.
-            for index in auto_postings_indices[1:]:
+            for index in sorted(auto_postings_indices[1:], reverse=1):
                 del postings[index]
 
         index = auto_postings_indices[0]
@@ -185,12 +185,13 @@ def get_incomplete_postings(entry):
         if not residual_positions and ((has_regular_postings and has_nonzero_amount) or
                                        not has_regular_postings):
             balance_errors.append(
-                BalanceError(entry.source,
+                BalanceError(entry.meta,
                              "Useless auto-posting: {}".format(inventory), entry))
             for currency in currencies:
                 position = Position(Lot(currency, None, None), ZERO)
                 new_postings.append(
-                    Posting(entry, old_posting.account, position, None, old_posting.flag))
+                    Posting(entry, old_posting.account, position,
+                            None, old_posting.flag, old_posting.meta))
                 has_inserted = True
         else:
             # Convert all the residual positions in inventory into a posting for
@@ -198,7 +199,8 @@ def get_incomplete_postings(entry):
             for position in residual_positions:
                 position.number = -position.number
                 new_postings.append(
-                    Posting(entry, old_posting.account, position, None, old_posting.flag))
+                    Posting(entry, old_posting.account, position,
+                            None, old_posting.flag, old_posting.meta))
                 has_inserted = True
 
         postings[index:index+1] = new_postings

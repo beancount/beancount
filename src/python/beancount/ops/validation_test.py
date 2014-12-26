@@ -82,6 +82,20 @@ class TestValidateInventoryBooking(cmptest.TestCase):
         validation_errors = validation.validate_inventory_booking(entries, options_map)
         self.assertEqual([validation.ValidationError], list(map(type, validation_errors)))
 
+    @parser.parsedoc
+    def test_simple_negative_lots_in_single_transaction(self, entries, errors, options_map):
+        """
+          2013-05-01 open Assets:Bank:Investing
+          2013-05-01 open Equity:Opening-Balances
+
+          2013-05-02 *
+            Assets:Bank:Investing                 5 GOOG {501 USD}
+            Assets:Bank:Investing                -1 GOOG {502 USD}
+            Equity:Opening-Balances
+        """
+        validation_errors = validation.validate_inventory_booking(entries, options_map)
+        self.assertEqual([validation.ValidationError], list(map(type, validation_errors)))
+
 
 class TestValidateOpenClose(cmptest.TestCase):
 
@@ -307,14 +321,14 @@ class TestValidateDocumentPaths(cmptest.TestCase):
 
     def test_validate_documents_paths(self):
         date = datetime.date(2014, 3, 3)
-        source = data.Source('<validation_test>', 0)
-        entries = [data.Document(source, date, 'Assets:Account1',
+        meta = data.new_metadata('<validation_test>', 0)
+        entries = [data.Document(meta, date, 'Assets:Account1',
                                  "/abs/path/to/something.pdf"),
-                   data.Document(source, date, 'Assets:Account2',
+                   data.Document(meta, date, 'Assets:Account2',
                                  "relative/something.pdf"),
-                   data.Document(source, date, 'Assets:Account2',
+                   data.Document(meta, date, 'Assets:Account2',
                                  "../something.pdf"),
-                   data.Document(source, date, 'Assets:Account2',
+                   data.Document(meta, date, 'Assets:Account2',
                                  "")]
         errors = validation.validate_documents_paths(entries, {})
         self.assertEqual(3, len(errors))

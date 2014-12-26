@@ -1,4 +1,10 @@
-"""A plugin that issues errors when more than one commodity is used in an account.
+"""A plugin that issues errors when amounts are posted to non-leaf accounts,
+that is, accounts with child accounts.
+
+This is an extra constraint that you may want to apply optionally. If you
+install this plugin, it will issue errors for all accounts that have
+postings to non-leaf accounts. Some users may want to disallow this and
+enforce that only leaf accounts may have postings on them.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
@@ -15,11 +21,6 @@ LeafOnlyError = collections.namedtuple('LeafOnlyError', 'source message entry')
 
 def validate_leaf_only(entries, unused_options_map):
     """Check for non-leaf accounts that have postings on them.
-
-    This is an extra constraint that you may want to apply optionally. If you
-    install this plugin, it will issue errors for all accounts that have
-    postings to non-leaf accounts. Some users may want to disallow this and
-    enforce that only leaf accounts may have postings on them.
 
     Args:
       entries: A list of directives.
@@ -39,7 +40,7 @@ def validate_leaf_only(entries, unused_options_map):
 
             open_entry = open_close_map[real_account.account][0]
             errors.append(LeafOnlyError(
-                open_entry.source,
+                open_entry.meta,
                 "Non-leaf account '{}' has postings on it".format(real_account.account),
                 open_entry))
 

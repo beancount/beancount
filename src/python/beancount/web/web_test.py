@@ -103,20 +103,20 @@ class TestWeb(unittest.TestCase):
         scrape(filename, self.check_page_okay, test_utils.get_test_port())
 
     def test_scrape_basic(self):
-        scrape(self.get_example_file('basic/basic.beancount'),
+        scrape(self.get_example_file('simple/basic.beancount'),
                self.check_page_okay, test_utils.get_test_port())
 
     def test_scrape_basic_view(self):
-        scrape(self.get_example_file('basic/basic.beancount'),
+        scrape(self.get_example_file('simple/basic.beancount'),
                self.check_page_okay, test_utils.get_test_port(),
                extra_args=['--view', 'year/2013'])
 
     def test_scrape_starterkit(self):
-        scrape(self.get_example_file('starterkit/starter.beancount'),
+        scrape(self.get_example_file('simple/starter.beancount'),
                self.check_page_okay, test_utils.get_test_port())
 
     # Note: Great idea, but sorry, too slow (approx. 50s on MBA). We need to
     # find some way to enable this on demand.
     def __test_scrape_example(self):
-        scrape(self.get_example_file('tutorial/example.beancount'),
+        scrape(self.get_example_file('example.beancount'),
                self.check_page_okay, test_utils.get_test_port())

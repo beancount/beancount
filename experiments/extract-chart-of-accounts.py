@@ -9,7 +9,7 @@ import re
 def main():
     import argparse, logging
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
-    parser = argparse.ArgumentParser(__doc__.strip())
+    parser = argparse.ArgumentParser(description=__doc__.strip())
     parser.add_argument('filename', help='Filename')
     opts = parser.parse_args()
 

@@ -125,17 +125,17 @@ class TestBalance(cmptest.TestCase):
         self.assertTrue(interpolate.compute_residual(entry.postings).is_empty())
 
     def test_get_incomplete_postings_pathological(self):
-        source = data.Source(__file__, 0)
+        meta = data.new_metadata(__file__, 0)
 
         # Test with no entries.
-        entry = data.Transaction(source, None, None, None, None, None, None, [])
+        entry = data.Transaction(meta, None, None, None, None, None, None, [])
         new_postings, has_inserted, errors = interpolate.get_incomplete_postings(entry)
         self.assertFalse(has_inserted)
         self.assertEqual(0, len(new_postings))
         self.assertEqual(0, len(errors))
 
         # Test with only a single leg (and check that it does not balance).
-        entry = data.Transaction(source, None, None, None, None, None, None, [
+        entry = data.Transaction(meta, None, None, None, None, None, None, [
             P(None, "Assets:Bank:Checking", "105.50", "USD"),
             ])
         new_postings, has_inserted, errors = interpolate.get_incomplete_postings(entry)
@@ -144,7 +144,7 @@ class TestBalance(cmptest.TestCase):
         self.assertEqual(1 if ERRORS_ON_RESIDUAL else 0, len(errors))
 
         # Test with two legs that balance.
-        entry = data.Transaction(source, None, None, None, None, None, None, [
+        entry = data.Transaction(meta, None, None, None, None, None, None, [
             P(None, "Assets:Bank:Checking", "105.50", "USD"),
             P(None, "Assets:Bank:Savings", "-105.50", "USD"),
             ])
@@ -154,7 +154,7 @@ class TestBalance(cmptest.TestCase):
         self.assertEqual(0, len(errors))
 
         # Test with two legs that do not balance.
-        entry = data.Transaction(source, None, None, None, None, None, None, [
+        entry = data.Transaction(meta, None, None, None, None, None, None, [
             P(None, "Assets:Bank:Checking", "105.50", "USD"),
             P(None, "Assets:Bank:Savings", "-115.50", "USD"),
             ])
@@ -164,7 +164,7 @@ class TestBalance(cmptest.TestCase):
         self.assertEqual(1 if ERRORS_ON_RESIDUAL else 0, len(errors))
 
         # Test with only one auto-posting.
-        entry = data.Transaction(source, None, None, None, None, None, None, [
+        entry = data.Transaction(meta, None, None, None, None, None, None, [
             P(None, "Assets:Bank:Checking", None, None),
             ])
         new_postings, has_inserted, errors = interpolate.get_incomplete_postings(entry)
@@ -173,7 +173,7 @@ class TestBalance(cmptest.TestCase):
         self.assertEqual(1, len(errors))
 
         # Test with an auto-posting where there is no residual.
-        entry = data.Transaction(source, None, None, None, None, None, None, [
+        entry = data.Transaction(meta, None, None, None, None, None, None, [
             P(None, "Assets:Bank:Checking", "105.50", "USD"),
             P(None, "Assets:Bank:Savings", "-105.50", "USD"),
             P(None, "Assets:Bank:Balancing", None, None),
@@ -184,7 +184,7 @@ class TestBalance(cmptest.TestCase):
         self.assertEqual(1, len(errors))
 
         # Test with too many empty postings.
-        entry = data.Transaction(source, None, None, None, None, None, None, [
+        entry = data.Transaction(meta, None, None, None, None, None, None, [
             P(None, "Assets:Bank:Checking", "105.50", "USD"),
             P(None, "Assets:Bank:Savings", "-106.50", "USD"),
             P(None, "Assets:Bank:BalancingA", None, None),
@@ -196,10 +196,10 @@ class TestBalance(cmptest.TestCase):
         self.assertEqual(1, len(errors))
 
     def test_get_incomplete_postings_normal(self):
-        source = data.Source(__file__, 0)
+        meta = data.new_metadata(__file__, 0)
 
         # Test with a single auto-posting with a residual.
-        entry = data.Transaction(source, None, None, None, None, None, None, [
+        entry = data.Transaction(meta, None, None, None, None, None, None, [
             P(None, "Assets:Bank:Checking", "105.50", "USD"),
             P(None, "Assets:Bank:Savings", "-115.50", "USD"),
             P(None, "Assets:Bank:Balancing", None, None),
@@ -210,10 +210,10 @@ class TestBalance(cmptest.TestCase):
         self.assertEqual(0, len(errors))
 
     def test_balance_with_large_amount(self):
-        source = data.Source(__file__, 0)
+        meta = data.new_metadata(__file__, 0)
 
         # Test with a single auto-posting with a residual.
-        entry = data.Transaction(source, None, None, None, None, None, None, [
+        entry = data.Transaction(meta, None, None, None, None, None, None, [
             P(None, "Income:US:Anthem:InsurancePayments", "-275.81", "USD"),
             P(None, "Income:US:Anthem:InsurancePayments", "-23738.54", "USD"),
             P(None, "Assets:Bank:Checking", "24014.45", "USD"),
@@ -224,8 +224,8 @@ class TestBalance(cmptest.TestCase):
         self.assertEqual(1 if ERRORS_ON_RESIDUAL else 0, len(errors))
 
     def test_balance_with_zero_posting(self):
-        source = data.Source(__file__, 0)
-        entry = data.Transaction(source, None, None, None, None, None, None, [
+        meta = data.new_metadata(__file__, 0)
+        entry = data.Transaction(meta, None, None, None, None, None, None, [
             P(None, "Income:US:Anthem:InsurancePayments", "0", "USD"),
             P(None, "Income:US:Anthem:InsurancePayments", None, None),
             ])
@@ -276,7 +276,7 @@ class TestComputeBalance(unittest.TestCase):
         2014-01-01 open Assets:Bank:Savings
         2014-01-01 open Assets:Investing
 
-        2014-05-26 note Assets:Investing "Buying some Googles"
+        2014-05-26 note Assets:Investing "Buying some shares"
 
         2014-05-30 *
           Assets:Bank:Checking  111.23 USD

@@ -8,6 +8,8 @@ import subprocess
 import os
 from os import path
 
+from beancount.utils import test_utils
+
 
 # pylint: disable=bad-whitespace
 COMMANDS = [
@@ -46,7 +48,7 @@ COMMANDS = [
 
 def main():
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
-    parser = argparse.ArgumentParser(__doc__.strip())
+    parser = argparse.ArgumentParser(description=__doc__.strip())
     parser.add_argument('filename', help='Beancount filename')
     parser.add_argument('output_directory', help='Output directory for the tutorial files')
     args = parser.parse_args()
@@ -58,7 +60,9 @@ def main():
         with open(output_filename, 'w') as output_file:
             with open(errors_filename, 'w') as errors_file:
                 command = command_template.format(args.filename)
-                pipe = subprocess.Popen(command, shell=True,
+                pipe = subprocess.Popen(command,
+                                        env=test_utils.subprocess_env(),
+                                        shell=True,
                                         stdout=output_file,
                                         stderr=errors_file)
                 pipe.communicate()

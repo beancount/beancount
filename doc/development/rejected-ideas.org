@@ -44,7 +44,7 @@ rejected, and the reasons why they were rejected.
       * CURRENCY: CAD, USD, other
       * TYPE: Asset, Income, Liability
       * INSTITUTION: RBC, RBC-Investment, HSBC, TD, etc.
-      * SOURCE: Google, Eladian, MarketFactory, etc.
+      * SOURCE: Softimage, Eladian, MarketFactory, etc.
       * DESTINATION: IRS, CRA, State-NewYork, State-California
 
     Ideally, one should be able to generate report by querying on a subset of
@@ -229,3 +229,18 @@ rejected, and the reasons why they were rejected.
 
     *REJECTED* Nobody will bother renaming their filenames to match link ids,
     that's just too much manual work during download/import.
+
+
+  - It might be really nice if all the commands would accept an environment
+    variable for the default file to use, if set. This means that the Beancount
+    filename could be an option like in Ledger and HLedger, e.g. with -f. It
+    *IS* true that in almost all cases I'm using the one, same input file for
+    all the programs, that is, the concept of a "default" is quite common.
+
+    This should probably go in before the first release because it has highly
+    visible impact on all the bean-query commands.
+
+    *REJECTED* I don't like it. Unnecessary complexity, and I've been living
+    with the explicit filename on every invocation for a while now, it's really
+    not much of a bother. This was perhaps influence from how Ledger works,
+    but I prefer to keep things simple and explicit. Not going to do it.

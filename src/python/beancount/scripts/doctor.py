@@ -26,7 +26,7 @@ from beancount.scripts import checkdeps
 from beancount.reports import context
 
 
-def do_dump_lexer(filename, unused_args):
+def do_lex(filename, unused_args):
     """Dump the lexer output for a Beancount syntax file.
 
     Args:
@@ -35,6 +35,17 @@ def do_dump_lexer(filename, unused_args):
     for token, lineno, text, obj in lexer.lex_iter(filename):
         sys.stdout.write('{:12} {:6d} {}\n'.format(
             '(None)' if token is None else token, lineno, repr(text)))
+
+do_dump_lexer = do_lex  # pylint: disable=invalid-name
+
+
+def do_parse(filename, unused_args):
+    """Run the parser in debug mode.
+
+    Args:
+      filename: A string, the Beancount input filename.
+    """
+    entries, errors, _ = parser.parse_file(filename, yydebug=1)
 
 
 def do_roundtrip(filename, unused_args):
@@ -200,7 +211,8 @@ def do_missing_open(filename, args):
     for account, first_use_date in first_use_map.items():
         if account not in open_close_map:
             new_entries.append(
-                data.Open(data.Source(filename, 0), first_use_date, account, None))
+                data.Open(data.new_metadata(filename, 0), first_use_date, account,
+                          None, None))
 
     dcontext = options_map['display_context']
     printer.print_entries(data.sort(new_entries), dcontext)

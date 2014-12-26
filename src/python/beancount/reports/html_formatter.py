@@ -91,12 +91,12 @@ class HTMLFormatter:
         """
         return '{} / {}'.format(*base_quote)
 
-    def render_source(self, source):
+    def render_source(self, meta):
         """Render a reference to the source file.
 
         Args:
-          source: A Source object.
+          meta: An AttrDict object.
         Returns:
           A string of HTML to be spliced inside an HTML template.
         """
-        return printer.render_source(source)
+        return printer.render_source(meta)

@@ -75,8 +75,6 @@ to mark these postings with.
 
 __author__ = 'Martin Blais <blais@furius.ca>'
 
-import copy
-
 from beancount.core import data
 from beancount.core import account_types
 from beancount.core import amount
@@ -87,7 +85,7 @@ from beancount.parser import printer
 __plugins__ = ('add_ira_contribs',)
 
 
-debug = 0
+DEBUG = 0
 
 
 def add_ira_contribs(entries, options_map, config):
@@ -136,7 +134,7 @@ def add_ira_contribs(entries, options_map, config):
                         pos_account.format(year=entry.date.year),
                         flag)
 
-            if debug and orig_entry is not entry:
+            if DEBUG and orig_entry is not entry:
                 printer.print_entry(orig_entry)
                 printer.print_entry(entry)
 
@@ -162,6 +160,6 @@ def add_postings(entry, amount_, neg_account, pos_account, flag):
         amount_.number)
 
     return data.entry_replace(entry, postings=entry.postings + [
-        data.Posting(entry, neg_account, pos.get_negative(), None, flag),
-        data.Posting(entry, pos_account, pos, None, flag),
+        data.Posting(entry, neg_account, pos.get_negative(), None, flag, None),
+        data.Posting(entry, pos_account, pos, None, flag, None),
         ])

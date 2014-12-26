@@ -116,7 +116,7 @@ int strtonl(const char* buf, size_t nchars);
     beancount.core.flags, in order for round-trips between text and entries to
     be possible. {5307d8fa1e7b}
     */
-[*!&#?%PSTCU]	{
+[*!&#?%PSTCUR]	{
     if ( yy_line_tokens != 1 ) {
         yylval->character = yytext[0];
         return FLAG;
@@ -204,6 +204,12 @@ plugin		{ return PLUGIN; }
 \^[A-Za-z0-9\-_/.]+ 		{
     yylval->pyobj = BUILD("LINK", "s", &(yytext[1]));
     return LINK;
+}
+
+ /* Key */
+[a-z][a-z0-9\-_]+: 		{
+    yylval->pyobj = BUILD("KEY", "s#", yytext, yyleng-1);
+    return KEY;
 }
 
  /* Default rule. */

@@ -150,6 +150,8 @@ def walk(root_directory):
       Tuples of (root, account-name, dirs, files), similar to os.walk().
     """
     for root, dirs, files in os.walk(root_directory):
+        dirs.sort()
+        files.sort()
         relroot = root[len(root_directory)+1:]
         account_name = relroot.replace(os.sep, sep)
         if is_valid(account_name):

@@ -51,24 +51,34 @@ def validate_inventory_booking(entries, unused_options_map):
     """
     errors = []
 
+    # A mapping of account name to booking method, accumulated in the main loop.
+    booking_methods = {}
+
     balances = collections.defaultdict(inventory.Inventory)
     for entry in entries:
-        if not isinstance(entry, data.Transaction):
-            continue
+        if isinstance(entry, data.Transaction):
+            for posting in entry.postings:
+                # Update the balance of each posting on its respective account
+                # without allowing booking to a negative position, and if an error
+                # is encountered, catch it and return it.
+                running_balance = balances[posting.account]
+                position_, unused_reducing = running_balance.add_position(posting.position)
 
-        for posting in entry.postings:
-            # Update the balance of each posting on its respective account
-            # without allowing booking to a negative position, and if an error
-            # is encountered, catch it and return it.
-            running_balance = balances[posting.account]
+                # Skip this check if the booking method is set to 'NONE'.
+                if booking_methods.get(posting.account, None) == 'NONE':
+                    continue
 
-            position_, reducing = running_balance.add_position(posting.position)
-            if position_.is_negative_at_cost():
-                errors.append(
-                    ValidationError(
-                        posting.entry.source,
-                        "Position held at cost goes negative: {}".format(position_),
-                        posting.entry))
+                # Check for a negative entry.
+                # FIXME: Maybe this should be using the reducing flag instead.
+                if position_.is_negative_at_cost():
+                    errors.append(
+                        ValidationError(
+                            posting.entry.meta,
+                            "Position held at cost goes negative: {}".format(position_),
+                            posting.entry))
+
+        elif isinstance(entry, data.Open):
+            booking_methods[entry.account] = entry.booking
 
     return errors
 
@@ -102,7 +112,7 @@ def validate_open_close(entries, unused_options_map):
             if entry.account in open_map:
                 errors.append(
                     ValidationError(
-                        entry.source,
+                        entry.meta,
                         "Duplicate open directive for {}".format(entry.account),
                         entry))
             else:
@@ -112,7 +122,7 @@ def validate_open_close(entries, unused_options_map):
             if entry.account in close_map:
                 errors.append(
                     ValidationError(
-                        entry.source,
+                        entry.meta,
                         "Duplicate close directive for {}".format(entry.account),
                         entry))
             else:
@@ -121,14 +131,14 @@ def validate_open_close(entries, unused_options_map):
                     if entry.date <= open_entry.date:
                         errors.append(
                             ValidationError(
-                                entry.source,
+                                entry.meta,
                                 "Internal error: closing date for {} "
                                 "appears before opening date".format(entry.account),
                                 entry))
                 except KeyError:
                     errors.append(
                         ValidationError(
-                            entry.source,
+                            entry.meta,
                             "Unopened account {} is being closed".format(entry.account),
                             entry))
 
@@ -165,7 +175,7 @@ def validate_duplicate_balances(entries, unused_options_map):
             if entry.amount != previous_entry.amount:
                 errors.append(
                     ValidationError(
-                        entry.source,
+                        entry.meta,
                         "Duplicate balance assertion with different amounts",
                         entry))
         except KeyError:
@@ -226,7 +236,7 @@ def validate_active_accounts(entries, unused_options_map):
             message = "Invalid reference to inactive account '{}'".format(account)
         else:
             message = "Invalid reference to unknown account '{}'".format(account)
-        errors.append(ValidationError(entry.source, message, entry))
+        errors.append(ValidationError(entry.meta, message, entry))
 
     return errors
 
@@ -271,7 +281,7 @@ def validate_currency_constraints(entries, options_map):
             if posting.position.lot.currency not in valid_currencies:
                 errors.append(
                     ValidationError(
-                        entry.source,
+                        entry.meta,
                         "Invalid currency {} for account '{}'".format(
                             posting.position.lot.currency, posting.account),
                         entry))
@@ -292,7 +302,7 @@ def validate_documents_paths(entries, options_map):
     Returns:
       A list of new errors, if any were found.
     """
-    return [ValidationError(entry.source, "Invalid relative path for entry", entry)
+    return [ValidationError(entry.meta, "Invalid relative path for entry", entry)
             for entry in entries
             if (isinstance(entry, Document) and
                 not path.isabs(entry.filename))]
@@ -318,7 +328,7 @@ def validate_data_types(entries, options_map):
             data.sanity_check_types(entry)
         except AssertionError as exc:
             errors.append(
-                ValidationError(entry.source,
+                ValidationError(entry.meta,
                                 "Invalid data types: {}".format(exc),
                                 entry))
     return errors
@@ -352,7 +362,7 @@ def validate_check_transaction_balances(entries, options_map):
             balance = interpolate.compute_residual(entry.postings)
             if not balance.is_small(interpolate.SMALL_EPSILON):
                 errors.append(
-                    ValidationError(entry.source,
+                    ValidationError(entry.meta,
                                     "Transaction does not balance: {}".format(balance),
                                     entry))
     return errors

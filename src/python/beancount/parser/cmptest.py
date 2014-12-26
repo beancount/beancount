@@ -31,7 +31,8 @@ class TestCase(unittest.TestCase):
           AssertionError: If the exception fails.
         """
         if isinstance(expected_entries, str):
-            expected_entries, errors, __ = parser.parse_string(textwrap.dedent(expected_entries))
+            expected_entries, errors, __ = parser.parse_string(
+                textwrap.dedent(expected_entries))
             if errors:
                 oss = io.StringIO()
                 printer.print_errors(errors, file=oss)
@@ -40,7 +41,8 @@ class TestCase(unittest.TestCase):
             assert isinstance(expected_entries, list)
 
         if isinstance(actual_entries, str):
-            actual_entries, errors, __ = parser.parse_string(textwrap.dedent(actual_entries))
+            actual_entries, errors, __ = parser.parse_string(
+                textwrap.dedent(actual_entries))
             if errors:
                 oss = io.StringIO()
                 printer.print_errors(errors, file=oss)

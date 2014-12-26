@@ -7,7 +7,6 @@ import re
 import sys
 import textwrap
 
-from beancount.core import amount
 from beancount.core import interpolate
 from beancount.core import data
 from beancount.core import display_context
@@ -46,9 +45,9 @@ def align_position_strings(strings):
     string_items = []
     search = re.compile('[A-Z]').search
     for string in strings:
-        mo = search(string)
-        if mo:
-            index = mo.start()
+        match = search(string)
+        if match:
+            index = match.start()
             if index != 0:
                 max_before = max(index, max_before)
                 max_after = max(len(string) - index, max_after)
@@ -131,7 +130,9 @@ class EntryPrinter:
         rows = [self.render_posting_strings(posting)
                 for posting in entry.postings]
         strs_account = [row[0] for row in rows]
-        width_account = max(len(flag_account) for flag_account in strs_account)
+        width_account = (max(len(flag_account) for flag_account in strs_account)
+                         if strs_account
+                         else 1)
         strs_position, width_position = align_position_strings(row[1] for row in rows)
         strs_weight, width_weight = align_position_strings(row[2] for row in rows)
 
@@ -269,17 +270,17 @@ def print_entries(entries, dcontext=None, render_weights=False, file=None, prefi
         output.write(eprinter(entry))
 
 
-def render_source(source):
+def render_source(meta):
     """Render the source for errors in a way that it will be both detected by
     Emacs and align and rendered nicely.
 
     Args:
-      source: an instance of Source.
+      meta: an instance of AttrDict.
     Returns:
       A string, rendered to be interpretable as a message location for Emacs or
       other editors.
     """
-    return '{}:{:8}'.format(source.filename, '{}:'.format(source.lineno))
+    return '{}:{:8}'.format(meta.filename, '{}:'.format(meta.lineno))
 
 
 def format_error(error):

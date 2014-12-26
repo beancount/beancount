@@ -96,7 +96,7 @@ is great for sectioning large files with many transactions."
     ("! " . font-lock-warning-face)
 
     ;; Number + Currency
-    ;;; ("\\([\\-+]?[0-9]+\\(\\.[0-9]+\\)?\\)\\s-+\\([A-Z][A-Z0-9'\.]\\{1,10\\}\\)" . )
+    ;;; ("\\([\\-+]?[0-9,]+\\(\\.[0-9]+\\)?\\)\\s-+\\([A-Z][A-Z0-9'\.]\\{1,10\\}\\)" . )
 
     ))
 
@@ -112,7 +112,7 @@ is great for sectioning large files with many transactions."
                                          "\\(?::[A-Z][A-Za-z0-9-_:]+\\)")
   "A regular expression to match account names.")
 
-(defvar beancount-number-regexp "[-+]?[0-9\\.]+"
+(defvar beancount-number-regexp "[-+]?[0-9,\\.]+"
   "A regular expression to match decimal numbers in beancount.")
 
 (defvar beancount-currency-regexp "[A-Z][A-Z-_'.]*"

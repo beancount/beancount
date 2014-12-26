@@ -134,7 +134,8 @@ def main():
                         help="Print the full list of supported formats and exit.")
 
     parser.add_argument('-f', '--format', default=None,
-                        choices=['text', 'csv', 'html', 'htmldiv', 'beancount', 'xls'],
+                        choices=['text', 'csv', 'html', 'htmldiv', 'xls', 'ofx',
+                                 'beancount'],
                         help="Output format.")
 
     parser.add_argument('-o', '--output', action='store',
@@ -149,7 +150,7 @@ def main():
                         help='Do not report errors.')
 
     parser.add_argument('filename', metavar='FILENAME.beancount',
-                        help='The Beancout input filename to load.')
+                        help='The Beancount input filename to load.')
 
     subparsers = parser.add_subparsers(title='report',
                                        help='Name/specification of the desired report.')

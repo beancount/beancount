@@ -5,7 +5,6 @@ from datetime import date
 import unittest
 import re
 import textwrap
-import sys
 
 from beancount.parser import printer
 from beancount.parser import parser
@@ -15,19 +14,19 @@ from beancount.core import interpolate
 from beancount.utils import test_utils
 
 
-SOURCE = data.Source('beancount/core/testing.beancount', 12345)
+META = data.new_metadata('beancount/core/testing.beancount', 12345)
 
 class TestPrinter(unittest.TestCase):
 
     def test_render_source(self):
-        source_str = printer.render_source(SOURCE)
+        source_str = printer.render_source(META)
         self.assertTrue(isinstance(source_str, str))
         self.assertTrue(re.search('12345', source_str))
-        self.assertTrue(re.search(SOURCE.filename, source_str))
+        self.assertTrue(re.search(META.filename, source_str))
 
     def test_format_and_print_error(self):
-        entry = data.Open(SOURCE, date(2014, 1, 15), 'Assets:Bank:Checking', [])
-        error = interpolate.BalanceError(SOURCE, "Example balance error", entry)
+        entry = data.Open(META, date(2014, 1, 15), 'Assets:Bank:Checking', [], None)
+        error = interpolate.BalanceError(META, "Example balance error", entry)
         error_str = printer.format_error(error)
         self.assertTrue(isinstance(error_str, str))
 
@@ -360,3 +359,19 @@ class TestPrinterAlignment(test_utils.TestCase):
           Assets:US:Investments:Cash  -22473.32 CAD @ 1.1000 USD                ; -24720.65 USD
         """)
         self.assertEqual(expected_str, oss.getvalue())
+
+
+class TestPrinterMisc(unittest.TestCase):
+
+    @parser.parsedoc
+    def test_no_valid_account(self, entries, errors, options_map):
+        """
+        2000-01-01 * "Test"
+          Assets:Foo
+
+        2000-01-01 * "Test"
+          Assets:Foo
+          Assets:Bar
+        """
+        oss = io.StringIO()
+        printer.print_entries(entries, file=oss)

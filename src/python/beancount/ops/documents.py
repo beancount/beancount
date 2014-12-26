@@ -69,7 +69,7 @@ def verify_document_files_exist(entries, unused_options_map):
             continue
         if not path.exists(entry.filename):
             errors.append(
-                DocumentError(entry.source,
+                DocumentError(entry.meta,
                               'File does not exist: "{}"'.format(entry.filename),
                               entry))
     return entries, errors
@@ -105,9 +105,9 @@ def find_documents(directory, input_filename, accounts_only=None, strict=False):
 
     # If the directory does not exist, just generate an error and return.
     if not path.exists(directory):
-        source = data.Source(input_filename, 0)
+        meta = data.new_metadata(input_filename, 0)
         error = DocumentError(
-            source, "Document root '{}' does not exist".format(directory), None)
+            meta, "Document root '{}' does not exist".format(directory), None)
         return ([], [error])
 
     # Walk the hierarchy of files.
@@ -126,20 +126,20 @@ def find_documents(directory, input_filename, accounts_only=None, strict=False):
                 if strict:
                     if any(account_name.startswith(account) for account in accounts_only):
                         errors.append(DocumentError(
-                            data.Source(input_filename, 0),
+                            data.new_metadata(input_filename, 0),
                             "Document '{}' found in child account {}".format(
                                 filename, account_name), None))
                     elif any(account.startswith(account_name) for account in accounts_only):
                         errors.append(DocumentError(
-                            data.Source(input_filename, 0),
+                            data.new_metadata(input_filename, 0),
                             "Document '{}' found in parent account {}".format(
                                 filename, account_name), None))
                 continue
 
             # Create a new directive.
-            source = data.Source(input_filename, 0)
+            meta = data.new_metadata(input_filename, 0)
             date = datetime.date(*map(int, match.group(1, 2, 3)))
-            entry = Document(source, date, account_name, path.join(root, filename))
+            entry = Document(meta, date, account_name, path.join(root, filename))
             entries.append(entry)
 
     return (entries, errors)

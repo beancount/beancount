@@ -368,3 +368,47 @@ class Distribution:
                 max_count = count
                 max_value = value
         return max_value
+
+
+class LineFileProxy:
+    """A file object that will delegate writing full lines to another logging function.
+    This may be used for writing data to a logging level without having to worry about
+    lines.
+    """
+    def __init__(self, line_writer, prefix=None):
+        """Construct a new line delegator file object proxy.
+
+        Args:
+          line_writer: A callable function, used to write to the delegated output.
+          prefix: An optional string, the prefix to insert before every line.
+        """
+        self.line_writer = line_writer
+        self.prefix = prefix
+        self.data = []
+
+    def write(self, data):
+        """Write some string data to the output.
+
+        Args:
+          data: A string, with or without newlines.
+        """
+        if '\n' in data:
+            self.data.append(data)
+            self.flush()
+        else:
+            self.data.append(data)
+
+    def flush(self):
+        """Flush the data to the line writer."""
+        data = ''.join(self.data)
+        if data:
+            lines = data.splitlines()
+            self.data = [lines.pop(-1)] if data[-1] != '\n' else []
+            for line in lines:
+                if self.prefix:
+                    line = self.prefix + line
+                self.line_writer(line)
+
+    def close(self):
+        """Close the line delegator."""
+        self.flush()

@@ -57,8 +57,8 @@ class LexBuilder(object):
         return self.long_string_maxlines_default
 
     def get_lexer_location(self):
-        return data.Source(_parser.get_yyfilename(),
-                           _parser.get_yylineno())
+        return data.new_metadata(_parser.get_yyfilename(),
+                                 _parser.get_yylineno())
 
     def ERROR(self, string):
         self.errors.append(
@@ -181,6 +181,17 @@ class LexBuilder(object):
           an object.
         """
         return link
+
+    def KEY(self, key):
+        """Process a KEY token.
+
+        Args:
+          key: a str, the name of the key string.
+        Returns:
+          The link string itself. For now we don't need to represent this by
+          an object.
+        """
+        return key
 
 
 def lex_iter(file, builder=None):
