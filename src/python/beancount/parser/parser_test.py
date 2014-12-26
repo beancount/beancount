@@ -17,6 +17,7 @@ from beancount.parser import parser
 from beancount.parser import lexer
 from beancount.core import data
 from beancount.core import amount
+from beancount.core import position
 from beancount.core import interpolate
 from beancount.core import interpolate_test
 from beancount.utils import test_utils
@@ -668,6 +669,142 @@ class TestTransactions(unittest.TestCase):
           2014-07-17 * "(JRN) INTRA-ACCOUNT TRANSFER" ^795422780
         """
         self.assertTrue(isinstance(entries[0].postings, list))
+
+
+class TestParseLots(unittest.TestCase):
+
+    @parsedoc
+    def test_lot_nolot(self, entries, errors, _):
+        """
+          2014-01-01 *
+            Assets:Invest:AAPL   45.23 USD
+            Assets:Invest:Cash
+        """
+        self.assertFalse(errors)
+        pos = entries[0].postings[0].position
+        self.assertEqual(D('45.23'), pos.number)
+        self.assertEqual(position.Lot('USD', None, None), pos.lot)
+
+    @parsedoc
+    def test_lot_empty(self, entries, errors, _):
+        """
+          2014-01-01 *
+            Assets:Invest:AAPL   20 AAPL {}
+            Assets:Invest:Cash
+        """
+        self.assertFalse(errors)
+        pos = entries[0].postings[0].position
+        self.assertEqual(D('20'), pos.number)
+        self.assertEqual(position.Lot('AAPL', None, None), pos.lot)
+
+    @parsedoc
+    def test_lot_cost(self, entries, errors, _):
+        """
+          2014-01-01 *
+            Assets:Invest:AAPL   20 AAPL {45.23 USD}
+            Assets:Invest:Cash
+        """
+        self.assertFalse(errors)
+        pos = entries[0].postings[0].position
+        self.assertEqual(D('20'), pos.number)
+        self.assertEqual(position.Lot('AAPL', amount.from_string('45.23 USD'), None),
+                         pos.lot)
+
+    @parsedoc
+    def test_lot_date(self, entries, errors, _):
+        """
+          2014-01-01 *
+            Assets:Invest:AAPL   20 AAPL {2014-12-26}
+            Assets:Invest:Cash
+        """
+        self.assertFalse(errors)
+        pos = entries[0].postings[0].position
+        self.assertEqual(D('20'), pos.number)
+        self.assertEqual(position.Lot('AAPL', None, datetime.date(2014, 12, 26)),
+                         pos.lot)
+
+    @parsedoc
+    def test_lot_label(self, entries, errors, _):
+        """
+          2014-01-01 *
+            Assets:Invest:AAPL   20 AAPL {"d82d55a0dbe8"}
+            Assets:Invest:Cash
+        """
+        self.assertEqual(1, len(errors))
+        self.assertTrue(re.search("Labels not supported", errors[0].message))
+        pos = entries[0].postings[0].position
+        self.assertEqual(D('20'), pos.number)
+        self.assertEqual(position.Lot('AAPL', None, None), pos.lot)
+
+    @parsedoc
+    def test_lot_two_types(self, entries, errors, _):
+        """
+          2014-01-01 *
+            Assets:Invest:AAPL    1 AAPL {45.23 USD, 2014-12-26}
+            Assets:Invest:AAPL    1 AAPL {2014-12-26, 45.23 USD}
+            Assets:Invest:AAPL    1 AAPL {45.23 USD, "d82d55a0dbe8"}
+            Assets:Invest:AAPL    1 AAPL {"d82d55a0dbe8", 45.23 USD}
+            Assets:Invest:AAPL    1 AAPL {2014-12-26, "d82d55a0dbe8"}
+            Assets:Invest:AAPL    1 AAPL {"d82d55a0dbe8", 2014-12-26}
+            Assets:Invest:Cash
+        """
+        self.assertEqual(4, len(errors))
+        self.assertTrue(all(re.search("Labels not supported", error.message)
+                            for error in errors))
+
+    @parsedoc
+    def test_lot_three_types(self, entries, errors, _):
+        """
+          2014-01-01 *
+            Assets:Invest:AAPL    1 AAPL {45.23 USD, 2014-12-26, "d82d55a0dbe8"}
+            Assets:Invest:AAPL    1 AAPL {2014-12-26, 45.23 USD, "d82d55a0dbe8"}
+            Assets:Invest:AAPL    1 AAPL {45.23 USD, "d82d55a0dbe8", 2014-12-26}
+            Assets:Invest:AAPL    1 AAPL {2014-12-26, "d82d55a0dbe8", 45.23 USD}
+            Assets:Invest:AAPL    1 AAPL {"d82d55a0dbe8", 45.23 USD, 2014-12-26}
+            Assets:Invest:AAPL    1 AAPL {"d82d55a0dbe8", 2014-12-26, 45.23 USD}
+            Assets:Invest:Cash
+        """
+        self.assertEqual(6, len(errors))
+        self.assertTrue(all(re.search("Labels not supported", error.message)
+                            for error in errors))
+
+    @parsedoc
+    def test_lot_repeated_cost(self, entries, errors, _):
+        """
+          2014-01-01 *
+            Assets:Invest:AAPL    1 AAPL {45.23 USD, 45.24 USD}
+            Assets:Invest:Cash
+        """
+        self.assertEqual(1, len(errors))
+        self.assertTrue(re.search("Duplicate cost", errors[0].message))
+
+    @parsedoc
+    def test_lot_repeated_date(self, entries, errors, _):
+        """
+          2014-01-01 *
+            Assets:Invest:AAPL    1 AAPL {45.23 USD, 2014-12-26, 2014-12-27}
+            Assets:Invest:Cash
+        """
+        self.assertEqual(1, len(errors))
+        self.assertTrue(re.search("Duplicate date", errors[0].message))
+
+    @parsedoc
+    def test_lot_repeated_label(self, entries, errors, _):
+        """
+          2014-01-01 *
+            Assets:Invest:AAPL    1 AAPL {"aaa", "bbb", 45.23 USD}
+            Assets:Invest:Cash
+        """
+        self.assertEqual(2, len(errors))
+        self.assertTrue(any(re.search("Duplicate label", error.message)
+                            for error in errors))
+        self.assertTrue(any(re.search("Labels not supported", error.message)
+                            for error in errors))
+
+## FIXME: Test full cost with + syntax.
+
+
+
 
 
 class TestCurrencies(unittest.TestCase):

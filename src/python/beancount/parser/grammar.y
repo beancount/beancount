@@ -99,7 +99,7 @@ const char* getTokenName(int token);
 %token <pyobj> NUMBER      /* A floating-point number */
 %token <pyobj> TAG         /* A tag that can be associated with a transaction */
 %token <pyobj> LINK        /* A link that can be associated with a transaction */
-%token <pyobj> ID          /* A label or a key in a key-value pair */
+%token <pyobj> KEY         /* A key in a key-value pair */
 
 /* Types for non-terminal symbols. */
 %type <character> txn
@@ -224,7 +224,7 @@ posting : INDENT optflag ACCOUNT position eol
             DECREF1($3);
         }
 
-key_value : INDENT ID  key_value_value eol
+key_value : INDENT KEY key_value_value eol
           {
               $$ = BUILD("key_value", "OO", $2, $3);
               DECREF2($2, $3);
@@ -384,7 +384,7 @@ lot_comp : amount
          {
              $$ = $1;
          }
-         | ID
+         | STRING
          {
              $$ = $1;
          }
@@ -520,7 +520,7 @@ const char* getTokenName(int token)
         case NUMBER   : return "NUMBER";
         case TAG      : return "TAG";
         case LINK     : return "LINK";
-        case ID       : return "ID";
+        case KEY      : return "KEY";
     }
     return 0;
 }

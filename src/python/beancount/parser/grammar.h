@@ -81,7 +81,7 @@ extern int yydebug;
     NUMBER = 291,
     TAG = 292,
     LINK = 293,
-    ID = 294
+    KEY = 294
   };
 #endif
 

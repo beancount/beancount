@@ -206,10 +206,10 @@ plugin		{ return PLUGIN; }
     return LINK;
 }
 
- /* Id */
-[a-z][a-z0-9\-_]+: 		{
-    yylval->pyobj = BUILD("ID", "s#", yytext, yyleng-1);
-    return ID;
+ /* Key */
+[a-z][a-zA-Z0-9\-_]+: 		{
+    yylval->pyobj = BUILD("KEY", "s#", yytext, yyleng-1);
+    return KEY;
 }
 
  /* Default rule. */

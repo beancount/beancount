@@ -271,7 +271,9 @@ class Builder(lexer.LexBuilder):
         Returns:
           A pair of the input. We do very little here.
         """
-        assert isinstance(lot_comp_list, list)
+        if lot_comp_list is None:
+            return (None, None, None)
+        assert isinstance(lot_comp_list, list), "Internal error in parser."
 
         cost = None
         lot_date = None
@@ -279,12 +281,27 @@ class Builder(lexer.LexBuilder):
         istotal = False
         for comp in lot_comp_list:
             if isinstance(comp, Amount):
-                cost = comp
+                if cost is None:
+                    cost = comp
+                else:
+                    self.errors.append(
+                        ParserError(self.get_lexer_location(),
+                                    "Duplicate cost: '{}'.".format(comp), None))
             elif isinstance(comp, date):
-                lot_date = comp
+                if lot_date is None:
+                    lot_date = comp
+                else:
+                    self.errors.append(
+                        ParserError(self.get_lexer_location(),
+                                    "Duplicate date: '{}'.".format(comp), None))
             else:
                 assert isinstance(comp, str)
-                label = comp
+                if label is None:
+                    label = comp
+                else:
+                    self.errors.append(
+                        ParserError(self.get_lexer_location(),
+                                    "Duplicate label: '{}'.".format(comp), None))
 
         if label is not None:
             self.errors.append(
