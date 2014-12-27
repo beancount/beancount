@@ -117,6 +117,8 @@ const char* getTokenName(int token);
 %type <pyobj> balance
 %type <pyobj> pad
 %type <pyobj> amount
+%type <pyobj> compound_amount
+%type <pyobj> maybe_number
 %type <pyobj> position
 %type <pyobj> lot_comp
 %type <pyobj> lot_comp_list
@@ -339,10 +341,30 @@ balance : DATE BALANCE ACCOUNT amount eol key_value_list
 
 amount : NUMBER CURRENCY
        {
-         PyObject* o = BUILD("amount", "OO", $1, $2);
-         $$ = o;
+         $$ = BUILD("amount", "OO", $1, $2);
          DECREF2($1, $2);
        }
+
+maybe_number : empty
+             {
+                 Py_INCREF(Py_None);
+                 $$ = Py_None;
+             }
+             | NUMBER
+             {
+                 $$ = $1;
+             }
+
+compound_amount : maybe_number CURRENCY
+                {
+                    $$ = BUILD("compound_amount", "OOO", $1, Py_None, $2);
+                    DECREF2($1, $2);
+                }
+                | maybe_number PLUS maybe_number CURRENCY
+                {
+                    $$ = BUILD("compound_amount", "OOO", $1, $3, $4);
+                    DECREF3($1, $3, $4);
+                }
 
 position : amount
          {
@@ -377,7 +399,7 @@ lot_comp_list : empty
                   DECREF2($1, $3);
               }
 
-lot_comp : amount
+lot_comp : compound_amount
          {
              $$ = $1;
          }

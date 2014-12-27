@@ -801,10 +801,52 @@ class TestParseLots(unittest.TestCase):
         self.assertTrue(any(re.search("Labels not supported", error.message)
                             for error in errors))
 
-## FIXME: Test full cost with + syntax.
+    @parsedoc
+    def test_lot_both_costs(self, entries, errors, _):
+        """
+          2014-01-01 *
+            Assets:Invest:AAPL   10 AAPL {45.23 + 9.95 USD}
+            Assets:Invest:AAPL   10 AAPL {45.23+9.95 USD}
+            Assets:Invest:Cash
+        """
+        self.assertTrue(errors)
+        self.assertTrue(re.search("Total cost not supported", errors[0].message))
+
+    @parsedoc
+    def test_lot_total_cost_only(self, entries, errors, _):
+        """
+          2014-01-01 *
+            Assets:Invest:AAPL   10 AAPL {+ 9.95 USD}
+            Assets:Invest:AAPL   10 AAPL { +9.95 USD}
+            Assets:Invest:Cash
+        """
+        self.assertTrue(errors)
+        self.assertTrue(re.search("Total cost not supported", errors[0].message))
+
+    @parsedoc
+    def test_lot_total_empty_total(self, entries, errors, _):
+        """
+          2014-01-01 *
+            Assets:Invest:AAPL   20 AAPL {45.23 + USD}
+            Assets:Invest:Cash
+        """
+        self.assertEqual(0, len(errors))
+        pos = entries[0].postings[0].position
+        self.assertEqual(D('20'), pos.number)
+        self.assertEqual(position.Lot('AAPL', amount.from_string('45.23 USD'), None),
+                         pos.lot)
 
 
-
+    @parsedoc
+    def test_lot_total_just_currency(self, entries, errors, _):
+        """
+          2014-01-01 *
+            Assets:Invest:AAPL   20 AAPL {USD}
+            Assets:Invest:AAPL   20 AAPL { + USD}
+            Assets:Invest:Cash
+        """
+        self.assertTrue(errors)
+        self.assertTrue(re.search("Total cost not supported", errors[0].message))
 
 
 class TestCurrencies(unittest.TestCase):

@@ -50,6 +50,10 @@ ParserSyntaxError = collections.namedtuple('ParserSyntaxError', 'source message 
 # Temporary holder for key-value pairs.
 KeyValue = collections.namedtuple('KeyValue', 'key value')
 
+# Convenience holding class for amounts with per-share and total value.
+CompoundAmount = collections.namedtuple('CompoundAmount',
+                                        'number_per number_total currency')
+
 
 def valid_account_regexp(options):
     """Build a regexp to validate account names from the options.
@@ -263,26 +267,49 @@ class Builder(lexer.LexBuilder):
         self.dcupdate(number, currency)
         return Amount(number, currency)
 
+    def compound_amount(self, number_per, number_total, currency):
+        """Process an amount grammar rule.
+
+        Args:
+          number_per: a Decimal instance, the number of the cost per share.
+          number_total: a Decimal instance, the number of the cost over all shares.
+          currency: a currency object (a str, really, see CURRENCY above)
+        Returns:
+          A triple of (Decimal, Decimal, currency string) to be processed further when
+          creating a Lot instance.
+        """
+        # Update the mapping that stores the parsed precisions.
+        # Note: This is relatively slow, adds about 70ms because of number.as_tuple().
+        if number_per is not None:
+            self.dcupdate(number_per, currency)
+        if number_total is not None:
+            self.dcupdate(number_total, currency)
+
+        # Note that we are not able to reduce the value to a number per-share
+        # here because we only get the number of units in the full lot spec.
+        return CompoundAmount(number_per, number_total, currency)
+
     def lot_spec(self, lot_comp_list):
         """Process a lot_cost_date grammar rule.
 
         Args:
-          lot_comp_list: A list of Amount, a datetime.date, or label ID strings.
+          lot_comp_list: A list of CompoundAmountAmount, a datetime.date, or
+            label ID strings.
         Returns:
-          A pair of the input. We do very little here.
+          A lot-info tuple of CompoundAmount, lot date and label string. Any of these
+          may be None.
         """
         if lot_comp_list is None:
             return (None, None, None)
         assert isinstance(lot_comp_list, list), "Internal error in parser."
 
-        cost = None
+        compound_cost = None
         lot_date = None
         label = None
-        istotal = False
         for comp in lot_comp_list:
-            if isinstance(comp, Amount):
-                if cost is None:
-                    cost = comp
+            if isinstance(comp, CompoundAmount):
+                if compound_cost is None:
+                    compound_cost = comp
                 else:
                     self.errors.append(
                         ParserError(self.get_lexer_location(),
@@ -308,22 +335,38 @@ class Builder(lexer.LexBuilder):
                 ParserError(self.get_lexer_location(),
                             "Labels not supported yet: '{}'.".format(label), None))
 
-        return (cost, lot_date, istotal)
+        return (compound_cost, lot_date, label)
 
-    def position(self, filename, lineno, amount, lot_cost_date):
+    def position(self, filename, lineno, amount, lot_info):
         """Process a position grammar rule.
 
         Args:
           filename: the current filename.
           lineno: the current line number.
           amount: an instance of Amount for the position.
-          lot_cost_date: a tuple of (cost, lot-date)
+          lot_info: a tuple of (compound-cost, lot-date, label)
         Returns:
           A new instance of Position.
         """
-        cost, lot_date, istotal = lot_cost_date if lot_cost_date else (None, None, False)
-        if istotal:
-            cost = amount_div(cost, amount.number)
+        compound_cost, lot_date, label = lot_info if lot_info else (None, None, None)
+
+        # Compute the cost.
+        if compound_cost is not None:
+            if (compound_cost.number_per is None or
+                compound_cost.number_total is not None):
+                self.errors.append(
+                    ParserError(self.get_lexer_location(),
+                                "Total cost not supported: '{}'".format(compound_cost),
+                                None))
+                cost = None
+            else:
+                cost = Amount(compound_cost.number_per, compound_cost.currency)
+        else:
+            cost = None
+        ## FIXME: Complete this, incorporate the total.
+        # if istotal:
+        #     cost = amount_div(cost, amount.number)
+
         lot = Lot(amount.currency, cost, lot_date)
 
         # We don't allow a cost nor a price of zero. (Conversion entries may use
