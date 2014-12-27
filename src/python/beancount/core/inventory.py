@@ -149,6 +149,15 @@ class Inventory(list):
     # Methods to access portions of an inventory.
     #
 
+    def keys(self):
+        """Return the commodities held in this inventory.
+
+        Returns:
+          A list of currency strings.
+        """
+        return set(position.lot.currency
+                   for position in self)
+
     def get_positions(self):
         """Return the positions in this inventory.
 
