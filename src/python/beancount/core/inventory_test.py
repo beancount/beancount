@@ -249,15 +249,15 @@ class TestInventory(unittest.TestCase):
         inv = Inventory.from_string('2 GOOG {500 USD}, 3 GOOG {520 USD}, 4 GOOG {530 USD}')
         self.assertEqual(inv.average(), Inventory.from_string('9 GOOG {520 USD}'))
 
-    def test_keys(self):
+    def test_currency_pairs(self):
         inv = Inventory()
-        self.assertEqual(set(), inv.keys())
+        self.assertEqual(set(), inv.currency_pairs())
 
         inv = Inventory.from_string('40 USD {1.01 CAD}, 40 USD')
-        self.assertEqual(set(['USD']), inv.keys())
+        self.assertEqual(set(['USD']), inv.currency_pairs())
 
         inv = Inventory.from_string('40 AAPL {1.01 USD}, 10 GOOG {2.02 USD}')
-        self.assertEqual(set(['AAPL', 'GOOG']), inv.keys())
+        self.assertEqual(set(['AAPL', 'GOOG']), inv.currency_pairs())
 
     def test_get_position(self):
         inv = Inventory(self.POSITIONS_ALL_KINDS)

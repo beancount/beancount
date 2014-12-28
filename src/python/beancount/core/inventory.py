@@ -48,6 +48,7 @@ from .amount import ZERO
 from .amount import Amount
 from .position import Lot
 from .position import Position
+from .position import lot_currency_pair
 from .position import from_string as position_from_string
 from .display_context import DEFAULT_FORMATTER
 
@@ -149,13 +150,13 @@ class Inventory(list):
     # Methods to access portions of an inventory.
     #
 
-    def keys(self):
+    def currency_pairs(self):
         """Return the commodities held in this inventory.
 
         Returns:
           A list of currency strings.
         """
-        return set(position.lot.currency
+        return set(lot_currency_pair(position.lot)
                    for position in self)
 
     def get_positions(self):
