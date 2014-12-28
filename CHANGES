@@ -4,6 +4,16 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2014-12-28
+
+  - Merged various functions (in beancount.ops.lifetimes) used to automatically
+    compute the date intervals that particular commodities are in used. This is
+    intended to be used to write scripts to automatically fetch all the price
+    entries needed during the lifetime of a particular Ledger. A script has been
+    created under experiments (src/experiments/fetch-missing-prices.py) which
+    you should be able to modify to your favourite price fetcher.
+
+
 2014-12-26
 
   - Merged the latest version of the 'display_context' branch into 'default'.

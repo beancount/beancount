@@ -16,6 +16,7 @@ from .position import Lot
 from .position import Position
 from .position import from_string
 from .position import from_amounts
+from .position import lot_currency_pair
 
 
 class TestPosition(unittest.TestCase):
@@ -163,3 +164,9 @@ class TestPosition(unittest.TestCase):
         pos2 = Position(Lot("USD", Amount('10', 'AUD'), None), D('-1'))
         self.assertFalse(pos1.is_negative_at_cost())
         self.assertTrue(pos2.is_negative_at_cost())
+
+    def test_lot_currency_pair(self):
+        self.assertEqual(("USD", None),
+                         lot_currency_pair(Lot("USD", None, None)))
+        self.assertEqual(("AAPL", "USD"),
+                         lot_currency_pair(Lot("AAPL", Amount('43.23', 'USD'), None)))
