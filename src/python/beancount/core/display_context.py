@@ -60,8 +60,6 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import collections
 import io
 import enum
-import math
-from pprint import pprint
 
 from beancount.utils import misc_utils
 
@@ -99,7 +97,8 @@ class _CurrencyContext:
         self.fractional_dist = misc_utils.Distribution()
 
     def __str__(self):
-        fmt = ('sign={:<2}  integer_max={:<2}  fractional_common={:<2}  fractional_max={:<2}  '
+        fmt = ('sign={:<2}  integer_max={:<2}  '
+               'fractional_common={:<2}  fractional_max={:<2}  '
                '"{}" "{}"')
         dist = self.fractional_dist
 

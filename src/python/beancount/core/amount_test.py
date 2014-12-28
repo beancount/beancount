@@ -1,8 +1,6 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import unittest
-import re
-import io
 
 from .amount import D
 from .amount import Decimal

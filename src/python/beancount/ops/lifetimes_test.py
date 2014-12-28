@@ -1,21 +1,8 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import datetime
-import re
-import logging
-import textwrap
-import sys
-import subprocess
-from os import path
-from unittest import mock
 
 from beancount import loader
-from beancount.core import inventory
-from beancount.core import data
-from beancount.ops import prices
-from beancount.parser import parser
-from beancount.parser import cmptest
-from beancount.parser import options
 from beancount.ops import lifetimes
 from beancount.utils import test_utils
 
@@ -205,8 +192,10 @@ class TestCompressLifetimes(test_utils.TestCase):
 class TestLifetimeDateIterators(test_utils.TestCase):
 
     def test_iter_weeks(self):
-        lifetimes_map = {('AAPL', 'USD'): [(datetime.date(2014, 2, 3), datetime.date(2014, 3, 10)),
-                                           (datetime.date(2014, 5, 20), datetime.date(2014, 7, 1))],
+        lifetimes_map = {('AAPL', 'USD'): [(datetime.date(2014, 2, 3),
+                                            datetime.date(2014, 3, 10)),
+                                           (datetime.date(2014, 5, 20),
+                                            datetime.date(2014, 7, 1))],
                          ('USD', None): [(datetime.date(2014, 1, 1), None)]}
 
         required_prices = list(lifetimes.required_weekly_prices(lifetimes_map,
