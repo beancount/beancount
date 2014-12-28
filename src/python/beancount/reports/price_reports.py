@@ -11,6 +11,7 @@ from beancount.parser import printer
 from beancount.core import data
 from beancount.core import amount
 from beancount.ops import prices
+from beancount.ops import lifetimes
 
 
 class CommoditiesReport(report.TableReport):
@@ -24,6 +25,22 @@ class CommoditiesReport(report.TableReport):
         return table.create_table([(base_quote,)
                                    for base_quote in sorted(price_map.forward_pairs)],
                                   [(0, "Base/Quote", self.formatter.render_commodity)])
+
+
+class CommodityLifetimes(report.TableReport):
+    """Print out a list of lifetimes of each commodity."""
+
+    names = ['lifetimes']
+    default_format = 'text'
+
+    def render_text(self, entries, errors, options_map, file):
+        lifetimes_map = lifetimes.get_commodity_lifetimes(entries)
+        ccywidth = max(map(len, lifetimes_map.keys())) if lifetimes else 1
+        for currency, lifetime in sorted(lifetimes_map.items(), key=lambda x: x[1][0][0]):
+            file.write('{:{width}}: {}\n'.format(currency,
+                                                 '  /  '.join('{} - {}'.format(begin, end or '')
+                                                              for begin, end in lifetime),
+                                                 width=ccywidth))
 
 
 class CommodityPricesReport(report.TableReport):
@@ -122,6 +139,7 @@ class PriceDBReport(report.Report):
 
 __reports__ = [
     CommoditiesReport,
+    CommodityLifetimes,
     CommodityPricesReport,
     PricesReport,
     PriceDBReport,

@@ -74,27 +74,3 @@ def get_commodity_lifetimes(entries):
                 commodities = new_commodities
 
     return lifetimes
-
-
-def main():
-    import argparse, logging
-    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
-    parser = argparse.ArgumentParser(description=__doc__.strip())
-    parser.add_argument('filename', help='Beancount filename to parse')
-    args = parser.parse_args()
-
-    # Load the Beancount input file.
-    entries, errors, options_map = loader.load_file(args.filename)
-
-    lifetimes = get_time_intervals(entries)
-    ccywidth = max(map(len, lifetimes.keys())) if lifetimes else 1
-    for currency, lifetime in sorted(lifetimes.items(), key=lambda x: x[1][0][0]):
-        print('{:{width}}: {}'.format(currency,
-                                      ' / '.join('{}-{}'.format(begin, end or '...')
-                                                 for begin, end in lifetime),
-                                      width=ccywidth))
-
-
-
-if __name__ == '__main__':
-    main()
