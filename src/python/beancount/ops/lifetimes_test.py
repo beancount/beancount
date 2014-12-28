@@ -69,11 +69,11 @@ class TestCommodityLifetimes(test_utils.TestCase):
         self.assertFalse(errors)
         lifetimes_map = lifetimes.get_commodity_lifetimes(entries)
         self.assertEqual(
-            {'USD': [(datetime.date(2000, 1, 2), None)],
-             'AAPL': [(datetime.date(2001, 2, 10), datetime.date(2001, 7, 21))],
-             'CSCO': [(datetime.date(2001, 2, 10), datetime.date(2001, 7, 22))],
-             'INTL': [(datetime.date(2001, 2, 10), datetime.date(2001, 7, 23))],
-             'IBM': [(datetime.date(2001, 2, 10), datetime.date(2001, 7, 24))]},
+            {('USD', None): [(datetime.date(2000, 1, 2), None)],
+             ('AAPL', 'USD'): [(datetime.date(2001, 2, 10), datetime.date(2001, 7, 21))],
+             ('CSCO', 'USD'): [(datetime.date(2001, 2, 10), datetime.date(2001, 7, 22))],
+             ('INTL', 'USD'): [(datetime.date(2001, 2, 10), datetime.date(2001, 7, 23))],
+             ('IBM', 'USD'): [(datetime.date(2001, 2, 10), datetime.date(2001, 7, 24))]},
             lifetimes_map)
 
     @loader.loaddoc
@@ -118,10 +118,10 @@ class TestCommodityLifetimes(test_utils.TestCase):
         self.assertFalse(errors)
         lifetimes_map = lifetimes.get_commodity_lifetimes(entries)
         self.assertEqual(
-            {'USD': [(datetime.date(2000, 1, 2), None)],
-             'AAPL': [(datetime.date(2001, 3, 10), datetime.date(2001, 12, 11)),
-                      (datetime.date(2002, 2, 10), datetime.date(2002, 6, 11)),
-                      (datetime.date(2003, 4, 10), None)]},
+            {('USD', None): [(datetime.date(2000, 1, 2), None)],
+             ('AAPL', 'USD'): [(datetime.date(2001, 3, 10), datetime.date(2001, 12, 11)),
+                               (datetime.date(2002, 2, 10), datetime.date(2002, 6, 11)),
+                               (datetime.date(2003, 4, 10), None)]},
             lifetimes_map)
 
     @loader.loaddoc
@@ -165,8 +165,8 @@ class TestCommodityLifetimes(test_utils.TestCase):
         self.assertFalse(errors)
         lifetimes_map = lifetimes.get_commodity_lifetimes(entries)
         self.assertEqual(
-            {'AAPL': [(datetime.date(2001, 3, 10), datetime.date(2001, 9, 11))],
-             'USD': [(datetime.date(2000, 1, 2), None)]},
+            {('AAPL', 'USD'): [(datetime.date(2001, 3, 10), datetime.date(2001, 9, 11))],
+             ('USD', None): [(datetime.date(2000, 1, 2), None)]},
             lifetimes_map)
 
 
@@ -205,8 +205,23 @@ class TestCompressLifetimes(test_utils.TestCase):
 class TestLifetimeDateIterators(test_utils.TestCase):
 
     def test_iter_weeks(self):
-        lifetimes_map = {'AAPL': [(datetime.date(2014, 2, 3), datetime.date(2014, 3, 10)),
-                                  (datetime.date(2014, 3, 20), datetime.date(2014, 7, 1))],
-                         'USD': [(datetime.date(2013, 12, 1), None)]}
+        lifetimes_map = {('AAPL', 'USD'): [(datetime.date(2014, 2, 3), datetime.date(2014, 3, 10)),
+                                           (datetime.date(2014, 5, 20), datetime.date(2014, 7, 1))],
+                         ('USD', None): [(datetime.date(2014, 1, 1), None)]}
 
-        list(lifetimes.iter_required_weekly_prices(lifetimes_map))
+        required_prices = list(lifetimes.required_weekly_prices(lifetimes_map,
+                                                                datetime.date(2014, 9, 1)))
+        self.assertEqual([(datetime.date(2014, 1, 31), 'AAPL', 'USD'),
+                          (datetime.date(2014, 2, 7), 'AAPL', 'USD'),
+                          (datetime.date(2014, 2, 14), 'AAPL', 'USD'),
+                          (datetime.date(2014, 2, 21), 'AAPL', 'USD'),
+                          (datetime.date(2014, 2, 28), 'AAPL', 'USD'),
+                          (datetime.date(2014, 3, 7), 'AAPL', 'USD'),
+                          (datetime.date(2014, 5, 16), 'AAPL', 'USD'),
+                          (datetime.date(2014, 5, 23), 'AAPL', 'USD'),
+                          (datetime.date(2014, 5, 30), 'AAPL', 'USD'),
+                          (datetime.date(2014, 6, 6), 'AAPL', 'USD'),
+                          (datetime.date(2014, 6, 13), 'AAPL', 'USD'),
+                          (datetime.date(2014, 6, 20), 'AAPL', 'USD'),
+                          (datetime.date(2014, 6, 27), 'AAPL', 'USD')],
+                         required_prices)

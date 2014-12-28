@@ -254,10 +254,10 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(set(), inv.currency_pairs())
 
         inv = Inventory.from_string('40 USD {1.01 CAD}, 40 USD')
-        self.assertEqual(set(['USD']), inv.currency_pairs())
+        self.assertEqual(set([('USD', 'CAD'), ('USD', None)]), inv.currency_pairs())
 
         inv = Inventory.from_string('40 AAPL {1.01 USD}, 10 GOOG {2.02 USD}')
-        self.assertEqual(set(['AAPL', 'GOOG']), inv.currency_pairs())
+        self.assertEqual(set([('AAPL', 'USD'), ('GOOG', 'USD')]), inv.currency_pairs())
 
     def test_get_position(self):
         inv = Inventory(self.POSITIONS_ALL_KINDS)

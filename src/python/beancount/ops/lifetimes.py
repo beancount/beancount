@@ -136,12 +136,14 @@ def required_weekly_prices(lifetimes_map, date_last):
     """
     results = []
     for currency_pair, intervals in lifetimes_map.items():
+        if currency_pair[1] is None:
+            continue
         for date_begin, date_end in intervals:
-            # Find first Friday at or after the minimum date.
+            # Find first Friday before the minimum date.
             diff_days = 4 - date_begin.weekday()
             if diff_days > 1:
                 diff_days -= 7
-            date = date_begin + datetime.timedelta(days=diff_days + 7)
+            date = date_begin + datetime.timedelta(days=diff_days)
 
             # Iterate over all Fridays.
             if date_end is None:
