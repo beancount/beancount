@@ -45,10 +45,12 @@ class CommodityLifetimes(report.TableReport):
             lifetimes_map = lifetimes.compress_lifetimes_days(lifetimes_map,
                                                               self.args.compress_days)
 
-        ccywidth = max(map(len, lifetimes_map.keys())) if lifetimes else 1
+        name_map = {pair: '{}/{}'.format(pair[0], pair[1]) if pair[1] else pair[0]
+                    for pair in lifetimes_map.keys()}
+        ccywidth = max(map(len, name_map.values()))
         for currency, lifetime in sorted(lifetimes_map.items(),
                                          key=lambda x: (x[1][0][0], x[0])):
-            file.write('{:{width}}: {}\n'.format(currency,
+            file.write('{:{width}}: {}\n'.format(name_map[currency],
                                                  '  /  '.join('{} - {}'.format(begin, end or '')
                                                               for begin, end in lifetime),
                                                  width=ccywidth))

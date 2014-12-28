@@ -200,3 +200,13 @@ class TestCompressLifetimes(test_utils.TestCase):
         for num_days in 11, 12, 100, 2000:
             compressed = lifetimes.compress_intervals_days(intervals, num_days)
             self.assertEqual(expected, compressed)
+
+
+class TestLifetimeDateIterators(test_utils.TestCase):
+
+    def test_iter_weeks(self):
+        lifetimes_map = {'AAPL': [(datetime.date(2014, 2, 3), datetime.date(2014, 3, 10)),
+                                  (datetime.date(2014, 3, 20), datetime.date(2014, 7, 1))],
+                         'USD': [(datetime.date(2013, 12, 1), None)]}
+
+        list(lifetimes.iter_required_weekly_prices(lifetimes_map))
