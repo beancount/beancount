@@ -33,10 +33,21 @@ class CommodityLifetimes(report.TableReport):
     names = ['lifetimes']
     default_format = 'text'
 
+    @classmethod
+    def add_args(cls, parser):
+        parser.add_argument('-c', '--compress-days', type=int,
+                            action='store', default=None,
+                            help="The number of unused days to allow for continuous usage.")
+
     def render_text(self, entries, errors, options_map, file):
         lifetimes_map = lifetimes.get_commodity_lifetimes(entries)
+        if self.args.compress_days:
+            lifetimes_map = lifetimes.compress_lifetimes_days(lifetimes_map,
+                                                              self.args.compress_days)
+
         ccywidth = max(map(len, lifetimes_map.keys())) if lifetimes else 1
-        for currency, lifetime in sorted(lifetimes_map.items(), key=lambda x: x[1][0][0]):
+        for currency, lifetime in sorted(lifetimes_map.items(),
+                                         key=lambda x: (x[1][0][0], x[0])):
             file.write('{:{width}}: {}\n'.format(currency,
                                                  '  /  '.join('{} - {}'.format(begin, end or '')
                                                               for begin, end in lifetime),

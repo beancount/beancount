@@ -74,3 +74,42 @@ def get_commodity_lifetimes(entries):
                 commodities = new_commodities
 
     return lifetimes
+
+
+def compress_intervals_days(intervals, num_days):
+    """Compress a list of date pairs to ignore short stretches of unused days.
+
+    Args:
+      intervals: A list of pairs of datetime.date instances.
+      num_days: An integer, the number of unused days to require for intervals
+        to be distinct, to allow a gap.
+    Returns:
+      A new dict of lifetimes map where some intervals may have been joined.
+    """
+    ignore_interval = datetime.timedelta(days=num_days)
+    new_intervals = []
+    iter_intervals = iter(intervals)
+    last_begin, last_end = next(iter_intervals)
+    for date_begin, date_end in iter_intervals:
+        if date_begin - last_end < ignore_interval:
+            # Compress.
+            last_end = date_end
+            continue
+        else:
+            new_intervals.append((last_begin, last_end))
+            last_begin, last_end = date_begin, date_end
+    new_intervals.append((last_begin, last_end))
+    return new_intervals
+
+
+def compress_lifetimes_days(lifetimes_map, num_days):
+    """Compress a lifetimes map to ignore short stretches of unused days.
+
+    Args:
+      lifetimes_map: A dict of currency intervals as returned by get_commodity_lifetimes.
+      num_days: An integer, the number of unused days to ignore.
+    Returns:
+      A new dict of lifetimes map where some intervals may have been joined.
+    """
+    return {currency: compress_intervals_days(intervals, num_days)
+            for currency, intervals in lifetimes_map.items()}

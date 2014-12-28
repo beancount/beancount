@@ -16,7 +16,7 @@ from beancount.ops import prices
 from beancount.parser import parser
 from beancount.parser import cmptest
 from beancount.parser import options
-from beancount.projects import lifetimes
+from beancount.ops import lifetimes
 from beancount.utils import test_utils
 
 
@@ -168,3 +168,35 @@ class TestCommodityLifetimes(test_utils.TestCase):
             {'AAPL': [(datetime.date(2001, 3, 10), datetime.date(2001, 9, 11))],
              'USD': [(datetime.date(2000, 1, 2), None)]},
             lifetimes_map)
+
+
+class TestCompressLifetimes(test_utils.TestCase):
+
+    def test_single_closed(self):
+        intervals = [(datetime.date(2014, 2, 3), datetime.date(2014, 3, 10))]
+        compressed = lifetimes.compress_intervals_days(intervals, 10)
+        self.assertEqual(intervals, compressed)
+        compressed = lifetimes.compress_intervals_days(intervals, 100)
+        self.assertEqual(intervals, compressed)
+
+    def test_single_open(self):
+        intervals = [(datetime.date(2014, 2, 3), None)]
+        compressed = lifetimes.compress_intervals_days(intervals, 10)
+        self.assertEqual(intervals, compressed)
+        compressed = lifetimes.compress_intervals_days(intervals, 100)
+        self.assertEqual(intervals, compressed)
+
+    def test_multiple_no_compress(self):
+        intervals = [(datetime.date(2014, 2, 3), datetime.date(2014, 3, 10)),
+                     (datetime.date(2014, 3, 20), datetime.date(2014, 7, 1))]
+        for num_days in 0, 1, 9, 10:
+            compressed = lifetimes.compress_intervals_days(intervals, num_days)
+            self.assertEqual(intervals, compressed)
+
+    def test_multiple_compress(self):
+        intervals = [(datetime.date(2014, 2, 3), datetime.date(2014, 3, 10)),
+                     (datetime.date(2014, 3, 20), datetime.date(2014, 7, 1))]
+        expected = [(datetime.date(2014, 2, 3), datetime.date(2014, 7, 1))]
+        for num_days in 11, 12, 100, 2000:
+            compressed = lifetimes.compress_intervals_days(intervals, num_days)
+            self.assertEqual(expected, compressed)
