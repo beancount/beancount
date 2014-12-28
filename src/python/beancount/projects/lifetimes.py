@@ -24,6 +24,8 @@ def get_time_intervals(entries):
       entries: A list of directives.
     Returns:
       A dict of commodity strings to lists of (start, end) datetime.date pairs.
+      The dates are inclusive of the day the commodity was seen; the end/last dates
+      are one day _after_ the last date seen.
     """
     lifetimes = collections.defaultdict(list)
 
@@ -68,8 +70,6 @@ def get_time_intervals(entries):
 
                 # Update our current set.
                 commodities = new_commodities
-
-                ##print(entry.date, ','.join(commodities))
 
     return lifetimes
 
