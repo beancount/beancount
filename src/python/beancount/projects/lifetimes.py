@@ -8,6 +8,7 @@ __author__ = 'Martin Blais <blais@furius.ca>'
 
 import collections
 import datetime
+import itertools
 
 from beancount import loader
 from beancount.core import inventory
@@ -17,7 +18,7 @@ from beancount.core import data
 ONEDAY = datetime.timedelta(days=1)
 
 
-def get_time_intervals(entries):
+def get_commodity_lifetimes(entries):
     """Given a list of directives, figure out the life of each commodity.
 
     Args:
@@ -55,7 +56,8 @@ def get_time_intervals(entries):
         # commodities, recompute the total set globally. This should not
         # occur very frequently.
         if commodities_changed:
-            new_commodities = get_all_commodities(balances.values())
+            new_commodities = set(
+                itertools.chain(*(inv.keys() for inv in balances.values())))
             if new_commodities != commodities:
                 # The new global set of commodities has changed; update our
                 # the dictionary of intervals.
@@ -72,20 +74,6 @@ def get_time_intervals(entries):
                 commodities = new_commodities
 
     return lifetimes
-
-
-def get_all_commodities(inventories):
-    """Given a list of inventories, compute the total set of commodities.
-
-    Args:
-      inventories: An iterable of Inventory instances.
-    Returns:
-      A set of commodities.
-    """
-    commodities = set()
-    for inv in inventories:
-        commodities.update(inv.keys())
-    return commodities
 
 
 def main():

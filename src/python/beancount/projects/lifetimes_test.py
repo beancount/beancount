@@ -67,7 +67,7 @@ class TestCommodityLifetimes(test_utils.TestCase):
 
         """
         self.assertFalse(errors)
-        lifetimes_map = lifetimes.get_time_intervals(entries)
+        lifetimes_map = lifetimes.get_commodity_lifetimes(entries)
         self.assertEqual(
             {'USD': [(datetime.date(2000, 1, 2), None)],
              'AAPL': [(datetime.date(2001, 2, 10), datetime.date(2001, 7, 21))],
@@ -116,7 +116,7 @@ class TestCommodityLifetimes(test_utils.TestCase):
           Assets:US:Invest:Cash
         """
         self.assertFalse(errors)
-        lifetimes_map = lifetimes.get_time_intervals(entries)
+        lifetimes_map = lifetimes.get_commodity_lifetimes(entries)
         self.assertEqual(
             {'USD': [(datetime.date(2000, 1, 2), None)],
              'AAPL': [(datetime.date(2001, 3, 10), datetime.date(2001, 12, 11)),
@@ -163,7 +163,7 @@ class TestCommodityLifetimes(test_utils.TestCase):
         2001-09-11 balance Assets:US:InvestB:AAPL    0 AAPL
         """
         self.assertFalse(errors)
-        lifetimes_map = lifetimes.get_time_intervals(entries)
+        lifetimes_map = lifetimes.get_commodity_lifetimes(entries)
         self.assertEqual(
             {'AAPL': [(datetime.date(2001, 3, 10), datetime.date(2001, 9, 11))],
              'USD': [(datetime.date(2000, 1, 2), None)]},
