@@ -4,7 +4,6 @@ import itertools
 import unittest
 import datetime
 
-from beancount.parser import parser
 from beancount.core.amount import D
 from beancount.core.amount import ZERO
 from beancount.core import position

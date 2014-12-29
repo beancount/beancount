@@ -13,7 +13,6 @@ from datetime import date
 
 from beancount.core.amount import ZERO
 from beancount.core.amount import Amount
-from beancount.core.amount import amount_div
 from beancount.core import display_context
 from beancount.core.position import Lot
 from beancount.core.position import Position

@@ -7,11 +7,9 @@ in order to properly fill the price database.
 __author__ = 'Martin Blais <blais@furius.ca>'
 
 import collections
-import copy
 import datetime
 import itertools
 
-from beancount import loader
 from beancount.core import inventory
 from beancount.core import data
 

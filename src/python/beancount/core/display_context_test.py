@@ -1,7 +1,6 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import unittest
-import io
 import re
 from decimal import Decimal
 
@@ -68,8 +67,9 @@ class TestDisplayContextNatural(DisplayContextBaseTest):
                                  noinit=True)
 
     def test_natural_no_clear_mode(self):
-        self.assertFormatNumbers(['1.2345', '764', '-7409.01', '0.00000125'],
-                                 ['1.23450000', '764.00000000', '-7409.01000000', '0.00000125'])
+        self.assertFormatNumbers(
+            ['1.2345', '764', '-7409.01', '0.00000125'],
+            ['1.23450000', '764.00000000', '-7409.01000000', '0.00000125'])
 
     def test_natural_clear_mode(self):
         self.assertFormatNumbers(['1.2345', '1.23', '234.26', '38.019'],

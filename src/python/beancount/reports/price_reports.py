@@ -50,10 +50,11 @@ class CommodityLifetimes(report.TableReport):
         ccywidth = max(map(len, name_map.values()))
         for currency, lifetime in sorted(lifetimes_map.items(),
                                          key=lambda x: (x[1][0][0], x[0])):
-            file.write('{:{width}}: {}\n'.format(name_map[currency],
-                                                 '  /  '.join('{} - {}'.format(begin, end or '')
-                                                              for begin, end in lifetime),
-                                                 width=ccywidth))
+            file.write('{:{width}}: {}\n'.format(
+                name_map[currency],
+                '  /  '.join('{} - {}'.format(begin, end or '')
+                             for begin, end in lifetime),
+                width=ccywidth))
 
 
 class CommodityPricesReport(report.TableReport):
