@@ -244,3 +244,17 @@ class TestDisplayContextDot(DisplayContextBaseTest):
              '    0.01',
              '    0.02',
              '    0.00'], commas=True)
+
+
+class TestDisplayContextQuantize(unittest.TestCase):
+
+    def test_quantize_basic(self):
+        dcontext =display_context.DisplayContext()
+        dcontext.update(Decimal('1.23'), 'USD')
+        self.assertEqual(Decimal('3.23'),
+                         dcontext.quantize(Decimal('3.23253343'), 'USD'))
+
+        dcontext.update(Decimal('1.2301'), 'USD')
+        dcontext.update(Decimal('1.2302'), 'USD')
+        self.assertEqual(Decimal('3.2325'),
+                         dcontext.quantize(Decimal('3.23253343'), 'USD'))

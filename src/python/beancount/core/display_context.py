@@ -62,6 +62,7 @@ import io
 import enum
 import math
 from pprint import pprint
+from decimal import Decimal
 
 from beancount.utils import misc_utils
 
@@ -86,11 +87,11 @@ class _CurrencyContext:
     used by the DisplayContext to manufacture appropriate Formatter
     objects.
 
-    # Attributes:
-    #   has_sign: A boolean, true if at least one of the numbers has a negative or
-    #     explicit positive sign.
-    #   integer_max: The maximum number of digits for the integer part.
-    #   fractional_dist: A frequency distribution of fractionals seen in the input file.
+    Attributes:
+      has_sign: A boolean, true if at least one of the numbers has a negative or
+        explicit positive sign.
+      integer_max: The maximum number of digits for the integer part.
+      fractional_dist: A frequency distribution of fractionals seen in the input file.
 
     """
     def __init__(self):
@@ -158,7 +159,7 @@ class _CurrencyContext:
         elif precision == Precision.MAXIMUM:
             return self.fractional_dist.max()
         else:
-            raise ValueError("Unknown precision: {}".foramt(precision))
+            raise ValueError("Unknown precision: {}".format(precision))
 
 
 class DisplayContext:
@@ -187,6 +188,21 @@ class DisplayContext:
         """
         self.ccontexts[currency].update(number)
 
+    def quantize(self, number, currency, precision=Precision.MOST_COMMON):
+        """Quantize the given number to the given precision.
+
+        Args:
+          number: A Decimal instance, the number to be quantized.
+          currency: A currency string.
+          precision: Which precision to use.
+        Returns:
+          A Decimal instance, the quantized number.
+        """
+        ccontext = self.ccontexts[currency]
+        num_fractional_digits = ccontext.get_fractional(precision)
+        qdigit = Decimal(1).scaleb(-num_fractional_digits)
+        return number.quantize(qdigit)
+
     def build(self,
               alignment=Align.NATURAL,
               precision=Precision.MOST_COMMON,
@@ -201,7 +217,7 @@ class DisplayContext:
         elif alignment == Align.DOT:
             build_method = self._build_dot
         else:
-            raise ValueError("Unknown alignment: {}".foramt(alignment))
+            raise ValueError("Unknown alignment: {}".format(alignment))
         fmtstrings = build_method(precision, commas, reserved)
 
         return DisplayFormatter(self, fmtstrings)
@@ -303,17 +319,9 @@ class DisplayFormatter:
     functions that format numbers to strings.
 
     Attributes:
-
-      # commas: A boolean, whether we should render commas or not.
-      # signs: A boolean, whether to always render the signs.
-      # fractional: A dict of currency to fractional. A key of None provides the
-      #   default precision. A special value of FULL_PRECISION indicates we should render
-      #   at the natural precision for the given number.
-      # fractional_max: Like 'fractional' but for maximum number of digits.
-      # formats: A dict of currency to a pre-baked format string to render a
-      #   number. (A key of None is treated as for self.fractional.)
-      # formats_max: Like 'formats' but for maximum number of digits.
-      # default_format: The default display format.
+      dcontext: A DisplayContext instance.
+      fmtstrings: A dict of currency to pre-baked format strings for it.
+      fmtfuncs: A dict of currency to pre-baked formatting functionsfor it.
     """
     def __init__(self, dcontext, fmtstrings):
         self.dcontext = dcontext
