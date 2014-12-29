@@ -353,6 +353,19 @@ class ExportPortfolioReport(report.TableReport):
                   </{txntype}>
     """)
 
+    # Note: This does not import in GFinance.
+    # CASH = textwrap.dedent("""
+    #       <INVBANKTRAN>
+    #         <STMTTRN>
+    #           <TRNTYPE>OTHER
+    #           <DTPOSTED>{dtposted}
+    #           <TRNAMT>{trnamt}
+    #           <FITID>{fitid}
+    #         </STMTTRN>
+    #         <SUBACCTFUND>CASH
+    #       </INVBANKTRAN>
+    # """)
+
     SECURITY = textwrap.dedent("""
               <{infotype}>
                 <SECINFO>
@@ -410,8 +423,15 @@ class ExportPortfolioReport(report.TableReport):
             action_set.add(commodity)
         return ignore, mutual_fund
 
+    # The cash equivalent currency. Note: Importing a cash deposit in GFinance
+    # portfolio import feature fails, so use a cash equivalent (Vanguard Prime
+    # Money Market Fund, which pretty much has a fixed price of 1.0 USD).
+    CASH_EQUIVALENT_CURRENCY = 'VMMXX'
+    CASH_EQUIVALENT_MFUND = True
+
     def render_ofx(self, entries, errors, options_map, file):
-        holdings_list, _ = get_assets_holdings(entries, options_map)
+        holdings_list, price_map = get_assets_holdings(entries, options_map)
+        dcontext = options_map['display_context']
 
         (ignored_commodities,
          mutual_funds_commodities) = self.get_commodity_classifications(entries)
@@ -425,7 +445,15 @@ class ExportPortfolioReport(report.TableReport):
 
         invtranlist_io = io.StringIO()
         commodities = set()
+        skipped_holdings = []
+        index = 0
         for index, holding in enumerate(holdings_list):
+            if (holding.currency == holding.cost_currency or
+                holding.cost_number is None or
+                holding.currency in ignored_commodities):
+                skipped_holdings.append(holding)
+                continue
+
             txntype = ('BUYMF'
                        if holding.currency in mutual_funds_commodities
                        else 'BUYSTOCK')
@@ -436,20 +464,46 @@ class ExportPortfolioReport(report.TableReport):
             units = holding.number
             unitprice = holding.cost_number
             fee = ZERO
-            if holding.currency == holding.cost_currency or unitprice is None:
-                continue
-            if holding.currency in ignored_commodities:
-                # logging.warning("Commodity ignored: %s %s",
-                #                 holding.currency, holding.cost_currency)
-                continue
-
             total = -(units * unitprice + fee)
             buytype = 'BUY'
+
             invtranlist_io.write(self.TRANSACTION.format(**vars()))
             commodities.add(holding.currency)
+
+        # Convert the skipped holdings to a bank deposit to cash to approximate their value.
+        if options_map['operating_currency']:
+            # Convert all skipped holdings to the first operating currency.
+            cash_currency = options_map['operating_currency'][0]
+            converted_holdings = holdings.convert_to_currency(price_map,
+                                                              cash_currency,
+                                                              skipped_holdings)
+
+            # Estimate the total market value in cash.
+            book_value = sum(holding.book_value
+                             for holding in converted_holdings
+                             if holding.cost_currency == cash_currency)
+            market_value = sum(holding.market_value
+                               for holding in converted_holdings
+                               if holding.cost_currency == cash_currency)
+
+            # Insert a cash deposit equivalent for that amount.
+            txntype = ('BUYMF' if self.CASH_EQUIVALENT_MFUND else 'BUYSTOCK')
+            fitid = index + 1
+            dttrade = render_ofx_date(trade_date)
+            memo = ''
+            uniqueid = self.CASH_EQUIVALENT_CURRENCY
+            units = dcontext.quantize(market_value, cash_currency)
+            unitprice = dcontext.quantize(book_value / market_value, cash_currency)
+            fee = ZERO
+            total = -(units * unitprice + fee)
+            buytype = 'BUY'
+
+            invtranlist_io.write(self.TRANSACTION.format(**vars()))
+            commodities.add(self.CASH_EQUIVALENT_CURRENCY)
+
         invtranlist = invtranlist_io.getvalue()
 
-        # Create a list of security.
+        # Create a list of securities.
         seclist_io = io.StringIO()
         for currency in commodities:
             infotype = 'MFINFO' if currency in mutual_funds_commodities else 'STOCKINFO'
