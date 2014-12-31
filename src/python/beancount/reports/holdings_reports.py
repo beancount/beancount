@@ -399,6 +399,7 @@ class ExportPortfolioReport(report.TableReport):
 
            YYYY-MM-DD note <account> "Export <commodity>: IGNORE"
            YYYY-MM-DD note <account> "Export <commodity>: MUTUAL_FUND"
+           YYYY-MM-DD note <account> "Export <commodity>: TICKER:<ticker>"
 
         This will get removed later.
 
@@ -412,16 +413,26 @@ class ExportPortfolioReport(report.TableReport):
         """
         ignore = set()
         mutual_fund = set()
+        ticker_map = {}
         for entry in entries:
             if not isinstance(entry, data.Note):
                 continue
-            match = re.match("Export (.*): (IGNORE|MUTUAL_FUND)", entry.comment)
+            match = re.match("Export (.*): (.*)", entry.comment)
             if match is None:
                 continue
             commodity, action = match.group(1, 2)
-            action_set = ignore if action == 'IGNORE' else mutual_fund
-            action_set.add(commodity)
-        return ignore, mutual_fund
+            if action == 'IGNORE':
+                ignore.add(commodity)
+            elif action == 'MUTUAL_FUND':
+                mutual_fund.add(commodity)
+            else:
+                match2 = re.match('TICKER:(.*)', action)
+                if match2:
+                    ticker_map[commodity] = match2.group(1).strip()
+                else:
+                    raise ValueError("Invalid action for Export note: {}".format(entry))
+
+        return ignore, mutual_fund, ticker_map
 
     # The cash equivalent currency. Note: Importing a cash deposit in GFinance
     # portfolio import feature fails, so use a cash equivalent (Vanguard Prime
@@ -434,7 +445,8 @@ class ExportPortfolioReport(report.TableReport):
         dcontext = options_map['display_context']
 
         (ignored_commodities,
-         mutual_funds_commodities) = self.get_commodity_classifications(entries)
+         mutual_funds_commodities,
+         ticker_map) = self.get_commodity_classifications(entries)
 
         # Create a list of purchases.
         #
@@ -460,7 +472,7 @@ class ExportPortfolioReport(report.TableReport):
             fitid = index + 1
             dttrade = render_ofx_date(trade_date)
             memo = holding.account if self.args.promiscuous else ''
-            uniqueid = holding.currency
+            uniqueid = ticker_map.get(holding.currency, holding.currency)
             units = holding.number
             unitprice = holding.cost_number
             fee = ZERO
@@ -507,7 +519,7 @@ class ExportPortfolioReport(report.TableReport):
         seclist_io = io.StringIO()
         for currency in commodities:
             infotype = 'MFINFO' if currency in mutual_funds_commodities else 'STOCKINFO'
-            uniqueid = currency
+            uniqueid = ticker_map.get(currency, currency)
             secname = currency
             ticker = currency
             seclist_io.write(self.SECURITY.format(**vars()))
