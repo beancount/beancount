@@ -59,19 +59,24 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
 import io
-import enum
 from decimal import Decimal
+
+try:
+    import enum
+    Enum = enum.Enum
+except ImportError:
+    Enum = object
 
 from beancount.utils import misc_utils
 
 
-class Precision(enum.Enum):
+class Precision(Enum):
     """The type of precision required."""
     MOST_COMMON = 1
     MAXIMUM = 2
 
 
-class Align(enum.Enum):
+class Align(Enum):
     """Alignment style for numbers."""
     NATURAL = 1
     DOT = 2
