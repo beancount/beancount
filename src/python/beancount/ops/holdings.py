@@ -146,8 +146,9 @@ def aggregate_holdings_by(holdings, keyfun):
     for holding in holdings:
         key = (keyfun(holding), holding.cost_currency)
         grouped[key].append(holding)
-    return sorted(aggregate_holdings_list(key_holdings)
-                  for key_holdings in grouped.values())
+    return sorted((aggregate_holdings_list(key_holdings)
+                   for key_holdings in grouped.values()),
+                  key=lambda holding: (holding.account, holding.currency))
 
 
 def aggregate_holdings_list(holdings):

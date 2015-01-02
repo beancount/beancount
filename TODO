@@ -614,6 +614,13 @@ http://furius.ca/beancount/doc/proposal-inter
 
 
 
+  - Issue warnings when fetching prices with dates that are too far from the
+    requested dates. We need to find a way to issue a global tolerance for this,
+    that indicates to the user to fill in missing prices that are required to
+    carry out particular reporting tasks.
+
+
+
   - Create a new directive type 'commodity' just for the purpose of attaching
     metadata on it. Plugins should be able to use this to extract per-commodity
     attributes, e.g.
