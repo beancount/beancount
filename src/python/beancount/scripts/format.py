@@ -18,7 +18,7 @@ def align_beancount(contents):
     """Reformat Beancount input to align all the numbers at the same column.
 
     Args:
-      contents: A string, Beancount input syntax to reforamt.
+      contents: A string, Beancount input syntax to reformat.
     Returns:
       A string, reformatted Beancount input with all the number aligned.
       No other changes than whitespace changes should be present between that

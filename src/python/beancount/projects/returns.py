@@ -421,7 +421,7 @@ def compute_period_returns(date_begin, date_end,
     # Now for each of the currencies, compute the returns. Handle cases where
     # the currency is not present as a zero value for that currency.
     #
-    # Note: In the future, we should instead require more inforamtion about the
+    # Note: In the future, we should instead require more information about the
     # desired currency for valuation and convert all contents to a single
     # currency above, so this is not needed except to handle really odd cases.
     returns = {}
