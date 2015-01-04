@@ -141,4 +141,4 @@ class TestGetters(unittest.TestCase):
         components = getters.get_account_components(entries)
         expected_components = {'US', 'Assets', 'Restaurant', 'Grocery',
                                'Cash', 'Coffee', 'Expenses', 'Credit-Card'}
-        self.assertEqual(expected_components, components)
+        self.assertEqual(sorted(expected_components), components)

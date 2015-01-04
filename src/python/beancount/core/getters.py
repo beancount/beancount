@@ -151,7 +151,7 @@ def get_account_components(entries):
     components = set()
     for account_name in accounts:
         components.update(account.split(account_name))
-    return components
+    return sorted(components)
 
 
 def get_all_tags(entries):
