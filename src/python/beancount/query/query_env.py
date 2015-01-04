@@ -84,6 +84,18 @@ class Month(query_compile.EvalFunction):
         args = self.eval_args(context)
         return args[0].month
 
+class YearMonth(query_compile.EvalFunction):
+    "Extract the year and month from a date."
+    __intypes__ = [datetime.date]
+
+    def __init__(self, operands):
+        super().__init__(operands, datetime.date)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        date = args[0]
+        return datetime.date(date.year, date.month, 1)
+
 class Day(query_compile.EvalFunction):
     "Extract the day from a date."
     __intypes__ = [datetime.date]
@@ -217,6 +229,7 @@ SIMPLE_FUNCTIONS = {
     ('cost', inventory.Inventory)  : CostInventory,
     'year'                         : Year,
     'month'                        : Month,
+    'ymonth'                       : YearMonth,
     'day'                          : Day,
     'weekday'                      : Weekday,
     }

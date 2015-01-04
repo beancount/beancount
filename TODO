@@ -3,6 +3,8 @@ beancount: TODO
 * Query Language
 http://furius.ca/beancount/doc/proposal-query
 
+  - Render to CSV as soon as possible, this makes it possible to export.
+
 
   - Create tests for all the realistic test cases
     Use cases:
@@ -299,6 +301,12 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Operating currencies getting pulled out are necessary... maybe do this in
     the translation?
+
+
+  - Support COUNT(), and COUNT(*), for this question on the ledger-cli list:
+    https://groups.google.com/d/msg/ledger-cli/4d9ZYVLnCGQ/ZyAqwZE-TBoJ
+    Try to reproduce this specific use case.
+
 
 
 * Requirements for Shipping 2.0
