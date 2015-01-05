@@ -1,20 +1,7 @@
-import datetime
 import re
-import io
 import unittest
-import functools
 from os import path
 
-from beancount.core.amount import D
-from beancount.core.amount import Decimal
-from beancount.core import inventory
-from beancount.query import query_parser
-from beancount.query import query_compile as qc
-from beancount.query import query_env as qe
-from beancount.query import query_execute as qx
-from beancount.parser import cmptest
-from beancount.parser import parser
-from beancount.utils import misc_utils
 from beancount.utils import test_utils
 from beancount.query import shell
 from beancount import loader
@@ -23,7 +10,7 @@ from beancount import loader
 def setUp(self):
     example_filename = path.join(test_utils.find_repository_root(__file__),
                                  'examples', 'example.beancount')
-    global entries, errors, options_map
+    global entries, errors, options_map  # pylint: disable=invalid-name
     entries, errors, options_map = loader.load(example_filename)
     assert not errors
 
@@ -156,11 +143,6 @@ class TestUseCases(unittest.TestCase):
         GROUP BY account, currency, cost_currency;
         """
         ## FIXME: Here we need to finally support FLATTEN to make this happen properly.
-
-
-
-
-
 
 
 __incomplete__ = True

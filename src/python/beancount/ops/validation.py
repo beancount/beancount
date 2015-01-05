@@ -69,7 +69,9 @@ def validate_inventory_booking(entries, unused_options_map):
                     continue
 
                 # Check for a negative entry.
-                # FIXME: Maybe this should be using the reducing flag instead.
+                #
+                # FIXME: Maybe this should be using the reducing flag returned
+                # from add_position() instead.
                 if position_.is_negative_at_cost():
                     errors.append(
                         ValidationError(

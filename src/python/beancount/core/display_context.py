@@ -61,6 +61,7 @@ import collections
 import io
 from decimal import Decimal
 
+# pylint: disable=invalid-name
 try:
     import enum
     Enum = enum.Enum

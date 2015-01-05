@@ -486,8 +486,10 @@ class BQLShell(DispatchingShell):
             (getattr(column_cls, '__equivalent__', '-'), name)
             for name, column_cls in sorted(self.env_postings.columns.items()))
 
-        entry_attributes = ''.join("  {:40}: {}\n".format(*pair) for pair in entry_pairs)
-        posting_attributes = ''.join("  {:40}: {}\n".format(*pair) for pair in posting_pairs)
+        entry_attributes = ''.join(
+            "  {:40}: {}\n".format(*pair) for pair in entry_pairs)
+        posting_attributes = ''.join(
+            "  {:40}: {}\n".format(*pair) for pair in posting_pairs)
         print(template.format(**vars()))
 
 

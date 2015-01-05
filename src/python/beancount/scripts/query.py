@@ -15,12 +15,12 @@ from beancount.query import shell
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
 
-    ## FIXME: implement
+    ## FIXME: implement this.
     # parser.add_argument('-f', '--format', default=None,
     #                     choices=['text', 'csv', 'html', 'htmldiv', 'beancount', 'xls'],
     #                     help="Output format.")
 
-    ## FIXME: implement
+    ## FIXME: implement this.
     # parser.add_argument('-o', '--output', action='store',
     #                     help=("Output filename. If not specified, the output goes "
     #                           "to stdout. The filename is inspected to select a "

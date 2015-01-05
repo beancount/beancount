@@ -698,8 +698,9 @@ class TestTranslationBalance(CompileSelectBase):
         self.assertEqual(
             qp.Select([
                 qp.Target(qp.Column('account'), None),
-                qp.Target(qp.Function('sum', [qp.Function('cost',
-                                                          [qp.Column('position')])]), None)],
+                qp.Target(qp.Function('sum',
+                                      [qp.Function('cost',
+                                                   [qp.Column('position')])]), None)],
                       None, None, self.group_by, self.order_by,
                       None, None, None, None),
             select)
