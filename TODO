@@ -1,5 +1,119 @@
 -*- mode: org -*-
 beancount: TODO
+* Requirements for Shipping 2.0
+** Establish Display Precision
+
+  - Make setting the precision from bean-example easier (provide a method to
+    create that format and update without conversion on the DisplayContext
+    itself).
+
+  - In the DisplayContext, implement caching of the formatters created to
+    increase speed, especially for printing a single entry repeatedly.
+
+  - Implement reserved number of digits.
+
+  - Add docstrings to DisplayContext.
+
+  - Make the query_render routines use a DisplayContext object to compute their alignment.
+
+  - In the EntryPrinter(), figure out the maximum width of accounts and set it up.
+  - Add a "target num columns" instead of a "min_width_account" to the
+    EntryPrinter and figure out the min_width_account automatically from it,
+    depending on whether we've got render_weights on or not. Use hte longest
+    possible number of integral digits required from the DisplayContext in
+    order to make this tight.
+
+  - Add an option for the DisplayContext to issue a warning if numbers are
+    rendered through it that lose some precision.
+
+  - Add "display_precision" input file option whereby the user can set the
+    precision to be used by each currency.
+
+
+** Misc
+
+  - IMPORTANT: Remove sample_stack for unit tests that fail, or fix the test..
+
+  - IMPORTANT LATENT BUG. You need to extend the lexer to parse A-Z for flags,
+    not just PSTCU! This is important, as I just realized that it could prevent
+    the correct parsing for entries in a round-trip, with postings produced with
+    unexpected flags. In fact, any character with whitespace on each side should
+    parse as a flag. This is very important.
+
+    This manifests when adding a posting with letter 'M' right now. Replicate
+    this, fix the problem.
+
+  - (easy) Don't render postings in the HTML interface by default. The detail
+    can be made available via bean-query now, and users can click on /context
+    link in order to get the full transaction detail. Journals should be
+    summaries. Add an optional argument to turn it on/off, but it should be off
+    by default.
+
+  - (easy) Make b.w.web also 'app.options_map' instead of 'app.options'.
+
+  - (easy) Make _all_ plugins accept a configuration parameter, unconditionally. The
+    interface should be this regular.
+
+  - Don't install all the _test.py files, make sure they're not installed, + add
+    a lint check that ensures the non-test files are never importing any of othe
+    test files.
+
+  (web)
+  - Make the web interface not render postings anymore by default.
+  - Rename /context to /entry
+
+  - USEFUL. Issue warnings if the price date is too far from the requested
+    market value date. This will help with returns, a lot. You should likely do
+    this in the price_map object, in the lookup function, maybe, so that all
+    modules benefit from the feature. You could ideally provide a date and a
+    tolerancen, and somehow issue warnings automatically.
+
+  - Fix FIXME in beancount.projects.returns, from DClemente issues.
+
+
+** Documentation / Ongoing
+
+  - As an aside, I see that the grammar supports @@ and {{}} syntaxes, but they
+    don't appear to be documented in the language manual.
+
+      Oh I hadn't noticed... I will document those, thank you for reporting this
+      oversight.
+
+  - In the comparison doc: describe how Beancount has asset types
+
+  - Comparison w/ Ledger doc: "balance sheet and closing of year"
+
+  - A nice new Health Care section is nearly complete... complete it with DEDUC
+    and COPAY legs explanation. Write an accompanying plugin to insert the
+    deductible tracking and what-not.
+
+  - Write out the taxes section, you have all the details, no need to wait
+
+  - Write document on converting between implementations
+
+  - Complete "How Inventories Work?"
+  - Complete intro document on double-entry bookkeepingk."
+  - Complete Design Doc
+
+  - Change documentation script to try to download to ODT format and then batch
+    format to ebook
+
+  - You should have a dedicated section of your document that explains how market
+    values are reported, that is, via the unrealized gains plugin. Also provide a
+    market() function, to value holdings.
+
+  - Finally bake a PDF of all GDocs documentation and add a link to it. Should
+    be mobile-friendly.
+
+
+
+
+  - README for example files
+  - Implement example for documents
+  - Implement example for import
+  - Implement example for dashboard
+  - Implement example for prices
+
 * Query Language
 http://furius.ca/beancount/doc/proposal-query
 
@@ -308,120 +422,6 @@ http://furius.ca/beancount/doc/proposal-query
     Try to reproduce this specific use case.
 
 
-
-* Requirements for Shipping 2.0
-** Establish Display Precision
-
-  - Make setting the precision from bean-example easier (provide a method to
-    create that format and update without conversion on the DisplayContext
-    itself).
-
-  - In the DisplayContext, implement caching of the formatters created to
-    increase speed, especially for printing a single entry repeatedly.
-
-  - Implement reserved number of digits.
-
-  - Add docstrings to DisplayContext.
-
-  - Make the query_render routines use a DisplayContext object to compute their alignment.
-
-  - In the EntryPrinter(), figure out the maximum width of accounts and set it up.
-  - Add a "target num columns" instead of a "min_width_account" to the
-    EntryPrinter and figure out the min_width_account automatically from it,
-    depending on whether we've got render_weights on or not. Use hte longest
-    possible number of integral digits required from the DisplayContext in
-    order to make this tight.
-
-  - Add an option for the DisplayContext to issue a warning if numbers are
-    rendered through it that lose some precision.
-
-  - Add "display_precision" input file option whereby the user can set the
-    precision to be used by each currency.
-
-
-** Misc
-
-  - IMPORTANT: Remove sample_stack for unit tests that fail, or fix the test..
-
-  - IMPORTANT LATENT BUG. You need to extend the lexer to parse A-Z for flags,
-    not just PSTCU! This is important, as I just realized that it could prevent
-    the correct parsing for entries in a round-trip, with postings produced with
-    unexpected flags. In fact, any character with whitespace on each side should
-    parse as a flag. This is very important.
-
-    This manifests when adding a posting with letter 'M' right now. Replicate
-    this, fix the problem.
-
-  - (easy) Don't render postings in the HTML interface by default. The detail
-    can be made available via bean-query now, and users can click on /context
-    link in order to get the full transaction detail. Journals should be
-    summaries. Add an optional argument to turn it on/off, but it should be off
-    by default.
-
-  - (easy) Make b.w.web also 'app.options_map' instead of 'app.options'.
-
-  - (easy) Make _all_ plugins accept a configuration parameter, unconditionally. The
-    interface should be this regular.
-
-  - Don't install all the _test.py files, make sure they're not installed, + add
-    a lint check that ensures the non-test files are never importing any of othe
-    test files.
-
-  (web)
-  - Make the web interface not render postings anymore by default.
-  - Rename /context to /entry
-
-  - USEFUL. Issue warnings if the price date is too far from the requested
-    market value date. This will help with returns, a lot. You should likely do
-    this in the price_map object, in the lookup function, maybe, so that all
-    modules benefit from the feature. You could ideally provide a date and a
-    tolerancen, and somehow issue warnings automatically.
-
-  - Fix FIXME in beancount.projects.returns, from DClemente issues.
-
-
-** Documentation / Ongoing
-
-  - As an aside, I see that the grammar supports @@ and {{}} syntaxes, but they
-    don't appear to be documented in the language manual.
-
-      Oh I hadn't noticed... I will document those, thank you for reporting this
-      oversight.
-
-  - In the comparison doc: describe how Beancount has asset types
-
-  - Comparison w/ Ledger doc: "balance sheet and closing of year"
-
-  - A nice new Health Care section is nearly complete... complete it with DEDUC
-    and COPAY legs explanation. Write an accompanying plugin to insert the
-    deductible tracking and what-not.
-
-  - Write out the taxes section, you have all the details, no need to wait
-
-  - Write document on converting between implementations
-
-  - Complete "How Inventories Work?"
-  - Complete intro document on double-entry bookkeepingk."
-  - Complete Design Doc
-
-  - Change documentation script to try to download to ODT format and then batch
-    format to ebook
-
-  - You should have a dedicated section of your document that explains how market
-    values are reported, that is, via the unrealized gains plugin. Also provide a
-    market() function, to value holdings.
-
-  - Finally bake a PDF of all GDocs documentation and add a link to it. Should
-    be mobile-friendly.
-
-
-
-
-  - README for example files
-  - Implement example for documents
-  - Implement example for import
-  - Implement example for dashboard
-  - Implement example for prices
 
 * Standalone Tools
 
