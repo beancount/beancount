@@ -72,12 +72,12 @@ class TestGetters(unittest.TestCase):
     def test_get_all_tags(self):
         entries = parser.parse_string(TEST_INPUT)[0]
         tags = getters.get_all_tags(entries)
-        self.assertEqual({'books', 'dinner'}, tags)
+        self.assertEqual(['books', 'dinner'], tags)
 
     def test_get_all_payees(self):
         entries = parser.parse_string(TEST_INPUT)[0]
         payees = getters.get_all_payees(entries)
-        self.assertEqual({'Whole Foods Market', 'La Colombe'}, payees)
+        self.assertEqual(['La Colombe', 'Whole Foods Market'], payees)
 
     def test_get_leveln_parent_accounts(self):
         account_names = ['Assets:US:Cash',
@@ -141,4 +141,4 @@ class TestGetters(unittest.TestCase):
         components = getters.get_account_components(entries)
         expected_components = {'US', 'Assets', 'Restaurant', 'Grocery',
                                'Cash', 'Coffee', 'Expenses', 'Credit-Card'}
-        self.assertEqual(expected_components, components)
+        self.assertEqual(sorted(expected_components), components)

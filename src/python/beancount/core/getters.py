@@ -151,7 +151,7 @@ def get_account_components(entries):
     components = set()
     for account_name in accounts:
         components.update(account.split(account_name))
-    return components
+    return sorted(components)
 
 
 def get_all_tags(entries):
@@ -168,7 +168,7 @@ def get_all_tags(entries):
             continue
         if entry.tags:
             all_tags.update(entry.tags)
-    return all_tags
+    return sorted(all_tags)
 
 
 def get_all_payees(entries):
@@ -185,7 +185,7 @@ def get_all_payees(entries):
             continue
         all_payees.add(entry.payee)
     all_payees.discard(None)
-    return all_payees
+    return sorted(all_payees)
 
 
 def get_leveln_parent_accounts(account_names, level, nrepeats=0):

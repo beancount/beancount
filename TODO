@@ -930,6 +930,28 @@ http://furius.ca/beancount/doc/proposal-inter
 
 
 
+  - Create a plugin that automatically inserts a zero balance check right before
+    a Close directive, for all currencies that appeared in that account.
+
+
+
+  - Issue warnings when fetching prices with dates that are too far from the
+    requested dates. We need to find a way to issue a global tolerance for this,
+    that indicates to the user to fill in missing prices that are required to
+    carry out particular reporting tasks.
+
+
+
+  - Create a new directive type 'commodity' just for the purpose of attaching
+    metadata on it. Plugins should be able to use this to extract per-commodity
+    attributes, e.g.
+
+       2014-12-31 commodity VMMXX
+         type: mutual_fund
+
+
+
+
   - Amount and Inventory and other basic classes: You could eventually support
     an implementation of __format__ which attempts to make sense of the
     different components, e.g., apply the format specifier to the number

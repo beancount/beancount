@@ -1,10 +1,13 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import io
 import unittest
 
 from beancount.reports import misc_reports
 from beancount.reports import report_test
 from beancount.parser import options
+from beancount.parser import parser
+from beancount.utils import test_utils
 
 
 class TestMiscReports(unittest.TestCase):
@@ -19,3 +22,14 @@ class TestMiscReports(unittest.TestCase):
             output = report_.render(entries, errors, options_map, format_)
             self.assertEqual(options.DEFAULT_OPTIONS, options_map)
             self.assertTrue(isinstance(output, str))
+
+    @parser.parsedoc
+    def test_errors(self, entries, errors, options_map):
+        """
+        hello world
+        """
+        report_ = misc_reports.ErrorReport.from_args([])
+        with io.StringIO() as oss:
+            report_.render_text(entries, errors, options_map, oss)
+        with io.StringIO() as oss:
+            report_.render_htmldiv(entries, errors, options_map, oss)

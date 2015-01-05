@@ -43,7 +43,7 @@ class Report:
     def __init__(self, args, parser):
         self.parser = parser
         self.args = args
-        assert self.default_format, "You must provide a default foramt."
+        assert self.default_format, "You must provide a default format."
 
     @classmethod
     def from_args(cls, argv=None, **kwds):

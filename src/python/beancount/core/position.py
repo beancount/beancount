@@ -44,6 +44,18 @@ from .display_context import DEFAULT_FORMATTER
 Lot = namedtuple('Lot', 'currency cost lot_date')
 
 
+def lot_currency_pair(lot):
+    """Return the currency pair associated with a lot.
+
+    Args:
+      lot: An instance of Lot.
+    Returns:
+      A pair of a currency string and a cost currency string or None.
+    """
+    return (lot.currency,
+            lot.cost.currency if lot.cost else None)
+
+
 # Lookup for ordering a list of currencies: we want the majors first, then the
 # cross-currencies, and then all the rest of the stuff a user might define
 # (shorter strings first).
