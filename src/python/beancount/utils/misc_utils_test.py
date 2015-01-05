@@ -28,6 +28,25 @@ class TestMiscUtils(unittest.TestCase):
         self.assertTrue(re.search("Operation", stdout.getvalue()))
         self.assertTrue(re.search("Time", stdout.getvalue()))
 
+    def test_box(self):
+        with test_utils.capture() as stdout:
+            with misc_utils.box():
+                print('A')
+        self.assertEqual(textwrap.dedent("""
+          ,----------------
+          A
+          `----------------
+        """), stdout.getvalue())
+
+        with test_utils.capture() as stdout:
+            with misc_utils.box('entries'):
+                print('A')
+        self.assertEqual(textwrap.dedent("""
+          ,--------(entries)--------
+          A
+          `-------------------------
+        """), stdout.getvalue())
+
     def test_swallow(self):
         with misc_utils.swallow(ValueError):
             pass
@@ -46,20 +65,6 @@ class TestMiscUtils(unittest.TestCase):
         self.assertEqual(
             [[('a', 1)], [('b', 2)], [('c', 3)], [('d', 4)]],
             sorted(grouped.values()))
-
-    def test_uniquify_last(self):
-        data = [('d', 9),
-                ('b', 4),
-                ('c', 8),
-                ('c', 6),
-                ('c', 7),
-                ('a', 3),
-                ('a', 1),
-                ('a', 2),
-                ('b', 5)]
-        unique_data = misc_utils.uniquify_last(data, lambda x: x[0])
-        self.assertEqual([('a', 2), ('b', 5), ('c', 7), ('d', 9)],
-                         list(unique_data))
 
     def test_filter_type(self):
         # pylint: disable=invalid-name
@@ -146,6 +151,82 @@ class TestMiscUtils(unittest.TestCase):
         # Note: Allow zero because the console function fails in nose when
         # capture is disabled.
         self.assertLess(-1, max_width)
+
+    def test_get_screen_height(self):
+        max_height = misc_utils.get_screen_height()
+        self.assertTrue(type(int), max_height)
+        # Note: Allow zero because the console function fails in nose when
+        # capture is disabled.
+        self.assertLess(-1, max_height)
+
+    def test_cmptuple(self):
+        # pylint: disable=invalid-name
+        One = misc_utils.cmptuple('Bla', 'a b c')
+        Two = misc_utils.cmptuple('Bli', 'd e f')
+
+        args = (1, 2, 3)
+        one = One(*args)
+        two = Two(*args)
+        self.assertFalse(one == two)
+
+
+class TestUniquify(unittest.TestCase):
+
+    def test_sorted_uniquify_first(self):
+        data = [('d', 9),
+                ('b', 4),
+                ('c', 8),
+                ('c', 6),
+                ('c', 7),
+                ('a', 3),
+                ('a', 1),
+                ('a', 2),
+                ('b', 5)]
+        unique_data = misc_utils.sorted_uniquify(data, lambda x: x[0], last=False)
+        self.assertEqual([('a', 3), ('b', 4), ('c', 8), ('d', 9)],
+                         list(unique_data))
+
+    def test_sorted_uniquify_last(self):
+        data = [('d', 9),
+                ('b', 4),
+                ('c', 8),
+                ('c', 6),
+                ('c', 7),
+                ('a', 3),
+                ('a', 1),
+                ('a', 2),
+                ('b', 5)]
+        unique_data = misc_utils.sorted_uniquify(data, lambda x: x[0], last=True)
+        self.assertEqual([('a', 2), ('b', 5), ('c', 7), ('d', 9)],
+                         list(unique_data))
+
+    def test_uniquify_first(self):
+        data = [('d', 9),
+                ('b', 4),
+                ('c', 8),
+                ('c', 6),
+                ('c', 7),
+                ('a', 3),
+                ('a', 1),
+                ('a', 2),
+                ('b', 5)]
+        unique_data = misc_utils.uniquify(data, lambda x: x[0], last=False)
+        self.assertEqual([('d', 9), ('b', 4), ('c', 8), ('a', 3)],
+                         list(unique_data))
+
+    def test_uniquify_last(self):
+        data = [('d', 9),
+                ('b', 4),
+                ('c', 8),
+                ('c', 6),
+                ('c', 7),
+                ('a', 3),
+                ('a', 1),
+                ('a', 2),
+                ('b', 5)]
+        unique_data = misc_utils.uniquify(data, lambda x: x[0], last=True)
+        self.assertEqual([('d', 9), ('c', 7), ('a', 2), ('b', 5)],
+                         list(unique_data))
 
 
 class TestDistribution(unittest.TestCase):

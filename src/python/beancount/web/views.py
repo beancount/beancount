@@ -12,49 +12,6 @@ from beancount.parser import options
 from beancount.utils import misc_utils
 
 
-
-def clamp_with_options(entries, begin_date, end_date, options_map):
-    """Clamp by getting all the parameters from an options map.
-
-    See clamp() for details.
-
-    Args:
-      entries: See clamp().
-      begin_date: See clamp().
-      end_date: See clamp().
-      options_map: A parser's option_map.
-    Returns:
-      Same as clamp().
-    """
-    account_types = options.get_account_types(options_map)
-    previous_accounts = options.get_previous_accounts(options_map)
-    conversion_currency = options_map['conversion_currency']
-    return summarize.clamp(entries, begin_date, end_date,
-                           account_types,
-                           conversion_currency,
-                           *previous_accounts)
-
-
-def close_with_options(entries, options_map):
-    """Close by getting all the parameters from an options map.
-
-    See summarize.close() for details.
-
-    Args:
-      entries: See close().
-      options_map: A parser's option_map.
-    Returns:
-      Same as close().
-    """
-    account_types = options.get_account_types(options_map)
-    current_accounts = options.get_current_accounts(options_map)
-    conversion_currency = options_map['conversion_currency']
-    return summarize.close(entries,
-                           account_types,
-                           conversion_currency,
-                           *current_accounts)
-
-
 class View:
     """A container for filtering a subset of entries and realizing that for
     display."""
@@ -106,7 +63,7 @@ class View:
         # income/expenses amounts to the balance sheet's equity (as "net
         # income"). This is used to render the end-period balance sheet, with
         # the current period's net income, closing the period.
-        self.closing_entries = close_with_options(self.entries, options_map)
+        self.closing_entries = summarize.cap_opt(self.entries, options_map)
 
         # Realize the three sets of entries.
         account_types = options.get_account_types(options_map)
@@ -192,7 +149,9 @@ class YearView(View):
         begin_date = datetime.date(self.year, 1, 1)
         end_date = datetime.date(self.year+1, 1, 1)
         with misc_utils.log_time('clamp', logging.info):
-            entries, index = clamp_with_options(entries, begin_date, end_date, options_map)
+            entries, index = summarize.clamp_opt(entries,
+                                                          begin_date, end_date,
+                                                          options_map)
         return entries, index
 
 

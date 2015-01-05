@@ -6,6 +6,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import collections
 import io
 import re
+import sys
 from time import time
 import contextlib
 from collections import defaultdict
@@ -31,6 +32,32 @@ def log_time(operation_name, log_timings, indent=0):
     if log_timings:
         log_timings("Operation: {:48} Time: {}{:6.0f} ms".format(
             "'{}'".format(operation_name), '      '*indent, (time2 - time1) * 1000))
+
+
+@contextlib.contextmanager
+def box(name=None, file=None):
+    """A context manager that prints out a box around a block.
+    This is useful for printing out stuff from tests in a way that is readable.
+
+    Args:
+      name: A string, the name of the box to use.
+      file: The file object to print to.
+    Yields:
+      None.
+    """
+    file = file or sys.stdout
+    file.write('\n')
+    if name:
+        header = ',--------({})--------\n'.format(name)
+        footer = '`{}\n'.format('-' * (len(header)-2))
+    else:
+        header = ',----------------\n'
+        footer = '`----------------\n'
+
+    file.write(header)
+    yield
+    file.write(footer)
+    file.flush()
 
 
 @contextlib.contextmanager
@@ -63,33 +90,6 @@ def groupby(keyfun, elements):
     for element in elements:
         grouped[keyfun(element)].append(element)
     return grouped
-
-
-def uniquify_last(iterable, keyfunc=None):
-    """Given a sequence of elements, remove duplicates of the given key. Keep the
-    last element of a sequence of key-identical elements.
-
-    Args:
-      iterable: An iterable sequence.
-      keyfunc: A function that extracts from the elements the sort key
-        to use and uniquify on. If left unspecified, the identify function
-        is used and the uniquification occurs on the elements themselves.
-    Yields:
-      (date, number) tuples.
-    """
-    if keyfunc is None:
-        keyfunc = lambda x: x
-    unset = object()
-    prev_obj = unset
-    prev_key = unset
-    for obj in sorted(iterable, key=keyfunc):
-        key = keyfunc(obj)
-        if key != prev_key and prev_obj is not unset:
-            yield prev_obj
-        prev_obj = obj
-        prev_key = key
-    if prev_obj is not unset:
-        yield prev_obj
 
 
 def filter_type(elist, types):
@@ -306,6 +306,124 @@ def get_screen_width():
     except io.UnsupportedOperation:
         return 0
     return curses.tigetnum('cols')
+
+
+def get_screen_height():
+    """Return the height of the terminal that runs this program.
+
+    Returns:
+      An integer, the number of characters the screen is high.
+      Return 0 if the terminal cannot be initialized.
+    """
+    import curses
+    try:
+        curses.setupterm()
+    except io.UnsupportedOperation:
+        return 0
+    return curses.tigetnum('lines')
+
+
+class TypeComparable:
+    """A base class whose equality comparison includes comparing the
+    type of the instance itself.
+    """
+    def __eq__(self, other):
+        return isinstance(other, type(self)) and super().__eq__(other)
+
+def cmptuple(name, attributes):
+    """Manufacture a comparable namedtuple class, similar to collections.namedtuple.
+
+    A comparable named tuple is a tuple which compares to False if contents are
+    equal but the data types are different. We define this to supplement
+    collections.namedtuple because by default a namedtuple disregards the type
+    and we want to make precise comparisons for tests.
+
+    Args:
+      name: The given name of the class.
+      attributes: A string or tuple of strings, with the names of the
+        attributes.
+    Returns:
+      A new namedtuple-derived type that compares False with other
+      tuples with same contents.
+    """
+    base = collections.namedtuple('_{}'.format(name), attributes)
+    return type(name, (TypeComparable, base,), {})
+
+
+def uniquify(iterable, keyfunc=None, last=False):
+    """Given a sequence of elements, remove duplicates of the given key. Keep either
+    the first or the last element of a sequence of key-identical elements. Order
+    is maintained as much as possible. This does maintain the ordering of the
+    original elements, they are returned in the same order as the original
+    elements.
+
+    Args:
+      iterable: An iterable sequence.
+      keyfunc: A function that extracts from the elements the sort key
+        to use and uniquify on. If left unspecified, the identify function
+        is used and the uniquification occurs on the elements themselves.
+      last: A boolean, True if we should keep the last item of the same keys.
+        Otherwise keep the first.
+    Yields:
+      Elements from the iterable.
+    """
+    if keyfunc is None:
+        keyfunc = lambda x: x
+    seen = set()
+    if last:
+        unique_reversed_list = []
+        for obj in reversed(iterable):
+            key = keyfunc(obj)
+            if key not in seen:
+                seen.add(key)
+                unique_reversed_list.append(obj)
+        yield from reversed(unique_reversed_list)
+    else:
+        for obj in iterable:
+            key = keyfunc(obj)
+            if key not in seen:
+                seen.add(key)
+                yield obj
+
+
+UNSET = object()
+
+def sorted_uniquify(iterable, keyfunc=None, last=False):
+    """Given a sequence of elements, sort and remove duplicates of the given key.
+    Keep either the first or the last (by key) element of a sequence of
+    key-identical elements. This does _not_ maintain the ordering of the
+    original elements, they are returned sorted (by key) instead.
+
+    Args:
+      iterable: An iterable sequence.
+      keyfunc: A function that extracts from the elements the sort key
+        to use and uniquify on. If left unspecified, the identify function
+        is used and the uniquification occurs on the elements themselves.
+      last: A boolean, True if we should keep the last item of the same keys.
+        Otherwise keep the first.
+    Yields:
+      Elements from the iterable.
+    """
+    if keyfunc is None:
+        keyfunc = lambda x: x
+    if last:
+        prev_obj = UNSET
+        prev_key = UNSET
+        for obj in sorted(iterable, key=keyfunc):
+            key = keyfunc(obj)
+            if key != prev_key and prev_obj is not UNSET:
+                yield prev_obj
+            prev_obj = obj
+            prev_key = key
+        if prev_obj is not UNSET:
+            yield prev_obj
+    else:
+        prev_key = UNSET
+        for obj in sorted(iterable, key=keyfunc):
+            key = keyfunc(obj)
+            if key != prev_key:
+                yield obj
+                prev_key = key
 
 
 class Distribution:

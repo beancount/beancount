@@ -116,7 +116,7 @@ def build_price_map(entries):
 
     # Unzip and sort each of the entries and eliminate duplicates on the date.
     sorted_price_map = PriceMap({
-        base_quote: list(misc_utils.uniquify_last(date_rates, lambda x: x[0]))
+        base_quote: list(misc_utils.sorted_uniquify(date_rates, lambda x: x[0], last=True))
         for (base_quote, date_rates) in price_map.items()})
 
     # Compute and insert all the inverted rates.

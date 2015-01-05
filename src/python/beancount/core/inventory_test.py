@@ -206,7 +206,7 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(inv.get_units('AUD'), A('0 AUD'))
         self.assertEqual(inv.get_units('NZD'), A('0 NZD'))
 
-    def test_units(self):
+    def test_units1(self):
         inv = Inventory()
         self.assertEqual(inv.units(), Inventory.from_string(''))
 
@@ -225,6 +225,12 @@ class TestInventory(unittest.TestCase):
         position.from_string('40.50 USD'),
         position.from_string('40.50 USD {1.10 CAD}'),
         position.from_string('40.50 USD {1.10 CAD / 2012-01-01}')]
+
+    def test_units(self):
+        inv = Inventory(self.POSITIONS_ALL_KINDS +
+                        [position.from_string('50.00 CAD')])
+        inv_cost = inv.units()
+        self.assertEqual(Inventory.from_string('121.50 USD, 50.00 CAD'), inv_cost)
 
     def test_cost(self):
         inv = Inventory(self.POSITIONS_ALL_KINDS +

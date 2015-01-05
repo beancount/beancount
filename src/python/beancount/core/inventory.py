@@ -213,6 +213,17 @@ class Inventory(list):
     def cost(self):
         """Return an inventory of costs for all positions (aggregated).
 
+        For example, an inventory that contains these lots:
+
+           2 GOOGL
+           3 GOOG {300.00 USD}
+           4 GOOG {310.00 USD / 2014-10-28}
+
+        will provide:
+
+           2 GOOGL
+           2140 USD
+
         Returns:
           An instance of Inventory.
         """

@@ -26,6 +26,7 @@ bean-bake
 bean-check
 bean-doctor
 bean-report
+bean-query
 bean-web
 bean-example
 bean-format
@@ -61,6 +62,7 @@ setup(
                 'beancount.core',
                 'beancount.ops',
                 'beancount.plugins',
+                'beancount.query',
                 'beancount.reports',
                 'beancount.scripts',
                 'beancount.web',

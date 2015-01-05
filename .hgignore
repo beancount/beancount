@@ -4,8 +4,6 @@ syntax: glob
 *~
 TAGS
 build
-src/python/beancount/parser/parsetab.py
-src/python/beancount/parser/grammar.output
 *.a
 *.so
 rewrite/golang/bin

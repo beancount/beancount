@@ -4,6 +4,14 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-01-04
+
+  - Merged the 'shell' branch into 'default', providing a new tool to extract
+    information from a Beancount input file: bean-query. This is the first
+    revision of the SQL-like query language for Beancount. Documentation for it
+    is available under http://furius.ca/beancount/doc/query.
+
+
 2014-12-28
 
   - Merged various functions (in beancount.ops.lifetimes) used to automatically

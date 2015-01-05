@@ -12,91 +12,67 @@ import shutil
 import tempfile
 import subprocess
 from os import path
-from pprint import pprint as pp
 
-from oauth2client import tools
+# Import oauth2 libraries.
 import oauth2client.client
-from oauth2client.client import OAuth2WebServerFlow
+from oauth2client import tools
 from oauth2client.file import Storage
 
+# Import Google API client libraries.
 import httplib2
-import googleapiclient.discovery
+try:
+    from apiclient import discovery
+except:
+    # The name for the older version differs slightly.
+    from googleapiclient import discovery
 
 
-def create_flow_from_file(scope):
-    """Create a flow from data stored in a filename.
-
-    Args:
-      scope: A string, the scope to get credentials for.
-    Returns:
-      A flow object.
-    """
-    secrets_filename = os.environ['GOOGLE_APIS']
-    flow = oauth2client.client.flow_from_clientsecrets(secrets_filename, scope)
-    flow.redirect_uri = oauth2client.client.OOB_CALLBACK_URN
-
-    # Secrets file contents look like this:
-    #
-    # {"installed":
-    #  {"client_id": ".....",
-    #   "client_secret": ".....",
-    #   "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-    #   "token_uri": "https://accounts.google.com/o/oauth2/token",
-    #   "client_email": "",
-    #   "redirect_uris": ["urn: ietf: wg: oauth: 2.0: oob", "oob"],
-    #   "client_x509_cert_url": "",
-    #   "auth_provider_x509_cert_url": "https: //www.googleapis.com/oauth2/v1/certs"}}
-
-    return flow
+DEFAULT_SECRETS_FILENAME = os.environ.get('GOOGLE_APIS', None)
+DEFAULT_STORAGE_FILENAME = path.join(os.environ['HOME'], '.oauth2-google-api')
 
 
-# Hardcoded secrets baked here for my native app.
-CLIENT_ID     = '.....' # Removed.
-CLIENT_SECRET = '.....' # Removed.
+def get_authenticated_http(scope, secrets_filename, storage_filename, opts):
+    """Authenticate via oauth2 and cache credentials to a file.
 
-def create_flow_from_ids(scope):
-    """Create a flow from hardcoded IDs.
+    If the credentials are already available in the 'storage' cache file, this
+    function will not require user interaction, it will simply return the cached
+    credentials; otherwise, it opens up a browser window for the user to accept
+    the access and obtain the credentials.
 
     Args:
       scope: A string, the scope to get credentials for.
-    Returns:
-      A flow object.
-    """
-    secrets_filename = os.environ['GOOGLE_APIS']
-    flow = oauth2client.client.flow_from_clientsecrets(secrets_filename, scope)
-    flow.redirect_uri = oauth2client.client.OOB_CALLBACK_URN
-
-    # Note: You could also have used 'http://localhost' to redirect.
-    return OAuth2WebServerFlow(client_id=CLIENT_ID,
-                               client_secret=CLIENT_SECRET,
-                               scope=scope,
-                               redirect_uri='urn:ietf:wg:oauth:2.0:oob')
-
-
-def get_authenticated_http(scope, storage_filename, opts):
-    """Authenticate via oauth2 and store to a filename.
-    If credentials are already available in the storage filename, this does not
-    need user interaction; otherwise, this opens up a browser window to accept
-    access.
-
-    Args:
-      scope: A string, the scope to get credentials for.
+      secrets_filename: A string, the filename that contains information
+        identifying the client application and secret (Note: this is not the
+        credentials/token).
       storage_filename: A string, a path to the filename where to cache the
         credentials between runs.
       opts: An argparse option values object, as retrurned by parse_args().
     Returns:
-      An authenticated http client object, from which you can use the Google APIs.
+      An authenticated http client object, from which you can use the Google
+      APIs.
     """
-    flow = create_flow_from_ids(scope)
+    # Create a flow from a secrets file.
+    flow = oauth2client.client.flow_from_clientsecrets(secrets_filename, scope)
+    flow.redirect_uri = oauth2client.client.OOB_CALLBACK_URN
 
+    # Create a transport, disable SSL certificates, which fails to validate.
     http = httplib2.Http()
     http.disable_ssl_certificate_validation = True
 
+    # Create a storage to cache the credentials for future runs, and look it up.
     storage = Storage(storage_filename)
     credentials = storage.get()
     if credentials is None:
-        credentials = tools.run_flow(flow, storage, opts, http=http)
+        # Save and restore the logger level, because the flow somehow overrides it.
+        saved_log_level = logging.getLogger().level
+        try:
+            # If the credentials haven't been found, run the flow. This will pop-up
+            # a web browser window for you to accept.
+            credentials = tools.run_flow(flow, storage, opts, http=http)
+        finally:
+            logging.getLogger().setLevel(saved_log_level)
 
+    # Authorize using the transport and return it.
     credentials.authorize(http)
 
     return http
@@ -167,8 +143,12 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.strip(),
                                      parents=[tools.argparser])
 
+    parser.add_argument('--secrets', action='store',
+                        default=DEFAULT_SECRETS_FILENAME,
+                        help="Secrets filename")
+
     parser.add_argument('--storage', action='store',
-                        default=path.join(os.environ['HOME'], '.oauth2-for-google-apis'),
+                        default=DEFAULT_STORAGE_FILENAME,
                         help="Storage filename")
 
     parser.add_argument('-o', '--output', action='store',
@@ -180,10 +160,10 @@ def main():
     # Connect, with authentication.
     # Check https://developers.google.com/drive/scopes for all available scopes.
     DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive'
-    http = get_authenticated_http(DRIVE_SCOPE, opts.storage, opts)
+    http = get_authenticated_http(DRIVE_SCOPE, opts.secrets, opts.storage, opts)
 
     # Access the drive API.
-    drive = googleapiclient.discovery.build('drive', 'v2', http=http)
+    drive = discovery.build('drive', 'v2', http=http)
 
     try:
         # Download the docs.

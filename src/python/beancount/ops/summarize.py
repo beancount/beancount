@@ -23,6 +23,178 @@ from beancount.core import interpolate
 from beancount.ops import prices
 from beancount.ops import balance
 from beancount.utils import bisect_key
+from beancount.parser import options
+
+
+def open(entries,
+         date,
+         account_types,
+         conversion_currency,
+         account_earnings,
+         account_opening,
+         account_conversions):
+    """Summarize entries before a date and transfer income/expenses to equity.
+
+    This method essentially prepares a list of directives to contain only
+    transactions that occur after a particular date. It truncates the past. To
+    do so, it will
+
+    1. Insert conversion transactions at the given open date, then
+
+    2. Insert transactions at that date to move accumulated balances from before
+       that date from the income and expenses accounts to an equity account, and
+       finally
+
+    3. It removes all the transactions previous to the date and replaces them by
+       opening balances entries to bring the balances to the same amount.
+
+    The result is a list of entries for which the income and expense accounts
+    are beginning with a balance of zero, and all other accounts begin with a
+    transaction that brings their balance to the expected amount. All the past
+    has been summarized at that point.
+
+    An index is returned to the first transaction past the balance opening
+    transactions, so you can keep just those in order to render a balance sheet
+    for only the opening balances.
+
+    Args:
+      entries: A list of directive tuples.
+      date: A datetime.date instance, the date at which to do this.
+      account_types: An instance of AccountTypes.
+      conversion_currency: A string, the transfer currency to use for zero prices
+        on the conversion entry.
+      account_earnings: A string, the name of the account to transfer
+        previous earnings from the income statement accounts to the balance
+        sheet.
+      account_opening: A string, the name of the account in equity
+        to transfer previous balances from, in order to initialize account
+        balances at the beginning of the period. This is typically called an
+        opening balances account.
+      account_conversions: A string, tne name of the equity account to
+        book currency conversions against.
+    Returns:
+      A new list of entries is returned, and the index that points to the first
+      original transaction after the beginning date of the period. This index
+      can be used to generate the opening balances report, which is a balance
+      sheet fed with only the summarized entries.
+
+    """
+    # Insert conversion entries.
+    entries = conversions(entries, account_conversions, conversion_currency, date)
+
+    # Transfer income and expenses before the period to equity.
+    entries, _ = clear(entries, date, account_types, account_earnings)
+
+    # Summarize all the previous balances, after transferring the income and
+    # expense balances, so all entries for those accounts before the begin date
+    # should now disappear.
+    entries, index = summarize(entries, date, account_opening)
+
+    return entries, index
+
+
+def close(entries,
+          date,
+          conversion_currency,
+          account_conversions):
+    """Truncate entries that occur after a particular date and ensure balance.
+
+    This method essentially removes entries after a date. It truncates the
+    future. To do so, it will
+
+    1. Remove all entries which occur after 'date', if given.
+
+    2. Insert conversion transactions at the end of the list of entries to
+       ensure that the total balance of all postings sums up to empty.
+
+    The result is a list of entries with a total balance of zero, with possibly
+    non-zero balances for the income/expense accounts. To produce a final
+    balance sheet, use transfer() to move the net income to the equity accounts.
+
+    Args:
+      entries: A list of directive tuples.
+      date: A datetime.date instance, one day beyond the end of the period. This
+        date can be optionally left to None in order to close at the end of the
+        list of entries.
+      conversion_currency: A string, the transfer currency to use for zero prices
+        on the conversion entry.
+      account_conversions: A string, tne name of the equity account to
+        book currency conversions against.
+    Returns:
+      A new list of entries is returned, and the index that points to one beyond
+      the last original transaction that was provided. Further entries may have
+      been inserted to normalize conversions and ensure the total balance sums
+      to zero.
+    """
+
+    # Truncate the entries after the date, if a date has been provided.
+    if date is not None:
+        entries = truncate(entries, date)
+
+    # Keep an index to the truncated list of entries (before conversions).
+    index = len(entries)
+
+    # Insert a conversions entry to ensure the total balance of all accounts is
+    # flush zero.
+    entries = conversions(entries, account_conversions, conversion_currency, date)
+
+    return entries, index
+
+
+def clear(entries,
+          date,
+          account_types,
+          account_earnings):
+    """Transfer income and expenses balances at the given date to the equity accounts.
+
+    This method insert entries to zero out balances on income and expenses
+    accounts by transfering them to an equity account.
+
+    Args:
+      entries: A list of directive tuples.
+      date: A datetime.date instance, one day beyond the end of the period. This
+        date can be optionally left to None in order to close at the end of the
+        list of entries.
+      account_types: An instance of AccountTypes.
+      account_earnings: A string, the name of the account to transfer
+        previous earnings from the income statement accounts to the balance
+        sheet.
+    Returns:
+      A new list of entries is returned, and the index that points to one before
+      the last original transaction before the transfers.
+    """
+    index = len(entries)
+
+    # Transfer income and expenses before the period to equity.
+    income_statement_account_pred = (
+        lambda account: is_income_statement_account(account, account_types))
+    new_entries = transfer_balances(entries, date,
+                                    income_statement_account_pred, account_earnings)
+
+    return new_entries, index
+
+
+def open_opt(entries, date, options_map):
+    """Convenience function to open() using an options map.
+    """
+    account_types = options.get_account_types(options_map)
+    previous_accounts = options.get_previous_accounts(options_map)
+    conversion_currency = options_map['conversion_currency']
+    return open(entries, date, account_types, conversion_currency, *previous_accounts)
+
+def close_opt(entries, date, options_map):
+    """Convenience function to close() using an options map.
+    """
+    conversion_currency = options_map['conversion_currency']
+    current_accounts = options.get_current_accounts(options_map)
+    return close(entries, date, conversion_currency, current_accounts[1])
+
+def clear_opt(entries, date, options_map):
+    """Convenience function to clear() using an options map.
+    """
+    account_types = options.get_account_types(options_map)
+    current_accounts = options.get_current_accounts(options_map)
+    return clear(entries, date, account_types, current_accounts[0])
 
 
 def clamp(entries,
@@ -90,11 +262,33 @@ def clamp(entries,
     return entries, index
 
 
-def close(entries,
-          account_types,
-          conversion_currency,
-          account_earnings,
-          account_conversions):
+def clamp_opt(entries, begin_date, end_date, options_map):
+    """Clamp by getting all the parameters from an options map.
+
+    See clamp() for details.
+
+    Args:
+      entries: See clamp().
+      begin_date: See clamp().
+      end_date: See clamp().
+      options_map: A parser's option_map.
+    Returns:
+      Same as clamp().
+    """
+    account_types = options.get_account_types(options_map)
+    previous_accounts = options.get_previous_accounts(options_map)
+    conversion_currency = options_map['conversion_currency']
+    return clamp(entries, begin_date, end_date,
+                 account_types,
+                 conversion_currency,
+                 *previous_accounts)
+
+
+def cap(entries,
+        account_types,
+        conversion_currency,
+        account_earnings,
+        account_conversions):
     """Transfer net income to equity and insert a final conversion entry.
 
     This is used to move and nullify balances from the income and expense
@@ -127,6 +321,26 @@ def close(entries,
     entries = conversions(entries, account_conversions, conversion_currency, None)
 
     return entries
+
+
+def cap_opt(entries, options_map):
+    """Close by getting all the parameters from an options map.
+
+    See cap() for details.
+
+    Args:
+      entries: See cap().
+      options_map: A parser's option_map.
+    Returns:
+      Same as close().
+    """
+    account_types = options.get_account_types(options_map)
+    current_accounts = options.get_current_accounts(options_map)
+    conversion_currency = options_map['conversion_currency']
+    return cap(entries,
+               account_types,
+               conversion_currency,
+               *current_accounts)
 
 
 def transfer_balances(entries, date, account_pred, transfer_account):

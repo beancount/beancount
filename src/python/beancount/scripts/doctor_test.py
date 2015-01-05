@@ -163,5 +163,5 @@ class TestScriptDisplayContext(cmptest.TestCase):
         """
         with test_utils.capture() as stdout:
             test_utils.run_with_args(doctor.main, ['display-context', filename])
-        # FIXME: This probably deserves a little better.
+        # Note: This probably deserves a little more love.
         self.assertTrue(stdout.getvalue())

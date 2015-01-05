@@ -6,6 +6,7 @@ import datetime
 import re
 import io
 import textwrap
+import functools
 
 import dateutil.parser
 
@@ -85,8 +86,8 @@ class AccountsReport(report.Report):
 
         # Render to stdout.
         maxlen = max(len(account) for account in open_close)
-        sortkey_fun = account_types.get_account_sort_function(
-            options.get_account_types(options_map))
+        sortkey_fun = functools.partial(account_types.get_account_sort_key,
+                                        options.get_account_types(options_map))
         for account, (open, close) in sorted(open_close.items(),
                                              key=lambda entry: sortkey_fun(entry[0])):
             open_date = open.date if open else ''

@@ -7,7 +7,6 @@ from beancount.reports import misc_reports
 from beancount.reports import report_test
 from beancount.parser import options
 from beancount.parser import parser
-from beancount.utils import test_utils
 
 
 class TestMiscReports(unittest.TestCase):

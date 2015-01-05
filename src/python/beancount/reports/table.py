@@ -103,6 +103,8 @@ def create_table(rows, field_spec=None):
             if value is not None:
                 if formatter is not None:
                     value = formatter(value)
+                else:
+                    value = str(value)
             else:
                 value = ''
             body_row.append(value)

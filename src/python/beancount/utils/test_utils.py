@@ -22,7 +22,7 @@ from os import path
 get_test_port = itertools.count(9470).__next__
 
 
-def find_repository_root(filename):
+def find_repository_root(filename=None):
     """Return the path to the repository root.
 
     Args:
@@ -30,6 +30,8 @@ def find_repository_root(filename):
     Returns:
       A string, the root directory.
     """
+    if filename is None:
+        filename = __file__
     while not all(path.exists(path.join(filename, sigfile))
                   for sigfile in ('PKGINFO', 'COPYING', 'README')):
         filename = path.dirname(filename)
@@ -159,6 +161,20 @@ def docfile(function):
             return function(self, f.name)
     new_function.__doc__ = None
     return new_function
+
+
+def search_words(words, line):
+    """Search for a sequence of words in a line.
+
+    Args:
+      words: A list of strings, the words to look for, or a space-separated string.
+      line: A string, the line to search into.
+    Returns:
+      A MatchObject, or None.
+    """
+    if isinstance(words, str):
+        words = words.split()
+    return re.search('.*'.join(r'\b{}\b'.format(word) for word in words), line)
 
 
 class TestCase(unittest.TestCase):
