@@ -73,6 +73,9 @@ beancount: TODO
 
 ** Documentation / Ongoing
 
+  - Document the @@ and {{}} syntaxes (see Matthew Harris email), especially as
+    they replace to price.
+
   - As an aside, I see that the grammar supports @@ and {{}} syntaxes, but they
     don't appear to be documented in the language manual.
 
@@ -920,6 +923,20 @@ http://furius.ca/beancount/doc/proposal-inter
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+  - Implement a check that the sign of a @@ price is always the same as the
+    number of units themselves.
+
+  - Implement a total balance assertion using the following syntax:
+
+      YYYY-MM-DD balance
+         account    amount
+         account    amount
+         account    amount
+         account    amount
+
+    The distinction is that it's on multiple lines. Maybe call it balance*.
 
 
   - Build library functions to dedent, parse and create single entries, and
