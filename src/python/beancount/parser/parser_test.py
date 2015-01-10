@@ -683,18 +683,51 @@ class TestCurrencies(unittest.TestCase):
         self.assertFalse(errors)
 
 
-class TestBalance(unittest.TestCase):
+class TestTotalsAndSigns(unittest.TestCase):
+
+    @parsedoc
+    def test_nontotal_sign(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            Assets:Investments:MSFT      -10 MSFT @ 200.00 USD
+            Assets:Investments:MSFT      -10 MSFT @@ 2000.00 USD
+            Assets:Investments:Cash
+        """
+        self.assertEqual(amount.from_string('200 USD'), entries[0].postings[0].price)
+        self.assertEqual(amount.from_string('-200 USD'), entries[0].postings[1].price)
 
     @parsedoc
     def test_total_price(self, entries, errors, _):
         """
           2013-05-18 * ""
-            Assets:Investments:MSFT      10 MSFT @@ 2000 USD
+            Assets:Investments:MSFT      10 MSFT @@ 2000.00 USD
             Assets:Investments:Cash
         """
         posting = entries[0].postings[0]
         self.assertEqual(amount.from_string('200 USD'), posting.price)
         self.assertEqual(None, posting.position.lot.cost)
+
+    @parsedoc
+    def test_total_price_negative(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            Assets:Investments:MSFT      -10 MSFT @@ -2000.00 USD
+            Assets:Investments:Cash
+        """
+        posting = entries[0].postings[0]
+        self.assertEqual(amount.from_string('200 USD'), posting.price)
+        self.assertEqual(None, posting.position.lot.cost)
+
+    @parsedoc
+    def test_total_price_inverted(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            Assets:Investments:MSFT      10 MSFT @@ -2000.00 USD
+            Assets:Investments:MSFT     -10 MSFT @@ 2000.00 USD
+            Assets:Investments:Cash
+        """
+        self.assertEqual(amount.from_string('-200 USD'), entries[0].postings[0].price)
+        self.assertEqual(amount.from_string('-200 USD'), entries[0].postings[1].price)
 
     @parsedoc
     def test_total_cost(self, entries, errors, _):

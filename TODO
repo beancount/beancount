@@ -32,7 +32,25 @@ beancount: TODO
 
 ** Misc
 
-  - IMPORTANT: Remove sample_stack for unit tests that fail, or fix the test..
+  - BUG: This will fail with an assertion, should be an error instead:
+
+       2014-11-01 * "Massdrop Group Inc." | "Express Checkout Payment Sent"
+         Expenses:Toys:Electronics    146.37 USD @@ 169.87 USD
+         Assets:CA:PayPal      -169.87 CAD
+
+
+  - Make prices required to always be positive, including with @@, and err on
+    negative amounts for prices. This will match Ledger semantics and will
+    remove one degree of freedom that wasn't necessary.
+
+  - Add the capability to issue warnings when the price database is queried for
+    a specific date but the price point is too distant from the requested date.
+
+      "One thing I want to do soon is to issue warnings when the price database is
+      looked up and the price point is too far from the requested date, so that the
+      user could go fill in the missing prices. I'd probably issue price entries with
+      the approximated price (approximated with a distant date) and then feed that
+      into another script that would fetch prices for those directives."
 
   - IMPORTANT LATENT BUG. You need to extend the lexer to parse A-Z for flags,
     not just PSTCU! This is important, as I just realized that it could prevent
@@ -923,6 +941,14 @@ http://furius.ca/beancount/doc/proposal-inter
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+  - It would be useful to create a directive that checks that the balance
+    of an account in a time interval is lesser or greater than some specific
+    amount, e.g.
+
+       Expenses:US:TY2014:SocSec      <= 7254 USD  ;; 6.2% of 117,000 USD
+       Expenses:US:TY2015:SocSec      <= 7347 USD  ;; 6.2% of 118,500 USD
 
 
   - Implement a check that the sign of a @@ price is always the same as the
