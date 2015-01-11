@@ -310,10 +310,7 @@ class Builder(lexer.LexBuilder):
                     ParserError(meta, "Cost is zero or negative: {}".format(cost), None))
 
         if istotal:
-            if __allow_negative_prices__:
-                cost = amount_div(cost, amount.number)
-            else:
-                cost = amount_div(cost, abs(amount.number))
+            cost = amount_div(cost, abs(amount.number))
         lot = Lot(amount.currency, cost, lot_date)
 
         return Position(lot, amount.number)

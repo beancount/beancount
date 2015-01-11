@@ -725,6 +725,10 @@ class TestTotalsAndSigns(unittest.TestCase):
           2013-05-18 * ""
             Assets:Investments:MSFT      10 MSFT {{2000 USD / 2014-02-25}}
             Assets:Investments:Cash
+
+          2013-06-01 * ""
+            Assets:Investments:MSFT      -10 MSFT {{2,000 USD}}
+            Assets:Investments:Cash
         """
         for entry in entries:
             posting = entry.postings[0]
@@ -792,6 +796,27 @@ class TestAllowNegativePrices(unittest.TestCase):
 
     def tearDown(self):
         parser.__allow_negative_prices__ = self.__allow_negative_prices__
+
+    @parsedoc
+    def test_total_cost(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            Assets:Investments:MSFT      10 MSFT {{2,000 USD}}
+            Assets:Investments:Cash
+
+          2013-05-18 * ""
+            Assets:Investments:MSFT      10 MSFT {{2000 USD / 2014-02-25}}
+            Assets:Investments:Cash
+
+          2013-06-01 * ""
+            Assets:Investments:MSFT      -10 MSFT {{2,000 USD}}
+            Assets:Investments:Cash
+        """
+        self.assertFalse(errors)
+        for entry in entries:
+            posting = entry.postings[0]
+            self.assertEqual(amount.from_string('200 USD'), posting.position.lot.cost)
+            self.assertEqual(None, posting.price)
 
     @parsedoc
     def test_price_negative(self, entries, errors, _):
