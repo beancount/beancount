@@ -76,9 +76,9 @@ class TestLexer(unittest.TestCase):
             ('CURRENCY', 5, 'TEST-3', 'TEST-3'),
             ('CURRENCY', 5, 'NT', 'NT'),
             ('EOL', 6, '\n', None),
-            ('STRING', 6, '"Nice dinner at Mermaid Inn"', 'Nice dinner at Mermaid Inn'),
+            ('STRING', 6, '"', 'Nice dinner at Mermaid Inn'),
             ('EOL', 7, '\n', None),
-            ('STRING', 7, '""', ''),
+            ('STRING', 7, '"', ''),
             ('EOL', 8, '\n', None),
             ('NUMBER', 8, '123', D('123')),
             ('NUMBER', 8, '123.45', D('123.45')),
@@ -295,3 +295,58 @@ class TestLexer(unittest.TestCase):
             ('EOL', 1, '\x00', None),
             ], tokens)
         self.assertFalse(errors)
+
+    @lex_tokens
+    def test_string_escaped(self, tokens, errors):
+        r'''
+          "The Great \"Juju\""
+          "The Great \t\n\r\f\b"
+        '''
+        self.assertEqual([
+            ('EOL', 2, '\n', None),
+            ('STRING', 2, '"', 'The Great "Juju"'),
+            ('EOL', 3, '\n', None),
+            ('STRING', 3, '"', 'The Great \t\n\r\x0c\x08'),
+            ('EOL', 4, '\n', None),
+            ('EOL', 4, '\x00', None),
+            ], tokens)
+        self.assertFalse(errors)
+
+    @lex_tokens
+    def test_string_newline(self, tokens, errors):
+        '"The Great\nJuju"'
+        # Note that this test contains an _actual_ newline, not an escape one as
+        # in the previous test. This should allow us to parse multiline strings.
+        self.assertEqual([
+            ('STRING', 2, '"', 'The Great\nJuju'),
+            ('EOL', 2, '\x00', None),
+            ], tokens)
+        self.assertFalse(errors)
+
+    @lex_tokens
+    def test_string_newline_long(self, tokens, errors):
+        '''
+        "Forty
+        world
+        leaders
+        and
+        hundreds"
+        '''
+        # Note that this test contains an _actual_ newline, not an escape one as
+        # in the previous test. This should allow us to parse multiline strings.
+        self.assertEqual([
+            ('EOL', 2, '\n', None),
+            ('STRING', 6, '"', 'Forty\nworld\nleaders\nand\nhundreds'),
+            ('EOL', 7, '\n', None),
+            ('EOL', 7, '\x00', None),
+            ], tokens)
+        self.assertFalse(errors)
+
+    def test_string_newline_toolong(self):
+        # Testing a string that busts the limits.
+        line = 'a' * 127 + '\n'
+        string = '"' + line * 128 + '"'
+        builder = lexer.LexBuilder()
+        tokens = list(lexer.lex_iter_string(string, builder))
+        self.assertTrue(tokens[0], 'ERROR')
+        self.assertTrue(tokens[1], 'EOL')
