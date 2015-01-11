@@ -11,6 +11,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import collections
 
 from beancount.core import getters
+from beancount.core import data
 from beancount.core import realization
 
 __plugins__ = ('validate_leaf_only',)
@@ -30,6 +31,7 @@ def validate_leaf_only(entries, unused_options_map):
     """
     real_root = realization.realize(entries, compute_balance=False)
 
+    default_meta = data.new_metadata('<leafonly>', 0)
     open_close_map = None # Lazily computed.
     errors = []
     for real_account in realization.iter_children(real_root):
@@ -40,7 +42,7 @@ def validate_leaf_only(entries, unused_options_map):
 
             open_entry = open_close_map[real_account.account][0]
             errors.append(LeafOnlyError(
-                open_entry.meta,
+                open_entry.meta if open_entry else default_meta,
                 "Non-leaf account '{}' has postings on it".format(real_account.account),
                 open_entry))
 
