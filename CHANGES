@@ -4,6 +4,47 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-01-11
+
+  - **IMPORTANT** Fixed an inconsistency with the signs of total cost syntax,
+    like this:
+
+        <account>          -1000 USD @@ -1123.24 CAD
+
+    It was required to use the negative sign in order to get the correct value.
+    This makes no sense: per-unit cost and price amounts were unsigned, and total
+    cost values were only allowed to be positive. Also, Ledger requires all
+    costs and prices to be positive/unsigned, which could be confusing for
+    Ledger users. I had no particularly good reason to require the same sign
+    for total cost: this was only an oversight.
+
+    So I changed this so that total price, like total cost, per-unit price,
+    per-unit cost, are all positive/unsigned. An error is now raised i a price
+    or cost, total or per-unit, are provided negative. You need to convert your
+    input files to unsigned values, like this (for the above example):
+
+        <account>          -1000 USD @@ 1123.24 CAD
+
+    If you pull this change and have negative total prices, your input file will
+    break. In order to circumvent the change, you may set the
+    BEANCOUNT_ALLOW_NEGATIVE_PRICES environment variable. I will remove this
+    workaround in a few months.
+    (This bug reported by Matthew Harris.)
+
+  - Fixed a bug when total cost {{...}} syntax was being used with a negative
+    number of units: it would raise an error, although it was legal to do so.
+    For example, this is legal and was raising an error:
+
+        <account>          -10 MSFT {{455.24 USD}}
+
+    It probably did not show up much because few people use the total cost
+    method, and the tests happened only to use positive numbers of units.
+
+  - Fixed issue #5: bug in beancount.plugins.leafonly plugin when posting to a
+    non-leaf account that had no Open directive. (This bug reported by Nathan
+    Grigg.)
+
+
 2015-01-04
 
   - Merged the 'shell' branch into 'default', providing a new tool to extract
