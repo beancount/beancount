@@ -699,7 +699,7 @@ class TestTotalsAndSigns(unittest.TestCase):
     def test_zero_cost(self, entries, errors, _):
         """
           2013-05-18 * ""
-            Assets:Investments:MSFT      -10 MSFT {000 USD}
+            Assets:Investments:MSFT      -10 MSFT {0.00 USD}
             Assets:Investments:Cash
         """
         self.assertTrue(errors)
@@ -782,6 +782,49 @@ class TestTotalsAndSigns(unittest.TestCase):
         """
         self.assertTrue(errors)
         self.assertTrue(re.search('Negative.*allowed', errors[0].message))
+
+
+class TestAllowNegativePrices(unittest.TestCase):
+
+    def setUp(self):
+        self.__allow_negative_prices__ = parser.__allow_negative_prices__
+        parser.__allow_negative_prices__ = True
+
+    def tearDown(self):
+        parser.__allow_negative_prices__ = self.__allow_negative_prices__
+
+    @parsedoc
+    def test_price_negative(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            Assets:Investments:MSFT      -10 MSFT @ -200.00 USD
+            Assets:Investments:Cash
+        """
+        posting = entries[0].postings[0]
+        self.assertEqual(amount.from_string('-200 USD'), posting.price)
+        self.assertEqual(None, posting.position.lot.cost)
+
+    @parsedoc
+    def test_total_price_negative(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            Assets:Investments:MSFT      -10 MSFT @@ 2000.00 USD
+            Assets:Investments:Cash
+        """
+        posting = entries[0].postings[0]
+        self.assertEqual(amount.from_string('-200 USD'), posting.price)
+        self.assertEqual(None, posting.position.lot.cost)
+
+    @parsedoc
+    def test_total_price_inverted(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            Assets:Investments:MSFT      10 MSFT @@ -2000.00 USD
+            Assets:Investments:Cash
+        """
+        posting = entries[0].postings[0]
+        self.assertEqual(amount.from_string('-200 USD'), posting.price)
+        self.assertEqual(None, posting.position.lot.cost)
 
 
 class TestMetaData(unittest.TestCase):
