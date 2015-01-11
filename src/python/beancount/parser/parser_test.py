@@ -686,18 +686,77 @@ class TestCurrencies(unittest.TestCase):
 class TestTotalsAndSigns(unittest.TestCase):
 
     @parsedoc
-    def test_nontotal_sign(self, entries, errors, _):
+    def test_zero_amount(self, entries, errors, _):
         """
           2013-05-18 * ""
-            Assets:Investments:MSFT      -10 MSFT @ 200.00 USD
-            Assets:Investments:MSFT      -10 MSFT @@ 2000.00 USD
+            Assets:Investments:MSFT      0 MSFT {-200.00 USD}
             Assets:Investments:Cash
         """
-        self.assertEqual(amount.from_string('200 USD'), entries[0].postings[0].price)
-        self.assertEqual(amount.from_string('-200 USD'), entries[0].postings[1].price)
+        self.assertTrue(errors)
+        self.assertTrue(re.search('Amount is zero', errors[0].message))
 
     @parsedoc
-    def test_total_price(self, entries, errors, _):
+    def test_zero_cost(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            Assets:Investments:MSFT      -10 MSFT {0.00 USD}
+            Assets:Investments:Cash
+        """
+        self.assertTrue(errors)
+        self.assertTrue(re.search('Cost is zero or negative', errors[0].message))
+
+    @parsedoc
+    def test_cost_negative(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            Assets:Investments:MSFT      -10 MSFT {-200.00 USD}
+            Assets:Investments:Cash
+        """
+        self.assertTrue(errors)
+        self.assertTrue(re.search('Cost is zero or negative', errors[0].message))
+
+    @parsedoc
+    def test_total_cost(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            Assets:Investments:MSFT      10 MSFT {{2,000 USD}}
+            Assets:Investments:Cash
+
+          2013-05-18 * ""
+            Assets:Investments:MSFT      10 MSFT {{2000 USD / 2014-02-25}}
+            Assets:Investments:Cash
+
+          2013-06-01 * ""
+            Assets:Investments:MSFT      -10 MSFT {{2,000 USD}}
+            Assets:Investments:Cash
+        """
+        for entry in entries:
+            posting = entry.postings[0]
+            self.assertEqual(amount.from_string('200 USD'), posting.position.lot.cost)
+            self.assertEqual(None, posting.price)
+
+    @parsedoc
+    def test_total_cost_negative(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            Assets:Investments:MSFT      -10 MSFT {{-200.00 USD}}
+            Assets:Investments:Cash
+        """
+        self.assertTrue(errors)
+        self.assertTrue(re.search('Cost is.*negative', errors[0].message))
+
+    @parsedoc
+    def test_price_negative(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            Assets:Investments:MSFT      -10 MSFT @ -200.00 USD
+            Assets:Investments:Cash
+        """
+        self.assertTrue(errors)
+        self.assertTrue(re.search('Negative.*allowed', errors[0].message))
+
+    @parsedoc
+    def test_total_price_positive(self, entries, errors, _):
         """
           2013-05-18 * ""
             Assets:Investments:MSFT      10 MSFT @@ 2000.00 USD
@@ -711,7 +770,7 @@ class TestTotalsAndSigns(unittest.TestCase):
     def test_total_price_negative(self, entries, errors, _):
         """
           2013-05-18 * ""
-            Assets:Investments:MSFT      -10 MSFT @@ -2000.00 USD
+            Assets:Investments:MSFT      -10 MSFT @@ 2000.00 USD
             Assets:Investments:Cash
         """
         posting = entries[0].postings[0]
@@ -723,11 +782,20 @@ class TestTotalsAndSigns(unittest.TestCase):
         """
           2013-05-18 * ""
             Assets:Investments:MSFT      10 MSFT @@ -2000.00 USD
-            Assets:Investments:MSFT     -10 MSFT @@ 2000.00 USD
             Assets:Investments:Cash
         """
-        self.assertEqual(amount.from_string('-200 USD'), entries[0].postings[0].price)
-        self.assertEqual(amount.from_string('-200 USD'), entries[0].postings[1].price)
+        self.assertTrue(errors)
+        self.assertTrue(re.search('Negative.*allowed', errors[0].message))
+
+
+class TestAllowNegativePrices(unittest.TestCase):
+
+    def setUp(self):
+        self.__allow_negative_prices__ = parser.__allow_negative_prices__
+        parser.__allow_negative_prices__ = True
+
+    def tearDown(self):
+        parser.__allow_negative_prices__ = self.__allow_negative_prices__
 
     @parsedoc
     def test_total_cost(self, entries, errors, _):
@@ -739,11 +807,49 @@ class TestTotalsAndSigns(unittest.TestCase):
           2013-05-18 * ""
             Assets:Investments:MSFT      10 MSFT {{2000 USD / 2014-02-25}}
             Assets:Investments:Cash
+
+          2013-06-01 * ""
+            Assets:Investments:MSFT      -10 MSFT {{2,000 USD}}
+            Assets:Investments:Cash
         """
+        self.assertFalse(errors)
         for entry in entries:
             posting = entry.postings[0]
             self.assertEqual(amount.from_string('200 USD'), posting.position.lot.cost)
             self.assertEqual(None, posting.price)
+
+    @parsedoc
+    def test_price_negative(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            Assets:Investments:MSFT      -10 MSFT @ -200.00 USD
+            Assets:Investments:Cash
+        """
+        posting = entries[0].postings[0]
+        self.assertEqual(amount.from_string('-200 USD'), posting.price)
+        self.assertEqual(None, posting.position.lot.cost)
+
+    @parsedoc
+    def test_total_price_negative(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            Assets:Investments:MSFT      -10 MSFT @@ 2000.00 USD
+            Assets:Investments:Cash
+        """
+        posting = entries[0].postings[0]
+        self.assertEqual(amount.from_string('-200 USD'), posting.price)
+        self.assertEqual(None, posting.position.lot.cost)
+
+    @parsedoc
+    def test_total_price_inverted(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            Assets:Investments:MSFT      10 MSFT @@ -2000.00 USD
+            Assets:Investments:Cash
+        """
+        posting = entries[0].postings[0]
+        self.assertEqual(amount.from_string('-200 USD'), posting.price)
+        self.assertEqual(None, posting.position.lot.cost)
 
 
 class TestMetaData(unittest.TestCase):

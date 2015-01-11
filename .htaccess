@@ -124,3 +124,5 @@ RedirectMatch /doc/inter-account$      	  /beancount/doc/proposal-inter
 RedirectMatch /doc/proposal-funds$        https://docs.google.com/document/d/1nf_yCiLuewVCEjkXq9Kd9SqbZGWqcs0v0pT5xQnkyzs/
 RedirectMatch /doc/fund$	    	  /beancount/doc/proposal-funds
 RedirectMatch /doc/fund-accounting$    	  /beancount/doc/proposal-funds
+
+RedirectMatch /doc/bug-negative-prices 	  https://groups.google.com/forum/#!topic/beancount/2Y7EWFUA3OA

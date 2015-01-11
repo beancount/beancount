@@ -7,6 +7,7 @@ import functools
 import inspect
 import textwrap
 import copy
+import os
 import re
 from os import path
 
@@ -40,6 +41,13 @@ from beancount.core import data
 
 
 __sanity_checks__ = False
+
+# FIXME: This environment variable enables temporary support for negative
+# prices. If you've updated across 2015-01-10 and you're getting a lot of
+# errors, you need to fix all the signs on your @@ total price values (they are
+# to be positive only). Just set this environment variable to disable this
+# change if you need to post-pone this.
+__allow_negative_prices__ = os.environ.get('BEANCOUNT_ALLOW_NEGATIVE_PRICES', False)
 
 
 ParserError = collections.namedtuple('ParserError', 'source message entry')
@@ -286,9 +294,6 @@ class Builder(lexer.LexBuilder):
           A new instance of Position.
         """
         cost, lot_date, istotal = lot_cost_date if lot_cost_date else (None, None, False)
-        if istotal:
-            cost = amount_div(cost, amount.number)
-        lot = Lot(amount.currency, cost, lot_date)
 
         # We don't allow a cost nor a price of zero. (Conversion entries may use
         # a price of zero as the only special case, but never for costs.)
@@ -297,12 +302,16 @@ class Builder(lexer.LexBuilder):
                 meta = new_metadata(filename, lineno)
                 self.errors.append(
                     ParserError(meta,
-                                "Amount is zero or negative: {}".format(cost), None))
+                                "Amount is zero: {}".format(cost), None))
 
             if cost.number <= ZERO:
                 meta = new_metadata(filename, lineno)
                 self.errors.append(
                     ParserError(meta, "Cost is zero or negative: {}".format(cost), None))
+
+        if istotal:
+            cost = amount_div(cost, abs(amount.number))
+        lot = Lot(amount.currency, cost, lot_date)
 
         return Position(lot, amount.number)
 
@@ -473,7 +482,6 @@ class Builder(lexer.LexBuilder):
                                                        document_filename))
         return Document(meta, date, account, document_filename)
 
-
     def key_value(self, key, value):
         """Process a document directive.
 
@@ -503,14 +511,34 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Posting object, with no parent entry.
         """
+        # Prices may not be negative.
+        if not __allow_negative_prices__:
+            if price and price.number < ZERO:
+                meta = new_metadata(filename, lineno)
+                self.errors.append(
+                    ParserError(meta, (
+                        "Negative prices are not allowed: {} "
+                        "(see http://furius.ca/beancount/doc/bug-negative-prices "
+                        "for workaround)"
+                    ).format(price), None))
+                # Fix it and continue.
+                price.number = abs(price.number)
+
         # If the price is specified for the entire amount, compute the effective
         # price here and forget about that detail of the input syntax.
         if istotal:
-            price = Amount(ZERO
-                           if position.number == ZERO
-                           else price.number / position.number, price.currency)
+            if position.number == ZERO:
+                number = ZERO
+            else:
+                if __allow_negative_prices__:
+                    number = price.number/position.number
+                else:
+                    number = price.number/abs(position.number)
+            price = Amount(number, price.currency)
 
-        # Note: Allow zero prices becuase we need them for round-trips.
+        # Note: Allow zero prices because we need them for round-trips for
+        # conversion entries.
+        #
         # if price is not None and price.number == ZERO:
         #     meta = new_metadata(filename, lineno)
         #     self.errors.append(
