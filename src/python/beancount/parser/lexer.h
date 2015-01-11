@@ -40,9 +40,20 @@ int yy_skip_line(void);
 int strtonl(const char* buf, size_t nchars);
 
 
+/* Longest possible string, including multiline strings. */
+#define MAX_STR_BUF  16384
+
+#define SAFE_COPY(dst_ptr, value)               \
+	*dst_ptr++ = value;                     \
+	if (dst_ptr >= strbuf_end) {            \
+	    BEGIN(INVALID);                     \
+	    return ERROR;                       \
+	}
 
 
-#line 46 "src/python/beancount/parser/lexer.h"
+
+
+#line 57 "src/python/beancount/parser/lexer.h"
 
 #define  YY_INT_ALIGNED short int
 
@@ -258,6 +269,7 @@ extern char *yytext;
 #ifdef YY_HEADER_EXPORT_START_CONDITIONS
 #define INITIAL 0
 #define INVALID 1
+#define STRLIT 2
 
 #endif
 
@@ -376,9 +388,9 @@ extern int yylex \
 #undef YY_DECL
 #endif
 
-#line 242 "src/python/beancount/parser/lexer.l"
+#line 290 "src/python/beancount/parser/lexer.l"
 
 
-#line 383 "src/python/beancount/parser/lexer.h"
+#line 395 "src/python/beancount/parser/lexer.h"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */

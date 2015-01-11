@@ -38,7 +38,7 @@ class TestScriptDoctor(test_utils.TestCase):
             EOL               5 '\\n'
             DATE              5 '2014-03-02'
             FLAG              5 '*'
-            STRING            5 '"Something"'
+            STRING            5 '"'
             EOL               6 '\\n'
             INDENT            6 '  '
             ACCOUNT           6 'Expenses:Restaurant'

@@ -55,15 +55,34 @@ int yy_skip_line(void);
 /* Utility functions. */
 int strtonl(const char* buf, size_t nchars);
 
+
+/* Longest possible string, including multiline strings. */
+#define MAX_STR_BUF  16384
+
+#define SAFE_COPY(dst_ptr, value)               \
+	*dst_ptr++ = value;                     \
+	if (dst_ptr >= strbuf_end) {            \
+	    BEGIN(INVALID);                     \
+	    return ERROR;                       \
+	}
+
 }
 
 /* A start condition for chomping an invalid token. */
 %x INVALID
 
+/* Exclusive start condition for parsing escape sequences in string literals. */
+%x STRLIT
+
 
 /*--------------------------------------------------------------------------------------*/
 /* Rules */
 %%
+
+	/* String literal buffer. */
+	char strbuf[MAX_STR_BUF];
+	char* strbuf_end = strbuf + MAX_STR_BUF;
+	char* strbuf_ptr = NULL;
 
 
  /* Newlines are output as explicit tokens, because lines matter in the syntax. */
@@ -183,9 +202,38 @@ plugin		{ return PLUGIN; }
 }
 
  /* String literals. */
-\"[^\"]*\" 			{
-    yylval->pyobj = BUILD("STRING", "s#", yytext+1, yyleng-2);
-    return STRING;
+ /* Note that we use an exclusive start condition.
+    See section "Start Conditions" in the GNU Flex manual. */
+\"	{
+    strbuf_ptr = strbuf;
+    BEGIN(STRLIT);
+}
+
+<STRLIT>{
+
+    /* Saw closing quote - all done. */
+    \"        {
+        BEGIN(INITIAL);
+        *strbuf_ptr = '\0';
+        yylval->pyobj = BUILD("STRING", "s#", strbuf, strbuf_ptr - strbuf);
+        return STRING;
+    }
+
+    /* Escape sequences. */
+    \\n       SAFE_COPY(strbuf_ptr, '\n');
+    \\t       SAFE_COPY(strbuf_ptr, '\t');
+    \\r       SAFE_COPY(strbuf_ptr, '\r');
+    \\b       SAFE_COPY(strbuf_ptr, '\b');
+    \\f       SAFE_COPY(strbuf_ptr, '\f');
+    \\(.|\n)  SAFE_COPY(strbuf_ptr, yytext[1]);
+
+    /* All other characters. */
+    [^\\\"]+        {
+        char *yptr = yytext;
+        while ( *yptr ) {
+            SAFE_COPY(strbuf_ptr, *yptr++);
+        }
+    }
 }
 
  /* Numbers */
