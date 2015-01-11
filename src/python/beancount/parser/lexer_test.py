@@ -341,3 +341,12 @@ class TestLexer(unittest.TestCase):
             ('EOL', 7, '\x00', None),
             ], tokens)
         self.assertFalse(errors)
+
+    def test_string_newline_toolong(self):
+        # Testing a string that busts the limits.
+        line = 'a' * 127 + '\n'
+        string = '"' + line * 128 + '"'
+        builder = lexer.LexBuilder()
+        tokens = list(lexer.lex_iter_string(string, builder))
+        self.assertTrue(tokens[0], 'ERROR')
+        self.assertTrue(tokens[1], 'EOL')
