@@ -151,6 +151,7 @@ txn		{ return TXN; }
 balance		{ return BALANCE; }
 open		{ return OPEN; }
 close		{ return CLOSE; }
+commodity	{ return COMMODITY; }
 pad		{ return PAD; }
 event		{ return EVENT; }
 price		{ return PRICE; }

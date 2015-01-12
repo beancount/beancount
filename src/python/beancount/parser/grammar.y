@@ -83,6 +83,7 @@ const char* getTokenName(int token);
 %token BALANCE             /* 'balance' keyword */
 %token OPEN                /* 'open' keyword */
 %token CLOSE               /* 'close' keyword */
+%token COMMODITY           /* 'commodity' keyword */
 %token PAD                 /* 'pad' keyword */
 %token EVENT               /* 'event' keyword */
 %token PRICE               /* 'price' keyword */
@@ -113,6 +114,7 @@ const char* getTokenName(int token);
 %type <pyobj> currency_list
 %type <pyobj> open
 %type <pyobj> close
+%type <pyobj> commodity
 %type <pyobj> balance
 %type <pyobj> pad
 %type <pyobj> amount
@@ -133,7 +135,7 @@ const char* getTokenName(int token);
 %start file
 
 /* We have some number of expected shift/reduce conflicts at 'eol'. */
-%expect 11
+%expect 12
 
 
 /*--------------------------------------------------------------------------------*/
@@ -322,6 +324,12 @@ close : DATE CLOSE ACCOUNT eol key_value_list
           DECREF3($1, $3, $5);
       }
 
+commodity : DATE COMMODITY CURRENCY eol key_value_list
+          {
+              $$ = BUILD("commodity", "siOOO", FILE_LINE_ARGS, $1, $3, $5);
+              DECREF3($1, $3, $5);
+          }
+
 pad : DATE PAD ACCOUNT ACCOUNT eol key_value_list
     {
         $$ = BUILD("pad", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
@@ -329,10 +337,10 @@ pad : DATE PAD ACCOUNT ACCOUNT eol key_value_list
     }
 
 balance : DATE BALANCE ACCOUNT amount eol key_value_list
-      {
-          $$ = BUILD("balance", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
-          DECREF4($1, $3, $4, $6);
-      }
+        {
+            $$ = BUILD("balance", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
+            DECREF4($1, $3, $4, $6);
+        }
 
 amount : NUMBER CURRENCY
        {
@@ -409,6 +417,7 @@ entry : transaction
       | note
       | document
       | price
+      | commodity
       {
           $$ = $1;
       }
