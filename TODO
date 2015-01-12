@@ -99,6 +99,10 @@ beancount: TODO
 
 ** Documentation / Ongoing
 
+  - Write a script to automatically convert and upload the docs for the shell
+    functions and what-not into a Google Docs that we can open with a web
+    browser. Write a script to spit it out in a nice format and upload.
+
   - Document the @@ and {{}} syntaxes (see Matthew Harris email), especially as
     they replace to price.
 
