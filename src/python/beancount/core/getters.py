@@ -8,6 +8,7 @@ from collections import defaultdict
 from beancount.core.data import Transaction
 from beancount.core.data import Open
 from beancount.core.data import Close
+from beancount.core.data import Commodity
 from beancount.core import account
 
 
@@ -282,3 +283,30 @@ def get_account_open_close(entries):
         open_close[index] = entry
 
     return open_close_map
+
+
+def get_commodity_map(entries, key=None, default=None):
+    """Create map of metadata by commodities.
+
+    This goes through the list of entries, find all the Commodity directives,
+    and returns a mapping of all currencies which have been seen to the values
+    on the metadata of the commodity directives for the key 'key'. If 'key' is
+    not specified, the Commodity directives themselves are returned.
+
+    Args:
+      entries: A list of directive instances.
+      key: A string, the key to fetch from the metadata of the commodity directives.
+      default: The default value to set if the metadata does not contain the required key.
+    Returns:
+      A map of account name strings to either Commodity directives, or the metadata values
+      on each of these directives.
+    """
+    # A dict of account name to (open-entry, close-entry).
+    commodities_map = defaultdict(lambda: [None, None])
+    for entry in entries:
+        if not isinstance(entry, Commodity):
+            continue
+        # FIXME: Complete this.
+        # It might be more efficient to store this list in the options map, or maybe to
+        # automatically synthesize the commodity directives explicitly and automatically.
+    return commodities_map
