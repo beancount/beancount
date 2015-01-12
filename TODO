@@ -32,6 +32,14 @@ beancount: TODO
 
 ** Misc
 
+  - BUG: Round-trip test with escaped characters won't work. Add a test, fix
+    this.
+
+       > Oh, I just noticed: bean-report print does not yet print back escaped
+       > characters properly and it does not yet print metadata at all. Another
+       > one for the TODO list, I guess.
+
+
   - BUG: This will fail with an assertion, should be an error instead:
 
        2014-11-01 * "Massdrop Group Inc." | "Express Checkout Payment Sent"
@@ -140,6 +148,8 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Render to CSV as soon as possible, this makes it possible to export.
 
+  - Add dot-syntax to be able to run inequalities against the balance, e.g.
+    balance.number < 1000 USD, or parse amounts, units(balance) < 1000 USD.
 
   - Create tests for all the realistic test cases
     Use cases:
@@ -992,6 +1002,7 @@ http://furius.ca/beancount/doc/proposal-inter
        2014-12-31 commodity VMMXX
          type: mutual_fund
 
+    Remove special case for note from 'export_holdings' report.
 
 
 
