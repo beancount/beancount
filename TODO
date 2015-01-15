@@ -32,6 +32,39 @@ beancount: TODO
 
 ** Misc
 
+  - BUG: with leaked negative basis:
+
+      "This is indeed, a bug triggered by this situation and I'll have to fix it.
+      The unrealized gains plugin computes the list of holdings in order to insert
+      the gains, and it ends up with a holding object like this for your leaked cost
+      basis":
+
+      Holding(account='Assets:Investments:RolloverIRA:ABC', number=Decimal('0.000'),
+      currency='ABC', cost_number=None, cost_currency='USD',
+      book_value=Decimal('-8222.48552000000000000000000'), market_value=None,
+      price_number=None, price_date=datetime.date(2013, 4, 1))
+
+      "Now, it expects that if the commodity is not a currency, it will have a price.
+      But price_number is None, so it complains about it.
+
+      I'll fix this over the weekend; it should be silent."
+
+      Input that reproduces the bug:
+
+          plugin "beancount.plugins.unrealized" "Unrealized"
+
+          2000-01-01 open Assets:Investments:IRA:XXX
+          2000-01-01 open Assets:Investments:RolloverIRA:ABC ABC "NONE"
+
+          2012-09-25 *
+            Assets:Investments:RolloverIRA:ABC  5 ABC {100.00 USD}
+            Assets:Investments:IRA:XXX
+
+          2013-04-01 *
+            Assets:Investments:RolloverIRA:ABC  -5 ABC {101.00 USD}
+            Assets:Investments:IRA:XXX
+
+
   - BUG: Round-trip test with escaped characters won't work. Add a test, fix
     this.
 
@@ -957,6 +990,21 @@ http://furius.ca/beancount/doc/proposal-inter
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - Write the multi-year report and share on the list at
+    https://groups.google.com/d/msg/ledger-cli/XNIK853ExNc/CWxSPa-5INMJ
+
+  - Write a utility script that merges multiple reports with a leftmost column
+    of account names into a single report with multiple columns.
+
+       SELECT account, bal1, bal2 FROM
+         (SELECT account, sum(cost(position)) as bal1
+          FROM CLOSE ON 2014-01-01 CLEAR)
+         JOIN
+         (SELECT account, sum(cost(position)) as bal2
+          FROM CLOSE ON 2015-01-01 CLEAR)
+         ON account;
+
+
   - It would be useful to create a directive that checks that the balance
     of an account in a time interval is lesser or greater than some specific
     amount, e.g.
@@ -967,6 +1015,9 @@ http://furius.ca/beancount/doc/proposal-inter
 
   - Implement a check that the sign of a @@ price is always the same as the
     number of units themselves.
+
+  - Make it possible to assert the total cost basis of a particular commodity
+    within an account (see Eric Weigle discussion on ledger-cli list).
 
   - Implement a total balance assertion using the following syntax:
 
