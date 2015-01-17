@@ -4,6 +4,15 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-01-17
+
+  - I added a paragraph about Releases in the Install document. Basically, I
+    don't do releases: the "default" branch is stable, just clone on "default"
+    and update regularly, I do all "risky" feature development in branches and
+    only merge to "default" when fully stable. All major changes on "default"
+    are announced in this file.
+
+
 2015-01-11
 
   - **IMPORTANT** Fixed an inconsistency with the signs of total cost syntax,
