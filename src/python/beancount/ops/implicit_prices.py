@@ -83,7 +83,7 @@ def add_implicit_prices(entries, unused_options_map):
                            price_entry.amount.number,  # Ideally should bd removed.
                            price_entry.amount.currency)
                     try:
-                        dup_entry = new_price_entry_map[key]
+                        new_price_entry_map[key]
 
                         ## Do not fail for now. We still have many valid use
                         ## cases of duplicate prices on the same date, for
@@ -93,6 +93,7 @@ def add_implicit_prices(entries, unused_options_map):
                         ## Keeping both for now. We should ideally not use the
                         ## number in the de-dup key above.
                         #
+                        # dup_entry = new_price_entry_map[key]
                         # if price_entry.amount.number == dup_entry.amount.number:
                         #     # Skip duplicates.
                         #     continue

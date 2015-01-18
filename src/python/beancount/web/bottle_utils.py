@@ -27,6 +27,10 @@ class AttrMapper:
         return self.mapper_function(*args, **kwargs)
 
 
+# Silence pyflakes errors.
+itertools = None
+_raise = None
+
 def internal_redirect(app, path_depth):
     """A version of bottle's mountpoint_wrapper() that we call explicitly.
 

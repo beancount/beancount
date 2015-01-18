@@ -100,17 +100,12 @@ def pad(entries, options_map):
                     # padded that lot since it was last encountered.
                     if active_pad and (check_amount.currency not in padded_lots):
 
-                        # Calculate the difference.
-                        balance_number = (ZERO
-                                          if balance_amount is None
-                                          else balance_amount.number)
-
                         # Note: we decide that it's an error to try to pad
                         # positions at cost; we check here that all the existing
                         # positions with that currency have no cost.
-                        positions = [position
-                                     for position in pad_balance.get_positions()
-                                     if position.lot.currency == check_amount.currency]
+                        positions = [pos
+                                     for pos in pad_balance.get_positions()
+                                     if pos.lot.currency == check_amount.currency]
                         for position_ in positions:
                             if position_.lot.cost is not None:
                                 pad_errors.append(

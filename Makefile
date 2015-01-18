@@ -220,9 +220,12 @@ pylint-fail:
 pylint-all:
 	pylint --rcfile=$(PWD)/etc/pylintrc $(SRC)
 
+pyflakes:
+	pyflakes $(SRC)
+
 # Run all currently configured linter checks.
 lint: pylint-pass
 
 
 # Check everything.
-status check: pylint-pass missing-tests fixmes dep-constraints tests-quiet multi-imports
+status check: pylint-pass pyflakes missing-tests fixmes dep-constraints tests-quiet multi-imports

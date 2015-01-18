@@ -680,7 +680,7 @@ def conversions():
 # this with 'doc' or 'link' and a redirect moves it to the corresponding global
 # page.
 @viewapp.route('/doc/<filename:re:.*>', name=doc_name)
-def doc(filename=None):
+def doc__view(filename=None):
     # Redirect to global page.
     bottle.redirect(app.router.build('doc', filename=filename))
 
@@ -960,6 +960,9 @@ def incognito(callback):
 
     return wrapper
 
+
+# Global template.
+template = None
 
 def run_app(args, quiet=None):
     logging.basicConfig(level=logging.INFO,

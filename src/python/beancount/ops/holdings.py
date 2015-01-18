@@ -3,7 +3,6 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
-import functools
 
 from beancount.core.amount import ZERO
 from beancount.core import account
@@ -92,36 +91,36 @@ def get_final_holdings(entries, included_account_types=None, price_map=None, dat
             if account_type not in included_account_types:
                 continue
 
-        for position in real_account.balance.get_positions():
-            if position.lot.cost:
+        for pos in real_account.balance.get_positions():
+            if pos.lot.cost:
                 # Get price information if we have a price_map.
                 market_value = None
                 if price_map is not None:
-                    base_quote = (position.lot.currency, position.lot.cost.currency)
+                    base_quote = (pos.lot.currency, pos.lot.cost.currency)
                     price_date, price_number = prices.get_price(price_map,
                                                                 base_quote, date)
                     if price_number is not None:
-                        market_value = position.number * price_number
+                        market_value = pos.number * price_number
                 else:
                     price_date, price_number = None, None
 
                 holding = Holding(real_account.account,
-                                  position.number,
-                                  position.lot.currency,
-                                  position.lot.cost.number,
-                                  position.lot.cost.currency,
-                                  position.number * position.lot.cost.number,
+                                  pos.number,
+                                  pos.lot.currency,
+                                  pos.lot.cost.number,
+                                  pos.lot.cost.currency,
+                                  pos.number * pos.lot.cost.number,
                                   market_value,
                                   price_number,
                                   price_date)
             else:
                 holding = Holding(real_account.account,
-                                  position.number,
-                                  position.lot.currency,
+                                  pos.number,
+                                  pos.lot.currency,
                                   None,
-                                  position.lot.currency,
-                                  position.number,
-                                  position.number,
+                                  pos.lot.currency,
+                                  pos.number,
+                                  pos.number,
                                   None,
                                   None)
             holdings.append(holding)
@@ -238,7 +237,6 @@ def convert_to_currency(price_map, target_currency, holdings_list):
     # A list of the fields we should convert.
     convert_fields = ('cost_number', 'book_value', 'market_value', 'price_number')
 
-    price_converter = functools.partial(prices.convert_amount, price_map, target_currency)
     new_holdings = []
     for holding in holdings_list:
         if holding.cost_currency == target_currency:

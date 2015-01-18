@@ -62,6 +62,7 @@ class TestScriptBake(test_utils.TestCase):
             outdir = path.join(tmpdir, 'output')
             with test_utils.capture() as output:
                 test_utils.run_with_args(bake.main, self.get_args() + [filename, outdir])
+            self.assertTrue(output.getvalue())
             self.assertTrue(path.exists(outdir) and path.isdir(outdir))
             directories = [root for root, _, _ in os.walk(outdir)]
             self.assertGreater(len(directories), 20)
