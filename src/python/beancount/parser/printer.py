@@ -209,6 +209,9 @@ class EntryPrinter:
     def Close(_, entry, oss):
         oss.write('{e.date} close {e.account}\n'.format(e=entry))
 
+    def Commodity(_, entry, oss):
+        oss.write('{e.date} commodity {e.currency}\n'.format(e=entry))
+
     def Price(self, entry, oss):
         oss.write('{e.date} price {e.currency:<22} {amount:>22}\n'.format(
             e=entry, amount=entry.amount.to_string(self.dformat_max)))
