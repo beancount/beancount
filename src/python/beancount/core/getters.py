@@ -8,7 +8,10 @@ from collections import defaultdict
 from beancount.core.data import Transaction
 from beancount.core.data import Open
 from beancount.core.data import Close
+from beancount.core.data import Balance
+from beancount.core.data import Price
 from beancount.core.data import Commodity
+from beancount.core import data
 from beancount.core import account
 
 
@@ -93,7 +96,7 @@ class GetAccounts:
 
     # Associate all the possible directives with their respective handlers.
     Open = Close = Balance = Note = Document = _one
-    Event = Price = _zero
+    Commodity = Event = Price = _zero
 
 
 # Global instance to share.
@@ -285,28 +288,74 @@ def get_account_open_close(entries):
     return open_close_map
 
 
-def get_commodity_map(entries, key=None, default=None):
-    """Create map of metadata by commodities.
-
-    This goes through the list of entries, find all the Commodity directives,
-    and returns a mapping of all currencies which have been seen to the values
-    on the metadata of the commodity directives for the key 'key'. If 'key' is
-    not specified, the Commodity directives themselves are returned.
+def get_commodity_map(entries):
+    """Create map of commodity names to Commodity entries.
 
     Args:
       entries: A list of directive instances.
-      key: A string, the key to fetch from the metadata of the commodity directives.
-      default: The default value to set if the metadata does not contain the required key.
     Returns:
-      A map of account name strings to either Commodity directives, or the metadata values
-      on each of these directives.
+      A map of commodity name strings to Commodity directives.
     """
-    # A dict of account name to (open-entry, close-entry).
-    commodities_map = defaultdict(lambda: [None, None])
+    commodities_map = {}
     for entry in entries:
-        if not isinstance(entry, Commodity):
-            continue
-        # FIXME: Complete this.
-        # It might be more efficient to store this list in the options map, or maybe to
-        # automatically synthesize the commodity directives explicitly and automatically.
+        if isinstance(entry, Commodity):
+            commodities_map[entry.currency] = entry
+
+        elif isinstance(entry, Transaction):
+            for posting in entry.postings:
+
+                # Main currency.
+                lot = posting.position.lot
+                commodities_map.setdefault(lot.currency, None)
+
+                # Currency in cost.
+                cost = lot.cost
+                if cost:
+                    commodities_map.setdefault(cost.currency, None)
+
+                # Currency in price.
+                price = posting.price
+                if price:
+                    commodities_map.setdefault(price.currency, None)
+
+        elif isinstance(entry, Balance):
+            commodities_map.setdefault(entry.amount.currency, None)
+
+        elif isinstance(entry, Price):
+            commodities_map.setdefault(entry.currency, None)
+
+    # Create missing Commodity directives when they haven't been specified explicitly.
+    # (I think it might be better to always do this from the loader.)
+    new_commodities = {}
+    date = entries[0].date
+    for commodity, entry in commodities_map.items():
+        if entry is None:
+            meta = data.new_metadata('<getters>', 0)
+            new_commodities[commodity] = Commodity(meta, date, commodity)
+    commodities_map.update(new_commodities)
+
     return commodities_map
+
+
+def get_values_meta(name_to_entries_map, meta_key, default=None):
+    """Get a map of the metadata from a map of entries values.
+
+    Given a dict of some key to a directive instance (or None), return a mapping
+    of the key to the metadata extracted from each directive, or a default
+    value. This can be used to gather a particular piece of metadata from an
+    accounts map or a commodities map.
+
+    Args:
+      name_to_entries_map: A dict of something to an entry or None.
+      meta_key: A string, the key to fetch from the metadata.
+      default: The default value to use if the metadata is not available or if
+        the value/entry is None.
+    Returns:
+      A mapping of the keys of name_to_entries_map to the values of the 'meta_key'
+      metadata.
+    """
+    # Frankly, I'm not certain I get much by making this a function.
+    return {key: (entry.meta.get(meta_key, default)
+                  if entry is not None
+                  else default)
+            for key, entry in name_to_entries_map.items()}

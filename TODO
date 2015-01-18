@@ -1,5 +1,17 @@
 -*- mode: org -*-
 beancount: TODO
+* Commodity
+
+  - You have to detect duplicate commodities... maybe the normalization plugin
+    should detect duplicates and automatically create the missing ones.
+
+  - Refactor the getters to leverage the symmetry between get_accounts() and
+    get_commodities().
+
+  - getters get_account_open_close() should be used to compute the use map with
+    the dates.
+
+
 * Requirements for Shipping 2.0
 ** Establish Display Precision
 
@@ -96,8 +108,9 @@ beancount: TODO
 
   - Fix FIXME in beancount.projects.returns, from DClemente issues.
 
-
 ** Documentation / Ongoing
+
+  - Write a note about making releases (and the lack thereof).
 
   - Document the @@ and {{}} syntaxes (see Matthew Harris email), especially as
     they replace to price.
@@ -452,6 +465,10 @@ http://furius.ca/beancount/doc/proposal-query
     https://groups.google.com/d/msg/ledger-cli/4d9ZYVLnCGQ/ZyAqwZE-TBoJ
     Try to reproduce this specific use case.
 
+
+  - BUG: In precedence (most likely), this fails with an exception:
+
+      PRINT FROM 'trip-2008-10-asia' IN tags AND 'trip-2008-10-asia-mysore' IN tags;
 
 
 * Standalone Tools
@@ -1948,7 +1965,18 @@ http://furius.ca/beancount/doc/proposal-inter
   - Make various attempts to simplify depgraph, we want to ship with a really
     lean dependency graph.
 
-  - Emerge a principle for where the following files should separate:
+  - ops & plugins should not depend on parser...
+
+      * Move beancount.parser.options to beancount.core.options
+      * Move beancount.parser.printer outside parser, ideally, or just factor the
+        dependencies separately.
+
+  - If you want to be consistent with the script names, rename
+    beancount.reports to beancount.report. This way, bean-* matches a single
+    package name. Just saying.
+
+  - Emerge a principle for where the following files should separate, or merge
+    the two modules:
 
       beancount.ops.*
       beancount.plugins.*
