@@ -383,12 +383,20 @@ class TestPrinterMisc(test_utils.TestCase):
     def test_metadata(self):
         input_string = textwrap.dedent("""
 
-        2000-01-01 open Assets:US:Investments
+        2000-01-01 open Assets:US:Investments:Cash
           name: "Investment account"
+        2000-01-01 open Assets:US:Investments:HOOL
 
         2000-01-02 commodity VHT
           asset-class: "Stocks"
           name: "Vanguard Health Care ETF"
+
+        2000-01-03 * "Something"
+          doc: "some-statement.pdf"
+          Assets:US:Investments:Cash  -23.45 USD
+            note: "No commission"
+          Assets:US:Investments:HOOL    1 HOOL {23.45 USD}
+            settlement: 2000-01-05
 
         """)
         entries, errors, options_map = parser.parse_string(input_string)

@@ -2,14 +2,16 @@
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import datetime
 import io
 import re
 import sys
 import textwrap
 
 from beancount.core.amount import Decimal
-from beancount.core import interpolate
+from beancount.core import amount
 from beancount.core import data
+from beancount.core import interpolate
 from beancount.core import display_context
 
 
@@ -108,10 +110,9 @@ class EntryPrinter:
         method(obj, oss)
         return oss.getvalue()
 
-    META_FORMAT = "  {}: {}\n"
     META_IGNORE = set(['filename', 'lineno'])
 
-    def write_metadata(self, meta, oss):
+    def write_metadata(self, meta, oss, prefix='  '):
         """Write metadata to the file object, excluding filename and line number.
 
         Args:
@@ -124,7 +125,7 @@ class EntryPrinter:
                     value_str = '"{}"'.format(value)
                 elif isinstance(value, (Decimal, datetime.date, amount.Amount)):
                     value_str = str(value)
-                oss.write(self.META_FORMAT.format(key, value_str))
+                oss.write("{}{}: {}\n".format(prefix, key, value_str))
 
     def Transaction(self, entry, oss):
         # Compute the string for the payee and narration line.
@@ -165,22 +166,37 @@ class EntryPrinter:
         if non_trivial_balance:
             fmt = "  {{:{0}}}  {{:{1}}}  ; {{:{2}}}\n".format(
                 width_account, width_position, width_weight).format
-            for account, position_str, weight_str in zip(strs_account,
-                                                         strs_position,
-                                                         strs_weight):
+            for posting, account, position_str, weight_str in zip(entry.postings,
+                                                                  strs_account,
+                                                                  strs_position,
+                                                                  strs_weight):
                 oss.write(fmt(account,
                               position_str,
                               weight_str if non_trivial_balance else ''))
+                if posting.meta:
+                    self.write_metadata(posting.meta, oss, '    ')
         else:
             fmt = "  {{:{0}}}  {{:{1}}}\n".format(width_account, width_position).format
-            for account, position_str in zip(strs_account, strs_position):
+            for posting, account, position_str in zip(entry.postings,
+                                                      strs_account,
+                                                      strs_position):
                 oss.write(fmt(account, position_str))
+                if posting.meta:
+                    self.write_metadata(posting.meta, oss, '    ')
 
     def render_posting_strings(self, posting):
-        # This renders the three components of a posting: the account and its
-        # optional posting flag, the position, and finally, the weight of the
-        # position.
+        """This renders the three components of a posting: the account and its optional
+        posting flag, the position, and finally, the weight of the position. The
+        purpose is to align these in the caller.
 
+        Args:
+          posting: An instance of Posting, the posting to render.
+        Returns:
+          A tuple of
+            flag_account: A string, the account name including the flag.
+            position_str: A string, the rendered position string.
+            weight_str: A string, the rendered weight of the posting.
+        """
         # Render a string of the flag and hte account.
         flag = '{} '.format(posting.flag) if posting.flag else ''
         flag_account = flag + posting.account
@@ -205,6 +221,8 @@ class EntryPrinter:
         # together.
         flag_account, position_str, weight_str = self.render_posting_strings(posting)
         oss.write('  {:64} {} {}\n'.format(flag_account, position_str, weight_str).rstrip())
+        if posting.meta:
+            self.write_metadata(posting.meta, oss, '    ')
 
     def Balance(self, entry, oss):
         comment = '   ; Diff: {}'.format(entry.diff_amount) if entry.diff_amount else ''
