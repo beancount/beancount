@@ -7,6 +7,7 @@ from beancount.query import shell
 from beancount import loader
 
 
+# pylint: disable=invalid-name
 entries, errors, options_map = None, None, None
 
 def setUp(self):

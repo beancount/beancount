@@ -28,6 +28,7 @@ class AttrMapper:
 
 
 # Silence pyflakes errors.
+# pylint: disable=invalid-name
 itertools = None
 _raise = None
 
