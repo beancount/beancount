@@ -95,11 +95,12 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
             # If the number of units sum to zero, the holdings should have been
             # zero.
             errors.append(
-                UnrealizedError(meta,
-                                "Number of units of {} in {} in holdings sum to zero "
-                                "for account {} and should not".format(
-                                    currency, cost_currency, account_name),
-                                None))
+                UnrealizedError(
+                    meta,
+                    "Number of units of {} in {} in holdings sum to zero "
+                    "for account {} and should not".format(
+                        holding.currency, holding.cost_currency, holding.account),
+                    None))
             continue
 
         # Compute the name of the accounts and add the requested subaccount name

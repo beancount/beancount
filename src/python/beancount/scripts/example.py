@@ -1023,6 +1023,7 @@ def generate_expense_accounts(date_birth):
       {date_birth} open Expenses:Home:Rent
       {date_birth} open Expenses:Home:Electricity
       {date_birth} open Expenses:Home:Internet
+      {date_birth} open Expenses:Home:Phone
 
       {date_birth} open Expenses:Financial:Fees
       {date_birth} open Expenses:Financial:Commissions
@@ -1159,7 +1160,8 @@ def generate_banking_expenses(date_begin, date_end, account, rent_amount):
     return data.sort(fee_expenses +
                      rent_expenses +
                      electricity_expenses +
-                     internet_expenses)
+                     internet_expenses +
+                     phone_expenses)
 
 
 def generate_regular_credit_expenses(date_birth, date_begin, date_end,

@@ -118,9 +118,9 @@ def get_holdings_entries(entries, options_map):
     # Get opening directives for all the accounts.
     used_accounts = {holding.account for holding in holdings_list}
     open_entries = summarize.get_open_entries(entries, latest_date)
-    used_open_entries = [entry
-                         for entry in open_entries
-                         if entry.account in used_accounts]
+    used_open_entries = [open_entry
+                         for open_entry in open_entries
+                         if open_entry.account in used_accounts]
 
     # Add an entry for the equity account we're using.
     meta = data.new_metadata('report_holdings_print', -1)

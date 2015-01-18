@@ -76,9 +76,9 @@ def create_table(rows, field_spec=None):
 
     # Ensure a nicely formatted header.
     field_spec = [((name, attribute_to_title(name), formatter)
-                   if header is None
-                   else (name, header, formatter))
-                  for (name, header, formatter) in field_spec]
+                   if header_ is None
+                   else (name, header_, formatter))
+                  for (name, header_, formatter) in field_spec]
 
     assert isinstance(field_spec, list), field_spec
     assert all(len(x) == 3 for x in field_spec), field_spec
@@ -170,7 +170,6 @@ def table_to_text(table,
     """
     column_widths = compute_table_widths(itertools.chain([table.header],
                                                          table.body))
-    num_columns = len(column_widths)
 
     # Insert column format chars and compute line formatting string.
     column_formats = []

@@ -121,7 +121,7 @@ class PricesReport(report.Report):
                          for entry in entries
                          if isinstance(entry, data.Price)]
         dcontext = options_map['display_context']
-        printer.print_entries(price_entries, file=file)
+        printer.print_entries(price_entries, dcontext, file=file)
 
 
 class PriceDBReport(report.Report):

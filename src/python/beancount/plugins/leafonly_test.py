@@ -9,7 +9,7 @@ from beancount import loader
 class TestLeafOnly(unittest.TestCase):
 
     @loader.loaddoc
-    def test_leaf_only(self, _, errors, __):
+    def test_leaf_only1(self, _, errors, __):
         """
             option "plugin" "beancount.plugins.leafonly"
 
@@ -30,7 +30,7 @@ class TestLeafOnly(unittest.TestCase):
         self.assertTrue(re.search('Expenses:Food', errors[0].message))
 
     @loader.loaddoc
-    def test_leaf_only(self, _, errors, __):
+    def test_leaf_only2(self, _, errors, __):
         """
             option "plugin" "beancount.plugins.leafonly"
 

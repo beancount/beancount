@@ -7,6 +7,8 @@ from beancount.query import shell
 from beancount import loader
 
 
+entries, errors, options_map = None, None, None
+
 def setUp(self):
     example_filename = path.join(test_utils.find_repository_root(__file__),
                                  'examples', 'example.beancount')

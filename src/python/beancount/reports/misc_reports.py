@@ -154,8 +154,6 @@ class ActivityReport(report.HTMLReport,
                             help="Cutoff date where we ignore whatever comes after.")
 
     def render_real_text(self, real_root, options_map, file):
-        errors = []
-
         rows = []
         account_types = options.get_account_types(options_map)
         for root in (account_types.assets,
@@ -182,8 +180,6 @@ class ActivityReport(report.HTMLReport,
         table.render_table(table_, file, 'text')
 
     def render_real_htmldiv(self, real_root, options_map, file):
-        errors = []
-
         account_types = options.get_account_types(options_map)
         for root in (account_types.assets,
                      account_types.liabilities):

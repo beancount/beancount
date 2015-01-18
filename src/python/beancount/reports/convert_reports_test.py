@@ -166,7 +166,7 @@ class TestLedgerConversion(test_utils.TestCase):
 
             # Convert the file to Ledger format.
             with tempfile.NamedTemporaryFile('w', suffix='.ledger') as lgrfile:
-                with test_utils.capture() as stdout:
+                with test_utils.capture():
                     result = test_utils.run_with_args(
                         report.main, [beanfile.name, '-o', lgrfile.name, 'ledger'])
                 self.assertEqual(0, result)
@@ -190,7 +190,7 @@ class TestHLedgerConversion(test_utils.TestCase):
             # Note: don't bother parsing for now, just a smoke test to make sure
             # we don't fail on run.
             with tempfile.NamedTemporaryFile('w', suffix='.hledger') as lgrfile:
-                with test_utils.capture() as stdout:
+                with test_utils.capture():
                     result = test_utils.run_with_args(
                         report.main, [beanfile.name, '-o', lgrfile.name, 'hledger'])
                 self.assertEqual(0, result)
