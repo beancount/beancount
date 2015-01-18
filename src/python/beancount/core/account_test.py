@@ -159,8 +159,8 @@ class TestWalk(TmpFilesTestBase):
 
     def test_walk(self):
         actual_data = [
-            (root[len(self.root):], account, dirs, files)
-            for root, account, dirs, files in account.walk(self.root)]
+            (root[len(self.root):], account_, dirs, files)
+            for root, account_, dirs, files in account.walk(self.root)]
 
         self.assertEqual([
             ('/Assets/US', 'Assets:US',

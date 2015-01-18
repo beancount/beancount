@@ -415,14 +415,12 @@ def generate_employment_income(employer_name,
 
         ;{date_begin} open Expenses:Vacation:Employer
 
-    """, **vars())
+    """, **locals())
 
     date_prev = None
 
     contrib_retirement = ZERO
     contrib_socsec = ZERO
-
-    retirement_per_pay = D('2000')
 
     biweekly_pay = annual_salary / 26
     gross = biweekly_pay
@@ -501,7 +499,7 @@ def generate_employment_income(employer_name,
                                  for line in template.splitlines()
                                  if not re.search(r'\bretirement\b', line))
 
-        transactions.extend(parse(template, **vars()))
+        transactions.extend(parse(template, **locals()))
 
     return preamble + transactions
 
@@ -519,7 +517,7 @@ def generate_tax_preamble(date_birth):
       {date_birth} open Income:CC:Federal:PreTax401k     DEFCCY
       {date_birth} open Assets:CC:Federal:PreTax401k     DEFCCY
 
-    """, **vars())
+    """, **locals())
 
 def generate_tax_accounts(year, date_max):
     """Generate accounts and contributino directives for a particular tax year.
@@ -576,7 +574,7 @@ def generate_tax_accounts(year, date_max):
         Assets:CC:Bank1:Checking       {amount_state_neg:.2f} CCY
         Liabilities:AccountsPayable
 
-    """, **vars())
+    """, **locals())
 
     return [entry for entry in entries if entry.date < date_max]
 
@@ -609,7 +607,7 @@ def generate_retirement_employer_match(entries, account_invest, account_income):
             {account_invest}         {amount:.2f} CCY
             {account_income}         {amount_neg:.2f} CCY
 
-        """, **vars()))
+        """, **locals()))
 
     return new_entries
 
@@ -631,11 +629,11 @@ def generate_retirement_investments(entries, account, commodities_items, price_m
     date_origin = entries[0].date
     open_entries.extend(parse("""
       {date_origin} open {account_cash} CCY
-    """, **vars()))
+    """, **locals()))
     for currency, _ in commodities_items:
         open_entries.extend(parse("""
           {date_origin} open {account}:{currency} {currency}
-        """, **vars()))
+        """, **locals()))
 
     new_entries = []
     for posting, balances in postings_for(entries, [account_cash]):
@@ -662,7 +660,7 @@ def generate_retirement_investments(entries, account, commodities_items, price_m
                 {account}:{commodity}  {units:.3f} {commodity} {{{price:.2f} CCY}}
                 {account}:Cash         {amount_cash_neg:.2f} CCY
 
-            """, **vars()))
+            """, **locals()))
 
             balance.add_amount(amount.Amount(-amount_cash, 'CCY'))
 
@@ -693,7 +691,7 @@ def generate_banking(date_begin, date_end, amount_initial):
 
       {date_balance} balance Assets:CC:Bank1:Checking   {amount_initial} CCY
 
-    """, **vars())
+    """, **locals())
 
 
 def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks):
@@ -720,11 +718,11 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
       {date_begin} open {account}:Cash    CCY
       {date_begin} open {account_gains}    CCY
       {date_begin} open {account_dividends}    CCY
-    """, **vars())
+    """, **locals())
     for stock in stocks:
         open_entries.extend(parse("""
           {date_begin} open {account}:{stock} {stock}
-        """, **vars()))
+        """, **locals()))
 
     # Figure out dates at which dividends should be distributed, near the end of
     # each quarter.
@@ -772,7 +770,7 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
               {next_dividend_date} * "Dividends on portfolio"
                 {account}:Cash        {amount_cash:.2f} CCY
                 {account_dividends}
-            """, **vars())[0]
+            """, **locals())[0]
             new_entries.append(dividend)
 
             # Advance the next dividend date.
@@ -808,7 +806,7 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
                         {account}:Cash        {amount_cash:.2f} CCY
                         {account}:{stock}     {units:.0f} {stock} {{{price:.2f} CCY}}
                         Expenses:Financial:Commissions   {commission:.2f} CCY
-                    """, **vars())[0]
+                    """, **locals())[0]
                     new_entries.append(buy)
 
                     account_stock = ':'.join([account, stock])
@@ -850,7 +848,7 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
                 {account}:Cash                  {amount_cash:.2f} CCY
                 Expenses:Financial:Commissions  {commission:.2f} CCY
                 {account_gains}
-            """, **vars())[0]
+            """, **locals())[0]
             new_entries.append(sell)
 
             balances[account_cash].add_position(sell.postings[1].position)
@@ -892,7 +890,7 @@ def generate_periodic_expenses(date_iter,
           {date} * "{txn_payee}" "{txn_narration}"
             {account_from}    {amount_neg:.2f} CCY
             {account_to}      {amount:.2f} CCY
-        """, **vars()))
+        """, **locals()))
 
     return new_entries
 
@@ -928,7 +926,7 @@ def generate_clearing_entries(date_iter,
               {next_date} * "{payee}" "{narration}"
                 {account_clear}     {neg_amount.number:.2f} CCY
                 {account_from}      {pos_amount.number:.2f} CCY
-            """, **vars()))
+            """, **locals()))
             balance_clear.add_amount(neg_amount)
 
             # Advance to the next date we're looking for.
@@ -998,7 +996,7 @@ def generate_outgoing_transfers(entries,
               {date} * "Transfering accumulated savings to other account"
                 {account}          {amount_transfer_neg:2f} CCY
                 {account_out}      {amount_transfer:2f} CCY
-            """, **vars()))
+            """, **locals()))
 
             offset_amount += amount_transfer
 
@@ -1029,7 +1027,7 @@ def generate_expense_accounts(date_birth):
       {date_birth} open Expenses:Financial:Fees
       {date_birth} open Expenses:Financial:Commissions
 
-    """, **vars())
+    """, **locals())
 
 
 def generate_open_entries(date, accounts, currency=None):
@@ -1070,7 +1068,7 @@ def generate_balance_checks(entries, account, date_iter):
                 amount = balance[account].get_units('CCY').number
                 balance_checks.extend(parse("""
                   {next_date} balance {account} {amount} CCY
-                """, **vars()))
+                """, **locals()))
                 next_date = next(date_iter)
 
     return balance_checks
@@ -1159,9 +1157,9 @@ def generate_banking_expenses(date_begin, date_end, account, rent_amount):
         lambda: random.normalvariate(60, 10))
 
     return data.sort(fee_expenses +
-                          rent_expenses +
-                          electricity_expenses +
-                          internet_expenses)
+                     rent_expenses +
+                     electricity_expenses +
+                     internet_expenses)
 
 
 def generate_regular_credit_expenses(date_birth, date_begin, date_end,
@@ -1274,7 +1272,7 @@ def generate_trip_entries(date_begin, date_end,
                   {date} * "{payee}" "" #{tag}
                     {account_credit}     {amount_neg:.2f} CCY
                     {account_expense}    {amount:.2f} CCY
-                """, **vars()))
+                """, **locals()))
 
     # Consume the vacation days.
     vacation_hrs = (date_end - date_begin).days * 8 # hrs/day
@@ -1282,13 +1280,13 @@ def generate_trip_entries(date_begin, date_end,
       {date_end} * "Consume vacation days"
         Assets:CC:Employer1:Vacation -{vacation_hrs:.2f} VACHR
         Expenses:Vacation             {vacation_hrs:.2f} VACHR
-    """, **vars()))
+    """, **locals()))
 
     # Generate events for the trip.
     new_entries.extend(parse("""
       {date_begin} event "location" "{trip_city}"
       {date_end}   event "location" "{home_city}"
-    """, **vars()))
+    """, **locals()))
 
     return new_entries
 
@@ -1582,7 +1580,7 @@ def write_example_file(date_birth, date_begin, date_end, reformat, file):
         output.write('\n\n\n{}\n\n'.format(title))
         printer.print_entries(data.sort(entries), dcontext, file=output)
 
-    output.write(FILE_PREAMBLE.format(**vars()))
+    output.write(FILE_PREAMBLE.format(**locals()))
     output_section('* Equity Accounts', equity_entries)
     output_section('* Banking', data.sort(banking_entries +
                                                banking_expenses +

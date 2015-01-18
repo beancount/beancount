@@ -66,12 +66,9 @@ class TestPosition(unittest.TestCase):
             Position(Lot("GOOG", Amount(D('510'), 'USD'), None), D('10')), pos)
 
     def test_constructors(self):
-        position = Position(Lot('USD', None, None),
-                            D('123.45'))
-        position = Position(Lot('USD', Amount('74.00', 'CAD'), None),
-                            D('123.45'))
-        position = Position(Lot('USD', Amount('74.00', 'CAD'), date(2013, 2, 3)),
-                            D('123.45'))
+        Position(Lot('USD', None, None), D('123.45'))
+        Position(Lot('USD', Amount('74.00', 'CAD'), None), D('123.45'))
+        Position(Lot('USD', Amount('74.00', 'CAD'), date(2013, 2, 3)), D('123.45'))
         with self.assertRaises(Exception):
             Position(None, D('123.45'))
         with self.assertRaises(Exception):

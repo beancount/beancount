@@ -479,7 +479,7 @@ class ExportPortfolioReport(report.TableReport):
             total = -(units * unitprice + fee)
             buytype = 'BUY'
 
-            invtranlist_io.write(self.TRANSACTION.format(**vars()))
+            invtranlist_io.write(self.TRANSACTION.format(**locals()))
             commodities.add(holding.currency)
 
         # Convert the skipped holdings to a bank deposit to cash to approximate their value.
@@ -510,7 +510,7 @@ class ExportPortfolioReport(report.TableReport):
             total = -(units * unitprice + fee)
             buytype = 'BUY'
 
-            invtranlist_io.write(self.TRANSACTION.format(**vars()))
+            invtranlist_io.write(self.TRANSACTION.format(**locals()))
             commodities.add(self.CASH_EQUIVALENT_CURRENCY)
 
         invtranlist = invtranlist_io.getvalue()
@@ -522,14 +522,14 @@ class ExportPortfolioReport(report.TableReport):
             uniqueid = ticker_map.get(currency, currency)
             secname = currency
             ticker = currency
-            seclist_io.write(self.SECURITY.format(**vars()))
+            seclist_io.write(self.SECURITY.format(**locals()))
         seclist = seclist_io.getvalue()
 
         # Create the top-level template.
         broker = 'Beancount'
         account = options_map['title'] if self.args.promiscuous else ''
         dtserver = dtasof = dtstart = dtend = render_ofx_date(now)
-        contents = self.TEMPLATE.format(**vars())
+        contents = self.TEMPLATE.format(**locals())
 
         # Clean up final contents and output it.
         stripped_contents = '\n'.join(line.lstrip()

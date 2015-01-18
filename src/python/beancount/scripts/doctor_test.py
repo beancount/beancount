@@ -55,7 +55,7 @@ class TestScriptDoctor(test_utils.TestCase):
     @test_utils.docfile
     def test_dump_lexer_empty(self, filename):
         ""
-        with test_utils.capture() as stdout:
+        with test_utils.capture():
             test_utils.run_with_args(doctor.main, ['dump-lexer', filename])
 
     @test_utils.docfile
@@ -68,16 +68,16 @@ class TestScriptDoctor(test_utils.TestCase):
           Expenses:Restaurant   50.02 USD
           Assets:Cash
         """
-        with test_utils.capture() as stdout:
+        with test_utils.capture():
             test_utils.run_with_args(doctor.main, ['roundtrip', filename])
 
     def test_list_options(self):
-        with test_utils.capture() as stdout:
+        with test_utils.capture():
             test_utils.run_with_args(doctor.main, ['list_options'])
             test_utils.run_with_args(doctor.main, ['list-options'])
 
     def test_checkdeps(self):
-        with test_utils.capture() as stdout:
+        with test_utils.capture():
             test_utils.run_with_args(doctor.main, ['checkdeps'])
 
 

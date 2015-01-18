@@ -75,7 +75,7 @@ def hash_entries(entries):
     errors = []
     num_legal_duplicates = 0
     for entry in entries:
-        entry_type = type(entry)
+        ##entry_type = type(entry)
 
         hash_ = hash_entry(entry)
 

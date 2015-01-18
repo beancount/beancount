@@ -83,7 +83,7 @@ class TestScriptBake(test_utils.TestCase):
                                  'archive.tar.bz2',
                                  'archive.zip'):
                 outfile = path.join(tmpdir, archive_name)
-                with test_utils.capture() as output:
+                with test_utils.capture():
                     test_utils.run_with_args(bake.main,
                                              self.get_args() + [filename, outfile])
                 self.assertFalse(path.exists(file_utils.path_greedy_split(outfile)[0]))

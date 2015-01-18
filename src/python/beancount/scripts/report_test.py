@@ -86,7 +86,7 @@ class TestScriptPositions(test_utils.TestCase):
     @test_utils.docfile
     def test_print_trial_empty(self, filename):
         ""
-        with test_utils.capture() as stdout:
+        with test_utils.capture():
             test_utils.run_with_args(report.main, [filename, 'trial'])
 
     @test_utils.docfile
@@ -132,7 +132,7 @@ class TestScriptPositions(test_utils.TestCase):
     @test_utils.docfile
     def test_list_accounts_empty(self, filename):
         ""
-        with test_utils.capture() as stdout:
+        with test_utils.capture():
             test_utils.run_with_args(report.main, [filename, 'accounts'])
 
     def test_export_portfolio_on_example(self):

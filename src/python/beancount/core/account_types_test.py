@@ -104,7 +104,7 @@ class TestAccountTypes(unittest.TestCase):
                 account_types.is_income_statement_account(
                     account_name, account_types.DEFAULT_ACCOUNT_TYPES))
 
-    def test_get_account_type(self):
+    def test_get_account_sign(self):
         for account_name, expected in [
                 ("Assets:US:RBS:Savings", +1),
                 ("Liabilities:US:RBS:MortgageLoan", -1),

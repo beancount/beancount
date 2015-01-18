@@ -139,7 +139,7 @@ class TestData(unittest.TestCase):
 
         for entry in entries:
             if isinstance(entry, data.Transaction):
-                posting = data.create_simple_posting(
+                data.create_simple_posting(
                     entry, 'Assets:Bank:Checking', '123.45', 'USD')
 
         return entries

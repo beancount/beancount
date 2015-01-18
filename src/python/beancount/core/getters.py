@@ -31,10 +31,10 @@ class GetAccounts:
         accounts_last = {}
         for entry in entries:
             method = getattr(self, entry.__class__.__name__)
-            for account in method(entry):
-                if account not in accounts_first:
-                    accounts_first[account] = entry.date
-                accounts_last[account] = entry.date
+            for account_ in method(entry):
+                if account_ not in accounts_first:
+                    accounts_first[account_] = entry.date
+                accounts_last[account_] = entry.date
         return accounts_first, accounts_last
 
     def get_entry_accounts(self, entry):

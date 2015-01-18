@@ -490,7 +490,7 @@ class BQLShell(DispatchingShell):
             "  {:40}: {}\n".format(*pair) for pair in entry_pairs)
         posting_attributes = ''.join(
             "  {:40}: {}\n".format(*pair) for pair in posting_pairs)
-        print(template.format(**vars()))
+        print(template.format(**locals()))
 
 
 def generate_env_attribute_list(env):

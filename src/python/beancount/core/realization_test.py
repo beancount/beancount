@@ -4,7 +4,6 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import copy
 import datetime
-import io
 import operator
 import re
 import unittest
@@ -102,7 +101,7 @@ class TestRealAccount(unittest.TestCase):
 
     def test_clone(self):
         ra0 = RealAccount('')
-        ra0_assets = ra0['Assets'] = RealAccount('Assets')
+        ra0['Assets'] = RealAccount('Assets')
         ra0.balance = 42
         ra0.postings.append('posting1')
         ra0.postings.append('posting2')
@@ -137,7 +136,7 @@ class TestRealGetters(unittest.TestCase):
     def test_get_or_create(self):
         ra0 = RealAccount('')
         ra0_checking = realization.get_or_create(ra0, 'Assets:US:Bank:Checking')
-        ra0_savings = realization.get_or_create(ra0, 'Assets:US:Bank:Savings')
+        realization.get_or_create(ra0, 'Assets:US:Bank:Savings')
         self.assertEqual('Assets:US:Bank:Checking', ra0_checking.account)
         self.assertEqual({'Assets'}, ra0.keys())
         self.assertEqual({'Checking', 'Savings'}, ra0['Assets']['US']['Bank'].keys())
@@ -148,8 +147,8 @@ class TestRealGetters(unittest.TestCase):
 
     def test_contains(self):
         ra0 = RealAccount('')
-        ra0_checking = realization.get_or_create(ra0, 'Assets:US:Bank:Checking')
-        ra0_savings = realization.get_or_create(ra0, 'Assets:US:Bank:Savings')
+        realization.get_or_create(ra0, 'Assets:US:Bank:Checking')
+        realization.get_or_create(ra0, 'Assets:US:Bank:Savings')
         self.assertTrue(realization.contains(ra0, 'Assets:US:Bank:Checking'))
         self.assertTrue(realization.contains(ra0, 'Assets:US:Bank:Savings'))
         self.assertFalse(realization.contains(ra0, 'Assets:US:Cash'))
@@ -172,14 +171,14 @@ class TestRealGetters(unittest.TestCase):
                           'Assets:US:Bank:Checking',
                           'Assets:US:Bank:Savings',
                           'Assets:US:Cash'],
-                         [ra0.account for ra0 in realization.iter_children(ra0)])
+                         [ra.account for ra in realization.iter_children(ra0)])
 
         # Test enumerating leaves only.
         self.assertEqual(['Assets:CA:Cash',
                           'Assets:US:Bank:Checking',
                           'Assets:US:Bank:Savings',
                           'Assets:US:Cash'],
-                         [ra0.account for ra0 in realization.iter_children(ra0, True)])
+                         [ra.account for ra in realization.iter_children(ra0, True)])
 
 
 class TestRealization(unittest.TestCase):
@@ -583,7 +582,6 @@ class TestRealOther(test_utils.TestCase):
         2012-01-01 open Equity:Opening-Balances
         """
         real_account = realization.realize(entries)
-        oss = io.StringIO()
         lines = realization.dump(real_account)
         self.assertEqual([
             ('|-- Assets              ',
@@ -613,7 +611,7 @@ class TestRealOther(test_utils.TestCase):
             ('    `-- CreditCard      ',
              '                        '),
             ], [(first_line, cont_line)
-                for first_line, cont_line, _ in lines])
+                for first_line, cont_line, _1 in lines])
 
     @parsedoc
     def test_dump_balances(self, entries, _, __):

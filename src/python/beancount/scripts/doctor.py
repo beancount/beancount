@@ -80,7 +80,6 @@ def do_roundtrip(filename, unused_args):
         if errors:
             print(',----------------------------------------------------------------------')
             printer.print_errors(errors, file=sys.stdout)
-            print(error_text)
             print('`----------------------------------------------------------------------')
 
         logging.info("Print what you read to yet another file")

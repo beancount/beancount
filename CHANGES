@@ -23,6 +23,10 @@ Note: This file contains only changes in the 'default' branch.
     http://furius.ca/beancount/doc/language#heading=h.a3si01ejc035
 
 
+  - I added a development dependency on pyflakes and validated all code on
+    'default' to pass a flawless pyflakes run.
+
+
 2015-01-17
 
   - I added a paragraph about Releases in the Install document. Basically, I

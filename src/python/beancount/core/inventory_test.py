@@ -361,8 +361,8 @@ class TestInventory(unittest.TestCase):
 
     def test_add_position(self):
         inv = Inventory()
-        for position in self.POSITIONS_ALL_KINDS:
-            inv.add_position(position)
+        for pos in self.POSITIONS_ALL_KINDS:
+            inv.add_position(pos)
         self.assertEqual(Inventory(self.POSITIONS_ALL_KINDS), inv)
 
     def test_op_add(self):
@@ -389,4 +389,4 @@ class TestInventory(unittest.TestCase):
         inv2.add_amount(A('20 CAD'))
         inv2.add_amount(A('55 GOOG'))
 
-        inv = inv1 + inv2
+        inv1 + inv2

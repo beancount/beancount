@@ -241,22 +241,6 @@ class TestLexer(unittest.TestCase):
             ('NUMBER', 1, '2340.19', D('2340.19')),
             ('CURRENCY', 1, 'USD', 'USD'),
             ('EOL', 2, '\n', None),
-            ], tokens)
-        self.assertTrue(errors)
-        self.assertTrue(re.search(r'\bcheck\b', errors[0].message))
-
-    @lex_tokens
-    def test_invalid_directive(self, tokens, errors):
-        """\
-          2008-03-01 check Assets:BestBank:Savings 2340.19 USD
-        """
-        self.assertEqual([
-            ('DATE', 1, '2008-03-01', datetime.date(2008, 3, 1)),
-            ('ERROR', 1, 'c', None),
-            ('ACCOUNT', 1, 'Assets:BestBank:Savings', 'Assets:BestBank:Savings'),
-            ('NUMBER', 1, '2340.19', D('2340.19')),
-            ('CURRENCY', 1, 'USD', 'USD'),
-            ('EOL', 2, '\n', None),
             ('EOL', 2, '\x00', None),
             ], tokens)
         self.assertTrue(errors)

@@ -28,4 +28,4 @@ class TestScriptQuery(test_utils.TestCase):
         """
         with test_utils.capture() as stdout:
             test_utils.run_with_args(query.main, [filename, "SELECT 1;"])
-        output = stdout.getvalue()
+        self.assertTrue(stdout.getvalue())

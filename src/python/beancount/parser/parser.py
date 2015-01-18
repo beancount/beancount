@@ -361,7 +361,7 @@ class Builder(lexer.LexBuilder):
         entry = Open(meta, date, account, currencies, booking)
         if booking and booking not in BOOKING_METHODS:
             self.errors.append(
-                ParserError(source, "Invalid booking method: {}".format(booking), entry))
+                ParserError(meta, "Invalid booking method: {}".format(booking), entry))
         return entry
 
     def close(self, filename, lineno, date, account, kvlist):

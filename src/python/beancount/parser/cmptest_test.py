@@ -83,7 +83,7 @@ class TestTestCase(cmptest.TestCase):
         self.assertIncludesEntries(first_two, entries)
 
         last_three = '\n'.join(self.ledger_text.splitlines()[-13:])
-        self.assertIncludesEntries(first_two, entries)
+        self.assertIncludesEntries(last_three, entries)
 
         with self.assertRaises(AssertionError):
             self.assertIncludesEntries("""

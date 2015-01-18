@@ -223,6 +223,8 @@ def balance_incomplete_postings(entry):
     empty postings on the entry itself. This also sets the parent of
     all the postings to this entry.
 
+    WARNING: This destructively modified entry itself!
+
     Args:
       entry: An instance of a valid directive. This entry is modified by
         having new postings inserted to it.

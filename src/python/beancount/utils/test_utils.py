@@ -99,15 +99,19 @@ def tempdir():
         shutil.rmtree(tempdir, ignore_errors=True)
 
 
-def capture(attributes='stdout'):
+def capture(*attributes):
     """A context manager that captures what's printed to stdout.
 
     Args:
-      attributes: A string or a list of strings, the name of the sys attributes to override
+      *attributes: A tuple of strings, the name of the sys attributes to override
         with StringIO instances.
     Yields:
       A StringIO string accumulator.
     """
+    if not attributes:
+        attributes = 'stdout'
+    elif len(attributes) == 1:
+        attributes = attributes[0]
     return patch(sys, attributes, io.StringIO)
 
 
