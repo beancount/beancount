@@ -1,17 +1,5 @@
 -*- mode: org -*-
 beancount: TODO
-* Commodity
-
-  - You have to detect duplicate commodities... maybe the normalization plugin
-    should detect duplicates and automatically create the missing ones.
-
-  - Refactor the getters to leverage the symmetry between get_accounts() and
-    get_commodities().
-
-  - getters get_account_open_close() should be used to compute the use map with
-    the dates.
-
-
 * Requirements for Shipping 2.0
 ** Establish Display Precision
 

@@ -195,6 +195,24 @@ class TestValidateDuplicateBalances(cmptest.TestCase):
                          [error.entry.date for error in errors])
 
 
+class TestValidateDuplicateCommodities(cmptest.TestCase):
+
+    @parser.parsedoc
+    def test_validate_duplicate_commodities(self, entries, _, options_map):
+        """
+        2014-01-01 commodity USD
+        2014-01-02 commodity CAD
+        2014-01-03 commodity AAPL
+        2014-01-04 commodity HOOL
+        2014-01-05 commodity USD
+        2014-01-06 commodity HOOL
+
+        """
+        errors = validation.validate_duplicate_commodities(entries, options_map)
+        self.assertEqual([datetime.date(2014, 1, 5), datetime.date(2014, 1, 6)],
+                         [error.entry.date for error in errors])
+
+
 class TestValidateActiveAccounts(cmptest.TestCase):
 
     @parser.parsedoc

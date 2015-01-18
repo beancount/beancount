@@ -4,6 +4,21 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-01-18
+
+  - Added a new, optional "Commodity" directive, which can be used to declare
+    commodities. The real purpose of this optional directive is to hang
+    per-commodity meta-data off of them. Some scripts are much simplified by
+    being able to define custom attributes for each commodity, e.g.
+    "name", "asset-class", "currency-exposure", and such. There is a new
+    function beancount.core.getters.get_commodity_map() which can be used to
+    gather a map of commodity to metadata.
+
+    You otherwise don't have to add those declarations; the new directive is
+    entirely optional and its addition should not break any existing feature
+    nor input file.
+
+
 2015-01-17
 
   - I added a paragraph about Releases in the Install document. Basically, I
