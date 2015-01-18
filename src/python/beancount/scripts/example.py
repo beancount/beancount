@@ -1360,6 +1360,55 @@ def replace(string, replacements, strip=False):
     return output
 
 
+def generate_commodity_entries(date_birth):
+    """Create a list of Commodity entries for all the currencies we're using.
+
+    Args:
+      date_birth: A datetime.date instance, the date of birth of the user.
+    Returns:
+      A list of Commodity entries for all the commodities in use.
+    """
+    return parse("""
+
+        1792-01-01 commodity USD
+          name: "US Dollar"
+          asset-class: "Cash"
+
+        {date_birth} commodity VACHR
+          name: "Employer Vacation Hours"
+          asset-class: "Vacation"
+
+        {date_birth} commodity IRAUSD
+          name: "US 401k and IRA Contributions"
+          asset-class: "Imaginary"
+
+        2009-05-01 commodity RGAGX
+          name: "American Funds The Growth Fund of America® Class R-6"
+          asset-class: "Stock"
+
+        1995-09-18 commodity VBMPX
+          name: "Vanguard Total Bond Market Index Fund Institutional Plus Shares"
+          asset-class: "Bonds"
+
+        2004-01-20 commodity ITOT
+          name: "iShares Core S&P Total U.S. Stock Market ETF"
+          asset-class: "Stock"
+
+        2007-07-20 commodity VEA
+          name: "Vanguard FTSE Developed Markets ETF"
+          asset-class: "Stock"
+
+        2004-01-26 commodity VHT
+          name: "Vanguard Health Care ETF"
+          asset-class: "Stock"
+
+        2004-11-01 commodity GLD
+          name: "SPDR Gold Trust (ETF)"
+          asset-class: "Gold"
+
+    """, **locals())
+
+
 def contextualize_file(contents, employer):
     """Replace generic strings in the generated file with realistic strings.
 
@@ -1370,15 +1419,17 @@ def contextualize_file(contents, employer):
     """
     replacements = {
         'CC': 'US',
-        'CCY': 'USD',
-        'VACHR': 'VACHR',
-        'DEFCCY': 'IRAUSD',
         'Bank1': 'BofA',
         'CreditCard1': 'Chase:Slate',
         'CreditCard2': 'Amex:BlueCash',
         'Employer1': employer,
         'Retirement': 'Vanguard',
         'Investment': 'ETrade',
+
+        # Commodities
+        'CCY': 'USD',
+        'VACHR': 'VACHR',
+        'DEFCCY': 'IRAUSD',
         'MFUND1': 'VBMPX',
         'MFUND2': 'RGAGX',
         'STK1': 'ITOT',
@@ -1414,6 +1465,9 @@ def write_example_file(date_birth, date_begin, date_end, reformat, file):
     account_credit = 'Liabilities:CC:CreditCard1'
     account_retirement = 'Assets:CC:Retirement'
     account_investing = 'Assets:CC:Investment:Cash'
+
+    # Commodities.
+    commodity_entries = generate_commodity_entries(date_birth)
 
     # Estimate the rent.
     rent_amount = round_to(ANNUAL_SALARY / RENT_DIVISOR, RENT_INCREMENT)
@@ -1583,6 +1637,7 @@ def write_example_file(date_birth, date_begin, date_end, reformat, file):
         printer.print_entries(data.sort(entries), dcontext, file=output)
 
     output.write(FILE_PREAMBLE.format(**locals()))
+    output_section('* Commodities', commodity_entries)
     output_section('* Equity Accounts', equity_entries)
     output_section('* Banking', data.sort(banking_entries +
                                                banking_expenses +

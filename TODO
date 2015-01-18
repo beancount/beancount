@@ -131,6 +131,9 @@ beancount: TODO
 
 ** Documentation / Ongoing
 
+  - Update the example file in order to include support for the commodities.
+
+
   - Write a note about making releases (and the lack thereof).
 
   - Write a script to automatically convert and upload the docs for the shell

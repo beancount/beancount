@@ -157,7 +157,7 @@ demo:
 
 
 # Generate the tutorial files from the example file.
-EXAMPLE=examples/tutorial/example.beancount
+EXAMPLE=examples/example.beancount
 example $(EXAMPLE):
 	./bin/bean-example --seed=0 -o $(EXAMPLE)
 
