@@ -186,6 +186,38 @@ def validate_duplicate_balances(entries, unused_options_map):
     return errors
 
 
+def validate_duplicate_commodities(entries, unused_options_map):
+    """Check that commodty entries are unique for each commodity.
+
+    Args:
+      entries: A list of directives.
+      unused_options_map: An options map.
+    Returns:
+      A list of new errors, if any were found.
+    """
+    errors = []
+
+    # Mapping of (account, currency, date) to Balance entry.
+    commodity_entries = {}
+    for entry in entries:
+        if not isinstance(entry, data.Commodity):
+            continue
+
+        key = entry.currency
+        try:
+            previous_entry = commodity_entries[key]
+            if previous_entry:
+                errors.append(
+                    ValidationError(
+                        entry.meta,
+                        "Duplicate commodity directives for '{}'".format(key),
+                        entry))
+        except KeyError:
+            commodity_entries[key] = entry
+
+    return errors
+
+
 def validate_active_accounts(entries, unused_options_map):
     """Check that all references to accounts occurs on active accounts.
 
@@ -376,6 +408,7 @@ BASIC_VALIDATIONS = [validate_inventory_booking,
                      validate_active_accounts,
                      validate_currency_constraints,
                      validate_duplicate_balances,
+                     validate_duplicate_commodities,
                      validate_documents_paths,
                      validate_check_transaction_balances]
 

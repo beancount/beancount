@@ -4,6 +4,7 @@ import unittest
 import datetime
 
 from beancount.core import getters
+from beancount.core import data
 from beancount.parser import parser
 
 
@@ -14,6 +15,12 @@ TEST_INPUT = """
 2012-02-01 open Expenses:Grocery
 2012-02-01 open Expenses:Coffee
 2012-02-01 open Expenses:Restaurant
+
+2012-02-01 commodity HOOL
+  name: "Hooli Corp."
+
+2012-02-01 commodity PIPA
+  name: "Pied Piper"
 
 2012-05-18 * "Buying food" #dinner
   Expenses:Restaurant         100 USD
@@ -34,6 +41,11 @@ TEST_INPUT = """
 """
 
 class TestGetters(unittest.TestCase):
+
+    def test_methods_coverage(self):
+        for dispatcher in (getters.GetAccounts,):
+            for klass in data.ALL_DIRECTIVES:
+                self.assertTrue(hasattr(dispatcher, klass.__name__))
 
     def test_get_accounts_use_map(self):
         entries = parser.parse_string(TEST_INPUT)[0]
@@ -63,7 +75,9 @@ class TestGetters(unittest.TestCase):
 
     def test_get_entry_accounts(self):
         entries = parser.parse_string(TEST_INPUT)[0]
-        accounts = getters.get_entry_accounts(entries[5])
+        accounts = getters.get_entry_accounts(next(entry
+                                                   for entry in entries
+                                                   if isinstance(entry, data.Transaction)))
         self.assertEqual({'Assets:US:Cash',
                           'Expenses:Grocery',
                           'Expenses:Restaurant'},
@@ -142,3 +156,23 @@ class TestGetters(unittest.TestCase):
         expected_components = {'US', 'Assets', 'Restaurant', 'Grocery',
                                'Cash', 'Coffee', 'Expenses', 'Credit-Card'}
         self.assertEqual(sorted(expected_components), components)
+
+    def test_get_commodities_map(self):
+        entries = parser.parse_string(TEST_INPUT)[0]
+        commodity_map = getters.get_commodity_map(entries)
+        self.assertEqual({'HOOL', 'PIPA', 'USD'}, commodity_map.keys())
+        self.assertTrue(all(isinstance(value, data.Commodity)
+                            for value in commodity_map.values()))
+        self.assertEqual(commodity_map['HOOL'],
+                         next(entry
+                              for entry in entries
+                              if isinstance(entry, data.Commodity)))
+
+    def test_get_values_meta(self):
+        entries = parser.parse_string(TEST_INPUT)[0]
+        commodity_map = getters.get_commodity_map(entries)
+        values = getters.get_values_meta(commodity_map, 'name', 'BLA')
+        self.assertEqual({'USD': 'BLA',
+                          'PIPA': 'Pied Piper',
+                          'HOOL': 'Hooli Corp.'},
+                         values)

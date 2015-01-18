@@ -65,23 +65,24 @@ extern int yydebug;
     BALANCE = 275,
     OPEN = 276,
     CLOSE = 277,
-    PAD = 278,
-    EVENT = 279,
-    PRICE = 280,
-    NOTE = 281,
-    DOCUMENT = 282,
-    PUSHTAG = 283,
-    POPTAG = 284,
-    OPTION = 285,
-    PLUGIN = 286,
-    DATE = 287,
-    ACCOUNT = 288,
-    CURRENCY = 289,
-    STRING = 290,
-    NUMBER = 291,
-    TAG = 292,
-    LINK = 293,
-    KEY = 294
+    COMMODITY = 278,
+    PAD = 279,
+    EVENT = 280,
+    PRICE = 281,
+    NOTE = 282,
+    DOCUMENT = 283,
+    PUSHTAG = 284,
+    POPTAG = 285,
+    OPTION = 286,
+    PLUGIN = 287,
+    DATE = 288,
+    ACCOUNT = 289,
+    CURRENCY = 290,
+    STRING = 291,
+    NUMBER = 292,
+    TAG = 293,
+    LINK = 294,
+    KEY = 295
   };
 #endif
 
@@ -96,7 +97,7 @@ union YYSTYPE
     const char* string;
     PyObject* pyobj;
 
-#line 100 "src/python/beancount/parser/grammar.h" /* yacc.c:1909  */
+#line 101 "src/python/beancount/parser/grammar.h" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1

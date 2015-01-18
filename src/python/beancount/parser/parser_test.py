@@ -162,6 +162,13 @@ class TestParserEntryTypes(unittest.TestCase):
         check_list(self, entries, [data.Close])
 
     @parsedoc
+    def test_entry_commodity(self, entries, _, __):
+        """
+          2013-05-18 commodity MSFT
+        """
+        check_list(self, entries, [data.Commodity])
+
+    @parsedoc
     def test_entry_pad(self, entries, _, __):
         """
           2013-05-18 pad Assets:US:BestBank:Checking  Equity:Opening-Balances

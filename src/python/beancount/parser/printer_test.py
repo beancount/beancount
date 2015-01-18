@@ -18,6 +18,10 @@ META = data.new_metadata('beancount/core/testing.beancount', 12345)
 
 class TestPrinter(unittest.TestCase):
 
+    def test_methods_coverage(self):
+        for klass in data.ALL_DIRECTIVES:
+            self.assertTrue(hasattr(printer.EntryPrinter, klass.__name__))
+
     def test_render_source(self):
         source_str = printer.render_source(META)
         self.assertTrue(isinstance(source_str, str))

@@ -74,6 +74,21 @@ BOOKING_METHODS = {'STRICT', 'NONE'}
 #   account: A string, the name of the account that is being closed.
 Close = new_directive('Close', 'account')
 
+# An optional commodity declaration directive. Commodities generally do not need
+# to be declared, but they may, and this is mainly created as intended to be
+# used to attach meta-data on a commodity name. Whenever a plugin needs
+# per-commodity meta-data, you would define such a commodity directive. Another
+# use is to define a commodity that isn't otherwise (yet) used anywhere in an
+# input file. (At the moment the date is meaningless but is specified for
+# coherence with all the other directives; if you can think of a good use case,
+# let us know).
+#
+# Attributes:
+#   meta: See above.
+#   date: See above.
+#   currency: A string, the commodity under consideration.
+Commodity = new_directive('Commodity', 'currency')
+
 # A "pad this account with this other account" directive. This directive
 # automatically inserts transactions that will make the next chronological
 # balance directive succeeds. It can be used to fill in missing date ranges of
@@ -210,7 +225,7 @@ Document = new_directive('Document', 'account filename')
 
 # A list of all the valid directive types.
 ALL_DIRECTIVES = (
-    Open, Close, Pad, Balance, Transaction, Note, Event, Price, Document
+    Open, Close, Commodity, Pad, Balance, Transaction, Note, Event, Price, Document
 )
 
 

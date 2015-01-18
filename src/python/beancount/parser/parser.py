@@ -21,6 +21,7 @@ from beancount.core.data import Transaction
 from beancount.core.data import Balance
 from beancount.core.data import Open
 from beancount.core.data import Close
+from beancount.core.data import Commodity
 from beancount.core.data import Pad
 from beancount.core.data import Event
 from beancount.core.data import Price
@@ -377,6 +378,21 @@ class Builder(lexer.LexBuilder):
         """
         meta = new_metadata(filename, lineno, kvlist)
         return Close(meta, date, account)
+
+    def commodity(self, filename, lineno, date, currency, kvlist):
+        """Process a close directive.
+
+        Args:
+          filename: The current filename.
+          lineno: The current line number.
+          date: A datetime object.
+          currency: A string, the commodity being declared.
+          kvlist: a list of KeyValue instances.
+        Returns:
+          A new Close object.
+        """
+        meta = new_metadata(filename, lineno, kvlist)
+        return Commodity(meta, date, currency)
 
     def pad(self, filename, lineno, date, account, source_account, kvlist):
         """Process a pad directive.

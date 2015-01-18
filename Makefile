@@ -67,11 +67,15 @@ CLUSTERS_REGEXPS =							\
 	beancount/core/.*_test\.py	 	core/tests		\
 	beancount/core			 	core			\
 	beancount/ops/.*_test\.py	 	ops/tests		\
-	beancount/ops			 	ops			\
+	beancount/ops			 	ops+plugins		\
+	beancount/parser/printer_test\.py 	printer/tests		\
+	beancount/parser/printer.py	 	printer			\
+	beancount/parser/options_test\.py 	core/tests		\
+	beancount/parser/options.py	 	core			\
 	beancount/parser/.*_test\.py	 	parser/tests		\
 	beancount/parser		 	parser			\
 	beancount/plugins/.*_test\.py	 	plugins/tests		\
-	beancount/plugins		 	plugins			\
+	beancount/plugins		 	ops+plugins		\
 	beancount/reports/.*_test\.py	 	reports/tests		\
 	beancount/reports		 	reports			\
 	beancount/scripts/bake.*_test\.py	scripts/bake/tests	\
@@ -82,6 +86,8 @@ CLUSTERS_REGEXPS =							\
 	beancount/utils			 	utils			\
 	beancount/web/.*_test\.py	 	web/tests		\
 	beancount/web			 	web			\
+	beancount/query/.*_test\.py	 	query/tests		\
+	beancount/query			 	query			\
 	beancount/load.*_test\.py	 	load/tests		\
 	beancount/load.*\.py		 	load			\
 	beancount                        	load
@@ -89,7 +95,7 @@ CLUSTERS_REGEXPS =							\
 GRAPHER = dot
 
 build/beancount.pdf: build/beancount.deps
-	cat $< | sfood-cluster-regexp $(CLUSTERS_REGEXPS) | grep -v /tests| sfood-graph | $(GRAPHER) -Tps | ps2pdf - $@
+	cat $< | sfood-cluster-regexp $(CLUSTERS_REGEXPS) | grep -v /tests | sfood-graph | $(GRAPHER) -Tps | ps2pdf - $@
 	evince $@
 
 build/beancount_tests.pdf: build/beancount.deps
