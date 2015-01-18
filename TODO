@@ -990,6 +990,13 @@ http://furius.ca/beancount/doc/proposal-inter
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - Move the check for zero units ("Amount is zero" from the parser) to a
+    plugin, and make this selectively removable.
+
+
+
+
+
   - Write the multi-year report and share on the list at
     https://groups.google.com/d/msg/ledger-cli/XNIK853ExNc/CWxSPa-5INMJ
 
