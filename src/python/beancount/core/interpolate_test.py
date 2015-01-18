@@ -1,7 +1,6 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import unittest
-import copy
 
 from beancount.core.data import create_simple_posting as P
 from beancount.core.data import create_simple_posting_with_cost as PCost
@@ -9,6 +8,7 @@ from beancount.core import interpolate
 from beancount.core import data
 from beancount.core import inventory
 from beancount.core import amount
+from beancount.core import position
 from beancount.parser import parser
 from beancount.parser import cmptest
 
@@ -234,28 +234,28 @@ class TestBalance(cmptest.TestCase):
         self.assertEqual(1, len(new_postings))
         self.assertEqual(0, len(errors))
 
-    def balance_incomplete_postings(self):
+    def test_balance_incomplete_postings__noop(self):
         entry = parser.parse_string("""
           2013-02-23 * "Something"
             Liabilities:CreditCard     -50 USD
             Expenses:Restaurant         50 USD
         """)[0][0]
-        orig_entry = copy.deepcopy(entry)
         errors = interpolate.balance_incomplete_postings(entry)
         self.assertFalse(errors)
-        self.assertEqual(orig_entry, entry)
+        self.assertEqual(2, len(entry.postings))
 
+    def test_balance_incomplete_postings__fill1(self):
         entry = parser.parse_string("""
           2013-02-23 * "Something"
             Liabilities:CreditCard     -50 USD
             Expenses:Restaurant
         """)[0][0]
-        orig_entry = copy.deepcopy(entry)
         errors = interpolate.balance_incomplete_postings(entry)
         self.assertFalse(errors)
-        self.assertEqual(strip_recursive(orig_entry),
-                         strip_recursive(entry))
+        self.assertEqual(2, len(entry.postings))
+        self.assertEqual(entry.postings[1].position, position.from_string('50 USD'))
 
+    def test_balance_incomplete_postings__fill2(self):
         entry = parser.parse_string("""
           2013-02-23 * "Something"
             Liabilities:CreditCard     -50 USD
@@ -265,6 +265,22 @@ class TestBalance(cmptest.TestCase):
         errors = interpolate.balance_incomplete_postings(entry)
         self.assertFalse(errors)
         self.assertEqual(4, len(entry.postings))
+        self.assertEqual(entry.postings[2].account, 'Expenses:Restaurant')
+        self.assertEqual(entry.postings[3].account, 'Expenses:Restaurant')
+        self.assertEqual(entry.postings[2].position, position.from_string('50 USD'))
+        self.assertEqual(entry.postings[3].position, position.from_string('50 CAD'))
+
+    def test_balance_incomplete_postings__cost(self):
+        entry = parser.parse_string("""
+          2013-02-23 * "Something"
+            Assets:Invest     10 MSFT {43.23 USD}
+            Assets:Cash
+        """)[0][0]
+        errors = interpolate.balance_incomplete_postings(entry)
+        self.assertFalse(errors)
+        self.assertEqual(2, len(entry.postings))
+        self.assertEqual(entry.postings[1].account, 'Assets:Cash')
+        self.assertEqual(entry.postings[1].position, position.from_string('-432.30 USD'))
 
 
 class TestComputeBalance(unittest.TestCase):
