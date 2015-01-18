@@ -7,6 +7,7 @@ import re
 import sys
 import textwrap
 
+from beancount.core.amount import Decimal
 from beancount.core import interpolate
 from beancount.core import data
 from beancount.core import display_context
@@ -107,6 +108,24 @@ class EntryPrinter:
         method(obj, oss)
         return oss.getvalue()
 
+    META_FORMAT = "  {}: {}\n"
+    META_IGNORE = set(['filename', 'lineno'])
+
+    def write_metadata(self, meta, oss):
+        """Write metadata to the file object, excluding filename and line number.
+
+        Args:
+          meta: An instance of AttrDict that contains the metadata for this directive.
+          oss: A file object to write to.
+        """
+        for key, value in sorted(meta.items()):
+            if key not in self.META_IGNORE:
+                if isinstance(value, str):
+                    value_str = '"{}"'.format(value)
+                elif isinstance(value, (Decimal, datetime.date, amount.Amount)):
+                    value_str = str(value)
+                oss.write(self.META_FORMAT.format(key, value_str))
+
     def Transaction(self, entry, oss):
         # Compute the string for the payee and narration line.
         strings = []
@@ -126,6 +145,7 @@ class EntryPrinter:
                 strings.append('^{}'.format(link))
 
         oss.write('{e.date} {e.flag} {}\n'.format(' '.join(strings), e=entry))
+        self.write_metadata(entry.meta, oss)
 
         rows = [self.render_posting_strings(posting)
                 for posting in entry.postings]
@@ -192,32 +212,41 @@ class EntryPrinter:
                    '{comment}\n').format(e=entry,
                                          amount=entry.amount.to_string(self.dformat),
                                          comment=comment))
+        self.write_metadata(entry.meta, oss)
 
-    def Note(_, entry, oss):
+    def Note(self, entry, oss):
         oss.write('{e.date} note {e.account} "{e.comment}"\n'.format(e=entry))
+        self.write_metadata(entry.meta, oss)
 
-    def Document(_, entry, oss):
+    def Document(self, entry, oss):
         oss.write('{e.date} document {e.account} "{e.filename}"\n'.format(e=entry))
+        self.write_metadata(entry.meta, oss)
 
-    def Pad(_, entry, oss):
+    def Pad(self, entry, oss):
         oss.write('{e.date} pad {e.account} {e.source_account}\n'.format(e=entry))
+        self.write_metadata(entry.meta, oss)
 
-    def Open(_, entry, oss):
+    def Open(self, entry, oss):
         oss.write('{e.date} open {e.account:47} {currencies}\n'.format(
             e=entry, currencies=','.join(entry.currencies or [])))
+        self.write_metadata(entry.meta, oss)
 
-    def Close(_, entry, oss):
+    def Close(self, entry, oss):
         oss.write('{e.date} close {e.account}\n'.format(e=entry))
+        self.write_metadata(entry.meta, oss)
 
-    def Commodity(_, entry, oss):
+    def Commodity(self, entry, oss):
         oss.write('{e.date} commodity {e.currency}\n'.format(e=entry))
+        self.write_metadata(entry.meta, oss)
 
     def Price(self, entry, oss):
         oss.write('{e.date} price {e.currency:<22} {amount:>22}\n'.format(
             e=entry, amount=entry.amount.to_string(self.dformat_max)))
+        self.write_metadata(entry.meta, oss)
 
-    def Event(_, entry, oss):
+    def Event(self, entry, oss):
         oss.write('{e.date} event "{e.type}" "{e.description}"\n'.format(e=entry))
+        self.write_metadata(entry.meta, oss)
 
 
 def format_entry(entry, dcontext=None, render_weights=False):

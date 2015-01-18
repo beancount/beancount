@@ -365,7 +365,7 @@ class TestPrinterAlignment(test_utils.TestCase):
         self.assertEqual(expected_str, oss.getvalue())
 
 
-class TestPrinterMisc(unittest.TestCase):
+class TestPrinterMisc(test_utils.TestCase):
 
     @parser.parsedoc
     def test_no_valid_account(self, entries, errors, options_map):
@@ -379,3 +379,20 @@ class TestPrinterMisc(unittest.TestCase):
         """
         oss = io.StringIO()
         printer.print_entries(entries, file=oss)
+
+    def test_metadata(self):
+        input_string = textwrap.dedent("""
+
+        2000-01-01 open Assets:US:Investments
+          name: "Investment account"
+
+        2000-01-02 commodity VHT
+          asset-class: "Stocks"
+          name: "Vanguard Health Care ETF"
+
+        """)
+        entries, errors, options_map = parser.parse_string(input_string)
+        self.assertFalse(errors)
+        oss = io.StringIO()
+        printer.print_entries(entries, file=oss)
+        self.assertLines(input_string, oss.getvalue())
