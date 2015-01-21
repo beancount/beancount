@@ -72,6 +72,21 @@ is great for sectioning large files with many transactions."
   (message "Accounts updated."))
 
 
+(defvar beancount-directive-names '("txn"
+                                    "open"
+                                    "close"
+                                    "commodity"
+                                    "balance"
+                                    "pad"
+                                    "event"
+                                    "price"
+                                    "note"
+                                    "document"
+                                    "pushtag"
+                                    "poptag")
+  "A list of the directive names.")
+
+
 (defvar beancount-font-lock-defaults
   `(;; Comments
     (";.+" . font-lock-comment-face)
@@ -80,8 +95,7 @@ is great for sectioning large files with many transactions."
     ("\".*?\"" . font-lock-string-face)
 
     ;; Reserved keywords
-    (,(regexp-opt '("txn" "balance" "open" "close" "pad" "event" "price" "note" "document"
-                    "pushtag" "poptag")) . font-lock-keyword-face)
+    (,(regexp-opt beancount-directive-names) . font-lock-keyword-face)
 
     ;; Tags & Links
     ("[#\\^][A-Za-z0-9\-_/.]+" . font-lock-type-face)
@@ -97,7 +111,6 @@ is great for sectioning large files with many transactions."
 
     ;; Number + Currency
     ;;; ("\\([\\-+]?[0-9,]+\\(\\.[0-9]+\\)?\\)\\s-+\\([A-Z][A-Z0-9'\.]\\{1,10\\}\\)" . )
-
     ))
 
 
