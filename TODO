@@ -32,6 +32,12 @@ beancount: TODO
 
 ** Misc
 
+  - Add PLY as a dependency from default (this is now in main).
+
+  - Regenerate example file because it now has commodity attached to them
+    (after adding the commodity directive).
+
+
   - BUG: with leaked negative basis:
 
       "This is indeed, a bug triggered by this situation and I'll have to fix it.
@@ -132,6 +138,11 @@ beancount: TODO
 ** Documentation / Ongoing
 
   - Update the example file in order to include support for the commodities.
+
+
+  - Document vesting as I do it.
+  - Start a doc on limbo accounts, including the email thread with mharris & redstreet0.
+  - Document options (from the email).
 
 
   - Write a note about making releases (and the lack thereof).
@@ -824,6 +835,12 @@ http://furius.ca/beancount/doc/proposal-inventory
 
 
 * Plugins
+
+  - Create a verification plugin that verifies that the balance of an account
+    does not go under some negative threshold below/above zero. This way you
+    could check that account balances are of the expected size. (The plugin
+    should accept transient negative balances within the day though, as those
+    are order-dependent.)
 
   - Create a verification plugin that checks that there is a single currency in
     use per account. Check Open directives, also check actual usage.

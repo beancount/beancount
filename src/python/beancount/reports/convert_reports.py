@@ -241,6 +241,10 @@ class LedgerPrinter:
         oss.write(';; Pad: {e.date:%Y/%m/%d} {e.account} {e.source_account}\n'.format(
             e=entry))
 
+    def Commodity(_, entry, oss):
+        # No need for declaration.
+        oss.write('commodity {e.currency}\n'.format(e=entry))
+
     def Open(_, entry, oss):
         oss.write('account {e.account:47}\n'.format(e=entry))
         if entry.currencies:
