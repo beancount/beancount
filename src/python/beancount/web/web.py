@@ -999,7 +999,8 @@ def run_app(args, quiet=None):
 
     # Run the server.
     app.args = args
-    app.run(host='localhost', port=args.port,
+    bind_address = '0.0.0.0' if args.public else 'localhost'
+    app.run(host=bind_address, port=args.port,
             debug=args.debug, reloader=False,
             quiet=args.quiet if hasattr(args, 'quiet') else quiet)
 
@@ -1066,6 +1067,10 @@ def add_web_arguments(argparser):
 
     group.add_argument('--view', action='store',
                        help="Render only the specified view (identify by URL)")
+
+    group.add_argument('--public', '--inaddr-any', action='store_true',
+                       help="Bind server to listen to any address, not just localhost.")
+
     return group
 
 
