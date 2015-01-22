@@ -23,6 +23,7 @@ def check_dependencies():
         check_python(),
         check_dateutil(),
         check_bottle(),
+        check_ply(),
         check_wget(),
         ]
 
@@ -68,6 +69,22 @@ def check_bottle():
     except ImportError:
         version, sufficient = None, False
     return ('bottle', version, sufficient)
+
+
+def check_ply():
+    """Check that PLY is installed.
+
+    Returns:
+      A triple of (package-name, version-number, sufficient) as per
+      check_dependencies().
+    """
+    try:
+        import ply.yacc
+        version = ply.yacc.__version__
+        sufficient = float(version) > 3.4
+    except ImportError:
+        version, sufficient = None, False
+    return ('ply', version, sufficient)
 
 
 def check_wget():

@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-01-22
+
+  - Added a dependency check for PLY and documented in the Install doc
+    (http://furius.ca/beancount/doc/install).
+
+
 2015-01-18
 
   - Added a new, optional "Commodity" directive, which can be used to declare
@@ -17,9 +23,11 @@ Note: This file contains only changes in the 'default' branch.
     You otherwise don't have to add those declarations; the new directive is
     entirely optional and its addition should not break any existing feature
     nor input file. It is an error to insert duplicate Commodity directives
-    for the same commodity name.
+    for the same commodity name. I'm mainly doing this now so I can migrate
+    the portfolio dashboard script from experiments into the mainline while
+    configuring it using metadata.
 
-    It is documented here:
+    The directive is documented here:
     http://furius.ca/beancount/doc/language#heading=h.a3si01ejc035
 
 
