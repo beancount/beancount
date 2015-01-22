@@ -245,6 +245,16 @@ class Builder(lexer.LexBuilder):
                 # Update the set of valid account types.
                 self.account_regexp = valid_account_regexp(self.options)
 
+    def include(self, filename, lineno, include_filename):
+        """Process an include directive.
+
+        Args:
+          filename: current filename.
+          lineno: current line number.
+          include_name: A string, the name of the file to include.
+        """
+        self.options['include'].append(include_filename)
+
     def plugin(self, filename, lineno, plugin_name, plugin_config):
         """Process a plugin directive.
 
