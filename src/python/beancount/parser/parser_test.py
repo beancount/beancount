@@ -447,6 +447,10 @@ class TestParserOptions(unittest.TestCase):
 
 class TestParserInclude(unittest.TestCase):
 
+    def test_parse_nonexist(self):
+        with self.assertRaises(OSError):
+            parser.parse_file('/some/bullshit/filename.beancount')
+
     @test_utils.docfile
     def test_include_absolute(self, filename):
         """
