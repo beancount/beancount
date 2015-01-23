@@ -10,6 +10,7 @@ import tempfile
 import re
 import sys
 import subprocess
+from os import path
 
 from beancount.core.amount import D
 from beancount.parser.parser import parsedoc
@@ -442,6 +443,39 @@ class TestParserOptions(unittest.TestCase):
         """
         check_list(self, errors, [parser.ParserError])
         self.assertNotEqual("filename", "gniagniagniagniagnia")
+
+
+class TestParserInclude(unittest.TestCase):
+
+    @test_utils.docfile
+    def test_include_absolute(self, filename):
+        """
+          include "/some/absolute/filename.beancount"
+        """
+        entries, errors, options_map = parser.parse_file(filename)
+        self.assertFalse(errors)
+        self.assertEqual(['/some/absolute/filename.beancount'],
+                         options_map['include'])
+
+    @test_utils.docfile
+    def test_include_relative(self, filename):
+        """
+          include "some/relative/filename.beancount"
+        """
+        cwd = path.dirname(filename)
+        entries, errors, options_map = parser.parse_file(filename)
+        self.assertFalse(errors)
+        self.assertEqual([path.join(cwd, 'some/relative/filename.beancount')],
+                         options_map['include'])
+
+    def test_include_relative_from_string(self):
+        input_string = """
+          include "some/relative/filename.beancount"
+        """
+        entries, errors, options_map = parser.parse_string(input_string)
+        self.assertTrue(errors)
+        self.assertTrue(re.search('CWD', errors[0].message))
+        self.assertEqual([], options_map['include'])
 
 
 class TestParserPlugin(unittest.TestCase):
