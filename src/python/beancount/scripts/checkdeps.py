@@ -81,7 +81,7 @@ def check_ply():
     try:
         import ply.yacc
         version = ply.yacc.__version__
-        sufficient = float(version) > 3.4
+        sufficient = float(version) >= 3.4
     except ImportError:
         version, sufficient = None, False
     return ('ply', version, sufficient)
