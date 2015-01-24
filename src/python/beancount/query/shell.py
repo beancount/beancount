@@ -269,6 +269,19 @@ class BQLShell(DispatchingShell):
     def on_Print(self, print_stmt):
         """
         Print entries in Beancount format.
+
+        The general form of a PRINT statement includes an SQL-like FROM
+        selector:
+
+           PRINT [FROM <from_expr> ...]
+
+        Where:
+
+          from_expr: A logical expression that matches on the attributes of
+            the directives. See SELECT command for details (this FROM expression
+            supports all the same expressions including its OPEN, CLOSE and
+            CLEAR operations).
+
         """
         # Compile the print statement.
         try:

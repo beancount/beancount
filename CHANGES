@@ -4,6 +4,26 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-01-24
+
+  - I created a new branch 'ledgerhub' to provide a version of Beancount that i
+    guaranteed to be compatible with LedgerHub.
+
+    Previously, LedgerHub was synchronizing a copy of some of the files under
+    beancount.core in order to avoid depending on Beancount. This turned out to
+    be difficult to maintain, as Beancount is still evolving relatively fast. So
+    I've decided to return to the original state of affairs: LedgerHub will
+    depend on a Beancount install in order to reuse its core libraries. (The
+    original reason for not doing so was that I thought I'd want to fork
+    those core libraries to support Ledger-specific features, but at this point
+    it's dubious whether I will need that at all --or whether I couldn't just
+    add generic support in Beancount's core libraries themselve to do that-- and
+    this will be an easier way to synchronize the two codebases going forward).
+
+    If you're a LedgerHub user, please checkout Beancount at its 'ledgerhub'
+    branch and make your PYTHONPATH depend on that.
+
+
 2015-01-22
 
   - Added a dependency check for PLY and documented in the Install doc
