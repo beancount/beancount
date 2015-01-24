@@ -139,6 +139,10 @@ beancount: TODO
 
   - Update the example file in order to include support for the commodities.
 
+  - Make a single doc / single about the four tools that can be used to get
+    information out of Beancount and make their sections short and link to a
+    dedicated doc for each. The four-out structure of this document should be clear.
+
 
   - Document vesting as I do it.
   - Start a doc on limbo accounts, including the email thread with mharris & redstreet0.
