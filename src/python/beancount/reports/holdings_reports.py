@@ -353,7 +353,7 @@ class ExportPortfolioReport(report.TableReport):
                   </{txntype}>
     """)
 
-    # Note: This does not import in GFinance.
+    # Note: This does not import well in GFinance.
     # CASH = textwrap.dedent("""
     #       <INVBANKTRAN>
     #         <STMTTRN>
@@ -482,6 +482,11 @@ class ExportPortfolioReport(report.TableReport):
             invtranlist_io.write(self.TRANSACTION.format(**locals()))
             commodities.add(holding.currency)
 
+        # Print a table of ignored holdings (for debugging).
+        ## import sys
+        ## table.render_table(table.create_table(skipped_holdings, FIELD_SPEC),
+        ##                    sys.stderr, 'text')
+
         # Convert the skipped holdings to a bank deposit to cash to approximate their value.
         if options_map['operating_currency']:
             # Convert all skipped holdings to the first operating currency.
@@ -491,12 +496,12 @@ class ExportPortfolioReport(report.TableReport):
                                                               skipped_holdings)
 
             # Estimate the total market value in cash.
-            book_value = sum(holding.book_value
-                             for holding in converted_holdings
-                             if holding.cost_currency == cash_currency)
-            market_value = sum(holding.market_value
-                               for holding in converted_holdings
-                               if holding.cost_currency == cash_currency)
+            included_holdings = []
+            for holding in converted_holdings:
+                if holding.cost_currency == cash_currency:
+                    included_holdings.append(holding)
+            book_value = sum(holding.book_value for holding in included_holdings)
+            market_value = sum(holding.market_value for holding in included_holdings)
 
             # Insert a cash deposit equivalent for that amount.
             txntype = ('BUYMF' if self.CASH_EQUIVALENT_MFUND else 'BUYSTOCK')
@@ -550,8 +555,6 @@ def render_ofx_date(dtime):
                               int(dtime.microsecond / 1000))
 
 
-
-
 class CashReport(report.TableReport):
     """The list of cash holdings (defined as currency = cost-currency)."""
 
@@ -563,12 +566,17 @@ class CashReport(report.TableReport):
                             action='store', default=None,
                             help="Which currency to convert all the holdings to")
 
+        parser.add_argument('-i', '--ignored',
+                            action='store_true',
+                            help="Report on ignored holdings instead of included ones")
+
         parser.add_argument('-o', '--operating-only',
                             action='store_true',
                             help="Only report on operating currencies")
 
     def generate_table(self, entries, errors, options_map):
         holdings_list, price_map = get_assets_holdings(entries, options_map)
+        holdings_list_orig = holdings_list
 
         # Keep only the holdings where currency is the same as the cost-currency.
         holdings_list = [holding
@@ -582,6 +590,11 @@ class CashReport(report.TableReport):
             holdings_list = [holding
                              for holding in holdings_list
                              if holding.currency in operating_currencies]
+
+        # Compute the list of ignored holdings and optionally report on them.
+        if self.args.ignored_holdings:
+            ignored_holdings = set(holdings_list_orig) - set(holdings_list)
+            holdings_list = ignored_holdings
 
         # Convert holdings to a unified currency.
         if self.args.currency:
