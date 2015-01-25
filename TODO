@@ -135,6 +135,34 @@ beancount: TODO
 
   - Fix FIXME in beancount.projects.returns, from DClemente issues.
 
+  - BUG: In web interface... clicking on a directive that cannot be contexted
+    right generates an error like this:
+
+      127.0.0.1 - - [25/Jan/2015 00:41:33] "GET
+      /context/7a79f22d284d032e2b28501e904e4826 HTTP/1.1" 500 59
+      Traceback (most recent call last):
+        File "/usr/local/lib/python3.4/wsgiref/handlers.py", line 137, in run
+          self.result = application(self.environ, self.start_response)
+        File "/usr/local/lib/python3.4/site-packages/bottle.py", line 979, in __call__
+          return self.wsgi(environ, start_response)
+        File "/usr/local/lib/python3.4/site-packages/bottle.py", line 954, in wsgi
+          out = self._cast(self._handle(environ))
+        File "/usr/local/lib/python3.4/site-packages/bottle.py", line 862, in _handle
+          return route.call(**args)
+        File "/usr/local/lib/python3.4/site-packages/bottle.py", line 1729, in wrapper
+          rv = callback(*a, **ka)
+        File "/home/blais/p/beancount/src/python/beancount/web/web.py", line 939, in
+        wrapper
+          return callback(*posargs, **kwargs)
+        File "/home/blais/p/beancount/src/python/beancount/web/web.py", line 381, in
+        context_
+          app.entries, dcontext, entry.meta.filename, entry.meta.lineno))
+        File "/home/blais/p/beancount/src/python/beancount/reports/context.py", line
+        33, in render_entry_context
+          raise SystemExit("No entry could be found before {}:{}".format(filename,
+          lineno))
+
+
 ** Documentation / Ongoing
 
   - Update the example file in order to include support for the commodities.
@@ -193,11 +221,40 @@ beancount: TODO
 
 
 
-  - README for example files
+  - Add README for example files
   - Implement example for documents
   - Implement example for import
   - Implement example for dashboard
   - Implement example for prices
+
+  - Merge "Getting Started with Beancount" & "Tutorial & Example" into a single
+    document. See comments from:
+    https://docs.google.com/document/d/1w5wWVFuPe6H2Aeex8iqCL8YfAO6xNZgzmrnRNlvxJec/
+
+  - Merge "A Comparison of Beancount, Ledger & HLedger" & "Beancount History &
+    Credits" documents into one. See comments from:
+    https://docs.google.com/document/d/1w5wWVFuPe6H2Aeex8iqCL8YfAO6xNZgzmrnRNlvxJec/
+
+  - Move the "spreadsheet / mint / quicken / quickbooks / gnucash / sql"
+    comparison bit out of the "Motivation" document into the "Comparison" document.
+    See comments from:
+    https://docs.google.com/document/d/1w5wWVFuPe6H2Aeex8iqCL8YfAO6xNZgzmrnRNlvxJec/
+
+  - Make the four extraction methods clear, create a "part" for the four docs.
+
+
+
+
+** Streamline Commands
+
+  - I plan to remove bean-example and move that into a bean-doctor subcommand.
+
+  - bean-sql is a bit of an experiment, I'm not sure we need it, but I want to
+    keep the functionality.
+
+  - Maybe bean-bake could be folded into bean-web.
+
+
 
 * Query Language
 http://furius.ca/beancount/doc/proposal-query
@@ -3024,6 +3081,10 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 ** Budget
 
   - Implement a plugin with budget constraints, as an example.
+
+  - Look at this syntax for an example of a recurring transaction specification:
+    https://www.roaringpenguin.com/products/remind
+    (Sumitted by user comment.)
 
 
 ** Auto-Remove, Auto-Pad
