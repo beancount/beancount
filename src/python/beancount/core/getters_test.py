@@ -18,6 +18,7 @@ TEST_INPUT = """
 
 2012-02-01 commodity HOOL
   name: "Hooli Corp."
+  ticker: "NYSE:HOOLI"
 
 2012-02-01 commodity PIPA
   name: "Pied Piper"
@@ -168,11 +169,20 @@ class TestGetters(unittest.TestCase):
                               for entry in entries
                               if isinstance(entry, data.Commodity)))
 
-    def test_get_values_meta(self):
+    def test_get_values_meta__single(self):
         entries = parser.parse_string(TEST_INPUT)[0]
         commodity_map = getters.get_commodity_map(entries)
-        values = getters.get_values_meta(commodity_map, 'name', 'BLA')
+        values = getters.get_values_meta(commodity_map, 'name', default='BLA')
         self.assertEqual({'USD': 'BLA',
                           'PIPA': 'Pied Piper',
                           'HOOL': 'Hooli Corp.'},
+                         values)
+
+    def test_get_values_meta__multi(self):
+        entries = parser.parse_string(TEST_INPUT)[0]
+        commodity_map = getters.get_commodity_map(entries)
+        values = getters.get_values_meta(commodity_map, 'name', 'ticker')
+        self.assertEqual({'HOOL': ('Hooli Corp.', 'NYSE:HOOLI'),
+                          'PIPA': ('Pied Piper', None),
+                          'USD': (None, None)},
                          values)

@@ -337,7 +337,7 @@ def get_commodity_map(entries):
     return commodities_map
 
 
-def get_values_meta(name_to_entries_map, meta_key, default=None):
+def get_values_meta(name_to_entries_map, *meta_keys, default=None):
     """Get a map of the metadata from a map of entries values.
 
     Given a dict of some key to a directive instance (or None), return a mapping
@@ -347,15 +347,22 @@ def get_values_meta(name_to_entries_map, meta_key, default=None):
 
     Args:
       name_to_entries_map: A dict of something to an entry or None.
-      meta_key: A string, the key to fetch from the metadata.
+      meta_keys: A list of strings, the keys to fetch from the metadata.
       default: The default value to use if the metadata is not available or if
         the value/entry is None.
     Returns:
-      A mapping of the keys of name_to_entries_map to the values of the 'meta_key'
-      metadata.
+      A mapping of the keys of name_to_entries_map to the values of the 'meta_keys'
+      metadata. If there are multiple 'meta_keys', each value is a tuple of them.
+      On the other hand, if there is only a single one, the value itself is returned.
     """
-    # Frankly, I'm not certain I get much by making this a function.
-    return {key: (entry.meta.get(meta_key, default)
-                  if entry is not None
-                  else default)
-            for key, entry in name_to_entries_map.items()}
+    value_map = {}
+    for key, entry in name_to_entries_map.items():
+        value_list = []
+        for meta_key in meta_keys:
+            value_list.append(entry.meta.get(meta_key, default)
+                              if entry is not None
+                              else default)
+        value_map[key] = (value_list[0]
+                          if len(meta_keys) == 1
+                          else tuple(value_list))
+    return value_map
