@@ -32,8 +32,6 @@ beancount: TODO
 
 ** Misc
 
-  - Add PLY as a dependency from default (this is now in main).
-
   - Regenerate example file because it now has commodity attached to them
     (after adding the commodity directive).
 
@@ -585,6 +583,8 @@ http://furius.ca/beancount/doc/proposal-query
     balance sheet and income statement). The equivalent UNIX tool does not
     exist. Select columns by regexp on prefix.
 
+  - Build a simple 'colrneg' tool that just highlights numbers as green or red
+    depending on if positive or negative.
 
   - 'csv-pivot': build this: a script that can accept a CSV file and render a
     CSV pivot table from it. The reason we need support is in order to carry out
@@ -811,6 +811,13 @@ http://furius.ca/beancount/doc/proposal-inventory
     This is an important feature.
 
 
+* Transfer Accounts
+
+  - Transfer accounts should be a priority. You need to be able to support a
+    single transaction that gets amortized over time.
+
+
+
 * Trading Accounts & Conversions
 
   - Write a document to explain how conversion entries work.
@@ -930,6 +937,46 @@ http://furius.ca/beancount/doc/proposal-inventory
 
   - Deal with wash sales... complete doc, call MSSB to figure out if/how they
     adjust the cost basis of a future stock vesting event.
+
+  - Idea: Write two plugins...
+
+    * One that check that all the postings with a particular flag on them
+      balance to zero.
+
+    * One that forks out all postings with a particular flag to a separate
+      transaction.
+
+    This is from an email thread with redstreet0 in Jan 2015:
+
+    I said: "
+
+       - Define yourself a special account under a common base, e.g. Equity:Extra:*
+         for all those special accounts.
+       - Write a plugin that will ensure that for all transactions that include at
+         least one posting on an Equity:Extra account, the sum of all the weights of
+         these postings is zero.
+       - If you want to automatically fill in missing postings these accounts, you can
+         also do that from a plugin.
+       - Your plugin should be configurable with the root account you want to make
+         special in that way, in this case "Equity:Extra". See other plugins for how
+         to pass in a configuration.
+       - You can optionally filter out all those Equity:Extra:* postings in the
+         reports using the FROM syntax. Otherwise the detail of the Equity:Extra
+         accounts in the balance sheet will be pretty harmless anyhow, but you could
+         remove it.
+
+       Note that instead of identifying these special postings using a known root
+       account, you could instead trigger that capability by using posting flags.
+
+       (Also, note that if all you care about is the balanced virtual accounts, that's
+       entirely equivalent to a second transaction on the same date. I could be
+       convinced to add that in, a special state for a subset of postings, as a
+       "shadow transaction" whereby the parser splits the single transaction into two
+       separate ones, perhaps adding a tag to the shadow one so that you can filter
+       them out at will. That could be implemented as a plugin, BTW, separating
+       postings that have a particular flag on them.)
+
+    ". This could be used to simulate balanced virtual postings.
 
 
 * Basic Directives as Plugins
@@ -1076,6 +1123,8 @@ http://furius.ca/beancount/doc/proposal-inter
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+
+
   - Move the check for zero units ("Amount is zero" from the parser) to a
     plugin, and make this selectively removable.
 
@@ -1111,6 +1160,10 @@ http://furius.ca/beancount/doc/proposal-inter
 
   - Make it possible to assert the total cost basis of a particular commodity
     within an account (see Eric Weigle discussion on ledger-cli list).
+
+  - When you will add cost basis to the balance assertions, make the padding
+    directive also able to fill in with some cost basis. This would be useful
+    for mharris (see discussion on Language Syntax document).
 
   - Implement a total balance assertion using the following syntax:
 
