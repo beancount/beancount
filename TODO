@@ -32,6 +32,56 @@ beancount: TODO
 
 ** Misc
 
+  - Unrealized gains should be modified so that they replace the book value of
+    the positions that they adjust, and can be applied at multiple dates. Then,
+    the realization should automatically occur both at the beginning and end of
+    reporting periods.
+
+
+  - Fix the closing criterion for empty accounts.
+
+      "I used to have it so that accounts closed before the beginning of the exercise
+      (in the reports) would not appear. Accounts closed at the end of the period but
+      with some activity within the period would appear (so you can click on them and
+      see their journal). Opened accounts with a zero balance would, too. Closed
+      before begin + no activity = no show."
+
+        2000-01-10 open Assets:Continuing
+        2000-01-10 open Assets:Empty
+        2000-01-10 open Assets:Terminated
+
+        2000-01-10 open Equity:Whatever
+
+        2014-03-10 *
+          Assets:Continuing       110 USD
+          Assets:Terminated       120 USD
+          Assets:Empty            130 USD
+          Equity:Whatever
+
+        2014-03-30 *
+          Assets:Terminated      -120 USD
+          Assets:Empty           -130 USD
+          Equity:Whatever
+
+        2014-05-15 close Assets:Terminated
+
+        2015-01-10 *
+          Assets:Continuing       110 USD
+          Equity:Whatever
+
+
+  - BUG: This breaks!
+
+      bean-query example.beancount balances | head -n 20
+
+    This is due to my shell handling.
+
+
+  - Review all the code that is an effective switch/case on directive types and
+    add checks for unknown directives. Make sure Commodity is being handled
+    correctly. Grep for isinstance. Add else clause everywhere none was, e.g.
+    https://bitbucket.org/blais/beancount/src/0e3be569f32a80411df8396d42d5e5ac3487a68f/src/python/beancount/core/realization.py?at=default#cl-292
+
   - Regenerate example file because it now has commodity attached to them
     (after adding the commodity directive).
 
@@ -161,6 +211,19 @@ beancount: TODO
           lineno))
 
 
+  - In balance/aggregate reports, render the balances for parent accounts too.
+
+  - Make bean-web and bean-query use the DisplayContext object in order to
+    render all their numbers. Users are noticing, this is annoying.
+
+  - BUG: This works, and it should not (probably just evaluates to true, but
+    it's misleading):
+
+      select * from 'Income:US:Hoogle:Vacation';
+
+
+
+
 ** Documentation / Ongoing
 
   - Update the example file in order to include support for the commodities.
@@ -261,6 +324,8 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Add dot-syntax to be able to run inequalities against the balance, e.g.
     balance.number < 1000 USD, or parse amounts, units(balance) < 1000 USD.
+    Some users have inferred that this would work, so it's probably intuitive
+    to others too.
 
   - Create tests for all the realistic test cases
     Use cases:
@@ -2158,6 +2223,10 @@ http://furius.ca/beancount/doc/proposal-inter
   - If you want to be consistent with the script names, rename
     beancount.reports to beancount.report. This way, bean-* matches a single
     package name. Just saying.
+
+    Also, in the same vein, move beancount.scripts.query to
+    beancount.scripts.query, either that or move the starter script for
+    bean-web to beancount.scripts. One or the other. I prefer the former.
 
   - Emerge a principle for where the following files should separate, or merge
     the two modules:
