@@ -1,4 +1,13 @@
 """Compute unrealized gains.
+
+The configuration for this plugin is a single string, the name of the subaccount
+to add to post the unrealized gains to, like this:
+
+  plugin "beancount.plugins.unrealized" "Unrealized"
+
+If you don't specify a name for the subaccount (the configuration value is
+optional), by default it inserts the unrealized gains in the same account that
+is being adjusted.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
