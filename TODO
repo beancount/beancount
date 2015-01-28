@@ -32,6 +32,22 @@ beancount: TODO
 
 ** Misc
 
+  - BUG: Precision for rendering is broken for some subsets of amounts (these
+    are 1.20 USD amounts):
+
+      beancount> select date, payee, narration, position where account ~
+      'Expenses:Taxes:TY2015:US:SDI';
+         date                          narration                      posit
+      ---------- - --------------------------------------------------- -----
+      2015-01-02   GOOGLE INC       PAYROLL / GOOGLE INC       PAYROLL 1 USD
+      2015-01-16   GOOGLE INC       PAYROLL / GOOGLE INC       PAYROLL 1 USD
+      2015-01-23   GOOGLE INC       PAYROLL / GOOGLE INC       PAYROLL 0 USD
+
+     This one works:
+
+       beancount> select date, payee, narration, position where account ~
+       'Expenses:Taxes:TY2015:US:SDI' and narration ~ 'GOOGLE';
+
   - Unrealized gains should be modified so that they replace the book value of
     the positions that they adjust, and can be applied at multiple dates. Then,
     the realization should automatically occur both at the beginning and end of
