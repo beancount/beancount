@@ -86,6 +86,11 @@ beancount: TODO
          Assets:CA:PayPal      -169.87 CAD
 
 
+  - BUG: In Emacs beancount-align-to-previous-number: When the cursor is not on
+    the first line of a list of balance entries with no empty line between
+    them, the alignment does not kick in. I don't know why.
+
+
   - Make prices required to always be positive, including with @@, and err on
     negative amounts for prices. This will match Ledger semantics and will
     remove one degree of freedom that wasn't necessary.
@@ -134,6 +139,9 @@ beancount: TODO
     tolerancen, and somehow issue warnings automatically.
 
   - Fix FIXME in beancount.projects.returns, from DClemente issues.
+
+
+
 
 ** Documentation / Ongoing
 
