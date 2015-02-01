@@ -134,6 +134,11 @@ beancount: TODO
          Assets:CA:PayPal      -169.87 CAD
 
 
+  - BUG: In Emacs beancount-align-to-previous-number: When the cursor is not on
+    the first line of a list of balance entries with no empty line between
+    them, the alignment does not kick in. I don't know why.
+
+
   - Make prices required to always be positive, including with @@, and err on
     negative amounts for prices. This will match Ledger semantics and will
     remove one degree of freedom that wasn't necessary.
@@ -220,6 +225,9 @@ beancount: TODO
     it's misleading):
 
       select * from 'Income:US:Hoogle:Vacation';
+
+
+
 
 
 
@@ -968,6 +976,19 @@ http://furius.ca/beancount/doc/proposal-inventory
 
 
 * Plugins
+
+  - Create a plugin that allows you to replace the date with some of the
+    metadata fields, e.g. to create alternative date histories.
+
+      "Note that if you _really_ badly wanted alternative history, you could you could
+      easily enter alternative dates as metadata (Beancount will recognize and parse
+      a datetime.date type as a value for metadata) and you coudl write _very_ simple
+      plugin that converts all the transactions to use the alternative date where
+      present in the metadata (or otherwise leave the date as is). You could even
+      define yourself multiple different sets of alternative dates by using different
+      metadata fields... you can go crazy if you like and create multiple versions of
+      history that way. But that would be segregated to a plugin so I'm comfortable
+      with it, do whatever you like in plugins, they're perfect for experimentation."
 
   - Create a verification plugin that verifies that the balance of an account
     does not go under some negative threshold below/above zero. This way you

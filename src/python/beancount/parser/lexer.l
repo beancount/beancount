@@ -161,6 +161,7 @@ pushtag	        { return PUSHTAG; }
 poptag		{ return POPTAG; }
 option		{ return OPTION; }
 plugin		{ return PLUGIN; }
+include		{ return INCLUDE; }
 
  /* Dates. */
 [0-9]{4,}[\-/][0-9]+[\-/][0-9]+	{

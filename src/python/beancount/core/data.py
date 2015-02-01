@@ -140,7 +140,7 @@ Balance = new_directive('Balance', 'account amount diff_amount')
 #   postings: A list of Posting instances, the legs of this transaction. See the
 #     doc under Posting below.
 Transaction = new_directive('Transaction',
-                                'flag payee narration tags links postings')
+                            'flag payee narration tags links postings')
 
 # A note directive, a general note that is attached to an account. These are
 # used to attach text at a particular date in a specific account. The notes can
