@@ -10,7 +10,6 @@ import tempfile
 import re
 import sys
 import subprocess
-from os import path
 
 from beancount.core.amount import D
 from beancount.parser.parser import parsedoc
@@ -466,7 +465,6 @@ class TestParserInclude(unittest.TestCase):
         """
           include "some/relative/filename.beancount"
         """
-        cwd = path.dirname(filename)
         entries, errors, options_map = parser.parse_file(filename)
         self.assertFalse(errors)
         self.assertEqual(['some/relative/filename.beancount'],
