@@ -3,6 +3,9 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import logging
 import unittest
 import tempfile
+import re
+import os
+from os import path
 
 from beancount import loader
 from beancount.parser import parser
@@ -69,6 +72,12 @@ class TestLoader(unittest.TestCase):
             self.assertTrue(isinstance(errors, list))
             self.assertTrue(isinstance(options_map, dict))
 
+    def test_load_nonexist(self):
+        entries, errors, options_map = loader.load_file('/some/bullshit/filename.beancount')
+        self.assertEqual([], entries)
+        self.assertTrue(errors)
+        self.assertTrue(re.search('does not exist', errors[0].message))
+
 
 class TestLoadDoc(unittest.TestCase):
 
@@ -98,3 +107,119 @@ class TestLoadDoc(unittest.TestCase):
         self.assertTrue(isinstance(entries, list))
         self.assertTrue(isinstance(options_map, dict))
         self.assertTrue([loader.LoadError], list(map(type, errors)))
+
+
+class TestLoadIncludes(unittest.TestCase):
+
+    def test_load_file_nonexist(self):
+        entries, errors, options_map = loader.load_file('/bull/bla/root.beancount')
+        self.assertEqual(1, len(errors))
+        self.assertTrue(re.search('does not exist', errors[0].message))
+
+    def test_load_file_with_nonexist_include(self):
+        with test_utils.tempdir() as tmp:
+            test_utils.create_temporary_files(tmp, {
+                'root.beancount': """
+                  include "/some/file/that/does/not/exist.beancount"
+                """})
+            entries, errors, options_map = loader.load_file(
+                path.join(tmp, 'root.beancount'))
+            self.assertEqual(1, len(errors))
+            self.assertTrue(re.search('does not exist', errors[0].message))
+
+    def test_load_file_with_absolute_include(self):
+        with test_utils.tempdir() as tmp:
+            test_utils.create_temporary_files(tmp, {
+                'apples.beancount': """
+                  include "{root}/fruits/oranges.beancount"
+                  2014-01-01 open Assets:Apples
+                """,
+                'fruits/oranges.beancount': """
+                  2014-01-02 open Assets:Oranges
+                """})
+            entries, errors, options_map = loader.load_file(
+                path.join(tmp, 'apples.beancount'))
+        self.assertFalse(errors)
+        self.assertEqual(2, len(entries))
+
+    def test_load_file_with_relative_include(self):
+        with test_utils.tempdir() as tmp:
+            test_utils.create_temporary_files(tmp, {
+                'apples.beancount': """
+                  include "fruits/oranges.beancount"
+                  2014-01-01 open Assets:Apples
+                """,
+                'fruits/oranges.beancount': """
+                  2014-01-02 open Assets:Oranges
+                """})
+            entries, errors, options_map = loader.load_file(
+                path.join(tmp, 'apples.beancount'))
+        self.assertFalse(errors)
+        self.assertEqual(2, len(entries))
+
+    def test_load_file_with_multiple_includes(self):
+        # Including recursive includes and mixed and absolute.
+        with test_utils.tempdir() as tmp:
+            test_utils.create_temporary_files(tmp, {
+                'apples.beancount': """
+                  include "fruits/oranges.beancount"
+                  include "{root}/legumes/patates.beancount"
+                  2014-01-01 open Assets:Apples
+                """,
+                'fruits/oranges.beancount': """
+                  include "../legumes/tomates.beancount"
+                  2014-01-02 open Assets:Oranges
+                """,
+                'legumes/tomates.beancount': """
+                  2014-01-03 open Assets:Tomates
+                """,
+                'legumes/patates.beancount': """
+                  2014-01-04 open Assets:Patates
+                """})
+            entries, errors, options_map = loader.load_file(
+                path.join(tmp, 'apples.beancount'))
+        self.assertFalse(errors)
+        self.assertEqual(4, len(entries))
+
+    def test_load_file_with_duplicate_includes(self):
+        with test_utils.tempdir() as tmp:
+            test_utils.create_temporary_files(tmp, {
+                'apples.beancount': """
+                  include "fruits/oranges.beancount"
+                  include "{root}/legumes/tomates.beancount"
+                  2014-01-01 open Assets:Apples
+                """,
+                'fruits/oranges.beancount': """
+                  include "../legumes/tomates.beancount"
+                  2014-01-02 open Assets:Oranges
+                """,
+                'legumes/tomates.beancount': """
+                  2014-01-03 open Assets:Tomates
+                """,
+                'legumes/patates.beancount': """
+                  2014-01-04 open Assets:Patates
+                """})
+            entries, errors, options_map = loader.load_file(
+                path.join(tmp, 'apples.beancount'))
+        self.assertTrue(errors)
+        self.assertEqual(3, len(entries))
+
+    def test_load_string_with_relative_include(self):
+        with test_utils.tempdir() as tmp:
+            test_utils.create_temporary_files(tmp, {
+                'apples.beancount': """
+                  include "fruits/oranges.beancount"
+                  2014-01-01 open Assets:Apples
+                """,
+                'fruits/oranges.beancount': """
+                  2014-01-02 open Assets:Oranges
+                """})
+            try:
+                cwd = os.getcwd()
+                os.chdir(tmp)
+                entries, errors, options_map = loader.load_file(
+                    path.join(tmp, 'apples.beancount'))
+            finally:
+                os.chdir(cwd)
+        self.assertFalse(errors)
+        self.assertEqual(2, len(entries))

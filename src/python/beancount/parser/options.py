@@ -149,6 +149,14 @@ PUBLIC_OPTION_GROUPS = [
     """, [OptDesc("plugin_processing_mode", "default", "raw")]),
 
     OptGroup("""
+      A list of other filenames to include. This is output from the parser and
+      processed by the loader but the list should otherwise have been cleared by the
+      time it gets to the top-level loader.load_*() function that invoked it.
+      The filenames are absolute. Relative include filenames are resolved against
+      the file that contains the include directives.
+    """, [OptDesc("include", [], "some-other-file.beancount")]),
+
+    OptGroup("""
       A list of Python modules containing transformation functions to run the
       entries through after parsing. The parser reads the entries as they are,
       transforms them through a list of standard functions, such as balance

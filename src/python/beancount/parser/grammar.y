@@ -92,6 +92,7 @@ const char* getTokenName(int token);
 %token PUSHTAG             /* 'pushtag' keyword */
 %token POPTAG              /* 'poptag' keyword */
 %token OPTION              /* 'option' keyword */
+%token INCLUDE             /* 'include' keyword */
 %token PLUGIN              /* 'plugin' keyword */
 %token <pyobj> DATE        /* A date object */
 %token <pyobj> ACCOUNT     /* The name of an account */
@@ -428,6 +429,12 @@ option : OPTION STRING STRING eol
           DECREF2($2, $3);
        }
 
+include : INCLUDE STRING eol
+       {
+          BUILD("include", "siO", FILE_LINE_ARGS, $2);
+          DECREF1($2);
+       }
+
 plugin : PLUGIN STRING eol
        {
           BUILD("plugin", "siOO", FILE_LINE_ARGS, $2, Py_None);
@@ -444,6 +451,7 @@ directive : SKIPPED
           | pushtag
           | poptag
           | option
+          | include
           | plugin
 
 
