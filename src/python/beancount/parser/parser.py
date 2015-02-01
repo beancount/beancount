@@ -109,9 +109,6 @@ class Builder(lexer.LexBuilder):
         # Set the filename we're processing.
         self.options['filename'] = filename
 
-        # Extract the relative directory name for processing include directives.
-        self.cwd = path.dirname(filename) if filename else None
-
         # Make the account regexp more restrictive than the default: check
         # types.
         self.account_regexp = valid_account_regexp(self.options)
@@ -259,21 +256,7 @@ class Builder(lexer.LexBuilder):
           lineno: current line number.
           include_name: A string, the name of the file to include.
         """
-        if path.isabs(include_filename):
-            self.options['include'].append(include_filename)
-
-        elif self.cwd:
-            abs_filename = path.normpath(path.join(self.cwd, include_filename))
-            self.options['include'].append(abs_filename)
-
-        else:
-            meta = new_metadata(filename, lineno)
-            self.errors.append(
-                ParserError(
-                    meta,
-                    "No CWD for relative include filename '{}'; ignored.".format(
-                        include_filename),
-                    None))
+        self.options['include'].append(include_filename)
 
     def plugin(self, filename, lineno, plugin_name, plugin_config):
         """Process a plugin directive.
