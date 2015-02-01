@@ -99,6 +99,30 @@ def tempdir():
         shutil.rmtree(tempdir, ignore_errors=True)
 
 
+def create_temporary_files(root, contents_map):
+    """Create a number of temporary files under 'root'.
+
+    This routine is used to initialize the contents of multiple files under a
+    temporary directory.
+
+    Args:
+      root: A string, the name of the directory under which to create the files.
+      contents_map: A dict of relative filenames to their contents. The content
+        strings will be automatically dedented for convenience. In addition, the
+        string 'ROOT' in the contents will be automatically replaced by the root
+        directory name.
+    """
+    os.makedirs(root, exist_ok=True)
+    for relative_filename, contents in contents_map.items():
+        assert not path.isabs(relative_filename)
+        filename = path.join(root, relative_filename)
+        os.makedirs(path.dirname(filename), exist_ok=True)
+
+        clean_contents = textwrap.dedent(contents.replace('{root}', root))
+        with open(filename, 'w') as f:
+            f.write(clean_contents)
+
+
 def capture(*attributes):
     """A context manager that captures what's printed to stdout.
 

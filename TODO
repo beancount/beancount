@@ -844,6 +844,19 @@ http://furius.ca/beancount/doc/proposal-inventory
 
 * Plugins
 
+  - Create a plugin that allows you to replace the date with some of the
+    metadata fields, e.g. to create alternative date histories.
+
+      "Note that if you _really_ badly wanted alternative history, you could you could
+      easily enter alternative dates as metadata (Beancount will recognize and parse
+      a datetime.date type as a value for metadata) and you coudl write _very_ simple
+      plugin that converts all the transactions to use the alternative date where
+      present in the metadata (or otherwise leave the date as is). You could even
+      define yourself multiple different sets of alternative dates by using different
+      metadata fields... you can go crazy if you like and create multiple versions of
+      history that way. But that would be segregated to a plugin so I'm comfortable
+      with it, do whatever you like in plugins, they're perfect for experimentation."
+
   - Create a verification plugin that verifies that the balance of an account
     does not go under some negative threshold below/above zero. This way you
     could check that account balances are of the expected size. (The plugin
