@@ -4,6 +4,15 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-02-01
+
+  - Implement an "include" directive. The include directive does not parse the
+    files in order... rather, each parse run on an input file accumulates the
+    list of includes to be parsed and processed the includes after parsing the
+    file. Because we're order independent, this should work. Note however that
+    the options should be set in the root file.
+
+
 2015-01-22
 
   - Added a dependency check for PLY and documented in the Install doc

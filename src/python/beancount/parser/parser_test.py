@@ -444,6 +444,42 @@ class TestParserOptions(unittest.TestCase):
         self.assertNotEqual("filename", "gniagniagniagniagnia")
 
 
+class TestParserInclude(unittest.TestCase):
+
+    def test_parse_nonexist(self):
+        with self.assertRaises(OSError):
+            parser.parse_file('/some/bullshit/filename.beancount')
+
+    @test_utils.docfile
+    def test_include_absolute(self, filename):
+        """
+          include "/some/absolute/filename.beancount"
+        """
+        entries, errors, options_map = parser.parse_file(filename)
+        self.assertFalse(errors)
+        self.assertEqual(['/some/absolute/filename.beancount'],
+                         options_map['include'])
+
+    @test_utils.docfile
+    def test_include_relative(self, filename):
+        """
+          include "some/relative/filename.beancount"
+        """
+        entries, errors, options_map = parser.parse_file(filename)
+        self.assertFalse(errors)
+        self.assertEqual(['some/relative/filename.beancount'],
+                         options_map['include'])
+
+    def test_include_relative_from_string(self):
+        input_string = """
+          include "some/relative/filename.beancount"
+        """
+        entries, errors, options_map = parser.parse_string(input_string)
+        self.assertFalse(errors)
+        self.assertEqual(['some/relative/filename.beancount'],
+                         options_map['include'])
+
+
 class TestParserPlugin(unittest.TestCase):
 
     @parsedoc

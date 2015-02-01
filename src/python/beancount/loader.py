@@ -8,10 +8,13 @@ import importlib
 import collections
 import io
 import itertools
+import os
+from os import path
 
 from beancount.utils import misc_utils
 from beancount.core import data
 from beancount.parser import parser
+from beancount.parser import options
 from beancount.parser import printer
 from beancount.ops import validation
 
@@ -49,7 +52,9 @@ def load_file(filename, log_timings=None, log_errors=None, extra_validations=Non
           the file.
         options_map: A dict of the options parsed from the file.
     """
-    return _load(parser.parse_file, filename, log_timings, log_errors, extra_validations)
+    if not path.isabs(filename):
+        filename = path.normpath(path.join(os.getcwd(), filename))
+    return _load([(filename, True)], log_timings, log_errors, extra_validations)
 
 
 # Alias, for compatibility.
@@ -75,10 +80,112 @@ def load_string(string, log_timings=None, log_errors=None, extra_validations=Non
           the file.
         options_map: A dict of the options parsed from the file.
     """
-    return _load(parser.parse_string, string, log_timings, log_errors, extra_validations)
+    return _load([(string, False)], log_timings, log_errors, extra_validations)
 
 
-def _load(parse_function, file_or_string, log_timings, log_errors, extra_validations):
+def _parse_recursive(sources, log_timings):
+    """Parse Beancount input, run its transformations and validate it.
+
+    Recursively parse a list of files or strings and their include files and
+    return an aggregate of parsed directives, errors, and the top-level
+    options-map. If the same file is being parsed twice, ignore it and issue an
+    error.
+
+    Args:
+      sources: A list of (filename-or-string, is-filename) where the first
+        element is a string, with either a filename or a string to be parsed directly,
+        and the second arugment is a boolean that is true if the first is a filename.
+        You may provide a list of such arguments to be parsed. Filenames must be absolute
+        paths.
+      log_timings: A function to write timings to, or None, if it should remain quiet.
+    Returns:
+      A tuple of (entries, parse_errors, options_map).
+    """
+    assert isinstance(sources, list) and all(isinstance(el, tuple) for el in sources)
+
+    # Current parse state.
+    entries, parse_errors = [], []
+    options_map = None
+
+    # A stack of sources to be parsed.
+    source_stack = list(sources)
+
+    # A list of absolute filenames that have been parsed in the past, used to
+    # detect and avoid duplicates (cycles).
+    filenames_seen = set()
+
+    with misc_utils.log_time('beancount.parser.parser', log_timings, indent=1):
+        while source_stack:
+            source, is_file = source_stack.pop(0)
+            is_top_level = options_map is None
+
+            if is_file:
+                # All filenames here must be absolute.
+                assert path.isabs(source)
+                filename = path.normpath(source)
+
+                # Check for file previously parsed... detect duplicates.
+                if filename in filenames_seen:
+                    parse_errors.append(
+                        LoadError(data.new_metadata("<load>", 0),
+                                  'Duplicate filename parsed: "{}"'.format(filename),
+                                  None))
+                    continue
+                else:
+                    filenames_seen.add(filename)
+
+                # Check for a file that does not exist.
+                if not path.exists(filename):
+                    parse_errors.append(
+                        LoadError(data.new_metadata("<load>", 0),
+                                  'File "{}" does not exist'.format(filename), None))
+                    continue
+
+                # Parse a file from disk.
+                with misc_utils.log_time('beancount.parser.parser.parse_file',
+                                         log_timings, indent=2):
+                    src_entries, src_errors, src_options_map = parser.parse_file(filename)
+
+                cwd = path.dirname(filename)
+            else:
+                # Parse a string buffer from memory.
+                with misc_utils.log_time('beancount.parser.parser.parse_string',
+                                         log_timings, indent=2):
+                    src_entries, src_errors, src_options_map = parser.parse_string(source)
+
+                # If we're parsing a string, the CWD is the current process
+                # working directory.
+                cwd = os.getcwd()
+
+            # Merge the entries resulting from the parsed file.
+            entries.extend(src_entries)
+            parse_errors.extend(src_errors)
+
+            # We need the options from the very top file only (the very
+            # first file being processed). No merging of options should
+            # occur.
+            if is_top_level:
+                options_map = src_options_map
+
+            # Add includes to the list of sources to process.
+            for include_filename in src_options_map['include']:
+                if not path.isabs(include_filename):
+                    include_filename = path.join(cwd, include_filename)
+                include_filename = path.normpath(include_filename)
+
+                # Add the include filenames to be processed later.
+                source_stack.append((include_filename, True))
+
+    # Note: We could easily save the set of parsed filenames in options_map
+    # here, if useful. Let's refrain for now, until we need it.
+
+    if options_map is None:
+        options_map = options.DEFAULT_OPTIONS.copy()
+
+    return entries, parse_errors, options_map
+
+
+def _load(sources, log_timings, log_errors, extra_validations):
     """Parse Beancount input, run its transformations and validate it.
 
     (This is an internal method.)
@@ -88,9 +195,11 @@ def _load(parse_function, file_or_string, log_timings, log_errors, extra_validat
     ready for reporting, a list of errors, and parser's options dict.
 
     Args:
-      parse_function: A function used to parse file_or_string. Either
-        parser.parse_file() or parser.parse_string().
-      file_or_string: The name of the file to be parsed, or an input string.
+      sources: A list of (filename-or-string, is-filename) where the first
+        element is a string, with either a filename or a string to be parsed directly,
+        and the second arugment is a boolean that is true if the first is a filename.
+        You may provide a list of such arguments to be parsed. Filenames must be absolute
+        paths.
       log_timings: A file object or function to write timings to,
         or None, if it should remain quiet.
       log_errors: A file object or function to write errors to,
@@ -100,12 +209,13 @@ def _load(parse_function, file_or_string, log_timings, log_errors, extra_validat
     Returns:
       See load() or load_string().
     """
+    assert isinstance(sources, list) and all(isinstance(el, tuple) for el in sources)
+
     if hasattr(log_timings, 'write'):
         log_timings = log_timings.write
 
-    # Parse the input file.
-    with misc_utils.log_time('beancount.parser.parser', log_timings, indent=1):
-        entries, parse_errors, options_map = parse_function(file_or_string)
+    # Parse all the files recursively.
+    entries, parse_errors, options_map = _parse_recursive(sources, log_timings)
 
     # Transform the entries.
     entries, errors = run_transformations(entries, parse_errors, options_map, log_timings)

@@ -94,7 +94,7 @@ class Builder(lexer.LexBuilder):
     """A builder used by the lexer and grammar parser as callbacks to create
     the data objects corresponding to rules parsed from the input file."""
 
-    def __init__(self):
+    def __init__(self, filename):
         lexer.LexBuilder.__init__(self)
 
         # A stack of the current active tags.
@@ -105,6 +105,9 @@ class Builder(lexer.LexBuilder):
 
         # Accumulated and unprocessed options.
         self.options = copy.deepcopy(options.DEFAULT_OPTIONS)
+
+        # Set the filename we're processing.
+        self.options['filename'] = filename
 
         # Make the account regexp more restrictive than the default: check
         # types.
@@ -244,6 +247,16 @@ class Builder(lexer.LexBuilder):
             if key.startswith('name_'):
                 # Update the set of valid account types.
                 self.account_regexp = valid_account_regexp(self.options)
+
+    def include(self, filename, lineno, include_filename):
+        """Process an include directive.
+
+        Args:
+          filename: current filename.
+          lineno: current line number.
+          include_name: A string, the name of the file to include.
+        """
+        self.options['include'].append(include_filename)
 
     def plugin(self, filename, lineno, plugin_name, plugin_config):
         """Process a plugin directive.
@@ -774,10 +787,8 @@ def parse_file(filename, **kw):
         list of errors that were encountered during parsing, and
         a dict of the option values that were parsed from the file.)
     """
-    builder = Builder()
-    if filename:
-        abs_filename = path.abspath(filename)
-        builder.options["filename"] = abs_filename
+    abs_filename = path.abspath(filename) if filename else None
+    builder = Builder(abs_filename)
     _parser.parse_file(filename, builder, **kw)
     return builder.finalize()
 
@@ -795,9 +806,9 @@ def parse_string(string, **kw):
     Return:
       Same as the output of parse_file().
     """
-    builder = Builder()
-    builder.options["filename"] = "<string>"
+    builder = Builder(None)
     _parser.parse_string(string, builder, **kw)
+    builder.options['filename'] = '<string>'
     return builder.finalize()
 
 
