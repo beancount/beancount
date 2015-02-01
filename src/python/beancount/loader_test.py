@@ -5,12 +5,10 @@ import unittest
 import tempfile
 import re
 import os
-import textwrap
 from os import path
 
 from beancount import loader
 from beancount.parser import parser
-from beancount.parser import printer
 from beancount.utils import test_utils
 
 
@@ -75,8 +73,10 @@ class TestLoader(unittest.TestCase):
             self.assertTrue(isinstance(options_map, dict))
 
     def test_load_nonexist(self):
-        with self.assertRaises(OSError):
-            loader.load_file('/some/bullshit/filename.beancount')
+        entries, errors, options_map = loader.load_file('/some/bullshit/filename.beancount')
+        self.assertEqual([], entries)
+        self.assertTrue(errors)
+        self.assertTrue(re.search('does not exist', errors[0].message))
 
 
 class TestLoadDoc(unittest.TestCase):

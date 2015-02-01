@@ -469,7 +469,7 @@ class TestParserInclude(unittest.TestCase):
         cwd = path.dirname(filename)
         entries, errors, options_map = parser.parse_file(filename)
         self.assertFalse(errors)
-        self.assertEqual([path.join(cwd, 'some/relative/filename.beancount')],
+        self.assertEqual(['some/relative/filename.beancount'],
                          options_map['include'])
 
     def test_include_relative_from_string(self):
@@ -477,9 +477,9 @@ class TestParserInclude(unittest.TestCase):
           include "some/relative/filename.beancount"
         """
         entries, errors, options_map = parser.parse_string(input_string)
-        self.assertTrue(errors)
-        self.assertTrue(re.search('CWD', errors[0].message))
-        self.assertEqual([], options_map['include'])
+        self.assertFalse(errors)
+        self.assertEqual(['some/relative/filename.beancount'],
+                         options_map['include'])
 
 
 class TestParserPlugin(unittest.TestCase):
