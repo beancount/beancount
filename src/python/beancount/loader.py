@@ -292,14 +292,15 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
                         entries, plugin_errors = callback(entries, options_map)
                     errors.extend(plugin_errors)
 
+            # Ensure that the entries are sorted. Don't trust the plugins
+            # themselves.
+            entries.sort(key=data.entry_sortkey)
+
         except ImportError as exc:
             # Upon failure, just issue an error.
             errors.append(LoadError(data.new_metadata("<load>", 0),
                                     'Error importing "{}": {}'.format(
                                         plugin_name, str(exc)), None))
-
-    # Ensure that the entries are sorted.
-    entries.sort(key=data.entry_sortkey)
 
     return entries, errors
 
