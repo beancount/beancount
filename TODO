@@ -32,6 +32,12 @@ beancount: TODO
 
 ** Misc
 
+  - Complete converting price fetching script to use meta-data only and remove
+    blais.prices. Also convert the example to declare commodities and the price
+    fetching script should just work.
+
+
+
   - BUG: Precision for rendering is broken for some subsets of amounts (these
     are 1.20 USD amounts):
 
@@ -338,6 +344,19 @@ beancount: TODO
     keep the functionality.
 
   - Maybe bean-bake could be folded into bean-web.
+
+
+
+* Commodities
+
+  - Because of the way we currently deal with stock splits, allow a list of
+    commodity names on the commodity directive, so you can do this:
+
+      1998-01-01 commodity CRA,CRA1
+        name: "Celera Corporation"
+        asset-class: "Stock"
+        ticker: "CRA"
+        quote: USD
 
 
 

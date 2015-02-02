@@ -19,19 +19,20 @@ def main():
     entries, errors, options_map = loader.load_file(args.filename)
 
     commodity_map = getters.get_commodity_map(entries)
-    ticker_info = getters.get_values_meta(commodity_map, 'ticker', 'quote')
-    ##pprint(ticker_info)
+    ticker_info = getters.get_values_meta(commodity_map, 'name', 'ticker', 'quote')
 
     print('Fetching:')
-    for currency, (ticker, cost_currency) in sorted(ticker_info.items()):
+    for currency, (name, ticker, cost_currency) in sorted(ticker_info.items()):
         if ticker:
-            print('{:16} {:16} {:16}'.format(currency, ticker, cost_currency))
+            print('{:16} {:16} {:16} {}'.format(currency, ticker, cost_currency, name))
     print()
 
     print('Skipping:')
-    for currency, (ticker, cost_currency) in sorted(ticker_info.items()):
+    for currency, (name, ticker, cost_currency) in sorted(ticker_info.items()):
         if not ticker:
-            print('{:16} {:16} {:16}'.format(currency, '', cost_currency or ''))
+            print('{:16} {:16} {:16} {}'.format(currency, '',
+                                                cost_currency or '',
+                                                name or ''))
 
 
 if __name__ == '__main__':
