@@ -269,6 +269,55 @@ class HoldingsReport(report.TableReport):
         printer.print_entries(holdings_entries, dcontext, file=file)
 
 
+def get_commodity_classifications(entries):
+    """In GFinance, a commodity that isn't a valid ticker symbol fails the import
+    process. Also, a commodity that is a mutual fund recorded in the OFX
+    file as a stock will similar fail the import process. We need to find a
+    way to fetch this info from the file itself. When metadata will get
+    merged, we should be able to get it from the account names, where we
+    could attach a property to the account's corresponding Open directive.
+
+    In the meantime, and as a kludge to start using this right away, place
+    a note for each currency (at any date, in any account) with the text
+    in the following format:
+
+       YYYY-MM-DD note <account> "Export <commodity>: IGNORE"
+       YYYY-MM-DD note <account> "Export <commodity>: MUTUAL_FUND"
+       YYYY-MM-DD note <account> "Export <commodity>: TICKER:<ticker>"
+
+    This will get removed later.
+
+    Args:
+      entries: A list of directives which should include the notes.
+    Returns:
+      Two sets of commodity strings: a set of commodities to be ignored,
+      and a set of commodities which are mutual funds. All other commodities
+      are assume to be regular stock.
+    """
+    ignore = set()
+    mutual_fund = set()
+    ticker_map = {}
+    for entry in entries:
+        if not isinstance(entry, data.Note):
+            continue
+        match = re.match("Export (.*): (.*)", entry.comment)
+        if match is None:
+            continue
+        commodity, action = match.group(1, 2)
+        if action == 'IGNORE':
+            ignore.add(commodity)
+        elif action == 'MUTUAL_FUND':
+            mutual_fund.add(commodity)
+        else:
+            match2 = re.match('TICKER:(.*)', action)
+            if match2:
+                ticker_map[commodity] = match2.group(1).strip()
+            else:
+                raise ValueError("Invalid action for Export note: {}".format(entry))
+
+    return ignore, mutual_fund, ticker_map
+
+
 class ExportPortfolioReport(report.TableReport):
     """Holdings lists that can be exported to external portfolio management software."""
 
@@ -385,55 +434,6 @@ class ExportPortfolioReport(report.TableReport):
                             help=("Include title and account names in memos. "
                                   "Use this if you trust wherever you upload."))
 
-    def get_commodity_classifications(self, entries):
-        """In GFinance, a commodity that isn't a valid ticker symbol fails the import
-        process. Also, a commodity that is a mutual fund recorded in the OFX
-        file as a stock will similar fail the import process. We need to find a
-        way to fetch this info from the file itself. When metadata will get
-        merged, we should be able to get it from the account names, where we
-        could attach a property to the account's corresponding Open directive.
-
-        In the meantime, and as a kludge to start using this right away, place
-        a note for each currency (at any date, in any account) with the text
-        in the following format:
-
-           YYYY-MM-DD note <account> "Export <commodity>: IGNORE"
-           YYYY-MM-DD note <account> "Export <commodity>: MUTUAL_FUND"
-           YYYY-MM-DD note <account> "Export <commodity>: TICKER:<ticker>"
-
-        This will get removed later.
-
-        Args:
-          entries: A list of directives which should include the notes.
-        Returns:
-          Two sets of commodity strings: a set of commodities to be ignored,
-          and a set of commodities which are mutual funds. All other commodities
-          are assume to be regular stock.
-
-        """
-        ignore = set()
-        mutual_fund = set()
-        ticker_map = {}
-        for entry in entries:
-            if not isinstance(entry, data.Note):
-                continue
-            match = re.match("Export (.*): (.*)", entry.comment)
-            if match is None:
-                continue
-            commodity, action = match.group(1, 2)
-            if action == 'IGNORE':
-                ignore.add(commodity)
-            elif action == 'MUTUAL_FUND':
-                mutual_fund.add(commodity)
-            else:
-                match2 = re.match('TICKER:(.*)', action)
-                if match2:
-                    ticker_map[commodity] = match2.group(1).strip()
-                else:
-                    raise ValueError("Invalid action for Export note: {}".format(entry))
-
-        return ignore, mutual_fund, ticker_map
-
     # The cash equivalent currency. Note: Importing a cash deposit in GFinance
     # portfolio import feature fails, so use a cash equivalent (Vanguard Prime
     # Money Market Fund, which pretty much has a fixed price of 1.0 USD).
@@ -446,7 +446,7 @@ class ExportPortfolioReport(report.TableReport):
 
         (ignored_commodities,
          mutual_funds_commodities,
-         ticker_map) = self.get_commodity_classifications(entries)
+         ticker_map) = get_commodity_classifications(entries)
 
         # Create a list of purchases.
         #
