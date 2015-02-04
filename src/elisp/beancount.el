@@ -247,7 +247,7 @@ align with the fill-column."
         (beancount-for-line-in-region
          begin end
          (let ((line (thing-at-point 'line)))
-           (when (string-match (concat "\\(.*?\\)"
+           (when (string-match (concat "^\\([^\"]*?\\)"
                                        "[ \t]+"
                                        "\\(" beancount-number-regexp "\\)"
                                        "[ \t]+"

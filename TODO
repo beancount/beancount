@@ -32,6 +32,17 @@ beancount: TODO
 
 ** Misc
 
+  - BUG: When multiple files have been loaded, have bean-web watch all the
+    loaded files.
+
+       "One question: previously, if I wrote to the beancount file that a
+    bean-web process was already using, and if I hit refresh, bean-web noticed
+    the update to the file and re-read. This still works now, but only on the
+    including file, not on the included files. Is this a pain to fix, or
+    relatively easy?"
+
+
+
   - Complete converting price fetching script to use meta-data only and remove
     blais.prices. Also convert the example to declare commodities and the price
     fetching script should just work.
@@ -1033,6 +1044,9 @@ http://furius.ca/beancount/doc/proposal-inventory
 
   - Create a verification plugin that checks that there is a single currency in
     use per account. Check Open directives, also check actual usage.
+
+  - Create a verification plugin that checks that all uses commodities have a
+    corresponding commodity declaration. For those who like it airtight.
 
   - Put all verification plugins, including nounused and noduplicates under
     beancount.plugins.constraints.*.

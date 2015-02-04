@@ -4,15 +4,21 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-02-03
+
+  - Fixed an unreported bug with Emacs support whereby a number appearing within
+    a narration string would get aligned along with the other amounts.
+
+
 2015-02-01
 
-  - Implement an "include" directive. The include directive does not parse the
+  - Implemented an "include" directive. The include directive does not parse the
     files in order... rather, each parse run on an input file accumulates the
     list of includes to be parsed and processed the includes after parsing the
     file. Because we're order independent, this should work. Note however that
     the options should be set in the root file.
 
-    This is document here:
+    This is documented here:
     https://docs.google.com/document/d/1wAMVrKIA2qtRGmoVDSUBJGmYZSygUaR0uOMW1GV3YE0/edit#heading=h.86lelow4097r
 
 
