@@ -1260,6 +1260,11 @@ http://furius.ca/beancount/doc/proposal-inter
 
 
 
+  - Consider allowing a cost basis of zero. (See "Modelling stock options with
+    Ledger" thread on ledger-cli).
+
+
+
   - Move the check for zero units ("Amount is zero" from the parser) to a
     plugin, and make this selectively removable.
 
