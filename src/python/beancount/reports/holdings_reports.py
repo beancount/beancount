@@ -592,7 +592,7 @@ class CashReport(report.TableReport):
                              if holding.currency in operating_currencies]
 
         # Compute the list of ignored holdings and optionally report on them.
-        if self.args.ignored_holdings:
+        if self.args.ignored:
             ignored_holdings = set(holdings_list_orig) - set(holdings_list)
             holdings_list = ignored_holdings
 

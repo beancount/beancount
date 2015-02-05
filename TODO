@@ -32,6 +32,10 @@ beancount: TODO
 
 ** Misc
 
+  - Create a function to identify whether a Position/Inventory is cash... use
+    this to reproduce/replace the 'cash' report. Use the same rule from
+    bean-report.
+
   - BUG: When multiple files have been loaded, have bean-web watch all the
     loaded files.
 
