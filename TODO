@@ -32,6 +32,21 @@ beancount: TODO
 
 ** Misc
 
+  - The 'balances' report should also support a WHERE clause as a nice
+    shorthand. I would use that all the time myself if I could.
+
+  - BUG: This should work:
+
+      beancount> select account, sum(position) where currency = 'IRAUSD' group by
+      account order by type;
+      ERROR: All non-aggregates must be covered by GROUP-BY clause in aggregate query.
+
+  - Add a query_env function to output the root type of an account, e.g. 'Assets'.
+
+  - Replace the portfolio script by a bean-query command that will use metadata
+    on the commodities (!). This will simplify things a lot and be more
+    flexible. These are really just aggregations of a different kind.
+
   - Create a function to identify whether a Position/Inventory is cash... use
     this to reproduce/replace the 'cash' report. Use the same rule from
     bean-report.
