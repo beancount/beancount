@@ -452,8 +452,8 @@ class ExportPortfolioReport(report.TableReport):
         #
         # Note: we'll enter the positions two days ago. When we have lot-dates
         # on all lots, put these transactions at the correct dates.
-        now = datetime.datetime.now()
-        trade_date = now - datetime.timedelta(days=2)
+        morning = datetime.datetime.now().replace(hour=9, minute=0, second=0, microsecond=0)
+        trade_date = morning - datetime.timedelta(days=2)
 
         invtranlist_io = io.StringIO()
         commodities = set()
@@ -533,7 +533,7 @@ class ExportPortfolioReport(report.TableReport):
         # Create the top-level template.
         broker = 'Beancount'
         account = options_map['title'] if self.args.promiscuous else ''
-        dtserver = dtasof = dtstart = dtend = render_ofx_date(now)
+        dtserver = dtasof = dtstart = dtend = render_ofx_date(morning)
         contents = self.TEMPLATE.format(**locals())
 
         # Clean up final contents and output it.
