@@ -1,6 +1,21 @@
 -*- mode: org -*-
 beancount: TODO
 * Requirements for Shipping 2.0
+** Complete Export
+
+  - Add a test for exported positions with and without prices (with no price
+    raise error)
+  - Add a test for converted positions with and without prices (with no price
+    raise error)
+  - Add a test for ignored positions
+  - Add a test for an inverted value
+  - Make the classification code above into a function that gathers the actions
+  - Add debugging code for export
+  - Check that a position in a foreign currency is exported as such and appears
+    as its own line
+
+
+
 ** Establish Display Precision
 
   - Make setting the precision from bean-example easier (provide a method to
@@ -31,6 +46,9 @@ beancount: TODO
 
 
 ** Misc
+
+  - Add a special PYTHONPATH for ledgerhub, to override Beancount to its custom
+    version.
 
   - The 'balances' report should also support a WHERE clause as a nice
     shorthand. I would use that all the time myself if I could.

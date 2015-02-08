@@ -3,10 +3,12 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import csv
+import collections
 import datetime
 import io
 import re
 import textwrap
+import logging
 
 from beancount.core.amount import D
 from beancount.core.amount import ZERO
@@ -14,6 +16,7 @@ from beancount.core import amount
 from beancount.core import account
 from beancount.core import data
 from beancount.core import flags
+from beancount.core import getters
 from beancount.parser import options
 from beancount.parser import printer
 from beancount.ops import prices
@@ -269,53 +272,87 @@ class HoldingsReport(report.TableReport):
         printer.print_entries(holdings_entries, dcontext, file=file)
 
 
-def get_commodity_classifications(entries):
-    """In GFinance, a commodity that isn't a valid ticker symbol fails the import
-    process. Also, a commodity that is a mutual fund recorded in the OFX
-    file as a stock will similar fail the import process. We need to find a
-    way to fetch this info from the file itself. When metadata will get
-    merged, we should be able to get it from the account names, where we
-    could attach a property to the account's corresponding Open directive.
-
-    In the meantime, and as a kludge to start using this right away, place
-    a note for each currency (at any date, in any account) with the text
-    in the following format:
-
-       YYYY-MM-DD note <account> "Export <commodity>: IGNORE"
-       YYYY-MM-DD note <account> "Export <commodity>: MUTUAL_FUND"
-       YYYY-MM-DD note <account> "Export <commodity>: TICKER:<ticker>"
-
-    This will get removed later.
+def is_mutual_fund(ticker):
+    """Return true if the GFinanc ticker is for a mutual fund.
 
     Args:
-      entries: A list of directives which should include the notes.
+      ticker: A string, the symbol for GFinance.
     Returns:
-      Two sets of commodity strings: a set of commodities to be ignored,
-      and a set of commodities which are mutual funds. All other commodities
-      are assume to be regular stock.
+      A boolean, true for mutual funds.
     """
-    ignore = set()
-    mutual_fund = set()
-    ticker_map = {}
-    for entry in entries:
-        if not isinstance(entry, data.Note):
-            continue
-        match = re.match("Export (.*): (.*)", entry.comment)
-        if match is None:
-            continue
-        commodity, action = match.group(1, 2)
-        if action == 'IGNORE':
-            ignore.add(commodity)
-        elif action == 'MUTUAL_FUND':
-            mutual_fund.add(commodity)
-        else:
-            match2 = re.match('TICKER:(.*)', action)
-            if match2:
-                ticker_map[commodity] = match2.group(1).strip()
-            else:
-                raise ValueError("Invalid action for Export note: {}".format(entry))
+    return bool(re.match('MUTF.*:', ticker))
 
-    return ignore, mutual_fund, ticker_map
+
+# An entry to be exported.
+#
+# Attributes:
+#   ticker: A string, the ticker to use for that position.
+#   number: A Decimal, the number of units for that position.
+#   cost_number: A Decimal, the price of that currency.
+#   mutual_fund: A boolean, true if this positions is a mutual fund.
+#   memo: A string to be attached to the export.
+ExportEntry = collections.namedtuple(
+    'ExportEntry', 'ticker number cost_number mutual_fund memo')
+
+
+def export_holdings(entries, options_map, promiscuous):
+    """Compute a list of holdings to export.
+
+    Args:
+      entries: A list of directives.
+      options_map: A dict of options as provided by the parser.
+      promiscuous: A boolean, true if we should output a promiscuious memo.
+    Returns:
+      A pair of
+        exported: A list of ExportEntry tuples.
+        debug_info: A triple of exported, converted and ignored tuples. This is
+          intended to be used for debugging.
+    """
+    holdings_list, price_map = get_assets_holdings(entries, options_map)
+    dcontext = options_map['display_context']
+
+    commodities_map = getters.get_commodity_map(entries)
+    tickers = getters.get_values_meta(commodities_map, 'ticker')
+
+    # Classify the holdings.
+    holdings_export = []
+    holdings_convert = []
+    holdings_ignore = []
+    for holding in holdings_list:
+        ticker = tickers.get(holding.currency, None)
+        if isinstance(ticker, str) and ticker.lower() == "cash":
+            holdings_convert.append(holding)
+        elif ticker:
+            holdings_export.append(holding)
+        else:
+            holdings_ignore.append(holding)
+
+    # Export the holdings with tickers individually.
+    exported = []
+    for holding in holdings_export:
+        ticker = tickers[holding.currency]
+        exported.append(
+            ExportEntry(ticker,
+                        holding.number,
+                        holding.cost_number,
+                        is_mutual_fund(ticker),
+                        holding.account if promiscuous else ''))
+
+    # Convert all the cash entries to cash.
+    ## FIXME: TODO
+
+    # cash_currency = 'USD'
+    # converted_holdings = holdings.convert_to_currency(price_map,
+    #                                                   cash_currency,
+    #                                                   holdings_convert)
+
+
+
+
+
+    debug_info = holdings_export, holdings_convert, holdings_ignore
+    return exported, debug_info
+
 
 
 class ExportPortfolioReport(report.TableReport):
@@ -430,6 +467,9 @@ class ExportPortfolioReport(report.TableReport):
 
     @classmethod
     def add_args(cls, parser):
+        parser.add_argument('-v', '--verbose', action='store_true',
+                            help="Output position export debugging information on stderr.")
+
         parser.add_argument('-p', '--promiscuous', action='store_true',
                             help=("Include title and account names in memos. "
                                   "Use this if you trust wherever you upload."))
@@ -440,13 +480,13 @@ class ExportPortfolioReport(report.TableReport):
     CASH_EQUIVALENT_CURRENCY = 'VMMXX'
     CASH_EQUIVALENT_MFUND = True
 
-    def render_ofx(self, entries, errors, options_map, file):
+    def render_ofx(self, entries, unused_errors, options_map, file):
         holdings_list, price_map = get_assets_holdings(entries, options_map)
         dcontext = options_map['display_context']
 
-        (ignored_commodities,
-         mutual_funds_commodities,
-         ticker_map) = get_commodity_classifications(entries)
+        commodities_map = getters.get_commodity_map(entries)
+        undefined = object()
+        tickers = getters.get_values_meta(commodities_map, 'ticker', default=undefined)
 
         # Create a list of purchases.
         #
@@ -458,21 +498,35 @@ class ExportPortfolioReport(report.TableReport):
         invtranlist_io = io.StringIO()
         commodities = set()
         skipped_holdings = []
+        ignored_commodities = set()
         index = 0
         for index, holding in enumerate(holdings_list):
+            ticker = tickers.get(holding.currency, None)
+
+            if ticker is undefined:
+                ignored_commodities.add(holding.currency)
+
             if (holding.currency == holding.cost_currency or
                 holding.cost_number is None or
-                holding.currency in ignored_commodities):
+                not ticker or ticker is undefined):
                 skipped_holdings.append(holding)
                 continue
 
+            # Note: We assume GFinance ticker symbology here to infer MF vs.
+            # STOCK, but frankly even if we fail to characterize it right this
+            # distinction is not important, it's just an artifact of OFX, I
+            # verified that the GFinance portfolio feature doesn't appear to
+            # care whether it was loaded as a MF or STOCK. Nevertheless, we
+            # "try" to get it right by inferring this from the symbol. We could
+            # eventually recognize a "class" metadata field from the
+            # commodities, but I feel that this simpler. Less is more.
             txntype = ('BUYMF'
-                       if holding.currency in mutual_funds_commodities
+                       if is_mutual_fund(ticker)
                        else 'BUYSTOCK')
             fitid = index + 1
             dttrade = render_ofx_date(trade_date)
             memo = holding.account if self.args.promiscuous else ''
-            uniqueid = ticker_map.get(holding.currency, holding.currency)
+            uniqueid = ticker
             units = holding.number
             unitprice = holding.cost_number
             fee = ZERO
@@ -480,7 +534,7 @@ class ExportPortfolioReport(report.TableReport):
             buytype = 'BUY'
 
             invtranlist_io.write(self.TRANSACTION.format(**locals()))
-            commodities.add(holding.currency)
+            commodities.add((holding.currency, ticker, is_mutual_fund(ticker)))
 
         # Print a table of ignored holdings (for debugging).
         ## import sys
@@ -516,17 +570,19 @@ class ExportPortfolioReport(report.TableReport):
             buytype = 'BUY'
 
             invtranlist_io.write(self.TRANSACTION.format(**locals()))
-            commodities.add(self.CASH_EQUIVALENT_CURRENCY)
+            commodities.add((self.CASH_EQUIVALENT_CURRENCY,
+                             self.CASH_EQUIVALENT_CURRENCY,
+                             False))
 
         invtranlist = invtranlist_io.getvalue()
 
         # Create a list of securities.
         seclist_io = io.StringIO()
-        for currency in commodities:
-            infotype = 'MFINFO' if currency in mutual_funds_commodities else 'STOCKINFO'
-            uniqueid = ticker_map.get(currency, currency)
+        for currency, ticker, mutual_fund in sorted(commodities):
+            uniqueid = currency
             secname = currency
-            ticker = currency
+            infotype = 'MFINFO' if mutual_fund else 'STOCKINFO'
+            ticker = ticker
             seclist_io.write(self.SECURITY.format(**locals()))
         seclist = seclist_io.getvalue()
 
@@ -541,6 +597,34 @@ class ExportPortfolioReport(report.TableReport):
                                       for line in contents.splitlines()
                                       if line.strip())
         file.write(self.PREFIX + stripped_contents)
+
+        if self.args.verbose:
+            log = sys.stderr.write
+            for commodity in ignored_commodities:
+                log("Ignoring commodity '{}'".format(commodity))
+
+
+    def __render_ofx(self, entries, unused_errors, options_map, file):
+        exported, debug_info = holdings_reports.export_holdings(entries, options_map, False)
+        if self.args.verbose:
+            print('Exported Positions:')
+            for export_entry in exported:
+                print(export_entry)
+            print()
+
+            holdings_exported, holdings_converted, holdings_ignored = debug_info
+            print('Exported Holdings:')
+            map(print('  {}'.format(holding)) for holding in holdings_exported)
+            print()
+            print('Converted Holdings:')
+            map(print('  {}'.format(holding)) for holding in holdings_exported)
+            print()
+            print('Ignored Holdings:')
+            map(print('  {}'.format(holding)) for holding in holdings_exported)
+            print()
+
+
+
 
 
 def render_ofx_date(dtime):
