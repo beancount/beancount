@@ -3,6 +3,18 @@ beancount: TODO
 * Requirements for Shipping 2.0
 ** Complete Export
 
+  export: "CASH"
+  export: "IGNORE"
+  export: "MONEY"
+  otherwise use export value, ticker, or commodity name itself
+
+  mention case of 1/USDCAD, mention that the meaning of 'ticker' is to fetch
+  prices, not just export. explain that for currencies what you want is a valid
+  instrument but to export to CASH equivalent.
+
+  - Explain how to declare standins for cash
+
+
   - Add a test for exported positions with and without prices (with no price
     raise error)
   - Add a test for converted positions with and without prices (with no price

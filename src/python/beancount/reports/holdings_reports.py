@@ -9,6 +9,7 @@ import io
 import re
 import textwrap
 import logging
+import sys
 
 from beancount.core.amount import D
 from beancount.core.amount import ZERO
@@ -287,16 +288,77 @@ def is_mutual_fund(ticker):
 #
 # Attributes:
 #   ticker: A string, the ticker to use for that position.
+#   cost_currency: A string, the quote commodity.
 #   number: A Decimal, the number of units for that position.
 #   cost_number: A Decimal, the price of that currency.
 #   mutual_fund: A boolean, true if this positions is a mutual fund.
 #   memo: A string to be attached to the export.
+#   holdings: The list of holdings that this position was create for.
 ExportEntry = collections.namedtuple(
-    'ExportEntry', 'ticker number cost_number mutual_fund memo')
+    'ExportEntry', 'symbol cost_currency number cost_number mutual_fund memo holdings')
+
+
+def classify_holdings_for_export(holdings_list, commodities_map):
+    """Figure out what to do for example with each holding.
+
+    Args:
+      holdings_list: A list of Holding instances to be exported.
+      commodities_map: A dict of commodity to Commodity instances.
+    Returns:
+      A pair of:
+        action_holdings: A list of (symbol, holding) for each holding. 'Symbol'
+          is the ticker to use for export, and may be "CASH" or "IGNORE" for
+          holdings to be converted or ignored.
+    """
+    # Get the map of commodities to tickers and export meta tags.
+    tickers = getters.get_values_meta(commodities_map, 'ticker')
+    exports = getters.get_values_meta(commodities_map, 'export')
+
+    # Classify the holdings based on their commodities' ticker metadata field.
+    action_holdings = []
+    for holding in holdings_list:
+        export = exports.get(holding.currency, None)
+        ticker = tickers.get(holding.currency, None)
+        if isinstance(export, str) and export:
+            if export.upper() == "CASH":
+                action_holdings.append(('CASH', holding))
+            elif export.upper() == "IGNORE":
+                action_holdings.append(('IGNORE', holding))
+            elif export.upper() == "MONEY":
+                # Hmm this is an interesting case... an actual holding is in
+                # units of our money-market standing. We could disallow this,
+                # but we can also just export it. Let's export it with the
+                # ticker value or commodity if present.
+                action_holdings.append((ticker if ticker else holding.currency, holding))
+            else:
+                action_holdings.append((export, holding))
+        elif ticker:
+            action_holdings.append((ticker, holding))
+        else:
+            action_holdings.append((holding.currency, holding))
+
+    return action_holdings
+
+
+def get_money_instruments(commodities_map):
+    """Get the money-market stand-ins for cash positions.
+
+    Args:
+      commodities_map: A map of currency to their corresponding Commodity directives.
+    Returns:
+      A dict of quote currency to the ticker symbol that stands for it,
+      e.g. {'USD': 'VMMXX'}.
+    """
+    return {entry.meta.get('quote', None): entry.meta.get('ticker', currency)
+            for currency, entry in commodities_map.items()
+            if entry.meta.get('export', None) == 'MONEY'}
 
 
 def export_holdings(entries, options_map, promiscuous):
     """Compute a list of holdings to export.
+
+    Holdings that are converted to cash equivalents will receive a currency of
+    "CASH:<currency>" where <currency> is the converted cash currency.
 
     Args:
       entries: A list of directives.
@@ -308,47 +370,73 @@ def export_holdings(entries, options_map, promiscuous):
         debug_info: A triple of exported, converted and ignored tuples. This is
           intended to be used for debugging.
     """
+    # Get the desired list of holdings.
     holdings_list, price_map = get_assets_holdings(entries, options_map)
+    commodities_map = getters.get_commodity_map(entries)
     dcontext = options_map['display_context']
 
-    commodities_map = getters.get_commodity_map(entries)
-    tickers = getters.get_values_meta(commodities_map, 'ticker')
+    # Classify all the holdings for export.
+    action_holdings = classify_holdings_for_export(holdings_list, commodities_map)
 
-    # Classify the holdings.
-    holdings_export = []
-    holdings_convert = []
-    holdings_ignore = []
-    for holding in holdings_list:
-        ticker = tickers.get(holding.currency, None)
-        if isinstance(ticker, str) and ticker.lower() == "cash":
-            holdings_convert.append(holding)
-        elif ticker:
-            holdings_export.append(holding)
-        else:
-            holdings_ignore.append(holding)
+    # List of holdings for debugging.
+    holdings_export, holdings_convert, holdings_ignore = [], [], []
 
     # Export the holdings with tickers individually.
     exported = []
-    for holding in holdings_export:
-        ticker = tickers[holding.currency]
+    for symbol, holding in action_holdings:
+        if symbol in ("CASH", "IGNORE"):
+            continue
         exported.append(
-            ExportEntry(ticker,
+            ExportEntry(symbol,
+                        holding.cost_currency,
                         holding.number,
                         holding.cost_number,
-                        is_mutual_fund(ticker),
-                        holding.account if promiscuous else ''))
+                        is_mutual_fund(symbol),
+                        holding.account if promiscuous else '',
+                        [holding]))
+        holdings_export.append(holding)
 
-    # Convert all the cash entries to cash.
+    # Convert all the cash entries to their book and market value by currency.
+    cash_values_market = collections.defaultdict(D)
+    cash_values_book = collections.defaultdict(D)
+    for symbol, holding in action_holdings:
+        if symbol != "CASH":
+            continue
+
+        if not holding.cost_currency:
+            # We cannot price this... no cost currency.
+            holdings_ignore.append(holding)
+            continue
+
+        ## FIXME: What about vacation hours (not held at cost)?
+        ## Attempt to convert to quote currency if possible.
+
+        # Accumulate market and book values.
+        cash_values_market[holding.cost_currency] += holding.market_value
+        cash_values_book[holding.cost_currency] += holding.book_value
+
+    # Convert all the cash values to money instruments, if possible. If not
+    # possible, we'll just have to ignore those values.
+    print(cash_values_book)
+    print(cash_values_market)
+
+
+    # uniqueid = self.CASH_EQUIVALENT_CURRENCY
+    # units = dcontext.quantize(market_value, cash_currency)
+    # unitprice = dcontext.quantize(book_value / market_value, cash_currency)
+
+
+    for symbol, holding in action_holdings:
+        if symbol == "IGNORE":
+            holdings_ignore.append(holding)
+
+
     ## FIXME: TODO
 
     # cash_currency = 'USD'
     # converted_holdings = holdings.convert_to_currency(price_map,
     #                                                   cash_currency,
     #                                                   holdings_convert)
-
-
-
-
 
     debug_info = holdings_export, holdings_convert, holdings_ignore
     return exported, debug_info
@@ -467,7 +555,7 @@ class ExportPortfolioReport(report.TableReport):
 
     @classmethod
     def add_args(cls, parser):
-        parser.add_argument('-v', '--verbose', action='store_true',
+        parser.add_argument('-d', '--debug', action='store_true',
                             help="Output position export debugging information on stderr.")
 
         parser.add_argument('-p', '--promiscuous', action='store_true',
@@ -598,30 +686,47 @@ class ExportPortfolioReport(report.TableReport):
                                       if line.strip())
         file.write(self.PREFIX + stripped_contents)
 
-        if self.args.verbose:
+        if self.args.debug:
             log = sys.stderr.write
             for commodity in ignored_commodities:
                 log("Ignoring commodity '{}'".format(commodity))
 
 
-    def __render_ofx(self, entries, unused_errors, options_map, file):
-        exported, debug_info = holdings_reports.export_holdings(entries, options_map, False)
-        if self.args.verbose:
-            print('Exported Positions:')
+    def render_ofx(self, entries, unused_errors, options_map, file):
+        exported, debug_info = export_holdings(entries, options_map, False)
+
+        HOLDING_FORMAT = ("  {h.account:48} "
+                          "{h.number:10.2f} {h.currency:12} "
+                          "{cost_number:10.2f} {cost_currency:12}\n")
+
+        def hargs(holding):
+            return dict(h=holding,
+                        cost_number=holding.cost_number or ZERO,
+                        cost_currency=holding.cost_currency)
+
+
+        if self.args.debug:
+            log = sys.stderr.write
+            log('Exported Positions:\n')
             for export_entry in exported:
-                print(export_entry)
-            print()
+                log(("{0.symbol:16} {0.cost_currency:16} "
+                     "{0.number:10.2f} {cost_number:10.2f} "
+                     "{0.mutual_fund} {0.memo}\n").format(
+                         export_entry,
+                         cost_number=export_entry.cost_number or 0))
+                # for holding in export_entry.holdings:
+                #     log(HOLDING_FORMAT.format(**hargs(holding)))
+                # log("\n")
 
             holdings_exported, holdings_converted, holdings_ignored = debug_info
-            print('Exported Holdings:')
-            map(print('  {}'.format(holding)) for holding in holdings_exported)
-            print()
-            print('Converted Holdings:')
-            map(print('  {}'.format(holding)) for holding in holdings_exported)
-            print()
-            print('Ignored Holdings:')
-            map(print('  {}'.format(holding)) for holding in holdings_exported)
-            print()
+            log('\n\n-------- Exported Holdings:\n')
+            [log(HOLDING_FORMAT.format(**hargs(holding))) for holding in holdings_exported]
+
+            log('\n\n-------- Converted Holdings:\n')
+            [log(HOLDING_FORMAT.format(**hargs(holding))) for holding in holdings_converted]
+
+            log('\n\n-------- Ignored Holdings:\n')
+            [log(HOLDING_FORMAT.format(**hargs(holding))) for holding in holdings_ignored]
 
 
 
