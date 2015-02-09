@@ -10,6 +10,9 @@ import re
 import textwrap
 import logging
 import sys
+import itertools
+
+from decimal import Decimal
 
 from beancount.core.amount import D
 from beancount.core.amount import ZERO
@@ -397,8 +400,7 @@ def export_holdings(entries, options_map, promiscuous):
         holdings_export.append(holding)
 
     # Convert all the cash entries to their book and market value by currency.
-    cash_values_market = collections.defaultdict(D)
-    cash_values_book = collections.defaultdict(D)
+    cash_holdings_map = collections.defaultdict(list)
     for symbol, holding in action_holdings:
         if symbol != "CASH":
             continue
@@ -408,39 +410,73 @@ def export_holdings(entries, options_map, promiscuous):
             holdings_ignore.append(holding)
             continue
 
-        ## FIXME: What about vacation hours (not held at cost)?
-        ## Attempt to convert to quote currency if possible.
-
         # Accumulate market and book values.
-        cash_values_market[holding.cost_currency] += holding.market_value
-        cash_values_book[holding.cost_currency] += holding.book_value
+        cash_holdings_map[holding.cost_currency].append(holding)
+
+    # Get the money instruments.
+    money_instruments = get_money_instruments(commodities_map)
 
     # Convert all the cash values to money instruments, if possible. If not
     # possible, we'll just have to ignore those values.
-    print(cash_values_book)
-    print(cash_values_market)
 
+    # Go through all the holdings to convert, and for each of those which aren't
+    # in terms of one of the money instruments, which we can directly add to the
+    # exported portfolio, attempt to convert them into currencies to one of
+    # those in the money instruments.
+    money_values_book = collections.defaultdict(D)
+    money_values_market = collections.defaultdict(D)
+    money_values_holdings = collections.defaultdict(list)
+    for cost_currency, holdings_list in cash_holdings_map.items():
+        book_value = sum(holding.book_value for holding in holdings_list)
+        market_value = sum(holding.market_value for holding in holdings_list)
+        ##print("X {:16} {:12.2f} {:12.2f}".format(cost_currency, book_value, market_value))
+        if cost_currency in money_instruments:
+            # The holding is already in terms of one of the money instruments.
+            money_values_book[cost_currency] += book_value
+            money_values_market[cost_currency] += market_value
+            money_values_holdings[cost_currency].extend(holdings_list)
+        else:
+            # The holding is not in terms of one of the money instruments.
+            # Find the first available price to convert it into one
+            for money_currency in money_instruments.keys():
+                base_quote = (cost_currency, money_currency)
+                _, rate = prices.get_latest_price(price_map, base_quote)
+                if rate is not None:
+                    money_values_book[money_currency] += book_value * rate
+                    money_values_market[money_currency] += market_value * rate
+                    money_values_holdings[money_currency].extend(holdings_list)
+                    break
+            else:
+                # We could not convert into any of the money commodities. Ignore
+                # those holdings.
+                holdings_ignore.extend(holdings_list)
 
-    # uniqueid = self.CASH_EQUIVALENT_CURRENCY
-    # units = dcontext.quantize(market_value, cash_currency)
-    # unitprice = dcontext.quantize(book_value / market_value, cash_currency)
+    for money_currency in money_values_book.keys():
+        book_value = money_values_book[money_currency]
+        market_value = money_values_market[money_currency]
+        holdings_list = money_values_holdings[money_currency]
 
+        symbol = money_instruments[money_currency]
+
+        assert isinstance(book_value, Decimal)
+        assert isinstance(market_value, Decimal)
+        exported.append(
+            ExportEntry(symbol,
+                        holding.cost_currency,
+                        dcontext.quantize(market_value, money_currency),
+                        dcontext.quantize(book_value / market_value, money_currency),
+                        is_mutual_fund(symbol),
+                        '',
+                        holdings_list))
+
+        holdings_convert.extend(holdings_list)
 
     for symbol, holding in action_holdings:
         if symbol == "IGNORE":
             holdings_ignore.append(holding)
 
-
-    ## FIXME: TODO
-
-    # cash_currency = 'USD'
-    # converted_holdings = holdings.convert_to_currency(price_map,
-    #                                                   cash_currency,
-    #                                                   holdings_convert)
-
     debug_info = holdings_export, holdings_convert, holdings_ignore
     return exported, debug_info
-
 
 
 class ExportPortfolioReport(report.TableReport):
@@ -704,7 +740,6 @@ class ExportPortfolioReport(report.TableReport):
                         cost_number=holding.cost_number or ZERO,
                         cost_currency=holding.cost_currency)
 
-
         if self.args.debug:
             log = sys.stderr.write
             log('Exported Positions:\n')
@@ -714,9 +749,9 @@ class ExportPortfolioReport(report.TableReport):
                      "{0.mutual_fund} {0.memo}\n").format(
                          export_entry,
                          cost_number=export_entry.cost_number or 0))
-                # for holding in export_entry.holdings:
-                #     log(HOLDING_FORMAT.format(**hargs(holding)))
-                # log("\n")
+                for holding in export_entry.holdings:
+                    log(HOLDING_FORMAT.format(**hargs(holding)))
+                log("\n")
 
             holdings_exported, holdings_converted, holdings_ignored = debug_info
             log('\n\n-------- Exported Holdings:\n')
@@ -727,9 +762,6 @@ class ExportPortfolioReport(report.TableReport):
 
             log('\n\n-------- Ignored Holdings:\n')
             [log(HOLDING_FORMAT.format(**hargs(holding))) for holding in holdings_ignored]
-
-
-
 
 
 def render_ofx_date(dtime):
