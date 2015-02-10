@@ -19,16 +19,17 @@ from beancount.utils import misc_utils
 # A holding, a flattened position with an account, and optionally, price and
 # book/market values.
 #
-# account: A string, the name of the account.
-# number: A Decimal, the number of units for that position.
-# currency: A string, the currency for that position.
-# cost_number: A Decimal, the price of that currency.
-# cost_currency: A string, the currency of the price of that currency.
-# book_value: A Decimal, the book value of the holding.
-# price_number: A Decimal, the price/rate of the currency/cost_currency.
-# price_date: A datetime.date, the date of the price.
-# market_value: A Decimal, the market value of the holding, with the
-#   price of this holding.
+# Attributes:
+#   account: A string, the name of the account.
+#   number: A Decimal, the number of units for that position.
+#   currency: A string, the currency for that position.
+#   cost_number: A Decimal, the price of that currency.
+#   cost_currency: A string, the currency of the price of that currency.
+#   book_value: A Decimal, the book value of the holding.
+#   price_number: A Decimal, the price/rate of the currency/cost_currency.
+#   price_date: A datetime.date, the date of the price.
+#   market_value: A Decimal, the market value of the holding, with the
+#     price of this holding.
 #
 # Note: we could reserve an 'extra' member to hold values from derived fields,
 # such as fractional value of portfolio, instead of occasionally overloading the

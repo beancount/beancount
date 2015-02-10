@@ -1,11 +1,13 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import functools
 import unittest
 import io
 
 from beancount.reports import holdings_reports
 from beancount.reports import table
 from beancount.ops import holdings
+from beancount.core import getters
 from beancount import loader
 
 
@@ -70,30 +72,3 @@ class TestHoldingsReports(unittest.TestCase):
         self.assertEqual(2, len(holdings_list))
         self.assertTrue(isinstance(holdings_list, list))
         self.assertTrue(isinstance(holdings_list[0], holdings.Holding))
-
-    def test_report_export_portfolio(self):
-        report_ = holdings_reports.ExportPortfolioReport.from_args([])
-        format_ = 'ofx'
-        output = report_.render(self.entries, self.errors, self.options_map, format_)
-        self.assertTrue(output)
-
-
-class TestCommodityClassifications(unittest.TestCase):
-
-    @loader.loaddoc
-    def test_classifications(self, entries, errors, options_map):
-        """
-        2000-01-01 open Assets:DoesntMatter
-        2015-02-03 note Assets:DoesntMatter "Export SILSTK: IGNORE"
-        2015-02-03 note Assets:DoesntMatter "Export LDNLIFE: IGNORE"
-        2015-02-03 note Assets:DoesntMatter "Export VMMPX: MUTUAL_FUND"
-        2015-02-03 note Assets:DoesntMatter "Export RBF1002: MUTUAL_FUND"
-        2015-02-03 note Assets:DoesntMatter "Export XSP: TICKER:TSE:XSP"
-        """
-        self.assertFalse(errors)
-
-        ignore = {'LDNLIFE', 'SILSTK'}
-        mutual_fund = {'VMMPX', 'RBF1002'}
-        ticker_map = {'XSP': 'TSE:XSP'}
-        self.assertEqual((ignore, mutual_fund, ticker_map),
-                         holdings_reports.get_commodity_classifications(entries))

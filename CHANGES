@@ -4,6 +4,14 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-02-10
+
+  - Revamped the export-to-OFX report to showcase a more explicit, flexible and
+    easily debuggable configuration. Also supports the declaration of money
+    instrument equivalents within the file itself. This will be documented here:
+    https://docs.google.com/document/d/1eZIDRmQZxR6cmDyOJf7U3BnCm4PDMah2twxYFfKPJtM/
+
+
 2015-02-03
 
   - Fixed an unreported bug with Emacs support whereby a number appearing within
