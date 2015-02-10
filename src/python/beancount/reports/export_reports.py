@@ -4,6 +4,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
 import datetime
+import itertools
 import io
 import re
 import textwrap
@@ -23,7 +24,7 @@ from beancount.reports import holdings_reports
 # An entry to be exported.
 #
 # Attributes:
-#   ticker: A string, the ticker to use for that position.
+#   symbol: A string, the ticker to use for that position.
 #   cost_currency: A string, the quote commodity.
 #   number: A Decimal, the number of units for that position.
 #   cost_number: A Decimal, the price of that currency.
@@ -138,11 +139,20 @@ def export_holdings(entries, options_map, promiscuous):
     for symbol, holding in action_holdings:
         if symbol in ("CASH", "IGNORE"):
             continue
+
+        if holding.cost_number is None:
+            assert holding.cost_currency in (None, holding.currency)
+            cost_number = holding.number
+            cost_currency = holding.currency
+        else:
+            cost_number = holding.cost_number
+            cost_currency = holding.cost_currency
+
         exported.append(
             ExportEntry(symbol,
-                        holding.cost_currency,
+                        cost_currency,
                         holding.number,
-                        holding.cost_number,
+                        cost_number,
                         is_mutual_fund(symbol),
                         holding.account if promiscuous else '',
                         [holding]))
@@ -210,7 +220,7 @@ def export_holdings(entries, options_map, promiscuous):
         assert isinstance(market_value, Decimal)
         converted.append(
             ExportEntry(symbol,
-                        holding.cost_currency,
+                        money_currency,
                         dcontext.quantize(market_value, money_currency),
                         dcontext.quantize(book_value / market_value, money_currency),
                         is_mutual_fund(symbol),
@@ -356,45 +366,63 @@ class ExportPortfolioReport(report.TableReport):
                             help=("Include title and account names in memos. "
                                   "Use this if you trust wherever you upload."))
 
-    # The cash equivalent currency. Note: Importing a cash deposit in GFinance
-    # portfolio import feature fails, so use a cash equivalent (Vanguard Prime
-    # Money Market Fund, which pretty much has a fixed price of 1.0 USD).
-    CASH_EQUIVALENT_CURRENCY = 'VMMXX'
-    CASH_EQUIVALENT_MFUND = True
+    EXPORT_FORMAT = ("{atype}  "
+                     "{0.number:10.2f} {0.symbol:16}  "
+                     "{cost_number:10.2f} {0.cost_currency:16}  "
+                     "{0.memo}\n")
 
-    def _old_render_ofx(self, entries, unused_errors, options_map, file):
-        holdings_list, price_map = holdings_reports.get_assets_holdings(entries,
-                                                                        options_map)
-        dcontext = options_map['display_context']
+    HOLDING_FORMAT = ("  Holding: {h.account:48} "
+                      "{h.number:10.2f} {h.currency:12} "
+                      "{cost_number:10.2f} {cost_currency:12}\n")
 
-        commodities_map = getters.get_commodity_map(entries)
-        undefined = object()
-        tickers = getters.get_values_meta(commodities_map, 'ticker', default=undefined)
+    def _render_debug_exports(self, export_entries, title=None):
+        if title:
+            sys.stderr.write('{}:\n'.format(title))
+            sys.stderr.write('----------------------------------------\n')
+        for export_entry in export_entries:
+            sys.stderr.write(self.EXPORT_FORMAT.format(
+                export_entry,
+                atype='MUTFUND' if export_entry.mutual_fund else 'STOCK  ',
+                cost_number=export_entry.cost_number or 0))
+            self._render_debug_holdings(export_entry.holdings)
+        sys.stderr.write('\n')
 
-        # Create a list of purchases.
-        #
-        # Note: we'll enter the positions two days ago. When we have lot-dates
-        # on all lots, put these transactions at the correct dates.
+    def _render_debug_holdings(self, holdings, title=None):
+        if title:
+            sys.stderr.write('{}:\n'.format(title))
+            sys.stderr.write('----------------------------------------\n')
+        for holding in holdings:
+            sys.stderr.write(self.HOLDING_FORMAT.format(
+                h=holding,
+                cost_number=holding.cost_number or ZERO,
+                cost_currency=holding.cost_currency))
+        sys.stderr.write('\n')
+
+    def render_ofx(self, entries, unused_errors, options_map, file):
+        exported, converted, holdings_ignored = export_holdings(entries, options_map, False)
+
+        # Print debug information if requested, before exporting.
+        if self.args.debug:
+            self._render_debug_exports(exported, 'Exported Holdings')
+            self._render_debug_exports(converted, 'Cash Holdings')
+            self._render_debug_holdings(holdings_ignored, 'Ignored Holdings')
+
+        # Compute trade date. Note that we'll enter the positions two days ago.
+        # When we have lot-dates on all lots, put these transactions at the
+        # correct dates.
         morning = datetime.datetime.now().replace(hour=9, minute=0, second=0, microsecond=0)
         trade_date = morning - datetime.timedelta(days=2)
 
-        invtranlist_io = io.StringIO()
+        # A list of all accumulated commodities.
         commodities = set()
+
+        dcontext = options_map['display_context']
+
+        invtranlist_io = io.StringIO()
         skipped_holdings = []
         ignored_commodities = set()
         index = 0
-        for index, holding in enumerate(holdings_list):
-            ticker = tickers.get(holding.currency, None)
-
-            if ticker is undefined:
-                ignored_commodities.add(holding.currency)
-
-            if (holding.currency == holding.cost_currency or
-                holding.cost_number is None or
-                not ticker or ticker is undefined):
-                skipped_holdings.append(holding)
-                continue
-
+        for index, export in enumerate(itertools.chain(exported, converted)):
             # Note: We assume GFinance ticker symbology here to infer MF vs.
             # STOCK, but frankly even if we fail to characterize it right this
             # distinction is not important, it's just an artifact of OFX, I
@@ -403,69 +431,29 @@ class ExportPortfolioReport(report.TableReport):
             # "try" to get it right by inferring this from the symbol. We could
             # eventually recognize a "class" metadata field from the
             # commodities, but I feel that this simpler. Less is more.
-            txntype = ('BUYMF'
-                       if is_mutual_fund(ticker)
-                       else 'BUYSTOCK')
+            txntype = ('BUYMF' if export.mutual_fund else 'BUYSTOCK')
             fitid = index + 1
             dttrade = render_ofx_date(trade_date)
-            memo = holding.account if self.args.promiscuous else ''
-            uniqueid = ticker
-            units = holding.number
-            unitprice = holding.cost_number
+            memo = export.memo
+            uniqueid = export.symbol
+            units = export.number
+            unitprice = export.cost_number
             fee = ZERO
             total = -(units * unitprice + fee)
             buytype = 'BUY'
 
             invtranlist_io.write(self.TRANSACTION.format(**locals()))
-            commodities.add((holding.currency, ticker, is_mutual_fund(ticker)))
-
-        # Print a table of ignored holdings (for debugging).
-        ## import sys
-        ## table.render_table(table.create_table(skipped_holdings, FIELD_SPEC),
-        ##                    sys.stderr, 'text')
-
-        # Convert the skipped holdings to a bank deposit to cash to approximate their value.
-        if options_map['operating_currency']:
-            # Convert all skipped holdings to the first operating currency.
-            cash_currency = options_map['operating_currency'][0]
-            converted_holdings = holdings.convert_to_currency(price_map,
-                                                              cash_currency,
-                                                              skipped_holdings)
-
-            # Estimate the total market value in cash.
-            included_holdings = []
-            for holding in converted_holdings:
-                if holding.cost_currency == cash_currency:
-                    included_holdings.append(holding)
-            book_value = sum(holding.book_value for holding in included_holdings)
-            market_value = sum(holding.market_value for holding in included_holdings)
-
-            # Insert a cash deposit equivalent for that amount.
-            txntype = ('BUYMF' if self.CASH_EQUIVALENT_MFUND else 'BUYSTOCK')
-            fitid = index + 1
-            dttrade = render_ofx_date(trade_date)
-            memo = ''
-            uniqueid = self.CASH_EQUIVALENT_CURRENCY
-            units = dcontext.quantize(market_value, cash_currency)
-            unitprice = dcontext.quantize(book_value / market_value, cash_currency)
-            fee = ZERO
-            total = -(units * unitprice + fee)
-            buytype = 'BUY'
-
-            invtranlist_io.write(self.TRANSACTION.format(**locals()))
-            commodities.add((self.CASH_EQUIVALENT_CURRENCY,
-                             self.CASH_EQUIVALENT_CURRENCY,
-                             False))
+            commodities.add((export.symbol, export.mutual_fund))
 
         invtranlist = invtranlist_io.getvalue()
 
         # Create a list of securities.
         seclist_io = io.StringIO()
-        for currency, ticker, mutual_fund in sorted(commodities):
-            uniqueid = currency
-            secname = currency
+        for symbol, mutual_fund in sorted(commodities):
+            uniqueid = symbol
+            secname = symbol
             infotype = 'MFINFO' if mutual_fund else 'STOCKINFO'
-            ticker = ticker
+            ticker = symbol
             seclist_io.write(self.SECURITY.format(**locals()))
         seclist = seclist_io.getvalue()
 
@@ -480,55 +468,6 @@ class ExportPortfolioReport(report.TableReport):
                                       for line in contents.splitlines()
                                       if line.strip())
         file.write(self.PREFIX + stripped_contents)
-
-        if self.args.debug:
-            log = sys.stderr.write
-            for commodity in ignored_commodities:
-                log("Ignoring commodity '{}'".format(commodity))
-
-
-    def render_ofx(self, entries, unused_errors, options_map, file):
-        exported, converted, holdings_ignored = export_holdings(entries, options_map, False)
-
-        if self.args.debug:
-            self._render_debug_exports(exported, 'Exported Holdings')
-            self._render_debug_exports(converted, 'Cash Holdings')
-            self._render_debug_holdings(holdings_ignored, 'Ignored Holdings')
-
-    EXPORT_FORMAT = ("{atype}  "
-                     "{0.number:10.2f} {0.symbol:16}  "
-                     "{cost_number:10.2f} {0.cost_currency:16}  "
-                     "{0.memo}\n")
-
-    def _render_debug_exports(self, export_entries, title=None):
-        if title:
-            sys.stderr.write('{}:\n'.format(title))
-            sys.stderr.write('----------------------------------------\n')
-        for export_entry in export_entries:
-            sys.stderr.write(self.EXPORT_FORMAT.format(
-                export_entry,
-                atype='MUTFUND' if export_entry.mutual_fund else 'STOCK  ',
-                cost_number=export_entry.cost_number or 0))
-            self._render_debug_holdings(export_entry.holdings)
-        sys.stderr.write('\n')
-
-    HOLDING_FORMAT = ("  Holding: {h.account:48} "
-                      "{h.number:10.2f} {h.currency:12} "
-                      "{cost_number:10.2f} {cost_currency:12}\n")
-
-    @staticmethod
-    def hargs(holding):
-        return dict(h=holding,
-                    cost_number=holding.cost_number or ZERO,
-                    cost_currency=holding.cost_currency)
-
-    def _render_debug_holdings(self, holdings, title=None):
-        if title:
-            sys.stderr.write('{}:\n'.format(title))
-            sys.stderr.write('----------------------------------------\n')
-        for holding in holdings:
-            sys.stderr.write(self.HOLDING_FORMAT.format(**self.hargs(holding)))
-        sys.stderr.write('\n')
 
 
 __reports__ = [
