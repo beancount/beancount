@@ -38,6 +38,11 @@ PRIVATE_OPTION_GROUPS = [
       automatically by the parser.
     """, [OptDesc("display_context",
                   display_context.DisplayContext(), display_context.DisplayContext())]),
+
+    OptGroup("""
+      A set of all the commodities that we have seen in the file.
+      This is mainly used for efficiency, best computed once at parse time.
+    """, [OptDesc("commodities", set(), set())]),
     ]
 
 

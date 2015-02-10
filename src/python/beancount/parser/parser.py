@@ -155,6 +155,9 @@ class Builder(lexer.LexBuilder):
         # Build and store the inferred DisplayContext instance.
         self.options['display_context'] = self.dcontext
 
+        # Add the full list of seen commodities.
+        self.options['commodities'] = self.commodities
+
         return self.options
 
     def get_invalid_account(self):
