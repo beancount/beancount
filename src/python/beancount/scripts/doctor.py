@@ -185,7 +185,11 @@ def do_context(filename, args):
     entries, errors, options_map = loader.load_file(filename)
 
     dcontext = options_map['display_context']
-    str_context = context.render_entry_context(entries, dcontext, filename, lineno)
+
+    # Note: Make sure to use the absolute filename used by the parser to resolve
+    # the file.
+    str_context = context.render_entry_context(entries, dcontext,
+                                               options_map['filename'], lineno)
     sys.stdout.write(str_context)
 
 
