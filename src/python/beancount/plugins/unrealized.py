@@ -91,10 +91,13 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
         # price point for that commodity, so we never expect for a price not to
         # be available, which is reasonable.
         if holding.price_number is None:
-            errors.append(
-                UnrealizedError(meta,
-                                "A valid price for {h.currency}/{h.cost_currency} "
-                                "could not be found".format(h=holding), None))
+            # An entry without a price might indicate that this is a holding
+            # resulting from leaked cost basis. {0ed05c502e63, b/16}
+            if holding.number:
+                errors.append(
+                    UnrealizedError(meta,
+                                    "A valid price for {h.currency}/{h.cost_currency} "
+                                    "could not be found".format(h=holding), None))
             continue
 
         # Compute the PnL; if there is no profit or loss, we create a

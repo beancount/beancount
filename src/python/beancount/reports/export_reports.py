@@ -16,7 +16,6 @@ from beancount.core.amount import D
 from beancount.core.amount import ZERO
 from beancount.core import getters
 from beancount.ops import prices
-from beancount.ops import holdings
 from beancount.reports import report
 from beancount.reports import holdings_reports
 

@@ -1,13 +1,11 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import functools
 import unittest
 import io
 
 from beancount.reports import holdings_reports
 from beancount.reports import table
 from beancount.ops import holdings
-from beancount.core import getters
 from beancount import loader
 
 
