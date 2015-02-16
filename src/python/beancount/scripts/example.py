@@ -1372,39 +1372,50 @@ def generate_commodity_entries(date_birth):
 
         1792-01-01 commodity USD
           name: "US Dollar"
-          asset-class: "Cash"
+          export: "CASH"
 
         {date_birth} commodity VACHR
           name: "Employer Vacation Hours"
-          asset-class: "Vacation"
+          export: "IGNORE"
 
         {date_birth} commodity IRAUSD
           name: "US 401k and IRA Contributions"
-          asset-class: "Imaginary"
+          export: "IGNORE"
 
         2009-05-01 commodity RGAGX
           name: "American Funds The Growth Fund of America® Class R-6"
-          asset-class: "Stock"
+          quote: USD
+          ticker: "MUTF:RGAGX"
 
         1995-09-18 commodity VBMPX
           name: "Vanguard Total Bond Market Index Fund Institutional Plus Shares"
-          asset-class: "Bonds"
+          quote: USD
+          ticker: "MUTF:VBMPX"
 
         2004-01-20 commodity ITOT
           name: "iShares Core S&P Total U.S. Stock Market ETF"
-          asset-class: "Stock"
+          quote: USD
+          ticker: "NYSEARCA:ITOT"
 
         2007-07-20 commodity VEA
           name: "Vanguard FTSE Developed Markets ETF"
-          asset-class: "Stock"
+          quote: USD
+          ticker: "NYSEARCA:VEA"
 
         2004-01-26 commodity VHT
           name: "Vanguard Health Care ETF"
-          asset-class: "Stock"
+          quote: USD
+          ticker: "NYSEARCA:VHT"
 
         2004-11-01 commodity GLD
           name: "SPDR Gold Trust (ETF)"
-          asset-class: "Gold"
+          quote: USD
+          ticker: "NYSEARCA:GLD"
+
+        1900-01-01 commodity VMMXX
+          quote: USD
+          ticker: "MUTF:VMMXX"
+          export: "MONEY"
 
     """, **locals())
 
@@ -1439,6 +1450,20 @@ def contextualize_file(contents, employer):
         }
     new_contents = replace(contents, replacements)
     return new_contents, replacements
+
+
+def apply_adhoc_fixes(contents):
+    """Apply fixes for short-comings in rendered output.
+
+    Args:
+      contents: A string, the contents to output.
+    Returns:
+      A string, the fixed contents.
+    """
+    # For now, render some special metadata fields as currency, not string.
+    # Eventually we should be able to distinguish these two at runtime using a
+    # tagged string type.
+    return re.sub('quote: "([A-Z0-9]+)"', r'quote: \1', contents)
 
 
 def write_example_file(date_birth, date_begin, date_end, reformat, file):
@@ -1660,6 +1685,11 @@ def write_example_file(date_birth, date_begin, date_end, reformat, file):
     contents, replacements = contextualize_file(output.getvalue(), employer_name)
     if reformat:
         contents = format.align_beancount(contents)
+
+    logging.info("Applying ad-doc fixes to file")
+    contents = apply_adhoc_fixes(contents)
+
+    logging.info("Writing contents")
     file.write(contents)
 
     logging.info("Validating Results")

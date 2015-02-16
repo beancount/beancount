@@ -142,12 +142,27 @@ def aggregate_holdings_by(holdings, keyfun):
     Returns:
       A list of aggregated holdings.
     """
+    # Aggregate the groups of holdings.
     grouped = collections.defaultdict(list)
     for holding in holdings:
         key = (keyfun(holding), holding.cost_currency)
         grouped[key].append(holding)
-    return sorted((aggregate_holdings_list(key_holdings)
-                   for key_holdings in grouped.values()),
+    grouped_holdings = (aggregate_holdings_list(key_holdings)
+                        for key_holdings in grouped.values())
+
+    # We could potentially filter out holdings with zero units here. These types
+    # of holdings might occur on a group with leaked (i.e., non-zero) cost basis
+    # and zero units. However, sometimes are valid merging of multiple
+    # currencies may occur, and the number value will be legitimately set to
+    # ZERO (for various reasons downstream), so we prefer not to ignore the
+    # holding. Callers must be prepared to deal with a holding of ZERO units and
+    # a non-zero cost basis. {0ed05c502e63, b/16}
+    ## nonzero_holdings = (holding
+    ##                     for holding in grouped_holdings
+    ##                     if holding.number != ZERO)
+
+    # Return the holdings in order.
+    return sorted(grouped_holdings,
                   key=lambda holding: (holding.account, holding.currency))
 
 
