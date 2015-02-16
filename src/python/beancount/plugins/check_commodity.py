@@ -31,10 +31,9 @@ def validate_commodity_directives(entries, options_map):
 
     meta = data.new_metadata('<check_commodity>', 0)
 
-    commodity_map = getters.get_commodity_map(entries)
+    commodity_map = getters.get_commodity_map(entries, create_missing=False)
     for currency in commodities_used:
         commodity_entry = commodity_map.get(currency, None)
-        print(commodity_entry)
         if commodity_entry is None:
             errors.append(
                 CheckCommodityError(
@@ -45,8 +44,10 @@ def validate_commodity_directives(entries, options_map):
     return entries, errors
 
 
+"""
 HA! This is broken, there is code that manufactures Commodity directives in get_commodity_map().
 Remove this code, or make it optional.
 
 Also, that code should use
   options_map['commodities']
+"""
