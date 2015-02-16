@@ -18,7 +18,7 @@ def main():
 
     entries, errors, options_map = loader.load_file(args.filename)
 
-    commodity_map = getters.get_commodity_map(entries)
+    commodity_map = getters.get_commodity_map(entries, options_map)
     ticker_info = getters.get_values_meta(commodity_map, 'name', 'ticker', 'quote')
 
     print('Fetching:')
