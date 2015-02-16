@@ -1,4 +1,4 @@
-"""A plugin that verifies that all used commodities have a corresponding Commodity directives.
+"""A plugin that verifies that all seen commodities have a Commodity directive.
 
 This is useful if you're a bit pedantic and like to make sure that you're
 declared attributes for each of the commodities you use. It's useful if you use

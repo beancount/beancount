@@ -1,10 +1,8 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import re
 import unittest
 
 from beancount import loader
-from beancount.parser import printer
 from beancount.plugins import check_commodity
 
 
