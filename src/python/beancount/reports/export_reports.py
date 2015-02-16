@@ -122,7 +122,7 @@ def export_holdings(entries, options_map, promiscuous):
     """
     # Get the desired list of holdings.
     holdings_list, price_map = holdings_reports.get_assets_holdings(entries, options_map)
-    commodities_map = getters.get_commodity_map(entries)
+    commodities_map = getters.get_commodity_map(entries, options_map)
     dcontext = options_map['display_context']
 
     # Classify all the holdings for export.

@@ -1272,6 +1272,20 @@ http://furius.ca/beancount/doc/proposal-inter
     '!' flag. "Show me all that's unverified right now."
 
 
+* Invariants
+
+  - options['commodities'] is currently where the list of all commodities seen
+    from the parser lives. The beancount.core.getters.get_commodities_map()
+    routine uses this to automatically generate a full list of directives. An
+    alternative would be to implement a plugin that enforces the generate of
+    these post-parsing so that they are always guaranteed to live within the
+    flow of entries. This would allow us to keep all the data in that list of
+    entries and to avoid depending on the options to store that output.
+
+    This should probably be combined with a similar step that similarly
+    enforces all unopened accounts to have an Open directive as well.
+
+
 * Current / Misc / To Be Classified
 
   (This is a grab bag of ideas. When I have a new idea coming to me, I don't

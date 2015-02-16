@@ -288,11 +288,14 @@ def get_account_open_close(entries):
     return open_close_map
 
 
-def get_commodity_map(entries):
+def get_commodity_map(entries, options_map, create_missing=True):
     """Create map of commodity names to Commodity entries.
 
     Args:
       entries: A list of directive instances.
+      options_map: A dict of options as parsed by the parser.
+      create_missing: A boolean, true if you want to automatically generate
+        missing commodity directives if not present in the output map.
     Returns:
       A map of commodity name strings to Commodity directives.
     """
@@ -324,15 +327,16 @@ def get_commodity_map(entries):
         elif isinstance(entry, Price):
             commodities_map.setdefault(entry.currency, None)
 
-    # Create missing Commodity directives when they haven't been specified explicitly.
-    # (I think it might be better to always do this from the loader.)
-    new_commodities = {}
-    date = entries[0].date
-    for commodity, entry in commodities_map.items():
-        if entry is None:
-            meta = data.new_metadata('<getters>', 0)
-            new_commodities[commodity] = Commodity(meta, date, commodity)
-    commodities_map.update(new_commodities)
+    if create_missing:
+        # Create missing Commodity directives when they haven't been specified explicitly.
+        # (I think it might be better to always do this from the loader.)
+        date = entries[0].date
+        meta = data.new_metadata('<getters>', 0)
+        commodities_map = {
+            commodity: (entry
+                        if entry is not None
+                        else Commodity(meta, date, commodity))
+            for commodity, entry in commodities_map.items()}
 
     return commodities_map
 
