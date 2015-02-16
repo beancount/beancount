@@ -4,6 +4,15 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-02-16
+
+  - Finally completed documentation on how to export your portfolio to Google
+    Finance, as
+    http://furius.ca/beancount/doc/export,
+    or equivalently as
+    https://docs.google.com/document/d/1eZIDRmQZxR6cmDyOJf7U3BnCm4PDMah2twxYFfKPJtM/
+
+
 2015-02-10
 
   - Revamped the export-to-OFX report to showcase a more explicit, flexible and
