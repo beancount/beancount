@@ -313,7 +313,8 @@ def print_entries(entries, dcontext=None, render_weights=False, file=None, prefi
         # Insert a newline between transactions and between blocks of directives
         # of the same type.
         entry_type = type(entry)
-        if entry_type is data.Transaction or entry_type is not previous_type:
+        if (entry_type in (data.Transaction, data.Commodity) or
+            entry_type is not previous_type):
             output.write('\n')
             previous_type = entry_type
 

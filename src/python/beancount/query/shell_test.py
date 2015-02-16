@@ -44,7 +44,7 @@ class TestUseCases(unittest.TestCase):
         SELECT DISTINCT account, open_date(account)
         ORDER BY account_sortkey(account);
         """
-        self.assertTrue(re.search('Assets:US:BofA:Checking *2012-01-01', output))
+        self.assertTrue(re.search('Assets:US:BofA:Checking *2013-01-01', output))
         self.assertTrue(re.search('Equity:Opening-Balances *1980-05-12', output))
         self.assertTrue(re.search('Expenses:Financial:Commissions *1980-05-12', output))
 
@@ -82,7 +82,7 @@ class TestUseCases(unittest.TestCase):
         """
         BALANCES AT cost;
         """
-        self.assertTrue(re.search('Liabilities:AccountsPayable *-3664.80 USD', output))
+        self.assertTrue(re.search('Liabilities:AccountsPayable *-2094.10 USD', output))
 
     @runshell
     def test_balances_with_where(self, output):
@@ -97,7 +97,7 @@ class TestUseCases(unittest.TestCase):
         BALANCES AT cost
         FROM OPEN ON 2014-01-01 CLOSE ON 2015-01-01 CLEAR;
         """
-        self.assertTrue(re.search('Assets:US:ETrade:Cash *9692.61 USD', output))
+        self.assertTrue(re.search('Assets:US:ETrade:Cash *834.92 USD', output))
 
     @runshell
     def test_income_statement(self, output):
