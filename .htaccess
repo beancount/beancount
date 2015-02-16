@@ -59,6 +59,9 @@ RedirectMatch /doc/stock$                 /beancount/doc/trading
 RedirectMatch /doc/stocks$                /beancount/doc/trading
 RedirectMatch /doc/pnl$                   /beancount/doc/trading
 
+RedirectMatch /doc/export$                https://docs.google.com/document/d/1eZIDRmQZxR6cmDyOJf7U3BnCm4PDMah2twxYFfKPJtM/
+RedirectMatch /doc/exporting              /beancount/doc/export
+
 RedirectMatch /doc/payee                  https://docs.google.com/document/d/17_u_cYxeXVsCV4GmaubK_xsTQl_H9rP87E_vnZHKNb0/
 RedirectMatch /doc/subaccount             /beancount/doc/payee
 
