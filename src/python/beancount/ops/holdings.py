@@ -12,6 +12,7 @@ from beancount.core import realization
 from beancount.core import account_types
 from beancount.core import data
 from beancount.core import flags
+from beancount.core import getters
 from beancount.ops import prices
 from beancount.utils import misc_utils
 
@@ -60,7 +61,7 @@ def get_final_holdings(entries, included_account_types=None, price_map=None, dat
       entries: A list of directives.
       included_account_types: A sequence of strings, the account types to
         include in the output. A reasonable example would be
-        ('Assets', 'Liabilities').
+        ('Assets', 'Liabilities'). If not specified, include all account types.
       price_map: A dict of prices, as built by prices.build_price_map().
       date: A datetime.date instance, the date at which to price the
         holdings. If left unspecified, we use the latest price information.
@@ -129,7 +130,52 @@ def get_final_holdings(entries, included_account_types=None, price_map=None, dat
     return holdings
 
 
+def get_commodities_at_date(entries, options_map, date=None):
+    """Return a list of commodities present at a particular date.
+
+    This routine fetches the holdings present at a particular date and returns a
+    list of the commodities held in those holdings. This should define the list
+    of price date points required to assess the market value of this portfolio.
+    This is used in a routine that fetches prices from a data source on the
+    internet (either from Ledgerhub, but you can reuse this in your own script
+    if you build one).
+
+    Args:
+      entries: A list of directives.
+      date: A datetime.date instance, the date at which to get the list of
+        relevant holdings.
+    Returns:
+      A list of (currency, cost-currency, ticker) triples, where
+        currency: The Beancount base currency to fetch a price for.
+        cost-currency: The Beancount quote / cost-currency for currency.
+        ticker: The ticker symbol to use for fetching the price (extracted from
+          the metadata of Commodity directives).
+    """
+    # Get the list of holdings at the particular date.
+    holdings_list = get_final_holdings(entries, date=date)
+
+    # Obtain the unique list of currencies we need to fetch.
+    commodities_list = {(holding.currency, holding.cost_currency)
+                        for holding in holdings_list}
+
+    # Add in the associated ticker symbols.
+    commodities_map = getters.get_commodity_map(entries, options_map)
+    commodities_symbols_list = []
+    for currency, cost_currency in sorted(commodities_list):
+        if currency == cost_currency:
+            continue
+        try:
+            commodity_entry = commodities_map[currency]
+            ticker = commodity_entry.meta.get('ticker', currency)
+        except KeyError:
+            ticker = currency
+        commodities_symbols_list.append((currency, cost_currency, ticker))
+
+    return commodities_symbols_list
+
+
 def aggregate_holdings_by(holdings, keyfun):
+
     """Aggregate holdings by some key.
 
     Note that the cost-currency must always be included in the group-key (sums
