@@ -156,6 +156,15 @@ class Builder(lexer.LexBuilder):
         self.options['display_context'] = self.dcontext
 
         # Add the full list of seen commodities.
+        #
+        # IMPORTANT: This is currently where the list of all commodities seen
+        # from the parser lives. The
+        # beancount.core.getters.get_commodities_map() routine uses this to
+        # automatically generate a full list of directives. An alternative would
+        # be to implement a plugin that enforces the generate of these
+        # post-parsing so that they are always guaranteed to live within the
+        # flow of entries. This would allow us to keep all the data in that list
+        # of entries and to avoid depending on the options to store that output.
         self.options['commodities'] = self.commodities
 
         return self.options
