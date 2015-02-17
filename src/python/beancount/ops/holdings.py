@@ -14,6 +14,7 @@ from beancount.core import data
 from beancount.core import flags
 from beancount.core import getters
 from beancount.ops import prices
+from beancount.ops import summarize
 from beancount.utils import misc_utils
 
 
@@ -136,6 +137,20 @@ def get_commodities_at_date(entries, options_map, date=None):
     This routine fetches the holdings present at a particular date and returns a
     list of the commodities held in those holdings. This should define the list
     of price date points required to assess the market value of this portfolio.
+
+    Notes:
+
+    * The ticker symbol will be fetched from the corresponding Commodity
+      directive. If there is no ticker symbol defined for a directive or no
+      corresponding Commodity directive, the currency is still included, but
+      'None' is specified for the symbol. The code that uses this routine should
+      be free to use the currency name to make an attempt to fetch the currency
+      using its name, or to ignore it.
+
+    * The 'cost-currency' is that which is found on the holdings instance and
+      can be ignored. The 'quote-currency' is that which is declared on the
+      Commodity directive from its 'quote' metadata field.
+
     This is used in a routine that fetches prices from a data source on the
     internet (either from Ledgerhub, but you can reuse this in your own script
     if you build one).
@@ -145,14 +160,21 @@ def get_commodities_at_date(entries, options_map, date=None):
       date: A datetime.date instance, the date at which to get the list of
         relevant holdings.
     Returns:
-      A list of (currency, cost-currency, ticker) triples, where
+      A list of (currency, cost-currency, quote-currency, ticker) tuples, where
         currency: The Beancount base currency to fetch a price for.
         cost-currency: The Beancount quote / cost-currency for currency.
+        quote-currency: The currency declared as quote currency (extracted from
+          the metadata of Commodity directives).
         ticker: The ticker symbol to use for fetching the price (extracted from
           the metadata of Commodity directives).
+
     """
+    # Remove all the entries after the given date, if requested.
+    if date is not None:
+        entries = summarize.truncate(entries, date)
+
     # Get the list of holdings at the particular date.
-    holdings_list = get_final_holdings(entries, date=date)
+    holdings_list = get_final_holdings(entries)
 
     # Obtain the unique list of currencies we need to fetch.
     commodities_list = {(holding.currency, holding.cost_currency)
@@ -162,14 +184,16 @@ def get_commodities_at_date(entries, options_map, date=None):
     commodities_map = getters.get_commodity_map(entries, options_map)
     commodities_symbols_list = []
     for currency, cost_currency in sorted(commodities_list):
-        if currency == cost_currency:
-            continue
         try:
             commodity_entry = commodities_map[currency]
-            ticker = commodity_entry.meta.get('ticker', currency)
+            ticker = commodity_entry.meta.get('ticker', None)
+            quote_currency = commodity_entry.meta.get('quote', None)
         except KeyError:
-            ticker = currency
-        commodities_symbols_list.append((currency, cost_currency, ticker))
+            ticker = None
+            quote_currency = None
+
+        commodities_symbols_list.append(
+            (currency, cost_currency, quote_currency, ticker))
 
     return commodities_symbols_list
 

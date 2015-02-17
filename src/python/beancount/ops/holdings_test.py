@@ -159,11 +159,12 @@ class TestHoldings(unittest.TestCase):
         2013-01-01 open Equity:Unknown
 
         2000-01-01 commodity GOOG
+          quote: USD
 
         2000-01-01 commodity ITOT
           ticker: "NYSEARCA:ITOT"
 
-        2013-04-05 *
+        2013-03-05 *
           Equity:Unknown
           Assets:Cash			50000 USD
 
@@ -192,9 +193,17 @@ class TestHoldings(unittest.TestCase):
           Liabilities:Loan
         """
         commodities = holdings.get_commodities_at_date(entries, options_map)
-        self.assertEqual([('GOOG', 'USD', 'GOOG'),
-                          ('ITOT', 'USD', 'NYSEARCA:ITOT')],
+        self.assertEqual([('GOOG', 'USD', 'USD', None),
+                          ('ITOT', 'USD', None, 'NYSEARCA:ITOT'),
+                          ('USD', 'USD', None, None)],
                          commodities)
+
+        commodities = holdings.get_commodities_at_date(entries, options_map,
+                                                       date=datetime.date(2013, 4, 2))
+        self.assertEqual([('GOOG', 'USD', 'USD', None),
+                          ('USD', 'USD', None, None)],
+                         commodities)
+
 
     def test_aggregate_holdings_list(self):
         test_holdings = list(itertools.starmap(holdings.Holding, [
