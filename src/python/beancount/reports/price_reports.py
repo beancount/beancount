@@ -10,6 +10,7 @@ from beancount.reports import gviz
 from beancount.parser import printer
 from beancount.core import data
 from beancount.core import amount
+from beancount.core import getters
 from beancount.ops import prices
 from beancount.ops import lifetimes
 
@@ -151,10 +152,32 @@ class PriceDBReport(report.Report):
             file.write('\n')
 
 
+class TickerReport(report.TableReport):
+    """Print a parseable mapping of (base, quote, ticker, name) for all commodities."""
+
+    names = ['tickers', 'symbols']
+
+    def generate_table(self, entries, errors, options_map):
+        commodity_map = getters.get_commodity_map(entries, options_map)
+        ticker_info = getters.get_values_meta(commodity_map, 'name', 'ticker', 'quote')
+
+        price_rows = [
+            (currency, cost_currency, ticker, name)
+            for currency, (name, ticker, cost_currency) in sorted(ticker_info.items())
+            if ticker]
+
+        return table.create_table(price_rows,
+                                  [(0, "Currency"),
+                                   (1, "Cost-Currency"),
+                                   (2, "Symbol"),
+                                   (3, "Name")])
+
+
 __reports__ = [
     CommoditiesReport,
     CommodityLifetimes,
     CommodityPricesReport,
     PricesReport,
     PriceDBReport,
+    TickerReport,
     ]
