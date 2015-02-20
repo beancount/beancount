@@ -299,6 +299,9 @@ def get_commodity_map(entries, options_map, create_missing=True):
     Returns:
       A map of commodity name strings to Commodity directives.
     """
+    if not entries:
+        return {}
+
     commodities_map = {}
     for entry in entries:
         if isinstance(entry, Commodity):

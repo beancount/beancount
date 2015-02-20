@@ -14,6 +14,7 @@ from urllib import request
 from urllib import parse
 
 from beancount.core.amount import D
+from beancount.core import amount
 from beancount.core import getters
 from beancount.core import data
 from beancount.ops import holdings
@@ -125,7 +126,7 @@ def main():
 
         price, price_time = get_google_finance_latest_price(ticker)
 
-        fileloc = data.new_metadata('<{}>'.format(type(fetcher).__name__), 0)
+        fileloc = data.new_metadata('<fetch-prices>', 0)
         price_entries.append(
             data.Price(fileloc, price_time.date(), currency, amount.Amount(price, quote_currency)))
 
