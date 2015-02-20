@@ -404,9 +404,6 @@ beancount: TODO
 
 
 
-  - (performance) Write your own lexer manually and compare performance with
-    flex one. I think we can do a much better job at error reporting by writing
-    our own, but I'm unsure how the performance compares.
 
 
 
@@ -2221,6 +2218,23 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 
   - When an error occurs, skip the lexer to the next empty line and recommence.
 
+** Lexer Rewrite
+
+  Reasons to write your own lexer manually:
+
+  - (performance) Write your own lexer manually and compare performance with
+    flex one. I think we can do a much better job at error reporting by writing
+    our own, but I'm unsure how the performance compares.
+
+  - Support for UTF-8
+
+  - Better error reporting
+
+  - More flexible syntax (see "Is it possbile for beancount to ignore org-mode
+    SCHEDULED and DEADLINE?" thread).
+
+
+
 ** Make the Parser Reentrant
 
   - Make the parser reentrant [2014-08-02]. This is _not_ a difficult task.
@@ -2283,11 +2297,6 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
   - Add 1/rate syntax for prices (and anything... really, why not).
     Convert at parsing time.
 
-
-*** Parser Testing
-
-  - Support a mode for the lexer to spit out its results on stdout, so that we
-    can cross-check with parsers in other languages.
 
 *** Includes
 
