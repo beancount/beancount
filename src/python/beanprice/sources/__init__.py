@@ -1,2 +1,2 @@
-"""Price fetchers from various sources.
+"""Price fetchers for various sources of prices.
 """

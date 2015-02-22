@@ -1,5 +1,7 @@
 """Fetch prices from Yahoo Finance.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import datetime
 from urllib import request
 from urllib import parse

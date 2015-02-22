@@ -1,5 +1,7 @@
 """Fetch prices from Google Finance.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import re
 import datetime
 from urllib import request

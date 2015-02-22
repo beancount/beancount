@@ -1,7 +1,7 @@
 """Read either a Beancount input file or a CSV of positions, and fetch
 corresponding latest prices from the internet.
 """
-
+__author__ = "Martin Blais <blais@furius.ca>"
 
 import csv
 import datetime
