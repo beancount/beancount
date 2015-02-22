@@ -1297,6 +1297,14 @@ http://furius.ca/beancount/doc/proposal-inter
 
 
 
+
+
+
+  - Along with the new inventory, you can make Holding -> Position. This makes
+    a lot of sense actually. Do do this!
+
+
+
   - (documents) documents found in parent directories don't end up creating a
     directive because we skip them because we only restrict to accounts which
     have had an open declaration... this is probably not what we want, in order
@@ -2730,9 +2738,15 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 
 *** Write a New Lexer From Scratch
 
+  Reasons to write your own lexer manually:
+
   - Should support UTF-8 encoding.
 
   - Should support SCHEDULE entries for org-mode (see email discussion).
+  - More flexible syntax (see "Is it possbile for beancount to ignore org-mode
+    SCHEDULED and DEADLINE?" thread).
+
+  - Better error reporting
 
   - (performance) Write your own lexer manually and compare performance with
     flex one. I think we can do a much better job at error reporting by writing
@@ -2810,11 +2824,6 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
   - Add 1/rate syntax for prices (and anything... really, why not).
     Convert at parsing time.
 
-
-*** Parser Testing
-
-  - Support a mode for the lexer to spit out its results on stdout, so that we
-    can cross-check with parsers in other languages.
 
 *** Includes
 
