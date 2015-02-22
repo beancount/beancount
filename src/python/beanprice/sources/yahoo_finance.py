@@ -9,6 +9,9 @@ from urllib import parse
 from beancount.core.amount import D
 
 
+__source_name__ = 'yahoo'
+
+
 # There is also a web service XML/JSON API:
 # http://finance.yahoo.com/webservice/v1/symbols/allcurrencies/quote
 

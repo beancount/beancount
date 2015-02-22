@@ -10,6 +10,9 @@ from urllib import parse
 from beancount.core.amount import D
 
 
+__source_name__ = 'google'
+
+
 # How to query it:
 # http://trading.cheno.net/downloading-google-intraday-historical-data-with-python/
 #

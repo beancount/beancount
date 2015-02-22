@@ -290,21 +290,21 @@ def get_jobs_from_file(filename, date, default_source):
     return jobs
 
 
-def process_args(argv):
+def process_args(argv, valid_price_sources):
     """Process command-line arguments and return a list of jobs to process.
 
     Args:
       argv: A list of command-line arguments. This is mainly allowed to be
         specified in explicitly for the benefit of unit tests.
+      valid_price_sources: A list of strings, the names of valid price sources.
+        The first item is taken to be the default price source.
     Returns:
       A list of Job tuples and a 'do-cache' boolean, true if we should use the
       cache.
     Raises:
       SystemExit: If something could not be parsed.
     """
-    # FIXME: compute this from the list of imports
-    price_sources = ['google', 'yahoo']
-    default_source = price_sources[0]
+    default_source = valid_price_sources[0]
 
     parser = argparse.ArgumentParser(description=__doc__)
 
@@ -316,7 +316,7 @@ def process_args(argv):
                         help="Specify the date for which to fetch the holdings")
 
     parser.add_argument('--source', action='store',
-                        choices=price_sources, default=default_source,
+                        choices=valid_price_sources, default=default_source,
                         help="Specify the default source of data for unspecified tickers.")
 
     parser.add_argument('--no-cache', dest='do_cache', action='store_false', default=True,
@@ -344,10 +344,9 @@ def process_args(argv):
         else:
             parser.error('Invalid scheme "{}"'.format(parsed_uri.scheme))
 
-
     # Validate price sources.
     for job in jobs:
-        if job.source not in price_sources:
+        if job.source not in valid_price_sources:
             parser.error('Invalid source "{}"'.format(parsed_uri.netloc))
 
     return jobs, args.do_cache
@@ -355,4 +354,15 @@ def process_args(argv):
 
 def main():
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
-    process_sources()
+
+    price_source_modules = [google_finance, yahoo_finance]
+
+    # Parse the arguments.
+    price_source_names = [module.name for module in price_source_modules]
+    jobs, do_cache = process_args(sys.argv, price_source_names)
+
+    # Process the jobs.
+    price_source_map = {module.name: module
+                        for mobule in price_source_modules}
+    for job in jobs:
+        print(job)
