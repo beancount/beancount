@@ -556,15 +556,9 @@ http://furius.ca/beancount/doc/proposal-query
   - Operating currencies getting pulled out are necessary... maybe do this in
     the translation?
 
-
   - Support COUNT(), and COUNT(*), for this question on the ledger-cli list:
     https://groups.google.com/d/msg/ledger-cli/4d9ZYVLnCGQ/ZyAqwZE-TBoJ
     Try to reproduce this specific use case.
-
-
-  - BUG: In precedence (most likely), this fails with an exception:
-
-      PRINT FROM 'trip-2008-10-asia' IN tags AND 'trip-2008-10-asia-mysore' IN tags;
 
 
 * Standalone Tools
@@ -870,18 +864,6 @@ http://furius.ca/beancount/doc/proposal-inventory
 
 
 
-  - (performance) Write your own lexer manually and compare performance with
-    flex one. I think we can do a much better job at error reporting by writing
-    our own, but I'm unsure how the performance compares.
-
-  - IMPORTANT LATENT ISSUE. You need to extend the lexer to parse A-Z for flags,
-    not just PSTCU! This is important, as I just realized that it could prevent
-    the correct parsing for entries in a round-trip, with postings produced with
-    unexpected flags. In fact, any character with whitespace on each side should
-    parse as a flag. This is very important.
-
-    This manifests when adding a posting with letter 'M' right now. Replicate
-    this, fix the problem.
 
 
 * Dashboard
@@ -1023,7 +1005,7 @@ http://furius.ca/beancount/doc/proposal-inventory
     the openings. In other words, unrealized gains should be realized
     marked-to-market at the time of open.
 
-  - BUG/CHANGE: Unrealized gain when rendering for closed years does not appear.
+  - Unrealized gain when rendering for closed years does not appear.
     Perhaps we should insert the unrealized gains during close operation.
 
     Idea: close realized gains along with close(), so that they don't show up for
@@ -1897,11 +1879,6 @@ http://furius.ca/beancount/doc/proposal-inter
     either directions, without currencies.
 
 
-  - BUG! import this:
-    documents/2013/Assets/CA/RBC/Checking/2013-11-13.ofx84423.qbo
-    * The balance check at the end is incorrect
-    * The statement are not organized by account; they are mixed together
-
   - Create a 3rd-party dependencies building script for Mac OSX users (fxt).
 
   (Cost Basis)
@@ -1910,11 +1887,6 @@ http://furius.ca/beancount/doc/proposal-inter
   - How do I take into account Wash Sale Adjustments to the cost basis?
 
   - entries_table() really should be called postings_table().
-
-  - Complete parser tests
-    * Modify the lexer to emit EOF and add that in the grammar rules for empty_line.
-    * BUG: Don't crap out when you can't read the file; error should be reported
-      like the other ones.
 
   - You need to validate the account name options (empty, or no :, use regex to constrain).
 
@@ -2745,12 +2717,36 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
   - Bug: Invalid account names should only be reported once.
 
 
-*** Lexer Level Errors
+** Lexer Work
+*** Errors in Flex Lexer
 
   - (parser) Support enabling flex debugging in beancount.core._parser.parse(),
     using "yyset_debug(int bdebug)".
 
   - When an error occurs, skip the lexer to the next empty line and recommence.
+
+    * Modify the lexer to emit EOF and add that in the grammar rules for empty_line.
+
+
+*** Write a New Lexer From Scratch
+
+  - Should support UTF-8 encoding.
+
+  - Should support SCHEDULE entries for org-mode (see email discussion).
+
+  - (performance) Write your own lexer manually and compare performance with
+    flex one. I think we can do a much better job at error reporting by writing
+    our own, but I'm unsure how the performance compares.
+
+  - IMPORTANT LATENT ISSUE. You need to extend the lexer to parse A-Z for flags,
+    not just PSTCU! This is important, as I just realized that it could prevent
+    the correct parsing for entries in a round-trip, with postings produced with
+    unexpected flags. In fact, any character with whitespace on each side should
+    parse as a flag. This is very important.
+
+    This manifests when adding a posting with letter 'M' right now. Replicate
+    this, fix the problem.
+
 
 ** Make the Parser Reentrant
 
