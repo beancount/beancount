@@ -120,7 +120,7 @@ def main():
         quote_currency = quote_currency or cost_currency
 
         # Invert the currencies if the rate is to be inverted.
-        if ticker.startswith('1/'):
+        if ticker.startswith('^'):
             ticker = ticker[2:]
             currency, quote_currency = quote_currency, currency
 
