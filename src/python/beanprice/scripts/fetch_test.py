@@ -66,6 +66,7 @@ class FetchArgsSpec(unittest.TestCase):
           Assets:Invest         100 VEA {41.2000 USD}
           Assets:Invest         100 VWO {45.3000 USD}
           Assets:Invest          20 BND {81.90 USD}
+          Equity:Opening-Balances
 
         2015-02-20 *
           Assets:Invest       10000 JPY
@@ -92,9 +93,11 @@ class FetchArgsSpec(unittest.TestCase):
 
         2015-02-10 *
           Assets:Invest         100 VEA {41.2000 USD}
+          Equity:Opening-Balances
 
         2015-02-15 *
           Assets:Invest         100 VWO {45.3000 USD}
+          Equity:Opening-Balances
         """
         jobs, do_cache = fetch.process_args(["--date=2015-02-12",
                                              "file://{}".format(filename)])
@@ -117,3 +120,23 @@ class FetchArgsSpec(unittest.TestCase):
         with test_utils.capture('stderr'):
             with self.assertRaises(SystemExit):
                 jobs, do_cache = fetch.process_args(['/path/to/nowhere'])
+
+    @test_utils.docfile
+    def test_source(self, filename):
+        """
+        2015-01-01 open Assets:Invest
+        2015-01-01 open Equity:Opening-Balances
+
+        2000-01-01 commodity VEA
+          ticker: "VEA"
+
+        2015-02-20 *
+          Assets:Invest         100 VEA {41.2000 USD}
+          Equity:Opening-Balances
+        """
+        jobs, do_cache = fetch.process_args(["--source=yahoo",
+                                             "file://{}".format(filename)])
+        self.assertEqual([
+            fetch.Job('yahoo', 'VEA', None, 'VEA', 'USD', False),
+            ], sorted(jobs))
+        self.assertTrue(do_cache)
