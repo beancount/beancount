@@ -4,6 +4,8 @@ This module contains the various column accessors and function evaluators that
 are made available by the query compiler via their compilation context objects.
 Define new columns and functions here.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import copy
 import datetime
 import re

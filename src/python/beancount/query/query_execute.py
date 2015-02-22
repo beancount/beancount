@@ -1,5 +1,7 @@
 """Execution of interpreter on data rows.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import collections
 import datetime
 import itertools

@@ -4,6 +4,8 @@ This code accepts the abstract syntax tree produced by the query parser,
 resolves the column and function names, compiles and interpreter and prepares a
 query to be run against a list of entries.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import collections
 import copy
 import datetime

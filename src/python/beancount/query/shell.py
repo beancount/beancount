@@ -1,5 +1,7 @@
 """An interactive command-line shell interpreter for the Beancount Query Language.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import atexit
 import cmd
 import io
