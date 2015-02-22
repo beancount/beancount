@@ -26,7 +26,7 @@ def get_google_finance_latest_price(ticker):
     """Return the latest price found for the symbol.
 
     Args:
-      symbol: An 'ExchangeCode:Symbol' string that is the unambiguous ticker
+      ticker: An 'ExchangeCode:Symbol' string that is the unambiguous ticker
         for the particular financial instrument to query.
     Returns:
       A pair of a price (a Decimal object) and the actual date of that price
