@@ -1,6 +1,6 @@
 -*- mode: org -*-
 beancount: TODO
-* Requirements for Shipping 2.0
+* Priorities
 ** Establish Display Precision
 
   - Make setting the precision from bean-example easier (provide a method to
@@ -32,17 +32,11 @@ beancount: TODO
 
 ** Misc
 
-  - Add a special PYTHONPATH for ledgerhub, to override Beancount to its custom
-    version.
+  - Add a special PYTHONPATH for ledgerhub binaries, to override Beancount to
+    its custom version.
 
   - The 'balances' report should also support a WHERE clause as a nice
     shorthand. I would use that all the time myself if I could.
-
-  - BUG: This should work:
-
-      beancount> select account, sum(position) where currency = 'IRAUSD' group by
-      account order by type;
-      ERROR: All non-aggregates must be covered by GROUP-BY clause in aggregate query.
 
   - Add a query_env function to output the root type of an account, e.g. 'Assets'.
 
@@ -54,38 +48,11 @@ beancount: TODO
     this to reproduce/replace the 'cash' report. Use the same rule from
     bean-report.
 
-  - BUG: When multiple files have been loaded, have bean-web watch all the
-    loaded files.
-
-       "One question: previously, if I wrote to the beancount file that a
-    bean-web process was already using, and if I hit refresh, bean-web noticed
-    the update to the file and re-read. This still works now, but only on the
-    including file, not on the included files. Is this a pain to fix, or
-    relatively easy?"
-
-
 
   - Complete converting price fetching script to use meta-data only and remove
     blais.prices. Also convert the example to declare commodities and the price
     fetching script should just work.
 
-
-
-  - BUG: Precision for rendering is broken for some subsets of amounts (these
-    are 1.20 USD amounts):
-
-      beancount> select date, payee, narration, position where account ~
-      'Expenses:Taxes:TY2015:US:SDI';
-         date                          narration                      posit
-      ---------- - --------------------------------------------------- -----
-      2015-01-02   GOOGLE INC       PAYROLL / GOOGLE INC       PAYROLL 1 USD
-      2015-01-16   GOOGLE INC       PAYROLL / GOOGLE INC       PAYROLL 1 USD
-      2015-01-23   GOOGLE INC       PAYROLL / GOOGLE INC       PAYROLL 0 USD
-
-     This one works:
-
-       beancount> select date, payee, narration, position where account ~
-       'Expenses:Taxes:TY2015:US:SDI' and narration ~ 'GOOGLE';
 
   - Unrealized gains should be modified so that they replace the book value of
     the positions that they adjust, and can be applied at multiple dates. Then,
@@ -125,73 +92,10 @@ beancount: TODO
           Equity:Whatever
 
 
-  - BUG: This breaks!
-
-      bean-query example.beancount balances | head -n 20
-
-    This is due to my shell handling.
-
-
   - Review all the code that is an effective switch/case on directive types and
     add checks for unknown directives. Make sure Commodity is being handled
     correctly. Grep for isinstance. Add else clause everywhere none was, e.g.
     https://bitbucket.org/blais/beancount/src/0e3be569f32a80411df8396d42d5e5ac3487a68f/src/python/beancount/core/realization.py?at=default#cl-292
-
-  - Regenerate example file because it now has commodity attached to them
-    (after adding the commodity directive).
-
-
-  - BUG: with leaked negative basis:
-
-      "This is indeed, a bug triggered by this situation and I'll have to fix it.
-      The unrealized gains plugin computes the list of holdings in order to insert
-      the gains, and it ends up with a holding object like this for your leaked cost
-      basis":
-
-      Holding(account='Assets:Investments:RolloverIRA:ABC', number=Decimal('0.000'),
-      currency='ABC', cost_number=None, cost_currency='USD',
-      book_value=Decimal('-8222.48552000000000000000000'), market_value=None,
-      price_number=None, price_date=datetime.date(2013, 4, 1))
-
-      "Now, it expects that if the commodity is not a currency, it will have a price.
-      But price_number is None, so it complains about it.
-
-      I'll fix this over the weekend; it should be silent."
-
-      Input that reproduces the bug:
-
-          plugin "beancount.plugins.unrealized" "Unrealized"
-
-          2000-01-01 open Assets:Investments:IRA:XXX
-          2000-01-01 open Assets:Investments:RolloverIRA:ABC ABC "NONE"
-
-          2012-09-25 *
-            Assets:Investments:RolloverIRA:ABC  5 ABC {100.00 USD}
-            Assets:Investments:IRA:XXX
-
-          2013-04-01 *
-            Assets:Investments:RolloverIRA:ABC  -5 ABC {101.00 USD}
-            Assets:Investments:IRA:XXX
-
-
-  - BUG: Round-trip test with escaped characters won't work. Add a test, fix
-    this.
-
-       > Oh, I just noticed: bean-report print does not yet print back escaped
-       > characters properly and it does not yet print metadata at all. Another
-       > one for the TODO list, I guess.
-
-
-  - BUG: This will fail with an assertion, should be an error instead:
-
-       2014-11-01 * "Massdrop Group Inc." | "Express Checkout Payment Sent"
-         Expenses:Toys:Electronics    146.37 USD @@ 169.87 USD
-         Assets:CA:PayPal      -169.87 CAD
-
-
-  - BUG: In Emacs beancount-align-to-previous-number: When the cursor is not on
-    the first line of a list of balance entries with no empty line between
-    them, the alignment does not kick in. I don't know why.
 
 
   - Make prices required to always be positive, including with @@, and err on
@@ -206,15 +110,6 @@ beancount: TODO
       user could go fill in the missing prices. I'd probably issue price entries with
       the approximated price (approximated with a distant date) and then feed that
       into another script that would fetch prices for those directives."
-
-  - IMPORTANT LATENT BUG. You need to extend the lexer to parse A-Z for flags,
-    not just PSTCU! This is important, as I just realized that it could prevent
-    the correct parsing for entries in a round-trip, with postings produced with
-    unexpected flags. In fact, any character with whitespace on each side should
-    parse as a flag. This is very important.
-
-    This manifests when adding a posting with letter 'M' right now. Replicate
-    this, fix the problem.
 
   - (easy) Don't render postings in the HTML interface by default. The detail
     can be made available via bean-query now, and users can click on /context
@@ -243,48 +138,10 @@ beancount: TODO
 
   - Fix FIXME in beancount.projects.returns, from DClemente issues.
 
-  - BUG: In web interface... clicking on a directive that cannot be contexted
-    right generates an error like this:
-
-      127.0.0.1 - - [25/Jan/2015 00:41:33] "GET
-      /context/7a79f22d284d032e2b28501e904e4826 HTTP/1.1" 500 59
-      Traceback (most recent call last):
-        File "/usr/local/lib/python3.4/wsgiref/handlers.py", line 137, in run
-          self.result = application(self.environ, self.start_response)
-        File "/usr/local/lib/python3.4/site-packages/bottle.py", line 979, in __call__
-          return self.wsgi(environ, start_response)
-        File "/usr/local/lib/python3.4/site-packages/bottle.py", line 954, in wsgi
-          out = self._cast(self._handle(environ))
-        File "/usr/local/lib/python3.4/site-packages/bottle.py", line 862, in _handle
-          return route.call(**args)
-        File "/usr/local/lib/python3.4/site-packages/bottle.py", line 1729, in wrapper
-          rv = callback(*a, **ka)
-        File "/home/blais/p/beancount/src/python/beancount/web/web.py", line 939, in
-        wrapper
-          return callback(*posargs, **kwargs)
-        File "/home/blais/p/beancount/src/python/beancount/web/web.py", line 381, in
-        context_
-          app.entries, dcontext, entry.meta.filename, entry.meta.lineno))
-        File "/home/blais/p/beancount/src/python/beancount/reports/context.py", line
-        33, in render_entry_context
-          raise SystemExit("No entry could be found before {}:{}".format(filename,
-          lineno))
-
-
   - In balance/aggregate reports, render the balances for parent accounts too.
 
   - Make bean-web and bean-query use the DisplayContext object in order to
     render all their numbers. Users are noticing, this is annoying.
-
-  - BUG: This works, and it should not (probably just evaluates to true, but
-    it's misleading):
-
-      select * from 'Income:US:Hoogle:Vacation';
-
-
-
-
-
 
 
 ** Documentation / Ongoing
@@ -1009,11 +866,22 @@ http://furius.ca/beancount/doc/proposal-inventory
   - Can I use Py_RETURN_NONE in order to incref and assign, in the lexer,
     instead of doing it in two steps?
 
+  - Optimize the main update() routine that is called in display_context.
+
+
+
   - (performance) Write your own lexer manually and compare performance with
     flex one. I think we can do a much better job at error reporting by writing
     our own, but I'm unsure how the performance compares.
 
-  - Optimize the main update() routine that is called in display_context.
+  - IMPORTANT LATENT ISSUE. You need to extend the lexer to parse A-Z for flags,
+    not just PSTCU! This is important, as I just realized that it could prevent
+    the correct parsing for entries in a round-trip, with postings produced with
+    unexpected flags. In fact, any character with whitespace on each side should
+    parse as a flag. This is very important.
+
+    This manifests when adding a posting with letter 'M' right now. Replicate
+    this, fix the problem.
 
 
 * Dashboard
