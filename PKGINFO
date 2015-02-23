@@ -4,7 +4,5 @@ Author: Martin Blais
 Author-Email: blais@furius.ca
 ChangeLog: http://furius.ca/beancount/CHANGES
 Bugs-Reporting: mailto:blais@furius.ca
-Download-Releases: http://furius.ca/downloads/beancount/releases
-Download-Snapshots: https://hg.furius.ca/public/beancount
+Download-Snapshots: http://bitbucket.org/blais/beancount
 License: GNU GPL
-
