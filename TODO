@@ -39,6 +39,8 @@ beancount: TODO
 
   (booking)
   - Change booking to always have lot-date and list trades automatically.
+  - Report trades, all bookings should be findable after the fact using a link.
+    This can be added without doing full booking.
 
   (query)
   - Implement implitict GROUP BY and BALANCES ... WHERE syntax
