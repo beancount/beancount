@@ -1196,6 +1196,26 @@ http://furius.ca/beancount/doc/proposal-inter
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - Compute pre-tax and post-tax net worth reports, based on a "tax" account
+    metadata field and some reasonable assumptions.
+
+
+
+  - Implement an optional feature that disables the merging of inventory lots
+    for all lots except lots without cost. I believe that this won't make any
+    difference to the complexity of selecting reducing lots but I want to test
+    it out on my real file before committing to the idea. Removing merging of
+    lots-at-cost would make the merging logic simpler and easier to understand.
+
+
+
+  - WILL report. Create a new type of report that produces a readable document
+    with the entire list of accounts and descriptions and account numbers pulled
+    from metadata. This document should be attacheable to a will, to describe
+    all the accounts, institutions' phone numbers, account numbers, in a way
+    that makes it possible for someone executing a will to easily understand
+    that full nature of the assets and how to reach the relevant institutions to
+    liquidate the assets.
 
 
   - Consider allowing a cost basis of zero. (See "Modelling stock options with
