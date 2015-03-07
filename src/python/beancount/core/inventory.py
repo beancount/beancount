@@ -137,6 +137,21 @@ class Inventory(list):
         return all(abs(position.number) <= epsilon
                    for position in self)
 
+    def is_mixed(self):
+        """Return true if the inventory contains a mix of positive and negative lots for
+        at least one instrument.
+
+        Returns:
+          A boolean.
+        """
+        signs_map = {}
+        for position in self:
+            sign = position.number >= 0
+            prev_sign = signs_map.setdefault(position.lot.currency, sign)
+            if sign != prev_sign:
+                return True
+        return False
+
     def __neg__(self):
         """Return an inventory with the negative of values of this one.
 

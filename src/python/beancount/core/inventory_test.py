@@ -188,6 +188,16 @@ class TestInventory(unittest.TestCase):
         self.assertTrue(ninv.is_small(D('1.53')))
         self.assertTrue(ninv.is_small(D('1.52')))
 
+    def test_is_mixed(self):
+        inv = Inventory.from_string('100 GOOG {250 USD}, 101 GOOG {251 USD}')
+        self.assertFalse(inv.is_mixed())
+
+        inv = Inventory.from_string('100 GOOG {250 USD}, -1 GOOG {251 USD}')
+        self.assertTrue(inv.is_mixed())
+
+        inv = Inventory.from_string('-2 GOOG {250 USD}, -1 GOOG {251 USD}')
+        self.assertFalse(inv.is_mixed())
+
     def test_op_neg(self):
         inv = Inventory()
         inv.add_amount(A('10 USD'))
