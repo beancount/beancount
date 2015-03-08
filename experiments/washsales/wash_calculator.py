@@ -50,7 +50,9 @@ def book_position(self, entry_date, pos):
     if pos.number > ZERO:
         # Always add the dates for augmenting lots. We also create a new lot if
         # the dates don't match.
-        pos.lot = pos.lot._replace(lot_date=entry_date)
+        if pos.lot.lot_date is None:
+            pos.lot = pos.lot._replace(lot_date=entry_date)
+        lot = pos.lot
 
         # Deal with an augmenting lot.
         for pos2 in self:
@@ -62,30 +64,40 @@ def book_position(self, entry_date, pos):
             self.append(pos)
 
     else:
+        remove_list = []
+
         # Deal with a reducing lot.
-        if pos.lot.lot_date:
-                # Deal with a reducing lot requesting a specific date.
-                for pos2 in self:
-                    if pos2.lot == lot:
-                        change = min(pos2.number, -pos.number)
-                        pos2.add(-change)
-                        pos.number += change
+        lot = pos.lot
+        if lot.lot_date:
+            # Deal with a reducing lot requesting a specific date.
+            for pos2 in self:
+                if pos2.lot == lot:
+                    change = min(pos2.number, -pos.number)
+                    pos.number += change
+                    pos2.add(-change)
+                    if pos2.number == ZERO:
+                        remove_list.append(pos2)
+                    if pos.number == ZERO:
                         break
-                else:
-                    raise ValueError("Could not find a matching lot for {}.".format(pos.lot))
+            else:
+                raise ValueError("Could not find a matching lot for {}.".format(lot))
         else:
             # Deal with a reducing lot without a date, interpret the date as a
             # wildcard.
             for pos2 in self:
-                if (pos2.lot.currency == lot.currency and
-                    pos2.lot.cost == lot.cost):
-
+                if (pos2.lot.currency == lot.currency and pos2.lot.cost == lot.cost):
                     change = min(pos2.number, -pos.number)
-                    pos2.add(-change)
                     pos.number += change
-                    break
+                    pos2.add(-change)
+                    if pos2.number == ZERO:
+                        remove_list.append(pos2)
+                    if pos.number == ZERO:
+                        break
             else:
-                raise ValueError("Could not find a matching lot for {}.".format(pos.lot))
+                raise ValueError("Could not find a matching lot for {}.".format(lot))
+
+        for pos_remove in remove_list:
+            self.remove(pos_remove)
 
 
 def main():
