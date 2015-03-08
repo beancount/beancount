@@ -71,7 +71,6 @@ def validate_inventory_booking(entries, unused_options_map):
                 # Check if the resulting inventory is mixed, which is not
                 # allowed under the STRICT method.
                 if running_balance.is_mixed():
-                    assert not reducing, "Internal error, mixed inventory after augmenting."
                     errors.append(
                         ValidationError(
                             posting.entry.meta,
