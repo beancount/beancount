@@ -53,6 +53,11 @@ from .position import from_string as position_from_string
 from .display_context import DEFAULT_FORMATTER
 
 
+# A temporary flag, used to experiment with various booking cases.
+# This gets set from validate_inventory_booking() for a single loop of checks.
+__experiment_booking__ = False
+
+
 class Inventory(list):
     """An Inventory is a set of positions.
 
@@ -288,17 +293,21 @@ class Inventory(list):
         Args:
           lot: An instance of Lot to key by.
         Returns:
-          An instance of Position, either the position that was found, or a new
-          Position instance that was created for this lot.
+          An pair of
+            found: An instance of Position, either the position that was found, or a new
+              Position instance that was created for this lot.
+            created: A boolean, true if the position had to be created.
         """
         for position in self:
             if position.lot == lot:
                 found = position
+                created = False
                 break
         else:
             found = Position(lot, ZERO)
             self.append(found)
-        return found
+            created = True
+        return found, created
 
     def add_amount(self, amount, cost=None, lot_date=None):
         """Add to this inventory using amount, cost and date. This adds with strict lot
@@ -357,9 +366,26 @@ class Inventory(list):
           of a new position).
         """
         # Find the position.
-        position = self._get_create_position(lot)
+        position, created = self._get_create_position(lot)
         reducing = (position.number * number) < 0
         position.add(number)
+        assert not (created and reducing), (
+            "Internal error: It's impossible to reduce a created position.")
+
+        # if __experiment_booking__:
+        #     # Detect cases where we're augmenting a found lot held at cost. This is
+        #     # for an experiment: We can pose a conjecture that for lots held at
+        #     # cost, we may never need to do lot merging. This could simplify the
+        #     # booking algorithms.
+        #     if not created and not reducing and lot.cost:
+        #         print('Augmenting lot held at cost {:10} {}'.format(number, lot))
+        #
+        #     # Look for augmenting lots with an explicit date. This is done in
+        #     # order to prepare for booking on a partial pattern for the new
+        #     # booking system.
+        #     if lot.lot_date:
+        #         if not reducing:
+        #             print('Augmenting lot with a date {:10} {}'.format(number, lot))
 
         # If the resulting position is a zero position, remove it. We want to
         # avoid zero positions in the Inventory as an invariant.

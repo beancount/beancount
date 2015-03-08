@@ -1207,6 +1207,14 @@ http://furius.ca/beancount/doc/proposal-inter
     it out on my real file before committing to the idea. Removing merging of
     lots-at-cost would make the merging logic simpler and easier to understand.
 
+    But what about something like this? Do we want multiple lots here?
+
+       2005-12-29 * "Dividend on NB550"
+         Assets:CA:RRSP:NB550            1.340 NB550 {18.2348 CAD}
+         Assets:CA:RRSP:NB550           28.646 NB550 {18.2348 CAD}
+         Income:CA:RRSP:Dividends
+
+
 
 
   - WILL report. Create a new type of report that produces a readable document

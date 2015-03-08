@@ -54,6 +54,8 @@ def validate_inventory_booking(entries, unused_options_map):
     # A mapping of account name to booking method, accumulated in the main loop.
     booking_methods = {}
 
+    ## inventory.__experiment_booking__ = True
+
     balances = collections.defaultdict(inventory.Inventory)
     for entry in entries:
         if isinstance(entry, data.Transaction):
@@ -80,6 +82,8 @@ def validate_inventory_booking(entries, unused_options_map):
 
         elif isinstance(entry, data.Open):
             booking_methods[entry.account] = entry.booking
+
+    ## inventory.__experiment_booking__ = False
 
     return errors
 
