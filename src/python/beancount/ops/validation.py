@@ -54,8 +54,6 @@ def validate_inventory_booking(entries, unused_options_map):
     # A mapping of account name to booking method, accumulated in the main loop.
     booking_methods = {}
 
-    ## inventory.__experiment_booking__ = True
-
     balances = collections.defaultdict(inventory.Inventory)
     for entry in entries:
         if isinstance(entry, data.Transaction):
@@ -64,7 +62,7 @@ def validate_inventory_booking(entries, unused_options_map):
                 # without allowing booking to a negative position, and if an error
                 # is encountered, catch it and return it.
                 running_balance = balances[posting.account]
-                position_, reducing = running_balance.add_position(posting.position)
+                position_, _ = running_balance.add_position(posting.position)
 
                 # Skip this check if the booking method is set to ignore it.
                 if booking_methods.get(posting.account, None) == 'NONE':
@@ -81,9 +79,10 @@ def validate_inventory_booking(entries, unused_options_map):
                             posting.entry))
 
         elif isinstance(entry, data.Open):
+            # These Open directives should always appear beforehand as per the
+            # assumptions on the list of entries, so should never be a problem
+            # finding them. If not, move this loop to a dedicated before.
             booking_methods[entry.account] = entry.booking
-
-    ## inventory.__experiment_booking__ = False
 
     return errors
 

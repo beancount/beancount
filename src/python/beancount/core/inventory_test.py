@@ -12,6 +12,7 @@ from .amount import D
 from .position import Position
 from .position import Lot
 from .inventory import Inventory
+from .inventory import Booking
 from . import amount
 from . import position
 from . import inventory
@@ -311,6 +312,20 @@ class TestInventory(unittest.TestCase):
         # Add to above zero again
         inv.add_amount(A('18.72 USD'))
         self.checkAmount(inv, '10', 'USD')
+
+    def test_add__booking(self):
+        inv = Inventory()
+        _, booking = inv.add_amount(A('100.00 USD'))
+        self.assertEqual(Booking.CREATED, booking)
+
+        _, booking = inv.add_amount(A('20.00 USD'))
+        self.assertEqual(Booking.AUGMENTED, booking)
+
+        _, booking = inv.add_amount(A('-20 USD'))
+        self.assertEqual(Booking.REDUCED, booking)
+
+        _, booking = inv.add_amount(A('-100 USD'))
+        self.assertEqual(Booking.REDUCED, booking)
 
     def test_add_multi_currency(self):
         inv = Inventory()

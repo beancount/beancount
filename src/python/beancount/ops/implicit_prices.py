@@ -50,7 +50,7 @@ def add_implicit_prices(entries, unused_options_map):
             for posting in entry.postings:
                 # Check if the position is matching against an existing
                 # position.
-                _, reducing = balances[posting.account].add_position(posting.position)
+                _, booking = balances[posting.account].add_position(posting.position)
 
                 # Add prices when they're explicitly specified on a posting. An
                 # explicitly specified price may occur in a conversion, e.g.
@@ -68,7 +68,8 @@ def add_implicit_prices(entries, unused_options_map):
                 # position. This happens when we're just specifying the cost,
                 # e.g.
                 #      Assets:Account    100 GOOG {564.20}
-                elif posting.position.lot.cost is not None and not reducing:
+                elif (posting.position.lot.cost is not None and
+                      booking != inventory.Booking.REDUCED):
                     meta = data.new_metadata(entry.meta.filename, entry.meta.lineno)
                     price_entry = data.Price(meta, entry.date,
                                              posting.position.lot.currency,

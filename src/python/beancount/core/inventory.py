@@ -52,10 +52,19 @@ from .position import lot_currency_pair
 from .position import from_string as position_from_string
 from .display_context import DEFAULT_FORMATTER
 
+# pylint: disable=invalid-name
+try:
+    import enum
+    Enum = enum.Enum
+except ImportError:
+    Enum = object
 
-# A temporary flag, used to experiment with various booking cases.
-# This gets set from validate_inventory_booking() for a single loop of checks.
-__experiment_booking__ = False
+
+class Booking(Enum):
+    """Result of booking a new lot to an existing inventory."""
+    CREATED = 1   # A new lot was created.
+    REDUCED = 2   # An existing lot was reduced.
+    AUGMENTED = 3 # An existing lot was augmented.
 
 
 class Inventory(list):
@@ -321,7 +330,9 @@ class Inventory(list):
           lot_date: An instance of datetime.date or None, the lot-date to use in
             the key to the inventory.
         Returns:
-          True if this position was booked against and reduced another.
+          A pair of (position, booking) where 'position' is the position that
+          that was modified, and where 'booking' is a Booking enum that hints at
+          how the lot was booked to this inventory.
         """
         assert isinstance(amount, Amount)
         assert cost is None or isinstance(cost, Amount), repr(cost)
@@ -336,7 +347,9 @@ class Inventory(list):
         Args:
           new_position: The position to add to this inventory.
         Returns:
-          True if this position was booked against and reduced another.
+          A pair of (position, booking) where 'position' is the position that
+          that was modified, and where 'booking' is a Booking enum that hints at
+          how the lot was booked to this inventory.
         """
         assert isinstance(new_position, Position), new_position
         return self._add(new_position.number, new_position.lot)
@@ -360,10 +373,9 @@ class Inventory(list):
           number: The number of units to add the given lot by.
           lot: The lot that we want to add to.
         Returns:
-          A pair of (position, reducing) where 'position' is the position that
-          that was modified, and where 'reducing' indicates whether this change
-          is a reduction of an existing position (vs. an increase or addition
-          of a new position).
+          A pair of (position, booking) where 'position' is the position that
+          that was modified, and where 'booking' is a Booking enum that hints at
+          how the lot was booked to this inventory.
         """
         # Find the position.
         position, created = self._get_create_position(lot)
@@ -372,27 +384,15 @@ class Inventory(list):
         assert not (created and reducing), (
             "Internal error: It's impossible to reduce a created position.")
 
-        # if __experiment_booking__:
-        #     # Detect cases where we're augmenting a found lot held at cost. This is
-        #     # for an experiment: We can pose a conjecture that for lots held at
-        #     # cost, we may never need to do lot merging. This could simplify the
-        #     # booking algorithms.
-        #     if not created and not reducing and lot.cost:
-        #         print('Augmenting lot held at cost {:10} {}'.format(number, lot))
-        #
-        #     # Look for augmenting lots with an explicit date. This is done in
-        #     # order to prepare for booking on a partial pattern for the new
-        #     # booking system.
-        #     if lot.lot_date:
-        #         if not reducing:
-        #             print('Augmenting lot with a date {:10} {}'.format(number, lot))
-
         # If the resulting position is a zero position, remove it. We want to
         # avoid zero positions in the Inventory as an invariant.
         if position.number == ZERO:
             self.remove(position)
 
-        return position, reducing
+        return position, (
+            Booking.REDUCED if reducing else
+            Booking.CREATED if created else
+            Booking.AUGMENTED)
 
     def __add__(self, other):
         """Add another inventory to this one. This inventory is not modified.
