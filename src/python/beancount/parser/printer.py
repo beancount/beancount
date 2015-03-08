@@ -205,8 +205,7 @@ class EntryPrinter:
         # present. Also render a string with the weight.
         if posting.position:
             position_str = posting.position.to_string(self.dformat)
-            weight_str = ';; {}'.format(
-                interpolate.get_posting_weight(posting).to_string(self.dformat))
+            weight_str = interpolate.get_posting_weight(posting).to_string(self.dformat)
         else:
             position_str = ''
             weight_str = ''
@@ -221,7 +220,7 @@ class EntryPrinter:
         # method rendering a transaction attempts to align the posting strings
         # together.
         flag_account, position_str, weight_str = self.render_posting_strings(posting)
-        oss.write('  {:64} {} {}\n'.format(flag_account, position_str, weight_str).rstrip())
+        oss.write('  {:64} {} ; {}\n'.format(flag_account, position_str, weight_str).rstrip())
         if posting.meta:
             self.write_metadata(posting.meta, oss, '    ')
 
