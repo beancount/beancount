@@ -1,4 +1,7 @@
 #!/usr/bin/env make
 
 wash:
-	$(PWD)/wash-calculator.py $(L) GOOG GOOGL
+	$(PWD)/wash_calculator.py $(L) GOOG GOOGL
+
+test:
+	nosetests $(PWD)
