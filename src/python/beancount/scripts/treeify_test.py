@@ -500,3 +500,24 @@ class TestTreeify(TestTreeifyBase):
                   `-- Cdefgh           101.00 USD
                       `-- Defghij      102.00 USD
         """, False)
+
+    def test_whitespace(self):
+        # Test with columns that have whitespace in them.
+        self.treeify_equal(
+            "Assets:Bank:DE:Bankname:Tagesgeld         3.57 EUR\n"
+            "Equity:Opening-Balances                  -3.57 EUR\n"
+            "Expenses                          \n"
+            "Income                            \n"
+            "Liabilities                       \n",
+            """\
+             |-- Assets
+             |   `-- Bank
+             |       `-- DE
+             |           `-- Bankname
+             |               `-- Tagesgeld             3.57 EUR
+             |-- Equity
+             |   `-- Opening-Balances                 -3.57 EUR
+             |-- Expenses
+             |-- Income
+             `-- Liabilities
+        """, False)

@@ -43,29 +43,39 @@ def find_column(lines, pattern, delimiter):
     beginnings = collections.defaultdict(list)
     pattern_and_whitespace = "({})(?P<ws>{}.|$)".format(pattern, delimiter)
     for no, line in enumerate(lines):
+        #line = line.rstrip('\n')
         for match in re.finditer(pattern_and_whitespace, line):
             beginnings[match.start()].append((no, line, match))
 
-    # Check if each column found is valid, that is, if the maximum of the
-    # following text overlaps with one of the column's text. This is important:
-    # We assume that a column will have been formatted to full width and that no
-    # text following the line overlap with the column, even in its trailing
-    # whitespace. In other words, this is a violation because "10,990.74"
-    # overlaps with the end of "Insurance" and not to be recognized as a valid
-    # column:
+    # For each potential column found, verify that it is valid. A valid column
+    # will have the maximum of its content text not overlap with any of the
+    # following text. We assume that a column will have been formatted to full
+    # width and that no text following the line overlap with the column, even in
+    # its trailing whitespace.
+    #
+    # In other words, the following example is a violation because "10,990.74"
+    # overlaps with the end of "Insurance" and so this would not be recognized
+    # as a valid column:
     #
     # Expenses:Food:Restaurant     10,990.74 USD
     # Expenses:Health:Dental:Insurance   208.80 USD
     #
     for leftmost_column, column_matches in beginnings.items():
+
+        # Compute the location of the rightmost column of text.
         rightmost_column = max(match.end(1) for _, _, match in column_matches)
+
+        # Compute the leftmost location of the content following the column text
+        # and past its whitespace.
         following_column = min(match.end() if match.group('ws') else 10000
-                               for _, _, match in column_matches) - 1
+                               for _, _, match in column_matches)
+
         if rightmost_column < following_column:
             # We process only the very first match.
             return_matches = [(no, match.group(1).rstrip())
                               for no, _, match in column_matches]
             return return_matches, leftmost_column, rightmost_column
+
 
 
 class Node(list):
