@@ -218,16 +218,17 @@ class CostInventory(query_compile.EvalFunction):
         args = self.eval_args(context)
         return args[0].cost()
 
-class ConvertAmount(query_compile.EvalFunction):
-    "Coervce an amount to a particular currency."
-    __intypes__ = [amount.Amount, str]
-
-    def __init__(self, operands):
-        super().__init__(operands, amount.Amount)
-
-    def __call__(self, context):
-        args = self.eval_args(context)
-        return prices.convert_amount(context.price_map, args[1], args[0])
+# FIXME: This isn't ready yet.
+# class ConvertAmount(query_compile.EvalFunction):
+#     "Coervce an amount to a particular currency."
+#     __intypes__ = [amount.Amount, str]
+#
+#     def __init__(self, operands):
+#         super().__init__(operands, amount.Amount)
+#
+#     def __call__(self, context):
+#         args = self.eval_args(context)
+#         return prices.convert_amount(context.price_map, args[1], args[0])
 
 
 SIMPLE_FUNCTIONS = {
@@ -242,7 +243,6 @@ SIMPLE_FUNCTIONS = {
     ('units', inventory.Inventory) : UnitsInventory,
     ('cost', position.Position)    : CostPosition,
     ('cost', inventory.Inventory)  : CostInventory,
-    'convert'                      : ConvertAmount,
     'year'                         : Year,
     'month'                        : Month,
     'ymonth'                       : YearMonth,
