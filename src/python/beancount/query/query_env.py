@@ -220,7 +220,7 @@ class CostInventory(query_compile.EvalFunction):
 
 # FIXME: This isn't ready yet.
 # class ConvertAmount(query_compile.EvalFunction):
-#     "Coervce an amount to a particular currency."
+#     "Coerce an amount to a particular currency."
 #     __intypes__ = [amount.Amount, str]
 #
 #     def __init__(self, operands):
