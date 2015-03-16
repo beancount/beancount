@@ -182,10 +182,10 @@ niceness)."
      (let ((end-marker (set-marker (make-marker) ,end)))
        (goto-char ,begin)
        (beginning-of-line)
-       (while (< (point) end-marker)
+       (while (and (not (= (point) (point-max))) (< (point) end-marker))
+         (beginning-of-line)
          (progn ,@exprs)
          (forward-line 1)
-         (beginning-of-line)
          ))))
 
 
