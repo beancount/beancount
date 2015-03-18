@@ -1,3 +1,7 @@
+"""Tests for pager code.
+"""
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import unittest
 import re
 

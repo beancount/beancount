@@ -1,6 +1,57 @@
 -*- mode: org -*-
 beancount: TODO
 * Priorities
+** Notes
+
+  - Move out the price fetch to src/python/beanprice module, should be
+    independent from LedgerHub and it should just work, remove script.
+
+  - Complete documenting taxes (this is a great time for it)
+
+  - Implement CSV output for bean-query (redstreet)
+
+  - Implement queries on metadata fields (for portfolio analysis aggregations)
+  - Implement the dashboard on the example file, take the code out of my
+    private code stash and share.
+
+  - Write simple arithmetic expression support
+
+  - Convert example file to use beancount.plugins.ira_contribs plugin.
+
+  - Change name of IRAUSD to 401KUSD or USD401K
+
+  - Complete double-entry introduction document & presentation
+
+  - Fetch missing prices for my ledger file and recompute returns.
+  - Returns calculation should spit out missing prices.
+    Automate returns calculation.
+
+  - Write a wash sales calculation code that can input from either a Beancount
+    input file or a spreadsheet.
+
+  - Limbo accounts: Start a document on handling limbo accounts, summarize all
+    info from emails.
+
+  - Complete text-statements to text for bean-report and ELI, complete with
+    --date on those reports.
+
+  - Export "net worth over time" project.
+
+  (booking)
+  - Change booking to always have lot-date and list trades automatically.
+  - Report trades, all bookings should be findable after the fact using a link.
+    This can be added without doing full booking.
+
+  (query)
+  - Implement implitict GROUP BY and BALANCES ... WHERE syntax
+  - Implement output format options (esp. CSV for spreadsheets).
+
+  (documentation)
+  - Slide: 4 methods: bean-web, bean-report, bean-query, write script + plugin
+
+
+
+
 ** Establish Display Precision
 
   - Make setting the precision from bean-example easier (provide a method to
@@ -53,11 +104,6 @@ beancount: TODO
     blais.prices. Also convert the example to declare commodities and the price
     fetching script should just work.
 
-
-  - Unrealized gains should be modified so that they replace the book value of
-    the positions that they adjust, and can be applied at multiple dates. Then,
-    the realization should automatically occur both at the beginning and end of
-    reporting periods.
 
 
   - Fix the closing criterion for empty accounts.
@@ -146,6 +192,8 @@ beancount: TODO
 
 ** Documentation / Ongoing
 
+  - Write out the taxes section, you have all the details, no need to wait
+
   - Update the example file in order to include support for the commodities.
 
   - Make a single doc / single about the four tools that can be used to get
@@ -180,8 +228,6 @@ beancount: TODO
   - A nice new Health Care section is nearly complete... complete it with DEDUC
     and COPAY legs explanation. Write an accompanying plugin to insert the
     deductible tracking and what-not.
-
-  - Write out the taxes section, you have all the details, no need to wait
 
   - Write document on converting between implementations
 
@@ -556,15 +602,9 @@ http://furius.ca/beancount/doc/proposal-query
   - Operating currencies getting pulled out are necessary... maybe do this in
     the translation?
 
-
   - Support COUNT(), and COUNT(*), for this question on the ledger-cli list:
     https://groups.google.com/d/msg/ledger-cli/4d9ZYVLnCGQ/ZyAqwZE-TBoJ
     Try to reproduce this specific use case.
-
-
-  - BUG: In precedence (most likely), this fails with an exception:
-
-      PRINT FROM 'trip-2008-10-asia' IN tags AND 'trip-2008-10-asia-mysore' IN tags;
 
 
 * Standalone Tools
@@ -870,18 +910,6 @@ http://furius.ca/beancount/doc/proposal-inventory
 
 
 
-  - (performance) Write your own lexer manually and compare performance with
-    flex one. I think we can do a much better job at error reporting by writing
-    our own, but I'm unsure how the performance compares.
-
-  - IMPORTANT LATENT ISSUE. You need to extend the lexer to parse A-Z for flags,
-    not just PSTCU! This is important, as I just realized that it could prevent
-    the correct parsing for entries in a round-trip, with postings produced with
-    unexpected flags. In fact, any character with whitespace on each side should
-    parse as a flag. This is very important.
-
-    This manifests when adding a posting with letter 'M' right now. Replicate
-    this, fix the problem.
 
 
 * Dashboard
@@ -1023,11 +1051,17 @@ http://furius.ca/beancount/doc/proposal-inventory
     the openings. In other words, unrealized gains should be realized
     marked-to-market at the time of open.
 
-  - BUG/CHANGE: Unrealized gain when rendering for closed years does not appear.
+  - Unrealized gain when rendering for closed years does not appear.
     Perhaps we should insert the unrealized gains during close operation.
 
     Idea: close realized gains along with close(), so that they don't show up for
     the latest year.
+
+  - Unrealized gains should be modified so that they replace the book value of
+    the positions that they adjust, and can be applied at multiple dates. Then,
+    the realization should automatically occur both at the beginning and end of
+    reporting periods.
+
 
 
 * Inter-Account Booking
@@ -1162,6 +1196,34 @@ http://furius.ca/beancount/doc/proposal-inter
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - Compute pre-tax and post-tax net worth reports, based on a "tax" account
+    metadata field and some reasonable assumptions.
+
+
+
+  - Implement an optional feature that disables the merging of inventory lots
+    for all lots except lots without cost. I believe that this won't make any
+    difference to the complexity of selecting reducing lots but I want to test
+    it out on my real file before committing to the idea. Removing merging of
+    lots-at-cost would make the merging logic simpler and easier to understand.
+
+    But what about something like this? Do we want multiple lots here?
+
+       2005-12-29 * "Dividend on NB550"
+         Assets:CA:RRSP:NB550            1.340 NB550 {18.2348 CAD}
+         Assets:CA:RRSP:NB550           28.646 NB550 {18.2348 CAD}
+         Income:CA:RRSP:Dividends
+
+
+
+
+  - WILL report. Create a new type of report that produces a readable document
+    with the entire list of accounts and descriptions and account numbers pulled
+    from metadata. This document should be attacheable to a will, to describe
+    all the accounts, institutions' phone numbers, account numbers, in a way
+    that makes it possible for someone executing a will to easily understand
+    that full nature of the assets and how to reach the relevant institutions to
+    liquidate the assets.
 
 
   - Consider allowing a cost basis of zero. (See "Modelling stock options with
@@ -1312,6 +1374,14 @@ http://furius.ca/beancount/doc/proposal-inter
   - Do we need to insert Open entries for the equity accounts described in
     options? I think we could safely plop that at the very beginning of the
     entries list in the parser.
+
+
+
+
+
+
+  - Along with the new inventory, you can make Holding -> Position. This makes
+    a lot of sense actually. Do do this!
 
 
 
@@ -1897,11 +1967,6 @@ http://furius.ca/beancount/doc/proposal-inter
     either directions, without currencies.
 
 
-  - BUG! import this:
-    documents/2013/Assets/CA/RBC/Checking/2013-11-13.ofx84423.qbo
-    * The balance check at the end is incorrect
-    * The statement are not organized by account; they are mixed together
-
   - Create a 3rd-party dependencies building script for Mac OSX users (fxt).
 
   (Cost Basis)
@@ -1910,11 +1975,6 @@ http://furius.ca/beancount/doc/proposal-inter
   - How do I take into account Wash Sale Adjustments to the cost basis?
 
   - entries_table() really should be called postings_table().
-
-  - Complete parser tests
-    * Modify the lexer to emit EOF and add that in the grammar rules for empty_line.
-    * BUG: Don't crap out when you can't read the file; error should be reported
-      like the other ones.
 
   - You need to validate the account name options (empty, or no :, use regex to constrain).
 
@@ -2745,12 +2805,42 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
   - Bug: Invalid account names should only be reported once.
 
 
-*** Lexer Level Errors
+** Lexer Work
+*** Errors in Flex Lexer
 
   - (parser) Support enabling flex debugging in beancount.core._parser.parse(),
     using "yyset_debug(int bdebug)".
 
   - When an error occurs, skip the lexer to the next empty line and recommence.
+
+    * Modify the lexer to emit EOF and add that in the grammar rules for empty_line.
+
+
+*** Write a New Lexer From Scratch
+
+  Reasons to write your own lexer manually:
+
+  - Should support UTF-8 encoding.
+
+  - Should support SCHEDULE entries for org-mode (see email discussion).
+  - More flexible syntax (see "Is it possbile for beancount to ignore org-mode
+    SCHEDULED and DEADLINE?" thread).
+
+  - Better error reporting
+
+  - (performance) Write your own lexer manually and compare performance with
+    flex one. I think we can do a much better job at error reporting by writing
+    our own, but I'm unsure how the performance compares.
+
+  - IMPORTANT LATENT ISSUE. You need to extend the lexer to parse A-Z for flags,
+    not just PSTCU! This is important, as I just realized that it could prevent
+    the correct parsing for entries in a round-trip, with postings produced with
+    unexpected flags. In fact, any character with whitespace on each side should
+    parse as a flag. This is very important.
+
+    This manifests when adding a posting with letter 'M' right now. Replicate
+    this, fix the problem.
+
 
 ** Make the Parser Reentrant
 
@@ -2814,11 +2904,6 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
   - Add 1/rate syntax for prices (and anything... really, why not).
     Convert at parsing time.
 
-
-*** Parser Testing
-
-  - Support a mode for the lexer to spit out its results on stdout, so that we
-    can cross-check with parsers in other languages.
 
 *** Includes
 

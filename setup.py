@@ -35,6 +35,7 @@ treeify
 """.splitlines() if x and not x.startswith('#')]
 
 
+# Please read: http://furius.ca/beancount/doc/install about releases.
 setup(
     name="beancount",
     version='2.0beta2',
@@ -52,6 +53,7 @@ setup(
     author="Martin Blais",
     author_email="blais@furius.ca",
     url="http://furius.ca/beancount",
+    download_url="http://bitbucket.org/blais/beancount",
 
     # See note about about setuptools; uncomment if fixed.
     ##install_requires = ['python-dateutil'],

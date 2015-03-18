@@ -1,5 +1,7 @@
 """Rendering of rows.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import collections
 import datetime
 import math

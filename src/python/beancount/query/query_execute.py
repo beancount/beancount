@@ -1,5 +1,7 @@
 """Execution of interpreter on data rows.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import collections
 import datetime
 import itertools
@@ -13,6 +15,7 @@ from beancount.core import getters
 from beancount.parser import printer
 from beancount.parser import options
 from beancount.ops import summarize
+from beancount.ops import prices
 from beancount.utils import misc_utils
 
 
@@ -118,6 +121,9 @@ class RowContext:
     # A dict of account name strings to (open, close) entries for those accounts.
     open_close_map = None
 
+    # A price dict as computed by build_price_map()
+    price_map = None
+
 
 def uses_balance_column(c_expr):
     """Return true if the expression accesses the special 'balance' column.
@@ -187,6 +193,7 @@ def execute_query(query, entries, options_map):
     context.options_map = options_map
     context.account_types = options.get_account_types(options_map)
     context.open_close_map = getters.get_account_open_close(entries)
+    context.price_map = prices.build_price_map(entries)
 
     # Dispatch between the non-aggregated queries and aggregated queries.
     c_where = query.c_where

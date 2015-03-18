@@ -4,6 +4,8 @@ This module contains the various column accessors and function evaluators that
 are made available by the query compiler via their compilation context objects.
 Define new columns and functions here.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import copy
 import datetime
 import re
@@ -21,6 +23,7 @@ from beancount.core import account
 from beancount.core import account_types
 from beancount.core import data
 from beancount.core import getters
+from beancount.ops import prices
 from beancount.query import query_compile
 
 
@@ -169,7 +172,7 @@ class AccountSortKey(query_compile.EvalFunction):
         return '{}-{}'.format(index, name)
 
 
-# Operation on inventories.
+# Operation on inventories, positions and amounts.
 
 class UnitsPosition(query_compile.EvalFunction):
     "Get the number of units of a position (stripping cost)."
@@ -214,6 +217,19 @@ class CostInventory(query_compile.EvalFunction):
     def __call__(self, context):
         args = self.eval_args(context)
         return args[0].cost()
+
+# FIXME: This isn't ready yet.
+# class ConvertAmount(query_compile.EvalFunction):
+#     "Coerce an amount to a particular currency."
+#     __intypes__ = [amount.Amount, str]
+#
+#     def __init__(self, operands):
+#         super().__init__(operands, amount.Amount)
+#
+#     def __call__(self, context):
+#         args = self.eval_args(context)
+#         return prices.convert_amount(context.price_map, args[1], args[0])
+
 
 SIMPLE_FUNCTIONS = {
     'str'                          : Str,
@@ -439,25 +455,25 @@ class TypeEntryColumn(query_compile.EvalColumn):
 
 class FilenameEntryColumn(query_compile.EvalColumn):
     "The filename where the directive was parsed from or created."
-    __equivalent__ = 'entry.source.filename'
+    __equivalent__ = 'entry.meta.filename'
     __intypes__ = [data.Transaction]
 
     def __init__(self):
         super().__init__(str)
 
     def __call__(self, entry):
-        return entry.source.filename
+        return entry.meta.filename
 
 class LineNoEntryColumn(query_compile.EvalColumn):
     "The line number from the file the directive was parsed from."
-    __equivalent__ = 'entry.source.lineno'
+    __equivalent__ = 'entry.meta.lineno'
     __intypes__ = [data.Transaction]
 
     def __init__(self):
         super().__init__(int)
 
     def __call__(self, entry):
-        return entry.source.lineno
+        return entry.meta.lineno
 
 class DateEntryColumn(query_compile.EvalColumn):
     "The date of the directive."
@@ -643,25 +659,25 @@ class TypeColumn(query_compile.EvalColumn):
 
 class FilenameColumn(query_compile.EvalColumn):
     "The filename where the posting was parsed from or created."
-    __equivalent__ = 'posting.entry.source.filename'
+    __equivalent__ = 'posting.entry.meta.filename'
     __intypes__ = [data.Posting]
 
     def __init__(self):
         super().__init__(str)
 
     def __call__(self, context):
-        return context.posting.entry.source.filename
+        return context.posting.entry.meta.filename
 
 class LineNoColumn(query_compile.EvalColumn):
     "The line number from the file the posting was parsed from."
-    __equivalent__ = 'posting.entry.source.lineno'
+    __equivalent__ = 'posting.entry.meta.lineno'
     __intypes__ = [data.Posting]
 
     def __init__(self):
         super().__init__(int)
 
     def __call__(self, context):
-        return context.posting.entry.source.lineno
+        return context.posting.entry.meta.lineno
 
 class DateColumn(query_compile.EvalColumn):
     "The date of the parent transaction for this posting."

@@ -52,6 +52,20 @@ from .position import lot_currency_pair
 from .position import from_string as position_from_string
 from .display_context import DEFAULT_FORMATTER
 
+# pylint: disable=invalid-name
+try:
+    import enum
+    Enum = enum.Enum
+except ImportError:
+    Enum = object
+
+
+class Booking(Enum):
+    """Result of booking a new lot to an existing inventory."""
+    CREATED = 1   # A new lot was created.
+    REDUCED = 2   # An existing lot was reduced.
+    AUGMENTED = 3 # An existing lot was augmented.
+
 
 class Inventory(list):
     """An Inventory is a set of positions.
@@ -136,6 +150,21 @@ class Inventory(list):
         """
         return all(abs(position.number) <= epsilon
                    for position in self)
+
+    def is_mixed(self):
+        """Return true if the inventory contains a mix of positive and negative lots for
+        at least one instrument.
+
+        Returns:
+          A boolean.
+        """
+        signs_map = {}
+        for position in self:
+            sign = position.number >= 0
+            prev_sign = signs_map.setdefault(position.lot.currency, sign)
+            if sign != prev_sign:
+                return True
+        return False
 
     def __neg__(self):
         """Return an inventory with the negative of values of this one.
@@ -273,17 +302,21 @@ class Inventory(list):
         Args:
           lot: An instance of Lot to key by.
         Returns:
-          An instance of Position, either the position that was found, or a new
-          Position instance that was created for this lot.
+          An pair of
+            found: An instance of Position, either the position that was found, or a new
+              Position instance that was created for this lot.
+            created: A boolean, true if the position had to be created.
         """
         for position in self:
             if position.lot == lot:
                 found = position
+                created = False
                 break
         else:
             found = Position(lot, ZERO)
             self.append(found)
-        return found
+            created = True
+        return found, created
 
     def add_amount(self, amount, cost=None, lot_date=None):
         """Add to this inventory using amount, cost and date. This adds with strict lot
@@ -297,7 +330,9 @@ class Inventory(list):
           lot_date: An instance of datetime.date or None, the lot-date to use in
             the key to the inventory.
         Returns:
-          True if this position was booked against and reduced another.
+          A pair of (position, booking) where 'position' is the position that
+          that was modified, and where 'booking' is a Booking enum that hints at
+          how the lot was booked to this inventory.
         """
         assert isinstance(amount, Amount)
         assert cost is None or isinstance(cost, Amount), repr(cost)
@@ -312,7 +347,9 @@ class Inventory(list):
         Args:
           new_position: The position to add to this inventory.
         Returns:
-          True if this position was booked against and reduced another.
+          A pair of (position, booking) where 'position' is the position that
+          that was modified, and where 'booking' is a Booking enum that hints at
+          how the lot was booked to this inventory.
         """
         assert isinstance(new_position, Position), new_position
         return self._add(new_position.number, new_position.lot)
@@ -336,22 +373,29 @@ class Inventory(list):
           number: The number of units to add the given lot by.
           lot: The lot that we want to add to.
         Returns:
-          A pair of (position, reducing) where 'position' is the position that
-          that was modified, and where 'reducing' indicates whether this change
-          is a reduction of an existing position (vs. an increase or addition
-          of a new position).
+          A pair of (position, booking) where 'position' is the position that
+          that was modified, and where 'booking' is a Booking enum that hints at
+          how the lot was booked to this inventory.
         """
         # Find the position.
-        position = self._get_create_position(lot)
+        position, created = self._get_create_position(lot)
+
+        # Note that if the positiong was created, position.number is always ZERO
+        # here.
         reducing = (position.number * number) < 0
         position.add(number)
+        assert not (created and reducing), (
+            "Internal error: It's impossible to reduce a created position.")
 
         # If the resulting position is a zero position, remove it. We want to
         # avoid zero positions in the Inventory as an invariant.
         if position.number == ZERO:
             self.remove(position)
 
-        return position, reducing
+        return position, (
+            Booking.REDUCED if reducing else
+            Booking.CREATED if created else
+            Booking.AUGMENTED)
 
     def __add__(self, other):
         """Add another inventory to this one. This inventory is not modified.

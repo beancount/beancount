@@ -12,6 +12,7 @@ from .amount import D
 from .position import Position
 from .position import Lot
 from .inventory import Inventory
+from .inventory import Booking
 from . import amount
 from . import position
 from . import inventory
@@ -188,6 +189,16 @@ class TestInventory(unittest.TestCase):
         self.assertTrue(ninv.is_small(D('1.53')))
         self.assertTrue(ninv.is_small(D('1.52')))
 
+    def test_is_mixed(self):
+        inv = Inventory.from_string('100 GOOG {250 USD}, 101 GOOG {251 USD}')
+        self.assertFalse(inv.is_mixed())
+
+        inv = Inventory.from_string('100 GOOG {250 USD}, -1 GOOG {251 USD}')
+        self.assertTrue(inv.is_mixed())
+
+        inv = Inventory.from_string('-2 GOOG {250 USD}, -1 GOOG {251 USD}')
+        self.assertFalse(inv.is_mixed())
+
     def test_op_neg(self):
         inv = Inventory()
         inv.add_amount(A('10 USD'))
@@ -301,6 +312,20 @@ class TestInventory(unittest.TestCase):
         # Add to above zero again
         inv.add_amount(A('18.72 USD'))
         self.checkAmount(inv, '10', 'USD')
+
+    def test_add__booking(self):
+        inv = Inventory()
+        _, booking = inv.add_amount(A('100.00 USD'))
+        self.assertEqual(Booking.CREATED, booking)
+
+        _, booking = inv.add_amount(A('20.00 USD'))
+        self.assertEqual(Booking.AUGMENTED, booking)
+
+        _, booking = inv.add_amount(A('-20 USD'))
+        self.assertEqual(Booking.REDUCED, booking)
+
+        _, booking = inv.add_amount(A('-100 USD'))
+        self.assertEqual(Booking.REDUCED, booking)
 
     def test_add_multi_currency(self):
         inv = Inventory()

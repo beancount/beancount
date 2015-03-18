@@ -1,5 +1,7 @@
 """Parser for Beancount Query Language.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import collections
 import datetime
 import io

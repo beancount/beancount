@@ -13,6 +13,8 @@ upon exit we close the file object. This also silences broken pipe errors
 triggered by the user exiting the sub-process, and recovers from a failing pager
 command by just using stdout.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import contextlib
 import os
 import sys

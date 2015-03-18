@@ -62,24 +62,26 @@ def validate_inventory_booking(entries, unused_options_map):
                 # without allowing booking to a negative position, and if an error
                 # is encountered, catch it and return it.
                 running_balance = balances[posting.account]
-                position_, unused_reducing = running_balance.add_position(posting.position)
+                position_, _ = running_balance.add_position(posting.position)
 
-                # Skip this check if the booking method is set to 'NONE'.
+                # Skip this check if the booking method is set to ignore it.
                 if booking_methods.get(posting.account, None) == 'NONE':
                     continue
 
-                # Check for a negative entry.
-                #
-                # FIXME: Maybe this should be using the reducing flag returned
-                # from add_position() instead.
-                if position_.is_negative_at_cost():
+                # Check if the resulting inventory is mixed, which is not
+                # allowed under the STRICT method.
+                if running_balance.is_mixed():
                     errors.append(
                         ValidationError(
                             posting.entry.meta,
-                            "Position held at cost goes negative: {}".format(position_),
+                            "Reducing position results in mixed inventory: {}".format(
+                                position_),
                             posting.entry))
 
         elif isinstance(entry, data.Open):
+            # These Open directives should always appear beforehand as per the
+            # assumptions on the list of entries, so should never be a problem
+            # finding them. If not, move this loop to a dedicated before.
             booking_methods[entry.account] = entry.booking
 
     return errors
