@@ -16,7 +16,7 @@ __source_name__ = 'yahoo'
 # http://finance.yahoo.com/webservice/v1/symbols/allcurrencies/quote
 
 
-class YahooFinancePriceFetcher:
+class PriceSource:
 
     def __init__(self, symbol, base, quote):
         """Create a price fetcher for Yahoo Finance.

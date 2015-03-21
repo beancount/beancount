@@ -94,29 +94,6 @@ from beanprice.sources import yahoo_finance
 from beanprice.sources import google_finance
 
 
-def memoize_fileobj(function):
-    urlcache = shelve.open(path.join(tempfile.gettempdir(),
-                                     '{}.db'.format(function.__name__)))
-    @functools.wraps(function)
-    def memoized(*args, **kw):
-        md5 = hashlib.md5()
-        md5.update(str(datetime.date.today()).encode('utf-8'))
-        md5.update(str(args).encode('utf-8'))
-        md5.update(str(sorted(kw.items())).encode('utf-8'))
-        hash_ = md5.hexdigest()
-        try:
-            contents = urlcache[hash_]
-        except KeyError:
-            fileobj = function(*args, **kw)
-            if fileobj:
-                contents = fileobj.read()
-                urlcache[hash_] = contents
-            else:
-                contents = None
-        return io.BytesIO(contents) if contents else None
-    return memoized
-
-
 def retrying_urlopen(url, timeout=5):
     """Open and download the given URL, retrying if it times out.
 
@@ -136,94 +113,34 @@ def retrying_urlopen(url, timeout=5):
     return response
 
 
+def memoize_recent(function, cache_filename):
+    """Memoize recent calls to the given function.
 
-
-
-# SKIP = object()
-#
-#
-# def fetch(instruments, fetchers):
-#     """Fetch the latest prices for a list of instruments.
-#
-#     Args:
-#       instruments: A sequence of pairs of (base, quote) strings to fetch.
-#       fetchers: A mapping of (base, quote) pairs to explicitly-created fetcher
-#         objects. If a (base, quote) pair is not present in the mapping, a
-#         GoogleFinancePriceFetcher is created with default settings. This
-#         allows you to override the exchange or asset class being used to
-#         lookup the value in Google Finance, or specify an alternative source
-#         for the data. You may also set the fetcher value to 'SKIP', which
-#         tells the price fetcher not to try to fetch a price for this instrument.
-#         This is used for oddball user-defined instruments that may appears in
-#         one's ledger file, instruments with no price available to fetch on markets.
-#     Returns:
-#       A list of Price directives instances.
-#     """
-#     price_entries = []
-#     price_map = {}
-#     for currency, cost_currency in instruments:
-#         # print('------------------------------------------------------------------------------------------------------------------------')
-#         # print(currency, cost_currency)
-#
-#         base_quote = (currency,
-#                       cost_currency if cost_currency != currency else None)
-#
-#         try:
-#             fetcher = fetchers[base_quote]
-#             if fetcher is SKIP:
-#                 continue
-#         except KeyError:
-#             logging.warn("Using default price fetcher for {}".format(base_quote))
-#             fetcher = google_finance.GoogleFinancePriceFetcher(currency,
-#                                                                currency,
-#                                                                cost_currency)
-#
-#         price, time = fetcher.get_latest_price()
-#         if price is None:
-#             logging.error("No price could be found for {}".format(base_quote))
-#             continue
-#
-#         base, quote = fetcher.base, fetcher.quote
-#
-#         fileloc = data.new_metadata('<{}>'.format(type(fetcher).__name__), 0)
-#         price_entries.append(
-#             data.Price(fileloc, time.date(), base, amount.Amount(price, quote)))
-#
-#     return price_entries
-
-
-# def load_fetch_and_print(filename, fetchers, output, cache=True):
-#     """Load a ledger or CSV file and fetch and print prices for it.
-#
-#     Args:
-#       filename: A string, the filename of a ledger or CSV file with holdings.
-#       fetchers: A dict of custom fetchers. See fetch() for details.
-#       output: A file object to file the entries to.
-#       cache: A boolen, true if we're to use the cache.
-#     """
-#     # Get the list of instruments to price.
-#     instruments = get_positions_from_file(filename)
-#
-#     if cache:
-#         orig_urlopen = urllib.request.urlopen
-#         urllib.request.urlopen = memoize_fileobj(retrying_urlopen)
-#
-#     # Fetch the entries.
-#     new_entries = fetch(sorted(instruments), fetchers)
-#
-#     if cache:
-#         urllib.request.urlopen = orig_urlopen
-#
-#     ## FIXME: Find a way to make the format configurable.
-#     provider = create_provider_from_format('beancount')
-#     for entry in new_entries:
-#         output.write(provider.format_entry(entry))
-
-
-
-
-
-
+    Args:
+      function: A callable object.
+      cache_filename: A string, the path to the database file to cache to.
+    Returns:
+      A memoized version of the function.
+    """
+    urlcache = shelve.open(cache_filename)
+    @functools.wraps(function)
+    def memoized(*args, **kw):
+        md5 = hashlib.md5()
+        md5.update(str(datetime.date.today()).encode('utf-8'))
+        md5.update(str(args).encode('utf-8'))
+        md5.update(str(sorted(kw.items())).encode('utf-8'))
+        hash_ = md5.hexdigest()
+        try:
+            contents = urlcache[hash_]
+        except KeyError:
+            fileobj = function(*args, **kw)
+            if fileobj:
+                contents = fileobj.read()
+                urlcache[hash_] = contents
+            else:
+                contents = None
+        return io.BytesIO(contents) if contents else None
+    return memoized
 
 
 # A price fetching job description.
@@ -303,6 +220,33 @@ def get_jobs_from_file(filename, date, default_source):
     return jobs
 
 
+def process_jobs(jobs, source_map):
+    """Run the given jobs using modules from the given source map.
+
+    Args:
+      jobs: A list of Job instances.
+      source_map: A mapping of source string to a source module object.
+    Returns:
+      A list of
+    """
+    for job in jobs:
+        logging.info(job)
+
+        source_module = source_map[job.source]
+        if job.date is None:
+            price, time = source_module.get_latest_price(job.symbol)
+        else:
+            price, time = source_module.get_historical_price(job.symbol, job.date)
+        print(price, time)
+
+
+#         fileloc = data.new_metadata('<{}>'.format(type(fetcher).__name__), 0)
+#         price_entries.append(
+#             data.Price(fileloc, time.date(), base, amount.Amount(price, quote)))
+#
+#     return price_entries
+
+
 def process_args(argv, valid_price_sources):
     """Process command-line arguments and return a list of jobs to process.
 
@@ -370,15 +314,28 @@ def process_args(argv, valid_price_sources):
 def main():
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
 
-    price_source_modules = [google_finance, yahoo_finance]
+    source_modules = [google_finance, yahoo_finance]
 
     # Parse the arguments.
-    price_source_names = [module.__source_name__
-                          for module in price_source_modules]
+    source_names = [module.__source_name__ for module in source_modules]
     jobs, do_cache = process_args(sys.argv[1:], price_source_names)
 
+    # Install the cache.
+    if do_cache:
+        cache_filename = path.join(tempfile.gettempdir(),
+                                   path.basename(sys.argv[0]))
+        urllib.request.urlopen = memoize_recent(retrying_urlopen)
+
     # Process the jobs.
-    price_source_map = {module.__source_name__: module
-                        for module in price_source_modules}
-    for job in jobs:
-        print(job)
+    source_map = {module.__source_name__: module for module in source_modules}
+    process_jobs(jobs, source_map)
+
+    # price_entries = []
+    #     # Invert the currencies if the rate is to be inverted.
+    #     if job.invert:
+    #         ticker = ticker[2:]
+    #         currency, quote_currency = quote_currency, currency
+    #     fileloc = data.new_metadata('<fetch-prices>', 0)
+    #     price_entries.append(
+    #         data.Price(fileloc, price_time.date(), currency, amount.Amount(price, quote_currency)))
+    # printer.print_entries(price_entries)
