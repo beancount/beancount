@@ -133,5 +133,6 @@ def main():
     printer.print_entries(price_entries)
 
 
-if __name__ == '__main__':
-    main()
+# FIXME: This script is obsolete.
+# if __name__ == '__main__':
+#     main()

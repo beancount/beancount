@@ -11,16 +11,39 @@ from beanprice.scripts import fetch
 SOURCES = ['google', 'yahoo']
 
 
+class ParseTicker(unittest.TestCase):
+
+    def test_tickers(self):
+        self.assertEqual(('google', 'HOOL', False),
+                         fetch.parse_ticker('HOOL', 'google'))
+
+        self.assertEqual(('google', 'HOOL', False),
+                         fetch.parse_ticker('google/HOOL', 'yahoo'))
+
+        self.assertEqual(('google', 'HOOL', True),
+                         fetch.parse_ticker('google/^HOOL', 'yahoo'))
+
+        self.assertEqual(('google', 'TSE:XSP', False),
+                         fetch.parse_ticker('google/TSE:XSP', 'yahoo'))
+
+        self.assertEqual(('google', 'USDCAD', True),
+                         fetch.parse_ticker('google/^USDCAD', 'yahoo'))
+
+
 class FetchArgsSpec(unittest.TestCase):
 
+    bogus_spec = 'price://google/HOOL'
+
     def test_empty(self):
-        jobs, do_cache = fetch.process_args([], SOURCES)
-        self.assertEqual([], jobs)
+        with self.assertRaises(SystemExit):
+            with test_utils.capture('stderr'):
+                jobs, do_cache = fetch.process_args([], SOURCES)
+                self.assertEqual([], jobs)
 
     def test_cache(self):
-        jobs, do_cache = fetch.process_args([], SOURCES)
+        jobs, do_cache = fetch.process_args([self.bogus_spec], SOURCES)
         self.assertTrue(do_cache)
-        jobs, do_cache = fetch.process_args(['--no-cache'], SOURCES)
+        jobs, do_cache = fetch.process_args(['--no-cache', self.bogus_spec], SOURCES)
         self.assertFalse(do_cache)
 
     def test_explicit_invalid(self):

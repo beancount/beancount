@@ -76,6 +76,7 @@ from os import path
 import shelve
 import tempfile
 from urllib.request import urlopen
+import re
 import sys
 import urllib
 import urllib.parse
@@ -219,20 +220,10 @@ def retrying_urlopen(url, timeout=5):
 #         output.write(provider.format_entry(entry))
 
 
-def get_symbol_invert(symbol_with_invert):
-    """Extract the inversion token from a symbol if it has one.
 
-    Args:
-      symbol_with_invert: A string, a ticker symbol possibly prefixed
-        with a token that tells us to invert its value. The token is a
-        '^' prefix to the symbol, e.g., '^GBPUSD' is an inverted 'USDGBP'.
-    Returns:
-      The symbol without the inversion and a boolean, true if inverted.
-    """
-    if symbol_with_invert.startswith('^'):
-        return symbol_with_invert[1:], True
-    else:
-        return symbol_with_invert, False
+
+
+
 
 
 # A price fetching job description.
@@ -247,6 +238,36 @@ def get_symbol_invert(symbol_with_invert):
 #   quote: A currency, the quote currency for the given syumbol.
 #   invert: A boolean, true if we need to invert the currency.
 Job = collections.namedtuple('Job', 'source symbol date base quote invert')
+
+
+def parse_ticker(ticker, default_source='google'):
+    """Given a ticker, parse out its components.
+
+    The grammar follows this syntax: (SOURCE/)?(^)?SYMBOL
+
+    For example, parsing 'MSFT' would return ('yahoo', 'MSFT', False)
+    with a default_source = 'yahoo'.
+
+    Another example is parsing 'google/^CURRENCY:USDCAD' which would
+    ('google', 'CURRENCY:USDCAD', True).
+
+    Args:
+      ticker: A string, the ticker to parse.
+      default_source: The default value for the source of the ticker to fetch,
+        if unspecified.
+    Returns:
+      A tuple of
+        source: A string, the source where to fetch the price from.
+        symbol: A string, the unique source-specific symbol to use.
+        invert: A boolean, true if we need to invert the price to be fetched.
+    """
+    match = re.match(r'(?:([a-z]+)/)?(\^)?([A-Z0-9:\-_]+)$', ticker)
+    if match is None:
+        raise ValueError('Invalid ticker: "{}"'.format(ticker))
+    source, invert, symbol = match.group(1, 2, 3)
+    invert = bool(invert)
+    source = source or default_source
+    return source, symbol, invert
 
 
 def get_jobs_from_file(filename, date, default_source):
@@ -269,20 +290,12 @@ def get_jobs_from_file(filename, date, default_source):
         # Ignore the commodity if it has no ticker defined on it.
         if ticker is None:
             continue
-
-        # Parse the source out of the ticker if possible.
-        if '/' in ticker:
-            source, symbol = ticker.split('/', 1)
-        else:
-            source, symbol = default_source, ticker
+        source, symbol, invert = parse_ticker(ticker, default_source)
 
         # Select the quote currency if declared, otherwise use the cost
         # currency.
         base = currency
         quote = quote_currency or cost_currency
-
-        # Invert the currencies if the rate is to be inverted.
-        symbol, invert = get_symbol_invert(symbol)
 
         jobs.append(
             Job(source, symbol, date, base, quote, invert))
@@ -308,7 +321,7 @@ def process_args(argv, valid_price_sources):
 
     parser = argparse.ArgumentParser(description=__doc__)
 
-    parser.add_argument('uri_list', nargs='*',
+    parser.add_argument('uri_list', nargs='+',
                         help='A list of URIs specifying which prices to fetch')
 
     parse_date = lambda s: parse_datetime(s).date()
@@ -331,23 +344,25 @@ def process_args(argv, valid_price_sources):
 
         # Parse an explicit price.
         if parsed_uri.scheme == 'price':
-            symbol, invert = get_symbol_invert(parsed_uri.path[1:])
+            source, symbol, invert = parse_ticker(''.join((parsed_uri.netloc,
+                                                           parsed_uri.path)))
             jobs.append(
-                Job(parsed_uri.netloc, symbol, args.date, None, None, invert))
+                Job(source, symbol, args.date, None, None, invert))
 
         # Parse symbols from a file.
         elif parsed_uri.scheme in ('file', ''):
-            if not path.exists(parsed_uri.path):
-                parser.error('File does not exist: "{}"'.format(parsed_uri.path))
+            filename = parsed_uri.path
+            if not (path.exists(filename) and path.isfile(filename)):
+                parser.error('File does not exist: "{}"'.format(filename))
             jobs.extend(
-                get_jobs_from_file(parsed_uri.path, args.date, args.source))
+                get_jobs_from_file(filename, args.date, args.source))
         else:
             parser.error('Invalid scheme "{}"'.format(parsed_uri.scheme))
 
     # Validate price sources.
     for job in jobs:
         if job.source not in valid_price_sources:
-            parser.error('Invalid source "{}"'.format(parsed_uri.netloc))
+            parser.error('Invalid source "{}"'.format(job.source))
 
     return jobs, args.do_cache
 
@@ -358,11 +373,12 @@ def main():
     price_source_modules = [google_finance, yahoo_finance]
 
     # Parse the arguments.
-    price_source_names = [module.name for module in price_source_modules]
-    jobs, do_cache = process_args(sys.argv, price_source_names)
+    price_source_names = [module.__source_name__
+                          for module in price_source_modules]
+    jobs, do_cache = process_args(sys.argv[1:], price_source_names)
 
     # Process the jobs.
-    price_source_map = {module.name: module
-                        for mobule in price_source_modules}
+    price_source_map = {module.__source_name__: module
+                        for module in price_source_modules}
     for job in jobs:
         print(job)
