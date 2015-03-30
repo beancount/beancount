@@ -175,6 +175,17 @@ class Inventory(list):
         return Inventory([Position(position.lot, -(position.number))
                           for position in self])
 
+    def __mul__(self, scalar):
+        """Scale/multiply the contents of the inventory.
+
+        Args:
+          scalar: A Decimal.
+        Returns:
+          An instance of Inventory.
+        """
+        return Inventory([Position(position.lot, position.number * scalar)
+                          for position in self])
+
     #
     # Methods to access portions of an inventory.
     #
