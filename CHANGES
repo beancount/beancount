@@ -4,6 +4,40 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-04-13
+
+  - Merged a new plugin (beancount.plugins.sellgains) that automatically
+    cross-checks the purchase price of a lot against all the other legs that are
+    in non-income accounts. This is useful to verify the correctness of @ price
+    annotations on reductions at cost, because not only the transactions have to
+    balance in cost (that is, including the income portion), they then also have
+    to balance without the income portion, using the price you attached (if you
+    somehow reported an incorrect price you will get an error).
+
+    This is best explained with an example:
+
+      1999-07-31 * "Sell"
+        Assets:US:BRS:Company:ESPP          -81 ADSK {26.3125 USD} @ 26.4375 USD
+        Assets:US:BRS:Company:Cash      2141.36 USD
+        Expenses:Financial:Fees            0.08 USD
+        Income:US:Company:ESPP:PnL      -10.125 USD
+
+    The regular balance verification checks all the legs against the cost basis:
+
+      -18 x 26.3125 + 2141.36 + 0.08 - 10.125 = 0 USD
+
+    This is the default behavior, and is still required. With the sellgains
+    plugin, an additional check also verifies that
+
+      -18 x 26.4375 + 2141.36 + 0.08 = 0 USD
+
+    Note how the price (26.4375) is used instead of the cost basis, and how
+    income legs are ignore in the calculation.
+
+    Transactions with reductions without a price and without an income leg will
+    be ignored, so only those which can be verified will be verified.
+
+
 2015-02-16
 
   - Finally completed documentation on how to export your portfolio to Google
