@@ -4,6 +4,14 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-04-13
+
+  - A minor improvment to bean-format has been implemented: Whitespace before
+    postings is now automatically normalized to the most frequent spacing
+    present in the document. This allows you to be somewhat sloppy on the
+    postings themselves when entering new transactions.
+
+
 2015-02-16
 
   - Finally completed documentation on how to export your portfolio to Google
