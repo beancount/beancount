@@ -27,8 +27,8 @@ DEFAULT_DELIMITER = "[ \t]+"
 DEFAULT_SPLITTER = ":"
 
 # Regular expressions used for loose accounts.
-LOOSE_PATTERN = r"\b([A-Z][A-Za-z0-9-_']*)(:[A-Z][A-Za-z0-9-_']*)+\b"
-LOOSE_SPLIT = r":"
+LOOSE_PATTERN = r"\b([A-Za-z0-9-_']+)(:[A-Za-z0-9-_']+)+\b"
+LOOSE_SPLITTER = r":"
 
 # Regular expressions used for filenames matching.
 FILENAME_PATTERN = r"([^ \t]*)(/[^ \t]*)+"
