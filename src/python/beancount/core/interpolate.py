@@ -80,10 +80,13 @@ def compute_residual(postings):
           in representing it, e.g. 0.01
     """
     inventory = Inventory()
-    precision = {}
+    precision = collections.defaultdict(int)
     for posting in postings:
         weight = get_posting_weight(posting)
+        precision[weight.currency] = min(precision[weight.currency],
+                                         weight.number.as_tuple().exponent)
         inventory.add_amount(weight)
+    # FIXME: Do something useful with precision, add tests.
     return inventory, precision
 
 
