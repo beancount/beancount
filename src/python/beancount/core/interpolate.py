@@ -66,9 +66,10 @@ def compute_residual(postings):
 
     This is used to cross-check a balanced transaction.
 
-    The precision is the minimum fraction that is being used for each currency
-    (a dict). We use the currency of the weight in order to infer the
-    quantization precision.
+    The precision is the maximum fraction that is being used for each currency
+    (a dict). We use the currency of the weight amount in order to infer the
+    quantization precision for each currency. Integer amounts aren't
+    contributing to the determination of precision.
 
     Args:
       postings: A list of Posting instances.
@@ -80,13 +81,17 @@ def compute_residual(postings):
           in representing it, e.g. 0.01
     """
     inventory = Inventory()
-    precision = collections.defaultdict(int)
+    precision = collections.defaultdict(lambda: -256)
     for posting in postings:
+        # Add to total residual balance.
         weight = get_posting_weight(posting)
-        precision[weight.currency] = min(precision[weight.currency],
-                                         weight.number.as_tuple().exponent)
         inventory.add_amount(weight)
-    # FIXME: Do something useful with precision, add tests.
+
+        # Compute precision bounds.
+        expo = weight.number.as_tuple().exponent
+        if expo < 0:
+            precision[weight.currency] = max(precision[weight.currency], expo)
+
     return inventory, precision
 
 

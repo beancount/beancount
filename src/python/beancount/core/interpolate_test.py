@@ -445,3 +445,47 @@ class TestComputeBalance(unittest.TestCase):
                 break
         balance_before, balance_after = interpolate.compute_entry_context(entries, entry)
         self.assertEqual(balance_before, balance_after)
+
+
+class TestPrecision(cmptest.TestCase):
+
+    @parser.parsedoc
+    def test_precision_infer(self, entries, errors, _):
+        """
+        2014-02-25 *
+          Assets:Account3       5.00 USD
+          Assets:Account4      -5.0 USD
+          Assets:Account4      -5 USD
+
+        2014-02-25 *
+          Assets:Account3       5 VHT @ 102.2340 USD
+          Assets:Account4      -511.11 USD
+
+        2014-02-25 *
+          Assets:Account3       5 VHT {102.2340 USD}
+          Assets:Account4      -511.11 USD
+
+        2014-02-25 *
+          Assets:Account3       5 VHT {102.2340 USD} @ 103.45237239 USD
+          Assets:Account4      -511.11 USD
+
+        2014-02-25 *
+          Assets:Account3       5 VHT {102.2340 USD}
+          Assets:Account4      -511 USD
+        """
+        self.assertFalse(errors)
+
+        residual, precision = interpolate.compute_residual(entries[0].postings)
+        self.assertEqual({'USD': -1}, precision)
+
+        residual, precision = interpolate.compute_residual(entries[1].postings)
+        self.assertEqual({'USD': -2}, precision)
+
+        residual, precision = interpolate.compute_residual(entries[2].postings)
+        self.assertEqual({'USD': -2}, precision)
+
+        residual, precision = interpolate.compute_residual(entries[3].postings)
+        self.assertEqual({'USD': -2}, precision)
+
+        residual, precision = interpolate.compute_residual(entries[4].postings)
+        self.assertEqual({'USD': -4}, precision)
