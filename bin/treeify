@@ -246,8 +246,7 @@ def main():
                         help='Name of the file to write (default: stdout)')
 
     parser.add_argument('-r', '--pattern', action='store',
-                        default=(r"(Assets|Liabilities|Equity|Income|Expenses)"
-                                 r"(:[A-Z][A-Za-z0-9-_']*)*"),
+                        default=None,
                         help="Pattern for repeatable components")
 
     parser.add_argument('-d', '--delimiter', action='store',
@@ -276,6 +275,10 @@ def main():
                                           args.loose_accounts,
                                           args.pattern)]) > 1:
         parser.error("Conflicted pattern options")
+
+    if args.pattern is None:
+        args.pattern = (r"(Assets|Liabilities|Equity|Income|Expenses)"
+                        r"(:[A-Z][A-Za-z0-9-_']*)*")
 
     if args.filenames:
         # Note: you could spit an error if the other options are set: "you may
