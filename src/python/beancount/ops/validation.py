@@ -395,11 +395,11 @@ def validate_check_transaction_balances(entries, options_map):
             # the plugins) are balanced. See {9e6c14b51a59}.
             #
             # Detect complete sets of postings that have residual balance;
-            balance = interpolate.compute_residual(entry.postings)
-            if not balance.is_small(interpolate.SMALL_EPSILON):
+            residual, unused_precision = interpolate.compute_residual(entry.postings)
+            if not residual.is_small(interpolate.SMALL_EPSILON):
                 errors.append(
                     ValidationError(entry.meta,
-                                    "Transaction does not balance: {}".format(balance),
+                                    "Transaction does not balance: {}".format(residual),
                                     entry))
     return errors
 

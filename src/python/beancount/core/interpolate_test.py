@@ -62,14 +62,14 @@ class TestBalance(cmptest.TestCase):
     def test_compute_residual(self):
 
         # Try with two accounts.
-        residual = interpolate.compute_residual([
+        residual, _ = interpolate.compute_residual([
             P(None, "Assets:Bank:Checking", "105.50", "USD"),
             P(None, "Assets:Bank:Checking", "-194.50", "USD"),
             ])
         self.assertEqual(inventory.from_string("-89 USD"), residual.units())
 
         # Try with more accounts.
-        residual = interpolate.compute_residual([
+        residual, _ = interpolate.compute_residual([
             P(None, "Assets:Bank:Checking", "105.50", "USD"),
             P(None, "Assets:Bank:Checking", "-194.50", "USD"),
             P(None, "Assets:Bank:Investing", "5", "AAPL"),
@@ -100,7 +100,8 @@ class TestBalance(cmptest.TestCase):
         for index in 0, 1:
             entry = interpolate.fill_residual_posting(entries[index], account)
             self.assertEqualEntries([entries[index]], [entry])
-            self.assertTrue(interpolate.compute_residual(entry.postings).is_empty())
+            residual, _ = interpolate.compute_residual(entry.postings)
+            self.assertTrue(residual.is_empty())
 
         entry = interpolate.fill_residual_posting(entries[2], account)
         self.assertEqualEntries("""
@@ -111,7 +112,8 @@ class TestBalance(cmptest.TestCase):
           Equity:Rounding        0.0000001 USD
 
         """, [entry])
-        self.assertTrue(interpolate.compute_residual(entry.postings).is_empty())
+        residual,  _ = interpolate.compute_residual(entry.postings)
+        self.assertTrue(residual.is_empty())
 
         entry = interpolate.fill_residual_posting(entries[3], account)
         self.assertEqualEntries("""
@@ -122,7 +124,8 @@ class TestBalance(cmptest.TestCase):
           Equity:Rounding   0.012375 USD
 
         """, [entry])
-        self.assertTrue(interpolate.compute_residual(entry.postings).is_empty())
+        residual, _ = interpolate.compute_residual(entry.postings)
+        self.assertTrue(residual.is_empty())
 
     def test_get_incomplete_postings_pathological(self):
         meta = data.new_metadata(__file__, 0)

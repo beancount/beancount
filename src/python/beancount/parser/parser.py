@@ -780,7 +780,7 @@ class Builder(lexer.LexBuilder):
 
         # Check that the balance actually is empty.
         if __sanity_checks__:
-            residual = compute_residual(entry.postings)
+            residual, unused_precision = compute_residual(entry.postings)
             assert residual.is_small(SMALL_EPSILON), residual
 
         return entry

@@ -62,19 +62,29 @@ def has_nontrivial_balance(posting):
 
 
 def compute_residual(postings):
-    """Compute the residual of a set of complete postings.
+    """Compute the residual of a set of complete postings, and the per-currency precision.
+
     This is used to cross-check a balanced transaction.
+
+    The precision is the minimum fraction that is being used for each currency
+    (a dict). We use the currency of the weight in order to infer the
+    quantization precision.
 
     Args:
       postings: A list of Posting instances.
     Returns:
-      An instance of Inventory, with the residual of the given list
-      of postings.
+      A pair of
+        residual: An instance of Inventory, with the residual of the given list
+          of postings.
+        precision: A dict of currency to the smallest fractional digit (as a Decimal) used
+          in representing it, e.g. 0.01
     """
     inventory = Inventory()
+    precision = {}
     for posting in postings:
-        inventory.add_amount(get_posting_weight(posting))
-    return inventory
+        weight = get_posting_weight(posting)
+        inventory.add_amount(weight)
+    return inventory, precision
 
 
 def fill_residual_posting(entry, account_rounding):
@@ -90,7 +100,7 @@ def fill_residual_posting(entry, account_rounding):
       was not needed - the transaction already balanced perfectly - no new
       leg is inserted.
     """
-    residual = compute_residual(entry.postings)
+    residual, unused_precision = compute_residual(entry.postings)
     if residual.is_empty():
         return entry
     else:
