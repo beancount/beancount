@@ -5,6 +5,7 @@ the name of debugging.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import collections
 import os
 import re
 import sys
@@ -191,6 +192,44 @@ def do_context(filename, args):
     str_context = context.render_entry_context(entries, dcontext,
                                                options_map['filename'], lineno)
     sys.stdout.write(str_context)
+
+
+def do_linked(filename, args):
+    """Print out a list of transactions linked to the one at the given line.
+
+    Args:
+      filename: A string, which consists in the filename.
+      args: A tuple of the rest of arguments. We're expecting the first argument
+        to be an integer as a string.
+    """
+    # Parse the arguments, get the line number.
+    if len(args) != 1:
+        raise SystemExit("Missing line number argument.")
+    lineno = int(args[0])
+
+    # Load the input file.
+    entries, errors, options_map = loader.load_file(filename)
+
+    # Find the closest entry.
+    closest_entry = data.find_closest(entries, filename, lineno)
+
+    # Find its links.
+    links = closest_entry.links
+    if not links:
+        return
+
+    # Find all linked entries.
+    linked_entries = [entry
+                      for entry in entries
+                      if (isinstance(entry, data.Transaction) and
+                          entry.links and
+                          entry.links & links)]
+
+    # Render linked entries (in date order) as errors (for Emacs).
+    RenderError = collections.namedtuple('RenderError', 'source message entry')
+    errors = [RenderError(entry.meta, '', entry)
+              for entry in linked_entries]
+    printer.print_errors(errors)
 
 
 def do_missing_open(filename, args):

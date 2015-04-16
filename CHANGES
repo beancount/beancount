@@ -4,6 +4,16 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-04-16
+
+  - Added a new command to bean-doctor: "linked" which prints out all
+    transactions linked to the one at a given line number, in a format Emacs can
+    grok with filename and location like errors so you can easily navigate
+    between the linked transactions.
+
+    Correspondingly, added a "bean-linked" command to the Emacs support mode.
+
+
 2015-04-13
 
   - A minor improvment to bean-format has been implemented: Whitespace before
