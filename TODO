@@ -1196,6 +1196,14 @@ http://furius.ca/beancount/doc/proposal-inter
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - Make booking the cost on the same currency as the instrument impossible:
+
+       <account>      1212.023 USD {100.00 USD}
+
+    Ditto w/ the price. This should only be done after allowing zero cost.
+
+
+
   - Compute pre-tax and post-tax net worth reports, based on a "tax" account
     metadata field and some reasonable assumptions.
 
