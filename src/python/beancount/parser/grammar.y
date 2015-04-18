@@ -130,6 +130,7 @@ const char* getTokenName(int token);
 %type <pyobj> txn_fields
 %type <pyobj> filename
 %type <pyobj> opt_booking
+%type <pyobj> number_expr
 
 
 /* Start symbol. */
@@ -165,6 +166,19 @@ empty_line : EOL
            | INDENT EOL
            | INDENT
            | COMMENT
+
+/* FIXME: This needs be made more general, dealing with precedence.
+   I just need this right now, so I'm putting it in, in a way that will.
+   be backwards compatible, so this is just a bit of a temporary hack
+   (blais, 2015-04-18). */
+number_expr : NUMBER
+            {
+                $$ = $1;
+            }
+            | number_expr SLASH NUMBER
+            {
+                $$ = PyNumber_TrueDivide($1, $3);
+            }
 
 txn_fields : empty
            {
@@ -343,7 +357,7 @@ balance : DATE BALANCE ACCOUNT amount eol key_value_list
             DECREF4($1, $3, $4, $6);
         }
 
-amount : NUMBER CURRENCY
+amount : number_expr CURRENCY
        {
          PyObject* o = BUILD("amount", "OO", $1, $2);
          $$ = o;

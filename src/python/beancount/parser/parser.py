@@ -186,6 +186,7 @@ class Builder(lexer.LexBuilder):
         if entries:
             self.entries = entries
 
+
     def pushtag(self, tag):
         """Push a tag on the current set of tags.
 

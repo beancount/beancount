@@ -3376,7 +3376,15 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 * Tools
 ** Emacs Support
 
+  - Idea: Implement another command like C-c x but that prints out all the
+    linked transactions.
+
+  - Idea: Implement movement commands that move the cursor to the previous/next
+    linked transaction.
+
   - Set the comment-syntax; currently it thinks it's '# '
+
+    Note: This is now present
 
   - In the new mode, we need to recreate a function that will mark a posting as
     valid (replace '!' by '*').
