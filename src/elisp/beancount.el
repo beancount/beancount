@@ -1,69 +1,170 @@
 ;;; beancount.el --- A minor mode that can be used to edit beancount input files.
 
 ;; Copyright (C) 2013 Martin Blais <blais@furius.ca>
+;; Copyright (C) 2014, 2015 Free Software Foundation, Inc.
+
+;; Version: 0
 
 ;; This file is not part of GNU Emacs.
 
+;; This package is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This package is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this package.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+;; TODO: Add a flymake rule, using bean-check
+
+;;; Code:
+
+;; FIXME: AFAIK, both of those `require's aren't needed.
 (require 'ido) ;; For completing read.
 (require 'font-lock)
 
+(defgroup beancount ()
+  "Editing mode for Beancount files."
+  :group 'external)                     ;FIXME: Really?  "external"?
 
+(defconst beancount--timestamped-directive-names
+  '("open" "close" "balance" "pad" "note" "document"
+    ;; The ones below are not followed by an account name.
+    "txn" "price" "event")
+  "Directive names that can appear after a date.")
+
+(defconst beancount--tag-chars "[:alnum:]-_/.")
+
+(defvar beancount-font-lock-keywords
+  `(;; Reserved keywords
+    (,(concat "^[0-9-/]+ *\\("
+              (regexp-opt beancount--timestamped-directive-names) "\\)")
+     (1 font-lock-keyword-face))
+
+    (,(concat "^" (regexp-opt '("pushtag" "poptag" "option" "plugin")))
+     . font-lock-keyword-face)
+
+    ;; Tags & Links
+    (,(concat "[#\\^][" beancount--tag-chars "]+") . font-lock-type-face)
+
+    ;; Date
+    ;; FIXME: The doc says it has to be "NNNN-NN-NN" but you allow "/"?
+    ("[0-9][0-9][0-9][0-9][-/][0-9][0-9][-/][0-9][0-9]"
+     . font-lock-constant-face)
+
+    ;; Account
+    ("\\([[:upper:]][[:alnum:]-]+:\\)+\\([[:upper:]][[:alnum:]-]+\\)"
+     . font-lock-builtin-face)
+
+    ;; Txn Flags
+    ("! " . font-lock-warning-face)
+
+    ;; Number + Currency
+    ;;; ("\\([\\-+]?[0-9,]+\\(\\.[0-9]+\\)?\\)\\s-+\\([A-Z][A-Z0-9'\.]\\{1,10\\}\\)" . )
+
+    ))
+
+
+(defvar beancount-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map [(control c)(\')] #'beancount-insert-account)
+    (define-key map [(control c)(control g)] #'beancount-transaction-set-flag)
+    (define-key map [(control c)(r)] #'beancount-init-accounts)
+    (define-key map [(control c)(l)] #'beancount-check)
+    (define-key map [(control c)(q)] #'beancount-query)
+    (define-key map [(control c)(x)] #'beancount-context)
+    (define-key map [(control c)(k)] #'beancount-linked)
+    (define-key map [(control c)(\;)] #'beancount-align-to-previous-number)
+    (define-key map [(control c)(\:)] #'beancount-align-numbers)
+    (define-key map [(control c)(p)] #'beancount-test-align)
+    (define-key map [?\M-\C-m] #'beancount-insert-entry)
+    (define-key map [?\t] #'beancount-tab)
+    map))
+
+(defvar beancount-mode-syntax-table
+  (let ((st (make-syntax-table)))
+    (modify-syntax-entry ?\" "\"\"" st)
+    (modify-syntax-entry ?\; "<" st)
+    (modify-syntax-entry ?\n ">" st)
+    st))
+
+(defcustom beancount-electricity t
+  "If non-nil, make some self-inserting keys electric.
+Currently, only `newline' is electric, to add missing currency."
+  :type 'boolean)
+
+;;;###autoload
 (define-minor-mode beancount-mode
   "A minor mode to help editing Beancount files.
 This can be used within other text modes, in particular, org-mode
-is great for sectioning large files with many transactions."
+is great for sectioning large files with many transactions.
+
+\\{beancount-mode-map}"
   :init-value nil
   :lighter " Beancount"
-  :keymap
-  '(
-    ([(control c)(\')] . beancount-insert-account)
-    ([(control c)(control g)] . beancount-transaction-set-flag)
-    ([(control c)(r)] . beancount-init-accounts)
-    ([(control c)(l)] . beancount-check)
-    ([(control c)(q)] . beancount-query)
-    ([(control c)(x)] . beancount-context)
-    ([(control c)(k)] . beancount-linked)
-    ([(control c)(\;)] . beancount-align-to-previous-number)
-    ([(control c)(\:)] . beancount-align-numbers)
-    ([(control c)(p)] . beancount-test-align)
-    )
+  ;; FIXME: Unused for buffer-local minor-modes!
   :group 'beancount
 
   ;; The following is mostly lifted from lisp-mode.
-  (make-local-variable 'paragraph-ignore-fill-prefix)
-  (setq paragraph-ignore-fill-prefix t)
-  (make-local-variable 'fill-paragraph-function)
-  (setq fill-paragraph-function 'lisp-fill-paragraph)
+  (set (make-local-variable 'paragraph-ignore-fill-prefix) t)
+  (set (make-local-variable 'fill-paragraph-function) 'lisp-fill-paragraph)
 
-  (make-local-variable 'comment-start)
-  (setq comment-start ";; ")
-  (make-local-variable 'comment-start-skip)
+  (set (make-local-variable 'comment-start) ";; ")
 
   ;; Look within the line for a ; following an even number of backslashes
   ;; after either a non-backslash or the line beginning.
-  (setq comment-start-skip "\\(\\(^\\|[^\\\\\n]\\)\\(\\\\\\\\\\)*\\);+ *")
-  (make-local-variable 'font-lock-comment-start-skip)
+  (set (make-local-variable 'comment-start-skip)
+       "\\(\\(^\\|[^\\\\\n]\\)\\(\\\\\\\\\\)*\\);+ *")
+
   ;; Font lock mode uses this only when it KNOWS a comment is starting.
-  (setq font-lock-comment-start-skip ";+ *")
-  (make-local-variable 'comment-add)
-  (setq comment-add 1) ;; Default to `;;' in comment-region
+  ;; FIXME: Why bother?
+  ;;(set (make-local-variable 'font-lock-comment-start-skip) ";+ *")
+
+  ;; Default to `;;' in comment-region
+  ;; FIXME: Redundant with the ";; " default value of comment-start.
+  (set (make-local-variable 'comment-add) 1)
+
+  (set-syntax-table beancount-mode-syntax-table)
+  ;; Force font-lock to use the syntax-table to find strings-and-comments,
+  ;; regardless of what the "host major mode" decided.
+  (set (make-local-variable 'font-lock-keywords-only) nil)
 
   ;; No tabs by default.
   (set (make-local-variable 'indent-tabs-mode) nil)
+
+  (add-hook 'completion-at-point-functions
+            #'beancount-completion-at-point nil t)
+  (set (make-local-variable 'completion-ignore-case) t)
 
   ;; Customize font-lock for beancount.
   ;;
   ;; Important: you have to use 'nil for the mode here because in certain major
   ;; modes (e.g. org-mode) the font-lock-keywords is a buffer-local variable.
   (if beancount-mode
-      (font-lock-add-keywords nil beancount-font-lock-defaults)
-    (font-lock-remove-keywords nil beancount-font-lock-defaults))
-  (font-lock-fontify-buffer)
+      (progn
+        (add-hook 'post-self-insert-hook #'beancount--electric nil t)
+        (font-lock-add-keywords nil beancount-font-lock-keywords))
+    (remove-hook 'post-self-insert-hook #'beancount--electric t)
+    (font-lock-remove-keywords nil beancount-font-lock-keywords))
+  (if (fboundp 'font-lock-flush)
+      (font-lock-flush)
+    (with-no-warnings (font-lock-fontify-buffer)))
 
   (when beancount-mode
-    (make-variable-buffer-local 'beancount-accounts)
     (beancount-init-accounts))
   )
+
+(defvar beancount-accounts nil
+  "A list of the accounts available in this buffer. This is a
+  cache of the value computed by `beancount-get-accounts'.")
+(make-variable-buffer-local 'beancount-accounts)
 
 
 (defun beancount-init-accounts ()
@@ -73,57 +174,22 @@ is great for sectioning large files with many transactions."
   (message "Accounts updated."))
 
 
-(defvar beancount-directive-names '("txn"
-                                    "open"
-                                    "close"
-                                    "commodity"
-                                    "balance"
-                                    "pad"
-                                    "event"
-                                    "price"
-                                    "note"
-                                    "document"
-                                    "pushtag"
-                                    "poptag")
+(defvar beancount-directive-names
+  (append beancount--timestamped-directive-names
+          '("plugin" "option" "pushtag" "poptag"))
   "A list of the directive names.")
-
-
-(defvar beancount-font-lock-defaults
-  `(;; Comments
-    (";.+" . font-lock-comment-face)
-
-    ;; Strings
-    ("\".*?\"" . font-lock-string-face)
-
-    ;; Reserved keywords
-    (,(regexp-opt beancount-directive-names) . font-lock-keyword-face)
-
-    ;; Tags & Links
-    ("[#\\^][A-Za-z0-9\-_/.]+" . font-lock-type-face)
-
-    ;; Date
-    ("[0-9][0-9][0-9][0-9][-/][0-9][0-9][-/][0-9][0-9]" . font-lock-constant-face)
-
-    ;; Account
-    ("\\([A-Z][A-Za-z0-9\-]+:\\)+\\([A-Z][A-Za-z0-9\-]+\\)" . font-lock-builtin-face)
-
-    ;; Txn Flags
-    ("! " . font-lock-warning-face)
-
-    ;; Number + Currency
-    ;;; ("\\([\\-+]?[0-9,]+\\(\\.[0-9]+\\)?\\)\\s-+\\([A-Z][A-Z0-9'\.]\\{1,10\\}\\)" . )
-    ))
-
 
 (defvar beancount-date-regexp "[0-9][0-9][0-9][0-9][-/][0-9][0-9][-/][0-9][0-9]"
   "A regular expression to match dates.")
 
-(defvar beancount-account-regexp (concat (regexp-opt '("Assets"
-                                                       "Liabilities"
-                                                       "Equity"
-                                                       "Income"
-                                                       "Expenses"))
-                                         "\\(?::[A-Z][A-Za-z0-9-_:]+\\)")
+(defconst beancount-account-categories
+  '("Assets" "Liabilities" "Equity" "Income" "Expenses"))
+
+(defconst beancount-account-chars "[:alnum:]-_:")
+
+(defvar beancount-account-regexp
+  (concat (regexp-opt beancount-account-categories)
+          "\\(?::[[:upper:]][" beancount-account-chars "]+\\)")
   "A regular expression to match account names.")
 
 (defvar beancount-number-regexp "[-+]?[0-9,\\.]+"
@@ -132,18 +198,169 @@ is great for sectioning large files with many transactions."
 (defvar beancount-currency-regexp "[A-Z][A-Z-_'.]*"
   "A regular expression to match currencies in beancount.")
 
+(defun beancount--tags (prefix)
+  "Return list of all tags starting with PREFIX in current buffer.
+Excludes tags appearing in the current line."
+  (unless (string-match "\\`[#^]" prefix)
+    (error "Unexpected prefix to search tags: %S" prefix))
+  (let ((found ())
+        (re (concat prefix "[" beancount--tag-chars "]*")))
+    (save-excursion
+      (forward-line 0)
+      (while (re-search-backward re nil t)
+        (push (match-string 0) found)))
+    ;; Ignore tags on current line.
+    (save-excursion
+      (forward-line 1)
+      (while (re-search-forward re nil t)
+        (push (match-string 0) found)))
+    (delete-dups found)))
 
-(defvar beancount-accounts nil
-  "A list of the accounts available in this buffer. This is a
-  cache of the value computed by beancount-get-accounts.")
+(defconst beancount-option-names
+  ;; FIXME: Extract automatically from somewhere!
+  '("title" "name_assets" "name_liabilities" "name_equity" "name_income"
+    "name_expenses" "account_previous_balances" "account_previous_earnings"
+    "account_previous_conversions" "account_current_earnings"
+    "account_current_conversions" "conversion_currency" "tolerance"
+    "documents" "operating_currency" "plugin_processing_mode"))
 
+(defconst beancount--txn-re
+  "^[0-9-/]+ +\\(?:txn +\\)?[^ [:lower:]]\\($\\| \\)")
+
+(defun beancount-inside-txn-p ()
+  ;; FIXME: The doc doesn't actually say how the legs of a transaction can be
+  ;; layed out.  We assume that they all start with some space on the line.
+  (save-excursion
+    (forward-line 0)
+    (while (and (looking-at "[ \t]") (not (bobp)))
+      (forward-line -1))
+    ;; FIXME: The doc doesn't say what a "flag" can look like, so we assume
+    ;; it's a single char that's neither a space nor a lower-case letter.
+    (looking-at beancount--txn-re)))
+
+(defun beancount-completion-at-point ()
+  "Return the completion data relevant for the text at point."
+  (let ((bp (buffer-substring (line-beginning-position) (point))))
+    (cond
+     ((string-match "\\`[a-z]*\\'" bp)
+      ;; A directive starting at BOL (hence non-timestamped).
+      (list (line-beginning-position)
+            (save-excursion (skip-chars-forward "a-z") (point))
+            '("pushtag" "poptag")))
+
+     ((string-match
+       (concat "\\`option +\\(\"[a-z_]*\\)?\\'")
+       bp)
+      (list (- (point)
+               (if (match-end 1) (- (match-end 1) (match-beginning 1)) 0))
+            (save-excursion (skip-chars-forward "a-z_")
+                            (if (looking-at "\"") (forward-char 1))
+                            (point))
+            (mapcar (lambda (s) (concat "\"" s "\"")) beancount-option-names)))
+
+     ((string-match
+       (concat "\\`poptag +\\(#[" beancount--tag-chars "]*\\)?\\'")
+       bp)
+      (list (- (point)
+               (if (match-end 1) (- (match-end 1) (match-beginning 1)) 0))
+            (save-excursion (skip-chars-forward beancount--tag-chars) (point))
+            (save-excursion
+              (let ((opened ()))
+                (while (re-search-backward
+                        (concat "^pushtag +\\(#[" beancount--tag-chars "]+\\)")
+                        nil t)
+                  (push (match-string 1) opened))
+                opened))))
+
+     ((string-match "\\`[0-9-/]+ +\\([[:alpha:]]*\\'\\)" bp)
+      ;; A timestamped directive.
+      (list (- (point) (- (match-end 1) (match-beginning 1)))
+            (save-excursion (skip-chars-forward "[:alpha:]") (point))
+            beancount--timestamped-directive-names))
+
+     ((and (beancount-inside-txn-p)
+           (string-match (concat "\\`[ \t]+\\(["
+                                 beancount-account-chars "]*\\)\\'")
+                         bp))
+      ;; Hopefully, an account name.  We don't force the partially-written
+      ;; account name to start with a capital, so that it's possible to use
+      ;; substring completion and also so we can rely on completion to put the
+      ;; right capitalization (thanks to completion-ignore-case).
+      (list (- (point) (- (match-end 1) (match-beginning 1)))
+            (save-excursion (skip-chars-forward beancount-account-chars)
+                            (point))
+            #'beancount-account-completion-table))
+
+     ((string-match (concat "\\`[0-9-/]+ +\\("
+                            (regexp-opt beancount--timestamped-directive-names)
+                            "\\) +\\([" beancount-account-chars "]*\\'\\)")
+                    bp)
+      (list (- (point) (- (match-end 2) (match-beginning 2)))
+            (save-excursion (skip-chars-forward beancount-account-chars)
+                            (point))
+            (if (equal (match-string 1 bp) "open")
+                (append
+                 (mapcar (lambda (c) (concat c ":")) beancount-account-categories)
+                 beancount-accounts)
+              #'beancount-account-completion-table)))
+
+     ((string-match (concat "[#^][" beancount--tag-chars "]*\\'") bp)
+      (list (- (point) (- (match-end 0) (match-beginning 0)))
+            (save-excursion (skip-chars-forward beancount--tag-chars) (point))
+            (completion-table-dynamic #'beancount--tags))))))
+
+(defun beancount-tab ()
+  "Try to use the right meaning of TAB."
+  (interactive)
+  (let ((cdata (beancount-completion-at-point)))
+    (if cdata
+        ;; There's beancount-specific completion at point.
+        (call-interactively #'completion-at-point)
+      (let* ((beancount-mode nil)
+             (fallback (key-binding (this-command-keys))))
+        (if (commandp fallback)
+            (command-execute fallback))))))
+
+(defun beancount--account-currency (account)
+  (save-excursion
+    (goto-char (point-min))
+    (when (re-search-forward (concat "^[0-9-]+[ \t]+open[ \t]+"
+                                     (regexp-quote account)
+                                     "[ \t]+\\([[:upper:]]+\\)[ \t]*"
+				     "\\(?:$\\|;\\)")
+                             nil t)
+      ;; The account has declared a single currency, so we can fill it in.
+      (match-string 1))))
+
+(defun beancount--electric ()
+  ;; TODO: When hitting RET after the first leg of a txn, look back
+  ;; for similar transactions and insert the matching account!
+  (when (and beancount-electricity (eq last-command-event ?\n))
+    (cond
+     ((save-excursion (forward-line -1) (looking-at beancount--txn-re))
+      ;; FIXME: Provide an indent-line-function instead!
+      ;; TODO: Auto-align the amount (probably use a beancount-amount-column).
+      (indent-line-to 2))
+     ((save-excursion (forward-line -1)
+                      (and (beancount-inside-txn-p)
+                           (looking-at (concat "[ \t]+\\(["
+                                               beancount-account-chars
+                                               "]+\\)[ \t]+[0-9.]+[ \t]*$"))))
+      ;; Last line is a leg without currency.
+      (let* ((account (match-string 1))
+             (pos (match-end 0))
+             (currency (beancount--account-currency account)))
+        (when currency
+          (save-excursion
+	    (goto-char pos)
+            (insert " " currency))))))))
 
 (defun beancount-hash-keys (hashtable)
   "Extract all the keys of the given hashtable. Return a sorted list."
   (let (rlist)
-    (maphash (lambda (k v) (push k rlist)) hashtable)
+    (maphash (lambda (k _v) (push k rlist)) hashtable)
+    ;; FIXME: Doesn't look very sorted!
     rlist))
-
 
 (defun beancount-get-accounts ()
   "Heuristically obtain a list of all the accounts used in all the postings.
@@ -157,12 +374,33 @@ declarations only."
         (puthash (match-string-no-properties 0) nil accounts)))
     (sort (beancount-hash-keys accounts) 'string<)))
 
+(defcustom beancount-use-ido t
+  "If non-nil, use ido-style completion rather than the standard completion."
+  :type 'boolean)
+
+(defun beancount-account-completion-table (string pred action)
+  (if (eq action 'metadata)
+      '(metadata (category . beancount-account))
+    (complete-with-action action beancount-accounts string pred)))
+
+;; Default to substring completion for beancount accounts.
+(defconst beancount--completion-overrides
+  '(beancount-account (styles basic partial-completion substring)))
+(cond
+ ((boundp 'completion-category-defaults)
+  (add-to-list 'completion-category-defaults beancount--completion-overrides))
+ ((and (boundp 'completion-category-overrides)
+       (not (assq 'beancount-account completion-category-overrides)))
+  (push beancount--completion-overrides completion-category-overrides)))
 
 (defun beancount-insert-account (account-name)
-  "Insert one of the valid account names in this file (using ido
-niceness)."
+  "Insert one of the valid account names in this file (using ido niceness)."
   (interactive
-   (list (ido-completing-read "Account: " beancount-accounts nil nil (thing-at-point 'word))))
+   (list
+    (funcall (if beancount-use-ido
+                 #'ido-completing-read #'completing-read)
+             "Account: " #'beancount-account-completion-table
+             nil t (thing-at-point 'word))))
   (let ((bounds (bounds-of-thing-at-point 'word)))
     (when bounds
       (delete-region (car bounds) (cdr bounds))))
@@ -174,16 +412,17 @@ niceness)."
   (save-excursion
     (backward-paragraph 1)
     (forward-line 1)
-    (replace-string "!" "*" nil (line-beginning-position) (line-end-position))))
+    (while (search-forward "!" (line-end-position) t)
+      (replace-match "*"))))
 
 
 (defmacro beancount-for-line-in-region (begin end &rest exprs)
   "Iterate over each line in region until an empty line is encountered."
   `(save-excursion
-     (let ((end-marker (set-marker (make-marker) ,end)))
+     (let ((end-marker (copy-marker ,end)))
        (goto-char ,begin)
        (beginning-of-line)
-       (while (and (not (= (point) (point-max))) (< (point) end-marker))
+       (while (and (not (eobp)) (< (point) end-marker))
          (beginning-of-line)
          (progn ,@exprs)
          (forward-line 1)
@@ -226,7 +465,8 @@ align with the fill-column."
                                    "[ \t]+"
                                    "\\(" beancount-number-regexp "\\)"
                                    "[ \t]+"
-                                   beancount-currency-regexp) line)
+                                   beancount-currency-regexp)
+                           line)
          (push (length (match-string 1 line)) prefix-widths)
          (push (length (match-string 2 line)) number-widths)
          )))
@@ -252,7 +492,8 @@ align with the fill-column."
                                        "[ \t]+"
                                        "\\(" beancount-number-regexp "\\)"
                                        "[ \t]+"
-                                       "\\(.*\\)$") line)
+                                       "\\(.*\\)$")
+                               line)
              (delete-region (line-beginning-position) (line-end-position))
              (let* ((prefix (match-string 1 line))
                     (number (match-string 2 line))
@@ -326,28 +567,47 @@ what that column is and returns it (an integer)."
         ))
     column))
 
+(defvar beancount-install-dir nil
+  "Directory in which Beancount's source is located.
+Only useful if you have not installed Beancount properly in your PATH.")
 
 (defvar beancount-check-program "bean-check"
   "Program to run to run just the parser and validator on an
   input file.")
 
-(defun beancount-check ()
-  (interactive)
+(defvar compilation-read-command)
+
+(defun beancount--run (prog &rest args)
   (let ((compilation-read-command nil)
-        (compile-command
-         (format "%s %s" beancount-check-program (buffer-file-name))))
+        (process-environment
+         (if beancount-install-dir
+             `(,(concat "PYTHONPATH="
+                        (expand-file-name "src/python"
+                                          beancount-install-dir))
+               ,(concat "PATH="
+                        (expand-file-name "bin" beancount-install-dir)
+                        ":" (getenv "PATH"))
+               ,@process-environment)
+           process-environment))
+        (compile-command (mapconcat #'shell-quote-argument
+                                    (cons prog args)
+                                    " ")))
     (call-interactively 'compile)))
 
+(defun beancount-check ()
+  (interactive)
+  (beancount--run beancount-check-program
+                  (file-relative-name (buffer-file-name))))
 
 (defvar beancount-query-program "bean-query"
   "Program to run to run just the parser and validator on an
   input file.")
 
 (defun beancount-query ()
+  "Run bean-query."
   (interactive)
-  (let ((compile-command
-         (format "%s %s " beancount-query-program (buffer-file-name))))
-    (call-interactively 'compile)))
+  (beancount--run beancount-query-program
+                  (file-relative-name buffer-file-name)))
 
 
 (defvar beancount-doctor-program "bean-doctor"
@@ -355,21 +615,22 @@ what that column is and returns it (an integer)."
 
 (defun beancount-context ()
   (interactive)
-  (let ((compilation-read-command nil)
-        (compile-command
-         (format "%s %s %s %d"
-                 beancount-doctor-program "context"
-                 (buffer-file-name) (line-number-at-pos (point)))))
-    (call-interactively 'compile)))
+  (beancount--run beancount-doctor-program "context"
+                  (file-relative-name buffer-file-name)
+                  (number-to-string (line-number-at-pos))))
+
 
 (defun beancount-linked ()
   (interactive)
-  (let ((compilation-read-command nil)
-        (compile-command
-         (format "%s %s %s %d"
-                 beancount-doctor-program "linked"
-                 (buffer-file-name) (line-number-at-pos (point)))))
-    (call-interactively 'compile)))
+  (beancount--run beancount-doctor-program "linked"
+                  (file-relative-name buffer-file-name)
+                  (line-number-at-pos)))
 
+(defun beancount-insert-entry ()
+  "Start a new entry."
+  (interactive)
+  (unless (bolp) (newline))
+  (insert (format-time-string "%Y-%m-%d") " "))
 
 (provide 'beancount)
+;;; beancount.el ends here
