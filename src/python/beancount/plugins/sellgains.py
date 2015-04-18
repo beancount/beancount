@@ -94,11 +94,13 @@ def validate_sell_gains(entries, options_map):
         total_proceeds = inventory.Inventory()
         for posting in entry.postings:
             position = posting.position
+            # If the posting is held at cost, add the priced value to the balance.
             if position.lot.cost is not None:
                 assert posting.price
                 price = posting.price
                 total_price.add_amount(amount.amount_mult(price, -position.number))
             else:
+                # Otherwise, use the weight and ignore postings to Income accounts.
                 atype = account_types.get_account_type(posting.account)
                 if atype in proceed_types:
                     total_proceeds.add_amount(
