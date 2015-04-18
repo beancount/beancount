@@ -20,6 +20,21 @@ import sys
 from pprint import pprint
 
 
+# Default regular expressions used for splitting.
+DEFAULT_PATTERN = (r"(Assets|Liabilities|Equity|Income|Expenses)"
+                   r"(:[A-Z][A-Za-z0-9-_']*)*")
+DEFAULT_DELIMITER = "[ \t]+"
+DEFAULT_SPLITTER = ":"
+
+# Regular expressions used for loose accounts.
+LOOSE_PATTERN = r"\b([A-Za-z0-9-_']+)(:[A-Za-z0-9-_']+)+\b"
+LOOSE_SPLITTER = r":"
+
+# Regular expressions used for filenames matching.
+FILENAME_PATTERN = r"([^ \t]*)(/[^ \t]*)+"
+FILENAME_SPLITTER = r"/"
+
+
 def find_column(lines, pattern, delimiter):
     """Find a valid column with hierarchical data in the text lines.
 
@@ -246,19 +261,21 @@ def main():
                         help='Name of the file to write (default: stdout)')
 
     parser.add_argument('-r', '--pattern', action='store',
-                        default=(r"(Assets|Liabilities|Equity|Income|Expenses)"
-                                 r"(:[A-Z][A-Za-z0-9-_']*)*"),
-                        help="Pattern for repeatable components")
+                        default=None,
+                        help=("Pattern for repeatable components "
+                              "(default: \"{}\")".format(DEFAULT_PATTERN)))
 
     parser.add_argument('-d', '--delimiter', action='store',
-                        default=r"[ \t]+",
+                        default=DEFAULT_DELIMITER,
                         help=("Delimiter pattern to detect the end of a column text. "
                               "If your pattens contain strings, you may want to set this "
-                              "to a longer string, like ' {2,}'"))
+                              "to a longer string, like ' {{2,}}' "
+                              "(default: \"{}\")").format(DEFAULT_DELIMITER))
 
     parser.add_argument('-s', '--split', action='store',
-                        default=":",
-                        help="Pattern splitting into components")
+                        default=DEFAULT_SPLITTER,
+                        help="Pattern splitting into components (default: \"{}\")".format(
+                            DEFAULT_SPLITTER))
 
     parser.add_argument('-F', '--filenames', action='store_true',
                         help="Use pattern and split suitable for filenames")
@@ -277,15 +294,18 @@ def main():
                                           args.pattern)]) > 1:
         parser.error("Conflicted pattern options")
 
+    if args.pattern is None:
+        args.pattern = DEFAULT_PATTERN
+
     if args.filenames:
         # Note: you could spit an error if the other options are set: "you may
         # not use --filenames and specify a pattern or split" or somesuch.
-        args.pattern = r"([^ \t]*)(/[^ \t]*)+"
-        args.split = r"/"
+        args.pattern = FILENAME_PATTERN
+        args.split = FILENAME_SPLITTER
 
     elif args.loose_accounts:
-        args.pattern = r"\b([A-Z][A-Za-z0-9-_']*)(:[A-Z][A-Za-z0-9-_']*)+\b"
-        args.split = r":"
+        args.pattern = LOOSE_PATTERN
+        args.split = LOOSE_SPLITTER
 
     # Open input and output files.
     input_file = open(args.input, 'r') if args.input else sys.stdin

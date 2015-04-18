@@ -38,6 +38,35 @@ Note: This file contains only changes in the 'default' branch.
     be ignored, so only those which can be verified will be verified.
 
 
+2015-04-18
+
+  - Beancount now allows the cost to the set to zero. This is useful for stock
+    options that one receives from an employer that have no value attached to
+    them.
+
+    Additionally, I'm considering allowing negative cost as well, which may be
+    necessary to handle adjusted cost bases, but I haven't added this just yet.
+    I'm not 100% convinced (adjustments are probably always upward).
+
+
+2015-04-16
+
+  - Added a new command to bean-doctor: "linked" which prints out all
+    transactions linked to the one at a given line number, in a format Emacs can
+    grok with filename and location like errors so you can easily navigate
+    between the linked transactions.
+
+    Correspondingly, added a "bean-linked" command to the Emacs support mode.
+
+
+2015-04-13
+
+  - A minor improvment to bean-format has been implemented: Whitespace before
+    postings is now automatically normalized to the most frequent spacing
+    present in the document. This allows you to be somewhat sloppy on the
+    postings themselves when entering new transactions.
+
+
 2015-02-16
 
   - Finally completed documentation on how to export your portfolio to Google
