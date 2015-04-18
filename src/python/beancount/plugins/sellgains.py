@@ -48,6 +48,7 @@ from beancount.core import amount
 from beancount.core import getters
 from beancount.core import inventory
 from beancount.core import account_types
+from beancount.core import interpolate
 from beancount.parser import printer
 from beancount.parser import options
 
@@ -100,9 +101,10 @@ def validate_sell_gains(entries, options_map):
             else:
                 atype = account_types.get_account_type(posting.account)
                 if atype in proceed_types:
-                    total_proceeds.add_position(position)
+                    total_proceeds.add_amount(
+                        interpolate.get_posting_weight(posting))
 
-        # Compare invnetories, currency by currency.
+        # Compare inventories, currency by currency.
         dict_price = {pos.lot.currency: pos.number
                       for pos in total_price}
         dict_proceeds = {pos.lot.currency: pos.number
