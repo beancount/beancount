@@ -15,6 +15,7 @@ from beancount.core.amount import D
 from beancount.parser.parser import parsedoc
 from beancount.parser import parser
 from beancount.parser import lexer
+from beancount.parser import printer
 from beancount.core import data
 from beancount.core import amount
 from beancount.core import interpolate
@@ -1089,3 +1090,18 @@ class TestLexerErrors(unittest.TestCase):
         self.assertFalse(errors)
         self.assertEqual(1, len(entries))
         self.assertEqual(2, len(entries[0].postings))
+
+
+class TestArithmetic(unittest.TestCase):
+
+    @parsedoc
+    def test_number_expr_DIV(self, entries, errors, _):
+        """
+          2013-05-18 * "Test"
+            Assets:Something    12 / 3 USD
+            Assets:Something   7.5 / 3 USD
+        """
+        self.assertEqual(1, len(entries))
+        postings = entries[0].postings
+        self.assertEqual(D('4'), postings[0].position.number)
+        self.assertEqual(D('2.5'), postings[1].position.number)
