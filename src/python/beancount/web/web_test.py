@@ -7,7 +7,12 @@ import argparse
 import sys
 
 import urllib.request
-import lxml.html
+try:
+    import lxml.html
+except ImportError as exc:
+    print("ERROR: Cannot run web tests: You need to install lxml: {}".format(exc),
+          file=sys.stderr)
+    sys.exit(1)
 
 from beancount.web import web
 from beancount.utils import test_utils

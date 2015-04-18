@@ -15,6 +15,7 @@ from beancount.core.amount import D
 from beancount.parser.parser import parsedoc
 from beancount.parser import parser
 from beancount.parser import lexer
+from beancount.parser import printer
 from beancount.core import data
 from beancount.core import amount
 from beancount.core import interpolate
@@ -691,7 +692,7 @@ class TestTransactions(unittest.TestCase):
             Assets:Cash
         """
         check_list(self, entries, [data.Transaction])
-        check_list(self, errors, [parser.ParserError])
+        check_list(self, errors, [])
 
     @parsedoc
     def test_imbalance(self, entries, errors, _):
@@ -745,8 +746,7 @@ class TestTotalsAndSigns(unittest.TestCase):
             Assets:Investments:MSFT      -10 MSFT {0.00 USD}
             Assets:Investments:Cash
         """
-        self.assertTrue(errors)
-        self.assertTrue(re.search('Cost is zero or negative', errors[0].message))
+        self.assertFalse(errors)
 
     @parsedoc
     def test_cost_negative(self, entries, errors, _):
@@ -756,7 +756,7 @@ class TestTotalsAndSigns(unittest.TestCase):
             Assets:Investments:Cash
         """
         self.assertTrue(errors)
-        self.assertTrue(re.search('Cost is zero or negative', errors[0].message))
+        self.assertTrue(re.search('Cost is negative', errors[0].message))
 
     @parsedoc
     def test_total_cost(self, entries, errors, _):
@@ -1089,3 +1089,18 @@ class TestLexerErrors(unittest.TestCase):
         self.assertFalse(errors)
         self.assertEqual(1, len(entries))
         self.assertEqual(2, len(entries[0].postings))
+
+
+class TestArithmetic(unittest.TestCase):
+
+    @parsedoc
+    def test_number_expr_DIV(self, entries, errors, _):
+        """
+          2013-05-18 * "Test"
+            Assets:Something    12 / 3 USD
+            Assets:Something   7.5 / 3 USD
+        """
+        self.assertEqual(1, len(entries))
+        postings = entries[0].postings
+        self.assertEqual(D('4'), postings[0].position.number)
+        self.assertEqual(D('2.5'), postings[1].position.number)

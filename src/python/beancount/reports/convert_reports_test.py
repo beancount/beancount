@@ -155,7 +155,9 @@ class TestLedgerConversion(test_utils.TestCase):
         """, stdout.getvalue())
 
     def test_example(self):
-        with tempfile.NamedTemporaryFile('w', suffix='.beancount') as beanfile:
+        with tempfile.NamedTemporaryFile('w',
+                                         suffix='.beancount',
+                                         encoding='utf-8') as beanfile:
             # Generate an example Beancount file.
             example.write_example_file(datetime.date(1980, 1, 1),
                                        datetime.date(2010, 1, 1),
@@ -176,7 +178,9 @@ class TestLedgerConversion(test_utils.TestCase):
 class TestHLedgerConversion(test_utils.TestCase):
 
     def test_example(self):
-        with tempfile.NamedTemporaryFile('w', suffix='.beancount') as beanfile:
+        with tempfile.NamedTemporaryFile('w',
+                                         suffix='.beancount',
+                                         encoding='utf-8') as beanfile:
             # Generate an example Beancount file.
             example.write_example_file(datetime.date(1980, 1, 1),
                                        datetime.date(2010, 1, 1),

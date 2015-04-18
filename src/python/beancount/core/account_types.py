@@ -33,7 +33,7 @@ DEFAULT_ACCOUNT_TYPES = AccountTypes("Assets",
 
 
 def get_account_sort_key(account_types, account_name):
-    """Return a typle that can be used to sort account names.
+    """Return a tuple that can be used to order/sort account names.
 
     Args:
       account_types: An instance of AccountTypes, a tuple of account type names.
