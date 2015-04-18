@@ -1094,6 +1094,19 @@ class TestLexerErrors(unittest.TestCase):
 class TestArithmetic(unittest.TestCase):
 
     @parsedoc
+    def test_number_expr_MUL(self, entries, errors, _):
+        """
+          2013-05-18 * "Test"
+            Assets:Something    12 * 3 USD
+            Assets:Something   7.5 * 3.1 USD
+        """
+        printer.print_errors(errors)
+        self.assertEqual(1, len(entries))
+        postings = entries[0].postings
+        self.assertEqual(D('36'), postings[0].position.number)
+        self.assertEqual(D('23.25'), postings[1].position.number)
+
+    @parsedoc
     def test_number_expr_DIV(self, entries, errors, _):
         """
           2013-05-18 * "Test"

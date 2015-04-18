@@ -77,6 +77,7 @@ const char* getTokenName(int token);
 %token <string> RCURL      /* } */
 %token <string> EQUAL      /* = */
 %token <string> COMMA      /* , */
+%token <string> ASTERISK   /* * */
 %token <string> SLASH      /* / */
 %token <character> FLAG    /* Valid characters for flags */
 %token TXN                 /* 'txn' keyword */
@@ -155,6 +156,10 @@ txn : TXN
     {
         $$ = $1;
     }
+    | ASTERISK
+    {
+        $$ = $1[0];
+    }
 
 eol : EOL
     | COMMENT EOL
@@ -174,6 +179,10 @@ empty_line : EOL
 number_expr : NUMBER
             {
                 $$ = $1;
+            }
+            | number_expr ASTERISK NUMBER
+            {
+                $$ = PyNumber_Multiply($1, $3);
             }
             | number_expr SLASH NUMBER
             {
@@ -215,6 +224,10 @@ transaction : DATE txn txn_fields eol posting_or_kv_list
 optflag : empty
         {
             $$ = '\0';
+        }
+        | ASTERISK
+        {
+            $$ = $1[0];
         }
         | FLAG
 
@@ -514,6 +527,7 @@ const char* getTokenName(int token)
         case RCURL    : return "RCURL";
         case EQUAL    : return "EQUAL";
         case COMMA    : return "COMMA";
+        case ASTERISK : return "ASTERISK";
         case SLASH    : return "SLASH";
         case FLAG     : return "FLAG";
         case TXN      : return "TXN";
