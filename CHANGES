@@ -4,7 +4,17 @@
 Note: This file contains only changes in the 'default' branch.
 
 
-2015-04-13
+2015-04-18
+
+  - Implemented limited support for arithmetic expressions. For now, only
+    support division. So A/B where "A" and "B" are numbers should now work.
+
+    In order to support full arithmetic expressions, we need to reimplement
+    the lexer in order to distinguish between "*" as a TAG or as a multiplication
+    token, and operator precedence to deal with terms vs. exprs. This will
+    probably be done soon. (I need division for a particular task right now, so
+  it is being added in in a backwards-compatilble way).
+
 
   - Merged a new plugin (beancount.plugins.sellgains) that automatically
     cross-checks the purchase price of a lot against all the other legs that are
@@ -38,7 +48,7 @@ Note: This file contains only changes in the 'default' branch.
     be ignored, so only those which can be verified will be verified.
 
 
-2015-04-18
+2015-04-13
 
   - Beancount now allows the cost to the set to zero. This is useful for stock
     options that one receives from an employer that have no value attached to
