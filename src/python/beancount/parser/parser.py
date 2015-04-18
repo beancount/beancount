@@ -330,10 +330,10 @@ class Builder(lexer.LexBuilder):
                     ParserError(meta,
                                 'Amount is zero: "{}"'.format(amount), None))
 
-            if cost.number <= ZERO:
+            if cost.number < ZERO:
                 meta = new_metadata(filename, lineno)
                 self.errors.append(
-                    ParserError(meta, 'Cost is zero or negative: "{}"'.format(cost), None))
+                    ParserError(meta, 'Cost is negative: "{}"'.format(cost), None))
 
         if istotal:
             cost = amount_div(cost, abs(amount.number))

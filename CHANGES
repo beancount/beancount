@@ -4,6 +4,17 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-04-18
+
+  - Beancount now allows the cost to the set to zero. This is useful for stock
+    options that one receives from an employer that have no value attached to
+    them.
+
+    Additionally, I'm considering allowing negative cost as well, which may be
+    necessary to handle adjusted cost bases, but I haven't added this just yet.
+    I'm not 100% convinced (adjustments are probably always upward).
+
+
 2015-04-16
 
   - Added a new command to bean-doctor: "linked" which prints out all

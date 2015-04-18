@@ -691,7 +691,7 @@ class TestTransactions(unittest.TestCase):
             Assets:Cash
         """
         check_list(self, entries, [data.Transaction])
-        check_list(self, errors, [parser.ParserError])
+        check_list(self, errors, [])
 
     @parsedoc
     def test_imbalance(self, entries, errors, _):
