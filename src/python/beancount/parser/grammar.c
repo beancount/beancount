@@ -1528,7 +1528,7 @@ yyreduce:
   case 13:
 #line 179 "src/python/beancount/parser/grammar.y" /* yacc.c:1646  */
     {
-               (yyval.pyobj) = BUILD("number_expr_DIV", "OO", (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
+                (yyval.pyobj) = PyNumber_TrueDivide((yyvsp[-2].pyobj), (yyvsp[0].pyobj));
             }
 #line 1534 "src/python/beancount/parser/grammar.c" /* yacc.c:1646  */
     break;

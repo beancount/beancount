@@ -177,7 +177,7 @@ number_expr : NUMBER
             }
             | number_expr SLASH NUMBER
             {
-               $$ = BUILD("number_expr_DIV", "OO", $1, $3);
+                $$ = PyNumber_TrueDivide($1, $3);
             }
 
 txn_fields : empty

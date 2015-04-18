@@ -746,8 +746,7 @@ class TestTotalsAndSigns(unittest.TestCase):
             Assets:Investments:MSFT      -10 MSFT {0.00 USD}
             Assets:Investments:Cash
         """
-        self.assertTrue(errors)
-        self.assertTrue(re.search('Cost is zero or negative', errors[0].message))
+        self.assertFalse(errors)
 
     @parsedoc
     def test_cost_negative(self, entries, errors, _):
@@ -757,7 +756,7 @@ class TestTotalsAndSigns(unittest.TestCase):
             Assets:Investments:Cash
         """
         self.assertTrue(errors)
-        self.assertTrue(re.search('Cost is zero or negative', errors[0].message))
+        self.assertTrue(re.search('Cost is negative', errors[0].message))
 
     @parsedoc
     def test_total_cost(self, entries, errors, _):

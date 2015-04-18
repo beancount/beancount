@@ -187,20 +187,6 @@ class Builder(lexer.LexBuilder):
             self.entries = entries
 
 
-    def number_expr_DIV(self, numerator, denominator):
-        """Implement numerical division.
-
-        Args:
-          numerator: A Decimal instance.
-          denominator: A Decimal instance.
-        Returns:
-          A Decimal instance, the quotient.
-        """
-        # FIXME: We ought to perform this in C for performance instead of
-        # calling back to Python. Figure this out later.
-        return numerator / denominator
-
-
     def pushtag(self, tag):
         """Push a tag on the current set of tags.
 
