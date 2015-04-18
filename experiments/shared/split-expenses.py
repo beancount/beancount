@@ -176,7 +176,6 @@ def main():
 
         pos_conversion = position.Position(position.Lot(main_currency, None, None),
                                            -balance_amount)
-        print('; {}'.format(price_rate))
         conversion.postings.append(
             data.Posting(conversion, args.reconciliation_account, -pos_conversion,
                          amount.Amount(price_rate, pos.lot.currency), None, None))
