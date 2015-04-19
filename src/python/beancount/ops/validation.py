@@ -74,8 +74,8 @@ def validate_inventory_booking(entries, unused_options_map):
                     errors.append(
                         ValidationError(
                             posting.entry.meta,
-                            "Reducing position results in mixed inventory: {}".format(
-                                position_),
+                            ("Reducing position results in inventory with positive "
+                             "and negative lots: {}").format(position_),
                             posting.entry))
 
         elif isinstance(entry, data.Open):
