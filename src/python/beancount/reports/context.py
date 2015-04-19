@@ -5,10 +5,11 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import io
 
-from beancount.parser import printer
+from beancount.core.amount import ZERO
 from beancount.core import compare
 from beancount.core import data
 from beancount.core import interpolate
+from beancount.parser import printer
 
 
 def render_entry_context(entries, dcontext, filename, lineno):
@@ -63,7 +64,14 @@ def render_entry_context(entries, dcontext, filename, lineno):
 
     # Print the entry itself.
     print(file=oss)
+    dformat = dcontext.build()
     printer.print_entry(closest_entry, dcontext, render_weights=True, file=oss)
+
+    # Print residuals.
+    residual = interpolate.compute_residual(closest_entry.postings)
+    if not residual.is_empty():
+        print(file=oss)
+        print(';;; Residual: {}'.format(residual.to_string(dformat)), file=oss)
 
     # Print the context after.
     print(file=oss)
