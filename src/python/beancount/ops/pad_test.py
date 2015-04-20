@@ -393,3 +393,21 @@ class TestPadding(cmptest.TestCase):
         self.assertEqual([pad.PadError], list(map(type, errors)))
         self.assertTrue(re.search('Attempt to pad an entry with cost for',
                                   errors[0].message))
+
+    @loaddoc
+    def test_pad_parent(self, entries, errors, __):
+        """
+          1998-01-01 open Assets:CA:Bank:Checking     CAD
+          1998-01-01 open Assets:CA:Bank:CheckingOld  CAD
+          1998-01-01 open Income:CA:Something         USD
+          1998-01-01 open Equity:Beginning-Balances
+
+          2006-01-01 pad Assets:CA:Bank:Checking   Equity:Beginning-Balances
+
+          2006-04-04 balance Assets:CA:Bank:Checking      742.50 CAD
+
+          2001-01-15 * "Referral"
+            Assets:CA:Bank:CheckingOld   1000.00 CAD @ 0.6625 USD
+            Income:CA:Something          -662.50 USD
+        """
+        self.assertFalse(errors)

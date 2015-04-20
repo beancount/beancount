@@ -251,3 +251,22 @@ class TestBalance(unittest.TestCase):
             Expenses:Something           -100 USD
         """
         self.assertEqual([], list(map(type, errors)))
+
+    @loaddoc
+    def test_balance_with_prefix_account(self, entries, errors, __):
+        """
+          2013-05-01 open Assets:Bank:Checking
+          2013-05-01 open Assets:Bank:CheckingOld
+          2013-05-01 open Equity:Opening-Balances
+
+          2013-05-02 *
+            Assets:Bank:Checking                100 USD
+            Equity:Opening-Balances
+
+          2013-05-03 *
+            Assets:Bank:CheckingOld              27 USD
+            Equity:Opening-Balances
+
+          2013-05-10 balance Assets:Bank:Checking   100 USD
+        """
+        self.assertEqual([], list(map(type, errors)))

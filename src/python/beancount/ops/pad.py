@@ -3,8 +3,10 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
+import re
 
 from beancount.core.amount import D
+from beancount.core import account
 from beancount.core import amount
 from beancount.core import inventory
 from beancount.core import data
@@ -53,7 +55,7 @@ def pad(entries, options_map):
     new_entries = {id(pad): [] for pad in pads}
 
     # Process each account that has a padding group.
-    for account, pad_list in sorted(pad_dict.items()):
+    for account_, pad_list in sorted(pad_dict.items()):
 
         # Last encountered / currency active pad entry.
         active_pad = None
@@ -63,8 +65,9 @@ def pad(entries, options_map):
 
         # Gather all the postings for the account and its children.
         postings = []
+        is_child = account.parent_matcher(account_)
         for item_account, item_postings in by_account.items():
-            if item_account.startswith(account):
+            if is_child(item_account):
                 postings.extend(item_postings)
         postings.sort(key=data.posting_sortkey)
 
@@ -77,7 +80,7 @@ def pad(entries, options_map):
                 pad_balance.add_position(entry.position)
 
             elif isinstance(entry, data.Pad):
-                if entry.account == account:
+                if entry.account == account_:
                     # Mark this newly encountered pad as active and allow all lots
                     # to be padded heretofore.
                     active_pad = entry
