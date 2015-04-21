@@ -74,7 +74,9 @@ def validate_sell_gains(entries, options_map):
     """
     errors = []
     acc_types = options.get_account_types(options_map)
-    proceed_types = set([acc_types.assets, acc_types.expenses])
+    proceed_types = set([acc_types.assets,
+                         acc_types.liabilities,
+                         acc_types.expenses])
 
     for entry in entries:
         if not isinstance(entry, data.Transaction):
@@ -127,10 +129,5 @@ def validate_sell_gains(entries, options_map):
                     "Invalid price vs. proceeds/gains: {} vs. {}".format(
                         total_price, total_proceeds),
                     entry))
-
-        # printer.print_entries([entry])
-        # print(total_price)
-        # print(total_proceeds)
-        # print()
 
     return entries, errors
