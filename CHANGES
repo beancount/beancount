@@ -13,8 +13,10 @@ Note: This file contains only changes in the 'default' branch.
     the lexer in order to distinguish between "*" as a TAG or as a multiplication
     token, and operator precedence to deal with terms vs. exprs. This will
     probably be done soon. (I need division for a particular task right now, so
-  it is being added in in a backwards-compatilble way).
+    it is being added in in a backwards-compatilble way).
 
+
+2015-04-18
 
   - Merged a new plugin (beancount.plugins.sellgains) that automatically
     cross-checks the purchase price of a lot against all the other legs that are
