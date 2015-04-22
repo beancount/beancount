@@ -4,6 +4,14 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-04-19
+
+  - Fixed a bug with the pad directive that did not look for account name
+    boundaries when looking at a parent account.
+
+  - In output of bean-doctor context, now print the residual amount.
+
+
 2015-04-18
 
   - Implemented limited support for arithmetic expressions. For now, only
