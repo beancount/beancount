@@ -1383,7 +1383,7 @@ def generate_commodity_entries(date_birth):
           export: "IGNORE"
 
         2009-05-01 commodity RGAGX
-          name: "American Funds The Growth Fund of America® Class R-6"
+          name: "American Funds The Growth Fund of America Class R-6"
           quote: USD
           ticker: "MUTF:RGAGX"
 
