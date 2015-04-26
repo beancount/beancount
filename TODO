@@ -83,6 +83,9 @@ beancount: TODO
 
 ** Misc
 
+  - beancount.parser.parsedoc_noerrors() has been implemented; now convert all
+    the tests to the simplified version.
+
   - Add a special PYTHONPATH for ledgerhub binaries, to override Beancount to
     its custom version.
 
