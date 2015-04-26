@@ -245,6 +245,7 @@ class Builder(lexer.LexBuilder):
 
                 # Append to a list of values.
                 option.append(value)
+
             else:
                 # Validate some option values.
                 if key == 'plugin_processing_mode':
@@ -258,7 +259,7 @@ class Builder(lexer.LexBuilder):
                 # Set the value.
                 self.options[key] = value
 
-            # Refresh the list of valid account regexps as we go.
+            # Refresh the list of valid account regexps as we go along.
             if key.startswith('name_'):
                 # Update the set of valid account types.
                 self.account_regexp = valid_account_regexp(self.options)

@@ -1,5 +1,61 @@
 -*- mode: org -*-
 beancount: TODO
+* Precision
+Launch description:
+
+  - MAJOR FEATURE: Tolerance checks have now been completely revamped.
+    This proposal:
+      http://furius.ca/beancount/doc/proposal-rounding
+    has been implemented. The new behaviour is documented here:
+      http://furius.ca/beancount/doc/precision
+
+    This affects:
+    * transaction balance checks
+    * checks from balance directives
+    * padding directives
+
+
+  - Add a 'converter' to options parsing.
+  - Convert to Decimal using the converter, parsing pairs.
+  - Change all other options parsing code to convert using the converters.
+  - Convert the list of currencies into a dict after parsing.
+  - Add a 'deprecated' field to OptDesc.
+
+            elif isinstance(option, dict):
+                # Check the that option parses a key and value.
+                match = re.match(r'(.*)[ \t]*:[ \t]*(.*)', value.strip())
+                if not match:
+                    self.errors.append(
+                        ParserError(meta, ("Invalid format for dict "
+                                           "option '{}': '{}'".format(key, value)), None))
+                else:
+                    key, value = match.groups()
+
+                    # Set the dict value. to a list of values.
+                    if value in option:
+                        self.errors.append(
+                            ParserError(meta, ("Warning: Overriding value '{}' for '{}'"
+                                               "option '{}': '{}'".format(key, value)), None))
+
+                    option.append(value)
+
+
+
+
+
+  - Remove the 'tolerance' option and make that use the same precision algorithm
+    as is used during balancing. This will affect check() and pad().
+
+  - Implement a 'fixed_tolerance' option to make the old behavior still work for
+    people during the transition.
+
+  - Document how precision works, in detail.
+
+
+  - Since we're deprecating some options, Deprecate the 'plugin' option and
+    remove the code from parser.py for it.
+
+
 * Priorities
 ** Notes
 

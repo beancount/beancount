@@ -112,6 +112,42 @@ PUBLIC_OPTION_GROUPS = [
                   "NOTHING", "NOTHING")]),
 
     OptGroup("""
+      Mappings of currency to the tolerance used when it cannot be inferred
+      automatically. The tolerance at hand is the one used for verifying (1)
+      that transactions balance, (2) that explicit balance checks from 'balance'
+      directives balance, and (3) in the precision used for padding (from the
+      'pad' directive).
+
+      The values must be strings in the following format:
+        <currency>:<tolerance>
+      for example, 'USD:0.005'.
+
+      By default, the default tolerance used for currencies without an explicit
+      value is zero (which means infinite precision). As a special case, this
+      default value, that is, the default value used for all currencies without
+      an explicit default can be overridden using the '*' currency, like this:
+      '*:0.5'. Used by itself, this last example sets the default tolerance as
+      '0.5' for all currencies.
+
+      For detailed documentation about how precision is handled, see this doc:
+      http://furius.ca/beancount/doc/precision
+    """, [OptDesc("default_tolerance", [], [])]),
+
+    # Note: This option will go away at some point. Use this until you're able
+    # to find time to port your input files to match the inferred tolerance.
+    # See this for details: http://furius.ca/beancount/doc/precision
+    OptGroup("""
+      The fixed tolerance to use for all currencies, regardless of inference.
+      This value essentially overrides the inference of tolerance and restores
+      the old Beancount behaviour for balancing transactions. IMPORTANT NOTE:
+      This is a TEMPORARY feature, intended to faciliate migration towards the
+      newer, more automatic inferred tolerance behavior.
+    """, [OptDesc("fixed_tolerance", None, '*:0.005')]),
+
+    # Note: This option will go away. Its behavior has been replaced by
+    # precision/tolerance inference.
+    # See this for details: http://furius.ca/beancount/doc/precision
+    OptGroup("""
       The tolerance allowed for balance checks and padding directives. In the
       real world, rounding occurs in various places, and we need to allow a
       small (but very small) amount of tolerance in checking the balance of

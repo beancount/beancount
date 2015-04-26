@@ -566,6 +566,39 @@ class TestDisplayContextOptions(unittest.TestCase):
         self.assertEqual(True, options_map['render_commas'])
 
 
+class TestToleranceOptions(unittest.TestCase):
+
+    @parsedoc
+    def test_tolerance__deprecated(self, _, __, options_map):
+        """
+          option "tolerance" "0.05"
+        """
+        self.assertEqual("0.05", options_map['tolerance'])
+
+    @parsedoc
+    def test_fixed_tolerance(self, _, __, options_map):
+        """
+          option "fixed_tolerance" "0.05"
+        """
+        self.assertEqual("0.05", options_map['fixed_tolerance'])
+
+    @parsedoc
+    def test_default_tolerance__empty(self, _, __, options_map):
+        """
+        """
+        self.assertEqual([],
+                         options_map['default_tolerance'])
+
+    @parsedoc
+    def test_default_tolerance(self, _, __, options_map):
+        """
+          option "default_tolerance" "*:0"
+          option "default_tolerance" "USD:0.05"
+          option "default_tolerance" "JPY:0.5"
+        """
+        self.assertEqual(["*:0", "USD:0.05", "JPY:0.5"],
+                         options_map['default_tolerance'])
+
 
 class TestParserLinks(unittest.TestCase):
 
