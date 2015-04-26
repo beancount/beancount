@@ -15,6 +15,8 @@ Launch description:
     * padding directives
 
 
+  - Add Boolean type to parser.
+
   - Add a 'converter' to options parsing.
   - Convert to Decimal using the converter, parsing pairs.
   - Change all other options parsing code to convert using the converters.

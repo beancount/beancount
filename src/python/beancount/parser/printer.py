@@ -125,6 +125,10 @@ class EntryPrinter:
                     value_str = '"{}"'.format(value)
                 elif isinstance(value, (Decimal, datetime.date, amount.Amount)):
                     value_str = str(value)
+                elif isinstance(value, bool):
+                    value_str = '1' if value else '0'
+                else:
+                    raise ValueError("Unexpected value: '{!r}'".format(value))
                 oss.write("{}{}: {}\n".format(prefix, key, value_str))
 
     def Transaction(self, entry, oss):
