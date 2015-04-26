@@ -569,6 +569,17 @@ class TestDisplayContextOptions(unittest.TestCase):
 class TestToleranceOptions(unittest.TestCase):
 
     @parsedoc
+    def test_tolerance_defaults(self, _, __, options_map):
+        """
+        """
+        self.assertEqual('0.015',
+                         options_map['tolerance'])
+        self.assertEqual(None,
+                         options_map['fixed_tolerance'])
+        self.assertEqual([],
+                         options_map['default_tolerance'])
+
+    @parsedoc
     def test_tolerance__deprecated(self, _, __, options_map):
         """
           option "tolerance" "0.05"
@@ -581,13 +592,6 @@ class TestToleranceOptions(unittest.TestCase):
           option "fixed_tolerance" "0.05"
         """
         self.assertEqual("0.05", options_map['fixed_tolerance'])
-
-    @parsedoc
-    def test_default_tolerance__empty(self, _, __, options_map):
-        """
-        """
-        self.assertEqual([],
-                         options_map['default_tolerance'])
 
     @parsedoc
     def test_default_tolerance(self, _, __, options_map):
