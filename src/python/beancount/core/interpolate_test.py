@@ -2,6 +2,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import unittest
 
+from beancount.core.amount import D
 from beancount.core.data import create_simple_posting as P
 from beancount.core.data import create_simple_posting_with_cost as PCost
 from beancount.core import interpolate
@@ -476,16 +477,16 @@ class TestPrecision(cmptest.TestCase):
         self.assertFalse(errors)
 
         residual, precision = interpolate.compute_residual(entries[0].postings)
-        self.assertEqual({'USD': -1}, precision)
+        self.assertEqual({'USD': D('0.05')}, precision)
 
         residual, precision = interpolate.compute_residual(entries[1].postings)
-        self.assertEqual({'USD': -2}, precision)
+        self.assertEqual({'USD': D('0.005')}, precision)
 
         residual, precision = interpolate.compute_residual(entries[2].postings)
-        self.assertEqual({'USD': -2}, precision)
+        self.assertEqual({'USD': D('0.005')}, precision)
 
         residual, precision = interpolate.compute_residual(entries[3].postings)
-        self.assertEqual({'USD': -2}, precision)
+        self.assertEqual({'USD': D('0.005')}, precision)
 
         residual, precision = interpolate.compute_residual(entries[4].postings)
-        self.assertEqual({'USD': -4}, precision)
+        self.assertEqual({'USD': D('0.00005')}, precision)

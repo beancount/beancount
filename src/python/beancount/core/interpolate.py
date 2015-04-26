@@ -6,6 +6,7 @@ import collections
 import copy
 
 from beancount.core.amount import D
+from beancount.core.amount import ONE
 from beancount.core.amount import ZERO
 from beancount.core.inventory import Inventory
 from beancount.core.position import Lot
@@ -81,16 +82,20 @@ def compute_residual(postings):
           in representing it, e.g. 0.01
     """
     inventory = Inventory()
-    precision = collections.defaultdict(lambda: -256)
+    expo_dict = collections.defaultdict(lambda: -256)
     for posting in postings:
         # Add to total residual balance.
         weight = get_posting_weight(posting)
         inventory.add_amount(weight)
 
-        # Compute precision bounds.
+        # Compute expo_dict bounds.
         expo = weight.number.as_tuple().exponent
         if expo < 0:
-            precision[weight.currency] = max(precision[weight.currency], expo)
+            expo_dict[weight.currency] = max(expo_dict[weight.currency], expo)
+
+    # Convert a dict of exponents to a dict of precision.
+    precision = {currency: ONE.scaleb(expo) / 2
+                 for currency, expo in expo_dict.items()}
 
     return inventory, precision
 
