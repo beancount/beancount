@@ -7,6 +7,7 @@ import functools
 import inspect
 import textwrap
 import copy
+import io
 import os
 import re
 from os import path
@@ -37,6 +38,7 @@ from beancount.core.interpolate import SMALL_EPSILON
 from beancount.parser import _parser
 from beancount.parser import lexer
 from beancount.parser import options
+from beancount.parser import printer
 from beancount.core import account
 from beancount.core import data
 
@@ -825,7 +827,7 @@ def parse_string(string, **kw):
     return builder.finalize()
 
 
-def parsedoc(fun):
+def parsedoc(fun, no_errors=False):
     """Decorator that parses the function's docstring as an argument.
 
     Note that this only runs the parser on the tests, not the loader, so is no
@@ -833,9 +835,9 @@ def parsedoc(fun):
 
     Args:
       fun: the function object to be decorated.
+      no_errors: A boolean, true if we should assert that there are no errors.
     Returns:
       The decorated function.
-
     """
     filename = inspect.getfile(fun)
     lines, lineno = inspect.getsourcelines(fun)
@@ -852,6 +854,25 @@ def parsedoc(fun):
         entries, errors, options_map = parse_string(textwrap.dedent(fun.__doc__),
                                                     report_filename=filename,
                                                     report_firstline=lineno)
-        return fun(self, entries, errors, options_map)
+        if no_errors:
+            if errors:
+                oss = io.StringIO()
+                printer.print_errors(errors, file=oss)
+                self.fail("Unexpected errors:\n{}".format(oss.getvalue()))
+            return fun(self, entries, options_map)
+        else:
+            return fun(self, entries, errors, options_map)
+
     newfun.__doc__ = None
     return newfun
+
+
+def parsedoc_noerrors(fun):
+    """Decorator like parsedoc but that further ensures no errors.
+
+    Args:
+      fun: the function object to be decorated.
+    Returns:
+      The decorated function.
+    """
+    return parsedoc(fun, no_errors=True)

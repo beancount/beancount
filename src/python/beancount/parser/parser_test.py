@@ -43,6 +43,34 @@ def check_list(test, objlist, explist):
             test.assertTrue(isinstance(type(obj), type(exp)))
 
 
+class TestParserDoc(unittest.TestCase):
+
+    @parser.parsedoc
+    def test_parsedoc(self, entries, errors, options_map):
+        """
+        2013-05-40 * "Nice dinner at Mermaid Inn"
+          Expenses:Restaurant         100 USD
+          Assets:US:Cash
+        """
+        self.assertTrue(errors)
+
+    # Note: nose does not honor expectedFailure as of 1.3.4. We would use it
+    # here instead of doing this manually.
+    def test_parsedoc_noerrors(self):
+        @parser.parsedoc_noerrors
+        def test_function(self, entries, options_map):
+            """
+            2013-05-40 * "Nice dinner at Mermaid Inn"
+              Expenses:Restaurant         100 USD
+              Assets:US:Cash
+            """
+        try:
+            test_function(unittest.TestCase())
+            self.fail("Test should have failed.")
+        except AssertionError:
+            pass
+
+
 class TestParserInputs(unittest.TestCase):
     """Try difference sources for the parser's input."""
 
