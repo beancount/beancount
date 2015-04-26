@@ -84,23 +84,21 @@ def compute_residual(postings):
     inventory = Inventory()
     expo_dict = {}
     for posting in postings:
-        # Skip automatically inferred postings.
-        if posting.meta and AUTOMATIC_META in posting.meta:
-            continue
-
         # Add to total residual balance.
         weight = get_posting_weight(posting)
         inventory.add_amount(weight)
 
-        # Compute expo_dict bounds.
-        position = posting.position
-        precision_currency = position.lot.currency
-        expo = position.number.as_tuple().exponent
-        if expo < 0:
-            # Note: the exponent is a negative value. The constant is only used
-            # here to avoid a hash-table lookup.
-            expo_dict[precision_currency] = max(
-                expo, expo_dict.get(precision_currency, -1024))
+        # Skip the precision on automatically inferred postings.
+        if not posting.meta or AUTOMATIC_META not in posting.meta:
+            # Compute expo_dict bounds.
+            position = posting.position
+            precision_currency = position.lot.currency
+            expo = position.number.as_tuple().exponent
+            if expo < 0:
+                # Note: the exponent is a negative value. The constant is only used
+                # here to avoid a hash-table lookup.
+                expo_dict[precision_currency] = max(
+                    expo, expo_dict.get(precision_currency, -1024))
 
     # Convert a dict of exponents to a dict of precision.
     precision = {currency: ONE.scaleb(expo) / 2
