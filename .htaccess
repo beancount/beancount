@@ -97,7 +97,9 @@ RedirectMatch /doc/proposal-inventory$    /beancount/doc/proposal-booking
 
 RedirectMatch /doc/proposal-rounding$     https://docs.google.com/document/d/1MY2JMiiXUmcwsOT0CkiK-fCo0ZE7nbr8uTcTL50b6X4/
 RedirectMatch /doc/proposal-residual$     /beancount/doc/proposal-rounding
+RedirectMatch /doc/proposal-precision$    /beancount/doc/proposal-rounding
 RedirectMatch /doc/rounding$              /beancount/doc/proposal-rounding
+RedirectMatch /doc/precision$             /beancount/doc/proposal-rounding
 
 RedirectMatch /doc/proposal-filtering$    https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 RedirectMatch /doc/proposal-filter$       /beancount/doc/proposal-filtering

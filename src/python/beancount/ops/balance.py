@@ -3,11 +3,13 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
+import re
 
 from beancount.core.amount import D
 from beancount.core.data import Transaction
 from beancount.core.data import Balance
 from beancount.core import amount
+from beancount.core import account
 from beancount.core import inventory
 from beancount.core import realization
 from beancount.core import getters
@@ -54,11 +56,12 @@ def check(entries, options_map):
     # Add all children accounts of an asserted account to be calculated as well,
     # and pre-create these accounts, and only those (we're just being tight to
     # make sure).
-    for account in getters.get_accounts(entries):
-        if (account in asserted_accounts or
-            any(account.startswith(asserted_account)
-                for asserted_account in asserted_accounts)):
-            realization.get_or_create(real_root, account)
+    asserted_match_list = [account.parent_matcher(account_)
+                           for account_ in asserted_accounts]
+    for account_ in getters.get_accounts(entries):
+        if (account_ in asserted_accounts or
+            any(match(account_) for match in asserted_match_list)):
+            realization.get_or_create(real_root, account_)
 
     for entry in entries:
         if isinstance(entry, Transaction):

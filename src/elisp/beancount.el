@@ -22,6 +22,7 @@ is great for sectioning large files with many transactions."
     ([(control c)(l)] . beancount-check)
     ([(control c)(q)] . beancount-query)
     ([(control c)(x)] . beancount-context)
+    ([(control c)(k)] . beancount-linked)
     ([(control c)(\;)] . beancount-align-to-previous-number)
     ([(control c)(\:)] . beancount-align-numbers)
     ([(control c)(p)] . beancount-test-align)
@@ -358,6 +359,15 @@ what that column is and returns it (an integer)."
         (compile-command
          (format "%s %s %s %d"
                  beancount-doctor-program "context"
+                 (buffer-file-name) (line-number-at-pos (point)))))
+    (call-interactively 'compile)))
+
+(defun beancount-linked ()
+  (interactive)
+  (let ((compilation-read-command nil)
+        (compile-command
+         (format "%s %s %s %d"
+                 beancount-doctor-program "linked"
                  (buffer-file-name) (line-number-at-pos (point)))))
     (call-interactively 'compile)))
 

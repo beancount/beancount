@@ -144,6 +144,12 @@ class TestAccount(unittest.TestCase):
         self.assertEqual('',
                          account.commonprefix(['']))
 
+    def test_parent_matcher(self):
+        is_child = account.parent_matcher('Assets:Bank:Checking')
+        self.assertTrue(is_child('Assets:Bank:Checking'))
+        self.assertTrue(is_child('Assets:Bank:Checking:SubAccount'))
+        self.assertFalse(is_child('Assets:Bank:CheckingOld'))
+
 
 class TestWalk(TmpFilesTestBase):
 

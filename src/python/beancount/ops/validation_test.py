@@ -430,7 +430,7 @@ class TestValidate(cmptest.TestCase):
         """
         errors = validation.validate(entries, options_map)
         self.assertEqual(2, len(errors))
-        self.assertTrue(any(re.match('Reducing.*mixed', error.message)
+        self.assertTrue(any(re.match('Reducing position results', error.message)
                             for error in errors))
         self.assertTrue(any(re.match('Invalid currency', error.message)
                             for error in errors))

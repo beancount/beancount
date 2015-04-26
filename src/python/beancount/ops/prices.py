@@ -11,6 +11,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import collections
 
 from beancount.core.amount import ONE
+from beancount.core.amount import ZERO
 from beancount.core.data import Price
 from beancount.core import amount
 from beancount.core import data
@@ -122,8 +123,11 @@ def build_price_map(entries):
     # Compute and insert all the inverted rates.
     forward_pairs = list(sorted_price_map.keys())
     for (base, quote), price_list in list(sorted_price_map.items()):
+        # Note: You have to filter out zero prices for zero-cost postings, like
+        # gifted options.
         sorted_price_map[(quote, base)] = [
-            (date, ONE/price) for date, price in price_list]
+            (date, ONE/price) for date, price in price_list
+            if price != ZERO]
 
     sorted_price_map.forward_pairs = forward_pairs
     return sorted_price_map

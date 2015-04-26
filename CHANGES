@@ -4,6 +4,81 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-04-19
+
+  - Fixed a bug with the pad directive that did not look for account name
+    boundaries when looking at a parent account.
+
+  - In output of bean-doctor context, now print the residual amount.
+
+
+2015-04-18
+
+  - Implemented limited support for arithmetic expressions. For now, only
+    support division. So A/B where "A" and "B" are numbers should now work.
+
+    In order to support full arithmetic expressions, we need to reimplement
+    the lexer in order to distinguish between "*" as a TAG or as a multiplication
+    token, and operator precedence to deal with terms vs. exprs. This will
+    probably be done soon. (I need division for a particular task right now, so
+    it is being added in in a backwards-compatilble way).
+
+
+2015-04-18
+
+  - Merged a new plugin (beancount.plugins.sellgains) that automatically
+    cross-checks the purchase price of a lot against all the other legs that are
+    in non-income accounts. This is useful to verify the correctness of @ price
+    annotations on reductions at cost, because not only the transactions have to
+    balance in cost (that is, including the income portion), they then also have
+    to balance without the income portion, using the price you attached (if you
+    somehow reported an incorrect price you will get an error).
+
+    This is best explained with an example:
+
+      1999-07-31 * "Sell"
+        Assets:US:BRS:Company:ESPP          -81 ADSK {26.3125 USD} @ 26.4375 USD
+        Assets:US:BRS:Company:Cash      2141.36 USD
+        Expenses:Financial:Fees            0.08 USD
+        Income:US:Company:ESPP:PnL      -10.125 USD
+
+    The regular balance verification checks all the legs against the cost basis:
+
+      -18 x 26.3125 + 2141.36 + 0.08 - 10.125 = 0 USD
+
+    This is the default behavior, and is still required. With the sellgains
+    plugin, an additional check also verifies that
+
+      -18 x 26.4375 + 2141.36 + 0.08 = 0 USD
+
+    Note how the price (26.4375) is used instead of the cost basis, and how
+    income legs are ignore in the calculation.
+
+    Transactions with reductions without a price and without an income leg will
+    be ignored, so only those which can be verified will be verified.
+
+
+2015-04-13
+
+  - Beancount now allows the cost to the set to zero. This is useful for stock
+    options that one receives from an employer that have no value attached to
+    them.
+
+    Additionally, I'm considering allowing negative cost as well, which may be
+    necessary to handle adjusted cost bases, but I haven't added this just yet.
+    I'm not 100% convinced (adjustments are probably always upward).
+
+
+2015-04-16
+
+  - Added a new command to bean-doctor: "linked" which prints out all
+    transactions linked to the one at a given line number, in a format Emacs can
+    grok with filename and location like errors so you can easily navigate
+    between the linked transactions.
+
+    Correspondingly, added a "bean-linked" command to the Emacs support mode.
+
+
 2015-04-13
 
   - A minor improvment to bean-format has been implemented: Whitespace before
