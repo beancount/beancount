@@ -144,12 +144,21 @@ class Inventory(list):
 
         Args:
           epsilon: A Decimal, the small number of units under which a position
-            is considered small as well.
+            is considered small, or a dict of currency to such epsilon precision.
         Returns:
           A boolean.
         """
-        return all(abs(position.number) <= epsilon
-                   for position in self)
+        if isinstance(epsilon, dict):
+            for position in self:
+                epsilon_value = epsilon.get(position.lot.currency, None)
+                if epsilon_value is not None:
+                    ###print((abs(position.number), epsilon_value))
+                    if abs(position.number) > epsilon_value:
+                        return False
+            return True
+        else:
+            return not any(abs(position.number) > epsilon
+                           for position in self)
 
     def is_mixed(self):
         """Return true if the inventory contains a mix of positive and negative lots for
