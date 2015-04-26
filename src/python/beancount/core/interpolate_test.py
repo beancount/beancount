@@ -477,7 +477,7 @@ class TestPrecision(cmptest.TestCase):
         self.assertFalse(errors)
 
         residual, precision = interpolate.compute_residual(entries[0].postings)
-        self.assertEqual({'USD': D('0.05')}, precision)
+        self.assertEqual({'USD': D('0.5')}, precision)
 
         residual, precision = interpolate.compute_residual(entries[1].postings)
         self.assertEqual({'USD': D('0.005')}, precision)
@@ -490,3 +490,8 @@ class TestPrecision(cmptest.TestCase):
 
         residual, precision = interpolate.compute_residual(entries[4].postings)
         self.assertEqual({'USD': D('0.00005')}, precision)
+
+
+# Test whether the cost or the price should matter
+# Test what happens when the precision is 0
+# Test with just amounts, to exercise the min/max specification
