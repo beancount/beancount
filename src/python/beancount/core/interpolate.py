@@ -84,6 +84,10 @@ def compute_residual(postings):
     inventory = Inventory()
     expo_dict = {}
     for posting in postings:
+        # Skip automatically inferred postings.
+        if posting.meta and AUTOMATIC_META in posting.meta:
+            continue
+
         # Add to total residual balance.
         weight = get_posting_weight(posting)
         inventory.add_amount(weight)
@@ -105,6 +109,10 @@ def compute_residual(postings):
     return inventory, precision
 
 
+# Meta-data field appended to automatically inserted postings.
+AUTOMATIC_META = '__automatic__'
+
+
 def fill_residual_posting(entry, account_rounding):
     """If necessary, insert a posting to absorb the residual.
     This makes the transaction balance exactly.
@@ -124,7 +132,8 @@ def fill_residual_posting(entry, account_rounding):
     else:
         new_postings = list(entry.postings)
         for position in residual.get_positions():
-            rounding_posting = Posting(None, account_rounding, -position, None, None, None)
+            meta = {AUTOMATIC_META: True}
+            rounding_posting = Posting(None, account_rounding, -position, None, None, meta)
             new_postings.append(rounding_posting)
         return entry_replace(entry, postings=new_postings)
 
@@ -137,6 +146,9 @@ def get_incomplete_postings(entry):
     replaced with completed ones. This is probably the only place where there
     is a bit of non-trivial logic in this entire project (and the rewrite was
     to make sure it was *that* simple.)
+
+    Note that inferred postings are tagged via metatada with an '__automatic__'
+    field added to them with a true boolean value.
 
     Note: The 'postings' parameter may be modified or destroyed for performance
     reasons; don't reuse it.
@@ -217,6 +229,8 @@ def get_incomplete_postings(entry):
                              "Useless auto-posting: {}".format(inventory), entry))
             for currency in currencies:
                 position = Position(Lot(currency, None, None), ZERO)
+                meta = copy.copy(old_posting.meta) if old_posting.meta else {}
+                meta[AUTOMATIC_META] = True
                 new_postings.append(
                     Posting(entry, old_posting.account, position,
                             None, old_posting.flag, old_posting.meta))
@@ -226,9 +240,11 @@ def get_incomplete_postings(entry):
             # each position.
             for position in residual_positions:
                 position.number = -position.number
+                meta = copy.copy(old_posting.meta) if old_posting.meta else {}
+                meta[AUTOMATIC_META] = True
                 new_postings.append(
                     Posting(entry, old_posting.account, position,
-                            None, old_posting.flag, old_posting.meta))
+                            None, old_posting.flag, meta))
                 has_inserted = True
 
         postings[index:index+1] = new_postings

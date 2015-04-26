@@ -212,6 +212,7 @@ class TestBalance(cmptest.TestCase):
         self.assertTrue(has_inserted)
         self.assertEqual(3, len(new_postings))
         self.assertEqual(0, len(errors))
+        self.assertTrue('__automatic__' in new_postings[2].meta)
 
     def test_balance_with_large_amount(self):
         meta = data.new_metadata(__file__, 0)
@@ -450,48 +451,99 @@ class TestComputeBalance(unittest.TestCase):
 
 class TestPrecision(cmptest.TestCase):
 
-    @parser.parsedoc
-    def test_precision_infer(self, entries, errors, _):
+    @parser.parsedoc_noerrors
+    def test_precision__no_precision(self, entries, _):
         """
         2014-02-25 *
+          Assets:Account1       500 USD
+          Assets:Account2      -120 USD
+          Assets:Account3      -380 USD
+        """
+        residual, precision = interpolate.compute_residual(entries[0].postings)
+        self.assertEqual({}, precision)
+
+    @parser.parsedoc_noerrors
+    def test_precision__dubious_precision(self, entries, _):
+        """
+        2014-02-25 *
+          Assets:Account1       5.0000 USD
+          Assets:Account2       5.000 USD
           Assets:Account3       5.00 USD
           Assets:Account4      -5.0 USD
           Assets:Account4      -5 USD
+        """
+        residual, precision = interpolate.compute_residual(entries[0].postings)
+        self.assertEqual({'USD': D('0.05')}, precision)
 
+    @parser.parsedoc_noerrors
+    def test_precision__ignore_price(self, entries, _):
+        """
         2014-02-25 *
           Assets:Account3       5 VHT @ 102.2340 USD
           Assets:Account4      -511.11 USD
+        """
+        residual, precision = interpolate.compute_residual(entries[0].postings)
+        self.assertEqual({'USD': D('0.005')}, precision)
 
+    @parser.parsedoc_noerrors
+    def test_precision__ignore_cost(self, entries, _):
+        """
         2014-02-25 *
           Assets:Account3       5 VHT {102.2340 USD}
           Assets:Account4      -511.11 USD
+        """
+        residual, precision = interpolate.compute_residual(entries[0].postings)
+        self.assertEqual({'USD': D('0.005')}, precision)
 
+
+    @parser.parsedoc_noerrors
+    def test_precision__ignore_cost_and_price(self, entries, _):
+        """
         2014-02-25 *
           Assets:Account3       5 VHT {102.2340 USD} @ 103.45237239 USD
           Assets:Account4      -511.11 USD
+        """
+        residual, precision = interpolate.compute_residual(entries[0].postings)
+        self.assertEqual({'USD': D('0.005')}, precision)
 
+    @parser.parsedoc_noerrors
+    def test_precision__cost_and_number_ignored(self, entries, _):
+        """
         2014-02-25 *
           Assets:Account3       5 VHT {102.2340 USD}
           Assets:Account4      -511 USD
         """
-        self.assertFalse(errors)
-
         residual, precision = interpolate.compute_residual(entries[0].postings)
-        self.assertEqual({'USD': D('0.5')}, precision)
+        self.assertEqual({}, precision)
 
-        residual, precision = interpolate.compute_residual(entries[1].postings)
-        self.assertEqual({'USD': D('0.005')}, precision)
+    @parser.parsedoc_noerrors
+    def test_precision__number_on_cost_used(self, entries, _):
+        """
+        2014-02-25 *
+          Assets:Account3       5.1 VHT {102.2340 USD}
+          Assets:Account4      -511 USD
+        """
+        residual, precision = interpolate.compute_residual(entries[0].postings)
+        self.assertEqual({'VHT': D('0.05')}, precision)
 
-        residual, precision = interpolate.compute_residual(entries[2].postings)
-        self.assertEqual({'USD': D('0.005')}, precision)
+    @parser.parsedoc_noerrors
+    def test_precision__minium_on_costs(self, entries, _):
+        """
+        2014-02-25 *
+          Assets:Account3       5.1   VHT {102.2340 USD}
+          Assets:Account3       5.11  VHT {102.2340 USD}
+          Assets:Account3       5.111 VHT {102.2340 USD}
+          Assets:Account4  -1564.18 USD
+        """
+        residual, precision = interpolate.compute_residual(entries[0].postings)
+        self.assertEqual({'VHT': D('0.05'), 'USD': D('0.005')}, precision)
 
-        residual, precision = interpolate.compute_residual(entries[3].postings)
-        self.assertEqual({'USD': D('0.005')}, precision)
-
-        residual, precision = interpolate.compute_residual(entries[4].postings)
-        self.assertEqual({'USD': D('0.00005')}, precision)
-
-
-# Test whether the cost or the price should matter
-# Test what happens when the precision is 0
-# Test with just amounts, to exercise the min/max specification
+    @parser.parsedoc_noerrors
+    def test_precision__with_inference(self, entries, _):
+        """
+        2014-02-25 *
+          Assets:Account3       5.1   VHT {102.2340 USD}
+          Assets:Account4
+        """
+        residual, precision = interpolate.compute_residual(entries[0].postings)
+        self.assertEqual({'VHT': D('0.05')}, precision)
