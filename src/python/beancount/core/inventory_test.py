@@ -199,8 +199,8 @@ class TestInventory(unittest.TestCase):
             self.assertFalse(inv.is_small({'JPY': D('0.03'), 'USD': D('0.00299999')}))
 
             # Test missing precisions.
-            self.assertTrue(inv.is_small({'JPY': D('0.05')}))
-            self.assertTrue(inv.is_small({'USD': D('0.005')}))
+            self.assertFalse(inv.is_small({'JPY': D('0.05')}))
+            self.assertFalse(inv.is_small({'USD': D('0.005')}))
 
             # Test extra precisions.
             self.assertTrue(inv.is_small({'JPY': D('0.05'),
@@ -208,7 +208,7 @@ class TestInventory(unittest.TestCase):
                                           'CAD': D('0.0005')}))
 
             # Test no precisions.
-            self.assertTrue(inv.is_small({}))
+            self.assertFalse(inv.is_small({}))
 
     def test_is_mixed(self):
         inv = Inventory.from_string('100 GOOG {250 USD}, 101 GOOG {251 USD}')

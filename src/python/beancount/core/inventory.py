@@ -144,9 +144,9 @@ class Inventory(list):
     # FIXME: Testing this out with hard-coded values to see if
     # default values would work on my own file.
     TEST_DEFAULT_VALUES = {
-        'USD': D('0.005'),
-        'CAD': D('0.005'),
-        'INR': D('0.5'),
+        # 'USD': D('0.005'),
+        # 'CAD': D('0.005'),
+        # 'INR': D('0.5'),
     }
 
     def is_small(self, epsilon):
