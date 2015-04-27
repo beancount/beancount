@@ -33,7 +33,6 @@ from beancount.core.data import Posting
 from beancount.core.data import BOOKING_METHODS
 from beancount.core.interpolate import balance_incomplete_postings
 from beancount.core.interpolate import compute_residual
-from beancount.core.interpolate import SMALL_EPSILON
 
 from beancount.parser import _parser
 from beancount.parser import lexer

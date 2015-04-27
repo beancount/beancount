@@ -3,6 +3,10 @@ beancount: TODO
 * Precision
 Launch description:
 
+  - Validate render_commas using an option converter
+
+
+
   - MAJOR FEATURE: Tolerance checks have now been completely revamped.
     This proposal:
       http://furius.ca/beancount/doc/proposal-rounding
@@ -10,9 +14,9 @@ Launch description:
       http://furius.ca/beancount/doc/precision
 
     This affects:
-    * transaction balance checks
-    * checks from balance directives
-    * padding directives
+    * Transaction balance checks
+    * Checks from balance directives
+    * Padding directives
 
 
   - Add Boolean type to parser; this is just the right thing to do. Either that
@@ -23,7 +27,7 @@ Launch description:
     accept it. Either change the lexer or better: avoid serializing the value.
 
   - Make Balance checks and Pad directives use the default tolerance.
-  - Remove SMALL_EPSILON.
+
 
 
   - Do write the final tests on interpolate_test.

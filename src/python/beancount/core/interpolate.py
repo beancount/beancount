@@ -23,12 +23,6 @@ from beancount.core import inventory
 BalanceError = collections.namedtuple('BalanceError', 'source message entry')
 
 
-# The difference amount at which we consider a transaction to be balanced.
-# Note: This could probably be a little smaller and that would be a good thing.
-# See https://docs.google.com/document/d/1MY2JMiiXUmcwsOT0CkiK-fCo0ZE7nbr8uTcTL50b6X4/
-SMALL_EPSILON = D('0.005')
-
-
 def get_posting_weight(posting):
     """Get the amount that will need to be balanced from a posting of a transaction.
 
