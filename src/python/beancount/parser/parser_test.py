@@ -587,8 +587,7 @@ class TestMiscOptions(unittest.TestCase):
         option "plugin_processing_mode" "invalid"
         """
         self.assertEqual(1, len(errors))
-        self.assertTrue(re.match("Invalid value for 'plugin_processing_mode'",
-                                 errors[0].message))
+        self.assertTrue(re.match("Error for option", errors[0].message))
         self.assertEqual("default", options_map['plugin_processing_mode'])
 
 

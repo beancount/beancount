@@ -232,7 +232,19 @@ class Builder(lexer.LexBuilder):
                 ParserError(meta, "Option '{}' may not be set".format(key), None))
 
         else:
+            # Convert the value, if necessary.
             option_descriptor = options.OPTIONS[key]
+            if option_descriptor.converter:
+                try:
+                    value = option_descriptor.converter(value)
+                except ValueError as exc:
+                    meta = new_metadata(filename, lineno)
+                    self.errors.append(
+                        ParserError(meta,
+                                    "Error for option '{}': {}".format(key, exc),
+                                    None))
+                    return
+
             option = self.options[key]
             if isinstance(option, list):
                 # Process the 'plugin' option specially: accept an optional
@@ -250,15 +262,6 @@ class Builder(lexer.LexBuilder):
                 option.append(value)
 
             else:
-                # Validate some option values.
-                if key == 'plugin_processing_mode':
-                    if value not in ('raw', 'default'):
-                        meta = new_metadata(filename, lineno)
-                        self.errors.append(
-                            ParserError(meta,
-                                        ("Invalid value for '{}': '{}'").format(key, value),
-                                        None))
-                        return
                 # Set the value.
                 self.options[key] = value
 

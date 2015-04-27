@@ -12,6 +12,21 @@ from beancount.core import account
 from beancount.core import display_context
 
 
+def options_validate_processing_mode(value):
+    """Validate the options processing mode.
+
+    Args:
+      value: A string, the value provided as option.
+    Returns:
+      The new value, converted, if the conversion is successful.
+    Raises:
+      ValueError: If the value is invalid.
+    """
+    if value not in ('raw', 'default'):
+        raise ValueError("Invalid value '{}'".format(value))
+    return value
+
+
 # list of option groups, with their description, option names and default
 # values.
 OptGroup = collections.namedtuple('OptGroup',
@@ -188,7 +203,8 @@ PUBLIC_OPTION_GROUPS = [
       all, only user plugins are run (the user should explicitly load the
       desired list of plugins by using the 'plugin' option. This is useful in case the
       user wants full control over the ordering in which the plugins are run).
-    """, [OptDesc("plugin_processing_mode", "default", "raw", None)]),
+    """, [OptDesc("plugin_processing_mode", "default", "raw",
+                  options_validate_processing_mode)]),
 
     OptGroup("""
       A list of other filenames to include. This is output from the parser and
