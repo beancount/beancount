@@ -3,10 +3,6 @@ beancount: TODO
 * Precision
 Launch description:
 
-  - Validate render_commas using an option converter
-
-
-
   - MAJOR FEATURE: Tolerance checks have now been completely revamped.
     This proposal:
       http://furius.ca/beancount/doc/proposal-rounding

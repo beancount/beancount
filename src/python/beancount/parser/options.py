@@ -82,6 +82,19 @@ def options_validate_default_tolerance(value):
     return (currency, D(tolerance_str))
 
 
+def options_validate_boolean(value):
+    """Validate a boolean option.
+
+    Args:
+      value: A string, the value provided as option.
+    Returns:
+      The new value, converted, if the conversion is successful.
+    Raises:
+      ValueError: If the value is invalid.
+    """
+    return value.lower() in ('1', 'true', 'yes')
+
+
 # List of option groups, with their description, option names and default
 # values.
 OptGroup = collections.namedtuple('OptGroup',
@@ -288,7 +301,8 @@ PUBLIC_OPTION_GROUPS = [
     OptGroup("""
       A boolean, true if the number formatting routines should output commas
       as thousand separators in numbers.
-    """, [Opt("render_commas", "", "")]),
+    """, [Opt("render_commas", False, "TRUE",
+              converter=options_validate_boolean)]),
 
     OptGroup("""
       A string that defines which set of plugins is to be run by the loader: if

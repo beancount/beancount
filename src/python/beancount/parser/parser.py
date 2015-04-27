@@ -152,10 +152,6 @@ class Builder(lexer.LexBuilder):
         Returns:
           A dict of option names to options.
         """
-        # Normalize the commas rendering option to a boolean object.
-        self.options['render_commas'] = (
-            self.options['render_commas'].lower() in ('1', 'true'))
-
         # Build and store the inferred DisplayContext instance.
         self.options['display_context'] = self.dcontext
 

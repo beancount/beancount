@@ -564,6 +564,13 @@ class TestDisplayContextOptions(unittest.TestCase):
         """
         self.assertEqual(True, options_map['render_commas'])
 
+    @parser.parsedoc
+    def test_render_commas_yes2(self, _, __, options_map):
+        """
+          option "render_commas" "TRUE"
+        """
+        self.assertEqual(True, options_map['render_commas'])
+
 
 class TestMiscOptions(unittest.TestCase):
 
