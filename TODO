@@ -15,49 +15,31 @@ Launch description:
     * padding directives
 
 
-  - Fix bugs with using __automatic__ as metadata key... the lexer does not
-    accept it. Either change the lexer or better: avoid serializing the value.
-
   - Add Boolean type to parser; this is just the right thing to do. Either that
     or convert 'automatic' metadata field to be set to 1/0 and post-pone this
     task.
 
-  - Add a 'converter' to options parsing.
-  - Convert to Decimal using the converter, parsing pairs.
-  - Change all other options parsing code to convert using the converters.
-  - Convert the list of currencies into a dict after parsing.
-  - Add a 'deprecated' field to OptDesc.
-
-            elif isinstance(option, dict):
-                # Check the that option parses a key and value.
-                match = re.match(r'(.*)[ \t]*:[ \t]*(.*)', value.strip())
-                if not match:
-                    self.errors.append(
-                        ParserError(meta, ("Invalid format for dict "
-                                           "option '{}': '{}'".format(key, value)), None))
-                else:
-                    key, value = match.groups()
-
-                    # Set the dict value. to a list of values.
-                    if value in option:
-                        self.errors.append(
-                            ParserError(meta, ("Warning: Overriding value '{}' for '{}'"
-                                               "option '{}': '{}'".format(key, value)), None))
-
-                    option.append(value)
+  - Fix bugs with using __automatic__ as metadata key... the lexer does not
+    accept it. Either change the lexer or better: avoid serializing the value.
 
 
 
+  - Do write the final tests on interpolate_test.
 
 
-  - Remove the 'tolerance' option and make that use the same precision algorithm
-    as is used during balancing. This will affect check() and pad().
 
   - Implement a 'fixed_tolerance' option to make the old behavior still work for
     people during the transition.
 
   - Document how precision works, in detail.
 
+
+
+
+  - Add a 'deprecated' field to OptDesc.
+
+  - Deprecate the 'tolerance' option and make that use the same precision algorithm
+    as is used during balancing. This will affect check() and pad().
 
   - Since we're deprecating some options, Deprecate the 'plugin' option and
     remove the code from parser.py for it.

@@ -140,41 +140,32 @@ class Inventory(list):
         """
         return sorted(self) == sorted(other)
 
-
-    # FIXME: Testing this out with hard-coded values to see if
-    # default values would work on my own file.
-    TEST_DEFAULT_VALUES = {
-        # 'USD': D('0.005'),
-        # 'CAD': D('0.005'),
-        # 'INR': D('0.5'),
-    }
-
-    def is_small(self, epsilon):
+    def is_small(self, tolerance, tolerance_default={}):
         """Return true if all the positions in the inventory are small.
 
         Args:
-          epsilon: A Decimal, the small number of units under which a position
+          tolerance: A Decimal, the small number of units under which a position
             is considered small, or a dict of currency to such epsilon precision.
         Returns:
           A boolean.
         """
-        if isinstance(epsilon, dict):
+        if isinstance(tolerance, dict):
             for position in self:
                 position_currency = position.lot.currency
-                epsilon_value = epsilon.get(position_currency, None)
+                tolerance_value = tolerance.get(position_currency, None)
 
                 # When a precision value cannot be inferred, use the defaults.
-                if epsilon_value is None:
+                if tolerance_value is None:
                     # FIXME/TODO: Fetch a default value for the currency, or the
                     # global default value. For now we're just using infinite
                     # precision this way.
-                    epsilon_value = self.TEST_DEFAULT_VALUES.get(position_currency, ZERO)
+                    tolerance_value = tolerance_default.get(position_currency, ZERO)
 
-                if abs(position.number) > epsilon_value:
+                if abs(position.number) > tolerance_value:
                     return False
             return True
         else:
-            return not any(abs(position.number) > epsilon
+            return not any(abs(position.number) > tolerance
                            for position in self)
 
     def is_mixed(self):
