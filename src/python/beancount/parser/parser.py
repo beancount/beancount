@@ -55,6 +55,9 @@ __allow_negative_prices__ = os.environ.get('BEANCOUNT_ALLOW_NEGATIVE_PRICES', Fa
 ParserError = collections.namedtuple('ParserError', 'source message entry')
 ParserSyntaxError = collections.namedtuple('ParserSyntaxError', 'source message entry')
 
+DeprecatedError = collections.namedtuple('DeprecatedError', 'source message entry')
+
+
 
 # Temporary holder for key-value pairs.
 KeyValue = collections.namedtuple('KeyValue', 'key value')
@@ -237,7 +240,7 @@ class Builder(lexer.LexBuilder):
             if option_descriptor.deprecated:
                 meta = new_metadata(filename, lineno)
                 self.errors.append(
-                    ParserError(meta, option_descriptor.deprecated, None))
+                    DeprecatedError(meta, option_descriptor.deprecated, None))
 
             # Convert the value, if necessary.
             if option_descriptor.converter:
