@@ -140,6 +140,17 @@ def do_list_options(*unused_args):
     print(options.list_options())
 
 
+def do_print_options(filename, *args):
+    """Print out the actual options parsed from a file.
+
+    Args:
+      unused_args: Ignored.
+    """
+    _, __, options_map = loader.load_file(filename)
+    for key, value in sorted(options_map.items()):
+        print('{}: {}'.format(key, value))
+
+
 def get_commands():
     """Return a list of available commands in this file.
 
