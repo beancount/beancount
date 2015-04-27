@@ -18,7 +18,7 @@ OptGroup = collections.namedtuple('OptGroup',
                                   'description options')
 
 OptDesc = collections.namedtuple('OptDesc',
-                                 'name default_value example_value')
+                                 'name default_value example_value converter')
 
 _TYPES = account_types.DEFAULT_ACCOUNT_TYPES
 
@@ -30,19 +30,20 @@ PRIVATE_OPTION_GROUPS = [
       The name of the top-level Beancount input file parsed from which the
       contents of the ledger have been extracted. This may be None, if no file
       was used.
-    """, [OptDesc("filename", None, None)]),
+    """, [OptDesc("filename", None, None, None)]),
 
     OptGroup("""
       An instance of DisplayContext, which is used to format numbers for output
       with precision inferred from that in the input file. This is created
       automatically by the parser.
     """, [OptDesc("display_context",
-                  display_context.DisplayContext(), display_context.DisplayContext())]),
+                  display_context.DisplayContext(), display_context.DisplayContext(),
+                  None)]),
 
     OptGroup("""
       A set of all the commodities that we have seen in the file.
       This is mainly used for efficiency, best computed once at parse time.
-    """, [OptDesc("commodities", set(), set())]),
+    """, [OptDesc("commodities", set(), set(), None)]),
     ]
 
 
@@ -52,7 +53,7 @@ PUBLIC_OPTION_GROUPS = [
     OptGroup("""
       The title of this ledger / input file. This shows up at the top of every
       page.
-    """, [OptDesc("title", "Beancount", "Joe Smith's Personal Ledger")]),
+    """, [OptDesc("title", "Beancount", "Joe Smith's Personal Ledger", None)]),
 
     OptGroup("""
       Root names of every account. This can be used to customize your category
@@ -62,25 +63,25 @@ PUBLIC_OPTION_GROUPS = [
       options at the beginning of your file, because they affect how the parser
       recognizes account names.
     """, [
-        OptDesc("name_assets", _TYPES.assets, _TYPES.assets),
-        OptDesc("name_liabilities", _TYPES.liabilities, _TYPES.liabilities),
-        OptDesc("name_equity", _TYPES.equity, _TYPES.equity),
-        OptDesc("name_income", _TYPES.income, _TYPES.income),
-        OptDesc("name_expenses", _TYPES.expenses, _TYPES.expenses),
+        OptDesc("name_assets", _TYPES.assets, _TYPES.assets, None),
+        OptDesc("name_liabilities", _TYPES.liabilities, _TYPES.liabilities, None),
+        OptDesc("name_equity", _TYPES.equity, _TYPES.equity, None),
+        OptDesc("name_income", _TYPES.income, _TYPES.income, None),
+        OptDesc("name_expenses", _TYPES.expenses, _TYPES.expenses, None),
     ]),
 
     OptGroup("""
       Leaf name of the equity account used for summarizing previous transactions
       into opening balances.
     """, [OptDesc("account_previous_balances",
-                  "Opening-Balances", "Opening-Balances")]),
+                  "Opening-Balances", "Opening-Balances", None)]),
 
     OptGroup("""
       Leaf name of the equity account used for transferring previous retained
       earnings from income and expenses accrued before the beginning of the
       exercise into the balance sheet.
     """, [OptDesc("account_previous_earnings",
-                  "Earnings:Previous", "Earnings:Previous")]),
+                  "Earnings:Previous", "Earnings:Previous", None)]),
 
     OptGroup("""
       Leaf name of the equity account used for inserting conversions that will
@@ -88,20 +89,20 @@ PUBLIC_OPTION_GROUPS = [
       will essentially "fixup" the basic accounting equation due to the errors
       that priced conversions introduce.
     """, [OptDesc("account_previous_conversions",
-                  "Conversions:Previous", "Conversions:Previous")]),
+                  "Conversions:Previous", "Conversions:Previous", None)]),
 
     OptGroup("""
       Leaf name of the equity account used for transferring current retained
       earnings from income and expenses accrued during the current exercise into
       the balance sheet. This is most often called "Net Income".
     """, [OptDesc("account_current_earnings",
-                  "Earnings:Current", "Earnings:Current")]),
+                  "Earnings:Current", "Earnings:Current", None)]),
 
     OptGroup("""
       Leaf name of the equity account used for inserting conversions that will
       zero out remaining amounts due to transfers during the exercise period.
     """, [OptDesc("account_current_conversions",
-                  "Conversions:Current", "Conversions:Current")]),
+                  "Conversions:Current", "Conversions:Current", None)]),
 
     OptGroup("""
       The imaginary currency used to convert all units for conversions at a
@@ -109,7 +110,7 @@ PUBLIC_OPTION_GROUPS = [
       the rest of the ledger. Choose something unique that makes sense in your
       language.
     """, [OptDesc("conversion_currency",
-                  "NOTHING", "NOTHING")]),
+                  "NOTHING", "NOTHING", None)]),
 
     OptGroup("""
       Mappings of currency to the tolerance used when it cannot be inferred
@@ -131,7 +132,7 @@ PUBLIC_OPTION_GROUPS = [
 
       For detailed documentation about how precision is handled, see this doc:
       http://furius.ca/beancount/doc/precision
-    """, [OptDesc("default_tolerance", [], [])]),
+    """, [OptDesc("default_tolerance", [], [], None)]),
 
     # Note: This option will go away at some point. Use this until you're able
     # to find time to port your input files to match the inferred tolerance.
@@ -142,7 +143,7 @@ PUBLIC_OPTION_GROUPS = [
       the old Beancount behaviour for balancing transactions. IMPORTANT NOTE:
       This is a TEMPORARY feature, intended to faciliate migration towards the
       newer, more automatic inferred tolerance behavior.
-    """, [OptDesc("fixed_tolerance", None, '*:0.005')]),
+    """, [OptDesc("fixed_tolerance", None, '*:0.005', None)]),
 
     # Note: This option will go away. Its behavior has been replaced by
     # precision/tolerance inference.
@@ -153,13 +154,13 @@ PUBLIC_OPTION_GROUPS = [
       small (but very small) amount of tolerance in checking the balance of
       transactions and in requiring padding entries to be auto-inserted. This is
       the tolerance amount, which you can override.
-    """, [OptDesc("tolerance", "0.015", "0.015")]),
+    """, [OptDesc("tolerance", "0.015", "0.015", None)]),
 
     OptGroup("""
       A list of directory roots, relative to the CWD, which should be searched
       for document files. For the document files to be automatically found they
       must have the following filename format: YYYY-MM-DD.(.*)
-    """, [OptDesc("documents", [], "/path/to/your/documents/archive")]),
+    """, [OptDesc("documents", [], "/path/to/your/documents/archive", None)]),
 
     OptGroup("""
       A list of currencies that we single out during reporting and create
@@ -173,12 +174,12 @@ PUBLIC_OPTION_GROUPS = [
       their associated unit strings. This allows you to import the numbers in a
       spreadsheet (e.g, "101.00 USD" does not get parsed by a spreadsheet
       import, but "101.00" does).
-    """, [OptDesc("operating_currency", [], "USD")]),
+    """, [OptDesc("operating_currency", [], "USD", None)]),
 
     OptGroup("""
       A boolean, true if the number formatting routines should output commas
       as thousand separators in numbers.
-    """, [OptDesc("render_commas", "", "")]),
+    """, [OptDesc("render_commas", "", "", None)]),
 
     OptGroup("""
       A string that defines which set of plugins is to be run by the loader: if
@@ -187,7 +188,7 @@ PUBLIC_OPTION_GROUPS = [
       all, only user plugins are run (the user should explicitly load the
       desired list of plugins by using the 'plugin' option. This is useful in case the
       user wants full control over the ordering in which the plugins are run).
-    """, [OptDesc("plugin_processing_mode", "default", "raw")]),
+    """, [OptDesc("plugin_processing_mode", "default", "raw", None)]),
 
     OptGroup("""
       A list of other filenames to include. This is output from the parser and
@@ -195,7 +196,7 @@ PUBLIC_OPTION_GROUPS = [
       time it gets to the top-level loader.load_*() function that invoked it.
       The filenames are absolute. Relative include filenames are resolved against
       the file that contains the include directives.
-    """, [OptDesc("include", [], "some-other-file.beancount")]),
+    """, [OptDesc("include", [], "some-other-file.beancount", None)]),
 
     OptGroup("""
       A list of Python modules containing transformation functions to run the
@@ -213,24 +214,29 @@ PUBLIC_OPTION_GROUPS = [
       is provided, it is provided as an extra argument to the plugin function.
       Errors should not be printed out the output, they will be converted to
       strins by the loader and displayed as dictacted by the output medium.
-    """, [OptDesc("plugin", [], "beancount.plugins.module_name")]),
+    """, [OptDesc("plugin", [], "beancount.plugins.module_name", None)]),
 
     OptGroup("""
       The number of lines beyond which a multi-line string will trigger a
       overly long line warning. This warning is meant to help detect a dangling
       quote by warning users of unexpectedly long strings.
-    """, [OptDesc("long_string_maxlines", 64, 64)]),
+    """, [OptDesc("long_string_maxlines", 64, 64, None)]),
 
     ]
 
 
 OPTION_GROUPS = PRIVATE_OPTION_GROUPS + PUBLIC_OPTION_GROUPS
 
+# A dict of the option names to their descriptors.
+OPTIONS = {desc.name: desc
+           for group in OPTION_GROUPS
+           for desc in group.options}
+
 
 # A dict of the option names to their default value.
-DEFAULT_OPTIONS = {desc.name: desc.default_value
-                   for group in OPTION_GROUPS
-                   for desc in group.options}
+OPTIONS_DEFAULTS = {desc.name: desc.default_value
+                    for group in OPTION_GROUPS
+                    for desc in group.options}
 
 
 # A list of options that cannot be modified.

@@ -106,7 +106,7 @@ class Builder(lexer.LexBuilder):
         self.entries = []
 
         # Accumulated and unprocessed options.
-        self.options = copy.deepcopy(options.DEFAULT_OPTIONS)
+        self.options = copy.deepcopy(options.OPTIONS_DEFAULTS)
 
         # Set the filename we're processing.
         self.options['filename'] = filename
@@ -225,11 +225,14 @@ class Builder(lexer.LexBuilder):
             meta = new_metadata(filename, lineno)
             self.errors.append(
                 ParserError(meta, "Invalid option: '{}'".format(key), None))
+
         elif key in options.READ_ONLY_OPTIONS:
             meta = new_metadata(filename, lineno)
             self.errors.append(
                 ParserError(meta, "Option '{}' may not be set".format(key), None))
+
         else:
+            option_descriptor = options.OPTIONS[key]
             option = self.options[key]
             if isinstance(option, list):
                 # Process the 'plugin' option specially: accept an optional

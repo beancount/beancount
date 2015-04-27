@@ -180,7 +180,7 @@ def _parse_recursive(sources, log_timings):
     # here, if useful. Let's refrain for now, until we need it.
 
     if options_map is None:
-        options_map = options.DEFAULT_OPTIONS.copy()
+        options_map = options.OPTIONS_DEFAULTS.copy()
 
     return entries, parse_errors, options_map
 

@@ -13,7 +13,7 @@ from beancount.core import account_types
 class TestOptions(unittest.TestCase):
 
     def test_get_account_types(self):
-        options_ = options.DEFAULT_OPTIONS.copy()
+        options_ = options.OPTIONS_DEFAULTS.copy()
         result = options.get_account_types(options_)
         expected = account_types.AccountTypes(assets='Assets',
                                               liabilities='Liabilities',
@@ -23,13 +23,13 @@ class TestOptions(unittest.TestCase):
         self.assertEqual(expected, result)
 
     def test_get_previous_accounts(self):
-        options_ = options.DEFAULT_OPTIONS.copy()
+        options_ = options.OPTIONS_DEFAULTS.copy()
         result = options.get_previous_accounts(options_)
         self.assertEqual(3, len(result))
         self.assertTrue(all(isinstance(x, str) for x in result))
 
     def test_get_current_accounts(self):
-        options_ = options.DEFAULT_OPTIONS.copy()
+        options_ = options.OPTIONS_DEFAULTS.copy()
         result = options.get_current_accounts(options_)
         self.assertEqual(2, len(result))
         self.assertTrue(all(isinstance(x, str) for x in result))
