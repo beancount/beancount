@@ -75,7 +75,7 @@ class TestContext(test_utils.TestCase):
           Expenses:Financial:Commissions      8.95 USD                ;     8.95 USD
 
 
-        ;;; Precision: USD=2
+        ;;; Precision: ITOT=0.005, USD=0.005
 
         ; ! Assets:US:ETrade:Cash                      -2537.65 USD
 

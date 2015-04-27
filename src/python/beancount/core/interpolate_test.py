@@ -212,7 +212,7 @@ class TestBalance(cmptest.TestCase):
         self.assertTrue(has_inserted)
         self.assertEqual(3, len(new_postings))
         self.assertEqual(0, len(errors))
-        self.assertTrue('__automatic__' in new_postings[2].meta)
+        self.assertTrue(interpolate.AUTOMATIC_META in new_postings[2].meta)
 
     def test_balance_with_large_amount(self):
         meta = data.new_metadata(__file__, 0)

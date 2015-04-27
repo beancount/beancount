@@ -994,7 +994,7 @@ class TestMetaData(unittest.TestCase):
             test: "Something"
         """
         self.assertEqual(1, len(entries))
-        self.assertEqual({'test': 'Something'},
+        self.assertEqual({'__automatic__': True, 'test': 'Something'},
                          entries[0].postings[1].meta)
 
     @parsedoc
@@ -1014,7 +1014,8 @@ class TestMetaData(unittest.TestCase):
         self.assertEqual('Something', entries[0].meta['test1'])
         self.assertEqual({'test2': 'has', 'test3': 'to'},
                          entries[0].postings[0].meta)
-        self.assertEqual({'test4': 'come', 'test5': 'from', 'test6': 'this'},
+        self.assertEqual({'__automatic__': True,
+                          'test4': 'come', 'test5': 'from', 'test6': 'this'},
                          entries[0].postings[1].meta)
 
     @parsedoc
@@ -1034,7 +1035,8 @@ class TestMetaData(unittest.TestCase):
         self.assertEqual('Something', entries[0].meta['test1'])
         self.assertEqual({'test2': 'has', 'test3': 'to'},
                          entries[0].postings[0].meta)
-        self.assertEqual({'test4': 'come', 'test5': 'from', 'test6': 'this'},
+        self.assertEqual({'__automatic__': True,
+                          'test4': 'come', 'test5': 'from', 'test6': 'this'},
                          entries[0].postings[1].meta)
 
     @parsedoc

@@ -15,7 +15,12 @@ Launch description:
     * padding directives
 
 
-  - Add Boolean type to parser.
+  - Fix bugs with using __automatic__ as metadata key... the lexer does not
+    accept it. Either change the lexer or better: avoid serializing the value.
+
+  - Add Boolean type to parser; this is just the right thing to do. Either that
+    or convert 'automatic' metadata field to be set to 1/0 and post-pone this
+    task.
 
   - Add a 'converter' to options parsing.
   - Convert to Decimal using the converter, parsing pairs.

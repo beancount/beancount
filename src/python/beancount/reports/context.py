@@ -77,8 +77,8 @@ def render_entry_context(entries, dcontext, filename, lineno):
         if precision:
             print(file=oss)
             print(';;; Precision: {}'.format(
-                ', '.join('{}={}'.format(key, -value)
-                          for key, value in precision.items())), file=oss)
+                ', '.join('{}={}'.format(key, value)
+                          for key, value in sorted(precision.items()))), file=oss)
 
     # Print the context after.
     print(file=oss)
