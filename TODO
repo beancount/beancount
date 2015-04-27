@@ -19,9 +19,6 @@ Launch description:
     or convert 'automatic' metadata field to be set to 1/0 and post-pone this
     task.
 
-  - Fix bugs with using __automatic__ as metadata key... the lexer does not
-    accept it. Either change the lexer or better: avoid serializing the value.
-
   - Make Balance checks and Pad directives use the default tolerance.
 
 
@@ -29,10 +26,6 @@ Launch description:
   - Do write the final tests on interpolate_test.
   - Make sure to cover the case of relying on '*'.
 
-
-
-  - Complete the implementation of a 'fixed_tolerance' option to make the old
-    behavior still work for people during the transition.
 
 
   - Document how precision works, in detail.
