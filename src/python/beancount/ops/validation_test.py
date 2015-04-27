@@ -9,6 +9,7 @@ from beancount.parser import parser
 from beancount.parser import printer
 from beancount.parser import cmptest
 from beancount.ops import validation
+from beancount import loader
 
 
 class TestValidateInventoryBooking(cmptest.TestCase):
@@ -434,3 +435,60 @@ class TestValidate(cmptest.TestCase):
                             for error in errors))
         self.assertTrue(any(re.match('Invalid currency', error.message)
                             for error in errors))
+
+
+class TestValidateTolerances(cmptest.TestCase):
+
+    @loader.loaddoc
+    def test_tolerance_implicit_integral(self, entries, errors, options_map):
+        """
+        plugin "beancount.ops.auto_accounts"
+
+        2014-02-01 * "Buy"
+          Assets:Investments:Stock   1 AAPL {41.00 USD}
+          Assets:Investments:Cash  -41 USD
+
+        2014-02-02 * "Buy"
+          Assets:Investments:Stock   1 AAPL {41.00 USD}
+          Assets:Investments:Cash  -41.00 USD
+
+        2014-02-03 * "Buy"
+          Assets:Investments:Stock   1 AAPL {41.00 USD}
+          Assets:Investments:Cash  -41.00000 USD
+        """
+        self.assertFalse(errors)
+
+    @loader.loaddoc
+    def test_tolerance_implicit_fractional_global(self, entries, errors, options_map):
+        """
+        plugin "beancount.ops.auto_accounts"
+        option "default_tolerance" "*:0.005"
+
+        1997-03-06 * "Buy"
+          Assets:Insurance:HYPOT       7.9599 HYPOT {125.63 CAD}
+          Assets:Insurance:Cash         -1000 CAD
+        """
+        self.assertFalse(errors)
+
+    @loader.loaddoc
+    def test_tolerance_implicit_fractional_specific(self, entries, errors, options_map):
+        """
+        plugin "beancount.ops.auto_accounts"
+        option "default_tolerance" "CAD:0.005"
+
+        1997-03-06 * "Buy"
+          Assets:Insurance:HYPOT       7.9599 HYPOT {125.63 CAD}
+          Assets:Insurance:Cash         -1000 CAD
+        """
+        self.assertFalse(errors)
+
+    @loader.loaddoc
+    def test_tolerance_implicit_fractional_withprec(self, entries, errors, options_map):
+        """
+        plugin "beancount.ops.auto_accounts"
+
+        2000-01-01 * "Buy"
+          Assets:Insurance:HYPOT          7.9599 HYPOT {125.63 CAD}
+          Assets:Insurance:Cash         -1000.00 CAD
+        """
+        self.assertFalse(errors)

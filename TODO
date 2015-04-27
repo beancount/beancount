@@ -15,8 +15,6 @@ Launch description:
     * Padding directives
 
 
-  - Document how precision works, in detail.
-
   - Do write the final tests on interpolate_test.
   - Make sure to cover the case of relying on '*'.
 
@@ -27,6 +25,49 @@ Launch description:
   - Add Boolean type to parser; this is just the right thing to do. Either that
     or convert 'automatic' metadata field to be set to 1/0 and post-pone this
     task.
+
+
+** Precision Documentation
+
+  - Document how precision works, in detail.
+
+        How Precision Works in Beancount
+
+        Only values to the left are considered, not costs, nor prices.
+
+        Examples of precisin values (explain min (or max), with examples).
+
+
+        When a value has an integer value, we must infer its precision:
+
+           2001-01-15 * "5000 USD (empl. referral)" #transfer-accounts-unsure
+             Assets:CA:RBC:CheckingOld            7547.17 CAD @ 0.6625 USD
+             Income:CA:Autodesk:EmployeeReferral    -5000 USD
+
+
+             When a currency does not appear, we must infer its precision
+
+                2001-04-01 * "Vest ADSK ESPP - Bought at discount: 18.1160 USD" ^old-transactions-023
+             Assets:CA:ETrade:OptionsLink:ADSK       172 ADSK {30.5625 USD}
+             Income:CA:Autodesk:ESPP:Contrib    -4873.24 CAD @ 0.6394 USD
+             Income:CA:Autodesk:ESPP:Discount   -3348.14 CAD @ 0.6394 USD
+
+
+        Note that Ledger does not handle this case.
+
+
+        When inferring the precision, you may provide a default minimum precision per currency.
+
+        The default value for this default value can further be set itself.
+        (Its default value is to require infinite precision.)
+
+        How to fix an invalid balance by inserting digits on an integer value.
+
+
+        Explain how to weather the changeover:
+
+           option "default_tolerance" "*:0.005"
+
 
 
 * Priorities
