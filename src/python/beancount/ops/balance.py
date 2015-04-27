@@ -33,7 +33,7 @@ def check(entries, options_map):
     Returns:
       A pair of a list of directives and a list of balance check errors.
     """
-    tolerance = D(options_map['tolerance'])
+    tolerance = options_map['tolerance']
 
     new_entries = []
     check_errors = []

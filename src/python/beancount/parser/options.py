@@ -50,6 +50,19 @@ def options_validate_plugin(value):
     return (plugin_name, plugin_config)
 
 
+def options_validate_tolerance(value):
+    """Validate the tolerance option.
+
+    Args:
+      value: A string, the value provided as option.
+    Returns:
+      The new value, converted, if the conversion is successful.
+    Raises:
+      ValueError: If the value is invalid.
+    """
+    return D(value)
+
+
 def options_validate_default_tolerance(value):
     """Validate the default_tolerance option.
 
@@ -201,7 +214,8 @@ PUBLIC_OPTION_GROUPS = [
       the old Beancount behaviour for balancing transactions. IMPORTANT NOTE:
       This is a TEMPORARY feature, intended to faciliate migration towards the
       newer, more automatic inferred tolerance behavior.
-    """, [OptDesc("fixed_tolerance", None, '*:0.005', None)]),
+    """, [OptDesc("fixed_tolerance", None, '*:0.005',
+                  options_validate_tolerance)]),
 
     # Note: This option will go away. Its behavior has been replaced by
     # precision/tolerance inference.
@@ -212,7 +226,8 @@ PUBLIC_OPTION_GROUPS = [
       small (but very small) amount of tolerance in checking the balance of
       transactions and in requiring padding entries to be auto-inserted. This is
       the tolerance amount, which you can override.
-    """, [OptDesc("tolerance", "0.015", "0.015", None)]),
+    """, [OptDesc("tolerance", D("0.015"), "0.015",
+                  options_validate_tolerance)]),
 
     OptGroup("""
       A list of directory roots, relative to the CWD, which should be searched

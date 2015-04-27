@@ -597,7 +597,7 @@ class TestToleranceOptions(unittest.TestCase):
     def test_tolerance_defaults(self, _, __, options_map):
         """
         """
-        self.assertEqual('0.015',
+        self.assertEqual(D('0.015'),
                          options_map['tolerance'])
         self.assertEqual(None,
                          options_map['fixed_tolerance'])
@@ -609,14 +609,14 @@ class TestToleranceOptions(unittest.TestCase):
         """
           option "tolerance" "0.05"
         """
-        self.assertEqual("0.05", options_map['tolerance'])
+        self.assertEqual(D("0.05"), options_map['tolerance'])
 
     @parser.parsedoc
     def test_fixed_tolerance(self, _, __, options_map):
         """
           option "fixed_tolerance" "0.05"
         """
-        self.assertEqual("0.05", options_map['fixed_tolerance'])
+        self.assertEqual(D("0.05"), options_map['fixed_tolerance'])
 
     @parser.parsedoc
     def test_default_tolerance(self, _, __, options_map):

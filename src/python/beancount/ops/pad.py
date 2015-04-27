@@ -41,7 +41,7 @@ def pad(entries, options_map):
       A new list of directives, with Pad entries inserte, and a list of new
       errors produced.
     """
-    tolerance = D(options_map['tolerance'])
+    tolerance = options_map['tolerance']
     pad_errors = []
 
     # Find all the pad entries and group them by account.
