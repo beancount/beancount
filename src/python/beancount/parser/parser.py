@@ -232,8 +232,15 @@ class Builder(lexer.LexBuilder):
                 ParserError(meta, "Option '{}' may not be set".format(key), None))
 
         else:
-            # Convert the value, if necessary.
             option_descriptor = options.OPTIONS[key]
+
+            # Issue a warning if the option is deprecated.
+            if option_descriptor.deprecated:
+                meta = new_metadata(filename, lineno)
+                self.errors.append(
+                    ParserError(meta, option_descriptor.deprecated, None))
+
+            # Convert the value, if necessary.
             if option_descriptor.converter:
                 try:
                     value = option_descriptor.converter(value)

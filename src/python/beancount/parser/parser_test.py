@@ -631,6 +631,33 @@ class TestToleranceOptions(unittest.TestCase):
                          options_map['default_tolerance'])
 
 
+class TestDeprecatedOptions(unittest.TestCase):
+
+    @parser.parsedoc
+    def test_deprecated_plugin(self, _, errors, __):
+        """
+          option "plugin" "beancount.plugins.module_name"
+        """
+        self.assertEqual(1, len(errors))
+        self.assertTrue(re.search('option is deprecated', errors[0].message))
+
+    @parser.parsedoc
+    def test_deprecated_fixed_tolerance(self, _, errors, __):
+        """
+          option "fixed_tolerance" "0.00005"
+        """
+        self.assertEqual(1, len(errors))
+        self.assertTrue(re.search('option is deprecated', errors[0].message))
+
+    @parser.parsedoc
+    def test_deprecated_tolerance(self, _, errors, __):
+        """
+          option "tolerance" "0.00005"
+        """
+        self.assertEqual(1, len(errors))
+        self.assertTrue(re.search('option has been deprecated', errors[0].message))
+
+
 class TestParserLinks(unittest.TestCase):
 
     @parser.parsedoc
