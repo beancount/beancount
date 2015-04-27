@@ -606,8 +606,6 @@ class TestToleranceOptions(unittest.TestCase):
         """
         self.assertEqual(D('0.015'),
                          options_map['tolerance'])
-        self.assertEqual(None,
-                         options_map['fixed_tolerance'])
         self.assertEqual({},
                          options_map['default_tolerance'])
 
@@ -617,13 +615,6 @@ class TestToleranceOptions(unittest.TestCase):
           option "tolerance" "0.05"
         """
         self.assertEqual(D("0.05"), options_map['tolerance'])
-
-    @parser.parsedoc
-    def test_fixed_tolerance(self, _, __, options_map):
-        """
-          option "fixed_tolerance" "0.05"
-        """
-        self.assertEqual(D("0.05"), options_map['fixed_tolerance'])
 
     @parser.parsedoc
     def test_default_tolerance(self, _, __, options_map):
@@ -644,14 +635,6 @@ class TestDeprecatedOptions(unittest.TestCase):
     def test_deprecated_plugin(self, _, errors, __):
         """
           option "plugin" "beancount.plugins.module_name"
-        """
-        self.assertEqual(1, len(errors))
-        self.assertTrue(re.search('option is deprecated', errors[0].message))
-
-    @parser.parsedoc
-    def test_deprecated_fixed_tolerance(self, _, errors, __):
-        """
-          option "fixed_tolerance" "0.00005"
         """
         self.assertEqual(1, len(errors))
         self.assertTrue(re.search('option is deprecated', errors[0].message))

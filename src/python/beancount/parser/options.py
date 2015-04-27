@@ -250,20 +250,6 @@ PUBLIC_OPTION_GROUPS = [
     """, [Opt("default_tolerance", {},
               converter=options_validate_default_tolerance)]),
 
-    # Note: This option will go away at some point. Use this until you're able
-    # to find time to port your input files to match the inferred tolerance.
-    # See this for details: http://furius.ca/beancount/doc/precision
-    OptGroup("""
-      The fixed tolerance to use for all currencies, regardless of inference.
-      This value essentially overrides the inference of tolerance and restores
-      the old Beancount behaviour for balancing transactions. IMPORTANT NOTE:
-      This is a TEMPORARY feature, intended to faciliate migration towards the
-      newer, more automatic inferred tolerance behavior.
-    """, [Opt("fixed_tolerance", None, '*:0.005',
-              converter=options_validate_tolerance,
-              deprecated=("The 'fixed_tolerance' option is deprecated; it is "
-                          "intended as a stop-gap and will go away soon"))]),
-
     # Note: This option will go away. Its behavior has been replaced by
     # precision/tolerance inference.
     # See this for details: http://furius.ca/beancount/doc/precision
