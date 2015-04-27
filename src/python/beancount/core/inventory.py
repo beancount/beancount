@@ -156,10 +156,11 @@ class Inventory(list):
 
                 # When a precision value cannot be inferred, use the defaults.
                 if tolerance_value is None:
-                    # FIXME/TODO: Fetch a default value for the currency, or the
-                    # global default value. For now we're just using infinite
-                    # precision this way.
-                    tolerance_value = tolerance_default.get(position_currency, ZERO)
+                    # Fetch a default value for the currency, or the global
+                    # default value.
+                    tolerance_value = tolerance_default.get(
+                        position_currency,
+                        tolerance_default.get('*', ZERO))
 
                 if abs(position.number) > tolerance_value:
                     return False

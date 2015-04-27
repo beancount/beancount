@@ -27,6 +27,7 @@ Launch description:
 
 
   - Do write the final tests on interpolate_test.
+  - Make sure to cover the case of relying on '*'.
 
 
 
