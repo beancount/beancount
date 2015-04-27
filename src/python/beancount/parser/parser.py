@@ -247,19 +247,18 @@ class Builder(lexer.LexBuilder):
 
             option = self.options[key]
             if isinstance(option, list):
-                # Process the 'plugin' option specially: accept an optional
-                # argument from it. NOTE: We will eventually phase this out and
-                # replace it by a dedicated 'plugin' directive.
-                if key == 'plugin':
-                    match = re.match('(.*):(.*)', value)
-                    if match:
-                        plugin_name, plugin_config = match.groups()
-                    else:
-                        plugin_name, plugin_config = value, None
-                    value = (plugin_name, plugin_config)
-
                 # Append to a list of values.
                 option.append(value)
+
+            elif isinstance(option, dict):
+                # Set to a dict of values.
+                if not (isinstance(value, tuple) and len(value) == 2):
+                    self.errors.append(
+                        ParserError(
+                            meta, "Error for option '{}': {}".format(key, value), None))
+                    return
+                dict_key, dict_value = value
+                option[dict_key] = dict_value
 
             else:
                 # Set the value.

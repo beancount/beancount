@@ -5,8 +5,10 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
 import io
+import re
 import textwrap
 
+from beancount.core.amount import D
 from beancount.core import account_types
 from beancount.core import account
 from beancount.core import display_context
@@ -25,6 +27,46 @@ def options_validate_processing_mode(value):
     if value not in ('raw', 'default'):
         raise ValueError("Invalid value '{}'".format(value))
     return value
+
+
+def options_validate_plugin(value):
+    """Validate the plugin option.
+
+    Args:
+      value: A string, the value provided as option.
+    Returns:
+      The new value, converted, if the conversion is successful.
+    Raises:
+      ValueError: If the value is invalid.
+    """
+    # Process the 'plugin' option specially: accept an optional
+    # argument from it. NOTE: We will eventually phase this out and
+    # replace it by a dedicated 'plugin' directive.
+    match = re.match('(.*):(.*)', value)
+    if match:
+        plugin_name, plugin_config = match.groups()
+    else:
+        plugin_name, plugin_config = value, None
+    return (plugin_name, plugin_config)
+
+
+def options_validate_default_tolerance(value):
+    """Validate the default_tolerance option.
+
+    Args:
+      value: A string, the value provided as option.
+    Returns:
+      The new value, converted, if the conversion is successful.
+    Raises:
+      ValueError: If the value is invalid.
+    """
+    # Process the setting of a key-value, whereby the value is a Decimal
+    # representation.
+    match = re.match('(.*):(.*)', value)
+    if not match:
+        raise ValueError("Invalid value '{}'".format(value))
+    currency, tolerance_str = match.groups()
+    return (currency, D(tolerance_str))
 
 
 # list of option groups, with their description, option names and default
@@ -147,7 +189,8 @@ PUBLIC_OPTION_GROUPS = [
 
       For detailed documentation about how precision is handled, see this doc:
       http://furius.ca/beancount/doc/precision
-    """, [OptDesc("default_tolerance", [], [], None)]),
+    """, [OptDesc("default_tolerance", {}, {},
+                  options_validate_default_tolerance)]),
 
     # Note: This option will go away at some point. Use this until you're able
     # to find time to port your input files to match the inferred tolerance.
@@ -230,7 +273,8 @@ PUBLIC_OPTION_GROUPS = [
       is provided, it is provided as an extra argument to the plugin function.
       Errors should not be printed out the output, they will be converted to
       strins by the loader and displayed as dictacted by the output medium.
-    """, [OptDesc("plugin", [], "beancount.plugins.module_name", None)]),
+    """, [OptDesc("plugin", [], "beancount.plugins.module_name",
+                  options_validate_plugin)]),
 
     OptGroup("""
       The number of lines beyond which a multi-line string will trigger a

@@ -601,7 +601,7 @@ class TestToleranceOptions(unittest.TestCase):
                          options_map['tolerance'])
         self.assertEqual(None,
                          options_map['fixed_tolerance'])
-        self.assertEqual([],
+        self.assertEqual({},
                          options_map['default_tolerance'])
 
     @parser.parsedoc
@@ -625,7 +625,9 @@ class TestToleranceOptions(unittest.TestCase):
           option "default_tolerance" "USD:0.05"
           option "default_tolerance" "JPY:0.5"
         """
-        self.assertEqual(["*:0", "USD:0.05", "JPY:0.5"],
+        self.assertEqual({"*": D("0"),
+                          "USD": D("0.05"),
+                          "JPY": D("0.5")},
                          options_map['default_tolerance'])
 
 
