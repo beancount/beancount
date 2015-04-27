@@ -11,7 +11,7 @@ class TestCheckCommodity(unittest.TestCase):
     @loader.loaddoc
     def test_check_commodity_transaction(self, _, errors, __):
         """
-            option "plugin" "beancount.plugins.check_commodity"
+            plugin "beancount.plugins.check_commodity"
 
             2011-01-01 open Expenses:Restaurant
             2011-01-01 open Assets:Other
@@ -31,7 +31,7 @@ class TestCheckCommodity(unittest.TestCase):
     @loader.loaddoc
     def test_check_commodity_used_in_balance_only(self, _, errors, __):
         """
-            option "plugin" "beancount.plugins.check_commodity"
+            plugin "beancount.plugins.check_commodity"
 
             2011-01-01 open Expenses:Restaurant
             2011-01-01 open Assets:Other
@@ -49,7 +49,7 @@ class TestCheckCommodity(unittest.TestCase):
     @loader.loaddoc
     def test_check_commodity_okay(self, _, errors, __):
         """
-            option "plugin" "beancount.plugins.check_commodity"
+            plugin "beancount.plugins.check_commodity"
 
             2000-01-01 commodity USD
             2000-01-01 commodity CAD

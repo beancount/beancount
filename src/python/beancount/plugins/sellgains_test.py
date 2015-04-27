@@ -13,8 +13,8 @@ class TestSellGains(unittest.TestCase):
     @loader.loaddoc
     def test_sellgains_success(self, entries, errors, options_map):
         """
-        option "plugin" "beancount.ops.auto_accounts"
-        option "plugin" "beancount.plugins.sellgains"
+        plugin "beancount.ops.auto_accounts"
+        plugin "beancount.plugins.sellgains"
 
         1999-07-31 * "Sell"
           Assets:US:Company:ESPP          -81 ADSK {26.3125 USD} @ 26.4375 USD
@@ -28,8 +28,8 @@ class TestSellGains(unittest.TestCase):
     @loader.loaddoc
     def test_sellgains_fail_balance(self, entries, errors, options_map):
         """
-        option "plugin" "beancount.ops.auto_accounts"
-        option "plugin" "beancount.plugins.sellgains"
+        plugin "beancount.ops.auto_accounts"
+        plugin "beancount.plugins.sellgains"
 
         1999-07-31 * "Sell"
           Assets:US:Company:ESPP          -81 ADSK {26.3125 USD} @ 26.4375 USD
@@ -42,8 +42,8 @@ class TestSellGains(unittest.TestCase):
     @loader.loaddoc
     def test_sellgains_fail_imbalance(self, entries, errors, options_map):
         """
-        option "plugin" "beancount.ops.auto_accounts"
-        option "plugin" "beancount.plugins.sellgains"
+        plugin "beancount.ops.auto_accounts"
+        plugin "beancount.plugins.sellgains"
 
         1999-07-31 * "Sell"
           Assets:US:Company:ESPP          -81 ADSK {26.3125 USD} @ 26.4375 USD
@@ -56,8 +56,8 @@ class TestSellGains(unittest.TestCase):
     @loader.loaddoc
     def test_sellgains_other_currency(self, entries, errors, options_map):
         """
-        option "plugin" "beancount.ops.auto_accounts"
-        option "plugin" "beancount.plugins.sellgains"
+        plugin "beancount.ops.auto_accounts"
+        plugin "beancount.plugins.sellgains"
 
         1999-07-31 * "Sell"
           Assets:US:Company:ESPP          -80 ADSK {26.50 USD} @ 27.50 USD

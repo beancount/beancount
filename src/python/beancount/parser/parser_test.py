@@ -534,7 +534,7 @@ class TestParserPlugin(unittest.TestCase):
         """
           option "plugin" "beancount.plugin.unrealized"
         """
-        self.assertFalse(errors)
+        self.assertEqual(1, len(errors))
         self.assertEqual([('beancount.plugin.unrealized', None)],
                          options_map['plugin'])
 
@@ -543,7 +543,7 @@ class TestParserPlugin(unittest.TestCase):
         """
           option "plugin" "beancount.plugin.unrealized:Unrealized"
         """
-        self.assertFalse(errors)
+        self.assertEqual(1, len(errors))
         self.assertEqual([('beancount.plugin.unrealized', 'Unrealized')],
                          options_map['plugin'])
 
