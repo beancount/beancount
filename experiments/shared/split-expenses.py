@@ -166,19 +166,19 @@ def main():
                 continue
 
             price_date, price_rate = prices.get_price(price_map,
-                                                      (main_currency, pos.lot.currency))
-            dcontext.update(price_rate, pos.lot.currency)
-            delta_currency = pos.number / price_rate
+                                                      (pos.lot.currency, main_currency))
+            dcontext.update(price_rate.quantize(D('0.00001')), main_currency)
+            delta_currency = pos.number * price_rate
             conversion.postings.append(
                 data.Posting(conversion, args.reconciliation_account, -pos,
-                             None, None, None))
+                             amount.Amount(price_rate, main_currency), None, None))
             balance_amount += delta_currency
 
         pos_conversion = position.Position(position.Lot(main_currency, None, None),
                                            -balance_amount)
         conversion.postings.append(
             data.Posting(conversion, args.reconciliation_account, -pos_conversion,
-                         amount.Amount(price_rate, pos.lot.currency), None, None))
+                         None, None, None))
 
     print('plugin "beancount.ops.auto_accounts"')
     printer.print_entries(output_entries, dcontext)
