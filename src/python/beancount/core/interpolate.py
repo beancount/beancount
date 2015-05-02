@@ -9,6 +9,7 @@ from beancount.core.amount import D
 from beancount.core.amount import ONE
 from beancount.core.amount import ZERO
 from beancount.core.inventory import Inventory
+from beancount.core import inventory
 from beancount.core.position import Lot
 from beancount.core.position import Position
 from beancount.core.data import Transaction
@@ -130,7 +131,7 @@ def fill_residual_posting(entry, account_rounding):
         return entry_replace(entry, postings=new_postings)
 
 
-def get_incomplete_postings(entry):
+def get_incomplete_postings(entry, options_map):
     """Return new postings to balance an incomplete entry, that is, and entry
     with postings that have no amounts on them.
 
@@ -147,6 +148,7 @@ def get_incomplete_postings(entry):
 
     Args:
       entry: An instance of a valid directive.
+      options_map: A dict of options, as produced by the parser.
     Returns:
       A tuple of: a list of new postings to replace the entry's unbalanced
       postings, a boolean set to true if we've inserted new postings, and a list
@@ -165,7 +167,10 @@ def get_incomplete_postings(entry):
     currencies = set()
 
     # An inventory to accumulate the residual balance.
-    inventory = Inventory()
+    inventory_ = Inventory()
+
+    # A dict of values for default tolerances.
+    default_tolerances = options_map['default_tolerance']
 
     # Process all the postings.
     has_nonzero_amount = False
@@ -181,7 +186,7 @@ def get_incomplete_postings(entry):
 
             # Compute the amount to balance and update the inventory.
             balance_amount = get_posting_weight(posting)
-            inventory.add_amount(balance_amount)
+            inventory_.add_amount(balance_amount)
 
             has_regular_postings = True
             if balance_amount:
@@ -205,7 +210,7 @@ def get_incomplete_postings(entry):
         old_posting = postings[index]
         assert old_posting.price is None
 
-        residual_positions = inventory.get_positions()
+        residual_positions = inventory_.get_positions()
 
         # If there are no residual positions, we want to still insert a posting
         # but with a zero position for each currency, so that the posting shows
@@ -218,7 +223,7 @@ def get_incomplete_postings(entry):
                                        not has_regular_postings):
             balance_errors.append(
                 BalanceError(entry.meta,
-                             "Useless auto-posting: {}".format(inventory), entry))
+                             "Useless auto-posting: {}".format(inventory_), entry))
             for currency in currencies:
                 position = Position(Lot(currency, None, None), ZERO)
                 meta = copy.copy(old_posting.meta) if old_posting.meta else {}
@@ -232,6 +237,13 @@ def get_incomplete_postings(entry):
             # each position.
             for position in residual_positions:
                 position.number = -position.number
+
+                # Applying rounding to the deafult tolerance, if there is one.
+                tolerance = inventory.get_default_tolerance(default_tolerances,
+                                                            position.lot.currency)
+                if tolerance:
+                    position.number = position.number.quantize(tolerance)
+
                 meta = copy.copy(old_posting.meta) if old_posting.meta else {}
                 meta[AUTOMATIC_META] = True
                 new_postings.append(
@@ -254,7 +266,7 @@ def get_incomplete_postings(entry):
     return (postings, has_inserted, balance_errors)
 
 
-def balance_incomplete_postings(entry):
+def balance_incomplete_postings(entry, options_map):
     """Balance an entry with incomplete postings, modifying the
     empty postings on the entry itself. This also sets the parent of
     all the postings to this entry.
@@ -264,6 +276,7 @@ def balance_incomplete_postings(entry):
     Args:
       entry: An instance of a valid directive. This entry is modified by
         having new postings inserted to it.
+      options_map: A dict of options, as produced by the parser.
     Returns:
       A list of errors, or None, if none occurred.
     """
@@ -271,7 +284,7 @@ def balance_incomplete_postings(entry):
     if not entry.postings:
         return None
 
-    postings, inserted, errors = get_incomplete_postings(entry)
+    postings, inserted, errors = get_incomplete_postings(entry, options_map)
 
     # If we could make this faster to avoid the unnecessary copying, it would
     # make parsing substantially faster.

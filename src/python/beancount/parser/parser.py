@@ -787,7 +787,7 @@ class Builder(lexer.LexBuilder):
                             payee, narration, tags, links, postings)
 
         # Balance incomplete auto-postings and set the parent link to this entry as well.
-        balance_errors = balance_incomplete_postings(entry)
+        balance_errors = balance_incomplete_postings(entry, self.options)
 
         if balance_errors:
             self.errors.extend(balance_errors)

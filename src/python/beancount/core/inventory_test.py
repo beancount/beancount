@@ -9,6 +9,7 @@ from datetime import date
 import types
 
 from .amount import D
+from .amount import ZERO
 from .position import Position
 from .position import Lot
 from .inventory import Inventory
@@ -443,3 +444,30 @@ class TestInventory(unittest.TestCase):
         inv2.add_amount(A('55 GOOG'))
 
         inv1 + inv2
+
+
+class TestDefaultTolerance(unittest.TestCase):
+
+    def test_default_tolerance__present(self):
+        self.assertEqual(
+            D('0.001'),
+            inventory.get_default_tolerance({'USD': D('0.001')},
+                                            'USD'))
+        self.assertEqual(
+            D('0.001'),
+            inventory.get_default_tolerance({'USD': D('0.001'),
+                                             '*': D('0.5')},
+                                            'USD'))
+
+    def test_default_tolerance__global(self):
+        self.assertEqual(
+            D('0.5'),
+            inventory.get_default_tolerance({'USD': D('0.001'),
+                                             '*': D('0.5')},
+                                            'JPY'))
+
+    def test_default_tolerance__global_default(self):
+        self.assertEqual(
+            ZERO,
+            inventory.get_default_tolerance({'USD': D('0.001')},
+                                            'JPY'))

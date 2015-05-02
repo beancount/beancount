@@ -477,3 +477,22 @@ def check_invariants(inventory):
     # Check that none of the amounts is zero.
     for position in positions:
         assert position.number, position
+
+
+def get_default_tolerance(tolerances_map, currency):
+    """Given a dict of tolerances, return the default tolerance for the currency.
+
+    If a tolerance hasn't been specified for the given currency, return the
+    global default tolerance, or the default value (zero).
+
+    Args:
+      tolerances_map: A dict of currency to a tolerance Decimal value.
+      currency: A string, the currency to look up.
+    Returns:
+      A Decimal value, the tolerance to check for.
+    """
+    tolerance = tolerances_map.get(currency, None)
+    if tolerance is None:
+        tolerance = tolerances_map.get(
+            currency, tolerances_map.get('*', ZERO))
+    return tolerance
