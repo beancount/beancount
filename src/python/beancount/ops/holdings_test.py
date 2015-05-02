@@ -149,6 +149,27 @@ class TestHoldings(unittest.TestCase):
         self.assertEqual(expected_values, holdings_list)
 
     @loader.loaddoc
+    def test_get_final_holdings__zero_position(self, entries, _, __):
+        """
+        1970-01-01 open Assets:Stocks:NYA
+        1970-01-01 open Expenses:Financial:Commissions
+        1970-01-01 open Assets:Current
+        1970-01-01 open Income:Dividends:NYA
+
+        2012-07-02 ! "I received 1 new share in dividend, without paying"
+          Assets:Stocks:NYA 1 NYA {0 EUR}
+          Income:Dividends:NYA -0 EUR
+
+        2014-11-13 balance Assets:Stocks:NYA 1 NYA
+        """
+        price_map = prices.build_price_map(entries)
+        holdings_list = holdings.get_final_holdings(entries,
+                                                    ('Assets', 'Liabilities'),
+                                                    price_map)
+        self.assertEqual(1, len(holdings_list))
+        self.assertEqual('EUR', holdings_list[0].cost_currency)
+
+    @loader.loaddoc
     def test_get_commodities_at_date(self, entries, _, options_map):
         """
         2013-01-01 open Assets:Account1
