@@ -2,6 +2,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import tempfile
 import datetime
+import re
 import subprocess
 
 from beancount.utils import test_utils
@@ -67,6 +68,27 @@ class TestLedgerUtilityFunctions(cmptest.TestCase):
         """, new_entries)
 
 
+def get_ledger_version():
+    """Check that we have a sufficient version of Ledger installed.
+
+    Returns:
+      A tuple of integer, the Ledger binary version triple, or None,
+      if Ledger is not installed or could not be run.
+    """
+    try:
+        pipe = subprocess.Popen(['ledger', '--version'],
+                                shell=False,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
+        stdout, stderr = pipe.communicate()
+        match = re.search(r'(\d+)\.(\d+)\.(\d+)', stdout.decode('utf-8'))
+        if match:
+            return tuple(map(int, match.group(1,2,3)))
+    except OSError as exc:
+        pass
+    return None
+
+
 class TestLedgerConversion(test_utils.TestCase):
 
     def check_parses_ledger(self, ledger_filename):
@@ -75,16 +97,17 @@ class TestLedgerConversion(test_utils.TestCase):
         Args:
           filename: A string, the name of the Ledger file.
         """
-        try:
-            pipe = subprocess.Popen(['ledger', '-f', ledger_filename, 'bal'],
-                                    shell=False,
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE)
-            stdout, stderr = pipe.communicate()
-            self.assertEqual(0, pipe.returncode, stderr)
-        except OSError as exc:
-            if exc.errno == 2:
-                self.skipTest('Ledger is not installed, cannot verify conversion')
+        version = get_ledger_version()
+        if version < (3, 0, 0):
+            self.skipTest('Ledger is not installed or has insufficient version, '
+                          'cannot verify conversion; skipping test')
+
+        pipe = subprocess.Popen(['ledger', '-f', ledger_filename, 'bal'],
+                                shell=False,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
+        stdout, stderr = pipe.communicate()
+        self.assertEqual(0, pipe.returncode, stderr)
 
     @test_utils.docfile
     def test_simple(self, filename):
