@@ -140,33 +140,25 @@ class Inventory(list):
         """
         return sorted(self) == sorted(other)
 
-    def is_small(self, tolerance, tolerance_default={}):
+    def is_small(self, tolerances, default_tolerances={}):
         """Return true if all the positions in the inventory are small.
 
         Args:
-          tolerance: A Decimal, the small number of units under which a position
+          tolerances: A Decimal, the small number of units under which a position
             is considered small, or a dict of currency to such epsilon precision.
         Returns:
           A boolean.
         """
-        if isinstance(tolerance, dict):
+        if isinstance(tolerances, dict):
             for position in self:
-                position_currency = position.lot.currency
-                tolerance_value = tolerance.get(position_currency, None)
+                tolerance = get_tolerance(tolerances, default_tolerances,
+                                          position.lot.currency)
 
-                # When a precision value cannot be inferred, use the defaults.
-                if tolerance_value is None:
-                    # Fetch a default value for the currency, or the global
-                    # default value.
-                    tolerance_value = tolerance_default.get(
-                        position_currency,
-                        tolerance_default.get('*', ZERO))
-
-                if abs(position.number) > tolerance_value:
+                if abs(position.number) > tolerance:
                     return False
             return True
         else:
-            return not any(abs(position.number) > tolerance
+            return not any(abs(position.number) > tolerances
                            for position in self)
 
     def is_mixed(self):
@@ -479,20 +471,22 @@ def check_invariants(inventory):
         assert position.number, position
 
 
-def get_default_tolerance(tolerances_map, currency):
-    """Given a dict of tolerances, return the default tolerance for the currency.
+def get_tolerance(tolerances, default_tolerances, currency):
+    """Given dicts of tolerances, return the tolerance for the currency.
 
     If a tolerance hasn't been specified for the given currency, return the
     global default tolerance, or the default value (zero).
 
     Args:
-      tolerances_map: A dict of currency to a tolerance Decimal value.
+      tolerances: A dict of currency to a tolerance Decimal value.
+      default_tolerances: A fallback dict of currency to a tolerance Decimal value.
       currency: A string, the currency to look up.
     Returns:
       A Decimal value, the tolerance to check for.
     """
-    tolerance = tolerances_map.get(currency, None)
+    tolerance = tolerances.get(currency, None)
     if tolerance is None:
-        tolerance = tolerances_map.get(
-            currency, tolerances_map.get('*', ZERO))
+        tolerance = default_tolerances.get(currency, None)
+        if tolerance is None:
+            tolerance = default_tolerances.get('*', ZERO)
     return tolerance

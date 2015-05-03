@@ -451,23 +451,36 @@ class TestDefaultTolerance(unittest.TestCase):
     def test_default_tolerance__present(self):
         self.assertEqual(
             D('0.001'),
-            inventory.get_default_tolerance({'USD': D('0.001')},
-                                            'USD'))
+            inventory.get_tolerance({'USD': D('0.001')},
+                                    {},
+                                    'USD'))
         self.assertEqual(
             D('0.001'),
-            inventory.get_default_tolerance({'USD': D('0.001'),
-                                             '*': D('0.5')},
-                                            'USD'))
+            inventory.get_tolerance({'USD': D('0.001')},
+                                    {'USD': D('0.00001')},
+                                    'USD'))
+        self.assertEqual(
+            D('0.001'),
+            inventory.get_tolerance({'USD': D('0.001')},
+                                    {'*': D('0.5')},
+                                    'USD'))
 
     def test_default_tolerance__global(self):
         self.assertEqual(
-            D('0.5'),
-            inventory.get_default_tolerance({'USD': D('0.001'),
-                                             '*': D('0.5')},
-                                            'JPY'))
+            D('0.001'),
+            inventory.get_tolerance({},
+                                    {'USD': D('0.001'), '*': D('0.5')},
+                                    'USD'))
 
     def test_default_tolerance__global_default(self):
         self.assertEqual(
+            D('0.5'),
+            inventory.get_tolerance({},
+                                    {'USD': D('0.001'), '*': D('0.5')},
+                                    'JPY'))
+
+    def test_default_tolerance__not_found(self):
+        self.assertEqual(
             ZERO,
-            inventory.get_default_tolerance({'USD': D('0.001')},
-                                            'JPY'))
+            inventory.get_tolerance({'USD': D('0.001')}, {},
+                                    'JPY'))
