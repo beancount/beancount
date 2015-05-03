@@ -67,14 +67,14 @@ class TestBalance(cmptest.TestCase):
     def test_compute_residual(self):
 
         # Try with two accounts.
-        residual, _ = interpolate.compute_residual([
+        residual = interpolate.compute_residual([
             P(None, "Assets:Bank:Checking", "105.50", "USD"),
             P(None, "Assets:Bank:Checking", "-194.50", "USD"),
             ])
         self.assertEqual(inventory.from_string("-89 USD"), residual.units())
 
         # Try with more accounts.
-        residual, _ = interpolate.compute_residual([
+        residual = interpolate.compute_residual([
             P(None, "Assets:Bank:Checking", "105.50", "USD"),
             P(None, "Assets:Bank:Checking", "-194.50", "USD"),
             P(None, "Assets:Bank:Investing", "5", "AAPL"),
@@ -105,7 +105,7 @@ class TestBalance(cmptest.TestCase):
         for index in 0, 1:
             entry = interpolate.fill_residual_posting(entries[index], account)
             self.assertEqualEntries([entries[index]], [entry])
-            residual, _ = interpolate.compute_residual(entry.postings)
+            residual = interpolate.compute_residual(entry.postings)
             self.assertTrue(residual.is_empty())
 
         entry = interpolate.fill_residual_posting(entries[2], account)
@@ -117,7 +117,7 @@ class TestBalance(cmptest.TestCase):
           Equity:Rounding        0.0000001 USD
 
         """, [entry])
-        residual,  _ = interpolate.compute_residual(entry.postings)
+        residual = interpolate.compute_residual(entry.postings)
         self.assertTrue(residual.is_empty())
 
         entry = interpolate.fill_residual_posting(entries[3], account)
@@ -129,7 +129,7 @@ class TestBalance(cmptest.TestCase):
           Equity:Rounding   0.012375 USD
 
         """, [entry])
-        residual, _ = interpolate.compute_residual(entry.postings)
+        residual = interpolate.compute_residual(entry.postings)
         self.assertTrue(residual.is_empty())
 
     def test_get_incomplete_postings_pathological(self):
@@ -463,21 +463,21 @@ class TestComputeBalance(unittest.TestCase):
         self.assertEqual(balance_before, balance_after)
 
 
-class TestPrecision(cmptest.TestCase):
+class TestInferTolerances(cmptest.TestCase):
 
     @parser.parsedoc_noerrors
-    def test_precision__no_precision(self, entries, _):
+    def test_tolerances__no_precision(self, entries, _):
         """
         2014-02-25 *
           Assets:Account1       500 USD
           Assets:Account2      -120 USD
           Assets:Account3      -380 USD
         """
-        residual, precision = interpolate.compute_residual(entries[0].postings)
-        self.assertEqual({}, precision)
+        tolerances = interpolate.infer_tolerances(entries[0].postings)
+        self.assertEqual({}, tolerances)
 
     @parser.parsedoc_noerrors
-    def test_precision__dubious_precision(self, entries, _):
+    def test_tolerances__dubious_precision(self, entries, _):
         """
         2014-02-25 *
           Assets:Account1       5.0000 USD
@@ -486,62 +486,62 @@ class TestPrecision(cmptest.TestCase):
           Assets:Account4      -5.0 USD
           Assets:Account4      -5 USD
         """
-        residual, precision = interpolate.compute_residual(entries[0].postings)
-        self.assertEqual({'USD': D('0.05')}, precision)
+        tolerances = interpolate.infer_tolerances(entries[0].postings)
+        self.assertEqual({'USD': D('0.05')}, tolerances)
 
     @parser.parsedoc_noerrors
-    def test_precision__ignore_price(self, entries, _):
+    def test_tolerances__ignore_price(self, entries, _):
         """
         2014-02-25 *
           Assets:Account3       5 VHT @ 102.2340 USD
           Assets:Account4      -511.11 USD
         """
-        residual, precision = interpolate.compute_residual(entries[0].postings)
-        self.assertEqual({'USD': D('0.005')}, precision)
+        tolerances = interpolate.infer_tolerances(entries[0].postings)
+        self.assertEqual({'USD': D('0.005')}, tolerances)
 
     @parser.parsedoc_noerrors
-    def test_precision__ignore_cost(self, entries, _):
+    def test_tolerances__ignore_cost(self, entries, _):
         """
         2014-02-25 *
           Assets:Account3       5 VHT {102.2340 USD}
           Assets:Account4      -511.11 USD
         """
-        residual, precision = interpolate.compute_residual(entries[0].postings)
-        self.assertEqual({'USD': D('0.005')}, precision)
+        tolerances = interpolate.infer_tolerances(entries[0].postings)
+        self.assertEqual({'USD': D('0.005')}, tolerances)
 
 
     @parser.parsedoc_noerrors
-    def test_precision__ignore_cost_and_price(self, entries, _):
+    def test_tolerances__ignore_cost_and_price(self, entries, _):
         """
         2014-02-25 *
           Assets:Account3       5 VHT {102.2340 USD} @ 103.45237239 USD
           Assets:Account4      -511.11 USD
         """
-        residual, precision = interpolate.compute_residual(entries[0].postings)
-        self.assertEqual({'USD': D('0.005')}, precision)
+        tolerances = interpolate.infer_tolerances(entries[0].postings)
+        self.assertEqual({'USD': D('0.005')}, tolerances)
 
     @parser.parsedoc_noerrors
-    def test_precision__cost_and_number_ignored(self, entries, _):
+    def test_tolerances__cost_and_number_ignored(self, entries, _):
         """
         2014-02-25 *
           Assets:Account3       5 VHT {102.2340 USD}
           Assets:Account4      -511 USD
         """
-        residual, precision = interpolate.compute_residual(entries[0].postings)
-        self.assertEqual({}, precision)
+        tolerances = interpolate.infer_tolerances(entries[0].postings)
+        self.assertEqual({}, tolerances)
 
     @parser.parsedoc_noerrors
-    def test_precision__number_on_cost_used(self, entries, _):
+    def test_tolerances__number_on_cost_used(self, entries, _):
         """
         2014-02-25 *
           Assets:Account3       5.1 VHT {102.2340 USD}
           Assets:Account4      -511 USD
         """
-        residual, precision = interpolate.compute_residual(entries[0].postings)
-        self.assertEqual({'VHT': D('0.05')}, precision)
+        tolerances = interpolate.infer_tolerances(entries[0].postings)
+        self.assertEqual({'VHT': D('0.05')}, tolerances)
 
     @parser.parsedoc_noerrors
-    def test_precision__minium_on_costs(self, entries, _):
+    def test_tolerances__minium_on_costs(self, entries, _):
         """
         2014-02-25 *
           Assets:Account3       5.1   VHT {102.2340 USD}
@@ -549,15 +549,15 @@ class TestPrecision(cmptest.TestCase):
           Assets:Account3       5.111 VHT {102.2340 USD}
           Assets:Account4  -1564.18 USD
         """
-        residual, precision = interpolate.compute_residual(entries[0].postings)
-        self.assertEqual({'VHT': D('0.05'), 'USD': D('0.005')}, precision)
+        tolerances = interpolate.infer_tolerances(entries[0].postings)
+        self.assertEqual({'VHT': D('0.05'), 'USD': D('0.005')}, tolerances)
 
     @parser.parsedoc_noerrors
-    def test_precision__with_inference(self, entries, _):
+    def test_tolerances__with_inference(self, entries, _):
         """
         2014-02-25 *
           Assets:Account3       5.1   VHT {102.2340 USD}
           Assets:Account4
         """
-        residual, precision = interpolate.compute_residual(entries[0].postings)
-        self.assertEqual({'VHT': D('0.05')}, precision)
+        tolerances = interpolate.infer_tolerances(entries[0].postings)
+        self.assertEqual({'VHT': D('0.05')}, tolerances)

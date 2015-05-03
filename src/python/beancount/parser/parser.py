@@ -33,6 +33,7 @@ from beancount.core.data import Posting
 from beancount.core.data import BOOKING_METHODS
 from beancount.core.interpolate import balance_incomplete_postings
 from beancount.core.interpolate import compute_residual
+from beancount.core.interpolate import infer_tolerances
 
 from beancount.parser import _parser
 from beancount.parser import lexer
@@ -794,8 +795,9 @@ class Builder(lexer.LexBuilder):
 
         # Check that the balance actually is empty.
         if __sanity_checks__:
-            residual, precision = compute_residual(entry.postings)
-            assert residual.is_small(precision, options_map['default_tolerance']), (
+            residual = compute_residual(entry.postings)
+            tolerances = infer_tolerances(entry.postings)
+            assert residual.is_small(tolerances, options_map['default_tolerance']), (
                 "Invalid residual {}".format(residual))
 
         return entry

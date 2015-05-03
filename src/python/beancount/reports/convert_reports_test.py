@@ -173,6 +173,7 @@ class TestLedgerConversion(test_utils.TestCase):
                         report.main, [beanfile.name, '-o', lgrfile.name, 'ledger'])
                 self.assertEqual(0, result)
 
+                import shutil; shutil.copyfile(lgrfile.name, '/tmp/test.ledger')
                 self.check_parses_ledger(lgrfile.name)
 
 class TestHLedgerConversion(test_utils.TestCase):

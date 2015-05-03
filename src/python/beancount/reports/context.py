@@ -69,16 +69,17 @@ def render_entry_context(entries, dcontext, filename, lineno):
 
     if isinstance(closest_entry, data.Transaction):
         # Print residuals.
-        residual, precision = interpolate.compute_residual(closest_entry.postings)
+        residual = interpolate.compute_residual(closest_entry.postings)
         if not residual.is_empty():
             print(file=oss)
             print(';;; Residual: {}'.format(residual.to_string(dformat)), file=oss)
 
-        if precision:
+        tolerances = interpolate.infer_tolerances(closest_entry.postings)
+        if tolerances:
             print(file=oss)
             print(';;; Precision: {}'.format(
                 ', '.join('{}={}'.format(key, value)
-                          for key, value in sorted(precision.items()))), file=oss)
+                          for key, value in sorted(tolerances.items()))), file=oss)
 
     # Print the context after.
     print(file=oss)
