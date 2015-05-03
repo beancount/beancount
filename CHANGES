@@ -4,6 +4,13 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-05-03
+
+  - Added Equity to the list of accounts that count as proceeds for
+    beancount.plugins.sellgains plugin. This is so that old transactions
+    may use an unknown equity account and still pass the sellgains check.
+
+
 2015-04-19
 
   - Fixed a bug with the pad directive that did not look for account name
