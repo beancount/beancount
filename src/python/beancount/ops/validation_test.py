@@ -492,3 +492,14 @@ class TestValidateTolerances(cmptest.TestCase):
           Assets:Insurance:Cash         -1000.00 CAD
         """
         self.assertFalse(errors)
+
+    @loader.loaddoc
+    def test_tolerance_implicit_from_converted_cost(self, entries, errors, options_map):
+        """
+        plugin "beancount.ops.auto_accounts"
+
+        2011-01-25 * "Transfer of Assets, 3467.90 USD"
+          Assets:RothIRA:Vanguard:VTIVX  250.752 VTIVX {18.35 USD} @ 13.83 USD
+          Assets:RothIRA:DodgeCox:DODGX  -30.892 DODGX {148.93 USD} @ 112.26 USD
+        """
+        self.assertFalse(errors)
