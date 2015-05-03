@@ -110,6 +110,9 @@ Launch description:
 
 ** Misc
 
+  - Add a --auto option to bean-check that automatically inserts a
+    beancount.ops.auto_accounts directive and more.
+
   - beancount.parser.parsedoc_noerrors() has been implemented; now convert all
     the tests to the simplified version.
 
