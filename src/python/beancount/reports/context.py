@@ -75,17 +75,10 @@ def render_entry_context(entries, dcontext, filename, lineno):
             print(file=oss)
             print(';;; Residual: {}'.format(residual.to_string(dformat)), file=oss)
 
-        tolerances = interpolate.infer_tolerances(closest_entry.postings, use_cost=True)
+        tolerances = interpolate.infer_tolerances(closest_entry.postings)
         if tolerances:
             print(file=oss)
-            print(';;; Precision (balance): {}'.format(
-                ', '.join('{}={}'.format(key, value)
-                          for key, value in sorted(tolerances.items()))), file=oss)
-
-        tolerances = interpolate.infer_tolerances(closest_entry.postings, use_cost=False)
-        if tolerances:
-            print(file=oss)
-            print(';;; Precision (quantize): {}'.format(
+            print(';;; Precision: {}'.format(
                 ', '.join('{}={}'.format(key, value)
                           for key, value in sorted(tolerances.items()))), file=oss)
 
