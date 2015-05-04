@@ -33,6 +33,7 @@ Decimal = decimal.Decimal
 
 # Constants.
 ZERO = Decimal()
+HALF = Decimal('0.5')
 ONE = Decimal('1')
 
 # A regular expression to match the name of a currency.

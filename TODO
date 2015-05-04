@@ -22,6 +22,9 @@ Launch description:
   - Finish implementing quantization (& tests).
 
 
+  - You have to cap the inferred precision to 0.5 unit and build a test for it.
+
+
   - Add the converted amount from the cost/price for the given number of units
     of the number to the list of amounts to be considered for inferring the
     tolerance locally. For example, in this posting:
@@ -126,6 +129,9 @@ Launch description:
 
 
 ** Misc
+
+  - bean-doctor context does not render all digits... it should render all the
+    numbers as represented in memory. Don't round those numbers.
 
   - Add a --auto option to bean-check that automatically inserts a
     beancount.ops.auto_accounts directive and more.

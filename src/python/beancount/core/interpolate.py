@@ -8,6 +8,7 @@ import copy
 from beancount.core.amount import D
 from beancount.core.amount import ONE
 from beancount.core.amount import ZERO
+from beancount.core.amount import HALF
 from beancount.core.inventory import Inventory
 from beancount.core import inventory
 from beancount.core.position import Lot
@@ -79,7 +80,7 @@ def compute_residual(postings):
     return inventory
 
 
-def infer_tolerances(postings):
+def infer_tolerances(postings, use_cost=False):
     """Infer tolerances from a list of postings.
 
     The tolerance is the maximum fraction that is being used for each currency
@@ -89,31 +90,48 @@ def infer_tolerances(postings):
 
     Args:
       postings: A list of Posting instances.
+      use_cost: A boolean, true if we should be using a combination of the smallest
+        digit of the number times the cost or price in order to infer the tolerance.
     Returns:
       A dict of currency to the tolerated difference amount to be used for it,
       e.g. 0.005.
     """
-    exponent_dict = {}
+    tolerances = {}
     for posting in postings:
         # Skip the precision on automatically inferred postings.
         if posting.meta and AUTOMATIC_META in posting.meta:
             continue
+        position_ = posting.position
+        if position_ is None:
+            continue
+        lot = position_.lot
 
-        # Compute exponent_dict bounds.
-        position = posting.position
-        precision_currency = position.lot.currency
-        expo = position.number.as_tuple().exponent
+        # Compute bounds on the number.
+        currency = lot.currency
+        expo = position_.number.as_tuple().exponent
         if expo < 0:
-            # Note: the exponent is a negative value. The constant is only used
-            # here to avoid a hash-table lookup.
-            exponent_dict[precision_currency] = max(
-                expo, exponent_dict.get(precision_currency, -1024))
+            # Note: the exponent is a negative value.
+            tolerance = ONE.scaleb(expo) / 2
+            tolerances[currency] = max(tolerance,
+                                       tolerances.get(currency, -1024))
 
-    # Convert a dict of exponents to a dict of precision.
-    precision = {currency: ONE.scaleb(expo) / 2
-                 for currency, expo in exponent_dict.items()}
+            if use_cost:
+                # Compute bounds on the smallest digit of the number implied as cost.
+                if lot.cost is not None:
+                    cost_currency = lot.cost.currency
+                    cost_tolerance = min(tolerance * lot.cost.number, HALF)
+                    tolerances[cost_currency] = max(cost_tolerance,
+                                                    tolerances.get(cost_currency, -1024))
 
-    return precision
+                # Compute bounds on the smallest digit of the number implied as cost.
+                price = posting.price
+                if price is not None:
+                    price_currency = price.currency
+                    price_tolerance = min(tolerance * price.number, HALF)
+                    tolerances[price_currency] = max(price_tolerance,
+                                                     tolerances.get(price_currency, -1024))
+
+    return tolerances
 
 
 # Meta-data field appended to automatically inserted postings.
@@ -184,6 +202,7 @@ def get_incomplete_postings(entry, options_map):
     inventory_ = Inventory()
 
     # A dict of values for default tolerances.
+    tolerances = infer_tolerances(postings)
     default_tolerances = options_map['default_tolerance']
 
     # Process all the postings.
@@ -253,10 +272,12 @@ def get_incomplete_postings(entry, options_map):
                 position.number = -position.number
 
                 # Applying rounding to the deafult tolerance, if there is one.
-                tolerance = inventory.get_default_tolerance(default_tolerances,
-                                                            position.lot.currency)
+                tolerance = inventory.get_tolerance(tolerances,
+                                                    default_tolerances,
+                                                    position.lot.currency)
                 if tolerance:
-                    position.number = position.number.quantize(tolerance)
+                    quantum = (tolerance * 2).normalize()
+                    position.number = position.number.quantize(quantum)
 
                 meta = copy.copy(old_posting.meta) if old_posting.meta else {}
                 meta[AUTOMATIC_META] = True

@@ -497,9 +497,13 @@ class TestValidateTolerances(cmptest.TestCase):
     def test_tolerance_implicit_from_converted_cost(self, entries, errors, options_map):
         """
         plugin "beancount.ops.auto_accounts"
+        option "default_tolerance" "USD:0.0001"
 
-        2011-01-25 * "Transfer of Assets, 3467.90 USD"
-          Assets:RothIRA:Vanguard:VTIVX  250.752 VTIVX {18.35 USD} @ 13.83 USD
-          Assets:RothIRA:DodgeCox:DODGX  -30.892 DODGX {148.93 USD} @ 112.26 USD
+        ;; Note: Residual is 0.074453 USD here, but should work because of inferred
+        ;; tolerance on (0.001 x 148.93) / 2 = 0.07447707 > 0.074465 residual.
+        ;;
+        2011-01-25 * "Transfer of Assets"
+          Assets:RothIRA:Vanguard:VTIVX  250.752 VTIVX {18.348089 USD} @  13.83 USD
+          Assets:RothIRA:DodgeCox:DODGX  -30.892 DODGX {   148.93 USD} @ 112.26 USD
         """
         self.assertFalse(errors)

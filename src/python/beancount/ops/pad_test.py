@@ -292,26 +292,26 @@ class TestPadding(cmptest.TestCase):
           2013-05-01 open Equity:Opening-Balances
 
           2013-05-10 *
-            Assets:Checking                                                          1.00 USD
-            Assets:Checking                                                          1.00 CAD
-            Assets:Checking                                                          1.00 EUR
-            Equity:Opening-Balances                                                  -1.00 USD
-            Equity:Opening-Balances                                                  -1.00 CAD
-            Equity:Opening-Balances                                                  -1.00 EUR
+            Assets:Checking                    1.00 USD
+            Assets:Checking                    1.00 CAD
+            Assets:Checking                    1.00 EUR
+            Equity:Opening-Balances           -1.00 USD
+            Equity:Opening-Balances           -1.00 CAD
+            Equity:Opening-Balances           -1.00 EUR
 
           2013-05-20 pad Assets:Checking Equity:Opening-Balances
 
           2013-05-20 P "(Padding inserted for Balance of 5.00 USD for difference 4.00 USD)"
-            Assets:Checking                                                          4.00 USD
-            Equity:Opening-Balances                                                  -4.00 USD
+            Assets:Checking                    4.00 USD
+            Equity:Opening-Balances           -4.00 USD
 
           2013-05-20 P "(Padding inserted for Balance of 3.00 CAD for difference 2.00 CAD)"
-            Assets:Checking                                                          2.00 CAD
-            Equity:Opening-Balances                                                  -2.00 CAD
+            Assets:Checking                    2.00 CAD
+            Equity:Opening-Balances           -2.00 CAD
 
-          2013-06-01 balance Assets:Checking                                 5.00 USD
-          2013-06-01 balance Assets:Checking                                 3.00 CAD
-          2013-06-01 balance Assets:Checking                                 1.00 EUR
+          2013-06-01 balance Assets:Checking   5.00 USD
+          2013-06-01 balance Assets:Checking   3.00 CAD
+          2013-06-01 balance Assets:Checking   1.00 EUR
 
         """, entries)
 
