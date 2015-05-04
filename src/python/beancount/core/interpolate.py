@@ -88,6 +88,12 @@ def infer_tolerances(postings, use_cost=False):
     quantization precision for each currency. Integer amounts aren't
     contributing to the determination of precision.
 
+    The 'use_cost' option allows one to experiment with letting postings at cost
+    and at price influence the maximum value of the tolerance. It's quite tricky
+    to use and alters the definition of the tolerance in a non-trivial way, if you
+    use it. It was originally intended to be used for balancing the transactions
+    and not for quantizing during interpolation.
+
     Args:
       postings: A list of Posting instances.
       use_cost: A boolean, true if we should be using a combination of the smallest
@@ -115,21 +121,23 @@ def infer_tolerances(postings, use_cost=False):
             tolerances[currency] = max(tolerance,
                                        tolerances.get(currency, -1024))
 
-            if use_cost:
-                # Compute bounds on the smallest digit of the number implied as cost.
-                if lot.cost is not None:
-                    cost_currency = lot.cost.currency
-                    cost_tolerance = min(tolerance * lot.cost.number, HALF)
-                    tolerances[cost_currency] = max(cost_tolerance,
-                                                    tolerances.get(cost_currency, -1024))
+            if not use_cost:
+                continue
 
-                # Compute bounds on the smallest digit of the number implied as cost.
-                price = posting.price
-                if price is not None:
-                    price_currency = price.currency
-                    price_tolerance = min(tolerance * price.number, HALF)
-                    tolerances[price_currency] = max(price_tolerance,
-                                                     tolerances.get(price_currency, -1024))
+            # Compute bounds on the smallest digit of the number implied as cost.
+            if lot.cost is not None:
+                cost_currency = lot.cost.currency
+                cost_tolerance = min(tolerance * lot.cost.number, HALF)
+                tolerances[cost_currency] = max(cost_tolerance,
+                                                tolerances.get(cost_currency, -1024))
+
+            # Compute bounds on the smallest digit of the number implied as cost.
+            price = posting.price
+            if price is not None:
+                price_currency = price.currency
+                price_tolerance = min(tolerance * price.number, HALF)
+                tolerances[price_currency] = max(price_tolerance,
+                                                 tolerances.get(price_currency, -1024))
 
     return tolerances
 

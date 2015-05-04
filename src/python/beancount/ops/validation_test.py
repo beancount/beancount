@@ -493,17 +493,20 @@ class TestValidateTolerances(cmptest.TestCase):
         """
         self.assertFalse(errors)
 
-    @loader.loaddoc
-    def test_tolerance_implicit_from_converted_cost(self, entries, errors, options_map):
-        """
-        plugin "beancount.ops.auto_accounts"
-        option "default_tolerance" "USD:0.0001"
-
-        ;; Note: Residual is 0.074453 USD here, but should work because of inferred
-        ;; tolerance on (0.001 x 148.93) / 2 = 0.07447707 > 0.074465 residual.
-        ;;
-        2011-01-25 * "Transfer of Assets"
-          Assets:RothIRA:Vanguard:VTIVX  250.752 VTIVX {18.348089 USD} @  13.83 USD
-          Assets:RothIRA:DodgeCox:DODGX  -30.892 DODGX {   148.93 USD} @ 112.26 USD
-        """
-        self.assertFalse(errors)
+    # Note: this is a test that would work if we inferred tolerances from postings at cost.
+    # See https://groups.google.com/d/msg/beancount/5u-xgR-ttjg/sXfU32ItRscJ for a discussion.
+    #
+    # @loader.loaddoc
+    # def test_tolerance_implicit_from_converted_cost(self, entries, errors, options_map):
+    #     """
+    #     plugin "beancount.ops.auto_accounts"
+    #     option "default_tolerance" "USD:0.0001"
+    #
+    #     ;; Note: Residual is 0.074453 USD here, but should work because of inferred
+    #     ;; tolerance on (0.001 x 148.93) / 2 = 0.07447707 > 0.074465 residual.
+    #     ;;
+    #     2011-01-25 * "Transfer of Assets"
+    #       Assets:RothIRA:Vanguard:VTIVX  250.752 VTIVX {18.348089 USD} @  13.83 USD
+    #       Assets:RothIRA:DodgeCox:DODGX  -30.892 DODGX {   148.93 USD} @ 112.26 USD
+    #     """
+    #     self.assertFalse(errors)
