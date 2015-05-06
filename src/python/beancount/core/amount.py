@@ -54,17 +54,21 @@ def D(strord=None):
     Returns:
       A Decimal instance.
     """
-    # Note: try a map lookup and optimize performance here.
-    if not strord:
-        return Decimal()
-    elif isinstance(strord, str):
-        return Decimal(strord.replace(',', ''))
-    elif isinstance(strord, Decimal):
-        return strord
-    elif isinstance(strord, (int, float)):
-        return Decimal(strord)
-    else:
-        assert strord is None, "Invalid value to convert: {}".format(strord)
+    try:
+        # Note: try a map lookup and optimize performance here.
+        if strord is None or strord == '':
+            return Decimal()
+        elif isinstance(strord, str):
+            return Decimal(strord.replace(',', ''))
+        elif isinstance(strord, Decimal):
+            return strord
+        elif isinstance(strord, (int, float)):
+            return Decimal(strord)
+        else:
+            assert strord is None, "Invalid value to convert: {}".format(strord)
+    except Exception as exc:
+        print(repr(strord))
+        raise
 
 
 def round_to(number, increment):
