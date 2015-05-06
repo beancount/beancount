@@ -6,6 +6,8 @@ import collections
 import re
 
 from beancount.core.amount import D
+from beancount.core.amount import ONE
+from beancount.core.amount import ZERO
 from beancount.core.data import Transaction
 from beancount.core.data import Balance
 from beancount.core import amount
@@ -18,6 +20,20 @@ __plugins__ = ('check',)
 
 
 BalanceError = collections.namedtuple('BalanceError', 'source message entry')
+
+
+def get_tolerance(balance_entry):
+    """Get the tolerance amount for a single entry.
+
+    Args:
+      balance_entry: An instance of data.Balance
+    Returns:
+      A Decimal, the amount of tolerance implied by the directive.
+    """
+    expo = balance_entry.amount.number.as_tuple().exponent
+    if expo < 0:
+        return ONE.scaleb(expo)  ## / 2
+    return ZERO
 
 
 def check(entries, options_map):
@@ -33,8 +49,6 @@ def check(entries, options_map):
     Returns:
       A pair of a list of directives and a list of balance check errors.
     """
-    tolerance = options_map['tolerance']
-
     new_entries = []
     check_errors = []
 
@@ -94,6 +108,11 @@ def check(entries, options_map):
 
             # Check if the amount is within bounds of the expected amount.
             diff_amount = amount.amount_sub(balance_amount, expected_amount)
+
+            ## FIXME:
+            #tolerance = get_tolerance(entry)
+            tolerance = options_map['tolerance']
+
             if abs(diff_amount.number) > tolerance:
                 check_errors.append(
                     BalanceError(entry.meta,

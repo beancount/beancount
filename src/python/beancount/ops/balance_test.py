@@ -2,6 +2,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import unittest
 
+from beancount.core.amount import Decimal
 from beancount.ops import balance
 from beancount.loader import loaddoc
 from beancount.core import amount
@@ -270,3 +271,32 @@ class TestBalance(unittest.TestCase):
           2013-05-10 balance Assets:Bank:Checking   100 USD
         """
         self.assertEqual([], list(map(type, errors)))
+
+
+class TestBalancePrecision(unittest.TestCase):
+
+    @loaddoc
+    def test_balance_with_prefix_account(self, entries, errors, __):
+        """
+          2015-05-01 open Assets:Bank:Checking
+          2015-05-02 balance Assets:Bank:Checking   0 USD
+          2015-05-02 balance Assets:Bank:Checking   0.0 USD
+          2015-05-02 balance Assets:Bank:Checking   0.00 USD
+          2015-05-02 balance Assets:Bank:Checking   0.000 USD
+          2015-05-02 balance Assets:Bank:Checking   1 USD
+          2015-05-02 balance Assets:Bank:Checking   1.0 USD
+          2015-05-02 balance Assets:Bank:Checking   1.00 USD
+          2015-05-02 balance Assets:Bank:Checking   1.000 USD
+          2015-05-02 balance Assets:Bank:Checking   1.01 USD
+        """
+        tolerances = [balance.get_tolerance(entry)
+                      for entry in entries[1:]]
+        self.assertEqual([Decimal('0'),
+                          Decimal('0.1'),
+                          Decimal('0.01'),
+                          Decimal('0.001'),
+                          Decimal('0'),
+                          Decimal('0.1'),
+                          Decimal('0.01'),
+                          Decimal('0.001'),
+                          Decimal('0.01')], tolerances)
