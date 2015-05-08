@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """A utility library to ease connecting to the Google Data APIs.
 
 The Google APIs unfortunately doesn't yet support Python 3.x, so we write this
@@ -23,11 +22,7 @@ from oauth2client.file import Storage
 
 # Import Google API client libraries.
 import httplib2
-try:
-    from apiclient import discovery
-except:
-    # The name for the older version differs slightly.
-    from googleapiclient import discovery
+from apiclient import discovery
 
 
 DEFAULT_SECRETS_FILENAME = os.environ.get('GOOGLE_APIS', None)
@@ -89,7 +84,9 @@ def get_authenticated_http(scope, args):
 
     # Create a transport, disable SSL certificates, which fails to validate.
     http = httplib2.Http()
-    http.disable_ssl_certificate_validation = True
+
+    ## FIXME: Remove. This appears to have been fixed in the Python3 version.
+    ##http.disable_ssl_certificate_validation = True
 
     # Create a storage to cache the credentials for future runs, and look it up.
     storage = Storage(storage_filename)
@@ -100,7 +97,7 @@ def get_authenticated_http(scope, args):
         try:
             # If the credentials haven't been found, run the flow. This will pop-up
             # a web browser window for you to accept.
-            credentials = tools.run_flow(flow, storage, opts, http=http)
+            credentials = tools.run_flow(flow, storage, args, http=http)
         finally:
             logging.getLogger().setLevel(saved_log_level)
 
