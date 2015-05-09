@@ -168,3 +168,16 @@ def parent_matcher(account_name):
       child of 'account_name'.
     """
     return re.compile(r'{}\b'.format(re.escape(account_name))).match
+
+
+def parents(account_name):
+    """A generator of the names of the parents of this account, including this account.
+
+    Args:
+      account_name: The name of the account we want to start iterating from.
+    Returns:
+      A generator of account name strings.
+    """
+    while account_name:
+        yield account_name
+        account_name = parent(account_name)

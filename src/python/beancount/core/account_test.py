@@ -4,6 +4,7 @@ import unittest
 import tempfile
 import os
 import shutil
+import types
 from os import path
 
 from . import account
@@ -149,6 +150,13 @@ class TestAccount(unittest.TestCase):
         self.assertTrue(is_child('Assets:Bank:Checking'))
         self.assertTrue(is_child('Assets:Bank:Checking:SubAccount'))
         self.assertFalse(is_child('Assets:Bank:CheckingOld'))
+
+    def test_parents(self):
+        iterator = account.parents('Assets:Bank:Checking')
+        self.assertIsInstance(iterator, types.GeneratorType)
+        self.assertEqual(['Assets:Bank:Checking', 'Assets:Bank', 'Assets'],
+                         list(iterator))
+
 
 
 class TestWalk(TmpFilesTestBase):
