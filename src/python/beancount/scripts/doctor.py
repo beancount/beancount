@@ -257,7 +257,7 @@ def do_missing_open(filename, args):
                           None, None))
 
     dcontext = options_map['display_context']
-    printer.print_entries(data.sort(new_entries), dcontext)
+    printer.print_entries(data.sorted(new_entries), dcontext)
 
 
 def do_display_context(filename, args):
