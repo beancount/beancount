@@ -165,6 +165,15 @@ PRIVATE_OPTION_GROUPS = [
       A set of all the commodities that we have seen in the file.
       This is mainly used for efficiency, best computed once at parse time.
     """, [Opt("commodities", set())]),
+
+    OptGroup("""
+      A list of experiment names, to be enabled. All experiments are disabled by
+      default. In its default branch, Beancount contains various experimental
+      features which need to be enabled through this option. IMPORTANT: Any of
+      these experimental features may get removed at some point; the reason they
+      are experiments is that we are unsure whether we should commit to these in
+      the first place. Use at your own risk.
+    """, [Opt("experiments", [], "exp_mynewfeature")]),
     ]
 
 

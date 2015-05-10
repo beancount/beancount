@@ -471,6 +471,14 @@ class Builder(lexer.LexBuilder):
         """
         diff_amount = None
         meta = new_metadata(filename, lineno, kvlist)
+
+        # Only support explicit tolerance syntax if the experiment is enabled.
+        if (tolerance is not None and
+            'exp-explicit-tolerances' not in self.options['experiments']):
+            self.errors.append(
+                ParserError(meta, "Tolerance syntax is not supported", None))
+            tolerance = None
+
         return Balance(meta, date, account, amount, tolerance, diff_amount)
 
     def event(self, filename, lineno, date, event_type, description, kvlist):

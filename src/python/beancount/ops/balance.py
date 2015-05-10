@@ -110,9 +110,12 @@ def check(entries, options_map):
             diff_amount = amount.amount_sub(balance_amount, expected_amount)
 
             # Use the specified tolerance or automatically infer it.
-            tolerance = (get_tolerance(entry)
-                         if entry.tolerance is None
-                         else entry.tolerance)
+            if 'exp-explicit-tolerances' in options_map['experiments']:
+                tolerance = (get_tolerance(entry)
+                             if entry.tolerance is None
+                             else entry.tolerance)
+            else:
+                tolerance = get_tolerance(entry)
 
             if abs(diff_amount.number) > tolerance:
                 check_errors.append(
