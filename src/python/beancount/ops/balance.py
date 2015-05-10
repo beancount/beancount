@@ -32,7 +32,8 @@ def get_tolerance(balance_entry):
     """
     expo = balance_entry.amount.number.as_tuple().exponent
     if expo < 0:
-        return ONE.scaleb(expo)  ## / 2
+        # Be generous: Allow up to the last digit of difference.
+        return ONE.scaleb(expo)
     return ZERO
 
 

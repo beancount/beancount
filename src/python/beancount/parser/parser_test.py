@@ -132,10 +132,12 @@ class TestParserEntryTypes(unittest.TestCase):
     @parser.parsedoc
     def test_entry_balance(self, entries, _, __):
         """
+          option "experiments" "exp-explicit-tolerances"
+
           2013-05-18 balance Assets:US:BestBank:Checking  200 USD
           2013-05-18 balance Assets:US:BestBank:Checking  200 ~ 0.002 USD
         """
-        check_list(self, entries, [data.Balance])
+        check_list(self, entries, [data.Balance, data.Balance])
 
     @parser.parsedoc
     def test_entry_balance_with_cost(self, entries, errors, __):

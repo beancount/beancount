@@ -517,7 +517,7 @@ def render_text(result_types, result_rows, file, boxed=False, spaced=False):
 
 
 # A mapping of data-type -> (render-function, alignment)
-ENDERERS = {renderer_cls.dtype: renderer_cls
+RENDERERS = {renderer_cls.dtype: renderer_cls
              for renderer_cls in [StringRenderer,
                                   StringSetRenderer,
                                   IntegerRenderer,

@@ -190,9 +190,13 @@ def get_incomplete_postings(entry, options_map):
       entry: An instance of a valid directive.
       options_map: A dict of options, as produced by the parser.
     Returns:
-      A tuple of: a list of new postings to replace the entry's unbalanced
-      postings, a boolean set to true if we've inserted new postings, and a list
-      of balance errors generated during the balancing process.
+      A tuple of:
+        postings: a list of new postings to replace the entry's unbalanced
+          postings.
+        inserted: A boolean set to true if we've inserted new postings.
+        errors: A list of balance errors generated during the balancing process.
+        tolerances: The tolerances inferred in the process, using the postings
+          provided.
     """
     # Make a copy of the original list of postings.
     postings = list(entry.postings)
@@ -306,13 +310,14 @@ def get_incomplete_postings(entry, options_map):
         # plugins) are balanced. See {9e6c14b51a59}.
         pass
 
-    return (postings, has_inserted, balance_errors)
+    return (postings, has_inserted, balance_errors, tolerances)
 
 
 def balance_incomplete_postings(entry, options_map):
     """Balance an entry with incomplete postings, modifying the
-    empty postings on the entry itself. This also sets the parent of
-    all the postings to this entry.
+    empty postings on the entry itself. This sets the parent of
+    all the postings to this entry. Futhermore, it stores the dict
+    of inferred tolerances as metadata.
 
     WARNING: This destructively modified entry itself!
 
@@ -327,7 +332,8 @@ def balance_incomplete_postings(entry, options_map):
     if not entry.postings:
         return None
 
-    postings, inserted, errors = get_incomplete_postings(entry, options_map)
+    (postings, inserted, errors,
+     tolerances) = get_incomplete_postings(entry, options_map)
 
     # If we could make this faster to avoid the unnecessary copying, it would
     # make parsing substantially faster.
@@ -335,6 +341,10 @@ def balance_incomplete_postings(entry, options_map):
     entry.postings.clear()
     for posting in postings:
         entry.postings.append(reparent_posting(posting, entry))
+
+    if entry.meta is None:
+        entry.meta = {}
+    entry.meta['__tolerances__'] = tolerances
 
     return errors or None
 

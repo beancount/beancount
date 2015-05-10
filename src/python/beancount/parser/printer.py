@@ -123,15 +123,19 @@ class EntryPrinter:
             return
         for key, value in sorted(meta.items()):
             if key not in self.META_IGNORE:
+                value_str = None
                 if isinstance(value, str):
                     value_str = '"{}"'.format(value)
                 elif isinstance(value, (Decimal, datetime.date, amount.Amount)):
                     value_str = str(value)
                 elif isinstance(value, bool):
                     value_str = '1' if value else '0'
+                elif isinstance(value, dict):
+                    pass # Ignore dicts, don't print them out.
                 else:
                     raise ValueError("Unexpected value: '{!r}'".format(value))
-                oss.write("{}{}: {}\n".format(prefix, key, value_str))
+                if value_str is not None:
+                    oss.write("{}{}: {}\n".format(prefix, key, value_str))
 
     def Transaction(self, entry, oss):
         # Compute the string for the payee and narration line.

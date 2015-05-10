@@ -305,6 +305,8 @@ class TestBalancePrecision(unittest.TestCase):
     @loaddoc
     def test_balance_with_tolerance(self, entries, errors, __):
         """
+          option "experiments" "exp-explicit-tolerances"
+
           2013-05-01 open Assets:Bank:Checking
           2013-05-01 open Equity:Opening-Balances
 
