@@ -14,6 +14,7 @@ from beancount.core import position
 from beancount.core import flags
 from beancount.core import realization
 from beancount.utils import misc_utils
+from beancount.ops import balance
 
 __plugins__ = ('pad',)
 
@@ -41,7 +42,6 @@ def pad(entries, options_map):
       A new list of directives, with Pad entries inserte, and a list of new
       errors produced.
     """
-    tolerance = options_map['tolerance']
     pad_errors = []
 
     # Find all the pad entries and group them by account.
@@ -96,6 +96,12 @@ def pad(entries, options_map):
                 # distinct from the cost).
                 balance_amount = pad_balance.get_units(check_amount.currency)
                 diff_amount = amount.amount_sub(balance_amount, check_amount)
+
+                # Use the specified tolerance or automatically infer it.
+                tolerance = (balance.get_tolerance(entry)
+                             if entry.tolerance is None
+                             else entry.tolerance)
+
                 if abs(diff_amount.number) > tolerance:
                     # The check fails; we need to pad.
 

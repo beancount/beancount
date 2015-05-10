@@ -411,3 +411,22 @@ class TestPadding(cmptest.TestCase):
             Income:CA:Something          -662.50 USD
         """
         self.assertFalse(errors)
+
+    @loaddoc
+    def test_pad_tolerance(self, entries, errors, __):
+        """
+          1998-01-01 open Assets:CA:Bank:Checking
+          1998-01-01 open Income:CA:Something
+          1998-01-01 open Equity:Beginning-Balances
+
+          2006-01-01 pad Assets:CA:Bank:Checking   Equity:Beginning-Balances
+
+          2001-01-15 * "Referral"
+            Assets:CA:Bank:Checking   999.95 CAD
+            Income:CA:Something
+
+          2006-04-04 balance Assets:CA:Bank:Checking      1000.00 ~ 0.05 CAD
+
+        """
+        self.assertEqual(1, len(errors))
+        self.assertTrue(re.search('Unused Pad entry', errors[0].message))

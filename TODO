@@ -28,21 +28,6 @@ Launch description:
   - You have to cap the inferred precision to 0.5 unit and build a test for it.
 
 
-  - Add the converted amount from the cost/price for the given number of units
-    of the number to the list of amounts to be considered for inferring the
-    tolerance locally. For example, in this posting:
-
-       Assets:Vanguard:VTIVX  250.752 VTIVX {18.35 USD} @ 13.83 USD
-
-    The value 0.001 (from 250.752's precision) x 18.35 = 0.0185 USD / 2
-    should be contending in the list of tolerance intervals.
-    (Idea from mharris)
-
-  - Make Balance checks and Pad directives use the new tolerance mechanism. Make
-    check() and pad() use the same precision algorithm as is used during
-    balancing.
-
-
   - Add Boolean type to parser; this is just the right thing to do. Either that
     or convert 'automatic' metadata field to be set to 1/0 and post-pone this
     task. (This is intended to be used in some of the new options that will be
