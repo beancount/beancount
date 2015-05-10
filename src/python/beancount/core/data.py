@@ -2,6 +2,7 @@
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import builtins
 import collections
 import datetime
 from collections import namedtuple
@@ -529,7 +530,7 @@ def entry_sortkey(entry):
     return (entry.date, SORT_ORDER.get(type(entry), 0), entry.meta.lineno)
 
 
-def sort(entries):
+def sorted(entries):
     """A convenience to sort a list of entries, using entry_sortkey().
 
     Args:
@@ -537,7 +538,7 @@ def sort(entries):
     Returns:
       A sorted list of directives.
     """
-    return sorted(entries, key=entry_sortkey)
+    return builtins.sorted(entries, key=entry_sortkey)
 
 
 def posting_sortkey(entry):

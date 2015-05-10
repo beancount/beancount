@@ -164,7 +164,7 @@ class TestData(unittest.TestCase):
 
     def test_sort(self):
         entries = self.create_sort_data()
-        sorted_entries = data.sort(entries)
+        sorted_entries = data.sorted(entries)
         self.check_sorted(sorted_entries)
 
     def test_posting_sortkey(self):

@@ -95,7 +95,7 @@ def get_final_holdings(entries, included_account_types=None, price_map=None, dat
                 continue
 
         for pos in real_account.balance.get_positions():
-            if pos.lot.cost:
+            if pos.lot.cost is not None:
                 # Get price information if we have a price_map.
                 market_value = None
                 if price_map is not None:

@@ -142,6 +142,14 @@ Launch description:
   - beancount.parser.parsedoc_noerrors() has been implemented; now convert all
     the tests to the simplified version.
 
+  - In the parser or in the validation, check that the price currency matches
+    that of the cost currency, if both are specified!
+
+       2011-01-25 * "Transfer of Assets, 3467.90 USD"
+           * Assets:Investments:RothIRA:Vanguard:VTIVX  250.752 VTIVX {18.35 USD} @ 13.83 CAD
+           * Assets:Investments:RothIRA:DodgeCox:DODGX  -30.892 DODGX {148.93 USD} @ 112.26 USD
+
+
   - Add a special PYTHONPATH for ledgerhub binaries, to override Beancount to
     its custom version.
 

@@ -119,6 +119,8 @@ class EntryPrinter:
           meta: An instance of AttrDict that contains the metadata for this directive.
           oss: A file object to write to.
         """
+        if meta is None:
+            return
         for key, value in sorted(meta.items()):
             if key not in self.META_IGNORE:
                 if isinstance(value, str):

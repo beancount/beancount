@@ -195,7 +195,7 @@ def parse(input_string, **replacements):
         printer.print_errors(errors, file=sys.stderr)
         raise ValueError("Parsed text has errors")
 
-    return data.sort(entries)
+    return data.sorted(entries)
 
 
 def date_iter(date_begin, date_end):
@@ -367,7 +367,7 @@ def get_minimum_balance(entries, account, currency):
       A Decimal number, the minimum amount throughout the history of this account.
     """
     min_amount = ZERO
-    for posting, balances in postings_for(data.sort(entries), [account]):
+    for posting, balances in postings_for(data.sorted(entries), [account]):
         balance = balances[account]
         current = balance.get_units(currency).number
         if current < min_amount:
@@ -664,7 +664,7 @@ def generate_retirement_investments(entries, account, commodities_items, price_m
 
             balance.add_amount(amount.Amount(-amount_cash, 'CCY'))
 
-    return data.sort(open_entries + new_entries)
+    return data.sorted(open_entries + new_entries)
 
 
 def generate_banking(date_begin, date_end, amount_initial):
@@ -1086,7 +1086,7 @@ def check_non_negative(entries, account, currency):
       AssertionError: if the balance goes negative.
     """
     previous_date = None
-    for posting, balances in postings_for(data.sort(entries), [account], before=True):
+    for posting, balances in postings_for(data.sorted(entries), [account], before=True):
         balance = balances[account]
         date = posting.entry.date
         if date != previous_date:
@@ -1157,7 +1157,7 @@ def generate_banking_expenses(date_begin, date_end, account, rent_amount):
         account, 'Expenses:Home:Phone',
         lambda: random.normalvariate(60, 10))
 
-    return data.sort(fee_expenses +
+    return data.sorted(fee_expenses +
                      rent_expenses +
                      electricity_expenses +
                      internet_expenses +
@@ -1199,14 +1199,14 @@ def generate_regular_credit_expenses(date_birth, date_begin, date_end,
         account_credit, 'Expenses:Transport:Tram',
         lambda: D('120.00'))
 
-    credit_expenses = data.sort(restaurant_expenses +
-                                     groceries_expenses +
-                                     subway_expenses)
+    credit_expenses = data.sorted(restaurant_expenses +
+                                  groceries_expenses +
+                                  subway_expenses)
 
     # Entries to open accounts.
     credit_preamble = generate_open_entries(date_birth, [account_credit], 'CCY')
 
-    return data.sort(credit_preamble + credit_expenses)
+    return data.sorted(credit_preamble + credit_expenses)
 
 
 def compute_trip_dates(date_begin, date_end):
@@ -1383,7 +1383,7 @@ def generate_commodity_entries(date_birth):
           export: "IGNORE"
 
         2009-05-01 commodity RGAGX
-          name: "American Funds The Growth Fund of America® Class R-6"
+          name: "American Funds The Growth Fund of America Class R-6"
           quote: USD
           ticker: "MUTF:RGAGX"
 
@@ -1572,20 +1572,20 @@ def write_example_file(date_birth, date_begin, date_end, reformat, file):
     # will offset all the amounts to ensure a positive balance throughout its
     # lifetime.
     minimum = get_minimum_balance(
-        data.sort(income_entries +
-                       banking_expenses +
-                       credit_entries +
-                       tax_entries),
+        data.sorted(income_entries +
+                    banking_expenses +
+                    credit_entries +
+                    tax_entries),
         account_checking, 'CCY')
     banking_entries = generate_banking(date_begin, date_end, max(-minimum, ZERO))
 
     logging.info("Generating Transfers to Investment Account")
     banking_transfers = generate_outgoing_transfers(
-        data.sort(income_entries +
-                       banking_entries +
-                       banking_expenses +
-                       credit_entries +
-                       tax_entries),
+        data.sorted(income_entries +
+                    banking_entries +
+                    banking_expenses +
+                    credit_entries +
+                    tax_entries),
         account_checking,
         account_investing,
         transfer_minimum=D('200'),
@@ -1629,12 +1629,12 @@ def write_example_file(date_birth, date_begin, date_end, reformat, file):
     credit_checks = generate_balance_checks(credit_entries, account_credit,
                                             date_random_seq(date_begin, date_end, 20, 30))
 
-    banking_checks = generate_balance_checks(data.sort(income_entries +
-                                                            banking_entries +
-                                                            banking_expenses +
-                                                            banking_transfers +
-                                                            credit_entries +
-                                                            tax_entries),
+    banking_checks = generate_balance_checks(data.sorted(income_entries +
+                                                         banking_entries +
+                                                         banking_expenses +
+                                                         banking_transfers +
+                                                         credit_entries +
+                                                         tax_entries),
                                              account_checking,
                                              date_random_seq(date_begin, date_end, 20, 30))
 
@@ -1659,20 +1659,20 @@ def write_example_file(date_birth, date_begin, date_end, reformat, file):
     output = io.StringIO()
     def output_section(title, entries):
         output.write('\n\n\n{}\n\n'.format(title))
-        printer.print_entries(data.sort(entries), dcontext, file=output)
+        printer.print_entries(data.sorted(entries), dcontext, file=output)
 
     output.write(FILE_PREAMBLE.format(**locals()))
     output_section('* Commodities', commodity_entries)
     output_section('* Equity Accounts', equity_entries)
-    output_section('* Banking', data.sort(banking_entries +
-                                               banking_expenses +
-                                               banking_transfers +
-                                               banking_checks))
-    output_section('* Credit-Cards', data.sort(credit_entries +
-                                                    credit_checks))
+    output_section('* Banking', data.sorted(banking_entries +
+                                            banking_expenses +
+                                            banking_transfers +
+                                            banking_checks))
+    output_section('* Credit-Cards', data.sorted(credit_entries +
+                                                 credit_checks))
     output_section('* Taxable Investments', investment_entries)
-    output_section('* Retirement Investments', data.sort(retirement_entries +
-                                                              retirement_match))
+    output_section('* Retirement Investments', data.sorted(retirement_entries +
+                                                           retirement_match))
     output_section('* Sources of Income', income_entries)
     output_section('* Taxes', tax_preamble)
     for year, entries in taxes:

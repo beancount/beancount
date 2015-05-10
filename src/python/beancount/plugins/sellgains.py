@@ -76,6 +76,7 @@ def validate_sell_gains(entries, options_map):
     acc_types = options.get_account_types(options_map)
     proceed_types = set([acc_types.assets,
                          acc_types.liabilities,
+                         acc_types.equity,
                          acc_types.expenses])
 
     for entry in entries:
