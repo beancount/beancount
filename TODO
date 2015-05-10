@@ -22,6 +22,9 @@ Launch description:
   - Finish implementing quantization (& tests).
 
 
+  - Store the precision used to balance a transaction in its metadata, as a
+    convenience and for debugging.
+
   - You have to cap the inferred precision to 0.5 unit and build a test for it.
 
 

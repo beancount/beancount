@@ -109,9 +109,10 @@ def check(entries, options_map):
             # Check if the amount is within bounds of the expected amount.
             diff_amount = amount.amount_sub(balance_amount, expected_amount)
 
-            ## FIXME:
-            #tolerance = get_tolerance(entry)
-            tolerance = options_map['tolerance']
+            # Use the specified tolerance or automatically infer it.
+            tolerance = (get_tolerance(entry)
+                         if entry.tolerance is None
+                         else entry.tolerance)
 
             if abs(diff_amount.number) > tolerance:
                 check_errors.append(
@@ -131,7 +132,7 @@ def check(entries, options_map):
                 # new error entry might be more functional or easier to
                 # understand.
                 entry = Balance(entry.meta.copy(), entry.date, entry.account,
-                                entry.amount, diff_amount)
+                                entry.amount, None, diff_amount)
 
         new_entries.append(entry)
 

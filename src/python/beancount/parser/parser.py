@@ -15,6 +15,7 @@ from os import path
 from beancount.core.amount import ZERO
 from beancount.core.amount import Amount
 from beancount.core.amount import amount_div
+from beancount.core.amount import D
 from beancount.core import display_context
 from beancount.core.position import Lot
 from beancount.core.position import Position
@@ -450,7 +451,7 @@ class Builder(lexer.LexBuilder):
         meta = new_metadata(filename, lineno, kvlist)
         return Pad(meta, date, account, source_account)
 
-    def balance(self, filename, lineno, date, account, amount, kvlist):
+    def balance(self, filename, lineno, date, account, amount, tolerance, kvlist):
         """Process an assertion directive.
 
         We produce no errors here by default. We replace the failing ones in the
@@ -463,13 +464,14 @@ class Builder(lexer.LexBuilder):
           date: A datetime object.
           account: A string, the account to balance.
           amount: The expected amount, to be checked.
+          tolerance: The tolerance number.
           kvlist: a list of KeyValue instances.
         Returns:
           A new Balance object.
         """
         diff_amount = None
         meta = new_metadata(filename, lineno, kvlist)
-        return Balance(meta, date, account, amount, diff_amount)
+        return Balance(meta, date, account, amount, tolerance, diff_amount)
 
     def event(self, filename, lineno, date, event_type, description, kvlist):
         """Process an event directive.

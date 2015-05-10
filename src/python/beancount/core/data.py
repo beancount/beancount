@@ -118,7 +118,9 @@ Pad = new_directive('Pad', 'account source_account')
 #     expecting 'account' to have at this date.
 #   diff_amount: None if the balance check succeeds. This value is set to
 #     an Amount instance if the balance fails, the amount of the difference.
-Balance = new_directive('Balance', 'account amount diff_amount')
+#   tolerance: A Decimal object, the amount of tolerance to use in the
+#     verification.
+Balance = new_directive('Balance', 'account amount tolerance diff_amount')
 
 # A transaction! This is the main type of object that we manipulate, and the
 # entire reason this whole project exists in the first place, because

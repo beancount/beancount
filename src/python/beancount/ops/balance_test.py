@@ -1,5 +1,6 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import re
 import unittest
 
 from beancount.core.amount import Decimal
@@ -223,13 +224,13 @@ class TestBalance(unittest.TestCase):
             Assets:Bank:Checking        0.00001 USD
             Income:Interest
 
-          2013-05-03 balance Assets:Bank:Checking   0 USD
+          2013-05-03 balance Assets:Bank:Checking   0.00 USD
 
           2013-05-03 *
             Assets:Bank:Checking        0.00001 USD
             Income:Interest
 
-          2013-05-04 balance Assets:Bank:Checking   0 USD
+          2013-05-04 balance Assets:Bank:Checking   0.00 USD
 
           2013-05-04 *
             Assets:Bank:Checking        0.015 USD
@@ -300,3 +301,25 @@ class TestBalancePrecision(unittest.TestCase):
                           Decimal('0.01'),
                           Decimal('0.001'),
                           Decimal('0.01')], tolerances)
+
+    @loaddoc
+    def test_balance_with_tolerance(self, entries, errors, __):
+        """
+          2013-05-01 open Assets:Bank:Checking
+          2013-05-01 open Equity:Opening-Balances
+
+          2013-05-03 *
+            Assets:Bank:Checking              23.024 USD
+            Equity:Opening-Balances
+
+          2015-05-02 balance Assets:Bank:Checking   23.022 ~ 0.001 USD
+          2015-05-03 balance Assets:Bank:Checking   23.023 ~ 0.001 USD
+          2015-05-04 balance Assets:Bank:Checking   23.024 ~ 0.001 USD
+          2015-05-05 balance Assets:Bank:Checking   23.025 ~ 0.001 USD
+          2015-05-06 balance Assets:Bank:Checking   23.026 ~ 0.001 USD
+
+          2015-05-10 balance Assets:Bank:Checking   23.03 ~ 0.01 USD
+        """
+        self.assertEqual(2, len(errors))
+        self.assertTrue(re.search('23.022', errors[0].message))
+        self.assertTrue(re.search('23.026', errors[1].message))
