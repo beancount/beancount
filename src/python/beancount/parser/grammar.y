@@ -99,6 +99,7 @@ const char* getTokenName(int token);
 %token OPTION              /* 'option' keyword */
 %token INCLUDE             /* 'include' keyword */
 %token PLUGIN              /* 'plugin' keyword */
+%token <pyobj> BOOL        /* A boolean, true or false */
 %token <pyobj> DATE        /* A date object */
 %token <pyobj> ACCOUNT     /* The name of an account */
 %token <pyobj> CURRENCY    /* A currency specification */
@@ -257,10 +258,10 @@ key_value_value : STRING
                 | CURRENCY
                 | TAG
                 | NUMBER
+                | BOOL
                 | amount
                 {
                     $$ = $1;
-                    DECREF1($1);
                 }
                 | empty
                 {

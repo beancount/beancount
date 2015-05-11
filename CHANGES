@@ -4,6 +4,14 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-05-11
+
+  - Added parsing of boolean types: TRUE, FALSE will produce values of
+    Python "True" and "False". This is useful to used as metadata values.
+
+  - Removed extraneous reference release in key_value_value in parser.
+
+
 2015-05-03
 
   - Added Equity to the list of accounts that count as proceeds for

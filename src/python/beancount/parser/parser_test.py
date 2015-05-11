@@ -1166,6 +1166,8 @@ class TestMetaData(unittest.TestCase):
             tag: #trip-florida
             number: 345.67
             amount: 345.67 USD
+            boolt: TRUE
+            boolf: FALSE
         """
         self.assertEqual(1, len(entries))
         self.assertTrue('filename' in entries[0].meta)
@@ -1180,6 +1182,8 @@ class TestMetaData(unittest.TestCase):
             'tag': 'trip-florida',
             'number': D('345.67'),
             'amount': amount.from_string('345.67 USD'),
+            'boolt': True,
+            'boolf': False,
             }, entries[0].meta)
 
 
