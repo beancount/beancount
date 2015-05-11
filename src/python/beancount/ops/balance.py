@@ -22,19 +22,36 @@ __plugins__ = ('check',)
 BalanceError = collections.namedtuple('BalanceError', 'source message entry')
 
 
-def get_tolerance(balance_entry):
+def get_tolerance(balance_entry, options_map):
     """Get the tolerance amount for a single entry.
 
     Args:
       balance_entry: An instance of data.Balance
+      options_map: An options dict, as per the parser.
     Returns:
       A Decimal, the amount of tolerance implied by the directive.
     """
-    expo = balance_entry.amount.number.as_tuple().exponent
-    if expo < 0:
-        # Be generous: Allow up to the last digit of difference.
-        return ONE.scaleb(expo)
-    return ZERO
+    if 'exp-legacy-fixed-tolerances' in options_map['experiments']:
+        # This is to support the legacy behavior to ease the transition
+        # for some users.
+        tolerance = D('0.015')
+
+    elif ('exp-explicit-tolerances' in options_map['experiments'] and
+          balance_entry.tolerance is not None):
+        # Use the balance-specific tolerance override if it is provided.
+        tolerance = balance_entry.tolerance
+
+    else:
+        expo = balance_entry.amount.number.as_tuple().exponent
+        if expo < 0:
+            # Be generous: Allow up to the last digit of difference.
+            tolerance = ONE.scaleb(expo)
+        else:
+            tolerance = ZERO
+
+    return tolerance
+
+
 
 
 def check(entries, options_map):
@@ -111,12 +128,7 @@ def check(entries, options_map):
             diff_amount = amount.amount_sub(balance_amount, expected_amount)
 
             # Use the specified tolerance or automatically infer it.
-            if 'exp-explicit-tolerances' in options_map['experiments']:
-                tolerance = (get_tolerance(entry)
-                             if entry.tolerance is None
-                             else entry.tolerance)
-            else:
-                tolerance = get_tolerance(entry)
+            tolerance = get_tolerance(entry, options_map)
 
             if abs(diff_amount.number) > tolerance:
                 check_errors.append(
@@ -135,8 +147,9 @@ def check(entries, options_map):
                 # of ideas, maybe leaving the original check intact and insert a
                 # new error entry might be more functional or easier to
                 # understand.
-                entry = Balance(entry.meta.copy(), entry.date, entry.account,
-                                entry.amount, None, diff_amount)
+                entry = entry._replace(
+                    meta=entry.meta.copy(),
+                    diff_amount=diff_amount)
 
         new_entries.append(entry)
 

@@ -214,8 +214,14 @@ def get_incomplete_postings(entry, options_map):
     inventory_ = Inventory()
 
     # A dict of values for default tolerances.
-    tolerances = infer_tolerances(postings)
-    default_tolerances = options_map['default_tolerance']
+    if 'exp-legacy-fixed-tolerances' in options_map['experiments']:
+        # This is supported only to support an easy transition for users.
+        # Users should be able to revert to this easily.
+        tolerances = {}
+        default_tolerances = {'*': '0.005'}
+    else:
+        tolerances = infer_tolerances(postings)
+        default_tolerances = options_map['default_tolerance']
 
     # Process all the postings.
     has_nonzero_amount = False

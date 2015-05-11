@@ -477,7 +477,7 @@ class Builder(lexer.LexBuilder):
             'exp-explicit-tolerances' not in self.options['experiments']):
             self.errors.append(
                 ParserError(meta, "Tolerance syntax is not supported", None))
-            tolerance = None
+            tolerance = '__tolerance_syntax_not_supported__'
 
         return Balance(meta, date, account, amount, tolerance, diff_amount)
 

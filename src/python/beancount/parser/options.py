@@ -173,7 +173,7 @@ PRIVATE_OPTION_GROUPS = [
       these experimental features may get removed at some point; the reason they
       are experiments is that we are unsure whether we should commit to these in
       the first place. Use at your own risk.
-    """, [Opt("experiments", [], "exp_mynewfeature")]),
+    """, [Opt("experiments", [], "exp-my-risky-feature")]),
     ]
 
 

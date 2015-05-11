@@ -4,6 +4,42 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-05-??
+
+  - MAJOR CHANGE: The logic used to compute tolerances on transaction balance
+    and balance assertion has been completely revamped. This proposal has been
+    mostly implemented:
+      http://furius.ca/beancount/doc/proposal-rounding
+    The new behaviour is documented here:
+      http://furius.ca/beancount/doc/precision
+
+    This affects:
+    * Transaction balance checks
+    * Checks from balance directives
+    * Padding directives
+
+    This change may cause some of your transactions to report as not balancing,
+    because the tolerances and now inferred automatically (this is better).
+    You need to make suitable changes to your input file. See docs for details.
+
+    However, because this might cause disruption, I've provided an option to
+    allow users to revert to the old tolerance behavior:
+
+        option "experiments" "exp-legacy-fixed-tolerances"
+
+
+  - There is a new experimental feature which accepts an explicit tolerance
+    value on balance assertions, like this:
+
+        YYYY-MM-DD balance <account>   <number> ~ <tolerance> <currency>
+
+    By default, this feature is not enabled; this is an experimental feature
+    being tested out and might go away eventually. To enable it, add the
+    following experiment flag:
+
+        option "experiments" "exp-explicit-tolerances"
+
+
 2015-05-11
 
   - Added parsing of boolean types: TRUE, FALSE will produce values of

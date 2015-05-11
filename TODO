@@ -3,27 +3,28 @@ beancount: TODO
 * Precision
 Launch description:
 
-  - MAJOR FEATURE: Tolerance checks have now been completely revamped.
-    This proposal:
-      http://furius.ca/beancount/doc/proposal-rounding
-    has been implemented. The new behaviour is documented here:
-      http://furius.ca/beancount/doc/precision
-
-    This affects:
-    * Transaction balance checks
-    * Checks from balance directives
-    * Padding directives
+  - Complete documentation, merge and release.
 
 
+* Explicit Tolerance
 
-  - You have to cap the inferred precision to 0.5 unit and build a test for it.
+  - Make the printer support explicit tolerance syntax. This is crucial for
+    round-trip.
 
 
-  - Add Boolean type to parser; this is just the right thing to do. Either that
-    or convert 'automatic' metadata field to be set to 1/0 and post-pone this
-    task. (This is intended to be used in some of the new options that will be
-    merged in this branch, so do it in this branch.)
+* Metadata and Experiment Flags Registry
 
+  - Create a registry of all metadata fields being used in the system, with
+
+    documentation for each, so that it does not end up becoming a mess.
+
+  - Ditto for experiment flags. These should be documented in a single place as
+    well. This is all easy.
+
+    Also: Fail if the experiment flag is not a supported one.
+
+  - Document experiments as well, and how to list the available ones
+    (bean-doctor should be able to do this from the registry).
 
 
 * Priorities
@@ -1231,12 +1232,18 @@ http://furius.ca/beancount/doc/proposal-inter
     enforces all unopened accounts to have an Open directive as well.
 
 
+* Pending Removals
+
+  - Remove the exp-legacy-fixed-tolerances experiment flag.
+
+
 * Current / Misc / To Be Classified
 
   (This is a grab bag of ideas. When I have a new idea coming to me, I don't
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
 
 
   - Make booking the cost on the same currency as the instrument impossible:

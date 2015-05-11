@@ -98,12 +98,7 @@ def pad(entries, options_map):
                 diff_amount = amount.amount_sub(balance_amount, check_amount)
 
                 # Use the specified tolerance or automatically infer it.
-                if 'exp-explicit-tolerances' in options_map['experiments']:
-                    tolerance = (balance.get_tolerance(entry)
-                                 if entry.tolerance is None
-                                 else entry.tolerance)
-                else:
-                    tolerance = balance.get_tolerance(entry)
+                tolerance = balance.get_tolerance(entry, options_map)
 
                 if abs(diff_amount.number) > tolerance:
                     # The check fails; we need to pad.
