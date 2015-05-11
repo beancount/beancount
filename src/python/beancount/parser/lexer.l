@@ -163,6 +163,19 @@ option		{ return OPTION; }
 plugin		{ return PLUGIN; }
 include		{ return INCLUDE; }
 
+ /* Account names. */
+TRUE		{
+    yylval->pyobj = Py_True;
+    Py_INCREF(Py_True);
+    return BOOL;
+}
+
+FALSE		{
+    yylval->pyobj = Py_False;
+    Py_INCREF(Py_False);
+    return BOOL;
+}
+
  /* Dates. */
 [0-9]{4,}[\-/][0-9]+[\-/][0-9]+	{
     const char* year_str;
