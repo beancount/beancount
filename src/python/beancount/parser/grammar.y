@@ -256,7 +256,6 @@ key_value_value : STRING
                 | amount
                 {
                     $$ = $1;
-                    DECREF1($1);
                 }
                 | empty
                 {

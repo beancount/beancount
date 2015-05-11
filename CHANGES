@@ -9,6 +9,8 @@ Note: This file contains only changes in the 'default' branch.
   - Added parsing of boolean types: TRUE, FALSE will produce values of
     Python "True" and "False". This is useful to used as metadata values.
 
+  - Removed extraneous reference release in key_value_value in parser.
+
 
 2015-05-03
 
