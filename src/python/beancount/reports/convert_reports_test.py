@@ -35,6 +35,19 @@ class TestLedgerUtilityFunctions(cmptest.TestCase):
         """
         self.entries = entries
 
+    def test_quote_currency(self):
+        test = """
+          2014-10-01 * "Buy some stock with local funds"
+            Assets:CA:Investment:GOOG          5 GOOG1 {500.00 USD}
+            Expenses:Commissions            9.95 USD
+        """
+        expected = """
+          2014-10-01 * "Buy some stock with local funds"
+            Assets:CA:Investment:GOOG          5 "GOOG1" {500.00 USD}
+            Expenses:Commissions            9.95 USD
+        """
+        self.assertEqual(expected, convert_reports.quote_currency(test))
+
     def test_postings_by_type(self):
         postings_lists = convert_reports.postings_by_type(self.entries[0])
         self.assertEqual([2, 0, 1], list(map(len, postings_lists)))
