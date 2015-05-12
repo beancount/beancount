@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-05-12
+
+  - Allow currency names up to 24 characters (not 12). This is often required
+    for people using options.
+
+
 2015-05-11
 
   - Added parsing of boolean types: TRUE, FALSE will produce values of

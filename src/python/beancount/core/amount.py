@@ -37,7 +37,7 @@ ONE = Decimal('1')
 
 # A regular expression to match the name of a currency.
 # Note: This is kept in sync with "beancount/parser/lexer.l".
-CURRENCY_RE = '[A-Z][A-Z0-9\'\.\_\-]{0,10}[A-Z0-9]'
+CURRENCY_RE = '[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]'
 
 # pylint: disable=invalid-name
 def D(strord=None):
