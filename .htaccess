@@ -88,8 +88,8 @@ RedirectMatch /doc/custom-application$    https://docs.google.com/document/d/1Sn
 RedirectMatch /doc/custom$                /beancount/doc/custom-application
 RedirectMatch /doc/application$           /beancount/doc/custom-application
 
-RedirectMatch /doc/portfolio-returns$     https://docs.google.com/document/d/1vEFB44-HFqydYVJXA-QxT4AN0K5xHHfSkhTmRSCPkac/
-RedirectMatch /doc/returns$               /beancount/doc/portfolio-returns
+RedirectMatch /doc/returns$               https://docs.google.com/document/d/1vEFB44-HFqydYVJXA-QxT4AN0K5xHHfSkhTmRSCPkac/
+RedirectMatch /doc/portfolio-returns$     /beancount/doc/portfolio-returns
 RedirectMatch /doc/calculating-returns$   /beancount/doc/portfolio-returns
 
 RedirectMatch /doc/proposal-booking$      https://docs.google.com/document/d/1F8IJ_7fMHZ75XFPocMokLxVZczAhrBRBVN9uMhQFCZ4/
