@@ -84,7 +84,7 @@ RedirectMatch /doc/conversions$           https://docs.google.com/document/d/1rW
 RedirectMatch /doc/example$               https://docs.google.com/document/d/1G-gsmwK551lSyuHboVLW3xbLhh99JfoKIbNnZSJxteE/
 RedirectMatch /doc/tutorial$              /beancount/doc/example
 
-RedirectMatch /doc/custom-appplication$   https://docs.google.com/document/d/1SnR7BdE2VXFTMEvnkhAd9PwXu_AxytTYpiS1LjXdP0E/
+RedirectMatch /doc/custom-application$    https://docs.google.com/document/d/1SnR7BdE2VXFTMEvnkhAd9PwXu_AxytTYpiS1LjXdP0E/
 RedirectMatch /doc/custom$                /beancount/doc/custom-application
 RedirectMatch /doc/application$           /beancount/doc/custom-application
 
