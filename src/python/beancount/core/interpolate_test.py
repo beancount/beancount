@@ -329,18 +329,80 @@ class TestBalance(cmptest.TestCase):
         self.assertEqual(entry.postings[1].position, position.from_string('-432.30 USD'))
 
     def test_balance_incomplete_postings__insert_rounding(self):
-        options_map = OPTIONS_MAP.copy()
-        options_map['account_rounding'] = 'Equity:RoundingError'
-        entry = parser.parse_string("""
+        entries, _, options_map = parser.parse_string("""
+          option "account_rounding" "Equity:RoundingError"
+
           2013-02-23 * "Something"
             Assets:Invest     1.245 RGAGX {43.23 USD}
             Assets:Cash      -53.82 USD
-        """)[0][0]
+        """)
+        entry = entries[0]
         errors = interpolate.balance_incomplete_postings(entry, options_map)
         self.assertFalse(errors)
         self.assertEqual(3, len(entry.postings))
         self.assertEqual(entry.postings[2].account, 'Equity:RoundingError')
         self.assertEqual(entry.postings[2].position, position.from_string('-0.00135 USD'))
+
+    def test_balance_incomplete_postings__quantum(self):
+        entries, _, options_map = parser.parse_string("""
+          option "default_tolerance" "USD:0.01"
+
+          2013-02-23 * "Something"
+            Assets:Invest     1.245 RGAGX {43.23 USD}
+            Assets:Cash
+        """)
+        entry = entries[0]
+        errors = interpolate.balance_incomplete_postings(entry, options_map)
+        self.assertFalse(errors)
+        self.assertEqual(D('-53.82'), entry.postings[1].position.number)
+
+        entries, _, options_map = parser.parse_string("""
+          option "default_tolerance" "USD:0.001"
+
+          2013-02-23 * "Something"
+            Assets:Invest     1.245 RGAGX {43.23 USD}
+            Assets:Cash
+        """)
+        entry = entries[0]
+        errors = interpolate.balance_incomplete_postings(entry, options_map)
+        self.assertFalse(errors)
+        self.assertEqual(D('-53.821'), entry.postings[1].position.number)
+
+    def test_balance_incomplete_postings__rounding_and_quantum(self):
+        entries, _, options_map = parser.parse_string("""
+          option "account_rounding" "Equity:RoundingError"
+          option "default_tolerance" "USD:0.01"
+
+          2013-02-23 * "Something"
+            Assets:Invest     1.245 RGAGX {43.23 USD}
+            Assets:Cash
+        """)
+        entry = entries[0]
+        errors = interpolate.balance_incomplete_postings(entry, options_map)
+        self.assertFalse(errors)
+        self.assertEqual(3, len(entry.postings))
+        self.assertEqual(D('-53.82'), entry.postings[1].position.number)
+        self.assertEqual('Equity:RoundingError', entry.postings[2].account)
+        self.assertEqual(D('-0.00135'), entry.postings[2].position.number)
+
+        entries, _, options_map = parser.parse_string("""
+          option "account_rounding" "Equity:RoundingError"
+          option "default_tolerance" "USD:0.01"
+
+          2014-05-06 * "Buy mutual fund"
+            Assets:Investments:RGXGX       4.27 RGAGX {53.21 USD}
+            Assets:Investments:Cash
+        """)
+        entry = entries[0]
+        errors = interpolate.balance_incomplete_postings(entry, options_map)
+        self.assertFalse(errors)
+        self.assertEqual(3, len(entry.postings))
+        self.assertEqual(D('-227.2100'), entry.postings[1].position.number)
+        self.assertEqual('Equity:RoundingError', entry.postings[2].account)
+        self.assertEqual(D('0.0033'), entry.postings[2].position.number)
+
+
+
 
 
 class TestComputeBalance(unittest.TestCase):

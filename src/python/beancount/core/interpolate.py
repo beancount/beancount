@@ -308,10 +308,6 @@ def get_incomplete_postings(entry, options_map):
             for position in residual_positions:
                 position = -position
 
-                # Update the residuals inventory.
-                weight = position.get_weight(None)
-                residual.add_amount(weight)
-
                 # Applying rounding to the deafult tolerance, if there is one.
                 tolerance = inventory.get_tolerance(tolerances,
                                                     default_tolerances,
@@ -326,6 +322,10 @@ def get_incomplete_postings(entry, options_map):
                     Posting(entry, old_posting.account, position,
                             None, old_posting.flag, meta))
                 has_inserted = True
+
+                # Update the residuals inventory.
+                weight = position.get_weight(None)
+                residual.add_amount(weight)
 
         postings[index:index+1] = new_postings
 
@@ -367,10 +367,12 @@ def balance_incomplete_postings(entry, options_map):
 
     # If we need to accumulate rounding error to accumulate the residual, add
     # suitable postings here.
-    account_rounding = options_map["account_rounding"]
-    if account_rounding:
-        rounding_postings = get_residual_postings(residual, account_rounding)
-        postings.extend(rounding_postings)
+    if not residual.is_empty():
+        account_rounding = options_map["account_rounding"]
+        if account_rounding:
+            rounding_postings = get_residual_postings(residual, account_rounding)
+            postings.extend(rounding_postings)
+            print(rounding_postings)
 
     # If we could make this faster to avoid the unnecessary copying, it would
     # make parsing substantially faster.
