@@ -150,6 +150,11 @@ def fill_residual_posting(entry, account_rounding):
     """If necessary, insert a posting to absorb the residual.
     This makes the transaction balance exactly.
 
+    Note: This was developed in order to tweak transactions before exporting
+    them to Ledger. A better method would be to enable the feature that
+    autoamtically inserts these rounding postings on all transactions, and so
+    maybe this method can be deprecated if we do so.
+
     Args:
       entry: An instance of a Transaction.
       account_rounding: A string, the name of the rounding account that
@@ -158,6 +163,7 @@ def fill_residual_posting(entry, account_rounding):
       A possibly new, modified entry with a new posting. If a residual
       was not needed - the transaction already balanced perfectly - no new
       leg is inserted.
+
     """
     residual = compute_residual(entry.postings)
     if residual.is_empty():
@@ -195,6 +201,8 @@ def get_incomplete_postings(entry, options_map):
           postings.
         inserted: A boolean set to true if we've inserted new postings.
         errors: A list of balance errors generated during the balancing process.
+        residual: A Inventory instance, the residual amounts after balancing
+          the postings.
         tolerances: The tolerances inferred in the process, using the postings
           provided.
     """
@@ -211,7 +219,7 @@ def get_incomplete_postings(entry, options_map):
     currencies = set()
 
     # An inventory to accumulate the residual balance.
-    inventory_ = Inventory()
+    residual = Inventory()
 
     # A dict of values for default tolerances.
     if 'exp-legacy-fixed-tolerances' in options_map['experiments']:
@@ -236,11 +244,11 @@ def get_incomplete_postings(entry, options_map):
             currencies.add(position.lot.currency)
 
             # Compute the amount to balance and update the inventory.
-            balance_amount = get_posting_weight(posting)
-            inventory_.add_amount(balance_amount)
+            weight = get_posting_weight(posting)
+            residual.add_amount(weight)
 
             has_regular_postings = True
-            if balance_amount:
+            if weight:
                 has_nonzero_amount = True
 
     # If there are auto-postings, fill them in.
@@ -261,7 +269,7 @@ def get_incomplete_postings(entry, options_map):
         old_posting = postings[index]
         assert old_posting.price is None
 
-        residual_positions = inventory_.get_positions()
+        residual_positions = residual.get_positions()
 
         # If there are no residual positions, we want to still insert a posting
         # but with a zero position for each currency, so that the posting shows
@@ -274,7 +282,7 @@ def get_incomplete_postings(entry, options_map):
                                        not has_regular_postings):
             balance_errors.append(
                 BalanceError(entry.meta,
-                             "Useless auto-posting: {}".format(inventory_), entry))
+                             "Useless auto-posting: {}".format(residual), entry))
             for currency in currencies:
                 position = Position(Lot(currency, None, None), ZERO)
                 meta = copy.copy(old_posting.meta) if old_posting.meta else {}
@@ -287,7 +295,11 @@ def get_incomplete_postings(entry, options_map):
             # Convert all the residual positions in inventory into a posting for
             # each position.
             for position in residual_positions:
-                position.number = -position.number
+                position = -position
+
+                # Update the residuals inventory.
+                weight = position.get_weight(None)
+                residual.add_amount(weight)
 
                 # Applying rounding to the deafult tolerance, if there is one.
                 tolerance = inventory.get_tolerance(tolerances,
@@ -316,7 +328,7 @@ def get_incomplete_postings(entry, options_map):
         # plugins) are balanced. See {9e6c14b51a59}.
         pass
 
-    return (postings, has_inserted, balance_errors, tolerances)
+    return (postings, has_inserted, balance_errors, residual, tolerances)
 
 
 def balance_incomplete_postings(entry, options_map):
@@ -338,8 +350,8 @@ def balance_incomplete_postings(entry, options_map):
     if not entry.postings:
         return None
 
-    (postings, inserted, errors,
-     tolerances) = get_incomplete_postings(entry, options_map)
+    (postings, unused_inserted, errors,
+     unused_residual, tolerances) = get_incomplete_postings(entry, options_map)
 
     # If we could make this faster to avoid the unnecessary copying, it would
     # make parsing substantially faster.
