@@ -333,7 +333,7 @@ class TestBalance(cmptest.TestCase):
         options_map['account_rounding'] = 'Equity:RoundingError'
         entry = parser.parse_string("""
           2013-02-23 * "Something"
-            Assets:Invest     1.245 MSFT {43.23 USD}
+            Assets:Invest     1.245 RGAGX {43.23 USD}
             Assets:Cash      -53.82 USD
         """)[0][0]
         errors = interpolate.balance_incomplete_postings(entry, options_map)
