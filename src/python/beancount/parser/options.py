@@ -230,6 +230,13 @@ PUBLIC_OPTION_GROUPS = [
     """, [Opt("account_current_conversions", "Conversions:Current")]),
 
     OptGroup("""
+      The name of an account to be used to post to and accumulate rounding error.
+      This is unset and this feature is disabled by default; setting this value to
+      an account name will automatically enable the addition of postings on all
+      transactions that have a residual amount.
+    """, [Opt("account_rounding", None, "Equity:Rounding")]),
+
+    OptGroup("""
       The imaginary currency used to convert all units for conversions at a
       degenerate rate of zero. This can be any currency name that isn't used in
       the rest of the ledger. Choose something unique that makes sense in your
