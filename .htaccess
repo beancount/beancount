@@ -42,6 +42,8 @@ RedirectMatch /doc/directives$            /beancount/doc/syntax
 RedirectMatch /doc/users-manual$          /beancount/doc/syntax
 RedirectMatch /doc/manual$                /beancount/doc/syntax
 
+RedirectMatch /doc/options$		  https://docs.google.com/document/d/18OtTy8nnqoI8P988tVdv46ZcNoDsVGQ0ydGoA8dHC-c/
+
 RedirectMatch /doc/query$                 https://docs.google.com/document/d/1s0GOZMcrKKCLlP29MD7kHO4L88evrwWdIO0p4EwRBE0/
 RedirectMatch /doc/query-language$        /beancount/doc/query
 RedirectMatch /doc/sql$                   /beancount/doc/query
