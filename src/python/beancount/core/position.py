@@ -150,6 +150,14 @@ class Position:
 
     __repr__ = __str__
 
+    def __neg__(self):
+        """Return the inverse position of this one.
+
+        Returns:
+          A new instance of Position.
+        """
+        return Position(self.lot, -self.number)
+
     def __eq__(self, other):
         """Equality comparison with another Position. The objects are considered equal
         if both number and lot are matching, and if the number of units is zero

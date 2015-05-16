@@ -7,6 +7,7 @@ import collections
 import io
 import re
 import textwrap
+import sys
 
 from beancount.core.amount import D
 from beancount.core import account_types
@@ -156,6 +157,14 @@ PRIVATE_OPTION_GROUPS = [
     """, [Opt("filename", None)]),
 
     OptGroup("""
+      A list of other filenames to include. This is output from the parser and
+      processed by the loader but the list should otherwise have been cleared by the
+      time it gets to the top-level loader.load_*() function that invoked it.
+      The filenames are absolute. Relative include filenames are resolved against
+      the file that contains the include directives.
+    """, [Opt("include", [], "some-other-file.beancount")]),
+
+    OptGroup("""
       An instance of DisplayContext, which is used to format numbers for output
       with precision inferred from that in the input file. This is created
       automatically by the parser.
@@ -230,6 +239,13 @@ PUBLIC_OPTION_GROUPS = [
     """, [Opt("account_current_conversions", "Conversions:Current")]),
 
     OptGroup("""
+      The name of an account to be used to post to and accumulate rounding error.
+      This is unset and this feature is disabled by default; setting this value to
+      an account name will automatically enable the addition of postings on all
+      transactions that have a residual amount.
+    """, [Opt("account_rounding", None, "Equity:Rounding")]),
+
+    OptGroup("""
       The imaginary currency used to convert all units for conversions at a
       degenerate rate of zero. This can be any currency name that isn't used in
       the rest of the ledger. Choose something unique that makes sense in your
@@ -256,7 +272,7 @@ PUBLIC_OPTION_GROUPS = [
 
       For detailed documentation about how precision is handled, see this doc:
       http://furius.ca/beancount/doc/precision
-    """, [Opt("default_tolerance", {},
+    """, [Opt("default_tolerance", {}, "CHF:0.01",
               converter=options_validate_default_tolerance)]),
 
     # Note: This option will go away. Its behavior has been replaced by
@@ -308,14 +324,6 @@ PUBLIC_OPTION_GROUPS = [
       user wants full control over the ordering in which the plugins are run).
     """, [Opt("plugin_processing_mode", "default", "raw",
               converter=options_validate_processing_mode)]),
-
-    OptGroup("""
-      A list of other filenames to include. This is output from the parser and
-      processed by the loader but the list should otherwise have been cleared by the
-      time it gets to the top-level loader.load_*() function that invoked it.
-      The filenames are absolute. Relative include filenames are resolved against
-      the file that contains the include directives.
-    """, [Opt("include", [], "some-other-file.beancount")]),
 
     OptGroup("""
       A list of Python modules containing transformation functions to run the
@@ -430,11 +438,24 @@ def list_options():
     oss = io.StringIO()
     for group in PUBLIC_OPTION_GROUPS:
         for desc in group.options:
-            oss.write('{}: {}\n'.format(desc.name, repr(desc.default_value)))
+            oss.write('option "{}" "{}"\n'.format(desc.name, desc.example_value))
+            if desc.deprecated:
+                oss.write(textwrap.fill(
+                    "THIS OPTION IS DEPRECATED: {}".format(desc.deprecated),
+                    initial_indent="  ",
+                    subsequent_indent="  "))
+                oss.write('\n\n')
         description = ' '.join(line.strip()
                                for line in group.description.strip().splitlines())
         oss.write(textwrap.fill(description,
                                 initial_indent='  ',
                                 subsequent_indent='  '))
+        oss.write('\n')
+
+        if isinstance(desc.default_value, (list, dict, set)):
+            oss.write('\n')
+            oss.write('  (This option may be supplied multiple times.)\n')
+
         oss.write('\n\n')
+
     return oss.getvalue()

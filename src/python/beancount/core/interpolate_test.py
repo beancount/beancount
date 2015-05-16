@@ -20,7 +20,8 @@ ERRORS_ON_RESIDUAL = False
 
 # A default options map just to provide the tolerances.
 OPTIONS_MAP = {'default_tolerance': {},
-               'experiments': []}
+               'experiments': [],
+               'account_rounding': None}
 
 
 class TestBalance(cmptest.TestCase):
@@ -138,7 +139,7 @@ class TestBalance(cmptest.TestCase):
 
         # Test with no entries.
         entry = data.Transaction(meta, None, None, None, None, None, None, [])
-        new_postings, has_inserted, errors, _ = interpolate.get_incomplete_postings(
+        new_postings, has_inserted, errors, _, __ = interpolate.get_incomplete_postings(
             entry, OPTIONS_MAP)
         self.assertFalse(has_inserted)
         self.assertEqual(0, len(new_postings))
@@ -149,7 +150,7 @@ class TestBalance(cmptest.TestCase):
             P(None, "Assets:Bank:Checking", "105.50", "USD"),
             ])
         (new_postings, has_inserted, errors,
-         tolerances) = interpolate.get_incomplete_postings(
+         residual, tolerances) = interpolate.get_incomplete_postings(
             entry, OPTIONS_MAP)
         self.assertFalse(has_inserted)
         self.assertEqual(1, len(new_postings))
@@ -161,7 +162,7 @@ class TestBalance(cmptest.TestCase):
             P(None, "Assets:Bank:Checking", "105.50", "USD"),
             P(None, "Assets:Bank:Savings", "-105.50", "USD"),
             ])
-        new_postings, has_inserted, errors, _ = interpolate.get_incomplete_postings(
+        new_postings, has_inserted, errors, _, __ = interpolate.get_incomplete_postings(
             entry, OPTIONS_MAP)
         self.assertFalse(has_inserted)
         self.assertEqual(2, len(new_postings))
@@ -172,7 +173,7 @@ class TestBalance(cmptest.TestCase):
             P(None, "Assets:Bank:Checking", "105.50", "USD"),
             P(None, "Assets:Bank:Savings", "-115.50", "USD"),
             ])
-        new_postings, has_inserted, errors, _ = interpolate.get_incomplete_postings(
+        new_postings, has_inserted, errors, _, __ = interpolate.get_incomplete_postings(
             entry, OPTIONS_MAP)
         self.assertFalse(has_inserted)
         self.assertEqual(2, len(new_postings))
@@ -182,7 +183,7 @@ class TestBalance(cmptest.TestCase):
         entry = data.Transaction(meta, None, None, None, None, None, None, [
             P(None, "Assets:Bank:Checking", None, None),
             ])
-        new_postings, has_inserted, errors, _ = interpolate.get_incomplete_postings(
+        new_postings, has_inserted, errors, _, __ = interpolate.get_incomplete_postings(
             entry, OPTIONS_MAP)
         self.assertFalse(has_inserted)
         self.assertEqual(0, len(new_postings))
@@ -194,7 +195,7 @@ class TestBalance(cmptest.TestCase):
             P(None, "Assets:Bank:Savings", "-105.50", "USD"),
             P(None, "Assets:Bank:Balancing", None, None),
             ])
-        new_postings, has_inserted, errors, _ = interpolate.get_incomplete_postings(
+        new_postings, has_inserted, errors, _, __ = interpolate.get_incomplete_postings(
             entry, OPTIONS_MAP)
         self.assertTrue(has_inserted)
         self.assertEqual(3, len(new_postings))
@@ -207,7 +208,7 @@ class TestBalance(cmptest.TestCase):
             P(None, "Assets:Bank:BalancingA", None, None),
             P(None, "Assets:Bank:BalancingB", None, None),
             ])
-        new_postings, has_inserted, errors, _ = interpolate.get_incomplete_postings(
+        new_postings, has_inserted, errors, _, __ = interpolate.get_incomplete_postings(
             entry, OPTIONS_MAP)
         self.assertTrue(has_inserted)
         self.assertEqual(3, len(new_postings))
@@ -222,12 +223,35 @@ class TestBalance(cmptest.TestCase):
             P(None, "Assets:Bank:Savings", "-115.50", "USD"),
             P(None, "Assets:Bank:Balancing", None, None),
             ])
-        new_postings, has_inserted, errors, _ = interpolate.get_incomplete_postings(
+        new_postings, has_inserted, errors, _, __ = interpolate.get_incomplete_postings(
             entry, OPTIONS_MAP)
         self.assertTrue(has_inserted)
         self.assertEqual(3, len(new_postings))
         self.assertEqual(0, len(errors))
         self.assertTrue(interpolate.AUTOMATIC_META in new_postings[2].meta)
+
+    def test_get_incomplete_postings_residual(self):
+        meta = data.new_metadata(__file__, 0)
+
+        # Test with a single auto-posting with a residual.
+        entry = data.Transaction(meta, None, None, None, None, None, None, [
+            P(None, "Assets:Bank:Checking", "105.50", "USD"),
+            P(None, "Assets:Bank:Savings", "-115.501", "USD"),
+            P(None, "Assets:Bank:Balancing", "10.00", "USD"),
+            ])
+        _, __, ___, residual, ____ = interpolate.get_incomplete_postings(entry, OPTIONS_MAP)
+        self.assertEqual(inventory.from_string('-0.001 USD'), residual)
+
+    def test_get_residual_postings(self):
+        residual = inventory.from_string('0.001 USD, -0.00002 CAD')
+        account_rounding = 'Equity:RoundingError'
+        postings = interpolate.get_residual_postings(residual, account_rounding)
+        meta = {interpolate.AUTOMATIC_META, 0}
+        self.assertEqual(2, len(postings))
+        self.assertEqual([
+            P(None, "Equity:RoundingError", "-0.001", "USD"),
+            P(None, "Equity:RoundingError", "0.00002", "CAD"),
+            ], [posting._replace(meta=None) for posting in postings])
 
     def test_balance_with_large_amount(self):
         meta = data.new_metadata(__file__, 0)
@@ -238,7 +262,7 @@ class TestBalance(cmptest.TestCase):
             P(None, "Income:US:Anthem:InsurancePayments", "-23738.54", "USD"),
             P(None, "Assets:Bank:Checking", "24014.45", "USD"),
             ])
-        new_postings, has_inserted, errors, _ = interpolate.get_incomplete_postings(
+        new_postings, has_inserted, errors, _, __ = interpolate.get_incomplete_postings(
             entry, OPTIONS_MAP)
         self.assertFalse(has_inserted)
         self.assertEqual(3, len(new_postings))
@@ -250,7 +274,7 @@ class TestBalance(cmptest.TestCase):
             P(None, "Income:US:Anthem:InsurancePayments", "0", "USD"),
             P(None, "Income:US:Anthem:InsurancePayments", None, None),
             ])
-        new_postings, has_inserted, errors, _ = interpolate.get_incomplete_postings(
+        new_postings, has_inserted, errors, _, __ = interpolate.get_incomplete_postings(
             entry, OPTIONS_MAP)
         self.assertFalse(has_inserted)
         self.assertEqual(1, len(new_postings))
@@ -303,6 +327,20 @@ class TestBalance(cmptest.TestCase):
         self.assertEqual(2, len(entry.postings))
         self.assertEqual(entry.postings[1].account, 'Assets:Cash')
         self.assertEqual(entry.postings[1].position, position.from_string('-432.30 USD'))
+
+    def test_balance_incomplete_postings__insert_rounding(self):
+        options_map = OPTIONS_MAP.copy()
+        options_map['account_rounding'] = 'Equity:RoundingError'
+        entry = parser.parse_string("""
+          2013-02-23 * "Something"
+            Assets:Invest     1.245 MSFT {43.23 USD}
+            Assets:Cash      -53.82 USD
+        """)[0][0]
+        errors = interpolate.balance_incomplete_postings(entry, options_map)
+        self.assertFalse(errors)
+        self.assertEqual(3, len(entry.postings))
+        self.assertEqual(entry.postings[2].account, 'Equity:RoundingError')
+        self.assertEqual(entry.postings[2].position, position.from_string('-0.00135 USD'))
 
 
 class TestComputeBalance(unittest.TestCase):
