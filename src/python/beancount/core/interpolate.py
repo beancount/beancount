@@ -146,6 +146,21 @@ def infer_tolerances(postings, use_cost=False):
 AUTOMATIC_META = '__automatic__'
 
 
+def get_residual_postings(residual, account_rounding):
+    """Create postings to book the given residuals.
+
+    Args:
+      residual: An Inventory, the residual positions.
+      account_rounding: A string, the name of the rounding account that
+        absorbs residuals / rounding errors.
+    Returns:
+      A list of new postings to be inserted to reduce the given residual.
+    """
+    meta = {AUTOMATIC_META: True}
+    return [Posting(None, account_rounding, -position, None, None, meta.copy())
+            for position in residual.get_positions()]
+
+
 def fill_residual_posting(entry, account_rounding):
     """If necessary, insert a posting to absorb the residual.
     This makes the transaction balance exactly.
@@ -170,16 +185,12 @@ def fill_residual_posting(entry, account_rounding):
         return entry
     else:
         new_postings = list(entry.postings)
-        for position in residual.get_positions():
-            meta = {AUTOMATIC_META: True}
-            rounding_posting = Posting(None, account_rounding, -position, None, None, meta)
-            new_postings.append(rounding_posting)
+        new_postings.extend(get_residual_postings(residual, account_rounding))
         return entry_replace(entry, postings=new_postings)
 
 
 def get_incomplete_postings(entry, options_map):
-    """Return new postings to balance an incomplete entry, that is, and entry
-    with postings that have no amounts on them.
+    """Balance an entry with auto-postings and return an updated list of completed postings.
 
     Returns a new list of balanced postings, with the incomplete postings
     replaced with completed ones. This is probably the only place where there
@@ -350,8 +361,16 @@ def balance_incomplete_postings(entry, options_map):
     if not entry.postings:
         return None
 
+    # Get the list of corrected postings.
     (postings, unused_inserted, errors,
-     unused_residual, tolerances) = get_incomplete_postings(entry, options_map)
+     residual, tolerances) = get_incomplete_postings(entry, options_map)
+
+    # If we need to accumulate rounding error to accumulate the residual, add
+    # suitable postings here.
+    account_rounding = options_map["account_rounding"]
+    if account_rounding:
+        rounding_postings = get_residual_postings(residual, account_rounding)
+        postings.extend(rounding_postings)
 
     # If we could make this faster to avoid the unnecessary copying, it would
     # make parsing substantially faster.
