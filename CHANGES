@@ -76,14 +76,14 @@ Note: This file contains only changes in the 'default' branch.
     can be useful to set metadata fields.
 
   - Postings that were inserted automatically have some metadata set on them to
-    distinguish this fact ('__metadata__').
+    distinguish this fact ('__automatic__').
 
 
 
 2015-05-12
 
   - Allow currency names up to 24 characters (not 12). This is often required
-    for people using options.
+    for people using financial options.
 
 
 2015-05-11
