@@ -119,6 +119,7 @@ int strtonl(const char* buf, size_t nchars);
 \{		{ return LCURL; }
 \}		{ return RCURL; }
 ,		{ return COMMA; }
+\~		{ return TILDE; }
 \/		{ return SLASH; }
 
  /* Skip commented output (but not the accompanying newline). */

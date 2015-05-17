@@ -4,6 +4,82 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-05-17
+
+  - MAJOR CHANGES: Precision and tolerances in Beancount have been entirely
+    revamped. The logic used to compute tolerances on transaction balances and
+    balance assertions is new. This previously discussed proposal:
+
+      http://furius.ca/beancount/doc/proposal-rounding
+
+    has been implemented. The new behaviour is documented here:
+
+      http://furius.ca/beancount/doc/tolerances
+
+
+    Here is a high-level summary of changes (see doc above for details):
+
+    * The tolerance used for transaction balances is inferred automatically from
+      the amounts on the transactions themselves. When not possible, a default
+      tolerance is looked up from values you can provide (as well as a global
+      default).
+
+    * There is a new 'default_tolerances' option to provide tolerances to be
+      used used when it cannot be inferred automatically. You use it like this:
+
+        option "default_tolerance" "*:0.005"
+        option "default_tolerance" "INR:0.5"
+        ...
+
+    * The 'tolerance' option has been deprecated. It now has no effect.
+
+    * Balance assertions and Pad directives use a similar inference mechanism,
+      where the tolerance is based on the precision of the expected number in
+      the input.
+
+    * Rounding errors may be automatically posted to a special account (new
+      postings are inserted during parsing where necessary). This is disabled by
+      default; you enable this by setting the new 'account_rounding' option to
+      the account you want the rounding errors to be posted to:
+
+        option "account_rounding" "Equity:Rounding-Errors"
+
+    * These changes may cause some of your transactions to report as not
+      balancing, because the tolerances and now inferred automatically and the
+      inferred tolerances may be smaller than the fixed value we used
+      previously. YOU NEED TO MAKE SUITABLE ADJUSTMENTS TO YOUR INPUT FILE.
+      However, because this might cause some minor disruption, I have provided
+      an option to allow users to revert Beancount to its previous tolerance
+      behavior for a few months:
+
+        option "use_legacy_fixed_tolerances" "TRUE"
+
+    * There is a new EXPERIMENTAL feature which makes Beancount accept an
+      explicit tolerance value on balance assertions, like this:
+
+        YYYY-MM-DD balance <account>  <number> ~ <tolerance> <currency>
+
+      For example,
+
+        2015-05-17 balance Assets:Vanguard   23.2134 ~ 0.002 RGAGX
+
+      By default, this feature is not enabled; this is being tested out and it
+      might go away eventually. To enable it, add the following experiment flag:
+
+        option "experiment_explicit_tolerances" "TRUE"
+
+
+  - The 'plugin' option has now been deprecated and will issue a warning if you
+    use it. You must now use the 'plugin' directive instead.
+
+  - The parser now supports boolean types, with this syntax: TRUE, FALSE. This
+    can be useful to set metadata fields.
+
+  - Postings that were inserted automatically have some metadata set on them to
+    distinguish this fact ('__metadata__').
+
+
+
 2015-05-12
 
   - Allow currency names up to 24 characters (not 12). This is often required

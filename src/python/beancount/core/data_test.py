@@ -127,7 +127,7 @@ class TestData(unittest.TestCase):
                              None, "Next day", None, None, []),
             data.Close(data.new_metadata(".", 1000), date2, account),
             data.Balance(data.new_metadata(".", 1001), date2, account,
-                         amount.Amount(D('200.00'), 'USD"'), None),
+                         amount.Amount(D('200.00'), 'USD"'), None, None),
             data.Open(data.new_metadata(".", 1002), date2, account, 'USD', None),
             data.Transaction(data.new_metadata(".", 1009), date2, FLAG,
                              None, "Transaction 2", None, None, []),

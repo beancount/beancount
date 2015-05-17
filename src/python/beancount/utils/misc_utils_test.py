@@ -229,18 +229,6 @@ class TestUniquify(unittest.TestCase):
                          list(unique_data))
 
 
-class TestDistribution(unittest.TestCase):
-
-    def test_distribution(self):
-        dist = misc_utils.Distribution()
-        dist.update(1)
-        dist.update(2)
-        dist.update(2)
-        dist.update(2)
-        dist.update(3)
-        dist.update(3)
-        dist.update(4)
-        self.assertEqual(2, dist.mode())
 
 
 class TestLineFileProxy(unittest.TestCase):

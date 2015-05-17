@@ -140,6 +140,17 @@ def do_list_options(*unused_args):
     print(options.list_options())
 
 
+def do_print_options(filename, *args):
+    """Print out the actual options parsed from a file.
+
+    Args:
+      unused_args: Ignored.
+    """
+    _, __, options_map = loader.load_file(filename)
+    for key, value in sorted(options_map.items()):
+        print('{}: {}'.format(key, value))
+
+
 def get_commands():
     """Return a list of available commands in this file.
 
@@ -194,6 +205,9 @@ def do_context(filename, args):
     sys.stdout.write(str_context)
 
 
+RenderError = collections.namedtuple('RenderError', 'source message entry')
+
+
 def do_linked(filename, args):
     """Print out a list of transactions linked to the one at the given line.
 
@@ -226,7 +240,6 @@ def do_linked(filename, args):
                           entry.links & links)]
 
     # Render linked entries (in date order) as errors (for Emacs).
-    RenderError = collections.namedtuple('RenderError', 'source message entry')
     errors = [RenderError(entry.meta, '', entry)
               for entry in linked_entries]
     printer.print_errors(errors)
