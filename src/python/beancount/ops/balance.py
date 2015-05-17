@@ -35,7 +35,7 @@ def get_tolerance(balance_entry, options_map):
         # for some users.
         tolerance = D('0.015')
 
-    elif ('exp-explicit-tolerances' in options_map['experiments'] and
+    elif (options_map["experiment_explicit_tolerances"] and
           balance_entry.tolerance is not None):
         # Use the balance-specific tolerance override if it is provided.
         tolerance = balance_entry.tolerance

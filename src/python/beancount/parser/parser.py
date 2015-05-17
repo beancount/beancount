@@ -269,7 +269,7 @@ class Builder(lexer.LexBuilder):
             elif isinstance(option, bool):
                 # Convert to a boolean.
                 if not isinstance(value, bool):
-                    value = (value.lower() == 'true') or (value == '1')
+                    value = (value.lower() in {'true', 'on'}) or (value == '1')
                 self.options[key] = value
 
             else:
@@ -479,7 +479,7 @@ class Builder(lexer.LexBuilder):
 
         # Only support explicit tolerance syntax if the experiment is enabled.
         if (tolerance is not None and
-            'exp-explicit-tolerances' not in self.options['experiments']):
+            not self.options["experiment_explicit_tolerances"]):
             self.errors.append(
                 ParserError(meta, "Tolerance syntax is not supported", None))
             tolerance = '__tolerance_syntax_not_supported__'

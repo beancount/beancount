@@ -4,11 +4,11 @@
 Note: This file contains only changes in the 'default' branch.
 
 
-2015-05-??
+2015-05-17
 
-  - MAJOR CHANGE: Precision work. The logic used to compute tolerances on
-    transaction balances and balance assertions has been completely revamped.
-    This proposal:
+  - MAJOR CHANGES: Precision and tolerances in Beancount have been entirely
+    revamped. The logic used to compute tolerances on transaction balances and
+    balance assertions is new. This previously discussed proposal:
 
       http://furius.ca/beancount/doc/proposal-rounding
 
@@ -16,7 +16,8 @@ Note: This file contains only changes in the 'default' branch.
 
       http://furius.ca/beancount/doc/tolerances
 
-    Summary of changes:
+
+    Here is a high-level summary of changes (see doc above for details):
 
     * The tolerance used for transaction balances is inferred automatically from
       the amounts on the transactions themselves. When not possible, a default
@@ -24,55 +25,58 @@ Note: This file contains only changes in the 'default' branch.
       default).
 
     * There is a new 'default_tolerances' option to provide tolerances to be
-      used used when it cannot be inferred automatically.
+      used used when it cannot be inferred automatically. You use it like this:
 
-    * Balance assertions and Pad directives use a similar mechanism inference
-      mechanism, based on the number provide in the balance assertion.
+        option "default_tolerance" "*:0.005"
+        option "default_tolerance" "INR:0.5"
+        ...
 
+    * The 'tolerance' option has been deprecated. It now has no effect.
 
-      'account_rounding'
+    * Balance assertions and Pad directives use a similar inference mechanism,
+      where the tolerance is based on the precision of the expected number in
+      the input.
 
-      'tolerance' option has been deprecated.
+    * Rounding errors may be automatically posted to a special account (new
+      postings are inserted during parsing where necessary). This is disabled by
+      default; you enable this by setting the new 'account_rounding' option to
+      the account you want the rounding errors to be posted to:
 
+        option "account_rounding" "Equity:Rounding-Errors"
 
+    * These changes may cause some of your transactions to report as not
+      balancing, because the tolerances and now inferred automatically and the
+      inferred tolerances may be smaller than the fixed value we used
+      previously. YOU NEED TO MAKE SUITABLE ADJUSTMENTS TO YOUR INPUT FILE.
+      However, because this might cause some minor disruption, I have provided
+      an option to allow users to revert Beancount to its previous tolerance
+      behavior for a few months:
 
+        option "use_legacy_fixed_tolerances" "TRUE"
 
-    This change may cause some of your transactions to report as not balancing,
-    because the tolerances and now inferred automatically. You need to make
-    suitable changes to your input file. See docs for details. However, because
-    this might cause disruption, I've provided an option to allow users to
-    revert to the old tolerance behavior:
+    * There is a new EXPERIMENTAL feature which makes Beancount accept an
+      explicit tolerance value on balance assertions, like this:
 
-        option "experiments" "exp-legacy-fixed-tolerances"
+        YYYY-MM-DD balance <account>  <number> ~ <tolerance> <currency>
 
+      For example,
+
+        2015-05-17 balance Assets:Vanguard   23.2134 ~ 0.002 RGAGX
+
+      By default, this feature is not enabled; this is being tested out and it
+      might go away eventually. To enable it, add the following experiment flag:
+
+        option "experiment_explicit_tolerances" "TRUE"
 
 
   - The 'plugin' option has now been deprecated and will issue a warning if you
-    use it. You must use the plugin directive.
-
-
-  - A new 'experiment' option has been added, which allows some
-    alpha/development features to be turned on selectively. I intend to have few
-    of these, but to use them occasionally.
-
-
-  - There is a new experimental feature which accepts an explicit tolerance
-    value on balance assertions, like this:
-
-        YYYY-MM-DD balance <account>   <number> ~ <tolerance> <currency>
-
-    By default, this feature is not enabled; this is an experimental feature
-    being tested out and might go away eventually. To enable it, add the
-    following experiment flag:
-
-        option "experiments" "exp-explicit-tolerances"
-
+    use it. You must now use the 'plugin' directive instead.
 
   - The parser now supports boolean types, with this syntax: TRUE, FALSE. This
     can be useful to set metadata fields.
 
   - Postings that were inserted automatically have some metadata set on them to
-    distinguish this.
+    distinguish this fact ('__metadata__').
 
 
 
