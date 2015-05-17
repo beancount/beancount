@@ -1069,6 +1069,13 @@ http://furius.ca/beancount/doc/proposal-inventory
 
     ". This could be used to simulate balanced virtual postings.
 
+  - Generalize the scope of Document directives so that they don't just point to
+    filenames, but can hold references to arbitrary document ids.
+    * Rename the field from 'filename' to 'document'
+    * Make the verification of that field against a filename option, enabled by
+      a plugin.
+    * Notify bw3443 about this.
+
 
 * Basic Directives as Plugins
 
