@@ -67,8 +67,8 @@ def D(strord=None):
         else:
             assert strord is None, "Invalid value to convert: {}".format(strord)
     except Exception as exc:
-        raise ValueError("Impossible to create Decimal instance from {}: {}".format
-                         repr(strord), str(exc))
+        raise ValueError("Impossible to create Decimal instance from {!s}: {}".format(
+                         strord, exc))
 
 
 def round_to(number, increment):
