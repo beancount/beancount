@@ -372,7 +372,6 @@ def balance_incomplete_postings(entry, options_map):
         if account_rounding:
             rounding_postings = get_residual_postings(residual, account_rounding)
             postings.extend(rounding_postings)
-            print(rounding_postings)
 
     # If we could make this faster to avoid the unnecessary copying, it would
     # make parsing substantially faster.
