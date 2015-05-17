@@ -11,7 +11,7 @@ from beancount.core.amount import Decimal
 from beancount.core import amount
 from beancount.core import position
 from beancount.core import inventory
-from beancount.utils import misc_utils
+from beancount.core import distribution
 
 
 class ColumnRenderer:
@@ -164,7 +164,7 @@ class DecimalRenderer(ColumnRenderer):
         self.min_exponent = 0
         self.total_width = None
         self.num_values = 0
-        self.dists = collections.defaultdict(misc_utils.Distribution)
+        self.dists = collections.defaultdict(distribution.Distribution)
 
     def update(self, number, key=None):
         if number is None:
