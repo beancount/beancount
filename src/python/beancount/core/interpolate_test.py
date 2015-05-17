@@ -20,7 +20,7 @@ ERRORS_ON_RESIDUAL = False
 
 # A default options map just to provide the tolerances.
 OPTIONS_MAP = {'default_tolerance': {},
-               'experiments': [],
+               'use_legacy_fixed_tolerances': False,
                'account_rounding': None}
 
 

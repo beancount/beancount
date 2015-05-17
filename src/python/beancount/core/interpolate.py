@@ -231,7 +231,7 @@ def get_incomplete_postings(entry, options_map):
     residual = Inventory()
 
     # A dict of values for default tolerances.
-    if 'exp-legacy-fixed-tolerances' in options_map['experiments']:
+    if options_map['use_legacy_fixed_tolerances']:
         # This is supported only to support an easy transition for users.
         # Users should be able to revert to this easily.
         tolerances = {}

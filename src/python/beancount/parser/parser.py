@@ -266,6 +266,12 @@ class Builder(lexer.LexBuilder):
                 dict_key, dict_value = value
                 option[dict_key] = dict_value
 
+            elif isinstance(option, bool):
+                # Convert to a boolean.
+                if not isinstance(value, bool):
+                    value = (value.lower() == 'true') or (value == '1')
+                self.options[key] = value
+
             else:
                 # Set the value.
                 self.options[key] = value

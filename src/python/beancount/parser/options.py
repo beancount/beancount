@@ -183,6 +183,15 @@ PRIVATE_OPTION_GROUPS = [
       are experiments is that we are unsure whether we should commit to these in
       the first place. Use at your own risk.
     """, [Opt("experiments", [], "exp-my-risky-feature")]),
+
+    OptGroup("""
+      Restore the legacy fixed handling of tolerances. Balance and Pad directives
+      have a fixed tolerance of 0.015 units, and Transactions balance at 0.005 units.
+      For any units. This is intended as a way for people to revert the behavior of
+      Beancount to ease the transition to the new inferred tolerance logic. See
+      http://furius.ca/beancount/doc/tolerances for more details.
+    """, [Opt("use_legacy_fixed_tolerances", False, True)]),
+
     ]
 
 

@@ -279,7 +279,7 @@ class TestBalancePrecision(unittest.TestCase):
     @loaddoc
     def test_get_tolerance__legacy(self, entries, errors, options_map):
         """
-          option "experiments" "exp-legacy-fixed-tolerances"
+          option "use_legacy_fixed_tolerances" "True"
 
           2015-05-01 open Assets:Bank:Checking
           2015-05-02 balance Assets:Bank:Checking   0 USD

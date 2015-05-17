@@ -6,26 +6,54 @@ Note: This file contains only changes in the 'default' branch.
 
 2015-05-??
 
-  - MAJOR CHANGE: The logic used to compute tolerances on transaction balance
-    and balance assertion has been completely revamped. This proposal has been
-    mostly implemented:
-      http://furius.ca/beancount/doc/proposal-rounding
-    The new behaviour is documented here:
-      http://furius.ca/beancount/doc/precision
+  - MAJOR CHANGE: Precision work. The logic used to compute tolerances on
+    transaction balances and balance assertions has been completely revamped.
+    This proposal:
 
-    This affects:
-    * Transaction balance checks
-    * Checks from balance directives
-    * Padding directives
+      http://furius.ca/beancount/doc/proposal-rounding
+
+    has been implemented. The new behaviour is documented here:
+
+      http://furius.ca/beancount/doc/tolerances
+
+    Summary of changes:
+
+    * The tolerance used for transaction balances is inferred automatically from
+      the amounts on the transactions themselves. When not possible, a default
+      tolerance is looked up from values you can provide (as well as a global
+      default).
+
+    * There is a new 'default_tolerances' option to provide tolerances to be
+      used used when it cannot be inferred automatically.
+
+    * Balance assertions and Pad directives use a similar mechanism inference
+      mechanism, based on the number provide in the balance assertion.
+
+
+      'account_rounding'
+
+      'tolerance' option has been deprecated.
+
+
+
 
     This change may cause some of your transactions to report as not balancing,
-    because the tolerances and now inferred automatically (this is better).
-    You need to make suitable changes to your input file. See docs for details.
-
-    However, because this might cause disruption, I've provided an option to
-    allow users to revert to the old tolerance behavior:
+    because the tolerances and now inferred automatically. You need to make
+    suitable changes to your input file. See docs for details. However, because
+    this might cause disruption, I've provided an option to allow users to
+    revert to the old tolerance behavior:
 
         option "experiments" "exp-legacy-fixed-tolerances"
+
+
+
+  - The 'plugin' option has now been deprecated and will issue a warning if you
+    use it. You must use the plugin directive.
+
+
+  - A new 'experiment' option has been added, which allows some
+    alpha/development features to be turned on selectively. I intend to have few
+    of these, but to use them occasionally.
 
 
   - There is a new experimental feature which accepts an explicit tolerance
@@ -38,6 +66,14 @@ Note: This file contains only changes in the 'default' branch.
     following experiment flag:
 
         option "experiments" "exp-explicit-tolerances"
+
+
+  - The parser now supports boolean types, with this syntax: TRUE, FALSE. This
+    can be useful to set metadata fields.
+
+  - Postings that were inserted automatically have some metadata set on them to
+    distinguish this.
+
 
 
 2015-05-12
