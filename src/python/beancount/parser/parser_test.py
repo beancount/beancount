@@ -14,7 +14,6 @@ import subprocess
 from beancount.core.amount import D
 from beancount.parser import parser
 from beancount.parser import lexer
-from beancount.parser import printer
 from beancount.core import data
 from beancount.core import amount
 from beancount.core import interpolate

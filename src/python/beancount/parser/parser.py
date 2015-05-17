@@ -15,7 +15,6 @@ from os import path
 from beancount.core.amount import ZERO
 from beancount.core.amount import Amount
 from beancount.core.amount import amount_div
-from beancount.core.amount import D
 from beancount.core import display_context
 from beancount.core.position import Lot
 from beancount.core.position import Position
@@ -807,7 +806,7 @@ class Builder(lexer.LexBuilder):
         if __sanity_checks__:
             residual = compute_residual(entry.postings)
             tolerances = infer_tolerances(entry.postings)
-            assert residual.is_small(tolerances, options_map['default_tolerance']), (
+            assert residual.is_small(tolerances, self.options['default_tolerance']), (
                 "Invalid residual {}".format(residual))
 
         return entry

@@ -5,7 +5,6 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import collections
 import copy
 
-from beancount.core.amount import D
 from beancount.core.amount import ONE
 from beancount.core.amount import ZERO
 from beancount.core.amount import HALF
@@ -18,7 +17,6 @@ from beancount.core.data import Posting
 from beancount.core.data import reparent_posting
 from beancount.core.data import entry_replace
 from beancount.core import getters
-from beancount.core import inventory
 
 
 # An error from balancing the postings.

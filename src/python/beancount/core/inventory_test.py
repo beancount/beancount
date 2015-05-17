@@ -196,7 +196,8 @@ class TestInventory(unittest.TestCase):
 
             # Test border case and an epsilon under.
             self.assertTrue(inv.is_small({'JPY': D('0.03'), 'USD': D('0.003')}))
-            self.assertFalse(inv.is_small({'JPY': D('0.02999999999999'), 'USD': D('0.003')}))
+            self.assertFalse(inv.is_small({'JPY': D('0.02999999999999'),
+                                           'USD': D('0.003')}))
             self.assertFalse(inv.is_small({'JPY': D('0.03'), 'USD': D('0.00299999')}))
 
             # Test missing precisions.

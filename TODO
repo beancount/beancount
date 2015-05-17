@@ -1,16 +1,5 @@
 -*- mode: org -*-
 beancount: TODO
-* Precision
-Launch description:
-
-  - Complete documentation, merge and release.
-
-  - Finish the work on quantization of inferred numbers, + the docs.
-
-  - Implement the Equity:Rounding plugin and document it. This should be done in
-    this branch.
-
-
 * Explicit Tolerance
 
   - Make the printer support explicit tolerance syntax. This is crucial for

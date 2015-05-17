@@ -6,7 +6,6 @@ import textwrap
 
 from beancount.core import data
 from beancount.parser import parser
-from beancount.parser import printer
 from beancount.parser import cmptest
 from beancount.ops import validation
 from beancount import loader
@@ -82,7 +81,8 @@ class TestValidateInventoryBooking(cmptest.TestCase):
         self.assertEqual([validation.ValidationError], list(map(type, validation_errors)))
 
     @parser.parsedoc
-    def test_mixed_lots_in_multiple_transactions_augmenting(self, entries, errors, options_map):
+    def test_mixed_lots_in_multiple_transactions_augmenting(self,
+                                                            entries, errors, options_map):
         """
           2013-05-01 open Assets:Bank:Investing
           2013-05-01 open Equity:Opening-Balances
@@ -99,7 +99,8 @@ class TestValidateInventoryBooking(cmptest.TestCase):
         self.assertEqual([validation.ValidationError], list(map(type, validation_errors)))
 
     @parser.parsedoc
-    def test_mixed_lots_in_multiple_transactions_reducing(self, entries, errors, options_map):
+    def test_mixed_lots_in_multiple_transactions_reducing(self,
+                                                          entries, errors, options_map):
         """
           2013-05-01 open Assets:Bank:Investing
           2013-05-01 open Equity:Opening-Balances
@@ -493,8 +494,10 @@ class TestValidateTolerances(cmptest.TestCase):
         """
         self.assertFalse(errors)
 
-    # Note: this is a test that would work if we inferred tolerances from postings at cost.
-    # See https://groups.google.com/d/msg/beancount/5u-xgR-ttjg/sXfU32ItRscJ for a discussion.
+    # Note: this is a test that would work if we inferred tolerances from
+    # postings at cost. See
+    # https://groups.google.com/d/msg/beancount/5u-xgR-ttjg/sXfU32ItRscJ for a
+    # discussion.
     #
     # @loader.loaddoc
     # def test_tolerance_implicit_from_converted_cost(self, entries, errors, options_map):

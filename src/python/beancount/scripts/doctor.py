@@ -205,6 +205,9 @@ def do_context(filename, args):
     sys.stdout.write(str_context)
 
 
+RenderError = collections.namedtuple('RenderError', 'source message entry')
+
+
 def do_linked(filename, args):
     """Print out a list of transactions linked to the one at the given line.
 
@@ -237,7 +240,6 @@ def do_linked(filename, args):
                           entry.links & links)]
 
     # Render linked entries (in date order) as errors (for Emacs).
-    RenderError = collections.namedtuple('RenderError', 'source message entry')
     errors = [RenderError(entry.meta, '', entry)
               for entry in linked_entries]
     printer.print_errors(errors)

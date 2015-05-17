@@ -7,7 +7,6 @@ import collections
 import io
 import re
 import textwrap
-import sys
 
 from beancount.core.amount import D
 from beancount.core import account_types
@@ -124,6 +123,7 @@ OptDesc = collections.namedtuple(
 
 UNSET = object()
 
+# pylint: disable=invalid-name
 def Opt(name, default_value,
         example_value=UNSET,
         converter=None,

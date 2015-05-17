@@ -246,7 +246,6 @@ class TestBalance(cmptest.TestCase):
         residual = inventory.from_string('0.001 USD, -0.00002 CAD')
         account_rounding = 'Equity:RoundingError'
         postings = interpolate.get_residual_postings(residual, account_rounding)
-        meta = {interpolate.AUTOMATIC_META, 0}
         self.assertEqual(2, len(postings))
         self.assertEqual([
             P(None, "Equity:RoundingError", "-0.001", "USD"),

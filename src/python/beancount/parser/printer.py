@@ -230,7 +230,9 @@ class EntryPrinter:
         # method rendering a transaction attempts to align the posting strings
         # together.
         flag_account, position_str, weight_str = self.render_posting_strings(posting)
-        oss.write('  {:64} {} ; {}\n'.format(flag_account, position_str, weight_str).rstrip())
+        oss.write('  {:64} {} ; {}\n'.format(flag_account,
+                                             position_str,
+                                             weight_str).rstrip())
         if posting.meta:
             self.write_metadata(posting.meta, oss, '    ')
 

@@ -5,7 +5,6 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import io
 
-from beancount.core.amount import ZERO
 from beancount.core import compare
 from beancount.core import data
 from beancount.core import interpolate

@@ -3,7 +3,6 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
-import re
 
 from beancount.core.amount import D
 from beancount.core.amount import ONE

@@ -44,7 +44,6 @@ import copy
 import collections
 from datetime import date
 
-from .amount import D
 from .amount import ZERO
 from .amount import Amount
 from .position import Lot

@@ -96,8 +96,8 @@ def get_ledger_version():
         stdout, stderr = pipe.communicate()
         match = re.search(r'(\d+)\.(\d+)\.(\d+)', stdout.decode('utf-8'))
         if match:
-            return tuple(map(int, match.group(1,2,3)))
-    except OSError as exc:
+            return tuple(map(int, match.group(1, 2, 3)))
+    except OSError:
         pass
     return None
 
