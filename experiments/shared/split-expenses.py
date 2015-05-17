@@ -14,6 +14,7 @@ from beancount.core.amount import ZERO
 from beancount import loader
 from beancount.core import data
 from beancount.core import amount
+from beancount.core import account
 from beancount.core import position
 from beancount.core import inventory
 from beancount.core import realization
@@ -126,6 +127,8 @@ def main():
     reconciliation_date = entries[-1].date
     output_entries = []
     for pattern in args.person_patterns:
+        account_reconciliation = account.join(args.reconciliation_account, pattern)
+
         # Create a reconciliation transaction that moves pending amounts to
         # their correct expense accounts.
         reconciliation = data.Transaction({},
@@ -138,16 +141,16 @@ def main():
 
         balance_list = balances[pattern]
         total = inventory.Inventory()
-        for account, balance in sorted(balance_list, key=lambda k: account_order(k[0])):
+        for account_, balance in sorted(balance_list, key=lambda k: account_order(k[0])):
             total += balance
             for pos in balance:
                 reconciliation.postings.append(
-                    data.Posting(reconciliation, account, pos, None, None, None))
+                    data.Posting(reconciliation, account_, pos, None, None, None))
         total = -total
 
         for pos in total:
             reconciliation.postings.append(
-                data.Posting(reconciliation, args.reconciliation_account, pos,
+                data.Posting(reconciliation, account_reconciliation, pos,
                              None, None, None))
 
         # Create a conversion entry that reconciles into the main operating
@@ -170,14 +173,14 @@ def main():
             dcontext.update(price_rate.quantize(D('0.00001')), main_currency)
             delta_currency = pos.number * price_rate
             conversion.postings.append(
-                data.Posting(conversion, args.reconciliation_account, -pos,
+                data.Posting(conversion, account_reconciliation, -pos,
                              amount.Amount(price_rate, main_currency), None, None))
             balance_amount += delta_currency
 
         pos_conversion = position.Position(position.Lot(main_currency, None, None),
                                            -balance_amount)
         conversion.postings.append(
-            data.Posting(conversion, args.reconciliation_account, -pos_conversion,
+            data.Posting(conversion, account_reconciliation, -pos_conversion,
                          None, None, None))
 
     print('plugin "beancount.ops.auto_accounts"')
