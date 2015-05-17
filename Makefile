@@ -211,6 +211,7 @@ check-author:
 LINT_PASS=line-too-long,bad-whitespace,bad-indentation,unused-import,invalid-name,reimported
 LINT_FAIL=bad-continuation
 
+
 pylint-pass:
 	pylint --rcfile=$(PWD)/etc/pylintrc --disable=all --enable=$(LINT_PASS) $(SRC)
 
@@ -224,8 +225,9 @@ pyflakes:
 	pyflakes $(SRC)
 
 # Run all currently configured linter checks.
-lint: pylint-pass
+pylint lint: pylint-pass
 
 
 # Check everything.
-status check: pylint-pass pyflakes missing-tests fixmes dep-constraints tests-quiet multi-imports
+status check: pylint pyflakes missing-tests dep-constraints multi-imports tests-quiet
+# fixmes: For later.

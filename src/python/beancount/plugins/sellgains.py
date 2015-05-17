@@ -41,7 +41,6 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
 
-from beancount.core.amount import D
 from beancount.core.amount import ZERO
 from beancount.core import data
 from beancount.core import amount
