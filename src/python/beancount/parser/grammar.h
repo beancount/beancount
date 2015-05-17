@@ -59,31 +59,33 @@ extern int yydebug;
     RCURL = 269,
     EQUAL = 270,
     COMMA = 271,
-    SLASH = 272,
-    FLAG = 273,
-    TXN = 274,
-    BALANCE = 275,
-    OPEN = 276,
-    CLOSE = 277,
-    COMMODITY = 278,
-    PAD = 279,
-    EVENT = 280,
-    PRICE = 281,
-    NOTE = 282,
-    DOCUMENT = 283,
-    PUSHTAG = 284,
-    POPTAG = 285,
-    OPTION = 286,
-    INCLUDE = 287,
-    PLUGIN = 288,
-    DATE = 289,
-    ACCOUNT = 290,
-    CURRENCY = 291,
-    STRING = 292,
-    NUMBER = 293,
-    TAG = 294,
-    LINK = 295,
-    KEY = 296
+    TILDE = 272,
+    SLASH = 273,
+    FLAG = 274,
+    TXN = 275,
+    BALANCE = 276,
+    OPEN = 277,
+    CLOSE = 278,
+    COMMODITY = 279,
+    PAD = 280,
+    EVENT = 281,
+    PRICE = 282,
+    NOTE = 283,
+    DOCUMENT = 284,
+    PUSHTAG = 285,
+    POPTAG = 286,
+    OPTION = 287,
+    INCLUDE = 288,
+    PLUGIN = 289,
+    BOOL = 290,
+    DATE = 291,
+    ACCOUNT = 292,
+    CURRENCY = 293,
+    STRING = 294,
+    NUMBER = 295,
+    TAG = 296,
+    LINK = 297,
+    KEY = 298
   };
 #endif
 
@@ -97,8 +99,12 @@ union YYSTYPE
     char character;
     const char* string;
     PyObject* pyobj;
+    struct {
+        PyObject* pyobj1;
+        PyObject* pyobj2;
+    } pairobj;
 
-#line 102 "src/python/beancount/parser/grammar.h" /* yacc.c:1909  */
+#line 108 "src/python/beancount/parser/grammar.h" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1

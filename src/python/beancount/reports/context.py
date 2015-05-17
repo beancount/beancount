@@ -5,10 +5,10 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import io
 
-from beancount.core.amount import ZERO
 from beancount.core import compare
 from beancount.core import data
 from beancount.core import interpolate
+from beancount.core import display_context
 from beancount.parser import printer
 
 
@@ -64,7 +64,7 @@ def render_entry_context(entries, dcontext, filename, lineno):
 
     # Print the entry itself.
     print(file=oss)
-    dformat = dcontext.build()
+    dformat = dcontext.build(precision=display_context.Precision.MAXIMUM)
     printer.print_entry(closest_entry, dcontext, render_weights=True, file=oss)
 
     if isinstance(closest_entry, data.Transaction):
@@ -73,6 +73,13 @@ def render_entry_context(entries, dcontext, filename, lineno):
         if not residual.is_empty():
             print(file=oss)
             print(';;; Residual: {}'.format(residual.to_string(dformat)), file=oss)
+
+        tolerances = interpolate.infer_tolerances(closest_entry.postings)
+        if tolerances:
+            print(file=oss)
+            print(';;; Precision: {}'.format(
+                ', '.join('{}={}'.format(key, value)
+                          for key, value in sorted(tolerances.items()))), file=oss)
 
     # Print the context after.
     print(file=oss)

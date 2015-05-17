@@ -383,6 +383,7 @@ def validate_check_transaction_balances(entries, options_map):
     # Note: this is a bit slow; we could limit our checks to the original
     # transactions by using the hash function in the loader.
     errors = []
+    default_tolerances = options_map['default_tolerance']
     for entry in entries:
         if isinstance(entry, Transaction):
             # IMPORTANT: This validation is _crucial_ and cannot be skipped.
@@ -395,12 +396,14 @@ def validate_check_transaction_balances(entries, options_map):
             # the plugins) are balanced. See {9e6c14b51a59}.
             #
             # Detect complete sets of postings that have residual balance;
-            balance = interpolate.compute_residual(entry.postings)
-            if not balance.is_small(interpolate.SMALL_EPSILON):
+            residual = interpolate.compute_residual(entry.postings)
+            tolerances = interpolate.infer_tolerances(entry.postings)
+            if not residual.is_small(tolerances, default_tolerances):
                 errors.append(
                     ValidationError(entry.meta,
-                                    "Transaction does not balance: {}".format(balance),
+                                    "Transaction does not balance: {}".format(residual),
                                     entry))
+
     return errors
 
 

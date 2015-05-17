@@ -10,6 +10,7 @@ import io
 
 from beancount.core import data
 from beancount.core import position
+from beancount.core import amount
 from beancount.core import interpolate
 from beancount.core import display_context
 from beancount.reports import report
@@ -38,7 +39,7 @@ def quote_currency(string):
     Returns:
       A string of text, with the commodity expressions surrounded with quotes.
     """
-    return re.sub(r'\b([A-Z][A-Z0-9\'\.\_\-]{0,10}[A-Z0-9])\b', quote, string)
+    return re.sub(r'\b({})\b'.format(amount.CURRENCY_RE), quote, string)
 
 
 def postings_by_type(entry):

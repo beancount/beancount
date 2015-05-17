@@ -60,6 +60,10 @@ const char* getTokenName(int token);
     char character;
     const char* string;
     PyObject* pyobj;
+    struct {
+        PyObject* pyobj1;
+        PyObject* pyobj2;
+    } pairobj;
 }
 
 /* Types for terminal symbols */
@@ -77,6 +81,7 @@ const char* getTokenName(int token);
 %token <string> RCURL      /* } */
 %token <string> EQUAL      /* = */
 %token <string> COMMA      /* , */
+%token <string> TILDE      /* ~ */
 %token <string> SLASH      /* / */
 %token <character> FLAG    /* Valid characters for flags */
 %token TXN                 /* 'txn' keyword */
@@ -94,6 +99,7 @@ const char* getTokenName(int token);
 %token OPTION              /* 'option' keyword */
 %token INCLUDE             /* 'include' keyword */
 %token PLUGIN              /* 'plugin' keyword */
+%token <pyobj> BOOL        /* A boolean, true or false */
 %token <pyobj> DATE        /* A date object */
 %token <pyobj> ACCOUNT     /* The name of an account */
 %token <pyobj> CURRENCY    /* A currency specification */
@@ -119,6 +125,7 @@ const char* getTokenName(int token);
 %type <pyobj> balance
 %type <pyobj> pad
 %type <pyobj> amount
+%type <pairobj> amount_tolerance
 %type <pyobj> position
 %type <pyobj> lot_cost_date
 %type <pyobj> price
@@ -251,10 +258,10 @@ key_value_value : STRING
                 | CURRENCY
                 | TAG
                 | NUMBER
+                | BOOL
                 | amount
                 {
                     $$ = $1;
-                    DECREF1($1);
                 }
                 | empty
                 {
@@ -351,18 +358,33 @@ pad : DATE PAD ACCOUNT ACCOUNT eol key_value_list
         DECREF4($1, $3, $4, $6);
     }
 
-balance : DATE BALANCE ACCOUNT amount eol key_value_list
+balance : DATE BALANCE ACCOUNT amount_tolerance eol key_value_list
         {
-            $$ = BUILD("balance", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
-            DECREF4($1, $3, $4, $6);
+            $$ = BUILD("balance", "siOOOOO", FILE_LINE_ARGS, $1, $3, $4.pyobj1, $4.pyobj2, $6);
+            DECREF3($1, $3, $6);
+            DECREF2($4.pyobj1, $4.pyobj2);
         }
 
 amount : number_expr CURRENCY
        {
-         PyObject* o = BUILD("amount", "OO", $1, $2);
-         $$ = o;
-         DECREF2($1, $2);
+           PyObject* o = BUILD("amount", "OO", $1, $2);
+           $$ = o;
+           DECREF2($1, $2);
        }
+
+amount_tolerance : number_expr CURRENCY
+                 {
+                     $$.pyobj1 = BUILD("amount", "OO", $1, $2);
+                     $$.pyobj2 = Py_None;
+                     Py_INCREF(Py_None);
+                     DECREF2($1, $2);
+                 }
+                 | number_expr TILDE number_expr CURRENCY
+                 {
+                     $$.pyobj1 = BUILD("amount", "OO", $1, $4);
+                     $$.pyobj2 = $3;
+                     DECREF3($1, $3, $4);
+                 }
 
 position : amount
          {

@@ -7,6 +7,7 @@ import functools
 import inspect
 import textwrap
 import copy
+import io
 import os
 import re
 from os import path
@@ -32,11 +33,12 @@ from beancount.core.data import Posting
 from beancount.core.data import BOOKING_METHODS
 from beancount.core.interpolate import balance_incomplete_postings
 from beancount.core.interpolate import compute_residual
-from beancount.core.interpolate import SMALL_EPSILON
+from beancount.core.interpolate import infer_tolerances
 
 from beancount.parser import _parser
 from beancount.parser import lexer
 from beancount.parser import options
+from beancount.parser import printer
 from beancount.core import account
 from beancount.core import data
 
@@ -53,6 +55,9 @@ __allow_negative_prices__ = os.environ.get('BEANCOUNT_ALLOW_NEGATIVE_PRICES', Fa
 
 ParserError = collections.namedtuple('ParserError', 'source message entry')
 ParserSyntaxError = collections.namedtuple('ParserSyntaxError', 'source message entry')
+
+DeprecatedError = collections.namedtuple('DeprecatedError', 'source message entry')
+
 
 
 # Temporary holder for key-value pairs.
@@ -104,7 +109,7 @@ class Builder(lexer.LexBuilder):
         self.entries = []
 
         # Accumulated and unprocessed options.
-        self.options = copy.deepcopy(options.DEFAULT_OPTIONS)
+        self.options = copy.deepcopy(options.OPTIONS_DEFAULTS)
 
         # Set the filename we're processing.
         self.options['filename'] = filename
@@ -148,10 +153,6 @@ class Builder(lexer.LexBuilder):
         Returns:
           A dict of option names to options.
         """
-        # Normalize the commas rendering option to a boolean object.
-        self.options['render_commas'] = (
-            self.options['render_commas'].lower() in ('1', 'true'))
-
         # Build and store the inferred DisplayContext instance.
         self.options['display_context'] = self.dcontext
 
@@ -223,40 +224,59 @@ class Builder(lexer.LexBuilder):
             meta = new_metadata(filename, lineno)
             self.errors.append(
                 ParserError(meta, "Invalid option: '{}'".format(key), None))
+
         elif key in options.READ_ONLY_OPTIONS:
             meta = new_metadata(filename, lineno)
             self.errors.append(
                 ParserError(meta, "Option '{}' may not be set".format(key), None))
+
         else:
+            option_descriptor = options.OPTIONS[key]
+
+            # Issue a warning if the option is deprecated.
+            if option_descriptor.deprecated:
+                meta = new_metadata(filename, lineno)
+                self.errors.append(
+                    DeprecatedError(meta, option_descriptor.deprecated, None))
+
+            # Convert the value, if necessary.
+            if option_descriptor.converter:
+                try:
+                    value = option_descriptor.converter(value)
+                except ValueError as exc:
+                    meta = new_metadata(filename, lineno)
+                    self.errors.append(
+                        ParserError(meta,
+                                    "Error for option '{}': {}".format(key, exc),
+                                    None))
+                    return
+
             option = self.options[key]
             if isinstance(option, list):
-                # Process the 'plugin' option specially: accept an optional
-                # argument from it. NOTE: We will eventually phase this out and
-                # replace it by a dedicated 'plugin' directive.
-                if key == 'plugin':
-                    match = re.match('(.*):(.*)', value)
-                    if match:
-                        plugin_name, plugin_config = match.groups()
-                    else:
-                        plugin_name, plugin_config = value, None
-                    value = (plugin_name, plugin_config)
-
                 # Append to a list of values.
                 option.append(value)
+
+            elif isinstance(option, dict):
+                # Set to a dict of values.
+                if not (isinstance(value, tuple) and len(value) == 2):
+                    self.errors.append(
+                        ParserError(
+                            meta, "Error for option '{}': {}".format(key, value), None))
+                    return
+                dict_key, dict_value = value
+                option[dict_key] = dict_value
+
+            elif isinstance(option, bool):
+                # Convert to a boolean.
+                if not isinstance(value, bool):
+                    value = (value.lower() in {'true', 'on'}) or (value == '1')
+                self.options[key] = value
+
             else:
-                # Validate some option values.
-                if key == 'plugin_processing_mode':
-                    if value not in ('raw', 'default'):
-                        meta = new_metadata(filename, lineno)
-                        self.errors.append(
-                            ParserError(meta,
-                                        ("Invalid value for '{}': '{}'").format(key, value),
-                                        None))
-                        return
                 # Set the value.
                 self.options[key] = value
 
-            # Refresh the list of valid account regexps as we go.
+            # Refresh the list of valid account regexps as we go along.
             if key.startswith('name_'):
                 # Update the set of valid account types.
                 self.account_regexp = valid_account_regexp(self.options)
@@ -436,7 +456,7 @@ class Builder(lexer.LexBuilder):
         meta = new_metadata(filename, lineno, kvlist)
         return Pad(meta, date, account, source_account)
 
-    def balance(self, filename, lineno, date, account, amount, kvlist):
+    def balance(self, filename, lineno, date, account, amount, tolerance, kvlist):
         """Process an assertion directive.
 
         We produce no errors here by default. We replace the failing ones in the
@@ -449,13 +469,22 @@ class Builder(lexer.LexBuilder):
           date: A datetime object.
           account: A string, the account to balance.
           amount: The expected amount, to be checked.
+          tolerance: The tolerance number.
           kvlist: a list of KeyValue instances.
         Returns:
           A new Balance object.
         """
         diff_amount = None
         meta = new_metadata(filename, lineno, kvlist)
-        return Balance(meta, date, account, amount, diff_amount)
+
+        # Only support explicit tolerance syntax if the experiment is enabled.
+        if (tolerance is not None and
+            not self.options["experiment_explicit_tolerances"]):
+            self.errors.append(
+                ParserError(meta, "Tolerance syntax is not supported", None))
+            tolerance = '__tolerance_syntax_not_supported__'
+
+        return Balance(meta, date, account, amount, tolerance, diff_amount)
 
     def event(self, filename, lineno, date, event_type, description, kvlist):
         """Process an event directive.
@@ -774,7 +803,7 @@ class Builder(lexer.LexBuilder):
                             payee, narration, tags, links, postings)
 
         # Balance incomplete auto-postings and set the parent link to this entry as well.
-        balance_errors = balance_incomplete_postings(entry)
+        balance_errors = balance_incomplete_postings(entry, self.options)
 
         if balance_errors:
             self.errors.extend(balance_errors)
@@ -782,7 +811,9 @@ class Builder(lexer.LexBuilder):
         # Check that the balance actually is empty.
         if __sanity_checks__:
             residual = compute_residual(entry.postings)
-            assert residual.is_small(SMALL_EPSILON), residual
+            tolerances = infer_tolerances(entry.postings)
+            assert residual.is_small(tolerances, self.options['default_tolerance']), (
+                "Invalid residual {}".format(residual))
 
         return entry
 
@@ -825,7 +856,7 @@ def parse_string(string, **kw):
     return builder.finalize()
 
 
-def parsedoc(fun):
+def parsedoc(fun, no_errors=False):
     """Decorator that parses the function's docstring as an argument.
 
     Note that this only runs the parser on the tests, not the loader, so is no
@@ -833,9 +864,9 @@ def parsedoc(fun):
 
     Args:
       fun: the function object to be decorated.
+      no_errors: A boolean, true if we should assert that there are no errors.
     Returns:
       The decorated function.
-
     """
     filename = inspect.getfile(fun)
     lines, lineno = inspect.getsourcelines(fun)
@@ -852,6 +883,25 @@ def parsedoc(fun):
         entries, errors, options_map = parse_string(textwrap.dedent(fun.__doc__),
                                                     report_filename=filename,
                                                     report_firstline=lineno)
-        return fun(self, entries, errors, options_map)
+        if no_errors:
+            if errors:
+                oss = io.StringIO()
+                printer.print_errors(errors, file=oss)
+                self.fail("Unexpected errors:\n{}".format(oss.getvalue()))
+            return fun(self, entries, options_map)
+        else:
+            return fun(self, entries, errors, options_map)
+
     newfun.__doc__ = None
     return newfun
+
+
+def parsedoc_noerrors(fun):
+    """Decorator like parsedoc but that further ensures no errors.
+
+    Args:
+      fun: the function object to be decorated.
+    Returns:
+      The decorated function.
+    """
+    return parsedoc(fun, no_errors=True)

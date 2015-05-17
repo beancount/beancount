@@ -42,6 +42,8 @@ RedirectMatch /doc/directives$            /beancount/doc/syntax
 RedirectMatch /doc/users-manual$          /beancount/doc/syntax
 RedirectMatch /doc/manual$                /beancount/doc/syntax
 
+RedirectMatch /doc/options$		  https://docs.google.com/document/d/18OtTy8nnqoI8P988tVdv46ZcNoDsVGQ0ydGoA8dHC-c/
+
 RedirectMatch /doc/query$                 https://docs.google.com/document/d/1s0GOZMcrKKCLlP29MD7kHO4L88evrwWdIO0p4EwRBE0/
 RedirectMatch /doc/query-language$        /beancount/doc/query
 RedirectMatch /doc/sql$                   /beancount/doc/query
@@ -84,22 +86,24 @@ RedirectMatch /doc/conversions$           https://docs.google.com/document/d/1rW
 RedirectMatch /doc/example$               https://docs.google.com/document/d/1G-gsmwK551lSyuHboVLW3xbLhh99JfoKIbNnZSJxteE/
 RedirectMatch /doc/tutorial$              /beancount/doc/example
 
-RedirectMatch /doc/custom-appplication$   https://docs.google.com/document/d/1SnR7BdE2VXFTMEvnkhAd9PwXu_AxytTYpiS1LjXdP0E/
+RedirectMatch /doc/custom-application$    https://docs.google.com/document/d/1SnR7BdE2VXFTMEvnkhAd9PwXu_AxytTYpiS1LjXdP0E/
 RedirectMatch /doc/custom$                /beancount/doc/custom-application
 RedirectMatch /doc/application$           /beancount/doc/custom-application
 
-RedirectMatch /doc/portfolio-returns$     https://docs.google.com/document/d/1vEFB44-HFqydYVJXA-QxT4AN0K5xHHfSkhTmRSCPkac/
-RedirectMatch /doc/returns$               /beancount/doc/portfolio-returns
+RedirectMatch /doc/returns$               https://docs.google.com/document/d/1vEFB44-HFqydYVJXA-QxT4AN0K5xHHfSkhTmRSCPkac/
+RedirectMatch /doc/portfolio-returns$     /beancount/doc/portfolio-returns
 RedirectMatch /doc/calculating-returns$   /beancount/doc/portfolio-returns
 
 RedirectMatch /doc/proposal-booking$      https://docs.google.com/document/d/1F8IJ_7fMHZ75XFPocMokLxVZczAhrBRBVN9uMhQFCZ4/
 RedirectMatch /doc/proposal-inventory$    /beancount/doc/proposal-booking
 
+RedirectMatch /doc/tolerances$            https://docs.google.com/document/d/1lgHxUUEY-UVEgoF6cupz2f_7v7vEF7fiJyiSlYYlhOo/
+RedirectMatch /doc/precision$             /beancount/doc/tolerances
+RedirectMatch /doc/rounding$              /beancount/doc/tolerances
+
 RedirectMatch /doc/proposal-rounding$     https://docs.google.com/document/d/1MY2JMiiXUmcwsOT0CkiK-fCo0ZE7nbr8uTcTL50b6X4/
 RedirectMatch /doc/proposal-residual$     /beancount/doc/proposal-rounding
 RedirectMatch /doc/proposal-precision$    /beancount/doc/proposal-rounding
-RedirectMatch /doc/rounding$              /beancount/doc/proposal-rounding
-RedirectMatch /doc/precision$             /beancount/doc/proposal-rounding
 
 RedirectMatch /doc/proposal-filtering$    https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 RedirectMatch /doc/proposal-filter$       /beancount/doc/proposal-filtering

@@ -31,7 +31,7 @@ def get_entries_with_narration(entries, regexp):
 class TestUnrealized(unittest.TestCase):
 
     def test_empty_entries(self):
-        entries, _ = unrealized.add_unrealized_gains([], options.DEFAULT_OPTIONS.copy())
+        entries, _ = unrealized.add_unrealized_gains([], options.OPTIONS_DEFAULTS.copy())
         self.assertEqual([], entries)
 
     @loaddoc

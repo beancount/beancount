@@ -68,7 +68,7 @@ try:
 except ImportError:
     Enum = object
 
-from beancount.utils import misc_utils
+from . import distribution
 
 
 class Precision(Enum):
@@ -101,7 +101,7 @@ class _CurrencyContext:
     def __init__(self):
         self.has_sign = False
         self.integer_max = 1
-        self.fractional_dist = misc_utils.Distribution()
+        self.fractional_dist = distribution.Distribution()
 
     def __str__(self):
         fmt = ('sign={:<2}  integer_max={:<2}  '

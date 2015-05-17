@@ -119,6 +119,7 @@ int strtonl(const char* buf, size_t nchars);
 \{		{ return LCURL; }
 \}		{ return RCURL; }
 ,		{ return COMMA; }
+\~		{ return TILDE; }
 \/		{ return SLASH; }
 
  /* Skip commented output (but not the accompanying newline). */
@@ -163,6 +164,19 @@ option		{ return OPTION; }
 plugin		{ return PLUGIN; }
 include		{ return INCLUDE; }
 
+ /* Account names. */
+TRUE		{
+    yylval->pyobj = Py_True;
+    Py_INCREF(Py_True);
+    return BOOL;
+}
+
+FALSE		{
+    yylval->pyobj = Py_False;
+    Py_INCREF(Py_False);
+    return BOOL;
+}
+
  /* Dates. */
 [0-9]{4,}[\-/][0-9]+[\-/][0-9]+	{
     const char* year_str;
@@ -198,7 +212,7 @@ include		{ return INCLUDE; }
 
  /* Currencies. These are defined as uppercase only in order to disambiguate the
   * syntax. This is kept in sync with beancount.core.amount.CURRENCY_RE. */
-[A-Z][A-Z0-9\'\.\_\-]{0,10}[A-Z0-9]	{
+[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]	{
     yylval->pyobj = BUILD("CURRENCY", "s", yytext);
     return CURRENCY;
 }

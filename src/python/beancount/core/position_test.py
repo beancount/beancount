@@ -83,6 +83,12 @@ class TestPosition(unittest.TestCase):
         pos2 = Position(Lot("USD", None, None), ZERO)
         self.assertNotEqual(pos1, pos2)
 
+    def test_neg(self):
+        pos = Position(Lot("CAD", None, None), D('7'))
+        npos = -pos
+        self.assertEqual(D('-7'), npos.number)
+        self.assertEqual(pos.lot, npos.lot)
+
     def test_eq_and_sortkey(self):
         pos1 = Position(Lot("USD", None, None), D('200'))
         pos2 = Position(Lot("USD", None, None), D('201'))

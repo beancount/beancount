@@ -38,7 +38,7 @@ class TestLoader(unittest.TestCase):
 
         # Test an invalid plugin name.
         entries, errors, options_map = parser.parse_string(
-            'option "plugin" "invalid.module.name"\n\n' + TEST_INPUT)
+            'plugin "invalid.module.name"\n\n' + TEST_INPUT)
         trans_entries, trans_errors = loader.run_transformations(
             entries, errors, options_map, None)
         self.assertEqual(1, len(trans_errors))

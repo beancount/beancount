@@ -128,8 +128,8 @@ def compare_entries(entries1, entries2):
         raise ValueError(str(error))
 
     same = keys1 == keys2
-    missing1 = data.sort([hashes1[key] for key in keys1 - keys2])
-    missing2 = data.sort([hashes2[key] for key in keys2 - keys1])
+    missing1 = data.sorted([hashes1[key] for key in keys1 - keys2])
+    missing2 = data.sorted([hashes2[key] for key in keys2 - keys1])
     return (same, missing1, missing2)
 
 
@@ -154,7 +154,7 @@ def includes_entries(subset_entries, entries):
         raise ValueError(str(error))
 
     includes = subset_keys.issubset(keys)
-    missing = data.sort([subset_hashes[key] for key in subset_keys - keys])
+    missing = data.sorted([subset_hashes[key] for key in subset_keys - keys])
     return (includes, missing)
 
 
@@ -180,5 +180,5 @@ def excludes_entries(subset_entries, entries):
 
     intersection = keys.intersection(subset_keys)
     excludes = not bool(intersection)
-    extra = data.sort([subset_hashes[key] for key in intersection])
+    extra = data.sorted([subset_hashes[key] for key in intersection])
     return (excludes, extra)
