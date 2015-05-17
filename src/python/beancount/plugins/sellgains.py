@@ -45,22 +45,15 @@ from beancount.core.amount import D
 from beancount.core.amount import ZERO
 from beancount.core import data
 from beancount.core import amount
-from beancount.core import getters
 from beancount.core import inventory
 from beancount.core import account_types
 from beancount.core import interpolate
-from beancount.parser import printer
 from beancount.parser import options
 
 __plugins__ = ('validate_sell_gains',)
 
 
 SellGainsError = collections.namedtuple('SellGainsError', 'source message entry')
-
-
-# FIXME: Infer this from the amounts themselves, perhaps reusing the same code
-# that will do this for balances.
-EPSILON = D('0.01')
 
 
 def validate_sell_gains(entries, options_map):
@@ -78,6 +71,8 @@ def validate_sell_gains(entries, options_map):
                          acc_types.liabilities,
                          acc_types.equity,
                          acc_types.expenses])
+
+    default_tolerances = options_map['default_tolerance']
 
     for entry in entries:
         if not isinstance(entry, data.Transaction):
@@ -115,11 +110,17 @@ def validate_sell_gains(entries, options_map):
         dict_proceeds = {pos.lot.currency: pos.number
                          for pos in total_proceeds}
 
+        tolerances = interpolate.infer_tolerances(entry.postings)
         invalid = False
         for currency, price_number in dict_price.items():
+            # Accept twice the normal tolerance.
+            tolerance = inventory.get_tolerance(tolerances,
+                                                default_tolerances,
+                                                currency) * 2
+
             proceeds_number = dict_proceeds.pop(currency, ZERO)
             diff = abs(price_number - proceeds_number)
-            if diff > EPSILON:
+            if diff > tolerance:
                 invalid = True
                 break
 
