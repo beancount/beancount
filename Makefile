@@ -67,15 +67,15 @@ CLUSTERS_REGEXPS =							\
 	beancount/core/.*_test\.py	 	core/tests		\
 	beancount/core			 	core			\
 	beancount/ops/.*_test\.py	 	ops/tests		\
-	beancount/ops			 	ops+plugins		\
+	beancount/ops			 	ops			\
 	beancount/parser/printer_test\.py 	printer/tests		\
 	beancount/parser/printer.py	 	printer			\
-	beancount/parser/options_test\.py 	core/tests		\
-	beancount/parser/options.py	 	core			\
+	beancount/parser/options_test\.py 	options/tests		\
+	beancount/parser/options.py	 	options			\
 	beancount/parser/.*_test\.py	 	parser/tests		\
 	beancount/parser		 	parser			\
 	beancount/plugins/.*_test\.py	 	plugins/tests		\
-	beancount/plugins		 	ops+plugins		\
+	beancount/plugins		 	plugins			\
 	beancount/reports/.*_test\.py	 	reports/tests		\
 	beancount/reports		 	reports			\
 	beancount/scripts/bake.*_test\.py	scripts/bake/tests	\
