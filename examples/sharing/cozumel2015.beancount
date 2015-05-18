@@ -4,6 +4,7 @@
 ;;
 option "title" "Mexico Trip: Cozumel & Tulum SCUBA Diving"
 
+plugin "beancount.projects.split_expenses" "Martin Caroline"
 plugin "beancount.ops.auto_accounts"
 
 option "operating_currency" "USD"
@@ -287,6 +288,6 @@ option "default_tolerance" "MXN:0.5"
 
 2015-03-06 price USD     13.65 MXN
 
-2015-03-06 * "Final transfer from Caroline to Martin to pay for difference"
-  Income:Caroline:Wallet                    -1500 USD
-  Income:Martin:Wallet                       1500 USD
+;; 2015-03-06 * "Final transfer from Caroline to Martin to pay for difference"
+;;   Income:Caroline:Wallet                    -1500 USD
+;;   Income:Martin:Wallet                       1500 USD

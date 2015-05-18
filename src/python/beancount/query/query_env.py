@@ -218,16 +218,16 @@ class CostInventory(query_compile.EvalFunction):
         return args[0].cost()
 
 # FIXME: This isn't ready yet.
-# class ConvertAmount(query_compile.EvalFunction):
-#     "Coerce an amount to a particular currency."
-#     __intypes__ = [amount.Amount, str]
-#
-#     def __init__(self, operands):
-#         super().__init__(operands, amount.Amount)
-#
-#     def __call__(self, context):
-#         args = self.eval_args(context)
-#         return prices.convert_amount(context.price_map, args[1], args[0])
+class ConvertAmount(query_compile.EvalFunction):
+    "Coerce an amount to a particular currency."
+    __intypes__ = [amount.Amount, str]
+
+    def __init__(self, operands):
+        super().__init__(operands, amount.Amount)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        return prices.convert_amount(context.price_map, args[1], args[0])
 
 
 SIMPLE_FUNCTIONS = {
@@ -247,6 +247,7 @@ SIMPLE_FUNCTIONS = {
     'ymonth'                       : YearMonth,
     'day'                          : Day,
     'weekday'                      : Weekday,
+    'convert'                      : ConvertAmount,
     }
 
 
