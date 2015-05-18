@@ -27,11 +27,12 @@ from beancount.parser import options
 
 
 def reduce_currency(balances, currency, price_map):
-    """Return the given balances to a single currency.
+    """Return the given balances to a single currency at the market price.
 
     Args:
       balances: An Inventory of balances.
       currency: A currency string.
+      price_map: A price mapping as created by build_price_map().
     Returns:
       An instance of Amount.
     """
@@ -80,10 +81,9 @@ def main():
     entries, errors, options_map = loader.load_file(args.filename)
     account_order = functools.partial(account_types.get_account_sort_key,
                                       options.get_account_types(options_map))
-    ##dcontext = options_map['display_context']
     price_map = prices.build_price_map(entries)
 
-    # Create accumulators for each relevant buckets.
+    # Create accumulators for each relevant bucket.
     balances = collections.defaultdict(list)
 
     dcontext = display_context.DisplayContext()
@@ -103,7 +103,6 @@ def main():
 
         # If this matches a specific person, book the entire amount to this
         # person.
-        ##print(real_account.account, real_account.balance, found or 'Split')
         if found:
             balances[found].append((real_account.account, real_account.balance))
 
