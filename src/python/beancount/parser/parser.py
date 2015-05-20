@@ -847,9 +847,13 @@ def parse_string(string, **kw):
 
     Args:
       string: a str, the contents to be parsed instead of a file's.
+      **kw: See parse.c. This function parses out 'dedent' which removes
+        whitespace from the front of the text (default is False).
     Return:
       Same as the output of parse_file().
     """
+    if kw.pop('dedent', None):
+        string = textwrap.dedent(string)
     builder = Builder(None)
     _parser.parse_string(string, builder, **kw)
     builder.options['filename'] = '<string>'
@@ -880,9 +884,10 @@ def parsedoc(fun, no_errors=False):
     def newfun(self):
         assert fun.__doc__ is not None, (
             "You need to insert a docstring on {}".format(fun.__name__))
-        entries, errors, options_map = parse_string(textwrap.dedent(fun.__doc__),
+        entries, errors, options_map = parse_string(fun.__doc__,
                                                     report_filename=filename,
-                                                    report_firstline=lineno)
+                                                    report_firstline=lineno,
+                                                    dedent=True)
         if no_errors:
             if errors:
                 oss = io.StringIO()
