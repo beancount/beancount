@@ -4,6 +4,17 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-05-20
+
+  - Fixed a potential important bug (#48) just introduced a few days ago whereby
+    enabling the 'account_rounding' option would inadvertently disable balance
+    checks. Thanks to Matthew Harris for finding and reporting it.
+
+  - Added a 'dedent' option to both beancount.parser.parser.parse_string() and
+    beancount.loader.load_string(). This is a convenience for writing quick
+    tests.
+
+
 2015-05-17
 
   - MAJOR CHANGES: Precision and tolerances in Beancount have been entirely

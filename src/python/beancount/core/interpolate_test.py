@@ -1,5 +1,6 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import re
 import unittest
 
 from beancount.core.amount import D
@@ -12,6 +13,8 @@ from beancount.core import amount
 from beancount.core import position
 from beancount.parser import parser
 from beancount.parser import cmptest
+from beancount.ops import validation
+from beancount import loader
 
 
 # True if errors are generated on residual by get_incomplete_postings().
@@ -120,7 +123,10 @@ class TestBalance(cmptest.TestCase):
 
         """, [entry])
         residual = interpolate.compute_residual(entry.postings)
-        self.assertTrue(residual.is_empty())
+        # Note: The residual calcualtion ignores postings inserted by the
+        # rounding account.
+        self.assertFalse(residual.is_empty())
+        self.assertEqual(inventory.from_string('-0.0000001 USD'), residual)
 
         entry = interpolate.fill_residual_posting(entries[3], account)
         self.assertEqualEntries("""
@@ -132,7 +138,9 @@ class TestBalance(cmptest.TestCase):
 
         """, [entry])
         residual = interpolate.compute_residual(entry.postings)
-        self.assertTrue(residual.is_empty())
+        # Same as above.
+        self.assertFalse(residual.is_empty())
+        self.assertEqual(inventory.from_string('-0.012375 USD'), residual)
 
     def test_get_incomplete_postings_pathological(self):
         meta = data.new_metadata(__file__, 0)
@@ -284,7 +292,7 @@ class TestBalance(cmptest.TestCase):
           2013-02-23 * "Something"
             Liabilities:CreditCard     -50 USD
             Expenses:Restaurant         50 USD
-        """)[0][0]
+        """, dedent=True)[0][0]
         errors = interpolate.balance_incomplete_postings(entry, OPTIONS_MAP)
         self.assertFalse(errors)
         self.assertEqual(2, len(entry.postings))
@@ -294,7 +302,7 @@ class TestBalance(cmptest.TestCase):
           2013-02-23 * "Something"
             Liabilities:CreditCard     -50 USD
             Expenses:Restaurant
-        """)[0][0]
+        """, dedent=True)[0][0]
         errors = interpolate.balance_incomplete_postings(entry, OPTIONS_MAP)
         self.assertFalse(errors)
         self.assertEqual(2, len(entry.postings))
@@ -306,7 +314,7 @@ class TestBalance(cmptest.TestCase):
             Liabilities:CreditCard     -50 USD
             Liabilities:CreditCard     -50 CAD
             Expenses:Restaurant
-        """)[0][0]
+        """, dedent=True)[0][0]
         errors = interpolate.balance_incomplete_postings(entry, OPTIONS_MAP)
         self.assertFalse(errors)
         self.assertEqual(4, len(entry.postings))
@@ -320,7 +328,7 @@ class TestBalance(cmptest.TestCase):
           2013-02-23 * "Something"
             Assets:Invest     10 MSFT {43.23 USD}
             Assets:Cash
-        """)[0][0]
+        """, dedent=True)[0][0]
         errors = interpolate.balance_incomplete_postings(entry, OPTIONS_MAP)
         self.assertFalse(errors)
         self.assertEqual(2, len(entry.postings))
@@ -334,7 +342,7 @@ class TestBalance(cmptest.TestCase):
           2013-02-23 * "Something"
             Assets:Invest     1.245 RGAGX {43.23 USD}
             Assets:Cash      -53.82 USD
-        """)
+        """, dedent=True)
         entry = entries[0]
         errors = interpolate.balance_incomplete_postings(entry, options_map)
         self.assertFalse(errors)
@@ -349,7 +357,7 @@ class TestBalance(cmptest.TestCase):
           2013-02-23 * "Something"
             Assets:Invest     1.245 RGAGX {43.23 USD}
             Assets:Cash
-        """)
+        """, dedent=True)
         entry = entries[0]
         errors = interpolate.balance_incomplete_postings(entry, options_map)
         self.assertFalse(errors)
@@ -361,7 +369,7 @@ class TestBalance(cmptest.TestCase):
           2013-02-23 * "Something"
             Assets:Invest     1.245 RGAGX {43.23 USD}
             Assets:Cash
-        """)
+        """, dedent=True)
         entry = entries[0]
         errors = interpolate.balance_incomplete_postings(entry, options_map)
         self.assertFalse(errors)
@@ -375,7 +383,7 @@ class TestBalance(cmptest.TestCase):
           2013-02-23 * "Something"
             Assets:Invest     1.245 RGAGX {43.23 USD}
             Assets:Cash
-        """)
+        """, dedent=True)
         entry = entries[0]
         errors = interpolate.balance_incomplete_postings(entry, options_map)
         self.assertFalse(errors)
@@ -391,7 +399,7 @@ class TestBalance(cmptest.TestCase):
           2014-05-06 * "Buy mutual fund"
             Assets:Investments:RGXGX       4.27 RGAGX {53.21 USD}
             Assets:Investments:Cash
-        """)
+        """, dedent=True)
         entry = entries[0]
         errors = interpolate.balance_incomplete_postings(entry, options_map)
         self.assertFalse(errors)
@@ -400,8 +408,23 @@ class TestBalance(cmptest.TestCase):
         self.assertEqual('Equity:RoundingError', entry.postings[2].account)
         self.assertEqual(D('0.0033'), entry.postings[2].position.number)
 
+    def test_balance_incomplete_postings__rounding_with_error(self):
+        # Here we want to verify that auto-inserting rounding postings does not
+        # disable non-balancing transactions. This is rather an important check!
+        entries, errors, options_map = loader.load_string("""
+          option "account_rounding" "Equity:RoundingError"
 
+          2000-01-01 open Assets:Investments:MutualFunds:XXX
+          2000-01-01 open Assets:Cash:Checking
+          2000-01-01 open Equity:RoundingError
 
+          ;; This transaction does not balance.
+          2002-02-08 * "Mutual fund purchase"
+            Assets:Investments:MutualFunds:XXX    51.031 XXX {97.98 USD}
+            Assets:Cash:Checking                -5000.00 USD
+        """, dedent=True)
+        self.assertEqual(1, len(errors))
+        self.assertTrue(re.search('does not balance', errors[0].message))
 
 
 class TestComputeBalance(unittest.TestCase):

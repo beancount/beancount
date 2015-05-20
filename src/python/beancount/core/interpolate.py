@@ -73,6 +73,9 @@ def compute_residual(postings):
     """
     inventory = Inventory()
     for posting in postings:
+        # Skip auto-postings inserted to absorb the residual (rounding error).
+        if posting.meta and posting.meta.get(AUTOMATIC_RESIDUAL, False):
+            continue
         # Add to total residual balance.
         inventory.add_amount(get_posting_weight(posting))
     return inventory
@@ -143,6 +146,9 @@ def infer_tolerances(postings, use_cost=False):
 # Meta-data field appended to automatically inserted postings.
 AUTOMATIC_META = '__automatic__'
 
+# Meta-data field appended to postings inserted to absorb rounding error.
+AUTOMATIC_RESIDUAL = '__residual__'
+
 
 def get_residual_postings(residual, account_rounding):
     """Create postings to book the given residuals.
@@ -154,7 +160,8 @@ def get_residual_postings(residual, account_rounding):
     Returns:
       A list of new postings to be inserted to reduce the given residual.
     """
-    meta = {AUTOMATIC_META: True}
+    meta = {AUTOMATIC_META: True,
+            AUTOMATIC_RESIDUAL: True}
     return [Posting(None, account_rounding, -position, None, None, meta.copy())
             for position in residual.get_positions()]
 
