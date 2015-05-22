@@ -706,3 +706,18 @@ class TestInferTolerances(cmptest.TestCase):
         tolerances = interpolate.infer_tolerances(entries[0].postings, True)
         self.assertEqual({'VHT': D('0.05'), 'USD': D('0.5')},
                          tolerances)
+
+    @parser.parsedoc_noerrors
+    def test_tolerances__legacy(self, entries, _):
+        """
+        ;; issue/47
+        option "use_legacy_fixed_tolerances" "TRUE"
+
+        1970-01-01 open Assets:B1
+        1970-01-01 open Assets:B2
+
+        2010-01-01 * "something"
+          Assets:B1      -200 EUR
+          Assets:B2
+        """
+        pass

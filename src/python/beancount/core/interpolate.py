@@ -5,6 +5,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import collections
 import copy
 
+from beancount.core.amount import D
 from beancount.core.amount import ONE
 from beancount.core.amount import ZERO
 from beancount.core.amount import HALF
@@ -17,6 +18,10 @@ from beancount.core.data import Posting
 from beancount.core.data import reparent_posting
 from beancount.core.data import entry_replace
 from beancount.core import getters
+
+
+# The default tolerances value to use for legacy tolerances.
+LEGACY_DEFAULT_TOLERANCES = {'*': D('0.005')}
 
 
 # An error from balancing the postings.
@@ -242,7 +247,7 @@ def get_incomplete_postings(entry, options_map):
         # This is supported only to support an easy transition for users.
         # Users should be able to revert to this easily.
         tolerances = {}
-        default_tolerances = {'*': '0.005'}
+        default_tolerances = LEGACY_DEFAULT_TOLERANCES
     else:
         tolerances = infer_tolerances(postings)
         default_tolerances = options_map['default_tolerance']
