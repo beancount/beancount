@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-05-22
+
+  - Fixed a simple bug (#47) where the default value used for legacy tolerances
+    wasn't being initialized properly and added a test for it.
+
+
 2015-05-20
 
   - Fixed a potential important bug (#48) just introduced a few days ago whereby
