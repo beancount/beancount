@@ -116,14 +116,15 @@ PyObject* parse_string(PyObject *self, PyObject *args, PyObject* kwds)
 
     /* Unpack and validate arguments */
     const char* input_string = 0;
+    Py_ssize_t input_length = 0;
     const char* report_filename = 0;
     int report_firstline = 0;
     extern int yydebug;
     static char *kwlist[] = {"input_string", "builder",
                              "report_filename", "report_firstline",
                              "yydebug", NULL};
-    if ( !PyArg_ParseTupleAndKeywords(args, kwds, "sO|sip", kwlist,
-                                      &input_string, &builder,
+    if ( !PyArg_ParseTupleAndKeywords(args, kwds, "s#O|sip", kwlist,
+                                      &input_string, &input_length, &builder,
                                       &report_filename, &report_firstline,
                                       &yydebug) ) {
         return NULL;
