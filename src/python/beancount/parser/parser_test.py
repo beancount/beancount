@@ -7,6 +7,7 @@ import datetime
 import unittest
 import inspect
 import tempfile
+import textwrap
 import re
 import sys
 import subprocess
@@ -1228,3 +1229,19 @@ class TestArithmetic(unittest.TestCase):
         postings = entries[0].postings
         self.assertEqual(D('4'), postings[0].position.number)
         self.assertEqual(D('2.5'), postings[1].position.number)
+
+
+class TestEncoding(unittest.TestCase):
+
+    input_string = textwrap.dedent("""
+      2015-01-01 open Assets:Something
+      2015-05-23 note Assets:Something "¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼ "
+    """)
+
+    def test_bytes_encoded_utf8(self):
+        parser.parse_string(self.input_string.encode('utf-8'))
+
+    def test_bytes_encoded_latin1(self):
+        # Note: This should fail without dumping core. This should fail
+        # elegantly.
+        parser.parse_string(self.input_string.encode('latin1', 'ignore'))

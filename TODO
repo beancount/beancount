@@ -1,5 +1,21 @@
 -*- mode: org -*-
 beancount: TODO
+* C Code Review
+
+  - You don't need to incref the builder... remove that. Test it.
+
+  - Add coding support for file version _parser.parse_file(), i.e. can we read a
+    file in another encoding from C/Python?
+
+  - Complete test with passing in an invalid encoding of latin1 in the parser; I
+    think you need to handle the case of a failing call to BUILD(), and you want
+    to something more than checkNull(), you want to abort the parser and trickle
+    up and error all the way up to Python. Right now this dumps core.
+
+  - Add a test for passing in different strings.
+  - Add tests for strings with an explicitly provided encoding.
+
+
 * Explicit Tolerance
 
   - Make the printer support explicit tolerance syntax. This is crucial for
