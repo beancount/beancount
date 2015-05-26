@@ -377,8 +377,8 @@ class Builder(lexer.LexBuilder):
             object_list.append(new_object)
         return object_list
 
-    def error(self, message, filename, lineno):
-        """Process an error rule.
+    def build_parser_error(self, message, filename, lineno):
+        """Process an error rule. This is called from yyerror().
 
         Args:
           message: the message to be printed.

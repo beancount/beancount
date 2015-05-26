@@ -20,6 +20,7 @@ from beancount.core import amount
 from beancount.core import interpolate
 from beancount.core import interpolate_test
 from beancount.utils import test_utils
+from beancount.parser import printer
 
 
 def check_list(test, objlist, explist):
@@ -1194,10 +1195,81 @@ class TestMetaData(unittest.TestCase):
             }, entries[0].meta)
 
 
-class TestLexerErrors(unittest.TestCase):
+class TestLexerAndParserErrors(unittest.TestCase):
+    """There are a number of different paths for errors. This test case intends to
+    exercise them all.
+
+    The parser.parse_*() functions never raise exceptions, they always produce a
+    list of error messages on the builder objects. This is by design: we have a
+    single way to produce and report errors.
+
+    * lexer_invalid_token(): yylex() is invoked by the parser... the lexer rules
+      are processed and all fail and the default rule of the lexer gets called
+      at {bf253a29a820}. The lexer immediately switches to the INVALID subparser
+      to chomp the rest of the invalid token's unrecognized characters until it
+      hits some whitespace {bba169a1d35a}. A new LexerError is created and
+      accumulated by calling the build_lexer_error() method on the builder
+      object using this text {0e31aeca3363}. The lexer then returns a LEX_ERROR
+      token to the parser, which fails as described below.
+
+    * lexer_exception_*(): The lexer recognizes a token and invokes a callback
+      on the builder using BUILD_LEX(). However, an exception is raised
+      {3cfb2739349a}. The exception's error text is saved
+
+      That then triggers the invalid subparser {bba169a1d35a}.
+      This triggers the parser's special error rule {3d95e55b654e}.
+
+    For both the errors above, when the parser receives the LEX_ERROR token, it
+    is unexpected (because none of the rules handle it), so it calls yyerror()
+    {ca6aab8b9748} and then switches to processing 'error' multiple times
+    {3d95e55b654e} until a valid grammar rule can be reduled.
+
+    The lexer creates and registers its own errors on the builder, so when
+    yyerror() is called, if the error is an unexpected LEX_ERROR token, it
+    silently ignores this error.
+
+    * Parser error: Independently, parsers may encounter parser-level errors, in
+      which case yyerror() is called and then 'error' processing proceeds as
+      above described above.
+
+    * Parser exception
+
+
+    Explain these:
+
+    def build_lexer_error()
+    def error()
+
+    """
 
     @parser.parsedoc
-    def test_bad_account(self, entries, errors, _):
+    def test_lexer_invalid_token(self, entries, errors, _):
+        """
+          2011-01-01 open ) USD
+        """
+        printer.print_errors(errors)
+
+    @parser.parsedoc
+    def test_lexer_exception_date(self, entries, errors, _):
+        """
+          2011-13-32 open Assets:Something
+        """
+        pass
+        printer.print_errors(errors)
+
+
+
+
+
+    # FIXME: TODO - Test for all instances where BUILD_LEX() is used.
+
+    # FIXME: TODO - Also mock the build_error routines, make them raise
+    # exceptions, make sure this is handled sanely.
+
+
+
+    @parser.parsedoc
+    def __test_bad_account(self, entries, errors, _):
         """
           2011-01-01 open Assets:A
         """
@@ -1206,7 +1278,7 @@ class TestLexerErrors(unittest.TestCase):
                          list(map(type, errors)))
 
     @parser.parsedoc
-    def test_no_final_newline(self, entries, errors, _):
+    def __test_no_final_newline(self, entries, errors, _):
         """
           2014-11-02 *
             Assets:Something   1 USD
@@ -1214,6 +1286,20 @@ class TestLexerErrors(unittest.TestCase):
         self.assertFalse(errors)
         self.assertEqual(1, len(entries))
         self.assertEqual(2, len(entries[0].postings))
+
+    utf8_test_string = textwrap.dedent("""
+      2015-01-01 open Assets:Something
+      2015-05-23 note Assets:Something "¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼ "
+    """)
+
+    def __test_bytes_encoded_utf8(self):
+        parser.parse_string(self.utf8_test_string.encode('utf-8'))
+
+    def __test_bytes_encoded_latin1(self):
+        # Note: This should fail without dumping core. This should fail
+        # elegantly. This should be failing in the lexer.
+        with self.assertRaises(UnicodeDecodeError):
+            parser.parse_string(self.utf8_test_string.encode('latin1', 'ignore'))
 
 
 class TestArithmetic(unittest.TestCase):
@@ -1229,19 +1315,3 @@ class TestArithmetic(unittest.TestCase):
         postings = entries[0].postings
         self.assertEqual(D('4'), postings[0].position.number)
         self.assertEqual(D('2.5'), postings[1].position.number)
-
-
-class TestEncoding(unittest.TestCase):
-
-    input_string = textwrap.dedent("""
-      2015-01-01 open Assets:Something
-      2015-05-23 note Assets:Something "¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼ "
-    """)
-
-    def test_bytes_encoded_utf8(self):
-        parser.parse_string(self.input_string.encode('utf-8'))
-
-    def test_bytes_encoded_latin1(self):
-        # Note: This should fail without dumping core. This should fail
-        # elegantly.
-        parser.parse_string(self.input_string.encode('latin1', 'ignore'))

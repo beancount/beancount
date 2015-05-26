@@ -9,6 +9,7 @@ import collections
 import io
 import itertools
 import os
+import sys
 from os import path
 
 from beancount.utils import misc_utils
@@ -34,7 +35,8 @@ DEFAULT_PLUGINS_POST = [
     ]
 
 
-def load_file(filename, log_timings=None, log_errors=None, extra_validations=None):
+def load_file(filename, log_timings=None, log_errors=None, extra_validations=None,
+              encoding=None):
     """Open a Beancount input file, parse it, run transformations and validate.
 
     Args:
@@ -45,16 +47,18 @@ def load_file(filename, log_timings=None, log_errors=None, extra_validations=Non
         or None, if it should remain quiet.
       extra_validations: A list of extra validation functions to run after loading
         this list of entries.
+      encoding: A string or None, the encoding to decode the input filename with.
     Returns:
       A triple of:
         entries: A date-sorted list of entries from the file.
         errors: A list of error objects generated while parsing and validating
           the file.
         options_map: A dict of the options parsed from the file.
+
     """
     if not path.isabs(filename):
         filename = path.normpath(path.join(os.getcwd(), filename))
-    return _load([(filename, True)], log_timings, log_errors, extra_validations)
+    return _load([(filename, True)], log_timings, log_errors, extra_validations, encoding)
 
 
 # Alias, for compatibility.
@@ -63,7 +67,7 @@ load = load_file
 
 
 def load_string(string, log_timings=None, log_errors=None, extra_validations=None,
-                dedent=False):
+                dedent=False, encoding=None):
     """Open a Beancount input string, parse it, run transformations and validate.
 
     Args:
@@ -75,6 +79,7 @@ def load_string(string, log_timings=None, log_errors=None, extra_validations=Non
       extra_validations: A list of extra validation functions to run after loading
         this list of entries.
       dedent: A boolean, if set, remove the whitespace in front of the lines.
+      encoding: A string or None, the encoding to decode the input filename with.
     Returns:
       A triple of:
         entries: A date-sorted list of entries from the file.
@@ -84,10 +89,10 @@ def load_string(string, log_timings=None, log_errors=None, extra_validations=Non
     """
     if dedent:
         string = textwrap.dedent(string)
-    return _load([(string, False)], log_timings, log_errors, extra_validations)
+    return _load([(string, False)], log_timings, log_errors, extra_validations, encoding)
 
 
-def _parse_recursive(sources, log_timings):
+def _parse_recursive(sources, log_timings, encoding=None):
     """Parse Beancount input, run its transformations and validate it.
 
     Recursively parse a list of files or strings and their include files and
@@ -102,6 +107,7 @@ def _parse_recursive(sources, log_timings):
         You may provide a list of such arguments to be parsed. Filenames must be absolute
         paths.
       log_timings: A function to write timings to, or None, if it should remain quiet.
+      encoding: A string or None, the encoding to decode the input filename with.
     Returns:
       A tuple of (entries, parse_errors, options_map).
     """
@@ -145,17 +151,40 @@ def _parse_recursive(sources, log_timings):
                                   'File "{}" does not exist'.format(filename), None))
                     continue
 
-                # Parse a file from disk.
-                with misc_utils.log_time('beancount.parser.parser.parse_file',
-                                         log_timings, indent=2):
-                    src_entries, src_errors, src_options_map = parser.parse_file(filename)
+                if encoding:
+                    # If we need to decode the file, read it, decoding it, and
+                    # parse from string. This is better than creating a
+                    # temporary file.
+                    source = open(filename, encoding=encoding).read()
+                    ascii_source = source.encode('ascii', 'replace')
+                    with misc_utils.log_time('beancount.parser.parser.parse_string',
+                                             log_timings, indent=2):
+                        (src_entries,
+                         src_errors,
+                         src_options_map) = parser.parse_string(ascii_source)
+                else:
+                    # Parse a file from disk directly. This assumes the file is
+                    # in ASCII mode.
+                    with misc_utils.log_time('beancount.parser.parser.parse_file',
+                                             log_timings, indent=2):
+                        (src_entries,
+                         src_errors,
+                         src_options_map) = parser.parse_file(filename)
 
                 cwd = path.dirname(filename)
             else:
+                # Encode the contents if necessary.
+                if encoding:
+                    if isinstance(source, bytes):
+                        source = source.decode(encoding)
+                    source = source.encode('ascii', 'replace')
+
                 # Parse a string buffer from memory.
                 with misc_utils.log_time('beancount.parser.parser.parse_string',
                                          log_timings, indent=2):
-                    src_entries, src_errors, src_options_map = parser.parse_string(source)
+                    (src_entries,
+                     src_errors,
+                     src_options_map) = parser.parse_string(source)
 
                 # If we're parsing a string, the CWD is the current process
                 # working directory.
@@ -189,7 +218,7 @@ def _parse_recursive(sources, log_timings):
     return entries, parse_errors, options_map
 
 
-def _load(sources, log_timings, log_errors, extra_validations):
+def _load(sources, log_timings, log_errors, extra_validations, encoding):
     """Parse Beancount input, run its transformations and validate it.
 
     (This is an internal method.)
@@ -210,6 +239,7 @@ def _load(sources, log_timings, log_errors, extra_validations):
         or None, if it should remain quiet.
       extra_validations: A list of extra validation functions to run after loading
         this list of entries.
+      encoding: A string or None, the encoding to decode the input filename with.
     Returns:
       See load() or load_string().
     """
@@ -219,7 +249,7 @@ def _load(sources, log_timings, log_errors, extra_validations):
         log_timings = log_timings.write
 
     # Parse all the files recursively.
-    entries, parse_errors, options_map = _parse_recursive(sources, log_timings)
+    entries, parse_errors, options_map = _parse_recursive(sources, log_timings, encoding)
 
     # Transform the entries.
     entries, errors = run_transformations(entries, parse_errors, options_map, log_timings)

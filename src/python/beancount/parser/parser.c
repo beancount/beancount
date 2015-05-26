@@ -27,6 +27,7 @@ PyObject* checkNull(PyObject* o)
 {
     if ( o == NULL ) {
         PyErr_Print();
+        /* FIXME: We should remove this and handle all errors. */
         abort();
     }
     return o;
@@ -104,7 +105,7 @@ PyObject* parse_file(PyObject *self, PyObject *args, PyObject* kwds)
 
     /* Check for parsing errors. */
     if ( result != 0 ) {
-        return PyErr_Format(PyExc_RuntimeError, "Parsing error");
+        return NULL;
     }
 
     Py_RETURN_NONE;
@@ -148,6 +149,7 @@ PyObject* parse_string(PyObject *self, PyObject *args, PyObject* kwds)
 
     /* Parse! This will call back methods on the builder instance. */
     result = yyparse();
+    TRACE_ERROR("Result %d\n", result);
 
     /* Finalize the parser. */
     yylex_destroy();
@@ -157,7 +159,7 @@ PyObject* parse_string(PyObject *self, PyObject *args, PyObject* kwds)
 
     /* Check for parsing errors. */
     if ( result != 0 ) {
-        return PyErr_Format(PyExc_RuntimeError, "Parsing error");
+        return NULL;
     }
 
     Py_RETURN_NONE;
@@ -170,7 +172,7 @@ PyObject* get_yyfilename(PyObject *self, PyObject *args)
 
 PyObject* get_yylineno(PyObject *self, PyObject *args)
 {
-  return PyLong_FromLong(yylineno);
+  return PyLong_FromLong(yylineno + yy_firstline);
 }
 
 

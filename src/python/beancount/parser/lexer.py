@@ -63,11 +63,16 @@ class LexBuilder(object):
         return data.new_metadata(_parser.get_yyfilename(),
                                  _parser.get_yylineno())
 
-    def ERROR(self, string):
-        self.errors.append(
-            LexerError(self.get_lexer_location(),
-                       "Lexer error; erroneous token: '{}'".format(string),
-                       None))
+## FIXME: you can probable remove this.
+    def build_lexer_error(self, string): # {0e31aeca3363}
+        #print('build_lexer_error({})'.format(string))
+        self.errors.append(LexerError(self.get_lexer_location(), string, None))
+
+
+## FIXME: review all the methods below, each should hav ea test and let
+## exceptions trickle through.
+
+
 
     def DATE(self, year, month, day):
         """Process a DATE token.
@@ -79,12 +84,17 @@ class LexBuilder(object):
         Returns:
           A new datetime object.
         """
-        try:
-            return datetime.date(year, month, day)
-        except ValueError as exc:
-            self.errors.append(
-                LexerError(self.get_lexer_location(), str(exc), None))
-            return None
+        return datetime.date(year, month, day)
+
+## FIXME: remove - let the lexer handle the exception
+        # try:
+        #     return datetime.date(year, month, day)
+        # except ValueError as exc:
+        #     self.errors.append(
+        #         LexerError(self.get_lexer_location(), str(exc), None))
+        #     return None
+
+
 
     def ACCOUNT(self, account_name):
         """Process an ACCOUNT token.
@@ -95,7 +105,7 @@ class LexBuilder(object):
         Args:
           account_name: a str, the valid name of an account.
         Returns:
-          A string, the naem of the account.
+          A string, the name of the account.
         """
         # Check account name validity.
         if not self.account_regexp.match(account_name):
