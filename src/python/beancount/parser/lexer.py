@@ -63,16 +63,11 @@ class LexBuilder(object):
         return data.new_metadata(_parser.get_yyfilename(),
                                  _parser.get_yylineno())
 
-## FIXME: you can probable remove this.
+## FIXME: you can probable remove this if you can communicate with the parser
+## some other way.
     def build_lexer_error(self, string): # {0e31aeca3363}
         #print('build_lexer_error({})'.format(string))
         self.errors.append(LexerError(self.get_lexer_location(), string, None))
-
-
-## FIXME: review all the methods below, each should hav ea test and let
-## exceptions trickle through.
-
-
 
     def DATE(self, year, month, day):
         """Process a DATE token.
@@ -85,16 +80,6 @@ class LexBuilder(object):
           A new datetime object.
         """
         return datetime.date(year, month, day)
-
-## FIXME: remove - let the lexer handle the exception
-        # try:
-        #     return datetime.date(year, month, day)
-        # except ValueError as exc:
-        #     self.errors.append(
-        #         LexerError(self.get_lexer_location(), str(exc), None))
-        #     return None
-
-
 
     def ACCOUNT(self, account_name):
         """Process an ACCOUNT token.
@@ -109,19 +94,12 @@ class LexBuilder(object):
         """
         # Check account name validity.
         if not self.account_regexp.match(account_name):
-            self.errors.append(
-                LexerError(self.get_lexer_location(),
-                           "Invalid account name: {}".format(account_name),
-                           None))
-            return account.join(self.get_invalid_account())
+            raise ValueError("Invalid account name: {}".format(account_name))
 
-        # Create an account, reusing their strings as we go.
-        try:
-            account_name = self.accounts[account_name]
-        except KeyError:
-            self.accounts[account_name] = account_name
-
-        return account_name
+        # Reuse (intern) account strings as much as possible. This potentially
+        # reduces memory usage a fair bit, because these strings are repeated
+        # liberally.
+        return self.accounts.setdefault(account_name, account_name)
 
     def CURRENCY(self, currency_name):
         """Process a CURRENCY token.
@@ -145,9 +123,11 @@ class LexBuilder(object):
           do some decoding here.
         """
         # If a multiline string, warm over a certain number of lines.
+        # FIXME: We should perform this long-lines check in the lexer directly.
         if '\n' in string:
             num_lines = string.count('\n') + 1
             if num_lines > self.get_long_string_maxlines():
+                # This is just a warning; accept the string anyhow.
                 self.errors.append(
                     LexerError(
                         self.get_lexer_location(),
@@ -163,16 +143,11 @@ class LexBuilder(object):
         Returns:
           A Decimal instance built of the number string.
         """
-        try:
-            # Note: We don't use D() for efficiency here.
-            if ',' in number:
-                number = number.replace(',', '')
-            return Decimal(number)
-        except Exception as e:
-            self.errors.append(
-                LexerError(self.get_lexer_location(),
-                           "Error parsing NUMBER for token '{}': {}".format(number, e),
-                           None))
+        # Note: We don't use D() for efficiency here.
+        # The lexer will only yield valid number strings.
+        if ',' in number:
+            number = number.replace(',', '')
+        return Decimal(number)
 
     def TAG(self, tag):
         """Process a TAG token.

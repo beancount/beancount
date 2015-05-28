@@ -231,12 +231,6 @@ FALSE		{
     /* Attempt to create the date. */
     BUILD_LEX("DATE", "iii", year, month, day);
 
-/* FIXME: Can we now remove this? */
-    /* Return error if we could not. An error has already been logged. */
-    if (yylval->pyobj == Py_None) {
-      return LEX_ERROR;
-    }
-
     return DATE;
 }
 
@@ -429,6 +423,8 @@ void build_lexer_error(YYSTYPE* yylval, const char* string, size_t length)
 
 void build_lexer_error_from_exception(YYSTYPE* yylval)
 {
+    /* FIXME: We should call back into the lexer for this. */
+
     /* Get the exception context. */
     PyObject* ptype;
     PyObject* pvalue;

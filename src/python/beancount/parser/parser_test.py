@@ -1245,37 +1245,54 @@ class TestLexerAndParserErrors(unittest.TestCase):
     @parser.parsedoc
     def test_lexer_invalid_token(self, entries, errors, _):
         """
-          2011-01-01 open ) USD
+          2000-01-01 open ) USD
         """
-        printer.print_errors(errors)
+        self.assertEqual(0, len(entries))
+        self.assertEqual(1, len(errors))
+        self.assertTrue(re.search(r"Invalid token: '\)'", errors[0].message))
 
     @parser.parsedoc
     def test_lexer_invalid_token__recovery(self, entries, errors, _):
         """
-          2011-01-01 open ) USD
+          2000-01-01 open ) USD
 
-          2011-01-02 open Assets:Something
+          2000-01-02 open Assets:Something
         """
-        printer.print_errors(errors)
+        self.assertEqual(1, len(entries))
+        self.assertEqual(1, len(errors))
+        self.assertTrue(re.search(r"Invalid token: '\)'", errors[0].message))
 
-    @parser.parsedoc
-    def test_lexer_exception_date(self, entries, errors, _):
-        """
-          2011-13-32 open Assets:Something
-        """
-        pass
-        printer.print_errors(errors)
+    # FIXME: Also add tests that have valid tokens after the error, like postings
 
     @parser.parsedoc
-    def test_lexer_exception_date__recovery(self, entries, errors, _):
+    def test_lexer_exception__recovery(self, entries, errors, _):
         """
-          2011-13-32 open Assets:Something
+          2000-13-32 open Assets:Something
 
-          2011-01-02 open Assets:Working
+          2000-01-02 open Assets:Working
         """
-        pass
-        printer.print_errors(errors)
+        self.assertEqual(1, len(entries))
+        self.assertEqual(1, len(errors))
+        self.assertTrue(re.search('month must be in 1..12', errors[0].message))
 
+
+    @parser.parsedoc
+    def test_lexer_exception_DATE(self, entries, errors, _):
+        """
+          2000-13-32 open Assets:Something
+        """
+        self.assertEqual(0, len(entries))
+        self.assertEqual(1, len(errors))
+        self.assertTrue(re.search('month must be in 1..12', errors[0].message))
+
+    @parser.parsedoc
+    def test_lexer_exception_ACCOUNT(self, entries, errors, _):
+        """
+          2000-01-01 open Invalid:Something
+        """
+        self.assertEqual(0, len(entries))
+        self.assertEqual(1, len(errors))
+        self.assertTrue(re.search('Invalid account name:', errors[0].message))
 
 
 

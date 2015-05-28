@@ -16,8 +16,8 @@ PyObject* checkNull(PyObject* o);
     checkNull( PyObject_CallMethod(builder, method_name, NULL) );
 
 
-// Error tracing (use for debugging error handling).
-#define DO_TRACE_ERRORS 1
+/* Error tracing (use for debugging error handling). */
+/* #define DO_TRACE_ERRORS 1 */
 #ifdef DO_TRACE_ERRORS
 
 #  define TRACE_ERROR(...)                              \
