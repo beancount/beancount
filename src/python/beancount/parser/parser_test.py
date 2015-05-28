@@ -1250,6 +1250,15 @@ class TestLexerAndParserErrors(unittest.TestCase):
         printer.print_errors(errors)
 
     @parser.parsedoc
+    def test_lexer_invalid_token__recovery(self, entries, errors, _):
+        """
+          2011-01-01 open ) USD
+
+          2011-01-02 open Assets:Something
+        """
+        printer.print_errors(errors)
+
+    @parser.parsedoc
     def test_lexer_exception_date(self, entries, errors, _):
         """
           2011-13-32 open Assets:Something
@@ -1257,6 +1266,15 @@ class TestLexerAndParserErrors(unittest.TestCase):
         pass
         printer.print_errors(errors)
 
+    @parser.parsedoc
+    def test_lexer_exception_date__recovery(self, entries, errors, _):
+        """
+          2011-13-32 open Assets:Something
+
+          2011-01-02 open Assets:Working
+        """
+        pass
+        printer.print_errors(errors)
 
 
 
