@@ -229,7 +229,33 @@ FALSE		{
     day = strtonl(day_str, yytext + yyleng - day_str);
 
     /* Attempt to create the date. */
+#if 1
     BUILD_LEX("DATE", "iii", year, month, day);
+#else
+    static PyObject* method_name = NULL;
+    if (method_name == NULL) {
+        method_name = PyUnicode_FromString("DATE");
+    }
+    PyObject* year_obj = PyLong_FromLong(year);
+    PyObject* month_obj = PyLong_FromLong(month);
+    PyObject* day_obj = PyLong_FromLong(day);
+
+    yylval->pyobj = PyObject_CallMethodObjArgs(builder, method_name,
+                                               year_obj,
+                                               month_obj,
+                                               day_obj,
+                                               NULL);
+    Py_DECREF(year_obj);
+    Py_DECREF(month_obj);
+    Py_DECREF(day_obj);
+
+    /* Process exception state {3cfb2739349a} */                        \
+    if (yylval->pyobj == NULL) {                                        \
+       TRACE_ERROR("BUILD_LEX(%s) raised exception", method_name);      \
+       build_lexer_error_from_exception(yylval);                        \
+       return LEX_ERROR;                                                \
+    }
+#endif
 
     return DATE;
 }
@@ -243,7 +269,11 @@ FALSE		{
  /* Currencies. These are defined as uppercase only in order to disambiguate the
   * syntax. This is kept in sync with beancount.core.amount.CURRENCY_RE. */
 [A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]	{
+#if 1
     BUILD_LEX("CURRENCY", "s", yytext);
+#else
+    yylval->pyobj = PyUnicode_FromString(yytext);
+#endif
     return CURRENCY;
 }
 
@@ -261,7 +291,11 @@ FALSE		{
     \"        {
         BEGIN(INITIAL);
         *strbuf_ptr = '\0';
+#if 1
         BUILD_LEX("STRING", "s#", strbuf, strbuf_ptr - strbuf);
+#else
+        yylval->pyobj = PyUnicode_FromStringAndSize(strbuf, strbuf_ptr - strbuf);
+#endif
         return STRING;
     }
 
