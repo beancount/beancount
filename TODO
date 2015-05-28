@@ -1247,6 +1247,13 @@ http://furius.ca/beancount/doc/proposal-inter
 
 
 
+  - Add something to auto-detect a change in the parser Python files w.r.t. to
+    the built binary: bake MD5 checksums in the extension modules for the
+    beancount.parser.*.py files and compare it at runtime from a check in
+    Python; which should issue a WARNING and work for all binaries (on parser
+    import I think).
+
+
   - Add a simple overview 'stats' report with output like this:
 
       Files these postings came from:
