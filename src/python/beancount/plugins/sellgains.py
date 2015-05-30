@@ -109,7 +109,7 @@ def validate_sell_gains(entries, options_map):
         dict_proceeds = {pos.lot.currency: pos.number
                          for pos in total_proceeds}
 
-        tolerances = interpolate.infer_tolerances(entry.postings)
+        tolerances = interpolate.infer_tolerances(entry.postings, options_map)
         invalid = False
         for currency, price_number in dict_price.items():
             # Accept twice the normal tolerance.

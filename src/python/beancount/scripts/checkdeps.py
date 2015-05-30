@@ -22,6 +22,7 @@ def check_dependencies():
     return [
         check_python(),
         check_dateutil(),
+        check_curses(),
         check_bottle(),
         check_ply(),
         check_wget(),
@@ -49,11 +50,29 @@ def check_dateutil():
     """
     try:
         import dateutil
-        # Note: There is no method to obtain the version number.
         version, sufficient = dateutil.__version__, True
     except ImportError:
         version, sufficient = None, False
     return ('dateutil', version, sufficient)
+
+
+def check_curses():
+    """Check that curses is installed properly.
+
+    'curses' normally comes with Python, but some old distributions
+    (e.g., OpenSuse) package it as optional somehow and we should
+    check for it ahead of time.
+
+    Returns:
+      A triple of (package-name, version-number, sufficient) as per
+      check_dependencies().
+    """
+    try:
+        import curses
+        version, sufficient = curses.version.decode('ascii'), True
+    except ImportError:
+        version, sufficient = None, False
+    return ('curses', version, sufficient)
 
 
 def check_bottle():

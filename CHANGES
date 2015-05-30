@@ -4,6 +4,51 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-05-30
+
+  - Added an experimental boolean option: 'experiment_infer_tolerance_from_cost'
+    that expands the inferred tolerance to include values inferred from the cost
+    and price amounts on those cost and price currencies.
+
+    Here is the doc for it:
+
+      Enable an EXPERIMENTAL feature that expands the maximum tolerance inferred
+      on transactions to include values on cost currencies inferred by postings
+      held at-cost or converted at price. Those postings can imply a tolerance
+      value by multiplying the smallest digit of the unit by the cost or price value
+      and taking half of that value.
+
+      For example, if a posting has an amount of "2.345 RGAGX {45.00 USD}"
+      attached to it, it implies a tolerance of 0.001 x 45.00 / 2 = 0.045 USD
+      and this is added to the mix to enlarge the tolerance allowed for units of
+      USD on that transaction. All the normally inferred tolerances (see
+      http://furius.ca/beancount/doc/tolerances) are still taken into account.
+      Enabling this flag only makes the tolerances potentially wider.
+
+      WARNING: This feature may go away in the future. It is an exploration to see
+      if it is truly useful.
+
+  - Added a dependency check for 'curses' library and updated documentation.
+    This is for OpenSuse which packages curses separately.
+
+
+2015-05-22
+
+  - Fixed a simple bug (#47) where the default value used for legacy tolerances
+    wasn't being initialized properly and added a test for it.
+
+
+2015-05-20
+
+  - Fixed a potential important bug (#48) just introduced a few days ago whereby
+    enabling the 'account_rounding' option would inadvertently disable balance
+    checks. Thanks to Matthew Harris for finding and reporting it.
+
+  - Added a 'dedent' option to both beancount.parser.parser.parse_string() and
+    beancount.loader.load_string(). This is a convenience for writing quick
+    tests.
+
+
 2015-05-17
 
   - MAJOR CHANGES: Precision and tolerances in Beancount have been entirely

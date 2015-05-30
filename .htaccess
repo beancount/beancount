@@ -81,6 +81,10 @@ RedirectMatch /doc/design$                /beancount/doc/design-doc
 RedirectMatch /doc/devel-doc$             /beancount/doc/design-doc
 RedirectMatch /doc/devel$                 /beancount/doc/design-doc
 
+RedirectMatch /doc/converting$            https://docs.google.com/document/d/1tkoUeSfZyEhEGdXHwYp5vBrSrNDgC4FVXhReSWsILlw/
+RedirectMatch /doc/convert$		  /beancount/doc/converting
+RedirectMatch /doc/ledger$		  /beancount/doc/converting
+
 RedirectMatch /doc/conversions$           https://docs.google.com/document/d/1rW7zQyMiv8hKZ0993pwQiu5vTxzEOQf_Q67GvVk6zu0/
 
 RedirectMatch /doc/example$               https://docs.google.com/document/d/1G-gsmwK551lSyuHboVLW3xbLhh99JfoKIbNnZSJxteE/

@@ -5,6 +5,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import collections
 import copy
 
+from beancount.core.amount import D
 from beancount.core.amount import ONE
 from beancount.core.amount import ZERO
 from beancount.core.amount import HALF
@@ -17,6 +18,10 @@ from beancount.core.data import Posting
 from beancount.core.data import reparent_posting
 from beancount.core.data import entry_replace
 from beancount.core import getters
+
+
+# The default tolerances value to use for legacy tolerances.
+LEGACY_DEFAULT_TOLERANCES = {'*': D('0.005')}
 
 
 # An error from balancing the postings.
@@ -73,12 +78,15 @@ def compute_residual(postings):
     """
     inventory = Inventory()
     for posting in postings:
+        # Skip auto-postings inserted to absorb the residual (rounding error).
+        if posting.meta and posting.meta.get(AUTOMATIC_RESIDUAL, False):
+            continue
         # Add to total residual balance.
         inventory.add_amount(get_posting_weight(posting))
     return inventory
 
 
-def infer_tolerances(postings, use_cost=False):
+def infer_tolerances(postings, options_map, use_cost=None):
     """Infer tolerances from a list of postings.
 
     The tolerance is the maximum fraction that is being used for each currency
@@ -96,10 +104,15 @@ def infer_tolerances(postings, use_cost=False):
       postings: A list of Posting instances.
       use_cost: A boolean, true if we should be using a combination of the smallest
         digit of the number times the cost or price in order to infer the tolerance.
+        If the value is left unspecified (as 'None'), the default value can be
+        overridden by setting an option.
     Returns:
       A dict of currency to the tolerated difference amount to be used for it,
       e.g. 0.005.
     """
+    if use_cost is None:
+        use_cost = options_map["experiment_infer_tolerance_from_cost"]
+
     tolerances = {}
     for posting in postings:
         # Skip the precision on automatically inferred postings.
@@ -143,6 +156,9 @@ def infer_tolerances(postings, use_cost=False):
 # Meta-data field appended to automatically inserted postings.
 AUTOMATIC_META = '__automatic__'
 
+# Meta-data field appended to postings inserted to absorb rounding error.
+AUTOMATIC_RESIDUAL = '__residual__'
+
 
 def get_residual_postings(residual, account_rounding):
     """Create postings to book the given residuals.
@@ -154,7 +170,8 @@ def get_residual_postings(residual, account_rounding):
     Returns:
       A list of new postings to be inserted to reduce the given residual.
     """
-    meta = {AUTOMATIC_META: True}
+    meta = {AUTOMATIC_META: True,
+            AUTOMATIC_RESIDUAL: True}
     return [Posting(None, account_rounding, -position, None, None, meta.copy())
             for position in residual.get_positions()]
 
@@ -235,9 +252,9 @@ def get_incomplete_postings(entry, options_map):
         # This is supported only to support an easy transition for users.
         # Users should be able to revert to this easily.
         tolerances = {}
-        default_tolerances = {'*': '0.005'}
+        default_tolerances = LEGACY_DEFAULT_TOLERANCES
     else:
-        tolerances = infer_tolerances(postings)
+        tolerances = infer_tolerances(postings, options_map)
         default_tolerances = options_map['default_tolerance']
 
     # Process all the postings.

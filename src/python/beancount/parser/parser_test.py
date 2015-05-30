@@ -106,6 +106,13 @@ class TestParserInputs(unittest.TestCase):
         output, errors = pipe.communicate(self.INPUT.encode('utf-8'))
         self.assertEqual(0, pipe.returncode)
 
+    def test_parse_string_None(self):
+        input_string = report_filename = None
+        with self.assertRaises(TypeError):
+            entries, errors, _ = parser.parse_string(input_string)
+        with self.assertRaises(TypeError):
+            entries, errors, _ = parser.parse_string("something", None, report_filename)
+
 
 class TestParserEntryTypes(unittest.TestCase):
     """Basic smoke test one entry of each kind."""
