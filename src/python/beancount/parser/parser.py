@@ -811,7 +811,7 @@ class Builder(lexer.LexBuilder):
         # Check that the balance actually is empty.
         if __sanity_checks__:
             residual = compute_residual(entry.postings)
-            tolerances = infer_tolerances(entry.postings)
+            tolerances = infer_tolerances(entry.postings, self.options)
             assert residual.is_small(tolerances, self.options['default_tolerance']), (
                 "Invalid residual {}".format(residual))
 
