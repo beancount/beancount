@@ -217,6 +217,19 @@ class CostInventory(query_compile.EvalFunction):
         args = self.eval_args(context)
         return args[0].cost()
 
+class OnlyInventory(query_compile.EvalFunction):
+    "Get one currency's amount from the inventory."
+    __intypes__ = [str, inventory.Inventory]
+
+    def __init__(self, operands):
+        super().__init__(operands, position.Position)
+
+    def __call__(self, context):
+        currency, inventory_ = self.eval_args(context)
+        lot = position.Lot(currency, None, None)
+        return inventory_.get_position(lot)
+
+
 # FIXME: This isn't ready yet.
 class ConvertAmount(query_compile.EvalFunction):
     "Coerce an amount to a particular currency."
@@ -242,6 +255,7 @@ SIMPLE_FUNCTIONS = {
     ('units', inventory.Inventory) : UnitsInventory,
     ('cost', position.Position)    : CostPosition,
     ('cost', inventory.Inventory)  : CostInventory,
+    'only'                         : OnlyInventory,
     'year'                         : Year,
     'month'                        : Month,
     'ymonth'                       : YearMonth,
