@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-05-30
+
+  - Added a dependency check for 'curses' library and updated documentation.
+    This is for OpenSuse which packages curses separately.
+
+
 2015-05-22
 
   - Fixed a simple bug (#47) where the default value used for legacy tolerances
