@@ -6,6 +6,14 @@ Note: This file contains only changes in the 'default' branch.
 
 2015-05-30
 
+  - Added a check to bake the source code's checksums into the C extension
+    module and upon loading beancount.parser.parser check that the checksums
+    match. This automatically issues a warning on all programs that use the
+    parser if the compiled extension module is out-of-date and the user needs to
+    rebuild. This should explain the occasional unexpected situation where the
+    extension module doesn't match the Python code, for those running from
+    source or during development and in switching branches.
+
   - Added an experimental boolean option: 'experiment_infer_tolerance_from_cost'
     that expands the inferred tolerance to include values inferred from the cost
     and price amounts on those cost and price currencies.

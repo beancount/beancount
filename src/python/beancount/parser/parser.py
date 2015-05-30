@@ -39,8 +39,14 @@ from beancount.parser import _parser
 from beancount.parser import lexer
 from beancount.parser import options
 from beancount.parser import printer
+from beancount.parser import hashsrc
 from beancount.core import account
 from beancount.core import data
+
+
+# When importing the module, always check that the compiled source matched the
+# installed source.
+hashsrc.check_parser_source_files()
 
 
 __sanity_checks__ = False
