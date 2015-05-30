@@ -1,6 +1,7 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import re
+import textwrap
 import unittest
 
 from beancount.core.amount import D
@@ -667,6 +668,42 @@ class TestInferTolerances(cmptest.TestCase):
         self.assertEqual({'VHT': D('0.0005')}, tolerances)
         tolerances = interpolate.infer_tolerances(entries[0].postings, options_map, True)
         self.assertEqual({'VHT': D('0.0005'), 'USD': D('0.051117')}, tolerances)
+
+    @parser.parsedoc_noerrors
+    def test_tolerances__number_on_cost_used_overrides(self, entries, options_map):
+        """
+        2014-02-25 *
+          Assets:Account3       5.111 VHT {102.2340 USD}
+          Assets:Account4      -511.0 USD
+        """
+        tolerances = interpolate.infer_tolerances(entries[0].postings, options_map)
+        self.assertEqual({'VHT': D('0.0005'), 'USD': D('0.05')}, tolerances)
+        tolerances = interpolate.infer_tolerances(entries[0].postings, options_map, True)
+        self.assertEqual({'VHT': D('0.0005'), 'USD': D('0.051117')}, tolerances)
+
+    def test_tolerances__number_on_cost_fail_to_succ(self):
+        # An example of a transaction that would fail without the inferred
+        # tolerances and succeed with them.
+        input_string = textwrap.dedent("""
+          plugin "beancount.ops.auto_accounts"
+
+          2014-02-25 *
+            Assets:Account3       5.111 VHT {1000.00 USD}
+            Assets:Account4      -5110.80 USD
+        """)
+        input_option = textwrap.dedent("""
+          option "experiment_infer_tolerance_from_cost" "True"
+        """)
+
+        entries, errors, options_map = loader.load_string(input_string)
+        self.assertFalse(options_map["experiment_infer_tolerance_from_cost"])
+        self.assertEqual(1, len(errors))
+        self.assertTrue(re.match('Transaction does not balance:.*0.20000 USD',
+                                 errors[0].message))
+
+        entries, errors, options_map = loader.load_string(input_option + input_string)
+        self.assertTrue(options_map["experiment_infer_tolerance_from_cost"])
+        self.assertFalse(errors)
 
     @parser.parsedoc_noerrors
     def test_tolerances__minium_on_costs(self, entries, options_map):
