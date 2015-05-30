@@ -215,4 +215,5 @@ class TestScriptContextualCommands(cmptest.TestCase):
             test_utils.run_with_args(doctor.main, ['linked', filename, '6'])
         self.assertTrue(re.search('Apples', stdout.getvalue()))
         self.assertTrue(re.search('Oranges', stdout.getvalue()))
-        self.assertEqual(2, len(list(re.finditer('/tmp/.*:\d+:', stdout.getvalue()))))
+        self.assertEqual(2, len(list(re.finditer('/(tmp|var/folders)/.*:\d+:',
+                                                 stdout.getvalue()))))
