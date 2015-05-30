@@ -378,7 +378,7 @@ def context_(ehash=None):
         oss.write("<pre>\n")
         for entry in matching_entries:
             oss.write(context.render_entry_context(
-                app.entries, dcontext, entry.meta.filename, entry.meta.lineno))
+                app.entries, app.options, dcontext, entry.meta.filename, entry.meta.lineno))
         oss.write("</pre>\n")
 
     return render_global(

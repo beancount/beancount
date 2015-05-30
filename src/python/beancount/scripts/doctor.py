@@ -200,7 +200,7 @@ def do_context(filename, args):
 
     # Note: Make sure to use the absolute filename used by the parser to resolve
     # the file.
-    str_context = context.render_entry_context(entries, dcontext,
+    str_context = context.render_entry_context(entries, options_map, dcontext,
                                                options_map['filename'], lineno)
     sys.stdout.write(str_context)
 

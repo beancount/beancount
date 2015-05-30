@@ -86,7 +86,7 @@ def compute_residual(postings):
     return inventory
 
 
-def infer_tolerances(postings, use_cost=False):
+def infer_tolerances(postings, options_map, use_cost=None):
     """Infer tolerances from a list of postings.
 
     The tolerance is the maximum fraction that is being used for each currency
@@ -104,10 +104,15 @@ def infer_tolerances(postings, use_cost=False):
       postings: A list of Posting instances.
       use_cost: A boolean, true if we should be using a combination of the smallest
         digit of the number times the cost or price in order to infer the tolerance.
+        If the value is left unspecified (as 'None'), the default value can be
+        overridden by setting an option.
     Returns:
       A dict of currency to the tolerated difference amount to be used for it,
       e.g. 0.005.
     """
+    if use_cost is None:
+        use_cost = options_map["experiment_infer_tolerance_from_cost"]
+
     tolerances = {}
     for posting in postings:
         # Skip the precision on automatically inferred postings.
@@ -249,7 +254,7 @@ def get_incomplete_postings(entry, options_map):
         tolerances = {}
         default_tolerances = LEGACY_DEFAULT_TOLERANCES
     else:
-        tolerances = infer_tolerances(postings)
+        tolerances = infer_tolerances(postings, options_map)
         default_tolerances = options_map['default_tolerance']
 
     # Process all the postings.
