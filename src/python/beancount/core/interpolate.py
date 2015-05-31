@@ -25,6 +25,13 @@ from beancount.core import getters
 LEGACY_DEFAULT_TOLERANCES = {'*': D('0.005')}
 
 
+# The maximum number of user-specified coefficient digits we should allow for a
+# tolerance setting. This would allow the user to provide a tolerance like
+# 0.1234 but not 0.123456. This is used to detect whether a tolerance value
+# is input by the user and not inferred automatically.
+MAX_TOLERANCE_DIGITS = 5
+
+
 # An error from balancing the postings.
 BalanceError = collections.namedtuple('BalanceError', 'source message entry')
 
@@ -340,7 +347,7 @@ def get_incomplete_postings(entry, options_map):
                     # guarantees that, unless there is an error condition, the
                     # quantized exponent is always equal to that of the
                     # right-hand operand.
-                    if len(quantum.as_tuple().digits) < decimal.getcontext().prec:
+                    if len(quantum.as_tuple().digits) < MAX_TOLERANCE_DIGITS:
                         position.number = position.number.quantize(quantum)
 
                 meta = copy.copy(old_posting.meta) if old_posting.meta else {}
