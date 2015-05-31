@@ -653,8 +653,17 @@ def journal_(account_name=None):
             real_accounts = request.view.closing_real_accounts
 
     # Render the report.
+    args = []
+    if account_name:
+        args.append('--account={}'.format(account_name))
+
+    render_postings = request.params.get('postings', True)
+    if isinstance(render_postings, str):
+        render_postings = render_postings.lower() in ('1', 'true')
+    if render_postings:
+        args.append('--verbose')
+
     try:
-        args = ['--account={}'.format(account_name)] if account_name else []
         html_journal = render_real_report(journal_reports.JournalReport,
                                           real_accounts, args, leaf_only=False)
     except KeyError as e:
