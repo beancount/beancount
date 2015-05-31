@@ -4,7 +4,7 @@
 ;;
 option "title" "Mexico Trip: Cozumel & Tulum SCUBA Diving"
 
-plugin "beancount.projects.split_expenses" "Martin Caroline"
+;plugin "beancount.projects.split_expenses" "Martin Caroline"
 plugin "beancount.ops.auto_accounts"
 
 option "operating_currency" "USD"
@@ -271,7 +271,7 @@ option "default_tolerance" "MXN:0.5"
 
 2015-03-04 balance Assets:Cash:Pesos               65 MXN
 
-2015-03-06 * "Final transfer to clear internal balances to external ones"
+2015-03-06 * "Final transfer to clear and empty asset accounts"
   Assets:Cash:Pesos                               -65 MXN
   Income:Martin:Cash:Foreign                       60 MXN
   Income:Caroline:Cash                              5 MXN
@@ -280,13 +280,19 @@ option "default_tolerance" "MXN:0.5"
   Assets:Cash:Caroline                           -140 USD
   Income:Caroline:Cash                            140 USD
 
+2015-03-06 price USD     13.65 MXN
+
 2015-03-07 balance Assets:Cash:Pesos                0 MXN
 2015-03-07 balance Assets:Cash:Pesos                0 USD
 2015-03-07 balance Assets:Cash:Martin               0 USD
 2015-03-07 balance Assets:Cash:Caroline             0 USD
 
+2015-03-07 balance Assets:Cash                      0 USD
 
-2015-03-06 price USD     13.65 MXN
+2015-03-08 close Assets:Cash:Martin
+2015-03-08 close Assets:Cash:Caroline
+2015-03-08 close Assets:Cash:Pesos
+
 
 ;; 2015-03-06 * "Final transfer from Caroline to Martin to pay for difference"
 ;;   Income:Caroline:Wallet                    -1500 USD

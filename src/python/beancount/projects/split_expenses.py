@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Split expenses of a Beancount ledger between multiple people.
 
-This plugin is given a list of names. It assumes that any account whose
+This plugin is given a list of names. It assumes that any Expenses account whose
 components do not include any of the given names are to be split between the
 members. It goes through all the transactions and converts all such postings
 into multiple postings, one for each member.
@@ -63,6 +63,10 @@ def split_expenses(entries, options_map, config):
         raise RuntimeError("Invalid plugin configuration: configuration for split_expenses "
                            "should be a string or a sequence.")
 
+    acctypes = options.get_account_types(options_map)
+    def is_expense_account(account):
+        return account_types.get_account_type(account) == acctypes.expenses
+
     # A predicate to quickly identify if an account contains the name of a
     # member.
     is_individual_account = re.compile('|'.join(map(re.escape, members))).search
@@ -76,9 +80,9 @@ def split_expenses(entries, options_map, config):
         if isinstance(entry, data.Transaction):
             new_postings = []
             for posting in entry.postings:
-                if is_individual_account(posting.account):
-                    new_postings.append(posting)
-                else:
+                if (is_expense_account(posting.account) and
+                    not is_individual_account(posting.account)):
+
                     # Split this posting into multiple postings.
                     split_position = copy.copy(posting.position)
                     split_position.number /= len(members)
@@ -93,6 +97,8 @@ def split_expenses(entries, options_map, config):
                         new_postings.append(
                             posting._replace(account=subaccount,
                                              position=split_position))
+                else:
+                    new_postings.append(posting)
 
             # Modify the entry in-place, replace its postings.
             entry = data.entry_replace(entry, postings=new_postings)
