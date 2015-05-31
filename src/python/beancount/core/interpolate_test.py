@@ -758,4 +758,17 @@ class TestInferTolerances(cmptest.TestCase):
           Assets:B1      -200 EUR
           Assets:B2
         """
-        pass
+
+    @parser.parsedoc_noerrors
+    def test_tolerances__bug(self, entries, _):
+        """
+        option "operating_currency" "USD"
+        option "experiment_infer_tolerance_from_cost" "TRUE"
+
+        2000-01-01 open Assets:CAAPX
+        2000-01-01 open Income:Match
+
+        2006-11-02 * "Misc"
+          Assets:CAAPX  -1.729 CAAPX {{521.67787 USD}} @ 49.65 USD
+          Income:Match
+        """

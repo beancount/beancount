@@ -4,6 +4,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
 import copy
+import decimal
 
 from beancount.core.amount import D
 from beancount.core.amount import ONE
@@ -323,13 +324,24 @@ def get_incomplete_postings(entry, options_map):
             for position in residual_positions:
                 position = -position
 
-                # Applying rounding to the deafult tolerance, if there is one.
+                # Applying rounding to the default tolerance, if there is one.
                 tolerance = inventory.get_tolerance(tolerances,
                                                     default_tolerances,
                                                     position.lot.currency)
                 if tolerance:
                     quantum = (tolerance * 2).normalize()
-                    position.number = position.number.quantize(quantum)
+
+                    # If the tolerance is a neat number provided by the user,
+                    # quantize the inferred numbers. See doc on quantize():
+                    #
+                    # Unlike other operations, if the length of the coefficient
+                    # after the quantize operation would be greater than
+                    # precision, then an InvalidOperation is signaled. This
+                    # guarantees that, unless there is an error condition, the
+                    # quantized exponent is always equal to that of the
+                    # right-hand operand.
+                    if len(quantum.as_tuple().digits) < decimal.getcontext().prec:
+                        position.number = position.number.quantize(quantum)
 
                 meta = copy.copy(old_posting.meta) if old_posting.meta else {}
                 meta[AUTOMATIC_META] = True
