@@ -25,17 +25,17 @@ from distutils.core import setup, Extension
 
 
 install_scripts = [path.join('bin', x) for x in """
-  bean-bake
-  bean-check
-  bean-doctor
-  bean-report
-  bean-query
-  bean-web
-  bean-example
-  bean-format
-  bean-sql
-  treeify
-""".splitlines() if x and not x.startswith('#')]
+bean-bake
+bean-check
+bean-doctor
+bean-report
+bean-query
+bean-web
+bean-example
+bean-format
+bean-sql
+treeify
+""".split() if x and not x.startswith('#')]
 
 
 # Please read: http://furius.ca/beancount/doc/install about releases.
