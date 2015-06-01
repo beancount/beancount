@@ -23,6 +23,7 @@ from beancount.core import account
 from beancount.core import account_types
 from beancount.core import data
 from beancount.core import getters
+from beancount.ops import prices
 from beancount.query import query_compile
 
 
@@ -217,36 +218,82 @@ class CostInventory(query_compile.EvalFunction):
         args = self.eval_args(context)
         return args[0].cost()
 
-# FIXME: This isn't ready yet.
-# class ConvertAmount(query_compile.EvalFunction):
-#     "Coerce an amount to a particular currency."
-#     __intypes__ = [amount.Amount, str]
-#
-#     def __init__(self, operands):
-#         super().__init__(operands, amount.Amount)
-#
-#     def __call__(self, context):
-#         args = self.eval_args(context)
-#         return prices.convert_amount(context.price_map, args[1], args[0])
+class OnlyInventory(query_compile.EvalFunction):
+    "Get one currency's amount from the inventory."
+    __intypes__ = [str, inventory.Inventory]
+
+    def __init__(self, operands):
+        super().__init__(operands, position.Position)
+
+    def __call__(self, context):
+        currency, inventory_ = self.eval_args(context)
+        lot = position.Lot(currency, None, None)
+        return inventory_.get_position(lot)
+
+
+class ConvertAmount(query_compile.EvalFunction):
+    "Coerce an amount to a particular currency."
+    __intypes__ = [amount.Amount, str]
+
+    def __init__(self, operands):
+        super().__init__(operands, amount.Amount)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        return prices.convert_amount(context.price_map, args[1], args[0])
+
+class ConvertPosition(query_compile.EvalFunction):
+    "Coerce an amount to a particular currency."
+    __intypes__ = [position.Position, str]
+
+    def __init__(self, operands):
+        super().__init__(operands, amount.Amount)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        position_, currency = args
+        return prices.convert_amount(context.price_map,
+                                     currency, position_.get_cost())
+
+class ConvertInventory(query_compile.EvalFunction):
+    "Coerce an inventory to a particular currency."
+    __intypes__ = [inventory.Inventory, str]
+
+    def __init__(self, operands):
+        super().__init__(operands, inventory.Inventory)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        inventory_, currency = args
+        converted_inventory = inventory.Inventory()
+        for position_ in inventory_:
+            converted_amount = prices.convert_amount(context.price_map,
+                                                     currency, position_.get_cost())
+            converted_inventory.add_amount(converted_amount)
+        return converted_inventory
 
 
 SIMPLE_FUNCTIONS = {
-    'str'                          : Str,
-    'length'                       : Length,
-    'maxwidth'                     : MaxWidth,
-    'parent'                       : Parent,
-    'open_date'                    : OpenDate,
-    'close_date'                   : CloseDate,
-    'account_sortkey'              : AccountSortKey,
-    ('units', position.Position)   : UnitsPosition,
-    ('units', inventory.Inventory) : UnitsInventory,
-    ('cost', position.Position)    : CostPosition,
-    ('cost', inventory.Inventory)  : CostInventory,
-    'year'                         : Year,
-    'month'                        : Month,
-    'ymonth'                       : YearMonth,
-    'day'                          : Day,
-    'weekday'                      : Weekday,
+    'str'                                 : Str,
+    'length'                              : Length,
+    'maxwidth'                            : MaxWidth,
+    'parent'                              : Parent,
+    'open_date'                           : OpenDate,
+    'close_date'                          : CloseDate,
+    'account_sortkey'                     : AccountSortKey,
+    ('units', position.Position)          : UnitsPosition,
+    ('units', inventory.Inventory)        : UnitsInventory,
+    ('cost', position.Position)           : CostPosition,
+    ('cost', inventory.Inventory)         : CostInventory,
+    'only'                                : OnlyInventory,
+    'year'                                : Year,
+    'month'                               : Month,
+    'ymonth'                              : YearMonth,
+    'day'                                 : Day,
+    'weekday'                             : Weekday,
+    ('convert', amount.Amount, str)       : ConvertAmount,
+    ('convert', position.Position, str)   : ConvertPosition,
+    ('convert', inventory.Inventory, str) : ConvertInventory,
     }
 
 

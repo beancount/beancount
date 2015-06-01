@@ -42,6 +42,7 @@ class JournalReport(report.HTMLReport,
         parser.add_argument('-x', '--compact', dest='verbosity', action='store_const',
                             const=journal_text.COMPACT, default=journal_text.NORMAL,
                             help="Rendering compactly")
+
         parser.add_argument('-X', '--verbose', dest='verbosity', action='store_const',
                             const=journal_text.VERBOSE,
                             help="Rendering verbosely")
@@ -85,7 +86,9 @@ class JournalReport(report.HTMLReport,
 
     def render_real_htmldiv(self, real_root, options_map, file):
         postings = self.get_postings(real_root)
-        journal_html.html_entries_table_with_balance(file, postings, self.formatter)
+        render_postings = self.args.verbosity == journal_text.VERBOSE
+        journal_html.html_entries_table_with_balance(file, postings, self.formatter,
+                                                     render_postings)
 
 
 class ConversionsReport(report.HTMLReport):

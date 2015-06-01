@@ -1,0 +1,63 @@
+plugin "beancount.ops.auto_accounts"
+
+2015-03-07 * "Martin" | "Final reconciliation for Martin"
+  Income:Martin:Cash               -870.00 USD
+  Income:Martin:Cash:Foreign          60.0 MXN
+  Income:Martin:CreditCard        -1969.28 USD
+  Income:Martin:Wallet              500.00 USD
+  Expenses:Accommodation            735.45 USD
+  Expenses:Alcohol                   483.0 MXN
+  Expenses:Bicycles                   69.5 MXN
+  Expenses:Flights                  488.00 USD
+  Expenses:Groceries                 197.0 MXN
+  Expenses:Museum                     64.0 MXN
+  Expenses:Restaurant                22.28 USD
+  Expenses:Restaurant               1795.5 MXN
+  Expenses:Scuba                    120.00 USD
+  Expenses:Scuba:Martin             386.14 USD
+  Expenses:Scuba:ParkFees:Martin      7.50 USD
+  Expenses:Tips                       25.0 MXN
+  Expenses:Tips                      62.50 USD
+  Expenses:Tips:Martin              126.66 USD
+  Expenses:Tips:Martin               200.0 MXN
+  Expenses:Transport:Bus             709.0 MXN
+  Expenses:Transport:Taxi            53.90 USD
+  Expenses:Transport:Taxi            294.0 MXN
+  Expenses:Transport:Train            5.00 USD
+  Assets:Reconciliation:Martin      331.85 USD
+  Assets:Reconciliation:Martin     -3897.0 MXN
+
+2015-03-07 * "Martin" | "Final conversion"
+  Assets:Reconciliation:Martin   3897.0 MXN @ 0.07326 USD
+  Assets:Reconciliation:Martin  -285.49 USD              
+
+2015-03-07 * "Caroline" | "Final reconciliation for Caroline"
+  Income:Caroline:Cash               -160.00 USD
+  Income:Caroline:Cash                   5.0 MXN
+  Income:Caroline:CreditCard        -1245.00 USD
+  Income:Caroline:MetroCard           -10.00 USD
+  Income:Caroline:Wallet             -500.00 USD
+  Expenses:Accommodation              735.45 USD
+  Expenses:Alcohol                     483.0 MXN
+  Expenses:Bicycles                     69.5 MXN
+  Expenses:Flights                    488.00 USD
+  Expenses:Groceries                   197.0 MXN
+  Expenses:Museum                       64.0 MXN
+  Expenses:Restaurant                  22.28 USD
+  Expenses:Restaurant                 1795.5 MXN
+  Expenses:Scuba                      120.00 USD
+  Expenses:Scuba:Caroline             174.00 USD
+  Expenses:Scuba:ParkFees:Caroline      2.50 USD
+  Expenses:Tips                         25.0 MXN
+  Expenses:Tips                        62.50 USD
+  Expenses:Tips:Caroline               23.34 USD
+  Expenses:Transport:Bus               709.0 MXN
+  Expenses:Transport:Taxi              53.90 USD
+  Expenses:Transport:Taxi              294.0 MXN
+  Expenses:Transport:Train              5.00 USD
+  Assets:Reconciliation:Caroline      228.03 USD
+  Assets:Reconciliation:Caroline     -3642.0 MXN
+
+2015-03-07 * "Caroline" | "Final conversion"
+  Assets:Reconciliation:Caroline   3642.0 MXN @ 0.07326 USD
+  Assets:Reconciliation:Caroline  -266.81 USD              

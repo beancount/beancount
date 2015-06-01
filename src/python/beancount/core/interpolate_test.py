@@ -14,7 +14,6 @@ from beancount.core import amount
 from beancount.core import position
 from beancount.parser import parser
 from beancount.parser import cmptest
-from beancount.ops import validation
 from beancount import loader
 
 
