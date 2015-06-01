@@ -15,6 +15,59 @@
 #include "parser.h"
 #include "lexer.h"
 
+
+/* FIXME: remove this */
+PyObject* checkNull(PyObject* o)
+{
+    if ( o == NULL ) {
+        PyErr_Print();
+        /* FIXME: We should remove this and handle all errors. */
+        abort();
+    }
+    return o;
+}
+
+
+
+#define BUILD(method_name, format, ...)                                                 \
+    checkNull( PyObject_CallMethod(builder, method_name, format, __VA_ARGS__) );
+
+#define BUILD_NOARGS(method_name)                                       \
+    checkNull( PyObject_CallMethod(builder, method_name, NULL) );
+
+
+#define BUILD_X(method_name, format, ...)                                                        \
+    PyObject* build_value = PyObject_CallMethod(builder, method_name, format, __VA_ARGS__);     \
+    if (build_value == NULL) {                                                                  \
+        YYABORT;                                                                                \
+    }
+
+#define BUILD_NOARGS_X(method_name)                                             \
+    PyObject* build_value = PyObject_CallMethod(builder, method_name, NULL);    \
+    if (build_value == NULL) {                                                  \
+        YYABORT;                                                                \
+    }
+
+/* FIXME: if there is an error, we end up leaking the $1, $2, ... find a
+   solution for this. Maybe a more sensible solution here would be to inc-ref
+   None when setting that and to have the cleanup/decref code be done all within
+   the macro, to simplify all the code below. */
+
+/* FIXME: Complete testing aborting from here instead of calling abort() as above. */
+/* #define BUILD(method_name, format, ...)                                                         \ */
+/*     {                                                                                           \ */
+/*         checkNull( PyObject_CallMethod(builder, method_name, format, __VA_ARGS__) );            \ */
+/*         PyObject* result = PyObject_CallMethod(builder, method_name, format, __VA_ARGS__)       \ */
+/*         if (result == NULL) {                                                                   \ */
+/*             YYABORT;                                                                            \ */
+/*         }, result                                                                               \ */
+/*     } */
+
+
+
+
+
+
 /* First line of reported file/line string. This is used as #line. */
 int yy_firstline;
 
@@ -196,34 +249,40 @@ number_expr : NUMBER
 
 txn_fields : empty
            {
-               $$ = BUILD_NOARGS("txn_field_new");
+               BUILD_NOARGS_X("txn_field_new");
+               $$ = build_value;
            }
            | txn_fields STRING
            {
-               $$ = BUILD("txn_field_STRING", "OO", $1, $2);
+               BUILD_X("txn_field_STRING", "OO", $1, $2);
                DECREF2($1, $2);
+               $$ = build_value;
            }
            | txn_fields LINK
            {
-               $$ = BUILD("txn_field_LINK", "OO", $1, $2);
+               BUILD_X("txn_field_LINK", "OO", $1, $2);
                DECREF2($1, $2);
+               $$ = build_value;
            }
            | txn_fields TAG
            {
-               $$ = BUILD("txn_field_TAG", "OO", $1, $2);
+               BUILD_X("txn_field_TAG", "OO", $1, $2);
                DECREF2($1, $2);
+               $$ = build_value;
            }
            | txn_fields PIPE
            {
                /* Mark PIPE as present for backwards compatibility and raise an error */
-               $$ = BUILD("txn_field_PIPE", "OO", $1, Py_None);
+               BUILD_X("txn_field_PIPE", "OO", $1, Py_None);
                DECREF1($1);
+               $$ = build_value;
            }
 
 transaction : DATE txn txn_fields eol posting_or_kv_list
             {
-                $$ = BUILD("transaction", "siObOO", FILE_LINE_ARGS, $1, $2, $3, $5);
+                BUILD_X("transaction", "siObOO", FILE_LINE_ARGS, $1, $2, $3, $5);
                 DECREF4($1, $2, $3, $5);
+                $$ = build_value;
             }
 
 optflag : empty
@@ -234,29 +293,34 @@ optflag : empty
 
 posting : INDENT optflag ACCOUNT position eol
         {
-            $$ = BUILD("posting", "siOOOOb", FILE_LINE_ARGS, $3, $4, Py_None, Py_False, $2);
+            BUILD_X("posting", "siOOOOb", FILE_LINE_ARGS, $3, $4, Py_None, Py_False, $2);
             DECREF2($3, $4);
+            $$ = build_value;
         }
         | INDENT optflag ACCOUNT position AT amount eol
         {
-            $$ = BUILD("posting", "siOOOOb", FILE_LINE_ARGS, $3, $4, $6, Py_False, $2);
+            BUILD_X("posting", "siOOOOb", FILE_LINE_ARGS, $3, $4, $6, Py_False, $2);
             DECREF3($3, $4, $6);
+            $$ = build_value;
         }
         | INDENT optflag ACCOUNT position ATAT amount eol
         {
-            $$ = BUILD("posting", "siOOOOb", FILE_LINE_ARGS, $3, $4, $6, Py_True, $2);
+            BUILD_X("posting", "siOOOOb", FILE_LINE_ARGS, $3, $4, $6, Py_True, $2);
             DECREF3($3, $4, $6);
+            $$ = build_value;
         }
         | INDENT optflag ACCOUNT eol
         {
-            $$ = BUILD("posting", "siOOOOb", FILE_LINE_ARGS, $3, Py_None, Py_None, Py_False, $2);
+            BUILD_X("posting", "siOOOOb", FILE_LINE_ARGS, $3, Py_None, Py_None, Py_False, $2);
             DECREF1($3);
+            $$ = build_value;
         }
 
 key_value : INDENT KEY key_value_value eol
           {
-              $$ = BUILD("key_value", "OO", $2, $3);
+              BUILD_X("key_value", "OO", $2, $3);
               DECREF2($2, $3);
+              $$ = build_value;
           }
 
 key_value_value : STRING
@@ -283,13 +347,15 @@ posting_or_kv_list : empty
                    }
                    | posting_or_kv_list key_value
                    {
-                       $$ = BUILD("handle_list", "OO", $1, $2);
+                       BUILD_X("handle_list", "OO", $1, $2);
                        DECREF2($1, $2);
+                       $$ = build_value;
                    }
                    | posting_or_kv_list posting
                    {
-                       $$ = BUILD("handle_list", "OO", $1, $2);
+                       BUILD_X("handle_list", "OO", $1, $2);
                        DECREF2($1, $2);
+                       $$ = build_value;
                    }
 
 key_value_list : empty
@@ -299,8 +365,9 @@ key_value_list : empty
                }
                | key_value_list key_value
                {
-                   $$ = BUILD("handle_list", "OO", $1, $2);
+                   BUILD_X("handle_list", "OO", $1, $2);
                    DECREF2($1, $2);
+                   $$ = build_value;
                }
 
 currency_list : empty
@@ -310,31 +377,36 @@ currency_list : empty
               }
               | CURRENCY
               {
-                  $$ = BUILD("handle_list", "OO", Py_None, $1);
+                  BUILD_X("handle_list", "OO", Py_None, $1);
                   DECREF1($1);
+                  $$ = build_value;
               }
               | currency_list COMMA CURRENCY
               {
-                  $$ = BUILD("handle_list", "OO", $1, $3);
+                  BUILD_X("handle_list", "OO", $1, $3);
                   DECREF2($1, $3);
+                  $$ = build_value;
               }
 
 pushtag : PUSHTAG TAG eol
          {
-             BUILD("pushtag", "O", $2);
+             BUILD_X("pushtag", "O", $2);
              DECREF1($2);
+             DECREF1(build_value);
          }
 
 poptag : POPTAG TAG eol
        {
-           BUILD("poptag", "O", $2);
+           BUILD_X("poptag", "O", $2);
            DECREF1($2);
+           DECREF1(build_value);
        }
 
 open : DATE OPEN ACCOUNT currency_list opt_booking eol key_value_list
      {
-         $$ = BUILD("open", "siOOOOO", FILE_LINE_ARGS, $1, $3, $4, $5, $7);
+         BUILD_X("open", "siOOOOO", FILE_LINE_ARGS, $1, $3, $4, $5, $7);
          DECREF5($1, $3, $4, $5, $7);
+         $$ = build_value;
      }
 
 opt_booking : STRING
@@ -349,107 +421,123 @@ opt_booking : STRING
 
 close : DATE CLOSE ACCOUNT eol key_value_list
       {
-          $$ = BUILD("close", "siOOO", FILE_LINE_ARGS, $1, $3, $5);
+          BUILD_X("close", "siOOO", FILE_LINE_ARGS, $1, $3, $5);
           DECREF3($1, $3, $5);
+          $$ = build_value;
       }
 
 commodity : DATE COMMODITY CURRENCY eol key_value_list
           {
-              $$ = BUILD("commodity", "siOOO", FILE_LINE_ARGS, $1, $3, $5);
+              BUILD_X("commodity", "siOOO", FILE_LINE_ARGS, $1, $3, $5);
               DECREF3($1, $3, $5);
+              $$ = build_value;
           }
 
 pad : DATE PAD ACCOUNT ACCOUNT eol key_value_list
     {
-        $$ = BUILD("pad", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
+        BUILD_X("pad", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
         DECREF4($1, $3, $4, $6);
+        $$ = build_value;
     }
 
 balance : DATE BALANCE ACCOUNT amount_tolerance eol key_value_list
         {
-            $$ = BUILD("balance", "siOOOOO", FILE_LINE_ARGS, $1, $3, $4.pyobj1, $4.pyobj2, $6);
+            BUILD_X("balance", "siOOOOO", FILE_LINE_ARGS, $1, $3, $4.pyobj1, $4.pyobj2, $6);
             DECREF3($1, $3, $6);
             DECREF2($4.pyobj1, $4.pyobj2);
+            $$ = build_value;
         }
 
 amount : number_expr CURRENCY
        {
-           PyObject* o = BUILD("amount", "OO", $1, $2);
-           $$ = o;
+           BUILD_X("amount", "OO", $1, $2);
            DECREF2($1, $2);
+           $$ = build_value;
        }
 
 amount_tolerance : number_expr CURRENCY
                  {
-                     $$.pyobj1 = BUILD("amount", "OO", $1, $2);
+                     BUILD_X("amount", "OO", $1, $2);
+                     $$.pyobj1 = build_value;
                      $$.pyobj2 = Py_None;
                      Py_INCREF(Py_None);
                      DECREF2($1, $2);
                  }
                  | number_expr TILDE number_expr CURRENCY
                  {
-                     $$.pyobj1 = BUILD("amount", "OO", $1, $4);
+                     BUILD_X("amount", "OO", $1, $4);
+                     $$.pyobj1 = build_value;
                      $$.pyobj2 = $3;
                      DECREF3($1, $3, $4);
                  }
 
 position : amount
          {
-             $$ = BUILD("position", "siOO", FILE_LINE_ARGS, $1, Py_None);
+             BUILD_X("position", "siOO", FILE_LINE_ARGS, $1, Py_None);
              DECREF1($1);
+             $$ = build_value;
          }
          | amount lot_cost_date
          {
-             $$ = BUILD("position", "siOO", FILE_LINE_ARGS, $1, $2);
+             BUILD_X("position", "siOO", FILE_LINE_ARGS, $1, $2);
              DECREF2($1, $2);
+             $$ = build_value;
          }
 
 lot_cost_date : LCURL amount RCURL
          {
-             $$ = BUILD("lot_cost_date", "OOO", $2, Py_None, Py_False);
+             BUILD_X("lot_cost_date", "OOO", $2, Py_None, Py_False);
              DECREF1($2);
+             $$ = build_value;
          }
          | LCURL amount SLASH DATE RCURL
          {
-             $$ = BUILD("lot_cost_date", "OOO", $2, $4, Py_False);
+             BUILD_X("lot_cost_date", "OOO", $2, $4, Py_False);
              DECREF2($2, $4);
+             $$ = build_value;
          }
          | LCURLCURL amount RCURLCURL
          {
-             $$ = BUILD("lot_cost_date", "OOO", $2, Py_None, Py_True);
+             BUILD_X("lot_cost_date", "OOO", $2, Py_None, Py_True);
              DECREF1($2);
+             $$ = build_value;
          }
          | LCURLCURL amount SLASH DATE RCURLCURL
          {
-             $$ = BUILD("lot_cost_date", "OOO", $2, $4, Py_True);
+             BUILD_X("lot_cost_date", "OOO", $2, $4, Py_True);
              DECREF2($2, $4);
+             $$ = build_value;
          }
 
 
 price : DATE PRICE CURRENCY amount eol key_value_list
       {
-          $$ = BUILD("price", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
+          BUILD_X("price", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
           DECREF4($1, $3, $4, $6);
+          $$ = build_value;
       }
 
 event : DATE EVENT STRING STRING eol key_value_list
       {
-          $$ = BUILD("event", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
+          BUILD_X("event", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
           DECREF4($1, $3, $4, $6);
+          $$ = build_value;
       }
 
 note : DATE NOTE ACCOUNT STRING eol key_value_list
       {
-          $$ = BUILD("note", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
+          BUILD_X("note", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
           DECREF4($1, $3, $4, $6);
+          $$ = build_value;
       }
 
 filename : STRING
 
 document : DATE DOCUMENT ACCOUNT filename eol key_value_list
          {
-             $$ = BUILD("document", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
+             BUILD_X("document", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
              DECREF4($1, $3, $4, $6);
+             $$ = build_value;
          }
 
 entry : transaction
@@ -468,25 +556,29 @@ entry : transaction
 
 option : OPTION STRING STRING eol
        {
-          BUILD("option", "siOO", FILE_LINE_ARGS, $2, $3);
+          BUILD_X("option", "siOO", FILE_LINE_ARGS, $2, $3);
           DECREF2($2, $3);
+          DECREF1(build_value);
        }
 
 include : INCLUDE STRING eol
        {
-          BUILD("include", "siO", FILE_LINE_ARGS, $2);
+          BUILD_X("include", "siO", FILE_LINE_ARGS, $2);
           DECREF1($2);
+          DECREF1(build_value);
        }
 
 plugin : PLUGIN STRING eol
        {
-          BUILD("plugin", "siOO", FILE_LINE_ARGS, $2, Py_None);
+          BUILD_X("plugin", "siOO", FILE_LINE_ARGS, $2, Py_None);
           DECREF1($2);
+          DECREF1(build_value);
        }
        | PLUGIN STRING STRING eol
        {
-          BUILD("plugin", "siOO", FILE_LINE_ARGS, $2, $3);
+          BUILD_X("plugin", "siOO", FILE_LINE_ARGS, $2, $3);
           DECREF2($2, $3);
+          DECREF1(build_value);
        }
 
 directive : SKIPPED
@@ -504,8 +596,9 @@ declarations : declarations directive
              }
              | declarations entry
              {
-                 $$ = BUILD("handle_list", "OO", $1, $2);
+                 BUILD_X("handle_list", "OO", $1, $2);
                  DECREF2($1, $2);
+                 $$ = build_value;
              }
              | declarations error
              {
@@ -523,7 +616,8 @@ declarations : declarations directive
 
 file : declarations
      {
-         BUILD("store_result", "O", $1);
+         BUILD_X("store_result", "O", $1);
+         DECREF1(build_value);
      }
 
 

@@ -5,7 +5,9 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import collections
 import datetime
 import re
+import sys
 import tempfile
+import traceback
 
 from beancount.core import data
 from beancount.core import account
@@ -63,11 +65,15 @@ class LexBuilder(object):
         return data.new_metadata(_parser.get_yyfilename(),
                                  _parser.get_yylineno())
 
-## FIXME: you can probable remove this if you can communicate with the parser
-## some other way.
-    def build_lexer_error(self, string): # {0e31aeca3363}
-        #print('build_lexer_error({})'.format(string))
-        self.errors.append(LexerError(self.get_lexer_location(), string, None))
+    # Note: We could simplify the code by removing this if we could find a good
+    # way to have the lexer communicate the error contents to the parser.
+    def build_lexer_error(self, string, exc_type=None): # {0e31aeca3363}
+        if not isinstance(string, str):
+            string = str(string)
+        if exc_type is not None:
+            string = '{}: {}'.format(exc_type.__name__, string)
+        self.errors.append(
+            LexerError(self.get_lexer_location(), string, None))
 
     def DATE(self, year, month, day):
         """Process a DATE token.

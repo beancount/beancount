@@ -32,17 +32,10 @@
 /* Build and accumulate an error on the builder object. */
 void build_lexer_error(YYSTYPE* yylval, const char* string, size_t length);
 
-/* Fetch the exception context's error message and communicate it to
- * yyerror(), and finally clear the exception. */
+/* Build and accumulate an error on the builder object using the current
+ * exception state. */
 void build_lexer_error_from_exception(YYSTYPE* yylval);
 
-#if 0
-/* A static buffer to contain error text to be communicated to the parser. This
- * is the currently the only way to communicate with yyerror() and centralize
- * the creation of error objects. */
-#define ERROR_BUFFER_SIZE  4096
-char error_buffer[ERROR_BUFFER_SIZE];
-#endif
 
 
 /* Callback call site with error handling. */
@@ -397,70 +390,42 @@ int strtonl(const char* buf, size_t nchars)
 /* Build and accumulate an error on the builder object. */
 void build_lexer_error(YYSTYPE* yylval, const char* string, size_t length)
 {
-    /* TRACE_ERROR("Creating error with text '%s'\n", string); */
-
-#if 0
-    /* Communicate the error message to use to yyerror(). */
-    static char error_buffer[1024];
-    snprintf(error_buffer, 1024, "%s", string);
-    yylval->string = error_buffer;
-
-    /* FIXME: If you can recuperate the text above from the parser you should be
-     * able to do all error handling in there. Also, be careful about memory
-     * management. */
-
-#else
     /* Build and accumulate a new error object. {27d1d459c5cd} */
     PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error",
                                        "s#", string, length);
     if (rv == NULL) {
-        /* Process internal error */
-        /* FIXME: fix this, add a test for it too  */
-        fprintf(stderr, "Internal error\n");
+        PyErr_SetString(PyExc_RuntimeError,
+                        "Internal error: Building exception from default rule");
     }
-#endif
 }
 
 void build_lexer_error_from_exception(YYSTYPE* yylval)
 {
-    /* FIXME: We should call back into the lexer for this. */
-
     /* Get the exception context. */
     PyObject* ptype;
     PyObject* pvalue;
     PyObject* ptraceback;
     PyErr_Fetch(&ptype, &pvalue, &ptraceback);
     PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+
+    /* Clear the exception. */
+    PyErr_Clear();
+
     if (pvalue != NULL) {
-        /* Convert the exception to a string. */
-        PyObject* type_strobj = PyObject_GetAttrString(ptype, "__name__");
-        Py_ssize_t type_length;
-        const char* type_str = PyUnicode_AsUTF8AndSize(type_strobj, &type_length);
+        /* Build and accumulate a new error object. {27d1d459c5cd} */
+        PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error",
+                                           "OO", pvalue, ptype);
+        Py_DECREF(ptype);
+        Py_DECREF(pvalue);
+        Py_DECREF(ptraceback);
 
-        PyObject* message_strobj = PyObject_Str(pvalue);
-        Py_ssize_t message_length;
-        const char* message_str = PyUnicode_AsUTF8AndSize(message_strobj, &message_length);
-
-        char buffer[1024];
-        size_t length = 0;
-        strncpy(buffer + length, type_str, 1024 - length);
-        length += type_length;
-        strncpy(buffer + length, ": ", 1024 - length);
-        length += 2;
-        strncpy(buffer + length, message_str, 1024 - length);
-        length += message_length;
-
-        Py_DECREF(type_strobj);
-        Py_DECREF(message_strobj);
-
-        /* Register the error. */
-        build_lexer_error(yylval, buffer, length);
+        if (rv == NULL) {
+            PyErr_SetString(PyExc_RuntimeError,
+                            "Internal error: Building exception");
+        }
     }
     else {
-        /* This is unexpected... we only call this function after an exception
-         * has occurred. register an internal error. */
-        build_lexer_error(yylval, "Internal error: No exception", 28);
+        PyErr_SetString(PyExc_RuntimeError,
+                        "Internal error: No exception");
     }
-
-    /* PyErr_Clear(); */
 }

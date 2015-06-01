@@ -16,17 +16,10 @@
 /* Build and accumulate an error on the builder object. */
 void build_lexer_error(YYSTYPE* yylval, const char* string, size_t length);
 
-/* Fetch the exception context's error message and communicate it to
- * yyerror(), and finally clear the exception. */
+/* Build and accumulate an error on the builder object using the current
+ * exception state. */
 void build_lexer_error_from_exception(YYSTYPE* yylval);
 
-#if 0
-/* A static buffer to contain error text to be communicated to the parser. This
- * is the currently the only way to communicate with yyerror() and centralize
- * the creation of error objects. */
-#define ERROR_BUFFER_SIZE  4096
-char error_buffer[ERROR_BUFFER_SIZE];
-#endif
 
 
 /* Callback call site with error handling. */
@@ -87,7 +80,7 @@ int strtonl(const char* buf, size_t nchars);
 
 
 
-#line 91 "src/python/beancount/parser/lexer.h"
+#line 84 "src/python/beancount/parser/lexer.h"
 
 #define  YY_INT_ALIGNED short int
 
@@ -422,9 +415,9 @@ extern int yylex \
 #undef YY_DECL
 #endif
 
-#line 378 "src/python/beancount/parser/lexer.l"
+#line 337 "src/python/beancount/parser/lexer.l"
 
 
-#line 429 "src/python/beancount/parser/lexer.h"
+#line 422 "src/python/beancount/parser/lexer.h"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */

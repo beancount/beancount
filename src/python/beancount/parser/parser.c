@@ -21,20 +21,6 @@ extern int yy_firstline;
 PyObject* builder = 0;
 
 
-/* Check if the object is null; if so, report an error. This is used internally
-   only, to debug the parser rules, and should never trigger in production. */
-PyObject* checkNull(PyObject* o)
-{
-    if ( o == NULL ) {
-        PyErr_Print();
-        /* FIXME: We should remove this and handle all errors. */
-        abort();
-    }
-    return o;
-}
-
-
-
 PyDoc_STRVAR(parse_file_doc,
 "Parse the filename, calling back methods on the builder.\n\
 Your builder is responsible to accumulating results.\n\

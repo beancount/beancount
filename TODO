@@ -2,6 +2,22 @@
 beancount: TODO
 * C Code Review
 
+
+  - See if you could not best communicate the error from the lexer to the parser
+    via the exception vehicle. If the parser handles things nicely using
+    exceptions, this might be the best way!
+
+    If so, remove build_lexer_error; build all errors from the parser.
+
+  - Move the parser.Builder code to grammar.py to be coherent with lexer.py.
+    Split up the tests and what-not.
+
+
+  - We need to correctly chomp until a newline without calling yyerror()
+    repeatedly; do this properly. yyerror() should be called only once per
+    error.
+
+
   - You don't need to incref the builder... remove that. Test it.
 
   - Add coding support for file version _parser.parse_file(), i.e. can we read a
@@ -15,8 +31,6 @@ beancount: TODO
   - Add a test for passing in different strings.
   - Add tests for strings with an explicitly provided encoding.
 
-  - Move the parser.Builder code to grammar.py to be coherent with lexer.py.
-    Split up the tests and what-not.
 
 * Explicit Tolerance
 
