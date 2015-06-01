@@ -5,6 +5,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import collections
 import copy
 
+from beancount.core.amount import D
 from beancount.core.amount import ONE
 from beancount.core.amount import ZERO
 from beancount.core.amount import HALF
@@ -17,6 +18,17 @@ from beancount.core.data import Posting
 from beancount.core.data import reparent_posting
 from beancount.core.data import entry_replace
 from beancount.core import getters
+
+
+# The default tolerances value to use for legacy tolerances.
+LEGACY_DEFAULT_TOLERANCES = {'*': D('0.005')}
+
+
+# The maximum number of user-specified coefficient digits we should allow for a
+# tolerance setting. This would allow the user to provide a tolerance like
+# 0.1234 but not 0.123456. This is used to detect whether a tolerance value
+# is input by the user and not inferred automatically.
+MAX_TOLERANCE_DIGITS = 5
 
 
 # An error from balancing the postings.
@@ -81,7 +93,7 @@ def compute_residual(postings):
     return inventory
 
 
-def infer_tolerances(postings, use_cost=False):
+def infer_tolerances(postings, options_map, use_cost=None):
     """Infer tolerances from a list of postings.
 
     The tolerance is the maximum fraction that is being used for each currency
@@ -99,10 +111,15 @@ def infer_tolerances(postings, use_cost=False):
       postings: A list of Posting instances.
       use_cost: A boolean, true if we should be using a combination of the smallest
         digit of the number times the cost or price in order to infer the tolerance.
+        If the value is left unspecified (as 'None'), the default value can be
+        overridden by setting an option.
     Returns:
       A dict of currency to the tolerated difference amount to be used for it,
       e.g. 0.005.
     """
+    if use_cost is None:
+        use_cost = options_map["experiment_infer_tolerance_from_cost"]
+
     tolerances = {}
     for posting in postings:
         # Skip the precision on automatically inferred postings.
@@ -242,9 +259,9 @@ def get_incomplete_postings(entry, options_map):
         # This is supported only to support an easy transition for users.
         # Users should be able to revert to this easily.
         tolerances = {}
-        default_tolerances = {'*': '0.005'}
+        default_tolerances = LEGACY_DEFAULT_TOLERANCES
     else:
-        tolerances = infer_tolerances(postings)
+        tolerances = infer_tolerances(postings, options_map)
         default_tolerances = options_map['default_tolerance']
 
     # Process all the postings.
@@ -313,13 +330,24 @@ def get_incomplete_postings(entry, options_map):
             for position in residual_positions:
                 position = -position
 
-                # Applying rounding to the deafult tolerance, if there is one.
+                # Applying rounding to the default tolerance, if there is one.
                 tolerance = inventory.get_tolerance(tolerances,
                                                     default_tolerances,
                                                     position.lot.currency)
                 if tolerance:
                     quantum = (tolerance * 2).normalize()
-                    position.number = position.number.quantize(quantum)
+
+                    # If the tolerance is a neat number provided by the user,
+                    # quantize the inferred numbers. See doc on quantize():
+                    #
+                    # Unlike other operations, if the length of the coefficient
+                    # after the quantize operation would be greater than
+                    # precision, then an InvalidOperation is signaled. This
+                    # guarantees that, unless there is an error condition, the
+                    # quantized exponent is always equal to that of the
+                    # right-hand operand.
+                    if len(quantum.as_tuple().digits) < MAX_TOLERANCE_DIGITS:
+                        position.number = position.number.quantize(quantum)
 
                 meta = copy.copy(old_posting.meta) if old_posting.meta else {}
                 meta[AUTOMATIC_META] = True

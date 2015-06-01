@@ -72,14 +72,23 @@ RedirectMatch /doc/inventories$           /beancount/doc/booking
 RedirectMatch /doc/inventory$             /beancount/doc/booking
 RedirectMatch /doc/how-inventories-work   /beancount/doc/booking
 
-RedirectMatch /doc/cheatsheet$            http://furius.ca/beancount/doc/cheatsheet/beancount-cheatsheet.pdf
+RedirectMatch /doc/cheatsheet$            https://docs.google.com/document/d/1M4GwF6BkcXyVVvj4yXBJMX7YFXpxlxo95W6CpU3uWVc/
 RedirectMatch /doc/cheat$                 /beancount/doc/cheatsheet
 RedirectMatch /doc/sheet$                 /beancount/doc/cheatsheet
+RedirectMatch /doc/reference$             /beancount/doc/cheatsheet
+
+RedirectMatch /doc/cheatsheet-old$        http://furius.ca/beancount/doc/cheatsheet/beancount-cheatsheet.pdf
+RedirectMatch /doc/old$-cheatsheet        /beancount/doc/cheatsheet-old
+
 
 RedirectMatch /doc/design-doc$            https://docs.google.com/document/d/1N7HDXuNWgLG2PqFS4Kkgv5LzAAtU6c97UVNT7tdTIjA/
 RedirectMatch /doc/design$                /beancount/doc/design-doc
 RedirectMatch /doc/devel-doc$             /beancount/doc/design-doc
 RedirectMatch /doc/devel$                 /beancount/doc/design-doc
+
+RedirectMatch /doc/converting$            https://docs.google.com/document/d/1tkoUeSfZyEhEGdXHwYp5vBrSrNDgC4FVXhReSWsILlw/
+RedirectMatch /doc/convert$		  /beancount/doc/converting
+RedirectMatch /doc/ledger$		  /beancount/doc/converting
 
 RedirectMatch /doc/conversions$           https://docs.google.com/document/d/1rW7zQyMiv8hKZ0993pwQiu5vTxzEOQf_Q67GvVk6zu0/
 
@@ -100,6 +109,11 @@ RedirectMatch /doc/proposal-inventory$    /beancount/doc/proposal-booking
 RedirectMatch /doc/tolerances$            https://docs.google.com/document/d/1lgHxUUEY-UVEgoF6cupz2f_7v7vEF7fiJyiSlYYlhOo/
 RedirectMatch /doc/precision$             /beancount/doc/tolerances
 RedirectMatch /doc/rounding$              /beancount/doc/tolerances
+
+RedirectMatch /doc/sharing$               https://docs.google.com/document/d/1FRcJqUfeAMQO6KjG94w6rF7VajMGJaFplmF1Wu0rCHY/
+RedirectMatch /doc/share                  /beancount/doc/sharing
+RedirectMatch /doc/splitting              /beancount/doc/sharing
+RedirectMatch /doc/split                  /beancount/doc/sharing
 
 RedirectMatch /doc/proposal-rounding$     https://docs.google.com/document/d/1MY2JMiiXUmcwsOT0CkiK-fCo0ZE7nbr8uTcTL50b6X4/
 RedirectMatch /doc/proposal-residual$     /beancount/doc/proposal-rounding

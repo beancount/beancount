@@ -265,9 +265,15 @@ static struct PyModuleDef moduledef = {
 
 PyMODINIT_FUNC PyInit__parser(void)
 {
-    PyObject* m = PyModule_Create(&moduledef);
-    if ( m == NULL )
+    PyObject* module = PyModule_Create(&moduledef);
+    if ( module == NULL )
         Py_RETURN_NONE;
 
-    return m;
+    /* Provide the source hash to the parser module for verification that the
+     * extension module is up-to-date. */
+    /* uint64_t int_source_hash = #PARSER_SOURCE_HASH; */
+    PyObject* source_hash = PyUnicode_FromString(PARSER_SOURCE_HASH);
+    PyObject_SetAttrString(module, "SOURCE_HASH", source_hash);
+
+    return module;
 }

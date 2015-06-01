@@ -12,11 +12,12 @@ from beancount.core import display_context
 from beancount.parser import printer
 
 
-def render_entry_context(entries, dcontext, filename, lineno):
+def render_entry_context(entries, options_map, dcontext, filename, lineno):
     """Render the context before and after a particular transaction is applied.
 
     Args:
       entries: A list of directives.
+      options_map: A dict of options, as produced by the parser.
       dcontext: An instance of DisplayContext used to format the numbers.
       filename: A string, the name of the file from which the transaction was parsed.
       lineno: An integer, the line number in the file the transacation was parsed from.
@@ -74,7 +75,7 @@ def render_entry_context(entries, dcontext, filename, lineno):
             print(file=oss)
             print(';;; Residual: {}'.format(residual.to_string(dformat)), file=oss)
 
-        tolerances = interpolate.infer_tolerances(closest_entry.postings)
+        tolerances = interpolate.infer_tolerances(closest_entry.postings, options_map)
         if tolerances:
             print(file=oss)
             print(';;; Precision: {}'.format(

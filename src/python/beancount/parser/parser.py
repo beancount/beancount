@@ -39,8 +39,14 @@ from beancount.parser import _parser
 from beancount.parser import lexer
 from beancount.parser import options
 from beancount.parser import printer
+from beancount.parser import hashsrc
 from beancount.core import account
 from beancount.core import data
+
+
+# When importing the module, always check that the compiled source matched the
+# installed source.
+hashsrc.check_parser_source_files()
 
 
 __sanity_checks__ = False
@@ -811,7 +817,7 @@ class Builder(lexer.LexBuilder):
         # Check that the balance actually is empty.
         if __sanity_checks__:
             residual = compute_residual(entry.postings)
-            tolerances = infer_tolerances(entry.postings)
+            tolerances = infer_tolerances(entry.postings, self.options)
             assert residual.is_small(tolerances, self.options['default_tolerance']), (
                 "Invalid residual {}".format(residual))
 
@@ -881,7 +887,7 @@ def parsedoc(fun, no_errors=False):
     lineno += 1
 
     @functools.wraps(fun)
-    def newfun(self):
+    def wrapper(self):
         assert fun.__doc__ is not None, (
             "You need to insert a docstring on {}".format(fun.__name__))
         entries, errors, options_map = parse_string(fun.__doc__,
@@ -897,8 +903,9 @@ def parsedoc(fun, no_errors=False):
         else:
             return fun(self, entries, errors, options_map)
 
-    newfun.__doc__ = None
-    return newfun
+    wrapper.__input__ = wrapper.__doc__
+    wrapper.__doc__ = None
+    return wrapper
 
 
 def parsedoc_noerrors(fun):

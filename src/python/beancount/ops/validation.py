@@ -397,7 +397,7 @@ def validate_check_transaction_balances(entries, options_map):
             #
             # Detect complete sets of postings that have residual balance;
             residual = interpolate.compute_residual(entry.postings)
-            tolerances = interpolate.infer_tolerances(entry.postings)
+            tolerances = interpolate.infer_tolerances(entry.postings, options_map)
             if not residual.is_small(tolerances, default_tolerances):
                 errors.append(
                     ValidationError(entry.meta,

@@ -1264,6 +1264,23 @@ http://furius.ca/beancount/doc/proposal-inter
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - Add a simple overview 'stats' report with output like this:
+
+      Files these postings came from:
+        ...
+
+      Unique payees:            2681
+      Unique accounts:           151
+
+      Number of postings:       9026 (4.8 per day)
+      Uncleared postings:        126
+
+      Days since last post:     -206
+      Posts in last 7 days:       30
+      Posts in last 30 days:      52
+      Posts seen this month:       8
+
+
 
   - Make booking the cost on the same currency as the instrument impossible:
 
