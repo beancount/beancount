@@ -72,9 +72,14 @@ RedirectMatch /doc/inventories$           /beancount/doc/booking
 RedirectMatch /doc/inventory$             /beancount/doc/booking
 RedirectMatch /doc/how-inventories-work   /beancount/doc/booking
 
-RedirectMatch /doc/cheatsheet$            http://furius.ca/beancount/doc/cheatsheet/beancount-cheatsheet.pdf
+RedirectMatch /doc/cheatsheet$            https://docs.google.com/document/d/1M4GwF6BkcXyVVvj4yXBJMX7YFXpxlxo95W6CpU3uWVc/
 RedirectMatch /doc/cheat$                 /beancount/doc/cheatsheet
 RedirectMatch /doc/sheet$                 /beancount/doc/cheatsheet
+RedirectMatch /doc/reference$             /beancount/doc/cheatsheet
+
+RedirectMatch /doc/cheatsheet-old$        http://furius.ca/beancount/doc/cheatsheet/beancount-cheatsheet.pdf
+RedirectMatch /doc/old$-cheatsheet        /beancount/doc/cheatsheet-old
+
 
 RedirectMatch /doc/design-doc$            https://docs.google.com/document/d/1N7HDXuNWgLG2PqFS4Kkgv5LzAAtU6c97UVNT7tdTIjA/
 RedirectMatch /doc/design$                /beancount/doc/design-doc

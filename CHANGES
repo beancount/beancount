@@ -6,6 +6,8 @@ Note: This file contains only changes in the 'default' branch.
 
 2015-05-30
 
+  - Converted the Syntax Cheat Sheet to a Google Doc and removed it here.
+
   - Added a check to bake the source code's checksums into the C extension
     module and upon loading beancount.parser.parser check that the checksums
     match. This automatically issues a warning on all programs that use the
