@@ -25,28 +25,13 @@ to accounts with a component by their name.
 """
 __author__ = 'Martin Blais <blais@furius.ca>'
 
-import argparse
-import collections
 import copy
-import logging
 import re
-import functools
 
-from beancount.core.amount import D
-from beancount.core.amount import ZERO
-from beancount import loader
 from beancount.core import data
-from beancount.core import amount
 from beancount.core import account
-from beancount.core import position
-from beancount.core import inventory
-from beancount.core import realization
 from beancount.core import getters
 from beancount.core import account_types
-from beancount.core import display_context
-from beancount.core import flags
-from beancount.ops import prices
-from beancount.parser import printer
 from beancount.parser import options
 
 
