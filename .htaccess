@@ -110,6 +110,11 @@ RedirectMatch /doc/tolerances$            https://docs.google.com/document/d/1lg
 RedirectMatch /doc/precision$             /beancount/doc/tolerances
 RedirectMatch /doc/rounding$              /beancount/doc/tolerances
 
+RedirectMatch /doc/sharing$               https://docs.google.com/document/d/1FRcJqUfeAMQO6KjG94w6rF7VajMGJaFplmF1Wu0rCHY/
+RedirectMatch /doc/share                  /beancount/doc/sharing
+RedirectMatch /doc/splitting              /beancount/doc/sharing
+RedirectMatch /doc/split                  /beancount/doc/sharing
+
 RedirectMatch /doc/proposal-rounding$     https://docs.google.com/document/d/1MY2JMiiXUmcwsOT0CkiK-fCo0ZE7nbr8uTcTL50b6X4/
 RedirectMatch /doc/proposal-residual$     /beancount/doc/proposal-rounding
 RedirectMatch /doc/proposal-precision$    /beancount/doc/proposal-rounding
