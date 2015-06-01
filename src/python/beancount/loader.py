@@ -325,5 +325,6 @@ def loaddoc(fun):
     def wrapper(self):
         entries, errors, options_map = load_string(fun.__doc__, dedent=True)
         return fun(self, entries, errors, options_map)
+    wrapper.__input__ = wrapper.__doc__
     wrapper.__doc__ = None
     return wrapper

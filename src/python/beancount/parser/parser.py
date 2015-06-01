@@ -887,7 +887,7 @@ def parsedoc(fun, no_errors=False):
     lineno += 1
 
     @functools.wraps(fun)
-    def newfun(self):
+    def wrapper(self):
         assert fun.__doc__ is not None, (
             "You need to insert a docstring on {}".format(fun.__name__))
         entries, errors, options_map = parse_string(fun.__doc__,
@@ -903,8 +903,9 @@ def parsedoc(fun, no_errors=False):
         else:
             return fun(self, entries, errors, options_map)
 
-    newfun.__doc__ = None
-    return newfun
+    wrapper.__input__ = wrapper.__doc__
+    wrapper.__doc__ = None
+    return wrapper
 
 
 def parsedoc_noerrors(fun):
