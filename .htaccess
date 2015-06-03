@@ -115,6 +115,10 @@ RedirectMatch /doc/share                  /beancount/doc/sharing
 RedirectMatch /doc/splitting              /beancount/doc/sharing
 RedirectMatch /doc/split                  /beancount/doc/sharing
 
+RedirectMatch /doc/contrib$               https://docs.google.com/document/d/1Z37bQ45wDtjTPaMQ_x-f33p1trH9fNosEAUgbQXwp30/
+RedirectMatch /doc/contribution$          /beancount/doc/contrib
+RedirectMatch /doc/contributions$         /beancount/doc/contrib
+
 RedirectMatch /doc/proposal-rounding$     https://docs.google.com/document/d/1MY2JMiiXUmcwsOT0CkiK-fCo0ZE7nbr8uTcTL50b6X4/
 RedirectMatch /doc/proposal-residual$     /beancount/doc/proposal-rounding
 RedirectMatch /doc/proposal-precision$    /beancount/doc/proposal-rounding
