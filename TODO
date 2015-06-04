@@ -5,7 +5,6 @@ beancount: TODO
   - Make the printer support explicit tolerance syntax. This is crucial for
     round-trip.
 
-
 * Metadata and Experiment Flags Registry
 
   - Create a registry of all metadata fields being used in the system, with

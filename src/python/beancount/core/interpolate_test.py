@@ -759,8 +759,8 @@ class TestInferTolerances(cmptest.TestCase):
           Assets:B2
         """
 
-    @parser.parsedoc_noerrors
-    def test_tolerances__bug(self, entries, _):
+    @loader.loaddoc
+    def test_tolerances__bug(self, entries, errors, _):
         """
         option "operating_currency" "USD"
         option "experiment_infer_tolerance_from_cost" "TRUE"
@@ -772,17 +772,37 @@ class TestInferTolerances(cmptest.TestCase):
           Assets:CAAPX  -1.729 CAAPX {{521.67787 USD}} @ 49.65 USD
           Income:Match
         """
+        self.assertFalse(errors)
 
-    @parser.parsedoc_noerrors
-    def test_tolerances__bug53(self, entries, _):
+    @loader.loaddoc
+    def test_tolerances__bug53a(self, entries, errors, _):
         """
         option "operating_currency" "USD"
         option "experiment_infer_tolerance_from_cost" "TRUE"
 
-        2000-01-01 open Assets:CAAPX
-        2000-01-01 open Income:Match
+        2000-01-01 open Assets:Investments:VWELX
+        2000-01-01 open Assets:Investments:Cash
 
         2006-01-17 * "Plan Contribution"
           Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
           Assets:Investments:Cash -575.00 USD
         """
+        self.assertFalse(errors)
+
+# FIXME: We need to use the sum of the half the tolerances of all the postings held at cost.
+    # @loader.loaddoc
+    # def test_tolerances__bug53b(self, entries, errors, _):
+    #     """
+    #     option "operating_currency" "USD"
+    #     option "experiment_infer_tolerance_from_cost" "TRUE"
+
+    #     2000-01-01 open Assets:Investments:VMWLX
+    #     2000-01-01 open Income:Investments:Match
+
+    #     2006-01-17 * "Plan Contribution"
+    #       Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+    #       Assets:Investments:Cash -575.00 USD
+    #       Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+    #       Assets:Investments:Cash -575.00 USD
+    #     """
+    #     self.assertFalse(errors)
