@@ -13,6 +13,7 @@ from beancount.core import inventory
 from beancount.core import amount
 from beancount.core import position
 from beancount.parser import parser
+from beancount.parser import printer
 from beancount.parser import cmptest
 from beancount import loader
 
@@ -770,4 +771,18 @@ class TestInferTolerances(cmptest.TestCase):
         2006-11-02 * "Misc"
           Assets:CAAPX  -1.729 CAAPX {{521.67787 USD}} @ 49.65 USD
           Income:Match
+        """
+
+    @parser.parsedoc_noerrors
+    def test_tolerances__bug53(self, entries, _):
+        """
+        option "operating_currency" "USD"
+        option "experiment_infer_tolerance_from_cost" "TRUE"
+
+        2000-01-01 open Assets:CAAPX
+        2000-01-01 open Income:Match
+
+        2006-01-17 * "Plan Contribution"
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:Cash -575.00 USD
         """
