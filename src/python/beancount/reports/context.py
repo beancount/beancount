@@ -73,12 +73,13 @@ def render_entry_context(entries, options_map, dcontext, filename, lineno):
         residual = interpolate.compute_residual(closest_entry.postings)
         if not residual.is_empty():
             print(file=oss)
-            print(';;; Residual: {}'.format(residual.to_string(dformat)), file=oss)
+            # Note: We render the residual at maximum precision, for debugging.
+            print(';;; Residual: {}'.format(str(residual)), file=oss)
 
         tolerances = interpolate.infer_tolerances(closest_entry.postings, options_map)
         if tolerances:
             print(file=oss)
-            print(';;; Precision: {}'.format(
+            print(';;; Tolerances: {}'.format(
                 ', '.join('{}={}'.format(key, value)
                           for key, value in sorted(tolerances.items()))), file=oss)
 

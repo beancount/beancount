@@ -215,7 +215,8 @@ class EntryPrinter:
         # present. Also render a string with the weight.
         if posting.position:
             position_str = posting.position.to_string(self.dformat)
-            weight_str = interpolate.get_posting_weight(posting).to_string(self.dformat)
+            # Note: we render weights at maximum precision, for debugging.
+            weight_str = str(interpolate.get_posting_weight(posting))
         else:
             position_str = ''
             weight_str = ''
