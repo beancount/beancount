@@ -789,20 +789,63 @@ class TestInferTolerances(cmptest.TestCase):
         """
         self.assertFalse(errors)
 
-# FIXME: We need to use the sum of the half the tolerances of all the postings held at cost.
-    # @loader.loaddoc
-    # def test_tolerances__bug53b(self, entries, errors, _):
-    #     """
-    #     option "operating_currency" "USD"
-    #     option "experiment_infer_tolerance_from_cost" "TRUE"
+    @loader.loaddoc
+    def test_tolerances__bug53b(self, entries, errors, _):
+        """
+        option "operating_currency" "USD"
+        option "experiment_infer_tolerance_from_cost" "TRUE"
 
-    #     2000-01-01 open Assets:Investments:VMWLX
-    #     2000-01-01 open Income:Investments:Match
+        2000-01-01 open Assets:Investments:VWELX
+        2000-01-01 open Assets:Investments:Cash
 
-    #     2006-01-17 * "Plan Contribution"
-    #       Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
-    #       Assets:Investments:Cash -575.00 USD
-    #       Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
-    #       Assets:Investments:Cash -575.00 USD
-    #     """
-    #     self.assertFalse(errors)
+        2006-01-02 * "Plan Contribution"
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:Cash -575.00 USD
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:Cash -575.00 USD
+
+        2006-01-03 * "Plan Contribution"
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:Cash -575.00 USD
+          Assets:Investments:Cash -575.00 USD
+          Assets:Investments:Cash -575.00 USD
+
+        2006-01-03 * "Plan Contribution"
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:Cash -1725.00 USD
+
+        2006-01-16 * "Plan Contribution"
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:Cash -9200.00 USD
+        """
+        transactions = [entry
+                        for entry in entries
+                        if isinstance(entry, data.Transaction)]
+        self.assertEqual({'USD': D('0.03096'), 'VWELX': D('0.0005')},
+                         transactions[0].meta['__tolerances__'])
+        self.assertEqual({'USD': D('0.04644'), 'VWELX': D('0.0005')},
+                         transactions[1].meta['__tolerances__'])
+        self.assertEqual({'USD': D('0.04644'), 'VWELX': D('0.0005')},
+                         transactions[2].meta['__tolerances__'])
+        self.assertEqual({'USD': D('0.247680'), 'VWELX': D('0.0005')},
+                         transactions[3].meta['__tolerances__'])
+        self.assertFalse(errors)

@@ -102,10 +102,29 @@ def infer_tolerances(postings, options_map, use_cost=None):
     contributing to the determination of precision.
 
     The 'use_cost' option allows one to experiment with letting postings at cost
-    and at price influence the maximum value of the tolerance. It's quite tricky
-    to use and alters the definition of the tolerance in a non-trivial way, if you
-    use it. It was originally intended to be used for balancing the transactions
-    and not for quantizing during interpolation.
+    and at price influence the maximum value of the tolerance. It's tricky to
+    use and alters the definition of the tolerance in a non-trivial way, if you
+    use it. The tolerance is expanded by the sum of the cost times half of the
+    smallest digits in the number of units for all postings held at cost.
+
+    For example, in this transaction:
+
+        2006-01-17 * "Plan Contribution"
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:Cash -1150.00 USD
+
+    The tolerance for units of USD will calculated as the MAXIMUM of:
+
+      0.01 / 2 = 0.005 (from the 1150.00 USD leg)
+
+      The sum of
+        0.001 / 2 x 30.96 = 0.01548 +
+        0.001 / 2 x 30.96 = 0.01548
+                          = 0.03096
+
+    So the tolerance for USD in this case is max(0.005, 0.03096) = 0.03096. Prices
+    contribute similarly to the maximum tolerance allowed.
 
     Args:
       postings: A list of Posting instances.
@@ -116,11 +135,13 @@ def infer_tolerances(postings, options_map, use_cost=None):
     Returns:
       A dict of currency to the tolerated difference amount to be used for it,
       e.g. 0.005.
+
     """
     if use_cost is None:
         use_cost = options_map["experiment_infer_tolerance_from_cost"]
 
     tolerances = {}
+    cost_tolerances = collections.defaultdict(D)
     for posting in postings:
         # Skip the precision on automatically inferred postings.
         if posting.meta and AUTOMATIC_META in posting.meta:
@@ -146,16 +167,17 @@ def infer_tolerances(postings, options_map, use_cost=None):
             if lot.cost is not None:
                 cost_currency = lot.cost.currency
                 cost_tolerance = min(tolerance * lot.cost.number, HALF)
-                tolerances[cost_currency] = max(cost_tolerance,
-                                                tolerances.get(cost_currency, -1024))
+                cost_tolerances[cost_currency] += cost_tolerance
 
             # Compute bounds on the smallest digit of the number implied as cost.
             price = posting.price
             if price is not None:
                 price_currency = price.currency
                 price_tolerance = min(tolerance * price.number, HALF)
-                tolerances[price_currency] = max(price_tolerance,
-                                                 tolerances.get(price_currency, -1024))
+                cost_tolerances[cost_currency] += price_tolerance
+
+    for currency, tolerance in cost_tolerances.items():
+        tolerances[currency] = max(tolerance, tolerances.get(currency, -1024))
 
     return tolerances
 

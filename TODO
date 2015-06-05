@@ -1245,6 +1245,13 @@ http://furius.ca/beancount/doc/proposal-inter
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - A simple code cleanup: Since filtering Transactions out of a list of entries
+    is so incredibly common, provide a simple helper in b.c.data to do this.
+    filter_transactions() for example, and change all the code everywhere to use
+    it.
+
+
+
   - Add a simple overview 'stats' report with output like this:
 
       Files these postings came from:

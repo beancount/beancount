@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-06-03
+
+  - bean-doctor context now outputs weight and residual numbers at their full
+    precision instead of their rounded one.
+
+
 2015-06-02
 
   - Created a new document to keep track of user contributions:
