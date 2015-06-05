@@ -75,25 +75,25 @@
   Expenses:Taxes:TY2015:US:SocSec          122.18 USD
 
 2015-05-25 * "Conversion into shares" ^392f97dd62d0
-  Assets:US:Schwab:HOOL                          18 HOOL {131.3700 USD}
+  Assets:US:Schwab:HOOL                        18 HOOL {131.3700 USD}
   Assets:US:Hooli:RSURefund
-  Assets:US:Hooli:Unvested:S0012345      -35 HOOL.UNVEST
-  Expenses:Hooli:Vested                    35 HOOL.UNVEST
+  Assets:US:Hooli:Unvested:S0012345           -35 HOOL.UNVEST
+  Expenses:Hooli:Vested                        35 HOOL.UNVEST
 
 2015-05-25 * "Conversion into shares" ^392f97dd62d0
-  Assets:US:Schwab:HOOL                           9 HOOL {131.3700 USD}
+  Assets:US:Schwab:HOOL                         8 HOOL {131.3700 USD}
   Assets:US:Hooli:RSURefund
-  Assets:US:Hooli:Unvested:C123456        -15 HOOL.UNVEST
-  Expenses:Hooli:Vested                    15 HOOL.UNVEST
+  Assets:US:Hooli:Unvested:C123456            -15 HOOL.UNVEST
+  Expenses:Hooli:Vested                        15 HOOL.UNVEST
 
 
 2015-06-13 * "HOOLI INC       PAYROLL" ^392f97dd62d0
   doc: "2015-02-13.hooli.38745783.pdf"
-  Assets:US:Hooli:RSURefund            -94.30 USD
-  Assets:US:Hooli:RSURefund             -2.88 USD
-  Assets:US:BofA:Checking                     97.18 USD
+  Assets:US:Hooli:RSURefund                -94.31 USD
+  Assets:US:Hooli:RSURefund                 -2.88 USD
+  Assets:US:BofA:Checking                   97.19 USD
 
-2015-02-14 balance Assets:US:Hooli:RSURefund  0 USD
+2015-06-14 balance Assets:US:Hooli:RSURefund  0 USD
 
 
 
