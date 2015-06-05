@@ -174,7 +174,7 @@ def infer_tolerances(postings, options_map, use_cost=None):
             if price is not None:
                 price_currency = price.currency
                 price_tolerance = min(tolerance * price.number, HALF)
-                cost_tolerances[cost_currency] += price_tolerance
+                cost_tolerances[price_currency] += price_tolerance
 
     for currency, tolerance in cost_tolerances.items():
         tolerances[currency] = max(tolerance, tolerances.get(currency, -1024))
