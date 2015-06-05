@@ -23,6 +23,12 @@ beancount: TODO
 * Priorities
 ** Notes
 
+  - Add the new example files to the list of automatically tested docs; this is
+    important, we want to ensure they always work. sharing.beancount,
+    vesting.beancount.
+
+
+
   - Move out the price fetch to src/python/beanprice module, should be
     independent from LedgerHub and it should just work, remove script.
 
