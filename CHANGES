@@ -4,6 +4,16 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-06-04
+
+  - When using the 'experiment_infer_tolerance_from_cost' option, the inferred
+    tolerance is now expanded to include the SUM of all maximum rounding errors
+    from postings held at cost, not just the maximum. Users with multiple
+    rounding events in a single transactions could occur rounding that many
+    times. We assume no more rounding events than the number of postings held at
+    cost.
+
+
 2015-06-03
 
   - bean-doctor context now outputs weight and residual numbers at their full
