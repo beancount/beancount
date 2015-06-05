@@ -107,3 +107,17 @@
 
 
 2015-06-02 price HOOL.UNVEST               132.4300 USD.UNVEST
+
+
+
+;; Example sale:
+;;
+;; 2013-04-04 open Assets:US:Schwab:Cash
+;; 2013-04-04 open Income:US:Schwab:Gains
+;;
+;; 2015-09-10 * "Selling shares"
+;;   Assets:US:Schwab:HOOL         -26 HOOL {131.3700 USD} @ 138.23 USD
+;;   Assets:US:Schwab:Cash     3593.98 USD
+;;   Income:US:Schwab:Gains
+;;
+;; 2015-09-11 balance Assets:US:Schwab:HOOL  0 HOOL
