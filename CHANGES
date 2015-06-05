@@ -13,6 +13,10 @@ Note: This file contains only changes in the 'default' branch.
     times. We assume no more rounding events than the number of postings held at
     cost.
 
+  - I wrote a new document to explain how to deal with restricted stock units
+    vesting events:
+    http://furius.ca/beancount/doc/vesting
+
 
 2015-06-03
 
