@@ -43,14 +43,16 @@ def get_tolerance(balance_entry, options_map):
     else:
         expo = balance_entry.amount.number.as_tuple().exponent
         if expo < 0:
-            # Be generous: Allow up to the last digit of difference.
-            tolerance = ONE.scaleb(expo)
+            # Be generous and always allow twice the multiplier on Balance and
+            # Pad because the user creates these and the rounding of those
+            # balances may often be further off than those used within a single
+            # transaction.
+            tolerance = options_map["inferred_tolerance_multiplier"] * 2
+            tolerance = ONE.scaleb(expo) * tolerance
         else:
             tolerance = ZERO
 
     return tolerance
-
-
 
 
 def check(entries, options_map):

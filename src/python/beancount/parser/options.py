@@ -263,13 +263,36 @@ PUBLIC_OPTION_GROUPS = [
       '0.5' for all currencies.
 
       For detailed documentation about how precision is handled, see this doc:
-      http://furius.ca/beancount/doc/precision
+      http://furius.ca/beancount/doc/tolerances
     """, [Opt("default_tolerance", {}, "CHF:0.01",
               converter=options_validate_default_tolerance)]),
 
+    OptGroup("""
+      A multiplier for inferred tolerance values.
+
+      When the tolerance values aren't specified explicitly via the
+      'default_tolerance' option, the tolerance is inferred from the numbers in
+      the input file. For example, if a transaction has posting with a value
+      like '32.424 CAD', the tolerance for CAD will be inferred to be 0.001
+      times some multiplier. This is the muliplier value.
+
+      We normally assume that the institution we're reproducing this posting
+      from applies rounding, and so the default value for the multiplier is
+      0.5, that is, half of the smallest digit encountered.
+
+      You can customize this multiplier by changing this option, typically
+      expanding it to account for amounts slightly beyond the usual tolerance,
+      for example, if you deal with institutions with bad of unexpected rounding
+      behaviour.
+
+      For detailed documentation about how precision is handled, see this doc:
+      http://furius.ca/beancount/doc/tolerances
+    """, [Opt("inferred_tolerance_multiplier", D("0.5"), "1.1",
+              converter=D)]),
+
     # Note: This option will go away. Its behavior has been replaced by
     # precision/tolerance inference.
-    # See this for details: http://furius.ca/beancount/doc/precision
+    # See this for details: http://furius.ca/beancount/doc/tolerances
     OptGroup("""
       The tolerance allowed for balance checks and padding directives. In the
       real world, rounding occurs in various places, and we need to allow a
@@ -373,9 +396,10 @@ PUBLIC_OPTION_GROUPS = [
       and taking half of that value.
 
       For example, if a posting has an amount of "2.345 RGAGX {45.00 USD}"
-      attached to it, it implies a tolerance of 0.001 x 45.00 / 2 = 0.045 USD
-      and this is added to the mix to enlarge the tolerance allowed for units of
-      USD on that transaction. All the normally inferred tolerances (see
+      attached to it, it implies a tolerance of 0.001 x 45.00 * M = 0.045 USD
+      (where M is the inferred_tolerance_multiplier) and this is added to the
+      mix to enlarge the tolerance allowed for units of USD on that transaction.
+      All the normally inferred tolerances (see
       http://furius.ca/beancount/doc/tolerances) are still taken into account.
       Enabling this flag only makes the tolerances potentially wider.
 

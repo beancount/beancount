@@ -24,6 +24,7 @@ ERRORS_ON_RESIDUAL = False
 
 # A default options map just to provide the tolerances.
 OPTIONS_MAP = {'default_tolerance': {},
+               'inferred_tolerance_multiplier': D('0.5'),
                'use_legacy_fixed_tolerances': False,
                'account_rounding': None,
                'experiment_infer_tolerance_from_cost': False}
@@ -744,6 +745,25 @@ class TestInferTolerances(cmptest.TestCase):
         tolerances = interpolate.infer_tolerances(entries[0].postings, options_map, True)
         self.assertEqual({'VHT': D('0.05'), 'USD': D('0.5')},
                          tolerances)
+
+    @loader.loaddoc
+    def test_tolerances__multiplier(self, entries, errors, options_map):
+        """
+        option "inferred_tolerance_multiplier" "1.1"
+
+        1970-01-01 open Assets:B1
+        1970-01-01 open Assets:B2
+
+        2010-01-01 * "Balances"
+          Assets:B1      -200.00 EUR
+          Assets:B2       200.011 EUR
+
+        2010-01-02 * "Does not balance"
+          Assets:B1      -200.00 EUR
+          Assets:B2       200.012 EUR
+        """
+        self.assertEqual(1, len(errors))
+        self.assertTrue(errors[0].entry is entries[-1])
 
     @parser.parsedoc_noerrors
     def test_tolerances__legacy(self, entries, _):
