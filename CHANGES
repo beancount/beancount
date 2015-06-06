@@ -24,6 +24,14 @@ Note: This file contains only changes in the 'default' branch.
     for example, if you deal with institutions with bad of unexpected rounding
     behaviour.
 
+  - Promoted the 'experiment_infer_tolerance_from_cost' option to
+    'infer_tolerance_from_cost': not an experiment anymore. See thread on
+    mailing-list w/ mharris. This feature works well and actually solves real
+    problems for users.
+
+    A corresponding section has been added in the documentation at
+    http://furius.ca/beancount/doc/tolerances
+
 
 2015-06-04
 

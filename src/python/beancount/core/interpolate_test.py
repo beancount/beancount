@@ -27,7 +27,7 @@ OPTIONS_MAP = {'default_tolerance': {},
                'inferred_tolerance_multiplier': D('0.5'),
                'use_legacy_fixed_tolerances': False,
                'account_rounding': None,
-               'experiment_infer_tolerance_from_cost': False}
+               'infer_tolerance_from_cost': False}
 
 
 class TestBalance(cmptest.TestCase):
@@ -693,17 +693,17 @@ class TestInferTolerances(cmptest.TestCase):
             Assets:Account4      -5110.80 USD
         """)
         input_option = textwrap.dedent("""
-          option "experiment_infer_tolerance_from_cost" "True"
+          option "infer_tolerance_from_cost" "True"
         """)
 
         entries, errors, options_map = loader.load_string(input_string)
-        self.assertFalse(options_map["experiment_infer_tolerance_from_cost"])
+        self.assertFalse(options_map["infer_tolerance_from_cost"])
         self.assertEqual(1, len(errors))
         self.assertTrue(re.match('Transaction does not balance:.*0.20000 USD',
                                  errors[0].message))
 
         entries, errors, options_map = loader.load_string(input_option + input_string)
-        self.assertTrue(options_map["experiment_infer_tolerance_from_cost"])
+        self.assertTrue(options_map["infer_tolerance_from_cost"])
         self.assertFalse(errors)
 
     @parser.parsedoc_noerrors
@@ -783,7 +783,7 @@ class TestInferTolerances(cmptest.TestCase):
     def test_tolerances__bug(self, entries, errors, _):
         """
         option "operating_currency" "USD"
-        option "experiment_infer_tolerance_from_cost" "TRUE"
+        option "infer_tolerance_from_cost" "TRUE"
 
         2000-01-01 open Assets:CAAPX
         2000-01-01 open Income:Match
@@ -798,7 +798,7 @@ class TestInferTolerances(cmptest.TestCase):
     def test_tolerances__bug53a(self, entries, errors, _):
         """
         option "operating_currency" "USD"
-        option "experiment_infer_tolerance_from_cost" "TRUE"
+        option "infer_tolerance_from_cost" "TRUE"
 
         2000-01-01 open Assets:Investments:VWELX
         2000-01-01 open Assets:Investments:Cash
@@ -813,7 +813,7 @@ class TestInferTolerances(cmptest.TestCase):
     def test_tolerances__bug53b(self, entries, errors, _):
         """
         option "operating_currency" "USD"
-        option "experiment_infer_tolerance_from_cost" "TRUE"
+        option "infer_tolerance_from_cost" "TRUE"
 
         2000-01-01 open Assets:Investments:VWELX
         2000-01-01 open Assets:Investments:Cash
@@ -874,7 +874,7 @@ class TestInferTolerances(cmptest.TestCase):
     def test_tolerances__bug53_price(self, entries, errors, _):
         """
         option "operating_currency" "USD"
-        option "experiment_infer_tolerance_from_cost" "TRUE"
+        option "infer_tolerance_from_cost" "TRUE"
 
         2000-01-01 open Assets:Investments:VWELX
         2000-01-01 open Assets:Investments:Cash

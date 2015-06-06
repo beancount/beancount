@@ -290,6 +290,22 @@ PUBLIC_OPTION_GROUPS = [
     """, [Opt("inferred_tolerance_multiplier", D("0.5"), "1.1",
               converter=D)]),
 
+    OptGroup("""
+      Enable a feature that expands the maximum tolerance inferred on
+      transactions to include values on cost currencies inferred by postings
+      held at-cost or converted at price. Those postings can imply a tolerance
+      value by multiplying the smallest digit of the unit by the cost or price
+      value and taking half of that value.
+
+      For example, if a posting has an amount of "2.345 RGAGX {45.00 USD}"
+      attached to it, it implies a tolerance of 0.001 x 45.00 * M = 0.045 USD
+      (where M is the inferred_tolerance_multiplier) and this is added to the
+      mix to enlarge the tolerance allowed for units of USD on that transaction.
+      All the normally inferred tolerances (see
+      http://furius.ca/beancount/doc/tolerances) are still taken into account.
+      Enabling this flag only makes the tolerances potentially wider.
+    """, [Opt("infer_tolerance_from_cost", False, True)]),
+
     # Note: This option will go away. Its behavior has been replaced by
     # precision/tolerance inference.
     # See this for details: http://furius.ca/beancount/doc/tolerances
@@ -387,25 +403,6 @@ PUBLIC_OPTION_GROUPS = [
       WARNING: This feature may go away at any time. It is an exploration to see
       if it is truly useful. We may be able to do without.
     """, [Opt("experiment_explicit_tolerances", False, True)]),
-
-    OptGroup("""
-      Enable an EXPERIMENTAL feature that expands the maximum tolerance inferred
-      on transactions to include values on cost currencies inferred by postings
-      held at-cost or converted at price. Those postings can imply a tolerance
-      value by multiplying the smallest digit of the unit by the cost or price value
-      and taking half of that value.
-
-      For example, if a posting has an amount of "2.345 RGAGX {45.00 USD}"
-      attached to it, it implies a tolerance of 0.001 x 45.00 * M = 0.045 USD
-      (where M is the inferred_tolerance_multiplier) and this is added to the
-      mix to enlarge the tolerance allowed for units of USD on that transaction.
-      All the normally inferred tolerances (see
-      http://furius.ca/beancount/doc/tolerances) are still taken into account.
-      Enabling this flag only makes the tolerances potentially wider.
-
-      WARNING: This feature may go away in the future. It is an exploration to see
-      if it is truly useful.
-    """, [Opt("experiment_infer_tolerance_from_cost", False, True)]),
 
     ]
 

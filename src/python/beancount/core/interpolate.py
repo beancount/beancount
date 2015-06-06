@@ -145,7 +145,7 @@ def infer_tolerances(postings, options_map, use_cost=None):
 
     """
     if use_cost is None:
-        use_cost = options_map["experiment_infer_tolerance_from_cost"]
+        use_cost = options_map["infer_tolerance_from_cost"]
 
     inferred_tolerance_multiplier = options_map["inferred_tolerance_multiplier"]
 
