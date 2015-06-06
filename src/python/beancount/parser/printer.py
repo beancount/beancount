@@ -129,7 +129,7 @@ class EntryPrinter:
                 elif isinstance(value, (Decimal, datetime.date, amount.Amount)):
                     value_str = str(value)
                 elif isinstance(value, bool):
-                    value_str = '1' if value else '0'
+                    value_str = 'TRUE' if value else 'FALSE'
                 elif isinstance(value, dict):
                     pass # Ignore dicts, don't print them out.
                 else:
