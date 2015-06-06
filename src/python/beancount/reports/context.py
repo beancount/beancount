@@ -8,7 +8,6 @@ import io
 from beancount.core import compare
 from beancount.core import data
 from beancount.core import interpolate
-from beancount.core import display_context
 from beancount.parser import printer
 
 
@@ -65,7 +64,6 @@ def render_entry_context(entries, options_map, dcontext, filename, lineno):
 
     # Print the entry itself.
     print(file=oss)
-    dformat = dcontext.build(precision=display_context.Precision.MAXIMUM)
     printer.print_entry(closest_entry, dcontext, render_weights=True, file=oss)
 
     if isinstance(closest_entry, data.Transaction):
