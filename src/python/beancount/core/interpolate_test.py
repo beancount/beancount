@@ -13,7 +13,6 @@ from beancount.core import inventory
 from beancount.core import amount
 from beancount.core import position
 from beancount.parser import parser
-from beancount.parser import printer
 from beancount.parser import cmptest
 from beancount import loader
 
