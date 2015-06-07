@@ -106,7 +106,7 @@ def check_import(module_name, min_version=None):
         module = __import__(module_name)
         version = module.__version__
         assert isinstance(version, str)
-        is_sufficient = version >= min_version
+        is_sufficient = version >= min_version if min_version else True
     except ImportError:
         version, is_sufficient = None, False
-    return ('apiclient', version, is_sufficient)
+    return (module_name, version, is_sufficient)
