@@ -1,19 +1,11 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """A utility library to ease connecting to the Google Data APIs.
-
-The Google APIs unfortunately doesn't yet support Python 3.x, so we write this
-in Python 2.x.
 """
 __author__ = 'Martin Blais <blais@furius.ca>'
 
 import argparse
-import datetime
 import logging
-import urllib
 import os
-import shutil
-import tempfile
-import subprocess
 from os import path
 
 # Import oauth2 libraries.
@@ -23,11 +15,6 @@ from oauth2client.file import Storage
 
 # Import Google API client libraries.
 import httplib2
-try:
-    from apiclient import discovery
-except:
-    # The name for the older version differs slightly.
-    from googleapiclient import discovery
 
 
 DEFAULT_SECRETS_FILENAME = os.environ.get('GOOGLE_APIS', None)
@@ -57,7 +44,7 @@ def get_argparser(**kwds):
     return parser
 
 
-def get_authenticated_http(scope, args):
+def get_authenticated_http(scopes, args):
     """Authenticate via oauth2 and cache credentials to a file.
 
     If the credentials are already available in the 'storage' cache file, this
@@ -66,7 +53,7 @@ def get_authenticated_http(scope, args):
     the access and obtain the credentials.
 
     Args:
-      scope: A string, the scope to get credentials for.
+      scopes: A string or a list of strings, the scopes to get credentials for.
       args: An argparse option values object, as retrurned by parse_args().
         This arguments value object must include attributes for secrets_filename
         and storage_filename as per get_argparser().
@@ -84,6 +71,7 @@ def get_authenticated_http(scope, args):
     storage_filename = args.storage
 
     # Create a flow from a secrets file.
+    scope = ' '.join(scopes) if isinstance(scopes, list) else scopes
     flow = oauth2client.client.flow_from_clientsecrets(secrets_filename, scope)
     flow.redirect_uri = oauth2client.client.OOB_CALLBACK_URN
 
@@ -100,7 +88,7 @@ def get_authenticated_http(scope, args):
         try:
             # If the credentials haven't been found, run the flow. This will pop-up
             # a web browser window for you to accept.
-            credentials = tools.run_flow(flow, storage, opts, http=http)
+            credentials = tools.run_flow(flow, storage, args, http=http)
         finally:
             logging.getLogger().setLevel(saved_log_level)
 
