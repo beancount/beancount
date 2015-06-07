@@ -3,9 +3,17 @@ __author__ = 'Martin Blais <blais@furius.ca>'
 import unittest
 from unittest import mock
 
-from beancount.docs import download_docs
+# Skip the unittests if Google API client support is not installed.
+try:
+    import apiclient
+except ImportError:
+    apiclient = None
+else:
+    from apiclient import discovery
+    from beancount.docs import download_docs
 
 
+@unittest.skipIf(apiclient is None, "google-api-python-client not installed")
 class TestDownloadDocs(unittest.TestCase):
 
     def test_find_index_document(self):

@@ -5,11 +5,17 @@ import tempfile
 import unittest
 from unittest import mock
 
-import httplib2
+# Skip the unittests if oauth support is not installed.
+try:
+    import oauth2client
+    import httplib2
+except ImportError:
+    oauth2client = None
+else:
+    from beancount.docs import gauth
 
-from beancount.docs import gauth
 
-
+@unittest.skipIf(oauth2client is None, "oauth2client and/or httplib2 not installed")
 class TestGAuth(unittest.TestCase):
 
     def test_get_argparser(self):

@@ -3,9 +3,16 @@ __author__ = 'Martin Blais <blais@furius.ca>'
 import unittest
 from unittest import mock
 
-from beancount.docs import update_options
+# Skip the unittests if Google API client support is not installed.
+try:
+    import apiclient
+except ImportError:
+    apiclient = None
+else:
+    from beancount.docs import update_options
 
 
+@unittest.skipIf(apiclient is None, "google-api-python-client not installed")
 class TestUpdateOptions(unittest.TestCase):
 
     def test_get_options_doc_id(self):

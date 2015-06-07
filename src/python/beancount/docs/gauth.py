@@ -7,12 +7,9 @@ import logging
 import os
 from os import path
 
-# Import oauth2 libraries.
 import oauth2client.client
 from oauth2client import tools
 from oauth2client.file import Storage
-
-# Import Google API client libraries.
 import httplib2
 
 

@@ -20,11 +20,20 @@ def check_dependencies():
       Beancount.
     """
     return [
+        # Check for a complete installation of Python itself.
         check_python(),
-        check_dateutil(),
         check_curses(),
-        check_bottle(),
-        check_ply(),
+
+        # Modules we really do need installed.
+        check_import('dateutil'),
+        check_import('bottle'),
+        check_import('ply', '3.4'),
+
+        # Test are only required because of google-api-python-client.
+        check_import('apiclient'),
+        check_import('oauth2client'),
+
+        # This is required for bake.
         check_wget(),
         ]
 
@@ -39,21 +48,6 @@ def check_python():
     return ('python3',
             '.'.join(map(str, sys.version_info[:3])),
             sys.version_info[:2] >= (3, 3))
-
-
-def check_dateutil():
-    """Check that dateutil is installed.
-
-    Returns:
-      A triple of (package-name, version-number, sufficient) as per
-      check_dependencies().
-    """
-    try:
-        import dateutil
-        version, sufficient = dateutil.__version__, True
-    except ImportError:
-        version, sufficient = None, False
-    return ('dateutil', version, sufficient)
 
 
 def check_curses():
@@ -73,37 +67,6 @@ def check_curses():
     except ImportError:
         version, sufficient = None, False
     return ('curses', version, sufficient)
-
-
-def check_bottle():
-    """Check that bottle.py is installed.
-
-    Returns:
-      A triple of (package-name, version-number, sufficient) as per
-      check_dependencies().
-    """
-    try:
-        import bottle
-        version, sufficient = bottle.__version__, True
-    except ImportError:
-        version, sufficient = None, False
-    return ('bottle', version, sufficient)
-
-
-def check_ply():
-    """Check that PLY is installed.
-
-    Returns:
-      A triple of (package-name, version-number, sufficient) as per
-      check_dependencies().
-    """
-    try:
-        import ply.yacc
-        version = ply.yacc.__version__
-        sufficient = float(version) >= 3.4
-    except ImportError:
-        version, sufficient = None, False
-    return ('ply', version, sufficient)
 
 
 def check_wget():
@@ -126,3 +89,24 @@ def check_wget():
     except FileNotFoundError:
         pass
     return ('wget', version, sufficient)
+
+
+def check_import(module_name, min_version=None):
+    """Check that a particular module name is installed.
+
+    Args:
+      module_name: A string, the name of the module to be imported.
+      min_version: If not None, a string, the minimum version number
+        we require.
+    Returns:
+      A triple of (package-name, version-number, sufficient) as per
+      check_dependencies().
+    """
+    try:
+        module = __import__(module_name)
+        version = module.__version__
+        assert isinstance(version, str)
+        is_sufficient = version >= min_version
+    except ImportError:
+        version, is_sufficient = None, False
+    return ('apiclient', version, is_sufficient)
