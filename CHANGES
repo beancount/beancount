@@ -4,6 +4,26 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-06-07
+
+  - Moved documentation scripts from experiments to the main Beancount codebase.
+    There is a new package for it: beancount.docs. These codes are used to maintain
+    the Beancount documentation and there is common code for authentication in there,
+    code that I plan to use for automating the exporting ot portfolios.
+
+    This introduces some optional dependencies:
+
+    * google-api-python-client
+    * oauth2client
+    * httplib2
+
+    These are optional, and at the moment none of the actual Beancount tools
+    make any use of them. I moved this into the main Beancount codes because
+    the common authentication code will be used to export portfolios directly
+    to a Google spreadsheet in Google Drive, which will be super convenient
+    to build custom portfolio tracking views.
+
+
 2015-06-06
 
   - Added an 'inferred_tolerance_multiplier' option to allow the user to adjust
