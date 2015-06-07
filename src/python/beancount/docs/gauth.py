@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """A utility library to ease connecting to the Google Data APIs.
 """
 __author__ = 'Martin Blais <blais@furius.ca>'
