@@ -5,12 +5,9 @@ the source code and updated automatically using this script.
 """
 __author__ = 'Martin Blais <blais@furius.ca>'
 
-import argparse
 import logging
-import io
 import re
 from os import path
-from pprint import pprint
 
 from apiclient import http
 from apiclient import discovery

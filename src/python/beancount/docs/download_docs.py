@@ -1,23 +1,18 @@
 #!/usr/bin/python
-"""Download all the Beancount docs from my personal Google Drive and bake a nice PDF with it.
+"""Download all the Beancount docs from Google Drive and bake a nice PDF with it.
 """
 __author__ = 'Martin Blais <blais@furius.ca>'
 
-import argparse
 import datetime
 import logging
-import urllib
 import os
 import shutil
 import tempfile
 import subprocess
 import re
 from urllib import request
-import pprint
-import mimetypes
 from os import path
 
-from oauth2client import tools
 from apiclient import discovery
 
 from beancount.docs import gauth
@@ -49,7 +44,6 @@ def enumerate_linked_documents(service, indexid):
     doc = service.files().get(fileId=indexid).execute()
     link = doc['exportLinks']['text/html']
     contents = request.urlopen(link).read().decode('utf8')
-    seen = set()
     docids = [indexid]
     for match in re.finditer('https?://docs.google.com/document/d/([^/]+)/', contents):
         docid = match.group(1)
@@ -135,7 +129,6 @@ def main():
 
     indexid = find_index_document(service)
     docids = enumerate_linked_documents(service, indexid)
-    #docids.remove('1N7HDXuNWgLG2PqFS4Kkgv5LzAAtU6c97UVNT7tdTIjA')
 
     try:
         # Allocate a temporary directory.

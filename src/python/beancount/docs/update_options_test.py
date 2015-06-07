@@ -1,8 +1,5 @@
 __author__ = 'Martin Blais <blais@furius.ca>'
 
-import argparse
-import logging
-import tempfile
 import unittest
 from unittest import mock
 
