@@ -20,7 +20,6 @@ from beancount.utils import test_utils
 from beancount.docs import gauth
 
 
-
 def replace_gdocs_document(connection, doc_id, title, contents):
     """Upload new contents for a Google Doc for a plain/text file.
 
