@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Update the parts of the documentation that are auto-generated.
 
 For example, the options documentation is a Google Doc. It can be generated from
@@ -6,19 +5,16 @@ the source code and updated automatically using this script.
 """
 __author__ = 'Martin Blais <blais@furius.ca>'
 
-import argparse
 import logging
-import io
 import re
 from os import path
-from pprint import pprint
-
-from beancount.parser import options
-from beancount.utils import test_utils
 
 from apiclient import http
 from apiclient import discovery
-import gdrive  # Local import.
+
+from beancount.parser import options
+from beancount.utils import test_utils
+from beancount.docs import gauth
 
 
 def replace_gdocs_document(connection, doc_id, title, contents):
@@ -66,20 +62,22 @@ def get_options_doc_id():
 
 def main():
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
-    parser = gdrive.get_argparser(description=__doc__.strip())
+    parser = gauth.get_argparser(description=__doc__.strip())
     args = parser.parse_args()
 
+    # Find the document id.
+    doc_id = get_options_doc_id()
+
+    # Connect to the service.
     scopes = ['https://www.googleapis.com/auth/drive',
               'https://www.googleapis.com/auth/drive.scripts']
-    connection = gdrive.get_authenticated_http(scopes, args)
+    connection = gauth.get_authenticated_http(scopes, args)
 
-    doc_id = get_options_doc_id()
-    doc_id = '1_-T_BvDtUjj9M7liZMNSkrL8pgC60TGMBlYCiV1e4ZM'
-    #script_id = '1ruN1eWeWrPlqyRbpIi4u-WPGQq6KCPz63URl6h6YEgo8AoNxaMJzc79O'
-
-    title = "Beancount - Options Reference"
-    contents = options.list_options()
-    replace_gdocs_document(connection, doc_id, title, contents)
+    # Replace the document.
+    replace_gdocs_document(connection,
+                           doc_id,
+                           "Beancount - Options Reference",
+                           options.list_options())
 
 
 if __name__ == '__main__':

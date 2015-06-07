@@ -73,6 +73,7 @@ setup(
                 'beancount.reports',
                 'beancount.scripts',
                 'beancount.web',
+                'beancount.docs',
                 'beancount.utils'],
 
     package_data = {
