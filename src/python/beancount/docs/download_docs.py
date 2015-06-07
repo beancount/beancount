@@ -100,10 +100,14 @@ def collate_filenames(filenames, output_filename):
       IOError: If we could not produce the merged filename.
     """
     command = ['pdftk'] + filenames + ['cat', 'output', output_filename]
-    pipe = subprocess.Popen(command, shell=False)
-    pipe.communicate()
+    try:
+        pipe = subprocess.Popen(command, shell=False)
+        pipe.communicate()
+    except FileNotFoundError as exc:
+        raise SystemExit('pdftk is probably not installed: {}'.format(exc))
     if pipe.returncode != 0:
         raise IOError("Could not produce output '{}'".format(output_filename))
+
 
 
 def main():
