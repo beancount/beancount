@@ -77,7 +77,6 @@ def get_authenticated_http(scopes, args):
 
     # Create a transport, disable SSL certificates, which fails to validate.
     http = httplib2.Http()
-    http.disable_ssl_certificate_validation = True
 
     # Create a storage to cache the credentials for future runs, and look it up.
     storage = Storage(storage_filename)
