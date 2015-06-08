@@ -8,15 +8,15 @@ import copy
 from datetime import date
 import types
 
-from .amount import D
-from .amount import ZERO
-from .position import Position
-from .position import Lot
-from .inventory import Inventory
-from .inventory import Booking
-from . import amount
-from . import position
-from . import inventory
+from beancount.core.number import D
+from beancount.core.number import ZERO
+from beancount.core.position import Position
+from beancount.core.position import Lot
+from beancount.core.inventory import Inventory
+from beancount.core.inventory import Booking
+from beancount.core import amount
+from beancount.core import position
+from beancount.core import inventory
 
 
 A = amount.from_string

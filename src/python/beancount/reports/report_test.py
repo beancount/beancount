@@ -6,7 +6,7 @@ import unittest
 import re
 import io
 
-from beancount.core.amount import D
+from beancount.core.number import D
 from beancount.core import realization
 from beancount.reports import report
 from beancount.reports import table

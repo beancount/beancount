@@ -3,7 +3,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import unittest
 import functools
 
-from beancount.core.amount import D
+from beancount.core.number import D
 from beancount.core import getters
 from beancount.reports import export_reports
 from beancount.reports import holdings_reports

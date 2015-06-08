@@ -7,7 +7,7 @@ import shutil
 import types
 from os import path
 
-from . import account
+from beancount.core import account
 
 
 # Note: Ideally this should live in beancount.utils.test_utils, but since we

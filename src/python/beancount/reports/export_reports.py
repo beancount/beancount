@@ -12,8 +12,8 @@ import sys
 
 from decimal import Decimal
 
-from beancount.core.amount import D
-from beancount.core.amount import ZERO
+from beancount.core.number import D
+from beancount.core.number import ZERO
 from beancount.core import getters
 from beancount.ops import prices
 from beancount.reports import report

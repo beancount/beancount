@@ -4,7 +4,8 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import csv
 
-from beancount.core.amount import D
+from beancount.core.number import D
+from beancount.core.number import ZERO
 from beancount.core import amount
 from beancount.core import account
 from beancount.core import data
@@ -220,7 +221,7 @@ class HoldingsReport(report.TableReport):
 
         'root-account': dict(
             aggregation_key=lambda holding: account.root(3, holding.account),
-            sort_key=lambda holding: holding.market_value or amount.ZERO),
+            sort_key=lambda holding: holding.market_value or ZERO),
 
         'currency': dict(aggregation_key=lambda holding: holding.cost_currency),
         }

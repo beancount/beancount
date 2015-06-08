@@ -8,7 +8,7 @@ import re
 import sys
 import textwrap
 
-from beancount.core.amount import Decimal
+from beancount.core.number import Decimal
 from beancount.core import amount
 from beancount.core import data
 from beancount.core import interpolate

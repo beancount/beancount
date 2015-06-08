@@ -19,6 +19,9 @@ beancount: TODO
     b.core.number and b.core.amount should be distinct, there is no
     reason they should be together.
 
+  - The relative imports of the core module should be converted to
+    absolute ones.
+
 
 * Explicit Tolerance
 

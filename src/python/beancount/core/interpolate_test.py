@@ -4,7 +4,7 @@ import re
 import textwrap
 import unittest
 
-from beancount.core.amount import D
+from beancount.core.number import D
 from beancount.core.data import create_simple_posting as P
 from beancount.core.data import create_simple_posting_with_cost as PCost
 from beancount.core import interpolate

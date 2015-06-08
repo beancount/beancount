@@ -6,6 +6,24 @@ Note: This file contains only changes in the 'default' branch.
 
 2015-06-07
 
+  - Moved the following representation related symbols to their own module:
+
+      beancount.core.amount.D          ->  beancount.core.number.D
+      beancount.core.amount.Decimal    ->  beancount.core.number.Decimal
+      beancount.core.amount.ZERO       ->  beancount.core.number.ZERO
+      beancount.core.amount.ONE        ->  beancount.core.number.ONE
+      beancount.core.amount.HALF       ->  beancount.core.number.HALF
+      beancount.core.amount.round_to   ->  beancount.core.number.round_to
+
+    I also moved the tests. All the code specifically related to numbers is
+    now in beancount.core.number. I also removed the relative imports, as
+    Ledgerhub is importing from the Beancount source code now.
+
+    This is not a user-visible change. However, if you wrote scripts against
+    the codebase, you will need to rename your imports. In the meantime I added
+    stubs which issue a warning if you import from the obsoleted names.
+
+
   - Moved documentation scripts from experiments to the main Beancount codebase.
     There is a new package for it: beancount.docs. These codes are used to maintain
     the Beancount documentation and there is common code for authentication in there,

@@ -12,7 +12,7 @@ import dateutil.parser
 import ply.lex
 import ply.yacc
 
-from beancount.core.amount import D
+from beancount.core.number import D
 from beancount.utils.misc_utils import cmptuple
 
 
