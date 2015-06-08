@@ -68,7 +68,7 @@ try:
 except ImportError:
     Enum = object
 
-from . import distribution
+from beancount.core import distribution
 
 
 class Precision(Enum):

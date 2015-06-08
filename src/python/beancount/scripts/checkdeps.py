@@ -27,7 +27,7 @@ def check_dependencies():
         # Modules we really do need installed.
         check_import('dateutil'),
         check_import('bottle'),
-        check_import('ply', '3.4'),
+        check_import('ply', module_name='ply.yacc', min_version='3.4'),
 
         # Test are only required because of google-api-python-client.
         check_import('apiclient'),
@@ -91,22 +91,29 @@ def check_wget():
     return ('wget', version, sufficient)
 
 
-def check_import(module_name, min_version=None):
+def check_import(package_name, min_version=None, module_name=None):
     """Check that a particular module name is installed.
 
     Args:
-      module_name: A string, the name of the module to be imported.
+      package_name: A string, the name of the package and module to be
+        imported to verify this works. This should have a __version__
+        attribute on it.
       min_version: If not None, a string, the minimum version number
         we require.
+      module_name: The name of the module to import if it differs from the
+        package name.
     Returns:
       A triple of (package-name, version-number, sufficient) as per
       check_dependencies().
     """
+    if module_name is None:
+        module_name = package_name
     try:
-        module = __import__(module_name)
+        __import__(module_name)
+        module = sys.modules[module_name]
         version = module.__version__
         assert isinstance(version, str)
         is_sufficient = version >= min_version if min_version else True
     except ImportError:
         version, is_sufficient = None, False
-    return (module_name, version, is_sufficient)
+    return (package_name, version, is_sufficient)

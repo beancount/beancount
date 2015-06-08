@@ -9,12 +9,12 @@ from collections import namedtuple
 import sys
 
 # Note: this file is mirrorred into ledgerhub. Relative imports only.
-from .amount import Amount
-from .amount import Decimal
-from .amount import D
-from .position import Position
-from .position import Lot
-from .account import has_component
+from beancount.core.amount import Amount
+from beancount.core.number import Decimal
+from beancount.core.number import D
+from beancount.core.position import Position
+from beancount.core.position import Lot
+from beancount.core.account import has_component
 
 
 def new_directive(clsname, fields):

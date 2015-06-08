@@ -12,7 +12,7 @@ import os
 import re
 from os import path
 
-from beancount.core.amount import ZERO
+from beancount.core.number import ZERO
 from beancount.core.amount import Amount
 from beancount.core.amount import amount_div
 from beancount.core import display_context

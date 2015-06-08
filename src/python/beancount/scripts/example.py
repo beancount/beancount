@@ -26,9 +26,9 @@ import textwrap
 from dateutil import rrule
 from dateutil.parser import parse as parse_datetime
 
-from beancount.core.amount import D
-from beancount.core.amount import ZERO
-from beancount.core.amount import round_to
+from beancount.core.number import D
+from beancount.core.number import ZERO
+from beancount.core.number import round_to
 from beancount.core.account import join
 from beancount.core import data
 from beancount.core import amount

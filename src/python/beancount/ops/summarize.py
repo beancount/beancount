@@ -11,6 +11,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import datetime
 import collections
 
+from beancount.core.number import ZERO
 from beancount.core.data import Transaction
 from beancount.core.data import Open
 from beancount.core.data import Close
@@ -491,7 +492,7 @@ def conversions(entries, conversion_account, conversion_currency, date=None):
         # invariant. (This is the only single place we cheat on the balance rule
         # in the entire system and this is necessary; see documentation on
         # Conversions.)
-        price = amount.Amount(amount.ZERO, conversion_currency)
+        price = amount.Amount(ZERO, conversion_currency)
         conversion_entry.postings.append(
             data.Posting(conversion_entry, conversion_account, -position, price,
                          None, None))

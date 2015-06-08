@@ -3,7 +3,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import re
 import unittest
 
-from beancount.core.amount import Decimal
+from beancount.core.number import Decimal
 from beancount.ops import balance
 from beancount.loader import loaddoc
 from beancount.core import amount

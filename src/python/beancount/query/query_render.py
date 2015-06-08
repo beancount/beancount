@@ -7,7 +7,7 @@ import datetime
 import math
 from itertools import zip_longest
 
-from beancount.core.amount import Decimal
+from beancount.core.number import Decimal
 from beancount.core import amount
 from beancount.core import position
 from beancount.core import inventory

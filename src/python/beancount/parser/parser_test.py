@@ -11,7 +11,7 @@ import re
 import sys
 import subprocess
 
-from beancount.core.amount import D
+from beancount.core.number import D
 from beancount.parser import parser
 from beancount.parser import lexer
 from beancount.core import data

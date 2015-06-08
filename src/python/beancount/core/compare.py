@@ -5,8 +5,8 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import collections
 import hashlib
 
-from .data import Price
-from . import data
+from beancount.core.data import Price
+from beancount.core import data
 
 
 CompareError = collections.namedtuple('CompareError', 'source message entry')

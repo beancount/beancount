@@ -1,5 +1,17 @@
 -*- mode: org -*-
 beancount: TODO
+* File Cleanup
+
+  - Remove plugins from ops, remove algorithms from core:
+
+      b.ops.auto_accounts -> b.plugins.auto_accounts  (easy)
+      b.ops.implicit_prices -> b.plugins.implicit_prices  (easy)
+      b.ops.documents -> b.plugins.documents  (not sure if breaks)
+
+      b.core.getters -> b.ops.realization (does it add deps?)
+      b.core.realization -> b.ops.realization (does it add deps?)
+
+
 * Explicit Tolerance
 
   - Make the printer support explicit tolerance syntax. This is crucial for
@@ -1246,6 +1258,12 @@ http://furius.ca/beancount/doc/proposal-inter
 
 
   - Use self.assertRegexpMatches() everywhere I could have.
+
+
+  - Test out removing the circular reference in Posting. This would make writing
+    scripts a lot easier and I bet we should be able to make do with per-account
+    lists of (Posting, Transaction). Create a tuple type for it, to make this
+    explicit. I bet it wouldn't be very much work to make the conversion; try it.
 
 
   - A simple code cleanup: Since filtering Transactions out of a list of entries
