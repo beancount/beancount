@@ -36,10 +36,10 @@ def D(string):
                   "beancount.core.number.D")
     return number.D(string)
 
-def round_to(string):
+def round_to(number, increment):
     warnings.warn("beancount.core.amount.round_to has been renamed to "
                   "beancount.core.number.round_to")
-    return number.D(string)
+    return number.round_to(number, increment)
 
 _D = number.D
 #`-----------------------------------------------------------------------------'
