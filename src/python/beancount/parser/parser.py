@@ -599,7 +599,7 @@ class Builder(lexer.LexBuilder):
                         "for workaround)"
                     ).format(price), None))
                 # Fix it and continue.
-                price.number = abs(price.number)
+                price = price._replace(number=abs(price.number))
 
         # If the price is specified for the entire amount, compute the effective
         # price here and forget about that detail of the input syntax.

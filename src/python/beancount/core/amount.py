@@ -51,24 +51,24 @@ _D = number.D
 CURRENCY_RE = '[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]'
 
 
-class Amount:
+import collections
+_Amount = collections.namedtuple('_Amount', ('number', 'currency'))
+
+class Amount(_Amount):
     """An 'Amount' represents a number of a particular unit of something.
 
     It's essentially a typed number, with corresponding manipulation operations
     defined on it.
     """
 
-    __slots__ = ('number', 'currency')
-
-    def __init__(self, number, currency):
+    def __new__(cls, number, currency):
         """Constructor from a number and currency.
 
         Args:
           number: A string or Decimal instance. Will get converted automatically.
           currency: A string, the currency symbol to use.
         """
-        self.number = _D(number)
-        self.currency = currency
+        return _Amount.__new__(cls, _D(number), currency)
 
     def to_string(self, dformat=DEFAULT_FORMATTER):
         """Convert an Amount instance to a printable string.

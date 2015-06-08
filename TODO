@@ -11,16 +11,9 @@ beancount: TODO
       b.core.getters -> b.ops.realization (does it add deps?)
       b.core.realization -> b.ops.realization (does it add deps?)
 
-  - Move number code from
-
-      b.core.amount -> b.core.number
-
-    And define a C extension module to implemen D().
-    b.core.number and b.core.amount should be distinct, there is no
-    reason they should be together.
-
-  - The relative imports of the core module should be converted to
-    absolute ones.
+  - Make Amount and other basic classes descendants of tuple because
+    this makes their attributes truly immutable. Do this! You may
+    find bugs.
 
 
 * Explicit Tolerance

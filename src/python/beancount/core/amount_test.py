@@ -20,6 +20,17 @@ class TestAmount(unittest.TestCase):
         amount = Amount('100,034.02', 'USD')
         self.assertEqual(amount.number, Decimal('100034.02'))
 
+    def test_mutation(self):
+        amount1 = Amount(Decimal('100'), 'USD')
+        try:
+            amount.currency = 'CAD'
+        except AttributeError as exc:
+            self.assertRegexpMatches("can't set attribute", exc.message)
+        try:
+            amount.number = D('200')
+        except AttributeError as exc:
+            self.assertRegexpMatches("can't set attribute", exc.message)
+
     def test_fromstring(self):
         amount1 = Amount(Decimal('100'), 'USD')
         amount2 = Amount.from_string('100 USD')
