@@ -1,5 +1,25 @@
 -*- mode: org -*-
 beancount: TODO
+* File Cleanup
+
+  - Remove plugins from ops, remove algorithms from core:
+
+      b.ops.auto_accounts -> b.plugins.auto_accounts  (easy)
+      b.ops.implicit_prices -> b.plugins.implicit_prices  (easy)
+      b.ops.documents -> b.plugins.documents  (not sure if breaks)
+
+      b.core.getters -> b.ops.realization (does it add deps?)
+      b.core.realization -> b.ops.realization (does it add deps?)
+
+  - Move number code from
+
+      b.core.amount -> b.core.number
+
+    And define a C extension module to implemen D().
+    b.core.number and b.core.amount should be distinct, there is no
+    reason they should be together.
+
+
 * Explicit Tolerance
 
   - Make the printer support explicit tolerance syntax. This is crucial for
