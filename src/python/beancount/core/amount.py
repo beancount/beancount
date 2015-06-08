@@ -16,9 +16,9 @@ import re
 from decimal import Decimal
 
 # Import object to format numbers at specific precisions.
-from .display_context import DEFAULT_FORMATTER
-from .number import D
-from .number import ZERO
+from beancount.core.display_context import DEFAULT_FORMATTER
+from beancount.core.number import D
+from beancount.core.number import ZERO
 
 
 # A regular expression to match the name of a currency.

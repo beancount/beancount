@@ -2,10 +2,10 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import unittest
 
-from . import number
-from .number import D
-from .number import Decimal
-from .number import ZERO
+from beancount.core import number
+from beancount.core.number import D
+from beancount.core.number import Decimal
+from beancount.core.number import ZERO
 
 
 class TestDecimalPrecision(unittest.TestCase):

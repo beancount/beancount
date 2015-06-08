@@ -4,9 +4,9 @@ from datetime import date
 import unittest
 import datetime
 
-from .number import D
-from . import data
-from . import amount
+from beancount.core.number import D
+from beancount.core import data
+from beancount.core import amount
 
 
 META = data.new_metadata('beancount/core/testing.beancount', 12345)

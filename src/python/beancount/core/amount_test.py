@@ -2,12 +2,12 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import unittest
 
-from .number import D
-from .number import Decimal
-from .number import ZERO
-from .amount import Amount
-from . import amount
-from . import display_context
+from beancount.core.number import D
+from beancount.core.number import Decimal
+from beancount.core.number import ZERO
+from beancount.core.amount import Amount
+from beancount.core import amount
+from beancount.core import display_context
 
 
 class TestAmount(unittest.TestCase):
