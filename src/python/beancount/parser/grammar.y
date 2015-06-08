@@ -83,6 +83,7 @@ const char* getTokenName(int token);
 %token <string> COMMA      /* , */
 %token <string> TILDE      /* ~ */
 %token <string> SLASH      /* / */
+%token <string> COLON      /* : */
 %token <character> FLAG    /* Valid characters for flags */
 %token TXN                 /* 'txn' keyword */
 %token BALANCE             /* 'balance' keyword */
@@ -96,6 +97,8 @@ const char* getTokenName(int token);
 %token DOCUMENT            /* 'document' keyword */
 %token PUSHTAG             /* 'pushtag' keyword */
 %token POPTAG              /* 'poptag' keyword */
+%token PUSHMETA            /* 'pushmeta' keyword */
+%token POPMETA             /* 'popmeta' keyword */
 %token OPTION              /* 'option' keyword */
 %token INCLUDE             /* 'include' keyword */
 %token PLUGIN              /* 'plugin' keyword */
@@ -115,6 +118,7 @@ const char* getTokenName(int token);
 %type <pyobj> transaction
 %type <pyobj> posting
 %type <pyobj> key_value
+%type <pyobj> key_value_line
 %type <pyobj> key_value_list
 %type <pyobj> key_value_value
 %type <pyobj> posting_or_kv_list
@@ -246,11 +250,16 @@ posting : INDENT optflag ACCOUNT position eol
             DECREF1($3);
         }
 
-key_value : INDENT KEY key_value_value eol
+key_value : KEY COLON key_value_value
           {
-              $$ = BUILD("key_value", "OO", $2, $3);
-              DECREF2($2, $3);
+              $$ = BUILD("key_value", "OO", $1, $3);
+              DECREF2($1, $3);
           }
+
+key_value_line : INDENT key_value eol
+                   {
+                       $$ = $2;
+                   }
 
 key_value_value : STRING
                 | ACCOUNT
@@ -274,7 +283,7 @@ posting_or_kv_list : empty
                        Py_INCREF(Py_None);
                        $$ = Py_None;
                    }
-                   | posting_or_kv_list key_value
+                   | posting_or_kv_list key_value_line
                    {
                        $$ = BUILD("handle_list", "OO", $1, $2);
                        DECREF2($1, $2);
@@ -290,7 +299,7 @@ key_value_list : empty
                    Py_INCREF(Py_None);
                    $$ = Py_None;
                }
-               | key_value_list key_value
+               | key_value_list key_value_line
                {
                    $$ = BUILD("handle_list", "OO", $1, $2);
                    DECREF2($1, $2);
@@ -313,16 +322,31 @@ currency_list : empty
               }
 
 pushtag : PUSHTAG TAG eol
-         {
-             BUILD("pushtag", "O", $2);
-             DECREF1($2);
-         }
+       {
+           BUILD("pushtag", "O", $2);
+           DECREF1($2);
+       }
 
 poptag : POPTAG TAG eol
        {
            BUILD("poptag", "O", $2);
            DECREF1($2);
        }
+
+pushmeta : PUSHMETA key_value eol
+         {
+             /* Note: key_value is a tuple, Py_BuildValue() won't wrap it up
+              * within a tuple, so expand in the method (it receives two
+              * objects). See https://docs.python.org/3.4/c-api/arg.html. */
+             BUILD("pushmeta", "O", $2);
+             DECREF1($2);
+         }
+
+popmeta : POPMETA KEY COLON eol
+        {
+            BUILD("popmeta", "O", $2);
+            DECREF1($2);
+        }
 
 open : DATE OPEN ACCOUNT currency_list opt_booking eol key_value_list
      {
@@ -486,6 +510,8 @@ directive : SKIPPED
           | empty_line
           | pushtag
           | poptag
+          | pushmeta
+          | popmeta
           | option
           | include
           | plugin
@@ -537,6 +563,7 @@ const char* getTokenName(int token)
         case EQUAL    : return "EQUAL";
         case COMMA    : return "COMMA";
         case SLASH    : return "SLASH";
+        case COLON    : return "COLON";
         case FLAG     : return "FLAG";
         case TXN      : return "TXN";
         case BALANCE  : return "BALANCE";
@@ -549,6 +576,8 @@ const char* getTokenName(int token)
         case DOCUMENT : return "DOCUMENT";
         case PUSHTAG  : return "PUSHTAG";
         case POPTAG   : return "POPTAG";
+        case PUSHMETA  : return "PUSHMETA";
+        case POPMETA   : return "POPMETA";
         case OPTION   : return "OPTION";
         case DATE     : return "DATE";
         case ACCOUNT  : return "ACCOUNT";
@@ -559,5 +588,5 @@ const char* getTokenName(int token)
         case LINK     : return "LINK";
         case KEY      : return "KEY";
     }
-    return 0;
+    return "INVALID_TOKEN";
 }

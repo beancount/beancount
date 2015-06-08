@@ -19,6 +19,7 @@ from beancount.core import amount
 from beancount.core import interpolate
 from beancount.core import interpolate_test
 from beancount.utils import test_utils
+from beancount.parser import printer
 
 
 def check_list(test, objlist, explist):
@@ -342,7 +343,7 @@ class TestUglyBugs(unittest.TestCase):
         self.assertEqual([], errors)
 
 
-class TestTagStack(unittest.TestCase):
+class TestPushPopTag(unittest.TestCase):
 
     @parser.parsedoc
     def test_tag_left_unclosed(self, entries, errors, _):
@@ -350,7 +351,7 @@ class TestTagStack(unittest.TestCase):
           pushtag #trip-to-nowhere
         """
         self.assertEqual(1, len(errors))
-        self.assertTrue(re.search('Unbalanced tag', errors[0].message))
+        self.assertRegexpMatches(errors[0].message, 'Unbalanced pushed tag')
 
     @parser.parsedoc
     def test_pop_invalid_tag(self, entries, errors, _):
@@ -359,6 +360,76 @@ class TestTagStack(unittest.TestCase):
         """
         self.assertTrue(errors)
         self.assertTrue(re.search('absent tag', errors[0].message))
+
+
+class TestPushPopMeta(unittest.TestCase):
+
+    @parser.parsedoc
+    def test_pushmeta_normal(self, entries, errors, _):
+        """
+          pushmeta location: "Lausanne, Switzerland"
+
+          2015-06-07 * "Something"
+            Assets:Something   1 USD
+            Assets:Something
+
+          popmeta location:
+        """
+        self.assertFalse(errors)
+        self.assertTrue('location' in entries[0].meta)
+        self.assertEqual("Lausanne, Switzerland", entries[0].meta['location'])
+
+    @parser.parsedoc
+    def test_pushmeta_shadow(self, entries, errors, _):
+        """
+          pushmeta location: "Lausanne, Switzerland"
+
+          2015-06-07 * "Something"
+            location: "Paris, France"
+            Assets:Something   1 USD
+            Assets:Something
+
+          popmeta location:
+        """
+        self.assertFalse(errors)
+        self.assertTrue('location' in entries[0].meta)
+        self.assertEqual("Paris, France", entries[0].meta['location'])
+
+    @parser.parsedoc
+    def test_pushmeta_override(self, entries, errors, _):
+        """
+          pushmeta location: "Lausanne, Switzerland"
+          pushmeta location: "Paris, France"
+
+          2015-06-07 * "Something"
+            Assets:Something   1 USD
+            Assets:Something
+
+          popmeta location:
+        """
+        self.assertTrue('location' in entries[0].meta)
+        self.assertEqual("Paris, France", entries[0].meta['location'])
+        self.assertEqual(1, len(errors))
+        self.assertRegexpMatches(errors[0].message,
+                                 "Overriding value for metadata key")
+
+    @parser.parsedoc
+    def test_pushmeta_invalid_pop(self, entries, errors, _):
+        """
+          popmeta location:
+        """
+        self.assertEqual(1, len(errors))
+        self.assertRegexpMatches(errors[0].message,
+                                 "Attempting to pop absent metadata key")
+
+    @parser.parsedoc
+    def test_pushmeta_forgotten(self, entries, errors, _):
+        """
+          pushmeta location: "Lausanne, Switzerland"
+        """
+        self.assertEqual(1, len(errors))
+        self.assertRegexpMatches(errors[0].message,
+                                 "Unbalanced pushed metadata key")
 
 
 class TestMultipleLines(unittest.TestCase):

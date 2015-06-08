@@ -111,6 +111,9 @@ class Builder(lexer.LexBuilder):
         # A stack of the current active tags.
         self.tags = []
 
+        # A dict of the current active metadata fields (not a stack).
+        self.meta = {}
+
         # The result from running the parser, a list of entries.
         self.entries = []
 
@@ -141,7 +144,13 @@ class Builder(lexer.LexBuilder):
         for tag in self.tags:
             meta = new_metadata(self.options['filename'], 0)
             self.errors.append(
-                ParserError(meta, "Unbalanced tag: '{}'".format(tag), None))
+                ParserError(meta, "Unbalanced pushed tag: '{}'".format(tag), None))
+
+        # If the user left some metadata unpoped, issue an error.
+        for key, value in self.meta.items():
+            meta = new_metadata(self.options['filename'], 0)
+            self.errors.append(
+                ParserError(meta, "Unbalanced pushed metadata key: '{}'".format(key), None))
 
         return (self.get_entries(), self.errors, self.get_options())
 
@@ -216,6 +225,34 @@ class Builder(lexer.LexBuilder):
             meta = new_metadata(self.options['filename'], 0)
             self.errors.append(
                 ParserError(meta, "Attempting to pop absent tag: '{}'".format(tag), None))
+
+    def pushmeta(self, key, value):
+        """Set a metadata field on the current set of key-value pairs to add to transactions.
+
+        Args:
+          key_value: A KeyValue instance, to be added to the dict of metadata.
+        """
+        if key in self.meta:
+            meta = new_metadata(self.options['filename'], 0)
+            self.errors.append(
+                ParserError(meta, "Overriding value for metadata key: '{}'".format(key),
+                            None))
+        self.meta[key] = value
+
+    def popmeta(self, key):
+        """Removed a key off the current set of stacks.
+
+        Args:
+          key: A string, a key to be removed from the meta dict.
+        """
+        try:
+            del self.meta[key]
+        except KeyError:
+            meta = new_metadata(self.options['filename'], 0)
+            self.errors.append(
+                ParserError(meta,
+                            "Attempting to pop absent metadata key: '{}'".format(key),
+                            None))
 
     def option(self, filename, lineno, key, value):
         """Process an option directive.
@@ -740,7 +777,8 @@ class Builder(lexer.LexBuilder):
         """
         meta = new_metadata(filename, lineno)
 
-        # Separate postings and key-valus.
+        # Separate postings and key-values.
+        explicit_meta = {}
         postings = []
         if posting_or_kv_list:
             last_posting = None
@@ -750,8 +788,8 @@ class Builder(lexer.LexBuilder):
                     last_posting = posting_or_kv
                 else:
                     if last_posting is None:
-                        value = meta.setdefault(posting_or_kv.key,
-                                                posting_or_kv.value)
+                        value = explicit_meta.setdefault(posting_or_kv.key,
+                                                         posting_or_kv.value)
                         if value is not posting_or_kv.value:
                             self.errors.append(ParserError(
                                 meta, "Duplicate metadata field on entry: {}".format(
@@ -768,6 +806,16 @@ class Builder(lexer.LexBuilder):
                             self.errors.append(ParserError(
                                 meta, "Duplicate posting metadata field: {}".format(
                                     posting_or_kv), None))
+
+
+
+        # Initialize the metadata fields from the set of active values.
+        if self.meta:
+            meta.update(self.meta)
+
+        # Add on explicitly defined values.
+        if explicit_meta:
+            meta.update(explicit_meta)
 
         # Unpack the transaction fields.
         payee_narration = self.unpack_txn_strings(txn_fields, meta)

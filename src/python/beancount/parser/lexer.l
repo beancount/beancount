@@ -121,6 +121,7 @@ int strtonl(const char* buf, size_t nchars);
 ,		{ return COMMA; }
 \~		{ return TILDE; }
 \/		{ return SLASH; }
+\:		{ return COLON; }
 
  /* Skip commented output (but not the accompanying newline). */
 ;+.*		{
@@ -160,6 +161,8 @@ note		{ return NOTE; }
 document	{ return DOCUMENT; }
 pushtag	        { return PUSHTAG; }
 poptag		{ return POPTAG; }
+pushmeta	{ return PUSHMETA; }
+popmeta		{ return POPMETA; }
 option		{ return OPTION; }
 plugin		{ return PLUGIN; }
 include		{ return INCLUDE; }
@@ -273,6 +276,7 @@ FALSE		{
  /* Key */
 [a-z][a-z0-9\-_]+: 		{
     yylval->pyobj = BUILD("KEY", "s#", yytext, yyleng-1);
+    unput(':');
     return KEY;
 }
 
