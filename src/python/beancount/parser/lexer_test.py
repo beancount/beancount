@@ -9,7 +9,7 @@ import textwrap
 import unittest
 import re
 
-from beancount.core.amount import D
+from beancount.core.number import D
 from beancount.parser import lexer
 
 

@@ -8,8 +8,8 @@ import copy
 from datetime import date
 import types
 
-from .amount import D
-from .amount import ZERO
+from .number import D
+from .number import ZERO
 from .position import Position
 from .position import Lot
 from .inventory import Inventory

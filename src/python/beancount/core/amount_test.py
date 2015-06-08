@@ -2,9 +2,9 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import unittest
 
-from .amount import D
-from .amount import Decimal
-from .amount import ZERO
+from .number import D
+from .number import Decimal
+from .number import ZERO
 from .amount import Amount
 from . import amount
 from . import display_context

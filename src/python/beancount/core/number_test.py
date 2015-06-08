@@ -18,8 +18,8 @@ class TestDecimalPrecision(unittest.TestCase):
         # during arithmetic operations."
         with number.decimal.localcontext() as context:
             context.prec = 2
-            number = D('0.1122334455')
-            self.assertEqual('0.1122334455', str(number))
+            number_ = D('0.1122334455')
+            self.assertEqual('0.1122334455', str(number_))
 
 
 class TestToDecimal(unittest.TestCase):

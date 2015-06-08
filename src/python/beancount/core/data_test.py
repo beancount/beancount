@@ -4,7 +4,7 @@ from datetime import date
 import unittest
 import datetime
 
-from .amount import D
+from .number import D
 from . import data
 from . import amount
 

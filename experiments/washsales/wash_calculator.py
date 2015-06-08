@@ -18,8 +18,8 @@ import io
 import re
 import sys
 
-from beancount.core.amount import ZERO
-from beancount.core.amount import D
+from beancount.core.number import ZERO
+from beancount.core.number import D
 from beancount import loader
 from beancount.core import data
 from beancount.core import position

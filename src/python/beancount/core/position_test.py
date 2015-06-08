@@ -9,8 +9,8 @@ import copy
 import random
 from datetime import date
 
-from .amount import ZERO
-from .amount import D
+from .number import ZERO
+from .number import D
 from .amount import Amount
 from .position import Lot
 from .position import Position

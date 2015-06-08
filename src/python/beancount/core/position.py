@@ -23,9 +23,9 @@ from collections import namedtuple
 import re
 
 # Note: this file is mirrorred into ledgerhub. Relative imports only.
-from .amount import ZERO
-from .amount import Decimal
-from .amount import D
+from .number import ZERO
+from .number import Decimal
+from .number import D
 from .amount import Amount
 from .amount import NULL_AMOUNT
 from .amount import amount_mult

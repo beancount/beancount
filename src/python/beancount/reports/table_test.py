@@ -5,7 +5,7 @@ import collections
 import textwrap
 import unittest
 
-from beancount.core.amount import D
+from beancount.core.number import D
 from beancount.reports import table
 
 

@@ -10,8 +10,8 @@ import sys
 
 # Note: this file is mirrorred into ledgerhub. Relative imports only.
 from .amount import Amount
-from .amount import Decimal
-from .amount import D
+from .number import Decimal
+from .number import D
 from .position import Position
 from .position import Lot
 from .account import has_component
