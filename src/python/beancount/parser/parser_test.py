@@ -217,8 +217,12 @@ class TestParserEntryTypes(unittest.TestCase):
     def test_entry_event(self, entries, _, __):
         """
           2013-05-18 event "location" "New York, USA"
+
+          ;; Test empty event.
+          2013-05-18 event "location" ""
         """
-        check_list(self, entries, [data.Event])
+        check_list(self, entries, [data.Event, data.Event])
+        self.assertEqual("", entries[-1].description)
 
     @parser.parsedoc
     def test_entry_note(self, entries, _, __):

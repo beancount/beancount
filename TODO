@@ -1,5 +1,10 @@
 -*- mode: org -*-
 beancount: TODO
+* Pushmeta
+
+  - Rename the directives to setmeta & clearmeta. pushmeta & popmeta are misleading.
+
+
 * File Cleanup
 
   - Remove plugins from ops, remove algorithms from core:
