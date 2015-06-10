@@ -22,6 +22,14 @@ beancount: TODO
   - The relative imports of the core module should be converted to
     absolute ones.
 
+* Removing Dependencies
+
+  - Make sure all the tools work even without curses. Write a test for it,
+    patching it out. This is for SUSE.
+
+  - Look at writing my own web scraper instead of wget. Diff the two outputs to
+    make sure it works well. This would remove the need to install wget at all.
+
 
 * Explicit Tolerance
 
