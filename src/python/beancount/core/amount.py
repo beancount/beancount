@@ -61,6 +61,8 @@ class Amount(_Amount):
     defined on it.
     """
 
+    __slots__ = ()  # Prevent the creation of new attributes.
+
     def __new__(cls, number, currency):
         """Constructor from a number and currency.
 

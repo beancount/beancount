@@ -22,14 +22,20 @@ class TestAmount(unittest.TestCase):
 
     def test_mutation(self):
         amount1 = Amount(Decimal('100'), 'USD')
-        try:
-            amount.currency = 'CAD'
-        except AttributeError as exc:
-            self.assertRegexpMatches("can't set attribute", exc.message)
-        try:
-            amount.number = D('200')
-        except AttributeError as exc:
-            self.assertRegexpMatches("can't set attribute", exc.message)
+
+        # Test how changing existing attributes should fail.
+        with self.assertRaises(AttributeError) as ctx:
+            amount1.currency = 'CAD'
+        self.assertRegexpMatches("can't set attribute", str(ctx.exception))
+
+        with self.assertRaises(AttributeError) as ctx:
+            amount1.number = D('200')
+        self.assertRegexpMatches("can't set attribute", str(ctx.exception))
+
+        # Try setting a new attribute.
+        with self.assertRaises(AttributeError):
+            amount1.something = 42
+
 
     def test_fromstring(self):
         amount1 = Amount(Decimal('100'), 'USD')
