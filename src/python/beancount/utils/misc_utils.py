@@ -297,6 +297,8 @@ def import_curses():
     """Try to import the 'curses' module.
     (This is used here in order to override for tests.)
 
+    Returns:
+      The curses module, if it was possible to import it.
     Raises:
       ImportError: If the module could not be imported.
     """

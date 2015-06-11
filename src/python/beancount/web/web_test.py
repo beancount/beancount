@@ -22,6 +22,15 @@ DEBUG = False
 
 
 def scrape_urls(url_format, predicate, ignore_regexp=None):
+    """Recursively scrape pages from a web address.
+
+    Args:
+      url_format: The pattern for building links from relative paths.
+      predicate: A callback function to invoke on each page to validate it.
+        The function is called with the response and the url as arguments.
+        This function should trigger an error on failure (via an exception).
+      ignore_regexp: A regular expression string, the urls to ignore.
+    """
     # The set of all URLs processed
     done = set()
 
@@ -59,6 +68,13 @@ def scrape_urls(url_format, predicate, ignore_regexp=None):
 
 
 def find_links(html_text):
+    """Find links targets in HTML text.
+
+    Args:
+      html_text: A string, some HTML text.
+    Yields:
+      URL strings, where found.
+    """
     root = lxml.html.fromstring(html_text)
     for anchor in root.xpath('//a'):
         assert 'href' in anchor.attrib
@@ -66,6 +82,18 @@ def find_links(html_text):
 
 
 def scrape(filename, predicate, port, quiet=True, extra_args=None):
+    """Run a web server on a Beancount file and scrape it.
+
+    Args:
+      filename: A string, the name of the file to parse.
+      predicate: A callback function to invoke on each page to validate it.
+        The function is called with the response and the url as arguments.
+        This function should trigger an error on failure (via an exception).
+      port: An integer, a free port to use for serving the pages.
+      quiet: True if we shouldn't log the web server pages.
+      extra_args: Extra arguments to bean-web that we want to start the
+        server with.
+    """
     url_format = 'http://localhost:{}{{}}'.format(port)
 
     # Create a set of valid arguments to run the app.
