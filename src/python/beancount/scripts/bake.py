@@ -13,12 +13,39 @@ import shutil
 import shlex
 from os import path
 
+import lxml.html
+
+
 from beancount.web import web
+from beancount.web import web_test
 from beancount.scripts import checkdeps
 from beancount.utils import file_utils
 
 
+# FIXME: Move web_test's scraping functionality to utils.
+
+
 def bake_to_directory(webargs, output, quiet_subproc=False, quiet_server=False):
+    """Serve and bake a Beancount's web to a directory.
+
+    Args:
+      webargs: An argparse parsed options object with the web app arguments.
+      output: A directory name. We don't check here whether it exists or not.
+      quiet_subproc: A boolean, True to suppress output from the web server.
+    Returns:
+      True on success, False otherwise.
+    """
+    def callback(response, url):
+        assert response.status == 200
+        print(url)
+        print(response.read())
+
+    web_test.scrape(webargs.filename, callback, webargs.port, quiet=False)
+
+    ## return pipe.returncode == 0
+
+
+def bake_to_directory__wget(webargs, output, quiet_subproc=False, quiet_server=False):
     """Serve and bake a Beancount's web to a directory.
 
     Args:
@@ -40,6 +67,7 @@ def bake_to_directory(webargs, output, quiet_subproc=False, quiet_server=False):
                '--no-host-directories',
                '--page-requisites',
                '--convert-links',
+               '--backup-converted',
                '--html-extension',
                '--waitretry=0.05',
                '--exclude-directories=/{}/'.format(web.doc_name),
