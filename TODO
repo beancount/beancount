@@ -675,6 +675,17 @@ http://furius.ca/beancount/doc/proposal-query
     Try to reproduce this specific use case.
 
 
+** V2
+
+  - I think we can do prety well like this:
+
+      SELECT ... FROM transactions|postings|balance|...
+      WHERE ANY(...)
+            ALL(...)
+
+    I'm not sure where OPEN CLOSE and CLEAR all fit though.
+
+
 * Standalone Tools
 
   - Build an 'statement' tool that will render a treeified balance sheet in two
