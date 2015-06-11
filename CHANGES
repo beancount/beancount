@@ -4,6 +4,28 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-06-10
+
+  - Removed dependency on curses. If you don't have curses, everything should
+    work fine now, errors are being caught. Curses was only used to provide good
+    default values for rendering tables in terminals on e.g. bean-report
+    journal and to decide whether to use a pager in multi-page bean-query.
+    The default values are fixed if curses isn't available, e.g. 80 chars wide,
+    but as previously, you can override them manually. I also removed the
+    dependency from checkdeps and from the install document.
+
+
+2015-06-09
+
+  - Rewrote the Installation Instructions document completely to make it
+    simpler. Some users had found it daunting.
+    http://furius.ca/beancount/doc/install
+
+  - Tested Windows installation using Cygwin and added it to the installation
+    instructions.
+    http://furius.ca/beancount/doc/install
+
+
 2015-06-07
 
   - Moved the following representation related symbols to their own module:

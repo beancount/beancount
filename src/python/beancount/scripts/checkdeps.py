@@ -22,7 +22,6 @@ def check_dependencies():
     return [
         # Check for a complete installation of Python itself.
         check_python(),
-        check_curses(),
 
         # Modules we really do need installed.
         check_import('dateutil'),
@@ -48,25 +47,6 @@ def check_python():
     return ('python3',
             '.'.join(map(str, sys.version_info[:3])),
             sys.version_info[:2] >= (3, 3))
-
-
-def check_curses():
-    """Check that curses is installed properly.
-
-    'curses' normally comes with Python, but some old distributions
-    (e.g., OpenSuse) package it as optional somehow and we should
-    check for it ahead of time.
-
-    Returns:
-      A triple of (package-name, version-number, sufficient) as per
-      check_dependencies().
-    """
-    try:
-        import curses
-        version, sufficient = curses.version.decode('ascii'), True
-    except ImportError:
-        version, sufficient = None, False
-    return ('curses', version, sufficient)
 
 
 def check_wget():
