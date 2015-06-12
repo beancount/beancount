@@ -730,7 +730,7 @@ def commodities():
         contents=html_table)
 
 
-@viewapp.route('/event/<event:re:([a-zA-Z0-9._]+)?>', name='event')
+@viewapp.route('/event/<event:re:([A-Za-z0-9\-_/.]+)?>', name='event')
 def event(event=None):
     "Render all values of a particular event."
     if not event:
