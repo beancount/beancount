@@ -8,6 +8,7 @@ fetched directory contents to the archive and delete them.
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import argparse
+import functools
 import logging
 import os
 import subprocess
@@ -18,13 +19,11 @@ from os import path
 import lxml.html
 
 
+from beancount.web import scrape
 from beancount.web import web
 from beancount.web import web_test
 from beancount.scripts import checkdeps
 from beancount.utils import file_utils
-
-
-# FIXME: Move web_test's scraping functionality to utils.
 
 
 def normalize_filename(url):
@@ -41,16 +40,15 @@ def normalize_filename(url):
         return url if path.splitext(url)[1] else (url + '.html')
 
 
-def relativize_links(contents, current_url):
+def relativize_links(html, current_url):
     """Make all the links in the contents string relative to an URL.
 
     Args:
-      contents: A bytes object, the HTML code to translate.
+      html: An lxml document node.
       current_url: A string, the URL of the current page, a path to.
         a file or a directory. If the path represents a directory, the
         path ends with a /.
     """
-    html = lxml.html.document_fromstring(contents)
     current_dir = path.dirname(current_url)
     for element, attribute, link, pos in lxml.html.iterlinks(html):
         if path.isabs(link):
@@ -64,74 +62,49 @@ def relativize_links(contents, current_url):
     return lxml.html.tostring(html)
 
 
-def bake_to_directory(webargs, output, quiet_subproc=False, quiet_server=False):
+def process_scraped_document(output_dir, url, status, contents, html_root):
+    """Callback function to process a document being scraped.
+
+    This converts the document to have relative links and writes out the file to
+    the output directory.
+
+    Args:
+      output_dir: A string, the output directory to write.
+      url: A string, the URL of the page being scraped.
+      status: An integer, the status code from the response.
+      contents: A bytes object, the contents of the response.
+      html_root: An lxml root node for the document.
+
+    """
+    if status != 200:
+        logging.error("Invalid status: %s", status)
+
+    # Ignore directories.
+    if url.endswith('/'):
+        return
+
+    # Convert all the links to be relative ones.
+    relative_contents = relativize_links(html_root, url)
+
+    # Compute output filename and write out the relativized contents.
+    output_filename = path.join(output_dir, normalize_filename(url).lstrip('/'))
+    os.makedirs(path.dirname(output_filename), exist_ok=True)
+    with open(output_filename, 'wb') as outfile:
+        outfile.write(relative_contents)
+
+
+def bake_to_directory(webargs, output_dir, quiet_subproc=False, quiet_server=False):
     """Serve and bake a Beancount's web to a directory.
 
     Args:
       webargs: An argparse parsed options object with the web app arguments.
-      output: A directory name. We don't check here whether it exists or not.
+      output_dir: A directory name. We don't check here whether it exists or not.
       quiet_subproc: A boolean, True to suppress output from the web server.
     Returns:
       True on success, False otherwise.
     """
-    def callback(status, contents, url):
-        assert status == 200
-        # Ignore directories.
-        if url.endswith('/'):
-            return
-        #logging.info('url:                            %s', url)
-        relative_contents = relativize_links(contents, url)
-        output_filename = path.join(output, normalize_filename(url).lstrip('/'))
-        #logging.info('filename:                       %s', output_filename)
-
-        os.makedirs(path.dirname(output_filename), exist_ok=True)
-        with open(output_filename, 'wb') as outfile:
-            outfile.write(relative_contents)
-
-    web_test.scrape(webargs.filename, callback, webargs.port, quiet=False)
-
-    return True
-
-
-def bake_to_directory__wget(webargs, output, quiet_subproc=False, quiet_server=False):
-    """Serve and bake a Beancount's web to a directory.
-
-    Args:
-      webargs: An argparse parsed options object with the web app arguments.
-      output: A directory name. We don't check here whether it exists or not.
-      quiet_subproc: A boolean, True to suppress output from the subprocesses.
-    Returns:
-      True on success, False otherwise.
-    """
-    # Start a server thread locally.
-    thread = web.thread_server_start(webargs)
-
-    # Define a command that will run and convert all the links to work in a
-    # local mirror of the server (your accountant!) so a user can browse the
-    # static files extracted.
-    url = 'http://localhost:{}/'.format(webargs.port)
-    command = ['wget',
-               '--recursive',
-               '--no-host-directories',
-               '--page-requisites',
-               '--convert-links',
-               '--backup-converted',
-               '--html-extension',
-               '--waitretry=0.05',
-               '--exclude-directories=/{}/'.format(web.doc_name),
-               url,
-               '--directory-prefix', output]
-
-    pipe = subprocess.Popen(command,
-                            shell=False,
-                            stdout=subprocess.PIPE if quiet_subproc else None,
-                            stderr=subprocess.PIPE if quiet_subproc else None)
-    _, _ = pipe.communicate()
-
-    # Shutdown the server thread.
-    web.thread_server_shutdown(thread)
-
-    return pipe.returncode == 0
+    callback = functools.partial(process_scraped_document, output_dir)
+    scrape.scrape(webargs.filename, callback, webargs.port, quiet=False)
 
 
 def archive(command_template, directory, archive, quiet=False):
@@ -230,10 +203,11 @@ def main():
         parser.error("Package {} is not installed or insufficient (version: {})".format(
             package, version or 'N/A'))
 
-    baked = bake_to_directory(opts, output_directory, not opts.verbose, opts.quiet)
-    if not baked:
-        raise SystemExit("ERROR: Error baking into directory '{}'".format(
-            output_directory))
+    try:
+        bake_to_directory(opts, output_directory, not opts.verbose, opts.quiet)
+    except Exception as exc:
+        raise SystemExit("ERROR: Error baking into directory '{}': {}".format(
+            output_directory, exc))
 
     # Archive if requested.
     if archival_command:
