@@ -1287,6 +1287,11 @@ http://furius.ca/beancount/doc/proposal-inter
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - Make the web application use the regexps defined in common in its paths
+    instead of inline ad-hoc approximations. There was never any need to do
+    that.
+
+
   - Test out removing the circular reference in Posting. This would make writing
     scripts a lot easier and I bet we should be able to make do with per-account
     lists of (Posting, Transaction). Create a tuple type for it, to make this
