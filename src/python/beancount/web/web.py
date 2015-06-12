@@ -844,7 +844,8 @@ def url_restrict_generator(url_prefix):
                                       '/errors',
                                       '/source',
                                       '/link',
-                                      '/context']]
+                                      '/context',
+                                      '/third_party']]
 
     def url_restrict_handler(callback):
         def wrapper(*args, **kwargs):
