@@ -8,6 +8,8 @@ fetched directory contents to the archive and delete them.
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import argparse
+import logging
+import os
 import subprocess
 import shutil
 import shlex
@@ -25,6 +27,43 @@ from beancount.utils import file_utils
 # FIXME: Move web_test's scraping functionality to utils.
 
 
+def normalize_filename(url):
+    """Convert URL paths to filenames. Add .html extension if needed.
+
+    Args:
+      url: A string, the url to convert.
+    Returns:
+      A string, possibly with an extension appended.
+    """
+    if url.endswith('/'):
+        return path.join(url, 'index.html')
+    else:
+        return url if path.splitext(url)[1] else (url + '.html')
+
+
+def relativize_links(contents, current_url):
+    """Make all the links in the contents string relative to an URL.
+
+    Args:
+      contents: A bytes object, the HTML code to translate.
+      current_url: A string, the URL of the current page, a path to.
+        a file or a directory. If the path represents a directory, the
+        path ends with a /.
+    """
+    html = lxml.html.document_fromstring(contents)
+    current_dir = path.dirname(current_url)
+    for element, attribute, link, pos in lxml.html.iterlinks(html):
+        if path.isabs(link):
+
+            if link.endswith('/'):
+                logging.info('%s -> %s', current_url, link)
+
+            relative_link = path.relpath(normalize_filename(link), current_dir)
+            #logging.info('== %s -> %s = %s', current_url, link, relative_link)
+            element.set(attribute, relative_link)
+    return lxml.html.tostring(html)
+
+
 def bake_to_directory(webargs, output, quiet_subproc=False, quiet_server=False):
     """Serve and bake a Beancount's web to a directory.
 
@@ -35,14 +74,23 @@ def bake_to_directory(webargs, output, quiet_subproc=False, quiet_server=False):
     Returns:
       True on success, False otherwise.
     """
-    def callback(response, url):
-        assert response.status == 200
-        print(url)
-        print(response.read())
+    def callback(status, contents, url):
+        assert status == 200
+        # Ignore directories.
+        if url.endswith('/'):
+            return
+        #logging.info('url:                            %s', url)
+        relative_contents = relativize_links(contents, url)
+        output_filename = path.join(output, normalize_filename(url).lstrip('/'))
+        #logging.info('filename:                       %s', output_filename)
+
+        os.makedirs(path.dirname(output_filename), exist_ok=True)
+        with open(output_filename, 'wb') as outfile:
+            outfile.write(relative_contents)
 
     web_test.scrape(webargs.filename, callback, webargs.port, quiet=False)
 
-    ## return pipe.returncode == 0
+    return True
 
 
 def bake_to_directory__wget(webargs, output, quiet_subproc=False, quiet_server=False):

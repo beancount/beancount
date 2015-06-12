@@ -21,30 +21,26 @@ from beancount.utils import test_utils
 DEBUG = False
 
 
-def scrape_urls(url_format, predicate, ignore_regexp=None):
+def scrape_urls(url_format, callback, ignore_regexp=None):
     """Recursively scrape pages from a web address.
 
     Args:
       url_format: The pattern for building links from relative paths.
-      predicate: A callback function to invoke on each page to validate it.
+      callback: A callback function to invoke on each page to validate it.
         The function is called with the response and the url as arguments.
         This function should trigger an error on failure (via an exception).
       ignore_regexp: A regular expression string, the urls to ignore.
     """
-    # The set of all URLs processed
-    done = set()
+    # The set of all URLs seen so far.
+    seen = set()
 
     # The list of all URLs to process. We use a list here so we have
     # reproducible order if we repeat the test.
-    process = ["/"]
+    process_list = ["/"]
 
     # Loop over all URLs remaining to process.
-    while process:
-        url = process.pop()
-
-        # Mark as fetched.
-        assert url not in done
-        done.add(url)
+    while process_list:
+        url = process_list.pop()
 
         # Skip served documents.
         if ignore_regexp and re.match(ignore_regexp, url):
@@ -57,14 +53,20 @@ def scrape_urls(url_format, predicate, ignore_regexp=None):
 
         # Fetch the URL and check its return status.
         response = urllib.request.urlopen(url_format.format(url))
-        predicate(response, url)
+        response_contents = response.read()
 
-        # Get all the links in the page and add all the ones we haven't yet
-        # seen.
-        for url in find_links(response.read()):
-            if url in done or url in process:
+        # Process all the links in the page and register all the unseen links to
+        # be processed.
+        html = lxml.html.document_fromstring(response_contents)
+        for element, attribute, link, pos in lxml.html.iterlinks(html):
+            if not path.isabs(link):
                 continue
-            process.append(url)
+            if link not in seen:
+                process_list.append(link)
+                seen.add(link)
+
+        # Call back for processing.
+        callback(response.status, response_contents, url)
 
 
 def find_links(html_text):
@@ -81,12 +83,12 @@ def find_links(html_text):
         yield anchor.attrib['href']
 
 
-def scrape(filename, predicate, port, quiet=True, extra_args=None):
+def scrape(filename, callback, port, quiet=True, extra_args=None):
     """Run a web server on a Beancount file and scrape it.
 
     Args:
       filename: A string, the name of the file to parse.
-      predicate: A callback function to invoke on each page to validate it.
+      callback: A callback function to invoke on each page to validate it.
         The function is called with the response and the url as arguments.
         This function should trigger an error on failure (via an exception).
       port: An integer, a free port to use for serving the pages.
@@ -115,15 +117,15 @@ def scrape(filename, predicate, port, quiet=True, extra_args=None):
     #
     # - Components views... well there are just too many, makes the tests
     #   impossibly slow. Just keep the A's so some are covered.
-    scrape_urls(url_format, predicate, '^/(doc/|context/|view/component/[^A])')
+    scrape_urls(url_format, callback, '^/(doc/|context/|view/component/[^A])')
 
     web.thread_server_shutdown(thread)
 
 
 class TestWeb(unittest.TestCase):
 
-    def check_page_okay(self, response, url):
-        self.assertEqual(200, response.status, url)
+    def check_page_okay(self, status, _, url):
+        self.assertEqual(200, status, url)
 
     def get_example_file(self, filename):
         return path.join(test_utils.find_repository_root(__file__), 'examples', filename)
