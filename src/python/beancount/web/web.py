@@ -41,6 +41,10 @@ from beancount.reports import misc_reports
 from beancount.reports import context
 
 
+# The default view page to redirect to.
+DEFAULT_VIEW_REDIRECT = 'balsheet'
+
+
 class HTMLFormatter(html_formatter.HTMLFormatter):
     """A formatter object that can be used to render accounts links.
 
@@ -251,7 +255,7 @@ def toc():
         mindate, maxdate = getters.get_min_max_dates(entries_no_open_close)
 
     def view_url(name, **kw):
-        return app.router.build(name, path='', **kw)
+        return app.router.build(name, path=DEFAULT_VIEW_REDIRECT, **kw)
 
     viewboxes = []
     if app.args.view:
@@ -486,7 +490,7 @@ APP_NAVIGATION = bottle.SimpleTemplate("""
 
 @viewapp.route('/', name='approot')
 def approot():
-    bottle.redirect(request.app.get_url('balsheet'))
+    bottle.redirect(request.app.get_url(DEFAULT_VIEW_REDIRECT))
 
 
 @viewapp.route('/index', name='index')
