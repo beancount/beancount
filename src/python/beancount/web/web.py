@@ -706,7 +706,9 @@ def documents():
                                request.view.entries, leaf_only=False))
 
 
-@viewapp.route('/prices/<base:re:[A-Z0-9._\']+>/<quote:re:[A-Z0-9._\']+>', name='prices')
+@viewapp.route('/prices'
+               '/<base:re:[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]>'
+               '/<quote:re:[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]>', name='prices')
 def prices_values(base=None, quote=None):
     "Render all the values for a particular price pair."
     html_table = render_report(price_reports.CommodityPricesReport, request.view.entries,
