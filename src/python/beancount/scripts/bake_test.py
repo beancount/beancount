@@ -1,11 +1,75 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import os
+import subprocess
+import textwrap
 from os import path
+
+import lxml.html
 
 from beancount.utils import test_utils
 from beancount.utils import file_utils
 from beancount.scripts import bake
+
+
+class TestBakeFunctions(test_utils.TestCase):
+
+    def test_normalize_filename(self):
+        self.assertEqual('/pato/to/dir/index.html',
+                         bake.normalize_filename('/pato/to/dir/'))
+        self.assertEqual('/pato/to/file.csv',
+                         bake.normalize_filename('/pato/to/file.csv'))
+        self.assertEqual('/pato/to/file.html',
+                         bake.normalize_filename('/pato/to/file'))
+
+    test_html = textwrap.dedent("""
+      <html>
+        <body>
+          <a href="/path/parent">parent file</a>
+          <a href="/path/">parent dir</a>
+          <a href="/path/to/other">sibling file</a>
+          <a href="/path/to/">sibling dir</a>
+          <a href="/path/to/sub/child">child file</a>
+          <a href="/path/to/sub/">child dir</a>
+          <img src="/path/to/image.png"/>
+        </body>
+      </html>
+    """)
+
+    expected_html = textwrap.dedent("""
+      <html>
+        <body>
+          <a href="../parent.html">parent file</a>
+          <a href="../index.html">parent dir</a>
+          <a href="other.html">sibling file</a>
+          <a href="index.html">sibling dir</a>
+          <a href="sub/child.html">child file</a>
+          <a href="sub/index.html">child dir</a>
+          <img src="image.png"/>
+        </body>
+      </html>
+    """)
+
+    def test_relativize_links(self):
+        html = lxml.html.document_fromstring(self.test_html)
+        self.assertLines(
+            self.expected_html,
+            bake.relativize_links(html, '/path/to/index').decode('utf8'))
+
+    def test_process_scraped_document__file(self):
+        html = lxml.html.document_fromstring(self.test_html)
+        with test_utils.tempdir() as tmp:
+            bake.process_scraped_document(tmp, '/path/to/file', 200, self.test_html, html)
+            filename = path.join(tmp, 'path/to/file.html')
+            self.assertTrue(path.exists(filename))
+            self.assertLines(open(filename).read(), self.expected_html)
+
+    def test_process_scraped_document__ignore_directories(self):
+        html = lxml.html.document_fromstring(self.test_html)
+        with test_utils.tempdir() as tmp:
+            bake.process_scraped_document(tmp, '/path/to/file/', 200, self.test_html, html)
+            filename = path.join(tmp, 'path/to/file.html')
+            self.assertFalse(path.exists(filename))
 
 
 class TestScriptBake(test_utils.TestCase):
@@ -65,7 +129,7 @@ class TestScriptBake(test_utils.TestCase):
             self.assertTrue(output.getvalue())
             self.assertTrue(path.exists(outdir) and path.isdir(outdir))
             directories = [root for root, _, _ in os.walk(outdir)]
-            self.assertGreater(len(directories), 20)
+            self.assertGreater(len(directories), 15)
 
     @test_utils.docfile
     def test_bake_archive__known(self, filename):

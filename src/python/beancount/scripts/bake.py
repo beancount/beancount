@@ -18,7 +18,6 @@ from os import path
 
 import lxml.html
 
-
 from beancount.web import scrape
 from beancount.web import web
 from beancount.web import web_test
@@ -48,18 +47,15 @@ def relativize_links(html, current_url):
       current_url: A string, the URL of the current page, a path to.
         a file or a directory. If the path represents a directory, the
         path ends with a /.
+    Returns:
+      A bytes object, the re-rendered HTML string.
     """
     current_dir = path.dirname(current_url)
     for element, attribute, link, pos in lxml.html.iterlinks(html):
         if path.isabs(link):
-
-            if link.endswith('/'):
-                logging.info('%s -> %s', current_url, link)
-
             relative_link = path.relpath(normalize_filename(link), current_dir)
-            #logging.info('== %s -> %s = %s', current_url, link, relative_link)
             element.set(attribute, relative_link)
-    return lxml.html.tostring(html)
+    return lxml.html.tostring(html, method="xml")
 
 
 def process_scraped_document(output_dir, url, status, contents, html_root):
@@ -93,18 +89,18 @@ def process_scraped_document(output_dir, url, status, contents, html_root):
         outfile.write(relative_contents)
 
 
-def bake_to_directory(webargs, output_dir, quiet_subproc=False, quiet_server=False):
+def bake_to_directory(webargs, output_dir, quiet=False):
     """Serve and bake a Beancount's web to a directory.
 
     Args:
       webargs: An argparse parsed options object with the web app arguments.
       output_dir: A directory name. We don't check here whether it exists or not.
-      quiet_subproc: A boolean, True to suppress output from the web server.
+      quiet: A boolean, True to suppress web server fetch log.
     Returns:
       True on success, False otherwise.
     """
     callback = functools.partial(process_scraped_document, output_dir)
-    scrape.scrape(webargs.filename, callback, webargs.port, quiet=False)
+    scrape.scrape(webargs.filename, callback, webargs.port, quiet)
 
 
 def archive(command_template, directory, archive, quiet=False):
@@ -167,16 +163,10 @@ def main():
                              'we automatically archive the fetched directory '
                              'contents to this archive name and delete them.'))
 
-    group.add_argument('-v', '--verbose', action='store_true',
-                       help="Let subcommand output through.")
-
     group.add_argument('-q', '--quiet', action='store_true',
                        help="Don't even print out web server log")
 
     opts = parser.parse_args()
-
-    if opts.verbose and opts.quiet:
-        parser.error("Invalid options, cannot specify both --verbose and --quiet")
 
     # Figure out the archival method.
     output_directory, extension = file_utils.path_greedy_split(opts.output)
@@ -204,7 +194,7 @@ def main():
             package, version or 'N/A'))
 
     try:
-        bake_to_directory(opts, output_directory, not opts.verbose, opts.quiet)
+        bake_to_directory(opts, output_directory, opts.quiet)
     except Exception as exc:
         raise SystemExit("ERROR: Error baking into directory '{}': {}".format(
             output_directory, exc))

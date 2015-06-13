@@ -1287,6 +1287,9 @@ http://furius.ca/beancount/doc/proposal-inter
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - Rename test_util.TestCase.assertLines() to assertEqualNoWS().
+
+
   - Make the web application use the regexps defined in common in its paths
     instead of inline ad-hoc approximations. There was never any need to do
     that.
