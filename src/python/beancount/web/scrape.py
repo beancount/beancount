@@ -4,14 +4,9 @@ from os import path
 import re
 import argparse
 import sys
-
 import urllib.request
-try:
-    import lxml.html
-except ImportError as exc:
-    print("ERROR: Cannot run web tests: You need to install lxml: {}".format(exc),
-          file=sys.stderr)
-    sys.exit(1)
+
+import lxml.html
 
 from beancount.web import web
 
