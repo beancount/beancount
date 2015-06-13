@@ -245,7 +245,7 @@ def root():
     bottle.redirect(app.get_url('toc'))
 
 
-@app.route('/toc', name='toc')
+@app.route('/index', name='toc')
 def toc():
     entries_no_open_close = [entry for entry in app.entries
                              if not isinstance(entry, (data.Open, data.Close))]
