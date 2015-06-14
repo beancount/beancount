@@ -8,9 +8,6 @@ beancount: TODO
   - Make the web scraper run in multiple threads... it's quite a bit too slow as
     it is.
 
-  - Deal with tags that have a ".pdf" extension... the filename normalize does
-    not add .html to them as it should.
-
 
 * File Cleanup
 

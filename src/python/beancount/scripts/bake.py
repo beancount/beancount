@@ -14,7 +14,9 @@ import os
 import subprocess
 import shutil
 import shlex
+import re
 from os import path
+import urllib.parse
 
 import lxml.html
 
@@ -23,6 +25,12 @@ from beancount.web import web
 from beancount.web import web_test
 from beancount.scripts import checkdeps
 from beancount.utils import file_utils
+
+
+# Directories where binary files are allowed.
+BINARY_DIRECTORIES = ['resources', 'third_party', 'doc']
+BINARY_MATCH = re.compile(r'/({}/|favicon.ico$)'.format(
+    '|'.join(BINARY_DIRECTORIES))).match
 
 
 def normalize_filename(url):
@@ -35,8 +43,10 @@ def normalize_filename(url):
     """
     if url.endswith('/'):
         return path.join(url, 'index.html')
+    elif BINARY_MATCH(url):
+        return url
     else:
-        return url if path.splitext(url)[1] else (url + '.html')
+        return url if url.endswith('.html') else (url + '.html')
 
 
 def relativize_links(html, current_url):
@@ -78,20 +88,21 @@ def save_scraped_document(output_dir, response, html_root):
         logging.error("Invalid status: %s", response.status)
 
     # Ignore directories.
-    if response.url.endswith('/'):
+    url = urllib.parse.urlparse(response.url).path
+    if url.endswith('/'):
         return
 
     # Convert all the links to be relative ones.
     if response.info().get_content_type() == 'text/html':
         if html_root is None:
             html_root = lxml.html.document_fromstring(response.read())
-        contents = relativize_links(html_root, response.url)
+        contents = relativize_links(html_root, url)
     else:
         contents = response.read()
 
     # Compute output filename and write out the relativized contents.
     output_filename = path.join(output_dir,
-                                normalize_filename(response.url).lstrip('/'))
+                                normalize_filename(url).lstrip('/'))
     os.makedirs(path.dirname(output_filename), exist_ok=True)
     with open(output_filename, 'wb') as outfile:
         outfile.write(contents)

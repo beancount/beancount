@@ -406,7 +406,7 @@ GLOBAL_NAVIGATION = bottle.SimpleTemplate("""
 """).render(A=A)
 
 
-@app.route('/web.css', name='style')
+@app.route('/resources/web.css', name='style')
 def style():
     "Stylesheet for the entire document."
     response.content_type = 'text/css'
