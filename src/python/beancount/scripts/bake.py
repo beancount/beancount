@@ -58,7 +58,7 @@ def relativize_links(html, current_url):
     return lxml.html.tostring(html, method="xml")
 
 
-def process_scraped_document(output_dir, url, status, contents, html_root):
+def save_scraped_document(output_dir, url, status, contents, html_root):
     """Callback function to process a document being scraped.
 
     This converts the document to have relative links and writes out the file to
@@ -99,8 +99,12 @@ def bake_to_directory(webargs, output_dir, quiet=False):
     Returns:
       True on success, False otherwise.
     """
-    callback = functools.partial(process_scraped_document, output_dir)
-    scrape.scrape(webargs.filename, callback, webargs.port, quiet)
+    callback = functools.partial(save_scraped_document, output_dir)
+    # Skip the context pages, too slow.
+    # Skip the component pages... too many.
+    # Skip served documents.
+    scrape.scrape(webargs.filename, callback, webargs.port,
+                  '/(context|view/component|.*/doc)/', quiet)
 
 
 def archive(command_template, directory, archive, quiet=False):

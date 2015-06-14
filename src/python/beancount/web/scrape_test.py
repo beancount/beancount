@@ -1,6 +1,7 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import os
+import collections
 import subprocess
 import textwrap
 import urllib.parse
@@ -35,9 +36,15 @@ class TestScrapeFunctions(test_utils.TestCase):
                               'other.png'],
                              list(scrape.iterlinks(html_root)))
 
+
+Redirect = collections.namedtuple('Redirect', 'target_url')
+
+
 class TestScrapeURLs(test_utils.TestCase):
 
     web_contents = {
+        '/': Redirect('/index'),
+
         '/index': """
             <html>
               <body>
@@ -56,8 +63,13 @@ class TestScrapeURLs(test_utils.TestCase):
         }
 
     def fetch_url(url):
-        urlcomps = urllib.parse.urlparse(url)
-        content = TestScrapeURLs.web_contents[urlcomps.path]
+        urlpath = urllib.parse.urlparse(url).path
+        while 1:
+            content = TestScrapeURLs.web_contents[urlpath]
+            if isinstance(content, Redirect):
+                urlpath = content.target_url
+                continue
+            break
         response = mock.MagicMock()
         response.read = mock.MagicMock(return_value=contents)
         return response

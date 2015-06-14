@@ -56,18 +56,18 @@ class TestBakeFunctions(test_utils.TestCase):
             self.expected_html,
             bake.relativize_links(html, '/path/to/index').decode('utf8'))
 
-    def test_process_scraped_document__file(self):
+    def test_save_scraped_document__file(self):
         html = lxml.html.document_fromstring(self.test_html)
         with test_utils.tempdir() as tmp:
-            bake.process_scraped_document(tmp, '/path/to/file', 200, self.test_html, html)
+            bake.save_scraped_document(tmp, '/path/to/file', 200, self.test_html, html)
             filename = path.join(tmp, 'path/to/file.html')
             self.assertTrue(path.exists(filename))
             self.assertLines(open(filename).read(), self.expected_html)
 
-    def test_process_scraped_document__ignore_directories(self):
+    def test_save_scraped_document__ignore_directories(self):
         html = lxml.html.document_fromstring(self.test_html)
         with test_utils.tempdir() as tmp:
-            bake.process_scraped_document(tmp, '/path/to/file/', 200, self.test_html, html)
+            bake.save_scraped_document(tmp, '/path/to/file/', 200, self.test_html, html)
             filename = path.join(tmp, 'path/to/file.html')
             self.assertFalse(path.exists(filename))
 

@@ -1,5 +1,13 @@
 -*- mode: org -*-
 beancount: TODO
+* Bake & Scrape
+
+  - Provide the callback with the list of skipped URLs in order to allow it to
+    remove the <a> links around URLs that were skipped.
+
+  - Make the download work with non-HTML as well, e.g., image files.
+
+
 * File Cleanup
 
   - Remove plugins from ops, remove algorithms from core:
