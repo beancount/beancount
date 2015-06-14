@@ -16,7 +16,7 @@ class TestWeb(unittest.TestCase):
     ####ignore_regexp = '^/(doc/|context/|view/component/[^A])'
     ignore_regexp = '^(/context/|/view/component/[^A]|.*/doc/)'
 
-    def check_page_okay(self, response, _):
+    def check_page_okay(self, response, _, __):
         self.assertIn(response.status, (200, 202), response.url)
 
     def scrape(self, filename, **extra):

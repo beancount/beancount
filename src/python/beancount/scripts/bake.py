@@ -68,7 +68,7 @@ def relativize_links(html, current_url):
     return lxml.html.tostring(html, method="xml")
 
 
-def save_scraped_document(output_dir, response, html_root):
+def save_scraped_document(output_dir, response, html_root, skipped_urls):
     """Callback function to process a document being scraped.
 
     This converts the document to have relative links and writes out the file to
@@ -77,12 +77,9 @@ def save_scraped_document(output_dir, response, html_root):
     Args:
       output_dir: A string, the output directory to write.
       response: An http response as per urlopen.
-
-      url: A string, the URL of the page being scraped.
-      status: An integer, the status code from the response.
-      contents: A bytes object, the contents of the response.
       html_root: An lxml root node for the document, optionally. If this is provided,
         this avoid you having to reprocess it (for performance reasons).
+      skipped_urls: A set of the links from the file that were skipped.
     """
     if response.status != 200:
         logging.error("Invalid status: %s", response.status)

@@ -79,7 +79,7 @@ class TestScrapeURLs(test_utils.TestCase):
         response.info().get_content_type.return_value = content_type
         return response
 
-    def callback(self, response, html_root):
+    def callback(self, response, html_root, unused_skipped_urls):
         urlpath = urllib.parse.urlparse(response.url).path
         self.assertNotIn(urlpath, self.results)
         self.assertIn(response.status, (200, 202))

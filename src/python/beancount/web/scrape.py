@@ -66,6 +66,7 @@ def scrape_urls(url_format, callback, ignore_regexp=None):
         response = urllib.request.urlopen(url_format.format(url))
         response_contents = response.read()
 
+        skipped_urls = set()
         content_type = response.info().get_content_type()
         if content_type == 'text/html':
             # Process all the links in the page and register all the unseen links to
@@ -76,6 +77,7 @@ def scrape_urls(url_format, callback, ignore_regexp=None):
                 # Skip URLs to be ignored.
                 if ignore_regexp and re.match(ignore_regexp, link):
                     logging.debug("Skipping: %s", link)
+                    skipped_urls.add(link)
                     continue
 
                 # Check if link has already been seen.
@@ -92,7 +94,7 @@ def scrape_urls(url_format, callback, ignore_regexp=None):
             html_root = None
 
         # Call back for processing.
-        callback(response, html_root)
+        callback(response, html_root, skipped_urls)
 
 
 def scrape(filename, callback, port, ignore_regexp, quiet=True, extra_args=None):

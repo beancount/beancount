@@ -17,39 +17,35 @@ from beancount.scripts import bake
 
 class TestBakeFunctions(test_utils.TestCase):
 
-    def test_normalize_filename(self):
+    def check(self, from_, to_):
+        self.assertEqual(to_, bake.normalize_filename(from_))
+
+    def test_normalize_directories(self):
         # Index files should become index.
-        self.assertEqual('/path/to/dir/index.html',
-                         bake.normalize_filename('/path/to/dir/'))
+        self.check('/path/to/dir/', '/path/to/dir/index.html')
 
+    def test_normalize_normal(self):
         # Files without extensions should become .html
-        self.assertEqual('/path/to/file.html',
-                         bake.normalize_filename('/path/to/file'))
+        self.check('/path/to/file', '/path/to/file.html')
 
+    def test_normalize_untouched(self):
         # Existing extensions that shouldn't be touched.
-        self.assertEqual('/path/to/file.html',
-                         bake.normalize_filename('/path/to/file.html'))
-        self.assertEqual('/favicon.ico',
-                         bake.normalize_filename('/favicon.ico'))
-        self.assertEqual('/resources/file.css',
-                         bake.normalize_filename('/resources/file.css'))
-        self.assertEqual('/resources/file.js',
-                         bake.normalize_filename('/resources/file.js'))
+        self.check('/path/to/file', '/path/to/file.html')
+        self.check('/favicon.ico', '/favicon.ico')
+        self.check('/resources/file.css', '/resources/file.css')
+        self.check('/resources/file.js', '/resources/file.js')
 
+    def test_normalize_other(self):
         # Other extensions should become .html.
-        self.assertEqual('/path/to/file.csv.html',
-                         bake.normalize_filename('/path/to/file.csv'))
-        self.assertEqual('/path/to/file.png.html',
-                         bake.normalize_filename('/path/to/file.png'))
-        self.assertEqual('/link/tag.pdf.html',
-                         bake.normalize_filename('/link/tag.pdf'))
+        self.check('/path/to/file.csv', '/path/to/file.csv.html')
+        self.check('/path/to/file.png', '/path/to/file.png.html')
+        self.check('/link/tag.pdf', '/link/tag.pdf.html')
 
+    def test_normalize_protected(self):
         # Unless they are in doc or third_party.
-        self.assertEqual('/doc/file.csv',
-                         bake.normalize_filename('/doc/file.csv'))
-        self.assertEqual('/third_party/file.csv',
-                         bake.normalize_filename('/third_party/file.csv'))
-
+        self.check('/doc/file.csv', '/doc/file.csv')
+        self.check('/resources/file.png', '/resources/file.png')
+        self.check('/third_party/file.csv', '/third_party/file.csv')
 
     test_html = textwrap.dedent("""
       <html>
@@ -96,7 +92,7 @@ class TestBakeFunctions(test_utils.TestCase):
             response.read.return_value = self.test_html.encode('utf8')
             response.info().get_content_type.return_value = 'text/html'
 
-            bake.save_scraped_document(tmp, response, html)
+            bake.save_scraped_document(tmp, response, html, set())
             filename = path.join(tmp, 'path/to/file.html')
             self.assertTrue(path.exists(filename))
             self.assertLines(open(filename).read(), self.expected_html)
@@ -110,7 +106,7 @@ class TestBakeFunctions(test_utils.TestCase):
             response.read.return_value = self.test_html.encode('utf8')
             response.info().get_content_type.return_value = 'text/html'
 
-            bake.save_scraped_document(tmp, response, html)
+            bake.save_scraped_document(tmp, response, html, set())
             self.assertEqual([], os.listdir(tmp))
 
     def test_save_scraped_document__binary_content(self):
@@ -122,7 +118,7 @@ class TestBakeFunctions(test_utils.TestCase):
             response.read.return_value = 'IMAGE!'.encode('utf8')
             response.info().get_content_type.return_value = 'image/png'
 
-            bake.save_scraped_document(tmp, response, html)
+            bake.save_scraped_document(tmp, response, html, set())
             self.assertEqual(b'IMAGE!', open(path.join(tmp, 'resources/something.png'), 'rb').read())
 
 
