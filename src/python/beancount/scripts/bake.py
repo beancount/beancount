@@ -58,7 +58,7 @@ def relativize_links(html, current_url):
     return lxml.html.tostring(html, method="xml")
 
 
-def save_scraped_document(output_dir, url, status, contents, html_root):
+def save_scraped_document(output_dir, response, html_root):
     """Callback function to process a document being scraped.
 
     This converts the document to have relative links and writes out the file to
@@ -66,27 +66,35 @@ def save_scraped_document(output_dir, url, status, contents, html_root):
 
     Args:
       output_dir: A string, the output directory to write.
+      response: An http response as per urlopen.
+
       url: A string, the URL of the page being scraped.
       status: An integer, the status code from the response.
       contents: A bytes object, the contents of the response.
-      html_root: An lxml root node for the document.
-
+      html_root: An lxml root node for the document, optionally. If this is provided,
+        this avoid you having to reprocess it (for performance reasons).
     """
-    if status != 200:
-        logging.error("Invalid status: %s", status)
+    if response.status != 200:
+        logging.error("Invalid status: %s", response.status)
 
     # Ignore directories.
-    if url.endswith('/'):
+    if response.url.endswith('/'):
         return
 
     # Convert all the links to be relative ones.
-    relative_contents = relativize_links(html_root, url)
+    if response.info().get_content_type() == 'text/html':
+        if html_root is None:
+            html_root = lxml.html.document_fromstring(response.read())
+        contents = relativize_links(html_root, response.url)
+    else:
+        contents = response.read()
 
     # Compute output filename and write out the relativized contents.
-    output_filename = path.join(output_dir, normalize_filename(url).lstrip('/'))
+    output_filename = path.join(output_dir,
+                                normalize_filename(response.url).lstrip('/'))
     os.makedirs(path.dirname(output_filename), exist_ok=True)
     with open(output_filename, 'wb') as outfile:
-        outfile.write(relative_contents)
+        outfile.write(contents)
 
 
 def bake_to_directory(webargs, output_dir, quiet=False):

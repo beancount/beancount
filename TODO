@@ -5,8 +5,6 @@ beancount: TODO
   - Provide the callback with the list of skipped URLs in order to allow it to
     remove the <a> links around URLs that were skipped.
 
-  - Make the download work with non-HTML as well, e.g., image files.
-
   - Make the web scraper run in multiple threads... it's quite a bit too slow as
     it is.
 

@@ -4,6 +4,7 @@ import os
 import subprocess
 import textwrap
 from os import path
+from unittest import mock
 
 import lxml.html
 
@@ -50,6 +51,8 @@ class TestBakeFunctions(test_utils.TestCase):
       </html>
     """)
 
+    maxDiff = None
+
     def test_relativize_links(self):
         html = lxml.html.document_fromstring(self.test_html)
         self.assertLines(
@@ -59,7 +62,13 @@ class TestBakeFunctions(test_utils.TestCase):
     def test_save_scraped_document__file(self):
         html = lxml.html.document_fromstring(self.test_html)
         with test_utils.tempdir() as tmp:
-            bake.save_scraped_document(tmp, '/path/to/file', 200, self.test_html, html)
+            response = mock.MagicMock()
+            response.url = '/path/to/file'
+            response.status = 200
+            response.read.return_value = self.test_html.encode('utf8')
+            response.info().get_content_type.return_value = 'text/html'
+
+            bake.save_scraped_document(tmp, response, html)
             filename = path.join(tmp, 'path/to/file.html')
             self.assertTrue(path.exists(filename))
             self.assertLines(open(filename).read(), self.expected_html)
@@ -67,9 +76,26 @@ class TestBakeFunctions(test_utils.TestCase):
     def test_save_scraped_document__ignore_directories(self):
         html = lxml.html.document_fromstring(self.test_html)
         with test_utils.tempdir() as tmp:
-            bake.save_scraped_document(tmp, '/path/to/file/', 200, self.test_html, html)
-            filename = path.join(tmp, 'path/to/file.html')
-            self.assertFalse(path.exists(filename))
+            response = mock.MagicMock()
+            response.url = '/doc/to/'
+            response.status = 200
+            response.read.return_value = self.test_html.encode('utf8')
+            response.info().get_content_type.return_value = 'text/html'
+
+            bake.save_scraped_document(tmp, response, html)
+            self.assertEqual([], os.listdir(tmp))
+
+    def test_save_scraped_document__binary_content(self):
+        html = lxml.html.document_fromstring(self.test_html)
+        with test_utils.tempdir() as tmp:
+            response = mock.MagicMock()
+            response.url = '/something.png'
+            response.status = 200
+            response.read.return_value = 'IMAGE!'.encode('utf8')
+            response.info().get_content_type.return_value = 'image/png'
+
+            bake.save_scraped_document(tmp, response, html)
+            self.assertEqual(b'IMAGE!', open(path.join(tmp, 'something.png'), 'rb').read())
 
 
 class TestScriptBake(test_utils.TestCase):
@@ -129,7 +155,7 @@ class TestScriptBake(test_utils.TestCase):
             self.assertTrue(output.getvalue())
             self.assertTrue(path.exists(outdir) and path.isdir(outdir))
             directories = [root for root, _, _ in os.walk(outdir)]
-            self.assertGreater(len(directories), 15)
+            self.assertGreater(len(directories), 10)
 
     @test_utils.docfile
     def test_bake_archive__known(self, filename):

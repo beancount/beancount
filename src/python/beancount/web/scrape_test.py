@@ -33,56 +33,65 @@ class TestScrapeFunctions(test_utils.TestCase):
         self.assertListEqual(['/path/to/',
                               '/path/to/sub/child',
                               '/path/to/image.png',
-                              'other.png'],
-                             list(scrape.iterlinks(html_root)))
+                              '/path/to/other.png'],
+                             list(scrape.iterlinks(html_root, '/path/to/file')))
 
 
 Redirect = collections.namedtuple('Redirect', 'target_url')
-
 
 class TestScrapeURLs(test_utils.TestCase):
 
     web_contents = {
         '/': Redirect('/index'),
 
-        '/index': """
+        '/index': ('text/html', """
             <html>
               <body>
                 <a href="/path/to/file1">file</a>
               </body>
             </html>
-        """,
+        """),
 
-        '/file1': """
+        '/path/to/file1': ('text/html', """
             <html>
               <body>
                 <a href="/path/to/image.png">image</a>
               </body>
             </html>
-        """
+        """),
+
+        '/path/to/image.png': ('image/png', None),
         }
 
     def fetch_url(url):
         urlpath = urllib.parse.urlparse(url).path
         while 1:
-            content = TestScrapeURLs.web_contents[urlpath]
-            if isinstance(content, Redirect):
-                urlpath = content.target_url
+            page = TestScrapeURLs.web_contents[urlpath]
+            if isinstance(page, Redirect):
+                urlpath = page.target_url
                 continue
             break
+        content_type, contents = page
         response = mock.MagicMock()
         response.read = mock.MagicMock(return_value=contents)
+        response.url = url
+        response.status = 200
+        response.info().get_content_type.return_value = content_type
         return response
+
+    def callback(self, response, html_root):
+        urlpath = urllib.parse.urlparse(response.url).path
+        self.assertNotIn(urlpath, self.results)
+        self.assertIn(response.status, (200, 202))
+        self.results[urlpath] = (response.status, response.read(), html_root)
 
     @mock.patch('urllib.request.urlopen', fetch_url)
     def test_scrape_urls(self):
         url_format = 'http://something{}'
-        callback = mock.MagicMock()
-        scrape.scrape_urls(url_format, callback, ignore_regexp='^/doc')
-     # scrape.scrape(filename, callback, port, quiet=True, extra_args=None):
-
-
-
-
+        self.results = {}
+        scrape.scrape_urls(url_format, self.callback, ignore_regexp='^/doc')
+        self.assertSetEqual({'/',
+                             '/path/to/file1',
+                             '/path/to/image.png'}, set(self.results.keys()))
 
 # FIXME: You have to test the images get downloaded properly.

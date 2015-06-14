@@ -66,28 +66,33 @@ def scrape_urls(url_format, callback, ignore_regexp=None):
         response = urllib.request.urlopen(url_format.format(url))
         response_contents = response.read()
 
-        # Process all the links in the page and register all the unseen links to
-        # be processed.
-        html_root = lxml.html.document_fromstring(response_contents)
-        for link in iterlinks(html_root, url):
+        content_type = response.info().get_content_type()
+        if content_type == 'text/html':
+            # Process all the links in the page and register all the unseen links to
+            # be processed.
+            html_root = lxml.html.document_fromstring(response_contents)
+            for link in iterlinks(html_root, url):
 
-            # Skip URLs to be ignored.
-            if ignore_regexp and re.match(ignore_regexp, link):
-                logging.debug("Skipping: %s", link)
-                continue
+                # Skip URLs to be ignored.
+                if ignore_regexp and re.match(ignore_regexp, link):
+                    logging.debug("Skipping: %s", link)
+                    continue
 
-            # Check if link has already been seen.
-            if link in seen:
-                logging.debug('Seen: "%s"', link)
-                continue
+                # Check if link has already been seen.
+                if link in seen:
+                    logging.debug('Seen: "%s"', link)
+                    continue
 
-            # Schedule the link for scraping.
-            logging.debug('Scheduling: "%s"', link)
-            process_list.append(link)
-            seen.add(link)
+                # Schedule the link for scraping.
+                logging.debug('Scheduling: "%s"', link)
+                process_list.append(link)
+                seen.add(link)
+
+        else:
+            html_root = None
 
         # Call back for processing.
-        callback(url, response.status, response_contents, html_root)
+        callback(response, html_root)
 
 
 def scrape(filename, callback, port, ignore_regexp, quiet=True, extra_args=None):
