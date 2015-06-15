@@ -17,12 +17,13 @@ import lxml.html
 from beancount.web import web
 
 
-
-
-def check_links(filename, missing):
+def check_links(filename, missing, empty):
     logging.info('Processing %s', filename)
     filedir = path.dirname(filename)
-    html = lxml.html.parse(filename).getroot()
+    contents = open(filename, 'rb').read()
+    if len(contents) == 0:
+        empty.add(filename)
+    html = lxml.html.document_fromstring(contents)
     if html is None:
         return
     for element, attribute, link, pos in lxml.html.iterlinks(html):
@@ -37,22 +38,31 @@ def check_links(filename, missing):
 
 
 def main():
-    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
-
     parser = argparse.ArgumentParser(description=__doc__.strip())
     parser.add_argument('root', help='Root directory to scour')
+    parser.add_argument('-v', '--verbose', action='store_true')
     args = parser.parse_args()
 
+    logging.basicConfig(level=logging.INFO if args.verbose else logging.ERROR,
+                        format='%(levelname)-8s: %(message)s')
+
+    num_files = 0
     try:
-        missing = set()
+        missing, empty = set(), set()
         for root, dirs, files in os.walk(args.root):
             for filename in files:
-                check_links(path.join(root, filename), missing)
+                check_links(path.join(root, filename), missing, empty)
+                num_files += 1
     except KeyboardInterrupt:
         pass
 
+    logging.info('%d files processed.', num_files)
+
     for target in missing:
-        print(target)
+        logging.error('Missing %s', target)
+
+    for target in empty:
+        logging.error('Empty %s', target)
 
 
 if __name__ == '__main__':

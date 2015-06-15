@@ -70,7 +70,7 @@ class TestBakeFunctions(test_utils.TestCase):
           <a href="index.html">sibling dir</a>
           <a href="sub/child.html">child file</a>
           <a href="sub/index.html">child dir</a>
-          <img src="../../third_party/image.png"/>
+          <img src="../../third_party/image.png">
         </body>
       </html>
     """)
@@ -80,7 +80,7 @@ class TestBakeFunctions(test_utils.TestCase):
     def test_relativize_links(self):
         html = lxml.html.document_fromstring(self.test_html)
         bake.relativize_links(html, '/path/to/index')
-        contents = lxml.html.tostring(html, method="xml").decode('utf8')
+        contents = lxml.html.tostring(html, method="html").decode('utf8')
         self.assertLines(self.expected_html, contents)
 
     nolinks_html = textwrap.dedent("""
@@ -88,11 +88,11 @@ class TestBakeFunctions(test_utils.TestCase):
         <body>
           <a href="/path/parent">parent file</a>
           <a href="/path/">parent dir</a>
-          <span href="/path/to/other">sibling file</span>
+          <span class="removed-link">sibling file</span>
           <a href="/path/to/">sibling dir</a>
-          <span href="/path/to/sub/child">child file</span>
+          <span class="removed-link">child file</span>
           <a href="/path/to/sub/">child dir</a>
-          <img src="/third_party/image.png"/>
+          <img src="/third_party/image.png">
         </body>
       </html>
     """)
@@ -101,7 +101,7 @@ class TestBakeFunctions(test_utils.TestCase):
         html = lxml.html.document_fromstring(self.test_html)
         bake.remove_links(html, {'/path/to/other',
                                  '/path/to/sub/child'})
-        contents = lxml.html.tostring(html, method="xml").decode('utf8')
+        contents = lxml.html.tostring(html, method="html").decode('utf8')
         self.assertLines(self.nolinks_html, contents)
 
     def test_save_scraped_document__file(self):
@@ -113,7 +113,8 @@ class TestBakeFunctions(test_utils.TestCase):
             response.read.return_value = self.test_html.encode('utf8')
             response.info().get_content_type.return_value = 'text/html'
 
-            bake.save_scraped_document(tmp, response, html, set())
+            bake.save_scraped_document(
+                tmp, response.url, response, response.read.return_value, html, set())
             filename = path.join(tmp, 'path/to/file.html')
             self.assertTrue(path.exists(filename))
             self.assertLines(open(filename).read(), self.expected_html)
@@ -127,7 +128,8 @@ class TestBakeFunctions(test_utils.TestCase):
             response.read.return_value = self.test_html.encode('utf8')
             response.info().get_content_type.return_value = 'text/html'
 
-            bake.save_scraped_document(tmp, response, html, set())
+            bake.save_scraped_document(
+                tmp, response.url, response, response.read.return_value, html, set())
             self.assertEqual([], os.listdir(tmp))
 
     def test_save_scraped_document__binary_content(self):
@@ -136,11 +138,14 @@ class TestBakeFunctions(test_utils.TestCase):
             response = mock.MagicMock()
             response.url = '/resources/something.png'
             response.status = 200
-            response.read.return_value = 'IMAGE!'.encode('utf8')
+            expected_contents = 'IMAGE!'.encode('utf8')
+            response.read.return_value = expected_contents
             response.info().get_content_type.return_value = 'image/png'
 
-            bake.save_scraped_document(tmp, response, html, set())
-            self.assertEqual(b'IMAGE!', open(path.join(tmp, 'resources/something.png'), 'rb').read())
+            bake.save_scraped_document(
+                tmp, response.url, response, expected_contents, html, set())
+            actual_contents = open(path.join(tmp, 'resources/something.png'), 'rb').read()
+            self.assertEqual(expected_contents, actual_contents)
 
 
 class TestScriptBake(test_utils.TestCase):

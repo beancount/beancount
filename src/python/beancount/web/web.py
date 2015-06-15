@@ -482,7 +482,7 @@ APP_NAVIGATION = bottle.SimpleTemplate("""
   <li><a href="{{V.income}}">Income Statement</a></li>
   <li><a href="{{V.holdings}}">Equity/Holdings</a></li>
   <li><a href="{{V.trial}}">Trial Balance</a></li>
-  <li><a href="{{V.journal_root}}">General Journal</a></li>
+  <li><a href="{{V.journal_all}}">General Journal</a></li>
   <li><a href="{{V.index}}">Index</a></li>
 </ul>
 """)
@@ -504,7 +504,7 @@ def index():
             ("Balance Sheet", "balsheet"),
             ("Opening Balances", "openbal"),
             ("Income Statement", "income"),
-            ("General Journal", "journal_root"),
+            ("General Journal", "journal_all"),
             ("Conversions", "conversions"),
             ("Documents", "documents"),
             ("Holdings (Full Detail)", "holdings"),
@@ -635,8 +635,8 @@ def networth():
 
 
 
-@viewapp.route('/journal', name='journal_root')
-def journal_root():
+@viewapp.route('/journal/all', name='journal_all')
+def journal_all():
     "A list of all the entries in this realization."
     bottle.redirect(request.app.get_url('journal', account_name=''))
 

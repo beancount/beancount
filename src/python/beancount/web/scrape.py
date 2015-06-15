@@ -71,6 +71,13 @@ def scrape_urls(url_format, callback, ignore_regexp=None):
 
         # Fetch the URL and check its return status.
         response = urllib.request.urlopen(url_format.format(url))
+
+        # Generate errors on redirects.
+        redirected_url = urllib.parse.urlparse(response.geturl()).path
+        if redirected_url != url:
+            logging.error("Redirected: %s -> %s", url, redirected_url)
+
+        # Read the contents. This can only be done once.
         response_contents = response.read()
 
         skipped_urls = set()
@@ -102,7 +109,7 @@ def scrape_urls(url_format, callback, ignore_regexp=None):
             html_root = None
 
         # Call back for processing.
-        callback(response, html_root, skipped_urls)
+        callback(url, response, response_contents, html_root, skipped_urls)
 
     return all_processed_urls, all_skipped_urls
 

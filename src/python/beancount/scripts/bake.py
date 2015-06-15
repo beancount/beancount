@@ -79,7 +79,7 @@ def remove_links(html, targets):
             element.set('class', 'removed-link')
 
 
-def save_scraped_document(output_dir, response, html_root, skipped_urls):
+def save_scraped_document(output_dir, url, response, contents, html_root, skipped_urls):
     """Callback function to process a document being scraped.
 
     This converts the document to have relative links and writes out the file to
@@ -87,7 +87,9 @@ def save_scraped_document(output_dir, response, html_root, skipped_urls):
 
     Args:
       output_dir: A string, the output directory to write.
+      url: A string, the originally requested URL.
       response: An http response as per urlopen.
+      contents: Bytes, the content of a response.
       html_root: An lxml root node for the document, optionally. If this is provided,
         this avoid you having to reprocess it (for performance reasons).
       skipped_urls: A set of the links from the file that were skipped.
@@ -96,18 +98,18 @@ def save_scraped_document(output_dir, response, html_root, skipped_urls):
         logging.error("Invalid status: %s", response.status)
 
     # Ignore directories.
-    url = urllib.parse.urlparse(response.url).path
     if url.endswith('/'):
         return
 
+    # Note that we're saving the file under the non-redirected URL, because this
+    # will have to be opened using files and there are no redirects that way.
+
     if response.info().get_content_type() == 'text/html':
         if html_root is None:
-            html_root = lxml.html.document_fromstring(response.read())
+            html_root = lxml.html.document_fromstring(contents)
         remove_links(html_root, skipped_urls)
         relativize_links(html_root, url)
-        contents = lxml.html.tostring(html_root, method="xml")
-    else:
-        contents = response.read()
+        contents = lxml.html.tostring(html_root, method="html")
 
     # Compute output filename and write out the relativized contents.
     output_filename = path.join(output_dir,

@@ -1,6 +1,7 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import unittest
+import urllib.parse
 from os import path
 
 from beancount.web import scrape
@@ -16,8 +17,12 @@ class TestWeb(unittest.TestCase):
     ####ignore_regexp = '^/(doc/|context/|view/component/[^A])'
     ignore_regexp = '^(/context/|/view/component/[^A]|.*/doc/)'
 
-    def check_page_okay(self, response, _, __):
-        self.assertIn(response.status, (200, 202), response.url)
+    def check_page_okay(self, url, response, _, __, ___):
+        self.assertIn(response.status, (200, 202),
+                      "Requested URL: {}".format(url))
+        redirected_path = urllib.parse.urlparse(response.geturl()).path
+        requested_path = urllib.parse.urlparse(response.url).path
+        self.assertEqual(requested_path, redirected_path)
 
     def scrape(self, filename, **extra):
         abs_filename = path.join(test_utils.find_repository_root(__file__),

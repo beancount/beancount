@@ -2,13 +2,7 @@
 beancount: TODO
 * Bake & Scrape
 
-  - FIXME: If a page returns a 404, you should
-    - fail tests
-    - from bean-bake, spit out corresponding errors
-
-  - Move this code to the main directory and run this verification on baked output.
-
-  - Fix bug with journal (use the bug to write the tests above).
+  - Move the verify script code to the main directory and run this verification on baked output.
 
   - Make the web scraper run in multiple threads... it's quite a bit too slow as
     it is.
