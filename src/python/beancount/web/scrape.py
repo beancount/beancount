@@ -215,7 +215,7 @@ def validate_local_links_in_dir(directory):
         for filename in files:
             afilename = path.join(root, filename)
             allfiles.append(afilename)
-            logging.info('Processing %s', afilename)
+            logging.info("Validating: '%s'", afilename)
             missing, is_empty = validate_local_links(afilename)
             if is_empty:
                 empty.add(afilename)

@@ -287,7 +287,7 @@ def do_display_context(filename, args):
     sys.stdout.write(str(dcontext))
 
 
-def do_verify_html(directory, args):
+def do_validate_html(directory, args):
     """Validate all the HTML files under a directory hierachy.
 
     Args:
@@ -295,7 +295,7 @@ def do_verify_html(directory, args):
       args: A tuple of the rest of arguments.
     """
     files, missing, empty = scrape.validate_local_links_in_dir(directory)
-    logging.info('%d files processed.', len(files))
+    logging.info('%d files processed', len(files))
     for target in missing:
         logging.error('Missing %s', target)
     for target in empty:

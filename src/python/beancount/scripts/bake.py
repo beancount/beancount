@@ -225,11 +225,17 @@ def main():
             "ERROR: Output directory already exists '{}'".format(output_directory))
 
     # Bake to a directory hierarchy of files with local links.
-    try:
-        bake_to_directory(opts, output_directory, opts.quiet)
-    except Exception as exc:
-        raise SystemExit("ERROR: Error baking into directory '{}': {}".format(
-            output_directory, exc))
+    bake_to_directory(opts, output_directory, opts.quiet)
+
+    # Verify the bake output files. This is just a sanity checking step.
+    # You can also use "bean-doctor validate_html <file> to run this manually.
+    logging.info('Validating HTML output files & links.')
+    files, missing, empty = scrape.validate_local_links_in_dir(output_directory)
+    logging.info('Validation: %d files processed', len(files))
+    for target in missing:
+        logging.error("Validation error: Missing '%s'", target)
+    for target in empty:
+        logging.error("Validation error: Empty '%s'", target)
 
     # Archive if requested.
     if archival_command:
