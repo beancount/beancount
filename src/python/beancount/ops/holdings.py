@@ -199,7 +199,6 @@ def get_commodities_at_date(entries, options_map, date=None):
 
 
 def aggregate_holdings_by(holdings, keyfun):
-
     """Aggregate holdings by some key.
 
     Note that the cost-currency must always be included in the group-key (sums
