@@ -25,6 +25,7 @@ from beancount.utils import misc_utils
 from beancount.scripts import directories
 from beancount.scripts import checkdeps
 from beancount.reports import context
+from beancount.web import scrape
 
 
 def do_lex(filename, unused_args):
@@ -284,6 +285,21 @@ def do_display_context(filename, args):
     entries, errors, options_map = loader.load_file(filename)
     dcontext = options_map['display_context']
     sys.stdout.write(str(dcontext))
+
+
+def do_validate_html(directory, args):
+    """Validate all the HTML files under a directory hierachy.
+
+    Args:
+      directory: A string, the root directory whose contents to validte.
+      args: A tuple of the rest of arguments.
+    """
+    files, missing, empty = scrape.validate_local_links_in_dir(directory)
+    logging.info('%d files processed', len(files))
+    for target in missing:
+        logging.error('Missing %s', target)
+    for target in empty:
+        logging.error('Empty %s', target)
 
 
 def main():

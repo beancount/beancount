@@ -31,9 +31,6 @@ def check_dependencies():
         # Test are only required because of google-api-python-client.
         check_import('apiclient'),
         check_import('oauth2client'),
-
-        # This is required for bake.
-        check_wget(),
         ]
 
 
@@ -47,28 +44,6 @@ def check_python():
     return ('python3',
             '.'.join(map(str, sys.version_info[:3])),
             sys.version_info[:2] >= (3, 3))
-
-
-def check_wget():
-    """Check that wget is installed.
-
-    Returns:
-      A triple of (package-name, version-number, sufficient) as per
-      check_dependencies().
-    """
-    version, sufficient = None, False
-    try:
-        pipe = subprocess.Popen(('wget', '--version'),
-                                shell=False,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
-        stdout, stderr = pipe.communicate()
-        match = re.search(r'\b(\d+\.\d[\d\.]*)', (stdout + stderr).decode())
-        if match:
-            version, sufficient = match.group(1), True
-    except FileNotFoundError:
-        pass
-    return ('wget', version, sufficient)
 
 
 def check_import(package_name, min_version=None, module_name=None):

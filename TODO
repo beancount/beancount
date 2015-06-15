@@ -1287,6 +1287,32 @@ http://furius.ca/beancount/doc/proposal-inter
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - Rename test_util.TestCase.assertLines() to assertEqualNoWS().
+
+
+
+  - This query works:
+
+      bean-query $L ' balances from flag = "!" '
+
+    But this query fails:
+
+      bean-query $L " balances from flag = '\!' "
+
+    The second one needs to have the flag escaped because of bash shell
+    expansion, but the problem is that the escaped backslash appears in the
+    output. This is normal bash behavior, but the problem is that the user
+    receives no notification of failure in this case. Beancount should detect
+    that the string compared to a flag is not a single-character string and
+    issue an appropriate error message for it.
+
+
+
+  - Make the web application use the regexps defined in common in its paths
+    instead of inline ad-hoc approximations. There was never any need to do
+    that.
+
+
   - Test out removing the circular reference in Posting. This would make writing
     scripts a lot easier and I bet we should be able to make do with per-account
     lists of (Posting, Transaction). Create a tuple type for it, to make this
@@ -3830,6 +3856,14 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 ** Conversions
 
   - Render the Conversions amount at the bottom of the Conversions page...
+
+** Bake & Scrape
+
+  - Make the web scraper run in multiple threads... it's quite a bit too slow as
+    it is. I'm sure we can make it scrape in parallel using multiprocessing and
+    a work queue (this should be a fun little project and would make baking to
+    an archive a lot faster in many cases).
+
 
 * Export
 ** HTML Export as File
