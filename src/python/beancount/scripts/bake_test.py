@@ -1,12 +1,9 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import os
-import subprocess
 import textwrap
-import subprocess
 from os import path
 from unittest import mock
-import re
 
 import lxml.html
 

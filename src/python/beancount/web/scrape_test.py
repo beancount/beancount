@@ -2,7 +2,6 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import os
 import collections
-import subprocess
 import textwrap
 import urllib.parse
 import re
@@ -12,7 +11,6 @@ from unittest import mock
 import lxml.html
 
 from beancount.utils import test_utils
-from beancount.utils import file_utils
 from beancount.web import scrape
 
 
@@ -131,7 +129,7 @@ class TestScrapeVerification(test_utils.TestCase):
     def test_validate_local_links__empty(self):
         with test_utils.tempdir() as tmpdir:
             filename = path.join(tmpdir, 'start.html')
-            with open(filename, 'w') as ffile:
+            with open(filename, 'w'):
                 pass
             missing, empty = scrape.validate_local_links(filename)
             self.assertTrue(empty)

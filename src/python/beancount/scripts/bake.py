@@ -16,14 +16,11 @@ import shutil
 import shlex
 import re
 from os import path
-import urllib.parse
 
 import lxml.html
 
 from beancount.web import scrape
 from beancount.web import web
-from beancount.web import web_test
-from beancount.scripts import checkdeps
 from beancount.utils import file_utils
 
 
