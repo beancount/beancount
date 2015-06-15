@@ -224,12 +224,7 @@ def main():
         raise SystemExit(
             "ERROR: Output directory already exists '{}'".format(output_directory))
 
-    # Make sure that wget is installed.
-    package, version, sufficient = checkdeps.check_wget()
-    if not sufficient:
-        parser.error("Package {} is not installed or insufficient (version: {})".format(
-            package, version or 'N/A'))
-
+    # Bake to a directory hierarchy of files with local links.
     try:
         bake_to_directory(opts, output_directory, opts.quiet)
     except Exception as exc:
