@@ -1,11 +1,5 @@
 -*- mode: org -*-
 beancount: TODO
-* Bake & Scrape
-
-  - Make the web scraper run in multiple threads... it's quite a bit too slow as
-    it is.
-
-
 * File Cleanup
 
   - Remove plugins from ops, remove algorithms from core:
@@ -3862,6 +3856,14 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 ** Conversions
 
   - Render the Conversions amount at the bottom of the Conversions page...
+
+** Bake & Scrape
+
+  - Make the web scraper run in multiple threads... it's quite a bit too slow as
+    it is. I'm sure we can make it scrape in parallel using multiprocessing and
+    a work queue (this should be a fun little project and would make baking to
+    an archive a lot faster in many cases).
+
 
 * Export
 ** HTML Export as File

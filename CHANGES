@@ -4,6 +4,32 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-06-15
+
+  - All the code to bake a static HTML archive of a bean-web interface has been
+    rewritten.
+
+    * There used to be a number of bugs caused by the wget tool. These bugs have
+      been fixed.
+
+    * The new code does not depend on wget -- Beancount does not require wget
+      anymore. Explicit code to do web scraping has been implemented. On the
+      other hand, a new dependency is introduced: lxml. This dependency was
+      already required for development and install in the same way as all the
+      other dependencies: using pip3. Should be a breeze to install on all
+      platforms.
+
+    * A verification layer has been tacked on after the web scraping step to
+      check that there are no dangling links.
+
+    * Intentionally skipped links are now converted to plain text, such that
+      there are no dangling links for pages we aren't saving (these just used
+      to be ignored).
+
+    I repeat: Beancount does not depend on wget anymore.
+    Please install lxml with: "pip3 install lxml"
+
+
 2015-06-10
 
   - Removed dependency on curses. If you don't have curses, everything should
