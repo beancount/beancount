@@ -5,6 +5,7 @@ import collections
 import subprocess
 import textwrap
 import urllib.parse
+import re
 from os import path
 from unittest import mock
 
@@ -75,12 +76,13 @@ class TestScrapeURLs(test_utils.TestCase):
         response = mock.MagicMock()
         response.read = mock.MagicMock(return_value=contents)
         response.url = url
+        response.geturl.return_value = url
         response.status = 200
         response.info().get_content_type.return_value = content_type
         return response
 
-    def callback(self, response, html_root, unused_skipped_urls):
-        urlpath = urllib.parse.urlparse(response.url).path
+    def callback(self, url, response, unused_contents, html_root, unused_skipped_urls):
+        urlpath = urllib.parse.urlparse(url).path
         self.assertNotIn(urlpath, self.results)
         self.assertIn(response.status, (200, 202))
         self.results[urlpath] = (response.status, response.read(), html_root)
@@ -94,4 +96,43 @@ class TestScrapeURLs(test_utils.TestCase):
                              '/path/to/file1',
                              '/path/to/image.png'}, set(self.results.keys()))
 
-# FIXME: You have to test the images get downloaded properly.
+
+class TestScrapeVerification(test_utils.TestCase):
+
+    def test_validate_local_links(self):
+        with test_utils.tempdir() as tmpdir:
+            os.mkdir(path.join(tmpdir, 'root'))
+            os.mkdir(path.join(tmpdir, 'root/sub'))
+            open(path.join(tmpdir, 'parent.html'), 'w')
+            open(path.join(tmpdir, 'root/sibling.html'), 'w')
+            open(path.join(tmpdir, 'root/sibling.png'), 'w')
+            open(path.join(tmpdir, 'root/sub/child.html'), 'w')
+            filename = path.join(tmpdir, 'root/start.html')
+            with open(filename, 'w') as ffile:
+                ffile.write(textwrap.dedent("""
+                  <html>
+                    <body>
+                      <a href="../parent.html">Parent</a>
+                      <a href="../parent_not.html">Parent</a>
+                      <a href="sibling.html">Sibling</a>
+                      <a href="sibling_not.html">Sibling</a>
+                      <img src="sibling.png">Sibling Image</a>
+                      <a href="sub/child.html">Child</a>
+                      <a href="sub/child_not.html">Child</a>
+                    </body>
+                  </html>
+                """))
+            missing, empty = scrape.validate_local_links(filename)
+            self.assertFalse(empty)
+            self.assertEqual(3, len(missing))
+            self.assertTrue(all(re.search('_not', filename)
+                                for filename in missing))
+
+    def test_validate_local_links__empty(self):
+        with test_utils.tempdir() as tmpdir:
+            filename = path.join(tmpdir, 'start.html')
+            with open(filename, 'w') as ffile:
+                pass
+            missing, empty = scrape.validate_local_links(filename)
+            self.assertTrue(empty)
+            self.assertFalse(missing)

@@ -2,7 +2,7 @@
 beancount: TODO
 * Bake & Scrape
 
-  - Move the verify script code to the main directory and run this verification on baked output.
+  - Run the bake verification on baked output.
 
   - Make the web scraper run in multiple threads... it's quite a bit too slow as
     it is.

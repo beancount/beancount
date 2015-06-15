@@ -7,6 +7,7 @@ import sys
 import urllib.request
 import urllib.parse
 import logging
+import os
 
 import lxml.html
 
@@ -158,3 +159,64 @@ def scrape(filename, callback, port, ignore_regexp, quiet=True, extra_args=None)
     web.thread_server_shutdown(thread)
 
     return url_lists
+
+
+def validate_local_links(filename):
+    """Open and parse the given HTML filename and verify all local targets exist.
+
+    This checks that all the files pointed to by the file we're processing are
+    files that exist on disk. This can be used to validate that a baked output
+    does not have links to files that do not exist, that all the links are valid.
+
+    Args:
+      filename: A string, the name of the HTML file to process.
+    Returns:
+      A pair of:
+        missing: A set of strings, the names of links to files that do not exist.
+        empty: A boolean, true if this file is empty.
+    """
+    filedir = path.dirname(filename)
+    contents = open(filename, 'rb').read()
+
+    empty = len(contents) == 0
+    missing = set()
+    if not empty:
+        html = lxml.html.document_fromstring(contents)
+        if html is not None:
+            for element, attribute, link, pos in lxml.html.iterlinks(html):
+                urlpath = urllib.parse.urlparse(link)
+                if urlpath.scheme or urlpath.netloc:
+                    continue
+                if path.isabs(urlpath.path):
+                    continue
+                target = path.normpath(path.join(filedir, urlpath.path))
+                if not path.exists(target):
+                    missing.add(target)
+
+    return missing, empty
+
+
+def validate_local_links_in_dir(directory):
+    """Find all the files under the given directory and validate all their links.
+
+    Args:
+      directory: A string, the root directory whose files to process.
+    Returns:
+      A tuple of:
+        files: A list of all the filenames found and processed.
+        missing: A set of strings, the names of links to files that do not exist.
+        empty: A boolean, true if this file is empty.
+    """
+    logging.basicConfig(level=logging.INFO,
+                        format='%(levelname)-8s: %(message)s')
+    allfiles = []
+    missing, empty = set(), set()
+    for root, dirs, files in os.walk(directory):
+        for filename in files:
+            afilename = path.join(root, filename)
+            allfiles.append(afilename)
+            logging.info('Processing %s', afilename)
+            missing, is_empty = validate_local_links(afilename)
+            if is_empty:
+                empty.add(afilename)
+    return allfiles, missing, empty
