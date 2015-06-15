@@ -57,15 +57,26 @@ def relativize_links(html, current_url):
       current_url: A string, the URL of the current page, a path to.
         a file or a directory. If the path represents a directory, the
         path ends with a /.
-    Returns:
-      A bytes object, the re-rendered HTML string.
     """
     current_dir = path.dirname(current_url)
     for element, attribute, link, pos in lxml.html.iterlinks(html):
         if path.isabs(link):
             relative_link = path.relpath(normalize_filename(link), current_dir)
             element.set(attribute, relative_link)
-    return lxml.html.tostring(html, method="xml")
+
+
+def remove_links(html, targets):
+    """Convert a list of anchors (<a>) from an HTML tree to spans (<span>).
+
+    Args:
+      html: An lxml document node.
+      targets: A set of string, targets to be removed.
+    """
+    for element, attribute, link, pos in lxml.html.iterlinks(html):
+        if link in targets:
+            del element.attrib[attribute]
+            element.tag = 'span'
+            element.set('class', 'removed-link')
 
 
 def save_scraped_document(output_dir, response, html_root, skipped_urls):
@@ -89,11 +100,12 @@ def save_scraped_document(output_dir, response, html_root, skipped_urls):
     if url.endswith('/'):
         return
 
-    # Convert all the links to be relative ones.
     if response.info().get_content_type() == 'text/html':
         if html_root is None:
             html_root = lxml.html.document_fromstring(response.read())
-        contents = relativize_links(html_root, url)
+        remove_links(html_root, skipped_urls)
+        relativize_links(html_root, url)
+        contents = lxml.html.tostring(html_root, method="xml")
     else:
         contents = response.read()
 
@@ -119,8 +131,11 @@ def bake_to_directory(webargs, output_dir, quiet=False):
     # Skip the context pages, too slow.
     # Skip the component pages... too many.
     # Skip served documents.
-    scrape.scrape(webargs.filename, callback, webargs.port,
-                  '/(context|view/component|.*/doc)/', quiet)
+    processed_urls, skipped_urls = scrape.scrape(webargs.filename,
+                                                 callback,
+                                                 webargs.port,
+                                                 '/(context|view/component|.*/doc)/',
+                                                 quiet)
 
 
 def archive(command_template, directory, archive, quiet=False):

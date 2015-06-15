@@ -79,9 +79,30 @@ class TestBakeFunctions(test_utils.TestCase):
 
     def test_relativize_links(self):
         html = lxml.html.document_fromstring(self.test_html)
-        self.assertLines(
-            self.expected_html,
-            bake.relativize_links(html, '/path/to/index').decode('utf8'))
+        bake.relativize_links(html, '/path/to/index')
+        contents = lxml.html.tostring(html, method="xml").decode('utf8')
+        self.assertLines(self.expected_html, contents)
+
+    nolinks_html = textwrap.dedent("""
+      <html>
+        <body>
+          <a href="/path/parent">parent file</a>
+          <a href="/path/">parent dir</a>
+          <span href="/path/to/other">sibling file</span>
+          <a href="/path/to/">sibling dir</a>
+          <span href="/path/to/sub/child">child file</span>
+          <a href="/path/to/sub/">child dir</a>
+          <img src="/third_party/image.png"/>
+        </body>
+      </html>
+    """)
+
+    def test_remove_links(self):
+        html = lxml.html.document_fromstring(self.test_html)
+        bake.remove_links(html, {'/path/to/other',
+                                 '/path/to/sub/child'})
+        contents = lxml.html.tostring(html, method="xml").decode('utf8')
+        self.assertLines(self.nolinks_html, contents)
 
     def test_save_scraped_document__file(self):
         html = lxml.html.document_fromstring(self.test_html)

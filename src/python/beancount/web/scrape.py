@@ -48,6 +48,8 @@ def scrape_urls(url_format, callback, ignore_regexp=None):
         The function is called with the response and the url as arguments.
         This function should trigger an error on failure (via an exception).
       ignore_regexp: A regular expression string, the urls to ignore.
+    Returns:
+      A set of all the processed URLs and a set of all the skipped URLs.
     """
     # The set of all URLs seen so far.
     seen = set()
@@ -56,11 +58,16 @@ def scrape_urls(url_format, callback, ignore_regexp=None):
     # reproducible order if we repeat the test.
     process_list = ["/"]
 
+    # A set of all the URLs processed and skipped everywhere.
+    all_processed_urls = set()
+    all_skipped_urls = set()
+
     # Loop over all URLs remaining to process.
     while process_list:
         url = process_list.pop()
 
         logging.debug("Processing: %s", url)
+        all_processed_urls.add(url)
 
         # Fetch the URL and check its return status.
         response = urllib.request.urlopen(url_format.format(url))
@@ -78,6 +85,7 @@ def scrape_urls(url_format, callback, ignore_regexp=None):
                 if ignore_regexp and re.match(ignore_regexp, link):
                     logging.debug("Skipping: %s", link)
                     skipped_urls.add(link)
+                    all_skipped_urls.add(link)
                     continue
 
                 # Check if link has already been seen.
@@ -96,6 +104,8 @@ def scrape_urls(url_format, callback, ignore_regexp=None):
         # Call back for processing.
         callback(response, html_root, skipped_urls)
 
+    return all_processed_urls, all_skipped_urls
+
 
 def scrape(filename, callback, port, ignore_regexp, quiet=True, extra_args=None):
     """Run a web server on a Beancount file and scrape it.
@@ -112,6 +122,8 @@ def scrape(filename, callback, port, ignore_regexp, quiet=True, extra_args=None)
       quiet: True if we shouldn't log the web server pages.
       extra_args: Extra arguments to bean-web that we want to start the
         server with.
+    Returns:
+      A set of all the processed URLs and a set of all the skipped URLs.
     """
     url_format = 'http://localhost:{}{{}}'.format(port)
 
@@ -134,6 +146,8 @@ def scrape(filename, callback, port, ignore_regexp, quiet=True, extra_args=None)
     #
     # - Components views... well there are just too many, makes the tests
     #   impossibly slow. Just keep the A's so some are covered.
-    scrape_urls(url_format, callback, ignore_regexp)
+    url_lists = scrape_urls(url_format, callback, ignore_regexp)
 
     web.thread_server_shutdown(thread)
+
+    return url_lists
