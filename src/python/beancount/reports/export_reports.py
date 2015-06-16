@@ -6,6 +6,7 @@ import collections
 import datetime
 import itertools
 import io
+import logging
 import re
 import textwrap
 import sys
@@ -83,6 +84,10 @@ def classify_holdings_for_export(holdings_list, commodities_map):
         elif ticker:
             action_holdings.append((ticker, holding))
         else:
+            logging.warn(("Exporting holding using default commodity name '{}'; this "
+                          "can potentially break the OFX import. Consider providing "
+                          "'ticker' or 'export' metadata for your commodities.").format(
+                              holding.currency))
             action_holdings.append((holding.currency, holding))
 
     return action_holdings

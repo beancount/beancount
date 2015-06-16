@@ -207,8 +207,8 @@ def main():
     # Force hardcore validations, just for check.
     extra_validations = (validation.HARDCORE_VALIDATIONS if is_check else None)
 
-    if args.timings:
-        logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
+    logging.basicConfig(level=logging.INFO if args.timings else logging.WARNING,
+                        format='%(levelname)-8s: %(message)s')
 
     # Parse the input file.
     errors_file = None if args.no_errors else sys.stderr

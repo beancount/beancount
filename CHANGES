@@ -30,6 +30,15 @@ Note: This file contains only changes in the 'default' branch.
     Please install lxml with: "pip3 install lxml"
 
 
+  - The 'exportpf' report which is used to produce OFX that can be imported in
+    Google Finance now issues a warning if you did not provide either 'ticker'
+    or 'export' metadata for holdings that get exported. The reason for the new
+    adminition is that it trips up the OFX import and when Google Finance sees
+    a ticker it does not understand, the import fails. At least with the warning
+    we're telling the user they should be providing tickers or export directives
+    for all their commodities if they export the portfolio.
+
+
 2015-06-10
 
   - Removed dependency on curses. If you don't have curses, everything should
