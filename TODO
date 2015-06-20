@@ -1287,6 +1287,11 @@ http://furius.ca/beancount/doc/proposal-inter
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - bean-doctor context should accept a LINK, not just a line number from
+    context.
+
+
+
   - Rename test_util.TestCase.assertLines() to assertEqualNoWS().
 
 

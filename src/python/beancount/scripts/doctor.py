@@ -17,9 +17,12 @@ from beancount.parser import parser
 from beancount.parser import lexer
 from beancount.parser import options
 from beancount.parser import printer
+from beancount.core import account_types
 from beancount.core import compare
+from beancount.core import inventory
 from beancount.core import data
 from beancount.core import getters
+from beancount.core import realization
 from beancount import loader
 from beancount.utils import misc_utils
 from beancount.scripts import directories
@@ -244,6 +247,20 @@ def do_linked(filename, args):
     errors = [RenderError(entry.meta, '', entry)
               for entry in linked_entries]
     printer.print_errors(errors)
+
+    # Print out balances.
+    real_root = realization.realize(linked_entries)
+    realization.dump_balances(real_root, file=sys.stdout)
+
+    # Print out net income change.
+    acctypes = options.get_account_types(options_map)
+    net_income = inventory.Inventory()
+    for real_node in realization.iter_children(real_root):
+        if account_types.is_income_statement_account(real_node.account, acctypes):
+            net_income.add_inventory(real_node.balance)
+
+    print()
+    print('Net Income: {}'.format(-net_income))
 
 
 def do_missing_open(filename, args):
