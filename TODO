@@ -11,24 +11,7 @@ beancount: TODO
       b.core.getters -> b.ops.realization (does it add deps?)
       b.core.realization -> b.ops.realization (does it add deps?)
 
-  - Move number code from
-
-      b.core.amount -> b.core.number
-
-    And define a C extension module to implemen D().
-    b.core.number and b.core.amount should be distinct, there is no
-    reason they should be together.
-
-  - The relative imports of the core module should be converted to
-    absolute ones.
-
-* Removing Dependencies
-
-  - Make sure all the tools work even without curses. Write a test for it,
-    patching it out. This is for SUSE.
-
-  - Look at writing my own web scraper instead of wget. Diff the two outputs to
-    make sure it works well. This would remove the need to install wget at all.
+  - Define a C extension module to implement D().
 
 
 * Explicit Tolerance
