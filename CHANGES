@@ -4,6 +4,14 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-06-25
+
+  - Posting objects now have (filename, lineno) in their metadata. This could
+    potentially be helpful for people who want to insert text programmatically
+    in their input file without having to write their own parser.
+    See: https://groups.google.com/d/msg/beancount/zNCFk-YGdr8/8P2_vGGH9xoJ
+
+
 2015-06-15
 
   - All the code to bake a static HTML archive of a bean-web interface has been
