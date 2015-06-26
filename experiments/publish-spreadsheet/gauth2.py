@@ -90,4 +90,8 @@ def get_authenticated_http(scopes, args):
     # Authorize using the transport and return it.
     credentials.authorize(http)
 
+    # Refresh the access token if necessary.
+    if credentials.access_token_expired:
+        credentials.refresh(http)
+
     return http, credentials
