@@ -55,7 +55,7 @@ class TestContext(test_utils.TestCase):
         search_filename = entries[0].meta.filename
         search_lineno = entries[-3].meta.lineno + 2
         dcontext = options_map['display_context']
-        str_context = context.render_entry_context(entries, dcontext,
+        str_context = context.render_entry_context(entries, options_map, dcontext,
                                                    search_filename, search_lineno)
 
         self.assertLines(textwrap.dedent("""
@@ -70,12 +70,12 @@ class TestContext(test_utils.TestCase):
 
 
         2013-02-07 * "Buy shares of ITOT"
-          Assets:US:ETrade:Cash           -1126.21 USD                ; -1126.21 USD
-          Assets:US:ETrade:ITOT               6.00 ITOT {186.21 USD}  ;  1117.26 USD
-          Expenses:Financial:Commissions      8.95 USD                ;     8.95 USD
+          Assets:US:ETrade:Cash           -1126.21 USD                ;  -1126.21 USD
+          Assets:US:ETrade:ITOT               6.00 ITOT {186.21 USD}  ; 1117.2600 USD
+          Expenses:Financial:Commissions      8.95 USD                ;      8.95 USD
 
 
-        ;;; Precision: ITOT=0.005, USD=0.005
+        ;;; Tolerances: ITOT=0.005, USD=0.005
 
         ; ! Assets:US:ETrade:Cash                      -2537.65 USD
 

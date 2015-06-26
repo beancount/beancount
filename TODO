@@ -1,10 +1,23 @@
 -*- mode: org -*-
 beancount: TODO
+* File Cleanup
+
+  - Remove plugins from ops, remove algorithms from core:
+
+      b.ops.auto_accounts -> b.plugins.auto_accounts  (easy)
+      b.ops.implicit_prices -> b.plugins.implicit_prices  (easy)
+      b.ops.documents -> b.plugins.documents  (not sure if breaks)
+
+      b.core.getters -> b.ops.realization (does it add deps?)
+      b.core.realization -> b.ops.realization (does it add deps?)
+
+  - Define a C extension module to implement D().
+
+
 * Explicit Tolerance
 
   - Make the printer support explicit tolerance syntax. This is crucial for
     round-trip.
-
 
 * Metadata and Experiment Flags Registry
 
@@ -645,6 +658,17 @@ http://furius.ca/beancount/doc/proposal-query
     Try to reproduce this specific use case.
 
 
+** V2
+
+  - I think we can do prety well like this:
+
+      SELECT ... FROM transactions|postings|balance|...
+      WHERE ANY(...)
+            ALL(...)
+
+    I'm not sure where OPEN CLOSE and CLEAR all fit though.
+
+
 * Standalone Tools
 
   - Build an 'statement' tool that will render a treeified balance sheet in two
@@ -1244,6 +1268,67 @@ http://furius.ca/beancount/doc/proposal-inter
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+  - bean-doctor context should accept a LINK, not just a line number from
+    context.
+
+
+
+  - Rename test_util.TestCase.assertLines() to assertEqualNoWS().
+
+
+
+  - This query works:
+
+      bean-query $L ' balances from flag = "!" '
+
+    But this query fails:
+
+      bean-query $L " balances from flag = '\!' "
+
+    The second one needs to have the flag escaped because of bash shell
+    expansion, but the problem is that the escaped backslash appears in the
+    output. This is normal bash behavior, but the problem is that the user
+    receives no notification of failure in this case. Beancount should detect
+    that the string compared to a flag is not a single-character string and
+    issue an appropriate error message for it.
+
+
+
+  - Make the web application use the regexps defined in common in its paths
+    instead of inline ad-hoc approximations. There was never any need to do
+    that.
+
+
+  - Test out removing the circular reference in Posting. This would make writing
+    scripts a lot easier and I bet we should be able to make do with per-account
+    lists of (Posting, Transaction). Create a tuple type for it, to make this
+    explicit. I bet it wouldn't be very much work to make the conversion; try it.
+
+
+  - A simple code cleanup: Since filtering Transactions out of a list of entries
+    is so incredibly common, provide a simple helper in b.c.data to do this.
+    filter_transactions() for example, and change all the code everywhere to use
+    it.
+
+
+
+  - Add a simple overview 'stats' report with output like this:
+
+      Files these postings came from:
+        ...
+
+      Unique payees:            2681
+      Unique accounts:           151
+
+      Number of postings:       9026 (4.8 per day)
+      Uncleared postings:        126
+
+      Days since last post:     -206
+      Posts in last 7 days:       30
+      Posts in last 30 days:      52
+      Posts seen this month:       8
 
 
 
@@ -3759,6 +3844,14 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 ** Conversions
 
   - Render the Conversions amount at the bottom of the Conversions page...
+
+** Bake & Scrape
+
+  - Make the web scraper run in multiple threads... it's quite a bit too slow as
+    it is. I'm sure we can make it scrape in parallel using multiprocessing and
+    a work queue (this should be a fun little project and would make baking to
+    an archive a lot faster in many cases).
+
 
 * Export
 ** HTML Export as File

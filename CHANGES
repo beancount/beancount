@@ -4,6 +4,219 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-06-25
+
+  - Posting objects now have (filename, lineno) in their metadata. This could
+    potentially be helpful for people who want to insert text programmatically
+    in their input file without having to write their own parser.
+    See: https://groups.google.com/d/msg/beancount/zNCFk-YGdr8/8P2_vGGH9xoJ
+
+
+2015-06-15
+
+  - All the code to bake a static HTML archive of a bean-web interface has been
+    rewritten.
+
+    * There used to be a number of bugs caused by the wget tool. These bugs have
+      been fixed.
+
+    * The new code does not depend on wget -- Beancount does not require wget
+      anymore. Explicit code to do web scraping has been implemented. On the
+      other hand, a new dependency is introduced: lxml. This dependency was
+      already required for development and install in the same way as all the
+      other dependencies: using pip3. Should be a breeze to install on all
+      platforms.
+
+    * A verification layer has been tacked on after the web scraping step to
+      check that there are no dangling links.
+
+    * Intentionally skipped links are now converted to plain text, such that
+      there are no dangling links for pages we aren't saving (these just used
+      to be ignored).
+
+    I repeat: Beancount does not depend on wget anymore.
+    Please install lxml with: "pip3 install lxml"
+
+
+  - The 'exportpf' report which is used to produce OFX that can be imported in
+    Google Finance now issues a warning if you did not provide either 'ticker'
+    or 'export' metadata for holdings that get exported. The reason for the new
+    adminition is that it trips up the OFX import and when Google Finance sees
+    a ticker it does not understand, the import fails. At least with the warning
+    we're telling the user they should be providing tickers or export directives
+    for all their commodities if they export the portfolio.
+
+
+2015-06-10
+
+  - Removed dependency on curses. If you don't have curses, everything should
+    work fine now, errors are being caught. Curses was only used to provide good
+    default values for rendering tables in terminals on e.g. bean-report
+    journal and to decide whether to use a pager in multi-page bean-query.
+    The default values are fixed if curses isn't available, e.g. 80 chars wide,
+    but as previously, you can override them manually. I also removed the
+    dependency from checkdeps and from the install document.
+
+
+2015-06-09
+
+  - Rewrote the Installation Instructions document completely to make it
+    simpler. Some users had found it daunting.
+    http://furius.ca/beancount/doc/install
+
+  - Tested Windows installation using Cygwin and added it to the installation
+    instructions.
+    http://furius.ca/beancount/doc/install
+
+
+2015-06-07
+
+  - Moved the following representation related symbols to their own module:
+
+      beancount.core.amount.D          ->  beancount.core.number.D
+      beancount.core.amount.Decimal    ->  beancount.core.number.Decimal
+      beancount.core.amount.ZERO       ->  beancount.core.number.ZERO
+      beancount.core.amount.ONE        ->  beancount.core.number.ONE
+      beancount.core.amount.HALF       ->  beancount.core.number.HALF
+      beancount.core.amount.round_to   ->  beancount.core.number.round_to
+
+    I also moved the tests. All the code specifically related to numbers is
+    now in beancount.core.number. I also removed the relative imports, as
+    Ledgerhub is importing from the Beancount source code now.
+
+    This is not a user-visible change. However, if you wrote scripts against
+    the codebase, you will need to rename your imports. In the meantime I added
+    stubs which issue a warning if you import from the obsoleted names.
+
+
+  - Moved documentation scripts from experiments to the main Beancount codebase.
+    There is a new package for it: beancount.docs. These codes are used to maintain
+    the Beancount documentation and there is common code for authentication in there,
+    code that I plan to use for automating the exporting ot portfolios.
+
+    This introduces some optional dependencies:
+
+    * google-api-python-client
+    * oauth2client
+    * httplib2
+
+    These are optional, and at the moment none of the actual Beancount tools
+    make any use of them. I moved this into the main Beancount codes because
+    the common authentication code will be used to export portfolios directly
+    to a Google spreadsheet in Google Drive, which will be super convenient
+    to build custom portfolio tracking views.
+
+
+2015-06-06
+
+  - Added an 'inferred_tolerance_multiplier' option to allow the user to adjust
+    the magnitude of the inferred tolerance.
+
+    When the tolerance values aren't specified explicitly via the
+    'default_tolerance' option, the tolerance is inferred from the numbers in
+    the input file. For example, if a transaction has posting with a value
+    like '32.424 CAD', the tolerance for CAD will be inferred to be 0.001
+    times some multiplier. This is the muliplier value.
+
+    We normally assume that the institution we're reproducing this posting
+    from applies rounding, and so the default value for the multiplier is
+    0.5, that is, half of the smallest digit encountered.
+
+    You can now customize this multiplier by changing this option, typically
+    expanding it to account for amounts slightly beyond the usual tolerance,
+    for example, if you deal with institutions with bad of unexpected rounding
+    behaviour.
+
+  - Promoted the 'experiment_infer_tolerance_from_cost' option to
+    'infer_tolerance_from_cost': not an experiment anymore. See thread on
+    mailing-list w/ mharris. This feature works well and actually solves real
+    problems for users.
+
+    A corresponding section has been added in the documentation at
+    http://furius.ca/beancount/doc/tolerances
+
+
+2015-06-04
+
+  - When using the 'experiment_infer_tolerance_from_cost' option, the inferred
+    tolerance is now expanded to include the SUM of all maximum rounding errors
+    from postings held at cost, not just the maximum. Users with multiple
+    rounding events in a single transactions could occur rounding that many
+    times. We assume no more rounding events than the number of postings held at
+    cost.
+
+  - I wrote a new document to explain how to deal with restricted stock units
+    vesting events:
+    http://furius.ca/beancount/doc/vesting
+
+
+2015-06-03
+
+  - bean-doctor context now outputs weight and residual numbers at their full
+    precision instead of their rounded one.
+
+
+2015-06-02
+
+  - Created a new document to keep track of user contributions:
+    http://furius.ca/beancount/doc/contrib
+
+
+2015-05-30
+
+  - Converted the Syntax Cheat Sheet to a Google Doc and removed it here.
+
+  - Added a check to bake the source code's checksums into the C extension
+    module and upon loading beancount.parser.parser check that the checksums
+    match. This automatically issues a warning on all programs that use the
+    parser if the compiled extension module is out-of-date and the user needs to
+    rebuild. This should explain the occasional unexpected situation where the
+    extension module doesn't match the Python code, for those running from
+    source or during development and in switching branches.
+
+  - Added an experimental boolean option: 'experiment_infer_tolerance_from_cost'
+    that expands the inferred tolerance to include values inferred from the cost
+    and price amounts on those cost and price currencies.
+
+    Here is the doc for it:
+
+      Enable an EXPERIMENTAL feature that expands the maximum tolerance inferred
+      on transactions to include values on cost currencies inferred by postings
+      held at-cost or converted at price. Those postings can imply a tolerance
+      value by multiplying the smallest digit of the unit by the cost or price value
+      and taking half of that value.
+
+      For example, if a posting has an amount of "2.345 RGAGX {45.00 USD}"
+      attached to it, it implies a tolerance of 0.001 x 45.00 / 2 = 0.045 USD
+      and this is added to the mix to enlarge the tolerance allowed for units of
+      USD on that transaction. All the normally inferred tolerances (see
+      http://furius.ca/beancount/doc/tolerances) are still taken into account.
+      Enabling this flag only makes the tolerances potentially wider.
+
+      WARNING: This feature may go away in the future. It is an exploration to see
+      if it is truly useful.
+
+  - Added a dependency check for 'curses' library and updated documentation.
+    This is for OpenSuse which packages curses separately.
+
+
+2015-05-22
+
+  - Fixed a simple bug (#47) where the default value used for legacy tolerances
+    wasn't being initialized properly and added a test for it.
+
+
+2015-05-20
+
+  - Fixed a potential important bug (#48) just introduced a few days ago whereby
+    enabling the 'account_rounding' option would inadvertently disable balance
+    checks. Thanks to Matthew Harris for finding and reporting it.
+
+  - Added a 'dedent' option to both beancount.parser.parser.parse_string() and
+    beancount.loader.load_string(). This is a convenience for writing quick
+    tests.
+
+
 2015-05-17
 
   - MAJOR CHANGES: Precision and tolerances in Beancount have been entirely

@@ -85,18 +85,22 @@ def run_with_args(function, args):
 
 
 @contextlib.contextmanager
-def tempdir():
+def tempdir(delete=True, **kw):
     """A context manager that creates a temporary directory and deletes its
     contents unconditionally once done.
 
+    Args:
+      delete: A boolean, true if we want to delete the directory after running.
+      **kw: Keyword arguments for mkdtemp.
     Yields:
       A string, the name of the temporary directory created.
     """
-    tempdir = tempfile.mkdtemp(prefix="beancount-test-tmpdir.")
+    tempdir = tempfile.mkdtemp(prefix="beancount-test-tmpdir.", **kw)
     try:
         yield tempdir
     finally:
-        shutil.rmtree(tempdir, ignore_errors=True)
+        if delete:
+            shutil.rmtree(tempdir, ignore_errors=True)
 
 
 def create_temporary_files(root, contents_map):

@@ -17,14 +17,18 @@ from beancount.parser import parser
 from beancount.parser import lexer
 from beancount.parser import options
 from beancount.parser import printer
+from beancount.core import account_types
 from beancount.core import compare
+from beancount.core import inventory
 from beancount.core import data
 from beancount.core import getters
+from beancount.core import realization
 from beancount import loader
 from beancount.utils import misc_utils
 from beancount.scripts import directories
 from beancount.scripts import checkdeps
 from beancount.reports import context
+from beancount.web import scrape
 
 
 def do_lex(filename, unused_args):
@@ -200,7 +204,7 @@ def do_context(filename, args):
 
     # Note: Make sure to use the absolute filename used by the parser to resolve
     # the file.
-    str_context = context.render_entry_context(entries, dcontext,
+    str_context = context.render_entry_context(entries, options_map, dcontext,
                                                options_map['filename'], lineno)
     sys.stdout.write(str_context)
 
@@ -244,6 +248,20 @@ def do_linked(filename, args):
               for entry in linked_entries]
     printer.print_errors(errors)
 
+    # Print out balances.
+    real_root = realization.realize(linked_entries)
+    realization.dump_balances(real_root, file=sys.stdout)
+
+    # Print out net income change.
+    acctypes = options.get_account_types(options_map)
+    net_income = inventory.Inventory()
+    for real_node in realization.iter_children(real_root):
+        if account_types.is_income_statement_account(real_node.account, acctypes):
+            net_income.add_inventory(real_node.balance)
+
+    print()
+    print('Net Income: {}'.format(-net_income))
+
 
 def do_missing_open(filename, args):
     """Print out Open directives that are missing for the given input file.
@@ -284,6 +302,21 @@ def do_display_context(filename, args):
     entries, errors, options_map = loader.load_file(filename)
     dcontext = options_map['display_context']
     sys.stdout.write(str(dcontext))
+
+
+def do_validate_html(directory, args):
+    """Validate all the HTML files under a directory hierachy.
+
+    Args:
+      directory: A string, the root directory whose contents to validte.
+      args: A tuple of the rest of arguments.
+    """
+    files, missing, empty = scrape.validate_local_links_in_dir(directory)
+    logging.info('%d files processed', len(files))
+    for target in missing:
+        logging.error('Missing %s', target)
+    for target in empty:
+        logging.error('Empty %s', target)
 
 
 def main():

@@ -9,14 +9,14 @@ import copy
 import random
 from datetime import date
 
-from .amount import ZERO
-from .amount import D
-from .amount import Amount
-from .position import Lot
-from .position import Position
-from .position import from_string
-from .position import from_amounts
-from .position import lot_currency_pair
+from beancount.core.number import ZERO
+from beancount.core.number import D
+from beancount.core.amount import Amount
+from beancount.core.position import Lot
+from beancount.core.position import Position
+from beancount.core.position import from_string
+from beancount.core.position import from_amounts
+from beancount.core.position import lot_currency_pair
 
 
 class TestPosition(unittest.TestCase):

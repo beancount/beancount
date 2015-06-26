@@ -62,7 +62,8 @@ def load_file(filename, log_timings=None, log_errors=None, extra_validations=Non
 load = load_file
 
 
-def load_string(string, log_timings=None, log_errors=None, extra_validations=None):
+def load_string(string, log_timings=None, log_errors=None, extra_validations=None,
+                dedent=False):
     """Open a Beancount input string, parse it, run transformations and validate.
 
     Args:
@@ -73,6 +74,7 @@ def load_string(string, log_timings=None, log_errors=None, extra_validations=Non
         or None, if it should remain quiet.
       extra_validations: A list of extra validation functions to run after loading
         this list of entries.
+      dedent: A boolean, if set, remove the whitespace in front of the lines.
     Returns:
       A triple of:
         entries: A date-sorted list of entries from the file.
@@ -80,6 +82,8 @@ def load_string(string, log_timings=None, log_errors=None, extra_validations=Non
           the file.
         options_map: A dict of the options parsed from the file.
     """
+    if dedent:
+        string = textwrap.dedent(string)
     return _load([(string, False)], log_timings, log_errors, extra_validations)
 
 
@@ -319,8 +323,8 @@ def loaddoc(fun):
     """
     @functools.wraps(fun)
     def wrapper(self):
-        contents = textwrap.dedent(fun.__doc__)
-        entries, errors, options_map = load_string(contents)
+        entries, errors, options_map = load_string(fun.__doc__, dedent=True)
         return fun(self, entries, errors, options_map)
+    wrapper.__input__ = wrapper.__doc__
     wrapper.__doc__ = None
     return wrapper

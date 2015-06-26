@@ -4,6 +4,7 @@ Tests for general utils.
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import unittest
+from unittest import mock
 import re
 import time
 import textwrap
@@ -12,6 +13,15 @@ from collections import namedtuple
 
 from beancount.utils import misc_utils
 from beancount.utils import test_utils
+
+
+def raise_import_error(*args, **kw):
+    """Raises an ImportError. This is patched in a test.
+
+    Raises:
+      ImportError, unconditionally.
+    """
+    raise ImportError("Could not import module")
 
 
 class TestMiscUtils(unittest.TestCase):
@@ -151,6 +161,16 @@ class TestMiscUtils(unittest.TestCase):
         # Note: Allow zero because the console function fails in nose when
         # capture is disabled.
         self.assertLess(-1, max_width)
+
+    @mock.patch('beancount.utils.misc_utils.import_curses', raise_import_error)
+    def test_no_curses(self):
+        # Make sure the patch works.
+        with self.assertRaises(ImportError):
+            misc_utils.import_curses()
+
+        # Test functions that would require curses.
+        self.assertEqual(0, misc_utils.get_screen_width())
+        self.assertEqual(0, misc_utils.get_screen_height())
 
     def test_get_screen_height(self):
         max_height = misc_utils.get_screen_height()

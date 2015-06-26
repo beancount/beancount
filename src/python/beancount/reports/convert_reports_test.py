@@ -111,7 +111,7 @@ class TestLedgerConversion(test_utils.TestCase):
           filename: A string, the name of the Ledger file.
         """
         version = get_ledger_version()
-        if version < (3, 0, 0):
+        if version is None or version < (3, 0, 0):
             self.skipTest('Ledger is not installed or has insufficient version, '
                           'cannot verify conversion; skipping test')
 

@@ -4,7 +4,7 @@
 
 from dateutil.parser import parse as parse_datetime
 
-from beancount.core.amount import ZERO
+from beancount.core.number import ZERO
 from beancount.core.amount import Amount
 from beancount import loader
 from beancount.ops import lifetimes

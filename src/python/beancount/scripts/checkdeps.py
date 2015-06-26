@@ -4,9 +4,7 @@ This is meant to be used as an error diagnostic tool.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import re
 import sys
-import subprocess
 
 
 def check_dependencies():
@@ -20,11 +18,17 @@ def check_dependencies():
       Beancount.
     """
     return [
+        # Check for a complete installation of Python itself.
         check_python(),
-        check_dateutil(),
-        check_bottle(),
-        check_ply(),
-        check_wget(),
+
+        # Modules we really do need installed.
+        check_import('dateutil'),
+        check_import('bottle'),
+        check_import('ply', module_name='ply.yacc', min_version='3.4'),
+
+        # Test are only required because of google-api-python-client.
+        check_import('apiclient'),
+        check_import('oauth2client'),
         ]
 
 
@@ -40,70 +44,29 @@ def check_python():
             sys.version_info[:2] >= (3, 3))
 
 
-def check_dateutil():
-    """Check that dateutil is installed.
+def check_import(package_name, min_version=None, module_name=None):
+    """Check that a particular module name is installed.
 
+    Args:
+      package_name: A string, the name of the package and module to be
+        imported to verify this works. This should have a __version__
+        attribute on it.
+      min_version: If not None, a string, the minimum version number
+        we require.
+      module_name: The name of the module to import if it differs from the
+        package name.
     Returns:
       A triple of (package-name, version-number, sufficient) as per
       check_dependencies().
     """
+    if module_name is None:
+        module_name = package_name
     try:
-        import dateutil
-        # Note: There is no method to obtain the version number.
-        version, sufficient = dateutil.__version__, True
+        __import__(module_name)
+        module = sys.modules[module_name]
+        version = module.__version__
+        assert isinstance(version, str)
+        is_sufficient = version >= min_version if min_version else True
     except ImportError:
-        version, sufficient = None, False
-    return ('dateutil', version, sufficient)
-
-
-def check_bottle():
-    """Check that bottle.py is installed.
-
-    Returns:
-      A triple of (package-name, version-number, sufficient) as per
-      check_dependencies().
-    """
-    try:
-        import bottle
-        version, sufficient = bottle.__version__, True
-    except ImportError:
-        version, sufficient = None, False
-    return ('bottle', version, sufficient)
-
-
-def check_ply():
-    """Check that PLY is installed.
-
-    Returns:
-      A triple of (package-name, version-number, sufficient) as per
-      check_dependencies().
-    """
-    try:
-        import ply.yacc
-        version = ply.yacc.__version__
-        sufficient = float(version) >= 3.4
-    except ImportError:
-        version, sufficient = None, False
-    return ('ply', version, sufficient)
-
-
-def check_wget():
-    """Check that wget is installed.
-
-    Returns:
-      A triple of (package-name, version-number, sufficient) as per
-      check_dependencies().
-    """
-    version, sufficient = None, False
-    try:
-        pipe = subprocess.Popen(('wget', '--version'),
-                                shell=False,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
-        stdout, stderr = pipe.communicate()
-        match = re.search(r'\b(\d+\.\d[\d\.]*)', (stdout + stderr).decode())
-        if match:
-            version, sufficient = match.group(1), True
-    except FileNotFoundError:
-        pass
-    return ('wget', version, sufficient)
+        version, is_sufficient = None, False
+    return (package_name, version, is_sufficient)

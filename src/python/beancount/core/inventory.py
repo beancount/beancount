@@ -44,13 +44,13 @@ import copy
 import collections
 from datetime import date
 
-from .amount import ZERO
-from .amount import Amount
-from .position import Lot
-from .position import Position
-from .position import lot_currency_pair
-from .position import from_string as position_from_string
-from .display_context import DEFAULT_FORMATTER
+from beancount.core.number import ZERO
+from beancount.core.amount import Amount
+from beancount.core.position import Lot
+from beancount.core.position import Position
+from beancount.core.position import lot_currency_pair
+from beancount.core.position import from_string as position_from_string
+from beancount.core.display_context import DEFAULT_FORMATTER
 
 # pylint: disable=invalid-name
 try:

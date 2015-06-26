@@ -12,7 +12,7 @@ import os
 import re
 from os import path
 
-from beancount.core.amount import ZERO
+from beancount.core.number import ZERO
 from beancount.core.amount import Amount
 from beancount.core.amount import amount_div
 from beancount.core import display_context
@@ -39,8 +39,14 @@ from beancount.parser import _parser
 from beancount.parser import lexer
 from beancount.parser import options
 from beancount.parser import printer
+from beancount.parser import hashsrc
 from beancount.core import account
 from beancount.core import data
+
+
+# When importing the module, always check that the compiled source matched the
+# installed source.
+hashsrc.check_parser_source_files()
 
 
 __sanity_checks__ = False
@@ -611,11 +617,11 @@ class Builder(lexer.LexBuilder):
         # conversion entries.
         #
         # if price is not None and price.number == ZERO:
-        #     meta = new_metadata(filename, lineno)
         #     self.errors.append(
         #         ParserError(meta, "Price is zero: {}".format(price), None))
 
-        return Posting(None, account, position, price, chr(flag) if flag else None, None)
+        meta = new_metadata(filename, lineno)
+        return Posting(None, account, position, price, chr(flag) if flag else None, meta)
 
 
     def txn_field_new(self):
@@ -811,7 +817,7 @@ class Builder(lexer.LexBuilder):
         # Check that the balance actually is empty.
         if __sanity_checks__:
             residual = compute_residual(entry.postings)
-            tolerances = infer_tolerances(entry.postings)
+            tolerances = infer_tolerances(entry.postings, self.options)
             assert residual.is_small(tolerances, self.options['default_tolerance']), (
                 "Invalid residual {}".format(residual))
 
@@ -847,9 +853,13 @@ def parse_string(string, **kw):
 
     Args:
       string: a str, the contents to be parsed instead of a file's.
+      **kw: See parse.c. This function parses out 'dedent' which removes
+        whitespace from the front of the text (default is False).
     Return:
       Same as the output of parse_file().
     """
+    if kw.pop('dedent', None):
+        string = textwrap.dedent(string)
     builder = Builder(None)
     _parser.parse_string(string, builder, **kw)
     builder.options['filename'] = '<string>'
@@ -877,12 +887,13 @@ def parsedoc(fun, no_errors=False):
     lineno += 1
 
     @functools.wraps(fun)
-    def newfun(self):
+    def wrapper(self):
         assert fun.__doc__ is not None, (
             "You need to insert a docstring on {}".format(fun.__name__))
-        entries, errors, options_map = parse_string(textwrap.dedent(fun.__doc__),
+        entries, errors, options_map = parse_string(fun.__doc__,
                                                     report_filename=filename,
-                                                    report_firstline=lineno)
+                                                    report_firstline=lineno,
+                                                    dedent=True)
         if no_errors:
             if errors:
                 oss = io.StringIO()
@@ -892,8 +903,9 @@ def parsedoc(fun, no_errors=False):
         else:
             return fun(self, entries, errors, options_map)
 
-    newfun.__doc__ = None
-    return newfun
+    wrapper.__input__ = wrapper.__doc__
+    wrapper.__doc__ = None
+    return wrapper
 
 
 def parsedoc_noerrors(fun):

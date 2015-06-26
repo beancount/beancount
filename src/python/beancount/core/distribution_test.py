@@ -5,7 +5,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import unittest
 
-from . import distribution
+from beancount.core import distribution
 
 
 class TestDistribution(unittest.TestCase):

@@ -9,7 +9,7 @@ import tempfile
 
 from beancount.core import data
 from beancount.core import account
-from beancount.core.amount import Decimal
+from beancount.core.number import Decimal
 from beancount.parser import _parser
 
 

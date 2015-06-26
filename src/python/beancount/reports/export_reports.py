@@ -7,16 +7,18 @@ import csv
 import datetime
 import itertools
 import io
+import logging
 import re
 import textwrap
 import sys
 
 from decimal import Decimal
 
-from beancount.core.amount import D
-from beancount.core.amount import ZERO
+from beancount.core.number import D
+from beancount.core.number import ZERO
 from beancount.core import getters
 from beancount.ops import prices
+from beancount.ops import holdings
 from beancount.reports import report
 from beancount.reports import holdings_reports
 
@@ -83,6 +85,10 @@ def classify_holdings_for_export(holdings_list, commodities_map):
         elif ticker:
             action_holdings.append((ticker, holding))
         else:
+            logging.warn(("Exporting holding using default commodity name '{}'; this "
+                          "can potentially break the OFX import. Consider providing "
+                          "'ticker' or 'export' metadata for your commodities.").format(
+                              holding.currency))
             action_holdings.append((holding.currency, holding))
 
     return action_holdings
@@ -102,7 +108,7 @@ def get_money_instruments(commodities_map):
             if entry.meta.get('export', None) == 'MONEY'}
 
 
-def export_holdings(entries, options_map, promiscuous):
+def export_holdings(entries, options_map, promiscuous, aggregate_by_commodity=False):
     """Compute a list of holdings to export.
 
     Holdings that are converted to cash equivalents will receive a currency of
@@ -112,6 +118,7 @@ def export_holdings(entries, options_map, promiscuous):
       entries: A list of directives.
       options_map: A dict of options as provided by the parser.
       promiscuous: A boolean, true if we should output a promiscuious memo.
+      aggregate_by_commodity: A boolean, true if we should group the holdings by account.
     Returns:
       A pair of
         exported: A list of ExportEntry tuples, one for each exported position.
@@ -125,6 +132,12 @@ def export_holdings(entries, options_map, promiscuous):
     holdings_list, price_map = holdings_reports.get_assets_holdings(entries, options_map)
     commodities_map = getters.get_commodity_map(entries, options_map)
     dcontext = options_map['display_context']
+
+    # Aggregate the holdings, if requested. Google Finance is notoriously
+    # finnicky and if you have many holdings this might help.
+    if aggregate_by_commodity:
+        holdings_list = holdings.aggregate_holdings_by(holdings_list,
+                                                       lambda holding: holding.currency)
 
     # Classify all the holdings for export.
     action_holdings = classify_holdings_for_export(holdings_list, commodities_map)
@@ -366,6 +379,11 @@ class ExportPortfolioReport(report.TableReport):
                             help=("Include title and account names in memos. "
                                   "Use this if you trust wherever you upload."))
 
+        parser.add_argument('-a', '--aggregate-by-commodity', action='store_true',
+                            help=("Group the holdings by account. This may help if your "
+                                  "portfolio fails to import and you have many holdings."))
+
+
     EXPORT_FORMAT = ("{atype}  "
                      "{0.number:10.2f} {0.symbol:16}  "
                      "{cost_number:10.2f} {0.cost_currency:16}  "
@@ -406,7 +424,8 @@ class ExportPortfolioReport(report.TableReport):
             writer.writerow(export[:-1])
 
     def render_ofx(self, entries, unused_errors, options_map, file):
-        exported, converted, holdings_ignored = export_holdings(entries, options_map, False)
+        exported, converted, holdings_ignored = export_holdings(
+            entries, options_map, False, self.args.aggregate_by_commodity)
 
         # Print debug information if requested, before exporting.
         if self.args.debug:

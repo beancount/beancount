@@ -5,9 +5,9 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import collections
 import copy
 
-from beancount.core.amount import ONE
-from beancount.core.amount import ZERO
-from beancount.core.amount import HALF
+from beancount.core.number import D
+from beancount.core.number import ONE
+from beancount.core.number import ZERO
 from beancount.core.inventory import Inventory
 from beancount.core import inventory
 from beancount.core.position import Lot
@@ -17,6 +17,22 @@ from beancount.core.data import Posting
 from beancount.core.data import reparent_posting
 from beancount.core.data import entry_replace
 from beancount.core import getters
+
+
+# The default tolerances value to use for legacy tolerances.
+LEGACY_DEFAULT_TOLERANCES = {'*': D('0.005')}
+
+
+# An upper bound on the tolerance value, this is the maximum the tolerance
+# should ever be.
+MAXIMUM_TOLERANCE = D('0.5')
+
+
+# The maximum number of user-specified coefficient digits we should allow for a
+# tolerance setting. This would allow the user to provide a tolerance like
+# 0.1234 but not 0.123456. This is used to detect whether a tolerance value
+# is input by the user and not inferred automatically.
+MAX_TOLERANCE_DIGITS = 5
 
 
 # An error from balancing the postings.
@@ -73,12 +89,15 @@ def compute_residual(postings):
     """
     inventory = Inventory()
     for posting in postings:
+        # Skip auto-postings inserted to absorb the residual (rounding error).
+        if posting.meta and posting.meta.get(AUTOMATIC_RESIDUAL, False):
+            continue
         # Add to total residual balance.
         inventory.add_amount(get_posting_weight(posting))
     return inventory
 
 
-def infer_tolerances(postings, use_cost=False):
+def infer_tolerances(postings, options_map, use_cost=None):
     """Infer tolerances from a list of postings.
 
     The tolerance is the maximum fraction that is being used for each currency
@@ -87,20 +106,51 @@ def infer_tolerances(postings, use_cost=False):
     contributing to the determination of precision.
 
     The 'use_cost' option allows one to experiment with letting postings at cost
-    and at price influence the maximum value of the tolerance. It's quite tricky
-    to use and alters the definition of the tolerance in a non-trivial way, if you
-    use it. It was originally intended to be used for balancing the transactions
-    and not for quantizing during interpolation.
+    and at price influence the maximum value of the tolerance. It's tricky to
+    use and alters the definition of the tolerance in a non-trivial way, if you
+    use it. The tolerance is expanded by the sum of the cost times a fraction 'M'
+    of the smallest digits in the number of units for all postings held at cost.
+
+    For example, in this transaction:
+
+        2006-01-17 * "Plan Contribution"
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:Cash -1150.00 USD
+
+    The tolerance for units of USD will calculated as the MAXIMUM of:
+
+      0.01 * M = 0.005 (from the 1150.00 USD leg)
+
+      The sum of
+        0.001 * M x 30.96 = 0.01548 +
+        0.001 * M x 30.96 = 0.01548
+                          = 0.03096
+
+    So the tolerance for USD in this case is max(0.005, 0.03096) = 0.03096. Prices
+    contribute similarly to the maximum tolerance allowed.
+
+    Note that 'M' above is the inferred_tolerance_multiplier and its default
+    value is 0.5.
 
     Args:
       postings: A list of Posting instances.
       use_cost: A boolean, true if we should be using a combination of the smallest
         digit of the number times the cost or price in order to infer the tolerance.
+        If the value is left unspecified (as 'None'), the default value can be
+        overridden by setting an option.
     Returns:
       A dict of currency to the tolerated difference amount to be used for it,
       e.g. 0.005.
+
     """
+    if use_cost is None:
+        use_cost = options_map["infer_tolerance_from_cost"]
+
+    inferred_tolerance_multiplier = options_map["inferred_tolerance_multiplier"]
+
     tolerances = {}
+    cost_tolerances = collections.defaultdict(D)
     for posting in postings:
         # Skip the precision on automatically inferred postings.
         if posting.meta and AUTOMATIC_META in posting.meta:
@@ -115,7 +165,7 @@ def infer_tolerances(postings, use_cost=False):
         expo = position_.number.as_tuple().exponent
         if expo < 0:
             # Note: the exponent is a negative value.
-            tolerance = ONE.scaleb(expo) / 2
+            tolerance = ONE.scaleb(expo) * inferred_tolerance_multiplier
             tolerances[currency] = max(tolerance,
                                        tolerances.get(currency, -1024))
 
@@ -125,23 +175,27 @@ def infer_tolerances(postings, use_cost=False):
             # Compute bounds on the smallest digit of the number implied as cost.
             if lot.cost is not None:
                 cost_currency = lot.cost.currency
-                cost_tolerance = min(tolerance * lot.cost.number, HALF)
-                tolerances[cost_currency] = max(cost_tolerance,
-                                                tolerances.get(cost_currency, -1024))
+                cost_tolerance = min(tolerance * lot.cost.number, MAXIMUM_TOLERANCE)
+                cost_tolerances[cost_currency] += cost_tolerance
 
             # Compute bounds on the smallest digit of the number implied as cost.
             price = posting.price
             if price is not None:
                 price_currency = price.currency
-                price_tolerance = min(tolerance * price.number, HALF)
-                tolerances[price_currency] = max(price_tolerance,
-                                                 tolerances.get(price_currency, -1024))
+                price_tolerance = min(tolerance * price.number, MAXIMUM_TOLERANCE)
+                cost_tolerances[price_currency] += price_tolerance
+
+    for currency, tolerance in cost_tolerances.items():
+        tolerances[currency] = max(tolerance, tolerances.get(currency, -1024))
 
     return tolerances
 
 
 # Meta-data field appended to automatically inserted postings.
 AUTOMATIC_META = '__automatic__'
+
+# Meta-data field appended to postings inserted to absorb rounding error.
+AUTOMATIC_RESIDUAL = '__residual__'
 
 
 def get_residual_postings(residual, account_rounding):
@@ -154,7 +208,8 @@ def get_residual_postings(residual, account_rounding):
     Returns:
       A list of new postings to be inserted to reduce the given residual.
     """
-    meta = {AUTOMATIC_META: True}
+    meta = {AUTOMATIC_META: True,
+            AUTOMATIC_RESIDUAL: True}
     return [Posting(None, account_rounding, -position, None, None, meta.copy())
             for position in residual.get_positions()]
 
@@ -235,9 +290,9 @@ def get_incomplete_postings(entry, options_map):
         # This is supported only to support an easy transition for users.
         # Users should be able to revert to this easily.
         tolerances = {}
-        default_tolerances = {'*': '0.005'}
+        default_tolerances = LEGACY_DEFAULT_TOLERANCES
     else:
-        tolerances = infer_tolerances(postings)
+        tolerances = infer_tolerances(postings, options_map)
         default_tolerances = options_map['default_tolerance']
 
     # Process all the postings.
@@ -306,13 +361,24 @@ def get_incomplete_postings(entry, options_map):
             for position in residual_positions:
                 position = -position
 
-                # Applying rounding to the deafult tolerance, if there is one.
+                # Applying rounding to the default tolerance, if there is one.
                 tolerance = inventory.get_tolerance(tolerances,
                                                     default_tolerances,
                                                     position.lot.currency)
                 if tolerance:
                     quantum = (tolerance * 2).normalize()
-                    position.number = position.number.quantize(quantum)
+
+                    # If the tolerance is a neat number provided by the user,
+                    # quantize the inferred numbers. See doc on quantize():
+                    #
+                    # Unlike other operations, if the length of the coefficient
+                    # after the quantize operation would be greater than
+                    # precision, then an InvalidOperation is signaled. This
+                    # guarantees that, unless there is an error condition, the
+                    # quantized exponent is always equal to that of the
+                    # right-hand operand.
+                    if len(quantum.as_tuple().digits) < MAX_TOLERANCE_DIGITS:
+                        position.number = position.number.quantize(quantum)
 
                 meta = copy.copy(old_posting.meta) if old_posting.meta else {}
                 meta[AUTOMATIC_META] = True

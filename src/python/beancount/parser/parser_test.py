@@ -11,7 +11,7 @@ import re
 import sys
 import subprocess
 
-from beancount.core.amount import D
+from beancount.core.number import D
 from beancount.parser import parser
 from beancount.parser import lexer
 from beancount.core import data
@@ -105,6 +105,13 @@ class TestParserInputs(unittest.TestCase):
                                 stdin=subprocess.PIPE)
         output, errors = pipe.communicate(self.INPUT.encode('utf-8'))
         self.assertEqual(0, pipe.returncode)
+
+    def test_parse_string_None(self):
+        input_string = report_filename = None
+        with self.assertRaises(TypeError):
+            entries, errors, _ = parser.parse_string(input_string)
+        with self.assertRaises(TypeError):
+            entries, errors, _ = parser.parse_string("something", None, report_filename)
 
 
 class TestParserEntryTypes(unittest.TestCase):
@@ -1008,6 +1015,14 @@ class TestAllowNegativePrices(unittest.TestCase):
 
 class TestMetaData(unittest.TestCase):
 
+    @staticmethod
+    def strip_meta(meta):
+        """Removes the filename, lineno from the postings metadata."""
+        copy = meta.copy()
+        copy.pop('filename', None)
+        copy.pop('lineno', None)
+        return copy
+
     @parser.parsedoc
     def test_metadata_transaction__begin(self, entries, errors, _):
         """
@@ -1029,7 +1044,7 @@ class TestMetaData(unittest.TestCase):
         """
         self.assertEqual(1, len(entries))
         self.assertEqual({'test': 'Something'},
-                         entries[0].postings[0].meta)
+                         self.strip_meta(entries[0].postings[0].meta))
 
     @parser.parsedoc
     def test_metadata_transaction__end(self, entries, errors, _):
@@ -1040,8 +1055,9 @@ class TestMetaData(unittest.TestCase):
             test: "Something"
         """
         self.assertEqual(1, len(entries))
-        self.assertEqual({'__automatic__': True, 'test': 'Something'},
-                         entries[0].postings[1].meta)
+        self.assertEqual({'__automatic__': True,
+                          'test': 'Something'},
+                         self.strip_meta(entries[0].postings[1].meta))
 
     @parser.parsedoc
     def test_metadata_transaction__many(self, entries, errors, _):
@@ -1059,10 +1075,10 @@ class TestMetaData(unittest.TestCase):
         self.assertEqual(1, len(entries))
         self.assertEqual('Something', entries[0].meta['test1'])
         self.assertEqual({'test2': 'has', 'test3': 'to'},
-                         entries[0].postings[0].meta)
+                         self.strip_meta(entries[0].postings[0].meta))
         self.assertEqual({'__automatic__': True,
                           'test4': 'come', 'test5': 'from', 'test6': 'this'},
-                         entries[0].postings[1].meta)
+                         self.strip_meta(entries[0].postings[1].meta))
 
     @parser.parsedoc
     def test_metadata_transaction__indented(self, entries, errors, _):
@@ -1080,10 +1096,10 @@ class TestMetaData(unittest.TestCase):
         self.assertEqual(1, len(entries))
         self.assertEqual('Something', entries[0].meta['test1'])
         self.assertEqual({'test2': 'has', 'test3': 'to'},
-                         entries[0].postings[0].meta)
+                         self.strip_meta(entries[0].postings[0].meta))
         self.assertEqual({'__automatic__': True,
                           'test4': 'come', 'test5': 'from', 'test6': 'this'},
-                         entries[0].postings[1].meta)
+                         self.strip_meta(entries[0].postings[1].meta))
 
     @parser.parsedoc
     def test_metadata_transaction__repeated(self, entries, errors, _):
@@ -1099,7 +1115,8 @@ class TestMetaData(unittest.TestCase):
         """
         self.assertEqual(1, len(entries))
         self.assertEqual('Bananas', entries[0].meta['test'])
-        self.assertEqual({'test': 'Bananas'}, entries[0].postings[0].meta)
+        self.assertEqual({'test': 'Bananas'},
+                         self.strip_meta(entries[0].postings[0].meta))
         self.assertEqual(3, len(errors))
         self.assertTrue(all(re.search('Duplicate.*metadata field', error.message)
                             for error in errors))

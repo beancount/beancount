@@ -10,10 +10,18 @@ should match the value of the stock sold:
   Expenses:Financial:Fees            0.08 USD
   Income:US:Company:ESPP:PnL      -10.125 USD
 
-The cost basis is checked against: 2141.36 + 008 + -10.125.
+The cost basis is checked against: 2141.36 + 008 + -10.125. That is, the balance
+checks computes
 
-But... usually the income leg isn't given to you.
-Beancount can automatically infer it using the balance, like this:
+  -81 x 26.3125  = -2131.3125  +
+                    2141.36    +
+                       0.08    +
+                     -10.125
+
+and checks that the residual is below a small tolernace.
+
+But... usually the income leg isn't given to you in statements. Beancount can
+automatically infer it using the balance, which is convenient, like this:
 
 1999-07-31 * "Sell"
   Assets:US:BRS:Company:ESPP          -81 ADSK {26.3125 USD}
@@ -21,8 +29,8 @@ Beancount can automatically infer it using the balance, like this:
   Expenses:Financial:Fees            0.08 USD
   Income:US:Company:ESPP:PnL
 
-However, most often you have the sales prices given to you on your transaction
-confirmation statement, so you can enter this:
+Additionally, most often you have the sales prices given to you on your
+transaction confirmation statement, so you can enter this:
 
 1999-07-31 * "Sell"
   Assets:US:BRS:Company:ESPP          -81 ADSK {26.3125 USD} @ 26.4375 USD
@@ -30,18 +38,29 @@ confirmation statement, so you can enter this:
   Expenses:Financial:Fees            0.08 USD
   Income:US:Company:ESPP:PnL
 
-This plugin does the following: For transactions which have a price, it verifies
-that the proceeds of the lot will sum up to the total of the asset accounts,
-disregarding the income legs. This provides yet another level of verification
-and allows you to elide the income amounts, knowing that the price is there to
-provide an extra level of error-checking in case you enter a typo.
+So in theory, if the price is given (26.4375 USD), we could verify that the
+proceeds from the sale at the given price match non-Income postings. That is,
+verify that
 
+  -81 x 26.4375  = -2141.4375  +
+                    2141.36    +
+                       0.08    +
+
+is below a small tolerance value. So this plugin does this.
+
+In general terms, it does the following: For transactions with postings that
+have a cost and a price, it verifies that the sum of the positions on all
+postings to non-income accounts is below tolerance.
+
+This provides yet another level of verification and allows you to elide the
+income amounts, knowing that the price is there to provide an extra level of
+error-checking in case you enter a typo.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
 
-from beancount.core.amount import ZERO
+from beancount.core.number import ZERO
 from beancount.core import data
 from beancount.core import amount
 from beancount.core import inventory
@@ -53,6 +72,11 @@ __plugins__ = ('validate_sell_gains',)
 
 
 SellGainsError = collections.namedtuple('SellGainsError', 'source message entry')
+
+
+# A multiplier of the regular tolerance being used. This provides a little extra
+# space for satisfying two sets of constraints.
+EXTRA_TOLERANCE_MULTIPLIER = 2
 
 
 def validate_sell_gains(entries, options_map):
@@ -109,13 +133,15 @@ def validate_sell_gains(entries, options_map):
         dict_proceeds = {pos.lot.currency: pos.number
                          for pos in total_proceeds}
 
-        tolerances = interpolate.infer_tolerances(entry.postings)
+        tolerances = interpolate.infer_tolerances(entry.postings, options_map)
         invalid = False
         for currency, price_number in dict_price.items():
-            # Accept twice the normal tolerance.
+            # Accept a looser than usual tolerance because rounding occurs
+            # differently. Also, it would be difficult for the user to satisfy
+            # two sets of constraints manually.
             tolerance = inventory.get_tolerance(tolerances,
                                                 default_tolerances,
-                                                currency) * 2
+                                                currency) * EXTRA_TOLERANCE_MULTIPLIER
 
             proceeds_number = dict_proceeds.pop(currency, ZERO)
             diff = abs(price_number - proceeds_number)
