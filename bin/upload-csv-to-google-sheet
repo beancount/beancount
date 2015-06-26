@@ -1,10 +1,35 @@
 #!/usr/bin/env python
-"""Publish a CSV file to a Google Docs Spreadsheet sheet.
+"""Publish a CSV file to a Google Spreadsheet sheet.
 
-Note: This script has to run under Python 2.x because gdata (the old
-"gdata-python-client" XML-based APIs) has not yet been ported to Python 3, and
-it looks abandoned by Google in favor of the discovery apis (i.e.,
-"google-api-python-client").
+This is a convenient script to update an existing Google Spreadsheet document
+with the contents of a CSV file.
+
+For example:
+
+  upload-csv-to-google-sheet /tmp/file.csv 19cwo67y40oyrsNbYKw80LtUie3tzMo1JWggbDcXFtgM
+
+By default, this updates (overwrites) the first worksheet in the spreadsheet. If
+you want to update another sheet, use the --worksheet option, e.g.:
+
+  upload-csv-to-google-sheet --worksheet='Sheet1' ...
+
+
+You will need to have an installation of the following libraries for this to
+work:
+
+ * gdata-python-client
+ * oauth2client
+ * httplib2
+
+Moreover, you will need to enable the Google Sheets API in the developer console
+and download the Client Secrets that Google provides to ~/.google-apis.json. (You
+can override this location with the GOOGLE_APIS environment variable.)
+
+
+Note: This script has to run under Python 2.x unlike the other scripts provided
+in this package because gdata (the old "gdata-python-client" XML-based APIs) has
+not yet been ported to Python 3, and it looks abandoned by Google in favor of
+the discovery apis (i.e., "google-api-python-client").
 
 Beancount is only implemented using Python 3.x, so we will support exporting the
 list of holdings to a temporary CSV file and uploading it automatically to a
@@ -34,7 +59,8 @@ import gdata.gauth
 # gauth.py
 
 
-DEFAULT_SECRETS_FILENAME = os.environ.get('GOOGLE_APIS', None)
+DEFAULT_SECRETS_FILENAME = os.environ.get(
+    'GOOGLE_APIS', path.join(os.environ['HOME'], '.google-apis.json'))
 DEFAULT_STORAGE_FILENAME = path.join(os.environ['HOME'], '.oauth2-google-api')
 
 
