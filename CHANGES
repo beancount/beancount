@@ -4,6 +4,23 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-06-26
+
+  - Created a generic script that can be used to automate the upload of
+    arbitrary CSV files to a Google Spreadsheet. This can be used along with the
+    holdings reports in order to create a spreadsheet tracking your assets.
+
+    Unfortunately, this script has to be written in Python 2.x, because of
+    the unavailability of the gdata-python-client library which is not available
+    at this time for Python 3.x. The script is self-contained. If you want
+    to use this, you must install the following libraries in your Python 2.x
+    install:
+
+    * gdata-python-client
+    * oauth2client
+    * httplib2
+
+
 2015-06-25
 
   - Posting objects now have (filename, lineno) in their metadata. This could

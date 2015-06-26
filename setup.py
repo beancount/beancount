@@ -37,6 +37,9 @@ bean-sql
 treeify
 """.split() if x and not x.startswith('#')]
 
+# Note: We don't include the 'upload-csv-to-google-sheet' script here because it is a
+# Python 2.x script.
+
 
 # Please read: http://furius.ca/beancount/doc/install about releases.
 setup(
