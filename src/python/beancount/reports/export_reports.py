@@ -3,6 +3,7 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
+import csv
 import datetime
 import itertools
 import io
@@ -415,6 +416,13 @@ class ExportPortfolioReport(report.TableReport):
                 cost_currency=holding.cost_currency))
         sys.stderr.write('\n')
 
+    def render_csv(self, entries, unused_errors, options_map, file):
+        exported, converted, holdings_ignored = export_holdings(entries, options_map, False)
+        writer = csv.writer(file)
+        writer.writerow(ExportEntry._fields[:-1])
+        for index, export in enumerate(itertools.chain(exported, converted)):
+            writer.writerow(export[:-1])
+
     def render_ofx(self, entries, unused_errors, options_map, file):
         exported, converted, holdings_ignored = export_holdings(
             entries, options_map, False, self.args.aggregate_by_commodity)
@@ -439,7 +447,6 @@ class ExportPortfolioReport(report.TableReport):
         invtranlist_io = io.StringIO()
         skipped_holdings = []
         ignored_commodities = set()
-        index = 0
         for index, export in enumerate(itertools.chain(exported, converted)):
             # Note: We assume GFinance ticker symbology here to infer MF vs.
             # STOCK, but frankly even if we fail to characterize it right this
