@@ -4,6 +4,11 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-06-27
+
+  - Complete the design doc and made it public.
+
+
 2015-06-26
 
   - Created a generic script that can be used to automate the upload of
