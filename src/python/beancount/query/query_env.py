@@ -8,6 +8,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import copy
 import datetime
+import logging
 import re
 import textwrap
 
@@ -269,7 +270,11 @@ class ConvertInventory(query_compile.EvalFunction):
         for position_ in inventory_:
             converted_amount = prices.convert_amount(context.price_map,
                                                      currency, position_.get_cost())
-            converted_inventory.add_amount(converted_amount)
+            if converted_amount is None:
+                # Note: Not sure if I should issue a warning here.
+                logging.warn("Skipping position: {}".format(position_))
+            else:
+                converted_inventory.add_amount(converted_amount)
         return converted_inventory
 
 
