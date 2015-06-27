@@ -1270,6 +1270,12 @@ http://furius.ca/beancount/doc/proposal-inter
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - Try removing the 'tags' attribute of transactions by moving it to metadata
+    fields and making sure tools are available to perform the same aggregations
+    using bean-query and views using bean-web.
+
+
+
   - bean-doctor context should accept a LINK, not just a line number from
     context.
 
