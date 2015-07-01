@@ -25,6 +25,7 @@ def check_dependencies():
         check_import('dateutil'),
         check_import('bottle'),
         check_import('ply', module_name='ply.yacc', min_version='3.4'),
+        check_import('lxml', module_name='lxml.etree', min_version='3'),
 
         # Test are only required because of google-api-python-client.
         check_import('apiclient'),
