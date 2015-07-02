@@ -17,24 +17,46 @@ if sys.version_info[:2] < (3,3):
 
 
 # Import setup().
-setuptools_kwargs = {}
-try:
-    # Use distutils if requested (this is use in testing).
-    if 'BEANCOUNT_DISABLE_SETUPTOOLS' in os.environ:
-        raise ImportError("Setuptools disabled explicitly")
+setup_extra_kwargs = {}
+from distutils.core import setup, Extension
 
-    # Try to use setuptools first, if it is installed, because it supports
-    # automatic installation of dependencies.
-    from setuptools import setup, Extension
-    setuptools_kwargs.update(
-        install_requires = ['python-dateutil', 'bottle', 'ply', 'lxml']
-        )
-except ImportError:
-    # If setuptools is not installed, fallback on the stdlib. This works too, it
-    # just won't install the dependencies automatically.
-    warnings.warn("Setuptools not installed; falling back on distutils. "
-                  "You will have to install dependencies explicitly.")
-    from distutils.core import setup, Extension
+# Unused support for setuptools. Setuptools is seriously broken:
+#
+# * Using setuptools v15, build_ext --in-place puts the compiled Extension
+#   library under src/python. It needs to be under src/python/beancount/parser.
+#
+# * Using setuptools v18, it puts the library in the right place but invoking
+#   it not from pip3 or easy_install makes it complain about install_requires
+#   not being supported.
+#
+# Setuptools is broken. The only reason I was trying to use it was to support
+# automatically installed dependencies. But it's so broken I'm giving up.
+# Here's how to install dependencies:
+#
+#    pip3 install python-dateutil bottle ply lxml
+#
+# You do this once.
+# Removed code follows.
+#
+## try:
+##     # Use distutils if requested (this is use in testing).
+##     if 'BEANCOUNT_DISABLE_SETUPTOOLS' in os.environ:
+##         raise ImportError("Setuptools disabled explicitly")
+##
+##     # Try to use setuptools first, if it is installed, because it supports
+##     # automatic installation of dependencies.
+##     from setuptools import setup, Extension
+##     if setuptools.__version__ < '18':
+##
+##     setup_extra_kwargs.update(
+##         install_requires = ['python-dateutil', 'bottle', 'ply', 'lxml']
+##         )
+## except ImportError:
+##     # If setuptools is not installed, fallback on the stdlib. This works too, it
+##     # just won't install the dependencies automatically.
+##     warnings.warn("Setuptools not installed; falling back on distutils. "
+##                   "You will have to install dependencies explicitly.")
+##     from distutils.core import setup, Extension
 
 
 # Make sure we can import hashsrc in order to create a binary with a checksum of
@@ -68,7 +90,7 @@ upload-csv-to-google-sheet
 # Please read: http://furius.ca/beancount/doc/install about version numbers.
 setup(
     name="beancount",
-    version='2.0beta2',
+    version='2.0b3',
     description="Command-line Double-Entry Accounting",
 
     long_description=
@@ -86,7 +108,7 @@ setup(
     url="http://furius.ca/beancount",
     download_url="http://bitbucket.org/blais/beancount",
 
-    package_dir = {'': 'src/python'},
+    package_dir = {'': 'src/python',},
     packages = ['beancount',
                 'beancount.parser',
                 'beancount.core',
@@ -120,6 +142,6 @@ setup(
                                   '"{}"'.format(hash_parser_source_files()))]),
     ],
 
-    # Add optional arguments that only work with setuptools.
-    **setuptools_kwargs
+    # Add optional arguments that only work with some variants of setup().
+    **setup_extra_kwargs
 )

@@ -6,34 +6,11 @@ Note: This file contains only changes in the 'default' branch.
 
 2015-07-02
 
-  - Fixed bugs with automatic installation dependencies and reinstated
-    setuptools support. I'd been having problems with setup.py in that it's
-    supposed to be able to install dependencies by default, so in theory you
-    shouldn't have to install anything but Beancount now. It hadn't been working
-    before (I was relying on distutils, which is now a fallback).
+  - Built support for setuptools and rolled back changes. Setuptools is broken
+    beyond what I can bear. Screw this. You'll have to install dependencies by
+    hand. It's a one-liner, like this:
 
-    Here's some background: Python has two active supporting projects for
-    packaging:
-
-    (1) distutils, which comes with it in the stdlib, and
-
-    (2) setuptools, which is newer and better, but which needs to be installed
-    on top of the stdlib.
-
-    There's a deep history of why that is and many projects have come and gone
-    trying to make this better (e.g. distribute). The main issue with disutils
-    is that it does not support automatic installation of dependencies (it's
-    really old but a ton of packages still depend on it, that's the price of
-    popularity). Setuptools does support it, the packager can declare
-    dependencies and pip3 should be able to pull in and install all requirements
-    automatically. I could not get setuptools to install my dependencies due to
-    a namespace collision with the 'parser' module (was my fault).
-
-    Now that I've made changes, Beancount supports setuptools and installs
-    dependencies automatically if you have it installed. If you don't have
-    setuptools installed, it falls back on distutils (and you have to install
-    the dependencies manually, e.g. it's a one-liner:  "pip3 install
-    python-dateutil lxml bottle ply").
+      pip3 install python-dateutil bottle ply lxml
 
 
 2015-06-27
