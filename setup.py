@@ -19,6 +19,10 @@ if sys.version_info[:2] < (3,3):
 # Import setup().
 setuptools_kwargs = {}
 try:
+    # Use distutils if requested (this is use in testing).
+    if 'BEANCOUNT_DISABLE_SETUPTOOLS' in os.environ:
+        raise ImportError("Setuptools disabled explicitly")
+
     # Try to use setuptools first, if it is installed, because it supports
     # automatic installation of dependencies.
     from setuptools import setup, Extension
