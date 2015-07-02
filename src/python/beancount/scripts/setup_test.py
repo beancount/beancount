@@ -14,6 +14,12 @@ from beancount.utils import test_utils
 
 class TestSetup(test_utils.TestCase):
 
+## You need to test this with setuptools and with distutils.
+## Test with setuptools like this (skip the test if setuptools is not installed):
+    """
+    rm -rf /tmp/install && mkdir -p /tmp/install/lib/python3.4/site-packages &&  PYTHONPATH=/tmp/install/lib/python3.4/site-packages   python3 setup.py install  --prefix=/tmp/install
+    """
+
     def test_setup(self):
         rootdir = test_utils.find_repository_root(__file__)
         installdir = tempfile.mkdtemp(prefix='beancount-setup-test.')

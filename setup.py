@@ -4,26 +4,47 @@ Install script for beancount.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import os
+from os import path
+import runpy
 import sys
+import warnings
+
+
+# Check if the version is sufficient.
 if sys.version_info[:2] < (3,3):
     raise SystemExit("ERROR: Insufficient Python version; you need v3.3 or higher.")
 
-import os
-from os import path
 
-#
-sys.path.insert(0, path.join(path.dirname(__file__), 'src/python/beancount/parser'))
-import hashsrc
+# Import setup().
+setuptools_kwargs = {}
+try:
+    # Try to use setuptools first, if it is installed, because it supports
+    # automatic installation of dependencies.
+    from setuptools import setup, Extension
+    setuptools_kwargs.update(
+        install_requires = ['python-dateutil', 'bottle', 'ply', 'lxml']
+        )
+except ImportError:
+    # If setuptools is not installed, fallback on the stdlib. This works too, it
+    # just won't install the dependencies automatically.
+    warnings.warn("Setuptools not installed; falling back on distutils. "
+                  "You will have to install dependencies explicitly.")
+    from distutils.core import setup, Extension
 
-# Note: there is a bug with setuptools that makes local installation fail,
-# the _parser.so extension is copied under src/python instead of
-# src/python/beancount/parser. I don't know why at this point.
-# try:
-#     from setuptools import setup, Extension
-# except ImportError:
-from distutils.core import setup, Extension
+
+# Make sure we can import hashsrc in order to create a binary with a checksum of
+# the C source code. This checksum is used to issue a warning when loading an
+# incompatible binary. (Also note that you should _NOT_ add the path of this
+# file to the PYTHONPATH directly because it contains a 'parser' module and that
+# overrides the stdlib 'parser' module which is used by setuptools, and causes a
+# subtle bug. That's why I import this utility directly from path).
+hashsrc = runpy.run_path(path.join(path.dirname(__file__),
+                                   'src/python/beancount/parser/hashsrc.py'))
+hash_parser_source_files = hashsrc['hash_parser_source_files']
 
 
+# Explicitly list the scripts to install.
 install_scripts = [path.join('bin', x) for x in """
 bean-bake
 bean-check
@@ -35,20 +56,18 @@ bean-example
 bean-format
 bean-sql
 treeify
+upload-csv-to-google-sheet
 """.split() if x and not x.startswith('#')]
 
-# Note: We don't include the 'upload-csv-to-google-sheet' script here because it is a
-# Python 2.x script.
 
-
-# Please read: http://furius.ca/beancount/doc/install about releases.
+# Create a setup.
+# Please read: http://furius.ca/beancount/doc/install about version numbers.
 setup(
     name="beancount",
     version='2.0beta2',
     description="Command-line Double-Entry Accounting",
 
     long_description=
-
     """
       A double-entry accounting system that uses a simple text file format
       as input. A few Python scripts are used to parse the contents of the
@@ -62,9 +81,6 @@ setup(
     author_email="blais@furius.ca",
     url="http://furius.ca/beancount",
     download_url="http://bitbucket.org/blais/beancount",
-
-    # See note about about setuptools above; uncomment if the problem gets fixed.
-    ##install_requires = ['python-dateutil'],
 
     package_dir = {'': 'src/python'},
     packages = ['beancount',
@@ -97,6 +113,9 @@ setup(
                       "src/python/beancount/parser/parser.c"
                   ],
                   define_macros=[('PARSER_SOURCE_HASH',
-                                  '"{}"'.format(hashsrc.hash_parser_source_files()))]),
+                                  '"{}"'.format(hash_parser_source_files()))]),
     ],
+
+    # Add optional arguments that only work with setuptools.
+    **setuptools_kwargs
 )
