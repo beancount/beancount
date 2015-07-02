@@ -5,10 +5,9 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import collections
 import copy
 
-from beancount.core.amount import D
-from beancount.core.amount import ONE
-from beancount.core.amount import ZERO
-from beancount.core.amount import HALF
+from beancount.core.number import D
+from beancount.core.number import ONE
+from beancount.core.number import ZERO
 from beancount.core.inventory import Inventory
 from beancount.core import inventory
 from beancount.core.position import Lot
@@ -22,6 +21,11 @@ from beancount.core import getters
 
 # The default tolerances value to use for legacy tolerances.
 LEGACY_DEFAULT_TOLERANCES = {'*': D('0.005')}
+
+
+# An upper bound on the tolerance value, this is the maximum the tolerance
+# should ever be.
+MAXIMUM_TOLERANCE = D('0.5')
 
 
 # The maximum number of user-specified coefficient digits we should allow for a
@@ -102,10 +106,32 @@ def infer_tolerances(postings, options_map, use_cost=None):
     contributing to the determination of precision.
 
     The 'use_cost' option allows one to experiment with letting postings at cost
-    and at price influence the maximum value of the tolerance. It's quite tricky
-    to use and alters the definition of the tolerance in a non-trivial way, if you
-    use it. It was originally intended to be used for balancing the transactions
-    and not for quantizing during interpolation.
+    and at price influence the maximum value of the tolerance. It's tricky to
+    use and alters the definition of the tolerance in a non-trivial way, if you
+    use it. The tolerance is expanded by the sum of the cost times a fraction 'M'
+    of the smallest digits in the number of units for all postings held at cost.
+
+    For example, in this transaction:
+
+        2006-01-17 * "Plan Contribution"
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:Cash -1150.00 USD
+
+    The tolerance for units of USD will calculated as the MAXIMUM of:
+
+      0.01 * M = 0.005 (from the 1150.00 USD leg)
+
+      The sum of
+        0.001 * M x 30.96 = 0.01548 +
+        0.001 * M x 30.96 = 0.01548
+                          = 0.03096
+
+    So the tolerance for USD in this case is max(0.005, 0.03096) = 0.03096. Prices
+    contribute similarly to the maximum tolerance allowed.
+
+    Note that 'M' above is the inferred_tolerance_multiplier and its default
+    value is 0.5.
 
     Args:
       postings: A list of Posting instances.
@@ -116,11 +142,15 @@ def infer_tolerances(postings, options_map, use_cost=None):
     Returns:
       A dict of currency to the tolerated difference amount to be used for it,
       e.g. 0.005.
+
     """
     if use_cost is None:
-        use_cost = options_map["experiment_infer_tolerance_from_cost"]
+        use_cost = options_map["infer_tolerance_from_cost"]
+
+    inferred_tolerance_multiplier = options_map["inferred_tolerance_multiplier"]
 
     tolerances = {}
+    cost_tolerances = collections.defaultdict(D)
     for posting in postings:
         # Skip the precision on automatically inferred postings.
         if posting.meta and AUTOMATIC_META in posting.meta:
@@ -135,7 +165,7 @@ def infer_tolerances(postings, options_map, use_cost=None):
         expo = position_.number.as_tuple().exponent
         if expo < 0:
             # Note: the exponent is a negative value.
-            tolerance = ONE.scaleb(expo) / 2
+            tolerance = ONE.scaleb(expo) * inferred_tolerance_multiplier
             tolerances[currency] = max(tolerance,
                                        tolerances.get(currency, -1024))
 
@@ -145,17 +175,18 @@ def infer_tolerances(postings, options_map, use_cost=None):
             # Compute bounds on the smallest digit of the number implied as cost.
             if lot.cost is not None:
                 cost_currency = lot.cost.currency
-                cost_tolerance = min(tolerance * lot.cost.number, HALF)
-                tolerances[cost_currency] = max(cost_tolerance,
-                                                tolerances.get(cost_currency, -1024))
+                cost_tolerance = min(tolerance * lot.cost.number, MAXIMUM_TOLERANCE)
+                cost_tolerances[cost_currency] += cost_tolerance
 
             # Compute bounds on the smallest digit of the number implied as cost.
             price = posting.price
             if price is not None:
                 price_currency = price.currency
-                price_tolerance = min(tolerance * price.number, HALF)
-                tolerances[price_currency] = max(price_tolerance,
-                                                 tolerances.get(price_currency, -1024))
+                price_tolerance = min(tolerance * price.number, MAXIMUM_TOLERANCE)
+                cost_tolerances[price_currency] += price_tolerance
+
+    for currency, tolerance in cost_tolerances.items():
+        tolerances[currency] = max(tolerance, tolerances.get(currency, -1024))
 
     return tolerances
 

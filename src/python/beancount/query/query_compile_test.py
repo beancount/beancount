@@ -4,8 +4,8 @@ import datetime
 import re
 import unittest
 
-from beancount.core.amount import D
-from beancount.core.amount import Decimal
+from beancount.core.number import D
+from beancount.core.number import Decimal
 from beancount.query import query_parser as qp
 from beancount.query import query_compile as qc
 from beancount.query import query_env as qe

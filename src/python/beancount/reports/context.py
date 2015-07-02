@@ -8,7 +8,6 @@ import io
 from beancount.core import compare
 from beancount.core import data
 from beancount.core import interpolate
-from beancount.core import display_context
 from beancount.parser import printer
 
 
@@ -65,7 +64,6 @@ def render_entry_context(entries, options_map, dcontext, filename, lineno):
 
     # Print the entry itself.
     print(file=oss)
-    dformat = dcontext.build(precision=display_context.Precision.MAXIMUM)
     printer.print_entry(closest_entry, dcontext, render_weights=True, file=oss)
 
     if isinstance(closest_entry, data.Transaction):
@@ -73,12 +71,13 @@ def render_entry_context(entries, options_map, dcontext, filename, lineno):
         residual = interpolate.compute_residual(closest_entry.postings)
         if not residual.is_empty():
             print(file=oss)
-            print(';;; Residual: {}'.format(residual.to_string(dformat)), file=oss)
+            # Note: We render the residual at maximum precision, for debugging.
+            print(';;; Residual: {}'.format(str(residual)), file=oss)
 
         tolerances = interpolate.infer_tolerances(closest_entry.postings, options_map)
         if tolerances:
             print(file=oss)
-            print(';;; Precision: {}'.format(
+            print(';;; Tolerances: {}'.format(
                 ', '.join('{}={}'.format(key, value)
                           for key, value in sorted(tolerances.items()))), file=oss)
 

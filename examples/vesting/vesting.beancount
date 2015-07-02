@@ -1,0 +1,123 @@
+;; An example that demonstrate how to track vesting of restricted stock units (RSUs).
+;; See doc at: http://furius.ca/beancount/doc/vesting
+
+1990-12-02 commodity HOOL
+  name: "Hooli Common shares."
+
+2013-01-28 commodity HOOL.UNVEST
+  name: "Unvested award of Hooli Common shares."
+
+
+2013-01-28 open Income:US:Hooli:Awards        HOOL.UNVEST
+2014-01-28 open Expenses:Hooli:Vested         HOOL.UNVEST
+
+
+2014-04-02 * "Award S0012345"
+  Income:US:Hooli:Awards                -1680 HOOL.UNVEST
+  Assets:US:Hooli:Unvested:S0012345      1680 HOOL.UNVEST
+
+2014-04-02 open Assets:US:Hooli:Unvested:S0012345
+
+
+2014-07-02 * "Award C123456"
+  Assets:US:Hooli:Unvested:C123456        720 HOOL.UNVEST
+  Income:US:Hooli:Awards                 -720 HOOL.UNVEST
+
+2014-07-02 open Assets:US:Hooli:Unvested:C123456
+
+
+
+
+
+
+
+2013-04-04 open Income:US:Hooli:RSU
+
+2015-01-01 open Expenses:Taxes:TY2015:US:StateNY
+2015-01-01 open Expenses:Taxes:TY2015:US:Federal
+2015-01-01 open Expenses:Taxes:TY2015:US:SocSec
+2015-01-01 open Expenses:Taxes:TY2015:US:SDI
+2015-01-01 open Expenses:Taxes:TY2015:US:Medicare
+2015-01-01 open Expenses:Taxes:TY2015:US:CityNYC
+
+; Rounding errors accumulate here and are paid 2-3 months after vesting
+2013-01-28 open Assets:US:Hooli:RSURefund
+
+2013-04-04 open Assets:US:Schwab:HOOL
+
+2001-01-01 open Assets:US:BofA:Checking
+
+
+
+
+
+
+2015-05-27 * "Vesting Event - S0012345 - HOOL" #award-S0012345 ^392f97dd62d0
+  doc: "2015-02-13.hooli.38745783.pdf"
+  Income:US:Hooli:RSU                    -4597.95 USD
+  Assets:US:Hooli:RSURefund               2458.97 USD
+  Expenses:Taxes:TY2015:US:Medicare         66.68 USD
+  Expenses:Taxes:TY2015:US:Federal        1149.48 USD
+  Expenses:Taxes:TY2015:US:CityNYC         195.42 USD
+  Expenses:Taxes:TY2015:US:SDI               0.00 USD
+  Expenses:Taxes:TY2015:US:StateNY         442.32 USD
+  Expenses:Taxes:TY2015:US:SocSec          285.08 USD
+
+2015-05-27 * "Vesting Event - C123456 - HOOL" #award-C123456 ^392f97dd62d0
+  doc: "2015-02-13.hooli.38745783.pdf"
+  Income:US:Hooli:RSU                    -1970.55 USD
+  Assets:US:Hooli:RSURefund               1053.84 USD
+  Expenses:Taxes:TY2015:US:Medicare         28.58 USD
+  Expenses:Taxes:TY2015:US:Federal         492.63 USD
+  Expenses:Taxes:TY2015:US:CityNYC          83.75 USD
+  Expenses:Taxes:TY2015:US:SDI               0.00 USD
+  Expenses:Taxes:TY2015:US:StateNY         189.57 USD
+  Expenses:Taxes:TY2015:US:SocSec          122.18 USD
+
+2015-05-25 * "Conversion into shares" ^392f97dd62d0
+  Assets:US:Schwab:HOOL                        18 HOOL {131.3700 USD}
+  Assets:US:Hooli:RSURefund
+  Assets:US:Hooli:Unvested:S0012345           -35 HOOL.UNVEST
+  Expenses:Hooli:Vested                        35 HOOL.UNVEST
+
+2015-05-25 * "Conversion into shares" ^392f97dd62d0
+  Assets:US:Schwab:HOOL                         8 HOOL {131.3700 USD}
+  Assets:US:Hooli:RSURefund
+  Assets:US:Hooli:Unvested:C123456            -15 HOOL.UNVEST
+  Expenses:Hooli:Vested                        15 HOOL.UNVEST
+
+
+2015-06-13 * "HOOLI INC       PAYROLL" ^392f97dd62d0
+  doc: "2015-02-13.hooli.38745783.pdf"
+  Assets:US:Hooli:RSURefund                -94.31 USD
+  Assets:US:Hooli:RSURefund                 -2.88 USD
+  Assets:US:BofA:Checking                   97.19 USD
+
+2015-06-14 balance Assets:US:Hooli:RSURefund  0 USD
+
+
+
+
+
+2015-06-04 balance Assets:US:Hooli:Unvested:S0012345  1645 HOOL.UNVEST
+2015-06-04 balance Assets:US:Hooli:Unvested:C123456    705 HOOL.UNVEST
+
+
+
+
+
+2015-06-02 price HOOL.UNVEST               132.4300 USD.UNVEST
+
+
+
+;; Example sale:
+;;
+;; 2013-04-04 open Assets:US:Schwab:Cash
+;; 2013-04-04 open Income:US:Schwab:Gains
+;;
+;; 2015-09-10 * "Selling shares"
+;;   Assets:US:Schwab:HOOL         -26 HOOL {131.3700 USD} @ 138.23 USD
+;;   Assets:US:Schwab:Cash     3593.98 USD
+;;   Income:US:Schwab:Gains
+;;
+;; 2015-09-11 balance Assets:US:Schwab:HOOL  0 HOOL

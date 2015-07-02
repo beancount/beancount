@@ -41,6 +41,10 @@ from beancount.reports import misc_reports
 from beancount.reports import context
 
 
+# The default view page to redirect to.
+DEFAULT_VIEW_REDIRECT = 'balsheet'
+
+
 class HTMLFormatter(html_formatter.HTMLFormatter):
     """A formatter object that can be used to render accounts links.
 
@@ -241,7 +245,7 @@ def root():
     bottle.redirect(app.get_url('toc'))
 
 
-@app.route('/toc', name='toc')
+@app.route('/index', name='toc')
 def toc():
     entries_no_open_close = [entry for entry in app.entries
                              if not isinstance(entry, (data.Open, data.Close))]
@@ -251,7 +255,7 @@ def toc():
         mindate, maxdate = getters.get_min_max_dates(entries_no_open_close)
 
     def view_url(name, **kw):
-        return app.router.build(name, path='', **kw)
+        return app.router.build(name, path=DEFAULT_VIEW_REDIRECT, **kw)
 
     viewboxes = []
     if app.args.view:
@@ -402,7 +406,7 @@ GLOBAL_NAVIGATION = bottle.SimpleTemplate("""
 """).render(A=A)
 
 
-@app.route('/web.css', name='style')
+@app.route('/resources/web.css', name='style')
 def style():
     "Stylesheet for the entire document."
     response.content_type = 'text/css'
@@ -478,7 +482,7 @@ APP_NAVIGATION = bottle.SimpleTemplate("""
   <li><a href="{{V.income}}">Income Statement</a></li>
   <li><a href="{{V.holdings}}">Equity/Holdings</a></li>
   <li><a href="{{V.trial}}">Trial Balance</a></li>
-  <li><a href="{{V.journal_root}}">General Journal</a></li>
+  <li><a href="{{V.journal_all}}">General Journal</a></li>
   <li><a href="{{V.index}}">Index</a></li>
 </ul>
 """)
@@ -486,7 +490,7 @@ APP_NAVIGATION = bottle.SimpleTemplate("""
 
 @viewapp.route('/', name='approot')
 def approot():
-    bottle.redirect(request.app.get_url('balsheet'))
+    bottle.redirect(request.app.get_url(DEFAULT_VIEW_REDIRECT))
 
 
 @viewapp.route('/index', name='index')
@@ -500,7 +504,7 @@ def index():
             ("Balance Sheet", "balsheet"),
             ("Opening Balances", "openbal"),
             ("Income Statement", "income"),
-            ("General Journal", "journal_root"),
+            ("General Journal", "journal_all"),
             ("Conversions", "conversions"),
             ("Documents", "documents"),
             ("Holdings (Full Detail)", "holdings"),
@@ -631,8 +635,8 @@ def networth():
 
 
 
-@viewapp.route('/journal', name='journal_root')
-def journal_root():
+@viewapp.route('/journal/all', name='journal_all')
+def journal_all():
     "A list of all the entries in this realization."
     bottle.redirect(request.app.get_url('journal', account_name=''))
 
@@ -702,7 +706,9 @@ def documents():
                                request.view.entries, leaf_only=False))
 
 
-@viewapp.route('/prices/<base:re:[A-Z0-9._\']+>/<quote:re:[A-Z0-9._\']+>', name='prices')
+@viewapp.route('/prices'
+               '/<base:re:[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]>'
+               '/<quote:re:[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]>', name='prices')
 def prices_values(base=None, quote=None):
     "Render all the values for a particular price pair."
     html_table = render_report(price_reports.CommodityPricesReport, request.view.entries,
@@ -724,7 +730,7 @@ def commodities():
         contents=html_table)
 
 
-@viewapp.route('/event/<event:re:([a-zA-Z0-9._]+)?>', name='event')
+@viewapp.route('/event/<event:re:([A-Za-z0-9\-_/.]+)?>', name='event')
 def event(event=None):
     "Render all values of a particular event."
     if not event:
@@ -840,7 +846,8 @@ def url_restrict_generator(url_prefix):
                                       '/errors',
                                       '/source',
                                       '/link',
-                                      '/context']]
+                                      '/context',
+                                      '/third_party']]
 
     def url_restrict_handler(callback):
         def wrapper(*args, **kwargs):

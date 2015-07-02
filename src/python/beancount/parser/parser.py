@@ -12,7 +12,7 @@ import os
 import re
 from os import path
 
-from beancount.core.amount import ZERO
+from beancount.core.number import ZERO
 from beancount.core.amount import Amount
 from beancount.core.amount import amount_div
 from beancount.core import display_context
@@ -617,11 +617,11 @@ class Builder(lexer.LexBuilder):
         # conversion entries.
         #
         # if price is not None and price.number == ZERO:
-        #     meta = new_metadata(filename, lineno)
         #     self.errors.append(
         #         ParserError(meta, "Price is zero: {}".format(price), None))
 
-        return Posting(None, account, position, price, chr(flag) if flag else None, None)
+        meta = new_metadata(filename, lineno)
+        return Posting(None, account, position, price, chr(flag) if flag else None, meta)
 
 
     def txn_field_new(self):

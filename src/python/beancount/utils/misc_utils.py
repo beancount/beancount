@@ -293,6 +293,24 @@ def first_paragraph(docstring):
     return ' '.join(lines)
 
 
+def import_curses():
+    """Try to import the 'curses' module.
+    (This is used here in order to override for tests.)
+
+    Returns:
+      The curses module, if it was possible to import it.
+    Raises:
+      ImportError: If the module could not be imported.
+    """
+    # Note: There's a recipe for getting terminal size on Windows here, without
+    # curses, I should probably implement that at some point:
+    # http://stackoverflow.com/questions/263890/how-do-i-find-the-width-height-of-a-terminal-window
+    # Also, consider just using 'blessings' instead, which provides this across
+    # multiple platforms.
+    import curses
+    return curses
+
+
 def get_screen_width():
     """Return the width of the terminal that runs this program.
 
@@ -300,12 +318,13 @@ def get_screen_width():
       An integer, the number of characters the screen is wide.
       Return 0 if the terminal cannot be initialized.
     """
-    import curses
     try:
+        curses = import_curses()
         curses.setupterm()
-    except io.UnsupportedOperation:
-        return 0
-    return curses.tigetnum('cols')
+        columns = curses.tigetnum('cols')
+    except (io.UnsupportedOperation, ImportError):
+        columns = 0
+    return columns
 
 
 def get_screen_height():
@@ -315,12 +334,13 @@ def get_screen_height():
       An integer, the number of characters the screen is high.
       Return 0 if the terminal cannot be initialized.
     """
-    import curses
     try:
-        curses.setupterm()
-    except io.UnsupportedOperation:
-        return 0
-    return curses.tigetnum('lines')
+        curses = import_curses()
+        lines = curses.setupterm()
+        lines = curses.tigetnum('lines')
+    except (io.UnsupportedOperation, ImportError):
+        lines = 0
+    return lines
 
 
 class TypeComparable:

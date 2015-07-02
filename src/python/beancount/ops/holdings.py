@@ -4,7 +4,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
 
-from beancount.core.amount import ZERO
+from beancount.core.number import ZERO
 from beancount.core import account
 from beancount.core import amount
 from beancount.core import position
@@ -199,7 +199,6 @@ def get_commodities_at_date(entries, options_map, date=None):
 
 
 def aggregate_holdings_by(holdings, keyfun):
-
     """Aggregate holdings by some key.
 
     Note that the cost-currency must always be included in the group-key (sums

@@ -4,7 +4,7 @@ import re
 import textwrap
 import unittest
 
-from beancount.core.amount import D
+from beancount.core.number import D
 from beancount.core.data import create_simple_posting as P
 from beancount.core.data import create_simple_posting_with_cost as PCost
 from beancount.core import interpolate
@@ -23,9 +23,10 @@ ERRORS_ON_RESIDUAL = False
 
 # A default options map just to provide the tolerances.
 OPTIONS_MAP = {'default_tolerance': {},
+               'inferred_tolerance_multiplier': D('0.5'),
                'use_legacy_fixed_tolerances': False,
                'account_rounding': None,
-               'experiment_infer_tolerance_from_cost': False}
+               'infer_tolerance_from_cost': False}
 
 
 class TestBalance(cmptest.TestCase):
@@ -691,17 +692,17 @@ class TestInferTolerances(cmptest.TestCase):
             Assets:Account4      -5110.80 USD
         """)
         input_option = textwrap.dedent("""
-          option "experiment_infer_tolerance_from_cost" "True"
+          option "infer_tolerance_from_cost" "True"
         """)
 
         entries, errors, options_map = loader.load_string(input_string)
-        self.assertFalse(options_map["experiment_infer_tolerance_from_cost"])
+        self.assertFalse(options_map["infer_tolerance_from_cost"])
         self.assertEqual(1, len(errors))
         self.assertTrue(re.match('Transaction does not balance:.*0.20000 USD',
                                  errors[0].message))
 
         entries, errors, options_map = loader.load_string(input_option + input_string)
-        self.assertTrue(options_map["experiment_infer_tolerance_from_cost"])
+        self.assertTrue(options_map["infer_tolerance_from_cost"])
         self.assertFalse(errors)
 
     @parser.parsedoc_noerrors
@@ -744,6 +745,25 @@ class TestInferTolerances(cmptest.TestCase):
         self.assertEqual({'VHT': D('0.05'), 'USD': D('0.5')},
                          tolerances)
 
+    @loader.loaddoc
+    def test_tolerances__multiplier(self, entries, errors, options_map):
+        """
+        option "inferred_tolerance_multiplier" "1.1"
+
+        1970-01-01 open Assets:B1
+        1970-01-01 open Assets:B2
+
+        2010-01-01 * "Balances"
+          Assets:B1      -200.00 EUR
+          Assets:B2       200.011 EUR
+
+        2010-01-02 * "Does not balance"
+          Assets:B1      -200.00 EUR
+          Assets:B2       200.012 EUR
+        """
+        self.assertEqual(1, len(errors))
+        self.assertTrue(errors[0].entry is entries[-1])
+
     @parser.parsedoc_noerrors
     def test_tolerances__legacy(self, entries, _):
         """
@@ -758,11 +778,11 @@ class TestInferTolerances(cmptest.TestCase):
           Assets:B2
         """
 
-    @parser.parsedoc_noerrors
-    def test_tolerances__bug(self, entries, _):
+    @loader.loaddoc
+    def test_tolerances__bug(self, entries, errors, _):
         """
         option "operating_currency" "USD"
-        option "experiment_infer_tolerance_from_cost" "TRUE"
+        option "infer_tolerance_from_cost" "TRUE"
 
         2000-01-01 open Assets:CAAPX
         2000-01-01 open Income:Match
@@ -771,3 +791,101 @@ class TestInferTolerances(cmptest.TestCase):
           Assets:CAAPX  -1.729 CAAPX {{521.67787 USD}} @ 49.65 USD
           Income:Match
         """
+        self.assertFalse(errors)
+
+    @loader.loaddoc
+    def test_tolerances__bug53a(self, entries, errors, _):
+        """
+        option "operating_currency" "USD"
+        option "infer_tolerance_from_cost" "TRUE"
+
+        2000-01-01 open Assets:Investments:VWELX
+        2000-01-01 open Assets:Investments:Cash
+
+        2006-01-17 * "Plan Contribution"
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:Cash -575.00 USD
+        """
+        self.assertFalse(errors)
+
+    @loader.loaddoc
+    def test_tolerances__bug53b(self, entries, errors, _):
+        """
+        option "operating_currency" "USD"
+        option "infer_tolerance_from_cost" "TRUE"
+
+        2000-01-01 open Assets:Investments:VWELX
+        2000-01-01 open Assets:Investments:Cash
+
+        2006-01-02 * "Plan Contribution"
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:Cash -575.00 USD
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:Cash -575.00 USD
+
+        2006-01-03 * "Plan Contribution"
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:Cash -575.00 USD
+          Assets:Investments:Cash -575.00 USD
+          Assets:Investments:Cash -575.00 USD
+
+        2006-01-03 * "Plan Contribution"
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:Cash -1725.00 USD
+
+        2006-01-16 * "Plan Contribution"
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:Cash -9200.00 USD
+        """
+        transactions = [entry
+                        for entry in entries
+                        if isinstance(entry, data.Transaction)]
+        self.assertEqual({'USD': D('0.03096'), 'VWELX': D('0.0005')},
+                         transactions[0].meta['__tolerances__'])
+        self.assertEqual({'USD': D('0.04644'), 'VWELX': D('0.0005')},
+                         transactions[1].meta['__tolerances__'])
+        self.assertEqual({'USD': D('0.04644'), 'VWELX': D('0.0005')},
+                         transactions[2].meta['__tolerances__'])
+        self.assertEqual({'USD': D('0.247680'), 'VWELX': D('0.0005')},
+                         transactions[3].meta['__tolerances__'])
+        self.assertFalse(errors)
+
+    @loader.loaddoc
+    def test_tolerances__bug53_price(self, entries, errors, _):
+        """
+        option "operating_currency" "USD"
+        option "infer_tolerance_from_cost" "TRUE"
+
+        2000-01-01 open Assets:Investments:VWELX
+        2000-01-01 open Assets:Investments:Cash
+
+        2006-01-02 * "Plan Contribution"
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX @ 20.40 USD
+          Assets:Investments:Cash
+        """
+        transactions = [entry
+                        for entry in entries
+                        if isinstance(entry, data.Transaction)]
+        self.assertEqual({'USD': D('0.02568'), 'VWELX': D('0.0005')},
+                         transactions[0].meta['__tolerances__'])
+        self.assertFalse(errors)

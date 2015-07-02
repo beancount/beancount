@@ -42,7 +42,7 @@ RedirectMatch /doc/directives$            /beancount/doc/syntax
 RedirectMatch /doc/users-manual$          /beancount/doc/syntax
 RedirectMatch /doc/manual$                /beancount/doc/syntax
 
-RedirectMatch /doc/options$		  https://docs.google.com/document/d/18OtTy8nnqoI8P988tVdv46ZcNoDsVGQ0ydGoA8dHC-c/
+RedirectMatch /doc/options$		  https://docs.google.com/document/d/1_-T_BvDtUjj9M7liZMNSkrL8pgC60TGMBlYCiV1e4ZM/
 
 RedirectMatch /doc/query$                 https://docs.google.com/document/d/1s0GOZMcrKKCLlP29MD7kHO4L88evrwWdIO0p4EwRBE0/
 RedirectMatch /doc/query-language$        /beancount/doc/query
@@ -80,11 +80,12 @@ RedirectMatch /doc/reference$             /beancount/doc/cheatsheet
 RedirectMatch /doc/cheatsheet-old$        http://furius.ca/beancount/doc/cheatsheet/beancount-cheatsheet.pdf
 RedirectMatch /doc/old$-cheatsheet        /beancount/doc/cheatsheet-old
 
-
 RedirectMatch /doc/design-doc$            https://docs.google.com/document/d/1N7HDXuNWgLG2PqFS4Kkgv5LzAAtU6c97UVNT7tdTIjA/
 RedirectMatch /doc/design$                /beancount/doc/design-doc
-RedirectMatch /doc/devel-doc$             /beancount/doc/design-doc
-RedirectMatch /doc/devel$                 /beancount/doc/design-doc
+
+RedirectMatch /doc/devel-doc$             https://docs.google.com/document/d/1l6YmKIPUsucrooofdrollO6Re2rTPJA9KigoS8OBluk/
+RedirectMatch /doc/devel$                 /beancount/doc/devel-doc
+RedirectMatch /doc/developer$             /beancount/doc/devel-doc
 
 RedirectMatch /doc/converting$            https://docs.google.com/document/d/1tkoUeSfZyEhEGdXHwYp5vBrSrNDgC4FVXhReSWsILlw/
 RedirectMatch /doc/convert$		  /beancount/doc/converting
@@ -114,6 +115,14 @@ RedirectMatch /doc/sharing$               https://docs.google.com/document/d/1FR
 RedirectMatch /doc/share                  /beancount/doc/sharing
 RedirectMatch /doc/splitting              /beancount/doc/sharing
 RedirectMatch /doc/split                  /beancount/doc/sharing
+
+RedirectMatch /doc/vesting$               https://docs.google.com/document/d/1mHNlNMTZsKPMjP_qQmedoizZFQy1-GzlR2lX5zy_0ok/
+RedirectMatch /doc/vest$                  /beancount/doc/vesting
+RedirectMatch /doc/rsu$                   /beancount/doc/vesting
+
+RedirectMatch /doc/contrib$               https://docs.google.com/document/d/1Z37bQ45wDtjTPaMQ_x-f33p1trH9fNosEAUgbQXwp30/
+RedirectMatch /doc/contribution$          /beancount/doc/contrib
+RedirectMatch /doc/contributions$         /beancount/doc/contrib
 
 RedirectMatch /doc/proposal-rounding$     https://docs.google.com/document/d/1MY2JMiiXUmcwsOT0CkiK-fCo0ZE7nbr8uTcTL50b6X4/
 RedirectMatch /doc/proposal-residual$     /beancount/doc/proposal-rounding

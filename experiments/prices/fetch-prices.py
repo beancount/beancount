@@ -13,7 +13,7 @@ from pprint import pprint
 from urllib import request
 from urllib import parse
 
-from beancount.core.amount import D
+from beancount.core.number import D
 from beancount.core import amount
 from beancount.core import getters
 from beancount.core import data

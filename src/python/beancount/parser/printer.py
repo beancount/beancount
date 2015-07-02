@@ -8,7 +8,7 @@ import re
 import sys
 import textwrap
 
-from beancount.core.amount import Decimal
+from beancount.core.number import Decimal
 from beancount.core import amount
 from beancount.core import data
 from beancount.core import interpolate
@@ -129,7 +129,7 @@ class EntryPrinter:
                 elif isinstance(value, (Decimal, datetime.date, amount.Amount)):
                     value_str = str(value)
                 elif isinstance(value, bool):
-                    value_str = '1' if value else '0'
+                    value_str = 'TRUE' if value else 'FALSE'
                 elif isinstance(value, dict):
                     pass # Ignore dicts, don't print them out.
                 else:
@@ -215,7 +215,8 @@ class EntryPrinter:
         # present. Also render a string with the weight.
         if posting.position:
             position_str = posting.position.to_string(self.dformat)
-            weight_str = interpolate.get_posting_weight(posting).to_string(self.dformat)
+            # Note: we render weights at maximum precision, for debugging.
+            weight_str = str(interpolate.get_posting_weight(posting))
         else:
             position_str = ''
             weight_str = ''

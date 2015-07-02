@@ -4,6 +4,218 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-07-02
+
+  - Fixed bugs with automatic installation dependencies and reinstated
+    setuptools support. I'd been having problems with setup.py in that it's
+    supposed to be able to install dependencies by default, so in theory you
+    shouldn't have to install anything but Beancount now. It hadn't been working
+    before (I was relying on distutils, which is now a fallback).
+
+    Here's some background: Python has two active supporting projects for
+    packaging:
+
+    (1) distutils, which comes with it in the stdlib, and
+
+    (2) setuptools, which is newer and better, but which needs to be installed
+    on top of the stdlib.
+
+    There's a deep history of why that is and many projects have come and gone
+    trying to make this better (e.g. distribute). The main issue with disutils
+    is that it does not support automatic installation of dependencies (it's
+    really old but a ton of packages still depend on it, that's the price of
+    popularity). Setuptools does support it, the packager can declare
+    dependencies and pip3 should be able to pull in and install all requirements
+    automatically. I could not get setuptools to install my dependencies due to
+    a namespace collision with the 'parser' module (was my fault).
+
+    Now that I've made changes, Beancount supports setuptools and installs
+    dependencies automatically if you have it installed. If you don't have
+    setuptools installed, it falls back on distutils (and you have to install
+    the dependencies manually, e.g. it's a one-liner:  "pip3 install
+    python-dateutil lxml bottle ply").
+
+
+2015-06-27
+
+  - Complete the design doc and made it public.
+
+
+2015-06-26
+
+  - Created a generic script that can be used to automate the upload of
+    arbitrary CSV files to a Google Spreadsheet. This can be used along with the
+    holdings reports in order to create a spreadsheet tracking your assets.
+
+    Unfortunately, this script has to be written in Python 2.x, because of
+    the unavailability of the gdata-python-client library which is not available
+    at this time for Python 3.x. The script is self-contained. If you want
+    to use this, you must install the following libraries in your Python 2.x
+    install:
+
+    * gdata-python-client
+    * oauth2client
+    * httplib2
+
+
+2015-06-25
+
+  - Posting objects now have (filename, lineno) in their metadata. This could
+    potentially be helpful for people who want to insert text programmatically
+    in their input file without having to write their own parser.
+    See: https://groups.google.com/d/msg/beancount/zNCFk-YGdr8/8P2_vGGH9xoJ
+
+
+2015-06-15
+
+  - All the code to bake a static HTML archive of a bean-web interface has been
+    rewritten.
+
+    * There used to be a number of bugs caused by the wget tool. These bugs have
+      been fixed.
+
+    * The new code does not depend on wget -- Beancount does not require wget
+      anymore. Explicit code to do web scraping has been implemented. On the
+      other hand, a new dependency is introduced: lxml. This dependency was
+      already required for development and install in the same way as all the
+      other dependencies: using pip3. Should be a breeze to install on all
+      platforms.
+
+    * A verification layer has been tacked on after the web scraping step to
+      check that there are no dangling links.
+
+    * Intentionally skipped links are now converted to plain text, such that
+      there are no dangling links for pages we aren't saving (these just used
+      to be ignored).
+
+    I repeat: Beancount does not depend on wget anymore.
+    Please install lxml with: "pip3 install lxml"
+
+
+  - The 'exportpf' report which is used to produce OFX that can be imported in
+    Google Finance now issues a warning if you did not provide either 'ticker'
+    or 'export' metadata for holdings that get exported. The reason for the new
+    adminition is that it trips up the OFX import and when Google Finance sees
+    a ticker it does not understand, the import fails. At least with the warning
+    we're telling the user they should be providing tickers or export directives
+    for all their commodities if they export the portfolio.
+
+
+2015-06-10
+
+  - Removed dependency on curses. If you don't have curses, everything should
+    work fine now, errors are being caught. Curses was only used to provide good
+    default values for rendering tables in terminals on e.g. bean-report
+    journal and to decide whether to use a pager in multi-page bean-query.
+    The default values are fixed if curses isn't available, e.g. 80 chars wide,
+    but as previously, you can override them manually. I also removed the
+    dependency from checkdeps and from the install document.
+
+
+2015-06-09
+
+  - Rewrote the Installation Instructions document completely to make it
+    simpler. Some users had found it daunting.
+    http://furius.ca/beancount/doc/install
+
+  - Tested Windows installation using Cygwin and added it to the installation
+    instructions.
+    http://furius.ca/beancount/doc/install
+
+
+2015-06-07
+
+  - Moved the following representation related symbols to their own module:
+
+      beancount.core.amount.D          ->  beancount.core.number.D
+      beancount.core.amount.Decimal    ->  beancount.core.number.Decimal
+      beancount.core.amount.ZERO       ->  beancount.core.number.ZERO
+      beancount.core.amount.ONE        ->  beancount.core.number.ONE
+      beancount.core.amount.HALF       ->  beancount.core.number.HALF
+      beancount.core.amount.round_to   ->  beancount.core.number.round_to
+
+    I also moved the tests. All the code specifically related to numbers is
+    now in beancount.core.number. I also removed the relative imports, as
+    Ledgerhub is importing from the Beancount source code now.
+
+    This is not a user-visible change. However, if you wrote scripts against
+    the codebase, you will need to rename your imports. In the meantime I added
+    stubs which issue a warning if you import from the obsoleted names.
+
+
+  - Moved documentation scripts from experiments to the main Beancount codebase.
+    There is a new package for it: beancount.docs. These codes are used to maintain
+    the Beancount documentation and there is common code for authentication in there,
+    code that I plan to use for automating the exporting ot portfolios.
+
+    This introduces some optional dependencies:
+
+    * google-api-python-client
+    * oauth2client
+    * httplib2
+
+    These are optional, and at the moment none of the actual Beancount tools
+    make any use of them. I moved this into the main Beancount codes because
+    the common authentication code will be used to export portfolios directly
+    to a Google spreadsheet in Google Drive, which will be super convenient
+    to build custom portfolio tracking views.
+
+
+2015-06-06
+
+  - Added an 'inferred_tolerance_multiplier' option to allow the user to adjust
+    the magnitude of the inferred tolerance.
+
+    When the tolerance values aren't specified explicitly via the
+    'default_tolerance' option, the tolerance is inferred from the numbers in
+    the input file. For example, if a transaction has posting with a value
+    like '32.424 CAD', the tolerance for CAD will be inferred to be 0.001
+    times some multiplier. This is the muliplier value.
+
+    We normally assume that the institution we're reproducing this posting
+    from applies rounding, and so the default value for the multiplier is
+    0.5, that is, half of the smallest digit encountered.
+
+    You can now customize this multiplier by changing this option, typically
+    expanding it to account for amounts slightly beyond the usual tolerance,
+    for example, if you deal with institutions with bad of unexpected rounding
+    behaviour.
+
+  - Promoted the 'experiment_infer_tolerance_from_cost' option to
+    'infer_tolerance_from_cost': not an experiment anymore. See thread on
+    mailing-list w/ mharris. This feature works well and actually solves real
+    problems for users.
+
+    A corresponding section has been added in the documentation at
+    http://furius.ca/beancount/doc/tolerances
+
+
+2015-06-04
+
+  - When using the 'experiment_infer_tolerance_from_cost' option, the inferred
+    tolerance is now expanded to include the SUM of all maximum rounding errors
+    from postings held at cost, not just the maximum. Users with multiple
+    rounding events in a single transactions could occur rounding that many
+    times. We assume no more rounding events than the number of postings held at
+    cost.
+
+  - I wrote a new document to explain how to deal with restricted stock units
+    vesting events:
+    http://furius.ca/beancount/doc/vesting
+
+
+2015-06-03
+
+  - bean-doctor context now outputs weight and residual numbers at their full
+    precision instead of their rounded one.
+
+
+2015-06-02
+
+  - Created a new document to keep track of user contributions:
+    http://furius.ca/beancount/doc/contrib
+
+
 2015-05-30
 
   - Converted the Syntax Cheat Sheet to a Google Doc and removed it here.
