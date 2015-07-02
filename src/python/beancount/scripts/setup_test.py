@@ -29,23 +29,24 @@ class TestSetup(test_utils.TestCase):
         # variable.
         self.run_setup(self.installdir, {'BEANCOUNT_DISABLE_SETUPTOOLS': '1'})
 
-    def test_setup_with_setuptools(self):
-        # We need to create the installation target directory and have our
-        # PYTHONPATH set on it in order for setuptools to work properly in a
-        # temporary installation directory. Otherwise it fails and spits out a
-        # large error message with instructions on how to work with setuptoolss.
-        site_packages_path = path.join(
-            self.installdir,
-            'lib/python{vi.major:d}.{vi.minor:d}/site-packages'.format(vi=sys.version_info))
-        os.makedirs(site_packages_path)
-        self.run_setup(self.installdir, {'PYTHONPATH': site_packages_path})
-
-        # Setuptools will leave some crud in the installation source. Clean this
-        # up so as not to be annoying.
-        rootdir = test_utils.find_repository_root(__file__)
-        egg_info = path.join(rootdir, 'src/python/beancount.egg-info')
-        if path.exists(egg_info):
-            shutil.rmtree(egg_info)
+    # See setup.py. Setuptools support has been removed.
+    # def __test_setup_with_setuptools(self):
+    #     # We need to create the installation target directory and have our
+    #     # PYTHONPATH set on it in order for setuptools to work properly in a
+    #     # temporary installation directory. Otherwise it fails and spits out a
+    #     # large error message with instructions on how to work with setuptoolss.
+    #     site_packages_path = path.join(
+    #         self.installdir,
+    #         'lib/python{vi.major:d}.{vi.minor:d}/site-packages'.format(vi=sys.version_info))
+    #     os.makedirs(site_packages_path)
+    #     self.run_setup(self.installdir, {'PYTHONPATH': site_packages_path})
+    #
+    #     # Setuptools will leave some crud in the installation source. Clean this
+    #     # up so as not to be annoying.
+    #     rootdir = test_utils.find_repository_root(__file__)
+    #     egg_info = path.join(rootdir, 'src/python/beancount.egg-info')
+    #     if path.exists(egg_info):
+    #         shutil.rmtree(egg_info)
 
     def run_setup(self, installdir, extra_env=None):
         """Run setup.py with the given extra environment variables.
