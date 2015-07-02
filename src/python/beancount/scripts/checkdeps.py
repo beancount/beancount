@@ -7,6 +7,21 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import sys
 
 
+def list_dependencies(file=sys.stderr):
+    """Check the dependencies and produce a listing on the given file.
+
+    Args:
+      file: A file object to write the output to.
+    """
+    print("Dependencies:")
+    for package, version, sufficient in check_dependencies():
+        print("   {:16}: {} {}".format(
+            package,
+            version or 'NOT INSTALLED',
+            "(INSUFFICIENT)" if version and not sufficient else ""),
+              file=file)
+
+
 def check_dependencies():
     """Check the runtime dependencies and report their version numbers.
 

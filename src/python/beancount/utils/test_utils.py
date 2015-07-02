@@ -244,3 +244,25 @@ class TestCase(unittest.TestCase):
         with capture() as oss:
             yield oss
         self.assertLines(textwrap.dedent(expected_text), oss.getvalue())
+
+
+def make_failing_importer(*removed_module_names):
+    """Make an importer that raise an ImportError for some modules.
+
+    Use it like this:
+
+      @mock.patch('builtins.__import__', make_failing_importer('setuptools'))
+      def test_...
+
+
+    Args:
+      removed_module_name: The name of the module import that should raise an exception.
+    Returns:
+      A decorated test decorator.
+    """
+    def failing_import(name, *args, **kwargs):
+        if name in removed_module_names:
+            raise ImportError("Could not import {}".format(name))
+        else:
+            return builtins.__import__(name, *args, **kwargs)
+    return failing_import
