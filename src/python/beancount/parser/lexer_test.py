@@ -4,6 +4,7 @@ Tests for lexer.
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import datetime
+import pprint
 import functools
 import textwrap
 import unittest
@@ -26,21 +27,30 @@ def print_tokens(tokens):
     print('`--------------------------------')
 
 
+def lex_tokens(fun):
+    """Decorator for test functions that will invokve a lexer on them.
+
+    The lexer passes the list of tokens and errors to the test function.
+
+    Args:
+      fun: A test function to be decorated.
+    Returns:
+      The decorated function.
+    """
+    @functools.wraps(fun)
+    def wrapped(self):
+        string = fun.__doc__
+        builder = lexer.LexBuilder()
+        # Set default value for test_overlong_string().
+        builder.long_string_maxlines_default = 8
+        tokens = list(lexer.lex_iter_string(textwrap.dedent(string),
+                                            builder))
+        return fun(self, tokens, builder.errors)
+    wrapped.__doc__ = None
+    return wrapped
+
 class TestLexer(unittest.TestCase):
     """Test output of the lexer."""
-
-    def lex_tokens(fun):
-        @functools.wraps(fun)
-        def wrapped(self):
-            string = fun.__doc__
-            builder = lexer.LexBuilder()
-            # Set default value for test_overlong_string().
-            builder.long_string_maxlines_default = 8
-            tokens = list(lexer.lex_iter_string(textwrap.dedent(string),
-                                                builder))
-            return fun(self, tokens, builder.errors)
-        wrapped.__doc__ = None
-        return wrapped
 
     @lex_tokens
     def test_lex_iter(self, tokens, errors):
@@ -334,3 +344,72 @@ class TestLexer(unittest.TestCase):
         tokens = list(lexer.lex_iter_string(string, builder))
         self.assertTrue(tokens[0], 'ERROR')
         self.assertTrue(tokens[1], 'EOL')
+
+
+class TestLexerErrors(unittest.TestCase):
+    """Test lexer error handling.
+    """
+
+    @lex_tokens
+    def test_lexer_invalid_token(self, tokens, errors):
+        """
+          2000-01-01 open ) USD
+        """
+        self.assertEqual([('EOL', 2, '\n', None),
+                          ('DATE', 2, '2000-01-01', datetime.date(2000, 1, 1)),
+                          ('OPEN', 2, 'open', None),
+                          ('LEX_ERROR', 2, ')', None),
+                          ('CURRENCY', 2, 'USD', 'USD'),
+                          ('EOL', 3, '\n', None),
+                          ('EOL', 3, '\x00', None)],
+                         tokens)
+        self.assertEqual(1, len(errors))
+
+    @lex_tokens
+    def test_lexer_exception__recovery(self, tokens, errors):
+        """
+          2000-13-32 open Assets:Something
+
+          2000-01-02 open Assets:Working
+        """
+        self.assertEqual([('EOL', 2, '\n', None),
+                          ('LEX_ERROR', 2, '2000-13-32', None),
+                          ('OPEN', 2, 'open', None),
+                          ('ACCOUNT', 2, 'Assets:Something', 'Assets:Something'),
+                          ('EOL', 3, '\n', None),
+                          ('EOL', 4, '\n', None),
+                          ('DATE', 4, '2000-01-02', datetime.date(2000, 1, 2)),
+                          ('OPEN', 4, 'open', None),
+                          ('ACCOUNT', 4, 'Assets:Working', 'Assets:Working'),
+                          ('EOL', 5, '\n', None),
+                          ('EOL', 5, '\x00', None)], tokens)
+        self.assertEqual(1, len(errors))
+
+    @lex_tokens
+    def test_lexer_exception_DATE(self, tokens, errors):
+        """
+          2000-13-32 open Assets:Something
+        """
+        self.assertEqual([('EOL', 2, '\n', None),
+                          ('LEX_ERROR', 2, '2000-13-32', None),
+                          ('OPEN', 2, 'open', None),
+                          ('ACCOUNT', 2, 'Assets:Something', 'Assets:Something'),
+                          ('EOL', 3, '\n', None),
+                          ('EOL', 3, '\x00', None)], tokens)
+        self.assertEqual(1, len(errors))
+
+    # @lex_tokens
+    # def test_lexer_exception_ACCOUNT(self, tokens, errors):
+    #     """
+    #       2000-01-01 open Invalid:Something
+    #     """
+    #     self.assertEqual([('EOL', 2, '\n', None),
+    #                       ('DATE', 2, '2000-01-01', datetime.date(2000, 1, 1)),
+    #                       ('OPEN', 2, 'open', None),
+    #                       ('ACCOUNT', 2, 'Invalid:Something', 'Invalid:Something'),
+    #                       ('EOL', 3, '\n', None),
+    #                       ('EOL', 3, '\x00', None)], tokens)
+    #     self.assertEqual(0, len(errors))
+
+
+    # FIXME: TODO - Test for all instances where BUILD_LEX() is used.

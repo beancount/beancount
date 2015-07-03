@@ -92,6 +92,7 @@ int strtonl(const char* buf, size_t nchars);
 	if (dst_ptr >= strbuf_end) {            \
             BEGIN(INVALID);                     \
 	}
+/* FIXME: You have to make this code gobble the rest of the string and not fail. */
 
 }
 
@@ -324,8 +325,8 @@ FALSE		{
 <INVALID>[^ \t\n\r]+     {
     /* TRACE_ERROR("Processing INVALID sublexer at '%s'\n", yytext); */
 
-    char buffer[1024];
-    size_t length = snprintf(buffer, 1024, "Invalid token: '%s'", yytext);
+    char buffer[256];
+    size_t length = snprintf(buffer, 256, "Invalid token: '%s'", yytext);
     build_lexer_error(yylval, buffer, length);
 
     BEGIN(INITIAL);
