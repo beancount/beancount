@@ -82,7 +82,7 @@ void yyerror(char const* message)
     }
     else {
         /* Register a syntax error with the builder. */
-        BUILD("build_parser_error", "ssi", message, yy_filename, yylineno + yy_firstline);
+        BUILD("build_grammar_error", "ssi", message, yy_filename, yylineno + yy_firstline);
         TRACE_ERROR("yyerror: '%s'\nyytext='%s'\n", message, yytext);
     }
 }

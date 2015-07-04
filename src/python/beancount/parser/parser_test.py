@@ -20,7 +20,7 @@ from beancount.core import amount
 from beancount.core import interpolate
 from beancount.core import interpolate_test
 from beancount.utils import test_utils
-from beancount.parser import printer
+from beancount.parser import grammar
 
 
 def check_list(test, objlist, explist):
@@ -955,11 +955,11 @@ class TestTotalsAndSigns(unittest.TestCase):
 class TestAllowNegativePrices(unittest.TestCase):
 
     def setUp(self):
-        self.__allow_negative_prices__ = parser.__allow_negative_prices__
-        parser.__allow_negative_prices__ = True
+        self.__allow_negative_prices__ = grammar.__allow_negative_prices__
+        grammar.__allow_negative_prices__ = True
 
     def tearDown(self):
-        parser.__allow_negative_prices__ = self.__allow_negative_prices__
+        grammar.__allow_negative_prices__ = self.__allow_negative_prices__
 
     @parser.parsedoc
     def test_total_cost(self, entries, errors, _):

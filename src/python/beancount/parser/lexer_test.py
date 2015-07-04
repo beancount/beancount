@@ -4,7 +4,6 @@ Tests for lexer.
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import datetime
-import pprint
 import functools
 import textwrap
 import unittest
