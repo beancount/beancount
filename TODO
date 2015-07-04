@@ -14,6 +14,21 @@ beancount: TODO
   - Define a C extension module to implement D().
 
 
+* Error Handling
+
+  - See if you could not best communicate the error from the lexer to the parser
+    via the exception vehicle. If the parser handles things nicely using
+    exceptions, this might be the best way!
+    If so, remove build_lexer_error; build all errors from the parser.
+
+  - We need to correctly chomp until a newline without calling yyerror()
+    repeatedly; do this properly. yyerror() should be called only once per
+    error.
+
+  - You don't need to incref the builder... remove that. Test it.
+
+
+
 * Explicit Tolerance
 
   - Make the printer support explicit tolerance syntax. This is crucial for
