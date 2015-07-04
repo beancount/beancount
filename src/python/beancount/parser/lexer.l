@@ -192,7 +192,7 @@ option		{ return OPTION; }
 plugin		{ return PLUGIN; }
 include		{ return INCLUDE; }
 
- /* Account names. */
+ /* Boolean values. */
 TRUE		{
     yylval->pyobj = Py_True;
     Py_INCREF(Py_True);
@@ -422,7 +422,7 @@ void build_lexer_error_from_exception(YYSTYPE* yylval)
 
         if (rv == NULL) {
             PyErr_SetString(PyExc_RuntimeError,
-                            "Internal error: Building exception");
+                            "Internal error: While building exception");
         }
     }
     else {
