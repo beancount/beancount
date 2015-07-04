@@ -6,17 +6,11 @@
 
 extern PyObject* builder;
 
-PyObject* checkNull(PyObject* o);
 
-#define BUILD(method_name, format, ...)                                 \
-    checkNull( PyObject_CallMethod(builder, method_name, format, __VA_ARGS__) );
-
-#define BUILD_NOARGS(method_name)                                       \
-    checkNull( PyObject_CallMethod(builder, method_name, NULL) );
+/* #define DO_TRACE_ERRORS   1 */
 
 
 /* Error tracing (use for debugging error handling). */
-/* #define DO_TRACE_ERRORS   1 */
 #ifdef DO_TRACE_ERRORS
 #  define TRACE_ERROR(...)                              \
     {                                                   \
@@ -29,7 +23,4 @@ PyObject* checkNull(PyObject* o);
     }
 #else
 #  define TRACE_ERROR(...)
-#endif
-
-
 #endif

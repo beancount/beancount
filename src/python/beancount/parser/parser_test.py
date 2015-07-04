@@ -7,6 +7,7 @@ import datetime
 import unittest
 import inspect
 import tempfile
+import textwrap
 import re
 import sys
 import subprocess
@@ -1205,10 +1206,116 @@ class TestMetaData(unittest.TestCase):
             }, entries[0].meta)
 
 
-class TestLexerErrors(unittest.TestCase):
+class TestLexerAndParserErrors(unittest.TestCase):
+    """There are a number of different paths for errors. This test case intends to
+    exercise them all.
+
+    The parser.parse_*() functions never raise exceptions, they always produce a
+    list of error messages on the builder objects. This is by design: we have a
+    single way to produce and report errors.
+
+    * lexer_invalid_token(): yylex() is invoked by the parser... the lexer rules
+      are processed and all fail and the default rule of the lexer gets called
+      at {bf253a29a820}. The lexer immediately switches to the INVALID subparser
+      to chomp the rest of the invalid token's unrecognized characters until it
+      hits some whitespace {bba169a1d35a}. A new LexerError is created and
+      accumulated by calling the build_lexer_error() method on the builder
+      object using this text {0e31aeca3363}. The lexer then returns a LEX_ERROR
+      token to the parser, which fails as described below.
+
+    * lexer_exception_*(): The lexer recognizes a token and invokes a callback
+      on the builder using BUILD_LEX(). However, an exception is raised
+      {3cfb2739349a}. The exception's error text is saved
+
+      That then triggers the invalid subparser {bba169a1d35a}.
+      This triggers the parser's special error rule {3d95e55b654e}.
+
+    For both the errors above, when the parser receives the LEX_ERROR token, it
+    is unexpected (because none of the rules handle it), so it calls yyerror()
+    {ca6aab8b9748} and then switches to processing 'error' multiple times
+    {3d95e55b654e} until a valid grammar rule can be reduled.
+
+    The lexer creates and registers its own errors on the builder, so when
+    yyerror() is called, if the error is an unexpected LEX_ERROR token, it
+    silently ignores this error.
+
+    * Parser error: Independently, parsers may encounter parser-level errors, in
+      which case yyerror() is called and then 'error' processing proceeds as
+      above described above.
+
+    * Parser exception
+
+
+    Explain these:
+
+    def build_lexer_error()
+    def error()
+
+    """
 
     @parser.parsedoc
-    def test_bad_account(self, entries, errors, _):
+    def test_lexer_invalid_token(self, entries, errors, _):
+        """
+          2000-01-01 open ) USD
+        """
+        self.assertEqual(0, len(entries))
+        self.assertEqual(1, len(errors))
+        self.assertTrue(re.search(r"Invalid token: '\)'", errors[0].message))
+
+    @parser.parsedoc
+    def test_lexer_invalid_token__recovery(self, entries, errors, _):
+        """
+          2000-01-01 open ) USD
+
+          2000-01-02 open Assets:Something
+        """
+        self.assertEqual(1, len(entries))
+        self.assertEqual(1, len(errors))
+        self.assertTrue(re.search(r"Invalid token: '\)'", errors[0].message))
+
+    # FIXME: Also add tests that have valid tokens after the error, like postings
+
+    @parser.parsedoc
+    def test_lexer_exception__recovery(self, entries, errors, _):
+        """
+          2000-13-32 open Assets:Something
+
+          2000-01-02 open Assets:Working
+        """
+        self.assertEqual(1, len(entries))
+        self.assertEqual(1, len(errors))
+        self.assertTrue(re.search('month must be in 1..12', errors[0].message))
+
+
+    @parser.parsedoc
+    def test_lexer_exception_DATE(self, entries, errors, _):
+        """
+          2000-13-32 open Assets:Something
+        """
+        self.assertEqual(0, len(entries))
+        self.assertEqual(1, len(errors))
+        self.assertTrue(re.search('month must be in 1..12', errors[0].message))
+
+    @parser.parsedoc
+    def test_lexer_exception_ACCOUNT(self, entries, errors, _):
+        """
+          2000-01-01 open Invalid:Something
+        """
+        self.assertEqual(0, len(entries))
+        self.assertEqual(1, len(errors))
+        self.assertTrue(re.search('Invalid account name:', errors[0].message))
+
+
+
+    # FIXME: TODO - Test for all instances where BUILD_LEX() is used.
+
+    # FIXME: TODO - Also mock the build_error routines, make them raise
+    # exceptions, make sure this is handled sanely.
+
+
+
+    @parser.parsedoc
+    def __test_bad_account(self, entries, errors, _):
         """
           2011-01-01 open Assets:A
         """
@@ -1217,7 +1324,7 @@ class TestLexerErrors(unittest.TestCase):
                          list(map(type, errors)))
 
     @parser.parsedoc
-    def test_no_final_newline(self, entries, errors, _):
+    def __test_no_final_newline(self, entries, errors, _):
         """
           2014-11-02 *
             Assets:Something   1 USD

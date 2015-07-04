@@ -15,12 +15,65 @@
 #include "parser.h"
 #include "lexer.h"
 
+
+/* FIXME: remove this */
+PyObject* checkNull(PyObject* o)
+{
+    if ( o == NULL ) {
+        PyErr_Print();
+        /* FIXME: We should remove this and handle all errors. */
+        abort();
+    }
+    return o;
+}
+
+
+
+#define BUILD(method_name, format, ...)                                                 \
+    checkNull( PyObject_CallMethod(builder, method_name, format, __VA_ARGS__) );
+
+#define BUILD_NOARGS(method_name)                                       \
+    checkNull( PyObject_CallMethod(builder, method_name, NULL) );
+
+
+#define BUILD_X(method_name, format, ...)                                                        \
+    PyObject* build_value = PyObject_CallMethod(builder, method_name, format, __VA_ARGS__);     \
+    if (build_value == NULL) {                                                                  \
+        YYABORT;                                                                                \
+    }
+
+#define BUILD_NOARGS_X(method_name)                                             \
+    PyObject* build_value = PyObject_CallMethod(builder, method_name, NULL);    \
+    if (build_value == NULL) {                                                  \
+        YYABORT;                                                                \
+    }
+
+/* FIXME: if there is an error, we end up leaking the $1, $2, ... find a
+   solution for this. Maybe a more sensible solution here would be to inc-ref
+   None when setting that and to have the cleanup/decref code be done all within
+   the macro, to simplify all the code below. */
+
+/* FIXME: Complete testing aborting from here instead of calling abort() as above. */
+/* #define BUILD(method_name, format, ...)                                                         \ */
+/*     {                                                                                           \ */
+/*         checkNull( PyObject_CallMethod(builder, method_name, format, __VA_ARGS__) );            \ */
+/*         PyObject* result = PyObject_CallMethod(builder, method_name, format, __VA_ARGS__)       \ */
+/*         if (result == NULL) {                                                                   \ */
+/*             YYABORT;                                                                            \ */
+/*         }, result                                                                               \ */
+/*     } */
+
+
+
+
+
+
 /* First line of reported file/line string. This is used as #line. */
 int yy_firstline;
 
 #define FILE_LINE_ARGS  yy_filename, ((yyloc).first_line + yy_firstline)
 
-/* Error-handling function. */
+/* Error-handling function. {ca6aab8b9748} */
 void yyerror(char const* message)
 {
     /* Skip lex errors: they have already been registered the lexer itself. */
@@ -29,7 +82,8 @@ void yyerror(char const* message)
     }
     else {
         /* Register a syntax error with the builder. */
-        BUILD("error", "ssi", message, yy_filename, yylineno + yy_firstline);
+        BUILD("build_grammar_error", "ssi", message, yy_filename, yylineno + yy_firstline);
+        TRACE_ERROR("yyerror: '%s'\nyytext='%s'\n", message, yytext);
     }
 }
 
@@ -508,7 +562,11 @@ declarations : declarations directive
              }
              | declarations error
              {
-                 $$ = $1;
+                 /* {3d95e55b654e} */
+                 /* TRACE_ERROR("processing 'error': yytext='%s'.\n", yytext); */
+
+                 /* Ignore the error and continue reducing. */
+                 $$ = $1; /* YYABORT; */
              }
              | empty
              {

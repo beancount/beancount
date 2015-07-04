@@ -370,7 +370,7 @@ class Builder(lexer.LexBuilder):
             object_list.append(new_object)
         return object_list
 
-    def error(self, message, filename, lineno):
+    def build_grammar_error(self, message, filename, lineno):
         """Process an error rule.
 
         Args:

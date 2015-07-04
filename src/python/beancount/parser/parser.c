@@ -21,19 +21,6 @@ extern int yy_firstline;
 PyObject* builder = 0;
 
 
-/* Check if the object is null; if so, report an error. This is used internally
-   only, to debug the parser rules, and should never trigger in production. */
-PyObject* checkNull(PyObject* o)
-{
-    if ( o == NULL ) {
-        PyErr_Print();
-        abort();
-    }
-    return o;
-}
-
-
-
 PyDoc_STRVAR(parse_file_doc,
 "Parse the filename, calling back methods on the builder.\n\
 Your builder is responsible to accumulating results.\n\
@@ -104,7 +91,7 @@ PyObject* parse_file(PyObject *self, PyObject *args, PyObject* kwds)
 
     /* Check for parsing errors. */
     if ( result != 0 ) {
-        return PyErr_Format(PyExc_RuntimeError, "Parsing error");
+        return NULL;
     }
 
     Py_RETURN_NONE;
@@ -116,14 +103,15 @@ PyObject* parse_string(PyObject *self, PyObject *args, PyObject* kwds)
 
     /* Unpack and validate arguments */
     const char* input_string = 0;
+    Py_ssize_t input_length = 0;
     const char* report_filename = 0;
     int report_firstline = 0;
     extern int yydebug;
     static char *kwlist[] = {"input_string", "builder",
                              "report_filename", "report_firstline",
                              "yydebug", NULL};
-    if ( !PyArg_ParseTupleAndKeywords(args, kwds, "sO|sip", kwlist,
-                                      &input_string, &builder,
+    if ( !PyArg_ParseTupleAndKeywords(args, kwds, "s#O|sip", kwlist,
+                                      &input_string, &input_length, &builder,
                                       &report_filename, &report_firstline,
                                       &yydebug) ) {
         return NULL;
@@ -147,6 +135,7 @@ PyObject* parse_string(PyObject *self, PyObject *args, PyObject* kwds)
 
     /* Parse! This will call back methods on the builder instance. */
     result = yyparse();
+    TRACE_ERROR("Result of yyparse() = %d\n", result);
 
     /* Finalize the parser. */
     yylex_destroy();
@@ -156,7 +145,7 @@ PyObject* parse_string(PyObject *self, PyObject *args, PyObject* kwds)
 
     /* Check for parsing errors. */
     if ( result != 0 ) {
-        return PyErr_Format(PyExc_RuntimeError, "Parsing error");
+        return NULL;
     }
 
     Py_RETURN_NONE;
@@ -169,7 +158,7 @@ PyObject* get_yyfilename(PyObject *self, PyObject *args)
 
 PyObject* get_yylineno(PyObject *self, PyObject *args)
 {
-  return PyLong_FromLong(yylineno);
+  return PyLong_FromLong(yylineno + yy_firstline);
 }
 
 
