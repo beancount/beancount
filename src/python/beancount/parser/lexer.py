@@ -5,12 +5,9 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import collections
 import datetime
 import re
-import sys
 import tempfile
-import traceback
 
 from beancount.core import data
-from beancount.core import account
 from beancount.core.number import Decimal
 from beancount.parser import _parser
 
