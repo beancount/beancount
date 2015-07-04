@@ -428,22 +428,43 @@ class TestLexerErrors(unittest.TestCase):
                           ('EOL', 3, '\x00', None)], tokens)
         self.assertEqual(1, len(builder.errors))
 
-    def test_lexer_exception_STRING(self):
-        test_input = """
-          "Something"
-        """
+
+    def _run_lexer_with_raising_builder_method(self, test_input, method_name,
+                                               expected_tokens):
         builder = lexer.LexBuilder()
-        def raiseError(string):
+        def raise_error(string):
             raise ValueError
-        builder.STRING = raiseError
+        setattr(builder, method_name, raise_error)
         tokens = list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
-        self.assertEqual([('EOL', 2, '\n', None),
-                          ('LEX_ERROR', 2, '"', None),
-                          ('EOL', 3, '\n', None),
-                          ('EOL', 3, '\x00', None)], tokens)
+        self.assertEqual(expected_tokens, tokens)
         self.assertEqual(1, len(builder.errors))
 
+    def test_lexer_exception_STRING(self):
+        self._run_lexer_with_raising_builder_method(
+            ' "Something" ', 'STRING',
+            [('LEX_ERROR', 1, '"', None),
+             ('EOL', 1, '\x00', None)])
 
+    def test_lexer_exception_NUMBER(self):
+        self._run_lexer_with_raising_builder_method(
+            ' 100.23 ', 'NUMBER',
+            [('LEX_ERROR', 1, '100.23', None),
+             ('EOL', 1, '\x00', None)])
 
+    def test_lexer_exception_TAG(self):
+        self._run_lexer_with_raising_builder_method(
+            ' #the-tag ', 'TAG',
+            [('LEX_ERROR', 1, '#the-tag', None),
+             ('EOL', 1, '\x00', None)])
 
-    # FIXME: TODO - Test for all instances where BUILD_LEX() is used.
+    def test_lexer_exception_LINK(self):
+        self._run_lexer_with_raising_builder_method(
+            ' ^the-link ', 'LINK',
+            [('LEX_ERROR', 1, '^the-link', None),
+             ('EOL', 1, '\x00', None)])
+
+    def test_lexer_exception_KEY(self):
+        self._run_lexer_with_raising_builder_method(
+            ' mykey: ', 'KEY',
+            [('LEX_ERROR', 1, 'mykey:', None),
+             ('EOL', 1, '\x00', None)])

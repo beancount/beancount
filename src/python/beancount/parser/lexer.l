@@ -422,7 +422,7 @@ void build_lexer_error_from_exception(YYSTYPE* yylval)
 
         if (rv == NULL) {
             PyErr_SetString(PyExc_RuntimeError,
-                            "Internal error: Building exception");
+                            "Internal error: While building exception");
         }
     }
     else {
