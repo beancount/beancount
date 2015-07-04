@@ -45,7 +45,7 @@ extern int yydebug;
 # define YYTOKENTYPE
   enum yytokentype
   {
-    ERROR = 258,
+    LEX_ERROR = 258,
     INDENT = 259,
     EOL = 260,
     COMMENT = 261,
@@ -94,7 +94,7 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 59 "src/python/beancount/parser/grammar.y" /* yacc.c:1915  */
+#line 65 "src/python/beancount/parser/grammar.y" /* yacc.c:1915  */
 
     char character;
     const char* string;

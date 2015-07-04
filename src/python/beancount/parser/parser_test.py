@@ -19,6 +19,7 @@ from beancount.core import amount
 from beancount.core import interpolate
 from beancount.core import interpolate_test
 from beancount.utils import test_utils
+from beancount.parser import printer
 
 
 def check_list(test, objlist, explist):
@@ -410,8 +411,9 @@ class TestSyntaxErrors(unittest.TestCase):
         check_list(self, entries, [data.Balance])
 
         # Make sure at least one error is reported.
-        self.assertTrue(parser.ParserSyntaxError in map(type, errors))
-        self.assertTrue(lexer.LexerError in map(type, errors))
+        self.assertEqual(1, len(errors))
+        self.assertIsInstance(errors[0], lexer.LexerError)
+        self.assertRegexpMatches(errors[0].message, 'Invalid token')
 
 
 class TestLineNumbers(unittest.TestCase):
@@ -1211,7 +1213,7 @@ class TestLexerErrors(unittest.TestCase):
           2011-01-01 open Assets:A
         """
         self.assertEqual([], entries)
-        self.assertEqual([parser.ParserSyntaxError, lexer.LexerError],
+        self.assertEqual([lexer.LexerError],
                          list(map(type, errors)))
 
     @parser.parsedoc

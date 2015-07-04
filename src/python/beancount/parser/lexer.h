@@ -13,6 +13,34 @@
 #include "grammar.h"
 
 
+/* Build and accumulate an error on the builder object. */
+void build_lexer_error(YYSTYPE* yylval, const char* string, size_t length);
+
+/* Build and accumulate an error on the builder object using the current
+ * exception state. */
+void build_lexer_error_from_exception(YYSTYPE* yylval);
+
+
+
+/* Callback call site with error handling. */
+#define BUILD_LEX(method_name, format, ...)                             \
+    yylval->pyobj = PyObject_CallMethod(builder, method_name,           \
+                                        format, __VA_ARGS__);           \
+    /* Process exception state {3cfb2739349a} */                        \
+    if (yylval->pyobj == NULL) {                                        \
+       TRACE_ERROR("BUILD_LEX(%s) raised exception", method_name);      \
+       build_lexer_error_from_exception(yylval);                        \
+       return LEX_ERROR;                                                \
+    }
+
+/* FIXME: These methods shoudl never return None... check for this and raise an error if they ever do. */
+    /* else if (yylval->pyobj == Py_None) {                             \ */
+    /*    TRACE_ERROR("BUILD_LEX(%s) returned None", method_name); \ */
+    /*    create_error_from_exception(); */
+    /*    return LEX_ERROR;                                        \ */
+    /* } */
+
+
 /* Global declarations; defined below. */
 extern int yy_eof_times;
 extern const char* yy_filename;
@@ -46,14 +74,14 @@ int strtonl(const char* buf, size_t nchars);
 #define SAFE_COPY(dst_ptr, value)               \
 	*dst_ptr++ = value;                     \
 	if (dst_ptr >= strbuf_end) {            \
-	    BEGIN(INVALID);                     \
-	    return ERROR;                       \
+            BEGIN(INVALID);                     \
 	}
+/* FIXME: You have to make this code gobble the rest of the string and not fail. */
 
 
 
 
-#line 57 "src/python/beancount/parser/lexer.h"
+#line 85 "src/python/beancount/parser/lexer.h"
 
 #define  YY_INT_ALIGNED short int
 
@@ -375,9 +403,9 @@ extern int yylex \
 #undef YY_DECL
 #endif
 
-#line 306 "src/python/beancount/parser/lexer.l"
+#line 338 "src/python/beancount/parser/lexer.l"
 
 
-#line 382 "src/python/beancount/parser/lexer.h"
+#line 410 "src/python/beancount/parser/lexer.h"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */

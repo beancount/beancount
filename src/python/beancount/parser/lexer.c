@@ -9,6 +9,34 @@
 #include "grammar.h"
 
 
+/* Build and accumulate an error on the builder object. */
+void build_lexer_error(YYSTYPE* yylval, const char* string, size_t length);
+
+/* Build and accumulate an error on the builder object using the current
+ * exception state. */
+void build_lexer_error_from_exception(YYSTYPE* yylval);
+
+
+
+/* Callback call site with error handling. */
+#define BUILD_LEX(method_name, format, ...)                             \
+    yylval->pyobj = PyObject_CallMethod(builder, method_name,           \
+                                        format, __VA_ARGS__);           \
+    /* Process exception state {3cfb2739349a} */                        \
+    if (yylval->pyobj == NULL) {                                        \
+       TRACE_ERROR("BUILD_LEX(%s) raised exception", method_name);      \
+       build_lexer_error_from_exception(yylval);                        \
+       return LEX_ERROR;                                                \
+    }
+
+/* FIXME: These methods shoudl never return None... check for this and raise an error if they ever do. */
+    /* else if (yylval->pyobj == Py_None) {                             \ */
+    /*    TRACE_ERROR("BUILD_LEX(%s) returned None", method_name); \ */
+    /*    create_error_from_exception(); */
+    /*    return LEX_ERROR;                                        \ */
+    /* } */
+
+
 /* Global declarations; defined below. */
 extern int yy_eof_times;
 extern const char* yy_filename;
@@ -42,14 +70,14 @@ int strtonl(const char* buf, size_t nchars);
 #define SAFE_COPY(dst_ptr, value)               \
 	*dst_ptr++ = value;                     \
 	if (dst_ptr >= strbuf_end) {            \
-	    BEGIN(INVALID);                     \
-	    return ERROR;                       \
+            BEGIN(INVALID);                     \
 	}
+/* FIXME: You have to make this code gobble the rest of the string and not fail. */
 
 
 
 
-#line 53 "src/python/beancount/parser/lexer.c"
+#line 81 "src/python/beancount/parser/lexer.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -897,7 +925,7 @@ char *yytext;
 
 /*--------------------------------------------------------------------------------------*/
 /* Rules */
-#line 901 "src/python/beancount/parser/lexer.c"
+#line 929 "src/python/beancount/parser/lexer.c"
 
 #define INITIAL 0
 #define INVALID 1
@@ -1126,7 +1154,7 @@ YY_DECL
 		}
 
 	{
-#line 80 "src/python/beancount/parser/lexer.l"
+#line 108 "src/python/beancount/parser/lexer.l"
 
 
 	/* String literal buffer. */
@@ -1136,7 +1164,7 @@ YY_DECL
 
 
  /* Newlines are output as explicit tokens, because lines matter in the syntax. */
-#line 1140 "src/python/beancount/parser/lexer.c"
+#line 1168 "src/python/beancount/parser/lexer.c"
 
 	while ( 1 )		/* loops until end-of-file is reached */
 		{
@@ -1202,7 +1230,7 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 /* rule 1 can match eol */
 YY_RULE_SETUP
-#line 89 "src/python/beancount/parser/lexer.l"
+#line 117 "src/python/beancount/parser/lexer.l"
 {
     yy_line_tokens = 0;
     yycolumn = 1;
@@ -1214,7 +1242,7 @@ YY_RULE_SETUP
     postings. */
 case 2:
 YY_RULE_SETUP
-#line 98 "src/python/beancount/parser/lexer.l"
+#line 126 "src/python/beancount/parser/lexer.l"
 {
     if ( yy_line_tokens == 1 ) {
         /* If the next character completes the line, skip it. */
@@ -1233,58 +1261,58 @@ YY_RULE_SETUP
 /* Characters with special meanings have their own tokens. */
 case 3:
 YY_RULE_SETUP
-#line 114 "src/python/beancount/parser/lexer.l"
+#line 142 "src/python/beancount/parser/lexer.l"
 { return PIPE; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 115 "src/python/beancount/parser/lexer.l"
+#line 143 "src/python/beancount/parser/lexer.l"
 { return ATAT; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 116 "src/python/beancount/parser/lexer.l"
+#line 144 "src/python/beancount/parser/lexer.l"
 { return AT; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 117 "src/python/beancount/parser/lexer.l"
+#line 145 "src/python/beancount/parser/lexer.l"
 { return LCURLCURL; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 118 "src/python/beancount/parser/lexer.l"
+#line 146 "src/python/beancount/parser/lexer.l"
 { return RCURLCURL; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 119 "src/python/beancount/parser/lexer.l"
+#line 147 "src/python/beancount/parser/lexer.l"
 { return LCURL; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 120 "src/python/beancount/parser/lexer.l"
+#line 148 "src/python/beancount/parser/lexer.l"
 { return RCURL; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 121 "src/python/beancount/parser/lexer.l"
+#line 149 "src/python/beancount/parser/lexer.l"
 { return COMMA; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 122 "src/python/beancount/parser/lexer.l"
+#line 150 "src/python/beancount/parser/lexer.l"
 { return TILDE; }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 123 "src/python/beancount/parser/lexer.l"
+#line 151 "src/python/beancount/parser/lexer.l"
 { return SLASH; }
 	YY_BREAK
 /* Skip commented output (but not the accompanying newline). */
 case 13:
 YY_RULE_SETUP
-#line 126 "src/python/beancount/parser/lexer.l"
+#line 154 "src/python/beancount/parser/lexer.l"
 {
     /* yy_skip_line(); */
     return COMMENT;
@@ -1300,7 +1328,7 @@ YY_RULE_SETUP
     */
 case 14:
 YY_RULE_SETUP
-#line 139 "src/python/beancount/parser/lexer.l"
+#line 167 "src/python/beancount/parser/lexer.l"
 {
     if ( yy_line_tokens != 1 ) {
         yylval->character = yytext[0];
@@ -1315,83 +1343,83 @@ YY_RULE_SETUP
 /* Keywords. */
 case 15:
 YY_RULE_SETUP
-#line 151 "src/python/beancount/parser/lexer.l"
+#line 179 "src/python/beancount/parser/lexer.l"
 { return TXN; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 152 "src/python/beancount/parser/lexer.l"
+#line 180 "src/python/beancount/parser/lexer.l"
 { return BALANCE; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 153 "src/python/beancount/parser/lexer.l"
+#line 181 "src/python/beancount/parser/lexer.l"
 { return OPEN; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 154 "src/python/beancount/parser/lexer.l"
+#line 182 "src/python/beancount/parser/lexer.l"
 { return CLOSE; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 155 "src/python/beancount/parser/lexer.l"
+#line 183 "src/python/beancount/parser/lexer.l"
 { return COMMODITY; }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 156 "src/python/beancount/parser/lexer.l"
+#line 184 "src/python/beancount/parser/lexer.l"
 { return PAD; }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 157 "src/python/beancount/parser/lexer.l"
+#line 185 "src/python/beancount/parser/lexer.l"
 { return EVENT; }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 158 "src/python/beancount/parser/lexer.l"
+#line 186 "src/python/beancount/parser/lexer.l"
 { return PRICE; }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 159 "src/python/beancount/parser/lexer.l"
+#line 187 "src/python/beancount/parser/lexer.l"
 { return NOTE; }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 160 "src/python/beancount/parser/lexer.l"
+#line 188 "src/python/beancount/parser/lexer.l"
 { return DOCUMENT; }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 161 "src/python/beancount/parser/lexer.l"
+#line 189 "src/python/beancount/parser/lexer.l"
 { return PUSHTAG; }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 162 "src/python/beancount/parser/lexer.l"
+#line 190 "src/python/beancount/parser/lexer.l"
 { return POPTAG; }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 163 "src/python/beancount/parser/lexer.l"
+#line 191 "src/python/beancount/parser/lexer.l"
 { return OPTION; }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 164 "src/python/beancount/parser/lexer.l"
+#line 192 "src/python/beancount/parser/lexer.l"
 { return PLUGIN; }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 165 "src/python/beancount/parser/lexer.l"
+#line 193 "src/python/beancount/parser/lexer.l"
 { return INCLUDE; }
 	YY_BREAK
-/* Account names. */
+/* Boolean values. */
 case 30:
 YY_RULE_SETUP
-#line 168 "src/python/beancount/parser/lexer.l"
+#line 196 "src/python/beancount/parser/lexer.l"
 {
     yylval->pyobj = Py_True;
     Py_INCREF(Py_True);
@@ -1400,7 +1428,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 174 "src/python/beancount/parser/lexer.l"
+#line 202 "src/python/beancount/parser/lexer.l"
 {
     yylval->pyobj = Py_False;
     Py_INCREF(Py_False);
@@ -1410,7 +1438,7 @@ YY_RULE_SETUP
 /* Dates. */
 case 32:
 YY_RULE_SETUP
-#line 181 "src/python/beancount/parser/lexer.l"
+#line 209 "src/python/beancount/parser/lexer.l"
 {
     const char* year_str;
     const char* month_str;
@@ -1428,21 +1456,17 @@ YY_RULE_SETUP
     day = strtonl(day_str, yytext + yyleng - day_str);
 
     /* Attempt to create the date. */
-    yylval->pyobj = BUILD("DATE", "iii", year, month, day);
+    BUILD_LEX("DATE", "iii", year, month, day);
 
-    /* Return error if we could not. An error has already been logged. */
-    if (yylval->pyobj == Py_None) {
-      return ERROR;
-    }
     return DATE;
 }
 	YY_BREAK
 /* Account names. */
 case 33:
 YY_RULE_SETUP
-#line 208 "src/python/beancount/parser/lexer.l"
+#line 232 "src/python/beancount/parser/lexer.l"
 {
-    yylval->pyobj = BUILD("ACCOUNT", "s", yytext);
+    BUILD_LEX("ACCOUNT", "s", yytext);
     return ACCOUNT;
 }
 	YY_BREAK
@@ -1450,9 +1474,9 @@ YY_RULE_SETUP
   * syntax. This is kept in sync with beancount.core.amount.CURRENCY_RE. */
 case 34:
 YY_RULE_SETUP
-#line 215 "src/python/beancount/parser/lexer.l"
+#line 239 "src/python/beancount/parser/lexer.l"
 {
-    yylval->pyobj = BUILD("CURRENCY", "s", yytext);
+    BUILD_LEX("CURRENCY", "s", yytext);
     return CURRENCY;
 }
 	YY_BREAK
@@ -1461,7 +1485,7 @@ YY_RULE_SETUP
     See section "Start Conditions" in the GNU Flex manual. */
 case 35:
 YY_RULE_SETUP
-#line 223 "src/python/beancount/parser/lexer.l"
+#line 247 "src/python/beancount/parser/lexer.l"
 {
     strbuf_ptr = strbuf;
     BEGIN(STRLIT);
@@ -1471,51 +1495,51 @@ YY_RULE_SETUP
 /* Saw closing quote - all done. */
 case 36:
 YY_RULE_SETUP
-#line 231 "src/python/beancount/parser/lexer.l"
+#line 255 "src/python/beancount/parser/lexer.l"
 {
         BEGIN(INITIAL);
         *strbuf_ptr = '\0';
-        yylval->pyobj = BUILD("STRING", "s#", strbuf, strbuf_ptr - strbuf);
+        BUILD_LEX("STRING", "s#", strbuf, strbuf_ptr - strbuf);
         return STRING;
     }
 	YY_BREAK
 /* Escape sequences. */
 case 37:
 YY_RULE_SETUP
-#line 239 "src/python/beancount/parser/lexer.l"
+#line 263 "src/python/beancount/parser/lexer.l"
 SAFE_COPY(strbuf_ptr, '\n');
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 240 "src/python/beancount/parser/lexer.l"
+#line 264 "src/python/beancount/parser/lexer.l"
 SAFE_COPY(strbuf_ptr, '\t');
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 241 "src/python/beancount/parser/lexer.l"
+#line 265 "src/python/beancount/parser/lexer.l"
 SAFE_COPY(strbuf_ptr, '\r');
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 242 "src/python/beancount/parser/lexer.l"
+#line 266 "src/python/beancount/parser/lexer.l"
 SAFE_COPY(strbuf_ptr, '\b');
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 243 "src/python/beancount/parser/lexer.l"
+#line 267 "src/python/beancount/parser/lexer.l"
 SAFE_COPY(strbuf_ptr, '\f');
 	YY_BREAK
 case 42:
 /* rule 42 can match eol */
 YY_RULE_SETUP
-#line 244 "src/python/beancount/parser/lexer.l"
+#line 268 "src/python/beancount/parser/lexer.l"
 SAFE_COPY(strbuf_ptr, yytext[1]);
 	YY_BREAK
 /* All other characters. */
 case 43:
 /* rule 43 can match eol */
 YY_RULE_SETUP
-#line 247 "src/python/beancount/parser/lexer.l"
+#line 271 "src/python/beancount/parser/lexer.l"
 {
         char *yptr = yytext;
         while ( *yptr ) {
@@ -1527,47 +1551,47 @@ YY_RULE_SETUP
 /* Numbers */
 case 44:
 YY_RULE_SETUP
-#line 256 "src/python/beancount/parser/lexer.l"
+#line 280 "src/python/beancount/parser/lexer.l"
 {
-    yylval->pyobj = BUILD("NUMBER", "s", yytext);
+    BUILD_LEX("NUMBER", "s", yytext);
     return NUMBER;
 }
 	YY_BREAK
 /* Tags */
 case 45:
 YY_RULE_SETUP
-#line 262 "src/python/beancount/parser/lexer.l"
+#line 286 "src/python/beancount/parser/lexer.l"
 {
-    yylval->pyobj = BUILD("TAG", "s", &(yytext[1]));
+    BUILD_LEX("TAG", "s", &(yytext[1]));
     return TAG;
 }
 	YY_BREAK
 /* Links */
 case 46:
 YY_RULE_SETUP
-#line 268 "src/python/beancount/parser/lexer.l"
+#line 292 "src/python/beancount/parser/lexer.l"
 {
-    yylval->pyobj = BUILD("LINK", "s", &(yytext[1]));
+    BUILD_LEX("LINK", "s", &(yytext[1]));
     return LINK;
 }
 	YY_BREAK
 /* Key */
 case 47:
 YY_RULE_SETUP
-#line 274 "src/python/beancount/parser/lexer.l"
+#line 298 "src/python/beancount/parser/lexer.l"
 {
-    yylval->pyobj = BUILD("KEY", "s#", yytext, yyleng-1);
+    BUILD_LEX("KEY", "s#", yytext, yyleng-1);
     return KEY;
 }
 	YY_BREAK
-/* Default rule. */
+/* Default rule. {bf253a29a820} */
 case 48:
 YY_RULE_SETUP
-#line 280 "src/python/beancount/parser/lexer.l"
+#line 304 "src/python/beancount/parser/lexer.l"
 {
-  unput(*yytext);
-  BEGIN(INVALID);
-  return ERROR;
+    unput(*yytext);
+    TRACE_ERROR("Default rule '%s'.\n", yytext);
+    BEGIN(INVALID);
 }
 	YY_BREAK
 /* Fake an EOL at the end of file, to ensure that files without a final newline
@@ -1575,7 +1599,7 @@ YY_RULE_SETUP
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(INVALID):
 case YY_STATE_EOF(STRLIT):
-#line 288 "src/python/beancount/parser/lexer.l"
+#line 312 "src/python/beancount/parser/lexer.l"
 {
   if ( yy_eof_times == 0 ) {
     yy_eof_times = 1;
@@ -1585,23 +1609,31 @@ case YY_STATE_EOF(STRLIT):
   return 0;
  }
 	YY_BREAK
-/* Note: we use a subparser because if we set a default rule to
-    chomp this pattern, it would take precedence over valid rules
-    if the matched text is longer and thus break the parser. */
+/* Note: We use a subparser here because if we set a default rule to chomp this
+    pattern, it would take precedence over valid rules if the matched text is
+    longer and thus would break the lexer. Writing our own lexer would fix
+    this and more. {bba169a1d35a} */
 case 49:
 YY_RULE_SETUP
-#line 300 "src/python/beancount/parser/lexer.l"
+#line 325 "src/python/beancount/parser/lexer.l"
 {
-    yylval->pyobj = BUILD("ERROR", "s#", yytext, yyleng);
+    /* TRACE_ERROR("Processing INVALID sublexer at '%s'\n", yytext); */
+
+    char buffer[256];
+    size_t length = snprintf(buffer, 256, "Invalid token: '%s'", yytext);
+    build_lexer_error(yylval, buffer, length);
+
     BEGIN(INITIAL);
-}
+
+    return LEX_ERROR;
+ }
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 306 "src/python/beancount/parser/lexer.l"
+#line 338 "src/python/beancount/parser/lexer.l"
 ECHO;
 	YY_BREAK
-#line 1605 "src/python/beancount/parser/lexer.c"
+#line 1637 "src/python/beancount/parser/lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2607,7 +2639,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 306 "src/python/beancount/parser/lexer.l"
+#line 338 "src/python/beancount/parser/lexer.l"
 
 
 /*--------------------------------------------------------------------------------------*/
@@ -2660,5 +2692,48 @@ int strtonl(const char* buf, size_t nchars)
         result += (buf[i] - '0');
     }
     return result;
+}
+
+/* Build and accumulate an error on the builder object. */
+void build_lexer_error(YYSTYPE* yylval, const char* string, size_t length)
+{
+    /* Build and accumulate a new error object. {27d1d459c5cd} */
+    PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error",
+                                       "s#", string, length);
+    if (rv == NULL) {
+        PyErr_SetString(PyExc_RuntimeError,
+                        "Internal error: Building exception from default rule");
+    }
+}
+
+void build_lexer_error_from_exception(YYSTYPE* yylval)
+{
+    /* Get the exception context. */
+    PyObject* ptype;
+    PyObject* pvalue;
+    PyObject* ptraceback;
+    PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+    PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+
+    /* Clear the exception. */
+    PyErr_Clear();
+
+    if (pvalue != NULL) {
+        /* Build and accumulate a new error object. {27d1d459c5cd} */
+        PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error",
+                                           "OO", pvalue, ptype);
+        Py_DECREF(ptype);
+        Py_DECREF(pvalue);
+        Py_DECREF(ptraceback);
+
+        if (rv == NULL) {
+            PyErr_SetString(PyExc_RuntimeError,
+                            "Internal error: Building exception");
+        }
+    }
+    else {
+        PyErr_SetString(PyExc_RuntimeError,
+                        "Internal error: No exception");
+    }
 }
 
