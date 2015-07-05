@@ -16,6 +16,10 @@
 #include "lexer.h"
 
 
+/*
+ * Call a builder method and detect and handle a Python exception being raised
+ * in the handler. {05bb0fb60e86}
+ */
 #define BUILDX(target, method_name, format, ...)                                \
     target = PyObject_CallMethod(builder, method_name, format, __VA_ARGS__);    \
     if (target == NULL) {                                                       \
@@ -597,6 +601,12 @@ declarations : declarations directive
                   * Non-erroneous postings after an error occurs will reduce but
                   * not be included because a transaction's list of postings
                   * does not include an "error" rule.
+                  *
+                  * Note: Adding EOL after the "error" rule above works to
+                  * reduce the number of calls to this rule resulting from the
+                  * appearance of a LEX_ERROR token but makes the parser errors
+                  * skip the next valid directive, so we just have to make sure
+                  * repeated runs of this rule's handling code are idempotent.
                   */
                  $$ = $1;
              }

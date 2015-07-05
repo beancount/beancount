@@ -1269,7 +1269,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
     {ca6aab8b9748}).
 
     Error recovery then proceeds by successive reductions of the "error" grammar
-    rules which discards all tokens until an EOL token is produced
+    rules which discards all tokens until a valid rule can be reduced again
     ({3d95e55b654e}). Note that Bison issues a single call to yyerror() and
     keeps reducing invalid "error" rules silently until another one succeeds. We
     ignore the directive and restart parsing from that point on. If the error
@@ -1280,23 +1280,20 @@ class TestLexerAndParserErrors(cmptest.TestCase):
     The parser may itself also encounter two similar types of errors:
 
     * Syntax Error: There is an error in the grammar of the input. yyparse() is
-      called and we call build_grammar_error() to register the error. Error
-      recovery proceeds similarly to what was described previously.
+      called automatically by the generated code and we call
+      build_grammar_error() to register the error. Error recovery proceeds
+      similarly to what was described previously.
 
-    * Grammar Builder Exception: A grammar rule is reduced succesfully
+    * Grammar Builder Exception: A grammar rule is reduced succesfully, a
+      builder method is invoked and raises a Python exception. A macro in the
+      code that invokes this method is used to catch this error and calls
+      build_grammar_error_from_exception() to register an error and makes the
+      parser issue an error wth YYERROR (see {05bb0fb60e86}).
 
-
-parsers may encounter parser-level errors, in
-      which case yyerror() is called and then 'error' processing proceeds as
-      above described above.
-
-    * Parser exception
-
-
-    Explain these:
-
-    def build_lexer_error()
-
+    We never call YYABORT anywhere so the yyparse() function should never return
+    anything else than 0. If it does, we translate that into a Python
+    RuntimeError exception, or a MemoryError exception (if yyparse() ran out of
+    memory), see {459018e2905c}.
     """
 
     @parser.parsedoc
@@ -1725,9 +1722,6 @@ parsers may encounter parser-level errors, in
 
 
 
-
-    # FIXME:
-    # Make sure that yyparse() returning != 0 actually does raise an exception; add a test.
 
     # FIXME:
     # What happens to the memory of objects created and discarded by error rules?

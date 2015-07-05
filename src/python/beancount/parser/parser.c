@@ -31,6 +31,22 @@ PyDoc_STRVAR(parse_string_doc,
 Your builder is responsible to accumulating results.");
 
 
+/* Handle the result of yyparse() {459018e2905c}. */
+PyObject* handle_yyparse_result(int result)
+{
+    /* Check for internal errors during parsing (which would be the result of
+     * calling YYABORT, which we don't call), and this should raise an
+     * exception. */
+    if ( result == 1 ) {
+        return PyErr_Format(PyExc_RuntimeError, "Parser aborted (internal error)");
+    }
+    else if ( result == 2 ) {
+        return PyErr_Format(PyExc_MemoryError, "Parser ran out of memory");
+    }
+    assert(result == 0);
+    Py_RETURN_NONE;
+}
+
 PyObject* parse_file(PyObject *self, PyObject *args, PyObject* kwds)
 {
     FILE* fp = NULL;
@@ -89,14 +105,7 @@ PyObject* parse_file(PyObject *self, PyObject *args, PyObject* kwds)
     builder = 0;
     yy_filename = 0;
 
-    /* Check for internal errors during parsing (which would be the result of
-     * calling YYABORT, which we don't call), and this should raise an
-     * exception. */
-    if ( result != 0 ) {
-        return NULL;
-    }
-
-    Py_RETURN_NONE;
+    return handle_yyparse_result(result);
 }
 
 PyObject* parse_string(PyObject *self, PyObject *args, PyObject* kwds)
@@ -144,14 +153,7 @@ PyObject* parse_string(PyObject *self, PyObject *args, PyObject* kwds)
     builder = 0;
     yy_filename = 0;
 
-    /* Check for internal errors during parsing (which would be the result of
-     * calling YYABORT, which we don't call), and this should raise an
-     * exception. */
-    if ( result != 0 ) {
-        return NULL;
-    }
-
-    Py_RETURN_NONE;
+    return handle_yyparse_result(result);
 }
 
 PyObject* get_yyfilename(PyObject *self, PyObject *args)
