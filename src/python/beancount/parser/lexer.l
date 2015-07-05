@@ -30,37 +30,47 @@
 
 
 /* Build and accumulate an error on the builder object. */
-void build_lexer_error(YYSTYPE* yylval, const char* string, size_t length);
+void build_lexer_error(const char* string, size_t length);
 
 /* Build and accumulate an error on the builder object using the current
  * exception state. */
-void build_lexer_error_from_exception(YYSTYPE* yylval);
+void build_lexer_error_from_exception(void);
 
 
 
 /* Callback call site with error handling. */
-#define BUILD_LEX(method_name, format, ...)                             \
-    yylval->pyobj = PyObject_CallMethod(builder, method_name,           \
-                                        format, __VA_ARGS__);           \
-    /* Process exception state {3cfb2739349a} */                        \
-    if (yylval->pyobj == NULL) {                                        \
-       TRACE_ERROR("BUILD_LEX(%s) raised exception", method_name);      \
-       build_lexer_error_from_exception(yylval);                        \
-       return LEX_ERROR;                                                \
+#define BUILD_LEX(method_name, format, ...)                                             \
+    yylval->pyobj = PyObject_CallMethod(builder, method_name, format, __VA_ARGS__);     \
+    /* Handle a Python exception raised by the handler {3cfb2739349a} */                \
+    if (yylval->pyobj == NULL) {                                                        \
+       build_lexer_error_from_exception();                                              \
+       return LEX_ERROR;                                                                \
+    }                                                                                   \
+    /* Lexer builder methods should never return None, check for it. */                 \
+    else if (yylval->pyobj == Py_None) {                                                \
+        Py_DECREF(Py_None);                                                             \
+        build_lexer_error("Unexpected None result from lexer", 34);                     \
+        return LEX_ERROR;                                                               \
     }
 
-/* FIXME: These methods shoudl never return None... check for this and raise an error if they ever do. */
-    /* else if (yylval->pyobj == Py_None) {                             \ */
-    /*    TRACE_ERROR("BUILD_LEX(%s) returned None", method_name); \ */
-    /*    create_error_from_exception(); */
-    /*    return LEX_ERROR;                                        \ */
-    /* } */
+
+/* Initialization/finalization methods. These are separate from the yylex_init()
+ * and yylex_destroy() and they call them. */
+void yylex_initialize(const char* filename);
+void yylex_finalize(void);
 
 
 /* Global declarations; defined below. */
 extern int yy_eof_times;
 extern const char* yy_filename;
 extern int yycolumn;
+
+/* String buffer statics. */
+extern size_t strbuf_size; /* Current buffer size (not including final nul). */
+extern char* strbuf;       /* Current buffer head. */
+extern char* strbuf_end;   /* Current buffer sentinel (points to the final nul). */
+extern char* strbuf_ptr;   /* Current insertion point in buffer. */
+void strbuf_realloc(size_t num_new_chars);
 
 
 
@@ -84,15 +94,12 @@ int yy_skip_line(void);
 int strtonl(const char* buf, size_t nchars);
 
 
-/* Longest possible string, including multiline strings. */
-#define MAX_STR_BUF  16384
-
-#define SAFE_COPY(dst_ptr, value)               \
-	*dst_ptr++ = value;                     \
-	if (dst_ptr >= strbuf_end) {            \
-            BEGIN(INVALID);                     \
-	}
-/* FIXME: You have to make this code gobble the rest of the string and not fail. */
+/* Append characters to the static string buffer and verify. */
+#define SAFE_COPY_CHAR(value)                    \
+	if (strbuf_ptr >= strbuf_end) {         \
+            strbuf_realloc(1);                  \
+	}                                       \
+        *strbuf_ptr++ = value;
 
 }
 
@@ -106,11 +113,6 @@ int strtonl(const char* buf, size_t nchars);
 /*--------------------------------------------------------------------------------------*/
 /* Rules */
 %%
-
-	/* String literal buffer. */
-	char strbuf[MAX_STR_BUF];
-	char* strbuf_end = strbuf + MAX_STR_BUF;
-	char* strbuf_ptr = NULL;
 
 
  /* Newlines are output as explicit tokens, because lines matter in the syntax. */
@@ -224,7 +226,6 @@ FALSE		{
 
     /* Attempt to create the date. */
     BUILD_LEX("DATE", "iii", year, month, day);
-
     return DATE;
 }
 
@@ -256,22 +257,25 @@ FALSE		{
         BEGIN(INITIAL);
         *strbuf_ptr = '\0';
         BUILD_LEX("STRING", "s#", strbuf, strbuf_ptr - strbuf);
+        strbuf_ptr = NULL;
         return STRING;
     }
 
     /* Escape sequences. */
-    \\n       SAFE_COPY(strbuf_ptr, '\n');
-    \\t       SAFE_COPY(strbuf_ptr, '\t');
-    \\r       SAFE_COPY(strbuf_ptr, '\r');
-    \\b       SAFE_COPY(strbuf_ptr, '\b');
-    \\f       SAFE_COPY(strbuf_ptr, '\f');
-    \\(.|\n)  SAFE_COPY(strbuf_ptr, yytext[1]);
+    \\n       SAFE_COPY_CHAR('\n');
+    \\t       SAFE_COPY_CHAR('\t');
+    \\r       SAFE_COPY_CHAR('\r');
+    \\b       SAFE_COPY_CHAR('\b');
+    \\f       SAFE_COPY_CHAR('\f');
+    \\(.|\n)  SAFE_COPY_CHAR(yytext[1]);
 
     /* All other characters. */
     [^\\\"]+        {
-        char *yptr = yytext;
-        while ( *yptr ) {
-            SAFE_COPY(strbuf_ptr, *yptr++);
+        if ( yyleng > strbuf_end - strbuf_ptr ) {
+            strbuf_realloc(yyleng);
+        }
+        for (size_t i = 0; i < yyleng; ++i) {
+            *strbuf_ptr++ = yytext[i];
         }
     }
 }
@@ -303,7 +307,6 @@ FALSE		{
  /* Default rule. {bf253a29a820} */
 .			{
     unput(*yytext);
-    TRACE_ERROR("Default rule '%s'.\n", yytext);
     BEGIN(INVALID);
 }
 
@@ -316,23 +319,19 @@ FALSE		{
     return EOL;
   }
   return 0;
- }
+}
 
  /* Note: We use a subparser here because if we set a default rule to chomp this
     pattern, it would take precedence over valid rules if the matched text is
     longer and thus would break the lexer. Writing our own lexer would fix
     this and more. {bba169a1d35a} */
 <INVALID>[^ \t\n\r]+     {
-    /* TRACE_ERROR("Processing INVALID sublexer at '%s'\n", yytext); */
-
     char buffer[256];
     size_t length = snprintf(buffer, 256, "Invalid token: '%s'", yytext);
-    build_lexer_error(yylval, buffer, length);
-
+    build_lexer_error(buffer, length);
     BEGIN(INITIAL);
-
     return LEX_ERROR;
- }
+}
 
 
 %%
@@ -354,6 +353,63 @@ int yy_line_tokens = 0;
 
 /* The current column we're tokenizing at. */
 int yycolumn = 1;
+
+/* A buffer for parsing string literals. It is reused and its size is dynamically allocated. */
+size_t strbuf_size = 0;
+char* strbuf = NULL;
+char* strbuf_end;
+char* strbuf_ptr;
+
+/* Initialize the globals before running the lexer. */
+void yylex_initialize(const char* filename)
+{
+    assert(filename != NULL);
+    yy_eof_times = 0;
+    yy_filename = filename;
+    yy_line_tokens = 0;
+    yycolumn = 1;
+
+    /* Start with a decent small buffer. */
+    strbuf_size = 1024;
+    strbuf = realloc(strbuf, strbuf_size + 1);
+    strbuf_end = strbuf + strbuf_size - 1;
+    strbuf_ptr = NULL;
+
+    /* Note: If we used a reentrant parser, this routine should eventually call
+     * yylex_init(). */
+}
+
+/* Finalize the globals before running the lexer. */
+void yylex_finalize(void)
+{
+    yy_filename = NULL;
+
+    /* Finalize our reading buffer. */
+    if ( strbuf != NULL ) {
+        free(strbuf);
+        strbuf = NULL;
+    }
+
+    /* Call the yylex finalization routine. */
+    yylex_destroy();
+}
+
+
+/* Reallocate the buffer to accomodate some new characters. */
+void strbuf_realloc(size_t num_new_chars)
+{
+    assert(strbuf_ptr != NULL);
+    size_t cur_size = strbuf_ptr - strbuf;
+    size_t new_size = cur_size + num_new_chars;
+    while ( strbuf_size < new_size ) {
+        strbuf_size <<= 1;
+    }
+    strbuf = realloc(strbuf, strbuf_size + 1);
+    strbuf_ptr = strbuf + cur_size;
+    strbuf_end = strbuf + strbuf_size - 1;
+}
+
+
 
 
 #define LEXEOF 0
@@ -389,8 +445,10 @@ int strtonl(const char* buf, size_t nchars)
 }
 
 /* Build and accumulate an error on the builder object. */
-void build_lexer_error(YYSTYPE* yylval, const char* string, size_t length)
+void build_lexer_error(const char* string, size_t length)
 {
+    /* TRACE_ERROR("Invalid Token"); */
+
     /* Build and accumulate a new error object. {27d1d459c5cd} */
     PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error",
                                        "s#", string, length);
@@ -398,10 +456,13 @@ void build_lexer_error(YYSTYPE* yylval, const char* string, size_t length)
         PyErr_SetString(PyExc_RuntimeError,
                         "Internal error: Building exception from default rule");
     }
+    Py_XDECREF(rv);
 }
 
-void build_lexer_error_from_exception(YYSTYPE* yylval)
+void build_lexer_error_from_exception()
 {
+    /* TRACE_ERROR("Lexer Builder Exception"); */
+
     /* Get the exception context. */
     PyObject* ptype;
     PyObject* pvalue;

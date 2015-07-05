@@ -2,6 +2,7 @@
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import builtins
 import textwrap
 import unittest
 import io
@@ -253,7 +254,6 @@ def make_failing_importer(*removed_module_names):
 
       @mock.patch('builtins.__import__', make_failing_importer('setuptools'))
       def test_...
-
 
     Args:
       removed_module_name: The name of the module import that should raise an exception.

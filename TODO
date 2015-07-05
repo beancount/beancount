@@ -4,12 +4,12 @@ beancount: TODO
 
   - Remove plugins from ops, remove algorithms from core:
 
-      b.ops.auto_accounts -> b.plugins.auto_accounts  (easy)
+      b.ops.auto_accounts   -> b.plugins.auto_accounts  (easy)
       b.ops.implicit_prices -> b.plugins.implicit_prices  (easy)
-      b.ops.documents -> b.plugins.documents  (not sure if breaks)
+      b.ops.documents       -> b.plugins.documents  (not sure if breaks)
 
-      b.core.getters -> b.ops.realization (does it add deps?)
-      b.core.realization -> b.ops.realization (does it add deps?)
+      b.core.getters        -> b.ops.getters (does it add deps?)
+      b.core.realization    -> b.ops.realization (does it add deps?)
 
   - Define a C extension module to implement D().
 

@@ -24,3 +24,6 @@ extern PyObject* builder;
 #else
 #  define TRACE_ERROR(...)
 #endif
+
+
+#endif /* BEANCOUNT_BUILDER_H */

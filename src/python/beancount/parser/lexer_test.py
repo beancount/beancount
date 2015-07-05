@@ -40,8 +40,6 @@ def lex_tokens(fun):
     def wrapped(self):
         string = fun.__doc__
         builder = lexer.LexBuilder()
-        # Set default value for test_overlong_string().
-        builder.long_string_maxlines_default = 8
         tokens = list(lexer.lex_iter_string(textwrap.dedent(string),
                                             builder))
         return fun(self, tokens, builder.errors)
@@ -50,6 +48,8 @@ def lex_tokens(fun):
 
 class TestLexer(unittest.TestCase):
     """Test output of the lexer."""
+
+    maxDiff = None
 
     @lex_tokens
     def test_lex_iter(self, tokens, errors):
@@ -255,9 +255,11 @@ class TestLexer(unittest.TestCase):
         self.assertTrue(errors)
         self.assertTrue(re.search(r'\bcheck\b', errors[0].message))
 
-    @lex_tokens
-    def test_overlong_string(self, tokens, errors):
-        """
+    def test_string_too_long_warning(self):
+        # This tests the maximum string length implemented in Python, which is used
+        # to detect input errors.
+        test_input = """
+          ;; This is a typical error that should get detected for long strings.
           2014-01-01 note Assets:Temporary "Bla bla" "
 
           2014-02-01 open Liabilities:US:BankWithLongName:Credit-Card:Account01
@@ -273,8 +275,18 @@ class TestLexer(unittest.TestCase):
 
           2014-02-02 note Assets:Temporary "Bla bla"
         """
-        self.assertTrue(errors)
-        self.assertTrue(re.search(r'Overly long', errors[0].message))
+        builder = lexer.LexBuilder()
+        builder.long_string_maxlines_default = 8
+        list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
+        self.assertLessEqual(1, len(builder.errors))
+        self.assertRegexpMatches(builder.errors[0].message, 'String too long')
+
+    def test_very_long_string(self):
+        # This tests lexing with a string of 256k.
+        test_input = '"' + ('1234567890ABCDEF' * (256*64)) + '"'
+        builder = lexer.LexBuilder()
+        list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
+        self.assertLessEqual(0, len(builder.errors))
 
     @lex_tokens
     def test_no_final_newline(self, tokens, errors):
@@ -384,6 +396,17 @@ class TestLexerErrors(unittest.TestCase):
                           ('EOL', 5, '\x00', None)], tokens)
         self.assertEqual(1, len(errors))
 
+    def test_lexer_builder_returns_none(self):
+        builder = lexer.LexBuilder()
+        def return_none(string):
+            return None
+        builder.STRING = return_none
+        tokens = list(lexer.lex_iter_string('"Something"', builder))
+        self.assertEqual([('LEX_ERROR', 1, '"', None),
+                          ('EOL', 1, '\x00', None)], tokens)
+        self.assertEqual(1, len(builder.errors))
+        self.assertRegexpMatches(builder.errors[0].message, "None result from lexer")
+
     @lex_tokens
     def test_lexer_exception_DATE(self, tokens, errors):
         """
@@ -426,7 +449,6 @@ class TestLexerErrors(unittest.TestCase):
                           ('EOL', 3, '\n', None),
                           ('EOL', 3, '\x00', None)], tokens)
         self.assertEqual(1, len(builder.errors))
-
 
     def _run_lexer_with_raising_builder_method(self, test_input, method_name,
                                                expected_tokens):

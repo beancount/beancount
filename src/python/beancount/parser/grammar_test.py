@@ -1,90 +1,57 @@
 """
-Tests for parser.
+Tests for grammar parser.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import datetime
 import unittest
-import tempfile
+import inspect
 import textwrap
 import re
-import sys
-import subprocess
+from unittest import mock
 
+from beancount.core.number import D
 from beancount.parser import parser
+from beancount.parser import lexer
+from beancount.core import data
+from beancount.core import amount
+from beancount.core import interpolate
+from beancount.core import interpolate_test
 from beancount.utils import test_utils
+from beancount.parser import grammar
+from beancount.parser import cmptest
 
 
-class TestParserDoc(unittest.TestCase):
+def check_list(test, objlist, explist):
+    """Assert the list of objects against the expected specification.
 
-    @parser.parsedoc
-    def test_parsedoc(self, entries, errors, options_map):
-        """
-        2013-05-40 * "Nice dinner at Mermaid Inn"
-          Expenses:Restaurant         100 USD
-          Assets:US:Cash
-        """
-        self.assertTrue(errors)
+    Args:
+      test: the instance of the test object, used for generating assertions.
+      objlist: the list of objects returned.
 
-    # Note: nose does not honor expectedFailure as of 1.3.4. We would use it
-    # here instead of doing this manually.
-    def test_parsedoc_noerrors(self):
-        @parser.parsedoc_noerrors
-        def test_function(self, entries, options_map):
-            """
-            2013-05-40 * "Nice dinner at Mermaid Inn"
-              Expenses:Restaurant         100 USD
-              Assets:US:Cash
-            """
-        try:
-            test_function(unittest.TestCase())
-            self.fail("Test should have failed.")
-        except AssertionError:
-            pass
-
-
-class TestParserInputs(unittest.TestCase):
-    """Try difference sources for the parser's input."""
-
-    INPUT = """
-      2013-05-18 * "Nice dinner at Mermaid Inn"
-        Expenses:Restaurant         100 USD
-        Assets:US:Cash
+      explist: the list of objects expected. 'explist' can be an integer, to
+               check the length of the list; if it is a list of types, the types
+               are checked against the types of the objects in the list. This is
+               meant to be a convenient method.
     """
+    if isinstance(explist, int):
+        test.assertEqual(explist, len(objlist))
+    elif isinstance(explist, (tuple, list)):
+        test.assertEqual(len(explist), len(objlist))
+        for obj, exp in zip(objlist, explist):
+            test.assertTrue(isinstance(type(obj), type(exp)))
 
-    def test_parse_string(self):
-        entries, errors, _ = parser.parse_string(self.INPUT)
-        self.assertEqual(1, len(entries))
-        self.assertEqual(0, len(errors))
 
-    def test_parse_file(self):
-        with tempfile.NamedTemporaryFile('w', suffix='.beancount') as file:
-            file.write(self.INPUT)
-            file.flush()
-            entries, errors, _ = parser.parse_file(file.name)
-            self.assertEqual(1, len(entries))
-            self.assertEqual(0, len(errors))
+def raise_exception(*args, **kwargs):
+    """Raises a ValueError exception.
 
-    @classmethod
-    def parse_stdin(cls):
-        entries, errors, _ = parser.parse_file("-")
-        assert entries
-        assert not errors
-
-    def test_parse_stdin(self):
-        code = ('import beancount.parser.parser_test as p; '
-                'p.TestParserInputs.parse_stdin()')
-        pipe = subprocess.Popen([sys.executable, '-c', code, __file__],
-                                env=test_utils.subprocess_env(),
-                                stdin=subprocess.PIPE)
-        output, errors = pipe.communicate(self.INPUT.encode('utf-8'))
-        self.assertEqual(0, pipe.returncode)
-
-    def test_parse_string_None(self):
-        input_string = report_filename = None
-        with self.assertRaises(TypeError):
-            entries, errors, _ = parser.parse_string(input_string)
-        with self.assertRaises(TypeError):
-            entries, errors, _ = parser.parse_string("something", None, report_filename)
+    Args:
+      *args: Callback arguments.
+      *kwargs: Callback keyword arguments.
+    Raises:
+      ValueError: Unconditionally.
+    """
+    raise ValueError("Patched exception in parser")
 
 
 class TestParserEntryTypes(unittest.TestCase):
@@ -386,6 +353,16 @@ class TestSyntaxErrors(unittest.TestCase):
         self.assertEqual(1, len(errors))
         self.assertIsInstance(errors[0], lexer.LexerError)
         self.assertRegexpMatches(errors[0].message, 'Invalid token')
+
+    @parser.parsedoc
+    def test_no_final_newline(self, entries, errors, _):
+        """
+          2014-11-02 *
+            Assets:Something   1 USD
+            Assets:Other      -1 USD"""
+        self.assertFalse(errors)
+        self.assertEqual(1, len(entries))
+        self.assertEqual(2, len(entries[0].postings))
 
 
 class TestLineNumbers(unittest.TestCase):
@@ -1177,23 +1154,6 @@ class TestMetaData(unittest.TestCase):
             }, entries[0].meta)
 
 
-class TestUnicodeErrors(unittest.TestCase):
-
-    utf8_test_string = textwrap.dedent("""
-      2015-01-01 open Assets:Something
-      2015-05-23 note Assets:Something "¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼ "
-    """)
-
-    def test_bytes_encoded_utf8(self):
-        parser.parse_string(self.utf8_test_string.encode('utf-8'))
-
-    def test_bytes_encoded_latin1(self):
-        # Note: This should fail without dumping core. This should fail
-        # elegantly. This should be failing in the lexer.
-        with self.assertRaises(UnicodeDecodeError):
-            parser.parse_string(self.utf8_test_string.encode('latin1', 'ignore'))
-
-
 class TestArithmetic(unittest.TestCase):
 
     @parser.parsedoc
@@ -1207,3 +1167,486 @@ class TestArithmetic(unittest.TestCase):
         postings = entries[0].postings
         self.assertEqual(D('4'), postings[0].position.number)
         self.assertEqual(D('2.5'), postings[1].position.number)
+
+
+class TestLexerAndParserErrors(cmptest.TestCase):
+    """There are a number of different paths where errors may occur. This test case
+    intends to exercise them all. This docstring explains how it all works (it's
+    a bit complicated).
+
+    Expectations: The parser.parse_*() functions never raise exceptions, they
+    always produce a list of error messages on the builder objects. This is by
+    design: we have a single way to produce and report errors.
+
+    The lexer may fail in two different ways:
+
+    * Invalid Token: yylex() is invoked by the parser... the lexer rules are
+      processed and all fail and the default rule of the lexer gets called at
+      {bf253a29a820}. The lexer immediately switches to its INVALID subparser to
+      chomp the rest of the invalid token's unrecognized characters until it
+      hits some whitespace (see {bba169a1d35a}). A new LexerError is created and
+      accumulated by calling the build_lexer_error() method on the builder
+      object using this text (see {0e31aeca3363}). The lexer then returns a
+      LEX_ERROR token to the parser, which fails as below.
+
+    * Lexer Builder Exception: The lexer recognizes a valid token and invokes a
+      callback on the builder using BUILD_LEX(). However, an exception is raised
+      in that Python code ({3cfb2739349a}). The exception's error text is saved
+      and this is used to build an error on the lexer builder at
+      build_lexer_error().
+
+    For both the errors above, when the parser receives the LEX_ERROR token, it
+    is an unexpected token (because none of the rules handle it), so it calls
+    yyerror() {ca6aab8b9748}. Because the lexer has already registered an error
+    in the error list, in yyerror() we simply ignore it and do nothing (see
+    {ca6aab8b9748}).
+
+    Error recovery then proceeds by successive reductions of the "error" grammar
+    rules which discards all tokens until a valid rule can be reduced again
+    ({3d95e55b654e}). Note that Bison issues a single call to yyerror() and
+    keeps reducing invalid "error" rules silently until another one succeeds. We
+    ignore the directive and restart parsing from that point on. If the error
+    occurred on a posting in progress of being parsed, because the "error" rule
+    is not a valid posting of a transaction, that transaction will not be
+    produced and thus is ignore, which is what we want.
+
+    The parser may itself also encounter two similar types of errors:
+
+    * Syntax Error: There is an error in the grammar of the input. yyparse() is
+      called automatically by the generated code and we call
+      build_grammar_error() to register the error. Error recovery proceeds
+      similarly to what was described previously.
+
+    * Grammar Builder Exception: A grammar rule is reduced succesfully, a
+      builder method is invoked and raises a Python exception. A macro in the
+      code that invokes this method is used to catch this error and calls
+      build_grammar_error_from_exception() to register an error and makes the
+      parser issue an error wth YYERROR (see {05bb0fb60e86}).
+
+    We never call YYABORT anywhere so the yyparse() function should never return
+    anything else than 0. If it does, we translate that into a Python
+    RuntimeError exception, or a MemoryError exception (if yyparse() ran out of
+    memory), see {459018e2905c}.
+    """
+
+    @parser.parsedoc
+    def test_lexer_invalid_token(self, entries, errors, _):
+        """
+          2000-01-01 open ) USD
+        """
+        self.assertEqual(0, len(entries))
+        self.assertEqual(1, len(errors))
+        self.assertRegexpMatches(errors[0].message, r"Invalid token: '\)'")
+
+    @parser.parsedoc
+    def test_lexer_invalid_token__recovery(self, entries, errors, _):
+        """
+          2000-01-01 open ) USD
+          2000-01-02 open Assets:Something
+        """
+        self.assertEqualEntries("""
+          2000-01-02 open Assets:Something
+        """, entries)
+        self.assertEqual(1, len(errors))
+        self.assertRegexpMatches(errors[0].message, r"Invalid token: '\)'")
+
+    @parser.parsedoc
+    def test_lexer_exception(self, entries, errors, _):
+        """
+          2000-13-32 open Assets:Something
+        """
+        self.assertEqual(0, len(entries))
+        self.assertEqual(1, len(errors))
+        self.assertRegexpMatches(errors[0].message, 'month must be in 1..12')
+
+    @parser.parsedoc
+    def test_lexer_exception__recovery(self, entries, errors, _):
+        """
+          2000-13-32 open Assets:Something
+          2000-01-02 open Assets:Working
+        """
+        self.assertEqualEntries("""
+          2000-01-02 open Assets:Working
+        """, entries)
+        self.assertEqual(1, len(entries))
+        self.assertEqual(1, len(errors))
+        self.assertRegexpMatches(errors[0].message, 'month must be in 1..12')
+
+    def test_lexer_errors_in_postings(self):
+        txn_strings = textwrap.dedent("""
+
+          2000-01-02 *
+            Assets:Working  )
+            Assets:Working  11.11 USD
+            Assets:Working  22.22 USD
+
+          2000-01-02 *
+            Assets:Working  11.11 USD
+            Assets:Working  )
+            Assets:Working  22.22 USD
+
+          2000-01-02 *
+            Assets:Working  11.11 USD
+            Assets:Working  22.22 USD
+            Assets:Working  )
+
+          2000-01-02 *
+            Assets:Working  2014-13-32
+            Assets:Working  11.11 USD
+            Assets:Working  22.22 USD
+
+          2000-01-02 *
+            Assets:Working  11.11 USD
+            Assets:Working  2014-13-32
+            Assets:Working  22.22 USD
+
+          2000-01-02 *
+            Assets:Working  11.11 USD
+            Assets:Working  22.22 USD
+            Assets:Working  2014-13-32
+
+        """).strip().split('\n\n')
+        self.assertEqual(6, len(txn_strings))
+        for txn_string in txn_strings:
+            input_string = txn_string + textwrap.dedent("""
+              2000-01-02 open Assets:Working
+            """)
+            entries, errors, _ = parser.parse_string(input_string)
+
+            # Check that the transaction is not produced.
+            self.assertEqualEntries("""
+              2000-01-02 open Assets:Working
+            """, entries)
+            self.assertEqual(1, len(entries))
+            self.assertEqual(1, len(errors))
+            self.assertRegexpMatches(errors[0].message,
+                                     '(Invalid token|month must be in 1..12)')
+
+    @parser.parsedoc
+    def test_grammar_syntax_error(self, entries, errors, _):
+        """
+          2000-01-01 open open
+        """
+        self.assertEqual(0, len(entries))
+        self.assertEqual(1, len(errors))
+        self.assertRegexpMatches(errors[0].message, r"syntax error")
+
+    @parser.parsedoc
+    def test_grammar_syntax_error__recovery(self, entries, errors, _):
+        """
+          2000-01-01 open Assets:Before
+          2000-01-02 open open
+          2000-01-03 open Assets:After
+        """
+        self.assertEqual(1, len(errors))
+        self.assertRegexpMatches(errors[0].message, r"syntax error")
+        self.assertEqualEntries("""
+          2000-01-01 open Assets:Before
+          2000-01-03 open Assets:After
+        """, entries)
+
+    @parser.parsedoc
+    def test_grammar_syntax_error__recovery2(self, entries, errors, _):
+        """
+          2000-01-01 open open
+          2000-01-02 open Assets:Something
+        """
+        self.assertEqual(1, len(errors))
+        self.assertRegexpMatches(errors[0].message, r"syntax error")
+        self.assertEqual(1, len(entries))
+        self.assertEqualEntries("""
+          2000-01-02 open Assets:Something
+        """, entries)
+
+    @parser.parsedoc
+    def test_grammar_syntax_error__multiple(self, entries, errors, _):
+        """
+          2000-01-01 open Assets:Before
+          2000-01-02 open open
+          2000-01-03 open Assets:After
+          2000-01-04 close close
+          2000-01-05 close Assets:After
+        """
+        self.assertEqual(2, len(errors))
+        for error in errors:
+            self.assertRegexpMatches(error.message, r"syntax error")
+        self.assertEqual(3, len(entries))
+        self.assertEqualEntries("""
+          2000-01-01 open Assets:Before
+          2000-01-03 open Assets:After
+          2000-01-05 close Assets:After
+        """, entries)
+
+    def check_entries_errors(self, entries, errors):
+        self.assertEqual(1, len(errors))
+        self.assertRegexpMatches(errors[0].message, 'Patched exception')
+        self.assertEqual(2, len(entries))
+
+    @mock.patch('beancount.parser.grammar.Builder.pushtag', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__pushtag(self, entries, errors, _):
+        """
+          2000-01-01 open Assets:Before
+          pushtag #sometag
+          2010-01-01 close Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.poptag', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__poptag(self, entries, errors, _):
+        """
+          2000-01-01 open Assets:Before
+          poptag #sometag
+          2010-01-01 close Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.option', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__option(self, entries, errors, _):
+        """
+          2000-01-01 open Assets:Before
+          option "operating_currency" "CAD"
+          2010-01-01 close Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.include', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__include(self, entries, errors, _):
+        """
+          2000-01-01 open Assets:Before
+          include "answer.beancount"
+          2010-01-01 close Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.plugin', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__plugin(self, entries, errors, _):
+        """
+          2000-01-01 open Assets:Before
+          plugin "answer.beancount"
+          2010-01-01 close Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.amount', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__amount(self, entries, errors, _):
+        """
+          2000-01-01 open Assets:Before
+          2001-02-02 balance Assets:Before    23.00 USD
+          2010-01-01 close Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.lot_cost_date', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__lot_cost_date(self, entries, errors, _):
+        """
+          2000-01-01 open Assets:Before
+          2001-02-02 *
+            Assets:Before   10.00 HOOL {100.00 USD}
+            Assets:After   -100.00 USD
+          2010-01-01 close Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.position', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__position(self, entries, errors, _):
+        """
+          2000-01-01 open Assets:Before
+          2001-02-02 *
+            Assets:Before   100.00 USD
+            Assets:After   -100.00 USD
+          2010-01-01 close Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.open', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__open(self, entries, errors, _):
+        """
+          2010-01-01 balance Assets:Before  1 USD
+          2000-01-01 open Assets:Before
+          2010-01-01 close Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.close', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__close(self, entries, errors, _):
+        """
+          2010-01-01 balance Assets:Before  1 USD
+          2010-01-01 close Assets:Before
+          2000-01-01 open Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.commodity', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__commodity(self, entries, errors, _):
+        """
+          2010-01-01 close Assets:Before
+          2010-01-01 commodity USD
+          2000-01-01 open Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.pad', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__pad(self, entries, errors, _):
+        """
+          2010-01-01 close Assets:Before
+          2010-01-01 pad Assets:Before Assets:After
+          2000-01-01 open Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.balance', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__balance(self, entries, errors, _):
+        """
+          2010-01-01 close Assets:Before
+          2010-01-01 balance Assets:Before 100 USD
+          2000-01-01 open Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.event', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__event(self, entries, errors, _):
+        """
+          2010-01-01 close Assets:Before
+          2010-01-01 event "location" "New York, NY"
+          2000-01-01 open Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.price', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__price(self, entries, errors, _):
+        """
+          2010-01-01 close Assets:Before
+          2010-01-01 price HOOL 20 USD
+          2000-01-01 open Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.note', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__note(self, entries, errors, _):
+        """
+          2010-01-01 close Assets:Before
+          2010-01-01 note Assets:Before "Something something"
+          2000-01-01 open Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.document', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__document(self, entries, errors, _):
+        """
+          2010-01-01 close Assets:Before
+          2010-01-01 document Assets:Before "/path/to/document.png"
+          2000-01-01 open Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.key_value', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__key_value(self, entries, errors, _):
+        """
+          2010-01-01 close Assets:Before
+          2010-01-01 commodity HOOL
+            key: "Value"
+          2000-01-01 open Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.posting', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__posting(self, entries, errors, _):
+        """
+          2010-01-01 close Assets:Before
+          2010-01-01 *
+            Assets:Before   100.00 USD
+            Assets:After   -100.00 USD
+          2000-01-01 open Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.txn_field_new', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__txn_field_new(self, entries, errors, _):
+        """
+          2010-01-01 close Assets:Before
+          2010-01-01 * "Payee" "Narration"
+            Assets:Before   100.00 USD
+            Assets:After   -100.00 USD
+          2000-01-01 open Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.txn_field_TAG', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__txn_field_TAG(self, entries, errors, _):
+        """
+          2010-01-01 close Assets:Before
+          2010-01-01 * "Payee" "Narration" #sometag
+            Assets:Before   100.00 USD
+            Assets:After   -100.00 USD
+          2000-01-01 open Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.txn_field_LINK', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__txn_field_LINK(self, entries, errors, _):
+        """
+          2010-01-01 close Assets:Before
+          2010-01-01 * "Payee" "Narration" ^somelink
+            Assets:Before   100.00 USD
+            Assets:After   -100.00 USD
+          2000-01-01 open Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.txn_field_STRING', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__txn_field_STRING(self, entries, errors, _):
+        """
+          2010-01-01 close Assets:Before
+          2010-01-01 * "Payee" "Narration" ^somelink
+            Assets:Before   100.00 USD
+            Assets:After   -100.00 USD
+          2000-01-01 open Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.txn_field_PIPE', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__txn_field_PIPE(self, entries, errors, _):
+        """
+          2010-01-01 close Assets:Before
+          2010-01-01 * "Payee" | "Narration"
+            Assets:Before   100.00 USD
+            Assets:After   -100.00 USD
+          2000-01-01 open Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.transaction', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__transaction(self, entries, errors, _):
+        """
+          2010-01-01 close Assets:Before
+          2010-01-01 * "Payee" | "Narration"
+            Assets:Before   100.00 USD
+            Assets:After   -100.00 USD
+          2000-01-01 open Assets:Before
+        """
+        self.check_entries_errors(entries, errors)

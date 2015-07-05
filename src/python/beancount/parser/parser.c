@@ -31,6 +31,22 @@ PyDoc_STRVAR(parse_string_doc,
 Your builder is responsible to accumulating results.");
 
 
+/* Handle the result of yyparse() {459018e2905c}. */
+PyObject* handle_yyparse_result(int result)
+{
+    /* Check for internal errors during parsing (which would be the result of
+     * calling YYABORT, which we don't call), and this should raise an
+     * exception. */
+    if ( result == 1 ) {
+        return PyErr_Format(PyExc_RuntimeError, "Parser aborted (internal error)");
+    }
+    else if ( result == 2 ) {
+        return PyErr_Format(PyExc_MemoryError, "Parser ran out of memory");
+    }
+    assert(result == 0);
+    Py_RETURN_NONE;
+}
+
 PyObject* parse_file(PyObject *self, PyObject *args, PyObject* kwds)
 {
     FILE* fp = NULL;
@@ -50,7 +66,6 @@ PyObject* parse_file(PyObject *self, PyObject *args, PyObject* kwds)
                                       &yydebug) ) {
         return NULL;
     }
-    Py_XINCREF(builder);
 
     /* Open the file. */
     if ( strcmp(filename, "-") == 0 ) {
@@ -64,37 +79,27 @@ PyObject* parse_file(PyObject *self, PyObject *args, PyObject* kwds)
     }
 
     /* Initialize the lexer. */
-    /* Note: This needs become part of yylex_init(). See 2.5.37.*/
-    yy_eof_times = 0;
+    yylex_initialize(report_filename != NULL ? report_filename : filename);
+    yyin = fp;
 
     /* Initialize the parser. */
-    yyin = fp;
-    if ( report_filename != 0 ) {
-        yy_filename = report_filename;
-    }
-    else {
-        yy_filename = filename;
-    }
     yy_firstline = report_firstline;
 
     /* Parse! This will call back methods on the builder instance. */
     result = yyparse();
 
     /* Finalize the parser. */
+    /* Noop. */
+
+    /* Finalize the lexer. */
     if ( fp != NULL ) {
         fclose(fp);
     }
-    yylex_destroy();
-    Py_XDECREF(builder);
+    yylex_finalize();
+
     builder = 0;
-    yy_filename = 0;
 
-    /* Check for parsing errors. */
-    if ( result != 0 ) {
-        return NULL;
-    }
-
-    Py_RETURN_NONE;
+    return handle_yyparse_result(result);
 }
 
 PyObject* parse_string(PyObject *self, PyObject *args, PyObject* kwds)
@@ -116,21 +121,12 @@ PyObject* parse_string(PyObject *self, PyObject *args, PyObject* kwds)
                                       &yydebug) ) {
         return NULL;
     }
-    Py_XINCREF(builder);
-
-    yy_switch_to_buffer(yy_scan_string(input_string));
 
     /* Initialize the lexer. */
-    /* Note: This needs become part of yylex_init(). See 2.5.37.*/
-    yy_eof_times = 0;
+    yylex_initialize(report_filename != NULL ? report_filename : "<string>");
+    yy_switch_to_buffer(yy_scan_string(input_string));
 
     /* Initialize the parser. */
-    if ( report_filename != 0 ) {
-        yy_filename = report_filename;
-    }
-    else {
-        yy_filename = "<string>";
-    }
     yy_firstline = report_firstline;
 
     /* Parse! This will call back methods on the builder instance. */
@@ -138,38 +134,35 @@ PyObject* parse_string(PyObject *self, PyObject *args, PyObject* kwds)
     TRACE_ERROR("Result %d\n", result);
 
     /* Finalize the parser. */
-    yylex_destroy();
-    Py_XDECREF(builder);
+    /* Noop. */
+
+    /* Finalize the lexer. */
+    yylex_finalize();
+
     builder = 0;
-    yy_filename = 0;
 
-    /* Check for parsing errors. */
-    if ( result != 0 ) {
-        return NULL;
-    }
-
-    Py_RETURN_NONE;
+    return handle_yyparse_result(result);
 }
 
 PyObject* get_yyfilename(PyObject *self, PyObject *args)
 {
-  return PyUnicode_FromString(yy_filename);
+    return PyUnicode_FromString(yy_filename);
 }
 
 PyObject* get_yylineno(PyObject *self, PyObject *args)
 {
-  return PyLong_FromLong(yylineno + yy_firstline);
+    return PyLong_FromLong(yylineno + yy_firstline);
 }
 
 
 
 /* Inititalize the lexer to start running in debug mode. */
-PyObject* lexer_init(PyObject *self, PyObject *args)
+PyObject* lexer_initialize(PyObject *self, PyObject *args)
 {
     FILE* fp = NULL;
 
     /* Unpack and validate arguments */
-    const char* filename = 0;
+    const char* filename = NULL;
     if ( !PyArg_ParseTuple(args, "sO", &filename, &builder) ) {
         return NULL;
     }
@@ -182,13 +175,22 @@ PyObject* lexer_init(PyObject *self, PyObject *args)
     }
 
     /* Initialize the lexer. */
-    /* Note: This needs become part of yylex_init(). See 2.5.37.*/
-    yy_eof_times = 0;
-
-    /* Initialize the parser. */
+    yylex_initialize(filename);
     yyin = fp;
-    yy_filename = filename;
-    yy_eof_times = 0;
+
+    Py_RETURN_NONE;
+}
+
+/* Inititalize the lexer to start running in debug mode. */
+PyObject* lexer_finalize(PyObject *self, PyObject *args)
+{
+    /* Finalize the lexer. */
+    yylex_finalize();
+
+    /* /\* Close the file. *\/ */
+    /* if ( fclose(yyin) != 0 ) { */
+    /*     return PyErr_Format(PyExc_IOError, "Cannot close lexer file"); */
+    /* } */
 
     Py_RETURN_NONE;
 }
@@ -232,8 +234,9 @@ static PyMethodDef module_functions[] = {
     {"parse_string", (PyCFunction)parse_string, METH_VARARGS|METH_KEYWORDS, parse_string_doc},
     {"get_yyfilename", (PyCFunction)get_yyfilename, METH_VARARGS, NULL},
     {"get_yylineno", (PyCFunction)get_yylineno, METH_VARARGS, NULL},
-    {"lexer_init", lexer_init, METH_VARARGS, NULL},
+    {"lexer_initialize", lexer_initialize, METH_VARARGS, NULL},
     {"lexer_next", lexer_next, METH_VARARGS, NULL},
+    {"lexer_finalize", lexer_finalize, METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL} /* Sentinel */
 };
 

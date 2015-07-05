@@ -13,10 +13,11 @@ from beancount.parser import grammar
 from beancount.parser import printer
 from beancount.parser import hashsrc
 
-# pylint: disable=unused-import
 from beancount.parser.grammar import ParserError
 from beancount.parser.grammar import ParserSyntaxError
 from beancount.parser.grammar import DeprecatedError
+# pylint: disable=unused-import
+ParserError, ParserSyntaxError, DeprecatedError # pyflakes
 
 
 # When importing the module, always check that the compiled source matched the
