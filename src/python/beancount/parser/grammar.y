@@ -32,6 +32,18 @@
    None when setting that and to have the cleanup/decref code be done all within
    the macro, to simplify all the code below. */
 
+/* #define BUILDY(target, clean, method_name, format, ...)                         \ */
+/*     target = PyObject_CallMethod(builder, method_name, format, __VA_ARGS__);    \ */
+/*     if (target == NULL) {                                                       \ */
+/*         build_grammar_error_from_exception();                                   \ */
+/*         clean;                                                                  \ */
+/*         YYERROR;                                                                \ */
+/*     }                                                                           \ */
+/*     else {                                                                      \ */
+/*         clean;                                                                  \ */
+/*     } */
+
+
 
 /* First line of reported file/line string. This is used as #line. */
 int yy_firstline;
@@ -100,13 +112,13 @@ void yyerror(char const* message)
 const char* getTokenName(int token);
 
 
-/* #define DECREF1(x)  Py_DECREF(x); */
-#define DECREF1(x1)
-#define DECREF2(x1, x2)
-#define DECREF3(x1, x2, x3)
-#define DECREF4(x1, x2, x3, x4)
-#define DECREF5(x1, x2, x3, x4, x5)
-#define DECREF6(x1, x2, x3, x4, x5, x6)
+/* Macros to clean up memory for temporaries in rule reductions. */
+#define DECREF1(x1)                        Py_DECREF(x1);
+#define DECREF2(x1, x2)                    DECREF1(x1); Py_DECREF(x2);
+#define DECREF3(x1, x2, x3)                DECREF2(x1, x2); Py_DECREF(x3);
+#define DECREF4(x1, x2, x3, x4)            DECREF3(x1, x2, x3); Py_DECREF(x4);
+#define DECREF5(x1, x2, x3, x4, x5)        DECREF4(x1, x2, x3, x4); Py_DECREF(x5);
+#define DECREF6(x1, x2, x3, x4, x5, x6)    DECREF5(x1, x2, x3, x4, x5); Py_DECREF(x6);
 
 %}
 
@@ -294,7 +306,7 @@ txn_fields : empty
 transaction : DATE txn txn_fields eol posting_or_kv_list
             {
                 BUILDX($$, "transaction", "siObOO", FILE_LINE_ARGS, $1, $2, $3, $5);
-                DECREF4($1, $2, $3, $5);
+                DECREF3($1, $3, $5);
             }
 
 optflag : empty
@@ -460,7 +472,7 @@ amount_tolerance : number_expr CURRENCY
                  {
                      BUILDX($$.pyobj1, "amount", "OO", $1, $4);
                      $$.pyobj2 = $3;
-                     DECREF3($1, $3, $4);
+                     DECREF2($1, $4);
                  }
 
 position : amount
