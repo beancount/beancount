@@ -3,7 +3,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import datetime
 import unittest
 
-from beancount.core.amount import D
+from beancount.core.number import D
 from beancount.query import query_parser as qp
 
 

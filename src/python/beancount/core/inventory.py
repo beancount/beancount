@@ -44,13 +44,13 @@ import copy
 import collections
 from datetime import date
 
-from .amount import ZERO
-from .amount import Amount
-from .position import Lot
-from .position import Position
-from .position import lot_currency_pair
-from .position import from_string as position_from_string
-from .display_context import DEFAULT_FORMATTER
+from beancount.core.number import ZERO
+from beancount.core.amount import Amount
+from beancount.core.position import Lot
+from beancount.core.position import Position
+from beancount.core.position import lot_currency_pair
+from beancount.core.position import from_string as position_from_string
+from beancount.core.display_context import DEFAULT_FORMATTER
 
 # pylint: disable=invalid-name
 try:
@@ -139,17 +139,26 @@ class Inventory(list):
         """
         return sorted(self) == sorted(other)
 
-    def is_small(self, epsilon):
+    def is_small(self, tolerances, default_tolerances={}):
         """Return true if all the positions in the inventory are small.
 
         Args:
-          epsilon: A Decimal, the small number of units under which a position
-            is considered small as well.
+          tolerances: A Decimal, the small number of units under which a position
+            is considered small, or a dict of currency to such epsilon precision.
         Returns:
           A boolean.
         """
-        return all(abs(position.number) <= epsilon
-                   for position in self)
+        if isinstance(tolerances, dict):
+            for position in self:
+                tolerance = get_tolerance(tolerances, default_tolerances,
+                                          position.lot.currency)
+
+                if abs(position.number) > tolerance:
+                    return False
+            return True
+        else:
+            return not any(abs(position.number) > tolerances
+                           for position in self)
 
     def is_mixed(self):
         """Return true if the inventory contains a mix of positive and negative lots for
@@ -459,3 +468,24 @@ def check_invariants(inventory):
     # Check that none of the amounts is zero.
     for position in positions:
         assert position.number, position
+
+
+def get_tolerance(tolerances, default_tolerances, currency):
+    """Given dicts of tolerances, return the tolerance for the currency.
+
+    If a tolerance hasn't been specified for the given currency, return the
+    global default tolerance, or the default value (zero).
+
+    Args:
+      tolerances: A dict of currency to a tolerance Decimal value.
+      default_tolerances: A fallback dict of currency to a tolerance Decimal value.
+      currency: A string, the currency to look up.
+    Returns:
+      A Decimal value, the tolerance to check for.
+    """
+    tolerance = tolerances.get(currency, None)
+    if tolerance is None:
+        tolerance = default_tolerances.get(currency, None)
+        if tolerance is None:
+            tolerance = default_tolerances.get('*', ZERO)
+    return tolerance

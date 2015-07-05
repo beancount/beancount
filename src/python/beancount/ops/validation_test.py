@@ -6,9 +6,9 @@ import textwrap
 
 from beancount.core import data
 from beancount.parser import parser
-from beancount.parser import printer
 from beancount.parser import cmptest
 from beancount.ops import validation
+from beancount import loader
 
 
 class TestValidateInventoryBooking(cmptest.TestCase):
@@ -81,7 +81,8 @@ class TestValidateInventoryBooking(cmptest.TestCase):
         self.assertEqual([validation.ValidationError], list(map(type, validation_errors)))
 
     @parser.parsedoc
-    def test_mixed_lots_in_multiple_transactions_augmenting(self, entries, errors, options_map):
+    def test_mixed_lots_in_multiple_transactions_augmenting(self,
+                                                            entries, errors, options_map):
         """
           2013-05-01 open Assets:Bank:Investing
           2013-05-01 open Equity:Opening-Balances
@@ -98,7 +99,8 @@ class TestValidateInventoryBooking(cmptest.TestCase):
         self.assertEqual([validation.ValidationError], list(map(type, validation_errors)))
 
     @parser.parsedoc
-    def test_mixed_lots_in_multiple_transactions_reducing(self, entries, errors, options_map):
+    def test_mixed_lots_in_multiple_transactions_reducing(self,
+                                                          entries, errors, options_map):
         """
           2013-05-01 open Assets:Bank:Investing
           2013-05-01 open Equity:Opening-Balances
@@ -434,3 +436,80 @@ class TestValidate(cmptest.TestCase):
                             for error in errors))
         self.assertTrue(any(re.match('Invalid currency', error.message)
                             for error in errors))
+
+
+class TestValidateTolerances(cmptest.TestCase):
+
+    @loader.loaddoc
+    def test_tolerance_implicit_integral(self, entries, errors, options_map):
+        """
+        plugin "beancount.ops.auto_accounts"
+
+        2014-02-01 * "Buy"
+          Assets:Investments:Stock   1 AAPL {41.00 USD}
+          Assets:Investments:Cash  -41 USD
+
+        2014-02-02 * "Buy"
+          Assets:Investments:Stock   1 AAPL {41.00 USD}
+          Assets:Investments:Cash  -41.00 USD
+
+        2014-02-03 * "Buy"
+          Assets:Investments:Stock   1 AAPL {41.00 USD}
+          Assets:Investments:Cash  -41.00000 USD
+        """
+        self.assertFalse(errors)
+
+    @loader.loaddoc
+    def test_tolerance_implicit_fractional_global(self, entries, errors, options_map):
+        """
+        plugin "beancount.ops.auto_accounts"
+        option "default_tolerance" "*:0.005"
+
+        1997-03-06 * "Buy"
+          Assets:Insurance:HYPOT       7.9599 HYPOT {125.63 CAD}
+          Assets:Insurance:Cash         -1000 CAD
+        """
+        self.assertFalse(errors)
+
+    @loader.loaddoc
+    def test_tolerance_implicit_fractional_specific(self, entries, errors, options_map):
+        """
+        plugin "beancount.ops.auto_accounts"
+        option "default_tolerance" "CAD:0.005"
+
+        1997-03-06 * "Buy"
+          Assets:Insurance:HYPOT       7.9599 HYPOT {125.63 CAD}
+          Assets:Insurance:Cash         -1000 CAD
+        """
+        self.assertFalse(errors)
+
+    @loader.loaddoc
+    def test_tolerance_implicit_fractional_withprec(self, entries, errors, options_map):
+        """
+        plugin "beancount.ops.auto_accounts"
+
+        2000-01-01 * "Buy"
+          Assets:Insurance:HYPOT          7.9599 HYPOT {125.63 CAD}
+          Assets:Insurance:Cash         -1000.00 CAD
+        """
+        self.assertFalse(errors)
+
+    # Note: this is a test that would work if we inferred tolerances from
+    # postings at cost. See
+    # https://groups.google.com/d/msg/beancount/5u-xgR-ttjg/sXfU32ItRscJ for a
+    # discussion.
+    #
+    # @loader.loaddoc
+    # def test_tolerance_implicit_from_converted_cost(self, entries, errors, options_map):
+    #     """
+    #     plugin "beancount.ops.auto_accounts"
+    #     option "default_tolerance" "USD:0.0001"
+    #
+    #     ;; Note: Residual is 0.074453 USD here, but should work because of inferred
+    #     ;; tolerance on (0.001 x 148.93) / 2 = 0.07447707 > 0.074465 residual.
+    #     ;;
+    #     2011-01-25 * "Transfer of Assets"
+    #       Assets:RothIRA:Vanguard:VTIVX  250.752 VTIVX {18.348089 USD} @  13.83 USD
+    #       Assets:RothIRA:DodgeCox:DODGX  -30.892 DODGX {   148.93 USD} @ 112.26 USD
+    #     """
+    #     self.assertFalse(errors)

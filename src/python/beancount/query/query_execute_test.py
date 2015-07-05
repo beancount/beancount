@@ -5,8 +5,8 @@ import io
 import unittest
 import textwrap
 
-from beancount.core.amount import D
-from beancount.core.amount import Decimal
+from beancount.core.number import D
+from beancount.core.number import Decimal
 from beancount.core import inventory
 from beancount.query import query_parser
 from beancount.query import query_compile as qc
@@ -200,8 +200,8 @@ class TestFilterEntries(CommonInputBase, QueryBase):
         self.assertEqualEntries(self.INPUT + textwrap.dedent("""
 
           2014-04-04 C "Conversion for (-50.00 USD, -60.00 CAD)"
-            Equity:Conversions:Current                                              50.00 USD                    @ 0.00 NOTHING
-            Equity:Conversions:Current                                              60.00 CAD                    @ 0.00 NOTHING
+            Equity:Conversions:Current  50.00 USD @ 0 NOTHING
+            Equity:Conversions:Current  60.00 CAD @ 0 NOTHING
 
         """), filtered_entries)
 

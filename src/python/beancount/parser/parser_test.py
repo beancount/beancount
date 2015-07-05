@@ -11,11 +11,9 @@ import re
 import sys
 import subprocess
 
-from beancount.core.amount import D
-from beancount.parser.parser import parsedoc
+from beancount.core.number import D
 from beancount.parser import parser
 from beancount.parser import lexer
-from beancount.parser import printer
 from beancount.core import data
 from beancount.core import amount
 from beancount.core import interpolate
@@ -41,6 +39,34 @@ def check_list(test, objlist, explist):
         test.assertEqual(len(explist), len(objlist))
         for obj, exp in zip(objlist, explist):
             test.assertTrue(isinstance(type(obj), type(exp)))
+
+
+class TestParserDoc(unittest.TestCase):
+
+    @parser.parsedoc
+    def test_parsedoc(self, entries, errors, options_map):
+        """
+        2013-05-40 * "Nice dinner at Mermaid Inn"
+          Expenses:Restaurant         100 USD
+          Assets:US:Cash
+        """
+        self.assertTrue(errors)
+
+    # Note: nose does not honor expectedFailure as of 1.3.4. We would use it
+    # here instead of doing this manually.
+    def test_parsedoc_noerrors(self):
+        @parser.parsedoc_noerrors
+        def test_function(self, entries, options_map):
+            """
+            2013-05-40 * "Nice dinner at Mermaid Inn"
+              Expenses:Restaurant         100 USD
+              Assets:US:Cash
+            """
+        try:
+            test_function(unittest.TestCase())
+            self.fail("Test should have failed.")
+        except AssertionError:
+            pass
 
 
 class TestParserInputs(unittest.TestCase):
@@ -80,11 +106,18 @@ class TestParserInputs(unittest.TestCase):
         output, errors = pipe.communicate(self.INPUT.encode('utf-8'))
         self.assertEqual(0, pipe.returncode)
 
+    def test_parse_string_None(self):
+        input_string = report_filename = None
+        with self.assertRaises(TypeError):
+            entries, errors, _ = parser.parse_string(input_string)
+        with self.assertRaises(TypeError):
+            entries, errors, _ = parser.parse_string("something", None, report_filename)
+
 
 class TestParserEntryTypes(unittest.TestCase):
     """Basic smoke test one entry of each kind."""
 
-    @parsedoc
+    @parser.parsedoc
     def test_entry_transaction_1(self, entries, _, __):
         """
           2013-05-18 * "Nice dinner at Mermaid Inn"
@@ -93,7 +126,7 @@ class TestParserEntryTypes(unittest.TestCase):
         """
         check_list(self, entries, [data.Transaction])
 
-    @parsedoc
+    @parser.parsedoc
     def test_entry_transaction_2(self, entries, _, __):
         """
           2013-05-18 txn "Nice dinner at Mermaid Inn"
@@ -102,14 +135,17 @@ class TestParserEntryTypes(unittest.TestCase):
         """
         check_list(self, entries, [data.Transaction])
 
-    @parsedoc
+    @parser.parsedoc
     def test_entry_balance(self, entries, _, __):
         """
-          2013-05-18 balance Assets:US:BestBank:Checking  200 USD
-        """
-        check_list(self, entries, [data.Balance])
+          option "experiment_explicit_tolerances" "TRUE"
 
-    @parsedoc
+          2013-05-18 balance Assets:US:BestBank:Checking  200 USD
+          2013-05-18 balance Assets:US:BestBank:Checking  200 ~ 0.002 USD
+        """
+        check_list(self, entries, [data.Balance, data.Balance])
+
+    @parser.parsedoc
     def test_entry_balance_with_cost(self, entries, errors, __):
         """
           2013-05-18 balance Assets:Investments  10 MSFT {45.30 USD}
@@ -117,21 +153,21 @@ class TestParserEntryTypes(unittest.TestCase):
         check_list(self, entries, [])
         check_list(self, errors, [parser.ParserSyntaxError])
 
-    @parsedoc
+    @parser.parsedoc
     def test_entry_open_1(self, entries, _, __):
         """
           2013-05-18 open Assets:US:BestBank:Checking
         """
         check_list(self, entries, [data.Open])
 
-    @parsedoc
+    @parser.parsedoc
     def test_entry_open_2(self, entries, _, __):
         """
           2013-05-18 open Assets:US:BestBank:Checking   USD
         """
         check_list(self, entries, [data.Open])
 
-    @parsedoc
+    @parser.parsedoc
     def test_entry_open_3(self, entries, errors, __):
         """
           2013-05-18 open Assets:Cash   USD,CAD,EUR
@@ -139,7 +175,7 @@ class TestParserEntryTypes(unittest.TestCase):
         check_list(self, entries, [data.Open])
         self.assertEqual(entries[0].booking, None)
 
-    @parsedoc
+    @parser.parsedoc
     def test_entry_open_4(self, entries, errors, __):
         """
           2013-05-18 open Assets:US:Vanguard:VIIPX  VIIPX  "STRICT"
@@ -147,7 +183,7 @@ class TestParserEntryTypes(unittest.TestCase):
         check_list(self, entries, [data.Open])
         self.assertEqual(entries[0].booking, 'STRICT')
 
-    @parsedoc
+    @parser.parsedoc
     def test_entry_open_5(self, entries, errors, __):
         """
           2013-05-18 open Assets:US:Vanguard:VIIPX    "STRICT"
@@ -155,42 +191,42 @@ class TestParserEntryTypes(unittest.TestCase):
         check_list(self, entries, [data.Open])
         self.assertEqual(entries[0].booking, 'STRICT')
 
-    @parsedoc
+    @parser.parsedoc
     def test_entry_close(self, entries, _, __):
         """
           2013-05-18 close Assets:US:BestBank:Checking
         """
         check_list(self, entries, [data.Close])
 
-    @parsedoc
+    @parser.parsedoc
     def test_entry_commodity(self, entries, _, __):
         """
           2013-05-18 commodity MSFT
         """
         check_list(self, entries, [data.Commodity])
 
-    @parsedoc
+    @parser.parsedoc
     def test_entry_pad(self, entries, _, __):
         """
           2013-05-18 pad Assets:US:BestBank:Checking  Equity:Opening-Balances
         """
         check_list(self, entries, [data.Pad])
 
-    @parsedoc
+    @parser.parsedoc
     def test_entry_event(self, entries, _, __):
         """
           2013-05-18 event "location" "New York, USA"
         """
         check_list(self, entries, [data.Event])
 
-    @parsedoc
+    @parser.parsedoc
     def test_entry_note(self, entries, _, __):
         """
           2013-05-18 note Assets:US:BestBank:Checking  "Blah, di blah."
         """
         check_list(self, entries, [data.Note])
 
-    @parsedoc
+    @parser.parsedoc
     def test_entry_price(self, entries, _, __):
         """
           2013-05-18 price USD   1.0290 CAD
@@ -201,7 +237,7 @@ class TestParserEntryTypes(unittest.TestCase):
 class TestParserComplete(unittest.TestCase):
     """Tests of completion of balance."""
 
-    @parsedoc
+    @parser.parsedoc
     def test_entry_transaction_single_posting_at_zero(self, entries, errors, _):
         """
           2013-05-18 * "Nice dinner at Mermaid Inn"
@@ -210,7 +246,7 @@ class TestParserComplete(unittest.TestCase):
         check_list(self, entries, [data.Transaction])
         check_list(self, errors, 0)
 
-    @parsedoc
+    @parser.parsedoc
     def test_entry_transaction_imbalance_from_single_posting(self, entries, errors, _):
         """
           2013-05-18 * "Nice dinner at Mermaid Inn"
@@ -225,13 +261,13 @@ class TestParserComplete(unittest.TestCase):
 class TestUglyBugs(unittest.TestCase):
     """Test all kinds of stupid sh*t that will inevitably occur in practice."""
 
-    @parsedoc
+    @parser.parsedoc
     def test_empty_1(self, entries, errors, _):
         ""
         check_list(self, entries, [])
         check_list(self, errors, [])
 
-    @parsedoc
+    @parser.parsedoc
     def test_empty_2(self, entries, errors, _):
         """
 
@@ -239,7 +275,7 @@ class TestUglyBugs(unittest.TestCase):
         check_list(self, entries, [])
         check_list(self, errors, [])
 
-    @parsedoc
+    @parser.parsedoc
     def test_comment(self, entries, errors, _):
         """
         ;; This is some comment.
@@ -277,19 +313,19 @@ class TestUglyBugs(unittest.TestCase):
         check_list(self, entries, [data.Transaction])
         check_list(self, errors, [])
 
-    @parsedoc
+    @parser.parsedoc
     def test_indent_eof(self, entries, errors, _):
         "\t"
         check_list(self, entries, [])
         check_list(self, errors, [])
 
-    @parsedoc
+    @parser.parsedoc
     def test_comment_eof(self, entries, errors, _):
         "; comment"
         check_list(self, entries, [])
         check_list(self, errors, [])
 
-    @parsedoc
+    @parser.parsedoc
     def test_no_empty_lines(self, entries, errors, _):
         """
           2013-05-01 open Assets:Cash   USD,CAD,EUR
@@ -308,7 +344,7 @@ class TestUglyBugs(unittest.TestCase):
 
 class TestTagStack(unittest.TestCase):
 
-    @parsedoc
+    @parser.parsedoc
     def test_tag_left_unclosed(self, entries, errors, _):
         """
           pushtag #trip-to-nowhere
@@ -316,7 +352,7 @@ class TestTagStack(unittest.TestCase):
         self.assertEqual(1, len(errors))
         self.assertTrue(re.search('Unbalanced tag', errors[0].message))
 
-    @parsedoc
+    @parser.parsedoc
     def test_pop_invalid_tag(self, entries, errors, _):
         """
           poptag #trip-to-nowhere
@@ -327,7 +363,7 @@ class TestTagStack(unittest.TestCase):
 
 class TestMultipleLines(unittest.TestCase):
 
-    @parsedoc
+    @parser.parsedoc
     def test_multiline_narration(self, entries, errors, _):
         """
           2014-07-11 * "Hello one line
@@ -348,7 +384,7 @@ class TestSyntaxErrors(unittest.TestCase):
     One of our goals is to recover and report without ever
     bailing out with an exception."""
 
-    @parsedoc
+    @parser.parsedoc
     def test_lexer_default_rule_1(self, entries, errors, _):
         """
           Account:*:Bla
@@ -357,7 +393,7 @@ class TestSyntaxErrors(unittest.TestCase):
         self.assertTrue(errors)
         self.assertTrue(lexer.LexerError in map(type, errors))
 
-    @parsedoc
+    @parser.parsedoc
     def test_lexer_default_rule_2(self, entries, errors, _):
         """
           2013-05-18 * "Nice dinner at Mermaid Inn"
@@ -381,7 +417,7 @@ class TestSyntaxErrors(unittest.TestCase):
 class TestLineNumbers(unittest.TestCase):
     """Check that the line numbers line up correctly."""
 
-    @parsedoc
+    @parser.parsedoc
     def test_line_numbers(self, entries, errors, _):
         """
           2013-05-18 * "Nice dinner at Mermaid Inn"
@@ -404,7 +440,7 @@ class TestLineNumbers(unittest.TestCase):
 
 class TestParserOptions(unittest.TestCase):
 
-    @parsedoc
+    @parser.parsedoc
     def test_option_single_value(self, entries, errors, options_map):
         """
           option "title" "Super Rich"
@@ -413,7 +449,7 @@ class TestParserOptions(unittest.TestCase):
         option = options_map['title']
         self.assertEqual(option, 'Super Rich')
 
-    @parsedoc
+    @parser.parsedoc
     def test_option_list_value(self, entries, errors, options_map):
         """
           option "documents" "/path/docs/a"
@@ -426,7 +462,7 @@ class TestParserOptions(unittest.TestCase):
                           '/path/docs/b',
                           '/path/docs/c'], documents)
 
-    @parsedoc
+    @parser.parsedoc
     def test_invalid_option(self, entries, errors, options_map):
         """
           option "bladibla_invalid" "Some value"
@@ -435,7 +471,7 @@ class TestParserOptions(unittest.TestCase):
         check_list(self, errors, [parser.ParserError])
         self.assertFalse("bladibla_invalid" in options_map)
 
-    @parsedoc
+    @parser.parsedoc
     def test_readonly_option(self, entries, errors, options_map):
         """
           option "filename" "gniagniagniagniagnia"
@@ -483,7 +519,7 @@ class TestParserInclude(unittest.TestCase):
 
 class TestParserPlugin(unittest.TestCase):
 
-    @parsedoc
+    @parser.parsedoc
     def test_plugin(self, entries, errors, options_map):
         """
           plugin "beancount.plugin.unrealized"
@@ -492,7 +528,7 @@ class TestParserPlugin(unittest.TestCase):
         self.assertEqual([('beancount.plugin.unrealized', None)],
                          options_map['plugin'])
 
-    @parsedoc
+    @parser.parsedoc
     def test_plugin_with_config(self, entries, errors, options_map):
         """
           plugin "beancount.plugin.unrealized" "Unrealized"
@@ -502,46 +538,128 @@ class TestParserPlugin(unittest.TestCase):
                          options_map['plugin'])
 
     # Note: this is testing the old method, which will become obsolete one day.
-    @parsedoc
+    @parser.parsedoc
     def test_plugin_as_option(self, entries, errors, options_map):
         """
           option "plugin" "beancount.plugin.unrealized"
         """
-        self.assertFalse(errors)
+        self.assertEqual(1, len(errors))
         self.assertEqual([('beancount.plugin.unrealized', None)],
                          options_map['plugin'])
 
-    @parsedoc
+    @parser.parsedoc
     def test_plugin_as_option_with_config(self, entries, errors, options_map):
         """
           option "plugin" "beancount.plugin.unrealized:Unrealized"
         """
-        self.assertFalse(errors)
+        self.assertEqual(1, len(errors))
         self.assertEqual([('beancount.plugin.unrealized', 'Unrealized')],
                          options_map['plugin'])
 
 
 class TestDisplayContextOptions(unittest.TestCase):
 
-    @parsedoc
+    @parser.parsedoc
     def test_render_commas_no(self, _, __, options_map):
         """
           option "render_commas" "0"
         """
         self.assertEqual(False, options_map['render_commas'])
 
-    @parsedoc
+    @parser.parsedoc
     def test_render_commas_yes(self, _, __, options_map):
         """
           option "render_commas" "1"
         """
         self.assertEqual(True, options_map['render_commas'])
 
+    @parser.parsedoc
+    def test_render_commas_yes2(self, _, __, options_map):
+        """
+          option "render_commas" "TRUE"
+        """
+        self.assertEqual(True, options_map['render_commas'])
+
+
+class TestMiscOptions(unittest.TestCase):
+
+    @parser.parsedoc_noerrors
+    def test_plugin_processing_mode__default(self, _, options_map):
+        """
+        option "plugin_processing_mode" "default"
+        """
+        self.assertEqual("default", options_map['plugin_processing_mode'])
+
+    @parser.parsedoc_noerrors
+    def test_plugin_processing_mode__raw(self, _, options_map):
+        """
+        option "plugin_processing_mode" "raw"
+        """
+        self.assertEqual("raw", options_map['plugin_processing_mode'])
+
+    @parser.parsedoc
+    def test_plugin_processing_mode__invalid(self, _, errors, options_map):
+        """
+        option "plugin_processing_mode" "invalid"
+        """
+        self.assertEqual(1, len(errors))
+        self.assertTrue(re.match("Error for option", errors[0].message))
+        self.assertEqual("default", options_map['plugin_processing_mode'])
+
+
+class TestToleranceOptions(unittest.TestCase):
+
+    @parser.parsedoc
+    def test_tolerance_defaults(self, _, __, options_map):
+        """
+        """
+        self.assertEqual(D('0.015'),
+                         options_map['tolerance'])
+        self.assertEqual({},
+                         options_map['default_tolerance'])
+
+    @parser.parsedoc
+    def test_tolerance__deprecated(self, _, __, options_map):
+        """
+          option "tolerance" "0.05"
+        """
+        self.assertEqual(D("0.05"), options_map['tolerance'])
+
+    @parser.parsedoc
+    def test_default_tolerance(self, _, __, options_map):
+        """
+          option "default_tolerance" "*:0"
+          option "default_tolerance" "USD:0.05"
+          option "default_tolerance" "JPY:0.5"
+        """
+        self.assertEqual({"*": D("0"),
+                          "USD": D("0.05"),
+                          "JPY": D("0.5")},
+                         options_map['default_tolerance'])
+
+
+class TestDeprecatedOptions(unittest.TestCase):
+
+    @parser.parsedoc
+    def test_deprecated_plugin(self, _, errors, __):
+        """
+          option "plugin" "beancount.plugins.module_name"
+        """
+        self.assertEqual(1, len(errors))
+        self.assertTrue(re.search('option is deprecated', errors[0].message))
+
+    @parser.parsedoc
+    def test_deprecated_tolerance(self, _, errors, __):
+        """
+          option "tolerance" "0.00005"
+        """
+        self.assertEqual(1, len(errors))
+        self.assertTrue(re.search('option has been deprecated', errors[0].message))
 
 
 class TestParserLinks(unittest.TestCase):
 
-    @parsedoc
+    @parser.parsedoc
     def test_links(self, entries, errors, _):
         """
           2013-05-18 * "Something something" ^38784734873
@@ -555,7 +673,7 @@ class TestParserLinks(unittest.TestCase):
 
 class TestTransactions(unittest.TestCase):
 
-    @parsedoc
+    @parser.parsedoc
     def test_simple_1(self, entries, errors, _):
         """
           2013-05-18 * "Nice dinner at Mermaid Inn"
@@ -567,7 +685,7 @@ class TestTransactions(unittest.TestCase):
         self.assertEqual(None, entries[0].payee)
         self.assertEqual("Nice dinner at Mermaid Inn", entries[0].narration)
 
-    @parsedoc
+    @parser.parsedoc
     def test_simple_2(self, entries, errors, _):
         """
 
@@ -587,7 +705,7 @@ class TestTransactions(unittest.TestCase):
         self.assertEqual("Duane Reade", entries[1].payee)
         self.assertEqual("Toothbrush", entries[1].narration)
 
-    @parsedoc
+    @parser.parsedoc
     def test_empty_narration(self, entries, errors, _):
         """
           2013-05-18 * ""
@@ -599,7 +717,7 @@ class TestTransactions(unittest.TestCase):
         self.assertEqual("", entries[0].narration)
         self.assertEqual(None, entries[0].payee)
 
-    @parsedoc
+    @parser.parsedoc
     def test_no_narration(self, entries, errors, _):
         """
           2013-05-18 *
@@ -611,7 +729,7 @@ class TestTransactions(unittest.TestCase):
         self.assertEqual("", entries[0].narration)
         self.assertEqual(None, entries[0].payee)
 
-    @parsedoc
+    @parser.parsedoc
     def test_payee_no_narration(self, entries, errors, _):
         """
           2013-05-18 * "Mermaid Inn" |
@@ -625,7 +743,7 @@ class TestTransactions(unittest.TestCase):
         self.assertEqual(None, entries[0].payee)
         self.assertEqual("Mermaid Inn", entries[0].narration)
 
-    @parsedoc
+    @parser.parsedoc
     def test_too_many_strings(self, entries, errors, _):
         """
           2013-05-18 * "A" "B" "C"
@@ -635,7 +753,7 @@ class TestTransactions(unittest.TestCase):
         check_list(self, entries, [])
         check_list(self, errors, [parser.ParserError])
 
-    @parsedoc
+    @parser.parsedoc
     def test_link_and_then_tag(self, entries, errors, _):
         """
           2014-04-20 * "Money from CC" ^610fa7f17e7a #trip
@@ -649,7 +767,7 @@ class TestTransactions(unittest.TestCase):
         self.assertEqual(set(["610fa7f17e7a"]), entries[0].links)
         self.assertEqual(set(["trip"]), entries[0].tags)
 
-    @parsedoc
+    @parser.parsedoc
     def test_tag_then_link(self, entries, errors, _):
         """
           2014-04-20 * #trip "Money from CC" ^610fa7f17e7a
@@ -663,7 +781,7 @@ class TestTransactions(unittest.TestCase):
         self.assertEqual(set(["610fa7f17e7a"]), entries[0].links)
         self.assertEqual(set(["trip"]), entries[0].tags)
 
-    @parsedoc
+    @parser.parsedoc
     def test_zero_prices(self, entries, errors, _):
         """
           2014-04-20 * "Like a conversion entry"
@@ -674,7 +792,7 @@ class TestTransactions(unittest.TestCase):
         check_list(self, entries, [data.Transaction])
         check_list(self, errors, [])
 
-    @parsedoc
+    @parser.parsedoc
     def test_zero_units(self, entries, errors, _):
         """
           2014-04-20 * "Zero number of units"
@@ -684,7 +802,7 @@ class TestTransactions(unittest.TestCase):
         check_list(self, entries, [data.Transaction])
         check_list(self, errors, [parser.ParserError])
 
-    @parsedoc
+    @parser.parsedoc
     def test_zero_costs(self, entries, errors, _):
         """
           2014-04-20 * "Like a conversion entry"
@@ -694,7 +812,7 @@ class TestTransactions(unittest.TestCase):
         check_list(self, entries, [data.Transaction])
         check_list(self, errors, [])
 
-    @parsedoc
+    @parser.parsedoc
     def test_imbalance(self, entries, errors, _):
         """
           2014-04-20 * "Busted!"
@@ -706,7 +824,7 @@ class TestTransactions(unittest.TestCase):
                    [interpolate.BalanceError]
                    if interpolate_test.ERRORS_ON_RESIDUAL else [])
 
-    @parsedoc
+    @parser.parsedoc
     def test_no_postings(self, entries, errors, _):
         """
           2014-07-17 * "(JRN) INTRA-ACCOUNT TRANSFER" ^795422780
@@ -716,7 +834,7 @@ class TestTransactions(unittest.TestCase):
 
 class TestCurrencies(unittest.TestCase):
 
-    @parsedoc
+    @parser.parsedoc
     def test_parse_currencies(self, entries, errors, _):
         """
           2014-01-19 open Assets:Underscore    DJ_EURO
@@ -729,7 +847,7 @@ class TestCurrencies(unittest.TestCase):
 
 class TestTotalsAndSigns(unittest.TestCase):
 
-    @parsedoc
+    @parser.parsedoc
     def test_zero_amount(self, entries, errors, _):
         """
           2013-05-18 * ""
@@ -739,7 +857,7 @@ class TestTotalsAndSigns(unittest.TestCase):
         self.assertTrue(errors)
         self.assertTrue(re.search('Amount is zero', errors[0].message))
 
-    @parsedoc
+    @parser.parsedoc
     def test_zero_cost(self, entries, errors, _):
         """
           2013-05-18 * ""
@@ -748,7 +866,7 @@ class TestTotalsAndSigns(unittest.TestCase):
         """
         self.assertFalse(errors)
 
-    @parsedoc
+    @parser.parsedoc
     def test_cost_negative(self, entries, errors, _):
         """
           2013-05-18 * ""
@@ -758,7 +876,7 @@ class TestTotalsAndSigns(unittest.TestCase):
         self.assertTrue(errors)
         self.assertTrue(re.search('Cost is negative', errors[0].message))
 
-    @parsedoc
+    @parser.parsedoc
     def test_total_cost(self, entries, errors, _):
         """
           2013-05-18 * ""
@@ -778,7 +896,7 @@ class TestTotalsAndSigns(unittest.TestCase):
             self.assertEqual(amount.from_string('200 USD'), posting.position.lot.cost)
             self.assertEqual(None, posting.price)
 
-    @parsedoc
+    @parser.parsedoc
     def test_total_cost_negative(self, entries, errors, _):
         """
           2013-05-18 * ""
@@ -788,7 +906,7 @@ class TestTotalsAndSigns(unittest.TestCase):
         self.assertTrue(errors)
         self.assertTrue(re.search('Cost is.*negative', errors[0].message))
 
-    @parsedoc
+    @parser.parsedoc
     def test_price_negative(self, entries, errors, _):
         """
           2013-05-18 * ""
@@ -798,7 +916,7 @@ class TestTotalsAndSigns(unittest.TestCase):
         self.assertTrue(errors)
         self.assertTrue(re.search('Negative.*allowed', errors[0].message))
 
-    @parsedoc
+    @parser.parsedoc
     def test_total_price_positive(self, entries, errors, _):
         """
           2013-05-18 * ""
@@ -809,7 +927,7 @@ class TestTotalsAndSigns(unittest.TestCase):
         self.assertEqual(amount.from_string('200 USD'), posting.price)
         self.assertEqual(None, posting.position.lot.cost)
 
-    @parsedoc
+    @parser.parsedoc
     def test_total_price_negative(self, entries, errors, _):
         """
           2013-05-18 * ""
@@ -820,7 +938,7 @@ class TestTotalsAndSigns(unittest.TestCase):
         self.assertEqual(amount.from_string('200 USD'), posting.price)
         self.assertEqual(None, posting.position.lot.cost)
 
-    @parsedoc
+    @parser.parsedoc
     def test_total_price_inverted(self, entries, errors, _):
         """
           2013-05-18 * ""
@@ -840,7 +958,7 @@ class TestAllowNegativePrices(unittest.TestCase):
     def tearDown(self):
         parser.__allow_negative_prices__ = self.__allow_negative_prices__
 
-    @parsedoc
+    @parser.parsedoc
     def test_total_cost(self, entries, errors, _):
         """
           2013-05-18 * ""
@@ -861,7 +979,7 @@ class TestAllowNegativePrices(unittest.TestCase):
             self.assertEqual(amount.from_string('200 USD'), posting.position.lot.cost)
             self.assertEqual(None, posting.price)
 
-    @parsedoc
+    @parser.parsedoc
     def test_price_negative(self, entries, errors, _):
         """
           2013-05-18 * ""
@@ -872,7 +990,7 @@ class TestAllowNegativePrices(unittest.TestCase):
         self.assertEqual(amount.from_string('-200 USD'), posting.price)
         self.assertEqual(None, posting.position.lot.cost)
 
-    @parsedoc
+    @parser.parsedoc
     def test_total_price_negative(self, entries, errors, _):
         """
           2013-05-18 * ""
@@ -883,7 +1001,7 @@ class TestAllowNegativePrices(unittest.TestCase):
         self.assertEqual(amount.from_string('-200 USD'), posting.price)
         self.assertEqual(None, posting.position.lot.cost)
 
-    @parsedoc
+    @parser.parsedoc
     def test_total_price_inverted(self, entries, errors, _):
         """
           2013-05-18 * ""
@@ -897,7 +1015,15 @@ class TestAllowNegativePrices(unittest.TestCase):
 
 class TestMetaData(unittest.TestCase):
 
-    @parsedoc
+    @staticmethod
+    def strip_meta(meta):
+        """Removes the filename, lineno from the postings metadata."""
+        copy = meta.copy()
+        copy.pop('filename', None)
+        copy.pop('lineno', None)
+        return copy
+
+    @parser.parsedoc
     def test_metadata_transaction__begin(self, entries, errors, _):
         """
           2013-05-18 * ""
@@ -908,7 +1034,7 @@ class TestMetaData(unittest.TestCase):
         self.assertEqual(1, len(entries))
         self.assertEqual('Something', entries[0].meta['test'])
 
-    @parsedoc
+    @parser.parsedoc
     def test_metadata_transaction__middle(self, entries, errors, _):
         """
           2013-05-18 * ""
@@ -918,9 +1044,9 @@ class TestMetaData(unittest.TestCase):
         """
         self.assertEqual(1, len(entries))
         self.assertEqual({'test': 'Something'},
-                         entries[0].postings[0].meta)
+                         self.strip_meta(entries[0].postings[0].meta))
 
-    @parsedoc
+    @parser.parsedoc
     def test_metadata_transaction__end(self, entries, errors, _):
         """
           2013-05-18 * ""
@@ -929,10 +1055,11 @@ class TestMetaData(unittest.TestCase):
             test: "Something"
         """
         self.assertEqual(1, len(entries))
-        self.assertEqual({'test': 'Something'},
-                         entries[0].postings[1].meta)
+        self.assertEqual({'__automatic__': True,
+                          'test': 'Something'},
+                         self.strip_meta(entries[0].postings[1].meta))
 
-    @parsedoc
+    @parser.parsedoc
     def test_metadata_transaction__many(self, entries, errors, _):
         """
           2013-05-18 * ""
@@ -948,11 +1075,12 @@ class TestMetaData(unittest.TestCase):
         self.assertEqual(1, len(entries))
         self.assertEqual('Something', entries[0].meta['test1'])
         self.assertEqual({'test2': 'has', 'test3': 'to'},
-                         entries[0].postings[0].meta)
-        self.assertEqual({'test4': 'come', 'test5': 'from', 'test6': 'this'},
-                         entries[0].postings[1].meta)
+                         self.strip_meta(entries[0].postings[0].meta))
+        self.assertEqual({'__automatic__': True,
+                          'test4': 'come', 'test5': 'from', 'test6': 'this'},
+                         self.strip_meta(entries[0].postings[1].meta))
 
-    @parsedoc
+    @parser.parsedoc
     def test_metadata_transaction__indented(self, entries, errors, _):
         """
           2013-05-18 * ""
@@ -968,11 +1096,12 @@ class TestMetaData(unittest.TestCase):
         self.assertEqual(1, len(entries))
         self.assertEqual('Something', entries[0].meta['test1'])
         self.assertEqual({'test2': 'has', 'test3': 'to'},
-                         entries[0].postings[0].meta)
-        self.assertEqual({'test4': 'come', 'test5': 'from', 'test6': 'this'},
-                         entries[0].postings[1].meta)
+                         self.strip_meta(entries[0].postings[0].meta))
+        self.assertEqual({'__automatic__': True,
+                          'test4': 'come', 'test5': 'from', 'test6': 'this'},
+                         self.strip_meta(entries[0].postings[1].meta))
 
-    @parsedoc
+    @parser.parsedoc
     def test_metadata_transaction__repeated(self, entries, errors, _):
         """
           2013-05-18 * ""
@@ -986,12 +1115,13 @@ class TestMetaData(unittest.TestCase):
         """
         self.assertEqual(1, len(entries))
         self.assertEqual('Bananas', entries[0].meta['test'])
-        self.assertEqual({'test': 'Bananas'}, entries[0].postings[0].meta)
+        self.assertEqual({'test': 'Bananas'},
+                         self.strip_meta(entries[0].postings[0].meta))
         self.assertEqual(3, len(errors))
         self.assertTrue(all(re.search('Duplicate.*metadata field', error.message)
                             for error in errors))
 
-    @parsedoc
+    @parser.parsedoc
     def test_metadata_empty(self, entries, errors, _):
         """
           2013-05-18 * "blabla"
@@ -1009,7 +1139,7 @@ class TestMetaData(unittest.TestCase):
         self.assertEqual(None, entries[0].meta['bananas'])
         self.assertEqual(entries[1].meta['apples'], None)
 
-    @parsedoc
+    @parser.parsedoc
     def test_metadata_other(self, entries, errors, _):
         """
           2013-01-01 open Equity:Other
@@ -1041,7 +1171,7 @@ class TestMetaData(unittest.TestCase):
         """
         self.assertEqual(9, len(entries))
 
-    @parsedoc
+    @parser.parsedoc
     def test_metadata_data_types(self, entries, errors, _):
         """
           2013-05-18 * ""
@@ -1052,6 +1182,8 @@ class TestMetaData(unittest.TestCase):
             tag: #trip-florida
             number: 345.67
             amount: 345.67 USD
+            boolt: TRUE
+            boolf: FALSE
         """
         self.assertEqual(1, len(entries))
         self.assertTrue('filename' in entries[0].meta)
@@ -1066,12 +1198,14 @@ class TestMetaData(unittest.TestCase):
             'tag': 'trip-florida',
             'number': D('345.67'),
             'amount': amount.from_string('345.67 USD'),
+            'boolt': True,
+            'boolf': False,
             }, entries[0].meta)
 
 
 class TestLexerErrors(unittest.TestCase):
 
-    @parsedoc
+    @parser.parsedoc
     def test_bad_account(self, entries, errors, _):
         """
           2011-01-01 open Assets:A
@@ -1080,7 +1214,7 @@ class TestLexerErrors(unittest.TestCase):
         self.assertEqual([parser.ParserSyntaxError, lexer.LexerError],
                          list(map(type, errors)))
 
-    @parsedoc
+    @parser.parsedoc
     def test_no_final_newline(self, entries, errors, _):
         """
           2014-11-02 *
@@ -1093,7 +1227,7 @@ class TestLexerErrors(unittest.TestCase):
 
 class TestArithmetic(unittest.TestCase):
 
-    @parsedoc
+    @parser.parsedoc
     def test_number_expr_DIV(self, entries, errors, _):
         """
           2013-05-18 * "Test"

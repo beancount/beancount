@@ -4,7 +4,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
 
-from beancount.core.amount import ZERO
+from beancount.core.number import ZERO
 from beancount.core import account
 from beancount.core import amount
 from beancount.core import position
@@ -199,7 +199,6 @@ def get_commodities_at_date(entries, options_map, date=None):
 
 
 def aggregate_holdings_by(holdings, keyfun):
-
     """Aggregate holdings by some key.
 
     Note that the cost-currency must always be included in the group-key (sums
@@ -263,6 +262,8 @@ def aggregate_holdings_list(holdings):
     currencies = set()
     cost_currencies = set()
     price_dates = set()
+    book_value_seen = False
+    market_value_seen = False
     for holding in holdings:
         units += holding.number
         accounts.add(holding.account)
@@ -270,27 +271,31 @@ def aggregate_holdings_list(holdings):
         currencies.add(holding.currency)
         cost_currencies.add(holding.cost_currency)
 
-        if holding.book_value:
+        if holding.book_value is not None:
             total_book_value += holding.book_value
-        elif holding.cost_number:
+            book_value_seen = True
+        elif holding.cost_number is not None:
             total_book_value += holding.number * holding.cost_number
+            book_value_seen = True
 
-        if holding.market_value:
+        if holding.market_value is not None:
             total_market_value += holding.market_value
-        elif holding.price_number:
+            market_value_seen = True
+        elif holding.price_number is not None:
             total_market_value += holding.number * holding.price_number
+            market_value_seen = True
 
-    if not total_book_value:
+    if book_value_seen:
+        average_cost = total_book_value / units if units else None
+    else:
         total_book_value = None
-    average_cost = (total_book_value / units
-                    if total_book_value and units
-                    else None)
+        average_cost = None
 
-    if not total_market_value:
+    if market_value_seen:
+        average_price = total_market_value / units if units else None
+    else:
         total_market_value = None
-    average_price = (total_market_value / units
-                     if total_market_value and units
-                     else None)
+        average_price = None
 
     if len(cost_currencies) != 1:
         raise ValueError("Cost currencies are not homogeneous for aggregation: {}".format(

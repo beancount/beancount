@@ -3,7 +3,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import io
 import unittest
 
-from beancount.core.amount import D
+from beancount.core.number import D
 from beancount.core import realization
 from beancount.core import amount
 from beancount.core import position
@@ -125,7 +125,7 @@ class TestJournalTextRender(unittest.TestCase):
             'Transfer',
             'Investment',
             '-',
-            'FAIL - In Assets:Checking; expected = 0 USD, difference = 600.00 USD',
+            'FAIL - In Assets:Checking; expected = 0.00 USD, difference = 600.00 USD',
             'Assets:Checking',
             ]
         for expected_description, entry in zip(expected_descriptions, self.entries):

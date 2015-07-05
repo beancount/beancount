@@ -5,16 +5,6 @@ currency:
 
   (number, currency).
 
-The module also contains the basic Decimal type import.
-
-About Decimal usage:
-
-- Do not import Decimal from the 'decimal' or 'cdecimal' modules; always import
-  your Decimal class from beancount.core.amount.
-
-- Prefer to use D() to create new instances of Decimal objects, which
-  handles more syntax, e.g., handles None, and numbers with commas.
-
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
@@ -23,59 +13,42 @@ import re
 
 # Note: Python 3.3 guarantees a fast "C" decimal implementation. No need to
 # install cdecimal anymore.
-import decimal
+from decimal import Decimal
 
 # Import object to format numbers at specific precisions.
-from .display_context import DEFAULT_FORMATTER
+from beancount.core.display_context import DEFAULT_FORMATTER
+from beancount.core.number import ZERO
+from beancount.core import number
+
+
+#,-----------------------------------------------------------------------------.
+# Temporary forwarding of number functions to the number module.
+# IMPORTANT/FIXME: This will get removed after August 2015.
+import warnings
+
+ONE = number.ONE
+HALF = number.HALF
+decimal = number.decimal  # pylint: disable=invalid-name
 
 # pylint: disable=invalid-name
-Decimal = decimal.Decimal
+def D(string):
+    warnings.warn("beancount.core.amount.D has been renamed to "
+                  "beancount.core.number.D")
+    return number.D(string)
 
-# Constants.
-ZERO = Decimal()
-ONE = Decimal('1')
+def round_to(number, increment):
+    warnings.warn("beancount.core.amount.round_to has been renamed to "
+                  "beancount.core.number.round_to")
+    return number.round_to(number, increment)
+
+_D = number.D
+#`-----------------------------------------------------------------------------'
+
+
 
 # A regular expression to match the name of a currency.
 # Note: This is kept in sync with "beancount/parser/lexer.l".
-CURRENCY_RE = '[A-Z][A-Z0-9\'\.\_\-]{0,10}[A-Z0-9]'
-
-# pylint: disable=invalid-name
-def D(strord=None):
-    """Convert a string, possibly with commas, into a Decimal object.
-
-    This function just returns the argument if it is already a Decimal object,
-    for convenience. This is used in parsing amounts from files in the
-    importers. This is the main function you should use to build all numbers the
-    system manipulates (never use floating-point in an accounting system)..
-
-    Args:
-      stdord: A string or Decimal instance.
-    Returns:
-      A Decimal instance.
-    """
-    # Note: try a map lookup and optimize performance here.
-    if not strord:
-        return Decimal()
-    elif isinstance(strord, str):
-        return Decimal(strord.replace(',', ''))
-    elif isinstance(strord, Decimal):
-        return strord
-    elif isinstance(strord, (int, float)):
-        return Decimal(strord)
-    else:
-        assert strord is None, "Invalid value to convert: {}".format(strord)
-
-
-def round_to(number, increment):
-    """Round a number *down* to a particular increment.
-
-    Args:
-      number: A Decimal, the number to be rounded.
-      increment: A Decimal, the size of the increment.
-    Returns:
-      A Decimal, the rounded number.
-    """
-    return int((number / increment)) * increment
+CURRENCY_RE = '[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]'
 
 
 class Amount:
@@ -94,7 +67,7 @@ class Amount:
           number: A string or Decimal instance. Will get converted automatically.
           currency: A string, the currency symbol to use.
         """
-        self.number = D(number)
+        self.number = _D(number)
         self.currency = currency
 
     def to_string(self, dformat=DEFAULT_FORMATTER):
@@ -173,7 +146,7 @@ class Amount:
         if not match:
             raise ValueError("Invalid string for amount: '{}'".format(string))
         number, currency = match.group(1, 2)
-        return Amount(D(number), currency)
+        return Amount(_D(number), currency)
 
 
 # Note: We don't implement operators on Amount here in favour of the more
@@ -236,5 +209,5 @@ def amount_sub(amount1, amount2):
     return Amount(amount1.number - amount2.number, amount1.currency)
 
 
-from_string = Amount.from_string
+from_string = Amount.from_string  # pylint: disable=invalid-name
 NULL_AMOUNT = Amount(ZERO, '')

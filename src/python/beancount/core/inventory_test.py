@@ -8,14 +8,15 @@ import copy
 from datetime import date
 import types
 
-from .amount import D
-from .position import Position
-from .position import Lot
-from .inventory import Inventory
-from .inventory import Booking
-from . import amount
-from . import position
-from . import inventory
+from beancount.core.number import D
+from beancount.core.number import ZERO
+from beancount.core.position import Position
+from beancount.core.position import Lot
+from beancount.core.inventory import Inventory
+from beancount.core.inventory import Booking
+from beancount.core import amount
+from beancount.core import position
+from beancount.core import inventory
 
 
 A = amount.from_string
@@ -176,18 +177,47 @@ class TestInventory(unittest.TestCase):
         inv5 = Inventory.from_string('100 JPY, 100 USD')
         self.assertEqual(inv4, inv5)
 
-    def test_is_small(self):
-        inv = Inventory.from_string('1.50 JPY, 1.51 USD, 1.52 CAD')
-        self.assertFalse(inv.is_small(D('1.49')))
-        self.assertFalse(inv.is_small(D('1.50')))
-        self.assertTrue(inv.is_small(D('1.53')))
-        self.assertTrue(inv.is_small(D('1.52')))
+    def test_is_small__value(self):
+        test_inv = Inventory.from_string('1.50 JPY, 1.51 USD, 1.52 CAD')
+        for inv in test_inv, -test_inv:
+            self.assertFalse(inv.is_small(D('1.49')))
+            self.assertFalse(inv.is_small(D('1.50')))
+            self.assertTrue(inv.is_small(D('1.53')))
+            self.assertTrue(inv.is_small(D('1.52')))
 
-        ninv = -inv
-        self.assertFalse(ninv.is_small(D('1.49')))
-        self.assertFalse(ninv.is_small(D('1.50')))
-        self.assertTrue(ninv.is_small(D('1.53')))
-        self.assertTrue(ninv.is_small(D('1.52')))
+    def test_is_small__dict(self):
+        test_inv = Inventory.from_string('0.03 JPY, 0.003 USD')
+        for inv in test_inv, -test_inv:
+            # Test all four types of inequalities.
+            self.assertTrue(inv.is_small({'JPY': D('0.05'), 'USD': D('0.005')}))
+            self.assertFalse(inv.is_small({'JPY': D('0.005'), 'USD': D('0.0005')}))
+            self.assertTrue(inv.is_small({'JPY': D('0.05'), 'USD': D('0.5')}))
+            self.assertFalse(inv.is_small({'JPY': D('0.005'), 'USD': D('0.005')}))
+
+            # Test border case and an epsilon under.
+            self.assertTrue(inv.is_small({'JPY': D('0.03'), 'USD': D('0.003')}))
+            self.assertFalse(inv.is_small({'JPY': D('0.02999999999999'),
+                                           'USD': D('0.003')}))
+            self.assertFalse(inv.is_small({'JPY': D('0.03'), 'USD': D('0.00299999')}))
+
+            # Test missing precisions.
+            self.assertFalse(inv.is_small({'JPY': D('0.05')}))
+            self.assertFalse(inv.is_small({'USD': D('0.005')}))
+
+            # Test extra precisions.
+            self.assertTrue(inv.is_small({'JPY': D('0.05'),
+                                          'USD': D('0.005'),
+                                          'CAD': D('0.0005')}))
+
+            # Test no precisions.
+            self.assertFalse(inv.is_small({}))
+
+    def test_is_small__with_default(self):
+        inv = Inventory.from_string('0.03 JPY')
+        self.assertTrue(inv.is_small({'JPY': D('0.05')}))
+        self.assertFalse(inv.is_small({'JPY': D('0.02')}))
+        self.assertTrue(inv.is_small({}, {'JPY': D('0.05')}))
+        self.assertFalse(inv.is_small({}, {'JPY': D('0.02')}))
 
     def test_is_mixed(self):
         inv = Inventory.from_string('100 GOOG {250 USD}, 101 GOOG {251 USD}')
@@ -415,3 +445,43 @@ class TestInventory(unittest.TestCase):
         inv2.add_amount(A('55 GOOG'))
 
         inv1 + inv2
+
+
+class TestDefaultTolerance(unittest.TestCase):
+
+    def test_default_tolerance__present(self):
+        self.assertEqual(
+            D('0.001'),
+            inventory.get_tolerance({'USD': D('0.001')},
+                                    {},
+                                    'USD'))
+        self.assertEqual(
+            D('0.001'),
+            inventory.get_tolerance({'USD': D('0.001')},
+                                    {'USD': D('0.00001')},
+                                    'USD'))
+        self.assertEqual(
+            D('0.001'),
+            inventory.get_tolerance({'USD': D('0.001')},
+                                    {'*': D('0.5')},
+                                    'USD'))
+
+    def test_default_tolerance__global(self):
+        self.assertEqual(
+            D('0.001'),
+            inventory.get_tolerance({},
+                                    {'USD': D('0.001'), '*': D('0.5')},
+                                    'USD'))
+
+    def test_default_tolerance__global_default(self):
+        self.assertEqual(
+            D('0.5'),
+            inventory.get_tolerance({},
+                                    {'USD': D('0.001'), '*': D('0.5')},
+                                    'JPY'))
+
+    def test_default_tolerance__not_found(self):
+        self.assertEqual(
+            ZERO,
+            inventory.get_tolerance({'USD': D('0.001')}, {},
+                                    'JPY'))

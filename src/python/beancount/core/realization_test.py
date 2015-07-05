@@ -8,7 +8,7 @@ import operator
 import re
 import unittest
 
-from beancount.core.amount import D
+from beancount.core.number import D
 from beancount.core.realization import RealAccount
 from beancount.core import realization
 from beancount.core import data

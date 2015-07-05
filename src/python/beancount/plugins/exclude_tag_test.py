@@ -11,7 +11,7 @@ class TestExampleExcludeTag(cmptest.TestCase):
     def test_exclude_tag(self):
         input_text = textwrap.dedent("""
 
-            option "plugin" "beancount.plugins.exclude_tag"
+            plugin "beancount.plugins.exclude_tag"
 
             2011-01-01 open Expenses:Restaurant
             2011-01-01 open Assets:Cash

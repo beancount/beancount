@@ -293,6 +293,24 @@ def first_paragraph(docstring):
     return ' '.join(lines)
 
 
+def import_curses():
+    """Try to import the 'curses' module.
+    (This is used here in order to override for tests.)
+
+    Returns:
+      The curses module, if it was possible to import it.
+    Raises:
+      ImportError: If the module could not be imported.
+    """
+    # Note: There's a recipe for getting terminal size on Windows here, without
+    # curses, I should probably implement that at some point:
+    # http://stackoverflow.com/questions/263890/how-do-i-find-the-width-height-of-a-terminal-window
+    # Also, consider just using 'blessings' instead, which provides this across
+    # multiple platforms.
+    import curses
+    return curses
+
+
 def get_screen_width():
     """Return the width of the terminal that runs this program.
 
@@ -300,12 +318,13 @@ def get_screen_width():
       An integer, the number of characters the screen is wide.
       Return 0 if the terminal cannot be initialized.
     """
-    import curses
     try:
+        curses = import_curses()
         curses.setupterm()
-    except io.UnsupportedOperation:
-        return 0
-    return curses.tigetnum('cols')
+        columns = curses.tigetnum('cols')
+    except (io.UnsupportedOperation, ImportError):
+        columns = 0
+    return columns
 
 
 def get_screen_height():
@@ -315,12 +334,13 @@ def get_screen_height():
       An integer, the number of characters the screen is high.
       Return 0 if the terminal cannot be initialized.
     """
-    import curses
     try:
-        curses.setupterm()
-    except io.UnsupportedOperation:
-        return 0
-    return curses.tigetnum('lines')
+        curses = import_curses()
+        lines = curses.setupterm()
+        lines = curses.tigetnum('lines')
+    except (io.UnsupportedOperation, ImportError):
+        lines = 0
+    return lines
 
 
 class TypeComparable:
@@ -424,68 +444,6 @@ def sorted_uniquify(iterable, keyfunc=None, last=False):
             if key != prev_key:
                 yield obj
                 prev_key = key
-
-
-class Distribution:
-    """A class that computes a histogram of integer values. This is used to compute
-    a length that will cover at least some decent fraction of the samples.
-    """
-    def __init__(self):
-        self.hist = collections.defaultdict(int)
-
-    def empty(self):
-        """Return true if the distribution is empty.
-
-        Returns:
-          A boolean.
-        """
-        return len(self.hist) == 0
-
-    def update(self, value):
-        """Add a sample to the distribution.
-
-        Args:
-          value: A value of the function.
-        """
-        self.hist[value] += 1
-
-    def min(self):
-        """Return the minimum value seen in the distribution.
-
-        Returns:
-          An element of the value type, or None, if the distribution was empty.
-        """
-        if not self.hist:
-            return None
-        value, _ = sorted(self.hist.items())[0]
-        return value
-
-    def max(self):
-        """Return the minimum value seen in the distribution.
-
-        Returns:
-          An element of the value type, or None, if the distribution was empty.
-        """
-        if not self.hist:
-            return None
-        value, _ = sorted(self.hist.items())[-1]
-        return value
-
-    def mode(self):
-        """Return the mode of the distribution.
-
-        Returns:
-          An element of the value type, or None, if the distribution was empty.
-        """
-        if not self.hist:
-            return None
-        max_value = 0
-        max_count = 0
-        for value, count in sorted(self.hist.items()):
-            if count >= max_count:
-                max_count = count
-                max_value = value
-        return max_value
 
 
 class LineFileProxy:

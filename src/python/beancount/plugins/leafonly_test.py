@@ -11,7 +11,7 @@ class TestLeafOnly(unittest.TestCase):
     @loader.loaddoc
     def test_leaf_only1(self, _, errors, __):
         """
-            option "plugin" "beancount.plugins.leafonly"
+            plugin "beancount.plugins.leafonly"
 
             2011-01-01 open Expenses:Food
             2011-01-01 open Expenses:Food:Restaurant
@@ -32,7 +32,7 @@ class TestLeafOnly(unittest.TestCase):
     @loader.loaddoc
     def test_leaf_only2(self, _, errors, __):
         """
-            option "plugin" "beancount.plugins.leafonly"
+            plugin "beancount.plugins.leafonly"
 
             ;;; 2011-01-01 open Expenses:Food
             2011-01-01 open Expenses:Food:Restaurant

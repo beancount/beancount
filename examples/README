@@ -13,5 +13,14 @@ Files:
   simple/           : Some simpler example input files, with commentary. You
                       might want to read through these.
 
-  tutorial/         : Output files from the tutorial (see
-                      http://furius.ca/beancount/doc/tutorial)
+  tutorial/         : Output files from the tutorial, see
+                      http://furius.ca/beancount/doc/tutorial
+
+  sharing/          : Example input file from a document that explains how to
+                      share expenses, see
+                      http://furius.ca/beancount/doc/sharing
+
+  vesting/          : Example input file from a document that explains how to
+                      track the vesting of restricted stock units, see
+                      http://furius.ca/beancount/doc/vesting
+

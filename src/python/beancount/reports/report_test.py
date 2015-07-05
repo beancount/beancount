@@ -6,7 +6,7 @@ import unittest
 import re
 import io
 
-from beancount.core.amount import D
+from beancount.core.number import D
 from beancount.core import realization
 from beancount.reports import report
 from beancount.reports import table
@@ -157,9 +157,9 @@ class TestRealizationMeta(unittest.TestCase):
 
         report_ = MyReport.from_args([])
         oss = io.StringIO()
-        report_.render([], [], options.DEFAULT_OPTIONS, 'text', oss)
+        report_.render([], [], options.OPTIONS_DEFAULTS, 'text', oss)
         self.assertTrue(oss.getvalue())
-        report_.render([], [], options.DEFAULT_OPTIONS, 'html', oss)
+        report_.render([], [], options.OPTIONS_DEFAULTS, 'html', oss)
         self.assertTrue(oss.getvalue())
 
 

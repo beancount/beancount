@@ -107,8 +107,11 @@ def main():
         logging.info("Extrapolations based on the last %s data points for %s:",
                      num_points, currency)
         for amount in EXTRAPOLATE_WORTHS:
-            date_1m = date.fromtimestamp((amount - poly.c[1]) / poly.c[0])
-            logging.info("%10d %s: %s", amount, currency, date_1m)
+            try:
+                date_1m = date.fromtimestamp((amount - poly.c[1]) / poly.c[0])
+                logging.info("%10d %s: %s", amount, currency, date_1m)
+            except OverflowError:
+                pass
 
         #print(poly(time.mktime(datetime.date.today().timetuple())))
 
