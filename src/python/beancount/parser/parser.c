@@ -131,7 +131,6 @@ PyObject* parse_string(PyObject *self, PyObject *args, PyObject* kwds)
 
     /* Parse! This will call back methods on the builder instance. */
     result = yyparse();
-    TRACE_ERROR("Result %d\n", result);
 
     /* Finalize the parser. */
     /* Noop. */
