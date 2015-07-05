@@ -4,10 +4,22 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-07-05
+
+  - Implemented support for and unit testing for parsing strings from files in
+    various encodings. Only string objects (e.g., payee, narrations, comments,
+    etc.) are supported. This works with UTF8 encoding (tested), latin1 encoding
+    (tested), and probably more. The support is at the lexer level. You may now
+    supply an 'encoding' parameter to parser.parse_file(),
+    parser.parse_string(), loader.load_file(), loader.load_string() functions.
+    Passing in an invalid encoding should not mail it fail (though the contents
+    of the strings will be empty).
+
+
 2015-07-02
 
   - Built support for setuptools and rolled back changes. Setuptools is broken
-    beyond what I can bear. Screw this. You'll have to install dependencies by
+    beyond what I can bear. Forget this. You'll have to install dependencies by
     hand. It's a one-liner, like this:
 
       pip3 install python-dateutil bottle ply lxml

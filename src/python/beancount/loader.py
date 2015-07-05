@@ -151,25 +151,12 @@ def _parse_recursive(sources, log_timings, encoding=None):
                                   'File "{}" does not exist'.format(filename), None))
                     continue
 
-                if encoding:
-                    # If we need to decode the file, read it, decoding it, and
-                    # parse from string. This is better than creating a
-                    # temporary file.
-                    source = open(filename, encoding=encoding).read()
-                    ascii_source = source.encode('ascii', 'replace')
-                    with misc_utils.log_time('beancount.parser.parser.parse_string',
-                                             log_timings, indent=2):
-                        (src_entries,
-                         src_errors,
-                         src_options_map) = parser.parse_string(ascii_source)
-                else:
-                    # Parse a file from disk directly. This assumes the file is
-                    # in ASCII mode.
-                    with misc_utils.log_time('beancount.parser.parser.parse_file',
-                                             log_timings, indent=2):
-                        (src_entries,
-                         src_errors,
-                         src_options_map) = parser.parse_file(filename)
+                # Parse a file from disk directly.
+                with misc_utils.log_time('beancount.parser.parser.parse_file',
+                                         log_timings, indent=2):
+                    (src_entries,
+                     src_errors,
+                     src_options_map) = parser.parse_file(filename, encoding=encoding)
 
                 cwd = path.dirname(filename)
             else:

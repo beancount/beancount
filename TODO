@@ -14,11 +14,6 @@ beancount: TODO
   - Define a C extension module to implement D().
 
 
-* Unicode Support for Strings
-
-  - Remove conversion in _load function, make it just use the encoding parameter.
-
-
 * Explicit Tolerance
 
   - Make the printer support explicit tolerance syntax. This is crucial for

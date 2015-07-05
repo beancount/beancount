@@ -259,6 +259,12 @@ FALSE		{
         *strbuf_ptr = '\0';
         PyObject* unicode_str = PyUnicode_Decode(strbuf, strbuf_ptr - strbuf,
                                                  yy_encoding, "ignore");
+        if ( unicode_str == NULL ) {
+            build_lexer_error_from_exception();
+            yylval->pyobj = Py_None;
+            Py_INCREF(Py_None);
+            return LEX_ERROR;
+        }
         BUILD_LEX("STRING", "O", unicode_str);
         Py_DECREF(unicode_str);
         strbuf_ptr = NULL;
@@ -477,9 +483,9 @@ void build_lexer_error_from_exception()
     /* TRACE_ERROR("Lexer Builder Exception"); */
 
     /* Get the exception context. */
-    PyObject* ptype;
-    PyObject* pvalue;
-    PyObject* ptraceback;
+    PyObject* ptype = NULL;
+    PyObject* pvalue = NULL;
+    PyObject* ptraceback = NULL;
     PyErr_Fetch(&ptype, &pvalue, &ptraceback);
     PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
 
@@ -490,9 +496,9 @@ void build_lexer_error_from_exception()
         /* Build and accumulate a new error object. {27d1d459c5cd} */
         PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error",
                                            "OO", pvalue, ptype);
-        Py_DECREF(ptype);
-        Py_DECREF(pvalue);
-        Py_DECREF(ptraceback);
+        Py_XDECREF(ptype);
+        Py_XDECREF(pvalue);
+        Py_XDECREF(ptraceback);
 
         if (rv == NULL) {
             PyErr_SetString(PyExc_RuntimeError,
