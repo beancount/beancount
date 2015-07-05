@@ -18,10 +18,6 @@ beancount: TODO
 
   - You don't need to incref the builder... remove that. Test it.
 
-  - Move grammar.Builder tests to grammar_test.py.
-
-  - Fix and test {ccc5df638692} when all is said and done and ready to merge.
-
   - What happens to the memory of objects created and discarded by error rules?
 
 
