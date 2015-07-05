@@ -1221,6 +1221,21 @@ class TestMetaData(unittest.TestCase):
             }, entries[0].meta)
 
 
+class TestArithmetic(unittest.TestCase):
+
+    @parser.parsedoc
+    def test_number_expr_DIV(self, entries, errors, _):
+        """
+          2013-05-18 * "Test"
+            Assets:Something    12 / 3 USD
+            Assets:Something   7.5 / 3 USD
+        """
+        self.assertEqual(1, len(entries))
+        postings = entries[0].postings
+        self.assertEqual(D('4'), postings[0].position.number)
+        self.assertEqual(D('2.5'), postings[1].position.number)
+
+
 class TestLexerAndParserErrors(cmptest.TestCase):
     """There are a number of different paths where errors may occur. This test case
     intends to exercise them all. This docstring explains how it all works (it's
@@ -1432,38 +1447,292 @@ parsers may encounter parser-level errors, in
           2000-01-05 close Assets:After
         """, entries)
 
-    @mock.patch('beancount.parser.grammar.Builder.option', raise_exception)
+    def check_entries_errors(self, entries, errors):
+        self.assertEqual(1, len(errors))
+        self.assertRegexpMatches(errors[0].message, 'Patched exception')
+        self.assertEqual(2, len(entries))
+
+    @mock.patch('beancount.parser.grammar.Builder.pushtag', raise_exception)
     @parser.parsedoc
-    def ___test_grammar_exception__option(self, entries, errors, _):
+    def test_grammar_exceptions__pushtag(self, entries, errors, _):
         """
           2000-01-01 open Assets:Before
-          option "operating_currency" "USD"
-          2000-01-03 open Assets:After
+          pushtag #sometag
+          2010-01-01 close Assets:Before
         """
-        self.assertFalse(errors)
-        printer.print_errors(errors)
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.poptag', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__poptag(self, entries, errors, _):
+        """
+          2000-01-01 open Assets:Before
+          poptag #sometag
+          2010-01-01 close Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.option', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__option(self, entries, errors, _):
+        """
+          2000-01-01 open Assets:Before
+          option "operating_currency" "CAD"
+          2010-01-01 close Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.include', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__include(self, entries, errors, _):
+        """
+          2000-01-01 open Assets:Before
+          include "answer.beancount"
+          2010-01-01 close Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.plugin', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__plugin(self, entries, errors, _):
+        """
+          2000-01-01 open Assets:Before
+          plugin "answer.beancount"
+          2010-01-01 close Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.amount', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__amount(self, entries, errors, _):
+        """
+          2000-01-01 open Assets:Before
+          2001-02-02 balance Assets:Before    23.00 USD
+          2010-01-01 close Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.lot_cost_date', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__lot_cost_date(self, entries, errors, _):
+        """
+          2000-01-01 open Assets:Before
+          2001-02-02 *
+            Assets:Before   10.00 HOOL {100.00 USD}
+            Assets:After   -100.00 USD
+          2010-01-01 close Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.position', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__position(self, entries, errors, _):
+        """
+          2000-01-01 open Assets:Before
+          2001-02-02 *
+            Assets:Before   100.00 USD
+            Assets:After   -100.00 USD
+          2010-01-01 close Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.open', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__open(self, entries, errors, _):
+        """
+          2010-01-01 balance Assets:Before  1 USD
+          2000-01-01 open Assets:Before
+          2010-01-01 close Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.close', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__close(self, entries, errors, _):
+        """
+          2010-01-01 balance Assets:Before  1 USD
+          2010-01-01 close Assets:Before
+          2000-01-01 open Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.commodity', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__commodity(self, entries, errors, _):
+        """
+          2010-01-01 close Assets:Before
+          2010-01-01 commodity USD
+          2000-01-01 open Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.pad', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__pad(self, entries, errors, _):
+        """
+          2010-01-01 close Assets:Before
+          2010-01-01 pad Assets:Before Assets:After
+          2000-01-01 open Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.balance', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__balance(self, entries, errors, _):
+        """
+          2010-01-01 close Assets:Before
+          2010-01-01 balance Assets:Before 100 USD
+          2000-01-01 open Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.event', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__event(self, entries, errors, _):
+        """
+          2010-01-01 close Assets:Before
+          2010-01-01 event "location" "New York, NY"
+          2000-01-01 open Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.price', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__price(self, entries, errors, _):
+        """
+          2010-01-01 close Assets:Before
+          2010-01-01 price HOOL 20 USD
+          2000-01-01 open Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.note', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__note(self, entries, errors, _):
+        """
+          2010-01-01 close Assets:Before
+          2010-01-01 note Assets:Before "Something something"
+          2000-01-01 open Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.document', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__document(self, entries, errors, _):
+        """
+          2010-01-01 close Assets:Before
+          2010-01-01 document Assets:Before "/path/to/document.png"
+          2000-01-01 open Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.key_value', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__key_value(self, entries, errors, _):
+        """
+          2010-01-01 close Assets:Before
+          2010-01-01 commodity HOOL
+            key: "Value"
+          2000-01-01 open Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.posting', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__posting(self, entries, errors, _):
+        """
+          2010-01-01 close Assets:Before
+          2010-01-01 *
+            Assets:Before   100.00 USD
+            Assets:After   -100.00 USD
+          2000-01-01 open Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.txn_field_new', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__txn_field_new(self, entries, errors, _):
+        """
+          2010-01-01 close Assets:Before
+          2010-01-01 * "Payee" "Narration"
+            Assets:Before   100.00 USD
+            Assets:After   -100.00 USD
+          2000-01-01 open Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.txn_field_TAG', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__txn_field_TAG(self, entries, errors, _):
+        """
+          2010-01-01 close Assets:Before
+          2010-01-01 * "Payee" "Narration" #sometag
+            Assets:Before   100.00 USD
+            Assets:After   -100.00 USD
+          2000-01-01 open Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.txn_field_LINK', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__txn_field_LINK(self, entries, errors, _):
+        """
+          2010-01-01 close Assets:Before
+          2010-01-01 * "Payee" "Narration" ^somelink
+            Assets:Before   100.00 USD
+            Assets:After   -100.00 USD
+          2000-01-01 open Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.txn_field_STRING', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__txn_field_STRING(self, entries, errors, _):
+        """
+          2010-01-01 close Assets:Before
+          2010-01-01 * "Payee" "Narration" ^somelink
+            Assets:Before   100.00 USD
+            Assets:After   -100.00 USD
+          2000-01-01 open Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.txn_field_PIPE', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__txn_field_PIPE(self, entries, errors, _):
+        """
+          2010-01-01 close Assets:Before
+          2010-01-01 * "Payee" | "Narration"
+            Assets:Before   100.00 USD
+            Assets:After   -100.00 USD
+          2000-01-01 open Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.transaction', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__transaction(self, entries, errors, _):
+        """
+          2010-01-01 close Assets:Before
+          2010-01-01 * "Payee" | "Narration"
+            Assets:Before   100.00 USD
+            Assets:After   -100.00 USD
+          2000-01-01 open Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
 
 
 
-        # entries, errors, _ = parser.parse_string(input_string)
-
-        # self.assertEqual(0, len(entries))
-        # self.assertEqual(1, len(errors))
-        # self.assertRegexpMatches(errors[0].message, r"syntax error")
 
 
 
-
-
-    # FIXME: TODO - Also mock the build_error routines, make them raise
-    # exceptions, make sure this is handled sanely.
-
+    # FIXME:
     # Make sure that yyparse() returning != 0 actually does raise an exception; add a test.
 
+    # FIXME:
     # What happens to the memory of objects created and discarded by error rules?
 
-
-
+    # FIXME:
     # @parser.parsedoc
     # def __test_no_final_newline(self, entries, errors, _):
     #     """
@@ -1473,18 +1742,3 @@ parsers may encounter parser-level errors, in
     #     self.assertFalse(errors)
     #     self.assertEqual(1, len(entries))
     #     self.assertEqual(2, len(entries[0].postings))
-
-
-class TestArithmetic(unittest.TestCase):
-
-    @parser.parsedoc
-    def test_number_expr_DIV(self, entries, errors, _):
-        """
-          2013-05-18 * "Test"
-            Assets:Something    12 / 3 USD
-            Assets:Something   7.5 / 3 USD
-        """
-        self.assertEqual(1, len(entries))
-        postings = entries[0].postings
-        self.assertEqual(D('4'), postings[0].position.number)
-        self.assertEqual(D('2.5'), postings[1].position.number)

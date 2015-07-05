@@ -2705,6 +2705,7 @@ void build_lexer_error(YYSTYPE* yylval, const char* string, size_t length)
         PyErr_SetString(PyExc_RuntimeError,
                         "Internal error: Building exception from default rule");
     }
+    Py_XDECREF(rv);
 }
 
 void build_lexer_error_from_exception()

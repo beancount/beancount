@@ -180,6 +180,22 @@ class Builder(lexer.LexBuilder):
         if entries:
             self.entries = entries
 
+    def build_grammar_error(self, filename, lineno, message, exc_type=None):
+        """Build a grammar error and appends it to the list of pending errors.
+
+        Args:
+          filename: The current filename
+          lineno: The current line number
+          message: The message of the error.
+          exc_type: An exception type, if an exception occurred.
+        """
+        if not isinstance(message, str):
+            message = str(message)
+        if exc_type is not None:
+            message = '{}: {}'.format(exc_type.__name__, message)
+        meta = new_metadata(filename, lineno)
+        self.errors.append(
+            ParserSyntaxError(meta, message, None))
 
     def pushtag(self, tag):
         """Push a tag on the current set of tags.
@@ -369,23 +385,6 @@ class Builder(lexer.LexBuilder):
         if new_object is not None:
             object_list.append(new_object)
         return object_list
-
-    def build_grammar_error(self, filename, lineno, message, exc_type=None):
-        """Build a grammar error and appends it to the list of pending errors.
-
-        Args:
-          filename: The current filename
-          lineno: The current line number
-          message: The message of the error.
-          exc_type: An exception type, if an exception occurred.
-        """
-        if not isinstance(message, str):
-            message = str(message)
-        if exc_type is not None:
-            message = '{}: {}'.format(exc_type.__name__, message)
-        meta = new_metadata(filename, lineno)
-        self.errors.append(
-            ParserSyntaxError(meta, message, None))
 
     def open(self, filename, lineno, date, account, currencies, booking, kvlist):
         """Process an open directive.
