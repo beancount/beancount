@@ -14,12 +14,6 @@ beancount: TODO
   - Define a C extension module to implement D().
 
 
-* Error Handling
-
-  - What happens to the memory of objects created and discarded by error rules?
-
-
-
 * Explicit Tolerance
 
   - Make the printer support explicit tolerance syntax. This is crucial for
