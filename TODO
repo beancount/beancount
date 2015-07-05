@@ -16,8 +16,6 @@ beancount: TODO
 
 * Unicode Support for Strings
 
-  - Complete the parser_tests, model after lexer tests.
-
   - Remove conversion in _load function, make it just use the encoding parameter.
 
 
