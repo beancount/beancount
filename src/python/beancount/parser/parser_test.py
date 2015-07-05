@@ -3,27 +3,13 @@ Tests for parser.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import datetime
 import unittest
-import inspect
 import tempfile
-import textwrap
-import re
 import sys
 import subprocess
-from unittest import mock
 
-from beancount.core.number import D
 from beancount.parser import parser
-from beancount.parser import lexer
-from beancount.core import data
-from beancount.core import amount
-from beancount.core import interpolate
-from beancount.core import interpolate_test
 from beancount.utils import test_utils
-from beancount.parser import grammar
-from beancount.parser import cmptest
-from beancount.parser import printer
 
 
 class TestParserDoc(unittest.TestCase):
