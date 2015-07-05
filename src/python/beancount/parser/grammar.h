@@ -94,7 +94,7 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 143 "src/python/beancount/parser/grammar.y" /* yacc.c:1915  */
+#line 128 "src/python/beancount/parser/grammar.y" /* yacc.c:1915  */
 
     char character;
     const char* string;

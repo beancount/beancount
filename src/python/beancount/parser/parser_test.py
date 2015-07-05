@@ -431,6 +431,16 @@ class TestSyntaxErrors(unittest.TestCase):
         self.assertIsInstance(errors[0], lexer.LexerError)
         self.assertRegexpMatches(errors[0].message, 'Invalid token')
 
+    @parser.parsedoc
+    def test_no_final_newline(self, entries, errors, _):
+        """
+          2014-11-02 *
+            Assets:Something   1 USD
+            Assets:Other      -1 USD"""
+        self.assertFalse(errors)
+        self.assertEqual(1, len(entries))
+        self.assertEqual(2, len(entries[0].postings))
+
 
 class TestLineNumbers(unittest.TestCase):
     """Check that the line numbers line up correctly."""
@@ -1725,14 +1735,3 @@ class TestLexerAndParserErrors(cmptest.TestCase):
 
     # FIXME:
     # What happens to the memory of objects created and discarded by error rules?
-
-    # FIXME:
-    # @parser.parsedoc
-    # def __test_no_final_newline(self, entries, errors, _):
-    #     """
-    #       2014-11-02 *
-    #         Assets:Something   1 USD
-    #         Assets:Other      -1 USD"""
-    #     self.assertFalse(errors)
-    #     self.assertEqual(1, len(entries))
-    #     self.assertEqual(2, len(entries[0].postings))

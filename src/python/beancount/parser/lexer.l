@@ -30,7 +30,7 @@
 
 
 /* Build and accumulate an error on the builder object. */
-void build_lexer_error(YYSTYPE* yylval, const char* string, size_t length);
+void build_lexer_error(const char* string, size_t length);
 
 /* Build and accumulate an error on the builder object using the current
  * exception state. */
@@ -39,22 +39,19 @@ void build_lexer_error_from_exception(void);
 
 
 /* Callback call site with error handling. */
-#define BUILD_LEX(method_name, format, ...)                     \
-    yylval->pyobj = PyObject_CallMethod(builder, method_name,   \
-                                        format, __VA_ARGS__);   \
-    /* Process exception state {3cfb2739349a} */                \
-    if (yylval->pyobj == NULL) {                                \
-       build_lexer_error_from_exception();                      \
-       return LEX_ERROR;                                        \
+#define BUILD_LEX(method_name, format, ...)                                             \
+    yylval->pyobj = PyObject_CallMethod(builder, method_name, format, __VA_ARGS__);     \
+    /* Handle a Python exception raised by the handler {3cfb2739349a} */                \
+    if (yylval->pyobj == NULL) {                                                        \
+       build_lexer_error_from_exception();                                              \
+       return LEX_ERROR;                                                                \
+    }                                                                                   \
+    /* Lexer builder methods should never return None, check for it. */                 \
+    else if (yylval->pyobj == Py_None) {                                                \
+        Py_DECREF(Py_None);                                                             \
+        build_lexer_error("Unexpected None result from lexer", 34);                     \
+        return LEX_ERROR;                                                               \
     }
-
-/* {ccc5df638692} */
-/* FIXME: These methods shoudl never return None... check for this and raise an error if they ever do. */
-    /* else if (yylval->pyobj == Py_None) {                             \ */
-    /*    TRACE_ERROR("BUILD_LEX(%s) returned None", method_name); \ */
-    /*    create_error_from_exception(); */
-    /*    return LEX_ERROR;                                        \ */
-    /* } */
 
 
 /* Global declarations; defined below. */
@@ -224,7 +221,6 @@ FALSE		{
 
     /* Attempt to create the date. */
     BUILD_LEX("DATE", "iii", year, month, day);
-
     return DATE;
 }
 
@@ -324,7 +320,7 @@ FALSE		{
 <INVALID>[^ \t\n\r]+     {
     char buffer[256];
     size_t length = snprintf(buffer, 256, "Invalid token: '%s'", yytext);
-    build_lexer_error(yylval, buffer, length);
+    build_lexer_error(buffer, length);
     BEGIN(INITIAL);
     return LEX_ERROR;
 }
@@ -384,7 +380,7 @@ int strtonl(const char* buf, size_t nchars)
 }
 
 /* Build and accumulate an error on the builder object. */
-void build_lexer_error(YYSTYPE* yylval, const char* string, size_t length)
+void build_lexer_error(const char* string, size_t length)
 {
     /* TRACE_ERROR("Invalid Token"); */
 

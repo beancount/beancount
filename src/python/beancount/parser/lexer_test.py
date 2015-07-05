@@ -384,6 +384,17 @@ class TestLexerErrors(unittest.TestCase):
                           ('EOL', 5, '\x00', None)], tokens)
         self.assertEqual(1, len(errors))
 
+    def test_lexer_builder_returns_none(self):
+        builder = lexer.LexBuilder()
+        def return_none(string):
+            return None
+        builder.STRING = return_none
+        tokens = list(lexer.lex_iter_string('"Something"', builder))
+        self.assertEqual([('LEX_ERROR', 1, '"', None),
+                          ('EOL', 1, '\x00', None)], tokens)
+        self.assertEqual(1, len(builder.errors))
+        self.assertRegexpMatches(builder.errors[0].message, "None result from lexer")
+
     @lex_tokens
     def test_lexer_exception_DATE(self, tokens, errors):
         """
@@ -426,7 +437,6 @@ class TestLexerErrors(unittest.TestCase):
                           ('EOL', 3, '\n', None),
                           ('EOL', 3, '\x00', None)], tokens)
         self.assertEqual(1, len(builder.errors))
-
 
     def _run_lexer_with_raising_builder_method(self, test_input, method_name,
                                                expected_tokens):

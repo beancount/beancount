@@ -27,25 +27,10 @@
         YYERROR;                                                                \
     }
 
-
 /* FIXME: if there is an error, we end up leaking the $1, $2, ... find a
    solution for this. Maybe a more sensible solution here would be to inc-ref
    None when setting that and to have the cleanup/decref code be done all within
    the macro, to simplify all the code below. */
-
-/* FIXME: Complete testing aborting from here instead of calling abort() as above. */
-/* #define BUILD(method_name, format, ...)                                                         \ */
-/*     {                                                                                           \ */
-/*         checkNull( PyObject_CallMethod(builder, method_name, format, __VA_ARGS__) );            \ */
-/*         PyObject* result = PyObject_CallMethod(builder, method_name, format, __VA_ARGS__)       \ */
-/*         if (result == NULL) {                                                                   \ */
-/*             YYABORT;                                                                            \ */
-/*         }, result                                                                               \ */
-/*     } */
-
-
-
-
 
 
 /* First line of reported file/line string. This is used as #line. */
