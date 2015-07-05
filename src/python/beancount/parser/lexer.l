@@ -54,10 +54,23 @@ void build_lexer_error_from_exception(void);
     }
 
 
+/* Initialization/finalization methods. These are separate from the yylex_init()
+ * and yylex_destroy() and they call them. */
+void yylex_initialize(const char* filename);
+void yylex_finalize(void);
+
+
 /* Global declarations; defined below. */
 extern int yy_eof_times;
 extern const char* yy_filename;
 extern int yycolumn;
+
+/* String buffer statics. */
+extern size_t strbuf_size; /* Current buffer size (not including final nul). */
+extern char* strbuf;       /* Current buffer head. */
+extern char* strbuf_end;   /* Current buffer sentinel (points to the final nul). */
+extern char* strbuf_ptr;   /* Current insertion point in buffer. */
+void strbuf_realloc(size_t num_new_chars);
 
 
 
@@ -81,15 +94,12 @@ int yy_skip_line(void);
 int strtonl(const char* buf, size_t nchars);
 
 
-/* Longest possible string, including multiline strings. */
-#define MAX_STR_BUF  16384
-
-#define SAFE_COPY(dst_ptr, value)               \
-	*dst_ptr++ = value;                     \
-	if (dst_ptr >= strbuf_end) {            \
-            BEGIN(INVALID);                     \
-	}
-/* FIXME: You have to make this code gobble the rest of the string and not fail. */
+/* Append characters to the static string buffer and verify. */
+#define SAFE_COPY_CHAR(value)                    \
+	if (strbuf_ptr >= strbuf_end) {         \
+            strbuf_realloc(1);                  \
+	}                                       \
+        *strbuf_ptr++ = value;
 
 }
 
@@ -103,11 +113,6 @@ int strtonl(const char* buf, size_t nchars);
 /*--------------------------------------------------------------------------------------*/
 /* Rules */
 %%
-
-	/* String literal buffer. */
-	char strbuf[MAX_STR_BUF];
-	char* strbuf_end = strbuf + MAX_STR_BUF;
-	char* strbuf_ptr = NULL;
 
 
  /* Newlines are output as explicit tokens, because lines matter in the syntax. */
@@ -252,22 +257,25 @@ FALSE		{
         BEGIN(INITIAL);
         *strbuf_ptr = '\0';
         BUILD_LEX("STRING", "s#", strbuf, strbuf_ptr - strbuf);
+        strbuf_ptr = NULL;
         return STRING;
     }
 
     /* Escape sequences. */
-    \\n       SAFE_COPY(strbuf_ptr, '\n');
-    \\t       SAFE_COPY(strbuf_ptr, '\t');
-    \\r       SAFE_COPY(strbuf_ptr, '\r');
-    \\b       SAFE_COPY(strbuf_ptr, '\b');
-    \\f       SAFE_COPY(strbuf_ptr, '\f');
-    \\(.|\n)  SAFE_COPY(strbuf_ptr, yytext[1]);
+    \\n       SAFE_COPY_CHAR('\n');
+    \\t       SAFE_COPY_CHAR('\t');
+    \\r       SAFE_COPY_CHAR('\r');
+    \\b       SAFE_COPY_CHAR('\b');
+    \\f       SAFE_COPY_CHAR('\f');
+    \\(.|\n)  SAFE_COPY_CHAR(yytext[1]);
 
     /* All other characters. */
     [^\\\"]+        {
-        char *yptr = yytext;
-        while ( *yptr ) {
-            SAFE_COPY(strbuf_ptr, *yptr++);
+        if ( yyleng > strbuf_end - strbuf_ptr ) {
+            strbuf_realloc(yyleng);
+        }
+        for (size_t i = 0; i < yyleng; ++i) {
+            *strbuf_ptr++ = yytext[i];
         }
     }
 }
@@ -345,6 +353,62 @@ int yy_line_tokens = 0;
 
 /* The current column we're tokenizing at. */
 int yycolumn = 1;
+
+/* A buffer for parsing string literals. It is reused and its size is dynamically allocated. */
+size_t strbuf_size = 0;
+char* strbuf = NULL;
+char* strbuf_end;
+char* strbuf_ptr;
+
+/* Initialize the globals before running the lexer. */
+void yylex_initialize(const char* filename)
+{
+    assert(filename != NULL);
+    yy_eof_times = 0;
+    yy_filename = filename;
+    yy_line_tokens = 0;
+    yycolumn = 1;
+
+    strbuf_size = 8;
+    strbuf = realloc(strbuf, strbuf_size + 1);
+    strbuf_end = strbuf + strbuf_size - 1;
+    strbuf_ptr = NULL;
+
+    /* Note: If we used a reentrant parser, this routine should eventually call
+     * yylex_init(). */
+}
+
+/* Finalize the globals before running the lexer. */
+void yylex_finalize(void)
+{
+    yy_filename = NULL;
+
+    /* Finalize our reading buffer. */
+    if ( strbuf != NULL ) {
+        free(strbuf);
+        strbuf = NULL;
+    }
+
+    /* Call the yylex finalization routine. */
+    yylex_destroy();
+}
+
+
+/* Reallocate the buffer to accomodate some new characters. */
+void strbuf_realloc(size_t num_new_chars)
+{
+    assert(strbuf_ptr != NULL);
+    size_t cur_size = strbuf_ptr - strbuf;
+    size_t new_size = cur_size + num_new_chars;
+    while ( strbuf_size < new_size ) {
+        strbuf_size <<= 1;
+    }
+    strbuf = realloc(strbuf, strbuf_size + 1);
+    strbuf_ptr = strbuf + cur_size;
+    strbuf_end = strbuf + strbuf_size - 1;
+}
+
+
 
 
 #define LEXEOF 0

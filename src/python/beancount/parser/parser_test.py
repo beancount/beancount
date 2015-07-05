@@ -1727,11 +1727,3 @@ class TestLexerAndParserErrors(cmptest.TestCase):
           2000-01-01 open Assets:Before
         """
         self.check_entries_errors(entries, errors)
-
-
-
-
-
-
-    # FIXME:
-    # What happens to the memory of objects created and discarded by error rules?

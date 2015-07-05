@@ -38,10 +38,23 @@ void build_lexer_error_from_exception(void);
     }
 
 
+/* Initialization/finalization methods. These are separate from the yylex_init()
+ * and yylex_destroy() and they call them. */
+void yylex_initialize(const char* filename);
+void yylex_finalize(void);
+
+
 /* Global declarations; defined below. */
 extern int yy_eof_times;
 extern const char* yy_filename;
 extern int yycolumn;
+
+/* String buffer statics. */
+extern size_t strbuf_size; /* Current buffer size (not including final nul). */
+extern char* strbuf;       /* Current buffer head. */
+extern char* strbuf_end;   /* Current buffer sentinel (points to the final nul). */
+extern char* strbuf_ptr;   /* Current insertion point in buffer. */
+void strbuf_realloc(size_t num_new_chars);
 
 
 
@@ -65,20 +78,17 @@ int yy_skip_line(void);
 int strtonl(const char* buf, size_t nchars);
 
 
-/* Longest possible string, including multiline strings. */
-#define MAX_STR_BUF  16384
-
-#define SAFE_COPY(dst_ptr, value)               \
-	*dst_ptr++ = value;                     \
-	if (dst_ptr >= strbuf_end) {            \
-            BEGIN(INVALID);                     \
-	}
-/* FIXME: You have to make this code gobble the rest of the string and not fail. */
+/* Append characters to the static string buffer and verify. */
+#define SAFE_COPY_CHAR(value)                    \
+	if (strbuf_ptr >= strbuf_end) {         \
+            strbuf_realloc(1);                  \
+	}                                       \
+        *strbuf_ptr++ = value;
 
 
 
 
-#line 82 "src/python/beancount/parser/lexer.h"
+#line 92 "src/python/beancount/parser/lexer.h"
 
 #define  YY_INT_ALIGNED short int
 
@@ -400,9 +410,9 @@ extern int yylex \
 #undef YY_DECL
 #endif
 
-#line 329 "src/python/beancount/parser/lexer.l"
+#line 337 "src/python/beancount/parser/lexer.l"
 
 
-#line 407 "src/python/beancount/parser/lexer.h"
+#line 417 "src/python/beancount/parser/lexer.h"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */

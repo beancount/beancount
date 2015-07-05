@@ -16,20 +16,14 @@ beancount: TODO
 
 * Error Handling
 
-  - See if you could not best communicate the error from the lexer to the parser
-    via the exception vehicle. If the parser handles things nicely using
-    exceptions, this might be the best way!
-    If so, remove build_lexer_error; build all errors from the parser.
-
-  - We need to correctly chomp until a newline without calling yyerror()
-    repeatedly; do this properly. yyerror() should be called only once per
-    error.
-
   - You don't need to incref the builder... remove that. Test it.
 
   - Move grammar.Builder tests to grammar_test.py.
 
   - Fix and test {ccc5df638692} when all is said and done and ready to merge.
+
+  - What happens to the memory of objects created and discarded by error rules?
+
 
 
 * Explicit Tolerance
