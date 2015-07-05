@@ -2675,7 +2675,8 @@ void yylex_initialize(const char* filename)
     yy_line_tokens = 0;
     yycolumn = 1;
 
-    strbuf_size = 8;
+    /* Start with a decent small buffer. */
+    strbuf_size = 1024;
     strbuf = realloc(strbuf, strbuf_size + 1);
     strbuf_end = strbuf + strbuf_size - 1;
     strbuf_ptr = NULL;

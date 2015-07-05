@@ -16,8 +16,6 @@ beancount: TODO
 
 * Error Handling
 
-  - You don't need to incref the builder... remove that. Test it.
-
   - What happens to the memory of objects created and discarded by error rules?
 
 

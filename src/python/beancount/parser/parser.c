@@ -66,7 +66,6 @@ PyObject* parse_file(PyObject *self, PyObject *args, PyObject* kwds)
                                       &yydebug) ) {
         return NULL;
     }
-    Py_XINCREF(builder);
 
     /* Open the file. */
     if ( strcmp(filename, "-") == 0 ) {
@@ -90,14 +89,14 @@ PyObject* parse_file(PyObject *self, PyObject *args, PyObject* kwds)
     result = yyparse();
 
     /* Finalize the parser. */
+    /* Noop. */
+
+    /* Finalize the lexer. */
     if ( fp != NULL ) {
         fclose(fp);
     }
-
-    /* Finalize the lexer. */
     yylex_finalize();
 
-    Py_XDECREF(builder);
     builder = 0;
 
     return handle_yyparse_result(result);
@@ -122,8 +121,6 @@ PyObject* parse_string(PyObject *self, PyObject *args, PyObject* kwds)
                                       &yydebug) ) {
         return NULL;
     }
-    Py_XINCREF(builder);
-
 
     /* Initialize the lexer. */
     yylex_initialize(report_filename != NULL ? report_filename : "<string>");
@@ -136,11 +133,11 @@ PyObject* parse_string(PyObject *self, PyObject *args, PyObject* kwds)
     result = yyparse();
 
     /* Finalize the parser. */
+    /* Noop. */
 
     /* Finalize the lexer. */
     yylex_finalize();
 
-    Py_XDECREF(builder);
     builder = 0;
 
     return handle_yyparse_result(result);
