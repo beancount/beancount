@@ -29,11 +29,23 @@ PyObject* checkNull(PyObject* o)
 
 
 
-#define BUILD(method_name, format, ...)                                                 \
-    checkNull( PyObject_CallMethod(builder, method_name, format, __VA_ARGS__) );
 
-#define BUILD_NOARGS(method_name)                                       \
-    checkNull( PyObject_CallMethod(builder, method_name, NULL) );
+
+/* #define BUILD(method_name, format, ...)                                                 \ */
+/*     checkNull( PyObject_CallMethod(builder, method_name, format, __VA_ARGS__) ); */
+
+#define BUILD(method_name, format, ...)                                 \
+    {                                                                   \
+        PyObject* pyobj = PyObject_CallMethod(builder, method_name,     \
+                                              format, __VA_ARGS__);     \
+        if (pyobj == NULL) {                                            \
+            build_grammar_error_from_exception();                       \
+            YYERROR;                                                    \
+        }                                                               \
+    }
+
+
+
 
 
 /* #define BUILD_X(method_name, format, ...)                                                        \ */
@@ -75,12 +87,43 @@ int yy_firstline;
 
 #define FILE_LINE_ARGS  yy_filename, ((yyloc).first_line + yy_firstline)
 
-#if 0
-/* Skip tokens until we find a new line that does not begin with an indent. */
-void skipToRecover()
+
+/* Build a grammar error from the exception context. */
+void build_grammar_error_from_exception(void)
 {
+    TRACE_ERROR("Grammar Builder Exception");
+
+    /* Get the exception context. */
+    PyObject* ptype;
+    PyObject* pvalue;
+    PyObject* ptraceback;
+    PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+    PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+
+    /* Clear the exception. */
+    PyErr_Clear();
+
+    if (pvalue != NULL) {
+        /* Build and accumulate a new error object. {27d1d459c5cd} */
+        PyObject* rv = PyObject_CallMethod(builder, "build_grammar_error", "siOO",
+                                           yy_filename, yylineno + yy_firstline,
+                                           pvalue, ptype);
+        Py_DECREF(ptype);
+        Py_DECREF(pvalue);
+        Py_DECREF(ptraceback);
+
+        if (rv == NULL) {
+            PyErr_SetString(PyExc_RuntimeError,
+                            "Internal error: While building exception");
+        }
+    }
+    else {
+        PyErr_SetString(PyExc_RuntimeError,
+                        "Internal error: No exception");
+    }
 }
-#endif
+
+
 
 /* Error-handling function. {ca6aab8b9748} */
 void yyerror(char const* message)
@@ -91,9 +134,8 @@ void yyerror(char const* message)
         return;
     }
     else {
-        TRACE_ERROR("yyerror: '%s'; yytext='%s'", message, yytext);
         /* Register a syntax error with the builder. */
-        BUILD("build_grammar_error", "ssi", message, yy_filename, yylineno + yy_firstline);
+        BUILD("build_grammar_error", "sis", yy_filename, yylineno + yy_firstline, message);
     }
 }
 
@@ -259,7 +301,10 @@ number_expr : NUMBER
 
 txn_fields : empty
            {
-               $$ = BUILD_NOARGS("txn_field_new");
+               /* Note: We're passing a bogus value here in order to avoid
+                * having to declare a second macro just for this one special
+                * case. */
+               $$ = BUILD("txn_field_new", "O", Py_None);
            }
            | txn_fields STRING
            {

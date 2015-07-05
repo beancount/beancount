@@ -1434,7 +1434,7 @@ parsers may encounter parser-level errors, in
 
     @mock.patch('beancount.parser.grammar.Builder.option', raise_exception)
     @parser.parsedoc
-    def test_grammar_exception__option(self, entries, errors, _):
+    def ___test_grammar_exception__option(self, entries, errors, _):
         """
           2000-01-01 open Assets:Before
           option "operating_currency" "USD"

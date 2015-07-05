@@ -64,13 +64,19 @@ class LexBuilder(object):
 
     # Note: We could simplify the code by removing this if we could find a good
     # way to have the lexer communicate the error contents to the parser.
-    def build_lexer_error(self, string, exc_type=None): # {0e31aeca3363}
-        if not isinstance(string, str):
-            string = str(string)
+    def build_lexer_error(self, message, exc_type=None): # {0e31aeca3363}
+        """Build a lexer error and appends it to the list of pending errors.
+
+        Args:
+          message: The message of the error.
+          exc_type: An exception type, if an exception occurred.
+        """
+        if not isinstance(message, str):
+            message = str(message)
         if exc_type is not None:
-            string = '{}: {}'.format(exc_type.__name__, string)
+            message = '{}: {}'.format(exc_type.__name__, message)
         self.errors.append(
-            LexerError(self.get_lexer_location(), string, None))
+            LexerError(self.get_lexer_location(), message, None))
 
     def DATE(self, year, month, day):
         """Process a DATE token.

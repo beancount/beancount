@@ -18,18 +18,18 @@ void build_lexer_error(YYSTYPE* yylval, const char* string, size_t length);
 
 /* Build and accumulate an error on the builder object using the current
  * exception state. */
-void build_lexer_error_from_exception(YYSTYPE* yylval);
+void build_lexer_error_from_exception(void);
 
 
 
 /* Callback call site with error handling. */
-#define BUILD_LEX(method_name, format, ...)                             \
-    yylval->pyobj = PyObject_CallMethod(builder, method_name,           \
-                                        format, __VA_ARGS__);           \
-    /* Process exception state {3cfb2739349a} */                        \
-    if (yylval->pyobj == NULL) {                                        \
-       build_lexer_error_from_exception(yylval);                        \
-       return LEX_ERROR;                                                \
+#define BUILD_LEX(method_name, format, ...)                     \
+    yylval->pyobj = PyObject_CallMethod(builder, method_name,   \
+                                        format, __VA_ARGS__);   \
+    /* Process exception state {3cfb2739349a} */                \
+    if (yylval->pyobj == NULL) {                                \
+       build_lexer_error_from_exception();                      \
+       return LEX_ERROR;                                        \
     }
 
 /* {ccc5df638692} */
