@@ -277,8 +277,7 @@ class TestLexer(unittest.TestCase):
         """
         builder = lexer.LexBuilder()
         builder.long_string_maxlines_default = 8
-        tokens = list(lexer.lex_iter_string(textwrap.dedent(test_input),
-                                            builder))
+        list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
         self.assertLessEqual(1, len(builder.errors))
         self.assertRegexpMatches(builder.errors[0].message, 'String too long')
 
@@ -286,7 +285,7 @@ class TestLexer(unittest.TestCase):
         # This tests lexing with a string of 256k.
         test_input = '"' + ('1234567890ABCDEF' * (256*64)) + '"'
         builder = lexer.LexBuilder()
-        tokens = list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
+        list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
         self.assertLessEqual(0, len(builder.errors))
 
     @lex_tokens

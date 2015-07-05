@@ -127,7 +127,6 @@ class LexBuilder(object):
           do some decoding here.
         """
         # If a multiline string, warm over a certain number of lines.
-        # FIXME: We should perform this long-lines check in the lexer directly.
         if '\n' in string:
             num_lines = string.count('\n') + 1
             if num_lines > self.long_string_maxlines_default:

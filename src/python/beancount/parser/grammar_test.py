@@ -1346,7 +1346,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
         """, entries)
 
     @parser.parsedoc
-    def test_grammar_syntax_error__recovery(self, entries, errors, _):
+    def test_grammar_syntax_error__recovery2(self, entries, errors, _):
         """
           2000-01-01 open open
           2000-01-02 open Assets:Something
