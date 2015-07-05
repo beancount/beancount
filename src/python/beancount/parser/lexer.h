@@ -40,7 +40,7 @@ void build_lexer_error_from_exception(void);
 
 /* Initialization/finalization methods. These are separate from the yylex_init()
  * and yylex_destroy() and they call them. */
-void yylex_initialize(const char* filename);
+void yylex_initialize(const char* filename, const char* encoding);
 void yylex_finalize(void);
 
 
@@ -48,6 +48,7 @@ void yylex_finalize(void);
 extern int yy_eof_times;
 extern const char* yy_filename;
 extern int yycolumn;
+extern const char* yy_encoding;
 
 /* String buffer statics. */
 extern size_t strbuf_size; /* Current buffer size (not including final nul). */
@@ -88,7 +89,7 @@ int strtonl(const char* buf, size_t nchars);
 
 
 
-#line 92 "src/python/beancount/parser/lexer.h"
+#line 93 "src/python/beancount/parser/lexer.h"
 
 #define  YY_INT_ALIGNED short int
 
@@ -410,9 +411,9 @@ extern int yylex \
 #undef YY_DECL
 #endif
 
-#line 337 "src/python/beancount/parser/lexer.l"
+#line 341 "src/python/beancount/parser/lexer.l"
 
 
-#line 417 "src/python/beancount/parser/lexer.h"
+#line 418 "src/python/beancount/parser/lexer.h"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */

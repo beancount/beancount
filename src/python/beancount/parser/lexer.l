@@ -56,7 +56,7 @@ void build_lexer_error_from_exception(void);
 
 /* Initialization/finalization methods. These are separate from the yylex_init()
  * and yylex_destroy() and they call them. */
-void yylex_initialize(const char* filename);
+void yylex_initialize(const char* filename, const char* encoding);
 void yylex_finalize(void);
 
 
@@ -64,6 +64,7 @@ void yylex_finalize(void);
 extern int yy_eof_times;
 extern const char* yy_filename;
 extern int yycolumn;
+extern const char* yy_encoding;
 
 /* String buffer statics. */
 extern size_t strbuf_size; /* Current buffer size (not including final nul). */
@@ -256,7 +257,10 @@ FALSE		{
     \"        {
         BEGIN(INITIAL);
         *strbuf_ptr = '\0';
-        BUILD_LEX("STRING", "s#", strbuf, strbuf_ptr - strbuf);
+        PyObject* unicode_str = PyUnicode_Decode(strbuf, strbuf_ptr - strbuf,
+                                                 yy_encoding, "ignore");
+        BUILD_LEX("STRING", "O", unicode_str);
+        Py_DECREF(unicode_str);
         strbuf_ptr = NULL;
         return STRING;
     }
@@ -354,6 +358,9 @@ int yy_line_tokens = 0;
 /* The current column we're tokenizing at. */
 int yycolumn = 1;
 
+/* The encoding to use for converting strings. */
+const char* yy_encoding = NULL;
+
 /* A buffer for parsing string literals. It is reused and its size is dynamically allocated. */
 size_t strbuf_size = 0;
 char* strbuf = NULL;
@@ -361,13 +368,19 @@ char* strbuf_end;
 char* strbuf_ptr;
 
 /* Initialize the globals before running the lexer. */
-void yylex_initialize(const char* filename)
+void yylex_initialize(const char* filename, const char* encoding)
 {
     assert(filename != NULL);
     yy_eof_times = 0;
     yy_filename = filename;
     yy_line_tokens = 0;
     yycolumn = 1;
+    if ( encoding == 0 ) {
+        yy_encoding = "utf8";
+    }
+    else {
+        yy_encoding = encoding;
+    }
 
     /* Start with a decent small buffer. */
     strbuf_size = 1024;

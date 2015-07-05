@@ -86,18 +86,48 @@ class TestParserInputs(unittest.TestCase):
             entries, errors, _ = parser.parse_string("something", None, report_filename)
 
 
-class TestUnicodeErrors(unittest.TestCase):
+# FIXME: Model this after the lexer tests.
 
-    utf8_test_string = textwrap.dedent("""
-      2015-01-01 open Assets:Something
-      2015-05-23 note Assets:Something "¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼ "
-    """)
-
-    def test_bytes_encoded_utf8(self):
-        parser.parse_string(self.utf8_test_string.encode('utf-8'))
-
-    def test_bytes_encoded_latin1(self):
-        # Note: This should fail without dumping core. This should fail
-        # elegantly. This should be failing in the lexer.
-        with self.assertRaises(UnicodeDecodeError):
-            parser.parse_string(self.utf8_test_string.encode('latin1', 'ignore'))
+# class TestUnicodeErrors(unittest.TestCase):
+#
+#     test_string = textwrap.dedent("""
+#       2015-05-23 note Assets:Something "a¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼ z"
+#     """)
+#
+#     expected_string = "a¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼ z"
+#
+#     def test_bytes_encoded_utf8(self):
+#         utf8_bytes = self.test_string.encode('utf8')
+#         entries, errors, _ = parser.parse_string(utf8_bytes)
+#         self.assertEqual(1, len(entries))
+#         self.assertFalse(errors)
+#         # Check that the lexer correctly parsed the UTF8 string.
+#         self.assertEqual(self.expected_string, entries[0].comment)
+#
+#     def test_bytes_encoded_latin1(self):
+#         latin1_bytes = self.test_string.encode('latin1')
+#         entries, errors, _ = parser.parse_string(latin1_bytes)
+#         self.assertFalse(errors)
+#         # Check that the lexer correctly parsed the latin1 string.
+#         self.assertEqual(self.expected_string, entries[0].comment)
+#
+#
+#     # test_string = textwrap.dedent("""
+#     #   2015-05-23 note Assets:Something "¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼ "
+#     # """)
+#
+#     # def test_bytes_encoded_utf8(self):
+#     #     utf8_bytes = self.utf8_test_string.encode('utf-8')
+#     #     parser.parse_string(utf8_bytes)
+#
+#     # def test_bytes_encoded_latin1(self):
+#     #     # Note: This should fail without dumping core. This should fail
+#     #     # elegantly. This should be failing in the lexer.
+#     #     print()
+#     #     latin1_str = self.utf8_test_string.encode('latin1', 'ignore')
+#     #     print(latin1_str)
+#     #     parser.parse_string(latin1_str)
+#
+#
+#     #     # with self.assertRaises(UnicodeDecodeError):
+#     #     #     parser.parse_string(self.utf8_test_string.encode('latin1', 'ignore'))

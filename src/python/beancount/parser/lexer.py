@@ -186,13 +186,14 @@ class LexBuilder(object):
         return key
 
 
-def lex_iter(file, builder=None):
+def lex_iter(file, builder=None, encoding=None):
     """An iterator that yields all the tokens in the given file.
 
     Args:
       file: A string, the filename to run the lexer on, or a file object.
       builder: A builder of your choice. If not specified, a LexBuilder is
         used and discarded (along with its errors).
+      encoding: A string (or None), the default encoding to use for strings.
     Yields:
       Tuples of the token (a string), the matched text (a string), and the line
       no (an integer).
@@ -203,7 +204,7 @@ def lex_iter(file, builder=None):
         filename = file.name
     if builder is None:
         builder = LexBuilder()
-    _parser.lexer_initialize(filename, builder)
+    _parser.lexer_initialize(filename, builder, encoding)
     while 1:
         token_tuple = _parser.lexer_next()
         if token_tuple is None:
@@ -212,18 +213,19 @@ def lex_iter(file, builder=None):
     _parser.lexer_finalize()
 
 
-def lex_iter_string(string, builder=None):
+def lex_iter_string(string, builder=None, encoding=None):
     """Parse an input string and print the tokens to an output file.
 
     Args:
-      input_string: a str, the contents of the ledger to be parsed.
+      input_string: a str or bytes, the contents of the ledger to be parsed.
       builder: A builder of your choice. If not specified, a LexBuilder is
         used and discarded (along with its errors).
+      encoding: A string (or None), the default encoding to use for strings.
     Returns:
       A iterator on the string. See lex_iter() for details.
     """
-    tmp_file = tempfile.NamedTemporaryFile('w')
+    tmp_file = tempfile.NamedTemporaryFile('w' if isinstance(string, str) else 'wb')
     tmp_file.write(string)
     tmp_file.flush()
     # Note: We pass in the file object in order to keep it alive during parsing.
-    return lex_iter(tmp_file, builder)
+    return lex_iter(tmp_file, builder, encoding)
