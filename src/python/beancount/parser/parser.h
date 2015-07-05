@@ -7,7 +7,7 @@
 extern PyObject* builder;
 
 
-/* #define DO_TRACE_ERRORS   1 */
+#define DO_TRACE_ERRORS   1
 
 
 /* Error tracing (use for debugging error handling). */
@@ -24,3 +24,6 @@ extern PyObject* builder;
 #else
 #  define TRACE_ERROR(...)
 #endif
+
+
+#endif /* BEANCOUNT_BUILDER_H */

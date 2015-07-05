@@ -11,6 +11,7 @@ import textwrap
 import re
 import sys
 import subprocess
+from unittest import mock
 
 from beancount.core.number import D
 from beancount.parser import parser
@@ -21,6 +22,8 @@ from beancount.core import interpolate
 from beancount.core import interpolate_test
 from beancount.utils import test_utils
 from beancount.parser import grammar
+from beancount.parser import cmptest
+from beancount.parser import printer
 
 
 def check_list(test, objlist, explist):
@@ -41,6 +44,18 @@ def check_list(test, objlist, explist):
         test.assertEqual(len(explist), len(objlist))
         for obj, exp in zip(objlist, explist):
             test.assertTrue(isinstance(type(obj), type(exp)))
+
+
+def raise_exception(*args, **kwargs):
+    """Raises a ValueError exception.
+
+    Args:
+      *args: Callback arguments.
+      *kwargs: Callback keyword arguments.
+    Raises:
+      ValueError: Unconditionally.
+    """
+    raise ValueError("Patched exception in parser")
 
 
 class TestParserDoc(unittest.TestCase):
@@ -1206,40 +1221,57 @@ class TestMetaData(unittest.TestCase):
             }, entries[0].meta)
 
 
-class TestLexerAndParserErrors(unittest.TestCase):
-    """There are a number of different paths for errors. This test case intends to
-    exercise them all.
+class TestLexerAndParserErrors(cmptest.TestCase):
+    """There are a number of different paths where errors may occur. This test case
+    intends to exercise them all. This docstring explains how it all works (it's
+    a bit complicated).
 
-    The parser.parse_*() functions never raise exceptions, they always produce a
-    list of error messages on the builder objects. This is by design: we have a
-    single way to produce and report errors.
+    Expectations: The parser.parse_*() functions never raise exceptions, they
+    always produce a list of error messages on the builder objects. This is by
+    design: we have a single way to produce and report errors.
 
-    * lexer_invalid_token(): yylex() is invoked by the parser... the lexer rules
-      are processed and all fail and the default rule of the lexer gets called
-      at {bf253a29a820}. The lexer immediately switches to the INVALID subparser
-      to chomp the rest of the invalid token's unrecognized characters until it
-      hits some whitespace {bba169a1d35a}. A new LexerError is created and
+    The lexer may fail in two different ways:
+
+    * Invalid Token: yylex() is invoked by the parser... the lexer rules are
+      processed and all fail and the default rule of the lexer gets called at
+      {bf253a29a820}. The lexer immediately switches to its INVALID subparser to
+      chomp the rest of the invalid token's unrecognized characters until it
+      hits some whitespace (see {bba169a1d35a}). A new LexerError is created and
       accumulated by calling the build_lexer_error() method on the builder
-      object using this text {0e31aeca3363}. The lexer then returns a LEX_ERROR
-      token to the parser, which fails as described below.
+      object using this text (see {0e31aeca3363}). The lexer then returns a
+      LEX_ERROR token to the parser, which fails as below.
 
-    * lexer_exception_*(): The lexer recognizes a token and invokes a callback
-      on the builder using BUILD_LEX(). However, an exception is raised
-      {3cfb2739349a}. The exception's error text is saved
-
-      That then triggers the invalid subparser {bba169a1d35a}.
-      This triggers the parser's special error rule {3d95e55b654e}.
+    * Lexer Builder Exception: The lexer recognizes a valid token and invokes a
+      callback on the builder using BUILD_LEX(). However, an exception is raised
+      in that Python code ({3cfb2739349a}). The exception's error text is saved
+      and this is used to build an error on the lexer builder at
+      build_lexer_error().
 
     For both the errors above, when the parser receives the LEX_ERROR token, it
-    is unexpected (because none of the rules handle it), so it calls yyerror()
-    {ca6aab8b9748} and then switches to processing 'error' multiple times
-    {3d95e55b654e} until a valid grammar rule can be reduled.
+    is an unexpected token (because none of the rules handle it), so it calls
+    yyerror() {ca6aab8b9748}. Because the lexer has already registered an error
+    in the error list, in yyerror() we simply ignore it and do nothing (see
+    {ca6aab8b9748}).
 
-    The lexer creates and registers its own errors on the builder, so when
-    yyerror() is called, if the error is an unexpected LEX_ERROR token, it
-    silently ignores this error.
+    Error recovery then proceeds by successive reductions of the "error" grammar
+    rules which discards all tokens until an EOL token is produced
+    ({3d95e55b654e}). Note that Bison issues a single call to yyerror() and
+    keeps reducing invalid "error" rules silently until another one succeeds. We
+    ignore the directive and restart parsing from that point on. If the error
+    occurred on a posting in progress of being parsed, because the "error" rule
+    is not a valid posting of a transaction, that transaction will not be
+    produced and thus is ignore, which is what we want.
 
-    * Parser error: Independently, parsers may encounter parser-level errors, in
+    The parser may itself also encounter two similar types of errors:
+
+    * Syntax Error: There is an error in the grammar of the input. yyparse() is
+      called and we call build_grammar_error() to register the error. Error
+      recovery proceeds similarly to what was described previously.
+
+    * Grammar Builder Exception: A grammar rule is reduced succesfully
+
+
+parsers may encounter parser-level errors, in
       which case yyerror() is called and then 'error' processing proceeds as
       above described above.
 
@@ -1249,7 +1281,6 @@ class TestLexerAndParserErrors(unittest.TestCase):
     Explain these:
 
     def build_lexer_error()
-    def error()
 
     """
 
@@ -1260,78 +1291,188 @@ class TestLexerAndParserErrors(unittest.TestCase):
         """
         self.assertEqual(0, len(entries))
         self.assertEqual(1, len(errors))
-        self.assertTrue(re.search(r"Invalid token: '\)'", errors[0].message))
+        self.assertRegexpMatches(errors[0].message, r"Invalid token: '\)'")
 
     @parser.parsedoc
     def test_lexer_invalid_token__recovery(self, entries, errors, _):
         """
           2000-01-01 open ) USD
-
           2000-01-02 open Assets:Something
         """
-        self.assertEqual(1, len(entries))
+        self.assertEqualEntries("""
+          2000-01-02 open Assets:Something
+        """, entries)
         self.assertEqual(1, len(errors))
-        self.assertTrue(re.search(r"Invalid token: '\)'", errors[0].message))
+        self.assertRegexpMatches(errors[0].message, r"Invalid token: '\)'")
 
-    # FIXME: Also add tests that have valid tokens after the error, like postings
+    @parser.parsedoc
+    def test_lexer_exception(self, entries, errors, _):
+        """
+          2000-13-32 open Assets:Something
+        """
+        self.assertEqual(0, len(entries))
+        self.assertEqual(1, len(errors))
+        self.assertRegexpMatches(errors[0].message, 'month must be in 1..12')
 
     @parser.parsedoc
     def test_lexer_exception__recovery(self, entries, errors, _):
         """
           2000-13-32 open Assets:Something
-
           2000-01-02 open Assets:Working
         """
+        self.assertEqualEntries("""
+          2000-01-02 open Assets:Working
+        """, entries)
         self.assertEqual(1, len(entries))
         self.assertEqual(1, len(errors))
-        self.assertTrue(re.search('month must be in 1..12', errors[0].message))
+        self.assertRegexpMatches(errors[0].message, 'month must be in 1..12')
 
+    def test_lexer_errors_in_postings(self):
+        txn_strings = textwrap.dedent("""
+
+          2000-01-02 *
+            Assets:Working  )
+            Assets:Working  11.11 USD
+            Assets:Working  22.22 USD
+
+          2000-01-02 *
+            Assets:Working  11.11 USD
+            Assets:Working  )
+            Assets:Working  22.22 USD
+
+          2000-01-02 *
+            Assets:Working  11.11 USD
+            Assets:Working  22.22 USD
+            Assets:Working  )
+
+          2000-01-02 *
+            Assets:Working  2014-13-32
+            Assets:Working  11.11 USD
+            Assets:Working  22.22 USD
+
+          2000-01-02 *
+            Assets:Working  11.11 USD
+            Assets:Working  2014-13-32
+            Assets:Working  22.22 USD
+
+          2000-01-02 *
+            Assets:Working  11.11 USD
+            Assets:Working  22.22 USD
+            Assets:Working  2014-13-32
+
+        """).strip().split('\n\n')
+        self.assertEqual(6, len(txn_strings))
+        for txn_string in txn_strings:
+            input_string = txn_string + textwrap.dedent("""
+              2000-01-02 open Assets:Working
+            """)
+            entries, errors, _ = parser.parse_string(input_string)
+
+            # Check that the transaction is not produced.
+            self.assertEqualEntries("""
+              2000-01-02 open Assets:Working
+            """, entries)
+            self.assertEqual(1, len(entries))
+            self.assertEqual(1, len(errors))
+            self.assertRegexpMatches(errors[0].message,
+                                     '(Invalid token|month must be in 1..12)')
 
     @parser.parsedoc
-    def test_lexer_exception_DATE(self, entries, errors, _):
+    def test_grammar_syntax_error(self, entries, errors, _):
         """
-          2000-13-32 open Assets:Something
+          2000-01-01 open open
         """
         self.assertEqual(0, len(entries))
         self.assertEqual(1, len(errors))
-        self.assertTrue(re.search('month must be in 1..12', errors[0].message))
+        self.assertRegexpMatches(errors[0].message, r"syntax error")
 
     @parser.parsedoc
-    def test_lexer_exception_ACCOUNT(self, entries, errors, _):
+    def test_grammar_syntax_error__recovery(self, entries, errors, _):
         """
-          2000-01-01 open Invalid:Something
+          2000-01-01 open Assets:Before
+          2000-01-02 open open
+          2000-01-03 open Assets:After
         """
-        self.assertEqual(0, len(entries))
         self.assertEqual(1, len(errors))
-        self.assertTrue(re.search('Invalid account name:', errors[0].message))
+        self.assertRegexpMatches(errors[0].message, r"syntax error")
+        self.assertEqualEntries("""
+          2000-01-01 open Assets:Before
+          2000-01-03 open Assets:After
+        """, entries)
+
+    @parser.parsedoc
+    def test_grammar_syntax_error__recovery(self, entries, errors, _):
+        """
+          2000-01-01 open open
+          2000-01-02 open Assets:Something
+        """
+        self.assertEqual(1, len(errors))
+        self.assertRegexpMatches(errors[0].message, r"syntax error")
+        self.assertEqual(1, len(entries))
+        self.assertEqualEntries("""
+          2000-01-02 open Assets:Something
+        """, entries)
+
+    @parser.parsedoc
+    def test_grammar_syntax_error__multiple(self, entries, errors, _):
+        """
+          2000-01-01 open Assets:Before
+          2000-01-02 open open
+          2000-01-03 open Assets:After
+          2000-01-04 close close
+          2000-01-05 close Assets:After
+        """
+        self.assertEqual(2, len(errors))
+        for error in errors:
+            self.assertRegexpMatches(error.message, r"syntax error")
+        self.assertEqual(3, len(entries))
+        self.assertEqualEntries("""
+          2000-01-01 open Assets:Before
+          2000-01-03 open Assets:After
+          2000-01-05 close Assets:After
+        """, entries)
+
+    @mock.patch('beancount.parser.grammar.Builder.option', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exception__option(self, entries, errors, _):
+        """
+          2000-01-01 open Assets:Before
+          option "operating_currency" "USD"
+          2000-01-03 open Assets:After
+        """
+        self.assertFalse(errors)
+        printer.print_errors(errors)
 
 
 
-    # FIXME: TODO - Test for all instances where BUILD_LEX() is used.
+        # entries, errors, _ = parser.parse_string(input_string)
+
+        # self.assertEqual(0, len(entries))
+        # self.assertEqual(1, len(errors))
+        # self.assertRegexpMatches(errors[0].message, r"syntax error")
+
+
+
+
 
     # FIXME: TODO - Also mock the build_error routines, make them raise
     # exceptions, make sure this is handled sanely.
 
+    # Make sure that yyparse() returning != 0 actually does raise an exception; add a test.
+
+    # What happens to the memory of objects created and discarded by error rules?
 
 
-    @parser.parsedoc
-    def __test_bad_account(self, entries, errors, _):
-        """
-          2011-01-01 open Assets:A
-        """
-        self.assertEqual([], entries)
-        self.assertEqual([lexer.LexerError],
-                         list(map(type, errors)))
 
-    @parser.parsedoc
-    def __test_no_final_newline(self, entries, errors, _):
-        """
-          2014-11-02 *
-            Assets:Something   1 USD
-            Assets:Other      -1 USD"""
-        self.assertFalse(errors)
-        self.assertEqual(1, len(entries))
-        self.assertEqual(2, len(entries[0].postings))
+    # @parser.parsedoc
+    # def __test_no_final_newline(self, entries, errors, _):
+    #     """
+    #       2014-11-02 *
+    #         Assets:Something   1 USD
+    #         Assets:Other      -1 USD"""
+    #     self.assertFalse(errors)
+    #     self.assertEqual(1, len(entries))
+    #     self.assertEqual(2, len(entries[0].postings))
 
 
 class TestArithmetic(unittest.TestCase):

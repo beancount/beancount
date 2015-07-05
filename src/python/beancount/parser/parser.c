@@ -89,7 +89,9 @@ PyObject* parse_file(PyObject *self, PyObject *args, PyObject* kwds)
     builder = 0;
     yy_filename = 0;
 
-    /* Check for parsing errors. */
+    /* Check for internal errors during parsing (which would be the result of
+     * calling YYABORT, which we don't call), and this should raise an
+     * exception. */
     if ( result != 0 ) {
         return NULL;
     }
@@ -135,7 +137,6 @@ PyObject* parse_string(PyObject *self, PyObject *args, PyObject* kwds)
 
     /* Parse! This will call back methods on the builder instance. */
     result = yyparse();
-    TRACE_ERROR("Result of yyparse() = %d\n", result);
 
     /* Finalize the parser. */
     yylex_destroy();
@@ -143,7 +144,9 @@ PyObject* parse_string(PyObject *self, PyObject *args, PyObject* kwds)
     builder = 0;
     yy_filename = 0;
 
-    /* Check for parsing errors. */
+    /* Check for internal errors during parsing (which would be the result of
+     * calling YYABORT, which we don't call), and this should raise an
+     * exception. */
     if ( result != 0 ) {
         return NULL;
     }

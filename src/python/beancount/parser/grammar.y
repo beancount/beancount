@@ -36,17 +36,19 @@ PyObject* checkNull(PyObject* o)
     checkNull( PyObject_CallMethod(builder, method_name, NULL) );
 
 
-#define BUILD_X(method_name, format, ...)                                                        \
-    PyObject* build_value = PyObject_CallMethod(builder, method_name, format, __VA_ARGS__);     \
-    if (build_value == NULL) {                                                                  \
-        YYABORT;                                                                                \
-    }
+/* #define BUILD_X(method_name, format, ...)                                                        \ */
+/*     PyObject* build_value = PyObject_CallMethod(builder, method_name, format, __VA_ARGS__);     \ */
+/*     if (build_value == NULL) {                                                                  \ */
+/*         YYABORT;                                                                                \ */
+/*     } */
 
-#define BUILD_NOARGS_X(method_name)                                             \
-    PyObject* build_value = PyObject_CallMethod(builder, method_name, NULL);    \
-    if (build_value == NULL) {                                                  \
-        YYABORT;                                                                \
-    }
+
+/* #define BUILD_NOARGS_X(method_name)                                             \ */
+/*     PyObject* build_value = PyObject_CallMethod(builder, method_name, NULL);    \ */
+/*     if (build_value == NULL) {                                                  \ */
+/*         YYABORT;                                                                \ */
+/*     } */
+
 
 /* FIXME: if there is an error, we end up leaking the $1, $2, ... find a
    solution for this. Maybe a more sensible solution here would be to inc-ref
@@ -73,17 +75,25 @@ int yy_firstline;
 
 #define FILE_LINE_ARGS  yy_filename, ((yyloc).first_line + yy_firstline)
 
+#if 0
+/* Skip tokens until we find a new line that does not begin with an indent. */
+void skipToRecover()
+{
+}
+#endif
+
 /* Error-handling function. {ca6aab8b9748} */
 void yyerror(char const* message)
 {
     /* Skip lex errors: they have already been registered the lexer itself. */
     if (strstr(message, "LEX_ERROR") != NULL) {
+        /* TRACE_ERROR("yyerror: ignoring lex error '%s'", message); */
         return;
     }
     else {
+        TRACE_ERROR("yyerror: '%s'; yytext='%s'", message, yytext);
         /* Register a syntax error with the builder. */
         BUILD("build_grammar_error", "ssi", message, yy_filename, yylineno + yy_firstline);
-        TRACE_ERROR("yyerror: '%s'\nyytext='%s'\n", message, yytext);
     }
 }
 
@@ -560,13 +570,17 @@ declarations : declarations directive
                  $$ = BUILD("handle_list", "OO", $1, $2);
                  DECREF2($1, $2);
              }
-             | declarations error
+             | declarations error EOL
              {
-                 /* {3d95e55b654e} */
-                 /* TRACE_ERROR("processing 'error': yytext='%s'.\n", yytext); */
-
-                 /* Ignore the error and continue reducing. */
-                 $$ = $1; /* YYABORT; */
+                 /*
+                  * Ignore the error and continue reducing ({3d95e55b654e}).
+                  * Note that with the matching rule above, "error" will
+                  * successfully reduce on each line that cannot reduce.
+                  * Non-erroneous postings after an error occurs will reduce but
+                  * not be included because a transaction's list of postings
+                  * does not include an "error" rule.
+                  */
+                 $$ = $1;
              }
              | empty
              {

@@ -24,11 +24,11 @@ void build_lexer_error_from_exception(YYSTYPE* yylval);
                                         format, __VA_ARGS__);           \
     /* Process exception state {3cfb2739349a} */                        \
     if (yylval->pyobj == NULL) {                                        \
-       TRACE_ERROR("BUILD_LEX(%s) raised exception", method_name);      \
        build_lexer_error_from_exception(yylval);                        \
        return LEX_ERROR;                                                \
     }
 
+/* {ccc5df638692} */
 /* FIXME: These methods shoudl never return None... check for this and raise an error if they ever do. */
     /* else if (yylval->pyobj == Py_None) {                             \ */
     /*    TRACE_ERROR("BUILD_LEX(%s) returned None", method_name); \ */
@@ -1595,7 +1595,6 @@ YY_RULE_SETUP
 #line 304 "src/python/beancount/parser/lexer.l"
 {
     unput(*yytext);
-    TRACE_ERROR("Default rule '%s'.\n", yytext);
     BEGIN(INVALID);
 }
 	YY_BREAK
@@ -1604,7 +1603,7 @@ YY_RULE_SETUP
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(INVALID):
 case YY_STATE_EOF(STRLIT):
-#line 312 "src/python/beancount/parser/lexer.l"
+#line 311 "src/python/beancount/parser/lexer.l"
 {
   if ( yy_eof_times == 0 ) {
     yy_eof_times = 1;
@@ -1612,7 +1611,7 @@ case YY_STATE_EOF(STRLIT):
     return EOL;
   }
   return 0;
- }
+}
 	YY_BREAK
 /* Note: We use a subparser here because if we set a default rule to chomp this
     pattern, it would take precedence over valid rules if the matched text is
@@ -1620,25 +1619,21 @@ case YY_STATE_EOF(STRLIT):
     this and more. {bba169a1d35a} */
 case 49:
 YY_RULE_SETUP
-#line 325 "src/python/beancount/parser/lexer.l"
+#line 324 "src/python/beancount/parser/lexer.l"
 {
-    /* TRACE_ERROR("Processing INVALID sublexer at '%s'\n", yytext); */
-
     char buffer[256];
     size_t length = snprintf(buffer, 256, "Invalid token: '%s'", yytext);
     build_lexer_error(yylval, buffer, length);
-
     BEGIN(INITIAL);
-
     return LEX_ERROR;
- }
+}
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 338 "src/python/beancount/parser/lexer.l"
+#line 333 "src/python/beancount/parser/lexer.l"
 ECHO;
 	YY_BREAK
-#line 1642 "src/python/beancount/parser/lexer.c"
+#line 1637 "src/python/beancount/parser/lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2643,7 +2638,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 338 "src/python/beancount/parser/lexer.l"
+#line 333 "src/python/beancount/parser/lexer.l"
 
 
 /*--------------------------------------------------------------------------------------*/
@@ -2701,6 +2696,8 @@ int strtonl(const char* buf, size_t nchars)
 /* Build and accumulate an error on the builder object. */
 void build_lexer_error(YYSTYPE* yylval, const char* string, size_t length)
 {
+    TRACE_ERROR("Invalid Token");
+
     /* Build and accumulate a new error object. {27d1d459c5cd} */
     PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error",
                                        "s#", string, length);
@@ -2712,6 +2709,8 @@ void build_lexer_error(YYSTYPE* yylval, const char* string, size_t length)
 
 void build_lexer_error_from_exception(YYSTYPE* yylval)
 {
+    TRACE_ERROR("Lexer Builder Exception");
+
     /* Get the exception context. */
     PyObject* ptype;
     PyObject* pvalue;

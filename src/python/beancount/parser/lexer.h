@@ -28,11 +28,11 @@ void build_lexer_error_from_exception(YYSTYPE* yylval);
                                         format, __VA_ARGS__);           \
     /* Process exception state {3cfb2739349a} */                        \
     if (yylval->pyobj == NULL) {                                        \
-       TRACE_ERROR("BUILD_LEX(%s) raised exception", method_name);      \
        build_lexer_error_from_exception(yylval);                        \
        return LEX_ERROR;                                                \
     }
 
+/* {ccc5df638692} */
 /* FIXME: These methods shoudl never return None... check for this and raise an error if they ever do. */
     /* else if (yylval->pyobj == Py_None) {                             \ */
     /*    TRACE_ERROR("BUILD_LEX(%s) returned None", method_name); \ */
@@ -416,7 +416,7 @@ extern int yylex \
 #undef YY_DECL
 #endif
 
-#line 338 "src/python/beancount/parser/lexer.l"
+#line 333 "src/python/beancount/parser/lexer.l"
 
 
 #line 423 "src/python/beancount/parser/lexer.h"
