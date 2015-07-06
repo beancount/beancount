@@ -6,14 +6,16 @@ Note: This file contains only changes in the 'default' branch.
 
 2015-07-05
 
-  - Implemented support for and unit testing for parsing strings from files in
-    various encodings. Only string objects (e.g., payee, narrations, comments,
-    etc.) are supported. This works with UTF8 encoding (tested), latin1 encoding
-    (tested), and probably more. The support is at the lexer level. You may now
-    supply an 'encoding' parameter to parser.parse_file(),
+  - Implemented support for parsing strings from files in various encodings.
+    Only string objects encoded in non-ASCII are supported, e.g., payee,
+    narrations, description, etc. This means the account names are still
+    restricted to ASCII, in particular. This works with UTF8 encoding (tested),
+    latin1 encoding (tested), and probably more. The support is at the lexer
+    level. You may now supply an 'encoding' parameter to parser.parse_file(),
     parser.parse_string(), loader.load_file(), loader.load_string() functions.
     Passing in an invalid encoding should not mail it fail (though the contents
-    of the strings will be empty).
+    of the strings will be empty). Unit tests for all those cases have been
+    added.
 
 
 2015-07-02
