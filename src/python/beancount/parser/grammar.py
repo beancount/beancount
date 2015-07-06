@@ -3,11 +3,7 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
-import functools
-import inspect
-import textwrap
 import copy
-import io
 import os
 import re
 from os import path
@@ -35,11 +31,8 @@ from beancount.core.interpolate import balance_incomplete_postings
 from beancount.core.interpolate import compute_residual
 from beancount.core.interpolate import infer_tolerances
 
-from beancount.parser import _parser
 from beancount.parser import lexer
 from beancount.parser import options
-from beancount.parser import printer
-from beancount.parser import hashsrc
 from beancount.core import account
 from beancount.core import data
 
@@ -237,7 +230,7 @@ class Builder(lexer.LexBuilder):
                 ParserError(meta, "Attempting to pop absent tag: '{}'".format(tag), None))
 
     def pushmeta(self, key, value):
-        """Set a metadata field on the current set of key-value pairs to add to transactions.
+        """Set a metadata field on the current key-value pairs to be added to transactions.
 
         Args:
           key_value: A KeyValue instance, to be added to the dict of metadata.
