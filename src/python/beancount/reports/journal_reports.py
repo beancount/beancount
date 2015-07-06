@@ -17,9 +17,12 @@ class JournalReport(report.HTMLReport,
     names = ['journal', 'register', 'account']
     default_format = 'text'
 
+    # Default width for screen.
+    default_width = 80
+
     # For the tests we specify the width to render to to avoid having to invoke
     # the terminal functions which fail under nose without capture mode.
-    test_args = ['--width=80']
+    test_args = ['--width={}'.format(default_width)]
 
     @classmethod
     def add_args(cls, parser):
@@ -42,6 +45,7 @@ class JournalReport(report.HTMLReport,
         parser.add_argument('-x', '--compact', dest='verbosity', action='store_const',
                             const=journal_text.COMPACT, default=journal_text.NORMAL,
                             help="Rendering compactly")
+
         parser.add_argument('-X', '--verbose', dest='verbosity', action='store_const',
                             const=journal_text.VERBOSE,
                             help="Rendering verbosely")
@@ -65,7 +69,9 @@ class JournalReport(report.HTMLReport,
         return realization.get_postings(real_account)
 
     def _render_text_formats(self, real_root, options_map, file, output_format):
-        width = self.args.width or misc_utils.get_screen_width()
+        width = (self.args.width or
+                 misc_utils.get_screen_width() or
+                 self.default_width)
         postings = self.get_postings(real_root)
         try:
             journal_text.text_entries_table(file, postings, width,
@@ -85,7 +91,9 @@ class JournalReport(report.HTMLReport,
 
     def render_real_htmldiv(self, real_root, options_map, file):
         postings = self.get_postings(real_root)
-        journal_html.html_entries_table_with_balance(file, postings, self.formatter)
+        render_postings = self.args.verbosity == journal_text.VERBOSE
+        journal_html.html_entries_table_with_balance(file, postings, self.formatter,
+                                                     render_postings)
 
 
 class ConversionsReport(report.HTMLReport):

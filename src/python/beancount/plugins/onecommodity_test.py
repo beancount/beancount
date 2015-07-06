@@ -11,7 +11,7 @@ class TestOneCommodity(unittest.TestCase):
     @loader.loaddoc
     def test_one_commodity_transaction(self, _, errors, __):
         """
-            option "plugin" "beancount.plugins.onecommodity"
+            plugin "beancount.plugins.onecommodity"
 
             2011-01-01 open Expenses:Restaurant
             2011-01-01 open Assets:Other
@@ -32,7 +32,7 @@ class TestOneCommodity(unittest.TestCase):
     @loader.loaddoc
     def test_one_commodity_balance(self, _, errors, __):
         """
-            option "plugin" "beancount.plugins.onecommodity"
+            plugin "beancount.plugins.onecommodity"
 
             2011-01-01 open Expenses:Restaurant
             2011-01-01 open Assets:Other

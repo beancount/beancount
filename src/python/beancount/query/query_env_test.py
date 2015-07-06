@@ -3,8 +3,8 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import datetime
 import unittest
 
-from beancount.core.amount import D
-from beancount.core.amount import Decimal
+from beancount.core.number import D
+from beancount.core.number import Decimal
 from beancount.core import inventory
 from beancount.core import position
 from beancount.core import amount

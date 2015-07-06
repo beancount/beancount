@@ -8,7 +8,7 @@ import re
 import sys
 import textwrap
 
-from beancount.core.amount import Decimal
+from beancount.core.number import Decimal
 from beancount.core import amount
 from beancount.core import data
 from beancount.core import interpolate
@@ -110,7 +110,7 @@ class EntryPrinter:
         method(obj, oss)
         return oss.getvalue()
 
-    META_IGNORE = set(['filename', 'lineno'])
+    META_IGNORE = set(['filename', 'lineno', '__automatic__'])
 
     def write_metadata(self, meta, oss, prefix='  '):
         """Write metadata to the file object, excluding filename and line number.
@@ -119,13 +119,23 @@ class EntryPrinter:
           meta: An instance of AttrDict that contains the metadata for this directive.
           oss: A file object to write to.
         """
+        if meta is None:
+            return
         for key, value in sorted(meta.items()):
             if key not in self.META_IGNORE:
+                value_str = None
                 if isinstance(value, str):
                     value_str = '"{}"'.format(value)
                 elif isinstance(value, (Decimal, datetime.date, amount.Amount)):
                     value_str = str(value)
-                oss.write("{}{}: {}\n".format(prefix, key, value_str))
+                elif isinstance(value, bool):
+                    value_str = 'TRUE' if value else 'FALSE'
+                elif isinstance(value, dict):
+                    pass # Ignore dicts, don't print them out.
+                else:
+                    raise ValueError("Unexpected value: '{!r}'".format(value))
+                if value_str is not None:
+                    oss.write("{}{}: {}\n".format(prefix, key, value_str))
 
     def Transaction(self, entry, oss):
         # Compute the string for the payee and narration line.
@@ -205,7 +215,8 @@ class EntryPrinter:
         # present. Also render a string with the weight.
         if posting.position:
             position_str = posting.position.to_string(self.dformat)
-            weight_str = interpolate.get_posting_weight(posting).to_string(self.dformat)
+            # Note: we render weights at maximum precision, for debugging.
+            weight_str = str(interpolate.get_posting_weight(posting))
         else:
             position_str = ''
             weight_str = ''
@@ -220,7 +231,9 @@ class EntryPrinter:
         # method rendering a transaction attempts to align the posting strings
         # together.
         flag_account, position_str, weight_str = self.render_posting_strings(posting)
-        oss.write('  {:64} {} ; {}\n'.format(flag_account, position_str, weight_str).rstrip())
+        oss.write('  {:64} {} ; {}\n'.format(flag_account,
+                                             position_str,
+                                             weight_str).rstrip())
         if posting.meta:
             self.write_metadata(posting.meta, oss, '    ')
 

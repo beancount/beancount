@@ -67,15 +67,15 @@ CLUSTERS_REGEXPS =							\
 	beancount/core/.*_test\.py	 	core/tests		\
 	beancount/core			 	core			\
 	beancount/ops/.*_test\.py	 	ops/tests		\
-	beancount/ops			 	ops+plugins		\
+	beancount/ops			 	ops			\
 	beancount/parser/printer_test\.py 	printer/tests		\
 	beancount/parser/printer.py	 	printer			\
-	beancount/parser/options_test\.py 	core/tests		\
-	beancount/parser/options.py	 	core			\
+	beancount/parser/options_test\.py 	options/tests		\
+	beancount/parser/options.py	 	options			\
 	beancount/parser/.*_test\.py	 	parser/tests		\
 	beancount/parser		 	parser			\
 	beancount/plugins/.*_test\.py	 	plugins/tests		\
-	beancount/plugins		 	ops+plugins		\
+	beancount/plugins		 	plugins			\
 	beancount/reports/.*_test\.py	 	reports/tests		\
 	beancount/reports		 	reports			\
 	beancount/scripts/bake.*_test\.py	scripts/bake/tests	\
@@ -124,7 +124,7 @@ test tests unittests:
 	nosetests -v $(SRC)
 
 
-tests-quiet:
+qtest quiet-tests quiet-test test-quiet tests-quiet:
 	nosetests $(SRC)
 
 nakedtests:
@@ -197,6 +197,7 @@ check-author:
 LINT_PASS=line-too-long,bad-whitespace,bad-indentation,unused-import,invalid-name,reimported
 LINT_FAIL=bad-continuation
 
+
 pylint-pass:
 	pylint --rcfile=$(PWD)/etc/pylintrc --disable=all --enable=$(LINT_PASS) $(SRC)
 
@@ -210,8 +211,9 @@ pyflakes:
 	pyflakes $(SRC)
 
 # Run all currently configured linter checks.
-lint: pylint-pass
+pylint lint: pylint-pass
 
 
 # Check everything.
-status check: check-author pylint-pass pyflakes missing-tests fixmes dep-constraints tests-quiet multi-imports
+# Note: Add fixmes checks again later.
+status check: pylint pyflakes check-author missing-tests dep-constraints multi-imports

@@ -165,3 +165,55 @@ class TestScriptDisplayContext(cmptest.TestCase):
             test_utils.run_with_args(doctor.main, ['display-context', filename])
         # Note: This probably deserves a little more love.
         self.assertTrue(stdout.getvalue())
+
+
+class TestScriptContextualCommands(cmptest.TestCase):
+
+    @test_utils.docfile
+    def test_context(self, filename):
+        """
+            2013-01-01 open Expenses:Movie
+            2013-01-01 open Assets:Cash
+
+            2014-03-03 * "Something"
+              Expenses:Restaurant   50.02 USD
+              Expenses:Movie        25.00 USD
+              Assets:Cash
+
+            2014-04-04 * "Something"
+              Expenses:Alcohol      10.30 USD
+              Expenses:Movie        25.00 USD
+              Assets:Cash
+        """
+        with test_utils.capture() as stdout:
+            test_utils.run_with_args(doctor.main, ['context', filename, '6'])
+        self.assertTrue(re.search('Location:', stdout.getvalue()))
+        self.assertTrue(re.search('50.02', stdout.getvalue()))
+
+    @test_utils.docfile
+    def test_linked(self, filename):
+        """
+            2013-01-01 open Expenses:Movie
+            2013-01-01 open Assets:Cash
+
+            2014-03-03 * "Apples" ^abc
+              Expenses:Restaurant   50.02 USD
+              Expenses:Movie        25.00 USD
+              Assets:Cash
+
+            2014-04-04 * "Something"
+              Expenses:Alcohol      10.30 USD
+              Expenses:Movie        25.00 USD
+              Assets:Cash
+
+            2014-05-05 * "Oranges" ^abc
+              Expenses:Alcohol      10.30 USD
+              Expenses:Movie        25.00 USD
+              Assets:Cash
+        """
+        with test_utils.capture() as stdout:
+            test_utils.run_with_args(doctor.main, ['linked', filename, '6'])
+        self.assertTrue(re.search('Apples', stdout.getvalue()))
+        self.assertTrue(re.search('Oranges', stdout.getvalue()))
+        self.assertEqual(2, len(list(re.finditer('/(tmp|var/folders)/.*:\d+:',
+                                                 stdout.getvalue()))))

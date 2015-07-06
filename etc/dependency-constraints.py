@@ -29,8 +29,17 @@ ALLOWED = [
 
     ('beancount/reports', 'beancount/(core|utils|ops|parser|reports)'),
 
-    ('beancount/scripts', 'beancount/(core|utils|parser|web|ops|loader$|reports|scripts)'),
+    ('beancount/query', 'beancount/(core|utils|ops|parser|query)'),
+
+    ('beancount/scripts', 'beancount/(core|utils|parser|web|ops|loader$|reports|query|scripts)'),
     ('beancount/web', 'beancount/(core|utils|parser|ops|loader$|reports|web)'),
+
+    ('beancount/projects', 'beancount/(core|utils|parser|web|ops|loader$|reports|scripts)'),
+    ('beancount/projects/.*_test', 'beancount/(projects)'),
+
+    ('beancount/docs/.*_test', 'beancount/docs'),
+    ('beancount/docs', 'beancount/(docs|parser|utils)'),
+
     ]
 
 

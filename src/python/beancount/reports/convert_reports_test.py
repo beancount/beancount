@@ -2,6 +2,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import tempfile
 import datetime
+import re
 import subprocess
 
 from beancount.utils import test_utils
@@ -33,6 +34,19 @@ class TestLedgerUtilityFunctions(cmptest.TestCase):
             Assets:CA:Investment:Cash   -2939.46 CAD @ 0.8879 USD
         """
         self.entries = entries
+
+    def test_quote_currency(self):
+        test = """
+          2014-10-01 * "Buy some stock with local funds"
+            Assets:CA:Investment:GOOG          5 GOOG1 {500.00 USD}
+            Expenses:Commissions            9.95 USD
+        """
+        expected = """
+          2014-10-01 * "Buy some stock with local funds"
+            Assets:CA:Investment:GOOG          5 "GOOG1" {500.00 USD}
+            Expenses:Commissions            9.95 USD
+        """
+        self.assertEqual(expected, convert_reports.quote_currency(test))
 
     def test_postings_by_type(self):
         postings_lists = convert_reports.postings_by_type(self.entries[0])
@@ -67,6 +81,27 @@ class TestLedgerUtilityFunctions(cmptest.TestCase):
         """, new_entries)
 
 
+def get_ledger_version():
+    """Check that we have a sufficient version of Ledger installed.
+
+    Returns:
+      A tuple of integer, the Ledger binary version triple, or None,
+      if Ledger is not installed or could not be run.
+    """
+    try:
+        pipe = subprocess.Popen(['ledger', '--version'],
+                                shell=False,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
+        stdout, stderr = pipe.communicate()
+        match = re.search(r'(\d+)\.(\d+)\.(\d+)', stdout.decode('utf-8'))
+        if match:
+            return tuple(map(int, match.group(1, 2, 3)))
+    except OSError:
+        pass
+    return None
+
+
 class TestLedgerConversion(test_utils.TestCase):
 
     def check_parses_ledger(self, ledger_filename):
@@ -75,16 +110,17 @@ class TestLedgerConversion(test_utils.TestCase):
         Args:
           filename: A string, the name of the Ledger file.
         """
-        try:
-            pipe = subprocess.Popen(['ledger', '-f', ledger_filename, 'bal'],
-                                    shell=False,
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE)
-            stdout, stderr = pipe.communicate()
-            self.assertEqual(0, pipe.returncode, stderr)
-        except OSError as exc:
-            if exc.errno == 2:
-                self.skipTest('Ledger is not installed, cannot verify conversion')
+        version = get_ledger_version()
+        if version is None or version < (3, 0, 0):
+            self.skipTest('Ledger is not installed or has insufficient version, '
+                          'cannot verify conversion; skipping test')
+
+        pipe = subprocess.Popen(['ledger', '-f', ledger_filename, 'bal'],
+                                shell=False,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
+        stdout, stderr = pipe.communicate()
+        self.assertEqual(0, pipe.returncode, stderr)
 
     @test_utils.docfile
     def test_simple(self, filename):
@@ -155,7 +191,9 @@ class TestLedgerConversion(test_utils.TestCase):
         """, stdout.getvalue())
 
     def test_example(self):
-        with tempfile.NamedTemporaryFile('w', suffix='.beancount') as beanfile:
+        with tempfile.NamedTemporaryFile('w',
+                                         suffix='.beancount',
+                                         encoding='utf-8') as beanfile:
             # Generate an example Beancount file.
             example.write_example_file(datetime.date(1980, 1, 1),
                                        datetime.date(2010, 1, 1),
@@ -171,12 +209,16 @@ class TestLedgerConversion(test_utils.TestCase):
                         report.main, [beanfile.name, '-o', lgrfile.name, 'ledger'])
                 self.assertEqual(0, result)
 
+                import shutil; shutil.copyfile(lgrfile.name, '/tmp/test.ledger')
                 self.check_parses_ledger(lgrfile.name)
+
 
 class TestHLedgerConversion(test_utils.TestCase):
 
     def test_example(self):
-        with tempfile.NamedTemporaryFile('w', suffix='.beancount') as beanfile:
+        with tempfile.NamedTemporaryFile('w',
+                                         suffix='.beancount',
+                                         encoding='utf-8') as beanfile:
             # Generate an example Beancount file.
             example.write_example_file(datetime.date(1980, 1, 1),
                                        datetime.date(2010, 1, 1),
