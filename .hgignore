@@ -4,6 +4,7 @@ syntax: glob
 *~
 TAGS
 build
+dist
 *.a
 *.so
 rewrite/golang/bin

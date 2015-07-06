@@ -138,7 +138,7 @@ test tests unittests:
 	nosetests -v $(SRC)
 
 
-tests-quiet:
+qtest quiet-tests quiet-test test-quiet tests-quiet:
 	nosetests $(SRC)
 
 nakedtests:

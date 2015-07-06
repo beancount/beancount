@@ -17,7 +17,6 @@ from decimal import Decimal
 
 # Import object to format numbers at specific precisions.
 from beancount.core.display_context import DEFAULT_FORMATTER
-from beancount.core.number import D
 from beancount.core.number import ZERO
 from beancount.core import number
 
@@ -29,17 +28,18 @@ import warnings
 
 ONE = number.ONE
 HALF = number.HALF
-decimal = number.decimal
+decimal = number.decimal  # pylint: disable=invalid-name
 
+# pylint: disable=invalid-name
 def D(string):
     warnings.warn("beancount.core.amount.D has been renamed to "
                   "beancount.core.number.D")
     return number.D(string)
 
-def round_to(string):
+def round_to(number, increment):
     warnings.warn("beancount.core.amount.round_to has been renamed to "
                   "beancount.core.number.round_to")
-    return number.D(string)
+    return number.round_to(number, increment)
 
 _D = number.D
 #`-----------------------------------------------------------------------------'
@@ -211,5 +211,5 @@ def amount_sub(amount1, amount2):
     return Amount(amount1.number - amount2.number, amount1.currency)
 
 
-from_string = Amount.from_string
+from_string = Amount.from_string  # pylint: disable=invalid-name
 NULL_AMOUNT = Amount(ZERO, '')
