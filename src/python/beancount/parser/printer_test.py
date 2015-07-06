@@ -274,6 +274,8 @@ class TestDisplayContext(test_utils.TestCase):
 
 class TestPrinterAlignment(test_utils.TestCase):
 
+    maxDiff = None
+
     def test_align_position_strings(self):
         aligned_strings, width = printer.align_position_strings([
             '45 GOOG {504.30 USD}',
@@ -357,10 +359,10 @@ class TestPrinterAlignment(test_utils.TestCase):
         printer.print_entries(entries, dcontext, render_weights=True, file=oss)
         expected_str = textwrap.dedent("""
         2014-07-01 * "Something"
-          Assets:US:Investments:GOOG         45 GOOG {504.30 USD}               ;  22693.50 USD
-          Assets:US:Investments:GOOG          4 GOOG {504.30 USD / 2014-11-11}  ;   2017.20 USD
-          Expenses:Commissions             9.95 USD                             ;      9.95 USD
-          Assets:US:Investments:Cash  -22473.32 CAD @ 1.1000 USD                ; -24720.65 USD
+          Assets:US:Investments:GOOG         45 GOOG {504.30 USD}               ;    22693.50 USD
+          Assets:US:Investments:GOOG          4 GOOG {504.30 USD / 2014-11-11}  ;     2017.20 USD
+          Expenses:Commissions             9.95 USD                             ;      9.9505 USD
+          Assets:US:Investments:Cash  -22473.32 CAD @ 1.1000 USD                ; -24720.6520 USD
         """)
         self.assertEqual(expected_str, oss.getvalue())
 

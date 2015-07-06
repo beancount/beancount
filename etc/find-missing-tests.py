@@ -45,7 +45,7 @@ def is_complete(filename):
     """
     contents = open(filename).read()
     return not (re.search('^__incomplete__', contents, re.M) or
-                re.search(r'\bNotImplementedError\b', contents, re.M))
+                re.search(r'raise \bNotImplementedError\b', contents, re.M))
 
 
 def main():

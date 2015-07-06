@@ -4,8 +4,8 @@ import unittest
 import re
 
 from beancount.plugins import unrealized
-from beancount.core.amount import D
-from beancount.core.amount import ZERO
+from beancount.core.number import D
+from beancount.core.number import ZERO
 from beancount.core import data
 from beancount.parser import options
 from beancount.ops import validation
@@ -31,7 +31,7 @@ def get_entries_with_narration(entries, regexp):
 class TestUnrealized(unittest.TestCase):
 
     def test_empty_entries(self):
-        entries, _ = unrealized.add_unrealized_gains([], options.DEFAULT_OPTIONS.copy())
+        entries, _ = unrealized.add_unrealized_gains([], options.OPTIONS_DEFAULTS.copy())
         self.assertEqual([], entries)
 
     @loaddoc

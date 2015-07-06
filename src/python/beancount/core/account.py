@@ -156,3 +156,28 @@ def walk(root_directory):
         account_name = relroot.replace(os.sep, sep)
         if is_valid(account_name):
             yield (root, account_name, dirs, files)
+
+
+def parent_matcher(account_name):
+    """Build a predicate that returns whether an account is under the given one.
+
+    Args:
+      account_name: The name of the parent account we want to check for.
+    Returns:
+      A callable, which, when called, will return true if the given account is a
+      child of 'account_name'.
+    """
+    return re.compile(r'{}\b'.format(re.escape(account_name))).match
+
+
+def parents(account_name):
+    """A generator of the names of the parents of this account, including this account.
+
+    Args:
+      account_name: The name of the account we want to start iterating from.
+    Returns:
+      A generator of account name strings.
+    """
+    while account_name:
+        yield account_name
+        account_name = parent(account_name)

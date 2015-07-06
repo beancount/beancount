@@ -3,7 +3,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import unittest
 import functools
 
-from beancount.core.amount import D
+from beancount.core.number import D
 from beancount.core import getters
 from beancount.reports import export_reports
 from beancount.reports import holdings_reports
@@ -170,10 +170,11 @@ EE = export_reports.ExportEntry
 
 class TestCommodityExport(unittest.TestCase):
 
-    def export(self, entries, options_map):
+    def export(self, entries, options_map, aggregate_by_commodity=False):
         (exported,
          converted,
-         holdings_ignored) = export_reports.export_holdings(entries, options_map, False)
+         holdings_ignored) = export_reports.export_holdings(entries, options_map, False,
+                                                            aggregate_by_commodity)
         return ([e._replace(holdings=None) for e in exported],
                 [e._replace(holdings=None) for e in converted],
                 holdings_ignored)
@@ -357,3 +358,34 @@ class TestCommodityExport(unittest.TestCase):
         self.assertFalse(exported)
         self.assertFalse(converted)
         self.assertEqual(1, len(ignored))
+
+    @loader.loaddoc
+    def test_export_aggregate(self, entries, unused_errors, options_map):
+        """
+        2000-01-01 open Assets:Investing
+        2000-01-01 open Equity:Opening-Balances
+
+        2000-01-01 commodity AAPL
+          ticker: "NASDAQ:AAPL"
+
+        2015-02-08 *
+          Assets:Investing           2 AAPL {410.00 USD}
+          Equity:Opening-Balances
+
+        2015-03-08 *
+          Assets:Investing           3 AAPL {400.00 USD}
+          Equity:Opening-Balances
+
+        2015-04-08 *
+          Assets:Investing           1 GOOG {500.00 USD}
+          Equity:Opening-Balances
+
+        """
+        exported, converted, ignored = self.export(entries, options_map,
+                                                   aggregate_by_commodity=True)
+        self.assertListEqual([
+            ('NASDAQ:AAPL', 'USD', D('5'), D('404.00'), False, '', None),
+            ('GOOG', 'USD', D('1'), D('500.00'), False, '', None),
+            ], exported)
+        self.assertFalse(converted)
+        self.assertFalse(ignored)
