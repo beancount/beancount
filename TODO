@@ -9,12 +9,14 @@ beancount: TODO
 
   - Remove plugins from ops, remove algorithms from core:
 
-      b.ops.auto_accounts -> b.plugins.auto_accounts  (easy)
+      b.ops.auto_accounts   -> b.plugins.auto_accounts  (easy)
       b.ops.implicit_prices -> b.plugins.implicit_prices  (easy)
-      b.ops.documents -> b.plugins.documents  (not sure if breaks)
+      b.ops.documents       -> b.plugins.documents  (not sure if breaks)
 
-      b.core.getters -> b.ops.realization (does it add deps?)
-      b.core.realization -> b.ops.realization (does it add deps?)
+      b.core.getters        -> b.ops.getters (does it add deps?)
+      b.core.realization    -> b.ops.realization (does it add deps?)
+
+  - Define a C extension module to implement D().
 
 
 * Explicit Tolerance
@@ -661,6 +663,17 @@ http://furius.ca/beancount/doc/proposal-query
     Try to reproduce this specific use case.
 
 
+** V2
+
+  - I think we can do prety well like this:
+
+      SELECT ... FROM transactions|postings|balance|...
+      WHERE ANY(...)
+            ALL(...)
+
+    I'm not sure where OPEN CLOSE and CLEAR all fit though.
+
+
 * Standalone Tools
 
   - Build an 'statement' tool that will render a treeified balance sheet in two
@@ -1263,6 +1276,43 @@ http://furius.ca/beancount/doc/proposal-inter
 
 
   - Use self.assertRegexpMatches() everywhere I could have.
+
+
+  - Try removing the 'tags' attribute of transactions by moving it to metadata
+    fields and making sure tools are available to perform the same aggregations
+    using bean-query and views using bean-web.
+
+
+
+  - bean-doctor context should accept a LINK, not just a line number from
+    context.
+
+
+
+  - Rename test_util.TestCase.assertLines() to assertEqualNoWS().
+
+
+
+  - This query works:
+
+      bean-query $L ' balances from flag = "!" '
+
+    But this query fails:
+
+      bean-query $L " balances from flag = '\!' "
+
+    The second one needs to have the flag escaped because of bash shell
+    expansion, but the problem is that the escaped backslash appears in the
+    output. This is normal bash behavior, but the problem is that the user
+    receives no notification of failure in this case. Beancount should detect
+    that the string compared to a flag is not a single-character string and
+    issue an appropriate error message for it.
+
+
+
+  - Make the web application use the regexps defined in common in its paths
+    instead of inline ad-hoc approximations. There was never any need to do
+    that.
 
 
   - Test out removing the circular reference in Posting. This would make writing
@@ -3477,7 +3527,9 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 ** Emacs Support
 
   - Idea: Implement another command like C-c x but that prints out all the
-    linked transactions.
+    linked transactions. Like context, print out balances from before & after,
+    but also print out the combined changes to all the accounts in the linked
+    transactions.
 
   - Idea: Implement movement commands that move the cursor to the previous/next
     linked transaction.
@@ -3809,6 +3861,14 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 
   - Render the Conversions amount at the bottom of the Conversions page...
 
+** Bake & Scrape
+
+  - Make the web scraper run in multiple threads... it's quite a bit too slow as
+    it is. I'm sure we can make it scrape in parallel using multiprocessing and
+    a work queue (this should be a fun little project and would make baking to
+    an archive a lot faster in many cases).
+
+
 * Export
 ** HTML Export as File
 
@@ -4131,3 +4191,11 @@ Improve this bit:
   (documentation)
   - Write a worked and detailed example of generating automated transactions in
     the Plugins document.
+* Name ideas
+
+  - beangrind (new import system)
+  - beanroast (new import)a
+  - beangreen
+  - beanfilter
+  - beancocoa
+  - beantamp

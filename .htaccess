@@ -80,11 +80,12 @@ RedirectMatch /doc/reference$             /beancount/doc/cheatsheet
 RedirectMatch /doc/cheatsheet-old$        http://furius.ca/beancount/doc/cheatsheet/beancount-cheatsheet.pdf
 RedirectMatch /doc/old$-cheatsheet        /beancount/doc/cheatsheet-old
 
-
 RedirectMatch /doc/design-doc$            https://docs.google.com/document/d/1N7HDXuNWgLG2PqFS4Kkgv5LzAAtU6c97UVNT7tdTIjA/
 RedirectMatch /doc/design$                /beancount/doc/design-doc
-RedirectMatch /doc/devel-doc$             /beancount/doc/design-doc
-RedirectMatch /doc/devel$                 /beancount/doc/design-doc
+
+RedirectMatch /doc/devel-doc$             https://docs.google.com/document/d/1l6YmKIPUsucrooofdrollO6Re2rTPJA9KigoS8OBluk/
+RedirectMatch /doc/devel$                 /beancount/doc/devel-doc
+RedirectMatch /doc/developer$             /beancount/doc/devel-doc
 
 RedirectMatch /doc/converting$            https://docs.google.com/document/d/1tkoUeSfZyEhEGdXHwYp5vBrSrNDgC4FVXhReSWsILlw/
 RedirectMatch /doc/convert$		  /beancount/doc/converting

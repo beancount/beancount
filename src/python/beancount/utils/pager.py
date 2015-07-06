@@ -63,6 +63,15 @@ class ConditionalPager:
     lines has been printed to it.
     """
     def __init__(self, command, minlines=None):
+        """Create a conditional pager.
+
+        Args:
+          command: A string, the shell command to run as a pager.
+          minlines: If set, the number of lines under which you should not bother starting
+            a pager. This avoids kicking off a pager if the screen is high enough to
+            render the contents. If the value is unset, always starts a pager (which is
+            fine behavior too).
+        """
         self.command = command
         self.minlines = minlines
         self.default_file = sys.stdout

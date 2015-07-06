@@ -9,7 +9,6 @@ try:
 except ImportError:
     apiclient = None
 else:
-    from apiclient import discovery
     from beancount.docs import download_docs
 
 

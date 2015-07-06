@@ -17,9 +17,12 @@ class JournalReport(report.HTMLReport,
     names = ['journal', 'register', 'account']
     default_format = 'text'
 
+    # Default width for screen.
+    default_width = 80
+
     # For the tests we specify the width to render to to avoid having to invoke
     # the terminal functions which fail under nose without capture mode.
-    test_args = ['--width=80']
+    test_args = ['--width={}'.format(default_width)]
 
     @classmethod
     def add_args(cls, parser):
@@ -66,7 +69,9 @@ class JournalReport(report.HTMLReport,
         return realization.get_postings(real_account)
 
     def _render_text_formats(self, real_root, options_map, file, output_format):
-        width = self.args.width or misc_utils.get_screen_width()
+        width = (self.args.width or
+                 misc_utils.get_screen_width() or
+                 self.default_width)
         postings = self.get_postings(real_root)
         try:
             journal_text.text_entries_table(file, postings, width,

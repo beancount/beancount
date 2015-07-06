@@ -4,6 +4,134 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-07-05
+
+  - Implemented support for parsing strings from files in various encodings.
+    Only string objects encoded in non-ASCII are supported, e.g., payee,
+    narrations, description, etc. This means the account names are still
+    restricted to ASCII, in particular. This works with UTF8 encoding (tested),
+    latin1 encoding (tested), and probably more. The support is at the lexer
+    level. You may now supply an 'encoding' parameter to parser.parse_file(),
+    parser.parse_string(), loader.load_file(), loader.load_string() functions.
+    Passing in an invalid encoding should not mail it fail (though the contents
+    of the strings will be empty). Unit tests for all those cases have been
+    added.
+
+  - Completely reviewed all lexer and grammar error handling code. The parser
+    code used to bail out with abort() on an unhandled exception and dump core
+    after issuing its error message (this is ugly but was never a big issue
+    since this occurred pretty rarely). All errors are now handled gracefully
+    (invalid lexer token, exception raised in lexer builder, invalid gramamr
+    rule, exception raised in grammar builder Python code). A comprehensive
+    suite of unit tests has been built to catch all these. You should never
+    experience a core dump anymore. A number of other unexpected cases has also
+    been dealt with.
+
+  - The lexer used to have a fixed-size buffer for parsing its strings. The
+    buffer is now dynamically allocated. Lexing should also be slightly faster.
+
+  - Mmeory management for the parser has been reviewed. Memory clean up for
+    temporaries generated during parsing has been reinstated (it was disabled
+    somehow) and cleanup rules are invoked even in the case of errors. This may
+    make the parser somewhat slower.
+
+
+2015-07-02
+
+  - Built support for setuptools and rolled back changes. Setuptools is broken
+    beyond what I can bear. Forget this. You'll have to install dependencies by
+    hand. It's a one-liner, like this:
+
+      pip3 install python-dateutil bottle ply lxml
+
+
+2015-06-27
+
+  - Complete the design doc and made it public.
+
+
+2015-06-26
+
+  - Created a generic script that can be used to automate the upload of
+    arbitrary CSV files to a Google Spreadsheet. This can be used along with the
+    holdings reports in order to create a spreadsheet tracking your assets.
+
+    Unfortunately, this script has to be written in Python 2.x, because of
+    the unavailability of the gdata-python-client library which is not available
+    at this time for Python 3.x. The script is self-contained. If you want
+    to use this, you must install the following libraries in your Python 2.x
+    install:
+
+    * gdata-python-client
+    * oauth2client
+    * httplib2
+
+
+2015-06-25
+
+  - Posting objects now have (filename, lineno) in their metadata. This could
+    potentially be helpful for people who want to insert text programmatically
+    in their input file without having to write their own parser.
+    See: https://groups.google.com/d/msg/beancount/zNCFk-YGdr8/8P2_vGGH9xoJ
+
+
+2015-06-15
+
+  - All the code to bake a static HTML archive of a bean-web interface has been
+    rewritten.
+
+    * There used to be a number of bugs caused by the wget tool. These bugs have
+      been fixed.
+
+    * The new code does not depend on wget -- Beancount does not require wget
+      anymore. Explicit code to do web scraping has been implemented. On the
+      other hand, a new dependency is introduced: lxml. This dependency was
+      already required for development and install in the same way as all the
+      other dependencies: using pip3. Should be a breeze to install on all
+      platforms.
+
+    * A verification layer has been tacked on after the web scraping step to
+      check that there are no dangling links.
+
+    * Intentionally skipped links are now converted to plain text, such that
+      there are no dangling links for pages we aren't saving (these just used
+      to be ignored).
+
+    I repeat: Beancount does not depend on wget anymore.
+    Please install lxml with: "pip3 install lxml"
+
+
+  - The 'exportpf' report which is used to produce OFX that can be imported in
+    Google Finance now issues a warning if you did not provide either 'ticker'
+    or 'export' metadata for holdings that get exported. The reason for the new
+    adminition is that it trips up the OFX import and when Google Finance sees
+    a ticker it does not understand, the import fails. At least with the warning
+    we're telling the user they should be providing tickers or export directives
+    for all their commodities if they export the portfolio.
+
+
+2015-06-10
+
+  - Removed dependency on curses. If you don't have curses, everything should
+    work fine now, errors are being caught. Curses was only used to provide good
+    default values for rendering tables in terminals on e.g. bean-report
+    journal and to decide whether to use a pager in multi-page bean-query.
+    The default values are fixed if curses isn't available, e.g. 80 chars wide,
+    but as previously, you can override them manually. I also removed the
+    dependency from checkdeps and from the install document.
+
+
+2015-06-09
+
+  - Rewrote the Installation Instructions document completely to make it
+    simpler. Some users had found it daunting.
+    http://furius.ca/beancount/doc/install
+
+  - Tested Windows installation using Cygwin and added it to the installation
+    instructions.
+    http://furius.ca/beancount/doc/install
+
+
 2015-06-07
 
   - Moved the following representation related symbols to their own module:
