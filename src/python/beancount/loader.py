@@ -9,7 +9,6 @@ import collections
 import io
 import itertools
 import os
-import sys
 from os import path
 
 from beancount.utils import misc_utils

@@ -284,7 +284,8 @@ FALSE		{
         if ( yyleng > strbuf_end - strbuf_ptr ) {
             strbuf_realloc(yyleng);
         }
-        for (size_t i = 0; i < yyleng; ++i) {
+        size_t i;
+        for (i = 0; i < yyleng; ++i) {
             *strbuf_ptr++ = yytext[i];
         }
     }
