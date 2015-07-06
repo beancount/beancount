@@ -36,6 +36,10 @@ ALLOWED = [
 
     ('beancount/projects', 'beancount/(core|utils|parser|web|ops|loader$|reports|scripts)'),
     ('beancount/projects/.*_test', 'beancount/(projects)'),
+
+    ('beancount/docs/.*_test', 'beancount/docs'),
+    ('beancount/docs', 'beancount/(docs|parser|utils)'),
+
     ]
 
 

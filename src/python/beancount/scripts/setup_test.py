@@ -3,14 +3,11 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import os
-import functools
 import shutil
 import sys
 import tempfile
 import subprocess
-import builtins
 from os import path
-from unittest import mock
 
 from beancount.utils import test_utils
 
@@ -37,7 +34,8 @@ class TestSetup(test_utils.TestCase):
     #     # large error message with instructions on how to work with setuptoolss.
     #     site_packages_path = path.join(
     #         self.installdir,
-    #         'lib/python{vi.major:d}.{vi.minor:d}/site-packages'.format(vi=sys.version_info))
+    #         'lib/python{vi.major:d}.{vi.minor:d}/site-packages'.format(
+    #             vi=sys.version_info))
     #     os.makedirs(site_packages_path)
     #     self.run_setup(self.installdir, {'PYTHONPATH': site_packages_path})
     #
