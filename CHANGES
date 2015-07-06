@@ -45,6 +45,14 @@ Note: This file contains only changes in the 'default' branch.
       pip3 install python-dateutil bottle ply lxml
 
 
+2015-07-01
+
+  - Wrote a post-mortem/assessment doc on LedgerHub, detailed future plans for
+    LedgerHub and plans to eventually merge the codebase into Beancount again.
+    See: http://furius.ca/ledgerhub/doc/postmortem
+
+
+
 2015-06-27
 
   - Complete the design doc and made it public.
