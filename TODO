@@ -4,12 +4,12 @@ beancount: TODO
 
   - Remove plugins from ops, remove algorithms from core:
 
-      b.ops.auto_accounts -> b.plugins.auto_accounts  (easy)
+      b.ops.auto_accounts   -> b.plugins.auto_accounts  (easy)
       b.ops.implicit_prices -> b.plugins.implicit_prices  (easy)
-      b.ops.documents -> b.plugins.documents  (not sure if breaks)
+      b.ops.documents       -> b.plugins.documents  (not sure if breaks)
 
-      b.core.getters -> b.ops.realization (does it add deps?)
-      b.core.realization -> b.ops.realization (does it add deps?)
+      b.core.getters        -> b.ops.getters (does it add deps?)
+      b.core.realization    -> b.ops.realization (does it add deps?)
 
   - Define a C extension module to implement D().
 
@@ -3519,7 +3519,9 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 ** Emacs Support
 
   - Idea: Implement another command like C-c x but that prints out all the
-    linked transactions.
+    linked transactions. Like context, print out balances from before & after,
+    but also print out the combined changes to all the accounts in the linked
+    transactions.
 
   - Idea: Implement movement commands that move the cursor to the previous/next
     linked transaction.

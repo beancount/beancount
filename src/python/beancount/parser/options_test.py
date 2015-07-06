@@ -78,8 +78,10 @@ class TestAccountTypeOptions(unittest.TestCase):
           2014-01-04 open Actif:CA:RBC:CompteCheques
           2014-01-04 open Passif:CA:RBC:CarteDeCredit
         """
-        self.assertTrue(errors)
-        self.assertEqual(2, len(entries))
+        self.assertEqual(0, len(entries))
+        self.assertEqual(2, len(errors))
+        for error in errors:
+            self.assertRegexpMatches(error.message, "Invalid account name")
 
     @parsedoc
     def test_custom_account_names__fail_invalid_order(self, entries, errors, options_map):
@@ -88,8 +90,9 @@ class TestAccountTypeOptions(unittest.TestCase):
 
           option "name_assets" "Actif"
         """
-        self.assertTrue(errors)
-        self.assertEqual(1, len(entries))
+        self.assertEqual(0, len(entries))
+        self.assertEqual(1, len(errors))
+        self.assertRegexpMatches(errors[0].message, "Invalid account name")
 
 
 class TestValidateOptions(unittest.TestCase):

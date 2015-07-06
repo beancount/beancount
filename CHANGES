@@ -4,10 +4,42 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-07-05
+
+  - Implemented support for parsing strings from files in various encodings.
+    Only string objects encoded in non-ASCII are supported, e.g., payee,
+    narrations, description, etc. This means the account names are still
+    restricted to ASCII, in particular. This works with UTF8 encoding (tested),
+    latin1 encoding (tested), and probably more. The support is at the lexer
+    level. You may now supply an 'encoding' parameter to parser.parse_file(),
+    parser.parse_string(), loader.load_file(), loader.load_string() functions.
+    Passing in an invalid encoding should not mail it fail (though the contents
+    of the strings will be empty). Unit tests for all those cases have been
+    added.
+
+  - Completely reviewed all lexer and grammar error handling code. The parser
+    code used to bail out with abort() on an unhandled exception and dump core
+    after issuing its error message (this is ugly but was never a big issue
+    since this occurred pretty rarely). All errors are now handled gracefully
+    (invalid lexer token, exception raised in lexer builder, invalid gramamr
+    rule, exception raised in grammar builder Python code). A comprehensive
+    suite of unit tests has been built to catch all these. You should never
+    experience a core dump anymore. A number of other unexpected cases has also
+    been dealt with.
+
+  - The lexer used to have a fixed-size buffer for parsing its strings. The
+    buffer is now dynamically allocated. Lexing should also be slightly faster.
+
+  - Mmeory management for the parser has been reviewed. Memory clean up for
+    temporaries generated during parsing has been reinstated (it was disabled
+    somehow) and cleanup rules are invoked even in the case of errors. This may
+    make the parser somewhat slower.
+
+
 2015-07-02
 
   - Built support for setuptools and rolled back changes. Setuptools is broken
-    beyond what I can bear. Screw this. You'll have to install dependencies by
+    beyond what I can bear. Forget this. You'll have to install dependencies by
     hand. It's a one-liner, like this:
 
       pip3 install python-dateutil bottle ply lxml
