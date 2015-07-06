@@ -1600,7 +1600,7 @@ yyreduce:
   case 5:
 #line 239 "src/python/beancount/parser/grammar.y" /* yacc.c:1646  */
     {
-        (yyval.character) = (yyvsp[0].string)[0];
+        (yyval.character) = '*';
     }
 #line 1606 "src/python/beancount/parser/grammar.c" /* yacc.c:1646  */
     break;
@@ -1698,7 +1698,7 @@ yyreduce:
   case 23:
 #line 312 "src/python/beancount/parser/grammar.y" /* yacc.c:1646  */
     {
-            (yyval.character) = (yyvsp[0].string)[0];
+            (yyval.character) = '*';
         }
 #line 1704 "src/python/beancount/parser/grammar.c" /* yacc.c:1646  */
     break;

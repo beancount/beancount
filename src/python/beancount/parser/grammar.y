@@ -237,7 +237,7 @@ txn : TXN
     }
     | ASTERISK
     {
-        $$ = $1[0];
+        $$ = '*';
     }
 
 eol : EOL
@@ -310,7 +310,7 @@ optflag : empty
         }
         | ASTERISK
         {
-            $$ = $1[0];
+            $$ = '*';
         }
         | FLAG
 
