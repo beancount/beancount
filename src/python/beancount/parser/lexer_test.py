@@ -400,7 +400,7 @@ class TestLexerErrors(unittest.TestCase):
         builder = lexer.LexBuilder()
         def return_none(string):
             return None
-        builder.STRING = return_none
+        setattr(builder, 'STRING', return_none)
         tokens = list(lexer.lex_iter_string('"Something"', builder))
         self.assertEqual([('LEX_ERROR', 1, '"', None),
                           ('EOL', 1, '\x00', None)], tokens)

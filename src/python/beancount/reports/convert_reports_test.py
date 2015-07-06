@@ -212,6 +212,7 @@ class TestLedgerConversion(test_utils.TestCase):
                 import shutil; shutil.copyfile(lgrfile.name, '/tmp/test.ledger')
                 self.check_parses_ledger(lgrfile.name)
 
+
 class TestHLedgerConversion(test_utils.TestCase):
 
     def test_example(self):
