@@ -3519,7 +3519,9 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 ** Emacs Support
 
   - Idea: Implement another command like C-c x but that prints out all the
-    linked transactions.
+    linked transactions. Like context, print out balances from before & after,
+    but also print out the combined changes to all the accounts in the linked
+    transactions.
 
   - Idea: Implement movement commands that move the cursor to the previous/next
     linked transaction.

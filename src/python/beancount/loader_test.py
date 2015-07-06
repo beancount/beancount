@@ -3,6 +3,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import logging
 import unittest
 import tempfile
+import textwrap
 import re
 import os
 from os import path
@@ -223,3 +224,22 @@ class TestLoadIncludes(unittest.TestCase):
                 os.chdir(cwd)
         self.assertFalse(errors)
         self.assertEqual(2, len(entries))
+
+
+class TestEncoding(unittest.TestCase):
+
+    def test_string_unicode(self):
+        utf8_bytes = textwrap.dedent("""
+          2015-01-01 open Assets:Something
+          2015-05-23 note Assets:Something "¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼ "
+        """).encode('utf-8')
+        entries, errors, options_map = loader.load_string(utf8_bytes, encoding='utf8')
+        self.assertFalse(errors)
+
+    def test_string_latin1(self):
+        utf8_bytes = textwrap.dedent("""
+          2015-01-01 open Assets:Something
+          2015-05-23 note Assets:Something "¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼ "
+        """).encode('latin1')
+        entries, errors, options_map = loader.load_string(utf8_bytes, encoding='latin1')
+        self.assertFalse(errors)

@@ -489,3 +489,56 @@ class TestLexerErrors(unittest.TestCase):
             ' mykey: ', 'KEY',
             [('LEX_ERROR', 1, 'mykey:', None),
              ('EOL', 1, '\x00', None)])
+
+
+class TestLexerUnicode(unittest.TestCase):
+
+    test_utf8_string = textwrap.dedent("""
+      2015-05-23 note Assets:Something "a¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼ z"
+    """)
+    expected_utf8_string = "a¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼ z"
+
+    test_latin1_string = textwrap.dedent("""
+      2015-05-23 note Assets:Something "école Floß søllerød"
+    """)
+    expected_latin1_string = "école Floß søllerød"
+
+    # Test providing utf8 bytes to the lexer.
+    def test_bytes_encoded_utf8(self):
+        utf8_bytes = self.test_utf8_string.encode('utf8')
+        builder = lexer.LexBuilder()
+        tokens = list(lexer.lex_iter_string(utf8_bytes, builder))
+
+        # The lexer outputs no errors.
+        self.assertFalse(builder.errors)
+
+        # Check that the lexer correctly parsed the UTF8 string.
+        str_tokens = [token for token in tokens if token[0] == 'STRING']
+        self.assertEqual(self.expected_utf8_string, str_tokens[0][3])
+
+    # Test providing latin1 bytes to the lexer when it is expecting utf8.
+    def test_bytes_encoded_invalid(self):
+        latin1_bytes = self.test_utf8_string.encode('latin1')
+        builder = lexer.LexBuilder()
+        tokens = list(lexer.lex_iter_string(latin1_bytes, builder))
+
+        # The lexer outputs no errors.
+        self.assertFalse(builder.errors)
+
+        # Check that the lexer failed to convert the string but did not cause
+        # other errors.
+        str_tokens = [token for token in tokens if token[0] == 'STRING']
+        self.assertNotEqual(self.expected_utf8_string, str_tokens[0][3])
+
+    # Test providing latin1 bytes to the lexer with an encoding.
+    def test_bytes_encoded_latin1(self):
+        latin1_bytes = self.test_latin1_string.encode('latin1')
+        builder = lexer.LexBuilder()
+        tokens = list(lexer.lex_iter_string(latin1_bytes, builder, encoding='latin1'))
+
+        # The lexer outputs no errors.
+        self.assertFalse(builder.errors)
+
+        # Check that the lexer correctly parsed the latin1 string.
+        str_tokens = [token for token in tokens if token[0] == 'STRING']
+        self.assertEqual(self.expected_latin1_string, str_tokens[0][3])

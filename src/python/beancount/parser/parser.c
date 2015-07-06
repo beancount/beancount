@@ -57,13 +57,14 @@ PyObject* parse_file(PyObject *self, PyObject *args, PyObject* kwds)
     const char* report_filename = 0;
     int report_firstline = 0;
     extern int yydebug;
+    const char* encoding = 0;
     static char *kwlist[] = {"filename", "builder",
                              "report_filename", "report_firstline",
-                             "yydebug", NULL};
-    if ( !PyArg_ParseTupleAndKeywords(args, kwds, "sO|sip", kwlist,
+                             "encoding", "yydebug", NULL};
+    if ( !PyArg_ParseTupleAndKeywords(args, kwds, "sO|sizp", kwlist,
                                       &filename, &builder,
                                       &report_filename, &report_firstline,
-                                      &yydebug) ) {
+                                      &encoding, &yydebug) ) {
         return NULL;
     }
 
@@ -79,7 +80,8 @@ PyObject* parse_file(PyObject *self, PyObject *args, PyObject* kwds)
     }
 
     /* Initialize the lexer. */
-    yylex_initialize(report_filename != NULL ? report_filename : filename);
+    yylex_initialize(report_filename != NULL ? report_filename : filename,
+                     encoding);
     yyin = fp;
 
     /* Initialize the parser. */
@@ -110,20 +112,22 @@ PyObject* parse_string(PyObject *self, PyObject *args, PyObject* kwds)
     const char* input_string = 0;
     Py_ssize_t input_length = 0;
     const char* report_filename = 0;
+    const char* encoding = 0;
     int report_firstline = 0;
     extern int yydebug;
     static char *kwlist[] = {"input_string", "builder",
                              "report_filename", "report_firstline",
-                             "yydebug", NULL};
-    if ( !PyArg_ParseTupleAndKeywords(args, kwds, "s#O|sip", kwlist,
+                             "encoding", "yydebug", NULL};
+    if ( !PyArg_ParseTupleAndKeywords(args, kwds, "s#O|sizp", kwlist,
                                       &input_string, &input_length, &builder,
                                       &report_filename, &report_firstline,
-                                      &yydebug) ) {
+                                      &encoding, &yydebug) ) {
         return NULL;
     }
 
     /* Initialize the lexer. */
-    yylex_initialize(report_filename != NULL ? report_filename : "<string>");
+    yylex_initialize(report_filename != NULL ? report_filename : "<string>",
+                     encoding);
     yy_switch_to_buffer(yy_scan_string(input_string));
 
     /* Initialize the parser. */
@@ -162,7 +166,8 @@ PyObject* lexer_initialize(PyObject *self, PyObject *args)
 
     /* Unpack and validate arguments */
     const char* filename = NULL;
-    if ( !PyArg_ParseTuple(args, "sO", &filename, &builder) ) {
+    const char* encoding = NULL;
+    if ( !PyArg_ParseTuple(args, "sOz", &filename, &builder, &encoding) ) {
         return NULL;
     }
     Py_XINCREF(builder);
@@ -174,7 +179,7 @@ PyObject* lexer_initialize(PyObject *self, PyObject *args)
     }
 
     /* Initialize the lexer. */
-    yylex_initialize(filename);
+    yylex_initialize(filename, encoding);
     yyin = fp;
 
     Py_RETURN_NONE;
