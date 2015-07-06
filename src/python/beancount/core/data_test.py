@@ -4,9 +4,9 @@ from datetime import date
 import unittest
 import datetime
 
-from .amount import D
-from . import data
-from . import amount
+from beancount.core.number import D
+from beancount.core import data
+from beancount.core import amount
 
 
 META = data.new_metadata('beancount/core/testing.beancount', 12345)
@@ -127,7 +127,7 @@ class TestData(unittest.TestCase):
                              None, "Next day", None, None, []),
             data.Close(data.new_metadata(".", 1000), date2, account),
             data.Balance(data.new_metadata(".", 1001), date2, account,
-                         amount.Amount(D('200.00'), 'USD"'), None),
+                         amount.Amount(D('200.00'), 'USD"'), None, None),
             data.Open(data.new_metadata(".", 1002), date2, account, 'USD', None),
             data.Transaction(data.new_metadata(".", 1009), date2, FLAG,
                              None, "Transaction 2", None, None, []),
@@ -139,7 +139,7 @@ class TestData(unittest.TestCase):
 
         for entry in entries:
             if isinstance(entry, data.Transaction):
-                posting = data.create_simple_posting(
+                data.create_simple_posting(
                     entry, 'Assets:Bank:Checking', '123.45', 'USD')
 
         return entries
@@ -164,7 +164,7 @@ class TestData(unittest.TestCase):
 
     def test_sort(self):
         entries = self.create_sort_data()
-        sorted_entries = data.sort(entries)
+        sorted_entries = data.sorted(entries)
         self.check_sorted(sorted_entries)
 
     def test_posting_sortkey(self):

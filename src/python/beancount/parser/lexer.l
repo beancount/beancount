@@ -55,15 +55,34 @@ int yy_skip_line(void);
 /* Utility functions. */
 int strtonl(const char* buf, size_t nchars);
 
+
+/* Longest possible string, including multiline strings. */
+#define MAX_STR_BUF  16384
+
+#define SAFE_COPY(dst_ptr, value)               \
+	*dst_ptr++ = value;                     \
+	if (dst_ptr >= strbuf_end) {            \
+	    BEGIN(INVALID);                     \
+	    return ERROR;                       \
+	}
+
 }
 
 /* A start condition for chomping an invalid token. */
 %x INVALID
 
+/* Exclusive start condition for parsing escape sequences in string literals. */
+%x STRLIT
+
 
 /*--------------------------------------------------------------------------------------*/
 /* Rules */
 %%
+
+	/* String literal buffer. */
+	char strbuf[MAX_STR_BUF];
+	char* strbuf_end = strbuf + MAX_STR_BUF;
+	char* strbuf_ptr = NULL;
 
 
  /* Newlines are output as explicit tokens, because lines matter in the syntax. */
@@ -100,6 +119,7 @@ int strtonl(const char* buf, size_t nchars);
 \{		{ return LCURL; }
 \}		{ return RCURL; }
 ,		{ return COMMA; }
+\~		{ return TILDE; }
 \/		{ return SLASH; }
 \+		{ return PLUS; }
 
@@ -133,6 +153,7 @@ txn		{ return TXN; }
 balance		{ return BALANCE; }
 open		{ return OPEN; }
 close		{ return CLOSE; }
+commodity	{ return COMMODITY; }
 pad		{ return PAD; }
 event		{ return EVENT; }
 price		{ return PRICE; }
@@ -142,6 +163,20 @@ pushtag	        { return PUSHTAG; }
 poptag		{ return POPTAG; }
 option		{ return OPTION; }
 plugin		{ return PLUGIN; }
+include		{ return INCLUDE; }
+
+ /* Account names. */
+TRUE		{
+    yylval->pyobj = Py_True;
+    Py_INCREF(Py_True);
+    return BOOL;
+}
+
+FALSE		{
+    yylval->pyobj = Py_False;
+    Py_INCREF(Py_False);
+    return BOOL;
+}
 
  /* Dates. */
 [0-9]{4,}[\-/][0-9]+[\-/][0-9]+	{
@@ -178,15 +213,44 @@ plugin		{ return PLUGIN; }
 
  /* Currencies. These are defined as uppercase only in order to disambiguate the
   * syntax. This is kept in sync with beancount.core.amount.CURRENCY_RE. */
-[A-Z][A-Z0-9\'\.\_\-]{0,10}[A-Z0-9]	{
+[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]	{
     yylval->pyobj = BUILD("CURRENCY", "s", yytext);
     return CURRENCY;
 }
 
  /* String literals. */
-\"[^\"]*\" 			{
-    yylval->pyobj = BUILD("STRING", "s#", yytext+1, yyleng-2);
-    return STRING;
+ /* Note that we use an exclusive start condition.
+    See section "Start Conditions" in the GNU Flex manual. */
+\"	{
+    strbuf_ptr = strbuf;
+    BEGIN(STRLIT);
+}
+
+<STRLIT>{
+
+    /* Saw closing quote - all done. */
+    \"        {
+        BEGIN(INITIAL);
+        *strbuf_ptr = '\0';
+        yylval->pyobj = BUILD("STRING", "s#", strbuf, strbuf_ptr - strbuf);
+        return STRING;
+    }
+
+    /* Escape sequences. */
+    \\n       SAFE_COPY(strbuf_ptr, '\n');
+    \\t       SAFE_COPY(strbuf_ptr, '\t');
+    \\r       SAFE_COPY(strbuf_ptr, '\r');
+    \\b       SAFE_COPY(strbuf_ptr, '\b');
+    \\f       SAFE_COPY(strbuf_ptr, '\f');
+    \\(.|\n)  SAFE_COPY(strbuf_ptr, yytext[1]);
+
+    /* All other characters. */
+    [^\\\"]+        {
+        char *yptr = yytext;
+        while ( *yptr ) {
+            SAFE_COPY(strbuf_ptr, *yptr++);
+        }
+    }
 }
 
  /* Numbers */

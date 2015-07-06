@@ -9,14 +9,14 @@ import copy
 import random
 from datetime import date
 
-from .amount import ZERO
-from .amount import D
-from .amount import Amount
-from .position import Lot
-from .position import Position
-from .position import from_string
-from .position import from_amounts
-from .position import lot_currency_pair
+from beancount.core.number import ZERO
+from beancount.core.number import D
+from beancount.core.amount import Amount
+from beancount.core.position import Lot
+from beancount.core.position import Position
+from beancount.core.position import from_string
+from beancount.core.position import from_amounts
+from beancount.core.position import lot_currency_pair
 
 
 class TestPosition(unittest.TestCase):
@@ -66,12 +66,9 @@ class TestPosition(unittest.TestCase):
             Position(Lot("GOOG", Amount(D('510'), 'USD'), None), D('10')), pos)
 
     def test_constructors(self):
-        position = Position(Lot('USD', None, None),
-                            D('123.45'))
-        position = Position(Lot('USD', Amount('74.00', 'CAD'), None),
-                            D('123.45'))
-        position = Position(Lot('USD', Amount('74.00', 'CAD'), date(2013, 2, 3)),
-                            D('123.45'))
+        Position(Lot('USD', None, None), D('123.45'))
+        Position(Lot('USD', Amount('74.00', 'CAD'), None), D('123.45'))
+        Position(Lot('USD', Amount('74.00', 'CAD'), date(2013, 2, 3)), D('123.45'))
         with self.assertRaises(Exception):
             Position(None, D('123.45'))
         with self.assertRaises(Exception):
@@ -85,6 +82,12 @@ class TestPosition(unittest.TestCase):
 
         pos2 = Position(Lot("USD", None, None), ZERO)
         self.assertNotEqual(pos1, pos2)
+
+    def test_neg(self):
+        pos = Position(Lot("CAD", None, None), D('7'))
+        npos = -pos
+        self.assertEqual(D('-7'), npos.number)
+        self.assertEqual(pos.lot, npos.lot)
 
     def test_eq_and_sortkey(self):
         pos1 = Position(Lot("USD", None, None), D('200'))

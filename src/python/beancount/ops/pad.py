@@ -4,7 +4,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
 
-from beancount.core.amount import D
+from beancount.core import account
 from beancount.core import amount
 from beancount.core import inventory
 from beancount.core import data
@@ -12,6 +12,7 @@ from beancount.core import position
 from beancount.core import flags
 from beancount.core import realization
 from beancount.utils import misc_utils
+from beancount.ops import balance
 
 __plugins__ = ('pad',)
 
@@ -39,7 +40,6 @@ def pad(entries, options_map):
       A new list of directives, with Pad entries inserte, and a list of new
       errors produced.
     """
-    tolerance = D(options_map['tolerance'])
     pad_errors = []
 
     # Find all the pad entries and group them by account.
@@ -53,7 +53,7 @@ def pad(entries, options_map):
     new_entries = {id(pad): [] for pad in pads}
 
     # Process each account that has a padding group.
-    for account, pad_list in sorted(pad_dict.items()):
+    for account_, pad_list in sorted(pad_dict.items()):
 
         # Last encountered / currency active pad entry.
         active_pad = None
@@ -63,8 +63,9 @@ def pad(entries, options_map):
 
         # Gather all the postings for the account and its children.
         postings = []
+        is_child = account.parent_matcher(account_)
         for item_account, item_postings in by_account.items():
-            if item_account.startswith(account):
+            if is_child(item_account):
                 postings.extend(item_postings)
         postings.sort(key=data.posting_sortkey)
 
@@ -77,7 +78,7 @@ def pad(entries, options_map):
                 pad_balance.add_position(entry.position)
 
             elif isinstance(entry, data.Pad):
-                if entry.account == account:
+                if entry.account == account_:
                     # Mark this newly encountered pad as active and allow all lots
                     # to be padded heretofore.
                     active_pad = entry
@@ -93,6 +94,10 @@ def pad(entries, options_map):
                 # distinct from the cost).
                 balance_amount = pad_balance.get_units(check_amount.currency)
                 diff_amount = amount.amount_sub(balance_amount, check_amount)
+
+                # Use the specified tolerance or automatically infer it.
+                tolerance = balance.get_tolerance(entry, options_map)
+
                 if abs(diff_amount.number) > tolerance:
                     # The check fails; we need to pad.
 
@@ -100,17 +105,12 @@ def pad(entries, options_map):
                     # padded that lot since it was last encountered.
                     if active_pad and (check_amount.currency not in padded_lots):
 
-                        # Calculate the difference.
-                        balance_number = (ZERO
-                                          if balance_amount is None
-                                          else balance_amount.number)
-
                         # Note: we decide that it's an error to try to pad
                         # positions at cost; we check here that all the existing
                         # positions with that currency have no cost.
-                        positions = [position
-                                     for position in pad_balance.get_positions()
-                                     if position.lot.currency == check_amount.currency]
+                        positions = [pos
+                                     for pos in pad_balance.get_positions()
+                                     if pos.lot.currency == check_amount.currency]
                         for position_ in positions:
                             if position_.lot.cost is not None:
                                 pad_errors.append(

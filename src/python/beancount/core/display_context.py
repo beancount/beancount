@@ -62,16 +62,23 @@ import io
 import enum
 from decimal import Decimal
 
-from beancount.utils import misc_utils
+# pylint: disable=invalid-name
+try:
+    import enum
+    Enum = enum.Enum
+except ImportError:
+    Enum = object
+
+from beancount.core import distribution
 
 
-class Precision(enum.Enum):
+class Precision(Enum):
     """The type of precision required."""
     MOST_COMMON = 1
     MAXIMUM = 2
 
 
-class Align(enum.Enum):
+class Align(Enum):
     """Alignment style for numbers."""
     NATURAL = 1
     DOT = 2
@@ -95,7 +102,7 @@ class _CurrencyContext:
     def __init__(self):
         self.has_sign = False
         self.integer_max = 1
-        self.fractional_dist = misc_utils.Distribution()
+        self.fractional_dist = distribution.Distribution()
 
     def __str__(self):
         fmt = ('sign={:<2}  integer_max={:<2}  '

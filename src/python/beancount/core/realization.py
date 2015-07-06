@@ -596,8 +596,8 @@ def dump(root_account):
     line_format = '{{:{width}}}'.format(width=max_width)
     return [(line_format.format(first_line),
              line_format.format(cont_line),
-             real_account)
-            for (first_line, cont_line, real_account) in lines]
+             real_node)
+            for (first_line, cont_line, real_node) in lines]
 
 
 PREFIX_CHILD_1 = '|-- '

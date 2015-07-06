@@ -5,7 +5,7 @@ import argparse
 import functools
 import logging
 
-from beancount.core.amount import D
+from beancount.core.number import D
 from beancount import loader
 from beancount.ops import prices
 from beancount.ops import holdings

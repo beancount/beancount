@@ -43,7 +43,7 @@ class Report:
     def __init__(self, args, parser):
         self.parser = parser
         self.args = args
-        assert self.default_format, "You must provide a default foramt."
+        assert self.default_format, "You must provide a default format."
 
     @classmethod
     def from_args(cls, argv=None, **kwds):
@@ -254,6 +254,7 @@ def get_all_reports():
     from beancount.reports import balance_reports
     from beancount.reports import journal_reports
     from beancount.reports import holdings_reports
+    from beancount.reports import export_reports
     from beancount.reports import price_reports
     from beancount.reports import misc_reports
     from beancount.reports import convert_reports
@@ -262,6 +263,7 @@ def get_all_reports():
                                 [balance_reports,
                                  journal_reports,
                                  holdings_reports,
+                                 export_reports,
                                  price_reports,
                                  misc_reports,
                                  convert_reports]))

@@ -7,7 +7,6 @@
 
 #include "parser.h"
 #include "lexer.h"
-#include "parser.h"
 
 
 /* The bison header file does not contain this... silly. */
@@ -251,7 +250,7 @@ static PyMethodDef module_functions[] = {
 
 static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,
-    "_beancount",                         /* m_name */
+    "_parser",                            /* m_name */
     "Beancount parser extension module",  /* m_doc */
     -1,                                   /* m_size */
     module_functions,                     /* m_methods */
@@ -263,9 +262,15 @@ static struct PyModuleDef moduledef = {
 
 PyMODINIT_FUNC PyInit__parser(void)
 {
-    PyObject* m = PyModule_Create(&moduledef);
-    if ( m == NULL )
+    PyObject* module = PyModule_Create(&moduledef);
+    if ( module == NULL )
         Py_RETURN_NONE;
 
-    return m;
+    /* Provide the source hash to the parser module for verification that the
+     * extension module is up-to-date. */
+    /* uint64_t int_source_hash = #PARSER_SOURCE_HASH; */
+    PyObject* source_hash = PyUnicode_FromString(PARSER_SOURCE_HASH);
+    PyObject_SetAttrString(module, "SOURCE_HASH", source_hash);
+
+    return module;
 }

@@ -1,4 +1,4 @@
-/* A Bison parser, made by GNU Bison 3.0.  */
+/* A Bison parser, made by GNU Bison 3.0.2.  */
 
 /* Bison interface for Yacc-like parsers in C
 
@@ -59,30 +59,34 @@ extern int yydebug;
     RCURL = 269,
     EQUAL = 270,
     COMMA = 271,
-    SLASH = 272,
-    PLUS = 273,
-    FLAG = 274,
-    TXN = 275,
-    BALANCE = 276,
-    OPEN = 277,
-    CLOSE = 278,
-    PAD = 279,
-    EVENT = 280,
-    PRICE = 281,
-    NOTE = 282,
-    DOCUMENT = 283,
-    PUSHTAG = 284,
-    POPTAG = 285,
-    OPTION = 286,
-    PLUGIN = 287,
-    DATE = 288,
-    ACCOUNT = 289,
-    CURRENCY = 290,
-    STRING = 291,
-    NUMBER = 292,
-    TAG = 293,
-    LINK = 294,
-    KEY = 295
+    TILDE = 272,
+    SLASH = 273,
+    PLUS = 274,
+    FLAG = 275,
+    TXN = 276,
+    BALANCE = 277,
+    OPEN = 278,
+    CLOSE = 279,
+    COMMODITY = 280,
+    PAD = 281,
+    EVENT = 282,
+    PRICE = 283,
+    NOTE = 284,
+    DOCUMENT = 285,
+    PUSHTAG = 286,
+    POPTAG = 287,
+    OPTION = 288,
+    INCLUDE = 289,
+    PLUGIN = 290,
+    BOOL = 291,
+    DATE = 292,
+    ACCOUNT = 293,
+    CURRENCY = 294,
+    STRING = 295,
+    NUMBER = 296,
+    TAG = 297,
+    LINK = 298,
+    KEY = 299
   };
 #endif
 
@@ -96,8 +100,12 @@ union YYSTYPE
     char character;
     const char* string;
     PyObject* pyobj;
+    struct {
+        PyObject* pyobj1;
+        PyObject* pyobj2;
+    } pairobj;
 
-#line 101 "src/python/beancount/parser/grammar.h" /* yacc.c:1909  */
+#line 109 "src/python/beancount/parser/grammar.h" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1

@@ -315,7 +315,7 @@ class TestReturnsConstrained(test_utils.TestCase):
             (datetime.date(2014, 1, 1), datetime.date(2014, 1, 15)),
             (datetime.date(2014, 1, 15), datetime.date(2014, 6, 15)),
             (datetime.date(2014, 6, 15), datetime.date(2014, 10, 1)),
-            ], [(date_begin, date_end) for date_begin, date_end, _, __ in periods])
+            ], [(date_begin, date_end) for date_begin, date_end, _1, _2 in periods])
 
         self.assertEqual(inventory.from_string(''), periods[0][2])
 
@@ -326,7 +326,7 @@ class TestReturnsConstrained(test_utils.TestCase):
         self.assertEqual([
             (datetime.date(2014, 4, 20), datetime.date(2014, 6, 15)),
             (datetime.date(2014, 6, 15), datetime.date(2014, 10, 1)),
-            ], [(date_begin, date_end) for date_begin, date_end, _, __ in periods])
+            ], [(date_begin, date_end) for date_begin, date_end, _1, _2 in periods])
 
         self.assertEqual(inventory.from_string('2900 USD, 21 ACME {100 USD}'),
                          periods[0][2])
@@ -336,7 +336,7 @@ class TestReturnsConstrained(test_utils.TestCase):
                                              date_begin=datetime.date(2014, 9, 10))
         self.assertEqual([
             (datetime.date(2014, 9, 10), datetime.date(2014, 10, 1)),
-            ], [(date_begin, date_end) for date_begin, date_end, _, __ in periods])
+            ], [(date_begin, date_end) for date_begin, date_end, _1, _2 in periods])
 
         self.assertEqual(inventory.from_string('3720 USD, '
                                                '21 ACME {100 USD}, '
@@ -348,7 +348,7 @@ class TestReturnsConstrained(test_utils.TestCase):
                                              date_begin=datetime.date(2014, 10, 15))
         self.assertEqual([
             (datetime.date(2014, 10, 15), datetime.date(2014, 10, 15))
-            ], [(date_begin, date_end) for date_begin, date_end, _, __ in periods])
+            ], [(date_begin, date_end) for date_begin, date_end, _1, _2 in periods])
 
         self.assertEqual(inventory.from_string('600 USD, '
                                                '21 ACME {100 USD}, '
@@ -363,7 +363,7 @@ class TestReturnsConstrained(test_utils.TestCase):
         self.assertEqual([
             (datetime.date(2014, 1, 1), datetime.date(2014, 1, 15)),
             (datetime.date(2014, 1, 15), datetime.date(2014, 4, 20)),
-            ], [(date_begin, date_end) for date_begin, date_end, _, __ in periods])
+            ], [(date_begin, date_end) for date_begin, date_end, _1, _2 in periods])
 
         self.assertEqual(inventory.from_string('2900 USD, 21 ACME {100 USD}'),
                          periods[-1][3])
@@ -375,7 +375,7 @@ class TestReturnsConstrained(test_utils.TestCase):
             (datetime.date(2014, 1, 1), datetime.date(2014, 1, 15)),
             (datetime.date(2014, 1, 15), datetime.date(2014, 6, 15)),
             (datetime.date(2014, 6, 15), datetime.date(2014, 9, 10)),
-            ], [(date_begin, date_end) for date_begin, date_end, _, __ in periods])
+            ], [(date_begin, date_end) for date_begin, date_end, _1, _2 in periods])
 
         self.assertEqual(inventory.from_string('3720 USD, '
                                                '21 ACME {100 USD}, '
@@ -389,7 +389,7 @@ class TestReturnsConstrained(test_utils.TestCase):
             (datetime.date(2014, 1, 1), datetime.date(2014, 1, 15)),
             (datetime.date(2014, 1, 15), datetime.date(2014, 6, 15)),
             (datetime.date(2014, 6, 15), datetime.date(2014, 10, 15)),
-            ], [(date_begin, date_end) for date_begin, date_end, _, __ in periods])
+            ], [(date_begin, date_end) for date_begin, date_end, _1, _2 in periods])
 
         self.assertEqual(inventory.from_string('600 USD, '
                                                '21 ACME {100 USD}, '
@@ -405,7 +405,7 @@ class TestReturnsConstrained(test_utils.TestCase):
         self.assertEqual([
             (datetime.date(2014, 4, 20), datetime.date(2014, 6, 15)),
             (datetime.date(2014, 6, 15), datetime.date(2014, 9, 10)),
-            ], [(date_begin, date_end) for date_begin, date_end, _, __ in periods])
+            ], [(date_begin, date_end) for date_begin, date_end, _1, _2 in periods])
 
         self.assertEqual(inventory.from_string('3720 USD, '
                                                '21 ACME {100 USD}, '
@@ -444,7 +444,7 @@ class TestReturnsConstrained(test_utils.TestCase):
             (datetime.date(2013, 12, 1), datetime.date(2014, 1, 15)),
             (datetime.date(2014, 1, 15), datetime.date(2014, 6, 15)),
             (datetime.date(2014, 6, 15), datetime.date(2015, 3, 1)),
-            ], [(date_begin, date_end) for date_begin, date_end, _, __ in periods])
+            ], [(date_begin, date_end) for date_begin, date_end, _1, _2 in periods])
 
         inv_final = inventory.from_string('600 USD, '
                                           '21 ACME {100 USD}, '
@@ -481,7 +481,7 @@ class TestReturnsConstrained(test_utils.TestCase):
             (datetime.date(2014, 1, 1), datetime.date(2014, 1, 15)),
             (datetime.date(2014, 1, 15), datetime.date(2014, 6, 15)),
             (datetime.date(2014, 6, 15), datetime.date(2020, 1, 1)),
-            ], [(date_begin, date_end) for date_begin, date_end, _, __ in periods])
+            ], [(date_begin, date_end) for date_begin, date_end, _1, _2 in periods])
 
         self.assertEqual(inventory.from_string('1400 USD, '
                                                '21 ACME {100 USD}'), periods[-1][3])

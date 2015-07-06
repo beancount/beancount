@@ -101,7 +101,6 @@ def add_ira_contribs(entries, options_map, config):
         account names.
     Returns:
       A tuple of entries and errors.
-
     """
     # Parse and extract configuration values.
     config_obj = eval(config, {}, {})

@@ -22,6 +22,7 @@ is great for sectioning large files with many transactions."
     ([(control c)(l)] . beancount-check)
     ([(control c)(q)] . beancount-query)
     ([(control c)(x)] . beancount-context)
+    ([(control c)(k)] . beancount-linked)
     ([(control c)(\;)] . beancount-align-to-previous-number)
     ([(control c)(\:)] . beancount-align-numbers)
     ([(control c)(p)] . beancount-test-align)
@@ -72,6 +73,21 @@ is great for sectioning large files with many transactions."
   (message "Accounts updated."))
 
 
+(defvar beancount-directive-names '("txn"
+                                    "open"
+                                    "close"
+                                    "commodity"
+                                    "balance"
+                                    "pad"
+                                    "event"
+                                    "price"
+                                    "note"
+                                    "document"
+                                    "pushtag"
+                                    "poptag")
+  "A list of the directive names.")
+
+
 (defvar beancount-font-lock-defaults
   `(;; Comments
     (";.+" . font-lock-comment-face)
@@ -80,8 +96,7 @@ is great for sectioning large files with many transactions."
     ("\".*?\"" . font-lock-string-face)
 
     ;; Reserved keywords
-    (,(regexp-opt '("txn" "balance" "open" "close" "pad" "event" "price" "note" "document"
-                    "pushtag" "poptag")) . font-lock-keyword-face)
+    (,(regexp-opt beancount-directive-names) . font-lock-keyword-face)
 
     ;; Tags & Links
     ("[#\\^][A-Za-z0-9\-_/.]+" . font-lock-type-face)
@@ -97,7 +112,6 @@ is great for sectioning large files with many transactions."
 
     ;; Number + Currency
     ;;; ("\\([\\-+]?[0-9,]+\\(\\.[0-9]+\\)?\\)\\s-+\\([A-Z][A-Z0-9'\.]\\{1,10\\}\\)" . )
-
     ))
 
 
@@ -169,10 +183,10 @@ niceness)."
      (let ((end-marker (set-marker (make-marker) ,end)))
        (goto-char ,begin)
        (beginning-of-line)
-       (while (< (point) end-marker)
+       (while (and (not (= (point) (point-max))) (< (point) end-marker))
+         (beginning-of-line)
          (progn ,@exprs)
          (forward-line 1)
-         (beginning-of-line)
          ))))
 
 
@@ -234,7 +248,7 @@ align with the fill-column."
         (beancount-for-line-in-region
          begin end
          (let ((line (thing-at-point 'line)))
-           (when (string-match (concat "\\(.*?\\)"
+           (when (string-match (concat "^\\([^\"]*?\\)"
                                        "[ \t]+"
                                        "\\(" beancount-number-regexp "\\)"
                                        "[ \t]+"
@@ -345,6 +359,15 @@ what that column is and returns it (an integer)."
         (compile-command
          (format "%s %s %s %d"
                  beancount-doctor-program "context"
+                 (buffer-file-name) (line-number-at-pos (point)))))
+    (call-interactively 'compile)))
+
+(defun beancount-linked ()
+  (interactive)
+  (let ((compilation-read-command nil)
+        (compile-command
+         (format "%s %s %s %d"
+                 beancount-doctor-program "linked"
                  (buffer-file-name) (line-number-at-pos (point)))))
     (call-interactively 'compile)))
 

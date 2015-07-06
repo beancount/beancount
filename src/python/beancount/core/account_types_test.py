@@ -1,6 +1,7 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import unittest
+import functools
 
 from beancount.core import account_types
 
@@ -11,7 +12,7 @@ class TestAccountTypes(unittest.TestCase):
         self.assertEqual(5, len(account_types.DEFAULT_ACCOUNT_TYPES))
         self.assertTrue(account_types.DEFAULT_ACCOUNT_TYPES is not None)
 
-    def test_get_account_sort_function(self):
+    def test_get_account_sort_key(self):
         account_names_input = [
             "Expenses:Toys:Computer",
             "Income:US:Intel",
@@ -34,8 +35,8 @@ class TestAccountTypes(unittest.TestCase):
         ]
         account_names_actual = sorted(
             account_names_input,
-            key=account_types.get_account_sort_function(
-                account_types.DEFAULT_ACCOUNT_TYPES))
+            key=functools.partial(account_types.get_account_sort_key,
+                                  account_types.DEFAULT_ACCOUNT_TYPES))
         self.assertEqual(account_names_expected, account_names_actual)
 
     def test_get_account_type(self):
@@ -103,7 +104,7 @@ class TestAccountTypes(unittest.TestCase):
                 account_types.is_income_statement_account(
                     account_name, account_types.DEFAULT_ACCOUNT_TYPES))
 
-    def test_get_account_type(self):
+    def test_get_account_sign(self):
         for account_name, expected in [
                 ("Assets:US:RBS:Savings", +1),
                 ("Liabilities:US:RBS:MortgageLoan", -1),

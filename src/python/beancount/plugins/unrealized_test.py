@@ -4,8 +4,8 @@ import unittest
 import re
 
 from beancount.plugins import unrealized
-from beancount.core.amount import D
-from beancount.core.amount import ZERO
+from beancount.core.number import D
+from beancount.core.number import ZERO
 from beancount.core import data
 from beancount.parser import options
 from beancount.ops import validation
@@ -31,7 +31,7 @@ def get_entries_with_narration(entries, regexp):
 class TestUnrealized(unittest.TestCase):
 
     def test_empty_entries(self):
-        entries, _ = unrealized.add_unrealized_gains([], options.DEFAULT_OPTIONS.copy())
+        entries, _ = unrealized.add_unrealized_gains([], options.OPTIONS_DEFAULTS.copy())
         self.assertEqual([], entries)
 
     @loaddoc
@@ -259,23 +259,26 @@ class TestUnrealized(unittest.TestCase):
         self.assertFalse(valid_errors)
 
     @loaddoc
-    def test_no_units_but_diff(self, entries, _, options_map):
+    def test_no_units_but_leaked_cost_basis(self, entries, errors, options_map):
         """
         ;; This probable mistake triggers an error in the unrealized gains
-        ;; calculation.
+        ;; calculation. This will occur if you use unstrict booking and leak
+        ;; some cost basis, resulting in an holding of zero units but some
+        ;; non-zero book value (which should be ignored).
 
         2009-08-17 open Assets:Cash
-        2009-08-17 open Assets:Stocks
+        2009-08-17 open Assets:Stocks  "NONE"
         2009-08-17 open Income:Stocks
 
         2009-08-18 * "Bought titles"
           Assets:Cash      -5000 EUR
-          Assets:Stocks     5000 PP {1.0 EUR}
+          Assets:Stocks     5000 HOOL {1.0 EUR}
 
         2013-06-19 * "Sold with loss"
-          Assets:Stocks    -5000 PP {1.1 EUR} ;; Incorrect
+          Assets:Stocks    -5000 HOOL {1.1 EUR} ;; Incorrect
           Assets:Cash       3385 EUR
           Income:Stocks
         """
-        new_entries, errors = unrealized.add_unrealized_gains(entries, options_map)
-        self.assertEqual([unrealized.UnrealizedError], list(map(type, errors)))
+        self.assertFalse(errors)
+        new_entries, new_errors = unrealized.add_unrealized_gains(entries, options_map)
+        self.assertFalse(new_errors)

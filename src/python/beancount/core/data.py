@@ -2,18 +2,19 @@
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import builtins
 import collections
 import datetime
 from collections import namedtuple
 import sys
 
 # Note: this file is mirrorred into ledgerhub. Relative imports only.
-from .amount import Amount
-from .amount import Decimal
-from .amount import D
-from .position import Position
-from .position import Lot
-from .account import has_component
+from beancount.core.amount import Amount
+from beancount.core.number import Decimal
+from beancount.core.number import D
+from beancount.core.position import Position
+from beancount.core.position import Lot
+from beancount.core.account import has_component
 
 
 def new_directive(clsname, fields):
@@ -74,6 +75,21 @@ BOOKING_METHODS = {'STRICT', 'NONE'}
 #   account: A string, the name of the account that is being closed.
 Close = new_directive('Close', 'account')
 
+# An optional commodity declaration directive. Commodities generally do not need
+# to be declared, but they may, and this is mainly created as intended to be
+# used to attach meta-data on a commodity name. Whenever a plugin needs
+# per-commodity meta-data, you would define such a commodity directive. Another
+# use is to define a commodity that isn't otherwise (yet) used anywhere in an
+# input file. (At the moment the date is meaningless but is specified for
+# coherence with all the other directives; if you can think of a good use case,
+# let us know).
+#
+# Attributes:
+#   meta: See above.
+#   date: See above.
+#   currency: A string, the commodity under consideration.
+Commodity = new_directive('Commodity', 'currency')
+
 # A "pad this account with this other account" directive. This directive
 # automatically inserts transactions that will make the next chronological
 # balance directive succeeds. It can be used to fill in missing date ranges of
@@ -103,7 +119,9 @@ Pad = new_directive('Pad', 'account source_account')
 #     expecting 'account' to have at this date.
 #   diff_amount: None if the balance check succeeds. This value is set to
 #     an Amount instance if the balance fails, the amount of the difference.
-Balance = new_directive('Balance', 'account amount diff_amount')
+#   tolerance: A Decimal object, the amount of tolerance to use in the
+#     verification.
+Balance = new_directive('Balance', 'account amount tolerance diff_amount')
 
 # A transaction! This is the main type of object that we manipulate, and the
 # entire reason this whole project exists in the first place, because
@@ -125,7 +143,7 @@ Balance = new_directive('Balance', 'account amount diff_amount')
 #   postings: A list of Posting instances, the legs of this transaction. See the
 #     doc under Posting below.
 Transaction = new_directive('Transaction',
-                                'flag payee narration tags links postings')
+                            'flag payee narration tags links postings')
 
 # A note directive, a general note that is attached to an account. These are
 # used to attach text at a particular date in a specific account. The notes can
@@ -210,7 +228,7 @@ Document = new_directive('Document', 'account filename')
 
 # A list of all the valid directive types.
 ALL_DIRECTIVES = (
-    Open, Close, Pad, Balance, Transaction, Note, Event, Price, Document
+    Open, Close, Commodity, Pad, Balance, Transaction, Note, Event, Price, Document
 )
 
 
@@ -512,7 +530,7 @@ def entry_sortkey(entry):
     return (entry.date, SORT_ORDER.get(type(entry), 0), entry.meta.lineno)
 
 
-def sort(entries):
+def sorted(entries):
     """A convenience to sort a list of entries, using entry_sortkey().
 
     Args:
@@ -520,7 +538,7 @@ def sort(entries):
     Returns:
       A sorted list of directives.
     """
-    return sorted(entries, key=entry_sortkey)
+    return builtins.sorted(entries, key=entry_sortkey)
 
 
 def posting_sortkey(entry):

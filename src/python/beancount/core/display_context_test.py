@@ -4,9 +4,9 @@ import unittest
 import re
 from decimal import Decimal
 
-from . import display_context
-from .display_context import Precision
-from .display_context import Align
+from beancount.core import display_context
+from beancount.core.display_context import Precision
+from beancount.core.display_context import Align
 
 
 def decimalize(number_list):
@@ -249,7 +249,7 @@ class TestDisplayContextDot(DisplayContextBaseTest):
 class TestDisplayContextQuantize(unittest.TestCase):
 
     def test_quantize_basic(self):
-        dcontext =display_context.DisplayContext()
+        dcontext = display_context.DisplayContext()
         dcontext.update(Decimal('1.23'), 'USD')
         self.assertEqual(Decimal('3.23'),
                          dcontext.quantize(Decimal('3.23253343'), 'USD'))

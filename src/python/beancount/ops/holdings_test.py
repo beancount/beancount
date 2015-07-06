@@ -4,8 +4,8 @@ import itertools
 import unittest
 import datetime
 
-from beancount.core.amount import D
-from beancount.core.amount import ZERO
+from beancount.core.number import D
+from beancount.core.number import ZERO
 from beancount.core import position
 from beancount.core import amount
 from beancount.core import data
@@ -45,7 +45,7 @@ class TestHoldings(unittest.TestCase):
           Assets:Cash
 
         2013-04-02 *
-          Assets:Account2            20 ITOT {85.l95 USD}
+          Assets:Account2            20 ITOT {85.195 USD}
           Assets:Cash
 
         2013-04-03 *
@@ -64,10 +64,12 @@ class TestHoldings(unittest.TestCase):
              D('5234.60'), None, None, None),
             ('Assets:Account1', D('11'), 'GOOG', D('518.73'), 'USD',
              D('5706.03'), None, None, None),
+            ('Assets:Account2', D('20'), 'ITOT', D('85.195'), 'USD',
+             D('1703.900'), None, None, None),
             ('Assets:Account3', D('50'), 'GOOG', D('540.00'), 'USD',
              D('27000.00'), None, None, None),
-            ('Assets:Cash', D('17170.37'), 'USD', None, 'USD',
-             D('17170.37'), D('17170.37'), None, None),
+            ('Assets:Cash', D('15466.470'), 'USD', None, 'USD',
+             D('15466.470'), D('15466.470'), None, None),
             ('Equity:Unknown', D('-50000'), 'USD', None, 'USD',
              D('-50000'), D('-50000'), None, None),
             ('Liabilities:Loan', D('-5111'), 'USD', None, 'USD',
@@ -147,6 +149,84 @@ class TestHoldings(unittest.TestCase):
             # Notice no Equity account.
         ]
         self.assertEqual(expected_values, holdings_list)
+
+    @loader.loaddoc
+    def test_get_final_holdings__zero_position(self, entries, _, __):
+        """
+        1970-01-01 open Assets:Stocks:NYA
+        1970-01-01 open Expenses:Financial:Commissions
+        1970-01-01 open Assets:Current
+        1970-01-01 open Income:Dividends:NYA
+
+        2012-07-02 ! "I received 1 new share in dividend, without paying"
+          Assets:Stocks:NYA 1 NYA {0 EUR}
+          Income:Dividends:NYA -0 EUR
+
+        2014-11-13 balance Assets:Stocks:NYA 1 NYA
+        """
+        price_map = prices.build_price_map(entries)
+        holdings_list = holdings.get_final_holdings(entries,
+                                                    ('Assets', 'Liabilities'),
+                                                    price_map)
+        self.assertEqual(1, len(holdings_list))
+        self.assertEqual('EUR', holdings_list[0].cost_currency)
+
+    @loader.loaddoc
+    def test_get_commodities_at_date(self, entries, _, options_map):
+        """
+        2013-01-01 open Assets:Account1
+        2013-01-01 open Assets:Account2
+        2013-01-01 open Assets:Account3
+        2013-01-01 open Assets:Cash
+        2013-01-01 open Liabilities:Loan
+        2013-01-01 open Equity:Unknown
+
+        2000-01-01 commodity GOOG
+          quote: USD
+
+        2000-01-01 commodity ITOT
+          ticker: "NYSEARCA:ITOT"
+
+        2013-03-05 *
+          Equity:Unknown
+          Assets:Cash			50000 USD
+
+        2013-04-01 *
+          Assets:Account1             15 GOOG {518.73 USD}
+          Assets:Cash
+
+        2013-04-02 *
+          Assets:Account1             10 GOOG {523.46 USD}
+          Assets:Cash
+
+        2013-04-03 *
+          Assets:Account1             -4 GOOG {518.73 USD}
+          Assets:Cash
+
+        2013-04-02 *
+          Assets:Account2            20 ITOT {85.195 USD}
+          Assets:Cash
+
+        2013-04-03 *
+          Assets:Account3             50 GOOG {540.00 USD} @ 560.00 USD
+          Assets:Cash
+
+        2013-04-10 *
+          Assets:Cash			5111 USD
+          Liabilities:Loan
+        """
+        commodities = holdings.get_commodities_at_date(entries, options_map)
+        self.assertEqual([('GOOG', 'USD', 'USD', None),
+                          ('ITOT', 'USD', None, 'NYSEARCA:ITOT'),
+                          ('USD', 'USD', None, None)],
+                         commodities)
+
+        commodities = holdings.get_commodities_at_date(entries, options_map,
+                                                       date=datetime.date(2013, 4, 2))
+        self.assertEqual([('GOOG', 'USD', 'USD', None),
+                          ('USD', 'USD', None, None)],
+                         commodities)
+
 
     def test_aggregate_holdings_list(self):
         test_holdings = list(itertools.starmap(holdings.Holding, [

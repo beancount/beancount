@@ -1,10 +1,19 @@
 """Compute unrealized gains.
+
+The configuration for this plugin is a single string, the name of the subaccount
+to add to post the unrealized gains to, like this:
+
+  plugin "beancount.plugins.unrealized" "Unrealized"
+
+If you don't specify a name for the subaccount (the configuration value is
+optional), by default it inserts the unrealized gains in the same account that
+is being adjusted.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
 
-from beancount.core.amount import ZERO
+from beancount.core.number import ZERO
 from beancount.core import data
 from beancount.core import account
 from beancount.core import getters
@@ -82,10 +91,13 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
         # price point for that commodity, so we never expect for a price not to
         # be available, which is reasonable.
         if holding.price_number is None:
-            errors.append(
-                UnrealizedError(meta,
-                                "A valid price for {h.currency}/{h.cost_currency} "
-                                "could not be found".format(h=holding), None))
+            # An entry without a price might indicate that this is a holding
+            # resulting from leaked cost basis. {0ed05c502e63, b/16}
+            if holding.number:
+                errors.append(
+                    UnrealizedError(meta,
+                                    "A valid price for {h.currency}/{h.cost_currency} "
+                                    "could not be found".format(h=holding), None))
             continue
 
         # Compute the PnL; if there is no profit or loss, we create a
@@ -95,11 +107,12 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
             # If the number of units sum to zero, the holdings should have been
             # zero.
             errors.append(
-                UnrealizedError(meta,
-                                "Number of units of {} in {} in holdings sum to zero "
-                                "for account {} and should not".format(
-                                    currency, cost_currency, account_name),
-                                None))
+                UnrealizedError(
+                    meta,
+                    "Number of units of {} in {} in holdings sum to zero "
+                    "for account {} and should not".format(
+                        holding.currency, holding.cost_currency, holding.account),
+                    None))
             continue
 
         # Compute the name of the accounts and add the requested subaccount name

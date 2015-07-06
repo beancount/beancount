@@ -30,9 +30,14 @@ $(CROOT)/grammar.c $(CROOT)/grammar.h: $(CROOT)/grammar.y
 
 $(CROOT)/lexer.c $(CROOT)/lexer.h: $(CROOT)/lexer.l $(CROOT)/grammar.h
 	$(LEX) --outfile=$(CROOT)/lexer.c --header-file=$(CROOT)/lexer.h $<
-# cd $(CROOT) && flex $(notdir $<)
 
-compile: $(CROOT)/grammar.c $(CROOT)/grammar.h $(CROOT)/lexer.c $(CROOT)/lexer.h
+SOURCES =					\
+	$(CROOT)/lexer.c			\
+	$(CROOT)/lexer.h			\
+	$(CROOT)/grammar.c			\
+	$(CROOT)/grammar.h
+
+compile: $(SOURCES)
 	python3 setup.py build_ext -i
 
 .PHONY: build
@@ -63,6 +68,10 @@ CLUSTERS_REGEXPS =							\
 	beancount/core			 	core			\
 	beancount/ops/.*_test\.py	 	ops/tests		\
 	beancount/ops			 	ops			\
+	beancount/parser/printer_test\.py 	printer/tests		\
+	beancount/parser/printer.py	 	printer			\
+	beancount/parser/options_test\.py 	options/tests		\
+	beancount/parser/options.py	 	options			\
 	beancount/parser/.*_test\.py	 	parser/tests		\
 	beancount/parser		 	parser			\
 	beancount/plugins/.*_test\.py	 	plugins/tests		\
@@ -77,6 +86,8 @@ CLUSTERS_REGEXPS =							\
 	beancount/utils			 	utils			\
 	beancount/web/.*_test\.py	 	web/tests		\
 	beancount/web			 	web			\
+	beancount/query/.*_test\.py	 	query/tests		\
+	beancount/query			 	query			\
 	beancount/load.*_test\.py	 	load/tests		\
 	beancount/load.*\.py		 	load			\
 	beancount                        	load
@@ -84,7 +95,7 @@ CLUSTERS_REGEXPS =							\
 GRAPHER = dot
 
 build/beancount.pdf: build/beancount.deps
-	cat $< | sfood-cluster-regexp $(CLUSTERS_REGEXPS) | grep -v /tests| sfood-graph | $(GRAPHER) -Tps | ps2pdf - $@
+	cat $< | sfood-cluster-regexp $(CLUSTERS_REGEXPS) | grep -v /tests | sfood-graph | $(GRAPHER) -Tps | ps2pdf - $@
 	evince $@
 
 build/beancount_tests.pdf: build/beancount.deps
@@ -127,7 +138,7 @@ test tests unittests:
 	nosetests -v $(SRC)
 
 
-tests-quiet:
+qtest quiet-tests quiet-test test-quiet tests-quiet:
 	nosetests $(SRC)
 
 nakedtests:
@@ -146,7 +157,7 @@ demo:
 
 
 # Generate the tutorial files from the example file.
-EXAMPLE=examples/tutorial/example.beancount
+EXAMPLE=examples/example.beancount
 example $(EXAMPLE):
 	./bin/bean-example --seed=0 -o $(EXAMPLE)
 
@@ -200,6 +211,7 @@ check-author:
 LINT_PASS=line-too-long,bad-whitespace,bad-indentation,unused-import,invalid-name,reimported
 LINT_FAIL=bad-continuation
 
+
 pylint-pass:
 	pylint --rcfile=$(PWD)/etc/pylintrc --disable=all --enable=$(LINT_PASS) $(SRC)
 
@@ -209,9 +221,13 @@ pylint-fail:
 pylint-all:
 	pylint --rcfile=$(PWD)/etc/pylintrc $(SRC)
 
+pyflakes:
+	pyflakes $(SRC)
+
 # Run all currently configured linter checks.
-lint: pylint-pass
+pylint lint: pylint-pass
 
 
 # Check everything.
-status check: pylint-pass missing-tests fixmes dep-constraints tests-quiet multi-imports
+status check: pylint pyflakes missing-tests dep-constraints multi-imports tests-quiet
+# fixmes: For later.

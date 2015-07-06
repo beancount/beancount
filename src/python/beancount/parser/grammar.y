@@ -60,6 +60,10 @@ const char* getTokenName(int token);
     char character;
     const char* string;
     PyObject* pyobj;
+    struct {
+        PyObject* pyobj1;
+        PyObject* pyobj2;
+    } pairobj;
 }
 
 /* Types for terminal symbols */
@@ -77,6 +81,7 @@ const char* getTokenName(int token);
 %token <string> RCURL      /* } */
 %token <string> EQUAL      /* = */
 %token <string> COMMA      /* , */
+%token <string> TILDE      /* ~ */
 %token <string> SLASH      /* / */
 %token <string> PLUS       /* + */
 %token <character> FLAG    /* Valid characters for flags */
@@ -84,6 +89,7 @@ const char* getTokenName(int token);
 %token BALANCE             /* 'balance' keyword */
 %token OPEN                /* 'open' keyword */
 %token CLOSE               /* 'close' keyword */
+%token COMMODITY           /* 'commodity' keyword */
 %token PAD                 /* 'pad' keyword */
 %token EVENT               /* 'event' keyword */
 %token PRICE               /* 'price' keyword */
@@ -92,7 +98,9 @@ const char* getTokenName(int token);
 %token PUSHTAG             /* 'pushtag' keyword */
 %token POPTAG              /* 'poptag' keyword */
 %token OPTION              /* 'option' keyword */
+%token INCLUDE             /* 'include' keyword */
 %token PLUGIN              /* 'plugin' keyword */
+%token <pyobj> BOOL        /* A boolean, true or false */
 %token <pyobj> DATE        /* A date object */
 %token <pyobj> ACCOUNT     /* The name of an account */
 %token <pyobj> CURRENCY    /* A currency specification */
@@ -114,9 +122,11 @@ const char* getTokenName(int token);
 %type <pyobj> currency_list
 %type <pyobj> open
 %type <pyobj> close
+%type <pyobj> commodity
 %type <pyobj> balance
 %type <pyobj> pad
 %type <pyobj> amount
+%type <pairobj> amount_tolerance
 %type <pyobj> compound_amount
 %type <pyobj> maybe_number
 %type <pyobj> position
@@ -132,13 +142,14 @@ const char* getTokenName(int token);
 %type <pyobj> txn_fields
 %type <pyobj> filename
 %type <pyobj> opt_booking
+%type <pyobj> number_expr
 
 
 /* Start symbol. */
 %start file
 
 /* We have some number of expected shift/reduce conflicts at 'eol'. */
-%expect 11
+%expect 12
 
 
 /*--------------------------------------------------------------------------------*/
@@ -167,6 +178,19 @@ empty_line : EOL
            | INDENT EOL
            | INDENT
            | COMMENT
+
+/* FIXME: This needs be made more general, dealing with precedence.
+   I just need this right now, so I'm putting it in, in a way that will.
+   be backwards compatible, so this is just a bit of a temporary hack
+   (blais, 2015-04-18). */
+number_expr : NUMBER
+            {
+                $$ = $1;
+            }
+            | number_expr SLASH NUMBER
+            {
+                $$ = PyNumber_TrueDivide($1, $3);
+            }
 
 txn_fields : empty
            {
@@ -239,10 +263,10 @@ key_value_value : STRING
                 | CURRENCY
                 | TAG
                 | NUMBER
+                | BOOL
                 | amount
                 {
                     $$ = $1;
-                    DECREF1($1);
                 }
                 | empty
                 {
@@ -327,23 +351,44 @@ close : DATE CLOSE ACCOUNT eol key_value_list
           DECREF3($1, $3, $5);
       }
 
+commodity : DATE COMMODITY CURRENCY eol key_value_list
+          {
+              $$ = BUILD("commodity", "siOOO", FILE_LINE_ARGS, $1, $3, $5);
+              DECREF3($1, $3, $5);
+          }
+
 pad : DATE PAD ACCOUNT ACCOUNT eol key_value_list
     {
         $$ = BUILD("pad", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
         DECREF4($1, $3, $4, $6);
     }
 
-balance : DATE BALANCE ACCOUNT amount eol key_value_list
-      {
-          $$ = BUILD("balance", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
-          DECREF4($1, $3, $4, $6);
-      }
+balance : DATE BALANCE ACCOUNT amount_tolerance eol key_value_list
+        {
+            $$ = BUILD("balance", "siOOOOO", FILE_LINE_ARGS, $1, $3, $4.pyobj1, $4.pyobj2, $6);
+            DECREF3($1, $3, $6);
+            DECREF2($4.pyobj1, $4.pyobj2);
+        }
 
-amount : NUMBER CURRENCY
+amount : number_expr CURRENCY
        {
          $$ = BUILD("amount", "OO", $1, $2);
          DECREF2($1, $2);
        }
+
+amount_tolerance : number_expr CURRENCY
+                 {
+                     $$.pyobj1 = BUILD("amount", "OO", $1, $2);
+                     $$.pyobj2 = Py_None;
+                     Py_INCREF(Py_None);
+                     DECREF2($1, $2);
+                 }
+                 | number_expr TILDE number_expr CURRENCY
+                 {
+                     $$.pyobj1 = BUILD("amount", "OO", $1, $4);
+                     $$.pyobj2 = $3;
+                     DECREF3($1, $3, $4);
+                 }
 
 maybe_number : empty
              {
@@ -448,6 +493,7 @@ entry : transaction
       | note
       | document
       | price
+      | commodity
       {
           $$ = $1;
       }
@@ -456,6 +502,12 @@ option : OPTION STRING STRING eol
        {
           BUILD("option", "siOO", FILE_LINE_ARGS, $2, $3);
           DECREF2($2, $3);
+       }
+
+include : INCLUDE STRING eol
+       {
+          BUILD("include", "siO", FILE_LINE_ARGS, $2);
+          DECREF1($2);
        }
 
 plugin : PLUGIN STRING eol
@@ -474,6 +526,7 @@ directive : SKIPPED
           | pushtag
           | poptag
           | option
+          | include
           | plugin
 
 

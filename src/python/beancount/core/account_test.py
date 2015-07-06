@@ -4,9 +4,10 @@ import unittest
 import tempfile
 import os
 import shutil
+import types
 from os import path
 
-from . import account
+from beancount.core import account
 
 
 # Note: Ideally this should live in beancount.utils.test_utils, but since we
@@ -144,6 +145,19 @@ class TestAccount(unittest.TestCase):
         self.assertEqual('',
                          account.commonprefix(['']))
 
+    def test_parent_matcher(self):
+        is_child = account.parent_matcher('Assets:Bank:Checking')
+        self.assertTrue(is_child('Assets:Bank:Checking'))
+        self.assertTrue(is_child('Assets:Bank:Checking:SubAccount'))
+        self.assertFalse(is_child('Assets:Bank:CheckingOld'))
+
+    def test_parents(self):
+        iterator = account.parents('Assets:Bank:Checking')
+        self.assertIsInstance(iterator, types.GeneratorType)
+        self.assertEqual(['Assets:Bank:Checking', 'Assets:Bank', 'Assets'],
+                         list(iterator))
+
+
 
 class TestWalk(TmpFilesTestBase):
 
@@ -159,8 +173,8 @@ class TestWalk(TmpFilesTestBase):
 
     def test_walk(self):
         actual_data = [
-            (root[len(self.root):], account, dirs, files)
-            for root, account, dirs, files in account.walk(self.root)]
+            (root[len(self.root):], account_, dirs, files)
+            for root, account_, dirs, files in account.walk(self.root)]
 
         self.assertEqual([
             ('/Assets/US', 'Assets:US',

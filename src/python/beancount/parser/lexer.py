@@ -9,7 +9,7 @@ import tempfile
 
 from beancount.core import data
 from beancount.core import account
-from beancount.core.amount import Decimal
+from beancount.core.number import Decimal
 from beancount.parser import _parser
 
 
@@ -28,6 +28,9 @@ class LexBuilder(object):
 
         # A regexp for valid account names.
         self.account_regexp = re.compile('([A-Z][A-Za-z0-9\-]+)(:[A-Z][A-Za-z0-9\-]+)*$')
+
+        # A set of all the commodities that we have seen in the file.
+        self.commodities = set()
 
         # Errors that occurred during lexing and parsing.
         self.errors = []
@@ -119,6 +122,7 @@ class LexBuilder(object):
           A new currency object; for now, these are simply represented
           as the currency name.
         """
+        self.commodities.add(currency_name)
         return currency_name
 
     def STRING(self, string):

@@ -7,6 +7,7 @@ import unittest
 import io
 import os
 import sys
+import re
 from os import path
 
 from beancount.utils import test_utils
@@ -33,6 +34,35 @@ class TestTestUtils(unittest.TestCase):
         self.assertFalse(path.exists(path.join(tempdir, 'file1')))
         self.assertFalse(path.exists(path.join(tempdir, 'directory')))
 
+    def test_create_temporary_files(self):
+        with test_utils.tempdir() as tmp:
+            test_utils.create_temporary_files(tmp, {
+                'apples.beancount': """
+                  include "{root}/fruits/oranges.beancount"
+
+                  2014-01-01 open Assets:Apples
+                """,
+                'fruits/oranges.beancount': """
+                  2014-01-02 open Assets:Oranges
+                """})
+
+            # Check the total list of files.
+            apples = path.join(tmp, 'apples.beancount')
+            oranges = path.join(tmp, 'fruits/oranges.beancount')
+            self.assertEqual({apples, oranges},
+                             set(path.join(root, filename)
+                                 for root, _, files in os.walk(tmp)
+                                 for filename in files))
+
+            # Check the contents of apples (with replacement of root).
+            apples_content = open(apples).read()
+            self.assertTrue(re.search('open Assets:Apples', apples_content))
+            self.assertFalse(re.search('{root}', apples_content))
+
+            # Check the contents of oranges.
+            oranges_content = open(oranges).read()
+            self.assertTrue(re.search('open Assets:Oranges', oranges_content))
+
     def test_capture(self):
         text = "b9baaa0c-0f0a-47db-bffc-a00c6f4ac1db"
         with test_utils.capture() as output:
@@ -46,6 +76,11 @@ class TestTestUtils(unittest.TestCase):
         self.assertEqual("7f9034b1-51e7-420c-ac6b-945b5c594ebf",
                          open(filename).read())
 
+    def test_search_words(self):
+        test_utils.search_words('i walrus is',
+                                'i am the walrus is not chicago')
+        test_utils.search_words('i walrus is'.split(),
+                                'i am the walrus is not chicago')
 
 class TestTestCase(test_utils.TestCase):
 

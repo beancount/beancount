@@ -7,11 +7,13 @@ import functools
 import inspect
 import textwrap
 import copy
+import io
+import os
 import re
 from os import path
 from datetime import date
 
-from beancount.core.amount import ZERO
+from beancount.core.number import ZERO
 from beancount.core.amount import Amount
 from beancount.core import display_context
 from beancount.core.position import Lot
@@ -20,6 +22,7 @@ from beancount.core.data import Transaction
 from beancount.core.data import Balance
 from beancount.core.data import Open
 from beancount.core.data import Close
+from beancount.core.data import Commodity
 from beancount.core.data import Pad
 from beancount.core.data import Event
 from beancount.core.data import Price
@@ -30,20 +33,37 @@ from beancount.core.data import Posting
 from beancount.core.data import BOOKING_METHODS
 from beancount.core.interpolate import balance_incomplete_postings
 from beancount.core.interpolate import compute_residual
-from beancount.core.interpolate import SMALL_EPSILON
+from beancount.core.interpolate import infer_tolerances
 
 from beancount.parser import _parser
 from beancount.parser import lexer
 from beancount.parser import options
+from beancount.parser import printer
+from beancount.parser import hashsrc
 from beancount.core import account
 from beancount.core import data
 
 
+# When importing the module, always check that the compiled source matched the
+# installed source.
+hashsrc.check_parser_source_files()
+
+
 __sanity_checks__ = False
+
+# FIXME: This environment variable enables temporary support for negative
+# prices. If you've updated across 2015-01-10 and you're getting a lot of
+# errors, you need to fix all the signs on your @@ total price values (they are
+# to be positive only). Just set this environment variable to disable this
+# change if you need to post-pone this.
+__allow_negative_prices__ = os.environ.get('BEANCOUNT_ALLOW_NEGATIVE_PRICES', False)
 
 
 ParserError = collections.namedtuple('ParserError', 'source message entry')
 ParserSyntaxError = collections.namedtuple('ParserSyntaxError', 'source message entry')
+
+DeprecatedError = collections.namedtuple('DeprecatedError', 'source message entry')
+
 
 
 # Temporary holder for key-value pairs.
@@ -89,7 +109,7 @@ class Builder(lexer.LexBuilder):
     """A builder used by the lexer and grammar parser as callbacks to create
     the data objects corresponding to rules parsed from the input file."""
 
-    def __init__(self):
+    def __init__(self, filename):
         lexer.LexBuilder.__init__(self)
 
         # A stack of the current active tags.
@@ -99,7 +119,10 @@ class Builder(lexer.LexBuilder):
         self.entries = []
 
         # Accumulated and unprocessed options.
-        self.options = copy.deepcopy(options.DEFAULT_OPTIONS)
+        self.options = copy.deepcopy(options.OPTIONS_DEFAULTS)
+
+        # Set the filename we're processing.
+        self.options['filename'] = filename
 
         # Make the account regexp more restrictive than the default: check
         # types.
@@ -140,12 +163,20 @@ class Builder(lexer.LexBuilder):
         Returns:
           A dict of option names to options.
         """
-        # Normalize the commas rendering option to a boolean object.
-        self.options['render_commas'] = (
-            self.options['render_commas'].lower() in ('1', 'true'))
-
         # Build and store the inferred DisplayContext instance.
         self.options['display_context'] = self.dcontext
+
+        # Add the full list of seen commodities.
+        #
+        # IMPORTANT: This is currently where the list of all commodities seen
+        # from the parser lives. The
+        # beancount.core.getters.get_commodities_map() routine uses this to
+        # automatically generate a full list of directives. An alternative would
+        # be to implement a plugin that enforces the generate of these
+        # post-parsing so that they are always guaranteed to live within the
+        # flow of entries. This would allow us to keep all the data in that list
+        # of entries and to avoid depending on the options to store that output.
+        self.options['commodities'] = self.commodities
 
         return self.options
 
@@ -165,6 +196,7 @@ class Builder(lexer.LexBuilder):
         """
         if entries:
             self.entries = entries
+
 
     def pushtag(self, tag):
         """Push a tag on the current set of tags.
@@ -202,43 +234,72 @@ class Builder(lexer.LexBuilder):
             meta = new_metadata(filename, lineno)
             self.errors.append(
                 ParserError(meta, "Invalid option: '{}'".format(key), None))
+
         elif key in options.READ_ONLY_OPTIONS:
             meta = new_metadata(filename, lineno)
             self.errors.append(
                 ParserError(meta, "Option '{}' may not be set".format(key), None))
+
         else:
+            option_descriptor = options.OPTIONS[key]
+
+            # Issue a warning if the option is deprecated.
+            if option_descriptor.deprecated:
+                meta = new_metadata(filename, lineno)
+                self.errors.append(
+                    DeprecatedError(meta, option_descriptor.deprecated, None))
+
+            # Convert the value, if necessary.
+            if option_descriptor.converter:
+                try:
+                    value = option_descriptor.converter(value)
+                except ValueError as exc:
+                    meta = new_metadata(filename, lineno)
+                    self.errors.append(
+                        ParserError(meta,
+                                    "Error for option '{}': {}".format(key, exc),
+                                    None))
+                    return
+
             option = self.options[key]
             if isinstance(option, list):
-                # Process the 'plugin' option specially: accept an optional
-                # argument from it. NOTE: We will eventually phase this out and
-                # replace it by a dedicated 'plugin' directive.
-                if key == 'plugin':
-                    match = re.match('(.*):(.*)', value)
-                    if match:
-                        plugin_name, plugin_config = match.groups()
-                    else:
-                        plugin_name, plugin_config = value, None
-                    value = (plugin_name, plugin_config)
-
                 # Append to a list of values.
                 option.append(value)
+
+            elif isinstance(option, dict):
+                # Set to a dict of values.
+                if not (isinstance(value, tuple) and len(value) == 2):
+                    self.errors.append(
+                        ParserError(
+                            meta, "Error for option '{}': {}".format(key, value), None))
+                    return
+                dict_key, dict_value = value
+                option[dict_key] = dict_value
+
+            elif isinstance(option, bool):
+                # Convert to a boolean.
+                if not isinstance(value, bool):
+                    value = (value.lower() in {'true', 'on'}) or (value == '1')
+                self.options[key] = value
+
             else:
-                # Validate some option values.
-                if key == 'plugin_processing_mode':
-                    if value not in ('raw', 'default'):
-                        meta = new_metadata(filename, lineno)
-                        self.errors.append(
-                            ParserError(meta,
-                                        ("Invalid value for '{}': '{}'").format(key, value),
-                                        None))
-                        return
                 # Set the value.
                 self.options[key] = value
 
-            # Refresh the list of valid account regexps as we go.
+            # Refresh the list of valid account regexps as we go along.
             if key.startswith('name_'):
                 # Update the set of valid account types.
                 self.account_regexp = valid_account_regexp(self.options)
+
+    def include(self, filename, lineno, include_filename):
+        """Process an include directive.
+
+        Args:
+          filename: current filename.
+          lineno: current line number.
+          include_name: A string, the name of the file to include.
+        """
+        self.options['include'].append(include_filename)
 
     def plugin(self, filename, lineno, plugin_name, plugin_config):
         """Process a plugin directive.
@@ -362,11 +423,6 @@ class Builder(lexer.LexBuilder):
                 cost = Amount(compound_cost.number_per, compound_cost.currency)
         else:
             cost = None
-        ## FIXME: Complete this, incorporate the total.
-        # if istotal:
-        #     cost = amount_div(cost, amount.number)
-
-        lot = Lot(amount.currency, cost, lot_date)
 
         # We don't allow a cost nor a price of zero. (Conversion entries may use
         # a price of zero as the only special case, but never for costs.)
@@ -375,12 +431,18 @@ class Builder(lexer.LexBuilder):
                 meta = new_metadata(filename, lineno)
                 self.errors.append(
                     ParserError(meta,
-                                "Amount is zero or negative: {}".format(cost), None))
+                                'Amount is zero: "{}"'.format(amount), None))
 
-            if cost.number <= ZERO:
+            if cost.number < ZERO:
                 meta = new_metadata(filename, lineno)
                 self.errors.append(
-                    ParserError(meta, "Cost is zero or negative: {}".format(cost), None))
+                    ParserError(meta, 'Cost is negative: "{}"'.format(cost), None))
+
+        ## FIXME: Complete this, incorporate the total.
+        # if istotal:
+        #     cost = amount_div(cost, abs(amount.number))
+
+        lot = Lot(amount.currency, cost, lot_date)
 
         return Position(lot, amount.number)
 
@@ -429,7 +491,7 @@ class Builder(lexer.LexBuilder):
         entry = Open(meta, date, account, currencies, booking)
         if booking and booking not in BOOKING_METHODS:
             self.errors.append(
-                ParserError(source, "Invalid booking method: {}".format(booking), entry))
+                ParserError(meta, "Invalid booking method: {}".format(booking), entry))
         return entry
 
     def close(self, filename, lineno, date, account, kvlist):
@@ -447,6 +509,21 @@ class Builder(lexer.LexBuilder):
         meta = new_metadata(filename, lineno, kvlist)
         return Close(meta, date, account)
 
+    def commodity(self, filename, lineno, date, currency, kvlist):
+        """Process a close directive.
+
+        Args:
+          filename: The current filename.
+          lineno: The current line number.
+          date: A datetime object.
+          currency: A string, the commodity being declared.
+          kvlist: a list of KeyValue instances.
+        Returns:
+          A new Close object.
+        """
+        meta = new_metadata(filename, lineno, kvlist)
+        return Commodity(meta, date, currency)
+
     def pad(self, filename, lineno, date, account, source_account, kvlist):
         """Process a pad directive.
 
@@ -463,7 +540,7 @@ class Builder(lexer.LexBuilder):
         meta = new_metadata(filename, lineno, kvlist)
         return Pad(meta, date, account, source_account)
 
-    def balance(self, filename, lineno, date, account, amount, kvlist):
+    def balance(self, filename, lineno, date, account, amount, tolerance, kvlist):
         """Process an assertion directive.
 
         We produce no errors here by default. We replace the failing ones in the
@@ -476,13 +553,22 @@ class Builder(lexer.LexBuilder):
           date: A datetime object.
           account: A string, the account to balance.
           amount: The expected amount, to be checked.
+          tolerance: The tolerance number.
           kvlist: a list of KeyValue instances.
         Returns:
           A new Balance object.
         """
         diff_amount = None
         meta = new_metadata(filename, lineno, kvlist)
-        return Balance(meta, date, account, amount, diff_amount)
+
+        # Only support explicit tolerance syntax if the experiment is enabled.
+        if (tolerance is not None and
+            not self.options["experiment_explicit_tolerances"]):
+            self.errors.append(
+                ParserError(meta, "Tolerance syntax is not supported", None))
+            tolerance = '__tolerance_syntax_not_supported__'
+
+        return Balance(meta, date, account, amount, tolerance, diff_amount)
 
     def event(self, filename, lineno, date, event_type, description, kvlist):
         """Process an event directive.
@@ -551,7 +637,6 @@ class Builder(lexer.LexBuilder):
                                                        document_filename))
         return Document(meta, date, account, document_filename)
 
-
     def key_value(self, key, value):
         """Process a document directive.
 
@@ -581,20 +666,40 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Posting object, with no parent entry.
         """
+        # Prices may not be negative.
+        if not __allow_negative_prices__:
+            if price and price.number < ZERO:
+                meta = new_metadata(filename, lineno)
+                self.errors.append(
+                    ParserError(meta, (
+                        "Negative prices are not allowed: {} "
+                        "(see http://furius.ca/beancount/doc/bug-negative-prices "
+                        "for workaround)"
+                    ).format(price), None))
+                # Fix it and continue.
+                price.number = abs(price.number)
+
         # If the price is specified for the entire amount, compute the effective
         # price here and forget about that detail of the input syntax.
         if istotal:
-            price = Amount(ZERO
-                           if position.number == ZERO
-                           else price.number / position.number, price.currency)
+            if position.number == ZERO:
+                number = ZERO
+            else:
+                if __allow_negative_prices__:
+                    number = price.number/position.number
+                else:
+                    number = price.number/abs(position.number)
+            price = Amount(number, price.currency)
 
-        # Note: Allow zero prices becuase we need them for round-trips.
+        # Note: Allow zero prices because we need them for round-trips for
+        # conversion entries.
+        #
         # if price is not None and price.number == ZERO:
-        #     meta = new_metadata(filename, lineno)
         #     self.errors.append(
         #         ParserError(meta, "Price is zero: {}".format(price), None))
 
-        return Posting(None, account, position, price, chr(flag) if flag else None, None)
+        meta = new_metadata(filename, lineno)
+        return Posting(None, account, position, price, chr(flag) if flag else None, meta)
 
 
     def txn_field_new(self):
@@ -782,7 +887,7 @@ class Builder(lexer.LexBuilder):
                             payee, narration, tags, links, postings)
 
         # Balance incomplete auto-postings and set the parent link to this entry as well.
-        balance_errors = balance_incomplete_postings(entry)
+        balance_errors = balance_incomplete_postings(entry, self.options)
 
         if balance_errors:
             self.errors.extend(balance_errors)
@@ -790,7 +895,9 @@ class Builder(lexer.LexBuilder):
         # Check that the balance actually is empty.
         if __sanity_checks__:
             residual = compute_residual(entry.postings)
-            assert residual.is_small(SMALL_EPSILON), residual
+            tolerances = infer_tolerances(entry.postings, self.options)
+            assert residual.is_small(tolerances, self.options['default_tolerance']), (
+                "Invalid residual {}".format(residual))
 
         return entry
 
@@ -808,10 +915,8 @@ def parse_file(filename, **kw):
         list of errors that were encountered during parsing, and
         a dict of the option values that were parsed from the file.)
     """
-    builder = Builder()
-    if filename:
-        abs_filename = path.abspath(filename)
-        builder.options["filename"] = abs_filename
+    abs_filename = path.abspath(filename) if filename else None
+    builder = Builder(abs_filename)
     _parser.parse_file(filename, builder, **kw)
     return builder.finalize()
 
@@ -826,12 +931,16 @@ def parse_string(string, **kw):
 
     Args:
       string: a str, the contents to be parsed instead of a file's.
+      **kw: See parse.c. This function parses out 'dedent' which removes
+        whitespace from the front of the text (default is False).
     Return:
       Same as the output of parse_file().
     """
-    builder = Builder()
-    builder.options["filename"] = "<string>"
+    if kw.pop('dedent', None):
+        string = textwrap.dedent(string)
+    builder = Builder(None)
     _parser.parse_string(string, builder, **kw)
+    builder.options['filename'] = '<string>'
     return builder.finalize()
 
 
@@ -874,7 +983,7 @@ def parse_one(string):
     return entries[0]
 
 
-def parsedoc(fun):
+def parsedoc(fun, no_errors=False):
     """Decorator that parses the function's docstring as an argument.
 
     Note that this only runs the parser on the tests, not the loader, so is no
@@ -882,9 +991,9 @@ def parsedoc(fun):
 
     Args:
       fun: the function object to be decorated.
+      no_errors: A boolean, true if we should assert that there are no errors.
     Returns:
       The decorated function.
-
     """
     filename = inspect.getfile(fun)
     lines, lineno = inspect.getsourcelines(fun)
@@ -895,12 +1004,33 @@ def parsedoc(fun):
     lineno += 1
 
     @functools.wraps(fun)
-    def newfun(self):
+    def wrapper(self):
         assert fun.__doc__ is not None, (
             "You need to insert a docstring on {}".format(fun.__name__))
-        entries, errors, options_map = parse_string(textwrap.dedent(fun.__doc__),
+        entries, errors, options_map = parse_string(fun.__doc__,
                                                     report_filename=filename,
-                                                    report_firstline=lineno)
-        return fun(self, entries, errors, options_map)
-    newfun.__doc__ = None
-    return newfun
+                                                    report_firstline=lineno,
+                                                    dedent=True)
+        if no_errors:
+            if errors:
+                oss = io.StringIO()
+                printer.print_errors(errors, file=oss)
+                self.fail("Unexpected errors:\n{}".format(oss.getvalue()))
+            return fun(self, entries, options_map)
+        else:
+            return fun(self, entries, errors, options_map)
+
+    wrapper.__input__ = wrapper.__doc__
+    wrapper.__doc__ = None
+    return wrapper
+
+
+def parsedoc_noerrors(fun):
+    """Decorator like parsedoc but that further ensures no errors.
+
+    Args:
+      fun: the function object to be decorated.
+    Returns:
+      The decorated function.
+    """
+    return parsedoc(fun, no_errors=True)
