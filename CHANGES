@@ -4,6 +4,26 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-07-??
+
+  - Removed the Posting.entry back-reference of Postings to their owning
+    Transaction objects. This makes programmatically creating our data
+    structures more straight-forward and avoids us having to run pirouettes
+    around which object to create first. It also removes all manners of "fixing
+    up" transactions and removes one degree of freedom from plugins: we don't
+    have to check that the plugins generate objects with correct
+    back-references. It also makes the documentation simpler: I won't have to
+    explain this. Finally, it avoids a circular reference which could
+    potentially make Python's GC do some work for nothing.
+
+    It occurred to me that the only really important place where back-references
+    were used were in the beancount.core.realization code, and that in the
+    RealAccount objects I could easily replace the Posting instances in lists of
+    "postings or entries" into a new tuple object TxnPosting that contains a
+    reference to the parent transaction and a reference to the posting. This
+    voids the need for a back-reference.
+
+
 2015-07-05
 
   - Implemented support for parsing strings from files in various encodings.
