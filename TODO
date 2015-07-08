@@ -1,5 +1,23 @@
 -*- mode: org -*-
 beancount: TODO
+* Removed Backreference
+
+  - Remove Posting.entry, this will make all the code simpler. Create a little
+    TxnPosting record just to hold a pair of (entry, posting). Consistently use
+    the name 'txn_posting' in the source code.
+
+  - Consider whether we can actually remove posting.entry (I think it is only
+    used in the realization) and thus make it easy to create transactions
+    programmatically.
+
+  - Remove:
+
+    * beancount.core.data.strip_back_reference()
+    * beancount.core.data.entry_replace()
+    * beancount.core.data.reparent_posting()
+
+
+
 * File Cleanup
 
   - Remove plugins from ops, remove algorithms from core:
@@ -1257,9 +1275,13 @@ http://furius.ca/beancount/doc/proposal-inter
     enforces all unopened accounts to have an Open directive as well.
 
 
-* Pending Removals
+* Pending Removals / Remove Deprecated Things
 
   - Remove the exp-legacy-fixed-tolerances experiment flag.
+
+  - Remove support for legacy, PIPE, Not needed.
+
+  - Remove negative number warning and __ setting
 
 
 * Current / Misc / To Be Classified
@@ -1273,9 +1295,6 @@ http://furius.ca/beancount/doc/proposal-inter
   - Try creating a "Record" class to replace namedtuple using a class decorator
     and properties.
 
-  - Remove Posting.entry, this will make all the code simpler. Create a little
-    TxnPosting record just to hold a pair of (entry, posting). Consistently use
-    the name 'txn_posting' in the source code.
 
 
 
@@ -2227,7 +2246,6 @@ http://furius.ca/beancount/doc/proposal-inter
   - Remove the parsing of "CHECK" at some point, that was just there for
     compatibility.
 
-  - Remove support for legacy, PIPE, Not needed.
 
 
 
@@ -2332,9 +2350,6 @@ http://furius.ca/beancount/doc/proposal-inter
   - Replace gviz by some other library that does not require you to be online.
 
 
-  - Consider whether we can actually remove posting.entry (I think it is only
-    used in the realization) and thus make it easy to create transactions
-    programmatically.
 
 
 
@@ -3039,9 +3054,6 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 ** Options
 
   - FIXME: We need to parse the options using the same argparse parser....
-
-  - Remove the globals kludge in beancount/core/account.py, and weave the
-    necessary AccountTypes instance all over the place.
 
 
 ** Syntax
