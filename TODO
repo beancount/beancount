@@ -1270,6 +1270,15 @@ http://furius.ca/beancount/doc/proposal-inter
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - Try creating a "Record" class to replace namedtuple using a class decorator
+    and properties.
+
+  - Remove Posting.entry, this will make all the code simpler. Create a little
+    TxnPosting record just to hold a pair of (entry, posting). Consistently use
+    the name 'txn_posting' in the source code.
+
+
+
   - Try removing the 'tags' attribute of transactions by moving it to metadata
     fields and making sure tools are available to perform the same aggregations
     using bean-query and views using bean-web.
