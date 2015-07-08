@@ -186,9 +186,9 @@ class LedgerPrinter:
                                                          e=entry))
 
         for posting in entry.postings:
-            self.Posting(posting, oss)
+            self.Posting(posting, entry, oss)
 
-    def Posting(self, posting, oss):
+    def Posting(self, posting, entry, oss):
         flag = '{} '.format(posting.flag) if posting.flag else ''
         assert posting.account is not None
 
@@ -205,7 +205,7 @@ class LedgerPrinter:
             # See https://groups.google.com/d/msg/ledger-cli/35hA0Dvhom0/WX8gY_5kHy0J
             (postings_simple,
              postings_at_price,
-             postings_at_cost) = postings_by_type(posting.entry)
+             postings_at_cost) = postings_by_type(entry)
 
             if postings_at_price and postings_at_cost and posting.position.lot.cost:
                 price_str = '@ {}'.format(
@@ -284,7 +284,7 @@ class HLedgerPrinter(LedgerPrinter):
 
     # pylint: disable=invalid-name
 
-    def Posting(self, posting, oss):
+    def Posting(self, posting, entry, oss):
         flag = '{} '.format(posting.flag) if posting.flag else ''
         assert posting.account is not None
 
