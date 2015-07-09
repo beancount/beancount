@@ -231,7 +231,3 @@ pylint lint: pylint-pass
 # Check everything.
 status check: pylint pyflakes missing-tests dep-constraints multi-imports tests-quiet
 # fixmes: For later.
-
-
-grep-posting-entry:
-	egrep --include='*.py' -srn '\.entry\b' src/python/beancount | egrep -v '(context|error|row|errors\[0\])\.entry'
