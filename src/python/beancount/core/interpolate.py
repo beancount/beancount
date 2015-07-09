@@ -16,7 +16,6 @@ from beancount.core.data import Transaction
 from beancount.core.data import Posting
 from beancount.core.data import TxnPosting
 from beancount.core.data import reparent_posting
-from beancount.core.data import entry_replace
 from beancount.core import getters
 
 
@@ -240,7 +239,7 @@ def fill_residual_posting(entry, account_rounding):
     else:
         new_postings = list(entry.postings)
         new_postings.extend(get_residual_postings(residual, account_rounding))
-        return entry_replace(entry, postings=new_postings)
+        return entry._replace(postings=new_postings)
 
 
 def get_incomplete_postings(entry, options_map):

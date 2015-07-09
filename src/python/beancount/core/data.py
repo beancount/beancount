@@ -435,21 +435,22 @@ def sanity_check_types(entry):
             assert isinstance(posting.flag, (str, NoneType)), "Invalid flag type"
 
 
-def entry_replace(entry, **replacements):
-    """Replace components of an entry, reparenting postings automatically.
-    This is necessary because we use immutable namedtuple instances, with
-    circular references between entry and postings. It is a bit annoying,
-    but it does not occur in many places, so we live with it, enjoying the
-    extra convenience that circular refs provide, especially in lists of
-    postings.
-
-    Args:
-      entry: the entry whose components to replace
-      **replacements: replacements to apply to the entry
-    Returns:
-      A new entry, with postings correctly reparented.
-    """
-    return entry._replace(**replacements)  ## FIXME: Remove this function.
+# FIXME: Remove.
+# def entry_replace(entry, **replacements):
+#     """Replace components of an entry, reparenting postings automatically.
+#     This is necessary because we use immutable namedtuple instances, with
+#     circular references between entry and postings. It is a bit annoying,
+#     but it does not occur in many places, so we live with it, enjoying the
+#     extra convenience that circular refs provide, especially in lists of
+#     postings.
+#
+#     Args:
+#       entry: the entry whose components to replace
+#       **replacements: replacements to apply to the entry
+#     Returns:
+#       A new entry, with postings correctly reparented.
+#     """
+#     return entry._replace(**replacements)  ## FIXME: Remove this function.
 
 
 def reparent_posting(posting, entry):

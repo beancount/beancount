@@ -113,14 +113,13 @@ def split_currency_conversions(entry):
             posting_neg = data.Posting(None, posting_orig.account, -simple_position,
                                        None, None, None)
 
-            currency_entry = data.entry_replace(
-                entry,
+            currency_entry = entry._replace(
                 postings=[posting_orig, posting_neg],
                 narration=entry.narration + ' (Currency conversion)')
             new_entries.append(currency_entry)
             replacement_postings.append(posting_pos)
 
-        converted_entry = data.entry_replace(entry, postings=(
+        converted_entry = entry._replace(postings=(
             postings_at_cost + postings_simple + replacement_postings))
         new_entries.append(converted_entry)
     else:
