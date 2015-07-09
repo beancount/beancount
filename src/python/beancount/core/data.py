@@ -332,21 +332,21 @@ Posting = namedtuple('Posting', 'entry_DEPRECATED account position price flag me
 TxnPosting = namedtuple('TxnPosting', 'txn posting')
 
 
-def strip_back_reference(entry):
-    """Strip the postings back-reference to its transaction.
-    This is used for testing, because the Python comparison routines
-    for tuples/namedtuples don't deal with circular references too well.
-
-    Args:
-      entry: An instance of Transaction.
-    Returns:
-      A new instance of Transaction, with everything the same except
-      for the backreference of posting.entry to the entry. These are
-      replaced by None.
-    """
-    return entry._replace(
-        postings=[posting._replace(entry=None)
-                  for posting in entry.postings])
+# def strip_back_reference(entry):
+#     """Strip the postings back-reference to its transaction.
+#     This is used for testing, because the Python comparison routines
+#     for tuples/namedtuples don't deal with circular references too well.
+#
+#     Args:
+#       entry: An instance of Transaction.
+#     Returns:
+#       A new instance of Transaction, with everything the same except
+#       for the backreference of posting.entry to the entry. These are
+#       replaced by None.
+#     """
+#     return entry._replace(
+#         postings=[posting._replace(entry=None)
+#                   for posting in entry.postings])
 
 
 def create_simple_posting(entry, account, number, currency):
