@@ -108,7 +108,6 @@ class TestData(unittest.TestCase):
         posting = data.create_simple_posting(
             entry, 'Assets:Bank:Checking', '123.45', 'USD')
         posting = posting._replace(price=amount.Amount('153.02', 'CAD'))
-        data.reparent_posting(posting, entry)
         entry.postings[0] = posting
         self.assertTrue(data.transaction_has_conversion(entry))
 

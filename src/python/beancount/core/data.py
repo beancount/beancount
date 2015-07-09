@@ -453,20 +453,20 @@ def sanity_check_types(entry):
 #     return entry._replace(**replacements)  ## FIXME: Remove this function.
 
 
-def reparent_posting(posting, entry):
-    """Create a new posting entry that has the parent field set.
-
-    Note that this does not modify the list of postings in 'entry', i.e. entry
-    is left unmodified.
-
-    Args:
-      posting: a posting whose parent to set to 'entry'.
-      entry: the entry to set on the posting.
-    Return:
-      The modified posting. Note that the unmodified posting itself it returned
-      if the given entry is already the one on the posting.
-    """
-    return posting  ## FIXME: Remove this function.
+# def reparent_posting(posting, entry):
+#     """Create a new posting entry that has the parent field set.
+#
+#     Note that this does not modify the list of postings in 'entry', i.e. entry
+#     is left unmodified.
+#
+#     Args:
+#       posting: a posting whose parent to set to 'entry'.
+#       entry: the entry to set on the posting.
+#     Return:
+#       The modified posting. Note that the unmodified posting itself it returned
+#       if the given entry is already the one on the posting.
+#     """
+#     return posting  ## FIXME: Remove this function.
 
 
 def posting_has_conversion(posting):

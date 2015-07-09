@@ -15,7 +15,6 @@ from beancount.core.position import Position
 from beancount.core.data import Transaction
 from beancount.core.data import Posting
 from beancount.core.data import TxnPosting
-from beancount.core.data import reparent_posting
 from beancount.core import getters
 
 
@@ -442,7 +441,7 @@ def balance_incomplete_postings(entry, options_map):
     # PERF(25ms): could be saved here by avoiding reparenting.
     entry.postings.clear()
     for posting in postings:
-        entry.postings.append(reparent_posting(posting, entry))
+        entry.postings.append(posting)
 
     if entry.meta is None:
         entry.meta = {}
