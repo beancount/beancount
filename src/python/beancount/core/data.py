@@ -322,6 +322,16 @@ def new_metadata(filename, lineno, kvlist=None):
 Posting = namedtuple('Posting', 'entry account position price flag meta')
 
 
+# A pair of a Posting and its parent Transaction. This is inserted as
+# temporaries in lists of postings-of-entries, which is the product of a
+# realization.
+#
+# Attributes:
+#   txn: The parent Transaction instance.
+#   posting: The Posting instance.
+TxnPosting = namedtuple('Posting', 'txn posting')
+
+
 def strip_back_reference(entry):
     """Strip the postings back-reference to its transaction.
     This is used for testing, because the Python comparison routines
