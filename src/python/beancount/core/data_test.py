@@ -19,17 +19,6 @@ class TestData(unittest.TestCase):
         return data.Transaction(META, date(2014, 1, 15), FLAG, None,
                                 "Some example narration", None, None, [])
 
-    # FIXME: Remove.
-    # def test_strip_back_reference(self):
-    #     entry = data.Transaction(data.new_metadata(".", 0), datetime.date.today(), FLAG,
-    #                              None, "Something", None, None, [])
-    #     data.create_simple_posting(entry, 'Liabilities:CreditCard', '-50', 'USD')
-    #     data.create_simple_posting(entry, 'Expenses:Restaurant', '50', 'USD')
-    #     stripped_entry = data.strip_back_reference(entry)
-    #     self.assertTrue(all(posting.entry is None
-    #                         for posting in stripped_entry.postings))
-    #     self.assertNotEqual(entry, stripped_entry)
-
     def test_create_simple_posting(self):
         entry = self.create_empty_transaction()
         posting = data.create_simple_posting(
@@ -67,33 +56,6 @@ class TestData(unittest.TestCase):
             data.sanity_check_types(entry._replace(links={}))
         with self.assertRaises(AssertionError):
             data.sanity_check_types(entry._replace(postings=None))
-
-    # FIXME: Remove.
-    # def test_entry_replace__attribute(self):
-    #     entry = self.create_empty_transaction()
-    #     new_entry = data.entry_replace(entry, narration="Some new narration replaced")
-    #     self.assertTrue(isinstance(new_entry, data.Transaction))
-    #     self.assertTrue(all(posting.entry == new_entry
-    #                         for posting in new_entry.postings))
-
-    # FIXME: Remove.
-    # def test_entry_replace__postings(self):
-    #     entry = self.create_empty_transaction()
-    #     new_postings = [posting._replace(entry=None) for posting in entry.postings]
-    #     new_entry = data.entry_replace(entry, postings=new_postings)
-    #     self.assertTrue(isinstance(new_entry, data.Transaction))
-    #     self.assertTrue(all(posting.entry == new_entry
-    #                         for posting in new_entry.postings))
-
-    # FIXME: Remove.
-    # def test_reparent_posting(self):
-    #     entry1 = self.create_empty_transaction()
-    #     posting = data.create_simple_posting(
-    #         entry1, 'Assets:Bank:Checking', '123.45', 'USD')
-    #     entry2 = self.create_empty_transaction()
-    #     new_posting = data.reparent_posting(posting, entry2)
-    #     self.assertTrue(isinstance(new_posting, data.Posting))
-    #     self.assertTrue(new_posting.entry == entry2)
 
     def test_posting_has_conversion(self):
         entry = self.create_empty_transaction()

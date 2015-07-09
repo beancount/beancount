@@ -332,23 +332,6 @@ Posting = namedtuple('Posting', 'entry_DEPRECATED account position price flag me
 TxnPosting = namedtuple('TxnPosting', 'txn posting')
 
 
-# def strip_back_reference(entry):
-#     """Strip the postings back-reference to its transaction.
-#     This is used for testing, because the Python comparison routines
-#     for tuples/namedtuples don't deal with circular references too well.
-#
-#     Args:
-#       entry: An instance of Transaction.
-#     Returns:
-#       A new instance of Transaction, with everything the same except
-#       for the backreference of posting.entry to the entry. These are
-#       replaced by None.
-#     """
-#     return entry._replace(
-#         postings=[posting._replace(entry=None)
-#                   for posting in entry.postings])
-
-
 def create_simple_posting(entry, account, number, currency):
     """Create a simple posting on the entry, with just a number and currency (no cost).
 
@@ -433,40 +416,6 @@ def sanity_check_types(entry):
             assert isinstance(posting.position, (Position, NoneType)), "Invalid pos type"
             assert isinstance(posting.price, (Amount, NoneType)), "Invalid price type"
             assert isinstance(posting.flag, (str, NoneType)), "Invalid flag type"
-
-
-# FIXME: Remove.
-# def entry_replace(entry, **replacements):
-#     """Replace components of an entry, reparenting postings automatically.
-#     This is necessary because we use immutable namedtuple instances, with
-#     circular references between entry and postings. It is a bit annoying,
-#     but it does not occur in many places, so we live with it, enjoying the
-#     extra convenience that circular refs provide, especially in lists of
-#     postings.
-#
-#     Args:
-#       entry: the entry whose components to replace
-#       **replacements: replacements to apply to the entry
-#     Returns:
-#       A new entry, with postings correctly reparented.
-#     """
-#     return entry._replace(**replacements)  ## FIXME: Remove this function.
-
-
-# def reparent_posting(posting, entry):
-#     """Create a new posting entry that has the parent field set.
-#
-#     Note that this does not modify the list of postings in 'entry', i.e. entry
-#     is left unmodified.
-#
-#     Args:
-#       posting: a posting whose parent to set to 'entry'.
-#       entry: the entry to set on the posting.
-#     Return:
-#       The modified posting. Note that the unmodified posting itself it returned
-#       if the given entry is already the one on the posting.
-#     """
-#     return posting  ## FIXME: Remove this function.
 
 
 def posting_has_conversion(posting):
