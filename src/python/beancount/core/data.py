@@ -319,7 +319,7 @@ def new_metadata(filename, lineno, kvlist=None):
 #   metadata: A dict of strings to values, the metadata that was attached
 #     specifically to that posting, or None, if not provided. In practice, most
 #     of the instances will be unlikely to have metadata.
-Posting = namedtuple('Posting', 'entry account position price flag meta')
+Posting = namedtuple('Posting', 'entry_DEPRECATED account position price flag meta')
 
 
 # A pair of a Posting and its parent Transaction. This is inserted as
@@ -429,7 +429,6 @@ def sanity_check_types(entry):
         assert isinstance(entry.postings, list), "Invalid postings list type"
         for posting in entry.postings:
             assert isinstance(posting, Posting), "Invalid posting type"
-            assert posting.entry is entry, "Invalid posting reference to entry type"
             assert isinstance(posting.account, str), "Invalid account type"
             assert isinstance(posting.position, (Position, NoneType)), "Invalid pos type"
             assert isinstance(posting.price, (Amount, NoneType)), "Invalid price type"
@@ -450,11 +449,7 @@ def entry_replace(entry, **replacements):
     Returns:
       A new entry, with postings correctly reparented.
     """
-    new_postings = replacements.pop('postings', entry.postings)
-    new_entry = entry._replace(postings=[], **replacements)
-    new_entry.postings.extend(posting._replace(entry=new_entry)
-                              for posting in new_postings)
-    return new_entry
+    return entry._replace(**replacements)  ## FIXME: Remove this function.
 
 
 def reparent_posting(posting, entry):
@@ -470,10 +465,7 @@ def reparent_posting(posting, entry):
       The modified posting. Note that the unmodified posting itself it returned
       if the given entry is already the one on the posting.
     """
-    if posting.entry is entry:
-        return posting
-    else:
-        return posting._replace(entry=entry)
+    return posting  ## FIXME: Remove this function.
 
 
 def posting_has_conversion(posting):
@@ -513,14 +505,12 @@ def get_entry(posting_or_entry):
     """Return the entry associated with the posting or entry.
 
     Args:
-      entry: A Posting or entry instance
+      entry: A TxnPosting or entry instance
     Returns:
       A datetime instance.
     """
     if isinstance(posting_or_entry, TxnPosting):
         return posting_or_entry.txn
-    elif isinstance(posting_or_entry, Posting):
-        return posting_or_entry.entry
     else:
         return posting_or_entry
 
@@ -565,9 +555,7 @@ def posting_sortkey(entry):
       A tuple of (date, integer, integer), that forms the sort key for the
       posting or entry.
     """
-    if isinstance(entry, Posting):
-        entry = entry.entry
-    elif isinstance(entry, TxnPosting):
+    if isinstance(entry, TxnPosting):
         entry = entry.txn
     return (entry.date, SORT_ORDER.get(type(entry), 0), entry.meta.lineno)
 

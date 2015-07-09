@@ -602,7 +602,7 @@ def generate_retirement_employer_match(entries, account_invest, account_income):
     for txn_posting, balances in postings_for(entries, [account_invest]):
         amount = txn_posting.posting.position.number * match_frac
         amount_neg = -amount
-        date = txn_posting.posting.entry.date + ONE_DAY
+        date = txn_posting.txn.date + ONE_DAY
         new_entries.extend(parse("""
 
           {date} * "Employer match for contribution"

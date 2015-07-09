@@ -388,7 +388,7 @@ class TestValidateDataTypes(cmptest.TestCase):
         # Just a basic test that runs the sanitation code (that should already
         # be well tested by itself).
         entry = entries[0]
-        new_entry = entry._replace(narration=None)
+        new_entry = entry._replace(narration={"INVALID_SET_TYPE"})
         valid_errors = validation.validate_data_types([new_entry], options_map)
         self.assertEqual([validation.ValidationError], list(map(type, valid_errors)))
 

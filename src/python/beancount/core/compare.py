@@ -12,7 +12,7 @@ from beancount.core import data
 CompareError = collections.namedtuple('CompareError', 'source message entry')
 
 # A list of field names that are being ignored for persistence.
-IGNORED_FIELD_NAMES = {'meta', 'entry', 'diff_amount'}
+IGNORED_FIELD_NAMES = {'meta', 'entry', 'entry_DEPRECATED', 'diff_amount'}
 
 
 def stable_hash_namedtuple(objtuple, ignore=frozenset()):
@@ -75,8 +75,6 @@ def hash_entries(entries):
     errors = []
     num_legal_duplicates = 0
     for entry in entries:
-        ##entry_type = type(entry)
-
         hash_ = hash_entry(entry)
 
         if hash_ in entry_hash_dict:
