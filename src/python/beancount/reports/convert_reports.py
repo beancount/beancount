@@ -108,9 +108,9 @@ def split_currency_conversions(entry):
             weight = interpolate.get_posting_weight(posting_orig)
             simple_position = position.Position(position.Lot(weight.currency, None, None),
                                                 weight.number)
-            posting_pos = data.Posting(None, posting_orig.account, simple_position,
+            posting_pos = data.Posting(posting_orig.account, simple_position,
                                        None, None, None)
-            posting_neg = data.Posting(None, posting_orig.account, -simple_position,
+            posting_neg = data.Posting(posting_orig.account, -simple_position,
                                        None, None, None)
 
             currency_entry = entry._replace(

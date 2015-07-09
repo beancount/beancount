@@ -159,6 +159,6 @@ def add_postings(entry, amount_, neg_account, pos_account, flag):
         amount_.number)
 
     return entry._replace(postings=entry.postings + [
-        data.Posting(entry, neg_account, pos.get_negative(), None, flag, None),
-        data.Posting(entry, pos_account, pos, None, flag, None),
+        data.Posting(neg_account, pos.get_negative(), None, flag, None),
+        data.Posting(pos_account, pos, None, flag, None),
         ])

@@ -319,7 +319,7 @@ def new_metadata(filename, lineno, kvlist=None):
 #   metadata: A dict of strings to values, the metadata that was attached
 #     specifically to that posting, or None, if not provided. In practice, most
 #     of the instances will be unlikely to have metadata.
-Posting = namedtuple('Posting', 'entry_DEPRECATED account position price flag meta')
+Posting = namedtuple('Posting', 'account position price flag meta')
 
 
 # A pair of a Posting and its parent Transaction. This is inserted as
@@ -352,7 +352,7 @@ def create_simple_posting(entry, account, number, currency):
         if not isinstance(number, Decimal):
             number = D(number)
         position = Position(Lot(currency, None, None), number)
-    posting = Posting(entry, account, position, None, None, None)
+    posting = Posting(account, position, None, None, None)
     if entry is not None:
         entry.postings.append(posting)
     return posting
@@ -382,7 +382,7 @@ def create_simple_posting_with_cost(entry, account,
         cost_number = D(cost_number)
     cost = Amount(cost_number, cost_currency)
     position = Position(Lot(currency, cost, None), number)
-    posting = Posting(entry, account, position, None, None, None)
+    posting = Posting(account, position, None, None, None)
     if entry is not None:
         entry.postings.append(posting)
     return posting

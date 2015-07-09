@@ -209,7 +209,7 @@ def get_residual_postings(residual, account_rounding):
     """
     meta = {AUTOMATIC_META: True,
             AUTOMATIC_RESIDUAL: True}
-    return [Posting(None, account_rounding, -position, None, None, meta.copy())
+    return [Posting(account_rounding, -position, None, None, meta.copy())
             for position in residual.get_positions()]
 
 
@@ -351,7 +351,7 @@ def get_incomplete_postings(entry, options_map):
                 meta = copy.copy(old_posting.meta) if old_posting.meta else {}
                 meta[AUTOMATIC_META] = True
                 new_postings.append(
-                    Posting(entry, old_posting.account, position,
+                    Posting(old_posting.account, position,
                             None, old_posting.flag, old_posting.meta))
                 has_inserted = True
         else:
@@ -382,7 +382,7 @@ def get_incomplete_postings(entry, options_map):
                 meta = copy.copy(old_posting.meta) if old_posting.meta else {}
                 meta[AUTOMATIC_META] = True
                 new_postings.append(
-                    Posting(entry, old_posting.account, position,
+                    Posting(old_posting.account, position,
                             None, old_posting.flag, meta))
                 has_inserted = True
 
