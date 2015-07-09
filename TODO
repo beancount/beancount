@@ -10,6 +10,11 @@ beancount: TODO
     used in the realization) and thus make it easy to create transactions
     programmatically.
 
+  - Rename RealAccount.postings to RealAccount.txn_postings for clarity.
+
+  - Fix up posting_sortkey(), should probably not need the extra checks after
+    all is said and done.
+
   - Remove:
 
     * beancount.core.data.strip_back_reference()

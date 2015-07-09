@@ -114,8 +114,9 @@ class TestData(unittest.TestCase):
         entry = self.create_empty_transaction()
         posting = data.create_simple_posting(
             entry, 'Assets:Bank:Checking', '123.45', 'USD')
-        self.assertEqual(data.get_entry(entry), entry)
-        self.assertEqual(data.get_entry(posting), entry)
+        self.assertEqual(entry, data.get_entry(entry))
+        self.assertEqual(entry, data.get_entry(posting))
+        self.assertEqual(entry, data.get_entry(data.TxnPosting(entry, posting)))
 
     def create_sort_data(self):
         account = 'Assets:Bank:Checking'

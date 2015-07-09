@@ -14,6 +14,7 @@ from beancount.core.position import Lot
 from beancount.core.position import Position
 from beancount.core.data import Transaction
 from beancount.core.data import Posting
+from beancount.core.data import TxnPosting
 from beancount.core.data import reparent_posting
 from beancount.core.data import entry_replace
 from beancount.core import getters
@@ -451,8 +452,8 @@ def balance_incomplete_postings(entry, options_map):
     return errors or None
 
 
-def compute_postings_balance(postings):
-    """Compute the balance of a list of Postings's positions.
+def compute_postings_balance(txn_postings):
+    """Compute the balance of a list of Postings's or TxnPosting's positions.
 
     Args:
       postings: A list of Posting instances and other directives (which are
@@ -461,9 +462,11 @@ def compute_postings_balance(postings):
       An Inventory.
     """
     final_balance = Inventory()
-    for posting in postings:
-        if isinstance(posting, Posting):
-            final_balance.add_position(posting.position)
+    for txn_posting in txn_postings:
+        if isinstance(txn_posting, Posting):
+            final_balance.add_position(txn_posting.position)
+        elif isinstance(txn_posting, TxnPosting):
+            final_balance.add_position(txn_posting.posting.position)
     return final_balance
 
 

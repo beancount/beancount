@@ -329,7 +329,7 @@ Posting = namedtuple('Posting', 'entry account position price flag meta')
 # Attributes:
 #   txn: The parent Transaction instance.
 #   posting: The Posting instance.
-TxnPosting = namedtuple('Posting', 'txn posting')
+TxnPosting = namedtuple('TxnPosting', 'txn posting')
 
 
 def strip_back_reference(entry):
@@ -517,9 +517,12 @@ def get_entry(posting_or_entry):
     Returns:
       A datetime instance.
     """
-    return (posting_or_entry.entry
-            if isinstance(posting_or_entry, Posting)
-            else posting_or_entry)
+    if isinstance(posting_or_entry, TxnPosting):
+        return posting_or_entry.txn
+    elif isinstance(posting_or_entry, Posting):
+        return posting_or_entry.entry
+    else:
+        return posting_or_entry
 
 
 # Sort with the checks at the BEGINNING of the day.
@@ -564,6 +567,8 @@ def posting_sortkey(entry):
     """
     if isinstance(entry, Posting):
         entry = entry.entry
+    elif isinstance(entry, TxnPosting):
+        entry = entry.txn
     return (entry.date, SORT_ORDER.get(type(entry), 0), entry.meta.lineno)
 
 

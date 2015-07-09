@@ -218,31 +218,31 @@ class TestRealization(unittest.TestCase):
         """
         self.assertEqual(0, len(errors))
 
-        postings_map = realization.postings_by_account(entries)
-        self.assertTrue(isinstance(postings_map, dict))
+        txn_postings_map = realization.postings_by_account(entries)
+        self.assertTrue(isinstance(txn_postings_map, dict))
 
-        self.assertEqual([data.Open, data.Posting],
-                         list(map(type, postings_map['Assets:Cash'])))
+        self.assertEqual([data.Open, data.TxnPosting],
+                         list(map(type, txn_postings_map['Assets:Cash'])))
 
-        self.assertEqual([data.Open, data.Posting, data.Posting],
-                         list(map(type, postings_map['Expenses:Restaurant'])))
+        self.assertEqual([data.Open, data.TxnPosting, data.TxnPosting],
+                         list(map(type, txn_postings_map['Expenses:Restaurant'])))
 
         self.assertEqual([data.Open,
-                          data.Posting,
-                          data.Posting],
-                         list(map(type, postings_map['Expenses:Movie'])))
+                          data.TxnPosting,
+                          data.TxnPosting],
+                         list(map(type, txn_postings_map['Expenses:Movie'])))
 
         self.assertEqual([data.Open,
                           data.Pad,
-                          data.Posting, data.Posting, # data.Posting,
+                          data.TxnPosting, data.TxnPosting, # data.TxnPosting,
                           data.Note,
                           data.Document,
                           data.Balance,
                           data.Close],
-                         list(map(type, postings_map['Liabilities:CreditCard'])))
+                         list(map(type, txn_postings_map['Liabilities:CreditCard'])))
 
         self.assertEqual([data.Open, data.Pad],
-                         list(map(type, postings_map['Equity:Opening-Balances'])))
+                         list(map(type, txn_postings_map['Equity:Opening-Balances'])))
 
     def test_realize_empty(self):
         real_account = realization.realize([])
@@ -435,21 +435,22 @@ class TestRealOther(test_utils.TestCase):
                 (data.Open, 'Liabilities:CreditCard', None),
                 (data.Open, 'Equity:Opening-Balances', None),
                 (data.Pad, 'Assets:Bank:Checking', None),
-                #(data.Posting, 'Assets:Bank:Checking', '621.66'),
+                #(data.TxnPosting, 'Assets:Bank:Checking', '621.66'),
                 (data.Pad, 'Assets:Bank:Checking', None),
-                #(data.Posting, 'Equity:Opening-Balances', '-621.66'),
-                (data.Posting, 'Assets:Bank:Checking', '-11.11'),
-                (data.Posting, 'Expenses:Restaurant', '11.11'),
-                (data.Posting, 'Assets:Bank:Checking', '-22.22'),
-                (data.Posting, 'Expenses:Movie', '22.22'),
-                (data.Posting, 'Assets:Bank:Checking', '-33.33'),
-                (data.Posting, 'Liabilities:CreditCard', '33.33'),
+                #(data.TxnPosting, 'Equity:Opening-Balances', '-621.66'),
+                (data.TxnPosting, 'Assets:Bank:Checking', '-11.11'),
+                (data.TxnPosting, 'Expenses:Restaurant', '11.11'),
+                (data.TxnPosting, 'Assets:Bank:Checking', '-22.22'),
+                (data.TxnPosting, 'Expenses:Movie', '22.22'),
+                (data.TxnPosting, 'Assets:Bank:Checking', '-33.33'),
+                (data.TxnPosting, 'Liabilities:CreditCard', '33.33'),
                 (data.Note, 'Assets:Bank:Checking', None),
                 (data.Balance, 'Assets:Bank:Checking', None),
                 (data.Close, 'Assets:Bank:Checking', None),
         ], postings):
-
             self.assertEqual(exp_type, type(entpost))
+            if isinstance(entpost, data.TxnPosting):
+                entpost = entpost.posting
             if exp_account:
                 self.assertEqual(exp_account, entpost.account)
             if exp_number:
@@ -672,6 +673,6 @@ class TestFindLastActive(unittest.TestCase):
 
         """
         real_account = realization.realize(entries)
-        postings = realization.get(real_account, 'Assets:Target').postings
-        posting = realization.find_last_active_posting(postings)
-        self.assertEqual(datetime.date(2014, 2, 1), posting.entry.date)
+        txn_postings = realization.get(real_account, 'Assets:Target').postings
+        txn_posting = realization.find_last_active_posting(txn_postings)
+        self.assertEqual(datetime.date(2014, 2, 1), txn_posting.txn.date)
