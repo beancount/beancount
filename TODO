@@ -2,24 +2,12 @@
 beancount: TODO
 * Removed Backreference
 
-  - Remove Posting.entry, this will make all the code simpler. Create a little
-    TxnPosting record just to hold a pair of (entry, posting). Consistently use
-    the name 'txn_posting' in the source code.
-
-  - Consider whether we can actually remove posting.entry (I think it is only
-    used in the realization) and thus make it easy to create transactions
-    programmatically.
+  - Remove Posting.entry_DEPRECATED.
 
   - Rename RealAccount.postings to RealAccount.txn_postings for clarity.
 
   - Fix up posting_sortkey(), should probably not need the extra checks after
     all is said and done.
-
-  - Remove:
-
-    * beancount.core.data.strip_back_reference()
-    * beancount.core.data.entry_replace()
-    * beancount.core.data.reparent_posting()
 
 
 
