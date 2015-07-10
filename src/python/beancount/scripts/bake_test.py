@@ -207,7 +207,7 @@ class TestScriptBake(test_utils.TestCase):
     @test_utils.docfile
     def test_bake_bad_link(self, filename):
         """
-        plugin "beancount.ops.auto_accounts"
+        plugin "beancount.plugins.auto_accounts"
 
         2014-03-02 * "Something" ^2015-06-14.something.pdf
           Expenses:Restaurant   1 USD

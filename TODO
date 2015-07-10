@@ -123,7 +123,7 @@ beancount: TODO
     numbers as represented in memory. Don't round those numbers.
 
   - Add a --auto option to bean-check that automatically inserts a
-    beancount.ops.auto_accounts directive and more.
+    beancount.plugins.auto_accounts directive and more.
 
   - beancount.parser.parsedoc_noerrors() has been implemented; now convert all
     the tests to the simplified version.

@@ -10,7 +10,7 @@ Note: This file contains only changes in the 'default' branch.
     plugins to the beancount.plugins package, so that all the plugins are in the
     same place:
 
-       beancount.ops.auto_accounts -> beancount.plugins.auto_accounts
+       beancount.plugins.auto_accounts -> beancount.plugins.auto_accounts
        beancount.ops.implicit_prices -> beancount.plugins.implicit_prices
 
     In doing so, I also made the "implicit_prices" plugin NOT included by
