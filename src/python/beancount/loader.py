@@ -36,7 +36,7 @@ DEFAULT_PLUGINS_POST = [
 # A mapping of modules to warn about, to their renamed names.
 DEPRECATED_MODULES = {
     # "beancount.ops.auto_accounts": "beancount.plugins.auto_accounts",
-    # "beancount.ops.implicit_prices": "beancount.plugins.implicit_prices",
+    "beancount.ops.implicit_prices": "beancount.plugins.implicit_prices",
     }
 
 

@@ -12,7 +12,7 @@ class TestContext(test_utils.TestCase):
     @loader.loaddoc
     def test_context(self, entries, errors, options_map):
         """
-        plugin "beancount.ops.implicit_prices"
+        plugin "beancount.plugins.implicit_prices"
 
         2012-01-01 open Assets:US:ETrade:Cash                       USD
         2012-01-01 open Assets:US:ETrade:ITOT                       ITOT

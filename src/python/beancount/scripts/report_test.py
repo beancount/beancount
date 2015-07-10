@@ -92,7 +92,7 @@ class TestScriptPositions(test_utils.TestCase):
     @test_utils.docfile
     def test_all_prices(self, filename):
         """
-        plugin "beancount.ops.implicit_prices"
+        plugin "beancount.plugins.implicit_prices"
 
         2014-01-01 open Assets:Account1
         2014-01-01 open Income:Misc
