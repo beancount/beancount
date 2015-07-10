@@ -48,7 +48,7 @@ class RealAccount(dict):
         include the postings of children accounts).
       balance: The final balance of the list of postings associated with this account.
     """
-    __slots__ = ('account', 'postings', 'balance')
+    __slots__ = ('account', 'txn_postings', 'balance')
 
     def __init__(self, account_name, *args, **kwargs):
         """Create a RealAccount instance.
@@ -59,7 +59,7 @@ class RealAccount(dict):
         super().__init__(*args, **kwargs)
         assert isinstance(account_name, str)
         self.account = account_name
-        self.postings = []
+        self.txn_postings = []
         self.balance = inventory.Inventory()
 
     def __setitem__(self, key, value):
@@ -104,7 +104,7 @@ class RealAccount(dict):
         return (dict.__eq__(self, other) and
                 self.account == other.account and
                 self.balance == other.balance and
-                self.postings == other.postings)
+                self.txn_postings == other.txn_postings)
 
     def __ne__(self, other):
         """Not-equality predicate. See __eq__.
@@ -258,7 +258,7 @@ def realize(entries, min_accounts=None, compute_balance=True):
     real_root = RealAccount('')
     for account_name, txn_postings in txn_postings_map.items():
         real_account = get_or_create(real_root, account_name)
-        real_account.postings = txn_postings
+        real_account.txn_postings = txn_postings
         if compute_balance:
             real_account.balance = interpolate.compute_postings_balance(txn_postings)
 
@@ -327,7 +327,7 @@ def filter(real_account, predicate):
 
     real_copy = RealAccount(real_account.account)
     real_copy.balance = real_account.balance
-    real_copy.postings = real_account.postings
+    real_copy.txn_postings = real_account.txn_postings
 
     for child_name, real_child in real_account.items():
         real_child_copy = filter(real_child, predicate)
@@ -350,7 +350,7 @@ def get_postings(real_account):
     # because we need to return them sorted.
     accumulator = []
     for real_child in iter_children(real_account):
-        accumulator.extend(real_child.postings)
+        accumulator.extend(real_child.txn_postings)
     accumulator.sort(key=data.posting_sortkey)
     return accumulator
 

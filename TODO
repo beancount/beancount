@@ -1,10 +1,5 @@
 -*- mode: org -*-
 beancount: TODO
-* Removed Backreference
-
-  - Rename RealAccount.postings to RealAccount.txn_postings for clarity.
-
-
 * File Cleanup
 
   - Remove plugins from ops, remove algorithms from core:

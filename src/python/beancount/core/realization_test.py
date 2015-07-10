@@ -60,11 +60,11 @@ class TestRealAccount(unittest.TestCase):
     def test_equality(self):
         ra1 = RealAccount('Assets:US:Bank:Checking')
         ra1.balance.add_amount(amount.Amount('100', 'USD'))
-        ra1.postings.extend(['a', 'b'])
+        ra1.txn_postings.extend(['a', 'b'])
 
         ra2 = RealAccount('Assets:US:Bank:Checking')
         ra2.balance.add_amount(amount.Amount('100', 'USD'))
-        ra2.postings.extend(['a', 'b'])
+        ra2.txn_postings.extend(['a', 'b'])
 
         self.assertEqual(ra1, ra2)
 
@@ -73,9 +73,9 @@ class TestRealAccount(unittest.TestCase):
         self.assertNotEqual(ra1, ra2)
         ra2.balance = saved_balance
 
-        ra2.postings.append('c')
+        ra2.txn_postings.append('c')
         self.assertNotEqual(ra1, ra2)
-        ra2.postings.pop(-1)
+        ra2.txn_postings.pop(-1)
 
         saved_account = ra2.account
         ra2.account += ':First'
@@ -103,17 +103,17 @@ class TestRealAccount(unittest.TestCase):
         ra0 = RealAccount('')
         ra0['Assets'] = RealAccount('Assets')
         ra0.balance = 42
-        ra0.postings.append('posting1')
-        ra0.postings.append('posting2')
+        ra0.txn_postings.append('posting1')
+        ra0.txn_postings.append('posting2')
 
         ra0_clone = copy.copy(ra0)
         self.assertEqual(42, ra0_clone.balance)
-        self.assertEqual(['posting1', 'posting2'], ra0_clone.postings)
+        self.assertEqual(['posting1', 'posting2'], ra0_clone.txn_postings)
         self.assertEqual({'Assets'}, ra0_clone.keys())
 
         ra0_clone = ra0.copy()
         self.assertEqual(42, ra0_clone.balance)
-        self.assertEqual(['posting1', 'posting2'], ra0_clone.postings)
+        self.assertEqual(['posting1', 'posting2'], ra0_clone.txn_postings)
         self.assertEqual({'Assets'}, ra0_clone.keys())
 
 
@@ -484,7 +484,7 @@ class TestRealOther(test_utils.TestCase):
 
         root3 = copy.deepcopy(root2)
         ra3 = realization.get(root3, 'Assets:US:Bank:Checking')
-        ra3.postings.append('posting')
+        ra3.txn_postings.append('posting')
         self.assertNotEqual(root1, root3)
 
         root3 = copy.deepcopy(root2)
@@ -523,7 +523,7 @@ class TestRealOther(test_utils.TestCase):
         # Surprinsingly enough, this covers all the legal cases that occur in
         # practice (checked for full coverage manually if you like).
         # pylint: disable=bad-whitespace
-        rtuple = realization.iterate_with_balance(real_account.postings[:-2])
+        rtuple = realization.iterate_with_balance(real_account.txn_postings[:-2])
         self.assertEqual([
             (data.Open        , 0 , '()'          , '()')          ,
             (data.Transaction , 1 , '(11.11 CAD)' , '(11.11 CAD)') ,
@@ -531,7 +531,7 @@ class TestRealOther(test_utils.TestCase):
             ], simplify_rtuple(rtuple))
 
         # Test it again with the final balance entry.
-        rtuple = realization.iterate_with_balance(real_account.postings)
+        rtuple = realization.iterate_with_balance(real_account.txn_postings)
         self.assertEqual([
             (data.Open        , 0 , '()'          , '()')          ,
             (data.Transaction , 1 , '(11.11 CAD)' , '(11.11 CAD)') ,
@@ -543,7 +543,7 @@ class TestRealOther(test_utils.TestCase):
         # Test it out with valid input but with entries for the same transaction
         # separated by another entry. Swap the balance entry with the last
         # posting entry to test this.
-        postings = list(real_account.postings)
+        postings = list(real_account.txn_postings)
         postings[-3], postings[-2] = postings[-2], postings[-3]
         rtuple = realization.iterate_with_balance(postings)
         self.assertEqual([
@@ -555,7 +555,7 @@ class TestRealOther(test_utils.TestCase):
             ], simplify_rtuple(rtuple))
 
         # Go one step further and test it out with invalid date ordering.
-        postings = list(real_account.postings)
+        postings = list(real_account.txn_postings)
         postings[-1], postings[-2] = postings[-2], postings[-1]
         with self.assertRaises(AssertionError):
             list(realization.iterate_with_balance(postings))
@@ -673,6 +673,6 @@ class TestFindLastActive(unittest.TestCase):
 
         """
         real_account = realization.realize(entries)
-        txn_postings = realization.get(real_account, 'Assets:Target').postings
+        txn_postings = realization.get(real_account, 'Assets:Target').txn_postings
         txn_posting = realization.find_last_active_posting(txn_postings)
         self.assertEqual(datetime.date(2014, 2, 1), txn_posting.txn.date)

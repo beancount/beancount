@@ -274,7 +274,7 @@ def merge_postings(entries, accounts):
         if real_account is None:
             continue
         merged_postings.extend(txn_posting
-                               for txn_posting in real_account.postings
+                               for txn_posting in real_account.txn_postings
                                if isinstance(txn_posting, data.TxnPosting))
     merged_postings.sort(key=lambda txn_posting: txn_posting.txn.date)
     return merged_postings
