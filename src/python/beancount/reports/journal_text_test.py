@@ -69,6 +69,8 @@ class TestJournalTextRender(unittest.TestCase):
     @loader.loaddoc
     def setUp(self, entries, _, __):
         """
+        plugin "beancount.ops.implicit_prices"
+
         2014-01-01 open Assets:Checking
         2014-01-01 open Assets:Investing
         2014-01-01 open Assets:Savings

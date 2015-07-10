@@ -4,6 +4,21 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-07-09
+
+  - WARNING: USER-LEVEL CHANGES FOLLOW. I repatriated all the optional plugins
+    to the beancount.plugins package, so that all the plugins are in the same
+    place.
+
+    In doing so, I made the "implicit_prices" plugin NOT included by default.
+    This plugin creates automatically Price directives for all Postings which
+    have a @ <price> annotation, thus feeding those prices into the price
+    database. If you want to keep this behaviour -- and you should -- you need
+    to add the following in your input file:
+
+      plugin "beancount.ops.implicit_prices"
+
+
 2015-07-05
 
   - Implemented support for parsing strings from files in various encodings.

@@ -725,6 +725,7 @@ class TestReturnsInternalize(cmptest.TestCase):
         2014-01-10 * "Buying"
           Assets:Invest:Cash       -500.00 USD
           Assets:Invest:BOOG            50 BOOG {10.00 USD}
+        2014-01-10 price      BOOG   10.00 USD
 
         2014-04-01 * "Dividends"
           Assets:Invest:Cash         100.00 USD

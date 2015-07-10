@@ -158,6 +158,8 @@ class TestLedgerConversion(test_utils.TestCase):
     @test_utils.docfile
     def test_cost_and_foreign_currency(self, filename):
         """
+          plugin "beancount.ops.implicit_prices"
+
           2014-01-01 open Assets:CA:Investment:GOOG
           2014-01-01 open Expenses:Commissions
           2014-01-01 open Assets:CA:Investment:Cash
