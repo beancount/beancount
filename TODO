@@ -4,9 +4,6 @@ beancount: TODO
 
   - Remove plugins from ops, remove algorithms from core:
 
-      b.ops.auto_accounts   -> b.plugins.auto_accounts  (easy)
-      b.ops.implicit_prices -> b.plugins.implicit_prices  (easy)
-
       (Also remove "documents" option and move that as input to this plugin.)
       b.ops.documents       -> b.plugins.documents  (not sure if breaks)
 
