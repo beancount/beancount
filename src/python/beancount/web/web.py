@@ -52,8 +52,8 @@ class HTMLFormatter(html_formatter.HTMLFormatter):
       build_url: A function used to render links to a Bottle application.
       leafonly: a boolean, if true, render only the name of the leaf nodes.
     """
-    def __init__(self, build_url, leaf_only, view_links=True):
-        super().__init__()
+    def __init__(self, dcontext, build_url, leaf_only, view_links=True):
+        super().__init__(dcontext)
         self.build_url = build_url
         self.leaf_only = leaf_only
         self.view_links = view_links
@@ -147,7 +147,8 @@ def render_report(report_class, entries, args=None,
     Returns:
       A string, the rendered report.
     """
-    formatter = HTMLFormatter(request.app.get_url, leaf_only)
+    formatter = HTMLFormatter(app.options['display_context'],
+                              request.app.get_url, leaf_only)
     oss = io.StringIO()
     if center:
         oss.write('<center>\n')
@@ -175,7 +176,8 @@ def render_real_report(report_class, real_root, args=None, leaf_only=False):
     Returns:
       A string, the rendered report.
     """
-    formatter = HTMLFormatter(request.app.get_url, leaf_only)
+    formatter = HTMLFormatter(app.options['display_context'],
+                              request.app.get_url, leaf_only)
     oss = io.StringIO()
     report_ = report_class.from_args(args, formatter=formatter)
     report_.render_real_htmldiv(real_root, app.options, oss)
@@ -350,7 +352,8 @@ def link(link=None):
     linked_entries = basicops.filter_link(link, app.entries)
 
     oss = io.StringIO()
-    formatter = HTMLFormatter(request.app.get_url, False, view_links=False)
+    formatter = HTMLFormatter(app.options['display_context'],
+                              request.app.get_url, False, view_links=False)
     journal_html.html_entries_table_with_balance(oss, linked_entries, formatter)
     return render_global(
         pagetitle="Link: {}".format(link),

@@ -83,9 +83,10 @@ beancount: TODO
   - Slide: 4 methods: bean-web, bean-report, bean-query, write script + plugin
 
 
-
-
 ** Establish Display Precision
+
+  - Create a page in the web view that lists the various precision - by
+    example - inferred in the global DisplayContext.
 
   - Make setting the precision from bean-example easier (provide a method to
     create that format and update without conversion on the DisplayContext
@@ -116,10 +117,13 @@ beancount: TODO
 
 ** Misc
 
+  - Rename options['display_context'] to options['dcontext'] to be more
+    consistent with the ROTCB and segregate greps to the module name.
+
   - bean-doctor context does not render all digits... it should render all the
     numbers as represented in memory. Don't round those numbers.
 
-  - Add a --auto option to bean-check that automatically inserts a
+  - Add a --auto-everything option to bean-check that automatically inserts a
     beancount.plugins.auto_accounts directive and more.
 
   - beancount.parser.parsedoc_noerrors() has been implemented; now convert all
@@ -251,12 +255,8 @@ beancount: TODO
     dedicated doc for each. The four-out structure of this document should be clear.
 
 
-  - Document vesting as I do it.
   - Start a doc on limbo accounts, including the email thread with mharris & redstreet0.
-  - Document options (from the email).
 
-
-  - Write a note about making releases (and the lack thereof).
 
   - Write a script to automatically convert and upload the docs for the shell
     functions and what-not into a Google Docs that we can open with a web
@@ -318,7 +318,6 @@ beancount: TODO
     https://docs.google.com/document/d/1w5wWVFuPe6H2Aeex8iqCL8YfAO6xNZgzmrnRNlvxJec/
 
   - Make the four extraction methods clear, create a "part" for the four docs.
-
 
 
 
