@@ -45,7 +45,7 @@ extern int yydebug;
 # define YYTOKENTYPE
   enum yytokentype
   {
-    ERROR = 258,
+    LEX_ERROR = 258,
     INDENT = 259,
     EOL = 260,
     COMMENT = 261,
@@ -59,29 +59,33 @@ extern int yydebug;
     RCURL = 269,
     EQUAL = 270,
     COMMA = 271,
-    SLASH = 272,
-    FLAG = 273,
-    TXN = 274,
-    BALANCE = 275,
-    OPEN = 276,
-    CLOSE = 277,
-    PAD = 278,
-    EVENT = 279,
-    PRICE = 280,
-    NOTE = 281,
-    DOCUMENT = 282,
-    PUSHTAG = 283,
-    POPTAG = 284,
-    OPTION = 285,
-    PLUGIN = 286,
-    DATE = 287,
-    ACCOUNT = 288,
-    CURRENCY = 289,
-    STRING = 290,
-    NUMBER = 291,
-    TAG = 292,
-    LINK = 293,
-    KEY = 294
+    TILDE = 272,
+    SLASH = 273,
+    FLAG = 274,
+    TXN = 275,
+    BALANCE = 276,
+    OPEN = 277,
+    CLOSE = 278,
+    COMMODITY = 279,
+    PAD = 280,
+    EVENT = 281,
+    PRICE = 282,
+    NOTE = 283,
+    DOCUMENT = 284,
+    PUSHTAG = 285,
+    POPTAG = 286,
+    OPTION = 287,
+    INCLUDE = 288,
+    PLUGIN = 289,
+    BOOL = 290,
+    DATE = 291,
+    ACCOUNT = 292,
+    CURRENCY = 293,
+    STRING = 294,
+    NUMBER = 295,
+    TAG = 296,
+    LINK = 297,
+    KEY = 298
   };
 #endif
 
@@ -90,13 +94,17 @@ extern int yydebug;
 typedef union YYSTYPE YYSTYPE;
 union YYSTYPE
 {
-#line 59 "src/python/beancount/parser/grammar.y" /* yacc.c:1915  */
+#line 125 "src/python/beancount/parser/grammar.y" /* yacc.c:1909  */
 
     char character;
     const char* string;
     PyObject* pyobj;
+    struct {
+        PyObject* pyobj1;
+        PyObject* pyobj2;
+    } pairobj;
 
-#line 100 "src/python/beancount/parser/grammar.h" /* yacc.c:1915  */
+#line 108 "src/python/beancount/parser/grammar.h" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1

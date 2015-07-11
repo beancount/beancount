@@ -4,6 +4,7 @@ import unittest
 import datetime
 
 from beancount.core import getters
+from beancount.core import data
 from beancount.parser import parser
 
 
@@ -14,6 +15,13 @@ TEST_INPUT = """
 2012-02-01 open Expenses:Grocery
 2012-02-01 open Expenses:Coffee
 2012-02-01 open Expenses:Restaurant
+
+2012-02-01 commodity HOOL
+  name: "Hooli Corp."
+  ticker: "NYSE:HOOLI"
+
+2012-02-01 commodity PIPA
+  name: "Pied Piper"
 
 2012-05-18 * "Buying food" #dinner
   Expenses:Restaurant         100 USD
@@ -34,6 +42,11 @@ TEST_INPUT = """
 """
 
 class TestGetters(unittest.TestCase):
+
+    def test_methods_coverage(self):
+        for dispatcher in (getters.GetAccounts,):
+            for klass in data.ALL_DIRECTIVES:
+                self.assertTrue(hasattr(dispatcher, klass.__name__))
 
     def test_get_accounts_use_map(self):
         entries = parser.parse_string(TEST_INPUT)[0]
@@ -63,7 +76,9 @@ class TestGetters(unittest.TestCase):
 
     def test_get_entry_accounts(self):
         entries = parser.parse_string(TEST_INPUT)[0]
-        accounts = getters.get_entry_accounts(entries[5])
+        accounts = getters.get_entry_accounts(next(entry
+                                                   for entry in entries
+                                                   if isinstance(entry, data.Transaction)))
         self.assertEqual({'Assets:US:Cash',
                           'Expenses:Grocery',
                           'Expenses:Restaurant'},
@@ -72,12 +87,12 @@ class TestGetters(unittest.TestCase):
     def test_get_all_tags(self):
         entries = parser.parse_string(TEST_INPUT)[0]
         tags = getters.get_all_tags(entries)
-        self.assertEqual({'books', 'dinner'}, tags)
+        self.assertEqual(['books', 'dinner'], tags)
 
     def test_get_all_payees(self):
         entries = parser.parse_string(TEST_INPUT)[0]
         payees = getters.get_all_payees(entries)
-        self.assertEqual({'Whole Foods Market', 'La Colombe'}, payees)
+        self.assertEqual(['La Colombe', 'Whole Foods Market'], payees)
 
     def test_get_leveln_parent_accounts(self):
         account_names = ['Assets:US:Cash',
@@ -141,4 +156,33 @@ class TestGetters(unittest.TestCase):
         components = getters.get_account_components(entries)
         expected_components = {'US', 'Assets', 'Restaurant', 'Grocery',
                                'Cash', 'Coffee', 'Expenses', 'Credit-Card'}
-        self.assertEqual(expected_components, components)
+        self.assertEqual(sorted(expected_components), components)
+
+    def test_get_commodities_map(self):
+        entries, _, options_map = parser.parse_string(TEST_INPUT)
+        commodity_map = getters.get_commodity_map(entries, options_map)
+        self.assertEqual({'HOOL', 'PIPA', 'USD'}, commodity_map.keys())
+        self.assertTrue(all(isinstance(value, data.Commodity)
+                            for value in commodity_map.values()))
+        self.assertEqual(commodity_map['HOOL'],
+                         next(entry
+                              for entry in entries
+                              if isinstance(entry, data.Commodity)))
+
+    def test_get_values_meta__single(self):
+        entries, _, options_map = parser.parse_string(TEST_INPUT)
+        commodity_map = getters.get_commodity_map(entries, options_map)
+        values = getters.get_values_meta(commodity_map, 'name', default='BLA')
+        self.assertEqual({'USD': 'BLA',
+                          'PIPA': 'Pied Piper',
+                          'HOOL': 'Hooli Corp.'},
+                         values)
+
+    def test_get_values_meta__multi(self):
+        entries, _, options_map = parser.parse_string(TEST_INPUT)
+        commodity_map = getters.get_commodity_map(entries, options_map)
+        values = getters.get_values_meta(commodity_map, 'name', 'ticker')
+        self.assertEqual({'HOOL': ('Hooli Corp.', 'NYSE:HOOLI'),
+                          'PIPA': ('Pied Piper', None),
+                          'USD': (None, None)},
+                         values)

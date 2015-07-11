@@ -23,14 +23,14 @@ from collections import namedtuple
 import re
 
 # Note: this file is mirrorred into ledgerhub. Relative imports only.
-from .amount import ZERO
-from .amount import Decimal
-from .amount import D
-from .amount import Amount
-from .amount import NULL_AMOUNT
-from .amount import amount_mult
-from .amount import CURRENCY_RE
-from .display_context import DEFAULT_FORMATTER
+from beancount.core.number import ZERO
+from beancount.core.number import Decimal
+from beancount.core.number import D
+from beancount.core.amount import Amount
+from beancount.core.amount import NULL_AMOUNT
+from beancount.core.amount import amount_mult
+from beancount.core.amount import CURRENCY_RE
+from beancount.core.display_context import DEFAULT_FORMATTER
 
 
 # Lots are a representations of a commodity with an optional associated cost and
@@ -42,6 +42,18 @@ from .display_context import DEFAULT_FORMATTER
 #  cost: An Amount, or None if this lot has no associated cost.
 #  lot_date: A datetime.date, or None if this lot has no associated date.
 Lot = namedtuple('Lot', 'currency cost lot_date')
+
+
+def lot_currency_pair(lot):
+    """Return the currency pair associated with a lot.
+
+    Args:
+      lot: An instance of Lot.
+    Returns:
+      A pair of a currency string and a cost currency string or None.
+    """
+    return (lot.currency,
+            lot.cost.currency if lot.cost else None)
 
 
 # Lookup for ordering a list of currencies: we want the majors first, then the

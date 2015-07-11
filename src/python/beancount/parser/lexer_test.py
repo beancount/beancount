@@ -9,7 +9,7 @@ import textwrap
 import unittest
 import re
 
-from beancount.core.amount import D
+from beancount.core.number import D
 from beancount.parser import lexer
 
 
@@ -26,21 +26,30 @@ def print_tokens(tokens):
     print('`--------------------------------')
 
 
+def lex_tokens(fun):
+    """Decorator for test functions that will invokve a lexer on them.
+
+    The lexer passes the list of tokens and errors to the test function.
+
+    Args:
+      fun: A test function to be decorated.
+    Returns:
+      The decorated function.
+    """
+    @functools.wraps(fun)
+    def wrapped(self):
+        string = fun.__doc__
+        builder = lexer.LexBuilder()
+        tokens = list(lexer.lex_iter_string(textwrap.dedent(string),
+                                            builder))
+        return fun(self, tokens, builder.errors)
+    wrapped.__doc__ = None
+    return wrapped
+
 class TestLexer(unittest.TestCase):
     """Test output of the lexer."""
 
-    def lex_tokens(fun):
-        @functools.wraps(fun)
-        def wrapped(self):
-            string = fun.__doc__
-            builder = lexer.LexBuilder()
-            # Set default value for test_overlong_string().
-            builder.long_string_maxlines_default = 8
-            tokens = list(lexer.lex_iter_string(textwrap.dedent(string),
-                                                builder))
-            return fun(self, tokens, builder.errors)
-        wrapped.__doc__ = None
-        return wrapped
+    maxDiff = None
 
     @lex_tokens
     def test_lex_iter(self, tokens, errors):
@@ -76,9 +85,9 @@ class TestLexer(unittest.TestCase):
             ('CURRENCY', 5, 'TEST-3', 'TEST-3'),
             ('CURRENCY', 5, 'NT', 'NT'),
             ('EOL', 6, '\n', None),
-            ('STRING', 6, '"Nice dinner at Mermaid Inn"', 'Nice dinner at Mermaid Inn'),
+            ('STRING', 6, '"', 'Nice dinner at Mermaid Inn'),
             ('EOL', 7, '\n', None),
-            ('STRING', 7, '""', ''),
+            ('STRING', 7, '"', ''),
             ('EOL', 8, '\n', None),
             ('NUMBER', 8, '123', D('123')),
             ('NUMBER', 8, '123.45', D('123.45')),
@@ -197,7 +206,7 @@ class TestLexer(unittest.TestCase):
           2013-12-98
         """
         self.assertEqual([
-            ('ERROR', 1, '2013-12-98', None),
+            ('LEX_ERROR', 1, '2013-12-98', None),
             ('EOL', 2, '\n', None),
             ('EOL', 2, '\x00', None),
         ], tokens)
@@ -211,7 +220,7 @@ class TestLexer(unittest.TestCase):
           2013-12-228
         """
         self.assertEqual([
-            ('ERROR', 1, '2013-12-228', None),
+            ('LEX_ERROR', 1, '2013-12-228', None),
             ('EOL', 2, '\n', None),
             ('EOL', 2, '\x00', None),
             ], tokens)
@@ -222,12 +231,12 @@ class TestLexer(unittest.TestCase):
           Assets:A
         """
         self.assertEqual([
-            ('ERROR', 1, 'A', None),
+            ('LEX_ERROR', 1, 'Assets:A', None),
             ('EOL', 2, '\n', None),
             ('EOL', 2, '\x00', None),
         ], tokens)
         self.assertTrue(errors)
-        self.assertTrue(re.search('erroneous token', errors[0].message))
+        self.assertTrue(re.search('Invalid token', errors[0].message))
 
     @lex_tokens
     def test_invalid_directive(self, tokens, errors):
@@ -236,23 +245,7 @@ class TestLexer(unittest.TestCase):
         """
         self.assertEqual([
             ('DATE', 1, '2008-03-01', datetime.date(2008, 3, 1)),
-            ('ERROR', 1, 'c', None),
-            ('ACCOUNT', 1, 'Assets:BestBank:Savings', 'Assets:BestBank:Savings'),
-            ('NUMBER', 1, '2340.19', D('2340.19')),
-            ('CURRENCY', 1, 'USD', 'USD'),
-            ('EOL', 2, '\n', None),
-            ], tokens)
-        self.assertTrue(errors)
-        self.assertTrue(re.search(r'\bcheck\b', errors[0].message))
-
-    @lex_tokens
-    def test_invalid_directive(self, tokens, errors):
-        """\
-          2008-03-01 check Assets:BestBank:Savings 2340.19 USD
-        """
-        self.assertEqual([
-            ('DATE', 1, '2008-03-01', datetime.date(2008, 3, 1)),
-            ('ERROR', 1, 'c', None),
+            ('LEX_ERROR', 1, 'check', None),
             ('ACCOUNT', 1, 'Assets:BestBank:Savings', 'Assets:BestBank:Savings'),
             ('NUMBER', 1, '2340.19', D('2340.19')),
             ('CURRENCY', 1, 'USD', 'USD'),
@@ -262,9 +255,11 @@ class TestLexer(unittest.TestCase):
         self.assertTrue(errors)
         self.assertTrue(re.search(r'\bcheck\b', errors[0].message))
 
-    @lex_tokens
-    def test_overlong_string(self, tokens, errors):
-        """
+    def test_string_too_long_warning(self):
+        # This tests the maximum string length implemented in Python, which is used
+        # to detect input errors.
+        test_input = """
+          ;; This is a typical error that should get detected for long strings.
           2014-01-01 note Assets:Temporary "Bla bla" "
 
           2014-02-01 open Liabilities:US:BankWithLongName:Credit-Card:Account01
@@ -280,8 +275,18 @@ class TestLexer(unittest.TestCase):
 
           2014-02-02 note Assets:Temporary "Bla bla"
         """
-        self.assertTrue(errors)
-        self.assertTrue(re.search(r'Overly long', errors[0].message))
+        builder = lexer.LexBuilder()
+        builder.long_string_maxlines_default = 8
+        list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
+        self.assertLessEqual(1, len(builder.errors))
+        self.assertRegexpMatches(builder.errors[0].message, 'String too long')
+
+    def test_very_long_string(self):
+        # This tests lexing with a string of 256k.
+        test_input = '"' + ('1234567890ABCDEF' * (256*64)) + '"'
+        builder = lexer.LexBuilder()
+        list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
+        self.assertLessEqual(0, len(builder.errors))
 
     @lex_tokens
     def test_no_final_newline(self, tokens, errors):
@@ -295,3 +300,245 @@ class TestLexer(unittest.TestCase):
             ('EOL', 1, '\x00', None),
             ], tokens)
         self.assertFalse(errors)
+
+    @lex_tokens
+    def test_string_escaped(self, tokens, errors):
+        r'''
+          "The Great \"Juju\""
+          "The Great \t\n\r\f\b"
+        '''
+        self.assertEqual([
+            ('EOL', 2, '\n', None),
+            ('STRING', 2, '"', 'The Great "Juju"'),
+            ('EOL', 3, '\n', None),
+            ('STRING', 3, '"', 'The Great \t\n\r\x0c\x08'),
+            ('EOL', 4, '\n', None),
+            ('EOL', 4, '\x00', None),
+            ], tokens)
+        self.assertFalse(errors)
+
+    @lex_tokens
+    def test_string_newline(self, tokens, errors):
+        '"The Great\nJuju"'
+        # Note that this test contains an _actual_ newline, not an escape one as
+        # in the previous test. This should allow us to parse multiline strings.
+        self.assertEqual([
+            ('STRING', 2, '"', 'The Great\nJuju'),
+            ('EOL', 2, '\x00', None),
+            ], tokens)
+        self.assertFalse(errors)
+
+    @lex_tokens
+    def test_string_newline_long(self, tokens, errors):
+        '''
+        "Forty
+        world
+        leaders
+        and
+        hundreds"
+        '''
+        # Note that this test contains an _actual_ newline, not an escape one as
+        # in the previous test. This should allow us to parse multiline strings.
+        self.assertEqual([
+            ('EOL', 2, '\n', None),
+            ('STRING', 6, '"', 'Forty\nworld\nleaders\nand\nhundreds'),
+            ('EOL', 7, '\n', None),
+            ('EOL', 7, '\x00', None),
+            ], tokens)
+        self.assertFalse(errors)
+
+    def test_string_newline_toolong(self):
+        # Testing a string that busts the limits.
+        line = 'a' * 127 + '\n'
+        string = '"' + line * 128 + '"'
+        builder = lexer.LexBuilder()
+        tokens = list(lexer.lex_iter_string(string, builder))
+        self.assertTrue(tokens[0], 'LEX_ERROR')
+        self.assertTrue(tokens[1], 'EOL')
+
+
+class TestLexerErrors(unittest.TestCase):
+    """Test lexer error handling.
+    """
+
+    @lex_tokens
+    def test_lexer_invalid_token(self, tokens, errors):
+        """
+          2000-01-01 open ) USD
+        """
+        self.assertEqual([('EOL', 2, '\n', None),
+                          ('DATE', 2, '2000-01-01', datetime.date(2000, 1, 1)),
+                          ('OPEN', 2, 'open', None),
+                          ('LEX_ERROR', 2, ')', None),
+                          ('CURRENCY', 2, 'USD', 'USD'),
+                          ('EOL', 3, '\n', None),
+                          ('EOL', 3, '\x00', None)],
+                         tokens)
+        self.assertEqual(1, len(errors))
+
+    @lex_tokens
+    def test_lexer_exception__recovery(self, tokens, errors):
+        """
+          2000-13-32 open Assets:Something
+
+          2000-01-02 open Assets:Working
+        """
+        self.assertEqual([('EOL', 2, '\n', None),
+                          ('LEX_ERROR', 2, '2000-13-32', None),
+                          ('OPEN', 2, 'open', None),
+                          ('ACCOUNT', 2, 'Assets:Something', 'Assets:Something'),
+                          ('EOL', 3, '\n', None),
+                          ('EOL', 4, '\n', None),
+                          ('DATE', 4, '2000-01-02', datetime.date(2000, 1, 2)),
+                          ('OPEN', 4, 'open', None),
+                          ('ACCOUNT', 4, 'Assets:Working', 'Assets:Working'),
+                          ('EOL', 5, '\n', None),
+                          ('EOL', 5, '\x00', None)], tokens)
+        self.assertEqual(1, len(errors))
+
+    def test_lexer_builder_returns_none(self):
+        builder = lexer.LexBuilder()
+        def return_none(string):
+            return None
+        setattr(builder, 'STRING', return_none)
+        tokens = list(lexer.lex_iter_string('"Something"', builder))
+        self.assertEqual([('LEX_ERROR', 1, '"', None),
+                          ('EOL', 1, '\x00', None)], tokens)
+        self.assertEqual(1, len(builder.errors))
+        self.assertRegexpMatches(builder.errors[0].message, "None result from lexer")
+
+    @lex_tokens
+    def test_lexer_exception_DATE(self, tokens, errors):
+        """
+          2000-13-32 open Assets:Something
+        """
+        self.assertEqual([('EOL', 2, '\n', None),
+                          ('LEX_ERROR', 2, '2000-13-32', None),
+                          ('OPEN', 2, 'open', None),
+                          ('ACCOUNT', 2, 'Assets:Something', 'Assets:Something'),
+                          ('EOL', 3, '\n', None),
+                          ('EOL', 3, '\x00', None)], tokens)
+        self.assertEqual(1, len(errors))
+
+    def test_lexer_exception_ACCOUNT(self):
+        test_input = """
+          Invalid:Something
+        """
+        builder = lexer.LexBuilder()
+        # This modification is similar to what the options do, and will cause a
+        # ValueError exception to be raised in the lexer.
+        builder.account_regexp = re.compile('(Assets|Liabilities|Equity)'
+                                            '(:[A-Z][A-Za-z0-9\-]+)*$')
+        tokens = list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
+        self.assertEqual([('EOL', 2, '\n', None),
+                          ('LEX_ERROR', 2, 'Invalid:Something', None),
+                          ('EOL', 3, '\n', None),
+                          ('EOL', 3, '\x00', None)], tokens)
+        self.assertEqual(1, len(builder.errors))
+
+    def test_lexer_exception_CURRENCY(self):
+        test_input = """
+          USD
+        """
+        builder = lexer.LexBuilder()
+        builder.commodities = {}  # This will force an exception because the
+                                  # parser calls add() on it.
+        tokens = list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
+        self.assertEqual([('EOL', 2, '\n', None),
+                          ('LEX_ERROR', 2, 'USD', None),
+                          ('EOL', 3, '\n', None),
+                          ('EOL', 3, '\x00', None)], tokens)
+        self.assertEqual(1, len(builder.errors))
+
+    def _run_lexer_with_raising_builder_method(self, test_input, method_name,
+                                               expected_tokens):
+        builder = lexer.LexBuilder()
+        def raise_error(string):
+            raise ValueError
+        setattr(builder, method_name, raise_error)
+        tokens = list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
+        self.assertEqual(expected_tokens, tokens)
+        self.assertEqual(1, len(builder.errors))
+
+    def test_lexer_exception_STRING(self):
+        self._run_lexer_with_raising_builder_method(
+            ' "Something" ', 'STRING',
+            [('LEX_ERROR', 1, '"', None),
+             ('EOL', 1, '\x00', None)])
+
+    def test_lexer_exception_NUMBER(self):
+        self._run_lexer_with_raising_builder_method(
+            ' 100.23 ', 'NUMBER',
+            [('LEX_ERROR', 1, '100.23', None),
+             ('EOL', 1, '\x00', None)])
+
+    def test_lexer_exception_TAG(self):
+        self._run_lexer_with_raising_builder_method(
+            ' #the-tag ', 'TAG',
+            [('LEX_ERROR', 1, '#the-tag', None),
+             ('EOL', 1, '\x00', None)])
+
+    def test_lexer_exception_LINK(self):
+        self._run_lexer_with_raising_builder_method(
+            ' ^the-link ', 'LINK',
+            [('LEX_ERROR', 1, '^the-link', None),
+             ('EOL', 1, '\x00', None)])
+
+    def test_lexer_exception_KEY(self):
+        self._run_lexer_with_raising_builder_method(
+            ' mykey: ', 'KEY',
+            [('LEX_ERROR', 1, 'mykey:', None),
+             ('EOL', 1, '\x00', None)])
+
+
+class TestLexerUnicode(unittest.TestCase):
+
+    test_utf8_string = textwrap.dedent("""
+      2015-05-23 note Assets:Something "a¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼ z"
+    """)
+    expected_utf8_string = "a¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼ z"
+
+    test_latin1_string = textwrap.dedent("""
+      2015-05-23 note Assets:Something "école Floß søllerød"
+    """)
+    expected_latin1_string = "école Floß søllerød"
+
+    # Test providing utf8 bytes to the lexer.
+    def test_bytes_encoded_utf8(self):
+        utf8_bytes = self.test_utf8_string.encode('utf8')
+        builder = lexer.LexBuilder()
+        tokens = list(lexer.lex_iter_string(utf8_bytes, builder))
+
+        # The lexer outputs no errors.
+        self.assertFalse(builder.errors)
+
+        # Check that the lexer correctly parsed the UTF8 string.
+        str_tokens = [token for token in tokens if token[0] == 'STRING']
+        self.assertEqual(self.expected_utf8_string, str_tokens[0][3])
+
+    # Test providing latin1 bytes to the lexer when it is expecting utf8.
+    def test_bytes_encoded_invalid(self):
+        latin1_bytes = self.test_utf8_string.encode('latin1')
+        builder = lexer.LexBuilder()
+        tokens = list(lexer.lex_iter_string(latin1_bytes, builder))
+
+        # The lexer outputs no errors.
+        self.assertFalse(builder.errors)
+
+        # Check that the lexer failed to convert the string but did not cause
+        # other errors.
+        str_tokens = [token for token in tokens if token[0] == 'STRING']
+        self.assertNotEqual(self.expected_utf8_string, str_tokens[0][3])
+
+    # Test providing latin1 bytes to the lexer with an encoding.
+    def test_bytes_encoded_latin1(self):
+        latin1_bytes = self.test_latin1_string.encode('latin1')
+        builder = lexer.LexBuilder()
+        tokens = list(lexer.lex_iter_string(latin1_bytes, builder, encoding='latin1'))
+
+        # The lexer outputs no errors.
+        self.assertFalse(builder.errors)
+
+        # Check that the lexer correctly parsed the latin1 string.
+        str_tokens = [token for token in tokens if token[0] == 'STRING']
+        self.assertEqual(self.expected_latin1_string, str_tokens[0][3])

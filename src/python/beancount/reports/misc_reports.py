@@ -6,6 +6,7 @@ import datetime
 import re
 import io
 import textwrap
+import functools
 
 import dateutil.parser
 
@@ -45,9 +46,10 @@ class ErrorReport(report.HTMLReport):
         file.write('<div id="errors">\n')
         for error in errors:
             file.write('<div class="error">\n')
-            file.write('<a class="source" href="{}">{}</a><br/>\n'.format(
-                self.formatter.render_source(error.source),
-                printer.render_source(error.meta)))
+            if hasattr(error, 'source'):
+                file.write('<a class="source" href="{}">{}</a><br/>\n'.format(
+                    self.formatter.render_source(error.source),
+                    printer.render_source(error.source)))
             file.write('<span class="error-message">{}</span>\n'.format(
                 error.message))
             if error.entry is not None:
@@ -84,8 +86,8 @@ class AccountsReport(report.Report):
 
         # Render to stdout.
         maxlen = max(len(account) for account in open_close)
-        sortkey_fun = account_types.get_account_sort_function(
-            options.get_account_types(options_map))
+        sortkey_fun = functools.partial(account_types.get_account_sort_key,
+                                        options.get_account_types(options_map))
         for account, (open, close) in sorted(open_close.items(),
                                              key=lambda entry: sortkey_fun(entry[0])):
             open_date = open.date if open else ''
@@ -142,18 +144,43 @@ class ActivityReport(report.HTMLReport,
     """Render the last or recent update activity."""
 
     names = ['activity', 'updated']
+    default_format = 'text'
 
     @classmethod
     def add_args(cls, parser):
-        parser.add_argument('--cutoff',
+        parser.add_argument('-d', '--cutoff',
                             action='store', default=None,
                             type=lambda arg_str: dateutil.parser.parse(arg_str).date(),
                             help="Cutoff date where we ignore whatever comes after.")
 
-    def render_real_htmldiv(self, real_root, options_map, file):
-        cutoff = self.args.cutoff
-        errors = []
+    def render_real_text(self, real_root, options_map, file):
+        rows = []
+        account_types = options.get_account_types(options_map)
+        for root in (account_types.assets,
+                     account_types.liabilities):
+            for unused_first_line, unused_cont_line, real_account in realization.dump(
+                    realization.get(real_root, root)):
 
+                last_posting = realization.find_last_active_posting(
+                    real_account.txn_postings)
+
+                # Don't render updates to accounts that have been closed.
+                # Note: this is O(N), maybe we can store this at realization.
+                if last_posting is None or isinstance(last_posting, data.Close):
+                    continue
+
+                last_date = data.get_entry(last_posting).date
+                # Skip this posting if a cutoff date has been specified and the
+                # account has been updated to at least the cutoff date.
+                if self.args.cutoff and self.args.cutoff <= last_date:
+                    continue
+
+                rows.append((real_account.account, last_date))
+
+        table_ = table.create_table(rows, [(0, 'Account'), (1, 'Last Date', '{}'.format)])
+        table.render_table(table_, file, 'text')
+
+    def render_real_htmldiv(self, real_root, options_map, file):
         account_types = options.get_account_types(options_map)
         for root in (account_types.assets,
                      account_types.liabilities):
@@ -165,7 +192,8 @@ class ActivityReport(report.HTMLReport,
             for real_account, cells, row_classes in table:
                 if not isinstance(real_account, realization.RealAccount):
                     continue
-                last_posting = realization.find_last_active_posting(real_account.postings)
+                last_posting = realization.find_last_active_posting(
+                    real_account.txn_postings)
 
                 # Don't render updates to accounts that have been closed.
                 # Note: this is O(N), maybe we can store this at realization.
@@ -176,12 +204,12 @@ class ActivityReport(report.HTMLReport,
 
                 # Skip this posting if a cutoff date has been specified and the
                 # account has been updated to at least the cutoff date.
-                if cutoff and cutoff <= last_date:
+                if self.args.cutoff and self.args.cutoff <= last_date:
                     continue
 
                 # Okay, we need to render this. Append.
                 cells.append(data.get_entry(last_posting).date
-                             if real_account.postings
+                             if real_account.txn_postings
                              else '-')
                 num_cells += 1
 

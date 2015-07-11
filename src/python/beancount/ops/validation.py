@@ -62,22 +62,26 @@ def validate_inventory_booking(entries, unused_options_map):
                 # without allowing booking to a negative position, and if an error
                 # is encountered, catch it and return it.
                 running_balance = balances[posting.account]
-                position_, unused_reducing = running_balance.add_position(posting.position)
+                position_, _ = running_balance.add_position(posting.position)
 
-                # Skip this check if the booking method is set to 'NONE'.
+                # Skip this check if the booking method is set to ignore it.
                 if booking_methods.get(posting.account, None) == 'NONE':
                     continue
 
-                # Check for a negative entry.
-                # FIXME: Maybe this should be using the reducing flag instead.
-                if position_.is_negative_at_cost():
+                # Check if the resulting inventory is mixed, which is not
+                # allowed under the STRICT method.
+                if running_balance.is_mixed():
                     errors.append(
                         ValidationError(
-                            posting.entry.meta,
-                            "Position held at cost goes negative: {}".format(position_),
-                            posting.entry))
+                            entry.meta,
+                            ("Reducing position results in inventory with positive "
+                             "and negative lots: {}").format(position_),
+                            entry))
 
         elif isinstance(entry, data.Open):
+            # These Open directives should always appear beforehand as per the
+            # assumptions on the list of entries, so should never be a problem
+            # finding them. If not, move this loop to a dedicated before.
             booking_methods[entry.account] = entry.booking
 
     return errors
@@ -180,6 +184,38 @@ def validate_duplicate_balances(entries, unused_options_map):
                         entry))
         except KeyError:
             balance_entries[key] = entry
+
+    return errors
+
+
+def validate_duplicate_commodities(entries, unused_options_map):
+    """Check that commodty entries are unique for each commodity.
+
+    Args:
+      entries: A list of directives.
+      unused_options_map: An options map.
+    Returns:
+      A list of new errors, if any were found.
+    """
+    errors = []
+
+    # Mapping of (account, currency, date) to Balance entry.
+    commodity_entries = {}
+    for entry in entries:
+        if not isinstance(entry, data.Commodity):
+            continue
+
+        key = entry.currency
+        try:
+            previous_entry = commodity_entries[key]
+            if previous_entry:
+                errors.append(
+                    ValidationError(
+                        entry.meta,
+                        "Duplicate commodity directives for '{}'".format(key),
+                        entry))
+        except KeyError:
+            commodity_entries[key] = entry
 
     return errors
 
@@ -347,6 +383,7 @@ def validate_check_transaction_balances(entries, options_map):
     # Note: this is a bit slow; we could limit our checks to the original
     # transactions by using the hash function in the loader.
     errors = []
+    default_tolerances = options_map['default_tolerance']
     for entry in entries:
         if isinstance(entry, Transaction):
             # IMPORTANT: This validation is _crucial_ and cannot be skipped.
@@ -359,12 +396,14 @@ def validate_check_transaction_balances(entries, options_map):
             # the plugins) are balanced. See {9e6c14b51a59}.
             #
             # Detect complete sets of postings that have residual balance;
-            balance = interpolate.compute_residual(entry.postings)
-            if not balance.is_small(interpolate.SMALL_EPSILON):
+            residual = interpolate.compute_residual(entry.postings)
+            tolerances = interpolate.infer_tolerances(entry.postings, options_map)
+            if not residual.is_small(tolerances, default_tolerances):
                 errors.append(
                     ValidationError(entry.meta,
-                                    "Transaction does not balance: {}".format(balance),
+                                    "Transaction does not balance: {}".format(residual),
                                     entry))
+
     return errors
 
 
@@ -374,6 +413,7 @@ BASIC_VALIDATIONS = [validate_inventory_booking,
                      validate_active_accounts,
                      validate_currency_constraints,
                      validate_duplicate_balances,
+                     validate_duplicate_commodities,
                      validate_documents_paths,
                      validate_check_transaction_balances]
 

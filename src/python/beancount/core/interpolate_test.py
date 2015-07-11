@@ -1,20 +1,32 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import re
+import textwrap
 import unittest
-import copy
 
+from beancount.core.number import D
 from beancount.core.data import create_simple_posting as P
 from beancount.core.data import create_simple_posting_with_cost as PCost
 from beancount.core import interpolate
 from beancount.core import data
 from beancount.core import inventory
 from beancount.core import amount
+from beancount.core import position
 from beancount.parser import parser
 from beancount.parser import cmptest
+from beancount import loader
 
 
 # True if errors are generated on residual by get_incomplete_postings().
 ERRORS_ON_RESIDUAL = False
+
+
+# A default options map just to provide the tolerances.
+OPTIONS_MAP = {'default_tolerance': {},
+               'inferred_tolerance_multiplier': D('0.5'),
+               'use_legacy_fixed_tolerances': False,
+               'account_rounding': None,
+               'infer_tolerance_from_cost': False}
 
 
 class TestBalance(cmptest.TestCase):
@@ -100,7 +112,8 @@ class TestBalance(cmptest.TestCase):
         for index in 0, 1:
             entry = interpolate.fill_residual_posting(entries[index], account)
             self.assertEqualEntries([entries[index]], [entry])
-            self.assertTrue(interpolate.compute_residual(entry.postings).is_empty())
+            residual = interpolate.compute_residual(entry.postings)
+            self.assertTrue(residual.is_empty())
 
         entry = interpolate.fill_residual_posting(entries[2], account)
         self.assertEqualEntries("""
@@ -111,7 +124,11 @@ class TestBalance(cmptest.TestCase):
           Equity:Rounding        0.0000001 USD
 
         """, [entry])
-        self.assertTrue(interpolate.compute_residual(entry.postings).is_empty())
+        residual = interpolate.compute_residual(entry.postings)
+        # Note: The residual calcualtion ignores postings inserted by the
+        # rounding account.
+        self.assertFalse(residual.is_empty())
+        self.assertEqual(inventory.from_string('-0.0000001 USD'), residual)
 
         entry = interpolate.fill_residual_posting(entries[3], account)
         self.assertEqualEntries("""
@@ -122,14 +139,18 @@ class TestBalance(cmptest.TestCase):
           Equity:Rounding   0.012375 USD
 
         """, [entry])
-        self.assertTrue(interpolate.compute_residual(entry.postings).is_empty())
+        residual = interpolate.compute_residual(entry.postings)
+        # Same as above.
+        self.assertFalse(residual.is_empty())
+        self.assertEqual(inventory.from_string('-0.012375 USD'), residual)
 
     def test_get_incomplete_postings_pathological(self):
         meta = data.new_metadata(__file__, 0)
 
         # Test with no entries.
         entry = data.Transaction(meta, None, None, None, None, None, None, [])
-        new_postings, has_inserted, errors = interpolate.get_incomplete_postings(entry)
+        new_postings, has_inserted, errors, _, __ = interpolate.get_incomplete_postings(
+            entry, OPTIONS_MAP)
         self.assertFalse(has_inserted)
         self.assertEqual(0, len(new_postings))
         self.assertEqual(0, len(errors))
@@ -138,17 +159,21 @@ class TestBalance(cmptest.TestCase):
         entry = data.Transaction(meta, None, None, None, None, None, None, [
             P(None, "Assets:Bank:Checking", "105.50", "USD"),
             ])
-        new_postings, has_inserted, errors = interpolate.get_incomplete_postings(entry)
+        (new_postings, has_inserted, errors,
+         residual, tolerances) = interpolate.get_incomplete_postings(
+            entry, OPTIONS_MAP)
         self.assertFalse(has_inserted)
         self.assertEqual(1, len(new_postings))
         self.assertEqual(1 if ERRORS_ON_RESIDUAL else 0, len(errors))
+        self.assertIsInstance(tolerances, dict)
 
         # Test with two legs that balance.
         entry = data.Transaction(meta, None, None, None, None, None, None, [
             P(None, "Assets:Bank:Checking", "105.50", "USD"),
             P(None, "Assets:Bank:Savings", "-105.50", "USD"),
             ])
-        new_postings, has_inserted, errors = interpolate.get_incomplete_postings(entry)
+        new_postings, has_inserted, errors, _, __ = interpolate.get_incomplete_postings(
+            entry, OPTIONS_MAP)
         self.assertFalse(has_inserted)
         self.assertEqual(2, len(new_postings))
         self.assertEqual(0, len(errors))
@@ -158,7 +183,8 @@ class TestBalance(cmptest.TestCase):
             P(None, "Assets:Bank:Checking", "105.50", "USD"),
             P(None, "Assets:Bank:Savings", "-115.50", "USD"),
             ])
-        new_postings, has_inserted, errors = interpolate.get_incomplete_postings(entry)
+        new_postings, has_inserted, errors, _, __ = interpolate.get_incomplete_postings(
+            entry, OPTIONS_MAP)
         self.assertFalse(has_inserted)
         self.assertEqual(2, len(new_postings))
         self.assertEqual(1 if ERRORS_ON_RESIDUAL else 0, len(errors))
@@ -167,7 +193,8 @@ class TestBalance(cmptest.TestCase):
         entry = data.Transaction(meta, None, None, None, None, None, None, [
             P(None, "Assets:Bank:Checking", None, None),
             ])
-        new_postings, has_inserted, errors = interpolate.get_incomplete_postings(entry)
+        new_postings, has_inserted, errors, _, __ = interpolate.get_incomplete_postings(
+            entry, OPTIONS_MAP)
         self.assertFalse(has_inserted)
         self.assertEqual(0, len(new_postings))
         self.assertEqual(1, len(errors))
@@ -178,7 +205,8 @@ class TestBalance(cmptest.TestCase):
             P(None, "Assets:Bank:Savings", "-105.50", "USD"),
             P(None, "Assets:Bank:Balancing", None, None),
             ])
-        new_postings, has_inserted, errors = interpolate.get_incomplete_postings(entry)
+        new_postings, has_inserted, errors, _, __ = interpolate.get_incomplete_postings(
+            entry, OPTIONS_MAP)
         self.assertTrue(has_inserted)
         self.assertEqual(3, len(new_postings))
         self.assertEqual(1, len(errors))
@@ -190,7 +218,8 @@ class TestBalance(cmptest.TestCase):
             P(None, "Assets:Bank:BalancingA", None, None),
             P(None, "Assets:Bank:BalancingB", None, None),
             ])
-        new_postings, has_inserted, errors = interpolate.get_incomplete_postings(entry)
+        new_postings, has_inserted, errors, _, __ = interpolate.get_incomplete_postings(
+            entry, OPTIONS_MAP)
         self.assertTrue(has_inserted)
         self.assertEqual(3, len(new_postings))
         self.assertEqual(1, len(errors))
@@ -204,10 +233,34 @@ class TestBalance(cmptest.TestCase):
             P(None, "Assets:Bank:Savings", "-115.50", "USD"),
             P(None, "Assets:Bank:Balancing", None, None),
             ])
-        new_postings, has_inserted, errors = interpolate.get_incomplete_postings(entry)
+        new_postings, has_inserted, errors, _, __ = interpolate.get_incomplete_postings(
+            entry, OPTIONS_MAP)
         self.assertTrue(has_inserted)
         self.assertEqual(3, len(new_postings))
         self.assertEqual(0, len(errors))
+        self.assertTrue(interpolate.AUTOMATIC_META in new_postings[2].meta)
+
+    def test_get_incomplete_postings_residual(self):
+        meta = data.new_metadata(__file__, 0)
+
+        # Test with a single auto-posting with a residual.
+        entry = data.Transaction(meta, None, None, None, None, None, None, [
+            P(None, "Assets:Bank:Checking", "105.50", "USD"),
+            P(None, "Assets:Bank:Savings", "-115.501", "USD"),
+            P(None, "Assets:Bank:Balancing", "10.00", "USD"),
+            ])
+        _, __, ___, residual, ____ = interpolate.get_incomplete_postings(entry, OPTIONS_MAP)
+        self.assertEqual(inventory.from_string('-0.001 USD'), residual)
+
+    def test_get_residual_postings(self):
+        residual = inventory.from_string('0.001 USD, -0.00002 CAD')
+        account_rounding = 'Equity:RoundingError'
+        postings = interpolate.get_residual_postings(residual, account_rounding)
+        self.assertEqual(2, len(postings))
+        self.assertEqual([
+            P(None, "Equity:RoundingError", "-0.001", "USD"),
+            P(None, "Equity:RoundingError", "0.00002", "CAD"),
+            ], [posting._replace(meta=None) for posting in postings])
 
     def test_balance_with_large_amount(self):
         meta = data.new_metadata(__file__, 0)
@@ -218,7 +271,8 @@ class TestBalance(cmptest.TestCase):
             P(None, "Income:US:Anthem:InsurancePayments", "-23738.54", "USD"),
             P(None, "Assets:Bank:Checking", "24014.45", "USD"),
             ])
-        new_postings, has_inserted, errors = interpolate.get_incomplete_postings(entry)
+        new_postings, has_inserted, errors, _, __ = interpolate.get_incomplete_postings(
+            entry, OPTIONS_MAP)
         self.assertFalse(has_inserted)
         self.assertEqual(3, len(new_postings))
         self.assertEqual(1 if ERRORS_ON_RESIDUAL else 0, len(errors))
@@ -229,42 +283,150 @@ class TestBalance(cmptest.TestCase):
             P(None, "Income:US:Anthem:InsurancePayments", "0", "USD"),
             P(None, "Income:US:Anthem:InsurancePayments", None, None),
             ])
-        new_postings, has_inserted, errors = interpolate.get_incomplete_postings(entry)
+        new_postings, has_inserted, errors, _, __ = interpolate.get_incomplete_postings(
+            entry, OPTIONS_MAP)
         self.assertFalse(has_inserted)
         self.assertEqual(1, len(new_postings))
         self.assertEqual(0, len(errors))
 
-    def balance_incomplete_postings(self):
+    def test_balance_incomplete_postings__noop(self):
         entry = parser.parse_string("""
           2013-02-23 * "Something"
             Liabilities:CreditCard     -50 USD
             Expenses:Restaurant         50 USD
-        """)[0][0]
-        orig_entry = copy.deepcopy(entry)
-        errors = interpolate.balance_incomplete_postings(entry)
+        """, dedent=True)[0][0]
+        errors = interpolate.balance_incomplete_postings(entry, OPTIONS_MAP)
         self.assertFalse(errors)
-        self.assertEqual(orig_entry, entry)
+        self.assertEqual(2, len(entry.postings))
 
+    def test_balance_incomplete_postings__fill1(self):
         entry = parser.parse_string("""
           2013-02-23 * "Something"
             Liabilities:CreditCard     -50 USD
             Expenses:Restaurant
-        """)[0][0]
-        orig_entry = copy.deepcopy(entry)
-        errors = interpolate.balance_incomplete_postings(entry)
+        """, dedent=True)[0][0]
+        errors = interpolate.balance_incomplete_postings(entry, OPTIONS_MAP)
         self.assertFalse(errors)
-        self.assertEqual(strip_recursive(orig_entry),
-                         strip_recursive(entry))
+        self.assertEqual(2, len(entry.postings))
+        self.assertEqual(entry.postings[1].position, position.from_string('50 USD'))
 
+    def test_balance_incomplete_postings__fill2(self):
         entry = parser.parse_string("""
           2013-02-23 * "Something"
             Liabilities:CreditCard     -50 USD
             Liabilities:CreditCard     -50 CAD
             Expenses:Restaurant
-        """)[0][0]
-        errors = interpolate.balance_incomplete_postings(entry)
+        """, dedent=True)[0][0]
+        errors = interpolate.balance_incomplete_postings(entry, OPTIONS_MAP)
         self.assertFalse(errors)
         self.assertEqual(4, len(entry.postings))
+        self.assertEqual(entry.postings[2].account, 'Expenses:Restaurant')
+        self.assertEqual(entry.postings[3].account, 'Expenses:Restaurant')
+        self.assertEqual(entry.postings[2].position, position.from_string('50 USD'))
+        self.assertEqual(entry.postings[3].position, position.from_string('50 CAD'))
+
+    def test_balance_incomplete_postings__cost(self):
+        entry = parser.parse_string("""
+          2013-02-23 * "Something"
+            Assets:Invest     10 MSFT {43.23 USD}
+            Assets:Cash
+        """, dedent=True)[0][0]
+        errors = interpolate.balance_incomplete_postings(entry, OPTIONS_MAP)
+        self.assertFalse(errors)
+        self.assertEqual(2, len(entry.postings))
+        self.assertEqual(entry.postings[1].account, 'Assets:Cash')
+        self.assertEqual(entry.postings[1].position, position.from_string('-432.30 USD'))
+
+    def test_balance_incomplete_postings__insert_rounding(self):
+        entries, _, options_map = parser.parse_string("""
+          option "account_rounding" "Equity:RoundingError"
+
+          2013-02-23 * "Something"
+            Assets:Invest     1.245 RGAGX {43.23 USD}
+            Assets:Cash      -53.82 USD
+        """, dedent=True)
+        entry = entries[0]
+        errors = interpolate.balance_incomplete_postings(entry, options_map)
+        self.assertFalse(errors)
+        self.assertEqual(3, len(entry.postings))
+        self.assertEqual(entry.postings[2].account, 'Equity:RoundingError')
+        self.assertEqual(entry.postings[2].position, position.from_string('-0.00135 USD'))
+
+    def test_balance_incomplete_postings__quantum(self):
+        entries, _, options_map = parser.parse_string("""
+          option "default_tolerance" "USD:0.01"
+
+          2013-02-23 * "Something"
+            Assets:Invest     1.245 RGAGX {43.23 USD}
+            Assets:Cash
+        """, dedent=True)
+        entry = entries[0]
+        errors = interpolate.balance_incomplete_postings(entry, options_map)
+        self.assertFalse(errors)
+        self.assertEqual(D('-53.82'), entry.postings[1].position.number)
+
+        entries, _, options_map = parser.parse_string("""
+          option "default_tolerance" "USD:0.001"
+
+          2013-02-23 * "Something"
+            Assets:Invest     1.245 RGAGX {43.23 USD}
+            Assets:Cash
+        """, dedent=True)
+        entry = entries[0]
+        errors = interpolate.balance_incomplete_postings(entry, options_map)
+        self.assertFalse(errors)
+        self.assertEqual(D('-53.821'), entry.postings[1].position.number)
+
+    def test_balance_incomplete_postings__rounding_and_quantum(self):
+        entries, _, options_map = parser.parse_string("""
+          option "account_rounding" "Equity:RoundingError"
+          option "default_tolerance" "USD:0.01"
+
+          2013-02-23 * "Something"
+            Assets:Invest     1.245 RGAGX {43.23 USD}
+            Assets:Cash
+        """, dedent=True)
+        entry = entries[0]
+        errors = interpolate.balance_incomplete_postings(entry, options_map)
+        self.assertFalse(errors)
+        self.assertEqual(3, len(entry.postings))
+        self.assertEqual(D('-53.82'), entry.postings[1].position.number)
+        self.assertEqual('Equity:RoundingError', entry.postings[2].account)
+        self.assertEqual(D('-0.00135'), entry.postings[2].position.number)
+
+        entries, _, options_map = parser.parse_string("""
+          option "account_rounding" "Equity:RoundingError"
+          option "default_tolerance" "USD:0.01"
+
+          2014-05-06 * "Buy mutual fund"
+            Assets:Investments:RGXGX       4.27 RGAGX {53.21 USD}
+            Assets:Investments:Cash
+        """, dedent=True)
+        entry = entries[0]
+        errors = interpolate.balance_incomplete_postings(entry, options_map)
+        self.assertFalse(errors)
+        self.assertEqual(3, len(entry.postings))
+        self.assertEqual(D('-227.2100'), entry.postings[1].position.number)
+        self.assertEqual('Equity:RoundingError', entry.postings[2].account)
+        self.assertEqual(D('0.0033'), entry.postings[2].position.number)
+
+    def test_balance_incomplete_postings__rounding_with_error(self):
+        # Here we want to verify that auto-inserting rounding postings does not
+        # disable non-balancing transactions. This is rather an important check!
+        entries, errors, options_map = loader.load_string("""
+          option "account_rounding" "Equity:RoundingError"
+
+          2000-01-01 open Assets:Investments:MutualFunds:XXX
+          2000-01-01 open Assets:Cash:Checking
+          2000-01-01 open Equity:RoundingError
+
+          ;; This transaction does not balance.
+          2002-02-08 * "Mutual fund purchase"
+            Assets:Investments:MutualFunds:XXX    51.031 XXX {97.98 USD}
+            Assets:Cash:Checking                -5000.00 USD
+        """, dedent=True)
+        self.assertEqual(1, len(errors))
+        self.assertTrue(re.search('does not balance', errors[0].message))
 
 
 class TestComputeBalance(unittest.TestCase):
@@ -426,3 +588,304 @@ class TestComputeBalance(unittest.TestCase):
                 break
         balance_before, balance_after = interpolate.compute_entry_context(entries, entry)
         self.assertEqual(balance_before, balance_after)
+
+
+class TestInferTolerances(cmptest.TestCase):
+
+    @parser.parsedoc_noerrors
+    def test_tolerances__no_precision(self, entries, options_map):
+        """
+        2014-02-25 *
+          Assets:Account1       500 USD
+          Assets:Account2      -120 USD
+          Assets:Account3      -380 USD
+        """
+        tolerances = interpolate.infer_tolerances(entries[0].postings, options_map)
+        self.assertEqual({}, tolerances)
+
+    @parser.parsedoc_noerrors
+    def test_tolerances__dubious_precision(self, entries, options_map):
+        """
+        2014-02-25 *
+          Assets:Account1       5.0000 USD
+          Assets:Account2       5.000 USD
+          Assets:Account3       5.00 USD
+          Assets:Account4      -5.0 USD
+          Assets:Account4      -5 USD
+        """
+        tolerances = interpolate.infer_tolerances(entries[0].postings, options_map)
+        self.assertEqual({'USD': D('0.05')}, tolerances)
+
+    @parser.parsedoc_noerrors
+    def test_tolerances__ignore_price(self, entries, options_map):
+        """
+        2014-02-25 *
+          Assets:Account3       5 VHT @ 102.2340 USD
+          Assets:Account4      -511.11 USD
+        """
+        tolerances = interpolate.infer_tolerances(entries[0].postings, options_map)
+        self.assertEqual({'USD': D('0.005')}, tolerances)
+
+    @parser.parsedoc_noerrors
+    def test_tolerances__ignore_cost(self, entries, options_map):
+        """
+        2014-02-25 *
+          Assets:Account3       5 VHT {102.2340 USD}
+          Assets:Account4      -511.11 USD
+        """
+        tolerances = interpolate.infer_tolerances(entries[0].postings, options_map)
+        self.assertEqual({'USD': D('0.005')}, tolerances)
+
+
+    @parser.parsedoc_noerrors
+    def test_tolerances__ignore_cost_and_price(self, entries, options_map):
+        """
+        2014-02-25 *
+          Assets:Account3       5 VHT {102.2340 USD} @ 103.45237239 USD
+          Assets:Account4      -511.11 USD
+        """
+        tolerances = interpolate.infer_tolerances(entries[0].postings, options_map)
+        self.assertEqual({'USD': D('0.005')}, tolerances)
+
+    @parser.parsedoc_noerrors
+    def test_tolerances__cost_and_number_ignored(self, entries, options_map):
+        """
+        2014-02-25 *
+          Assets:Account3       5 VHT {102.2340 USD}
+          Assets:Account4      -511 USD
+        """
+        tolerances = interpolate.infer_tolerances(entries[0].postings, options_map)
+        self.assertEqual({}, tolerances)
+
+    @parser.parsedoc_noerrors
+    def test_tolerances__number_on_cost_used(self, entries, options_map):
+        """
+        2014-02-25 *
+          Assets:Account3       5.111 VHT {102.2340 USD}
+          Assets:Account4      -511 USD
+        """
+        tolerances = interpolate.infer_tolerances(entries[0].postings, options_map)
+        self.assertEqual({'VHT': D('0.0005')}, tolerances)
+        tolerances = interpolate.infer_tolerances(entries[0].postings, options_map, True)
+        self.assertEqual({'VHT': D('0.0005'), 'USD': D('0.051117')}, tolerances)
+
+    @parser.parsedoc_noerrors
+    def test_tolerances__number_on_cost_used_overrides(self, entries, options_map):
+        """
+        2014-02-25 *
+          Assets:Account3       5.111 VHT {102.2340 USD}
+          Assets:Account4      -511.0 USD
+        """
+        tolerances = interpolate.infer_tolerances(entries[0].postings, options_map)
+        self.assertEqual({'VHT': D('0.0005'), 'USD': D('0.05')}, tolerances)
+        tolerances = interpolate.infer_tolerances(entries[0].postings, options_map, True)
+        self.assertEqual({'VHT': D('0.0005'), 'USD': D('0.051117')}, tolerances)
+
+    def test_tolerances__number_on_cost_fail_to_succ(self):
+        # An example of a transaction that would fail without the inferred
+        # tolerances and succeed with them.
+        input_string = textwrap.dedent("""
+          plugin "beancount.plugins.auto_accounts"
+
+          2014-02-25 *
+            Assets:Account3       5.111 VHT {1000.00 USD}
+            Assets:Account4      -5110.80 USD
+        """)
+        input_option = textwrap.dedent("""
+          option "infer_tolerance_from_cost" "True"
+        """)
+
+        entries, errors, options_map = loader.load_string(input_string)
+        self.assertFalse(options_map["infer_tolerance_from_cost"])
+        self.assertEqual(1, len(errors))
+        self.assertTrue(re.match('Transaction does not balance:.*0.20000 USD',
+                                 errors[0].message))
+
+        entries, errors, options_map = loader.load_string(input_option + input_string)
+        self.assertTrue(options_map["infer_tolerance_from_cost"])
+        self.assertFalse(errors)
+
+    @parser.parsedoc_noerrors
+    def test_tolerances__minium_on_costs(self, entries, options_map):
+        """
+        2014-02-25 *
+          Assets:Account3       5.11111   VHT {102.2340 USD}
+          Assets:Account3       5.111111  VHT {102.2340 USD}
+          Assets:Account3       5.1111111 VHT {102.2340 USD}
+          Assets:Account4  -1564.18 USD
+        """
+        tolerances = interpolate.infer_tolerances(entries[0].postings, options_map)
+        self.assertEqual({'VHT': D('0.000005'), 'USD': D('0.005')}, tolerances)
+
+    @parser.parsedoc_noerrors
+    def test_tolerances__with_inference(self, entries, options_map):
+        """
+        2014-02-25 *
+          Assets:Account3       5.1111   VHT {102.2340 USD}
+          Assets:Account4
+        """
+        tolerances = interpolate.infer_tolerances(entries[0].postings, options_map)
+        self.assertEqual({'VHT': D('0.00005')},
+                         tolerances)
+        tolerances = interpolate.infer_tolerances(entries[0].postings, options_map, True)
+        self.assertEqual({'VHT': D('0.00005'), 'USD': D('0.005111700')},
+                         tolerances)
+
+    @parser.parsedoc_noerrors
+    def test_tolerances__capped_inference(self, entries, options_map):
+        """
+        2014-02-25 *
+          Assets:Account3       5.1   VHT {102.2340 USD}
+          Assets:Account4
+        """
+        tolerances = interpolate.infer_tolerances(entries[0].postings, options_map)
+        self.assertEqual({'VHT': D('0.05')},
+                         tolerances)
+        tolerances = interpolate.infer_tolerances(entries[0].postings, options_map, True)
+        self.assertEqual({'VHT': D('0.05'), 'USD': D('0.5')},
+                         tolerances)
+
+    @loader.loaddoc
+    def test_tolerances__multiplier(self, entries, errors, options_map):
+        """
+        option "inferred_tolerance_multiplier" "1.1"
+
+        1970-01-01 open Assets:B1
+        1970-01-01 open Assets:B2
+
+        2010-01-01 * "Balances"
+          Assets:B1      -200.00 EUR
+          Assets:B2       200.011 EUR
+
+        2010-01-02 * "Does not balance"
+          Assets:B1      -200.00 EUR
+          Assets:B2       200.012 EUR
+        """
+        self.assertEqual(1, len(errors))
+        self.assertTrue(errors[0].entry is entries[-1])
+
+    @parser.parsedoc_noerrors
+    def test_tolerances__legacy(self, entries, _):
+        """
+        ;; issue/47
+        option "use_legacy_fixed_tolerances" "TRUE"
+
+        1970-01-01 open Assets:B1
+        1970-01-01 open Assets:B2
+
+        2010-01-01 * "something"
+          Assets:B1      -200 EUR
+          Assets:B2
+        """
+
+    @loader.loaddoc
+    def test_tolerances__bug(self, entries, errors, _):
+        """
+        option "operating_currency" "USD"
+        option "infer_tolerance_from_cost" "TRUE"
+
+        2000-01-01 open Assets:CAAPX
+        2000-01-01 open Income:Match
+
+        2006-11-02 * "Misc"
+          Assets:CAAPX  -1.729 CAAPX {{521.67787 USD}} @ 49.65 USD
+          Income:Match
+        """
+        self.assertFalse(errors)
+
+    @loader.loaddoc
+    def test_tolerances__bug53a(self, entries, errors, _):
+        """
+        option "operating_currency" "USD"
+        option "infer_tolerance_from_cost" "TRUE"
+
+        2000-01-01 open Assets:Investments:VWELX
+        2000-01-01 open Assets:Investments:Cash
+
+        2006-01-17 * "Plan Contribution"
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:Cash -575.00 USD
+        """
+        self.assertFalse(errors)
+
+    @loader.loaddoc
+    def test_tolerances__bug53b(self, entries, errors, _):
+        """
+        option "operating_currency" "USD"
+        option "infer_tolerance_from_cost" "TRUE"
+
+        2000-01-01 open Assets:Investments:VWELX
+        2000-01-01 open Assets:Investments:Cash
+
+        2006-01-02 * "Plan Contribution"
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:Cash -575.00 USD
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:Cash -575.00 USD
+
+        2006-01-03 * "Plan Contribution"
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:Cash -575.00 USD
+          Assets:Investments:Cash -575.00 USD
+          Assets:Investments:Cash -575.00 USD
+
+        2006-01-03 * "Plan Contribution"
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:Cash -1725.00 USD
+
+        2006-01-16 * "Plan Contribution"
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:Cash -9200.00 USD
+        """
+        transactions = [entry
+                        for entry in entries
+                        if isinstance(entry, data.Transaction)]
+        self.assertEqual({'USD': D('0.03096'), 'VWELX': D('0.0005')},
+                         transactions[0].meta['__tolerances__'])
+        self.assertEqual({'USD': D('0.04644'), 'VWELX': D('0.0005')},
+                         transactions[1].meta['__tolerances__'])
+        self.assertEqual({'USD': D('0.04644'), 'VWELX': D('0.0005')},
+                         transactions[2].meta['__tolerances__'])
+        self.assertEqual({'USD': D('0.247680'), 'VWELX': D('0.0005')},
+                         transactions[3].meta['__tolerances__'])
+        self.assertFalse(errors)
+
+    @loader.loaddoc
+    def test_tolerances__bug53_price(self, entries, errors, _):
+        """
+        option "operating_currency" "USD"
+        option "infer_tolerance_from_cost" "TRUE"
+
+        2000-01-01 open Assets:Investments:VWELX
+        2000-01-01 open Assets:Investments:Cash
+
+        2006-01-02 * "Plan Contribution"
+          Assets:Investments:VWELX 18.572 VWELX {30.96 USD}
+          Assets:Investments:VWELX 18.572 VWELX @ 20.40 USD
+          Assets:Investments:Cash
+        """
+        transactions = [entry
+                        for entry in entries
+                        if isinstance(entry, data.Transaction)]
+        self.assertEqual({'USD': D('0.02568'), 'VWELX': D('0.0005')},
+                         transactions[0].meta['__tolerances__'])
+        self.assertFalse(errors)

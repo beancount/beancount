@@ -20,7 +20,7 @@ DocumentError = namedtuple('DocumentError', 'source message entry')
 
 
 def process_documents(entries, options_map):
-    """Check files for document directives and find documents automatically.
+    """Check files for document directives and create documents directives automatically.
 
     Args:
       entries: A list of all directives parsed from the file.

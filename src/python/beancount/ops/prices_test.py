@@ -4,7 +4,7 @@ import unittest
 import datetime
 import re
 
-from beancount.core.amount import D
+from beancount.core.number import D
 from beancount.core import inventory
 from beancount.core import amount
 from beancount.ops import prices

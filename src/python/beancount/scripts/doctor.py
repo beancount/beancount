@@ -5,6 +5,7 @@ the name of debugging.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import collections
 import os
 import re
 import sys
@@ -12,18 +13,10 @@ import argparse
 import logging
 from os import path
 
-from beancount.parser import parser
-from beancount.parser import lexer
-from beancount.parser import options
-from beancount.parser import printer
-from beancount.core import compare
-from beancount.core import data
-from beancount.core import getters
-from beancount import loader
+# Note: Because of the presence of checkdeps, we have to operate under the
+# assumption that not all third-party dependencies are installed. Import what
+# you need as late as possible.
 from beancount.utils import misc_utils
-from beancount.scripts import directories
-from beancount.scripts import checkdeps
-from beancount.reports import context
 
 
 def do_lex(filename, unused_args):
@@ -32,6 +25,7 @@ def do_lex(filename, unused_args):
     Args:
       filename: A string, the Beancount input filename.
     """
+    from beancount.parser import lexer
     for token, lineno, text, obj in lexer.lex_iter(filename):
         sys.stdout.write('{:12} {:6d} {}\n'.format(
             '(None)' if token is None else token, lineno, repr(text)))
@@ -45,6 +39,7 @@ def do_parse(filename, unused_args):
     Args:
       filename: A string, the Beancount input filename.
     """
+    from beancount.parser import parser
     entries, errors, _ = parser.parse_file(filename, yydebug=1)
 
 
@@ -58,6 +53,11 @@ def do_roundtrip(filename, unused_args):
     Args:
       filename: A string, the Beancount input filename.
     """
+    from beancount.parser import parser
+    from beancount.parser import printer
+    from beancount.core import compare
+    from beancount import loader
+
     round1_filename = round2_filename = None
     try:
         logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
@@ -80,7 +80,6 @@ def do_roundtrip(filename, unused_args):
         if errors:
             print(',----------------------------------------------------------------------')
             printer.print_errors(errors, file=sys.stdout)
-            print(error_text)
             print('`----------------------------------------------------------------------')
 
         logging.info("Print what you read to yet another file")
@@ -126,8 +125,9 @@ def do_directories(filename, args):
         case will be interpreted as the names of root directories to validate against
         the accounts in the given ledger.
     """
+    from beancount import loader
+    from beancount.scripts import directories
     entries, _, __ = loader.load_file(filename)
-
     directories.validate_directories(entries, args)
 
 
@@ -137,7 +137,20 @@ def do_list_options(*unused_args):
     Args:
       unused_args: Ignored.
     """
+    from beancount.parser import options
     print(options.list_options())
+
+
+def do_print_options(filename, *args):
+    """Print out the actual options parsed from a file.
+
+    Args:
+      unused_args: Ignored.
+    """
+    from beancount import loader
+    _, __, options_map = loader.load_file(filename)
+    for key, value in sorted(options_map.items()):
+        print('{}: {}'.format(key, value))
 
 
 def get_commands():
@@ -161,12 +174,10 @@ def do_checkdeps(*unused_args):
     Args:
       unused_args: Ignored.
     """
-    print("Dependencies:")
-    for package, version, sufficient in checkdeps.check_dependencies():
-        print("  {:16}: {} {}".format(
-            package,
-            version or 'NOT INSTALLED',
-            "(INSUFFICIENT)" if version and not sufficient else ""))
+    from beancount.scripts import checkdeps
+    checkdeps.list_dependencies(sys.stdout)
+    print('')
+    print('Use "pip3 install <package>" to install new packages.')
 
 
 def do_context(filename, args):
@@ -177,6 +188,9 @@ def do_context(filename, args):
       args: A tuple of the rest of arguments. We're expecting the first argument
         to be an integer as a string.
     """
+    from beancount.reports import context
+    from beancount import loader
+
     # Parse the arguments, get the line number.
     if len(args) != 1:
         raise SystemExit("Missing line number argument.")
@@ -186,8 +200,74 @@ def do_context(filename, args):
     entries, errors, options_map = loader.load_file(filename)
 
     dcontext = options_map['display_context']
-    str_context = context.render_entry_context(entries, dcontext, filename, lineno)
+
+    # Note: Make sure to use the absolute filename used by the parser to resolve
+    # the file.
+    str_context = context.render_entry_context(entries, options_map, dcontext,
+                                               options_map['filename'], lineno)
     sys.stdout.write(str_context)
+
+
+RenderError = collections.namedtuple('RenderError', 'source message entry')
+
+
+def do_linked(filename, args):
+    """Print out a list of transactions linked to the one at the given line.
+
+    Args:
+      filename: A string, which consists in the filename.
+      args: A tuple of the rest of arguments. We're expecting the first argument
+        to be an integer as a string.
+    """
+    from beancount.parser import options
+    from beancount.parser import printer
+    from beancount.core import account_types
+    from beancount.core import inventory
+    from beancount.core import data
+    from beancount.core import realization
+    from beancount import loader
+
+    # Parse the arguments, get the line number.
+    if len(args) != 1:
+        raise SystemExit("Missing line number argument.")
+    lineno = int(args[0])
+
+    # Load the input file.
+    entries, errors, options_map = loader.load_file(filename)
+
+    # Find the closest entry.
+    closest_entry = data.find_closest(entries, filename, lineno)
+
+    # Find its links.
+    links = closest_entry.links
+    if not links:
+        return
+
+    # Find all linked entries.
+    linked_entries = [entry
+                      for entry in entries
+                      if (isinstance(entry, data.Transaction) and
+                          entry.links and
+                          entry.links & links)]
+
+    # Render linked entries (in date order) as errors (for Emacs).
+    errors = [RenderError(entry.meta, '', entry)
+              for entry in linked_entries]
+    printer.print_errors(errors)
+
+    # Print out balances.
+    real_root = realization.realize(linked_entries)
+    realization.dump_balances(real_root, file=sys.stdout)
+
+    # Print out net income change.
+    acctypes = options.get_account_types(options_map)
+    net_income = inventory.Inventory()
+    for real_node in realization.iter_children(real_root):
+        if account_types.is_income_statement_account(real_node.account, acctypes):
+            net_income.add_inventory(real_node.balance)
+
+    print()
+    print('Net Income: {}'.format(-net_income))
 
 
 def do_missing_open(filename, args):
@@ -201,6 +281,11 @@ def do_missing_open(filename, args):
       args: A tuple of the rest of arguments. We're expecting the first argument
         to be an integer as a string.
     """
+    from beancount.parser import printer
+    from beancount.core import data
+    from beancount.core import getters
+    from beancount import loader
+
     entries, errors, options_map = loader.load_file(filename)
 
     # Get accounts usage and open directives.
@@ -215,7 +300,7 @@ def do_missing_open(filename, args):
                           None, None))
 
     dcontext = options_map['display_context']
-    printer.print_entries(data.sort(new_entries), dcontext)
+    printer.print_entries(data.sorted(new_entries), dcontext)
 
 
 def do_display_context(filename, args):
@@ -226,29 +311,46 @@ def do_display_context(filename, args):
       args: A tuple of the rest of arguments. We're expecting the first argument
         to be an integer as a string.
     """
+    from beancount import loader
     entries, errors, options_map = loader.load_file(filename)
     dcontext = options_map['display_context']
     sys.stdout.write(str(dcontext))
 
 
+def do_validate_html(directory, args):
+    """Validate all the HTML files under a directory hierachy.
+
+    Args:
+      directory: A string, the root directory whose contents to validte.
+      args: A tuple of the rest of arguments.
+    """
+    from beancount.web import scrape
+    files, missing, empty = scrape.validate_local_links_in_dir(directory)
+    logging.info('%d files processed', len(files))
+    for target in missing:
+        logging.error('Missing %s', target)
+    for target in empty:
+        logging.error('Empty %s', target)
+
+
 def main():
     commands_doc = ('Available Commands:\n' +
                     '\n'.join('  {:24}: {}'.format(*x) for x in get_commands()))
-    parser = argparse.ArgumentParser(description=__doc__,
-                                     formatter_class=argparse.RawTextHelpFormatter,
-                                     epilog=commands_doc)
-    parser.add_argument('command', action='store',
-                        help="The command to run.")
-    parser.add_argument('filename', nargs='?', help='Beancount input filename.')
-    parser.add_argument('rest', nargs='*', help='All remaining arguments.')
-    opts = parser.parse_args()
+    argparser = argparse.ArgumentParser(description=__doc__,
+                                        formatter_class=argparse.RawTextHelpFormatter,
+                                        epilog=commands_doc)
+    argparser.add_argument('command', action='store',
+                           help="The command to run.")
+    argparser.add_argument('filename', nargs='?', help='Beancount input filename.')
+    argparser.add_argument('rest', nargs='*', help='All remaining arguments.')
+    opts = argparser.parse_args()
 
     # Run the command.
     try:
         command_name = "do_{}".format(opts.command.replace('-', '_'))
         function = globals()[command_name]
     except KeyError:
-        parser.error("Invalid command name: '{}'".format(opts.command))
+        argparser.error("Invalid command name: '{}'".format(opts.command))
     else:
         function(opts.filename, opts.rest)
 

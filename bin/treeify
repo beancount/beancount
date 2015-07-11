@@ -20,6 +20,21 @@ import sys
 from pprint import pprint
 
 
+# Default regular expressions used for splitting.
+DEFAULT_PATTERN = (r"(Assets|Liabilities|Equity|Income|Expenses)"
+                   r"(:[A-Z][A-Za-z0-9-_']*)*")
+DEFAULT_DELIMITER = "[ \t]+"
+DEFAULT_SPLITTER = ":"
+
+# Regular expressions used for loose accounts.
+LOOSE_PATTERN = r"\b([A-Za-z0-9-_']+)(:[A-Za-z0-9-_']+)+\b"
+LOOSE_SPLITTER = r":"
+
+# Regular expressions used for filenames matching.
+FILENAME_PATTERN = r"([^ \t]*)(/[^ \t]*)+"
+FILENAME_SPLITTER = r"/"
+
+
 def find_column(lines, pattern, delimiter):
     """Find a valid column with hierarchical data in the text lines.
 
@@ -43,29 +58,39 @@ def find_column(lines, pattern, delimiter):
     beginnings = collections.defaultdict(list)
     pattern_and_whitespace = "({})(?P<ws>{}.|$)".format(pattern, delimiter)
     for no, line in enumerate(lines):
+        #line = line.rstrip('\n')
         for match in re.finditer(pattern_and_whitespace, line):
             beginnings[match.start()].append((no, line, match))
 
-    # Check if each column found is valid, that is, if the maximum of the
-    # following text overlaps with one of the column's text. This is important:
-    # We assume that a column will have been formatted to full width and that no
-    # text following the line overlap with the column, even in its trailing
-    # whitespace. In other words, this is a violation because "10,990.74"
-    # overlaps with the end of "Insurance" and not to be recognized as a valid
-    # column:
+    # For each potential column found, verify that it is valid. A valid column
+    # will have the maximum of its content text not overlap with any of the
+    # following text. We assume that a column will have been formatted to full
+    # width and that no text following the line overlap with the column, even in
+    # its trailing whitespace.
+    #
+    # In other words, the following example is a violation because "10,990.74"
+    # overlaps with the end of "Insurance" and so this would not be recognized
+    # as a valid column:
     #
     # Expenses:Food:Restaurant     10,990.74 USD
     # Expenses:Health:Dental:Insurance   208.80 USD
     #
     for leftmost_column, column_matches in beginnings.items():
+
+        # Compute the location of the rightmost column of text.
         rightmost_column = max(match.end(1) for _, _, match in column_matches)
+
+        # Compute the leftmost location of the content following the column text
+        # and past its whitespace.
         following_column = min(match.end() if match.group('ws') else 10000
-                               for _, _, match in column_matches) - 1
+                               for _, _, match in column_matches)
+
         if rightmost_column < following_column:
             # We process only the very first match.
             return_matches = [(no, match.group(1).rstrip())
                               for no, _, match in column_matches]
             return return_matches, leftmost_column, rightmost_column
+
 
 
 class Node(list):
@@ -236,19 +261,21 @@ def main():
                         help='Name of the file to write (default: stdout)')
 
     parser.add_argument('-r', '--pattern', action='store',
-                        default=(r"(Assets|Liabilities|Equity|Income|Expenses)"
-                                 r"(:[A-Z][A-Za-z0-9-_']*)*"),
-                        help="Pattern for repeatable components")
+                        default=None,
+                        help=("Pattern for repeatable components "
+                              "(default: \"{}\")".format(DEFAULT_PATTERN)))
 
     parser.add_argument('-d', '--delimiter', action='store',
-                        default=r"[ \t]+",
+                        default=DEFAULT_DELIMITER,
                         help=("Delimiter pattern to detect the end of a column text. "
                               "If your pattens contain strings, you may want to set this "
-                              "to a longer string, like ' {2,}'"))
+                              "to a longer string, like ' {{2,}}' "
+                              "(default: \"{}\")").format(DEFAULT_DELIMITER))
 
     parser.add_argument('-s', '--split', action='store',
-                        default=":",
-                        help="Pattern splitting into components")
+                        default=DEFAULT_SPLITTER,
+                        help="Pattern splitting into components (default: \"{}\")".format(
+                            DEFAULT_SPLITTER))
 
     parser.add_argument('-F', '--filenames', action='store_true',
                         help="Use pattern and split suitable for filenames")
@@ -267,15 +294,18 @@ def main():
                                           args.pattern)]) > 1:
         parser.error("Conflicted pattern options")
 
+    if args.pattern is None:
+        args.pattern = DEFAULT_PATTERN
+
     if args.filenames:
         # Note: you could spit an error if the other options are set: "you may
         # not use --filenames and specify a pattern or split" or somesuch.
-        args.pattern = r"([^ \t]*)(/[^ \t]*)+"
-        args.split = r"/"
+        args.pattern = FILENAME_PATTERN
+        args.split = FILENAME_SPLITTER
 
     elif args.loose_accounts:
-        args.pattern = r"\b([A-Z][A-Za-z0-9-_']*)(:[A-Z][A-Za-z0-9-_']*)+\b"
-        args.split = r":"
+        args.pattern = LOOSE_PATTERN
+        args.split = LOOSE_SPLITTER
 
     # Open input and output files.
     input_file = open(args.input, 'r') if args.input else sys.stdin

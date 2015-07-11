@@ -6,12 +6,12 @@ import io
 from beancount.reports import holdings_reports
 from beancount.reports import table
 from beancount.ops import holdings
-from beancount.loader import loaddoc
+from beancount import loader
 
 
 class TestHoldingsReports(unittest.TestCase):
 
-    @loaddoc
+    @loader.loaddoc
     def setUp(self, entries, errors, options_map):
         """
         2014-01-01 open Assets:Bank1
@@ -70,9 +70,3 @@ class TestHoldingsReports(unittest.TestCase):
         self.assertEqual(2, len(holdings_list))
         self.assertTrue(isinstance(holdings_list, list))
         self.assertTrue(isinstance(holdings_list[0], holdings.Holding))
-
-    def test_report_export_portfolio(self):
-        report_ = holdings_reports.ExportPortfolioReport.from_args([])
-        format_ = 'ofx'
-        output = report_.render(self.entries, self.errors, self.options_map, format_)
-        self.assertTrue(output)

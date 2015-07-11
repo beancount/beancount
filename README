@@ -42,8 +42,7 @@ Download & Installation
 You can obtain the source code from a Mercurial repository on my server or from
 BitBucket:
 
-  | http://hg.furius.ca/public/beancount/
-  | https://bitbucket.org/blais/beancount/
+  | http://bitbucket.org/blais/beancount/
 
 See the `Installing Beancount`__ document for more details.
 
@@ -55,13 +54,13 @@ Filing Bugs
 
 Tickets can be filed at on the BitBucket project page:
 
-  https://bitbucket.org/blais/beancount/issues
+  http://bitbucket.org/blais/beancount/issues
 
 
 Copyright and License
 =====================
 
-Copyright (C) 2007-2014  Martin Blais.  All Rights Reserved.
+Copyright (C) 2007-2015  Martin Blais.  All Rights Reserved.
 
 This code is distributed under the `GNU General Public License <COPYING>`_;
 

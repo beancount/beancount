@@ -7,20 +7,6 @@ from beancount.utils import test_utils
 from beancount.scripts import report
 
 
-def search_words(words, line):
-    """Search for a sequence of words in a line.
-
-    Args:
-      words: A list of strings, the words to look for, or a space-separated string.
-      line: A string, the line to search into.
-    Returns:
-      A MatchObject, or None.
-    """
-    if isinstance(words, str):
-        words = words.split()
-    return re.search('.*'.join(r'\b{}\b'.format(word) for word in words), line)
-
-
 class TestHelpReports(test_utils.TestCase):
 
     def test_get_list_report_string(self):
@@ -72,9 +58,9 @@ class TestScriptPositions(test_utils.TestCase):
         with test_utils.capture() as stdout:
             test_utils.run_with_args(report.main, [filename, 'holdings'])
         output = stdout.getvalue()
-        self.assertTrue(search_words('Assets:Account1 1,000.00 USD', output))
-        self.assertTrue(search_words('Assets:Account2    30.00 BOOG', output))
-        self.assertTrue(search_words('Assets:Account3   800.00 EUR', output))
+        self.assertTrue(test_utils.search_words('Assets:Account1 1,000.00 USD', output))
+        self.assertTrue(test_utils.search_words('Assets:Account2    30.00 BOOG', output))
+        self.assertTrue(test_utils.search_words('Assets:Account3   800.00 EUR', output))
 
     @test_utils.docfile
     def test_print_trial(self, filename):
@@ -100,12 +86,14 @@ class TestScriptPositions(test_utils.TestCase):
     @test_utils.docfile
     def test_print_trial_empty(self, filename):
         ""
-        with test_utils.capture() as stdout:
+        with test_utils.capture():
             test_utils.run_with_args(report.main, [filename, 'trial'])
 
     @test_utils.docfile
     def test_all_prices(self, filename):
         """
+        plugin "beancount.plugins.implicit_prices"
+
         2014-01-01 open Assets:Account1
         2014-01-01 open Income:Misc
 
@@ -146,7 +134,7 @@ class TestScriptPositions(test_utils.TestCase):
     @test_utils.docfile
     def test_list_accounts_empty(self, filename):
         ""
-        with test_utils.capture() as stdout:
+        with test_utils.capture():
             test_utils.run_with_args(report.main, [filename, 'accounts'])
 
     def test_export_portfolio_on_example(self):

@@ -1,13 +1,12 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import unittest
-import io
 import re
 from decimal import Decimal
 
-from . import display_context
-from .display_context import Precision
-from .display_context import Align
+from beancount.core import display_context
+from beancount.core.display_context import Precision
+from beancount.core.display_context import Align
 
 
 def decimalize(number_list):
@@ -68,8 +67,9 @@ class TestDisplayContextNatural(DisplayContextBaseTest):
                                  noinit=True)
 
     def test_natural_no_clear_mode(self):
-        self.assertFormatNumbers(['1.2345', '764', '-7409.01', '0.00000125'],
-                                 ['1.23450000', '764.00000000', '-7409.01000000', '0.00000125'])
+        self.assertFormatNumbers(
+            ['1.2345', '764', '-7409.01', '0.00000125'],
+            ['1.23450000', '764.00000000', '-7409.01000000', '0.00000125'])
 
     def test_natural_clear_mode(self):
         self.assertFormatNumbers(['1.2345', '1.23', '234.26', '38.019'],
@@ -244,3 +244,17 @@ class TestDisplayContextDot(DisplayContextBaseTest):
              '    0.01',
              '    0.02',
              '    0.00'], commas=True)
+
+
+class TestDisplayContextQuantize(unittest.TestCase):
+
+    def test_quantize_basic(self):
+        dcontext = display_context.DisplayContext()
+        dcontext.update(Decimal('1.23'), 'USD')
+        self.assertEqual(Decimal('3.23'),
+                         dcontext.quantize(Decimal('3.23253343'), 'USD'))
+
+        dcontext.update(Decimal('1.2301'), 'USD')
+        dcontext.update(Decimal('1.2302'), 'USD')
+        self.assertEqual(Decimal('3.2325'),
+                         dcontext.quantize(Decimal('3.23253343'), 'USD'))

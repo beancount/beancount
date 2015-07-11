@@ -49,14 +49,6 @@ class TestValidateDuplicates(cmptest.TestCase):
         self.checkDuplicates(entries, errors, options_map)
 
     @parser.parsedoc
-    def test_validate_no_duplicates__balance(self, entries, errors, options_map):
-        """
-        2000-01-01 balance Assets:Checking 201.00 USD
-        2000-01-01 balance Assets:Checking 201.00 USD
-        """
-        self.checkDuplicates(entries, errors, options_map)
-
-    @parser.parsedoc
     def test_validate_no_duplicates__transaction(self, entries, errors, options_map):
         """
         2014-06-24 * "Go negative from zero"

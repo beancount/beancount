@@ -48,7 +48,7 @@ class TestCase(unittest.TestCase):
                 printer.print_errors(errors, file=oss)
                 raise TestError("Unexpected errors in actual: {}".format(oss.getvalue()))
         else:
-            assert isinstance(expected_entries, list)
+            assert isinstance(actual_entries, list)
 
         same, expected_missing, actual_missing = compare.compare_entries(expected_entries,
                                                                          actual_entries)
@@ -56,12 +56,12 @@ class TestCase(unittest.TestCase):
             assert expected_missing or actual_missing
             oss = io.StringIO()
             if expected_missing:
-                oss.write("Missing from from expected set:\n\n")
+                oss.write("Present in expected set and not in actual set:\n\n")
                 for entry in expected_missing:
                     oss.write(printer.format_entry(entry))
                     oss.write('\n')
             if actual_missing:
-                oss.write("Missing from from actual set:\n\n")
+                oss.write("Present in actual set and not in expected set:\n\n")
                 for entry in actual_missing:
                     oss.write(printer.format_entry(entry))
                     oss.write('\n')

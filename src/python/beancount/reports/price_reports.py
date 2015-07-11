@@ -10,7 +10,9 @@ from beancount.reports import gviz
 from beancount.parser import printer
 from beancount.core import data
 from beancount.core import amount
+from beancount.core import getters
 from beancount.ops import prices
+from beancount.ops import lifetimes
 
 
 class CommoditiesReport(report.TableReport):
@@ -24,6 +26,36 @@ class CommoditiesReport(report.TableReport):
         return table.create_table([(base_quote,)
                                    for base_quote in sorted(price_map.forward_pairs)],
                                   [(0, "Base/Quote", self.formatter.render_commodity)])
+
+
+class CommodityLifetimes(report.TableReport):
+    """Print out a list of lifetimes of each commodity."""
+
+    names = ['lifetimes']
+    default_format = 'text'
+
+    @classmethod
+    def add_args(cls, parser):
+        parser.add_argument('-c', '--compress-days', type=int,
+                            action='store', default=None,
+                            help="The number of unused days to allow for continuous usage.")
+
+    def render_text(self, entries, errors, options_map, file):
+        lifetimes_map = lifetimes.get_commodity_lifetimes(entries)
+        if self.args.compress_days:
+            lifetimes_map = lifetimes.compress_lifetimes_days(lifetimes_map,
+                                                              self.args.compress_days)
+
+        name_map = {pair: '{}/{}'.format(pair[0], pair[1]) if pair[1] else pair[0]
+                    for pair in lifetimes_map.keys()}
+        ccywidth = max(map(len, name_map.values()))
+        for currency, lifetime in sorted(lifetimes_map.items(),
+                                         key=lambda x: (x[1][0][0], x[0])):
+            file.write('{:{width}}: {}\n'.format(
+                name_map[currency],
+                '  /  '.join('{} - {}'.format(begin, end or '')
+                             for begin, end in lifetime),
+                width=ccywidth))
 
 
 class CommodityPricesReport(report.TableReport):
@@ -90,7 +122,7 @@ class PricesReport(report.Report):
                          for entry in entries
                          if isinstance(entry, data.Price)]
         dcontext = options_map['display_context']
-        printer.print_entries(price_entries, file=file)
+        printer.print_entries(price_entries, dcontext, file=file)
 
 
 class PriceDBReport(report.Report):
@@ -120,9 +152,32 @@ class PriceDBReport(report.Report):
             file.write('\n')
 
 
+class TickerReport(report.TableReport):
+    """Print a parseable mapping of (base, quote, ticker, name) for all commodities."""
+
+    names = ['tickers', 'symbols']
+
+    def generate_table(self, entries, errors, options_map):
+        commodity_map = getters.get_commodity_map(entries, options_map)
+        ticker_info = getters.get_values_meta(commodity_map, 'name', 'ticker', 'quote')
+
+        price_rows = [
+            (currency, cost_currency, ticker, name)
+            for currency, (name, ticker, cost_currency) in sorted(ticker_info.items())
+            if ticker]
+
+        return table.create_table(price_rows,
+                                  [(0, "Currency"),
+                                   (1, "Cost-Currency"),
+                                   (2, "Symbol"),
+                                   (3, "Name")])
+
+
 __reports__ = [
     CommoditiesReport,
+    CommodityLifetimes,
     CommodityPricesReport,
     PricesReport,
     PriceDBReport,
+    TickerReport,
     ]

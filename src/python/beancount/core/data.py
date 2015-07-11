@@ -2,18 +2,19 @@
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import builtins
 import collections
 import datetime
 from collections import namedtuple
 import sys
 
 # Note: this file is mirrorred into ledgerhub. Relative imports only.
-from .amount import Amount
-from .amount import Decimal
-from .amount import D
-from .position import Position
-from .position import Lot
-from .account import has_component
+from beancount.core.amount import Amount
+from beancount.core.number import Decimal
+from beancount.core.number import D
+from beancount.core.position import Position
+from beancount.core.position import Lot
+from beancount.core.account import has_component
 
 
 def new_directive(clsname, fields):
@@ -74,6 +75,21 @@ BOOKING_METHODS = {'STRICT', 'NONE'}
 #   account: A string, the name of the account that is being closed.
 Close = new_directive('Close', 'account')
 
+# An optional commodity declaration directive. Commodities generally do not need
+# to be declared, but they may, and this is mainly created as intended to be
+# used to attach meta-data on a commodity name. Whenever a plugin needs
+# per-commodity meta-data, you would define such a commodity directive. Another
+# use is to define a commodity that isn't otherwise (yet) used anywhere in an
+# input file. (At the moment the date is meaningless but is specified for
+# coherence with all the other directives; if you can think of a good use case,
+# let us know).
+#
+# Attributes:
+#   meta: See above.
+#   date: See above.
+#   currency: A string, the commodity under consideration.
+Commodity = new_directive('Commodity', 'currency')
+
 # A "pad this account with this other account" directive. This directive
 # automatically inserts transactions that will make the next chronological
 # balance directive succeeds. It can be used to fill in missing date ranges of
@@ -103,7 +119,9 @@ Pad = new_directive('Pad', 'account source_account')
 #     expecting 'account' to have at this date.
 #   diff_amount: None if the balance check succeeds. This value is set to
 #     an Amount instance if the balance fails, the amount of the difference.
-Balance = new_directive('Balance', 'account amount diff_amount')
+#   tolerance: A Decimal object, the amount of tolerance to use in the
+#     verification.
+Balance = new_directive('Balance', 'account amount tolerance diff_amount')
 
 # A transaction! This is the main type of object that we manipulate, and the
 # entire reason this whole project exists in the first place, because
@@ -125,7 +143,7 @@ Balance = new_directive('Balance', 'account amount diff_amount')
 #   postings: A list of Posting instances, the legs of this transaction. See the
 #     doc under Posting below.
 Transaction = new_directive('Transaction',
-                                'flag payee narration tags links postings')
+                            'flag payee narration tags links postings')
 
 # A note directive, a general note that is attached to an account. These are
 # used to attach text at a particular date in a specific account. The notes can
@@ -210,7 +228,7 @@ Document = new_directive('Document', 'account filename')
 
 # A list of all the valid directive types.
 ALL_DIRECTIVES = (
-    Open, Close, Pad, Balance, Transaction, Note, Event, Price, Document
+    Open, Close, Commodity, Pad, Balance, Transaction, Note, Event, Price, Document
 )
 
 
@@ -301,24 +319,17 @@ def new_metadata(filename, lineno, kvlist=None):
 #   metadata: A dict of strings to values, the metadata that was attached
 #     specifically to that posting, or None, if not provided. In practice, most
 #     of the instances will be unlikely to have metadata.
-Posting = namedtuple('Posting', 'entry account position price flag meta')
+Posting = namedtuple('Posting', 'account position price flag meta')
 
 
-def strip_back_reference(entry):
-    """Strip the postings back-reference to its transaction.
-    This is used for testing, because the Python comparison routines
-    for tuples/namedtuples don't deal with circular references too well.
-
-    Args:
-      entry: An instance of Transaction.
-    Returns:
-      A new instance of Transaction, with everything the same except
-      for the backreference of posting.entry to the entry. These are
-      replaced by None.
-    """
-    return entry._replace(
-        postings=[posting._replace(entry=None)
-                  for posting in entry.postings])
+# A pair of a Posting and its parent Transaction. This is inserted as
+# temporaries in lists of postings-of-entries, which is the product of a
+# realization.
+#
+# Attributes:
+#   txn: The parent Transaction instance.
+#   posting: The Posting instance.
+TxnPosting = namedtuple('TxnPosting', 'txn posting')
 
 
 def create_simple_posting(entry, account, number, currency):
@@ -341,7 +352,7 @@ def create_simple_posting(entry, account, number, currency):
         if not isinstance(number, Decimal):
             number = D(number)
         position = Position(Lot(currency, None, None), number)
-    posting = Posting(entry, account, position, None, None, None)
+    posting = Posting(account, position, None, None, None)
     if entry is not None:
         entry.postings.append(posting)
     return posting
@@ -371,7 +382,7 @@ def create_simple_posting_with_cost(entry, account,
         cost_number = D(cost_number)
     cost = Amount(cost_number, cost_currency)
     position = Position(Lot(currency, cost, None), number)
-    posting = Posting(entry, account, position, None, None, None)
+    posting = Posting(account, position, None, None, None)
     if entry is not None:
         entry.postings.append(posting)
     return posting
@@ -401,51 +412,10 @@ def sanity_check_types(entry):
         assert isinstance(entry.postings, list), "Invalid postings list type"
         for posting in entry.postings:
             assert isinstance(posting, Posting), "Invalid posting type"
-            assert posting.entry is entry, "Invalid posting reference to entry type"
             assert isinstance(posting.account, str), "Invalid account type"
             assert isinstance(posting.position, (Position, NoneType)), "Invalid pos type"
             assert isinstance(posting.price, (Amount, NoneType)), "Invalid price type"
             assert isinstance(posting.flag, (str, NoneType)), "Invalid flag type"
-
-
-def entry_replace(entry, **replacements):
-    """Replace components of an entry, reparenting postings automatically.
-    This is necessary because we use immutable namedtuple instances, with
-    circular references between entry and postings. It is a bit annoying,
-    but it does not occur in many places, so we live with it, enjoying the
-    extra convenience that circular refs provide, especially in lists of
-    postings.
-
-    Args:
-      entry: the entry whose components to replace
-      **replacements: replacements to apply to the entry
-    Returns:
-      A new entry, with postings correctly reparented.
-    """
-    new_postings = replacements.pop('postings', entry.postings)
-    new_entry = entry._replace(postings=[], **replacements)
-    new_entry.postings.extend(posting._replace(entry=new_entry)
-                              for posting in new_postings)
-    return new_entry
-
-
-def reparent_posting(posting, entry):
-    """Create a new posting entry that has the parent field set.
-
-    Note that this does not modify the list of postings in 'entry', i.e. entry
-    is left unmodified.
-
-    Args:
-      posting: a posting whose parent to set to 'entry'.
-      entry: the entry to set on the posting.
-    Return:
-      The modified posting. Note that the unmodified posting itself it returned
-      if the given entry is already the one on the posting.
-    """
-    if posting.entry is entry:
-        return posting
-    else:
-        return posting._replace(entry=entry)
 
 
 def posting_has_conversion(posting):
@@ -485,13 +455,14 @@ def get_entry(posting_or_entry):
     """Return the entry associated with the posting or entry.
 
     Args:
-      entry: A Posting or entry instance
+      entry: A TxnPosting or entry instance
     Returns:
       A datetime instance.
     """
-    return (posting_or_entry.entry
-            if isinstance(posting_or_entry, Posting)
-            else posting_or_entry)
+    if isinstance(posting_or_entry, TxnPosting):
+        return posting_or_entry.txn
+    else:
+        return posting_or_entry
 
 
 # Sort with the checks at the BEGINNING of the day.
@@ -512,7 +483,7 @@ def entry_sortkey(entry):
     return (entry.date, SORT_ORDER.get(type(entry), 0), entry.meta.lineno)
 
 
-def sort(entries):
+def sorted(entries):
     """A convenience to sort a list of entries, using entry_sortkey().
 
     Args:
@@ -520,7 +491,7 @@ def sort(entries):
     Returns:
       A sorted list of directives.
     """
-    return sorted(entries, key=entry_sortkey)
+    return builtins.sorted(entries, key=entry_sortkey)
 
 
 def posting_sortkey(entry):
@@ -534,8 +505,8 @@ def posting_sortkey(entry):
       A tuple of (date, integer, integer), that forms the sort key for the
       posting or entry.
     """
-    if isinstance(entry, Posting):
-        entry = entry.entry
+    if isinstance(entry, TxnPosting):
+        entry = entry.txn
     return (entry.date, SORT_ORDER.get(type(entry), 0), entry.meta.lineno)
 
 

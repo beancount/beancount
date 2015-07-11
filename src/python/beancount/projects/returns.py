@@ -209,7 +209,7 @@ import logging
 
 from dateutil.parser import parse as parse_datetime
 
-from beancount.core.amount import ZERO
+from beancount.core.number import ZERO
 from beancount import loader
 from beancount.parser import printer
 from beancount.parser import options
@@ -421,7 +421,7 @@ def compute_period_returns(date_begin, date_end,
     # Now for each of the currencies, compute the returns. Handle cases where
     # the currency is not present as a zero value for that currency.
     #
-    # Note: In the future, we should instead require more inforamtion about the
+    # Note: In the future, we should instead require more information about the
     # desired currency for valuation and convert all contents to a single
     # currency above, so this is not needed except to handle really odd cases.
     returns = {}
@@ -557,20 +557,17 @@ def internalize(entries, transfer_account,
 
             # Create internal flows posting.
             postings_transfer_int = [
-                data.Posting(None, transfer_account, position_, None, None, None)
+                data.Posting(transfer_account, position_, None, None, None)
                 for position_ in balance_transfer.get_positions()]
-            new_entries.append(data.entry_replace(prototype_entry,
-                                                  postings=(postings_assets +
-                                                            postings_intflows +
-                                                            postings_transfer_int)))
+            new_entries.append(prototype_entry._replace(
+                postings=(postings_assets + postings_intflows + postings_transfer_int)))
 
             # Create external flows posting.
             postings_transfer_ext = [
-                data.Posting(None, transfer_account, -position_, None, None, None)
+                data.Posting(transfer_account, -position_, None, None, None)
                 for position_ in balance_transfer.get_positions()]
-            new_entries.append(data.entry_replace(prototype_entry,
-                                                  postings=(postings_transfer_ext +
-                                                            postings_extflows)))
+            new_entries.append(prototype_entry._replace(
+                postings=(postings_transfer_ext + postings_extflows)))
         else:
             new_entries.append(entry)
 

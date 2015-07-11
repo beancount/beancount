@@ -18,6 +18,10 @@ META = data.new_metadata('beancount/core/testing.beancount', 12345)
 
 class TestPrinter(unittest.TestCase):
 
+    def test_methods_coverage(self):
+        for klass in data.ALL_DIRECTIVES:
+            self.assertTrue(hasattr(printer.EntryPrinter, klass.__name__))
+
     def test_render_source(self):
         source_str = printer.render_source(META)
         self.assertTrue(isinstance(source_str, str))
@@ -270,6 +274,8 @@ class TestDisplayContext(test_utils.TestCase):
 
 class TestPrinterAlignment(test_utils.TestCase):
 
+    maxDiff = None
+
     def test_align_position_strings(self):
         aligned_strings, width = printer.align_position_strings([
             '45 GOOG {504.30 USD}',
@@ -353,15 +359,15 @@ class TestPrinterAlignment(test_utils.TestCase):
         printer.print_entries(entries, dcontext, render_weights=True, file=oss)
         expected_str = textwrap.dedent("""
         2014-07-01 * "Something"
-          Assets:US:Investments:GOOG         45 GOOG {504.30 USD}               ;  22693.50 USD
-          Assets:US:Investments:GOOG          4 GOOG {504.30 USD / 2014-11-11}  ;   2017.20 USD
-          Expenses:Commissions             9.95 USD                             ;      9.95 USD
-          Assets:US:Investments:Cash  -22473.32 CAD @ 1.1000 USD                ; -24720.65 USD
+          Assets:US:Investments:GOOG         45 GOOG {504.30 USD}               ;    22693.50 USD
+          Assets:US:Investments:GOOG          4 GOOG {504.30 USD / 2014-11-11}  ;     2017.20 USD
+          Expenses:Commissions             9.95 USD                             ;      9.9505 USD
+          Assets:US:Investments:Cash  -22473.32 CAD @ 1.1000 USD                ; -24720.6520 USD
         """)
         self.assertEqual(expected_str, oss.getvalue())
 
 
-class TestPrinterMisc(unittest.TestCase):
+class TestPrinterMisc(test_utils.TestCase):
 
     @parser.parsedoc
     def test_no_valid_account(self, entries, errors, options_map):
@@ -375,3 +381,28 @@ class TestPrinterMisc(unittest.TestCase):
         """
         oss = io.StringIO()
         printer.print_entries(entries, file=oss)
+
+    def test_metadata(self):
+        input_string = textwrap.dedent("""
+
+        2000-01-01 open Assets:US:Investments:Cash
+          name: "Investment account"
+        2000-01-01 open Assets:US:Investments:HOOL
+
+        2000-01-02 commodity VHT
+          asset-class: "Stocks"
+          name: "Vanguard Health Care ETF"
+
+        2000-01-03 * "Something"
+          doc: "some-statement.pdf"
+          Assets:US:Investments:Cash  -23.45 USD
+            note: "No commission"
+          Assets:US:Investments:HOOL    1 HOOL {23.45 USD}
+            settlement: 2000-01-05
+
+        """)
+        entries, errors, options_map = parser.parse_string(input_string)
+        self.assertFalse(errors)
+        oss = io.StringIO()
+        printer.print_entries(entries, file=oss)
+        self.assertLines(input_string, oss.getvalue())

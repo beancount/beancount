@@ -5,17 +5,18 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import io
 
-from beancount.parser import printer
 from beancount.core import compare
 from beancount.core import data
 from beancount.core import interpolate
+from beancount.parser import printer
 
 
-def render_entry_context(entries, dcontext, filename, lineno):
+def render_entry_context(entries, options_map, dcontext, filename, lineno):
     """Render the context before and after a particular transaction is applied.
 
     Args:
       entries: A list of directives.
+      options_map: A dict of options, as produced by the parser.
       dcontext: An instance of DisplayContext used to format the numbers.
       filename: A string, the name of the file from which the transaction was parsed.
       lineno: An integer, the line number in the file the transacation was parsed from.
@@ -64,6 +65,21 @@ def render_entry_context(entries, dcontext, filename, lineno):
     # Print the entry itself.
     print(file=oss)
     printer.print_entry(closest_entry, dcontext, render_weights=True, file=oss)
+
+    if isinstance(closest_entry, data.Transaction):
+        # Print residuals.
+        residual = interpolate.compute_residual(closest_entry.postings)
+        if not residual.is_empty():
+            print(file=oss)
+            # Note: We render the residual at maximum precision, for debugging.
+            print(';;; Residual: {}'.format(str(residual)), file=oss)
+
+        tolerances = interpolate.infer_tolerances(closest_entry.postings, options_map)
+        if tolerances:
+            print(file=oss)
+            print(';;; Tolerances: {}'.format(
+                ', '.join('{}={}'.format(key, value)
+                          for key, value in sorted(tolerances.items()))), file=oss)
 
     # Print the context after.
     print(file=oss)

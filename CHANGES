@@ -4,6 +4,687 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-07-09
+
+  - WARNING: API CHANGES AHEAD. If you wrote plugins, you will need to remove
+    the 'entry' parameter to constructors of Posting().
+
+    I removed the Posting.entry back-reference of Postings to their owning
+    Transaction objects. This makes programmatically creating our data
+    structures much more straight-forward and avoids us having to run pirouettes
+    around which object to create first. It also removes all manners of "fixing
+    up" transactions and removes one ultimatley unnecessary degree of freedom
+    from plugins outputs: we don't have to check that the plugins generate
+    objects with correct back-references. It also makes the documentation
+    simpler: I won't have to explain backreferences and how to deal with them.
+    Finally, it avoids the circular reference which could potentially make
+    Python's GC do some work for no other reason.
+
+    This happened because it occurred to me that the only really important place
+    where back-references were used were in the beancount.core.realization code,
+    and that in the RealAccount objects I could easily replace the Posting
+    instances in lists of "postings or entries" into a new tuple object
+    "TxnPosting" that contains a reference to the parent transaction and a
+    reference to the posting. This voids the need for a back-reference, and
+    makes the API really straightforward.
+
+
+  - WARNING: USER-LEVEL CHANGES FOLLOW. I repatriated the following optional
+    plugins to the beancount.plugins package, so that all the plugins are in the
+    same place:
+
+       beancount.ops.auto_accounts   -> beancount.plugins.auto_accounts
+       beancount.ops.implicit_prices -> beancount.plugins.implicit_prices
+
+    This is so that the "beancount.ops" package contains only plugins run by
+    default (non-optional), and so that the "beancount.plugins" only contains
+    optional plugins the user must provide.
+
+    In doing so, I also made the "implicit_prices" plugin NOT INCLUDED BY
+    DEFAULT. This plugin creates automatically Price directives for all Postings
+    which have a @ <price> annotation, thus feeding those prices into the price
+    database. If you want to keep this behaviour -- and you probably should --
+    you need to add the following in your input file:
+
+      plugin "beancount.plugins.implicit_prices"
+
+    (I'm considering moving move of the default plugins to be optional, in
+    particular, beancount.ops.documents, not sure yet.)
+
+
+2015-07-05
+
+  - Implemented support for parsing strings from files in various encodings.
+    Only string objects encoded in non-ASCII are supported, e.g., payee,
+    narrations, description, etc. This means the account names are still
+    restricted to ASCII, in particular. This works with UTF8 encoding (tested),
+    latin1 encoding (tested), and probably more. The support is at the lexer
+    level. You may now supply an 'encoding' parameter to parser.parse_file(),
+    parser.parse_string(), loader.load_file(), loader.load_string() functions.
+    Passing in an invalid encoding should not mail it fail (though the contents
+    of the strings will be empty). Unit tests for all those cases have been
+    added.
+
+  - Completely reviewed all lexer and grammar error handling code. The parser
+    code used to bail out with abort() on an unhandled exception and dump core
+    after issuing its error message (this is ugly but was never a big issue
+    since this occurred pretty rarely). All errors are now handled gracefully
+    (invalid lexer token, exception raised in lexer builder, invalid gramamr
+    rule, exception raised in grammar builder Python code). A comprehensive
+    suite of unit tests has been built to catch all these. You should never
+    experience a core dump anymore. A number of other unexpected cases has also
+    been dealt with.
+
+  - The lexer used to have a fixed-size buffer for parsing its strings. The
+    buffer is now dynamically allocated. Lexing should also be slightly faster.
+
+  - Mmeory management for the parser has been reviewed. Memory clean up for
+    temporaries generated during parsing has been reinstated (it was disabled
+    somehow) and cleanup rules are invoked even in the case of errors. This may
+    make the parser somewhat slower.
+
+
+2015-07-02
+
+  - Built support for setuptools and rolled back changes. Setuptools is broken
+    beyond what I can bear. Forget this. You'll have to install dependencies by
+    hand. It's a one-liner, like this:
+
+      pip3 install python-dateutil bottle ply lxml
+
+
+2015-07-01
+
+  - Wrote a post-mortem/assessment doc on LedgerHub, detailed future plans for
+    LedgerHub and plans to eventually merge the codebase into Beancount again.
+    See: http://furius.ca/ledgerhub/doc/postmortem
+
+
+
+2015-06-27
+
+  - Complete the design doc and made it public.
+
+
+2015-06-26
+
+  - Created a generic script that can be used to automate the upload of
+    arbitrary CSV files to a Google Spreadsheet. This can be used along with the
+    holdings reports in order to create a spreadsheet tracking your assets.
+
+    Unfortunately, this script has to be written in Python 2.x, because of
+    the unavailability of the gdata-python-client library which is not available
+    at this time for Python 3.x. The script is self-contained. If you want
+    to use this, you must install the following libraries in your Python 2.x
+    install:
+
+    * gdata-python-client
+    * oauth2client
+    * httplib2
+
+
+2015-06-25
+
+  - Posting objects now have (filename, lineno) in their metadata. This could
+    potentially be helpful for people who want to insert text programmatically
+    in their input file without having to write their own parser.
+    See: https://groups.google.com/d/msg/beancount/zNCFk-YGdr8/8P2_vGGH9xoJ
+
+
+2015-06-15
+
+  - All the code to bake a static HTML archive of a bean-web interface has been
+    rewritten.
+
+    * There used to be a number of bugs caused by the wget tool. These bugs have
+      been fixed.
+
+    * The new code does not depend on wget -- Beancount does not require wget
+      anymore. Explicit code to do web scraping has been implemented. On the
+      other hand, a new dependency is introduced: lxml. This dependency was
+      already required for development and install in the same way as all the
+      other dependencies: using pip3. Should be a breeze to install on all
+      platforms.
+
+    * A verification layer has been tacked on after the web scraping step to
+      check that there are no dangling links.
+
+    * Intentionally skipped links are now converted to plain text, such that
+      there are no dangling links for pages we aren't saving (these just used
+      to be ignored).
+
+    I repeat: Beancount does not depend on wget anymore.
+    Please install lxml with: "pip3 install lxml"
+
+
+  - The 'exportpf' report which is used to produce OFX that can be imported in
+    Google Finance now issues a warning if you did not provide either 'ticker'
+    or 'export' metadata for holdings that get exported. The reason for the new
+    adminition is that it trips up the OFX import and when Google Finance sees
+    a ticker it does not understand, the import fails. At least with the warning
+    we're telling the user they should be providing tickers or export directives
+    for all their commodities if they export the portfolio.
+
+
+2015-06-10
+
+  - Removed dependency on curses. If you don't have curses, everything should
+    work fine now, errors are being caught. Curses was only used to provide good
+    default values for rendering tables in terminals on e.g. bean-report
+    journal and to decide whether to use a pager in multi-page bean-query.
+    The default values are fixed if curses isn't available, e.g. 80 chars wide,
+    but as previously, you can override them manually. I also removed the
+    dependency from checkdeps and from the install document.
+
+
+2015-06-09
+
+  - Rewrote the Installation Instructions document completely to make it
+    simpler. Some users had found it daunting.
+    http://furius.ca/beancount/doc/install
+
+  - Tested Windows installation using Cygwin and added it to the installation
+    instructions.
+    http://furius.ca/beancount/doc/install
+
+
+2015-06-07
+
+  - Moved the following representation related symbols to their own module:
+
+      beancount.core.amount.D          ->  beancount.core.number.D
+      beancount.core.amount.Decimal    ->  beancount.core.number.Decimal
+      beancount.core.amount.ZERO       ->  beancount.core.number.ZERO
+      beancount.core.amount.ONE        ->  beancount.core.number.ONE
+      beancount.core.amount.HALF       ->  beancount.core.number.HALF
+      beancount.core.amount.round_to   ->  beancount.core.number.round_to
+
+    I also moved the tests. All the code specifically related to numbers is
+    now in beancount.core.number. I also removed the relative imports, as
+    Ledgerhub is importing from the Beancount source code now.
+
+    This is not a user-visible change. However, if you wrote scripts against
+    the codebase, you will need to rename your imports. In the meantime I added
+    stubs which issue a warning if you import from the obsoleted names.
+
+
+  - Moved documentation scripts from experiments to the main Beancount codebase.
+    There is a new package for it: beancount.docs. These codes are used to maintain
+    the Beancount documentation and there is common code for authentication in there,
+    code that I plan to use for automating the exporting ot portfolios.
+
+    This introduces some optional dependencies:
+
+    * google-api-python-client
+    * oauth2client
+    * httplib2
+
+    These are optional, and at the moment none of the actual Beancount tools
+    make any use of them. I moved this into the main Beancount codes because
+    the common authentication code will be used to export portfolios directly
+    to a Google spreadsheet in Google Drive, which will be super convenient
+    to build custom portfolio tracking views.
+
+
+2015-06-06
+
+  - Added an 'inferred_tolerance_multiplier' option to allow the user to adjust
+    the magnitude of the inferred tolerance.
+
+    When the tolerance values aren't specified explicitly via the
+    'default_tolerance' option, the tolerance is inferred from the numbers in
+    the input file. For example, if a transaction has posting with a value
+    like '32.424 CAD', the tolerance for CAD will be inferred to be 0.001
+    times some multiplier. This is the muliplier value.
+
+    We normally assume that the institution we're reproducing this posting
+    from applies rounding, and so the default value for the multiplier is
+    0.5, that is, half of the smallest digit encountered.
+
+    You can now customize this multiplier by changing this option, typically
+    expanding it to account for amounts slightly beyond the usual tolerance,
+    for example, if you deal with institutions with bad of unexpected rounding
+    behaviour.
+
+  - Promoted the 'experiment_infer_tolerance_from_cost' option to
+    'infer_tolerance_from_cost': not an experiment anymore. See thread on
+    mailing-list w/ mharris. This feature works well and actually solves real
+    problems for users.
+
+    A corresponding section has been added in the documentation at
+    http://furius.ca/beancount/doc/tolerances
+
+
+2015-06-04
+
+  - When using the 'experiment_infer_tolerance_from_cost' option, the inferred
+    tolerance is now expanded to include the SUM of all maximum rounding errors
+    from postings held at cost, not just the maximum. Users with multiple
+    rounding events in a single transactions could occur rounding that many
+    times. We assume no more rounding events than the number of postings held at
+    cost.
+
+  - I wrote a new document to explain how to deal with restricted stock units
+    vesting events:
+    http://furius.ca/beancount/doc/vesting
+
+
+2015-06-03
+
+  - bean-doctor context now outputs weight and residual numbers at their full
+    precision instead of their rounded one.
+
+
+2015-06-02
+
+  - Created a new document to keep track of user contributions:
+    http://furius.ca/beancount/doc/contrib
+
+
+2015-05-30
+
+  - Converted the Syntax Cheat Sheet to a Google Doc and removed it here.
+
+  - Added a check to bake the source code's checksums into the C extension
+    module and upon loading beancount.parser.parser check that the checksums
+    match. This automatically issues a warning on all programs that use the
+    parser if the compiled extension module is out-of-date and the user needs to
+    rebuild. This should explain the occasional unexpected situation where the
+    extension module doesn't match the Python code, for those running from
+    source or during development and in switching branches.
+
+  - Added an experimental boolean option: 'experiment_infer_tolerance_from_cost'
+    that expands the inferred tolerance to include values inferred from the cost
+    and price amounts on those cost and price currencies.
+
+    Here is the doc for it:
+
+      Enable an EXPERIMENTAL feature that expands the maximum tolerance inferred
+      on transactions to include values on cost currencies inferred by postings
+      held at-cost or converted at price. Those postings can imply a tolerance
+      value by multiplying the smallest digit of the unit by the cost or price value
+      and taking half of that value.
+
+      For example, if a posting has an amount of "2.345 RGAGX {45.00 USD}"
+      attached to it, it implies a tolerance of 0.001 x 45.00 / 2 = 0.045 USD
+      and this is added to the mix to enlarge the tolerance allowed for units of
+      USD on that transaction. All the normally inferred tolerances (see
+      http://furius.ca/beancount/doc/tolerances) are still taken into account.
+      Enabling this flag only makes the tolerances potentially wider.
+
+      WARNING: This feature may go away in the future. It is an exploration to see
+      if it is truly useful.
+
+  - Added a dependency check for 'curses' library and updated documentation.
+    This is for OpenSuse which packages curses separately.
+
+
+2015-05-22
+
+  - Fixed a simple bug (#47) where the default value used for legacy tolerances
+    wasn't being initialized properly and added a test for it.
+
+
+2015-05-20
+
+  - Fixed a potential important bug (#48) just introduced a few days ago whereby
+    enabling the 'account_rounding' option would inadvertently disable balance
+    checks. Thanks to Matthew Harris for finding and reporting it.
+
+  - Added a 'dedent' option to both beancount.parser.parser.parse_string() and
+    beancount.loader.load_string(). This is a convenience for writing quick
+    tests.
+
+
+2015-05-17
+
+  - MAJOR CHANGES: Precision and tolerances in Beancount have been entirely
+    revamped. The logic used to compute tolerances on transaction balances and
+    balance assertions is new. This previously discussed proposal:
+
+      http://furius.ca/beancount/doc/proposal-rounding
+
+    has been implemented. The new behaviour is documented here:
+
+      http://furius.ca/beancount/doc/tolerances
+
+
+    Here is a high-level summary of changes (see doc above for details):
+
+    * The tolerance used for transaction balances is inferred automatically from
+      the amounts on the transactions themselves. When not possible, a default
+      tolerance is looked up from values you can provide (as well as a global
+      default).
+
+    * There is a new 'default_tolerances' option to provide tolerances to be
+      used used when it cannot be inferred automatically. You use it like this:
+
+        option "default_tolerance" "*:0.005"
+        option "default_tolerance" "INR:0.5"
+        ...
+
+    * The 'tolerance' option has been deprecated. It now has no effect.
+
+    * Balance assertions and Pad directives use a similar inference mechanism,
+      where the tolerance is based on the precision of the expected number in
+      the input.
+
+    * Rounding errors may be automatically posted to a special account (new
+      postings are inserted during parsing where necessary). This is disabled by
+      default; you enable this by setting the new 'account_rounding' option to
+      the account you want the rounding errors to be posted to:
+
+        option "account_rounding" "Equity:Rounding-Errors"
+
+    * These changes may cause some of your transactions to report as not
+      balancing, because the tolerances and now inferred automatically and the
+      inferred tolerances may be smaller than the fixed value we used
+      previously. YOU NEED TO MAKE SUITABLE ADJUSTMENTS TO YOUR INPUT FILE.
+      However, because this might cause some minor disruption, I have provided
+      an option to allow users to revert Beancount to its previous tolerance
+      behavior for a few months:
+
+        option "use_legacy_fixed_tolerances" "TRUE"
+
+    * There is a new EXPERIMENTAL feature which makes Beancount accept an
+      explicit tolerance value on balance assertions, like this:
+
+        YYYY-MM-DD balance <account>  <number> ~ <tolerance> <currency>
+
+      For example,
+
+        2015-05-17 balance Assets:Vanguard   23.2134 ~ 0.002 RGAGX
+
+      By default, this feature is not enabled; this is being tested out and it
+      might go away eventually. To enable it, add the following experiment flag:
+
+        option "experiment_explicit_tolerances" "TRUE"
+
+
+  - The 'plugin' option has now been deprecated and will issue a warning if you
+    use it. You must now use the 'plugin' directive instead.
+
+  - The parser now supports boolean types, with this syntax: TRUE, FALSE. This
+    can be useful to set metadata fields.
+
+  - Postings that were inserted automatically have some metadata set on them to
+    distinguish this fact ('__automatic__').
+
+
+
+2015-05-12
+
+  - Allow currency names up to 24 characters (not 12). This is often required
+    for people using financial options.
+
+
+2015-05-11
+
+  - Added parsing of boolean types: TRUE, FALSE will produce values of
+    Python "True" and "False". This is useful to used as metadata values.
+
+  - Removed extraneous reference release in key_value_value in parser.
+
+
+2015-05-03
+
+  - Added Equity to the list of accounts that count as proceeds for
+    beancount.plugins.sellgains plugin. This is so that old transactions
+    may use an unknown equity account and still pass the sellgains check.
+
+
+2015-04-19
+
+  - Fixed a bug with the pad directive that did not look for account name
+    boundaries when looking at a parent account.
+
+  - In output of bean-doctor context, now print the residual amount.
+
+
+2015-04-18
+
+  - Implemented limited support for arithmetic expressions. For now, only
+    support division. So A/B where "A" and "B" are numbers should now work.
+
+    In order to support full arithmetic expressions, we need to reimplement
+    the lexer in order to distinguish between "*" as a TAG or as a multiplication
+    token, and operator precedence to deal with terms vs. exprs. This will
+    probably be done soon. (I need division for a particular task right now, so
+    it is being added in in a backwards-compatilble way).
+
+
+2015-04-18
+
+  - Merged a new plugin (beancount.plugins.sellgains) that automatically
+    cross-checks the purchase price of a lot against all the other legs that are
+    in non-income accounts. This is useful to verify the correctness of @ price
+    annotations on reductions at cost, because not only the transactions have to
+    balance in cost (that is, including the income portion), they then also have
+    to balance without the income portion, using the price you attached (if you
+    somehow reported an incorrect price you will get an error).
+
+    This is best explained with an example:
+
+      1999-07-31 * "Sell"
+        Assets:US:BRS:Company:ESPP          -81 ADSK {26.3125 USD} @ 26.4375 USD
+        Assets:US:BRS:Company:Cash      2141.36 USD
+        Expenses:Financial:Fees            0.08 USD
+        Income:US:Company:ESPP:PnL      -10.125 USD
+
+    The regular balance verification checks all the legs against the cost basis:
+
+      -18 x 26.3125 + 2141.36 + 0.08 - 10.125 = 0 USD
+
+    This is the default behavior, and is still required. With the sellgains
+    plugin, an additional check also verifies that
+
+      -18 x 26.4375 + 2141.36 + 0.08 = 0 USD
+
+    Note how the price (26.4375) is used instead of the cost basis, and how
+    income legs are ignore in the calculation.
+
+    Transactions with reductions without a price and without an income leg will
+    be ignored, so only those which can be verified will be verified.
+
+
+2015-04-13
+
+  - Beancount now allows the cost to the set to zero. This is useful for stock
+    options that one receives from an employer that have no value attached to
+    them.
+
+    Additionally, I'm considering allowing negative cost as well, which may be
+    necessary to handle adjusted cost bases, but I haven't added this just yet.
+    I'm not 100% convinced (adjustments are probably always upward).
+
+
+2015-04-16
+
+  - Added a new command to bean-doctor: "linked" which prints out all
+    transactions linked to the one at a given line number, in a format Emacs can
+    grok with filename and location like errors so you can easily navigate
+    between the linked transactions.
+
+    Correspondingly, added a "bean-linked" command to the Emacs support mode.
+
+
+2015-04-13
+
+  - A minor improvment to bean-format has been implemented: Whitespace before
+    postings is now automatically normalized to the most frequent spacing
+    present in the document. This allows you to be somewhat sloppy on the
+    postings themselves when entering new transactions.
+
+
+2015-02-16
+
+  - Finally completed documentation on how to export your portfolio to Google
+    Finance, as
+    http://furius.ca/beancount/doc/export,
+    or equivalently as
+    https://docs.google.com/document/d/1eZIDRmQZxR6cmDyOJf7U3BnCm4PDMah2twxYFfKPJtM/
+
+
+2015-02-10
+
+  - Revamped the export-to-OFX report to showcase a more explicit, flexible and
+    easily debuggable configuration. Also supports the declaration of money
+    instrument equivalents within the file itself. This will be documented here:
+    https://docs.google.com/document/d/1eZIDRmQZxR6cmDyOJf7U3BnCm4PDMah2twxYFfKPJtM/
+
+
+2015-02-03
+
+  - Fixed an unreported bug with Emacs support whereby a number appearing within
+    a narration string would get aligned along with the other amounts.
+
+
+2015-02-01
+
+  - Implemented an "include" directive. The include directive does not parse the
+    files in order... rather, each parse run on an input file accumulates the
+    list of includes to be parsed and processed the includes after parsing the
+    file. Because we're order independent, this should work. Note however that
+    the options should be set in the root file.
+
+    This is documented here:
+    https://docs.google.com/document/d/1wAMVrKIA2qtRGmoVDSUBJGmYZSygUaR0uOMW1GV3YE0/edit#heading=h.86lelow4097r
+
+
+2015-01-24
+
+  - I created a new branch 'ledgerhub' to provide a version of Beancount that i
+    guaranteed to be compatible with LedgerHub.
+
+    Previously, LedgerHub was synchronizing a copy of some of the files under
+    beancount.core in order to avoid depending on Beancount. This turned out to
+    be difficult to maintain, as Beancount is still evolving relatively fast. So
+    I've decided to return to the original state of affairs: LedgerHub will
+    depend on a Beancount install in order to reuse its core libraries. (The
+    original reason for not doing so was that I thought I'd want to fork
+    those core libraries to support Ledger-specific features, but at this point
+    it's dubious whether I will need that at all --or whether I couldn't just
+    add generic support in Beancount's core libraries themselve to do that-- and
+    this will be an easier way to synchronize the two codebases going forward).
+
+    If you're a LedgerHub user, please checkout Beancount at its 'ledgerhub'
+    branch and make your PYTHONPATH depend on that.
+
+
+2015-01-22
+
+  - Added a dependency check for PLY and documented in the Install doc
+    (http://furius.ca/beancount/doc/install).
+
+
+2015-01-18
+
+  - Added a new, optional "Commodity" directive, which can be used to declare
+    commodity/currencies/instruments. The real purpose of this optional
+    directive is to hang per-commodity meta-data off of them. Some scripts are
+    much simplified by being able to define custom attributes for each
+    commodity, e.g. "name", "asset-class", "currency-exposure", and such. There
+    is a new function beancount.core.getters.get_commodity_map() which can be
+    used to gather a map of commodity to metadata.
+
+    You otherwise don't have to add those declarations; the new directive is
+    entirely optional and its addition should not break any existing feature
+    nor input file. It is an error to insert duplicate Commodity directives
+    for the same commodity name. I'm mainly doing this now so I can migrate
+    the portfolio dashboard script from experiments into the mainline while
+    configuring it using metadata.
+
+    The directive is documented here:
+    http://furius.ca/beancount/doc/language#heading=h.a3si01ejc035
+
+
+  - I added a development dependency on pyflakes and validated all code on
+    'default' to pass a flawless pyflakes run.
+
+
+2015-01-17
+
+  - I added a paragraph about Releases in the Install document. Basically, I
+    don't do releases: the "default" branch is stable, just clone on "default"
+    and update regularly, I do all "risky" feature development in branches and
+    only merge to "default" when fully stable. All major changes on "default"
+    are announced in this file.
+
+
+2015-01-11
+
+  - **IMPORTANT** Fixed an inconsistency with the signs of total cost syntax,
+    like this:
+
+        <account>          -1000 USD @@ -1123.24 CAD
+
+    It was required to use the negative sign in order to get the correct value.
+    This makes no sense: per-unit cost and price amounts were unsigned, and total
+    cost values were only allowed to be positive. Also, Ledger requires all
+    costs and prices to be positive/unsigned, which could be confusing for
+    Ledger users. I had no particularly good reason to require the same sign
+    for total cost: this was only an oversight.
+
+    So I changed this so that total price, like total cost, per-unit price,
+    per-unit cost, are all positive/unsigned. An error is now raised i a price
+    or cost, total or per-unit, are provided negative. You need to convert your
+    input files to unsigned values, like this (for the above example):
+
+        <account>          -1000 USD @@ 1123.24 CAD
+
+    If you pull this change and have negative total prices, your input file will
+    break. In order to circumvent the change, you may set the
+    BEANCOUNT_ALLOW_NEGATIVE_PRICES environment variable. I will remove this
+    workaround in a few months.
+    (This bug reported by Matthew Harris.)
+
+  - Fixed a bug when total cost {{...}} syntax was being used with a negative
+    number of units: it would raise an error, although it was legal to do so.
+    For example, this is legal and was raising an error:
+
+        <account>          -10 MSFT {{455.24 USD}}
+
+    It probably did not show up much because few people use the total cost
+    method, and the tests happened only to use positive numbers of units.
+
+  - Fixed issue #5: bug in beancount.plugins.leafonly plugin when posting to a
+    non-leaf account that had no Open directive. (This bug reported by Nathan
+    Grigg.)
+
+
+2015-01-04
+
+  - Merged the 'shell' branch into 'default', providing a new tool to extract
+    information from a Beancount input file: bean-query. This is the first
+    revision of the SQL-like query language for Beancount. Documentation for it
+    is available under http://furius.ca/beancount/doc/query.
+
+
+2014-12-28
+
+  - Merged various functions (in beancount.ops.lifetimes) used to automatically
+    compute the date intervals that particular commodities are in used. This is
+    intended to be used to write scripts to automatically fetch all the price
+    entries needed during the lifetime of a particular Ledger. A script has been
+    created under experiments (src/experiments/fetch-missing-prices.py) which
+    you should be able to modify to your favourite price fetcher.
+
+  - The 'export_holdings' report now exports an extra holding as a cash
+    equivalent mutual fund in order to take into account of the value of
+    holdings that could not be converted to symbols the online portfolio
+    manager software knows about. The cash position brings the portfolio to
+    close to its total value.
+
+
+2014-12-26
+
+  - Merged the latest version of the 'display_context' branch into 'default'.
+    These changes make the DisplayContext object a factory for DisplayFormatter
+    objects which are then used to render numbers. This is a little more
+    sophisticated than the previous approach and will be reusable in the
+    rendering routines for the interactive SQL shell's result.
+
+
 2014-12-25
 
   - The 'metadata' branch has been merged into 'default'. Metadata is now
