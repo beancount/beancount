@@ -35,7 +35,7 @@ DEFAULT_PLUGINS_POST = [
 
 # A mapping of modules to warn about, to their renamed names.
 DEPRECATED_MODULES = {
-    # "beancount.plugins.auto_accounts": "beancount.plugins.auto_accounts",
+    "beancount.ops.auto_accounts": "beancount.plugins.auto_accounts",
     "beancount.ops.implicit_prices": "beancount.plugins.implicit_prices",
     }
 
@@ -306,6 +306,7 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
             warnings.warn("Deprecation notice: Module '{}' has been renamed to '{}'; "
                           "please adjust your plugin directive.".format(
                               plugin_name, renamed_name))
+            plugin_name = renamed_name
 
         # Try to import the module.
         try:
