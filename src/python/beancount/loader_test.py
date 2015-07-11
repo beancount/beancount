@@ -6,6 +6,8 @@ import tempfile
 import textwrap
 import re
 import os
+import warnings
+from unittest import mock
 from os import path
 
 from beancount import loader
@@ -78,6 +80,18 @@ class TestLoader(unittest.TestCase):
         self.assertEqual([], entries)
         self.assertTrue(errors)
         self.assertTrue(re.search('does not exist', errors[0].message))
+
+    @mock.patch.dict(loader.DEPRECATED_MODULES,
+                     {"beancount.ops.auto_accounts": "beancount.plugins.auto_accounts"},
+                     clear=True)
+    @mock.patch('warnings.warn')
+    def test_deprecated_plugin_warnings(self, warn):
+        with test_utils.capture('stderr'):
+            entries, errors, options_map = loader.load_string("""
+              plugin "beancount.ops.auto_accounts"
+            """, dedent=True)
+        self.assertTrue(warn.called)
+        self.assertFalse(errors)
 
 
 class TestLoadDoc(unittest.TestCase):

@@ -2,9 +2,9 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 from beancount.core.number import D
 from beancount.core import data
-from beancount.ops import implicit_prices
 from beancount.parser import parsedoc
 from beancount.parser import cmptest
+from beancount.plugins import implicit_prices
 
 
 class TestImplicitPrices(cmptest.TestCase):

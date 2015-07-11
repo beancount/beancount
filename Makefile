@@ -134,11 +134,10 @@ debug:
 
 
 # Run the unittests.
-test tests unittests:
-	nosetests -v $(SRC)
+vtest vtests verbose-test verbose-tests:
+	nosetests -v -s $(SRC)
 
-
-qtest qtests quiet-tests quiet-test test-quiet tests-quiet:
+qtest qtests quiet-test quiet-tests test tests:
 	nosetests $(SRC)
 
 nakedtests:

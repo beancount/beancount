@@ -72,10 +72,11 @@ def pad(entries, options_map):
         pad_balance = inventory.Inventory()
         for entry in postings:
 
-            if isinstance(entry, data.Posting):
+            assert not isinstance(entry, data.Posting)
+            if isinstance(entry, data.TxnPosting):
                 # This is a transaction; update the running balance for this
                 # account.
-                pad_balance.add_position(entry.position)
+                pad_balance.add_position(entry.posting.position)
 
             elif isinstance(entry, data.Pad):
                 if entry.account == account_:
@@ -132,11 +133,10 @@ def pad(entries, options_map):
                             None, narration, None, None, [])
 
                         new_entry.postings.append(
-                            data.Posting(new_entry, active_pad.account, diff_position,
+                            data.Posting(active_pad.account, diff_position,
                                          None, None, None))
                         new_entry.postings.append(
-                            data.Posting(new_entry,
-                                         active_pad.source_account, -diff_position,
+                            data.Posting(active_pad.source_account, -diff_position,
                                          None, None, None))
 
                         # Save it for later insertion after the active pad.

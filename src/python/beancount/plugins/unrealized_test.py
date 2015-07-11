@@ -106,6 +106,8 @@ class TestUnrealized(unittest.TestCase):
         2014-01-15 *
           Income:Misc           -1000 USD
           Assets:Account1       10 HOUSE {100 USD}
+
+        2014-01-15 price HOUSE  100 USD
         """
         # Well... if there is a cost, there is at least one price, derived from
         # the cost entry. This should always work.
@@ -123,6 +125,8 @@ class TestUnrealized(unittest.TestCase):
         2014-01-15 *
           Income:Misc           -1000 USD
           Assets:Account1       10 HOUSE {100 USD} @ 120 USD
+
+        2014-01-15 price HOUSE  120 USD
         """
         # Well... if there is a cost, there is at least one price, derived from
         # the cost entry.
@@ -155,6 +159,8 @@ class TestUnrealized(unittest.TestCase):
         2014-01-15 *
           Income:Misc
           Assets:Account1       10 HOUSE {100 USD}
+
+        2014-01-15 price HOUSE  100 USD
         """
         entries, errors = unrealized.add_unrealized_gains(entries, options_map, '_invalid_')
         self.assertEqual([unrealized.UnrealizedError], list(map(type, errors)))
@@ -227,7 +233,7 @@ class TestUnrealized(unittest.TestCase):
           Income:Misc
           Assets:Account1      1 HOUSE {100 USD}
 
-        ;;2014-01-16 price HOUSE 110 USD
+        2014-01-16 price HOUSE 110 USD
         """
         # Test the creation of a new, undeclared income account, check that open
         # directives are present for accounts that have been created

@@ -24,7 +24,7 @@ def is_account_active(real_account):
     Returns:
       A boolean, true if the account is active, according to the definition above.
     """
-    for entry in real_account.postings:
+    for entry in real_account.txn_postings:
         if isinstance(entry, data.Open):
             continue
         return True

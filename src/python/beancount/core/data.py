@@ -319,24 +319,17 @@ def new_metadata(filename, lineno, kvlist=None):
 #   metadata: A dict of strings to values, the metadata that was attached
 #     specifically to that posting, or None, if not provided. In practice, most
 #     of the instances will be unlikely to have metadata.
-Posting = namedtuple('Posting', 'entry account position price flag meta')
+Posting = namedtuple('Posting', 'account position price flag meta')
 
 
-def strip_back_reference(entry):
-    """Strip the postings back-reference to its transaction.
-    This is used for testing, because the Python comparison routines
-    for tuples/namedtuples don't deal with circular references too well.
-
-    Args:
-      entry: An instance of Transaction.
-    Returns:
-      A new instance of Transaction, with everything the same except
-      for the backreference of posting.entry to the entry. These are
-      replaced by None.
-    """
-    return entry._replace(
-        postings=[posting._replace(entry=None)
-                  for posting in entry.postings])
+# A pair of a Posting and its parent Transaction. This is inserted as
+# temporaries in lists of postings-of-entries, which is the product of a
+# realization.
+#
+# Attributes:
+#   txn: The parent Transaction instance.
+#   posting: The Posting instance.
+TxnPosting = namedtuple('TxnPosting', 'txn posting')
 
 
 def create_simple_posting(entry, account, number, currency):
@@ -359,7 +352,7 @@ def create_simple_posting(entry, account, number, currency):
         if not isinstance(number, Decimal):
             number = D(number)
         position = Position(Lot(currency, None, None), number)
-    posting = Posting(entry, account, position, None, None, None)
+    posting = Posting(account, position, None, None, None)
     if entry is not None:
         entry.postings.append(posting)
     return posting
@@ -389,7 +382,7 @@ def create_simple_posting_with_cost(entry, account,
         cost_number = D(cost_number)
     cost = Amount(cost_number, cost_currency)
     position = Position(Lot(currency, cost, None), number)
-    posting = Posting(entry, account, position, None, None, None)
+    posting = Posting(account, position, None, None, None)
     if entry is not None:
         entry.postings.append(posting)
     return posting
@@ -419,51 +412,10 @@ def sanity_check_types(entry):
         assert isinstance(entry.postings, list), "Invalid postings list type"
         for posting in entry.postings:
             assert isinstance(posting, Posting), "Invalid posting type"
-            assert posting.entry is entry, "Invalid posting reference to entry type"
             assert isinstance(posting.account, str), "Invalid account type"
             assert isinstance(posting.position, (Position, NoneType)), "Invalid pos type"
             assert isinstance(posting.price, (Amount, NoneType)), "Invalid price type"
             assert isinstance(posting.flag, (str, NoneType)), "Invalid flag type"
-
-
-def entry_replace(entry, **replacements):
-    """Replace components of an entry, reparenting postings automatically.
-    This is necessary because we use immutable namedtuple instances, with
-    circular references between entry and postings. It is a bit annoying,
-    but it does not occur in many places, so we live with it, enjoying the
-    extra convenience that circular refs provide, especially in lists of
-    postings.
-
-    Args:
-      entry: the entry whose components to replace
-      **replacements: replacements to apply to the entry
-    Returns:
-      A new entry, with postings correctly reparented.
-    """
-    new_postings = replacements.pop('postings', entry.postings)
-    new_entry = entry._replace(postings=[], **replacements)
-    new_entry.postings.extend(posting._replace(entry=new_entry)
-                              for posting in new_postings)
-    return new_entry
-
-
-def reparent_posting(posting, entry):
-    """Create a new posting entry that has the parent field set.
-
-    Note that this does not modify the list of postings in 'entry', i.e. entry
-    is left unmodified.
-
-    Args:
-      posting: a posting whose parent to set to 'entry'.
-      entry: the entry to set on the posting.
-    Return:
-      The modified posting. Note that the unmodified posting itself it returned
-      if the given entry is already the one on the posting.
-    """
-    if posting.entry is entry:
-        return posting
-    else:
-        return posting._replace(entry=entry)
 
 
 def posting_has_conversion(posting):
@@ -503,13 +455,14 @@ def get_entry(posting_or_entry):
     """Return the entry associated with the posting or entry.
 
     Args:
-      entry: A Posting or entry instance
+      entry: A TxnPosting or entry instance
     Returns:
       A datetime instance.
     """
-    return (posting_or_entry.entry
-            if isinstance(posting_or_entry, Posting)
-            else posting_or_entry)
+    if isinstance(posting_or_entry, TxnPosting):
+        return posting_or_entry.txn
+    else:
+        return posting_or_entry
 
 
 # Sort with the checks at the BEGINNING of the day.
@@ -552,8 +505,8 @@ def posting_sortkey(entry):
       A tuple of (date, integer, integer), that forms the sort key for the
       posting or entry.
     """
-    if isinstance(entry, Posting):
-        entry = entry.entry
+    if isinstance(entry, TxnPosting):
+        entry = entry.txn
     return (entry.date, SORT_ORDER.get(type(entry), 0), entry.meta.lineno)
 
 

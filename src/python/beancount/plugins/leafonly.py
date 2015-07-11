@@ -35,7 +35,7 @@ def validate_leaf_only(entries, unused_options_map):
     open_close_map = None # Lazily computed.
     errors = []
     for real_account in realization.iter_children(real_root):
-        if len(real_account) > 0 and real_account.postings:
+        if len(real_account) > 0 and real_account.txn_postings:
 
             if open_close_map is None:
                 open_close_map = getters.get_account_open_close(entries)

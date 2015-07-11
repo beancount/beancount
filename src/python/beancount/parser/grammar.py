@@ -649,7 +649,7 @@ class Builder(lexer.LexBuilder):
         #         ParserError(meta, "Price is zero: {}".format(price), None))
 
         meta = new_metadata(filename, lineno)
-        return Posting(None, account, position, price, chr(flag) if flag else None, meta)
+        return Posting(account, position, price, chr(flag) if flag else None, meta)
 
 
     def txn_field_new(self, _):
