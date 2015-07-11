@@ -823,7 +823,7 @@ class TestExecuteFlatten(QueryBase):
 
     INPUT = """
 
-      plugin "beancount.ops.auto_accounts"
+      plugin "beancount.plugins.auto_accounts"
 
       2010-02-23 *
         Assets:Something       5.00 USD

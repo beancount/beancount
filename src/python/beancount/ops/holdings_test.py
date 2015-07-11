@@ -523,24 +523,21 @@ class TestHoldings(unittest.TestCase):
         self.assertEqual(expected_price, posting.price)
 
     def test_get_pholding_market_value(self):
-        posting = data.Posting(None,
-                               'Account',
+        posting = data.Posting('Account',
                                position.from_string('100 MSFT {54.34 USD}'),
                                amount.from_string('60.00 USD'),
                                None, None)
         self.assertEqual(amount.from_string('6000.00 USD'),
                          holdings.get_pholding_market_value(posting))
 
-        posting = data.Posting(None,
-                               'Account',
+        posting = data.Posting('Account',
                                position.from_string('100 MSFT {54.34 USD}'),
                                None,
                                None, None)
         self.assertEqual(amount.from_string('5434.00 USD'),
                          holdings.get_pholding_market_value(posting))
 
-        posting = data.Posting(None,
-                               'Account',
+        posting = data.Posting('Account',
                                position.from_string('1000.00 USD'),
                                None,
                                None, None)
@@ -548,16 +545,14 @@ class TestHoldings(unittest.TestCase):
                          holdings.get_pholding_market_value(posting))
 
         with self.assertRaises(AssertionError):
-            posting = data.Posting(None,
-                                   'Account',
+            posting = data.Posting('Account',
                                    position.from_string('1000.00 USD'),
                                    amount.from_string('60.00 USD'),
                                    None, None)
             holdings.get_pholding_market_value(posting)
 
         with self.assertRaises(AssertionError):
-            posting = data.Posting(None,
-                                   'Account',
+            posting = data.Posting('Account',
                                    position.from_string('1000.00 USD {1.25 CAD}'),
                                    amount.from_string('60.00 USD'),
                                    None, None)

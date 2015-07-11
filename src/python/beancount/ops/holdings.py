@@ -469,7 +469,7 @@ def holding_to_posting(holding):
     price = (amount.Amount(holding.price_number, holding.cost_currency)
              if holding.price_number
              else None)
-    return data.Posting(None, holding.account, position_, price, None, None)
+    return data.Posting(holding.account, position_, price, None, None)
 
 
 def get_pholding_market_value(pholding):

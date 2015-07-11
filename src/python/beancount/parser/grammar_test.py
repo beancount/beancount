@@ -1653,7 +1653,19 @@ class TestLexerAndParserErrors(cmptest.TestCase):
         """
         self.check_entries_errors(entries, errors)
 
-    @mock.patch('beancount.parser.grammar.Builder.lot_cost_date', raise_exception)
+    @mock.patch('beancount.parser.grammar.Builder.compound_amount', raise_exception)
+    @parser.parsedoc
+    def test_grammar_exceptions__amount(self, entries, errors, _):
+        """
+          2000-01-01 open Assets:Before
+          2001-02-02 *
+            Assets:Before   10.00 HOOL {100.00 USD}
+            Assets:After   -100.00 USD
+          2010-01-01 close Assets:Before
+        """
+        self.check_entries_errors(entries, errors)
+
+    @mock.patch('beancount.parser.grammar.Builder.lot_spec', raise_exception)
     @parser.parsedoc
     def test_grammar_exceptions__lot_cost_date(self, entries, errors, _):
         """

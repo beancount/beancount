@@ -14,8 +14,7 @@ from beancount.core.position import Lot
 from beancount.core.position import Position
 from beancount.core.data import Transaction
 from beancount.core.data import Posting
-from beancount.core.data import reparent_posting
-from beancount.core.data import entry_replace
+from beancount.core.data import TxnPosting
 from beancount.core import getters
 
 
@@ -210,7 +209,7 @@ def get_residual_postings(residual, account_rounding):
     """
     meta = {AUTOMATIC_META: True,
             AUTOMATIC_RESIDUAL: True}
-    return [Posting(None, account_rounding, -position, None, None, meta.copy())
+    return [Posting(account_rounding, -position, None, None, meta.copy())
             for position in residual.get_positions()]
 
 
@@ -239,7 +238,7 @@ def fill_residual_posting(entry, account_rounding):
     else:
         new_postings = list(entry.postings)
         new_postings.extend(get_residual_postings(residual, account_rounding))
-        return entry_replace(entry, postings=new_postings)
+        return entry._replace(postings=new_postings)
 
 
 def get_incomplete_postings(entry, options_map):
@@ -352,7 +351,7 @@ def get_incomplete_postings(entry, options_map):
                 meta = copy.copy(old_posting.meta) if old_posting.meta else {}
                 meta[AUTOMATIC_META] = True
                 new_postings.append(
-                    Posting(entry, old_posting.account, position,
+                    Posting(old_posting.account, position,
                             None, old_posting.flag, old_posting.meta))
                 has_inserted = True
         else:
@@ -383,7 +382,7 @@ def get_incomplete_postings(entry, options_map):
                 meta = copy.copy(old_posting.meta) if old_posting.meta else {}
                 meta[AUTOMATIC_META] = True
                 new_postings.append(
-                    Posting(entry, old_posting.account, position,
+                    Posting(old_posting.account, position,
                             None, old_posting.flag, meta))
                 has_inserted = True
 
@@ -442,7 +441,7 @@ def balance_incomplete_postings(entry, options_map):
     # PERF(25ms): could be saved here by avoiding reparenting.
     entry.postings.clear()
     for posting in postings:
-        entry.postings.append(reparent_posting(posting, entry))
+        entry.postings.append(posting)
 
     if entry.meta is None:
         entry.meta = {}
@@ -451,8 +450,8 @@ def balance_incomplete_postings(entry, options_map):
     return errors or None
 
 
-def compute_postings_balance(postings):
-    """Compute the balance of a list of Postings's positions.
+def compute_postings_balance(txn_postings):
+    """Compute the balance of a list of Postings's or TxnPosting's positions.
 
     Args:
       postings: A list of Posting instances and other directives (which are
@@ -461,9 +460,11 @@ def compute_postings_balance(postings):
       An Inventory.
     """
     final_balance = Inventory()
-    for posting in postings:
-        if isinstance(posting, Posting):
-            final_balance.add_position(posting.position)
+    for txn_posting in txn_postings:
+        if isinstance(txn_posting, Posting):
+            final_balance.add_position(txn_posting.position)
+        elif isinstance(txn_posting, TxnPosting):
+            final_balance.add_position(txn_posting.posting.position)
     return final_balance
 
 

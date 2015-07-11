@@ -109,6 +109,9 @@ class RowContext:
     # The current posting being evaluated.
     posting = None
 
+    # The current transaction of the posting being evaluated.
+    entry = None
+
     # The current running balance *after* applying the posting.
     balance = None
 
@@ -209,6 +212,7 @@ def execute_query(query, entries, options_map):
         # Iterate over all the postings once and produce schwartzian rows.
         for entry in entries:
             if isinstance(entry, data.Transaction):
+                context.entry = entry
                 for posting in entry.postings:
                     context.posting = posting
                     if c_where is None or c_where(context):
@@ -253,6 +257,7 @@ def execute_query(query, entries, options_map):
         agg_store = {}
         for entry in entries:
             if isinstance(entry, data.Transaction):
+                context.entry = entry
                 for posting in entry.postings:
                     context.posting = posting
                     if c_where is None or c_where(context):
