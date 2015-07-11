@@ -86,7 +86,7 @@ def split_expenses(entries, options_map, config):
                     new_postings.append(posting)
 
             # Modify the entry in-place, replace its postings.
-            entry = data.entry_replace(entry, postings=new_postings)
+            entry = entry._replace(postings=new_postings)
 
         new_entries.append(entry)
 

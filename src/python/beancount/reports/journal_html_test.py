@@ -57,8 +57,8 @@ class TestJournalRender(unittest.TestCase):
 
     def test_iterate_html_postings(self):
         formatter = html_formatter.HTMLFormatter()
-        rows = list(journal_html.iterate_html_postings(self.real_account.postings,
-                                                    formatter))
+        rows = list(journal_html.iterate_html_postings(self.real_account.txn_postings,
+                                                       formatter))
 
         # Check (entry, leg_postings, rowtype, extra_class, flag).
         self.assertEqual([
@@ -89,9 +89,8 @@ class TestJournalRender(unittest.TestCase):
     def test_html_entries_table_with_balance(self):
         oss = io.StringIO()
         formatter = html_formatter.HTMLFormatter()
-        result = journal_html.html_entries_table_with_balance(oss,
-                                                              self.real_account.postings,
-                                                              formatter, True)
+        result = journal_html.html_entries_table_with_balance(
+            oss, self.real_account.txn_postings, formatter, True)
         html = oss.getvalue()
         self.assertTrue(result is None)
         self.assertTrue(isinstance(html, str))
@@ -100,9 +99,8 @@ class TestJournalRender(unittest.TestCase):
     def test_html_entries_table(self):
         oss = io.StringIO()
         formatter = html_formatter.HTMLFormatter()
-        result = journal_html.html_entries_table_with_balance(oss,
-                                                              self.real_account.postings,
-                                                              formatter, True)
+        result = journal_html.html_entries_table_with_balance(
+            oss, self.real_account.txn_postings, formatter, True)
         html = oss.getvalue()
         self.assertTrue(result is None)
         self.assertTrue(isinstance(html, str))

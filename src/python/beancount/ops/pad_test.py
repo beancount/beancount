@@ -342,23 +342,23 @@ class TestPadding(cmptest.TestCase):
 
         """
         post_map = realization.postings_by_account(entries)
-        postings = post_map['Assets:Checking']
+        txn_postings = post_map['Assets:Checking']
 
         balances = []
         pad_balance = inventory.Inventory()
-        for posting in postings:
-            if isinstance(posting, data.Posting):
-                position_, _ = pad_balance.add_position(posting.position)
+        for txn_posting in txn_postings:
+            if isinstance(txn_posting, data.TxnPosting):
+                position_, _ = pad_balance.add_position(txn_posting.posting.position)
                 self.assertFalse(position_.is_negative_at_cost())
-            balances.append((type(posting), pad_balance.get_units('USD')))
+            balances.append((type(txn_posting), pad_balance.get_units('USD')))
 
         self.assertEqual(balances, [(data.Open, amount.from_string('0.00 USD')),
                                     (data.Pad, amount.from_string('0.00 USD')),
-                                    (data.Posting, amount.from_string('95.00 USD')),
-                                    (data.Posting, amount.from_string('105.00 USD')),
+                                    (data.TxnPosting, amount.from_string('95.00 USD')),
+                                    (data.TxnPosting, amount.from_string('105.00 USD')),
                                     (data.Balance, amount.from_string('105.00 USD')),
-                                    (data.Posting, amount.from_string('125.00 USD')),
-                                    (data.Posting, amount.from_string('145.00 USD')),
+                                    (data.TxnPosting, amount.from_string('125.00 USD')),
+                                    (data.TxnPosting, amount.from_string('145.00 USD')),
                                     (data.Balance, amount.from_string('145.00 USD'))])
 
     # Note: You could try padding A into B and B into A to see if it works.

@@ -818,8 +818,8 @@ class TestReturnsWithUnrealized(test_utils.TestCase):
         # it. Try moving the unrealized gains a bit earlier, just to make sure
         # it has no effect.
         last_entry = entries[-1]
-        moved_entry = data.entry_replace(last_entry,
-                                         date=last_entry.date - datetime.timedelta(days=20))
+        moved_entry = last_entry._replace(
+            date=last_entry.date - datetime.timedelta(days=20))
         new_entries = entries[:-1] + [moved_entry]
 
         returns_, dates, internalized_entries = returns.compute_returns(

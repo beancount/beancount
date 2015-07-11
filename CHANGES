@@ -6,6 +6,29 @@ Note: This file contains only changes in the 'default' branch.
 
 2015-07-09
 
+  - WARNING: API CHANGES AHEAD. If you wrote plugins, you will need to remove
+    the 'entry' parameter to constructors of Posting().
+
+    I removed the Posting.entry back-reference of Postings to their owning
+    Transaction objects. This makes programmatically creating our data
+    structures much more straight-forward and avoids us having to run pirouettes
+    around which object to create first. It also removes all manners of "fixing
+    up" transactions and removes one ultimatley unnecessary degree of freedom
+    from plugins outputs: we don't have to check that the plugins generate
+    objects with correct back-references. It also makes the documentation
+    simpler: I won't have to explain backreferences and how to deal with them.
+    Finally, it avoids the circular reference which could potentially make
+    Python's GC do some work for no other reason.
+
+    This happened because it occurred to me that the only really important place
+    where back-references were used were in the beancount.core.realization code,
+    and that in the RealAccount objects I could easily replace the Posting
+    instances in lists of "postings or entries" into a new tuple object
+    "TxnPosting" that contains a reference to the parent transaction and a
+    reference to the posting. This voids the need for a back-reference, and
+    makes the API really straightforward.
+
+
   - WARNING: USER-LEVEL CHANGES FOLLOW. I repatriated the following optional
     plugins to the beancount.plugins package, so that all the plugins are in the
     same place:

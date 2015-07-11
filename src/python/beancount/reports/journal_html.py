@@ -40,20 +40,20 @@ Row = collections.namedtuple('Row',
                              'description links amount_str balance_str')
 
 
-def iterate_html_postings(postings, formatter):
+def iterate_html_postings(txn_postings, formatter):
     """Iterate through the list of transactions with rendered HTML strings for each cell.
 
     This pre-renders all the data for each row to HTML. This is reused by the entries
     table rendering routines.
 
     Args:
-      postings: A list of Posting or directive instances.
+      txn_postings: A list of TxnPosting or directive instances.
       formatter: An instance of HTMLFormatter, to be render accounts,
         inventories, links and docs.
     Yields:
       Instances of Row tuples. See above.
     """
-    for entry_line in realization.iterate_with_balance(postings):
+    for entry_line in realization.iterate_with_balance(txn_postings):
         entry, leg_postings, change, entry_balance = entry_line
 
         # Prepare the data to be rendered for this row.
@@ -123,14 +123,14 @@ def iterate_html_postings(postings, formatter):
                   flag, description, links, amount_str, balance_str)
 
 
-def html_entries_table_with_balance(oss, account_postings, formatter, render_postings=True):
+def html_entries_table_with_balance(oss, txn_postings, formatter, render_postings=True):
     """Render a list of entries into an HTML table, with a running balance.
 
     (This function returns nothing, it write to oss as a side-effect.)
 
     Args:
       oss: A file object to write the output to.
-      account_postings: A list of Posting or directive instances.
+      txn_postings: A list of Posting or directive instances.
       formatter: An instance of HTMLFormatter, to be render accounts,
         inventories, links and docs.
       render_postings: A boolean; if true, render the postings as rows under the
@@ -153,7 +153,7 @@ def html_entries_table_with_balance(oss, account_postings, formatter, render_pos
       </thead>
     ''')
 
-    for row in iterate_html_postings(account_postings, formatter):
+    for row in iterate_html_postings(txn_postings, formatter):
         entry = row.entry
 
         description = row.description
@@ -205,7 +205,7 @@ def html_entries_table_with_balance(oss, account_postings, formatter, render_pos
     write('</table>')
 
 
-def html_entries_table(oss, account_postings, formatter, render_postings=True):
+def html_entries_table(oss, txn_postings, formatter, render_postings=True):
     """Render a list of entries into an HTML table, with no running balance.
 
     This is appropriate for rendering tables of entries for postings with
@@ -216,7 +216,7 @@ def html_entries_table(oss, account_postings, formatter, render_postings=True):
 
     Args:
       oss: A file object to write the output to.
-      account_postings: A list of Posting or directive instances.
+      txn_postings: A list of Posting or directive instances.
       formatter: An instance of HTMLFormatter, to be render accounts,
         inventories, links and docs.
       render_postings: A boolean; if true, render the postings as rows under the
@@ -238,7 +238,7 @@ def html_entries_table(oss, account_postings, formatter, render_postings=True):
       </thead>
     ''')
 
-    for row in iterate_html_postings(account_postings, formatter):
+    for row in iterate_html_postings(txn_postings, formatter):
         entry = row.entry
 
         description = row.description
