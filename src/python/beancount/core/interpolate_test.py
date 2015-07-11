@@ -685,7 +685,7 @@ class TestInferTolerances(cmptest.TestCase):
         # An example of a transaction that would fail without the inferred
         # tolerances and succeed with them.
         input_string = textwrap.dedent("""
-          plugin "beancount.ops.auto_accounts"
+          plugin "beancount.plugins.auto_accounts"
 
           2014-02-25 *
             Assets:Account3       5.111 VHT {1000.00 USD}

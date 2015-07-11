@@ -46,7 +46,7 @@ class TestSplitExpenses(cmptest.TestCase):
     @loader.loaddoc
     def test_work_with_auto_accounts(self, entries, errors, __):
         """
-            plugin "beancount.ops.auto_accounts"
+            plugin "beancount.plugins.auto_accounts"
             plugin "beancount.plugins.split_expenses" "Martin Caroline"
 
             2011-05-17 * "Something"

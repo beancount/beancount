@@ -4,8 +4,7 @@ beancount: TODO
 
   - Remove plugins from ops, remove algorithms from core:
 
-      b.ops.auto_accounts   -> b.plugins.auto_accounts  (easy)
-      b.ops.implicit_prices -> b.plugins.implicit_prices  (easy)
+      (Also remove "documents" option and move that as input to this plugin.)
       b.ops.documents       -> b.plugins.documents  (not sure if breaks)
 
       b.core.getters        -> b.ops.getters (does it add deps?)
@@ -121,7 +120,7 @@ beancount: TODO
     numbers as represented in memory. Don't round those numbers.
 
   - Add a --auto option to bean-check that automatically inserts a
-    beancount.ops.auto_accounts directive and more.
+    beancount.plugins.auto_accounts directive and more.
 
   - beancount.parser.parsedoc_noerrors() has been implemented; now convert all
     the tests to the simplified version.
@@ -4192,6 +4191,25 @@ Improve this bit:
   (documentation)
   - Write a worked and detailed example of generating automated transactions in
     the Plugins document.
+** Contributor agreement
+
+  * See note at the bottom of: https://github.com/fourier/ztree
+
+      Since ztree is a part of GNU ELPA, it is copyrighted by the Free Software
+      Foundation, Inc.. Therefore in order to submit nontrivial changes (with total
+      amount of lines > 15), one needs to to grant the right to include your works in
+      GNU Emacs to the FSF.
+
+      For this you need to complete this form, and send it to assign@gnu.org. The FSF
+      will send you the assignment contract that both you and the FSF will sign.
+
+      For more information one can read here to understand why it is needed.
+
+      As soon as the paperwork is done one can contribute to ztree with bigger pull
+      requests. Note what pull requests without paperwork done will not be accepted,
+      so please notify the maintainer if everything is in place.
+
+
 * Name ideas
 
   - beangrind (new import system)

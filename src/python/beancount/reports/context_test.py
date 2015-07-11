@@ -12,6 +12,8 @@ class TestContext(test_utils.TestCase):
     @loader.loaddoc
     def test_context(self, entries, errors, options_map):
         """
+        plugin "beancount.plugins.implicit_prices"
+
         2012-01-01 open Assets:US:ETrade:Cash                       USD
         2012-01-01 open Assets:US:ETrade:ITOT                       ITOT
         2012-01-01 open Assets:US:ETrade:GLD                        GLD
@@ -60,7 +62,7 @@ class TestContext(test_utils.TestCase):
 
         self.assertLines(textwrap.dedent("""
         Hash:298dca350249afe0378cf8bac2fb12cf
-        Location: <string>:29
+        Location: <string>:31
 
         ;   Assets:US:ETrade:Cash                       -1411.44 USD
 
