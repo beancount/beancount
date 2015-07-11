@@ -1,10 +1,5 @@
-"""This module has code that can build a database of historical prices at
-various times, from which unrealized capital gains and market value can be
-deduced.
-
-Prices are deduced from Price entries found in the file, or perhaps
-created by scripts (for example you could build a script that will fetch
-live prices online and create entries on-the-fly).
+"""This plugin synthesizes Price directives for all Postings with a price or
+directive or if it is an augmenting posting, has a cost directive.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 

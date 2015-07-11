@@ -73,10 +73,10 @@ def validate_inventory_booking(entries, unused_options_map):
                 if running_balance.is_mixed():
                     errors.append(
                         ValidationError(
-                            posting.entry.meta,
+                            entry.meta,
                             ("Reducing position results in inventory with positive "
                              "and negative lots: {}").format(position_),
-                            posting.entry))
+                            entry))
 
         elif isinstance(entry, data.Open):
             # These Open directives should always appear beforehand as per the

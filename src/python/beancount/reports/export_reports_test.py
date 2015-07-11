@@ -282,6 +282,8 @@ class TestCommodityExport(unittest.TestCase):
         2015-02-08 *
           Assets:Investing           2 AAPL {410.00 USD}
           Equity:Opening-Balances
+
+        2015-02-09 price AAPL  410.00 USD
         """
         exported, converted, ignored = self.export(entries, options_map)
         self.assertEqual([
