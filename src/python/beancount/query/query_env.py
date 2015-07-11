@@ -696,7 +696,7 @@ class IdColumn(query_compile.EvalColumn):
         super().__init__(str)
 
     def __call__(self, context):
-        return hash_entry(context.posting.entry)
+        return hash_entry(context.entry)
 
 class TypeColumn(query_compile.EvalColumn):
     "The data type of the parent transaction for this posting."
@@ -706,128 +706,128 @@ class TypeColumn(query_compile.EvalColumn):
         super().__init__(str)
 
     def __call__(self, context):
-        return type(context.posting.entry).__name__.lower()
+        return type(context.entry).__name__.lower()
 
 class FilenameColumn(query_compile.EvalColumn):
     "The filename where the posting was parsed from or created."
-    __equivalent__ = 'posting.entry.meta.filename'
+    __equivalent__ = 'entry.meta.filename'
     __intypes__ = [data.Posting]
 
     def __init__(self):
         super().__init__(str)
 
     def __call__(self, context):
-        return context.posting.entry.meta.filename
+        return context.entry.meta.filename
 
 class LineNoColumn(query_compile.EvalColumn):
     "The line number from the file the posting was parsed from."
-    __equivalent__ = 'posting.entry.meta.lineno'
+    __equivalent__ = 'entry.meta.lineno'
     __intypes__ = [data.Posting]
 
     def __init__(self):
         super().__init__(int)
 
     def __call__(self, context):
-        return context.posting.entry.meta.lineno
+        return context.entry.meta.lineno
 
 class DateColumn(query_compile.EvalColumn):
     "The date of the parent transaction for this posting."
-    __equivalent__ = 'posting.entry.date'
+    __equivalent__ = 'entry.date'
     __intypes__ = [data.Posting]
 
     def __init__(self):
         super().__init__(datetime.date)
 
     def __call__(self, context):
-        return context.posting.entry.date
+        return context.entry.date
 
 class YearColumn(query_compile.EvalColumn):
     "The year of the date of the parent transaction for this posting."
-    __equivalent__ = 'posting.entry.date.year'
+    __equivalent__ = 'entry.date.year'
     __intypes__ = [data.Posting]
 
     def __init__(self):
         super().__init__(int)
 
     def __call__(self, context):
-        return context.posting.entry.date.year
+        return context.entry.date.year
 
 class MonthColumn(query_compile.EvalColumn):
     "The month of the date of the parent transaction for this posting."
-    __equivalent__ = 'posting.entry.date.month'
+    __equivalent__ = 'entry.date.month'
     __intypes__ = [data.Posting]
 
     def __init__(self):
         super().__init__(int)
 
     def __call__(self, context):
-        return context.posting.entry.date.month
+        return context.entry.date.month
 
 class DayColumn(query_compile.EvalColumn):
     "The day of the date of the parent transaction for this posting."
-    __equivalent__ = 'posting.entry.date.day'
+    __equivalent__ = 'entry.date.day'
     __intypes__ = [data.Posting]
 
     def __init__(self):
         super().__init__(int)
 
     def __call__(self, context):
-        return context.posting.entry.date.day
+        return context.entry.date.day
 
 class FlagColumn(query_compile.EvalColumn):
     "The flag of the parent transaction for this posting."
-    __equivalent__ = 'posting.entry.flag'
+    __equivalent__ = 'entry.flag'
     __intypes__ = [data.Posting]
 
     def __init__(self):
         super().__init__(str)
 
     def __call__(self, context):
-        return context.posting.entry.flag
+        return context.entry.flag
 
 class PayeeColumn(query_compile.EvalColumn):
     "The payee of the parent transaction for this posting."
-    __equivalent__ = 'posting.entry.payee'
+    __equivalent__ = 'entry.payee'
     __intypes__ = [data.Posting]
 
     def __init__(self):
         super().__init__(str)
 
     def __call__(self, context):
-        return context.posting.entry.payee or ''
+        return context.entry.payee or ''
 
 class NarrationColumn(query_compile.EvalColumn):
     "The narration of the parent transaction for this posting."
-    __equivalent__ = 'posting.entry.narration'
+    __equivalent__ = 'entry.narration'
     __intypes__ = [data.Posting]
 
     def __init__(self):
         super().__init__(str)
 
     def __call__(self, context):
-        return context.posting.entry.narration
+        return context.entry.narration
 
 class TagsColumn(query_compile.EvalColumn):
     "The set of tags of the parent transaction for this posting."
-    __equivalent__ = 'posting.entry.tags'
+    __equivalent__ = 'entry.tags'
     __intypes__ = [data.Posting]
 
     def __init__(self):
         super().__init__(set)
 
     def __call__(self, context):
-        return context.posting.entry.tags or EMPTY_SET
+        return context.entry.tags or EMPTY_SET
 
 class LinksColumn(query_compile.EvalColumn):
     "The set of links of the parent transaction for this posting."
-    __equivalent__ = 'posting.entry.links'
+    __equivalent__ = 'entry.links'
     __intypes__ = [data.Posting]
 
     def __init__(self):
         super().__init__(set)
 
     def __call__(self, context):
-        return context.posting.entry.links or EMPTY_SET
+        return context.entry.links or EMPTY_SET
 
 class PostingFlagColumn(query_compile.EvalColumn):
     "The flag of the posting itself."

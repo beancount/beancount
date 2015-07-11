@@ -11,7 +11,7 @@
 ;;   vanishes and it acts as a privilege token you've now used.
 ;;
 
-plugin "beancount.ops.auto_accounts"
+plugin "beancount.plugins.auto_accounts"
 
 2014-06-01 * "Stock options - acquire"
     Assets:BorganSchmanley:FOO-X100        8 FOO-X100 {0.80 USD}

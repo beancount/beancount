@@ -9,6 +9,7 @@ import collections
 import io
 import itertools
 import os
+import warnings
 from os import path
 
 from beancount.utils import misc_utils
@@ -25,13 +26,18 @@ LoadError = collections.namedtuple('LoadError', 'source message entry')
 # List of default plugins to run.
 DEFAULT_PLUGINS_PRE = [
     ("beancount.ops.pad", None),
-    ("beancount.ops.implicit_prices", None),
     ("beancount.ops.documents", None),
     ]
 
 DEFAULT_PLUGINS_POST = [
     ("beancount.ops.balance", None),
     ]
+
+# A mapping of modules to warn about, to their renamed names.
+DEPRECATED_MODULES = {
+    "beancount.ops.auto_accounts": "beancount.plugins.auto_accounts",
+    "beancount.ops.implicit_prices": "beancount.plugins.implicit_prices",
+    }
 
 
 def load_file(filename, log_timings=None, log_errors=None, extra_validations=None,
@@ -293,6 +299,15 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
             options_map['plugin_processing_mode'])
 
     for plugin_name, plugin_config in plugins_iter:
+
+        # Issue a warning on a deprecated module.
+        renamed_name = DEPRECATED_MODULES.get(plugin_name, None)
+        if renamed_name:
+            warnings.warn("Deprecation notice: Module '{}' has been renamed to '{}'; "
+                          "please adjust your plugin directive.".format(
+                              plugin_name, renamed_name))
+            plugin_name = renamed_name
+
         # Try to import the module.
         try:
             module = importlib.import_module(plugin_name)
