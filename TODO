@@ -4,8 +4,7 @@ beancount: TODO
 
   - Remove plugins from ops, remove algorithms from core:
 
-      b.ops.auto_accounts   -> b.plugins.auto_accounts  (easy)
-      b.ops.implicit_prices -> b.plugins.implicit_prices  (easy)
+      (Also remove "documents" option and move that as input to this plugin.)
       b.ops.documents       -> b.plugins.documents  (not sure if breaks)
 
       b.core.getters        -> b.ops.getters (does it add deps?)
@@ -124,7 +123,7 @@ beancount: TODO
     numbers as represented in memory. Don't round those numbers.
 
   - Add a --auto option to bean-check that automatically inserts a
-    beancount.ops.auto_accounts directive and more.
+    beancount.plugins.auto_accounts directive and more.
 
   - beancount.parser.parsedoc_noerrors() has been implemented; now convert all
     the tests to the simplified version.
@@ -1260,9 +1259,13 @@ http://furius.ca/beancount/doc/proposal-inter
     enforces all unopened accounts to have an Open directive as well.
 
 
-* Pending Removals
+* Pending Removals / Remove Deprecated Things
 
   - Remove the exp-legacy-fixed-tolerances experiment flag.
+
+  - Remove support for legacy, PIPE, Not needed.
+
+  - Remove negative number warning and __ setting
 
 
 * Current / Misc / To Be Classified
@@ -1271,6 +1274,18 @@ http://furius.ca/beancount/doc/proposal-inter
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+  - An easy way to remove the diff_amount exceptional field from Balance is to
+    move it to metadata, and this would be consistent with the goal of plugins
+    using metadata for their own goals: assertions of Balance can be see as a
+    feature of the plugins.
+
+
+  - Try creating a "Record" class to replace namedtuple using a class decorator
+    and properties.
+
+
 
 
   - Try removing the 'tags' attribute of transactions by moving it to metadata
@@ -2221,7 +2236,6 @@ http://furius.ca/beancount/doc/proposal-inter
   - Remove the parsing of "CHECK" at some point, that was just there for
     compatibility.
 
-  - Remove support for legacy, PIPE, Not needed.
 
 
 
@@ -2326,9 +2340,6 @@ http://furius.ca/beancount/doc/proposal-inter
   - Replace gviz by some other library that does not require you to be online.
 
 
-  - Consider whether we can actually remove posting.entry (I think it is only
-    used in the realization) and thus make it easy to create transactions
-    programmatically.
 
 
 
@@ -3033,9 +3044,6 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 ** Options
 
   - FIXME: We need to parse the options using the same argparse parser....
-
-  - Remove the globals kludge in beancount/core/account.py, and weave the
-    necessary AccountTypes instance all over the place.
 
 
 ** Syntax
@@ -4186,6 +4194,25 @@ Improve this bit:
   (documentation)
   - Write a worked and detailed example of generating automated transactions in
     the Plugins document.
+** Contributor agreement
+
+  * See note at the bottom of: https://github.com/fourier/ztree
+
+      Since ztree is a part of GNU ELPA, it is copyrighted by the Free Software
+      Foundation, Inc.. Therefore in order to submit nontrivial changes (with total
+      amount of lines > 15), one needs to to grant the right to include your works in
+      GNU Emacs to the FSF.
+
+      For this you need to complete this form, and send it to assign@gnu.org. The FSF
+      will send you the assignment contract that both you and the FSF will sign.
+
+      For more information one can read here to understand why it is needed.
+
+      As soon as the paperwork is done one can contribute to ztree with bigger pull
+      requests. Note what pull requests without paperwork done will not be accepted,
+      so please notify the maintainer if everything is in place.
+
+
 * Name ideas
 
   - beangrind (new import system)

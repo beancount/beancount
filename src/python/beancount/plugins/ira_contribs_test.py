@@ -9,6 +9,7 @@ class TestIraContributions(cmptest.TestCase):
     @loader.loaddoc
     def test_ira_contribs(self, entries, errors, __):
         """
+        plugin "beancount.plugins.implicit_prices"
 
         plugin "beancount.plugins.ira_contribs" "{
             'currency': 'IRAUSD',
