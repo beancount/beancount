@@ -1,8 +1,8 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
-from beancount.ops import auto_accounts
 from beancount.parser import parsedoc
 from beancount.parser import cmptest
+from beancount.plugins import auto_accounts
 
 
 class TestAutoInsertOpen(cmptest.TestCase):

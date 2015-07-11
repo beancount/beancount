@@ -29,6 +29,29 @@ Note: This file contains only changes in the 'default' branch.
     makes the API really straightforward.
 
 
+  - WARNING: USER-LEVEL CHANGES FOLLOW. I repatriated the following optional
+    plugins to the beancount.plugins package, so that all the plugins are in the
+    same place:
+
+       beancount.ops.auto_accounts   -> beancount.plugins.auto_accounts
+       beancount.ops.implicit_prices -> beancount.plugins.implicit_prices
+
+    This is so that the "beancount.ops" package contains only plugins run by
+    default (non-optional), and so that the "beancount.plugins" only contains
+    optional plugins the user must provide.
+
+    In doing so, I also made the "implicit_prices" plugin NOT INCLUDED BY
+    DEFAULT. This plugin creates automatically Price directives for all Postings
+    which have a @ <price> annotation, thus feeding those prices into the price
+    database. If you want to keep this behaviour -- and you probably should --
+    you need to add the following in your input file:
+
+      plugin "beancount.plugins.implicit_prices"
+
+    (I'm considering moving move of the default plugins to be optional, in
+    particular, beancount.ops.documents, not sure yet.)
+
+
 2015-07-05
 
   - Implemented support for parsing strings from files in various encodings.

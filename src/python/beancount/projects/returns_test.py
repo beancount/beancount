@@ -216,7 +216,7 @@ class TestReturnsPeriods(test_utils.TestCase):
     @loader.loaddoc
     def test_returns_one_transfer(self, entries, errors, options_map):
         """
-        plugin "beancount.ops.auto_accounts"
+        plugin "beancount.plugins.auto_accounts"
 
         2014-02-01 * "Deposit"
           Assets:US:Investments:Cash       10,000 USD
@@ -725,6 +725,7 @@ class TestReturnsInternalize(cmptest.TestCase):
         2014-01-10 * "Buying"
           Assets:Invest:Cash       -500.00 USD
           Assets:Invest:BOOG            50 BOOG {10.00 USD}
+        2014-01-10 price      BOOG   10.00 USD
 
         2014-04-01 * "Dividends"
           Assets:Invest:Cash         100.00 USD
