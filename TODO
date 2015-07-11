@@ -11,6 +11,9 @@ beancount: TODO
       b.core.realization    -> b.ops.realization (does it add deps?)
 
   - Define a C extension module to implement D().
+    This function should catch useless errors from the cdecimal library:
+      Declined: [<class 'decimal.ConversionSyntax'>]
+    and always provide the input string so we can debug WTF happened.
 
 
 * Explicit Tolerance
