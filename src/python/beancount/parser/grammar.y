@@ -222,7 +222,7 @@ const char* getTokenName(int token);
  */
 %left MINUS PLUS
 %left ASTERISK SLASH
-%precedence NEG   /* negation--unary minus */
+%precedence NEGATIVE /* negation--unary minus */
 
 /* Start symbol. */
 %start file
@@ -290,10 +290,14 @@ number_expr : NUMBER
                 $$ = PyNumber_TrueDivide($1, $3);
                 DECREF2($1, $3);
             }
-            | MINUS number_expr %prec NEG
+            | MINUS number_expr %prec NEGATIVE
             {
                 $$ = PyNumber_Negative($2);
                 DECREF1($2);
+            }
+            | PLUS number_expr %prec NEGATIVE
+            {
+                $$ = $2;
             }
             | LPAREN number_expr RPAREN
             {

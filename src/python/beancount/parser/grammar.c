@@ -242,7 +242,7 @@ extern int yydebug;
     TAG = 301,
     LINK = 302,
     KEY = 303,
-    NEG = 304
+    NEGATIVE = 304
   };
 #endif
 
@@ -535,16 +535,16 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  33
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   174
+#define YYLAST   179
 
 /* YYNTOKENS -- Number of terminals.  */
 #define YYNTOKENS  50
 /* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  39
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  99
+#define YYNRULES  100
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  183
+#define YYNSTATES  185
 
 /* YYTRANSLATE[YYX] -- Symbol number corresponding to YYX as returned
    by yylex, with out-of-bounds checking.  */
@@ -595,16 +595,17 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,   235,   235,   238,   242,   246,   251,   252,   256,   257,
-     258,   259,   260,   266,   270,   275,   280,   285,   290,   295,
-     300,   308,   313,   318,   323,   330,   336,   340,   344,   346,
-     351,   356,   361,   367,   373,   374,   375,   376,   377,   378,
-     379,   380,   384,   390,   395,   400,   406,   411,   417,   422,
-     427,   433,   439,   445,   452,   456,   462,   468,   474,   480,
-     486,   492,   500,   507,   512,   518,   523,   528,   533,   540,
-     546,   552,   558,   560,   566,   567,   568,   569,   570,   571,
-     572,   573,   574,   575,   580,   586,   592,   597,   603,   604,
-     605,   606,   607,   608,   609,   612,   616,   621,   639,   646
+       0,   238,   238,   241,   245,   249,   254,   255,   259,   260,
+     261,   262,   263,   269,   273,   278,   283,   288,   293,   298,
+     302,   307,   315,   320,   325,   330,   337,   343,   347,   351,
+     353,   358,   363,   368,   374,   380,   381,   382,   383,   384,
+     385,   386,   387,   391,   397,   402,   407,   413,   418,   424,
+     429,   434,   440,   446,   452,   459,   463,   469,   475,   481,
+     487,   493,   499,   507,   514,   519,   525,   530,   535,   540,
+     547,   553,   559,   565,   567,   573,   574,   575,   576,   577,
+     578,   579,   580,   581,   582,   587,   593,   599,   604,   610,
+     611,   612,   613,   614,   615,   616,   619,   623,   628,   646,
+     653
 };
 #endif
 
@@ -619,14 +620,15 @@ static const char *const yytname[] =
   "LPAREN", "RPAREN", "FLAG", "TXN", "BALANCE", "OPEN", "CLOSE",
   "COMMODITY", "PAD", "EVENT", "PRICE", "NOTE", "DOCUMENT", "PUSHTAG",
   "POPTAG", "OPTION", "INCLUDE", "PLUGIN", "BOOL", "DATE", "ACCOUNT",
-  "CURRENCY", "STRING", "NUMBER", "TAG", "LINK", "KEY", "NEG", "$accept",
-  "empty", "txn", "eol", "empty_line", "number_expr", "txn_fields",
-  "transaction", "optflag", "posting", "key_value", "key_value_value",
-  "posting_or_kv_list", "key_value_list", "currency_list", "pushtag",
-  "poptag", "open", "opt_booking", "close", "commodity", "pad", "balance",
-  "amount", "amount_tolerance", "position", "lot_cost_date", "price",
-  "event", "note", "filename", "document", "entry", "option", "include",
-  "plugin", "directive", "declarations", "file", YY_NULLPTR
+  "CURRENCY", "STRING", "NUMBER", "TAG", "LINK", "KEY", "NEGATIVE",
+  "$accept", "empty", "txn", "eol", "empty_line", "number_expr",
+  "txn_fields", "transaction", "optflag", "posting", "key_value",
+  "key_value_value", "posting_or_kv_list", "key_value_list",
+  "currency_list", "pushtag", "poptag", "open", "opt_booking", "close",
+  "commodity", "pad", "balance", "amount", "amount_tolerance", "position",
+  "lot_cost_date", "price", "event", "note", "filename", "document",
+  "entry", "option", "include", "plugin", "directive", "declarations",
+  "file", YY_NULLPTR
 };
 #endif
 
@@ -643,12 +645,12 @@ static const yytype_uint16 yytoknum[] =
 };
 # endif
 
-#define YYPACT_NINF -72
+#define YYPACT_NINF -74
 
 #define yypact_value_is_default(Yystate) \
-  (!!((Yystate) == (-72)))
+  (!!((Yystate) == (-74)))
 
-#define YYTABLE_NINF -100
+#define YYTABLE_NINF -101
 
 #define yytable_value_is_error(Yytable_value) \
   0
@@ -657,25 +659,25 @@ static const yytype_uint16 yytoknum[] =
      STATE-NUM.  */
 static const yytype_int16 yypact[] =
 {
-     -72,   -72,    72,     3,   -72,     4,   -72,    13,   -72,   -25,
-     -22,    -2,     6,    18,   128,   -72,   -72,   -72,   -72,   -72,
-     -72,   -72,   -72,   -72,   -72,   -72,   -72,   -72,   -72,   -72,
-     -72,   -72,   -72,   -72,   -72,   -72,    22,    22,    41,    22,
-       5,   -72,   -72,   -72,    53,    54,    56,    63,    80,    70,
-      82,    84,    90,   -72,   -72,   129,   -72,   -72,    22,   -72,
-      22,   -72,    -9,    92,    22,    22,    98,    97,    -9,   105,
-     106,   -72,    14,   -72,   -72,   -72,    -9,    -9,   -72,    69,
-      22,   -72,   -72,   -10,   -72,   -72,    22,    22,    73,    22,
-      22,   -72,    22,   -72,   -72,   -72,   -72,   -72,   -72,   110,
-      -9,    -9,    -9,    -9,    -9,   -72,   -72,   108,   -72,   -72,
-      22,   -72,   111,   111,   -72,   -72,   -72,   -72,   -72,   -72,
-     -72,   161,   -72,    99,   -72,   -72,    20,    20,   111,   -72,
-     -72,   118,   -72,   111,   111,   111,   111,   111,   -17,   -72,
-     -72,   -72,   111,    59,   -72,   -72,   -72,   127,   -72,   -72,
-     -72,   -72,   -72,    65,   -72,   -72,    22,   -72,    11,   -72,
-     -72,    71,   158,    -9,    -9,   -72,    -9,    -9,   -72,    -4,
-      55,    22,    22,   -72,   130,   -72,   131,   -72,   -72,   162,
-     156,   -72,   -72
+     -74,   -74,    74,     9,   -74,    10,   -74,    18,   -74,   -19,
+     -13,     6,    20,    27,   142,   -74,   -74,   -74,   -74,   -74,
+     -74,   -74,   -74,   -74,   -74,   -74,   -74,   -74,   -74,   -74,
+     -74,   -74,   -74,   -74,   -74,   -74,     1,     1,    33,     1,
+       5,   -74,   -74,   -74,    -5,    46,    55,    19,    57,    43,
+      64,    81,    84,   -74,   -74,   111,   -74,   -74,     1,   -74,
+       1,   -74,    99,    89,     1,     1,    91,    73,    99,    83,
+      90,   -74,    26,   -74,   -74,   -74,    99,    99,    99,   -74,
+      -1,     1,   -74,   -74,   -14,   -74,   -74,     1,     1,    71,
+       1,     1,   -74,     1,   -74,   -74,   -74,   -74,   -74,   -74,
+     -74,    85,    99,    99,    99,    99,    99,   -74,   -74,    92,
+     -74,   -74,     1,   -74,   132,   132,   -74,   -74,   -74,   -74,
+     -74,   -74,   -74,   135,   -74,    75,   -74,   -74,    42,    42,
+     132,   -74,   -74,   100,   -74,   132,   132,   132,   132,   132,
+     -10,   -74,   -74,   -74,   132,   109,   -74,   -74,   -74,   115,
+     -74,   -74,   -74,   -74,   -74,    77,   -74,   -74,     1,   -74,
+      80,   -74,   -74,    45,   137,    99,    99,   -74,    99,    99,
+     -74,    -7,     7,     1,     1,   -74,   117,   -74,   118,   -74,
+     -74,   151,   163,   -74,   -74
 };
 
   /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -683,43 +685,43 @@ static const yytype_int16 yypact[] =
      means the default is an error.  */
 static const yytype_uint8 yydefact[] =
 {
-       2,    98,     0,     0,    97,    11,     8,    12,    88,     0,
-       0,     0,     0,     0,     0,    89,    74,    90,    91,    76,
-      77,    83,    78,    75,    82,    79,    80,    81,    96,    92,
-      93,    94,    95,     1,    10,     9,     0,     0,     0,     0,
+       2,    99,     0,     0,    98,    11,     8,    12,    89,     0,
+       0,     0,     0,     0,     0,    90,    75,    91,    92,    77,
+      78,    84,    79,    76,    83,    80,    81,    82,    97,    93,
+      94,    95,    96,     1,    10,     9,     0,     0,     0,     0,
        0,     5,     4,     3,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     2,     6,     0,    51,    52,     0,    85,
-       0,    86,     0,     2,     0,     0,     0,     0,     0,     0,
-       0,    20,     0,     7,    84,    87,     0,     0,    13,     0,
-       0,    49,    48,     2,     2,     2,     0,     0,     0,     0,
-       0,    72,     0,    24,    21,    23,    22,     2,    18,     0,
-       0,     0,     0,     0,     0,    61,     2,     0,    54,    55,
-       0,    46,    56,    57,     2,     2,    60,     2,     2,     2,
-      43,    25,    19,     0,    16,    17,    14,    15,    59,    50,
-       2,     0,    47,    58,    70,    69,    71,    73,     2,    45,
-      44,    62,    53,     2,    27,    28,    26,     0,    40,    36,
-      35,    37,    34,    13,    38,    42,     0,    41,     0,    33,
-      32,    63,     0,     0,     0,    64,     0,     0,    29,     0,
-       0,     0,     0,    67,     0,    65,     0,    31,    30,     0,
-       0,    68,    66
+       0,     0,     0,     2,     6,     0,    52,    53,     0,    86,
+       0,    87,     0,     2,     0,     0,     0,     0,     0,     0,
+       0,    21,     0,     7,    85,    88,     0,     0,     0,    13,
+       0,     0,    50,    49,     2,     2,     2,     0,     0,     0,
+       0,     0,    73,     0,    25,    22,    24,    23,     2,    19,
+      18,     0,     0,     0,     0,     0,     0,    62,     2,     0,
+      55,    56,     0,    47,    57,    58,     2,     2,    61,     2,
+       2,     2,    44,    26,    20,     0,    16,    17,    14,    15,
+      60,    51,     2,     0,    48,    59,    71,    70,    72,    74,
+       2,    46,    45,    63,    54,     2,    28,    29,    27,     0,
+      41,    37,    36,    38,    35,    13,    39,    43,     0,    42,
+       0,    34,    33,    64,     0,     0,     0,    65,     0,     0,
+      30,     0,     0,     0,     0,    68,     0,    66,     0,    32,
+      31,     0,     0,    69,    67
 };
 
   /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -72,     0,   -72,   -35,   -72,   -36,   -72,   -72,   -72,   -72,
-      52,   -72,   -72,   -71,   -72,   -72,   -72,   -72,   -72,   -72,
-     -72,   -72,   -72,   -19,   -72,   -72,   -72,   -72,   -72,   -72,
-     -72,   -72,   -72,   -72,   -72,   -72,   -72,   -72,   -72
+     -74,     0,   -74,   -36,   -74,   -37,   -74,   -74,   -74,   -74,
+      56,   -74,   -74,   -73,   -74,   -74,   -74,   -74,   -74,   -74,
+     -74,   -74,   -74,    -4,   -74,   -74,   -74,   -74,   -74,   -74,
+     -74,   -74,   -74,   -74,   -74,   -74,   -74,   -74,   -74
 };
 
   /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int16 yydefgoto[] =
 {
-      -1,   111,    53,    56,    15,    88,    72,    16,   147,   139,
-     132,   156,   121,   112,    83,    17,    18,    19,   110,    20,
-      21,    22,    23,    89,    80,   162,   165,    24,    25,    26,
-      92,    27,    28,    29,    30,    31,    32,     2,     3
+      -1,   113,    53,    56,    15,    89,    72,    16,   149,   141,
+     134,   158,   123,   114,    84,    17,    18,    19,   112,    20,
+      21,    22,    23,    90,    81,   164,   167,    24,    25,    26,
+      93,    27,    28,    29,    30,    31,    32,     2,     3
 };
 
   /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -727,46 +729,46 @@ static const yytype_int16 yydefgoto[] =
      number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int16 yytable[] =
 {
-       1,   144,    57,    33,    59,    61,   107,   145,   173,    34,
-      54,    55,    76,    77,   113,   174,    54,    55,    35,    54,
-      55,    36,    93,    74,    37,    75,    79,    54,    55,    84,
-      85,   143,    76,    77,   108,   128,    78,    97,   101,   102,
-      98,    99,    38,   133,   134,   106,   135,   136,   137,    60,
-      39,   114,   115,    71,   117,   118,    78,   119,    94,   142,
-      95,    96,    40,    82,   123,   124,   125,   126,   127,   175,
-     -39,   -39,   -99,     4,   176,   130,     5,     6,     7,     8,
-      76,    77,   163,   109,   164,    58,   100,   101,   102,   103,
-     104,   101,   102,   103,   104,    62,    63,   120,    64,   148,
-     149,   150,   151,   152,   153,   154,    65,     9,    10,    11,
-      12,    13,   105,    14,    67,   131,   116,   101,   102,   103,
-     104,   159,    66,   160,   157,    68,    69,   168,   101,   102,
-     103,   104,    70,   122,    73,    81,   177,   178,   146,   161,
-      86,    87,   141,   155,   169,   170,    41,   171,   172,    90,
-      91,   129,    42,    43,    44,    45,    46,    47,    48,    49,
-      50,    51,    52,    54,    55,   138,   143,   166,   167,   158,
-     182,   179,   180,   140,   181
+       1,    57,   109,    59,    61,   175,    54,    55,   146,    33,
+      54,    55,   176,   115,   147,    34,   102,   103,   104,   105,
+     106,   177,    74,    35,    75,    80,   178,    36,    85,    86,
+     110,    54,    55,    37,    94,   130,    98,    62,   145,    99,
+     100,   101,   107,   135,   136,   108,   137,   138,   139,    60,
+      38,   116,   117,    71,   119,   120,   165,   121,   166,   144,
+     103,   104,    65,    83,    39,   125,   126,   127,   128,   129,
+      95,    40,    96,    97,  -100,     4,   132,    58,     5,     6,
+       7,     8,   -40,   -40,   111,    54,    55,    67,    63,   103,
+     104,   105,   106,   103,   104,   105,   106,    64,   122,    66,
+      76,    77,    78,   103,   104,   105,   106,    68,   124,     9,
+      10,    11,    12,    13,   118,    14,    73,    88,   143,    76,
+      77,    78,   161,    69,   162,    79,    70,    91,   170,    76,
+      77,    78,    82,    87,    92,   131,   133,   179,   180,   140,
+     148,   159,    54,    55,    79,   157,   168,   169,   145,   150,
+     151,   152,   153,   154,   155,   156,   163,   160,   181,   182,
+      41,   171,   172,   183,   173,   174,    42,    43,    44,    45,
+      46,    47,    48,    49,    50,    51,    52,   184,     0,   142
 };
 
-static const yytype_uint8 yycheck[] =
+static const yytype_int16 yycheck[] =
 {
-       0,    18,    37,     0,    39,    40,    16,    24,    12,     5,
-       5,     6,    21,    22,    85,    19,     5,     6,     5,     5,
-       6,    46,     8,    58,    46,    60,    62,     5,     6,    64,
-      65,    48,    21,    22,    44,   106,    45,    72,    18,    19,
-      76,    77,    44,   114,   115,    80,   117,   118,   119,    44,
-      44,    86,    87,    53,    89,    90,    45,    92,    44,   130,
-      46,    47,    44,    63,   100,   101,   102,   103,   104,    14,
-       5,     6,     0,     1,    19,   110,     4,     5,     6,     7,
-      21,    22,    11,    83,    13,    44,    17,    18,    19,    20,
-      21,    18,    19,    20,    21,    42,    42,    97,    42,    40,
-      41,    42,    43,    44,    45,    46,    43,    35,    36,    37,
-      38,    39,    43,    41,    44,     4,    43,    18,    19,    20,
-      21,   156,    42,   158,   143,    43,    42,   162,    18,    19,
-      20,    21,    42,    23,     5,    43,   171,   172,   138,   158,
-      42,    44,    43,   143,   163,   164,    18,   166,   167,    44,
-      44,    43,    24,    25,    26,    27,    28,    29,    30,    31,
-      32,    33,    34,     5,     6,     4,    48,     9,    10,    42,
-      14,    41,    41,   121,    12
+       0,    37,    16,    39,    40,    12,     5,     6,    18,     0,
+       5,     6,    19,    86,    24,     5,    17,    18,    19,    20,
+      21,    14,    58,     5,    60,    62,    19,    46,    64,    65,
+      44,     5,     6,    46,     8,   108,    72,    42,    48,    76,
+      77,    78,    43,   116,   117,    81,   119,   120,   121,    44,
+      44,    87,    88,    53,    90,    91,    11,    93,    13,   132,
+      18,    19,    43,    63,    44,   102,   103,   104,   105,   106,
+      44,    44,    46,    47,     0,     1,   112,    44,     4,     5,
+       6,     7,     5,     6,    84,     5,     6,    44,    42,    18,
+      19,    20,    21,    18,    19,    20,    21,    42,    98,    42,
+      20,    21,    22,    18,    19,    20,    21,    43,    23,    35,
+      36,    37,    38,    39,    43,    41,     5,    44,    43,    20,
+      21,    22,   158,    42,   160,    45,    42,    44,   164,    20,
+      21,    22,    43,    42,    44,    43,     4,   173,   174,     4,
+     140,   145,     5,     6,    45,   145,     9,    10,    48,    40,
+      41,    42,    43,    44,    45,    46,   160,    42,    41,    41,
+      18,   165,   166,    12,   168,   169,    24,    25,    26,    27,
+      28,    29,    30,    31,    32,    33,    34,    14,    -1,   123
 };
 
   /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
@@ -780,18 +782,18 @@ static const yytype_uint8 yystos[] =
       44,    18,    24,    25,    26,    27,    28,    29,    30,    31,
       32,    33,    34,    52,     5,     6,    53,    53,    44,    53,
       44,    53,    42,    42,    42,    43,    42,    44,    43,    42,
-      42,    51,    56,     5,    53,    53,    21,    22,    45,    55,
-      74,    43,    51,    64,    53,    53,    42,    44,    55,    73,
-      44,    44,    80,     8,    44,    46,    47,    53,    55,    55,
-      17,    18,    19,    20,    21,    43,    53,    16,    44,    51,
-      68,    51,    63,    63,    53,    53,    43,    53,    53,    53,
-      51,    62,    23,    55,    55,    55,    55,    55,    63,    43,
-      53,     4,    60,    63,    63,    63,    63,    63,     4,    59,
-      60,    43,    63,    48,    18,    24,    51,    58,    40,    41,
-      42,    43,    44,    45,    46,    51,    61,    73,    42,    53,
-      53,    73,    75,    11,    13,    76,     9,    10,    53,    73,
-      73,    73,    73,    12,    19,    14,    19,    53,    53,    41,
-      41,    12,    14
+      42,    51,    56,     5,    53,    53,    20,    21,    22,    45,
+      55,    74,    43,    51,    64,    53,    53,    42,    44,    55,
+      73,    44,    44,    80,     8,    44,    46,    47,    53,    55,
+      55,    55,    17,    18,    19,    20,    21,    43,    53,    16,
+      44,    51,    68,    51,    63,    63,    53,    53,    43,    53,
+      53,    53,    51,    62,    23,    55,    55,    55,    55,    55,
+      63,    43,    53,     4,    60,    63,    63,    63,    63,    63,
+       4,    59,    60,    43,    63,    48,    18,    24,    51,    58,
+      40,    41,    42,    43,    44,    45,    46,    51,    61,    73,
+      42,    53,    53,    73,    75,    11,    13,    76,     9,    10,
+      53,    73,    73,    73,    73,    12,    19,    14,    19,    53,
+      53,    41,    41,    12,    14
 };
 
   /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
@@ -799,29 +801,31 @@ static const yytype_uint8 yyr1[] =
 {
        0,    50,    51,    52,    52,    52,    53,    53,    54,    54,
       54,    54,    54,    55,    55,    55,    55,    55,    55,    55,
-      56,    56,    56,    56,    56,    57,    58,    58,    58,    59,
-      59,    59,    59,    60,    61,    61,    61,    61,    61,    61,
-      61,    61,    61,    62,    62,    62,    63,    63,    64,    64,
-      64,    65,    66,    67,    68,    68,    69,    70,    71,    72,
-      73,    74,    74,    75,    75,    76,    76,    76,    76,    77,
-      78,    79,    80,    81,    82,    82,    82,    82,    82,    82,
-      82,    82,    82,    82,    83,    84,    85,    85,    86,    86,
-      86,    86,    86,    86,    86,    87,    87,    87,    87,    88
+      55,    56,    56,    56,    56,    56,    57,    58,    58,    58,
+      59,    59,    59,    59,    60,    61,    61,    61,    61,    61,
+      61,    61,    61,    61,    62,    62,    62,    63,    63,    64,
+      64,    64,    65,    66,    67,    68,    68,    69,    70,    71,
+      72,    73,    74,    74,    75,    75,    76,    76,    76,    76,
+      77,    78,    79,    80,    81,    82,    82,    82,    82,    82,
+      82,    82,    82,    82,    82,    83,    84,    85,    85,    86,
+      86,    86,    86,    86,    86,    86,    87,    87,    87,    87,
+      88
 };
 
   /* YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.  */
 static const yytype_uint8 yyr2[] =
 {
        0,     2,     0,     1,     1,     1,     1,     2,     1,     2,
-       2,     1,     1,     1,     3,     3,     3,     3,     2,     3,
-       1,     2,     2,     2,     2,     5,     1,     1,     1,     5,
-       7,     7,     4,     4,     1,     1,     1,     1,     1,     1,
-       1,     1,     1,     1,     2,     2,     1,     2,     1,     1,
-       3,     3,     3,     7,     1,     1,     5,     5,     6,     6,
-       2,     2,     4,     1,     2,     3,     5,     3,     5,     6,
-       6,     6,     1,     6,     1,     1,     1,     1,     1,     1,
-       1,     1,     1,     1,     4,     3,     3,     4,     1,     1,
-       1,     1,     1,     1,     1,     2,     2,     2,     1,     1
+       2,     1,     1,     1,     3,     3,     3,     3,     2,     2,
+       3,     1,     2,     2,     2,     2,     5,     1,     1,     1,
+       5,     7,     7,     4,     4,     1,     1,     1,     1,     1,
+       1,     1,     1,     1,     1,     2,     2,     1,     2,     1,
+       1,     3,     3,     3,     7,     1,     1,     5,     5,     6,
+       6,     2,     2,     4,     1,     2,     3,     5,     3,     5,
+       6,     6,     6,     1,     6,     1,     1,     1,     1,     1,
+       1,     1,     1,     1,     1,     4,     3,     3,     4,     1,
+       1,     1,     1,     1,     1,     1,     2,     2,     2,     1,
+       1
 };
 
 
@@ -1597,92 +1601,100 @@ yyreduce:
   switch (yyn)
     {
         case 3:
-#line 239 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+#line 242 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
         (yyval.character) = '*';
     }
-#line 1605 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1609 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
   case 4:
-#line 243 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+#line 246 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
         (yyval.character) = (yyvsp[0].character);
     }
-#line 1613 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1617 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
   case 5:
-#line 247 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+#line 250 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
         (yyval.character) = '*';
     }
-#line 1621 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1625 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
   case 13:
-#line 267 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+#line 270 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
                 (yyval.pyobj) = (yyvsp[0].pyobj);
             }
-#line 1629 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1633 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
   case 14:
-#line 271 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+#line 274 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
                 (yyval.pyobj) = PyNumber_Add((yyvsp[-2].pyobj), (yyvsp[0].pyobj));
                 DECREF2((yyvsp[-2].pyobj), (yyvsp[0].pyobj));
             }
-#line 1638 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1642 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
   case 15:
-#line 276 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+#line 279 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
                 (yyval.pyobj) = PyNumber_Subtract((yyvsp[-2].pyobj), (yyvsp[0].pyobj));
                 DECREF2((yyvsp[-2].pyobj), (yyvsp[0].pyobj));
             }
-#line 1647 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1651 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
   case 16:
-#line 281 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+#line 284 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
                 (yyval.pyobj) = PyNumber_Multiply((yyvsp[-2].pyobj), (yyvsp[0].pyobj));
                 DECREF2((yyvsp[-2].pyobj), (yyvsp[0].pyobj));
             }
-#line 1656 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1660 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
   case 17:
-#line 286 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+#line 289 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
                 (yyval.pyobj) = PyNumber_TrueDivide((yyvsp[-2].pyobj), (yyvsp[0].pyobj));
                 DECREF2((yyvsp[-2].pyobj), (yyvsp[0].pyobj));
             }
-#line 1665 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1669 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
   case 18:
-#line 291 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+#line 294 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
                 (yyval.pyobj) = PyNumber_Negative((yyvsp[0].pyobj));
                 DECREF1((yyvsp[0].pyobj));
             }
-#line 1674 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1678 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
   case 19:
-#line 296 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+#line 299 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
-                (yyval.pyobj) = (yyvsp[-1].pyobj);
+                (yyval.pyobj) = (yyvsp[0].pyobj);
             }
-#line 1682 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1686 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
   case 20:
-#line 301 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+#line 303 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+    {
+                (yyval.pyobj) = (yyvsp[-1].pyobj);
+            }
+#line 1694 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+    break;
+
+  case 21:
+#line 308 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
                /* Note: We're passing a bogus value here in order to avoid
                 * having to declare a second macro just for this one special
@@ -1690,297 +1702,297 @@ yyreduce:
                BUILDY(,
                       (yyval.pyobj), "txn_field_new", "O", Py_None);
            }
-#line 1694 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1706 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
-  case 21:
-#line 309 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+  case 22:
+#line 316 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
                BUILDY(DECREF2((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                       (yyval.pyobj), "txn_field_STRING", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
            }
-#line 1703 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1715 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
-  case 22:
-#line 314 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+  case 23:
+#line 321 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
                BUILDY(DECREF2((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                       (yyval.pyobj), "txn_field_LINK", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
            }
-#line 1712 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1724 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
-  case 23:
-#line 319 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+  case 24:
+#line 326 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
                BUILDY(DECREF2((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                       (yyval.pyobj), "txn_field_TAG", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
            }
-#line 1721 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
-    break;
-
-  case 24:
-#line 324 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
-    {
-               /* Mark PIPE as present for backwards compatibility and raise an error */
-               BUILDY(DECREF1((yyvsp[-1].pyobj)),
-                      (yyval.pyobj), "txn_field_PIPE", "OO", (yyvsp[-1].pyobj), Py_None);
-           }
-#line 1731 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1733 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
   case 25:
 #line 331 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
-                BUILDY(DECREF3((yyvsp[-4].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
-                       (yyval.pyobj), "transaction", "siObOO", FILE_LINE_ARGS, (yyvsp[-4].pyobj), (yyvsp[-3].character), (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
-            }
-#line 1740 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+               /* Mark PIPE as present for backwards compatibility and raise an error */
+               BUILDY(DECREF1((yyvsp[-1].pyobj)),
+                      (yyval.pyobj), "txn_field_PIPE", "OO", (yyvsp[-1].pyobj), Py_None);
+           }
+#line 1743 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
   case 26:
-#line 337 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+#line 338 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
-            (yyval.character) = '\0';
-        }
-#line 1748 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+                BUILDY(DECREF3((yyvsp[-4].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
+                       (yyval.pyobj), "transaction", "siObOO", FILE_LINE_ARGS, (yyvsp[-4].pyobj), (yyvsp[-3].character), (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
+            }
+#line 1752 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
   case 27:
-#line 341 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+#line 344 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+    {
+            (yyval.character) = '\0';
+        }
+#line 1760 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+    break;
+
+  case 28:
+#line 348 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
             (yyval.character) = '*';
         }
-#line 1756 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1768 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
-  case 29:
-#line 347 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+  case 30:
+#line 354 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
             BUILDY(DECREF2((yyvsp[-2].pyobj), (yyvsp[-1].pyobj)),
                    (yyval.pyobj), "posting", "siOOOOb", FILE_LINE_ARGS, (yyvsp[-2].pyobj), (yyvsp[-1].pyobj), Py_None, Py_False, (yyvsp[-3].character));
         }
-#line 1765 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1777 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
-  case 30:
-#line 352 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+  case 31:
+#line 359 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
             BUILDY(DECREF3((yyvsp[-4].pyobj), (yyvsp[-3].pyobj), (yyvsp[-1].pyobj)),
                    (yyval.pyobj), "posting", "siOOOOb", FILE_LINE_ARGS, (yyvsp[-4].pyobj), (yyvsp[-3].pyobj), (yyvsp[-1].pyobj), Py_False, (yyvsp[-5].character));
         }
-#line 1774 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1786 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
-  case 31:
-#line 357 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+  case 32:
+#line 364 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
             BUILDY(DECREF3((yyvsp[-4].pyobj), (yyvsp[-3].pyobj), (yyvsp[-1].pyobj)),
                    (yyval.pyobj), "posting", "siOOOOb", FILE_LINE_ARGS, (yyvsp[-4].pyobj), (yyvsp[-3].pyobj), (yyvsp[-1].pyobj), Py_True, (yyvsp[-5].character));
         }
-#line 1783 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1795 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
-  case 32:
-#line 362 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+  case 33:
+#line 369 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
             BUILDY(DECREF1((yyvsp[-1].pyobj)),
                    (yyval.pyobj), "posting", "siOOOOb", FILE_LINE_ARGS, (yyvsp[-1].pyobj), Py_None, Py_None, Py_False, (yyvsp[-2].character));
         }
-#line 1792 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1804 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
-  case 33:
-#line 368 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+  case 34:
+#line 375 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
               BUILDY(DECREF2((yyvsp[-2].pyobj), (yyvsp[-1].pyobj)),
                      (yyval.pyobj), "key_value", "OO", (yyvsp[-2].pyobj), (yyvsp[-1].pyobj));
           }
-#line 1801 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
-    break;
-
-  case 41:
-#line 381 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
-    {
-                    (yyval.pyobj) = (yyvsp[0].pyobj);
-                }
-#line 1809 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1813 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
   case 42:
-#line 385 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+#line 388 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+    {
+                    (yyval.pyobj) = (yyvsp[0].pyobj);
+                }
+#line 1821 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+    break;
+
+  case 43:
+#line 392 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
                     Py_INCREF(Py_None);
                     (yyval.pyobj) = Py_None;
                 }
-#line 1818 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1830 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
-  case 43:
-#line 391 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+  case 44:
+#line 398 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
                        Py_INCREF(Py_None);
                        (yyval.pyobj) = Py_None;
                    }
-#line 1827 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
-    break;
-
-  case 44:
-#line 396 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
-    {
-                       BUILDY(DECREF2((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
-                              (yyval.pyobj), "handle_list", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
-                   }
-#line 1836 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1839 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
   case 45:
-#line 401 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+#line 403 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
                        BUILDY(DECREF2((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                               (yyval.pyobj), "handle_list", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
                    }
-#line 1845 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1848 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
   case 46:
-#line 407 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+#line 408 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+    {
+                       BUILDY(DECREF2((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
+                              (yyval.pyobj), "handle_list", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
+                   }
+#line 1857 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+    break;
+
+  case 47:
+#line 414 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
                    Py_INCREF(Py_None);
                    (yyval.pyobj) = Py_None;
                }
-#line 1854 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1866 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
-  case 47:
-#line 412 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+  case 48:
+#line 419 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
                    BUILDY(DECREF2((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                           (yyval.pyobj), "handle_list", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
                }
-#line 1863 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1875 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
-  case 48:
-#line 418 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+  case 49:
+#line 425 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
                   Py_INCREF(Py_None);
                   (yyval.pyobj) = Py_None;
               }
-#line 1872 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1884 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
-  case 49:
-#line 423 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+  case 50:
+#line 430 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
                   BUILDY(DECREF1((yyvsp[0].pyobj)),
                          (yyval.pyobj), "handle_list", "OO", Py_None, (yyvsp[0].pyobj));
               }
-#line 1881 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1893 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
-  case 50:
-#line 428 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+  case 51:
+#line 435 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
                   BUILDY(DECREF2((yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
                          (yyval.pyobj), "handle_list", "OO", (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
               }
-#line 1890 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1902 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
-  case 51:
-#line 434 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+  case 52:
+#line 441 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
              BUILDY(DECREF1((yyvsp[-1].pyobj)),
                     (yyval.pyobj), "pushtag", "O", (yyvsp[-1].pyobj));
          }
-#line 1899 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1911 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
-  case 52:
-#line 440 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+  case 53:
+#line 447 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
            BUILDY(DECREF1((yyvsp[-1].pyobj)),
                   (yyval.pyobj), "poptag", "O", (yyvsp[-1].pyobj));
        }
-#line 1908 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
-    break;
-
-  case 53:
-#line 446 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
-    {
-         BUILDY(DECREF5((yyvsp[-6].pyobj), (yyvsp[-4].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
-                (yyval.pyobj), "open", "siOOOOO", FILE_LINE_ARGS, (yyvsp[-6].pyobj), (yyvsp[-4].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
-         ;
-     }
-#line 1918 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1920 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
   case 54:
 #line 453 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
-                (yyval.pyobj) = (yyvsp[0].pyobj);
-            }
-#line 1926 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+         BUILDY(DECREF5((yyvsp[-6].pyobj), (yyvsp[-4].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
+                (yyval.pyobj), "open", "siOOOOO", FILE_LINE_ARGS, (yyvsp[-6].pyobj), (yyvsp[-4].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
+         ;
+     }
+#line 1930 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
   case 55:
-#line 457 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+#line 460 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+    {
+                (yyval.pyobj) = (yyvsp[0].pyobj);
+            }
+#line 1938 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+    break;
+
+  case 56:
+#line 464 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
                 Py_INCREF(Py_None);
                 (yyval.pyobj) = Py_None;
             }
-#line 1935 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1947 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
-  case 56:
-#line 463 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+  case 57:
+#line 470 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
           BUILDY(DECREF3((yyvsp[-4].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
                  (yyval.pyobj), "close", "siOOO", FILE_LINE_ARGS, (yyvsp[-4].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
       }
-#line 1944 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1956 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
-  case 57:
-#line 469 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+  case 58:
+#line 476 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
               BUILDY(DECREF3((yyvsp[-4].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
                      (yyval.pyobj), "commodity", "siOOO", FILE_LINE_ARGS, (yyvsp[-4].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
           }
-#line 1953 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1965 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
-  case 58:
-#line 475 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+  case 59:
+#line 482 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
         BUILDY(DECREF4((yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
                (yyval.pyobj), "pad", "siOOOO", FILE_LINE_ARGS, (yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
     }
-#line 1962 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1974 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
-  case 59:
-#line 481 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+  case 60:
+#line 488 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
             BUILDY(DECREF5((yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[0].pyobj), (yyvsp[-2].pairobj).pyobj1, (yyvsp[-2].pairobj).pyobj2),
                    (yyval.pyobj), "balance", "siOOOOO", FILE_LINE_ARGS, (yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pairobj).pyobj1, (yyvsp[-2].pairobj).pyobj2, (yyvsp[0].pyobj));
         }
-#line 1971 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1983 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
-  case 60:
-#line 487 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+  case 61:
+#line 494 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
            BUILDY(DECREF2((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                   (yyval.pyobj), "amount", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
        }
-#line 1980 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 1992 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
-  case 61:
-#line 493 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+  case 62:
+#line 500 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
                      BUILDY(DECREF2((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                             (yyval.pairobj).pyobj1, "amount", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
@@ -1988,172 +2000,172 @@ yyreduce:
                      Py_INCREF(Py_None);
                      ;
                  }
-#line 1992 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
-    break;
-
-  case 62:
-#line 501 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
-    {
-                     BUILDY(DECREF2((yyvsp[-3].pyobj), (yyvsp[0].pyobj)),
-                            (yyval.pairobj).pyobj1, "amount", "OO", (yyvsp[-3].pyobj), (yyvsp[0].pyobj));
-                     (yyval.pairobj).pyobj2 = (yyvsp[-1].pyobj);
-                 }
-#line 2002 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 2004 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
   case 63:
 #line 508 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
-             BUILDY(DECREF1((yyvsp[0].pyobj)),
-                    (yyval.pyobj), "position", "siOO", FILE_LINE_ARGS, (yyvsp[0].pyobj), Py_None);
-         }
-#line 2011 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+                     BUILDY(DECREF2((yyvsp[-3].pyobj), (yyvsp[0].pyobj)),
+                            (yyval.pairobj).pyobj1, "amount", "OO", (yyvsp[-3].pyobj), (yyvsp[0].pyobj));
+                     (yyval.pairobj).pyobj2 = (yyvsp[-1].pyobj);
+                 }
+#line 2014 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
   case 64:
-#line 513 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+#line 515 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+    {
+             BUILDY(DECREF1((yyvsp[0].pyobj)),
+                    (yyval.pyobj), "position", "siOO", FILE_LINE_ARGS, (yyvsp[0].pyobj), Py_None);
+         }
+#line 2023 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+    break;
+
+  case 65:
+#line 520 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
              BUILDY(DECREF2((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                     (yyval.pyobj), "position", "siOO", FILE_LINE_ARGS, (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
          }
-#line 2020 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 2032 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
-  case 65:
-#line 519 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+  case 66:
+#line 526 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
                   BUILDY(DECREF1((yyvsp[-1].pyobj)),
                          (yyval.pyobj), "lot_cost_date", "OOO", (yyvsp[-1].pyobj), Py_None, Py_False);
               }
-#line 2029 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 2041 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
-  case 66:
-#line 524 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+  case 67:
+#line 531 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
                   BUILDY(DECREF2((yyvsp[-3].pyobj), (yyvsp[-1].pyobj)),
                          (yyval.pyobj), "lot_cost_date", "OOO", (yyvsp[-3].pyobj), (yyvsp[-1].pyobj), Py_False);
               }
-#line 2038 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 2050 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
-  case 67:
-#line 529 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+  case 68:
+#line 536 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
                   BUILDY(DECREF1((yyvsp[-1].pyobj)),
                          (yyval.pyobj), "lot_cost_date", "OOO", (yyvsp[-1].pyobj), Py_None, Py_True);
               }
-#line 2047 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
-    break;
-
-  case 68:
-#line 534 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
-    {
-                  BUILDY(DECREF2((yyvsp[-3].pyobj), (yyvsp[-1].pyobj)),
-                         (yyval.pyobj), "lot_cost_date", "OOO", (yyvsp[-3].pyobj), (yyvsp[-1].pyobj), Py_True);
-              }
-#line 2056 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 2059 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
   case 69:
 #line 541 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
-          BUILDY(DECREF4((yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
-                 (yyval.pyobj), "price", "siOOOO", FILE_LINE_ARGS, (yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
-      }
-#line 2065 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+                  BUILDY(DECREF2((yyvsp[-3].pyobj), (yyvsp[-1].pyobj)),
+                         (yyval.pyobj), "lot_cost_date", "OOO", (yyvsp[-3].pyobj), (yyvsp[-1].pyobj), Py_True);
+              }
+#line 2068 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
   case 70:
-#line 547 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+#line 548 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+    {
+          BUILDY(DECREF4((yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
+                 (yyval.pyobj), "price", "siOOOO", FILE_LINE_ARGS, (yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
+      }
+#line 2077 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+    break;
+
+  case 71:
+#line 554 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
           BUILDY(DECREF4((yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
                  (yyval.pyobj), "event", "siOOOO", FILE_LINE_ARGS, (yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
       }
-#line 2074 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 2086 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
-  case 71:
-#line 553 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+  case 72:
+#line 560 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
           BUILDY(DECREF4((yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
                  (yyval.pyobj), "note", "siOOOO", FILE_LINE_ARGS, (yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
       }
-#line 2083 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 2095 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
-  case 73:
-#line 561 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+  case 74:
+#line 568 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
              BUILDY(DECREF4((yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
                     (yyval.pyobj), "document", "siOOOO", FILE_LINE_ARGS, (yyvsp[-5].pyobj), (yyvsp[-3].pyobj), (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
          }
-#line 2092 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
-    break;
-
-  case 83:
-#line 576 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
-    {
-          (yyval.pyobj) = (yyvsp[0].pyobj);
-      }
-#line 2100 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 2104 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
   case 84:
-#line 581 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+#line 583 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+    {
+          (yyval.pyobj) = (yyvsp[0].pyobj);
+      }
+#line 2112 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+    break;
+
+  case 85:
+#line 588 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
            BUILDY(DECREF2((yyvsp[-2].pyobj), (yyvsp[-1].pyobj)),
                   (yyval.pyobj), "option", "siOO", FILE_LINE_ARGS, (yyvsp[-2].pyobj), (yyvsp[-1].pyobj));
        }
-#line 2109 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 2121 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
-  case 85:
-#line 587 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+  case 86:
+#line 594 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
            BUILDY(DECREF1((yyvsp[-1].pyobj)),
                   (yyval.pyobj), "include", "siO", FILE_LINE_ARGS, (yyvsp[-1].pyobj));
        }
-#line 2118 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 2130 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
-  case 86:
-#line 593 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+  case 87:
+#line 600 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
            BUILDY(DECREF1((yyvsp[-1].pyobj)),
                   (yyval.pyobj), "plugin", "siOO", FILE_LINE_ARGS, (yyvsp[-1].pyobj), Py_None);
        }
-#line 2127 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 2139 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
-  case 87:
-#line 598 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+  case 88:
+#line 605 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
            BUILDY(DECREF2((yyvsp[-2].pyobj), (yyvsp[-1].pyobj)),
                   (yyval.pyobj), "plugin", "siOO", FILE_LINE_ARGS, (yyvsp[-2].pyobj), (yyvsp[-1].pyobj));
        }
-#line 2136 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
-    break;
-
-  case 95:
-#line 613 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
-    {
-                 (yyval.pyobj) = (yyvsp[-1].pyobj);
-             }
-#line 2144 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 2148 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
   case 96:
-#line 617 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+#line 620 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+    {
+                 (yyval.pyobj) = (yyvsp[-1].pyobj);
+             }
+#line 2156 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+    break;
+
+  case 97:
+#line 624 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
                  BUILDY(DECREF2((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
                         (yyval.pyobj), "handle_list", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
              }
-#line 2153 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 2165 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
-  case 97:
-#line 622 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+  case 98:
+#line 629 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
                  /*
                   * Ignore the error and continue reducing ({3d95e55b654e}).
@@ -2171,29 +2183,29 @@ yyreduce:
                   */
                  (yyval.pyobj) = (yyvsp[-1].pyobj);
              }
-#line 2175 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
-    break;
-
-  case 98:
-#line 640 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
-    {
-                  Py_INCREF(Py_None);
-                  (yyval.pyobj) = Py_None;
-             }
-#line 2184 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 2187 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
   case 99:
 #line 647 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
     {
+                  Py_INCREF(Py_None);
+                  (yyval.pyobj) = Py_None;
+             }
+#line 2196 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+    break;
+
+  case 100:
+#line 654 "src/python/beancount/parser/grammar.y" /* yacc.c:1661  */
+    {
          BUILDY(,
                 (yyval.pyobj), "store_result", "O", (yyvsp[0].pyobj));
      }
-#line 2193 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 2205 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
     break;
 
 
-#line 2197 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
+#line 2209 "src/python/beancount/parser/grammar.c" /* yacc.c:1661  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -2428,7 +2440,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 655 "src/python/beancount/parser/grammar.y" /* yacc.c:1906  */
+#line 662 "src/python/beancount/parser/grammar.y" /* yacc.c:1906  */
 
 
 /* A function that will convert a token name to a string, used in debugging. */

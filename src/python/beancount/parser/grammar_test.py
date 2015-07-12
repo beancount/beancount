@@ -1222,6 +1222,17 @@ class TestArithmetic(unittest.TestCase):
         self.assertEqual(D('-7.5'), postings[2].position.number)
 
     @parser.parsedoc
+    def test_number_expr__positive(self, entries, errors, _):
+        """
+          2013-05-18 * "Test"
+            Assets:Something    +12 USD
+            Assets:Something   -7.5 USD
+        """
+        self.assertEqual(1, len(entries))
+        postings = entries[0].postings
+        self.assertEqual(D('12'), postings[0].position.number)
+
+    @parser.parsedoc
     def test_number_expr__precedence(self, entries, errors, _):
         """
           2013-05-18 * "Test"

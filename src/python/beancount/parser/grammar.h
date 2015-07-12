@@ -91,7 +91,7 @@ extern int yydebug;
     TAG = 301,
     LINK = 302,
     KEY = 303,
-    NEG = 304
+    NEGATIVE = 304
   };
 #endif
 
