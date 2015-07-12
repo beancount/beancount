@@ -42,7 +42,7 @@ class ErrorReport(report.HTMLReport):
         printer.print_errors(errors, file=file)
 
     def render_htmldiv(self, entries, errors, options_map, file):
-        dcontext = options_map['display_context']
+        dcontext = options_map['dcontext']
         file.write('<div id="errors">\n')
         for error in errors:
             file.write('<div class="error">\n')
@@ -68,7 +68,7 @@ class PrintReport(report.Report):
     default_format = 'beancount'
 
     def render_beancount(self, entries, errors, options_map, file):
-        dcontext = options_map['display_context']
+        dcontext = options_map['dcontext']
         printer.print_entries(entries, dcontext, file=file)
 
 

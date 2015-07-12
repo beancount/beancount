@@ -168,7 +168,7 @@ PRIVATE_OPTION_GROUPS = [
       An instance of DisplayContext, which is used to format numbers for output
       with precision inferred from that in the input file. This is created
       automatically by the parser.
-    """, [Opt("display_context", display_context.DisplayContext())]),
+    """, [Opt("dcontext", display_context.DisplayContext())]),
 
     OptGroup("""
       A set of all the commodities that we have seen in the file.

@@ -148,8 +148,12 @@ const char* getTokenName(int token);
 %token <string> EQUAL      /* = */
 %token <string> COMMA      /* , */
 %token <string> TILDE      /* ~ */
+%token <string> ASTERISK   /* * */
 %token <string> SLASH      /* / */
 %token <string> PLUS       /* + */
+%token <string> MINUS      /* - */
+%token <string> LPAREN     /* ( */
+%token <string> RPAREN     /* ) */
 %token <character> FLAG    /* Valid characters for flags */
 %token TXN                 /* 'txn' keyword */
 %token BALANCE             /* 'balance' keyword */
@@ -216,6 +220,13 @@ const char* getTokenName(int token);
 %type <pyobj> plugin
 %type <pyobj> file
 
+/* Operator precedence.
+ * This is pulled straight out of the textbook example:
+ * http://www.gnu.org/software/bison/manual/html_node/Infix-Calc.html#Infix-Calc
+ */
+%left MINUS PLUS
+%left ASTERISK SLASH
+%precedence NEGATIVE /* negation--unary minus */
 
 /* Start symbol. */
 %start file
@@ -239,6 +250,10 @@ txn : TXN
     {
         $$ = $1;
     }
+    | ASTERISK
+    {
+        $$ = '*';
+    }
 
 eol : EOL
     | COMMENT EOL
@@ -259,9 +274,38 @@ number_expr : NUMBER
             {
                 $$ = $1;
             }
-            | number_expr SLASH NUMBER
+            | number_expr PLUS number_expr
+            {
+                $$ = PyNumber_Add($1, $3);
+                DECREF2($1, $3);
+            }
+            | number_expr MINUS number_expr
+            {
+                $$ = PyNumber_Subtract($1, $3);
+                DECREF2($1, $3);
+            }
+            | number_expr ASTERISK number_expr
+            {
+                $$ = PyNumber_Multiply($1, $3);
+                DECREF2($1, $3);
+            }
+            | number_expr SLASH number_expr
             {
                 $$ = PyNumber_TrueDivide($1, $3);
+                DECREF2($1, $3);
+            }
+            | MINUS number_expr %prec NEGATIVE
+            {
+                $$ = PyNumber_Negative($2);
+                DECREF1($2);
+            }
+            | PLUS number_expr %prec NEGATIVE
+            {
+                $$ = $2;
+            }
+            | LPAREN number_expr RPAREN
+            {
+                $$ = $2;
             }
 
 txn_fields : empty
@@ -304,6 +348,10 @@ optflag : empty
         {
             $$ = '\0';
         }
+        | ASTERISK
+        {
+            $$ = '*';
+        }
         | FLAG
 
 posting : INDENT optflag ACCOUNT position eol
@@ -338,8 +386,8 @@ key_value_value : STRING
                 | DATE
                 | CURRENCY
                 | TAG
-                | NUMBER
                 | BOOL
+                | number_expr
                 | amount
                 {
                     $$ = $1;
@@ -472,7 +520,7 @@ maybe_number : empty
                  Py_INCREF(Py_None);
                  $$ = Py_None;
              }
-             | NUMBER
+             | number_expr
              {
                  $$ = $1;
              }
@@ -482,7 +530,7 @@ compound_amount : maybe_number CURRENCY
                     BUILDY(DECREF2($1, $2),
                            $$, "compound_amount", "OOO", $1, Py_None, $2);
                 }
-                | maybe_number PLUS maybe_number CURRENCY
+                | maybe_number TILDE maybe_number CURRENCY
                 {
                     BUILDY(DECREF3($1, $3, $4),
                            $$, "compound_amount", "OOO", $1, $3, $4);
@@ -658,40 +706,44 @@ const char* getTokenName(int token)
 {
     switch ( token ) {
         case LEX_ERROR : return "LEX_ERROR";
-        case INDENT   : return "INDENT";
-        case EOL      : return "EOL";
-        case COMMENT  : return "COMMENT";
-        case SKIPPED  : return "SKIPPED";
-        case PIPE     : return "PIPE";
-        case ATAT     : return "ATAT";
-        case AT       : return "AT";
-        case LCURL    : return "LCURL";
-        case RCURL    : return "RCURL";
-        case EQUAL    : return "EQUAL";
-        case COMMA    : return "COMMA";
-        case SLASH    : return "SLASH";
-        case PLUS     : return "PLUS";
-        case FLAG     : return "FLAG";
-        case TXN      : return "TXN";
-        case BALANCE  : return "BALANCE";
-        case OPEN     : return "OPEN";
-        case CLOSE    : return "CLOSE";
-        case PAD      : return "PAD";
-        case EVENT    : return "EVENT";
-        case PRICE    : return "PRICE";
-        case NOTE     : return "NOTE";
-        case DOCUMENT : return "DOCUMENT";
-        case PUSHTAG  : return "PUSHTAG";
-        case POPTAG   : return "POPTAG";
-        case OPTION   : return "OPTION";
-        case DATE     : return "DATE";
-        case ACCOUNT  : return "ACCOUNT";
-        case CURRENCY : return "CURRENCY";
-        case STRING   : return "STRING";
-        case NUMBER   : return "NUMBER";
-        case TAG      : return "TAG";
-        case LINK     : return "LINK";
-        case KEY      : return "KEY";
+        case INDENT    : return "INDENT";
+        case EOL       : return "EOL";
+        case COMMENT   : return "COMMENT";
+        case SKIPPED   : return "SKIPPED";
+        case PIPE      : return "PIPE";
+        case ATAT      : return "ATAT";
+        case AT        : return "AT";
+        case LCURL     : return "LCURL";
+        case RCURL     : return "RCURL";
+        case EQUAL     : return "EQUAL";
+        case COMMA     : return "COMMA";
+        case PLUS      : return "PLUS";
+        case MINUS     : return "MINUS";
+        case ASTERISK  : return "ASTERISK";
+        case SLASH     : return "SLASH";
+        case LPAREN    : return "LPAREN";
+        case RPAREN    : return "RPAREN";
+        case FLAG      : return "FLAG";
+        case TXN       : return "TXN";
+        case BALANCE   : return "BALANCE";
+        case OPEN      : return "OPEN";
+        case CLOSE     : return "CLOSE";
+        case PAD       : return "PAD";
+        case EVENT     : return "EVENT";
+        case PRICE     : return "PRICE";
+        case NOTE      : return "NOTE";
+        case DOCUMENT  : return "DOCUMENT";
+        case PUSHTAG   : return "PUSHTAG";
+        case POPTAG    : return "POPTAG";
+        case OPTION    : return "OPTION";
+        case DATE      : return "DATE";
+        case ACCOUNT   : return "ACCOUNT";
+        case CURRENCY  : return "CURRENCY";
+        case STRING    : return "STRING";
+        case NUMBER    : return "NUMBER";
+        case TAG       : return "TAG";
+        case LINK      : return "LINK";
+        case KEY       : return "KEY";
     }
     return 0;
 }

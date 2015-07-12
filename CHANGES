@@ -4,7 +4,25 @@
 Note: This file contains only changes in the 'default' branch.
 
 
-2015-07-09
+2015-07-12
+
+  - Implemented support for arithmetic operations: +, -, *, / and parenthesis
+    groupings are now supported, anywhere that a number can be seen in the input
+    file, including postings, costs & prices, and balance numbers.
+
+
+2015-07-12
+
+  - Changed how web & report rendering code renders numbers so that it uses the
+    DisplayContext inferred from the numbers in the input file. Numbers in the
+    reports were previously using the default precision and that led to all
+    sorts of inconsistencies. The numbers are now rendered using the most common
+    precision which has been seen in the input files. (This work had been
+    planned for a while, as part of converting everything to use the
+    DisplayContext. Next up will be converting the shell's rendering routines.)
+
+
+2015-07-11
 
   - WARNING: API CHANGES AHEAD. If you wrote plugins, you will need to remove
     the 'entry' parameter to constructors of Posting().

@@ -159,7 +159,7 @@ class Builder(lexer.LexBuilder):
           A dict of option names to options.
         """
         # Build and store the inferred DisplayContext instance.
-        self.options['display_context'] = self.dcontext
+        self.options['dcontext'] = self.dcontext
 
         # Add the full list of seen commodities.
         #
