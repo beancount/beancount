@@ -241,7 +241,9 @@ class ConvertAmount(query_compile.EvalFunction):
 
     def __call__(self, context):
         args = self.eval_args(context)
-        return prices.convert_amount(context.price_map, args[1], args[0])
+        return (prices.convert_amount(context.price_map, args[1], args[0])
+                if args[1] is None else
+                None)
 
 class ConvertPosition(query_compile.EvalFunction):
     "Coerce an amount to a particular currency."

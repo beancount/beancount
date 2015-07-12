@@ -121,7 +121,7 @@ class PricesReport(report.Report):
         price_entries = [entry
                          for entry in entries
                          if isinstance(entry, data.Price)]
-        dcontext = options_map['display_context']
+        dcontext = options_map['dcontext']
         printer.print_entries(price_entries, dcontext, file=file)
 
 
@@ -140,7 +140,7 @@ class PriceDBReport(report.Report):
     default_format = 'beancount'
 
     def render_beancount(self, entries, errors, options_map, file):
-        dcontext = options_map['display_context']
+        dcontext = options_map['dcontext']
         price_map = prices.build_price_map(entries)
         meta = data.new_metadata('<report_prices_db>', 0)
         for base_quote in price_map.forward_pairs:

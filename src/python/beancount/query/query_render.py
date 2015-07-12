@@ -253,10 +253,10 @@ class AmountRenderer(ColumnRenderer):
         return len(self.empty)
 
     def format(self, amount_):
-        if amount_ is None:
-            return self.fmt.format('', '')
-        elif self.fmt is None:
+        if self.fmt is None:
             return self.empty
+        elif amount_ is None:
+            return self.fmt.format('', '')
         return self.fmt.format(self.rdr.format(amount_.number, amount_.currency),
                                amount_.currency)
 
