@@ -1266,6 +1266,7 @@ class TestArithmetic(unittest.TestCase):
             Assets:Something   -(3 * 4) HOOL {120.01 * 2.1 USD} @ 134.02 * 2.1 USD
             Assets:Something
           2014-01-01 balance Assets:Something  3 * 4 * 120.01 * 2.1  USD
+            number: -(5662.23 + 22.3)
         """
         self.assertFalse(errors)
         self.assertEqual(2, len(entries))
@@ -1273,6 +1274,7 @@ class TestArithmetic(unittest.TestCase):
         self.assertEqual(D('252.021'), entries[0].postings[0].position.lot.cost.number)
         self.assertEqual(D('281.442'), entries[0].postings[0].price.number)
         self.assertEqual(D('3024.252'), entries[1].amount.number)
+        self.assertEqual(D('-5684.53'), entries[1].meta['number'])
 
 
 class TestLexerAndParserErrors(cmptest.TestCase):

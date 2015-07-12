@@ -382,8 +382,8 @@ key_value_value : STRING
                 | DATE
                 | CURRENCY
                 | TAG
-                | NUMBER
                 | BOOL
+                | number_expr
                 | amount
                 {
                     $$ = $1;
