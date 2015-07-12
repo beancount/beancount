@@ -1259,6 +1259,21 @@ class TestArithmetic(unittest.TestCase):
             [posting.position.number
              for posting in entries[0].postings])
 
+    @parser.parsedoc
+    def test_number_expr__different_places(self, entries, errors, _):
+        """
+          2013-05-18 * "Test"
+            Assets:Something   -(3 * 4) HOOL {120.01 * 2.1 USD} @ 134.02 * 2.1 USD
+            Assets:Something
+          2014-01-01 balance Assets:Something  3 * 4 * 120.01 * 2.1  USD
+        """
+        self.assertFalse(errors)
+        self.assertEqual(2, len(entries))
+        self.assertEqual(D('-12'), entries[0].postings[0].position.number)
+        self.assertEqual(D('252.021'), entries[0].postings[0].position.lot.cost.number)
+        self.assertEqual(D('281.442'), entries[0].postings[0].price.number)
+        self.assertEqual(D('3024.252'), entries[1].amount.number)
+
 
 class TestLexerAndParserErrors(cmptest.TestCase):
     """There are a number of different paths where errors may occur. This test case
