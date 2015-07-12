@@ -124,8 +124,8 @@ int strtonl(const char* buf, size_t nchars);
 }
 
  /* Ignore whitespace, except when found at the beginning of a line and followed
-    by a non-comment regular character. This is how we group indented
-    postings. */
+    by a non-comment regular character. This is how we detect an initial indent
+    and thus group postings together in the grammar. */
 [ \t\r]+	{
     if ( yy_line_tokens == 1 ) {
         /* If the next character completes the line, skip it. */
@@ -150,9 +150,18 @@ int strtonl(const char* buf, size_t nchars);
 \{		{ return LCURL; }
 \}		{ return RCURL; }
 ,		{ return COMMA; }
-\*		{ return ASTERISK; }
 \~		{ return TILDE; }
 \/		{ return SLASH; }
+\*		{
+    if ( yy_line_tokens != 1 ) {
+        return ASTERISK;
+    }
+    else {
+        /* Allow org-mode titles. */
+        yy_skip_line();
+        return SKIPPED;
+    }
+}
 
  /* Skip commented output (but not the accompanying newline). */
 ;+.*		{

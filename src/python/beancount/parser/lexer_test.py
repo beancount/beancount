@@ -357,6 +357,74 @@ class TestLexer(unittest.TestCase):
         self.assertTrue(tokens[1], 'EOL')
 
 
+class TestIgnoredLines(unittest.TestCase):
+
+    @lex_tokens
+    def test_ignored__long_comment(self, tokens, errors):
+        """
+        ;; Long comment line about something something.
+        """
+        self.assertEqual([
+            ('EOL', 2, '\n', None),
+            ('COMMENT', 2, ';; Long comment line about something something.', None),
+            ('EOL', 3, '\n', None),
+            ('EOL', 3, '\x00', None),
+            ], tokens)
+        self.assertFalse(errors)
+
+    @lex_tokens
+    def test_ignored__indented_comment(self, tokens, errors):
+        """
+        option "title" "The Title"
+          ;; Something something.
+        """
+        self.assertEqual([
+            ('EOL', 2, '\n', None),
+            ('OPTION', 2, 'option', None),
+            ('STRING', 2, '"', 'title'),
+            ('STRING', 2, '"', 'The Title'),
+            ('EOL', 3, '\n', None),
+            ('SKIPPED', 3, '  ', None),
+            ('COMMENT', 3, ';; Something something.', None),
+            ('EOL', 4, '\n', None),
+            ('EOL', 4, '\x00', None),
+        ], tokens)
+        self.assertFalse(errors)
+
+    @lex_tokens
+    def test_ignored__something_else(self, tokens, errors):
+        """
+        Regular prose appearing mid-file which starts with a flag character.
+        """
+        self.assertEqual([
+            ('EOL', 2, '\n', None),
+            ('SKIPPED', 2, 'R', None),
+            ('EOL', 3, '\n', None),
+            ('EOL', 3, '\x00', None),
+            ], tokens)
+        self.assertFalse(errors)
+
+    @lex_tokens
+    def test_ignored__something_else(self, tokens, errors):
+        """
+        Xxx this sentence starts with a non-flag character.
+        """
+        self.assertTrue(errors)
+
+    @lex_tokens
+    def test_ignored__org_mode_title(self, tokens, errors):
+        """
+        * This sentence is an org-mode title.
+        """
+        self.assertEqual([
+            ('EOL', 2, '\n', None),
+            ('SKIPPED', 2, '*', None),
+            ('EOL', 3, '\n', None),
+            ('EOL', 3, '\x00', None),
+        ], tokens)
+        self.assertFalse(errors)
+
+
 class TestLexerErrors(unittest.TestCase):
     """Test lexer error handling.
     """
