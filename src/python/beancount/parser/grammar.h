@@ -59,34 +59,38 @@ extern int yydebug;
     RCURL = 269,
     EQUAL = 270,
     COMMA = 271,
-    ASTERISK = 272,
-    TILDE = 273,
+    TILDE = 272,
+    ASTERISK = 273,
     SLASH = 274,
-    FLAG = 275,
-    TXN = 276,
-    BALANCE = 277,
-    OPEN = 278,
-    CLOSE = 279,
-    COMMODITY = 280,
-    PAD = 281,
-    EVENT = 282,
-    PRICE = 283,
-    NOTE = 284,
-    DOCUMENT = 285,
-    PUSHTAG = 286,
-    POPTAG = 287,
-    OPTION = 288,
-    INCLUDE = 289,
-    PLUGIN = 290,
-    BOOL = 291,
-    DATE = 292,
-    ACCOUNT = 293,
-    CURRENCY = 294,
-    STRING = 295,
-    NUMBER = 296,
-    TAG = 297,
-    LINK = 298,
-    KEY = 299
+    PLUS = 275,
+    MINUS = 276,
+    LPAREN = 277,
+    RPAREN = 278,
+    FLAG = 279,
+    TXN = 280,
+    BALANCE = 281,
+    OPEN = 282,
+    CLOSE = 283,
+    COMMODITY = 284,
+    PAD = 285,
+    EVENT = 286,
+    PRICE = 287,
+    NOTE = 288,
+    DOCUMENT = 289,
+    PUSHTAG = 290,
+    POPTAG = 291,
+    OPTION = 292,
+    INCLUDE = 293,
+    PLUGIN = 294,
+    BOOL = 295,
+    DATE = 296,
+    ACCOUNT = 297,
+    CURRENCY = 298,
+    STRING = 299,
+    NUMBER = 300,
+    TAG = 301,
+    LINK = 302,
+    KEY = 303
   };
 #endif
 
@@ -105,7 +109,7 @@ union YYSTYPE
         PyObject* pyobj2;
     } pairobj;
 
-#line 109 "src/python/beancount/parser/grammar.h" /* yacc.c:1915  */
+#line 113 "src/python/beancount/parser/grammar.h" /* yacc.c:1915  */
 };
 
 typedef union YYSTYPE YYSTYPE;

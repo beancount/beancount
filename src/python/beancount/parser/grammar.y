@@ -147,9 +147,13 @@ const char* getTokenName(int token);
 %token <string> RCURL      /* } */
 %token <string> EQUAL      /* = */
 %token <string> COMMA      /* , */
-%token <string> ASTERISK   /* * */
 %token <string> TILDE      /* ~ */
+%token <string> ASTERISK   /* * */
 %token <string> SLASH      /* / */
+%token <string> PLUS       /* + */
+%token <string> MINUS      /* - */
+%token <string> LPAREN     /* ( */
+%token <string> RPAREN     /* ) */
 %token <character> FLAG    /* Valid characters for flags */
 %token TXN                 /* 'txn' keyword */
 %token BALANCE             /* 'balance' keyword */
@@ -641,8 +645,12 @@ const char* getTokenName(int token)
         case RCURL     : return "RCURL";
         case EQUAL     : return "EQUAL";
         case COMMA     : return "COMMA";
+        case PLUS      : return "PLUS";
+        case MINUS     : return "MINUS";
         case ASTERISK  : return "ASTERISK";
         case SLASH     : return "SLASH";
+        case LPAREN    : return "LPAREN";
+        case RPAREN    : return "RPAREN";
         case FLAG      : return "FLAG";
         case TXN       : return "TXN";
         case BALANCE   : return "BALANCE";

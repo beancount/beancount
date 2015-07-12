@@ -151,7 +151,11 @@ int strtonl(const char* buf, size_t nchars);
 \}		{ return RCURL; }
 ,		{ return COMMA; }
 \~		{ return TILDE; }
+\+		{ return PLUS; }
+\-		{ return MINUS; }
 \/		{ return SLASH; }
+\(		{ return LPAREN; }
+\)		{ return RPAREN; }
 \*		{
     if ( yy_line_tokens != 1 ) {
         return ASTERISK;
@@ -302,7 +306,7 @@ FALSE		{
 }
 
  /* Numbers */
-[-+]?([0-9]+|[0-9][0-9,]+[0-9])(\.[0-9]*)? 		{
+([0-9]+|[0-9][0-9,]+[0-9])(\.[0-9]*)? 		{
     BUILD_LEX("NUMBER", "s", yytext);
     return NUMBER;
 }
