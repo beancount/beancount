@@ -117,9 +117,6 @@ beancount: TODO
 
 ** Misc
 
-  - Rename options['display_context'] to options['dcontext'] to be more
-    consistent with the ROTCB and segregate greps to the module name.
-
   - bean-doctor context does not render all digits... it should render all the
     numbers as represented in memory. Don't round those numbers.
 

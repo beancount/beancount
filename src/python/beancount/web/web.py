@@ -147,7 +147,7 @@ def render_report(report_class, entries, args=None,
     Returns:
       A string, the rendered report.
     """
-    formatter = HTMLFormatter(app.options['display_context'],
+    formatter = HTMLFormatter(app.options['dcontext'],
                               request.app.get_url, leaf_only)
     oss = io.StringIO()
     if center:
@@ -176,7 +176,7 @@ def render_real_report(report_class, real_root, args=None, leaf_only=False):
     Returns:
       A string, the rendered report.
     """
-    formatter = HTMLFormatter(app.options['display_context'],
+    formatter = HTMLFormatter(app.options['dcontext'],
                               request.app.get_url, leaf_only)
     oss = io.StringIO()
     report_ = report_class.from_args(args, formatter=formatter)
@@ -352,7 +352,7 @@ def link(link=None):
     linked_entries = basicops.filter_link(link, app.entries)
 
     oss = io.StringIO()
-    formatter = HTMLFormatter(app.options['display_context'],
+    formatter = HTMLFormatter(app.options['dcontext'],
                               request.app.get_url, False, view_links=False)
     journal_html.html_entries_table_with_balance(oss, linked_entries, formatter)
     return render_global(
@@ -377,11 +377,11 @@ def context_(ehash=None):
         print("ERROR: Ambiguous entries for '{}'".format(ehash),
               file=oss)
         print(file=oss)
-        dcontext = app.options['display_context']
+        dcontext = app.options['dcontext']
         printer.print_entries(matching_entries, dcontext, file=oss)
 
     else:
-        dcontext = app.options['display_context']
+        dcontext = app.options['dcontext']
         oss.write("<pre>\n")
         for entry in matching_entries:
             oss.write(context.render_entry_context(

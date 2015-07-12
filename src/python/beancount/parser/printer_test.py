@@ -250,7 +250,7 @@ class TestDisplayContext(test_utils.TestCase):
           Assets:Account    55555.55555 FP5
           Assets:Cash
         """
-        dcontext = options_map['display_context']
+        dcontext = options_map['dcontext']
         oss = io.StringIO()
         printer.print_entries(entries, dcontext, file=oss)
 
@@ -304,7 +304,7 @@ class TestPrinterAlignment(test_utils.TestCase):
           Expenses:Commissions  20000 USD
           Expenses:Commissions  9.9505 USD
         """
-        dcontext = options_map['display_context']
+        dcontext = options_map['dcontext']
         oss = io.StringIO()
         printer.print_entries(entries, dcontext, file=oss)
         expected_str = textwrap.dedent("""
@@ -321,7 +321,7 @@ class TestPrinterAlignment(test_utils.TestCase):
           Expenses:Commissions  20000 USD
           Expenses:Commissions  9.9505 USD
         """
-        dcontext = options_map['display_context']
+        dcontext = options_map['dcontext']
         oss = io.StringIO()
         eprinter = printer.EntryPrinter(dcontext, min_width_account=40)
         oss.write(eprinter(entries[0]))
@@ -341,7 +341,7 @@ class TestPrinterAlignment(test_utils.TestCase):
           Expenses:Commissions            9.9505 USD
           Assets:US:Investments:Cash   -22473.32 CAD @ 1.10 USD
         """
-        dcontext = options_map['display_context']
+        dcontext = options_map['dcontext']
 
         oss = io.StringIO()
         printer.print_entries(entries, dcontext, render_weights=False, file=oss)
