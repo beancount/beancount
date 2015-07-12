@@ -50,8 +50,6 @@ beancount: TODO
   - Implement the dashboard on the example file, take the code out of my
     private code stash and share.
 
-  - Write simple arithmetic expression support
-
   - Convert example file to use beancount.plugins.ira_contribs plugin.
 
   - Change name of IRAUSD to 401KUSD or USD401K

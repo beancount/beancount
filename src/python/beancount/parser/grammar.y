@@ -148,7 +148,12 @@ const char* getTokenName(int token);
 %token <string> EQUAL      /* = */
 %token <string> COMMA      /* , */
 %token <string> TILDE      /* ~ */
+%token <string> ASTERISK   /* * */
 %token <string> SLASH      /* / */
+%token <string> PLUS       /* + */
+%token <string> MINUS      /* - */
+%token <string> LPAREN     /* ( */
+%token <string> RPAREN     /* ) */
 %token <character> FLAG    /* Valid characters for flags */
 %token TXN                 /* 'txn' keyword */
 %token BALANCE             /* 'balance' keyword */
@@ -211,6 +216,13 @@ const char* getTokenName(int token);
 %type <pyobj> plugin
 %type <pyobj> file
 
+/* Operator precedence.
+ * This is pulled straight out of the textbook example:
+ * http://www.gnu.org/software/bison/manual/html_node/Infix-Calc.html#Infix-Calc
+ */
+%left MINUS PLUS
+%left ASTERISK SLASH
+%precedence NEGATIVE /* negation--unary minus */
 
 /* Start symbol. */
 %start file
@@ -234,6 +246,10 @@ txn : TXN
     {
         $$ = $1;
     }
+    | ASTERISK
+    {
+        $$ = '*';
+    }
 
 eol : EOL
     | COMMENT EOL
@@ -254,9 +270,38 @@ number_expr : NUMBER
             {
                 $$ = $1;
             }
-            | number_expr SLASH NUMBER
+            | number_expr PLUS number_expr
+            {
+                $$ = PyNumber_Add($1, $3);
+                DECREF2($1, $3);
+            }
+            | number_expr MINUS number_expr
+            {
+                $$ = PyNumber_Subtract($1, $3);
+                DECREF2($1, $3);
+            }
+            | number_expr ASTERISK number_expr
+            {
+                $$ = PyNumber_Multiply($1, $3);
+                DECREF2($1, $3);
+            }
+            | number_expr SLASH number_expr
             {
                 $$ = PyNumber_TrueDivide($1, $3);
+                DECREF2($1, $3);
+            }
+            | MINUS number_expr %prec NEGATIVE
+            {
+                $$ = PyNumber_Negative($2);
+                DECREF1($2);
+            }
+            | PLUS number_expr %prec NEGATIVE
+            {
+                $$ = $2;
+            }
+            | LPAREN number_expr RPAREN
+            {
+                $$ = $2;
             }
 
 txn_fields : empty
@@ -298,6 +343,10 @@ transaction : DATE txn txn_fields eol posting_or_kv_list
 optflag : empty
         {
             $$ = '\0';
+        }
+        | ASTERISK
+        {
+            $$ = '*';
         }
         | FLAG
 
@@ -628,7 +677,12 @@ const char* getTokenName(int token)
         case RCURL     : return "RCURL";
         case EQUAL     : return "EQUAL";
         case COMMA     : return "COMMA";
+        case PLUS      : return "PLUS";
+        case MINUS     : return "MINUS";
+        case ASTERISK  : return "ASTERISK";
         case SLASH     : return "SLASH";
+        case LPAREN    : return "LPAREN";
+        case RPAREN    : return "RPAREN";
         case FLAG      : return "FLAG";
         case TXN       : return "TXN";
         case BALANCE   : return "BALANCE";

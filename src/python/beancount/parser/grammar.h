@@ -60,32 +60,38 @@ extern int yydebug;
     EQUAL = 270,
     COMMA = 271,
     TILDE = 272,
-    SLASH = 273,
-    FLAG = 274,
-    TXN = 275,
-    BALANCE = 276,
-    OPEN = 277,
-    CLOSE = 278,
-    COMMODITY = 279,
-    PAD = 280,
-    EVENT = 281,
-    PRICE = 282,
-    NOTE = 283,
-    DOCUMENT = 284,
-    PUSHTAG = 285,
-    POPTAG = 286,
-    OPTION = 287,
-    INCLUDE = 288,
-    PLUGIN = 289,
-    BOOL = 290,
-    DATE = 291,
-    ACCOUNT = 292,
-    CURRENCY = 293,
-    STRING = 294,
-    NUMBER = 295,
-    TAG = 296,
-    LINK = 297,
-    KEY = 298
+    ASTERISK = 273,
+    SLASH = 274,
+    PLUS = 275,
+    MINUS = 276,
+    LPAREN = 277,
+    RPAREN = 278,
+    FLAG = 279,
+    TXN = 280,
+    BALANCE = 281,
+    OPEN = 282,
+    CLOSE = 283,
+    COMMODITY = 284,
+    PAD = 285,
+    EVENT = 286,
+    PRICE = 287,
+    NOTE = 288,
+    DOCUMENT = 289,
+    PUSHTAG = 290,
+    POPTAG = 291,
+    OPTION = 292,
+    INCLUDE = 293,
+    PLUGIN = 294,
+    BOOL = 295,
+    DATE = 296,
+    ACCOUNT = 297,
+    CURRENCY = 298,
+    STRING = 299,
+    NUMBER = 300,
+    TAG = 301,
+    LINK = 302,
+    KEY = 303,
+    NEGATIVE = 304
   };
 #endif
 
@@ -104,7 +110,7 @@ union YYSTYPE
         PyObject* pyobj2;
     } pairobj;
 
-#line 108 "src/python/beancount/parser/grammar.h" /* yacc.c:1909  */
+#line 114 "src/python/beancount/parser/grammar.h" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
