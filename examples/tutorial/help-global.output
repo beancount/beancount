@@ -1,0 +1,27 @@
+usage: bean-query [-h] [--help-reports [HELP_REPORTS]] [--help-formats [HELP_FORMATS]] [-f {text,csv,html,htmldiv,beancount,xls}] [-o OUTPUT] [-t] [-q]
+                  FILENAME.beancount
+                  {balances,bal,trial,balsheet,income,journal,register,account,conversions,documents,holdings,networth,equity,commodities,prices,all_prices,pricedb,pricesdb,prices_db,check,validate,errors,print,accounts,current_events,latest_events,events,activity,updated,stats-types,stats-directives,stats-entries,stats-postings,ledger}
+                  ...
+
+Print out a list of current holdings, relative or absolute. This is to share my portfolio with others, or to compute its daily changes.
+
+positional arguments:
+  FILENAME.beancount    The Beancout input filename to load.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --help-reports [HELP_REPORTS], --list-reports [HELP_REPORTS]
+                        Print the full list of supported reports and exit.
+  --help-formats [HELP_FORMATS], --list-formats [HELP_FORMATS]
+                        Print the full list of supported formats and exit.
+  -f {text,csv,html,htmldiv,beancount,xls}, --format {text,csv,html,htmldiv,beancount,xls}
+                        Output format.
+  -o OUTPUT, --output OUTPUT
+                        Output filename. If not specified, the output goes to stdout. The filename is inspected to select a sensible default format, if one is not requested.
+  -t, --timings, --verbose
+                        Print timings.
+  -q, --no-errors       Do not report errors.
+
+report:
+  {balances,bal,trial,balsheet,income,journal,register,account,conversions,documents,holdings,networth,equity,commodities,prices,all_prices,pricedb,pricesdb,prices_db,check,validate,errors,print,accounts,current_events,latest_events,events,activity,updated,stats-types,stats-directives,stats-entries,stats-postings,ledger}
+                        Name/specification of the desired report.

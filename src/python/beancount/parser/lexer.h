@@ -13,14 +13,54 @@
 #include "grammar.h"
 
 
-/* The filename being parsed. */
+/* Build and accumulate an error on the builder object. */
+void build_lexer_error(const char* string, size_t length);
+
+/* Build and accumulate an error on the builder object using the current
+ * exception state. */
+void build_lexer_error_from_exception(void);
+
+
+
+/* Callback call site with error handling. */
+#define BUILD_LEX(method_name, format, ...)                                             \
+    yylval->pyobj = PyObject_CallMethod(builder, method_name, format, __VA_ARGS__);     \
+    /* Handle a Python exception raised by the handler {3cfb2739349a} */                \
+    if (yylval->pyobj == NULL) {                                                        \
+       build_lexer_error_from_exception();                                              \
+       return LEX_ERROR;                                                                \
+    }                                                                                   \
+    /* Lexer builder methods should never return None, check for it. */                 \
+    else if (yylval->pyobj == Py_None) {                                                \
+        Py_DECREF(Py_None);                                                             \
+        build_lexer_error("Unexpected None result from lexer", 34);                     \
+        return LEX_ERROR;                                                               \
+    }
+
+
+/* Initialization/finalization methods. These are separate from the yylex_init()
+ * and yylex_destroy() and they call them. */
+void yylex_initialize(const char* filename, const char* encoding);
+void yylex_finalize(void);
+
+
+/* Global declarations; defined below. */
+extern int yy_eof_times;
 extern const char* yy_filename;
 extern int yycolumn;
+extern const char* yy_encoding;
+
+/* String buffer statics. */
+extern size_t strbuf_size; /* Current buffer size (not including final nul). */
+extern char* strbuf;       /* Current buffer head. */
+extern char* strbuf_end;   /* Current buffer sentinel (points to the final nul). */
+extern char* strbuf_ptr;   /* Current insertion point in buffer. */
+void strbuf_realloc(size_t num_new_chars);
 
 
 
 /* Handle detecting the beginning of line. */
-extern int yy_line_tokens; /* Number of tokens since the bol */
+extern int yy_line_tokens; /* Number of tokens since the bol. */
 
 #define YY_USER_ACTION  {                               \
     yy_line_tokens++;                                   \
@@ -32,16 +72,24 @@ extern int yy_line_tokens; /* Number of tokens since the bol */
 
 
 /* Skip the rest of the input line. */
-void yy_skip_line(void);
+int yy_skip_line(void);
 
 
 /* Utility functions. */
 int strtonl(const char* buf, size_t nchars);
 
 
+/* Append characters to the static string buffer and verify. */
+#define SAFE_COPY_CHAR(value)                    \
+	if (strbuf_ptr >= strbuf_end) {         \
+            strbuf_realloc(1);                  \
+	}                                       \
+        *strbuf_ptr++ = value;
 
 
-#line 45 "src/python/beancount/parser/lexer.h"
+
+
+#line 93 "src/python/beancount/parser/lexer.h"
 
 #define  YY_INT_ALIGNED short int
 
@@ -256,6 +304,8 @@ extern char *yytext;
 
 #ifdef YY_HEADER_EXPORT_START_CONDITIONS
 #define INITIAL 0
+#define INVALID 1
+#define STRLIT 2
 
 #endif
 
@@ -374,9 +424,9 @@ extern int yylex \
 #undef YY_DECL
 #endif
 
-#line 195 "src/python/beancount/parser/lexer.l"
+#line 362 "src/python/beancount/parser/lexer.l"
 
 
-#line 381 "src/python/beancount/parser/lexer.h"
+#line 431 "src/python/beancount/parser/lexer.h"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */

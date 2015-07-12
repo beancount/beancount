@@ -1,32 +1,57 @@
 """Getter functions that operate on lists of entries to return various lists of
 things that they reference, accounts, tags, links, currencies, etc.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 from collections import defaultdict
 
-from beancount.core.data import Transaction, Open, Close
+from beancount.core.data import Transaction
+from beancount.core.data import Open
+from beancount.core.data import Close
+from beancount.core.data import Balance
+from beancount.core.data import Price
+from beancount.core.data import Commodity
+from beancount.core import data
 from beancount.core import account
-
-
-# FIXME: Ideally this would live under ops, pending dependencies.
 
 
 class GetAccounts:
     """Accounts gatherer.
     """
-    def __call__(self, entries):
+    def get_accounts_use_map(self, entries):
         """Gather the list of accounts from the list of entries.
 
         Args:
           entries: A list of directive instances.
         Returns:
-          A list of Account instances.
+          A pair of dictionaries of account name to date, one for first date
+          used and one for last date used. The keys should be identical.
         """
-        accounts = set()
+        accounts_first = {}
+        accounts_last = {}
         for entry in entries:
             method = getattr(self, entry.__class__.__name__)
-            for account in method(entry):
-                accounts.add(account)
-        return accounts
+            for account_ in method(entry):
+                if account_ not in accounts_first:
+                    accounts_first[account_] = entry.date
+                accounts_last[account_] = entry.date
+        return accounts_first, accounts_last
+
+    def get_entry_accounts(self, entry):
+        """Gather all the accounts references by a single directive.
+
+        Note: This should get replaced by a method on each directive eventually,
+        that would be the clean way to do this.
+
+        Args:
+          entry: A directive instance.
+        Returns:
+          A set of account name strings.
+        """
+        method = getattr(self, entry.__class__.__name__)
+        return set(method(entry))
+
+    # pylint: disable=invalid-name
 
     def Transaction(_, entry):
         """Process a Transaction directive.
@@ -71,7 +96,24 @@ class GetAccounts:
 
     # Associate all the possible directives with their respective handlers.
     Open = Close = Balance = Note = Document = _one
-    Event = Price = _zero
+    Commodity = Event = Price = _zero
+
+
+# Global instance to share.
+# pylint: disable=invalid-name
+_GetAccounts = GetAccounts()
+
+
+def get_accounts_use_map(entries):
+    """Gather all the accounts references by a list of directives.
+
+    Args:
+      entries: A list of directive instances.
+    Returns:
+      A pair of dictionaries of account name to date, one for first date
+      used and one for last date used. The keys should be identical.
+    """
+    return _GetAccounts.get_accounts_use_map(entries)
 
 
 def get_accounts(entries):
@@ -82,7 +124,22 @@ def get_accounts(entries):
     Returns:
       A set of account strings.
     """
-    return GetAccounts()(entries)
+    _, accounts_last = _GetAccounts.get_accounts_use_map(entries)
+    return accounts_last.keys()
+
+
+def get_entry_accounts(entry):
+    """Gather all the accounts references by a single directive.
+
+    Note: This should get replaced by a method on each directive eventually,
+    that would be the clean way to do this.
+
+    Args:
+      entries: A directive instance.
+    Returns:
+      A set of account strings.
+    """
+    return _GetAccounts.get_entry_accounts(entry)
 
 
 def get_account_components(entries):
@@ -97,8 +154,8 @@ def get_account_components(entries):
     accounts = get_accounts(entries)
     components = set()
     for account_name in accounts:
-        components.update(account_name.split(account.sep))
-    return components
+        components.update(account.split(account_name))
+    return sorted(components)
 
 
 def get_all_tags(entries):
@@ -115,7 +172,7 @@ def get_all_tags(entries):
             continue
         if entry.tags:
             all_tags.update(entry.tags)
-    return all_tags
+    return sorted(all_tags)
 
 
 def get_all_payees(entries):
@@ -132,15 +189,15 @@ def get_all_payees(entries):
             continue
         all_payees.add(entry.payee)
     all_payees.discard(None)
-    return all_payees
+    return sorted(all_payees)
 
 
-def get_leveln_parent_accounts(account_names, n, nrepeats=0):
+def get_leveln_parent_accounts(account_names, level, nrepeats=0):
     """Return a list of all the unique leaf names are level N in an account hierarchy.
 
     Args:
       account_names: A list of account names (strings)
-      n: The level to cross-cut. 0 is for root accounts.
+      level: The level to cross-cut. 0 is for root accounts.
       nrepeats: A minimum number of times a leaf is required to be present in the
         the list of unique account names in order to be returned by this function.
     Returns:
@@ -148,27 +205,40 @@ def get_leveln_parent_accounts(account_names, n, nrepeats=0):
     """
     leveldict = defaultdict(int)
     for account_name in set(account_names):
-        components = account_name.split(account.sep)
-        if n < len(components):
-            leveldict[components[n]] += 1
-    levels = {level
-              for level, count in leveldict.items()
+        components = account.split(account_name)
+        if level < len(components):
+            leveldict[components[level]] += 1
+    levels = {level_
+              for level_, count in leveldict.items()
               if count > nrepeats}
     return sorted(levels)
 
 
-def get_min_max_dates(entries):
+def get_min_max_dates(entries, types=None):
     """Return the minimum and amximum dates in the list of entries.
 
     Args:
       entries: A list of directive instances.
+      types: An optional tuple of types to restrict the entries to.
     Returns:
       A pair of datetime.date dates, the minimum and maximum dates seen in the
       directives.
     """
-    if not entries:
-        return (None, None)
-    return (entries[0].date, entries[-1].date)
+    date_first = date_last = None
+
+    for entry in entries:
+        if types and not isinstance(entry, types):
+            continue
+        date_first = entry.date
+        break
+
+    for entry in reversed(entries):
+        if types and not isinstance(entry, types):
+            continue
+        date_last = entry.date
+        break
+
+    return (date_first, date_last)
 
 
 def get_active_years(entries):
@@ -193,16 +263,113 @@ def get_active_years(entries):
 def get_account_open_close(entries):
     """Fetch the open/close entries for each of the accounts.
 
+    If an open or close entry happens to be duplicated, accept the earliest
+    entry (chronologically).
+
     Args:
       entries: A list of directive instances.
     Returns:
-      A map of Account instance to pairs of (open-directive,
-      close-directive) tuples.
+      A map of account name strings to pairs of (open-directive, close-directive)
+      tuples.
     """
-    open_closes_map = defaultdict(lambda: [None, None])
+    # A dict of account name to (open-entry, close-entry).
+    open_close_map = defaultdict(lambda: [None, None])
     for entry in entries:
         if not isinstance(entry, (Open, Close)):
             continue
+        open_close = open_close_map[entry.account]
         index = 0 if isinstance(entry, Open) else 1
-        open_closes_map[entry.account][index] = entry
-    return open_closes_map
+        previous_entry = open_close[index]
+        if previous_entry is not None:
+            if previous_entry.date <= entry.date:
+                entry = previous_entry
+        open_close[index] = entry
+
+    return open_close_map
+
+
+def get_commodity_map(entries, options_map, create_missing=True):
+    """Create map of commodity names to Commodity entries.
+
+    Args:
+      entries: A list of directive instances.
+      options_map: A dict of options as parsed by the parser.
+      create_missing: A boolean, true if you want to automatically generate
+        missing commodity directives if not present in the output map.
+    Returns:
+      A map of commodity name strings to Commodity directives.
+    """
+    if not entries:
+        return {}
+
+    commodities_map = {}
+    for entry in entries:
+        if isinstance(entry, Commodity):
+            commodities_map[entry.currency] = entry
+
+        elif isinstance(entry, Transaction):
+            for posting in entry.postings:
+
+                # Main currency.
+                lot = posting.position.lot
+                commodities_map.setdefault(lot.currency, None)
+
+                # Currency in cost.
+                cost = lot.cost
+                if cost:
+                    commodities_map.setdefault(cost.currency, None)
+
+                # Currency in price.
+                price = posting.price
+                if price:
+                    commodities_map.setdefault(price.currency, None)
+
+        elif isinstance(entry, Balance):
+            commodities_map.setdefault(entry.amount.currency, None)
+
+        elif isinstance(entry, Price):
+            commodities_map.setdefault(entry.currency, None)
+
+    if create_missing:
+        # Create missing Commodity directives when they haven't been specified explicitly.
+        # (I think it might be better to always do this from the loader.)
+        date = entries[0].date
+        meta = data.new_metadata('<getters>', 0)
+        commodities_map = {
+            commodity: (entry
+                        if entry is not None
+                        else Commodity(meta, date, commodity))
+            for commodity, entry in commodities_map.items()}
+
+    return commodities_map
+
+
+def get_values_meta(name_to_entries_map, *meta_keys, default=None):
+    """Get a map of the metadata from a map of entries values.
+
+    Given a dict of some key to a directive instance (or None), return a mapping
+    of the key to the metadata extracted from each directive, or a default
+    value. This can be used to gather a particular piece of metadata from an
+    accounts map or a commodities map.
+
+    Args:
+      name_to_entries_map: A dict of something to an entry or None.
+      meta_keys: A list of strings, the keys to fetch from the metadata.
+      default: The default value to use if the metadata is not available or if
+        the value/entry is None.
+    Returns:
+      A mapping of the keys of name_to_entries_map to the values of the 'meta_keys'
+      metadata. If there are multiple 'meta_keys', each value is a tuple of them.
+      On the other hand, if there is only a single one, the value itself is returned.
+    """
+    value_map = {}
+    for key, entry in name_to_entries_map.items():
+        value_list = []
+        for meta_key in meta_keys:
+            value_list.append(entry.meta.get(meta_key, default)
+                              if entry is not None
+                              else default)
+        value_map[key] = (value_list[0]
+                          if len(meta_keys) == 1
+                          else tuple(value_list))
+    return value_map

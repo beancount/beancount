@@ -3,6 +3,8 @@
 This module contains some common basic operations on entries that are complex
 enough not to belong in core/data.py.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 from collections import defaultdict
 
 from beancount.core import data

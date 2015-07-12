@@ -7,3 +7,5 @@ in problem-solving using Beancount, work-in-progress that can be selectively
 installed via a --plugin option, or one-offs to answer questions on the
 mailing-list.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+

@@ -20,10 +20,6 @@ table td {
     padding-right: 4px;
 }
 
-div#errors {
-    background-color: #F66;
-    padding: 1em;
-}
 
 /* The document/file title at the top. */
 #title {
@@ -44,11 +40,11 @@ div#errors {
 
 /* The navigation links. */
 
-div#navigation {
+div.navigation {
     font-size: small;
 }
 
-div#navigation ul {
+div.navigation ul {
     /* margin: 10px 0px 0px 0px; */
     margin-top: 5px;
     /* padding-top: 5px; */
@@ -56,15 +52,21 @@ div#navigation ul {
     /* border: thin solid red; */
 }
 
-div#navigation li {
+div.navigation li {
     display: inline;
     margin: 4px;
 /* font-size: x-small; */
 }
 
-div#navigation li span.ledger-name {
+div.navigation li span.ledger-name {
     margin-left: 1.5em;
     /* font-weight: bold; */
+}
+
+div.navigation#nav-right {
+    /* position: absolute; */
+    /* right: 1.5em; */
+    float: right;
 }
 
 
@@ -118,7 +120,7 @@ table.tree-table tr.parent-node {
 }
 
 table tr.totals {
-    background-color: #d0d0d0;
+    background-color: #eee;
 }
 
 span.totals-label {
@@ -206,7 +208,7 @@ table.entry-table tr.Balance {
     background-color: #cfc;
 }
 
-table.entry-table tr.CheckFail {
+table.entry-table tr.Balance.fail {
     background-color: #f8a;
 }
 
@@ -358,8 +360,32 @@ table#price-index td {
 }
 
 
-/* Source rendering */
+/* Source code rendering */
 div#source pre {
    margin-top: 0px;
    margin-bottom: 0px;
 }
+
+
+/* Overlay */
+div#overlay {
+    left: 3%;
+    right: 3%;
+    padding: 1em;
+    margin-left: auto;
+    margin-right: auto;
+    position: absolute;
+    background-color: #FEE;
+    opacity: 0.95;
+    border: 3px solid black;
+    border-radius: 10px;
+}
+
+/* div#overlay { */
+/*     -webkit-animation: fadeaway 2s; */
+/* } */
+
+/* @-webkit-keyframes fadeaway { */
+/*       0% { opacity: 1;  } */
+/*     100% { opacity: 0;  } */
+/* } */

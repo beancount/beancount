@@ -1,16 +1,17 @@
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import textwrap
 
 from beancount import loader
-from beancount.plugins import forecast
 from beancount.parser import cmptest
 
 
 class TestExampleForecast(cmptest.TestCase):
 
     def test_forecast(self):
-        INPUT = textwrap.dedent("""
+        input_text = textwrap.dedent("""
 
-            option "plugin" "beancount.plugins.forecast"
+            plugin "beancount.plugins.forecast"
 
             2011-01-01 open Expenses:Restaurant
             2011-01-01 open Assets:Cash
@@ -20,7 +21,8 @@ class TestExampleForecast(cmptest.TestCase):
               Assets:Cash
 
         """)
-        entries, _, __ = loader.load(INPUT, parse_method='string')
+        entries, errors, __ = loader.load_string(input_text)
+        self.assertFalse(errors)
         self.assertEqualEntries("""
 
             2011-01-01 open Expenses:Restaurant

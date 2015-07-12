@@ -1,18 +1,72 @@
 """
 Tests for general utils.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import unittest
+from unittest import mock
+import re
 import time
+import textwrap
+import sys
 from collections import namedtuple
 
 from beancount.utils import misc_utils
+from beancount.utils import test_utils
+
+
+def raise_import_error(*args, **kw):
+    """Raises an ImportError. This is patched in a test.
+
+    Raises:
+      ImportError, unconditionally.
+    """
+    raise ImportError("Could not import module")
 
 
 class TestMiscUtils(unittest.TestCase):
 
-    def test_print_time(self):
-        with misc_utils.print_time('test-op'):
-            time.sleep(0.1)
+    def test_log_time(self):
+        with test_utils.capture() as stdout:
+            with misc_utils.log_time('test-op', None):
+                time.sleep(0.1)
+        self.assertEqual("", stdout.getvalue())
+
+        with test_utils.capture() as stdout:
+            with misc_utils.log_time('test-op', sys.stdout.write):
+                time.sleep(0.1)
+        self.assertTrue(re.search("Operation", stdout.getvalue()))
+        self.assertTrue(re.search("Time", stdout.getvalue()))
+
+    def test_box(self):
+        with test_utils.capture() as stdout:
+            with misc_utils.box():
+                print('A')
+        self.assertEqual(textwrap.dedent("""
+          ,----------------
+          A
+          `----------------
+        """), stdout.getvalue())
+
+        with test_utils.capture() as stdout:
+            with misc_utils.box('entries'):
+                print('A')
+        self.assertEqual(textwrap.dedent("""
+          ,--------(entries)--------
+          A
+          `-------------------------
+        """), stdout.getvalue())
+
+    def test_swallow(self):
+        with misc_utils.swallow(ValueError):
+            pass
+
+        with misc_utils.swallow(ValueError):
+            raise ValueError("Should not trickle out")
+
+        with self.assertRaises(ValueError):
+            with misc_utils.swallow(IOError):
+                raise ValueError("Should not trickle out")
 
     def test_groupby(self):
         data = [('a', 1), ('b', 2), ('c', 3), ('d', 4)]
@@ -22,21 +76,8 @@ class TestMiscUtils(unittest.TestCase):
             [[('a', 1)], [('b', 2)], [('c', 3)], [('d', 4)]],
             sorted(grouped.values()))
 
-    def test_uniquify_last(self):
-        data = [('d', 9),
-                ('b', 4),
-                ('c', 8),
-                ('c', 6),
-                ('c', 7),
-                ('a', 3),
-                ('a', 1),
-                ('a', 2),
-                ('b', 5)]
-        unique_data = misc_utils.uniquify_last(data, lambda x: x[0])
-        self.assertEqual([('a', 2), ('b', 5), ('c', 7), ('d', 9)],
-                         list(unique_data))
-
     def test_filter_type(self):
+        # pylint: disable=invalid-name
         class A: pass
         class B: pass
         class C: pass
@@ -48,13 +89,35 @@ class TestMiscUtils(unittest.TestCase):
         data = [(1,), (2, 3, 4, 5), (2, 3)]
         self.assertEqual((2, 3, 4, 5), misc_utils.longest(data))
 
+    def test_skipiter(self):
+        self.assertEqual([0, 3, 6, 9], list(misc_utils.skipiter(range(10), 3)))
+
     def test_get_tuple_values(self):
+        # pylint: disable=invalid-name
         Something = namedtuple('Something', 'a b c d e')
         SomethingElse = namedtuple('SomethingElse', 'f g h')
         class A(str): pass
         ntuple = Something(1, 2, SomethingElse(A('a'), None, 2), [A('b'), 'c'], 5)
-        x = misc_utils.get_tuple_values(ntuple, lambda x: isinstance(x, A))
-        self.assertEqual([A('a'), A('b')], list(x))
+        values = misc_utils.get_tuple_values(ntuple, lambda x: isinstance(x, A))
+        self.assertEqual([A('a'), A('b')], list(values))
+
+    def test_replace_tuple_values(self):
+        # pylint: disable=invalid-name
+        Something = namedtuple('Something', 'a b c d e')
+        SomethingElse = namedtuple('SomethingElse', 'f g')
+
+        something = Something(1, 2, '3', SomethingElse(10, '11'),
+                              [SomethingElse(100, '101')])
+        replacements = {'3': '3000', '101': '1010', '11': '1100'}
+        something_else = misc_utils.replace_namedtuple_values(
+            something,
+            lambda x: isinstance(x, str),
+            lambda x: replacements.get(x, x))
+
+        expected = Something(a=1, b=2, c='3000',
+                             d=SomethingElse(f=10, g='1100'),
+                             e=[SomethingElse(f=100, g='1010')])
+        self.assertEqual(expected, something_else)
 
     def test_compute_unique_clean_ids(self):
         self.assertEqual({'a': 'a', 'b': 'b', 'c': 'c'},
@@ -67,8 +130,139 @@ class TestMiscUtils(unittest.TestCase):
                          misc_utils.compute_unique_clean_ids(['a b', 'a_b']))
 
     def test_map_namedtuple_attributes(self):
+        # pylint: disable=invalid-name
         Test = namedtuple('Test', 'a b c d')
         test = Test(None, None, 1, 2)
         new_test = misc_utils.map_namedtuple_attributes(
             ('b', 'd'), lambda num: num if num is None else num * 10, test)
         self.assertEqual(Test(None, None, 1, 20), new_test)
+
+    def test_staticvar(self):
+        @misc_utils.staticvar('a', 42)
+        def foo():
+            return foo.a
+        self.assertEqual(42, foo())
+        self.assertEqual(42, foo.a)
+
+    def test_first_paragraph(self):
+        docstring = textwrap.dedent("""\
+          Dump the lexer output for a Beancount syntax file.
+          Bla di blah.
+
+          Args:
+            filename: A string, the Beancount input filename.
+        """)
+        self.assertEqual('Dump the lexer output for a Beancount syntax file. Bla di blah.',
+                         misc_utils.first_paragraph(docstring))
+
+    def test_get_screen_width(self):
+        max_width = misc_utils.get_screen_width()
+        self.assertTrue(type(int), max_width)
+        # Note: Allow zero because the console function fails in nose when
+        # capture is disabled.
+        self.assertLess(-1, max_width)
+
+    @mock.patch('beancount.utils.misc_utils.import_curses', raise_import_error)
+    def test_no_curses(self):
+        # Make sure the patch works.
+        with self.assertRaises(ImportError):
+            misc_utils.import_curses()
+
+        # Test functions that would require curses.
+        self.assertEqual(0, misc_utils.get_screen_width())
+        self.assertEqual(0, misc_utils.get_screen_height())
+
+    def test_get_screen_height(self):
+        max_height = misc_utils.get_screen_height()
+        self.assertTrue(type(int), max_height)
+        # Note: Allow zero because the console function fails in nose when
+        # capture is disabled.
+        self.assertLess(-1, max_height)
+
+    def test_cmptuple(self):
+        # pylint: disable=invalid-name
+        One = misc_utils.cmptuple('Bla', 'a b c')
+        Two = misc_utils.cmptuple('Bli', 'd e f')
+
+        args = (1, 2, 3)
+        one = One(*args)
+        two = Two(*args)
+        self.assertFalse(one == two)
+
+
+class TestUniquify(unittest.TestCase):
+
+    def test_sorted_uniquify_first(self):
+        data = [('d', 9),
+                ('b', 4),
+                ('c', 8),
+                ('c', 6),
+                ('c', 7),
+                ('a', 3),
+                ('a', 1),
+                ('a', 2),
+                ('b', 5)]
+        unique_data = misc_utils.sorted_uniquify(data, lambda x: x[0], last=False)
+        self.assertEqual([('a', 3), ('b', 4), ('c', 8), ('d', 9)],
+                         list(unique_data))
+
+    def test_sorted_uniquify_last(self):
+        data = [('d', 9),
+                ('b', 4),
+                ('c', 8),
+                ('c', 6),
+                ('c', 7),
+                ('a', 3),
+                ('a', 1),
+                ('a', 2),
+                ('b', 5)]
+        unique_data = misc_utils.sorted_uniquify(data, lambda x: x[0], last=True)
+        self.assertEqual([('a', 2), ('b', 5), ('c', 7), ('d', 9)],
+                         list(unique_data))
+
+    def test_uniquify_first(self):
+        data = [('d', 9),
+                ('b', 4),
+                ('c', 8),
+                ('c', 6),
+                ('c', 7),
+                ('a', 3),
+                ('a', 1),
+                ('a', 2),
+                ('b', 5)]
+        unique_data = misc_utils.uniquify(data, lambda x: x[0], last=False)
+        self.assertEqual([('d', 9), ('b', 4), ('c', 8), ('a', 3)],
+                         list(unique_data))
+
+    def test_uniquify_last(self):
+        data = [('d', 9),
+                ('b', 4),
+                ('c', 8),
+                ('c', 6),
+                ('c', 7),
+                ('a', 3),
+                ('a', 1),
+                ('a', 2),
+                ('b', 5)]
+        unique_data = misc_utils.uniquify(data, lambda x: x[0], last=True)
+        self.assertEqual([('d', 9), ('c', 7), ('a', 2), ('b', 5)],
+                         list(unique_data))
+
+
+
+
+class TestLineFileProxy(unittest.TestCase):
+
+    def test_line_file_proxy(self):
+        output = []
+        fileobj = misc_utils.LineFileProxy(output.append, ' ')
+        fileobj.write('a')
+        fileobj.write('b')
+        fileobj.write('c\n')
+        fileobj.write('d')
+        self.assertEqual([' abc'], output)
+        fileobj.flush()
+        self.assertEqual([' abc'], output)
+        fileobj.write('e\n')
+        self.assertEqual([' abc', ' de'], output)
+        fileobj.close()

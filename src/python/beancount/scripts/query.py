@@ -1,48 +1,77 @@
-"""Print out a list of current holdings, relative or absolute.
-
-This is to share my portfolio with others, or to compute its daily changes.
+"""Run a SQL query on the set of transactions and postings.
 """
-import sys
+__author__ = "Martin Blais <blais@furius.ca>"
 
-from beancount import load
-from beancount.reports import table
-from beancount.utils import file_utils
-from beancount.reports import rselect
+import argparse
+import logging
+import sys
+import os
+
+from beancount import loader
+from beancount.utils import misc_utils
+from beancount.query import shell
 
 
 def main():
-    import argparse
-    parser = argparse.ArgumentParser(__doc__)
+    parser = argparse.ArgumentParser(description=__doc__)
 
-    parser.add_argument('filename', help='Filename.')
-    parser.add_argument('report', help='Name of the desired report.')
+    ## FIXME: implement this.
+    # parser.add_argument('-f', '--format', default=None,
+    #                     choices=['text', 'csv', 'html', 'htmldiv', 'beancount', 'xls'],
+    #                     help="Output format.")
 
-    parser.add_argument('-f', '--format', default=None,
-                           choices=['txt', 'csv', 'html'],
-                           help="Output format.")
+    ## FIXME: implement this.
+    # parser.add_argument('-o', '--output', action='store',
+    #                     help=("Output filename. If not specified, the output goes "
+    #                           "to stdout. The filename is inspected to select a "
+    #                           "sensible default format, if one is not requested."))
 
-    parser.add_argument('-o', '--output', action='store',
-                           help="Output filename. If not specified, output goes to stdout.")
+    parser.add_argument('-q', '--no-errors', action='store_true',
+                        help='Do not report errors')
 
-    opts = parser.parse_args()
+    parser.add_argument('filename', metavar='FILENAME.beancount',
+                        help='The Beancount input filename to load')
 
-    outfile = open(opts.output, 'w') if opts.output else sys.stdout
-    opts.format = opts.format or file_utils.guess_file_format(opts.output)
+    parser.add_argument('query', nargs='*',
+                        help='A query to run directly')
+
+    args = parser.parse_args()
 
     # Parse the input file.
-    entries, errors, options_map = load(opts.filename, quiet=True)
+    errors_file = None if args.no_errors else sys.stderr
+    with misc_utils.log_time('beancount.loader (total)', logging.info):
+        entries, errors, options_map = loader.load_file(args.filename,
+                                                        log_timings=logging.info,
+                                                        log_errors=errors_file)
 
-    # Dispatch on which report to generate.
-    report_function = rselect.get_report_generator(opts.report)
-    if report_function is None:
-        parser.error("Unknown report.")
+    # Create the shell.
+    is_insteractive = os.isatty(sys.stdin.fileno()) and not args.query
+    shell_obj = shell.BQLShell(is_insteractive, entries, errors, options_map)
 
-    # Create holdings list.
-    table_ = report_function(entries, options_map)
+    if is_insteractive:
+        # Run interactively if we're a TTY and no query is supplied.
+        num_directives, num_transactions, num_postings = shell.summary_statistics(entries)
+        if 'title' in options_map:
+            print('Input file: "{}"'.format(options_map['title']))
+        print("Ready with {} directives ({} postings in {} transactions).".format(
+            num_directives, num_postings, num_transactions))
+        try:
+            shell_obj.cmdloop()
+        except KeyboardInterrupt:
+            print('\nExit')
+    else:
+        # Run in batch mode (Non-interactive).
+        if args.query:
+            # We have a query to run.
+            query = ' '.join(args.query)
+        else:
+            # If we have no query and we're not a TTY, read the BQL command from
+            # standard input.
+            query = sys.stdin.read()
 
-    if isinstance(table_, table.TableReport):
-        # Create the table report.
-        table.render_table(table_, outfile, opts.format)
+        shell_obj.onecmd(query)
+
+    return 0
 
 
 if __name__ == '__main__':

@@ -1,28 +1,36 @@
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import io
 from datetime import date
 import unittest
 import re
+import textwrap
 
 from beancount.parser import printer
 from beancount.parser import parser
-from beancount.core import data
-from beancount.core import complete
 from beancount.parser import cmptest
+from beancount.core import data
+from beancount.core import interpolate
+from beancount.utils import test_utils
 
 
-FILELOC = data.FileLocation('beancount/core/testing.beancount', 12345)
+META = data.new_metadata('beancount/core/testing.beancount', 12345)
 
 class TestPrinter(unittest.TestCase):
 
-    def test_render_fileloc(self):
-        fileloc_str = printer.render_fileloc(FILELOC)
-        self.assertTrue(isinstance(fileloc_str, str))
-        self.assertTrue(re.search('12345', fileloc_str))
-        self.assertTrue(re.search(FILELOC.filename, fileloc_str))
+    def test_methods_coverage(self):
+        for klass in data.ALL_DIRECTIVES:
+            self.assertTrue(hasattr(printer.EntryPrinter, klass.__name__))
+
+    def test_render_source(self):
+        source_str = printer.render_source(META)
+        self.assertTrue(isinstance(source_str, str))
+        self.assertTrue(re.search('12345', source_str))
+        self.assertTrue(re.search(META.filename, source_str))
 
     def test_format_and_print_error(self):
-        entry = data.Open(FILELOC, date(2014, 1, 15), 'Assets:Bank:Checking', [])
-        error = complete.BalanceError(FILELOC, "Example balance error", entry)
+        entry = data.Open(META, date(2014, 1, 15), 'Assets:Bank:Checking', [], None)
+        error = interpolate.BalanceError(META, "Example balance error", entry)
         error_str = printer.format_error(error)
         self.assertTrue(isinstance(error_str, str))
 
@@ -42,7 +50,7 @@ class TestEntryPrinter(cmptest.TestCase):
 
         # Print out the entries and parse them back in.
         oss1 = io.StringIO()
-        printer.print_entries(entries1, oss1)
+        printer.print_entries(entries1, file=oss1)
         entries2, errors, __ = parser.parse_string(oss1.getvalue())
 
         self.assertEqualEntries(entries1, entries2)
@@ -50,7 +58,7 @@ class TestEntryPrinter(cmptest.TestCase):
 
         # Print out those reparsed and parse them back in.
         oss2 = io.StringIO()
-        printer.print_entries(entries2, oss2)
+        printer.print_entries(entries2, file=oss2)
         entries3, errors, __ = parser.parse_string(oss2.getvalue())
 
         self.assertEqualEntries(entries1, entries3)
@@ -161,3 +169,240 @@ class TestEntryPrinter(cmptest.TestCase):
         2014-06-08 event "employer" "Four Square"
         """
         self.assertRoundTrip(entries, errors)
+
+
+def characterize_spaces(text):
+    """Classify each line to a particular type.
+
+    Args:
+      text: A string, the text to classify.
+    Returns:
+      A list of line types, one for each line.
+    """
+    lines = []
+    for line in text.splitlines():
+        if re.match(r'\d\d\d\d-\d\d-\d\d open', line):
+            linecls = 'open'
+        elif re.match(r'\d\d\d\d-\d\d-\d\d price', line):
+            linecls = 'price'
+        elif re.match(r'\d\d\d\d-\d\d-\d\d', line):
+            linecls = 'txn'
+        elif re.match(r'[ \t]$', line):
+            linecls = 'empty'
+        else:
+            linecls = None
+        lines.append(linecls)
+    return lines
+
+
+class TestPrinterSpacing(unittest.TestCase):
+
+    maxDiff = 8192
+
+    def test_interline_spacing(self):
+        input_text = textwrap.dedent("""\
+        2014-01-01 open Assets:Account1
+        2014-01-01 open Assets:Account2
+        2014-01-01 open Assets:Cash
+
+        2014-06-08 *
+          Assets:Account1       111.00 BEAN
+          Assets:Cash
+
+        2014-06-08 * "Narration"
+          Assets:Account1       111.00 BEAN
+          Assets:Cash
+
+        2014-06-08 * "Payee" | "Narration"
+          Assets:Account2       111.00 BEAN
+          Assets:Cash
+
+        2014-10-01 close Assets:Account2
+
+        2014-10-11 price BEAN   10 USD
+        2014-10-12 price BEAN   11 USD
+        2014-10-13 price BEAN   11 USD
+        """)
+        entries, _, __ = parser.parse_string(input_text)
+
+        oss = io.StringIO()
+        printer.print_entries(entries, file=oss)
+
+        expected_classes = characterize_spaces(input_text)
+        actual_classes = characterize_spaces(oss.getvalue())
+
+        self.assertEqual(expected_classes, actual_classes)
+
+
+class TestDisplayContext(test_utils.TestCase):
+
+    maxDiff = 2048
+
+    @parser.parsedoc
+    def test_precision(self, entries, errors, options_map):
+        """
+        2014-07-01 *
+          Assets:Account              1 INT
+          Assets:Account            1.1 FP1
+          Assets:Account          22.22 FP2
+          Assets:Account        333.333 FP3
+          Assets:Account      4444.4444 FP4
+          Assets:Account    55555.55555 FP5
+          Assets:Cash
+        """
+        dcontext = options_map['dcontext']
+        oss = io.StringIO()
+        printer.print_entries(entries, dcontext, file=oss)
+
+        expected_str = textwrap.dedent("""
+        2014-07-01 *
+          Assets:Account             1 INT
+          Assets:Account           1.1 FP1
+          Assets:Account         22.22 FP2
+          Assets:Account       333.333 FP3
+          Assets:Account     4444.4444 FP4
+          Assets:Account   55555.55555 FP5
+          Assets:Cash               -1 INT
+          Assets:Cash             -1.1 FP1
+          Assets:Cash           -22.22 FP2
+          Assets:Cash         -333.333 FP3
+          Assets:Cash       -4444.4444 FP4
+          Assets:Cash     -55555.55555 FP5
+        """)
+        self.assertLines(expected_str, oss.getvalue())
+
+
+class TestPrinterAlignment(test_utils.TestCase):
+
+    maxDiff = None
+
+    def test_align_position_strings(self):
+        aligned_strings, width = printer.align_position_strings([
+            '45 GOOG {504.30 USD}',
+            '4 GOOG {504.30 USD / 2014-11-11}',
+            '9.9505 USD',
+            '',
+            '-22473.32 CAD @ 1.10 USD',
+            'UNKNOWN',
+            '76400.203',
+        ])
+        self.assertEqual(40, width)
+        self.assertEqual([
+            '       45 GOOG {504.30 USD}             ',
+            '        4 GOOG {504.30 USD / 2014-11-11}',
+            '   9.9505 USD                           ',
+            '                                        ',
+            '-22473.32 CAD @ 1.10 USD                ',
+            'UNKNOWN                                 ',
+            '76400.203                               ',
+            ], aligned_strings)
+
+    @parser.parsedoc
+    def test_align(self, entries, errors, options_map):
+        """
+        2014-07-01 * "Something"
+          Expenses:Commissions  20000 USD
+          Expenses:Commissions  9.9505 USD
+        """
+        dcontext = options_map['dcontext']
+        oss = io.StringIO()
+        printer.print_entries(entries, dcontext, file=oss)
+        expected_str = textwrap.dedent("""
+        2014-07-01 * "Something"
+          Expenses:Commissions  20000.0000 USD
+          Expenses:Commissions      9.9505 USD
+        """)
+        self.assertEqual(expected_str, oss.getvalue())
+
+    @parser.parsedoc
+    def test_align_min_width_account(self, entries, errors, options_map):
+        """
+        2014-07-01 * "Something"
+          Expenses:Commissions  20000 USD
+          Expenses:Commissions  9.9505 USD
+        """
+        dcontext = options_map['dcontext']
+        oss = io.StringIO()
+        eprinter = printer.EntryPrinter(dcontext, min_width_account=40)
+        oss.write(eprinter(entries[0]))
+        expected_str = textwrap.dedent("""\
+        2014-07-01 * "Something"
+          Expenses:Commissions                      20000.0000 USD
+          Expenses:Commissions                          9.9505 USD
+        """)
+        self.assertEqual(expected_str, oss.getvalue())
+
+    @parser.parsedoc
+    def test_align_with_weight(self, entries, errors, options_map):
+        """
+        2014-07-01 * "Something"
+          Assets:US:Investments:GOOG          45 GOOG {504.30 USD}
+          Assets:US:Investments:GOOG           4 GOOG {504.30 USD / 2014-11-11}
+          Expenses:Commissions            9.9505 USD
+          Assets:US:Investments:Cash   -22473.32 CAD @ 1.10 USD
+        """
+        dcontext = options_map['dcontext']
+
+        oss = io.StringIO()
+        printer.print_entries(entries, dcontext, render_weights=False, file=oss)
+        expected_str = ''.join([
+            '\n',
+            '2014-07-01 * "Something"\n',
+            '  Assets:US:Investments:GOOG         45 GOOG {504.30 USD}             \n',
+            '  Assets:US:Investments:GOOG          4 GOOG {504.30 USD / 2014-11-11}\n',
+            '  Expenses:Commissions             9.95 USD                           \n',
+            '  Assets:US:Investments:Cash  -22473.32 CAD @ 1.1000 USD              \n',
+            ])
+        self.assertEqual(expected_str, oss.getvalue())
+
+        oss = io.StringIO()
+        printer.print_entries(entries, dcontext, render_weights=True, file=oss)
+        expected_str = textwrap.dedent("""
+        2014-07-01 * "Something"
+          Assets:US:Investments:GOOG         45 GOOG {504.30 USD}               ;    22693.50 USD
+          Assets:US:Investments:GOOG          4 GOOG {504.30 USD / 2014-11-11}  ;     2017.20 USD
+          Expenses:Commissions             9.95 USD                             ;      9.9505 USD
+          Assets:US:Investments:Cash  -22473.32 CAD @ 1.1000 USD                ; -24720.6520 USD
+        """)
+        self.assertEqual(expected_str, oss.getvalue())
+
+
+class TestPrinterMisc(test_utils.TestCase):
+
+    @parser.parsedoc
+    def test_no_valid_account(self, entries, errors, options_map):
+        """
+        2000-01-01 * "Test"
+          Assets:Foo
+
+        2000-01-01 * "Test"
+          Assets:Foo
+          Assets:Bar
+        """
+        oss = io.StringIO()
+        printer.print_entries(entries, file=oss)
+
+    def test_metadata(self):
+        input_string = textwrap.dedent("""
+
+        2000-01-01 open Assets:US:Investments:Cash
+          name: "Investment account"
+        2000-01-01 open Assets:US:Investments:HOOL
+
+        2000-01-02 commodity VHT
+          asset-class: "Stocks"
+          name: "Vanguard Health Care ETF"
+
+        2000-01-03 * "Something"
+          doc: "some-statement.pdf"
+          Assets:US:Investments:Cash  -23.45 USD
+            note: "No commission"
+          Assets:US:Investments:HOOL    1 HOOL {23.45 USD}
+            settlement: 2000-01-05
+
+        """)
+        entries, errors, options_map = parser.parse_string(input_string)
+        self.assertFalse(errors)
+        oss = io.StringIO()
+        printer.print_entries(entries, file=oss)
+        self.assertLines(input_string, oss.getvalue())

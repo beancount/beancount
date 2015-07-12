@@ -1,0 +1,45 @@
+;; Notes:
+;;
+;; * I put the exercise price in the commodity name itself, e.g., FOO_X100, as
+;;   in 'X' for strike price and '100' for 100$/share. This defines the
+;;   instrument. Put the expiration date in there as well if you feel a need
+;;   to do that (use the exchange codes if it makes sense to you).
+;;
+;; * I track the value of the option itself, not of the exercise price. When
+;;   you "use" the option by exercising it, I would track that as an expense
+;;   as in the below with 'Expenses:OptionsExercises' because the option 
+;;   vanishes and it acts as a privilege token you've now used.
+;;
+
+plugin "beancount.plugins.auto_accounts"
+
+2014-06-01 * "Stock options - acquire"
+    Assets:BorganSchmanley:FOO-X100        8 FOO-X100 {0.80 USD}
+    Income:BorganSchmanley:OptionsVesting  ;; Note: Non-taxable if statutory
+
+2014-12-01 * "Stock options - exercise"
+    Assets:BorganSchmanley:FOO-X100       -4 FOO-X100 {0.80 USD} @ 120.00 USD
+    Expenses:OptionsExercise            3.20 USD
+    Assets:BorganSchmanley:FOO             4 FOO {120.00 USD}
+    Assets:BorganSchmanley:Cash      -400.00 USD
+    Income:BorganSchmanley:Gains      -80.00 USD ;; These gains to be reported on W-2 AFAIK.
+
+2014-12-01 * "Stock options - sale"
+    Assets:BorganSchmanley:FOO            -4 FOO {120.00 USD} @ 121.00 USD
+    Assets:BorganSchmanley:Cash       484.00 USD
+    Income:BorganSchmanley:Gains       -4.00 USD
+
+
+;; In my sale example above, I assume you waited a bit before selling after
+;; exercise and got a small gain/loss from it. If you did not and you sold at
+;; 120.00 (same as FMV at exercise) then you would have a gain or zero.
+;;
+;; If you wanted to represent an exercise + sell in one transaction, you could
+;; do it this way, without the stock, you'd just get the money:
+
+2014-12-15 * "Stock options - exercise & auto-sale"
+    Assets:BorganSchmanley:FOO-X100       -4 FOO-X100 {0.80 USD} @ 120.00 USD
+    Expenses:OptionsExercise            3.20 USD
+    Assets:BorganSchmanley:Cash        80.00 USD
+    Income:BorganSchmanley:Gains      -80.00 USD ;; These gains to be reported on W-2 AFAIK.
+

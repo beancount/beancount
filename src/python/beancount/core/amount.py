@@ -5,65 +5,50 @@ currency:
 
   (number, currency).
 
-The module also contains the basic Decimal type import.
-
-About Decimal usage:
-
-- Do not import Decimal from 'decimal' or 'cdecimal' modules; always import your
-  Decimal class from beancount.core.amount.
-
-- Prefer to use to_decimal() to create new instances of Decimal objects, which
-  handles more syntax, e.g., handles None, and numbers with commas.
-
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 # Note: this file is mirrorred into ledgerhub. Relative imports only.
+import re
 
-# Attempt to import a fast Decimal implementation; if we can't, fall back on the
-# slower pure-Python Decimal object. Note that because of the small and
-# occasional discrepancies between these two modules, we may have to work with
-# the common denominator between these two. This is only a very minor compromise
-# though, they have 99% compatible.
-try:
-    import cdecimal as decimal
-except ImportError:
-    import decimal
-Decimal = decimal.Decimal
+# Note: Python 3.3 guarantees a fast "C" decimal implementation. No need to
+# install cdecimal anymore.
+from decimal import Decimal
 
-# Constants.
-ZERO = Decimal()
-ONE = Decimal('1')
-
-def to_decimal(strord):
-    """Convert a string, possibly with commas, into a Decimal object.
-
-    This function just returns the argument if it is already a Decimal object,
-    for convenience. This is used in parsing amounts from files in the
-    importers. This is the main function you should use to build all numbers the
-    system manipulates (never use floating-point in an accounting system)..
-
-    Args:
-      stdord: A string or Decimal instancė
-    Returns:
-      A Decimal instance.
-    """
-    if isinstance(strord, Decimal):
-        return strord
-    else:
-        if not strord:
-            return Decimal()
-        else:
-            assert isinstance(strord, str)
-            return Decimal(strord.replace(',', ''))
+# Import object to format numbers at specific precisions.
+from beancount.core.display_context import DEFAULT_FORMATTER
+from beancount.core.number import ZERO
+from beancount.core import number
 
 
-# Number of digits to display all amounts if we can do so precisely.
-DISPLAY_QUANTIZE = Decimal('.01')
+#,-----------------------------------------------------------------------------.
+# Temporary forwarding of number functions to the number module.
+# IMPORTANT/FIXME: This will get removed after August 2015.
+import warnings
 
-# Maximum number of digits to display numbers for user.
-MAXDIGITS_QUANTIZE = 5
+ONE = number.ONE
+HALF = number.HALF
+decimal = number.decimal  # pylint: disable=invalid-name
 
-# Maximum number of digits to display for printing for debugging.
-MAXDIGITS_PRINTER = 12
+# pylint: disable=invalid-name
+def D(string):
+    warnings.warn("beancount.core.amount.D has been renamed to "
+                  "beancount.core.number.D")
+    return number.D(string)
+
+def round_to(number, increment):
+    warnings.warn("beancount.core.amount.round_to has been renamed to "
+                  "beancount.core.number.round_to")
+    return number.round_to(number, increment)
+
+_D = number.D
+#`-----------------------------------------------------------------------------'
+
+
+
+# A regular expression to match the name of a currency.
+# Note: This is kept in sync with "beancount/parser/lexer.l".
+CURRENCY_RE = '[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]'
 
 
 class Amount:
@@ -82,8 +67,19 @@ class Amount:
           number: A string or Decimal instance. Will get converted automatically.
           currency: A string, the currency symbol to use.
         """
-        self.number = to_decimal(number)
+        self.number = _D(number)
         self.currency = currency
+
+    def to_string(self, dformat=DEFAULT_FORMATTER):
+        """Convert an Amount instance to a printable string.
+
+        Args:
+          dformat: An instance of DisplayFormatter.
+        Returns:
+          A formatted string of the quantized amount and symbol.
+        """
+        return "{} {}".format(dformat.format(self.number, self.currency),
+                              self.currency)
 
     def __str__(self):
         """Convert an Amount instance to a printable string with the defaults.
@@ -91,37 +87,8 @@ class Amount:
         Returns:
           A formatted string of the quantized amount and symbol.
         """
-        return self.str(MAXDIGITS_QUANTIZE)
+        return self.to_string()
 
-    def __format__(self, format_spec):
-        """Explicit support for formatting.
-
-        Args:
-          format_spec: A string, the spec for formatting.
-        Returns:
-          A formatted string object.
-        """
-        return str(self).format(format_spec)
-
-    def str(self, max_digits):
-        """Convert an Amount instance to a printable string.
-
-        Args:
-          max_digits: The maximum number of digits to print.
-        Returns:
-          A formatted string of the quantized amount and symbol.
-        """
-        number = self.number
-
-        # FIXME: The better way to do this would be to let the user specify a
-        # desired rendering precision for each currency.
-        if number == number.quantize(DISPLAY_QUANTIZE):
-            return "{:.2f} {}".format(number, self.currency)
-        else:
-            return "{:.{width}f} {}".format(number, self.currency,
-                                            width=max_digits)
-
-    # We use the same as a printable representation.
     __repr__ = __str__
 
     def __bool__(self):
@@ -140,11 +107,46 @@ class Amount:
             return False
         return (self.number, self.currency) == (other.number, other.currency)
 
+    def __lt__(self, other):
+        """Ordering comparison. This is used in the sorting key of positions.
+        Args:
+          other: An instance of Amount.
+        Returns:
+          True if this is less than the other Amount.
+        """
+        return amount_sortkey(self) < amount_sortkey(other)
+
     def __hash__(self):
         """A hashing function for amounts. The hash includes the currency.
         Returns:
-          An integer, the hash for this amount."""
+          An integer, the hash for this amount.
+        """
         return hash((self.number, self.currency))
+
+    def __neg__(self):
+        """Return the negative of this amount.
+        Returns:
+          A new instance of Amount, with the negative number of units.
+        """
+        return Amount(-self.number, self.currency)
+
+    @staticmethod
+    def from_string(string):
+        """Create an amount from a string.
+
+        This is a miniature parser used for building tests.
+
+        Args:
+          string: A string of <number> <currency>.
+        Returns:
+          A new instance of Amount.
+        """
+        match = re.match(r'\s*([-+]?[0-9.]+)\s+({currency})'.format(currency=CURRENCY_RE),
+                         string)
+        if not match:
+            raise ValueError("Invalid string for amount: '{}'".format(string))
+        number, currency = match.group(1, 2)
+        return Amount(_D(number), currency)
 
 
 # Note: We don't implement operators on Amount here in favour of the more
@@ -171,7 +173,7 @@ def amount_mult(amount, number):
     Returns:
       An Amount, with the same currency, but with 'number' times units.
     """
-    assert isinstance(amount, Amount), repr(amount)
+    assert isinstance(amount.number, Decimal), repr(amount)
     assert isinstance(number, Decimal), repr(number)
     return Amount(amount.number * number, amount.currency)
 
@@ -184,7 +186,7 @@ def amount_div(amount, number):
     Returns:
       An Amount, with the same currency, but with amount units divided by 'number'.
     """
-    assert isinstance(amount, Amount)
+    assert isinstance(amount.number, Decimal)
     assert isinstance(number, Decimal)
     return Amount(amount.number / number, amount.currency)
 
@@ -198,10 +200,14 @@ def amount_sub(amount1, amount2):
       An instance of Amount, with the difference between the two amount's
       numbers, in the same currency.
     """
-    assert isinstance(amount1, Amount)
-    assert isinstance(amount2, Amount)
+    assert isinstance(amount1.number, Decimal)
+    assert isinstance(amount2.number, Decimal)
     if amount1.currency != amount2.currency:
         raise ValueError(
             "Unmatching currencies for operation on {} and {}".format(
                 amount1, amount2))
     return Amount(amount1.number - amount2.number, amount1.currency)
+
+
+from_string = Amount.from_string  # pylint: disable=invalid-name
+NULL_AMOUNT = Amount(ZERO, '')

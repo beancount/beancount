@@ -1,3 +1,5 @@
+__author__ = "Martin Blais <blais@furius.ca>"
+
 from beancount import loader
 from beancount.plugins import tag_pending
 from beancount.utils import test_utils
@@ -26,7 +28,8 @@ class TestExampleTrackPending(test_utils.TestCase):
           Liabilities:AccountsPayable
 
         """
-        original_entries, _, _ = loader.load(filename)
+        original_entries, errors, _ = loader.load_file(filename)
+        self.assertFalse(errors)
         entries = tag_pending.tag_pending_transactions(original_entries, 'PENDING')
         self.assertEqual(len(original_entries), len(entries))
         self.assertEqual(None, entries[4].tags)

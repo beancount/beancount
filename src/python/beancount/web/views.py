@@ -1,6 +1,9 @@
 """Views are filters on the global list of entries, which produces a subset of entries.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import datetime
+import logging
 
 from beancount.core import data
 from beancount.ops import summarize
@@ -9,19 +12,25 @@ from beancount.parser import options
 from beancount.utils import misc_utils
 
 
-
 class View:
     """A container for filtering a subset of entries and realizing that for
     display."""
 
     def __init__(self, all_entries, options_map, title):
+        """Build a View instance.
+
+        Args:
+          all_entries: The full list of directives as output from the loader.
+          options_map: The options dict, as output by the parser.
+          title: A string, the title of this view to render.
+        """
 
         # A reference to the full list of padded entries.
         self.all_entries = all_entries
 
         # List of filterered entries for this view, and index at the beginning
         # of the period transactions, past the opening balances. These are
-        # computed in _realize().
+        # computed in _initialize().
         self.entries = None
         self.opening_entries = None
         self.closing_entries = None
@@ -29,75 +38,80 @@ class View:
         # Title.
         self.title = title
 
-        # A reference to the global list of options and the account type names.
-        # FIXME: These may be redundant, review whether we actually need these.
-        self.options = options_map
-        self.account_types = options.get_account_types(options_map)
-
         # Realization of the filtered entries to display. These are computed in
-        # _realize().
+        # _initialize().
         self.real_accounts = None
         self.opening_real_accounts = None
         self.closing_real_accounts = None
 
         # Realize now, we don't need to do this lazily because we create these
         # view objects on-demand and cache them.
-        self._realize()
+        self._initialize(options_map)
 
-    def _realize(self):
-        """Compute the list of filtered entries and transaction tree."""
+    def _initialize(self, options_map):
+        """Compute the list of filtered entries and realization trees."""
 
         # Get the filtered list of entries.
-        self.entries, self.begin_index = self.apply_filter(self.all_entries, self.options)
+        self.entries, self.begin_index = self.apply_filter(self.all_entries, options_map)
 
-        if not self.entries:
-            self.opening_entries = []
-            self.closing_entries = []
-        else:
-            # Compute the list of entries for the opening balances sheet.
-            self.opening_entries = (self.entries[:self.begin_index]
-                                    if self.begin_index is not None
-                                    else None)
+        # Compute the list of entries for the opening balances sheet.
+        self.opening_entries = (self.entries[:self.begin_index]
+                                if self.begin_index is not None
+                                else [])
 
-
-            # Compute the list of entries that includes transfer entries of the
-            # income/expenses amounts to the balance sheet's equity (as "net
-            # income"). This is used to render the end-period balance sheet, with
-            # the current period's net income, closing the period.
-            current_accounts = options.get_current_accounts(self.options)
-            self.closing_entries = summarize.close(self.entries,
-                                                   self.account_types,
-                                                   self.options['conversion_currency'],
-                                                   *current_accounts)
+        # Compute the list of entries that includes transfer entries of the
+        # income/expenses amounts to the balance sheet's equity (as "net
+        # income"). This is used to render the end-period balance sheet, with
+        # the current period's net income, closing the period.
+        self.closing_entries = summarize.cap_opt(self.entries, options_map)
 
         # Realize the three sets of entries.
-        if self.opening_entries:
-            with misc_utils.print_time('realize_opening'):
-                self.opening_real_accounts = realization.realize(self.opening_entries,
-                                                                 self.account_types)
-        else:
-            self.opening_real_accounts = None
+        account_types = options.get_account_types(options_map)
+        with misc_utils.log_time('realize_opening', logging.info):
+            self.opening_real_accounts = realization.realize(self.opening_entries,
+                                                             account_types)
 
-        with misc_utils.print_time('realize'):
+        with misc_utils.log_time('realize', logging.info):
             self.real_accounts = realization.realize(self.entries,
-                                                     self.account_types)
+                                                     account_types)
 
-        with misc_utils.print_time('realize_closing'):
+        with misc_utils.log_time('realize_closing', logging.info):
             self.closing_real_accounts = realization.realize(self.closing_entries,
-                                                             self.account_types)
+                                                             account_types)
 
         assert self.real_accounts is not None
         assert self.closing_real_accounts is not None
 
     def apply_filter(self, entries):
-        "Filter the list of entries."
+        """Filter the list of entries.
+
+        This is used to obtain the filtered list of entries.
+
+        Args:
+          entries: A list of directives to filter.
+        Returns:
+          A pair of
+            1. a list of filtered entries, and
+            2. an integer, the index at which the beginning of the entries for
+              the period begin, one directive past the opening
+              balances/initialization entries.
+        """
         raise NotImplementedError
 
 
 class EmptyView(View):
-    """An empty view, as a placeholder until we implement one."""
+    """An empty view, for testing."""
 
     def __init__(self, entries, options_map, title, *args, **kw):
+        """Create an empty view.
+
+        Args:
+          entries: A list of directives.
+          options_map: A dict of options, as produced by the parser.
+          title: A string, the title of this view.
+          *args: Ignored.
+          **kw: Ignored.
+        """
         View.__init__(self, entries, options_map, title)
 
     def apply_filter(self, _, __):
@@ -106,49 +120,62 @@ class EmptyView(View):
 
 
 class AllView(View):
+    """A view that includes all the entries, unmodified."""
 
     def apply_filter(self, entries, options_map):
-        "Return the list of entries unmodified."
         return (entries, None)
 
 
 class YearView(View):
+    """A view of the entries for just a single year."""
 
     def __init__(self, entries, options_map, title, year):
+        """Create a view clamped to one year.
+
+        Note: this is the only view where the entries are summarized and
+        clamped.
+
+        Args:
+          entries: A list of directives.
+          options_map: A dict of options, as produced by the parser.
+          title: A string, the title of this view.
+          year: An integer, the year of the exercise period.
+        """
         self.year = year
         View.__init__(self, entries, options_map, title)
 
     def apply_filter(self, entries, options_map):
-        "Return entries for only that year."
-
-        # Get the transfer account objects.
-        previous_accounts = options.get_previous_accounts(options_map)
-
         # Clamp to the desired period.
         begin_date = datetime.date(self.year, 1, 1)
         end_date = datetime.date(self.year+1, 1, 1)
-        account_types = options.get_account_types(options_map)
-        with misc_utils.print_time('clamp'):
-            entries, index = summarize.clamp(entries, begin_date, end_date,
-                                             account_types,
-                                             options_map['conversion_currency'],
-                                             *previous_accounts)
-
+        with misc_utils.log_time('clamp', logging.info):
+            entries, index = summarize.clamp_opt(entries,
+                                                          begin_date, end_date,
+                                                          options_map)
         return entries, index
 
 
 class TagView(View):
+    """A view that includes only entries some specific tags."""
 
     def __init__(self, entries, options_map, title, tags):
-        # The tags we want to include.
-        assert isinstance(tags, (set, list, tuple))
-        self.tags = tags
+        """Create a view with only entries tagged with the given tags.
 
+        Note: this is the only view where the entries are summarized and
+        clamped.
+
+        Args:
+          entries: A list of directives.
+          options_map: A dict of options, as produced by the parser.
+          title: A string, the title of this view.
+          tags: A set of strings, the tags to include. Entries with at least
+            one of these tags will be included in the output.
+        """
+        assert isinstance(tags, (set, frozenset, list, tuple))
+        self.tags = tags
         View.__init__(self, entries, options_map, title)
 
     def apply_filter(self, entries, options_map):
-        "Return only entries with the given tag."
-
         tags = self.tags
         tagged_entries = [
             entry
@@ -159,17 +186,25 @@ class TagView(View):
 
 
 class PayeeView(View):
+    """A view that includes entries with some specific payee."""
 
     def __init__(self, entries, options_map, title, payee):
-        # The payee to filter.
+        """Create a view clamped to one year.
+
+        Note: this is the only view where the entries are summarized and
+        clamped.
+
+        Args:
+          entries: A list of directives.
+          options_map: A dict of options, as produced by the parser.
+          title: A string, the title of this view.
+          payee: A string, the payee whose transactions to include.
+        """
         assert isinstance(payee, str)
         self.payee = payee
-
         View.__init__(self, entries, options_map, title)
 
     def apply_filter(self, entries, options_map):
-        "Return only transactions for the given payee."
-
         payee = self.payee
         payee_entries = [entry
                          for entry in entries
@@ -179,17 +214,26 @@ class PayeeView(View):
 
 
 class ComponentView(View):
+    """A view that includes transactions with at least one posting with an account
+    that includes a given component."""
 
     def __init__(self, entries, options_map, title, component):
-        # The payee to filter.
+        """Create a view clamped to one year.
+
+        Note: this is the only view where the entries are summarized and
+        clamped.
+
+        Args:
+          entries: A list of directives.
+          options_map: A dict of options, as produced by the parser.
+          title: A string, the title of this view.
+          compnent: A string, the name of an account component to include.
+        """
         assert isinstance(component, str)
         self.component = component
-
         View.__init__(self, entries, options_map, title)
 
     def apply_filter(self, entries, options_map):
-        "Return only transactions for the given payee."
-
         component = self.component
         component_entries = [entry
                              for entry in entries

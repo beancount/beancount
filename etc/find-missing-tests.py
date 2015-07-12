@@ -20,7 +20,6 @@ def find_missing_tests(source_dir):
     Yields:
       Tuples of source filename, test filename, and an is-missing boolean.
     """
-
     for root, dirs, files in os.walk(source_dir):
         for relative_filename in files:
             if ((not relative_filename.endswith('.py')) or
@@ -46,12 +45,12 @@ def is_complete(filename):
     """
     contents = open(filename).read()
     return not (re.search('^__incomplete__', contents, re.M) or
-                re.search(r'\bNotImplementedError\b', contents, re.M))
+                re.search(r'raise \bNotImplementedError\b', contents, re.M))
 
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(__doc__.strip())
+    parser = argparse.ArgumentParser(description=__doc__.strip())
     parser.add_argument('source_root', action='store')
     opts = parser.parse_args()
 
@@ -60,7 +59,7 @@ def main():
     if missing_tests:
         for filename, test_filename, missing in missing_tests:
             missing_str = 'MISSING' if missing else 'INCOMPLETE'
-            print('{:60} {}'.format(filename, missing_str))
+            print('Missing Test: {:60} {}'.format(filename, missing_str))
 
 
 if __name__ == '__main__':

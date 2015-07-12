@@ -1,4 +1,4 @@
-/* A Bison parser, made by GNU Bison 3.0.  */
+/* A Bison parser, made by GNU Bison 3.0.2.  */
 
 /* Bison interface for Yacc-like parsers in C
 
@@ -45,7 +45,7 @@ extern int yydebug;
 # define YYTOKENTYPE
   enum yytokentype
   {
-    ERROR = 258,
+    LEX_ERROR = 258,
     INDENT = 259,
     EOL = 260,
     COMMENT = 261,
@@ -59,27 +59,39 @@ extern int yydebug;
     RCURL = 269,
     EQUAL = 270,
     COMMA = 271,
-    SLASH = 272,
-    FLAG = 273,
-    TXN = 274,
-    BALANCE = 275,
-    OPEN = 276,
-    CLOSE = 277,
-    PAD = 278,
-    EVENT = 279,
-    PRICE = 280,
-    NOTE = 281,
-    DOCUMENT = 282,
-    PUSHTAG = 283,
-    POPTAG = 284,
-    OPTION = 285,
-    DATE = 286,
-    ACCOUNT = 287,
-    CURRENCY = 288,
-    STRING = 289,
-    NUMBER = 290,
-    TAG = 291,
-    LINK = 292
+    TILDE = 272,
+    ASTERISK = 273,
+    SLASH = 274,
+    PLUS = 275,
+    MINUS = 276,
+    LPAREN = 277,
+    RPAREN = 278,
+    FLAG = 279,
+    TXN = 280,
+    BALANCE = 281,
+    OPEN = 282,
+    CLOSE = 283,
+    COMMODITY = 284,
+    PAD = 285,
+    EVENT = 286,
+    PRICE = 287,
+    NOTE = 288,
+    DOCUMENT = 289,
+    PUSHTAG = 290,
+    POPTAG = 291,
+    OPTION = 292,
+    INCLUDE = 293,
+    PLUGIN = 294,
+    BOOL = 295,
+    DATE = 296,
+    ACCOUNT = 297,
+    CURRENCY = 298,
+    STRING = 299,
+    NUMBER = 300,
+    TAG = 301,
+    LINK = 302,
+    KEY = 303,
+    NEGATIVE = 304
   };
 #endif
 
@@ -88,13 +100,17 @@ extern int yydebug;
 typedef union YYSTYPE YYSTYPE;
 union YYSTYPE
 {
-#line 62 "src/python/beancount/parser/grammar.y" /* yacc.c:1909  */
+#line 125 "src/python/beancount/parser/grammar.y" /* yacc.c:1909  */
 
     char character;
     const char* string;
     PyObject* pyobj;
+    struct {
+        PyObject* pyobj1;
+        PyObject* pyobj2;
+    } pairobj;
 
-#line 98 "src/python/beancount/parser/grammar.h" /* yacc.c:1909  */
+#line 114 "src/python/beancount/parser/grammar.h" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1

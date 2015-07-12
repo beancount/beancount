@@ -1,5 +1,13 @@
+__author__ = "Martin Blais <blais@furius.ca>"
+
+import os
+import re
+from os import path
+
+from beancount.parser import cmptest
 from beancount.utils import test_utils
 from beancount.scripts import doctor
+from beancount.scripts import directories_test
 
 
 class TestScriptDoctor(test_utils.TestCase):
@@ -29,8 +37,8 @@ class TestScriptDoctor(test_utils.TestCase):
             EOL               4 '\\n'
             EOL               5 '\\n'
             DATE              5 '2014-03-02'
-            FLAG              5 '*'
-            STRING            5 '"Something'
+            ASTERISK          5 '*'
+            STRING            5 '"'
             EOL               6 '\\n'
             INDENT            6 '  '
             ACCOUNT           6 'Expenses:Restaurant'
@@ -40,17 +48,18 @@ class TestScriptDoctor(test_utils.TestCase):
             INDENT            7 '  '
             ACCOUNT           7 'Assets:Cash'
             EOL               8 '\\n'
+            EOL               8 '\\x00'
         """
         self.assertLines(expected_output, stdout.getvalue())
 
     @test_utils.docfile
     def test_dump_lexer_empty(self, filename):
         ""
-        with test_utils.capture() as stdout:
+        with test_utils.capture():
             test_utils.run_with_args(doctor.main, ['dump-lexer', filename])
 
     @test_utils.docfile
-    def test_list_accounts(self, filename):
+    def test_dump_roundtrip(self, filename):
         """
         2013-01-01 open Expenses:Restaurant
         2013-01-01 open Assets:Cash
@@ -59,64 +68,152 @@ class TestScriptDoctor(test_utils.TestCase):
           Expenses:Restaurant   50.02 USD
           Assets:Cash
         """
-        with test_utils.capture() as stdout:
-            test_utils.run_with_args(doctor.main, ['list-accounts', filename])
+        with test_utils.capture():
+            test_utils.run_with_args(doctor.main, ['roundtrip', filename])
 
-        r = self.assertLines("""
-            Assets:Cash          2013-01-01
-            Expenses:Restaurant  2013-01-01
+    def test_list_options(self):
+        with test_utils.capture():
+            test_utils.run_with_args(doctor.main, ['list_options'])
+            test_utils.run_with_args(doctor.main, ['list-options'])
+
+    def test_checkdeps(self):
+        with test_utils.capture():
+            test_utils.run_with_args(doctor.main, ['checkdeps'])
+
+
+class TestScriptCheckDirectories(directories_test.TestScriptCheckDirectories):
+
+    @test_utils.docfile
+    def test_invocation(self, filename):
+        """
+            2013-01-01 open Expenses:Restaurant
+            2013-01-01 open Expenses:Movie
+            2013-01-01 open Expenses:Alcohol
+            2013-01-01 open Assets:Cash
+
+            2014-03-02 * "Something"
+              Expenses:Restaurant   50.02 USD
+              Expenses:Alcohol      10.30 USD
+              Expenses:Movie        25.00 USD
+              Assets:Cash
+        """
+        for directory in self.TEST_DIRECTORIES:
+            os.makedirs(path.join(self.tmpdir, directory))
+
+        with test_utils.capture() as stdout:
+            test_utils.run_with_args(doctor.main, ['directories', filename, self.tmpdir])
+        self.assertEqual(2, len(stdout.getvalue().splitlines()))
+        matches = set(match.group(1) for match in re.finditer("'(.*?)'", stdout.getvalue()))
+        clean_matches = set(match[len(self.tmpdir)+1:]
+                            if match.startswith(self.tmpdir)
+                            else match
+                            for match in matches)
+        self.assertEqual({'Expenses/Restaurant/Sub',
+                          'Expenses:Restaurant:Sub',
+                          'Assets:Extra',
+                          'Assets/Extra'}, clean_matches)
+
+
+class TestScriptMissingOpen(cmptest.TestCase):
+
+    @test_utils.docfile
+    def test_missing_open(self, filename):
+        """
+            2013-01-01 open Expenses:Movie
+            2013-01-01 open Assets:Cash
+
+            2014-03-03 * "Something"
+              Expenses:Restaurant   50.02 USD
+              Expenses:Movie        25.00 USD
+              Assets:Cash
+
+            2014-04-04 * "Something"
+              Expenses:Alcohol      10.30 USD
+              Expenses:Movie        25.00 USD
+              Assets:Cash
+        """
+        with test_utils.capture() as stdout:
+            test_utils.run_with_args(doctor.main, ['missing-open', filename])
+
+        self.assertEqualEntries("""
+
+            2014-03-03 open Expenses:Restaurant
+            2014-04-04 open Expenses:Alcohol
+
         """, stdout.getvalue())
 
-    @test_utils.docfile
-    def test_list_accounts_empty(self, filename):
-        ""
-        with test_utils.capture() as stdout:
-            test_utils.run_with_args(doctor.main, ['list-accounts', filename])
+
+class TestScriptDisplayContext(cmptest.TestCase):
 
     @test_utils.docfile
-    def test_print_trial(self, filename):
+    def test_display_context(self, filename):
         """
-        2013-01-01 open Expenses:Restaurant
-        2013-01-01 open Assets:Cash
+            2013-01-01 open Expenses:Movie
+            2013-01-01 open Assets:Cash
 
-        2014-03-02 * "Something"
-          Expenses:Restaurant   50.02 USD
-          Assets:Cash
+            2014-03-03 * "Something"
+              Expenses:Restaurant   50.02 USD
+              Expenses:Movie        25.00 USD
+              Assets:Cash
+
+            2014-04-04 * "Something"
+              Expenses:Alcohol      10.30 USD
+              Expenses:Movie        25.00 USD
+              Assets:Cash
         """
         with test_utils.capture() as stdout:
-            test_utils.run_with_args(doctor.main, ['print-trial', filename])
-        output = stdout.getvalue()
-        self.assertLines("""
-            |-- Assets
-            |   `-- Cash               -50.02 USD
-            `-- Expenses
-                `-- Restaurant          50.02 USD
-        """, output)
+            test_utils.run_with_args(doctor.main, ['display-context', filename])
+        # Note: This probably deserves a little more love.
+        self.assertTrue(stdout.getvalue())
+
+
+class TestScriptContextualCommands(cmptest.TestCase):
 
     @test_utils.docfile
-    def test_print_trial_empty(self, filename):
-        ""
+    def test_context(self, filename):
+        """
+            2013-01-01 open Expenses:Movie
+            2013-01-01 open Assets:Cash
+
+            2014-03-03 * "Something"
+              Expenses:Restaurant   50.02 USD
+              Expenses:Movie        25.00 USD
+              Assets:Cash
+
+            2014-04-04 * "Something"
+              Expenses:Alcohol      10.30 USD
+              Expenses:Movie        25.00 USD
+              Assets:Cash
+        """
         with test_utils.capture() as stdout:
-            test_utils.run_with_args(doctor.main, ['print-trial', filename])
+            test_utils.run_with_args(doctor.main, ['context', filename, '6'])
+        self.assertTrue(re.search('Location:', stdout.getvalue()))
+        self.assertTrue(re.search('50.02', stdout.getvalue()))
 
     @test_utils.docfile
-    def test_prices(self, filename):
+    def test_linked(self, filename):
         """
-        2014-01-01 open Assets:Account1
-        2014-01-01 open Income:Misc
+            2013-01-01 open Expenses:Movie
+            2013-01-01 open Assets:Cash
 
-        2014-01-15 *
-          Assets:Account1       10 GOOG @ 512.01 USD
-          Income:Misc
+            2014-03-03 * "Apples" ^abc
+              Expenses:Restaurant   50.02 USD
+              Expenses:Movie        25.00 USD
+              Assets:Cash
 
-        2014-02-01 price GOOG 524.02 USD
-        2014-02-10 price GOOG 536.03 USD
+            2014-04-04 * "Something"
+              Expenses:Alcohol      10.30 USD
+              Expenses:Movie        25.00 USD
+              Assets:Cash
+
+            2014-05-05 * "Oranges" ^abc
+              Expenses:Alcohol      10.30 USD
+              Expenses:Movie        25.00 USD
+              Assets:Cash
         """
         with test_utils.capture() as stdout:
-            test_utils.run_with_args(doctor.main, ['prices', filename])
-        output = stdout.getvalue()
-        self.assertLines("""
-            GOOG,USD,2014-01-15,512.01
-            GOOG,USD,2014-02-01,524.02
-            GOOG,USD,2014-02-10,536.03
-        """, output)
+            test_utils.run_with_args(doctor.main, ['linked', filename, '6'])
+        self.assertTrue(re.search('Apples', stdout.getvalue()))
+        self.assertTrue(re.search('Oranges', stdout.getvalue()))
+        self.assertEqual(2, len(list(re.finditer('/(tmp|var/folders)/.*:\d+:',
+                                                 stdout.getvalue()))))

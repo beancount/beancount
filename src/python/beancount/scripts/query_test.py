@@ -1,17 +1,10 @@
-import re
+__author__ = "Martin Blais <blais@furius.ca>"
 
 from beancount.utils import test_utils
 from beancount.scripts import query
 
 
-def search_words(words, line):
-    if isinstance(words, str):
-        words = words.split()
-    return re.search('.*'.join(r'\b{}\b'.format(word) for word in words), line)
-
-
-
-class TestScriptPositions(test_utils.TestCase):
+class TestScriptQuery(test_utils.TestCase):
 
     @test_utils.docfile
     def test_success(self, filename):
@@ -27,15 +20,12 @@ class TestScriptPositions(test_utils.TestCase):
 
         2013-04-05 *
           Assets:Account1     -3000 USD
-          Assets:Account2     30 BOOG {100 USD}
+          Assets:Account2        30 BOOG {100 USD}
 
         2013-04-05 *
           Assets:Account1     -1000 USD
-          Assets:Account3     800 EUR @ 1.25 USD
+          Assets:Account3       800 EUR @ 1.25 USD
         """
         with test_utils.capture() as stdout:
-            test_utils.run_with_args(query.main, [filename, 'holdings'])
-        output = stdout.getvalue()
-        self.assertTrue(search_words('Assets:Account1 1,000.00 USD', output))
-        self.assertTrue(search_words('Assets:Account2    30.00 BOOG', output))
-        self.assertTrue(search_words('Assets:Account3   800.00 EUR', output))
+            test_utils.run_with_args(query.main, [filename, "SELECT 1;"])
+        self.assertTrue(stdout.getvalue())

@@ -1,253 +1,455 @@
-"""
-Sanity checks.
-(Note that these don't have anything to do with 'Balance' directives.
-"""
-from os import path
-from collections import namedtuple
+"""Validation checks.
 
-from beancount.core.account_types import is_valid_account_name
-from beancount.core.data import Open, Close, Balance, Transaction, Document
+These checks are intended to be run after all the plugins have transformed the
+list of entries, just before serving them or generating reports from them. The
+idea is to ensure a reasonable set of invariants and generate errors if those
+invariants are violated. They are not sanity checks--user data is subject to
+constraints which are hopefully detected here and which will result in errors
+trickled up to the user.
+"""
+__author__ = "Martin Blais <blais@furius.ca>"
+
+from os import path
+import collections
+
+from beancount.core.data import Open
+from beancount.core.data import Close
+from beancount.core.data import Transaction
+from beancount.core.data import Document
+from beancount.core.data import Note
 from beancount.core import data
 from beancount.core import getters
 from beancount.core import inventory
-from beancount.core import realization
+from beancount.core import interpolate
 from beancount.utils import misc_utils
 
 
 # An error from one of the checks.
-ValidationError = namedtuple('ValidationError', 'fileloc message entry')
+ValidationError = collections.namedtuple('ValidationError', 'source message entry')
 
 
-def validate_non_negative_costs(entries):
+# Directive types that should be allowed after the account is closed.
+ALLOW_AFTER_CLOSE = (Document, Note)
+
+
+def validate_inventory_booking(entries, unused_options_map):
     """Validate that no position at cost is allowed to go negative.
 
-    A real-world exception of this would be for trading future spreads or
-    allowing short-sales, but we plan to add support for enabling this
-    selectively.
+    This routine checks that when a posting reduces a position, existing or not,
+    that the subsequent inventory does not result in a position with a negative
+    number of units. A negative number of units would only be required for short
+    trades of trading spreads on futures, and right now this is not supported.
+    It would not be difficult to support this, however, but we want to be strict
+    about it, because being pedantic about this is otherwise a great way to
+    detect user data entry mistakes.
 
     Args:
       entries: A list of directives.
+      unused_options_map: An options map.
     Returns:
       A list of errors.
     """
-    postings_map = realization.postings_by_account(entries)
-
     errors = []
-    for account_name, postings in postings_map.items():
-        running_balance = inventory.Inventory()
-        for posting in postings:
-            if not isinstance(posting, data.Posting):
-                continue
-            try:
-                running_balance.add_position(posting.position, False)
-            except ValueError as e:
-                errors.append(
-                    ValidationError(
-                        posting.entry.fileloc,
-                        "Position/cost error: '{}' -- {}".format(posting.account, e),
-                        posting.entry))
+
+    # A mapping of account name to booking method, accumulated in the main loop.
+    booking_methods = {}
+
+    balances = collections.defaultdict(inventory.Inventory)
+    for entry in entries:
+        if isinstance(entry, data.Transaction):
+            for posting in entry.postings:
+                # Update the balance of each posting on its respective account
+                # without allowing booking to a negative position, and if an error
+                # is encountered, catch it and return it.
+                running_balance = balances[posting.account]
+                position_, _ = running_balance.add_position(posting.position)
+
+                # Skip this check if the booking method is set to ignore it.
+                if booking_methods.get(posting.account, None) == 'NONE':
+                    continue
+
+                # Check if the resulting inventory is mixed, which is not
+                # allowed under the STRICT method.
+                if running_balance.is_mixed():
+                    errors.append(
+                        ValidationError(
+                            entry.meta,
+                            ("Reducing position results in inventory with positive "
+                             "and negative lots: {}").format(position_),
+                            entry))
+
+        elif isinstance(entry, data.Open):
+            # These Open directives should always appear beforehand as per the
+            # assumptions on the list of entries, so should never be a problem
+            # finding them. If not, move this loop to a dedicated before.
+            booking_methods[entry.account] = entry.booking
+
     return errors
 
 
-def validate_open_close(entries, accounts):
+def validate_open_close(entries, unused_options_map):
+    """Check constraints on open and close directives themselves.
 
-    """Some entries may not be present more than once for each account or date.
-    Open and Close are unique per account, for instance. Balance is unique
-    for each date. There are more. Return a list of errors on non-unique
-    entries.
+    This method checks two kinds of constraints:
+
+    1. An open or a close directive may only show up once for each account. If a
+       duplicate is detected, an error is generated.
+
+    2. Close directives may only appears if an open directive has been seen
+       previous (chronologically).
+
+    3. The date of close directives must be strictly greater than their
+      corresponding open directive.
+
+    Args:
+      entries: A list of directives.
+      unused_options_map: An options map.
+    Returns:
+      A list of new errors, if any were found.
     """
-
+    errors = []
     open_map = {}
     close_map = {}
-    check_errors = []
-
-    def check_one(entry, account):
-        """Check a single entry."""
-        open = open_map.get(account)
-        if open is None or entry.date < open.date:
-            check_errors.append(
-                ValidationError(
-                    entry.fileloc,
-                    "Unknown account {} (or perhaps wrong date?).".format(account),
-                    entry))
-
-        close = close_map.get(account)
-        if close is not None and entry.date > close.date:
-            check_errors.append(
-                ValidationError(entry.fileloc,
-                                "Entry after account {} closed.".format(account),
-                                entry))
-
-    # Check all entries for missing open directives and references to accounts
-    # which haven't been opened.
     for entry in entries:
-        if isinstance(entry, Transaction):
-            for posting in entry.postings:
-                check_one(entry, posting.account)
 
-        elif isinstance(entry, Open):
-            account = entry.account
-            if account in open_map:
-                check_errors.append(
-                    ValidationError(entry.fileloc,
-                                    "Duplicate open entry for {}.".format(account),
-                                    entry))
+        if isinstance(entry, Open):
+            if entry.account in open_map:
+                errors.append(
+                    ValidationError(
+                        entry.meta,
+                        "Duplicate open directive for {}".format(entry.account),
+                        entry))
             else:
-                open_map[account] = entry
+                open_map[entry.account] = entry
 
         elif isinstance(entry, Close):
-            account = entry.account
-            if account in close_map:
-                check_errors.append(
-                    ValidationError(entry.fileloc,
-                                    "Duplicate close entry for {}.".format(account),
-                                    entry))
+            if entry.account in close_map:
+                errors.append(
+                    ValidationError(
+                        entry.meta,
+                        "Duplicate close directive for {}".format(entry.account),
+                        entry))
             else:
-                close_map[account] = entry
+                try:
+                    open_entry = open_map[entry.account]
+                    if entry.date <= open_entry.date:
+                        errors.append(
+                            ValidationError(
+                                entry.meta,
+                                "Internal error: closing date for {} "
+                                "appears before opening date".format(entry.account),
+                                entry))
+                except KeyError:
+                    errors.append(
+                        ValidationError(
+                            entry.meta,
+                            "Unopened account {} is being closed".format(entry.account),
+                            entry))
 
-        elif isinstance(entry, Balance):
-            if entry.account in accounts:
-                # The account is an account with transactions; check the fast
-                # path.
-                check_one(entry, entry.account)
-            else:
-                # Parent accounts with subaccounts. Check that there exist at
-                # least one sub-account that is currently open for the check,
-                # where the check is valid.
-                error_entry = None
-                for account, open in open_map.items():
-                    if not account.startswith(entry.account):
-                        continue
-                    if entry.date >= open.date:
-                        close = close_map.get(account)
-                        if close is None or entry.date <= close.date:
-                            error_entry = None
-                            break
-                        else:
-                            error_entry = close
-                    else:
-                        error_entry = open
+                close_map[entry.account] = entry
 
-                if error_entry:
-                    if isinstance(error_entry, Open):
-                        check_errors.append(
-                            ValidationError(error_entry.fileloc,
-                                            ("Unknown account {} (or perhaps wrong "
-                                             "date?).".format(error_entry.account)),
-                                            error_entry))
-                    else:
-                        assert isinstance(error_entry, Close)
-                        check_errors.append(
-                            ValidationError(error_entry.fileloc,
-                                            "Entry after account {} closed.".format(
-                                                error_entry.account),
-                                            error_entry))
-
-        # Documents are allowed to show up after closure, as they may be received after.
-        elif hasattr(entry, 'account') and not isinstance(entry, Document):
-            check_one(entry, entry.account)
-
-    # Check to make sure that all accounts parsed have a corresponding open directive.
-    for account in accounts:
-        if account not in open_map:
-            check_errors.append(
-                ValidationError(data.FileLocation('<validate_open_close>', 0),
-                                "No open directive for account {}.".format(account),
-                                None))
-
-    return check_errors, open_map, close_map
+    return errors
 
 
-def validate_unused_accounts(entries, accounts):
-    """Find the list of accounts referred to by non-open entries,
-    and check that against the total list of accounts. Accounts which are only
-    referred to by open entries are probably unused."""
+def validate_duplicate_balances(entries, unused_options_map):
+    """Check that balance entries occur only once per day.
 
-    # Find all the accounts referenced by entries which are not Open, and the
-    # open directives for error reporting below.
-    open_map = {}
-    referenced_accounts = set()
+    Because we do not support time, and the declaration order of entries is
+    meant to be kept irrelevant, two balance entries with different amounts
+    should not occur in the file. We do allow two identical balance assertions,
+    however, because this may occur during import.
+
+    Args:
+      entries: A list of directives.
+      unused_options_map: An options map.
+    Returns:
+      A list of new errors, if any were found.
+    """
+    errors = []
+
+    # Mapping of (account, currency, date) to Balance entry.
+    balance_entries = {}
     for entry in entries:
-        if isinstance(entry, Open):
-            open_map[entry.account] = entry
+        if not isinstance(entry, data.Balance):
             continue
-        referenced_accounts.update(
-            misc_utils.get_tuple_values(entry, is_valid_account_name))
 
-    # Unreferenced accounts are unused accounts.
-    unused_accounts = accounts - referenced_accounts
+        key = (entry.account, entry.amount.currency, entry.date)
+        try:
+            previous_entry = balance_entries[key]
+            if entry.amount != previous_entry.amount:
+                errors.append(
+                    ValidationError(
+                        entry.meta,
+                        "Duplicate balance assertion with different amounts",
+                        entry))
+        except KeyError:
+            balance_entries[key] = entry
 
-    # Create a list of suitable errors, with the location of the spurious Open
-    # directives.
-    return [ValidationError(open_map[account].fileloc,
-                            "Unused account {}.".format(account),
-                            open_map[account])
-            for account in unused_accounts]
+    return errors
 
 
-def validate_currency_constraints(entries):
-    """Check that each account has currencies within its declared constraints."""
+def validate_duplicate_commodities(entries, unused_options_map):
+    """Check that commodty entries are unique for each commodity.
 
+    Args:
+      entries: A list of directives.
+      unused_options_map: An options map.
+    Returns:
+      A list of new errors, if any were found.
+    """
+    errors = []
+
+    # Mapping of (account, currency, date) to Balance entry.
+    commodity_entries = {}
+    for entry in entries:
+        if not isinstance(entry, data.Commodity):
+            continue
+
+        key = entry.currency
+        try:
+            previous_entry = commodity_entries[key]
+            if previous_entry:
+                errors.append(
+                    ValidationError(
+                        entry.meta,
+                        "Duplicate commodity directives for '{}'".format(key),
+                        entry))
+        except KeyError:
+            commodity_entries[key] = entry
+
+    return errors
+
+
+def validate_active_accounts(entries, unused_options_map):
+    """Check that all references to accounts occurs on active accounts.
+
+    We basically check that references to accounts from all directives other
+    than Open and Close occur at dates the open-close interval of that account.
+    This should be good for all of the directive types where we can extract an
+    account name.
+
+    Note that this is more strict a check than comparing the dates: we actually
+    check that no references to account are made on the same day before the open
+    directive appears for that account. This is a nice property to have, and is
+    supported by our custom sorting routine that will sort open entries before
+    transaction entries, given the same date.
+
+    Args:
+      entries: A list of directives.
+      unused_options_map: An options map.
+    Returns:
+      A list of new errors, if any were found.
+    """
+    error_pairs = []
+    active_set = set()
+    opened_accounts = set()
+    for entry in entries:
+        if isinstance(entry, data.Open):
+            active_set.add(entry.account)
+            opened_accounts.add(entry.account)
+
+        elif isinstance(entry, data.Close):
+            active_set.discard(entry.account)
+
+        else:
+            for account in getters.get_entry_accounts(entry):
+                if account not in active_set:
+                    # Allow document and note directives that occur after an
+                    # account is closed.
+                    if (isinstance(entry, ALLOW_AFTER_CLOSE) and
+                        account in opened_accounts):
+                        continue
+
+                    # Register an error to be logged later, with an appropriate
+                    # message.
+                    error_pairs.append((account, entry))
+
+    # Refine the error message to disambiguate between the case of an account
+    # that has never been seen and one that was simply not active at the time.
+    errors = []
+    for account, entry in error_pairs:
+        if account in opened_accounts:
+            message = "Invalid reference to inactive account '{}'".format(account)
+        else:
+            message = "Invalid reference to unknown account '{}'".format(account)
+        errors.append(ValidationError(entry.meta, message, entry))
+
+    return errors
+
+
+def validate_currency_constraints(entries, options_map):
+    """Check the currency constraints from account open declarations.
+
+    Open directives admit an optional list of currencies that specify the only
+    types of commodities that the running inventory for this account may
+    contain. This function checks that all postings are only made in those
+    commodities.
+
+    Args:
+      entries: A list of directives.
+      unused_options_map: An options map.
+    Returns:
+      A list of new errors, if any were found.
+    """
+
+    # Get all the open entries with currency constraints.
     open_map = {entry.account: entry
-                for entry in misc_utils.filter_type(entries, Open)}
+                for entry in entries
+                if isinstance(entry, Open) and entry.currencies}
 
     errors = []
-    for entry in misc_utils.filter_type(entries, Transaction):
+    for entry in entries:
+        if not isinstance(entry, Transaction):
+            continue
+
         for posting in entry.postings:
+            # Look up the corresponding account's valid currencies; skip the
+            # check if there are none specified.
             try:
                 open_entry = open_map[posting.account]
                 valid_currencies = open_entry.currencies
+                if not valid_currencies:
+                    continue
             except KeyError:
-                valid_currencies = []
-
-            if not valid_currencies:
                 continue
+
+            # Perform the check.
             if posting.position.lot.currency not in valid_currencies:
-                errors.append(ValidationError(
-                    entry.fileloc,
-                    "Invalid currency {} for account '{}'.".format(
-                        posting.position.lot.currency, posting.account),
-                    entry))
+                errors.append(
+                    ValidationError(
+                        entry.meta,
+                        "Invalid currency {} for account '{}'".format(
+                            posting.position.lot.currency, posting.account),
+                        entry))
 
     return errors
 
 
-def validate_documents_paths(entries):
-    """Check that all filenames in Document entries are absolute filenames."""
+def validate_documents_paths(entries, options_map):
+    """Check that all filenames in resolved Document entries are absolute filenames.
 
-    return [ValidationError(entry.fileloc, "Invalid relative path for entry.", entry)
-            for entry in misc_utils.filter_type(entries, Document)
-            if not path.isabs(entry.filename)]
+    The processing of document entries is assumed to result in absolute paths.
+    Relative paths are resolved at the parsing stage and at point we want to
+    make sure we don't have to do any further processing on them.
 
-
-def validate(entries):
-    """Perform all the standard checks on parsed contents."""
-
-    accounts = getters.get_accounts(entries)
-
-    # Check for negative amounts at cost.
-    cost_errors = validate_non_negative_costs(entries)
-
-    # Check for unused accounts.
-    unused_errors = validate_unused_accounts(entries, accounts)
-
-    # Validate open/close directives and accounts referred outside of those.
-    check_errors, _, _ = validate_open_close(entries, accounts)
-
-    # Check the currency constraints.
-    constraint_errors = validate_currency_constraints(entries)
-
-    # Sanity checks for documents.
-    doc_errors = validate_documents_paths(entries)
-
-    return (cost_errors +
-            unused_errors +
-            check_errors +
-            constraint_errors +
-            doc_errors)
+    Args:
+      entries: A list of directives.
+      unused_options_map: An options map.
+    Returns:
+      A list of new errors, if any were found.
+    """
+    return [ValidationError(entry.meta, "Invalid relative path for entry", entry)
+            for entry in entries
+            if (isinstance(entry, Document) and
+                not path.isabs(entry.filename))]
 
 
+def validate_data_types(entries, options_map):
+    """Check that all the data types of the attributes of entries are as expected.
 
-# FIXME: TODO - check that there are no duplicates on open entries.
-# FIXME: TODO - check again that all transactions balance
-# FIXME: TODO - check posting entries
+    Users are provided with a means to filter the list of entries. They're able to
+    write code that manipulates those tuple objects without any type constraints.
+    With discipline, this mostly works, but I know better: check, just to make sure.
+    This routine checks all the data types and assumptions on entries.
+
+    Args:
+      entries: A list of directives.
+      unused_options_map: An options map.
+    Returns:
+      A list of new errors, if any were found.
+    """
+    errors = []
+    for entry in entries:
+        try:
+            data.sanity_check_types(entry)
+        except AssertionError as exc:
+            errors.append(
+                ValidationError(entry.meta,
+                                "Invalid data types: {}".format(exc),
+                                entry))
+    return errors
+
+
+def validate_check_transaction_balances(entries, options_map):
+    """Check again that all transaction postings balance, as users may have
+    transformed transactions.
+
+    Args:
+      entries: A list of directives.
+      unused_options_map: An options map.
+    Returns:
+      A list of new errors, if any were found.
+    """
+    # Note: this is a bit slow; we could limit our checks to the original
+    # transactions by using the hash function in the loader.
+    errors = []
+    default_tolerances = options_map['default_tolerance']
+    for entry in entries:
+        if isinstance(entry, Transaction):
+            # IMPORTANT: This validation is _crucial_ and cannot be skipped.
+            # This is where we actually detect and warn on unbalancing
+            # transactions. This _must_ come after the user routines, because
+            # unbalancing input is legal, as those types of transactions may be
+            # "fixed up" by a user-plugin. In other words, we want to allow
+            # users to input unbalancing transactions as long as the final
+            # transactions objects that appear on the stream (after processing
+            # the plugins) are balanced. See {9e6c14b51a59}.
+            #
+            # Detect complete sets of postings that have residual balance;
+            residual = interpolate.compute_residual(entry.postings)
+            tolerances = interpolate.infer_tolerances(entry.postings, options_map)
+            if not residual.is_small(tolerances, default_tolerances):
+                errors.append(
+                    ValidationError(entry.meta,
+                                    "Transaction does not balance: {}".format(residual),
+                                    entry))
+
+    return errors
+
+
+# A list of reasonably fast validations to always run by default.
+BASIC_VALIDATIONS = [validate_inventory_booking,
+                     validate_open_close,
+                     validate_active_accounts,
+                     validate_currency_constraints,
+                     validate_duplicate_balances,
+                     validate_duplicate_commodities,
+                     validate_documents_paths,
+                     validate_check_transaction_balances]
+
+# These are slow, and thus only turned on in the check() routine.
+# We're hoping to optimize these and make them decently fast, so
+# we're not providing an option at this moment, this can be enabled
+# by modifying the 'VALIDATIONS' attribute below.
+HARDCORE_VALIDATIONS = [validate_data_types]
+
+# The list of validations to run.
+VALIDATIONS = BASIC_VALIDATIONS
+
+
+def validate(entries, options_map, log_timings=None, extra_validations=None):
+    """Perform all the standard checks on parsed contents.
+
+    Args:
+      entries: A list of directives.
+      unused_options_map: An options map.
+      log_timings: An optional function to use for logging the time of individual
+        operations.
+      extra_validations: A list of extra validation functions to run after loading
+        this list of entries.
+    Returns:
+      A list of new errors, if any were found.
+    """
+    validation_tests = VALIDATIONS
+    if extra_validations:
+        validation_tests += extra_validations
+
+    # Run various validation routines define above.
+    errors = []
+    for validation_function in validation_tests:
+        with misc_utils.log_time('function: {}'.format(validation_function.__name__),
+                                 log_timings, indent=2):
+            new_errors = validation_function(entries, options_map)
+        errors.extend(new_errors)
+
+    return errors

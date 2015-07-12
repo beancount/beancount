@@ -1,0 +1,55 @@
+balances,bal,trial:
+    Print out the trial balance of accounts matching an expression.
+balsheet:
+    Print out a balance sheet.
+income:
+    Print out an income statement.
+journal,register,account:
+    Print out an account register/journal.
+conversions:
+    Print out a report of all conversions.
+documents:
+    Print out a report of documents.
+holdings:
+    The full list of holdings for Asset and Liabilities accounts.
+networth,equity:
+    Generate a table of total net worth for each operating currency.
+commodities:
+    Print out a list of commodities.
+prices:
+    Print all the prices for a particular commodity.
+all_prices:
+    Print out the unnormalized price entries that we input. Unnormalized means
+    that we may render both (base,quote) and (quote,base). This can be used to
+    rebuild a prices database without having to share the entire ledger file.
+    Note: this type of report should be removed once we have filtering on
+    directive type, this is simply the 'print' report with type:price. Maybe
+    rename the 'pricedb' report to just 'prices' for simplicity's sake.
+pricedb,pricesdb,prices_db:
+    Print out the normalized price entries from the price db. Normalized means
+    that we print prices in the most common (base, quote) order. This can be
+    used to rebuild a prices database without having to share the entire ledger
+    file. Only the forward prices are printed; which (base, quote) pair is
+    selected is selected based on the most common occurrence between (base,
+    quote) and (quote, base). This is done in the price map.
+check,validate:
+    Report nothing.
+errors:
+    Report the errors.
+print:
+    Print out the entries.
+accounts:
+    Print out the list of all accounts.
+current_events,latest_events:
+    Produce a table of the current values of all event types.
+events:
+    Produce a table of all the values of a particular event.
+activity,updated:
+    Render the last or recent update activity.
+stats-types,stats-directives,stats-entries:
+    Render statistics on each directive type, the number of entries by type.
+stats-postings:
+    Render the number of postings for each account.
+ledger:
+    Print out the entries in a format that can be parsed by Ledger.
+

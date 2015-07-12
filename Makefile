@@ -2,7 +2,7 @@
 
 # Just my big old fat ledger file.
 INPUT = $(HOME)/q/office/accounting/blais.beancount
-DOWNLOADS = $(HOME)/u/Downloads $(HOME)/q/office/accounting/new/oanda/oanda.912333.csv
+DOWNLOADS = $(HOME)/u/Downloads
 
 GREP="grep --include="*.py" -srnE"
 SRC=src/python/beancount
@@ -17,7 +17,7 @@ clean:
 	rm -f $(CROOT)/grammar.h $(CROOT)/grammar.c
 	rm -f $(CROOT)/lexer.h $(CROOT)/lexer.c
 	rm -f $(CROOT)/*.so
-	find . -name __pycache__ -exec rm -r "{}" \;
+	find . -name __pycache__ -exec rm -r "{}" \; -prune
 
 
 # Targets to generate and compile the C parser.
@@ -30,9 +30,14 @@ $(CROOT)/grammar.c $(CROOT)/grammar.h: $(CROOT)/grammar.y
 
 $(CROOT)/lexer.c $(CROOT)/lexer.h: $(CROOT)/lexer.l $(CROOT)/grammar.h
 	$(LEX) --outfile=$(CROOT)/lexer.c --header-file=$(CROOT)/lexer.h $<
-# cd $(CROOT) && flex $(notdir $<)
 
-compile: $(CROOT)/grammar.c $(CROOT)/grammar.h $(CROOT)/lexer.c $(CROOT)/lexer.h
+SOURCES =					\
+	$(CROOT)/lexer.c			\
+	$(CROOT)/lexer.h			\
+	$(CROOT)/grammar.c			\
+	$(CROOT)/grammar.h
+
+compile: $(SOURCES)
 	python3 setup.py build_ext -i
 
 .PHONY: build
@@ -48,6 +53,9 @@ dump_lexer:
 grind:
 	valgrind --leak-check=full /usr/local/bin/python3 bean-sandbox $(INPUT)
 
+# Regenerate the website.
+html docs:
+	projects docs beancount
 
 # Compute and plot inter-module dependencies.
 # We want to insure a really strict set of relationships between the modules,
@@ -60,6 +68,10 @@ CLUSTERS_REGEXPS =							\
 	beancount/core			 	core			\
 	beancount/ops/.*_test\.py	 	ops/tests		\
 	beancount/ops			 	ops			\
+	beancount/parser/printer_test\.py 	printer/tests		\
+	beancount/parser/printer.py	 	printer			\
+	beancount/parser/options_test\.py 	options/tests		\
+	beancount/parser/options.py	 	options			\
 	beancount/parser/.*_test\.py	 	parser/tests		\
 	beancount/parser		 	parser			\
 	beancount/plugins/.*_test\.py	 	plugins/tests		\
@@ -74,6 +86,8 @@ CLUSTERS_REGEXPS =							\
 	beancount/utils			 	utils			\
 	beancount/web/.*_test\.py	 	web/tests		\
 	beancount/web			 	web			\
+	beancount/query/.*_test\.py	 	query/tests		\
+	beancount/query			 	query			\
 	beancount/load.*_test\.py	 	load/tests		\
 	beancount/load.*\.py		 	load			\
 	beancount                        	load
@@ -81,7 +95,7 @@ CLUSTERS_REGEXPS =							\
 GRAPHER = dot
 
 build/beancount.pdf: build/beancount.deps
-	cat $< | sfood-cluster-regexp $(CLUSTERS_REGEXPS) | grep -v /tests| sfood-graph | $(GRAPHER) -Tps | ps2pdf - $@
+	cat $< | sfood-cluster-regexp $(CLUSTERS_REGEXPS) | grep -v /tests | sfood-graph | $(GRAPHER) -Tps | ps2pdf - $@
 	evince $@
 
 build/beancount_tests.pdf: build/beancount.deps
@@ -120,8 +134,14 @@ debug:
 
 
 # Run the unittests.
-test tests unittest unittests:
-	nosetests -v $(SRC)
+vtest vtests verbose-test verbose-tests:
+	nosetests -v -s $(SRC)
+
+qtest qtests quiet-test quiet-tests test tests:
+	nosetests $(SRC)
+
+nakedtests:
+	PATH=/bin:/usr/bin PYTHONPATH= /usr/local/bin/nosetests -x $(SRC)
 
 
 # Run the parser and measure its performance.
@@ -133,6 +153,16 @@ check:
 # Run the demo program.
 demo:
 	bin/bean-web --debug examples/demo.beancount
+
+
+# Generate the tutorial files from the example file.
+EXAMPLE=examples/example.beancount
+example $(EXAMPLE):
+	./bin/bean-example --seed=0 -o $(EXAMPLE)
+
+TUTORIAL=examples/tutorial
+tutorial: $(EXAMPLE)
+	python3 src/python/beancount/scripts/tutorial.py $(EXAMPLE) $(TUTORIAL)
 
 
 # Run the web server.
@@ -155,29 +185,48 @@ import:
 sandbox:
 	bean-sandbox $(INPUT)
 
-# Report on the sorry state of test coverage, for 1.0 release.
-# sources and imports are going to move to ledgerhub.
-status test-status:
+missing-tests:
 	./etc/find-missing-tests.py $(SRC)
 
+fixmes:
+	egrep -srn '\b(FIXME|TODO\()' $(SRC) || true
+
+multi-imports:
+	egrep -srn '^(from.*)?import.*,' $(SRC) || true
 
 # Check for unused imports.
-sfood:
+sfood-checker:
 	sfood-checker bin src/python
+
+# Check dependency constraints.
+dep-constraints: build/beancount.deps
+	./etc/dependency-constraints.py $<
+
+check-author:
+	find src/python/beancount -type f -name '*.py' ! -exec grep -q '__author__' {} \; -print
 
 # Run the linter on all source code.
 #LINT_PASS=line-too-long,bad-whitespace,bad-continuation,bad-indentation
-LINT_PASS=line-too-long,bad-whitespace,bad-indentation
-LINT_FAIL=
+LINT_PASS=line-too-long,bad-whitespace,bad-indentation,unused-import,invalid-name,reimported
+LINT_FAIL=bad-continuation
+
 
 pylint-pass:
 	pylint --rcfile=$(PWD)/etc/pylintrc --disable=all --enable=$(LINT_PASS) $(SRC)
 
 pylint-fail:
-	pylint --rcfile=$(PWD)/etc/pylintrc --disable=all  --enable=$(LINT_FAIL) $(SRC)
+	pylint --rcfile=$(PWD)/etc/pylintrc --disable=all --enable=$(LINT_FAIL) $(SRC)
 
 pylint-all:
 	pylint --rcfile=$(PWD)/etc/pylintrc $(SRC)
 
+pyflakes:
+	pyflakes $(SRC)
+
 # Run all currently configured linter checks.
-lint: sfood pylint-pass
+pylint lint: pylint-pass
+
+
+# Check everything.
+status check: pylint pyflakes missing-tests dep-constraints multi-imports tests-quiet
+# fixmes: For later.

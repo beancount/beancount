@@ -6,66 +6,19 @@ Prices are deduced from Price entries found in the file, or perhaps
 created by scripts (for example you could build a script that will fetch
 live prices online and create entries on-the-fly).
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import collections
 
-from beancount.core.amount import ONE
+from beancount.core.number import ONE
+from beancount.core.number import ZERO
+from beancount.core.data import Price
 from beancount.core import amount
-from beancount.core.data import Transaction, Price
 from beancount.core import data
 from beancount.core import inventory
+from beancount.core import position
 from beancount.utils import misc_utils
-
-
-def add_implicit_prices(entries):
-    """Insert implicitly defined prices from Transactions.
-
-    Explicit price entries are simply maintained in the output list. Prices from
-    postings with costs or with prices from Transaction entries are synthesized
-    as new Price entries in the list of entries output.
-
-    Args:
-      entries: A list of directives. We're interested only in the Transaction instances.
-    Returns:
-      A list of entries, possibly with more Price entries than before, and a
-      list of errors.
-    """
-    new_entries = []
-
-    balances = collections.defaultdict(inventory.Inventory)
-    for entry in entries:
-        # Always replicate the existing entries.
-        new_entries.append(entry)
-
-        if isinstance(entry, Transaction):
-            # Inspect all the postings in the transaction.
-            for posting in entry.postings:
-                # Check if the position is matching against an existing
-                # position.
-                reducing = balances[posting.account].add_position(posting.position, True)
-
-                # Add prices when they're explicitly specified on a posting. An
-                # explicitly specified price may occur in a conversion, e.g.
-                #      Asset:Account    100 USD @ 1.10 CAD
-                # or, if a cost is also specified, as the current price of the
-                # underlying instrument, e.g.
-                #      Asset:Account    100 GOOG {564.20} @ {581.97} USD
-                if posting.price is not None:
-                    entry = Price(entry.fileloc, entry.date,
-                                  posting.position.lot.currency,
-                                  posting.price)
-                    new_entries.append(entry)
-
-                # Add costs, when we're not matching against an existing
-                # position. This happens when we're just specifying the cost,
-                # e.g.
-                #      Asset:Account    100 GOOG {564.20}
-                elif posting.position.lot.cost is not None and not reducing:
-                    entry = Price(entry.fileloc, entry.date,
-                                  posting.position.lot.currency,
-                                  posting.position.lot.cost)
-                    new_entries.append(entry)
-
-    return new_entries, []
+from beancount.utils import bisect_key
 
 
 def get_last_price_entries(entries, date):
@@ -74,13 +27,14 @@ def get_last_price_entries(entries, date):
 
     Args:
       entries: A list of directives.
-      date: An instance of datetime.date.
+      date: An instance of datetime.date. If None, the very latest price
+        is returned.
     Returns:
       A list of price entries.
     """
     price_entry_map = {}
     for entry in entries:
-        if entry.date >= date:
+        if date is not None and entry.date >= date:
             break
         if isinstance(entry, Price):
             base_quote = (entry.currency, entry.amount.currency)
@@ -102,7 +56,6 @@ class PriceMap(dict):
 
 
 def build_price_map(entries):
-
     """Build a price map from a list of arbitrary entries.
 
     If multiple prices are found for the same (currency, cost-currency) pair at
@@ -164,14 +117,17 @@ def build_price_map(entries):
 
     # Unzip and sort each of the entries and eliminate duplicates on the date.
     sorted_price_map = PriceMap({
-        base_quote: list(misc_utils.uniquify_last(date_rates, lambda x: x[0]))
+        base_quote: list(misc_utils.sorted_uniquify(date_rates, lambda x: x[0], last=True))
         for (base_quote, date_rates) in price_map.items()})
 
     # Compute and insert all the inverted rates.
     forward_pairs = list(sorted_price_map.keys())
     for (base, quote), price_list in list(sorted_price_map.items()):
+        # Note: You have to filter out zero prices for zero-cost postings, like
+        # gifted options.
         sorted_price_map[(quote, base)] = [
-            (date, ONE/price) for date, price in price_list]
+            (date, ONE/price) for date, price in price_list
+            if price != ZERO]
 
     sorted_price_map.forward_pairs = forward_pairs
     return sorted_price_map
@@ -235,7 +191,8 @@ def get_all_prices(price_map, base_quote):
         denominated in. This may also just be a string, with a '/' separator.
     Returns:
       A list of (date, Decimal) pairs, sorted by date.
-
+    Raises:
+      KeyError: If the base/quote could not be found.
     """
     base_quote = normalize_base_quote(base_quote)
     return _lookup_price_and_inverse(price_map, base_quote)
@@ -263,11 +220,14 @@ def get_latest_price(price_map, base_quote):
 
     # Look up the list and return the latest element. The lists are assumed to
     # be sorted.
-    price_list = _lookup_price_and_inverse(price_map, base_quote)
+    try:
+        price_list = _lookup_price_and_inverse(price_map, base_quote)
+    except KeyError:
+        price_list = None
     if price_list:
         return price_list[-1]
     else:
-        return None
+        return None, None
 
 
 def get_price(price_map, base_quote, date=None):
@@ -297,12 +257,15 @@ def get_price(price_map, base_quote, date=None):
     if quote is None or base == quote:
         return (None, ONE)
 
-    price_list = _lookup_price_and_inverse(price_map, base_quote)
-    index = misc_utils.bisect_right_with_key(price_list, date, key=lambda x: x[0])
-    if index == 0:
+    try:
+        price_list = _lookup_price_and_inverse(price_map, base_quote)
+        index = bisect_key.bisect_right_with_key(price_list, date, key=lambda x: x[0])
+        if index == 0:
+            return None, None
+        else:
+            return price_list[index-1]
+    except KeyError:
         return None, None
-    else:
-        return price_list[index-1]
 
 
 def convert_amount(price_map, target_currency, amount_):
@@ -318,12 +281,64 @@ def convert_amount(price_map, target_currency, amount_):
     """
     if amount_.currency != target_currency:
         base_quote = (amount_.currency, target_currency)
-        try:
-            _, rate = get_latest_price(price_map, base_quote)
+        _, rate = get_latest_price(price_map, base_quote)
+        if rate is not None:
             converted_amount = amount.Amount(amount_.number * rate, target_currency)
-        except KeyError:
+        else:
             # If a rate is not found, simply remove the market value.
             converted_amount = None
     else:
         converted_amount = amount_
     return converted_amount
+
+
+def get_position_market_value(position_, date, price_map):
+    """Compute the market value of the position at a particular date.
+
+    If the price map does not contain price information, we avoid converting the
+    position and return itself, unchanged.
+
+    Args:
+      position: An instance of Position
+      date: A datetime.date instance, the date at which to market the instruments.
+        If the date provided is None, the inventory is valued at the latest market
+        prices.
+      price_map: A price map, as created by beancount.ops.prices.
+    Returns:
+      An inventory of market values per currency.
+
+    """
+    lot = position_.lot
+    cost_currency = lot.cost.currency if lot.cost else None
+    if cost_currency:
+        base_quote = (lot.currency, cost_currency)
+        price_date, price_number = get_price(price_map, base_quote, date)
+        if price_number is None:
+            return position_
+        else:
+            new_amount = amount.Amount(position_.number * price_number, cost_currency)
+    else:
+        new_amount = amount.Amount(position_.number, lot.currency)
+    return position.from_amounts(new_amount)
+
+
+def get_inventory_market_value(balance, date, price_map):
+    """Compute the market value of the inventory in a currency at a date.
+
+    This function converts all the positions to their market value, in their
+    respective cost currencies.
+
+    Args:
+      balance: An instance of Inventory.
+      date: A datetime.date instance, the date at which to market the instruments.
+        If the date provided is None, the inventory is valued at the latest market
+        prices.
+      price_map: A price map, as created by beancount.ops.prices.
+    Returns:
+      An inventory of market values per currency.
+    """
+    new_balance = inventory.Inventory()
+    for position_ in balance.get_positions():
+        new_balance.add_position(
+            get_position_market_value(position_, date, price_map))
+    return new_balance

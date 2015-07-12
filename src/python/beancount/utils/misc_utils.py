@@ -1,31 +1,79 @@
 """
 Generic utility packages and functions.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
+import collections
+import io
 import re
-import logging
+import sys
 from time import time
 import contextlib
 from collections import defaultdict
-import logging
 
 
 @contextlib.contextmanager
-def print_time(operation_name, quiet=False):
+def log_time(operation_name, log_timings, indent=0):
     """A context manager that times the block and logs it to info level.
 
     Args:
       operation_name: A string, a label for the name of the operation.
-      quiet: A boolean, true if this should be a no-op.
+      log_timings: A function to write log messages to. If left to None,
+        no timings are written (this becomes a no-op).
+      indent: An integer, the indentation level for the format of the timing
+        line. This is useful if you're logging timing to a hierarchy of
+        operations.
     Yields:
       The start time of the operation.
     """
-    if quiet:
-        yield; return
-    t1 = time()
-    yield t1
-    t2 = time()
-    logging.info(">>>>> Operation: '{}'  Time: {:.0f}ms".format(operation_name,
-                                                                (t2 - t1)*1000))
+    time1 = time()
+    yield time1
+    time2 = time()
+    if log_timings:
+        log_timings("Operation: {:48} Time: {}{:6.0f} ms".format(
+            "'{}'".format(operation_name), '      '*indent, (time2 - time1) * 1000))
+
+
+@contextlib.contextmanager
+def box(name=None, file=None):
+    """A context manager that prints out a box around a block.
+    This is useful for printing out stuff from tests in a way that is readable.
+
+    Args:
+      name: A string, the name of the box to use.
+      file: The file object to print to.
+    Yields:
+      None.
+    """
+    file = file or sys.stdout
+    file.write('\n')
+    if name:
+        header = ',--------({})--------\n'.format(name)
+        footer = '`{}\n'.format('-' * (len(header)-2))
+    else:
+        header = ',----------------\n'
+        footer = '`----------------\n'
+
+    file.write(header)
+    yield
+    file.write(footer)
+    file.flush()
+
+
+@contextlib.contextmanager
+def swallow(*exception_types):
+    """Catch and ignore certain exceptions.
+
+    Args:
+      exception_types: A tuple of exception classes to ignore.
+    Yields:
+      None.
+    """
+    try:
+        yield
+    except Exception as exc:
+        if not isinstance(exc, exception_types):
+            raise
 
 
 def groupby(keyfun, elements):
@@ -42,33 +90,6 @@ def groupby(keyfun, elements):
     for element in elements:
         grouped[keyfun(element)].append(element)
     return grouped
-
-
-def uniquify_last(iterable, keyfunc=None):
-    """Given a sequence of elements, remove duplicates of the given key. Keep the
-    last element of a sequence of key-identical elements.
-
-    Args:
-      iterable: An iterable sequence.
-      keyfunc: A function that extracts from the elements the sort key
-        to use and uniquify on. If left unspecified, the identify function
-        is used and the uniquification occurs on the elements themselves.
-    Yields:
-      (date, number) tuples.
-    """
-    if keyfunc is None:
-        keyfunc = lambda x: x
-    UNSET = object()
-    prev_obj = UNSET
-    prev_key = UNSET
-    for obj in sorted(iterable, key=keyfunc):
-        key = keyfunc(obj)
-        if key != prev_key and prev_obj is not UNSET:
-            yield prev_obj
-        prev_obj = obj
-        prev_key = key
-    if prev_obj is not UNSET:
-        yield prev_obj
 
 
 def filter_type(elist, types):
@@ -95,11 +116,30 @@ def longest(seq):
       The longest list from the sequence.
     """
     longest, length = None, -1
-    for x in seq:
-        lenx = len(x)
-        if lenx > length:
-            longest, length = x, lenx
+    for element in seq:
+        len_element = len(element)
+        if len_element > length:
+            longest, length = element, len_element
     return longest
+
+
+def skipiter(iterable, num_skip):
+    """Skip some elements from an iterator.
+
+    Args:
+      iterable: An iterator.
+      num_skip: The number of elements in the period.
+    Yields:
+      Elemnets from the iterable, with num_skip elements skipped.
+      For example, skipiter(range(10), 3) yields [0, 3, 6, 9].
+    """
+    assert num_skip > 0
+    sit = iter(iterable)
+    while 1:
+        value = next(sit)
+        yield value
+        for _ in range(num_skip-1):
+            next(sit)
 
 
 def get_tuple_values(ntuple, predicate, memo=None):
@@ -111,14 +151,17 @@ def get_tuple_values(ntuple, predicate, memo=None):
       ntuple: A tuple or namedtuple.
       predicate: A predicate function that returns true if an attribute is to be
         output.
+      memo: An optional memoizing dictionary. If a tuple has already been seen, the
+        recursion will be avoided.
     Yields:
       Attributes of the tuple and its sub-elements if the predicate is true.
     """
     if memo is None:
         memo = set()
-    if id(ntuple) in memo:
+    id_ntuple = id(ntuple)
+    if id_ntuple in memo:
         return
-    memo.add(id(ntuple))
+    memo.add(id_ntuple)
 
     if predicate(ntuple):
         yield
@@ -128,6 +171,44 @@ def get_tuple_values(ntuple, predicate, memo=None):
         if isinstance(attribute, (list, tuple)):
             for value in get_tuple_values(attribute, predicate, memo):
                 yield value
+
+
+def replace_namedtuple_values(ntuple, predicate, mapper, memo=None):
+    """Recurse through all the members of namedtuples and lists, and for
+    members that match the given predicate, run them through the given mapper.
+
+    Args:
+      ntuple: A namedtuple instance.
+      predicate: A predicate function that returns true if an attribute is to be
+        output.
+      mapper: A callable, that will accept a single argument and return its
+        replacement value.
+      memo: An optional memoizing dictionary. If a tuple has already been seen, the
+        recursion will be avoided.
+    Yields:
+      Attributes of the tuple and its sub-elements if the predicate is true.
+    """
+    if memo is None:
+        memo = set()
+    id_ntuple = id(ntuple)
+    if id_ntuple in memo:
+        return
+    memo.add(id_ntuple)
+
+    if not (type(ntuple) is not tuple and isinstance(ntuple, tuple)):
+        return ntuple
+    replacements = {}
+    for attribute_name, attribute in zip(ntuple._fields, ntuple):
+        if predicate(attribute):
+            replacements[attribute_name] = mapper(attribute)
+        elif type(attribute) is not tuple and isinstance(attribute, tuple):
+            replacements[attribute_name] = replace_namedtuple_values(
+                attribute, predicate, mapper, memo)
+        elif type(attribute) in (list, tuple):
+            replacements[attribute_name] = [
+                replace_namedtuple_values(member, predicate, mapper, memo)
+                for member in attribute]
+    return ntuple._replace(**replacements)
 
 
 def compute_unique_clean_ids(strings):
@@ -149,42 +230,17 @@ def compute_unique_clean_ids(strings):
         idmap = {}
         mre = re.compile(regexp)
         for string in string_set:
-            id = mre.sub(replacement, string)
-            if id in seen:
+            id_ = mre.sub(replacement, string)
+            if id_ in seen:
                 break  # Collision.
-            seen.add(id)
-            idmap[id] = string
+            seen.add(id_)
+            idmap[id_] = string
         else:
             break
     else:
         return # Could not find a unique mapping.
 
     return idmap
-
-
-def bisect_right_with_key(a, x, key, lo=0, hi=None):
-    """Like bisect.bisect_right, but with a key lookup parameter.
-
-    Args:
-      a: The list to search in.
-      x: The element to search for.
-      key: A function, to extract the value from the list.
-      lo: The smallest index to search.
-      hi: The largest index to search.
-    Returns:
-      As in bisect.bisect_right, an element from list 'a'.
-    """
-    if lo < 0:
-        raise ValueError('lo must be non-negative')
-    if hi is None:
-        hi = len(a)
-    while lo < hi:
-        mid = (lo+hi)//2
-        if x < key(a[mid]):
-            hi = mid
-        else:
-            lo = mid+1
-    return lo
 
 
 def map_namedtuple_attributes(attributes, mapper, object_):
@@ -201,3 +257,234 @@ def map_namedtuple_attributes(attributes, mapper, object_):
     """
     return object_._replace(**{attribute: mapper(getattr(object_, attribute))
                                for attribute in attributes})
+
+
+def staticvar(varname, initial_value):
+    """Returns a decorator that defines a Python function attribute.
+
+    This is used to simulate a static function variable in Python.
+
+    Args:
+      varname: A string, the name of the variable to define.
+      initial_value: The value to initialize the variable to.
+    Returns:
+      A function decorator.
+    """
+    def deco(fun):
+        setattr(fun, varname, initial_value)
+        return fun
+    return deco
+
+
+def first_paragraph(docstring):
+    """Return the first sentence of a docstring.
+    The sentence has to be delimited by an empty line.
+
+    Args:
+      docstring: A doc string.
+    Returns:
+      A string with just the first sentence on a single line.
+    """
+    lines = []
+    for line in docstring.strip().splitlines():
+        if not line:
+            break
+        lines.append(line.rstrip())
+    return ' '.join(lines)
+
+
+def import_curses():
+    """Try to import the 'curses' module.
+    (This is used here in order to override for tests.)
+
+    Returns:
+      The curses module, if it was possible to import it.
+    Raises:
+      ImportError: If the module could not be imported.
+    """
+    # Note: There's a recipe for getting terminal size on Windows here, without
+    # curses, I should probably implement that at some point:
+    # http://stackoverflow.com/questions/263890/how-do-i-find-the-width-height-of-a-terminal-window
+    # Also, consider just using 'blessings' instead, which provides this across
+    # multiple platforms.
+    import curses
+    return curses
+
+
+def get_screen_width():
+    """Return the width of the terminal that runs this program.
+
+    Returns:
+      An integer, the number of characters the screen is wide.
+      Return 0 if the terminal cannot be initialized.
+    """
+    try:
+        curses = import_curses()
+        curses.setupterm()
+        columns = curses.tigetnum('cols')
+    except (io.UnsupportedOperation, ImportError):
+        columns = 0
+    return columns
+
+
+def get_screen_height():
+    """Return the height of the terminal that runs this program.
+
+    Returns:
+      An integer, the number of characters the screen is high.
+      Return 0 if the terminal cannot be initialized.
+    """
+    try:
+        curses = import_curses()
+        lines = curses.setupterm()
+        lines = curses.tigetnum('lines')
+    except (io.UnsupportedOperation, ImportError):
+        lines = 0
+    return lines
+
+
+class TypeComparable:
+    """A base class whose equality comparison includes comparing the
+    type of the instance itself.
+    """
+    def __eq__(self, other):
+        return isinstance(other, type(self)) and super().__eq__(other)
+
+def cmptuple(name, attributes):
+    """Manufacture a comparable namedtuple class, similar to collections.namedtuple.
+
+    A comparable named tuple is a tuple which compares to False if contents are
+    equal but the data types are different. We define this to supplement
+    collections.namedtuple because by default a namedtuple disregards the type
+    and we want to make precise comparisons for tests.
+
+    Args:
+      name: The given name of the class.
+      attributes: A string or tuple of strings, with the names of the
+        attributes.
+    Returns:
+      A new namedtuple-derived type that compares False with other
+      tuples with same contents.
+    """
+    base = collections.namedtuple('_{}'.format(name), attributes)
+    return type(name, (TypeComparable, base,), {})
+
+
+def uniquify(iterable, keyfunc=None, last=False):
+    """Given a sequence of elements, remove duplicates of the given key. Keep either
+    the first or the last element of a sequence of key-identical elements. Order
+    is maintained as much as possible. This does maintain the ordering of the
+    original elements, they are returned in the same order as the original
+    elements.
+
+    Args:
+      iterable: An iterable sequence.
+      keyfunc: A function that extracts from the elements the sort key
+        to use and uniquify on. If left unspecified, the identify function
+        is used and the uniquification occurs on the elements themselves.
+      last: A boolean, True if we should keep the last item of the same keys.
+        Otherwise keep the first.
+    Yields:
+      Elements from the iterable.
+    """
+    if keyfunc is None:
+        keyfunc = lambda x: x
+    seen = set()
+    if last:
+        unique_reversed_list = []
+        for obj in reversed(iterable):
+            key = keyfunc(obj)
+            if key not in seen:
+                seen.add(key)
+                unique_reversed_list.append(obj)
+        yield from reversed(unique_reversed_list)
+    else:
+        for obj in iterable:
+            key = keyfunc(obj)
+            if key not in seen:
+                seen.add(key)
+                yield obj
+
+
+UNSET = object()
+
+def sorted_uniquify(iterable, keyfunc=None, last=False):
+    """Given a sequence of elements, sort and remove duplicates of the given key.
+    Keep either the first or the last (by key) element of a sequence of
+    key-identical elements. This does _not_ maintain the ordering of the
+    original elements, they are returned sorted (by key) instead.
+
+    Args:
+      iterable: An iterable sequence.
+      keyfunc: A function that extracts from the elements the sort key
+        to use and uniquify on. If left unspecified, the identify function
+        is used and the uniquification occurs on the elements themselves.
+      last: A boolean, True if we should keep the last item of the same keys.
+        Otherwise keep the first.
+    Yields:
+      Elements from the iterable.
+    """
+    if keyfunc is None:
+        keyfunc = lambda x: x
+    if last:
+        prev_obj = UNSET
+        prev_key = UNSET
+        for obj in sorted(iterable, key=keyfunc):
+            key = keyfunc(obj)
+            if key != prev_key and prev_obj is not UNSET:
+                yield prev_obj
+            prev_obj = obj
+            prev_key = key
+        if prev_obj is not UNSET:
+            yield prev_obj
+    else:
+        prev_key = UNSET
+        for obj in sorted(iterable, key=keyfunc):
+            key = keyfunc(obj)
+            if key != prev_key:
+                yield obj
+                prev_key = key
+
+
+class LineFileProxy:
+    """A file object that will delegate writing full lines to another logging function.
+    This may be used for writing data to a logging level without having to worry about
+    lines.
+    """
+    def __init__(self, line_writer, prefix=None):
+        """Construct a new line delegator file object proxy.
+
+        Args:
+          line_writer: A callable function, used to write to the delegated output.
+          prefix: An optional string, the prefix to insert before every line.
+        """
+        self.line_writer = line_writer
+        self.prefix = prefix
+        self.data = []
+
+    def write(self, data):
+        """Write some string data to the output.
+
+        Args:
+          data: A string, with or without newlines.
+        """
+        if '\n' in data:
+            self.data.append(data)
+            self.flush()
+        else:
+            self.data.append(data)
+
+    def flush(self):
+        """Flush the data to the line writer."""
+        data = ''.join(self.data)
+        if data:
+            lines = data.splitlines()
+            self.data = [lines.pop(-1)] if data[-1] != '\n' else []
+            for line in lines:
+                if self.prefix:
+                    line = self.prefix + line
+                self.line_writer(line)
+
+    def close(self):
+        """Close the line delegator."""
+        self.flush()

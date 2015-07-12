@@ -1,4 +1,7 @@
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import unittest
+import functools
 
 from beancount.core import account_types
 
@@ -9,12 +12,12 @@ class TestAccountTypes(unittest.TestCase):
         self.assertEqual(5, len(account_types.DEFAULT_ACCOUNT_TYPES))
         self.assertTrue(account_types.DEFAULT_ACCOUNT_TYPES is not None)
 
-    def test_get_account_sort_function(self):
+    def test_get_account_sort_key(self):
         account_names_input = [
             "Expenses:Toys:Computer",
             "Income:US:Intel",
             "Income:US:ETrade:Dividends",
-            "Equity:OpeningBalances",
+            "Equity:Opening-Balances",
             "Liabilities:US:RBS:MortgageLoan",
             "Equity:NetIncome",
             "Assets:US:RBS:Savings",
@@ -25,15 +28,15 @@ class TestAccountTypes(unittest.TestCase):
             "Assets:US:RBS:Savings",
             "Liabilities:US:RBS:MortgageLoan",
             "Equity:NetIncome",
-            "Equity:OpeningBalances",
+            "Equity:Opening-Balances",
             "Income:US:ETrade:Dividends",
             "Income:US:Intel",
             "Expenses:Toys:Computer",
         ]
         account_names_actual = sorted(
             account_names_input,
-            key=account_types.get_account_sort_function(
-                account_types.DEFAULT_ACCOUNT_TYPES))
+            key=functools.partial(account_types.get_account_sort_key,
+                                  account_types.DEFAULT_ACCOUNT_TYPES))
         self.assertEqual(account_names_expected, account_names_actual)
 
     def test_get_account_type(self):
@@ -46,7 +49,7 @@ class TestAccountTypes(unittest.TestCase):
         self.assertEqual("Equity",
                          account_types.get_account_type("Equity:NetIncome"))
         self.assertEqual("Equity",
-                         account_types.get_account_type("Equity:OpeningBalances"))
+                         account_types.get_account_type("Equity:Opening-Balances"))
         self.assertEqual("Income",
                          account_types.get_account_type("Income:US:ETrade:Dividends"))
         self.assertEqual("Income",
@@ -56,26 +59,11 @@ class TestAccountTypes(unittest.TestCase):
         self.assertEqual("Invalid",
                          account_types.get_account_type("Invalid:Toys:Computer"))
 
-    def test_is_valid_account_name(self):
-        is_valid = account_types.is_valid_account_name
-        self.assertTrue(is_valid("Assets:US:RBS:Checking"))
-        self.assertTrue(is_valid("Equity:OpeningBalances"))
-        self.assertTrue(is_valid("Income:US:ETrade:Dividends-USD"))
-        self.assertTrue(is_valid("Assets:US:RBS"))
-        self.assertTrue(is_valid("Assets:US"))
-        self.assertFalse(is_valid("Assets"))
-        self.assertFalse(is_valid("Invalid"))
-        self.assertFalse(is_valid("Other"))
-        self.assertFalse(is_valid("Assets:US:RBS*Checking"))
-        self.assertFalse(is_valid("Assets:US:RBS:Checking&"))
-        self.assertFalse(is_valid("Assets:US:RBS:checking"))
-        self.assertFalse(is_valid("Assets:us:RBS:checking"))
-
     def test_is_root_account(self):
         for types in (None, account_types.DEFAULT_ACCOUNT_TYPES):
             for account_name, expected in [
                     ("Assets:US:RBS:Checking", False),
-                    ("Equity:OpeningBalances", False),
+                    ("Equity:Opening-Balances", False),
                     ("Income:US:ETrade:Dividends-USD", False),
                     ("Assets", True),
                     ("Liabilities", True),
@@ -102,7 +90,7 @@ class TestAccountTypes(unittest.TestCase):
         for account_name, expected in [
                 ("Assets:US:RBS:Savings", True),
                 ("Liabilities:US:RBS:MortgageLoan", True),
-                ("Equity:OpeningBalances", True),
+                ("Equity:Opening-Balances", True),
                 ("Income:US:ETrade:Dividends", False),
                 ("Expenses:Toys:Computer", False),
         ]:
@@ -115,3 +103,13 @@ class TestAccountTypes(unittest.TestCase):
                 not expected,
                 account_types.is_income_statement_account(
                     account_name, account_types.DEFAULT_ACCOUNT_TYPES))
+
+    def test_get_account_sign(self):
+        for account_name, expected in [
+                ("Assets:US:RBS:Savings", +1),
+                ("Liabilities:US:RBS:MortgageLoan", -1),
+                ("Equity:Opening-Balances", -1),
+                ("Income:US:ETrade:Dividends", -1),
+                ("Expenses:Toys:Computer", +1),
+        ]:
+            self.assertEqual(expected, account_types.get_account_sign(account_name))

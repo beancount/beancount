@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Various tests for beancount.
 
 (This is the main test program I fiddle with during development.)
@@ -9,6 +10,7 @@ import io
 import re
 import sys
 import time
+import logging
 from collections import defaultdict, namedtuple
 
 import pandas
@@ -16,7 +18,7 @@ import matplotlib #; matplotlib.use('qt4agg')
 from matplotlib import pyplot
 
 from beancount.core import data
-from beancount.core.amount import Decimal
+from beancount.core.number import Decimal
 from beancount.core.data import Transaction, Price
 from beancount.core import realization
 from beancount.ops import summarize
@@ -112,29 +114,29 @@ def check_equity_balances(real_accounts):
 
 
 def main():
-    argparser = argparse.ArgumentParser(__doc__)
+    argparser = argparse.ArgumentParser(description=__doc__)
 
     argparser.add_argument('filename',
                         help='Beancount input filename.')
 
     opts = argparser.parse_args()
 
-    with utils.print_time('load'):
-        entries, errors, options = load(opts.filename)
+    with utils.log_time('load', logging.info):
+        entries, errors, options = load(opts.filename, logging.info)
 
     for entry in entries:
         print(format_entry(entry))
     raise SystemExit
 
-    with utils.print_time('compute_total_balance'):
+    with utils.log_time('compute_total_balance', logging.info):
         summarize.compute_total_balance(entries)
 
-    with utils.print_time('realize'):
+    with utils.log_time('realize', logging.info):
         real_accounts = realization.realize(entries)
 
     print('LEN', len(entries))
 
-    with utils.print_time('clamp'):
+    with utils.log_time('clamp', logging.info):
         previous_accounts = parser.parser.get_previous_accounts(options)
         entries, index = summarize.clamp(entries,
                                          datetime.date(2013, 1, 1),
@@ -151,7 +153,7 @@ def main():
         # print("TRIAL_BALANCE", total_balance, file=real_log)
         # print("TRIAL_BALANCE (cost)", total_balance.get_cost(), file=real_log)
 
-        with utils.print_time('summarize'):
+        with utils.log_time('summarize', logging.info):
             account_opening = data.Account('Equity:OpeningBalances', 'Equity')
             sum_entries, _ = summarize.summarize(entries, datetime.date(2012, 1, 1), account_opening)
             sumreal_accounts = realization.realize(sum_entries)
@@ -269,7 +271,7 @@ def print_entries_by_date(entries):
 
 def measure_balance_total(entries):
     # For timing only.
-    with utils.print_time('balance_all'): # 89ms... okay.
+    with utils.log_time('balance_all', logging.info): # 89ms... okay.
         balance = Inventory()
         for entry in utils.filter_type(entries, data.Transaction):
             for posting in entry.postings:

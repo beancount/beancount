@@ -1,0 +1,299 @@
+;; -*- mode: org; mode: beancount; fill-column: 200 -*-
+;;
+;; Joint expenses for Scuba diving trip to Cozumel & Tulum, Mexico, February-March 2015.
+;;
+option "title" "Mexico Trip: Cozumel & Tulum SCUBA Diving"
+
+;plugin "beancount.projects.split_expenses" "Martin Caroline"
+plugin "beancount.plugins.auto_accounts"
+
+option "operating_currency" "USD"
+option "operating_currency" "MXN"
+
+option "default_tolerance" "MXN:0.5"
+
+
+;; External accounts for Martin.
+2015-02-01 open Income:Martin:Cash
+2015-02-01 open Income:Martin:Cash:Foreign
+2015-02-01 open Income:Martin:Wallet
+2015-02-01 open Income:Martin:CreditCard
+
+;; External accounts for Caroline.
+2015-02-01 open Income:Caroline:Cash
+2015-02-01 open Income:Caroline:Wallet
+2015-02-01 open Income:Caroline:MetroCard
+2015-02-01 open Income:Caroline:CreditCard
+
+
+;; Internal accounts used during the trip.
+2015-02-01 open Assets:Cash:Martin
+  description: "Cash for the trip held by Martin"
+
+2015-02-01 open Assets:Cash:Caroline
+  description: "Cash for the trip held by Caroline"
+
+2015-02-01 open Assets:Cash:Pesos
+  description: "A shared account to contain our pocket of pesos"
+
+
+2015-02-01 * "Flights to Cancun"
+   Income:Caroline:CreditCard        -976.00 USD
+   Expenses:Flights
+
+2015-02-01 * "Aqua Viva Tulum - two nights"
+   Income:Caroline:CreditCard        -269.00 USD
+   Expenses:Accommodation
+
+2015-02-01 * "Transfer Martin -> Caroline on Google Wallet"
+  Income:Martin:Wallet                      -1000 USD
+  Income:Caroline:Wallet                     1000 USD
+
+;; Initial cash on us.
+2015-02-24 * "Getting cash for travel"
+  Income:Martin:Cash                        -1200 USD
+  Assets:Cash:Martin                         1200 USD
+
+2015-02-24 * "Getting cash for travel"
+  Income:Caroline:Cash                   -300 USD
+  Assets:Cash:Caroline                        300 USD
+
+2015-02-25 balance Assets:Cash:Martin     1200.00 USD
+2015-02-25 balance Assets:Cash:Caroline    300.00 USD
+
+
+2015-02-25 * "Taxi to airport" ^433f66ea0e4e
+  Expenses:Transport:Taxi                   62.80 USD
+  Income:Martin:CreditCard
+
+2015-02-25 * "Breakfast at LaVie at JFK airport" ^e4c0cc598083
+  Expenses:Restaurant                       44.56 USD
+  Income:Martin:CreditCard
+
+2015-02-25 * "Exchanged cash at XIC at CUN airport"
+  Assets:Cash:Caroline                    -100.00 USD @ 12.00 MXN
+  Assets:Cash:Pesos                              1200 MXN
+
+2015-02-25 * "Yellow Transfers" | "SuperShuttle to Playa del Carmen" ^e25fcd8cbf93
+  Expenses:Transport:Bus                      656 MXN
+  Income:Martin:CreditCard            -44.12 USD @ 14.86854 MXN
+
+2015-02-25 * "Tip for shuttle driver"
+  Expenses:Tips                                50 MXN
+  Assets:Cash:Pesos
+
+2015-02-25 * "UltraMar Ferry across to Cozumel"
+  Expenses:Transport:Bus                      326 MXN
+  Assets:Cash:Pesos
+
+2015-02-25 * "Senor Frogs" | "Beers & Coconut"
+  Expenses:Alcohol                            134 MXN
+  Assets:Cash:Pesos
+
+2015-02-25 * "Marine Park Fee (3 days for Martin, 1 for Caroline)"
+  Expenses:Scuba:ParkFees:Martin             7.50 USD
+  Expenses:Scuba:ParkFees:Caroline           2.50 USD
+  Assets:Cash:Martin
+
+2015-02-26 balance Assets:Cash:Pesos              690 MXN
+
+2015-02-28 * "Early tips for Observer crew"
+  Expenses:Tips:Martin                      20.00 USD ;; Victor
+  Expenses:Tips:Martin                      20.00 USD ;; Budha
+  Assets:Cash:Martin
+
+2015-02-28 * "Tips for Luis for wreck dive"
+  Expenses:Tips:Martin                        200 MXN ;; Luis (Choky)
+  Assets:Cash:Pesos
+
+
+;; 4 nights / 3 days diving diver rate $655.00
+;; 4 nights / 0 days diving non-diver rate $505
+;; + 19 % tax = $1380.40 See attachment for details.
+2015-02-28 * "Scuba Club Cozumel" | "Room bill" ^8215bf8afa1d
+  Income:Martin:CreditCard          -1380.40 USD ;; Credit card
+  Expenses:Scuba:Martin                    178.50 USD ;; (655 - 505) * 1.19
+  Expenses:Accommodation
+
+2015-03-01 * "Final tips"
+  Expenses:Tips:Martin                      40.00 USD ;; Francisco x4
+  Expenses:Tips:Martin                      10.00 USD ;; Julio x1
+  Expenses:Tips:Martin                      10.00 USD ;; Brian x1  20$
+  Expenses:Tips:Caroline                    10.00 USD ;; Brian x1  20$
+  Expenses:Tips:Martin                      13.33 USD ;; Victor 20$
+  Expenses:Tips:Caroline                     6.67 USD
+  Expenses:Tips:Martin                      13.33 USD ;; Budha 20$
+  Expenses:Tips:Caroline                     6.67 USD
+  Expenses:Tips                             60.00 USD ;; Wait staff
+  Expenses:Tips                             20.00 USD ;; Cleaning staff
+  Assets:Cash:Martin
+
+2015-03-01 * "Scuba Club Cozumel" | "Dive shop bill" ^69b409189b37
+  Income:Martin:CreditCard           -381.64 USD
+  Expenses:Scuba:Martin                        27 USD ;; Regulator w/ Gauge
+  Expenses:Scuba:Caroline                       9 USD ;; Regulator w/ Gauge
+  Expenses:Scuba:Martin                        27 USD ;; BCD
+  Expenses:Scuba:Caroline                       9 USD ;; BCD
+  Expenses:Scuba:Martin                         6 USD ;; Fins
+  Expenses:Scuba:Martin                        24 USD ;; Wet suit
+  Expenses:Scuba:Caroline                       8 USD ;; Wet suit
+  Expenses:Scuba:Caroline                       9 USD ;; Dive computer
+  Expenses:Scuba:Martin                         5 USD ;; U/W Light
+  Expenses:Scuba:Caroline                      70 USD ;; Dive trip (2 tank)
+  Expenses:Scuba:Martin                        45 USD ;; Wreck Dive w/ Lite
+  Expenses:Scuba:Martin                        45 USD ;; Afternoon dive
+  Expenses:Scuba:Caroline                      45 USD ;; Afternoon dive
+  Expenses:Scuba:Martin                     28.64 USD ;; Taxes
+  Expenses:Scuba:Caroline                   24.00 USD ;; Taxes
+
+
+2015-03-01 * "Scuba Club Cozumel" | "Bar bill" ^004abe4d81b6
+  Expenses:Alcohol                            832 MXN
+  Income:Martin:CreditCard            -55.76 USD @ 14.9211 MXN
+
+2015-03-01 * "Taxi from Scuba Club to Ferry"
+  Expenses:Transport:Taxi                      70 MXN
+  Assets:Cash:Pesos
+
+2015-03-01 * "Express Ferry" | "from Cozumel to Playa del Carmen"
+  Expenses:Transport:Taxi                     270 MXN
+  Assets:Cash:Pesos
+
+2015-03-01 * "Cafe Antoinette" | "Coffee"
+  Expenses:Restaurant                         100 MXN
+  Assets:Cash:Pesos
+
+2015-03-01 * "Taxi from Playa del Carmen to Tulum"
+  Expenses:Transport:Taxi                   45.00 USD
+  Expenses:Tips                              5.00 USD
+  Assets:Cash:Martin
+
+2015-03-01 * "Motmot Diving" | "Deposit for cenote diving"
+  Expenses:Scuba                            50.00 USD
+  Assets:Cash:Martin
+
+2015-03-01 * "Changed money at cambio across from ScotiaBank"
+  Assets:Cash:Martin                      -120.00 USD @ 13.65 MXN
+  Assets:Cash:Pesos                              1638 MXN
+
+2015-03-01 * "Taxi to Hartwood"
+  Expenses:Transport:Taxi                     128 MXN
+  Assets:Cash:Pesos
+
+;; They wanted to charge 12.00 USD/MXN for US payment.
+2015-03-01 * "Hartwood" | "Dinner - ran out of pesos, had to pay with mix of cash, they billed 1886 MXN"
+  Expenses:Restaurant                        1880 MXN
+  Assets:Cash:Pesos                             -1400 MXN
+  Assets:Cash:Martin                       -40.00 USD @ 12.00 MXN
+
+
+;; This wasn't noted on the doc.
+2015-03-01 * "Taxi from Hartwood"
+  Expenses:Transport:Taxi                     120 MXN
+  Assets:Cash:Pesos
+
+
+2015-03-02 balance Assets:Cash:Pesos               40 MXN
+
+2015-03-02 * "Motmot Diving" | "Remainder for diving Casa Cenote and Gran Cenote"
+  Expenses:Scuba                           190.00 USD
+  Assets:Cash:Martin
+
+2015-03-02 * "Motmot Diving" | "Tips for Peter Tovey DM"
+  Expenses:Tips                             20.00 USD
+  Assets:Cash:Martin
+
+2015-03-02 * "Changed money at cambio across from ScotiaBank"
+  Assets:Cash:Martin                      -140.00 USD @ 13.65 MXN
+  Assets:Cash:Pesos                              1911 MXN
+
+2015-03-02 * "Caroline wants to buy some fruits"
+  Expenses:Groceries                           37 MXN
+  Assets:Cash:Pesos
+
+2015-03-02 * "El Camello Jr." | "Real mexican Lunch"
+  Expenses:Restaurant                         365 MXN
+  Assets:Cash:Pesos
+
+2015-03-02 * "Kelly Bikes" | "Renting two bikes for 24 hours"
+  Expenses:Bicycles                           139 MXN
+  Assets:Cash:Pesos
+
+2015-03-02 * "Casa Banana" | "Light dinner in Tulum beach area"
+  Expenses:Restaurant                         770 MXN
+  Assets:Cash:Pesos
+
+
+2015-03-03 * "Zona Arqueologica de Tulum" | "Entry tickets to Tulum Mayan ruins in the morning"
+  Expenses:Museum                             128 MXN
+  Assets:Cash:Pesos
+
+2015-03-03 * "Changed money at cambio across from ScotiaBank"
+  Assets:Cash:Caroline                     -60.00 USD @ 13.70 MXN
+  Assets:Cash:Pesos                               822 MXN
+
+2015-03-03 * "Aqua Viva" | "Tip for Casper"
+  Expenses:Tips                             20.00 USD
+  Assets:Cash:Martin
+
+2015-03-03 * "ADO Bus" | "Bus tickets Tulum to Playa del Carmen"
+  Expenses:Transport:Bus                      124 MXN
+  Assets:Cash:Pesos
+
+2015-03-03 * "ADO Bus" | "Bus tickets Playa del Carmen to Cancun"
+  Expenses:Transport:Bus                      312 MXN
+  Assets:Cash:Pesos
+
+2015-03-03 * "Cafe Antoinette" | "Coffee + pastries, Orange juice"
+  Expenses:Restaurant                         128 MXN
+  Expenses:Restaurant                          25 MXN
+  Assets:Cash:Pesos
+
+2015-03-06 balance Assets:Cash:Martin      330.00 USD
+
+;; Transcribed but I cannot use this because it is intra-day.
+;2015-03-03 balance Assets:Cash:Pesos                                   745 MXN
+
+
+;; Spending remaining pesos at Cancun airport.
+
+2015-03-03 * "Cancun Airport Shops" | "Chocolates"
+  Expenses:Groceries                          357 MXN
+  Assets:Cash:Pesos
+
+2015-03-03 * "Cancun Airport Shops" | "Burrito/Quesadilla Lunch"
+  Expenses:Restaurant                         323 MXN
+  Assets:Cash:Pesos
+
+2015-03-03 * "Airtrain" | "Caroline paid to Jamaica sta. off of her MetroCard"
+  Expenses:Transport:Train                  10.00 USD
+  Income:Caroline:MetroCard
+
+2015-03-04 balance Assets:Cash:Pesos               65 MXN
+
+2015-03-06 * "Final transfer to clear and empty asset accounts"
+  Assets:Cash:Pesos                               -65 MXN
+  Income:Martin:Cash:Foreign                       60 MXN
+  Income:Caroline:Cash                              5 MXN
+  Assets:Cash:Martin                             -330 USD
+  Income:Martin:Cash                              330 USD
+  Assets:Cash:Caroline                           -140 USD
+  Income:Caroline:Cash                            140 USD
+
+2015-03-06 price USD     13.65 MXN
+
+2015-03-07 balance Assets:Cash:Pesos                0 MXN
+2015-03-07 balance Assets:Cash:Pesos                0 USD
+2015-03-07 balance Assets:Cash:Martin               0 USD
+2015-03-07 balance Assets:Cash:Caroline             0 USD
+
+2015-03-07 balance Assets:Cash                      0 USD
+
+2015-03-08 close Assets:Cash:Martin
+2015-03-08 close Assets:Cash:Caroline
+2015-03-08 close Assets:Cash:Pesos
+
+
+;; 2015-03-06 * "Final transfer from Caroline to Martin to pay for difference"
+;;   Income:Caroline:Wallet                    -1500 USD
+;;   Income:Martin:Wallet                       1500 USD

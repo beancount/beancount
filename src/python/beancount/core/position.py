@@ -16,12 +16,21 @@ A "Position" represents a specific number of units of an associated lot:
   (number, lot)
 
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import datetime
 from collections import namedtuple
 import re
 
 # Note: this file is mirrorred into ledgerhub. Relative imports only.
-from .amount import ZERO, Decimal, to_decimal, Amount, amount_mult, MAXDIGITS_PRINTER
+from beancount.core.number import ZERO
+from beancount.core.number import Decimal
+from beancount.core.number import D
+from beancount.core.amount import Amount
+from beancount.core.amount import NULL_AMOUNT
+from beancount.core.amount import amount_mult
+from beancount.core.amount import CURRENCY_RE
+from beancount.core.display_context import DEFAULT_FORMATTER
 
 
 # Lots are a representations of a commodity with an optional associated cost and
@@ -33,6 +42,18 @@ from .amount import ZERO, Decimal, to_decimal, Amount, amount_mult, MAXDIGITS_PR
 #  cost: An Amount, or None if this lot has no associated cost.
 #  lot_date: A datetime.date, or None if this lot has no associated date.
 Lot = namedtuple('Lot', 'currency cost lot_date')
+
+
+def lot_currency_pair(lot):
+    """Return the currency pair associated with a lot.
+
+    Args:
+      lot: An instance of Lot.
+    Returns:
+      A pair of a currency string and a cost currency string or None.
+    """
+    return (lot.currency,
+            lot.cost.currency if lot.cost else None)
 
 
 # Lookup for ordering a list of currencies: we want the majors first, then the
@@ -83,29 +104,41 @@ class Position:
         """
         return hash((self.lot, self.number))
 
-    def strs(self):
-        """Return a pair of string representations for the position.
+    def to_string(self, dformat=DEFAULT_FORMATTER, detail=True):
+        """Render the position to a string.
 
+        Args:
+          dformat: An instance of DisplayFormatter.
+          detail: A boolean, true if we should only render the lot details
+           beyond the cost (lot-date, label, etc.). If false, we only render
+           the cost, if present.
         Returns:
-          A pair of (amount, cost) strings.
+          A string, the rendered position.
         """
         lot = self.lot
-        amount_str = Amount(self.number, lot.currency).str(MAXDIGITS_PRINTER)
 
-        # Optionally render the cost and lot-date.
-        if lot.cost or lot.lot_date:
-            cost_str_list = []
-            cost_str_list.append(' {')
-            if lot.cost:
-                cost_str_list.append(
-                    Amount(lot.cost.number, lot.cost.currency).str(MAXDIGITS_PRINTER))
-            if lot.lot_date:
-                cost_str_list.append(' / {}'.format(lot.lot_date))
-            cost_str_list.append('}')
-            cost_str = ''.join(cost_str_list)
+        # Render the units.
+        pos_str = Amount(self.number, lot.currency).to_string(dformat)
+
+        # Render the cost (and other lot parameters, lot-date, label, etc.).
+        if detail:
+            if lot.cost or lot.lot_date:
+                cost_str_list = []
+                cost_str_list.append('{')
+                if lot.cost:
+                    cost_str_list.append(
+                        Amount(lot.cost.number, lot.cost.currency).to_string(dformat))
+                if lot.lot_date:
+                    cost_str_list.append(' / {}'.format(lot.lot_date))
+                cost_str_list.append('}')
+                pos_str = '{} {}'.format(pos_str, ''.join(cost_str_list))
+
         else:
-            cost_str = ''
-        return (amount_str, cost_str)
+            # Render just the cost, if present.
+            if lot.cost is not None:
+                pos_str = '{} {{{}}}'.format(pos_str, lot.cost.to_string(dformat))
+
+        return pos_str
 
     def __str__(self):
         """Return a string representation of the position.
@@ -113,7 +146,7 @@ class Position:
         Returns:
           A string, a printable representation of the position.
         """
-        return ''.join(self.strs())
+        return self.to_string()
 
     __repr__ = __str__
 
@@ -141,9 +174,10 @@ class Position:
         Returns:
           A tuple, used to sort lists of positions.
         """
-        return (CURRENCY_ORDER.get(self.lot.currency,
-                                   NCURRENCIES + len(self.lot.currency)),
-                self.number)
+        lot = self.lot
+        currency = lot.currency
+        order_units = CURRENCY_ORDER.get(currency, NCURRENCIES + len(currency))
+        return (order_units, lot.cost or NULL_AMOUNT, self.number)
 
     def __lt__(self, other):
         """A least-than comparison operator for positions.
@@ -162,9 +196,10 @@ class Position:
         Returns:
           A shallow copy of this position.
         """
+        # Note: We use Decimal() for efficiency.
         return Position(self.lot, Decimal(self.number))
 
-    def get_amount(self):
+    def get_units(self):
         """Get the Amount that correponds to this lot. The amount is the number of units
         of the currency, irrespective of its cost or lot date.
 
@@ -173,9 +208,6 @@ class Position:
         """
         return Amount(self.number, self.lot.currency)
 
-    # FIXME: We really should have the default get_cost() return a position, and
-    # then have the caller .get_amount(). This would be the perfect way to do
-    # this; do this.
     def get_cost(self):
         """Return the cost associated with this position. The cost is the number of
         units of the lot times the cost of the lot. If the lot has no associated
@@ -190,7 +222,30 @@ class Position:
         else:
             return amount_mult(cost, self.number)
 
-    def get_cost_position(self):
+    def get_weight(self, price=None):
+        """Compute the weight of the position, with the given price.
+
+        Returns:
+          An instance of Amount.
+        """
+        # It the self has a cost, use that to balance this posting.
+        lot = self.lot
+        if lot.cost is not None:
+            amount = amount_mult(lot.cost, self.number)
+
+        # If there is a price, use that to balance this posting.
+        elif price is not None:
+            assert self.lot.currency != price.currency, (
+                "Invalid currency for price: {} in {}".format(self, price))
+            amount = amount_mult(price, self.number)
+
+        # Otherwise, just use the units.
+        else:
+            amount = Amount(self.number, self.lot.currency)
+
+        return amount
+
+    def cost(self):
         """Return a Position representing the cost of this position. See get_cost().
 
         Returns:
@@ -223,15 +278,25 @@ class Position:
         Returns:
           An instance of Position which represents the inserse of this Position.
         """
+        # Note: We use Decimal() for efficiency.
         return Position(self.lot, Decimal(-self.number))
 
     __neg__ = get_negative
+
+    def is_negative_at_cost(self):
+        """Return true if the position is held at cost and negative.
+
+        Returns:
+          A boolean.
+        """
+        return (self.number < ZERO and
+                (self.lot.cost or self.lot.lot_date))
 
     @staticmethod
     def from_string(string):
         """Create a position from a string specification.
 
-        This is a miniature parser used for testing.
+        This is a miniature parser used for building tests.
 
         Args:
           string: A string of <number> <currency> with an optional {<number>
@@ -239,22 +304,39 @@ class Position:
         Returns:
           A new instance of Position.
         """
-        mo = re.match(r'\s*([-+]?[0-9.]+)\s+([A-Z]+)'
-                      '(\s+{([-+]?[0-9.]+)\s+([A-Z]+)'
-                      '(\s*/\s*(\d\d\d\d-\d\d-\d\d))?})?', string)
-        if not mo:
+        match = re.match(
+            (r'\s*([-+]?[0-9.]+)\s+({currency})'
+             r'(\s+{{([-+]?[0-9.]+)\s+({currency})'
+             r'(\s*/\s*(\d\d\d\d-\d\d-\d\d))?}})?'
+             r'\s*$').format(currency=CURRENCY_RE),
+            string)
+        if not match:
             raise ValueError("Invalid string for position: '{}'".format(string))
-        number, currency = mo.group(1, 2)
-        if mo.group(3):
-            cost_number, cost_currency = mo.group(4, 5)
-            cost = Amount(to_decimal(cost_number), cost_currency)
+        number, currency = match.group(1, 2)
+        if match.group(3):
+            cost_number, cost_currency = match.group(4, 5)
+            cost = Amount(D(cost_number), cost_currency)
         else:
             cost = None
-        if mo.group(6):
-            lot_date = datetime.datetime.strptime(mo.group(7), '%Y-%m-%d').date()
+        if match.group(6):
+            lot_date = datetime.datetime.strptime(match.group(7), '%Y-%m-%d').date()
         else:
             lot_date = None
-        return Position(Lot(currency, cost, lot_date), to_decimal(number))
+        return Position(Lot(currency, cost, lot_date), D(number))
+
+    @staticmethod
+    def from_amounts(amount, cost_amount=None):
+        """Create a position from an amount and a cost.
+
+        Args:
+          amount: An amount, that represents the number of units and the lot currency.
+          cost_amount: If not None, represents the cost amount.
+        Returns:
+          A Position instance.
+        """
+        return Position(Lot(amount.currency, cost_amount, None), amount.number)
 
 
+# pylint: disable=invalid-name
 from_string = Position.from_string
+from_amounts = Position.from_amounts

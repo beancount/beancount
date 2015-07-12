@@ -1,38 +1,11 @@
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import unittest
-import re
 
-from .amount import to_decimal, Decimal, ZERO
-from .amount import Amount
-from . import amount
-
-
-class TestDecimalPrecision(unittest.TestCase):
-
-    def test_formatting(self):
-        # Verifying if we can auto-format everything using precision. No.
-        #
-        # "The significance of a new Decimal is determined solely by the number
-        # of digits input. Context precision and rounding only come into play
-        # during arithmetic operations."
-        with amount.decimal.localcontext() as context:
-            context.prec = 2
-            number = to_decimal('0.1122334455')
-            self.assertEqual('0.1122334455', str(number))
-
-
-class TestToDecimal(unittest.TestCase):
-
-    def test_ZERO(self):
-        self.assertEqual(ZERO, Decimal('0'))
-
-    def test_to_decimal(self):
-        d = Decimal('10.345')
-        self.assertEqual(to_decimal(d), d)
-        self.assertEqual(to_decimal('10.345'), d)
-        self.assertEqual(to_decimal('10,034.45'), Decimal('10034.45'))
-        self.assertEqual(to_decimal('-83,434,309.10'), Decimal('-83434309.10'))
-        self.assertEqual(to_decimal(''), Decimal())
-        self.assertEqual(to_decimal(None), Decimal())
+from beancount.core.number import Decimal
+from beancount.core.amount import Amount
+from beancount.core import amount
+from beancount.core import display_context
 
 
 class TestAmount(unittest.TestCase):
@@ -45,9 +18,30 @@ class TestAmount(unittest.TestCase):
         amount = Amount('100,034.02', 'USD')
         self.assertEqual(amount.number, Decimal('100034.02'))
 
+    def test_fromstring(self):
+        amount1 = Amount(Decimal('100'), 'USD')
+        amount2 = Amount.from_string('100 USD')
+        self.assertEqual(amount1, amount2)
+
+        Amount.from_string('  100.00 USD  ')
+
+        with self.assertRaises(ValueError):
+            Amount.from_string('100')
+
+        with self.assertRaises(ValueError):
+            Amount.from_string('USD')
+
+        with self.assertRaises(ValueError):
+            Amount.from_string('100.00 U')
+
     def test_tostring(self):
-        amount = Amount('100,034.02', 'USD')
-        self.assertTrue(re.search(r'\.\d\d\b', str(amount)))
+        amount = Amount('100034.023', 'USD')
+
+        self.assertEqual('100034.023 USD', str(amount))
+
+        dcontext = display_context.DisplayContext()
+        dformat = dcontext.build(commas=True)
+        self.assertEqual('100,034.023 USD', amount.to_string(dformat))
 
     def test_comparisons(self):
         amount1 = Amount(Decimal('100'), 'USD')
@@ -57,13 +51,6 @@ class TestAmount(unittest.TestCase):
         amount3 = Amount(Decimal('101'), 'USD')
         self.assertNotEqual(amount1, amount3)
 
-    def test_tostring_quantize(self):
-        amount = Amount('100,034.027456', 'USD')
-        self.assertTrue(re.search(r'\.02746\b', str(amount)))
-
-        amount = Amount('100,034.05000', 'USD')
-        self.assertTrue(re.search(r'\.05\b', str(amount)))
-
     def test_hash(self):
         amount = Amount('100,034.027456', 'USD')
         self.assertTrue({amount: True})
@@ -72,7 +59,7 @@ class TestAmount(unittest.TestCase):
         amount2 = Amount('100,034.027456', 'CAD')
         self.assertEqual(2, len({amount: True, amount2: False}))
 
-    def test_sort(self):
+    def test_sort__explicit(self):
         # Check that we can sort currency-first.
         amounts = [
             Amount('1', 'USD'),
@@ -91,6 +78,36 @@ class TestAmount(unittest.TestCase):
             Amount('2', 'USD'),
             Amount('3', 'USD'),
         ], amounts)
+
+    def test_sort__natural(self):
+        # Check that we can sort currency-first.
+        amounts = [
+            Amount('1', 'USD'),
+            Amount('201', 'EUR'),
+            Amount('3', 'USD'),
+            Amount('100', 'CAD'),
+            Amount('2', 'USD'),
+            Amount('200', 'EUR'),
+        ]
+        amounts = sorted(amounts)
+        self.assertEqual([
+            Amount('100', 'CAD'),
+            Amount('200', 'EUR'),
+            Amount('201', 'EUR'),
+            Amount('1', 'USD'),
+            Amount('2', 'USD'),
+            Amount('3', 'USD'),
+        ], amounts)
+
+    def test_neg(self):
+        amount_ = Amount('100', 'CAD')
+        self.assertEqual(Amount('-100', 'CAD'), -amount_)
+
+        amount_ = Amount('-100', 'CAD')
+        self.assertEqual(Amount('100', 'CAD'), -amount_)
+
+        amount_ = Amount('0', 'CAD')
+        self.assertEqual(Amount('0', 'CAD'), -amount_)
 
     def test_mult(self):
         amount_ = Amount('100', 'CAD')

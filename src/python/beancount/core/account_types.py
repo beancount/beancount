@@ -7,6 +7,8 @@ this is the best solution in the short-term, the account types are used
 in too many places to pass around that state everywhere. Maybe we change
 this later on.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import re
 from collections import namedtuple
 
@@ -30,8 +32,8 @@ DEFAULT_ACCOUNT_TYPES = AccountTypes("Assets",
                                      "Expenses")
 
 
-def get_account_sort_function(account_types):
-    """Return a function that can be used to extract a key to sort account names.
+def get_account_sort_key(account_types, account_name):
+    """Return a tuple that can be used to order/sort account names.
 
     Args:
       account_types: An instance of AccountTypes, a tuple of account type names.
@@ -40,9 +42,7 @@ def get_account_sort_function(account_types):
       function. It accepts a single argument, the account name to sort and
       produces a sortable key.
     """
-    assert isinstance(account_types, AccountTypes)
-    return lambda account_name: (account_types.index(get_account_type(account_name)),
-                                 account_name)
+    return (account_types.index(get_account_type(account_name)), account_name)
 
 
 def get_account_type(account_name):
@@ -58,21 +58,7 @@ def get_account_type(account_name):
 
     """
     assert isinstance(account_name, str), account_name
-    return account_name.split(account.sep)[0]
-
-
-def is_valid_account_name(string):
-    """Return true if the given string is an account name.
-
-    Args:
-      string: A string, to be checked for account name pattern.
-    Returns:
-      A boolean, true if the string has the form of an account's name.
-    """
-    return (isinstance(string, str) and
-            bool(re.match(
-                '([A-Z][A-Za-z0-9\-]+)({}[A-Z][A-Za-z0-9\-]+)+$'.format(account.sep),
-                string)))
+    return account.split(account_name)[0]
 
 
 def is_root_account(account_name, account_types=None):
@@ -147,3 +133,22 @@ def is_equity_account(account_name, account_types):
     assert isinstance(account_types, AccountTypes)
     account_type = get_account_type(account_name)
     return account_type == account_types.equity
+
+
+def get_account_sign(account_name, account_types=None):
+    """Return the sign of the normal balance of a particular account.
+
+    Args:
+      account_name: A string, the name of the account whose sign is to return.
+      account_types: An optional instance of the current account_types.
+    Returns:
+      +1 or -1, depending on the account's type.
+    """
+    if account_types is None:
+        account_types = DEFAULT_ACCOUNT_TYPES
+    assert isinstance(account_name, str), account_name
+    account_type = get_account_type(account_name)
+    return (+1
+            if account_type in (account_types.assets,
+                                account_types.expenses)
+            else -1)

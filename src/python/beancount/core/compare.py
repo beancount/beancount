@@ -1,8 +1,18 @@
 """Comparison helpers for data objects.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
+import collections
 import hashlib
 
-from .data import entry_sortkey
+from beancount.core.data import Price
+from beancount.core import data
+
+
+CompareError = collections.namedtuple('CompareError', 'source message entry')
+
+# A list of field names that are being ignored for persistence.
+IGNORED_FIELD_NAMES = {'meta', 'diff_amount'}
 
 
 def stable_hash_namedtuple(objtuple, ignore=frozenset()):
@@ -18,11 +28,12 @@ def stable_hash_namedtuple(objtuple, ignore=frozenset()):
         computing a stable hash. For instance, circular references to objects
         or irrelevant data.
     """
+    # Note: this routine is slow and would stand to be implemented in C.
     hashobj = hashlib.md5()
     for attr_name, attr_value in zip(objtuple._fields, objtuple):
         if attr_name in ignore:
             continue
-        if isinstance(attr_value, (list, set)):
+        if isinstance(attr_value, (list, set, frozenset)):
             subhashes = set()
             for element in attr_value:
                 if isinstance(element, tuple):
@@ -46,7 +57,7 @@ def hash_entry(entry):
     Returns:
       A stable hexadecimal hash of this entry.
     """
-    return stable_hash_namedtuple(entry, {'fileloc', 'entry', 'diff_amount'})
+    return stable_hash_namedtuple(entry, IGNORED_FIELD_NAMES)
 
 
 def hash_entries(entries):
@@ -57,21 +68,34 @@ def hash_entries(entries):
     Args:
       entries: A list of directives.
     Returns:
-      A dict of hash-value to entry, for all entries.
+      A dict of hash-value to entry (for all entries) and a list of errors.
+      Errors are created when duplicate entries are found.
     """
     entry_hash_dict = {}
+    errors = []
+    num_legal_duplicates = 0
     for entry in entries:
-        entry_type = type(entry)
-
         hash_ = hash_entry(entry)
+
         if hash_ in entry_hash_dict:
-            other_entry = entry_hash_dict[hash_]
-            raise ValueError("Duplicate entry: {} == {}".format(entry,
-                                                                other_entry))
+            if isinstance(entry, Price):
+                # Note: Allow duplicate Price entries, they should be common
+                # because of the nature of stock markets (if they're closed, the
+                # data source is likely to return an entry for the previously
+                # available date, which may already have been fetched).
+                num_legal_duplicates += 1
+            else:
+                other_entry = entry_hash_dict[hash_]
+                errors.append(
+                    CompareError(entry.meta,
+                                 "Duplicate entry: {} == {}".format(entry, other_entry),
+                                 entry))
         entry_hash_dict[hash_] = entry
 
-    assert len(entry_hash_dict) == len(entries)
-    return entry_hash_dict
+    if not errors:
+        assert len(entry_hash_dict) + num_legal_duplicates == len(entries), (
+            len(entry_hash_dict), len(entries), num_legal_duplicates)
+    return entry_hash_dict, errors
 
 
 def compare_entries(entries1, entries2):
@@ -89,17 +113,21 @@ def compare_entries(entries1, entries2):
           'entries2'.
         missing2: A list of directives from 'entries2' not found in
           'entries1'.
+    Raises:
+      ValueError: If a duplicate entry is found.
     """
-    hashes1 = hash_entries(entries1)
-    hashes2 = hash_entries(entries2)
+    hashes1, errors1 = hash_entries(entries1)
+    hashes2, errors2 = hash_entries(entries2)
     keys1 = set(hashes1.keys())
     keys2 = set(hashes2.keys())
 
+    if errors1 or errors2:
+        error = (errors1 + errors2)[0]
+        raise ValueError(str(error))
+
     same = keys1 == keys2
-    missing1 = sorted([hashes1[key] for key in keys1 - keys2],
-                      key=entry_sortkey)
-    missing2 = sorted([hashes2[key] for key in keys2 - keys1],
-                      key=entry_sortkey)
+    missing1 = data.sorted([hashes1[key] for key in keys1 - keys2])
+    missing2 = data.sorted([hashes2[key] for key in keys2 - keys1])
     return (same, missing1, missing2)
 
 
@@ -111,15 +139,20 @@ def includes_entries(subset_entries, entries):
       entries: The larger list of entries that could include 'subset_entries'.
     Returns:
       A boolean and a list of missing entries.
+    Raises:
+      ValueError: If a duplicate entry is found.
     """
-    subset_hashes = hash_entries(subset_entries)
+    subset_hashes, subset_errors = hash_entries(subset_entries)
     subset_keys = set(subset_hashes.keys())
-    hashes = hash_entries(entries)
+    hashes, errors = hash_entries(entries)
     keys = set(hashes.keys())
 
+    if subset_errors or errors:
+        error = (subset_errors + errors)[0]
+        raise ValueError(str(error))
+
     includes = subset_keys.issubset(keys)
-    missing = sorted([subset_hashes[key] for key in subset_keys - keys],
-                     key=entry_sortkey)
+    missing = data.sorted([subset_hashes[key] for key in subset_keys - keys])
     return (includes, missing)
 
 
@@ -131,14 +164,19 @@ def excludes_entries(subset_entries, entries):
       entries: The larger list of entries that should not include 'subset_entries'.
     Returns:
       A boolean and a list of entries that are not supposed to appear.
+    Raises:
+      ValueError: If a duplicate entry is found.
     """
-    subset_hashes = hash_entries(subset_entries)
+    subset_hashes, subset_errors = hash_entries(subset_entries)
     subset_keys = set(subset_hashes.keys())
-    hashes = hash_entries(entries)
+    hashes, errors = hash_entries(entries)
     keys = set(hashes.keys())
+
+    if subset_errors or errors:
+        error = (subset_errors + errors)[0]
+        raise ValueError(str(error))
 
     intersection = keys.intersection(subset_keys)
     excludes = not bool(intersection)
-    extra = sorted([subset_hashes[key] for key in intersection],
-                   key=entry_sortkey)
+    extra = data.sorted([subset_hashes[key] for key in intersection])
     return (excludes, extra)

@@ -1,35 +1,45 @@
 """Compute final holdings for a list of entries.
 """
-import collections
-import functools
+__author__ = "Martin Blais <blais@furius.ca>"
 
-from beancount.core.amount import ZERO
+import collections
+
+from beancount.core.number import ZERO
+from beancount.core import account
+from beancount.core import amount
+from beancount.core import position
 from beancount.core import realization
 from beancount.core import account_types
 from beancount.core import data
 from beancount.core import flags
-from beancount.core import position
+from beancount.core import getters
 from beancount.ops import prices
+from beancount.ops import summarize
 from beancount.utils import misc_utils
 
 
 # A holding, a flattened position with an account, and optionally, price and
 # book/market values.
 #
-# account: A string, the name of the account.
-# number: A Decimal, the number of units for that position.
-# currency: A string, the currency for that position.
-# cost_number: A Decimal, the price of that currency.
-# cost_currency: A string, the currency of the price of that currency.
-# book_value: A Decimal, the book value of the holding.
-# price_number: A Decimal, the price/rate of the currency/cost_currency.
-# price_date: A datetime.date, the date of the price.
-# market_value: A Decimal, the market value of the holding, with the
-#   price of this holding.
+# Attributes:
+#   account: A string, the name of the account.
+#   number: A Decimal, the number of units for that position.
+#   currency: A string, the currency for that position.
+#   cost_number: A Decimal, the price of that currency.
+#   cost_currency: A string, the currency of the price of that currency.
+#   book_value: A Decimal, the book value of the holding.
+#   price_number: A Decimal, the price/rate of the currency/cost_currency.
+#   price_date: A datetime.date, the date of the price.
+#   market_value: A Decimal, the market value of the holding, with the
+#     price of this holding.
 #
 # Note: we could reserve an 'extra' member to hold values from derived fields,
 # such as fractional value of portfolio, instead of occasionally overloading the
 # value of market_value or others.
+#
+# WARNING: This really could be replaced by a Posting; to be done later on, this
+# will eventually be replaced by a Posting type. All related code will have the
+# same logic.
 Holding = collections.namedtuple('Holding',
                                  'account number currency cost_number cost_currency '
                                  'book_value market_value price_number price_date')
@@ -52,16 +62,18 @@ def get_final_holdings(entries, included_account_types=None, price_map=None, dat
       entries: A list of directives.
       included_account_types: A sequence of strings, the account types to
         include in the output. A reasonable example would be
-        ('Assets', 'Liabilities').
+        ('Assets', 'Liabilities'). If not specified, include all account types.
       price_map: A dict of prices, as built by prices.build_price_map().
       date: A datetime.date instance, the date at which to price the
         holdings. If left unspecified, we use the latest price information.
     Returns:
       A list of dicts, with the following fields:
-
     """
     # Remove the entries inserted by unrealized gains/losses. Those entries do
     # affect asset accounts, and we don't want them to appear in holdings.
+    #
+    # Note: Perhaps it would make sense to generalize this concept of "inserted
+    # unrealized gains."
     simple_entries = [entry
                       for entry in entries
                       if (not isinstance(entry, data.Transaction) or
@@ -82,65 +94,163 @@ def get_final_holdings(entries, included_account_types=None, price_map=None, dat
             if account_type not in included_account_types:
                 continue
 
-        for position in real_account.balance.get_positions():
-            if position.lot.cost:
+        for pos in real_account.balance.get_positions():
+            if pos.lot.cost is not None:
                 # Get price information if we have a price_map.
                 market_value = None
                 if price_map is not None:
-                    base_quote = (position.lot.currency, position.lot.cost.currency)
+                    base_quote = (pos.lot.currency, pos.lot.cost.currency)
                     price_date, price_number = prices.get_price(price_map,
                                                                 base_quote, date)
                     if price_number is not None:
-                        market_value = position.number * price_number
+                        market_value = pos.number * price_number
                 else:
                     price_date, price_number = None, None
 
                 holding = Holding(real_account.account,
-                                  position.number,
-                                  position.lot.currency,
-                                  position.lot.cost.number,
-                                  position.lot.cost.currency,
-                                  position.number * position.lot.cost.number,
+                                  pos.number,
+                                  pos.lot.currency,
+                                  pos.lot.cost.number,
+                                  pos.lot.cost.currency,
+                                  pos.number * pos.lot.cost.number,
                                   market_value,
                                   price_number,
                                   price_date)
             else:
                 holding = Holding(real_account.account,
-                                  position.number,
-                                  position.lot.currency,
-                                  None, None, None, None, None, None)
+                                  pos.number,
+                                  pos.lot.currency,
+                                  None,
+                                  pos.lot.currency,
+                                  pos.number,
+                                  pos.number,
+                                  None,
+                                  None)
             holdings.append(holding)
 
     return holdings
 
 
-def aggregate_by_base_quote(holdings):
-    """Group and aggregate a list of holdings by (base, quote) pair.
+def get_commodities_at_date(entries, options_map, date=None):
+    """Return a list of commodities present at a particular date.
 
-    This groups the holdings and applies aggregation to each set of matching
-    rows. The 'account' fields should all be None.
+    This routine fetches the holdings present at a particular date and returns a
+    list of the commodities held in those holdings. This should define the list
+    of price date points required to assess the market value of this portfolio.
+
+    Notes:
+
+    * The ticker symbol will be fetched from the corresponding Commodity
+      directive. If there is no ticker symbol defined for a directive or no
+      corresponding Commodity directive, the currency is still included, but
+      'None' is specified for the symbol. The code that uses this routine should
+      be free to use the currency name to make an attempt to fetch the currency
+      using its name, or to ignore it.
+
+    * The 'cost-currency' is that which is found on the holdings instance and
+      can be ignored. The 'quote-currency' is that which is declared on the
+      Commodity directive from its 'quote' metadata field.
+
+    This is used in a routine that fetches prices from a data source on the
+    internet (either from Ledgerhub, but you can reuse this in your own script
+    if you build one).
 
     Args:
-      holdings: A list of Holding instances.
+      entries: A list of directives.
+      date: A datetime.date instance, the date at which to get the list of
+        relevant holdings.
     Returns:
-      An aggregated list of Holding instances.
+      A list of (currency, cost-currency, quote-currency, ticker) tuples, where
+        currency: The Beancount base currency to fetch a price for.
+        cost-currency: The Beancount quote / cost-currency for currency.
+        quote-currency: The currency declared as quote currency (extracted from
+          the metadata of Commodity directives).
+        ticker: The ticker symbol to use for fetching the price (extracted from
+          the metadata of Commodity directives).
+
     """
+    # Remove all the entries after the given date, if requested.
+    if date is not None:
+        entries = summarize.truncate(entries, date)
+
+    # Get the list of holdings at the particular date.
+    holdings_list = get_final_holdings(entries)
+
+    # Obtain the unique list of currencies we need to fetch.
+    commodities_list = {(holding.currency, holding.cost_currency)
+                        for holding in holdings_list}
+
+    # Add in the associated ticker symbols.
+    commodities_map = getters.get_commodity_map(entries, options_map)
+    commodities_symbols_list = []
+    for currency, cost_currency in sorted(commodities_list):
+        try:
+            commodity_entry = commodities_map[currency]
+            ticker = commodity_entry.meta.get('ticker', None)
+            quote_currency = commodity_entry.meta.get('quote', None)
+        except KeyError:
+            ticker = None
+            quote_currency = None
+
+        commodities_symbols_list.append(
+            (currency, cost_currency, quote_currency, ticker))
+
+    return commodities_symbols_list
+
+
+def aggregate_holdings_by(holdings, keyfun):
+    """Aggregate holdings by some key.
+
+    Note that the cost-currency must always be included in the group-key (sums
+    over multiple currency units do not make sense), so it is appended to the
+    sort-key automatically.
+
+    Args:
+      keyfun: A callable, which returns the key to aggregate by. This key need
+        not include the cost-currency.
+    Returns:
+      A list of aggregated holdings.
+    """
+    # Aggregate the groups of holdings.
     grouped = collections.defaultdict(list)
     for holding in holdings:
-        key = (holding.currency, holding.cost_currency)
+        key = (keyfun(holding), holding.cost_currency)
         grouped[key].append(holding)
-    return sorted(aggregate_holdings_list(key_holdings)
-                  for key_holdings in grouped.values())
+    grouped_holdings = (aggregate_holdings_list(key_holdings)
+                        for key_holdings in grouped.values())
+
+    # We could potentially filter out holdings with zero units here. These types
+    # of holdings might occur on a group with leaked (i.e., non-zero) cost basis
+    # and zero units. However, sometimes are valid merging of multiple
+    # currencies may occur, and the number value will be legitimately set to
+    # ZERO (for various reasons downstream), so we prefer not to ignore the
+    # holding. Callers must be prepared to deal with a holding of ZERO units and
+    # a non-zero cost basis. {0ed05c502e63, b/16}
+    ## nonzero_holdings = (holding
+    ##                     for holding in grouped_holdings
+    ##                     if holding.number != ZERO)
+
+    # Return the holdings in order.
+    return sorted(grouped_holdings,
+                  key=lambda holding: (holding.account, holding.currency))
 
 
 def aggregate_holdings_list(holdings):
     """Aggregate a list of holdings.
+
+    If there are varying 'account', 'currency' or 'cost_currency' attributes,
+    their values are replaced by '*'. Otherwise they are preserved. Note that
+    all the cost-currency values must be equal in order for aggregations to
+    succeed (without this constraint a sum of units in different currencies has
+    no meaning).
 
     Args:
       holdings: A list of Holding instances.
     Returns:
       A single Holding instance, or None, if there are no holdings in the input
       list.
+    Raises:
+      ValueError: If multiple cost currencies encountered.
     """
     if not holdings:
         return None
@@ -148,30 +258,58 @@ def aggregate_holdings_list(holdings):
     # Note: Holding is a bit overspecified with book and market values. We
     # recompute them from cost and price numbers here anyhow.
     units, total_book_value, total_market_value = ZERO, ZERO, ZERO
+    accounts = set()
+    currencies = set()
+    cost_currencies = set()
+    price_dates = set()
+    book_value_seen = False
+    market_value_seen = False
     for holding in holdings:
         units += holding.number
+        accounts.add(holding.account)
+        price_dates.add(holding.price_date)
+        currencies.add(holding.currency)
+        cost_currencies.add(holding.cost_currency)
 
-        if holding.cost_number:
+        if holding.book_value is not None:
+            total_book_value += holding.book_value
+            book_value_seen = True
+        elif holding.cost_number is not None:
             total_book_value += holding.number * holding.cost_number
+            book_value_seen = True
 
-        if holding.price_number:
+        if holding.market_value is not None:
+            total_market_value += holding.market_value
+            market_value_seen = True
+        elif holding.price_number is not None:
             total_market_value += holding.number * holding.price_number
+            market_value_seen = True
 
-    if not total_book_value:
+    if book_value_seen:
+        average_cost = total_book_value / units if units else None
+    else:
         total_book_value = None
-    average_cost = (total_book_value / units
-                    if total_book_value and units
-                    else None)
+        average_cost = None
 
-    if not total_market_value:
+    if market_value_seen:
+        average_price = total_market_value / units if units else None
+    else:
         total_market_value = None
-    average_price = (total_market_value / units
-                     if total_market_value and units
-                     else None)
+        average_price = None
 
-    first = holdings[0]
-    return Holding(None, units, first.currency, average_cost, first.cost_currency,
-                   total_book_value, total_market_value, average_price, None)
+    if len(cost_currencies) != 1:
+        raise ValueError("Cost currencies are not homogeneous for aggregation: {}".format(
+            ','.join(map(str, cost_currencies))))
+
+    units = units if len(currencies) == 1 else ZERO
+    currency = currencies.pop() if len(currencies) == 1 else '*'
+    cost_currency = cost_currencies.pop()
+    account_ = (accounts.pop()
+                if len(accounts) == 1
+                else account.commonprefix(accounts))
+    price_date = price_dates.pop() if len(price_dates) == 1 else None
+    return Holding(account_, units, currency, average_cost, cost_currency,
+                   total_book_value, total_market_value, average_price, price_date)
 
 
 def convert_to_currency(price_map, target_currency, holdings_list):
@@ -190,42 +328,40 @@ def convert_to_currency(price_map, target_currency, holdings_list):
     # A list of the fields we should convert.
     convert_fields = ('cost_number', 'book_value', 'market_value', 'price_number')
 
-    price_converter = functools.partial(prices.convert_amount, price_map, target_currency)
     new_holdings = []
     for holding in holdings_list:
         if holding.cost_currency == target_currency:
             # The holding is already priced in the target currency; do nothing.
             new_holding = holding
         else:
-            if holding.cost_currency is not None:
-                # There is a valid cost currency; attempt to convert all the fields.
-                base_quote = (holding.cost_currency, target_currency)
-            else:
-                # There is no cost currency; attempt to convert. Note that this may
-                # be a degenerate case of the currency itself being the target
-                # currency, in which case the price-map should yield a rate of 1.0
-                # and everything else works out.
-                assert holding.cost_currency is None
+            if holding.cost_currency is None:
+                # There is no cost currency; make the holding priced in its own
+                # units. The price-map should yield a rate of 1.0 and everything
+                # else works out.
                 if holding.currency is None:
                     raise ValueError("Invalid currency '{}'".format(holding.currency))
-                base_quote = (holding.currency, target_currency)
+                holding = holding._replace(cost_currency=holding.currency)
 
-                # Fill in with the units if the cost currency is not set.
+                # Fill in with book and market value as well.
                 if holding.book_value is None:
                     holding = holding._replace(book_value=holding.number)
                 if holding.market_value is None:
                     holding = holding._replace(market_value=holding.number)
-            try:
-                # Get the conversion rate and replace the required numerical
-                # fields..
-                _, rate = prices.get_latest_price(price_map, base_quote)
+
+            assert holding.cost_currency, "Missing cost currency: {}".format(holding)
+            base_quote = (holding.cost_currency, target_currency)
+
+            # Get the conversion rate and replace the required numerical
+            # fields..
+            _, rate = prices.get_latest_price(price_map, base_quote)
+            if rate is not None:
                 new_holding = misc_utils.map_namedtuple_attributes(
                     convert_fields,
                     lambda number: number if number is None else number * rate,
                     holding)
                 # Ensure we set the new cost currency after conversion.
                 new_holding = new_holding._replace(cost_currency=target_currency)
-            except KeyError:
+            else:
                 # Could not get the rate... clear every field and set the cost
                 # currency to None. This enough marks the holding conversion as
                 # a failure.
@@ -283,3 +419,39 @@ def reduce_relative(holdings):
                                                if holding.market_value is not None
                                                else None)))
     return fractional_holdings
+
+
+def scale_holding(holding, scale_factor):
+    """Scale the values of a holding.
+
+    Args:
+      holding: An instance of Holding.
+      scale_factor: A float or Decimal number.
+    Returns:
+      A scaled copy of the holding.
+    """
+    return Holding(
+        holding.account,
+        holding.number * scale_factor if holding.number else None,
+        holding.currency,
+        holding.cost_number,
+        holding.cost_currency,
+        holding.book_value * scale_factor if holding.book_value else None,
+        holding.market_value * scale_factor if holding.market_value else None,
+        holding.price_number,
+        holding.price_date)
+
+
+def holding_to_position(holding):
+    """Convert the holding to a position.
+
+    Args:
+      holding: An instance of Holding.
+    Returns:
+      An instance of Position.
+    """
+    cost = (amount.Amount(holding.cost_number, holding.cost_currency)
+            if holding.cost_number
+            else None)
+    return position.Position(position.Lot(holding.currency, cost, None),
+                             holding.number)

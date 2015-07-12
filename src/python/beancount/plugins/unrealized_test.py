@@ -1,14 +1,15 @@
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import unittest
 import re
 
 from beancount.plugins import unrealized
-from beancount.core.amount import to_decimal, ZERO
-from beancount.core import account_types
+from beancount.core.number import D
+from beancount.core.number import ZERO
 from beancount.core import data
 from beancount.parser import options
 from beancount.ops import validation
 from beancount.loader import loaddoc
-from beancount.loader import printer
 
 
 def get_entries_with_narration(entries, regexp):
@@ -30,7 +31,7 @@ def get_entries_with_narration(entries, regexp):
 class TestUnrealized(unittest.TestCase):
 
     def test_empty_entries(self):
-        entries, _ = unrealized.add_unrealized_gains([], options.DEFAULT_OPTIONS.copy())
+        entries, _ = unrealized.add_unrealized_gains([], options.OPTIONS_DEFAULTS.copy())
         self.assertEqual([], entries)
 
     @loaddoc
@@ -88,13 +89,13 @@ class TestUnrealized(unittest.TestCase):
 
         house = get_entries_with_narration(new_entries, "units of HOUSE")[0]
         self.assertEqual(2, len(house.postings))
-        self.assertEqual(to_decimal('350'), house.postings[0].position.number)
+        self.assertEqual(D('350'), house.postings[0].position.number)
         self.assertEqual('Assets:Account1', house.postings[0].account)
         self.assertEqual('Income:Account1', house.postings[1].account)
 
         mansion = get_entries_with_narration(new_entries, "units of MANSION")[0]
         self.assertEqual(2, len(mansion.postings))
-        self.assertEqual(to_decimal('-100'), mansion.postings[0].position.number)
+        self.assertEqual(D('-100'), mansion.postings[0].position.number)
 
     @loaddoc
     def test_no_price(self, entries, _, options_map):
@@ -105,6 +106,8 @@ class TestUnrealized(unittest.TestCase):
         2014-01-15 *
           Income:Misc           -1000 USD
           Assets:Account1       10 HOUSE {100 USD}
+
+        2014-01-15 price HOUSE  100 USD
         """
         # Well... if there is a cost, there is at least one price, derived from
         # the cost entry. This should always work.
@@ -122,13 +125,15 @@ class TestUnrealized(unittest.TestCase):
         2014-01-15 *
           Income:Misc           -1000 USD
           Assets:Account1       10 HOUSE {100 USD} @ 120 USD
+
+        2014-01-15 price HOUSE  120 USD
         """
         # Well... if there is a cost, there is at least one price, derived from
         # the cost entry.
         new_entries, _ = unrealized.add_unrealized_gains(entries, options_map)
         unreal_entries = unrealized.get_unrealized_entries(new_entries)
         self.assertEqual(1, len(unreal_entries))
-        self.assertEqual(to_decimal('200'),
+        self.assertEqual(D('200'),
                          unreal_entries[0].postings[0].position.number)
 
     @loaddoc
@@ -154,6 +159,8 @@ class TestUnrealized(unittest.TestCase):
         2014-01-15 *
           Income:Misc
           Assets:Account1       10 HOUSE {100 USD}
+
+        2014-01-15 price HOUSE  100 USD
         """
         entries, errors = unrealized.add_unrealized_gains(entries, options_map, '_invalid_')
         self.assertEqual([unrealized.UnrealizedError], list(map(type, errors)))
@@ -189,32 +196,32 @@ class TestUnrealized(unittest.TestCase):
         entry = get_entries_with_narration(unreal_entries, '1 units')[0]
         self.assertEqual("Assets:Account1:Gains", entry.postings[0].account)
         self.assertEqual("Income:Account1:Gains", entry.postings[1].account)
-        self.assertEqual(to_decimal("10.00"), entry.postings[0].position.number)
-        self.assertEqual(to_decimal("-10.00"), entry.postings[1].position.number)
+        self.assertEqual(D("10.00"), entry.postings[0].position.number)
+        self.assertEqual(D("-10.00"), entry.postings[1].position.number)
 
         entry = get_entries_with_narration(unreal_entries, '2 units')[0]
         self.assertEqual("Liabilities:Account1:Gains", entry.postings[0].account)
         self.assertEqual("Income:Account1:Gains", entry.postings[1].account)
-        self.assertEqual(to_decimal("18.00"), entry.postings[0].position.number)
-        self.assertEqual(to_decimal("-18.00"), entry.postings[1].position.number)
+        self.assertEqual(D("18.00"), entry.postings[0].position.number)
+        self.assertEqual(D("-18.00"), entry.postings[1].position.number)
 
         entry = get_entries_with_narration(unreal_entries, '3 units')[0]
         self.assertEqual("Equity:Account1:Gains", entry.postings[0].account)
         self.assertEqual("Income:Account1:Gains", entry.postings[1].account)
-        self.assertEqual(to_decimal("24.00"), entry.postings[0].position.number)
-        self.assertEqual(to_decimal("-24.00"), entry.postings[1].position.number)
+        self.assertEqual(D("24.00"), entry.postings[0].position.number)
+        self.assertEqual(D("-24.00"), entry.postings[1].position.number)
 
         entry = get_entries_with_narration(unreal_entries, '4 units')[0]
         self.assertEqual("Expenses:Account1:Gains", entry.postings[0].account)
         self.assertEqual("Income:Account1:Gains", entry.postings[1].account)
-        self.assertEqual(to_decimal("28.00"), entry.postings[0].position.number)
-        self.assertEqual(to_decimal("-28.00"), entry.postings[1].position.number)
+        self.assertEqual(D("28.00"), entry.postings[0].position.number)
+        self.assertEqual(D("-28.00"), entry.postings[1].position.number)
 
         entry = get_entries_with_narration(unreal_entries, '5 units')[0]
         self.assertEqual("Income:Account1:Gains", entry.postings[0].account)
         self.assertEqual("Income:Account1:Gains", entry.postings[1].account)
-        self.assertEqual(to_decimal("30.00"), entry.postings[0].position.number)
-        self.assertEqual(to_decimal("-30.00"), entry.postings[1].position.number)
+        self.assertEqual(D("30.00"), entry.postings[0].position.number)
+        self.assertEqual(D("-30.00"), entry.postings[1].position.number)
 
     @loaddoc
     def test_create_open_directive(self, entries, errors, options_map):
@@ -226,7 +233,7 @@ class TestUnrealized(unittest.TestCase):
           Income:Misc
           Assets:Account1      1 HOUSE {100 USD}
 
-        ;;2014-01-16 price HOUSE 110 USD
+        2014-01-16 price HOUSE 110 USD
         """
         # Test the creation of a new, undeclared income account, check that open
         # directives are present for accounts that have been created
@@ -254,27 +261,30 @@ class TestUnrealized(unittest.TestCase):
                           if isinstance(entry, data.Open)})
 
         # Validate the new entries; validation should pass.
-        valid_errors = validation.validate(new_entries)
+        valid_errors = validation.validate(new_entries, options_map)
         self.assertFalse(valid_errors)
 
     @loaddoc
-    def test_no_units_but_diff(self, entries, _, options_map):
+    def test_no_units_but_leaked_cost_basis(self, entries, errors, options_map):
         """
         ;; This probable mistake triggers an error in the unrealized gains
-        ;; calculation.
+        ;; calculation. This will occur if you use unstrict booking and leak
+        ;; some cost basis, resulting in an holding of zero units but some
+        ;; non-zero book value (which should be ignored).
 
         2009-08-17 open Assets:Cash
-        2009-08-17 open Assets:Stocks
+        2009-08-17 open Assets:Stocks  "NONE"
         2009-08-17 open Income:Stocks
 
         2009-08-18 * "Bought titles"
           Assets:Cash      -5000 EUR
-          Assets:Stocks     5000 PP {1.0 EUR}
+          Assets:Stocks     5000 HOOL {1.0 EUR}
 
         2013-06-19 * "Sold with loss"
-          Assets:Stocks    -5000 PP {1.1 EUR} ;; Incorrect
+          Assets:Stocks    -5000 HOOL {1.1 EUR} ;; Incorrect
           Assets:Cash       3385 EUR
           Income:Stocks
         """
-        new_entries, errors = unrealized.add_unrealized_gains(entries, options_map)
-        self.assertEqual([unrealized.UnrealizedError], list(map(type, errors)))
+        self.assertFalse(errors)
+        new_entries, new_errors = unrealized.add_unrealized_gains(entries, options_map)
+        self.assertFalse(new_errors)
