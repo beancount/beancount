@@ -90,7 +90,8 @@ extern int yydebug;
     NUMBER = 300,
     TAG = 301,
     LINK = 302,
-    KEY = 303
+    KEY = 303,
+    NEG = 304
   };
 #endif
 
@@ -109,7 +110,7 @@ union YYSTYPE
         PyObject* pyobj2;
     } pairobj;
 
-#line 113 "src/python/beancount/parser/grammar.h" /* yacc.c:1915  */
+#line 114 "src/python/beancount/parser/grammar.h" /* yacc.c:1915  */
 };
 
 typedef union YYSTYPE YYSTYPE;

@@ -216,6 +216,13 @@ const char* getTokenName(int token);
 %type <pyobj> plugin
 %type <pyobj> file
 
+/* Operator precedence.
+ * This is pulled straight out of the textbook example:
+ * http://www.gnu.org/software/bison/manual/html_node/Infix-Calc.html#Infix-Calc
+ */
+%left MINUS PLUS
+%left ASTERISK SLASH
+%precedence NEG   /* negation--unary minus */
 
 /* Start symbol. */
 %start file
@@ -263,13 +270,34 @@ number_expr : NUMBER
             {
                 $$ = $1;
             }
-            | number_expr ASTERISK NUMBER
+            | number_expr PLUS number_expr
+            {
+                $$ = PyNumber_Add($1, $3);
+                DECREF2($1, $3);
+            }
+            | number_expr MINUS number_expr
+            {
+                $$ = PyNumber_Subtract($1, $3);
+                DECREF2($1, $3);
+            }
+            | number_expr ASTERISK number_expr
             {
                 $$ = PyNumber_Multiply($1, $3);
+                DECREF2($1, $3);
             }
-            | number_expr SLASH NUMBER
+            | number_expr SLASH number_expr
             {
                 $$ = PyNumber_TrueDivide($1, $3);
+                DECREF2($1, $3);
+            }
+            | MINUS number_expr %prec NEG
+            {
+                $$ = PyNumber_Negative($2);
+                DECREF1($2);
+            }
+            | LPAREN number_expr RPAREN
+            {
+                $$ = $2;
             }
 
 txn_fields : empty

@@ -20,6 +20,7 @@ from beancount.core import interpolate_test
 from beancount.utils import test_utils
 from beancount.parser import grammar
 from beancount.parser import cmptest
+from beancount.parser import printer
 
 
 def check_list(test, objlist, explist):
@@ -1159,7 +1160,31 @@ class TestArithmetic(unittest.TestCase):
     maxDiff = None
 
     @parser.parsedoc
-    def test_number_expr_MUL(self, entries, errors, _):
+    def test_number_expr__add(self, entries, errors, _):
+        """
+          2013-05-18 * "Test"
+            Assets:Something    12 + 3 USD
+            Assets:Something   7.5 + 3.1 USD
+        """
+        self.assertEqual(1, len(entries))
+        postings = entries[0].postings
+        self.assertEqual(D('15'), postings[0].position.number)
+        self.assertEqual(D('10.6'), postings[1].position.number)
+
+    @parser.parsedoc
+    def test_number_expr__subtract(self, entries, errors, _):
+        """
+          2013-05-18 * "Test"
+            Assets:Something    12 - 3 USD
+            Assets:Something   7.5 - 3.1 USD
+        """
+        self.assertEqual(1, len(entries))
+        postings = entries[0].postings
+        self.assertEqual(D('9'), postings[0].position.number)
+        self.assertEqual(D('4.4'), postings[1].position.number)
+
+    @parser.parsedoc
+    def test_number_expr__multiply(self, entries, errors, _):
         """
           2013-05-18 * "Test"
             Assets:Something    12 * 3 USD
@@ -1171,7 +1196,7 @@ class TestArithmetic(unittest.TestCase):
         self.assertEqual(D('23.25'), postings[1].position.number)
 
     @parser.parsedoc
-    def test_number_expr_DIV(self, entries, errors, _):
+    def test_number_expr__divide(self, entries, errors, _):
         """
           2013-05-18 * "Test"
             Assets:Something    12 / 3 USD
@@ -1181,6 +1206,47 @@ class TestArithmetic(unittest.TestCase):
         postings = entries[0].postings
         self.assertEqual(D('4'), postings[0].position.number)
         self.assertEqual(D('2.5'), postings[1].position.number)
+
+    @parser.parsedoc
+    def test_number_expr__negative(self, entries, errors, _):
+        """
+          2013-05-18 * "Test"
+            Assets:Something    -12 USD
+            Assets:Something   -7.5 USD
+            Assets:Something   - 7.5 USD
+        """
+        self.assertEqual(1, len(entries))
+        postings = entries[0].postings
+        self.assertEqual(D('-12'), postings[0].position.number)
+        self.assertEqual(D('-7.5'), postings[1].position.number)
+        self.assertEqual(D('-7.5'), postings[2].position.number)
+
+    @parser.parsedoc
+    def test_number_expr__precedence(self, entries, errors, _):
+        """
+          2013-05-18 * "Test"
+            Assets:Something   2 * 3 + 4 USD
+            Assets:Something   2 + 3 * 4 USD
+            Assets:Something   2 + -3 * 4 USD
+            Assets:Something   (2 + -3) * 4 USD
+        """
+        self.assertEqual(1, len(entries))
+        self.assertListEqual(
+            [D('10'), D('14'), D('-10'), D('-4')],
+            [posting.position.number for posting in entries[0].postings])
+
+    @parser.parsedoc
+    def test_number_expr__groups(self, entries, errors, _):
+        """
+          2013-05-18 * "Test"
+            Assets:Something   (2 + -3) * 4 USD
+            Assets:Something   2 * (2 + -3) USD
+        """
+        self.assertEqual(1, len(entries))
+        self.assertListEqual(
+            [D('-4'), D('-2')],
+            [posting.position.number
+             for posting in entries[0].postings])
 
 
 class TestLexerAndParserErrors(cmptest.TestCase):
@@ -1250,7 +1316,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
         """
         self.assertEqual(0, len(entries))
         self.assertEqual(1, len(errors))
-        self.assertRegexpMatches(errors[0].message, r"Invalid token: '\)'")
+        self.assertRegexpMatches(errors[0].message, r"syntax error, unexpected RPAREN")
 
     @parser.parsedoc
     def test_lexer_invalid_token__recovery(self, entries, errors, _):
@@ -1262,7 +1328,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
           2000-01-02 open Assets:Something
         """, entries)
         self.assertEqual(1, len(errors))
-        self.assertRegexpMatches(errors[0].message, r"Invalid token: '\)'")
+        self.assertRegexpMatches(errors[0].message, r"syntax error, unexpected RPAREN")
 
     @parser.parsedoc
     def test_lexer_exception(self, entries, errors, _):
@@ -1290,6 +1356,21 @@ class TestLexerAndParserErrors(cmptest.TestCase):
         txn_strings = textwrap.dedent("""
 
           2000-01-02 *
+            Assets:Working  `
+            Assets:Working  11.11 USD
+            Assets:Working  22.22 USD
+
+          2000-01-02 *
+            Assets:Working  11.11 USD
+            Assets:Working  `
+            Assets:Working  22.22 USD
+
+          2000-01-02 *
+            Assets:Working  11.11 USD
+            Assets:Working  22.22 USD
+            Assets:Working  `
+
+          2000-01-02 *
             Assets:Working  )
             Assets:Working  11.11 USD
             Assets:Working  22.22 USD
@@ -1303,21 +1384,6 @@ class TestLexerAndParserErrors(cmptest.TestCase):
             Assets:Working  11.11 USD
             Assets:Working  22.22 USD
             Assets:Working  )
-
-          2000-01-02 *
-            Assets:Working  2014-13-32
-            Assets:Working  11.11 USD
-            Assets:Working  22.22 USD
-
-          2000-01-02 *
-            Assets:Working  11.11 USD
-            Assets:Working  2014-13-32
-            Assets:Working  22.22 USD
-
-          2000-01-02 *
-            Assets:Working  11.11 USD
-            Assets:Working  22.22 USD
-            Assets:Working  2014-13-32
 
         """).strip().split('\n\n')
         self.assertEqual(6, len(txn_strings))
@@ -1334,7 +1400,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
             self.assertEqual(1, len(entries))
             self.assertEqual(1, len(errors))
             self.assertRegexpMatches(errors[0].message,
-                                     '(Invalid token|month must be in 1..12)')
+                                     '(Invalid token|unexpected RPAREN)')
 
     @parser.parsedoc
     def test_grammar_syntax_error(self, entries, errors, _):

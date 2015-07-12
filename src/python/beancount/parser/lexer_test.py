@@ -92,8 +92,10 @@ class TestLexer(unittest.TestCase):
             ('NUMBER', 8, '123', D('123')),
             ('NUMBER', 8, '123.45', D('123.45')),
             ('NUMBER', 8, '123.456789', D('123.456789')),
-            ('NUMBER', 8, '-123', D('-123')),
-            ('NUMBER', 8, '-123.456789', D('-123.456789')),
+            ('MINUS', 8, '-', None),
+            ('NUMBER', 8, '123', D('123')),
+            ('MINUS', 8, '-', None),
+            ('NUMBER', 8, '123.456789', D('123.456789')),
             ('EOL', 9, '\n', None),
             ('TAG', 9, '#sometag123', 'sometag123'),
             ('EOL', 10, '\n', None),
@@ -158,7 +160,7 @@ class TestLexer(unittest.TestCase):
         """\
           - 1002.00 USD
         """
-        self.assertTrue(errors)
+        self.assertFalse(errors)
 
     @lex_tokens
     def test_number_dots(self, tokens, errors):
@@ -432,12 +434,12 @@ class TestLexerErrors(unittest.TestCase):
     @lex_tokens
     def test_lexer_invalid_token(self, tokens, errors):
         """
-          2000-01-01 open ) USD
+          2000-01-01 open ` USD
         """
         self.assertEqual([('EOL', 2, '\n', None),
                           ('DATE', 2, '2000-01-01', datetime.date(2000, 1, 1)),
                           ('OPEN', 2, 'open', None),
-                          ('LEX_ERROR', 2, ')', None),
+                          ('LEX_ERROR', 2, '`', None),
                           ('CURRENCY', 2, 'USD', 'USD'),
                           ('EOL', 3, '\n', None),
                           ('EOL', 3, '\x00', None)],
