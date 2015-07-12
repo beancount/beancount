@@ -6,6 +6,7 @@ provide links within a web interface.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
+from beancount.core import display_context
 from beancount.parser import printer
 
 
@@ -13,6 +14,16 @@ class HTMLFormatter:
     """A trivial formatter object that can be used to format strings as themselves.
     This mainly defines an interface to implement.
     """
+
+    def __init__(self, dcontext):
+        """Create an instance of HTMLFormatter.
+
+        Args:
+          dcontext: DisplayContext to use to render the numbers.
+        """
+        self._dformat = dcontext.build(
+            precision=display_context.Precision.MOST_COMMON,
+            commas=True)
 
     def render_account(self, account_name):
         """Render an account name.
@@ -24,6 +35,27 @@ class HTMLFormatter:
         """
         return account_name
 
+    def render_number(self, number, currency):
+        """Render a number for a currency using the formatter's display context.
+
+        Args:
+          number: A Decimal instance, the number to be rendered.
+          currency: A string, the commodity the number represent.
+        Returns:
+          A string, the formatted number to render.
+        """
+        return self._dformat.format(number, currency)
+
+    def render_amount(self, amount):
+        """Render an amount.
+
+        Args:
+          amount: An Amount instance.
+        Returns:
+          A string of HTML to be spliced inside a table cell.
+        """
+        return amount.to_string(self._dformat)
+
     def render_inventory(self, inv):
         """Render an inventory.
 
@@ -33,14 +65,13 @@ class HTMLFormatter:
         Args:
           inv: An Inventory instance.
         Returns:
-          A string of HTM to be spliced inside a table cell.
+          A string of HTML to be spliced inside a table cell.
         """
-        return ('<br/>'.join(map(str, inv.get_positions()))
-                if not inv.is_empty()
-                else '')
+        return '<br/>'.join(position_.to_string(self._dformat)
+                            for position_ in sorted(inv))
 
     def render_context(self, entry):
-        """Render a transaction context (maybe as an HTML link).
+        """Render a reference to context around a transaction (maybe as an HTML link).
 
         Args:
           entry: A directive.

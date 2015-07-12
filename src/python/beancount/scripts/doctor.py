@@ -199,7 +199,7 @@ def do_context(filename, args):
     # Load the input file.
     entries, errors, options_map = loader.load_file(filename)
 
-    dcontext = options_map['display_context']
+    dcontext = options_map['dcontext']
 
     # Note: Make sure to use the absolute filename used by the parser to resolve
     # the file.
@@ -299,7 +299,7 @@ def do_missing_open(filename, args):
                 data.Open(data.new_metadata(filename, 0), first_use_date, account,
                           None, None))
 
-    dcontext = options_map['display_context']
+    dcontext = options_map['dcontext']
     printer.print_entries(data.sorted(new_entries), dcontext)
 
 
@@ -313,7 +313,7 @@ def do_display_context(filename, args):
     """
     from beancount import loader
     entries, errors, options_map = loader.load_file(filename)
-    dcontext = options_map['display_context']
+    dcontext = options_map['dcontext']
     sys.stdout.write(str(dcontext))
 
 

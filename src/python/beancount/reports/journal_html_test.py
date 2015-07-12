@@ -7,6 +7,7 @@ import unittest
 from beancount import loader
 from beancount.core import realization
 from beancount.core import data
+from beancount.core import display_context
 from beancount.reports import html_formatter
 from beancount.reports import journal_html
 
@@ -56,7 +57,7 @@ class TestJournalRender(unittest.TestCase):
         self.real_account = realization.get(real_root, 'Assets:Checking')
 
     def test_iterate_html_postings(self):
-        formatter = html_formatter.HTMLFormatter()
+        formatter = html_formatter.HTMLFormatter(display_context.DEFAULT_DISPLAY_CONTEXT)
         rows = list(journal_html.iterate_html_postings(self.real_account.txn_postings,
                                                        formatter))
 
@@ -88,7 +89,7 @@ class TestJournalRender(unittest.TestCase):
 
     def test_html_entries_table_with_balance(self):
         oss = io.StringIO()
-        formatter = html_formatter.HTMLFormatter()
+        formatter = html_formatter.HTMLFormatter(display_context.DEFAULT_DISPLAY_CONTEXT)
         result = journal_html.html_entries_table_with_balance(
             oss, self.real_account.txn_postings, formatter, True)
         html = oss.getvalue()
@@ -98,7 +99,7 @@ class TestJournalRender(unittest.TestCase):
 
     def test_html_entries_table(self):
         oss = io.StringIO()
-        formatter = html_formatter.HTMLFormatter()
+        formatter = html_formatter.HTMLFormatter(display_context.DEFAULT_DISPLAY_CONTEXT)
         result = journal_html.html_entries_table_with_balance(
             oss, self.real_account.txn_postings, formatter, True)
         html = oss.getvalue()
