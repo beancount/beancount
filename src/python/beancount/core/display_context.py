@@ -59,7 +59,6 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
 import io
-import enum
 from decimal import Decimal
 
 # pylint: disable=invalid-name
