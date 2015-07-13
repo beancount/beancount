@@ -174,16 +174,16 @@ class LexBuilder(object):
         """
         return link
 
-    def KEY(self, key):
-        """Process a KEY token.
+    def KEY(self, ident):
+        """Process an identifier token.
 
         Args:
-          key: a str, the name of the key string.
+          ident: a str, the name of the key string.
         Returns:
           The link string itself. For now we don't need to represent this by
           an object.
         """
-        return key
+        return ident
 
 
 def lex_iter(file, builder=None, encoding=None):

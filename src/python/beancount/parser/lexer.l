@@ -324,7 +324,7 @@ FALSE		{
 }
 
  /* Key */
-[a-z][a-z0-9\-_]+: 		{
+[a-z][a-zA-Z0-9\-_]+: 		{
     BUILD_LEX("KEY", "s#", yytext, yyleng-1);
     return KEY;
 }
