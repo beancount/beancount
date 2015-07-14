@@ -3,6 +3,7 @@ Unit tests for the Inventory class.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import datetime
 import unittest
 import copy
 from datetime import date
@@ -118,6 +119,17 @@ class TestInventory(unittest.TestCase):
             Inventory([Position(Lot("GOOG", A('532.43 USD'), None),
                                 D('2.2')),
                        Position(Lot("EUR", None, None), D('3.413'))]),
+            inv)
+
+        inv = inventory.from_string(
+            '2.2 GOOG {532.43 USD}, 2.3 GOOG {564.00 USD, 2015-07-14}, 3.413 EUR')
+        self.assertEqual(
+            Inventory([Position(Lot("GOOG", A('532.43 USD'), None),
+                                D('2.2')),
+                       Position(Lot("GOOG", A('564.00 USD'), datetime.date(2015, 7, 14)),
+                                D('2.3')),
+                       Position(Lot("EUR", None, None),
+                                D('3.413'))]),
             inv)
 
     def test_ctor_empty_len(self):
