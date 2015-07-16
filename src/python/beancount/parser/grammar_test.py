@@ -968,14 +968,15 @@ class TestParseLots(unittest.TestCase):
             Assets:Invest:AAPL    1.1 AAPL {45.23 USD / 2015-07-16 / "blabla"}
             Assets:Invest:Cash
         """
-        self.assertEqual(1, len(errors))
-        self.assertTrue(re.search("Labels not supported", errors[0].message))
+        self.assertEqual(3, len(errors))
+        self.assertTrue(re.search("slash", errors[0].message))
+        self.assertTrue(re.search("slash", errors[1].message))
+        self.assertTrue(re.search("Labels not supported", errors[2].message))
         pos = entries[0].postings[0].position
         self.assertEqual(D('1.1'), pos.number)
         self.assertEqual(position.Lot('AAPL',
                                       amount.from_string('45.23 USD'),
-                                      datetime.date(2015, 7, 16)),
-                         pos.lot)
+                                      datetime.date(2015, 7, 16)), pos.lot)
 
 
 class TestCurrencies(unittest.TestCase):
