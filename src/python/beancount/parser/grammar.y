@@ -148,6 +148,7 @@ const char* getTokenName(int token);
 %token <string> EQUAL      /* = */
 %token <string> COMMA      /* , */
 %token <string> TILDE      /* ~ */
+%token <string> HASH       /* # */
 %token <string> ASTERISK   /* * */
 %token <string> SLASH      /* / */
 %token <string> PLUS       /* + */
@@ -530,7 +531,7 @@ compound_amount : maybe_number CURRENCY
                     BUILDY(DECREF2($1, $2),
                            $$, "compound_amount", "OOO", $1, Py_None, $2);
                 }
-                | maybe_number TILDE maybe_number CURRENCY
+                | maybe_number HASH maybe_number CURRENCY
                 {
                     BUILDY(DECREF3($1, $3, $4),
                            $$, "compound_amount", "OOO", $1, $3, $4);
@@ -717,6 +718,8 @@ const char* getTokenName(int token)
         case RCURL     : return "RCURL";
         case EQUAL     : return "EQUAL";
         case COMMA     : return "COMMA";
+        case TILDE     : return "TILDE";
+        case HASH      : return "HASH";
         case PLUS      : return "PLUS";
         case MINUS     : return "MINUS";
         case ASTERISK  : return "ASTERISK";

@@ -324,7 +324,7 @@ class Position:
             expressions = [expr.strip() for expr in re.split('[,/]', cost_expression)]
             for expr in expressions:
                 # Match a compound number.
-                match = re.match(r'({})\s*(?:~\s*({}))?\s+({})'.format(
+                match = re.match(r'({})\s*(?:#\s*({}))?\s+({})'.format(
                     NUMBER_RE, NUMBER_RE, CURRENCY_RE), expr)
                 if match:
                     per_number, total_number, cost_currency = match.group(1, 2, 3)

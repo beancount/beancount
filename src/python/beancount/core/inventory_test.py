@@ -133,7 +133,7 @@ class TestInventory(unittest.TestCase):
             inv)
 
         inv = inventory.from_string(
-            '1.1 GOOG {500.00 ~ 11.00 USD}, 100 CAD')
+            '1.1 GOOG {500.00 # 11.00 USD}, 100 CAD')
         self.assertEqual(
             Inventory([Position(Lot("GOOG", A('510.00 USD'), None),
                                 D('1.1')),

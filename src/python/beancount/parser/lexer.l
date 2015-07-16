@@ -151,6 +151,7 @@ int strtonl(const char* buf, size_t nchars);
 \}		{ return RCURL; }
 ,		{ return COMMA; }
 \~		{ return TILDE; }
+\#		{ return HASH; }
 \+		{ return PLUS; }
 \-		{ return MINUS; }
 \/		{ return SLASH; }
