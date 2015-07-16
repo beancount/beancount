@@ -44,6 +44,10 @@ class TestPosition(unittest.TestCase):
         lot_date = datetime.date(2014, 6, 15)
         self.assertEqual(Position(Lot("GOOG", cost, lot_date), D('2.2')), pos)
 
+    def test_from_string__with_label(self):
+        pos = from_string('2.2 GOOG {"78c3f7f1315b"}')
+        self.assertEqual(Position(Lot("GOOG", None, None), D('2.2')), pos)
+
     def test_from_string__with_total_cost(self):
         pos = from_string('1.1 GOOG {500.00 # 11.00 USD}')
         self.assertEqual(
@@ -53,7 +57,7 @@ class TestPosition(unittest.TestCase):
             pos)
 
     def test_from_string__with_everything(self):
-        pos = from_string('20 GOOG {532.43 # 20.00 USD, e4dc1a361022, 2014-06-15}')
+        pos = from_string('20 GOOG {532.43 # 20.00 USD, "e4dc1a361022", 2014-06-15}')
         cost = Amount(D('533.43'), 'USD')
         lot_date = datetime.date(2014, 6, 15)
         self.assertEqual(Position(Lot("GOOG", cost, lot_date), D('20')), pos)

@@ -950,7 +950,6 @@ class TestParseLots(unittest.TestCase):
         self.assertEqual(position.Lot('AAPL', amount.from_string('45.23 USD'), None),
                          pos.lot)
 
-
     @parser.parsedoc
     def test_lot_total_just_currency(self, entries, errors, _):
         """
@@ -961,6 +960,22 @@ class TestParseLots(unittest.TestCase):
         """
         self.assertTrue(errors)
         self.assertTrue(re.search("Total cost not supported", errors[0].message))
+
+    @parser.parsedoc
+    def test_lot_with_slashes(self, entries, errors, _):
+        """
+          2014-01-01 *
+            Assets:Invest:AAPL    1.1 AAPL {45.23 USD / 2015-07-16 / "blabla"}
+            Assets:Invest:Cash
+        """
+        self.assertEqual(1, len(errors))
+        self.assertTrue(re.search("Labels not supported", errors[0].message))
+        pos = entries[0].postings[0].position
+        self.assertEqual(D('1.1'), pos.number)
+        self.assertEqual(position.Lot('AAPL',
+                                      amount.from_string('45.23 USD'),
+                                      datetime.date(2015, 7, 16)),
+                         pos.lot)
 
 
 class TestCurrencies(unittest.TestCase):

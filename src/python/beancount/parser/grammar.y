@@ -555,6 +555,8 @@ lot_spec : LCURL lot_comp_list RCURL
                     $$, "lot_spec", "O", $2);
          }
 
+lot_comp_sep : COMMA | SLASH
+
 lot_comp_list : empty
               {
                   Py_INCREF(Py_None);
@@ -565,7 +567,7 @@ lot_comp_list : empty
                   BUILDY(DECREF1($1),
                          $$, "handle_list", "OO", Py_None, $1);
               }
-              | lot_comp_list COMMA lot_comp
+              | lot_comp_list lot_comp_sep lot_comp
               {
                   BUILDY(DECREF2($1, $3),
                          $$, "handle_list", "OO", $1, $3);

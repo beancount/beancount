@@ -344,7 +344,7 @@ class Position:
                     continue
 
                 # Match a label.
-                match = re.match(r'[a-zA-Z][a-zA-Z0-9]*', expr)
+                match = re.match(r'"([^"]+)*"', expr)
                 if match:
                     label = match.groups(1)
                     logging.warning("Label not supported yet.")
