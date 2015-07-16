@@ -132,6 +132,15 @@ class TestInventory(unittest.TestCase):
                                 D('3.413'))]),
             inv)
 
+        inv = inventory.from_string(
+            '1.1 GOOG {500.00 ~ 11.00 USD}, 100 CAD')
+        self.assertEqual(
+            Inventory([Position(Lot("GOOG", A('510.00 USD'), None),
+                                D('1.1')),
+                       Position(Lot("CAD", None, None),
+                                D('100'))]),
+            inv)
+
     def test_ctor_empty_len(self):
         # Test regular constructor.
         inv = Inventory()
