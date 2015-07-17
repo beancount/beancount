@@ -37,7 +37,7 @@ class TestOpenClose(cmptest.TestCase):
         2012-03-01 * "Some income and expense to be summarized"
           Income:Salary        10000 USD
           Expenses:Taxes        3600 USD
-          Assets:US:Checking
+          Assets:US:Checking  -13600 USD
 
         2012-03-02 * "Some conversion to be summarized"
           Assets:US:Checking   -5000 USD @ 1.2 CAD
@@ -48,7 +48,7 @@ class TestOpenClose(cmptest.TestCase):
         2012-08-01 * "Some income and expense to show"
           Income:Salary        11000 USD
           Expenses:Taxes        3200 USD
-          Assets:US:Checking
+          Assets:US:Checking  -14200 USD
 
         2012-08-02 * "Some other conversion to be summarized"
           Assets:US:Checking   -3000 USD @ 1.25 CAD
@@ -59,7 +59,7 @@ class TestOpenClose(cmptest.TestCase):
         2012-11-01 * "Some income and expense to be truncated"
           Income:Salary        10000 USD
           Expenses:Taxes        3600 USD
-          Assets:US:Checking
+          Assets:US:Checking  -13600 USD
 
         """
         self.assertFalse(errors)
@@ -153,7 +153,7 @@ class TestOpenClose(cmptest.TestCase):
         2012-03-01 * "Some income and expense to be summarized"
           Income:Salary        10000 USD
           Expenses:Taxes        3600 USD
-          Assets:US:Checking
+          Assets:US:Checking  -13600 USD
 
         2012-03-02 * "Some conversion to be summarized"
           Assets:US:Checking   -5000 USD @ 1.2 CAD
@@ -164,7 +164,7 @@ class TestOpenClose(cmptest.TestCase):
         2012-08-01 * "Some income and expense to show"
           Income:Salary        11000 USD
           Expenses:Taxes        3200 USD
-          Assets:US:Checking
+          Assets:US:Checking  -14200 USD
 
         2012-08-02 * "Some other conversion to be summarized"
           Assets:US:Checking   -3000 USD @ 1.25 CAD
@@ -205,7 +205,7 @@ class TestOpenClose(cmptest.TestCase):
         2012-03-01 * "Some income and expense to be summarized"
           Income:Salary        10000 USD
           Expenses:Taxes        3600 USD
-          Assets:US:Checking
+          Assets:US:Checking  -13600 USD
 
         2012-03-02 * "Some conversion to be summarized"
           Assets:US:Checking   -5000 USD @ 1.2 CAD
@@ -216,7 +216,7 @@ class TestOpenClose(cmptest.TestCase):
         2012-08-01 * "Some income and expense to show"
           Income:Salary        11000 USD
           Expenses:Taxes        3200 USD
-          Assets:US:Checking
+          Assets:US:Checking  -14200 USD
 
         2012-08-02 * "Some other conversion to be summarized"
           Assets:US:Checking   -3000 USD @ 1.25 CAD
@@ -338,7 +338,7 @@ class TestClamp(cmptest.TestCase):
         2012-03-01 * "Some income and expense to be summarized"
           Income:Salary        10000.00 USD
           Expenses:Taxes        3600.00 USD
-          Assets:US:Checking
+          Assets:US:Checking  -13600.00 USD
 
         2012-03-02 * "Some conversion to be summarized"
           Assets:US:Checking   -5000.00 USD @ 1.2 CAD
@@ -349,7 +349,7 @@ class TestClamp(cmptest.TestCase):
         2012-08-01 * "Some income and expense to show"
           Income:Salary        11000.00 USD
           Expenses:Taxes        3200.00 USD
-          Assets:US:Checking
+          Assets:US:Checking  -14200.00 USD
 
         2012-08-02 * "Some other conversion to be summarized"
           Assets:US:Checking   -3000.00 USD @ 1.25 CAD
@@ -360,7 +360,7 @@ class TestClamp(cmptest.TestCase):
         2012-11-01 * "Some income and expense to be truncated"
           Income:Salary        10000.00 USD
           Expenses:Taxes        3600.00 USD
-          Assets:US:Checking
+          Assets:US:Checking  -13600.00 USD
 
         """
         self.assertFalse(errors)
@@ -508,18 +508,18 @@ INPUT_BEFORE = """
 
 2010-11-20 * "First hit on credit card account"
   Liabilities:US:Chase:CreditCard   -67.20 USD
-  Expenses:Restaurant
+  Expenses:Restaurant                67.20 USD
 
 2010-11-26 * "Second hit on credit card account (same account)"
   Liabilities:US:Chase:CreditCard   -345.23 USD
-  Expenses:Flights
+  Expenses:Flights                   345.23 USD
 
 2010-11-30 *
   Assets:US:Chase:Checking      -80.02 USD
-  Expenses:Internet
+  Expenses:Internet              80.02 USD
 
 2010-12-05 * "Unit held at cost"
-  Assets:US:Investing:GOOG      5 GOOG {510.00 USD}
+  Assets:US:Investing:GOOG        5 GOOG {510.00 USD}
   Assets:US:Chase:Checking    -2550 USD
 
 2010-12-05 * "Conversion"
@@ -545,13 +545,13 @@ INPUT_PERIOD = """
 
 2011-01-20 * "Dinner at Cull & Pistol"
   Liabilities:US:Chase:CreditCard   -89.23 USD
-  Expenses:Restaurant
+  Expenses:Restaurant                89.23 USD
 
 2011-02-01 open  Assets:Cash
 
 2011-02-02 * "Cafe Mogador"
   Expenses:Restaurant      37.92 USD
-  Assets:Cash
+  Assets:Cash             -37.92 USD
 
 2011-02-16 *
   Income:US:Employer:Salary    -5000.00 USD

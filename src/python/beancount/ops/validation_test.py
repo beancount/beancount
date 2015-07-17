@@ -7,6 +7,7 @@ import textwrap
 from beancount.core import data
 from beancount.parser import parser
 from beancount.parser import cmptest
+from beancount.parser import printer
 from beancount.ops import validation
 from beancount import loader
 
@@ -20,24 +21,24 @@ class TestValidateInventoryBooking(cmptest.TestCase):
         2014-01-01 open Assets:Investments:Stock
 
         2014-06-22 * "Add some positive units"
-          Assets:Investments:Stock   1 GOOG {500 USD}
-          Assets:Investments:Cash
+          Assets:Investments:Stock    1 GOOG {500 USD}
+          Assets:Investments:Cash  -500 USD
 
         2014-06-23 * "Down to zero"
-          Assets:Investments:Stock  -1 GOOG {500 USD}
-          Assets:Investments:Cash
+          Assets:Investments:Stock   -1 GOOG {500 USD}
+          Assets:Investments:Cash   500 USD
 
         2014-06-24 * "Go negative from zero"
-          Assets:Investments:Stock  -1 GOOG {500 USD}
-          Assets:Investments:Cash
+          Assets:Investments:Stock   -1 GOOG {500 USD}
+          Assets:Investments:Cash   500 USD
 
         2014-06-25 * "Go positive much"
-          Assets:Investments:Stock  11 GOOG {500 USD}
-          Assets:Investments:Cash
+          Assets:Investments:Stock    11 GOOG {500 USD}
+          Assets:Investments:Cash  -5500 USD
 
         2014-06-26 * "Cross to negative from above zero"
           Assets:Investments:Stock  -15 GOOG {500 USD}
-          Assets:Investments:Cash
+          Assets:Investments:Cash  7500 USD
 
         """)
 
@@ -61,7 +62,7 @@ class TestValidateInventoryBooking(cmptest.TestCase):
 
           2013-05-02 *
             Assets:Bank:Investing                -1 GOOG {501 USD}
-            Equity:Opening-Balances
+            Equity:Opening-Balances             501 USD
         """
         validation_errors = validation.validate_inventory_booking(entries, options_map)
         self.assertEqual([], list(map(type, validation_errors)))
@@ -75,7 +76,7 @@ class TestValidateInventoryBooking(cmptest.TestCase):
           2013-05-02 *
             Assets:Bank:Investing                 5 GOOG {501 USD}
             Assets:Bank:Investing                -1 GOOG {502 USD}
-            Equity:Opening-Balances
+            Equity:Opening-Balances           -2003 USD
         """
         validation_errors = validation.validate_inventory_booking(entries, options_map)
         self.assertEqual([validation.ValidationError], list(map(type, validation_errors)))
@@ -89,11 +90,11 @@ class TestValidateInventoryBooking(cmptest.TestCase):
 
           2013-05-02 *
             Assets:Bank:Investing                 5 GOOG {501 USD}
-            Equity:Opening-Balances
+            Equity:Opening-Balances            -501 USD
 
           2013-05-03 *
             Assets:Bank:Investing                -1 GOOG {502 USD}
-            Equity:Opening-Balances
+            Equity:Opening-Balances             502 USD
         """
         validation_errors = validation.validate_inventory_booking(entries, options_map)
         self.assertEqual([validation.ValidationError], list(map(type, validation_errors)))
@@ -108,11 +109,11 @@ class TestValidateInventoryBooking(cmptest.TestCase):
           2013-05-02 *
             Assets:Bank:Investing                 5 GOOG {501 USD}
             Assets:Bank:Investing                 5 GOOG {502 USD}
-            Equity:Opening-Balances
+            Equity:Opening-Balances           -5015 USD
 
           2013-05-03 *
             Assets:Bank:Investing                -6 GOOG {502 USD}
-            Equity:Opening-Balances
+            Equity:Opening-Balances            3012 USD
         """
         validation_errors = validation.validate_inventory_booking(entries, options_map)
         self.assertEqual([validation.ValidationError], list(map(type, validation_errors)))
@@ -418,16 +419,16 @@ class TestValidate(cmptest.TestCase):
         2014-01-01 open Assets:Investments:Stock   AAPL
 
         2014-06-23 * "Go positive"
-          Assets:Investments:Stock   1 AAPL {41 USD}
-          Assets:Investments:Cash
+          Assets:Investments:Stock    1 AAPL {41 USD}
+          Assets:Investments:Cash   -41 USD
 
         2014-06-24 * "Go negative from zero"
-          Assets:Investments:Stock  -1 AAPL {42 USD}
-          Assets:Investments:Cash
+          Assets:Investments:Stock   -1 AAPL {42 USD}
+          Assets:Investments:Cash    42 USD
 
         2014-06-23 * "Use invalid currency"
-          Assets:Investments:Stock   1 HOOG {500 USD}
-          Assets:Investments:Cash
+          Assets:Investments:Stock    1 HOOG {500 USD}
+          Assets:Investments:Cash  -500 USD
 
         """
         errors = validation.validate(entries, options_map)
