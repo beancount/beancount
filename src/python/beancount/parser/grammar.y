@@ -255,6 +255,10 @@ txn : TXN
     {
         $$ = '*';
     }
+    | HASH
+    {
+        $$ = '#';
+    }
 
 eol : EOL
     | COMMENT EOL
@@ -350,6 +354,10 @@ optflag : empty
             $$ = '\0';
         }
         | ASTERISK
+        {
+            $$ = '*';
+        }
+        | HASH
         {
             $$ = '*';
         }
