@@ -15,6 +15,7 @@ from os import path
 from beancount.utils import misc_utils
 from beancount.core import data
 from beancount.parser import parser
+from beancount.parser import grammar
 from beancount.parser import options
 from beancount.parser import printer
 from beancount.ops import validation
@@ -243,6 +244,10 @@ def _load(sources, log_timings, log_errors, extra_validations, encoding):
     # Parse all the files recursively.
     entries, parse_errors, options_map = _parse_recursive(sources, log_timings, encoding)
 
+    # Run interpolation on incomplete entries.
+    entries, balance_errors = grammar.interpolate(entries, options_map)
+    parse_errors.extend(balance_errors)
+
     # Transform the entries.
     entries, errors = run_transformations(entries, parse_errors, options_map, log_timings)
 
@@ -340,7 +345,7 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
     return entries, errors
 
 
-def loaddoc(fun):
+def loaddoc(fun, no_errors=False):
     """A decorator that loads the docstring and calls the function with parsed entries.
 
     This is an incredibly convenient tool to write lots of tests. Write a
@@ -349,13 +354,34 @@ def loaddoc(fun):
 
     Args:
       fun: A callable method, that accepts the three return arguments that load() returns.
+      no_errors: A boolean, true if we should assert that there are no errors.
     Returns:
       A wrapped method that accepts a single 'self' argument.
     """
     @functools.wraps(fun)
     def wrapper(self):
         entries, errors, options_map = load_string(fun.__doc__, dedent=True)
-        return fun(self, entries, errors, options_map)
+        if no_errors:
+            if errors:
+                oss = io.StringIO()
+                printer.print_errors(errors, file=oss)
+                self.fail("Unexpected errors:\n{}".format(oss.getvalue()))
+            return fun(self, entries, options_map)
+        else:
+            return fun(self, entries, errors, options_map)
     wrapper.__input__ = wrapper.__doc__
     wrapper.__doc__ = None
     return wrapper
+
+
+def loaddoc_noerrors(fun):
+    """Decorator like parsedoc but that further ensures no errors.
+
+    This does not pass in the errors to the callback.
+
+    Args:
+      fun: the function object to be decorated.
+    Returns:
+      The decorated function.
+    """
+    return loaddoc(fun, no_errors=True)

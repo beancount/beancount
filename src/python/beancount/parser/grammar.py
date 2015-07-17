@@ -881,21 +881,39 @@ class Builder(lexer.LexBuilder):
         links = txn_fields.links
         links = frozenset(links) if links else None
 
-        # Create the transaction. Note: we need to parent the postings.
-        entry = Transaction(meta, date, chr(flag),
-                            payee, narration, tags, links, postings)
+        # Create the transaction.
+        return Transaction(meta, date, chr(flag),
+                           payee, narration, tags, links, postings)
 
-        # Balance incomplete auto-postings and set the parent link to this entry as well.
-        balance_errors = balance_incomplete_postings(entry, self.options)
 
-        if balance_errors:
-            self.errors.extend(balance_errors)
+def interpolate(entries, options_map):
+    """Run the interpolation on a list of incomplete entries from the parser.
 
-        # Check that the balance actually is empty.
-        if __sanity_checks__:
-            residual = compute_residual(entry.postings)
-            tolerances = infer_tolerances(entry.postings, self.options)
-            assert residual.is_small(tolerances, self.options['default_tolerance']), (
-                "Invalid residual {}".format(residual))
+    !WARNING!!! This destructively modifies some of the Transaction entries directly.
 
-        return entry
+    Args:
+      incomplete_entries: A list of directives, with some postings possibly left
+        with incomplete amounts as produced by the parser.
+      options_map: An options dict as produced by the parser.
+    Returns:
+      A pair of
+        entries: A list of interpolated entries with all their postings completed.
+        errors: New errors produced during interpolation.
+    """
+    errors = []
+    for entry in entries:
+        if isinstance(entry, Transaction):
+            # Balance incomplete auto-postings and set the parent link to this entry as well.
+            balance_errors = balance_incomplete_postings(entry, options_map)
+
+            if balance_errors:
+                errors.extend(balance_errors)
+
+            # Check that the balance actually is empty.
+            if __sanity_checks__:
+                residual = compute_residual(entry.postings)
+                tolerances = infer_tolerances(entry.postings, options_map)
+                assert residual.is_small(tolerances, options_map['default_tolerance']), (
+                    "Invalid residual {}".format(residual))
+
+    return entries, errors
