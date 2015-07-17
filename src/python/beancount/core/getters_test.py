@@ -6,6 +6,7 @@ import datetime
 from beancount.core import getters
 from beancount.core import data
 from beancount.parser import parser
+from beancount import loader
 
 
 TEST_INPUT = """
@@ -49,7 +50,7 @@ class TestGetters(unittest.TestCase):
                 self.assertTrue(hasattr(dispatcher, klass.__name__))
 
     def test_get_accounts_use_map(self):
-        entries = parser.parse_string(TEST_INPUT)[0]
+        entries = loader.load_string(TEST_INPUT)[0]
         accounts_first, accounts_last = getters.get_accounts_use_map(entries)
         self.assertEqual({'Expenses:Coffee': datetime.date(2012, 2, 1),
                           'Expenses:Restaurant': datetime.date(2012, 2, 1),
@@ -65,7 +66,7 @@ class TestGetters(unittest.TestCase):
                          accounts_last)
 
     def test_get_accounts(self):
-        entries = parser.parse_string(TEST_INPUT)[0]
+        entries = loader.load_string(TEST_INPUT)[0]
         accounts = getters.get_accounts(entries)
         self.assertEqual({'Assets:US:Cash',
                           'Assets:US:Credit-Card',
@@ -75,7 +76,7 @@ class TestGetters(unittest.TestCase):
                          accounts)
 
     def test_get_entry_accounts(self):
-        entries = parser.parse_string(TEST_INPUT)[0]
+        entries = loader.load_string(TEST_INPUT)[0]
         accounts = getters.get_entry_accounts(next(entry
                                                    for entry in entries
                                                    if isinstance(entry, data.Transaction)))
@@ -85,12 +86,12 @@ class TestGetters(unittest.TestCase):
                          accounts)
 
     def test_get_all_tags(self):
-        entries = parser.parse_string(TEST_INPUT)[0]
+        entries = loader.load_string(TEST_INPUT)[0]
         tags = getters.get_all_tags(entries)
         self.assertEqual(['books', 'dinner'], tags)
 
     def test_get_all_payees(self):
-        entries = parser.parse_string(TEST_INPUT)[0]
+        entries = loader.load_string(TEST_INPUT)[0]
         payees = getters.get_all_payees(entries)
         self.assertEqual(['La Colombe', 'Whole Foods Market'], payees)
 
@@ -111,18 +112,18 @@ class TestGetters(unittest.TestCase):
         self.assertEqual({'Cash', 'Credit-Card'}, set(levels))
 
     def test_get_min_max_dates(self):
-        entries = parser.parse_string(TEST_INPUT)[0]
+        entries = loader.load_string(TEST_INPUT)[0]
         mindate, maxdate = getters.get_min_max_dates(entries)
         self.assertEqual(datetime.date(2012, 2, 1), mindate)
         self.assertEqual(datetime.date(2014, 2, 1), maxdate)
 
     def test_get_active_years(self):
-        entries = parser.parse_string(TEST_INPUT)[0]
+        entries = loader.load_string(TEST_INPUT)[0]
         years = list(getters.get_active_years(entries))
         self.assertEqual([2012, 2013, 2014], years)
 
     def test_get_account_open_close(self):
-        entries = parser.parse_string(TEST_INPUT)[0]
+        entries = loader.load_string(TEST_INPUT)[0]
         ocmap = getters.get_account_open_close(entries)
         self.assertEqual(5, len(ocmap))
 
@@ -152,14 +153,14 @@ class TestGetters(unittest.TestCase):
         self.assertEqual(datetime.date(2014, 1, 28), close_entry.date)
 
     def test_get_account_components(self):
-        entries = parser.parse_string(TEST_INPUT)[0]
+        entries = loader.load_string(TEST_INPUT)[0]
         components = getters.get_account_components(entries)
         expected_components = {'US', 'Assets', 'Restaurant', 'Grocery',
                                'Cash', 'Coffee', 'Expenses', 'Credit-Card'}
         self.assertEqual(sorted(expected_components), components)
 
     def test_get_commodities_map(self):
-        entries, _, options_map = parser.parse_string(TEST_INPUT)
+        entries, _, options_map = loader.load_string(TEST_INPUT)
         commodity_map = getters.get_commodity_map(entries, options_map)
         self.assertEqual({'HOOL', 'PIPA', 'USD'}, commodity_map.keys())
         self.assertTrue(all(isinstance(value, data.Commodity)
@@ -170,7 +171,7 @@ class TestGetters(unittest.TestCase):
                               if isinstance(entry, data.Commodity)))
 
     def test_get_values_meta__single(self):
-        entries, _, options_map = parser.parse_string(TEST_INPUT)
+        entries, _, options_map = loader.load_string(TEST_INPUT)
         commodity_map = getters.get_commodity_map(entries, options_map)
         values = getters.get_values_meta(commodity_map, 'name', default='BLA')
         self.assertEqual({'USD': 'BLA',
@@ -179,7 +180,7 @@ class TestGetters(unittest.TestCase):
                          values)
 
     def test_get_values_meta__multi(self):
-        entries, _, options_map = parser.parse_string(TEST_INPUT)
+        entries, _, options_map = loader.load_string(TEST_INPUT)
         commodity_map = getters.get_commodity_map(entries, options_map)
         values = getters.get_values_meta(commodity_map, 'name', 'ticker')
         self.assertEqual({'HOOL': ('Hooli Corp.', 'NYSE:HOOLI'),

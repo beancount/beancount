@@ -113,6 +113,8 @@ def parsedoc(fun, no_errors=False):
 def parsedoc_noerrors(fun):
     """Decorator like parsedoc but that further ensures no errors.
 
+    This does not pass in the errors to the callback.
+
     Args:
       fun: the function object to be decorated.
     Returns:

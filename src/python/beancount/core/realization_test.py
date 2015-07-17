@@ -15,8 +15,9 @@ from beancount.core import data
 from beancount.core import inventory
 from beancount.core import amount
 from beancount.core import account_types
-from beancount.parser import parsedoc
+from beancount.parser import parser
 from beancount.utils import test_utils
+from beancount import loader
 
 
 def create_simple_account():
@@ -183,7 +184,7 @@ class TestRealGetters(unittest.TestCase):
 
 class TestRealization(unittest.TestCase):
 
-    @parsedoc
+    @parser.parsedoc
     def test_postings_by_account(self, entries, errors, _):
         """
         2012-01-01 open Expenses:Restaurant
@@ -258,7 +259,7 @@ class TestRealization(unittest.TestCase):
         self.assertEqual(set(account_types.DEFAULT_ACCOUNT_TYPES),
                          real_account.keys())
 
-    @parsedoc
+    @parser.parsedoc
     def test_simple_realize(self, entries, errors, options_map):
         """
           2013-05-01 open Assets:US:Checking:Sub   USD
@@ -276,7 +277,7 @@ class TestRealization(unittest.TestCase):
             real_account = realization.get(real_root, account_name)
             self.assertEqual(account_name, real_account.account)
 
-    @parsedoc
+    @loader.loaddoc
     def test_realize(self, entries, errors, _):
         """
         2012-01-01 open Expenses:Restaurant
@@ -392,7 +393,7 @@ class TestRealFilter(unittest.TestCase):
 
 class TestRealOther(test_utils.TestCase):
 
-    @parsedoc
+    @parser.parsedoc
     def test_get_postings(self, entries, errors, _):
         """
         2012-01-01 open Assets:Bank:Checking
@@ -405,15 +406,15 @@ class TestRealOther(test_utils.TestCase):
 
         2012-03-01 * "Food"
           Expenses:Restaurant     11.11 CAD
-          Assets:Bank:Checking
+          Assets:Bank:Checking   -11.11 CAD
 
         2012-03-05 * "Food"
           Expenses:Movie         22.22 CAD
-          Assets:Bank:Checking
+          Assets:Bank:Checking  -22.22 CAD
 
         2012-03-10 * "Paying off credit card"
           Assets:Bank:Checking     -33.33 CAD
-          Liabilities:CreditCard
+          Liabilities:CreditCard    33.33 CAD
 
         2012-03-20 note Assets:Bank:Checking "Bla bla 444.44"
 
@@ -492,7 +493,7 @@ class TestRealOther(test_utils.TestCase):
         ra3['Sub'] = RealAccount('Assets:US:Bank:Checking:Sub')
         self.assertNotEqual(root1, root3)
 
-    @parsedoc
+    @loader.loaddoc
     def test_iterate_with_balance(self, entries, _, __):
         """
         2012-01-01 open Assets:Bank:Checking
@@ -571,7 +572,7 @@ class TestRealOther(test_utils.TestCase):
         balance = realization.compute_balance(realization.get(real_root, 'Assets:US:Bank'))
         self.assertEqual(inventory.from_string('310 USD'), balance)
 
-    @parsedoc
+    @parser.parsedoc
     def test_dump(self, entries, _, __):
         """
         2012-01-01 open Assets:Bank1:Checking
@@ -614,7 +615,7 @@ class TestRealOther(test_utils.TestCase):
             ], [(first_line, cont_line)
                 for first_line, cont_line, _1 in lines])
 
-    @parsedoc
+    @loader.loaddoc
     def test_dump_balances(self, entries, _, __):
         """
         2012-01-01 open Expenses:Restaurant
@@ -653,7 +654,7 @@ class TestRealMisc(unittest.TestCase):
 
 class TestFindLastActive(unittest.TestCase):
 
-    @parsedoc
+    @loader.loaddoc
     def test_find_last_active_posting(self, entries, _, __):
         """
         2012-01-01 open Assets:Target

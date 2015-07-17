@@ -12,6 +12,7 @@ from beancount.parser import cmptest
 from beancount.core import data
 from beancount.core import interpolate
 from beancount.utils import test_utils
+from beancount import loader
 
 
 META = data.new_metadata('beancount/core/testing.beancount', 12345)
@@ -248,7 +249,12 @@ class TestDisplayContext(test_utils.TestCase):
           Assets:Account        333.333 FP3
           Assets:Account      4444.4444 FP4
           Assets:Account    55555.55555 FP5
-          Assets:Cash
+          Assets:Cash               -1 INT
+          Assets:Cash             -1.1 FP1
+          Assets:Cash           -22.22 FP2
+          Assets:Cash         -333.333 FP3
+          Assets:Cash       -4444.4444 FP4
+          Assets:Cash     -55555.55555 FP5
         """
         dcontext = options_map['dcontext']
         oss = io.StringIO()
@@ -370,7 +376,7 @@ class TestPrinterAlignment(test_utils.TestCase):
 
 class TestPrinterMisc(test_utils.TestCase):
 
-    @parser.parsedoc
+    @loader.loaddoc
     def test_no_valid_account(self, entries, errors, options_map):
         """
         2000-01-01 * "Test"

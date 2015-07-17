@@ -418,9 +418,11 @@ class TestClamp(cmptest.TestCase):
 
 class TestCap(cmptest.TestCase):
 
-    @parser.parsedoc
+    @loader.loaddoc
     def test_cap(self, entries, errors, options_map):
         """
+        plugin "beancount.plugins.auto_accounts"
+
         2014-03-01 * "Some income and expense"
           Income:Salary        10000.00 USD
           Expenses:Taxes        3500.00 USD
@@ -433,9 +435,9 @@ class TestCap(cmptest.TestCase):
         self.assertFalse(errors)
         account_types = options.get_account_types(options_map)
         capd_entries = summarize.cap(entries, account_types,
-                                         'NOTHING',
-                                         'Equity:Earnings',
-                                         'Equity:Conversions')
+                                     'NOTHING',
+                                     'Equity:Earnings',
+                                     'Equity:Conversions')
 
         self.assertIncludesEntries(entries, capd_entries)
         self.assertIncludesEntries("""
@@ -453,7 +455,7 @@ class TestCap(cmptest.TestCase):
           Equity:Conversions   -6000.00 CAD @ 0 NOTHING
 
         """, capd_entries)
-        self.assertEqual(5, len(capd_entries))
+        self.assertEqual(9, len(capd_entries))
 
 
 INPUT_OPEN = """
@@ -1028,7 +1030,7 @@ class TestEntriesFromBalance(cmptest.TestCase):
 
 class TestBalanceByAccount(cmptest.TestCase):
 
-    @parser.parsedoc
+    @loader.loaddoc
     def setUp(self, entries, _, __):
         """
         2014-02-01 *
