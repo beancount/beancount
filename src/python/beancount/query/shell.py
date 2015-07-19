@@ -367,7 +367,9 @@ class BQLShell(DispatchingShell):
                 print("Unsupported output format '{}'.".format(output_format))
 
             with self.get_pager() as file:
-                query_render.render_text(result_types, result_rows, file,
+                query_render.render_text(result_types, result_rows,
+                                         self.options_map['dcontext'],
+                                         file,
                                          boxed=self.vars['boxed'],
                                          spaced=self.vars['spaced'])
 
