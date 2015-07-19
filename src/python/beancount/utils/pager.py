@@ -75,6 +75,9 @@ class ConditionalPager:
         self.command = command
         self.minlines = minlines
         self.default_file = sys.stdout
+        # FIXME: I think we need this - self.default_file = io.TextIOWrapper(sys.stdout, 'utf-8')
+        #self.default_file = io.TextIOWrapper(sys.stdout, 'utf-8')
+        # FIXME: Having problems with encoding.
 
     def __enter__(self):
         """Initialize the context manager and return this instance as it."""
