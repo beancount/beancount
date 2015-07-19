@@ -37,7 +37,7 @@ class TestScriptDoctor(test_utils.TestCase):
             EOL               4 '\\n'
             EOL               5 '\\n'
             DATE              5 '2014-03-02'
-            FLAG              5 '*'
+            ASTERISK          5 '*'
             STRING            5 '"'
             EOL               6 '\\n'
             INDENT            6 '  '

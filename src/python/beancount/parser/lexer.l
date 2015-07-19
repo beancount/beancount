@@ -124,8 +124,8 @@ int strtonl(const char* buf, size_t nchars);
 }
 
  /* Ignore whitespace, except when found at the beginning of a line and followed
-    by a non-comment regular character. This is how we group indented
-    postings. */
+    by a non-comment regular character. This is how we detect an initial indent
+    and thus group postings together in the grammar. */
 [ \t\r]+	{
     if ( yy_line_tokens == 1 ) {
         /* If the next character completes the line, skip it. */
@@ -151,7 +151,21 @@ int strtonl(const char* buf, size_t nchars);
 \}		{ return RCURL; }
 ,		{ return COMMA; }
 \~		{ return TILDE; }
+\+		{ return PLUS; }
+\-		{ return MINUS; }
 \/		{ return SLASH; }
+\(		{ return LPAREN; }
+\)		{ return RPAREN; }
+\*		{
+    if ( yy_line_tokens != 1 ) {
+        return ASTERISK;
+    }
+    else {
+        /* Allow org-mode titles. */
+        yy_skip_line();
+        return SKIPPED;
+    }
+}
 
  /* Skip commented output (but not the accompanying newline). */
 ;+.*		{
@@ -167,7 +181,7 @@ int strtonl(const char* buf, size_t nchars);
     beancount.core.flags, in order for round-trips between text and entries to
     be possible. {5307d8fa1e7b}
     */
-[*!&#?%PSTCUR]	{
+[!&#?%PSTCUR]	{
     if ( yy_line_tokens != 1 ) {
         yylval->character = yytext[0];
         return FLAG;
@@ -292,7 +306,7 @@ FALSE		{
 }
 
  /* Numbers */
-[-+]?([0-9]+|[0-9][0-9,]+[0-9])(\.[0-9]*)? 		{
+([0-9]+|[0-9][0-9,]+[0-9])(\.[0-9]*)? 		{
     BUILD_LEX("NUMBER", "s", yytext);
     return NUMBER;
 }
@@ -310,7 +324,7 @@ FALSE		{
 }
 
  /* Key */
-[a-z][a-z0-9\-_]+: 		{
+[a-z][a-zA-Z0-9\-_]+: 		{
     BUILD_LEX("KEY", "s#", yytext, yyleng-1);
     return KEY;
 }

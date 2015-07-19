@@ -1,4 +1,4 @@
-"""Builder for Bewancount grammar.
+"""Builder for Beancount grammar.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
