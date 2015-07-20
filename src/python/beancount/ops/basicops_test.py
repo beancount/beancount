@@ -118,19 +118,19 @@ class TestBasicOpsOther(unittest.TestCase):
 
         2014-05-10 * "A"
           Assets:Account1    1 USD
-          Assets:Account2
+          Assets:Account2   -1 USD
 
         2014-05-10 * "B"
           Assets:Account1    1 USD
-          Assets:Account3
+          Assets:Account3   -1 USD
 
         2014-05-10 * "C"
           Assets:Account2    1 USD
-          Assets:Account3
+          Assets:Account3   -1 USD
 
         2014-05-10 * "D"
           Assets:Account3    1 USD
-          Assets:Account4
+          Assets:Account4   -1 USD
 
         """
         entries = [entry for entry in entries if isinstance(entry, data.Transaction)]

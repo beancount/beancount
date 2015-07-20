@@ -197,17 +197,17 @@ class TestRealization(unittest.TestCase):
 
         2012-03-01 * "Food"
           Expenses:Restaurant     100 CAD
-          Assets:Cash
+          Assets:Cash            -100 CAD
 
         2012-03-10 * "Food again"
-          Expenses:Restaurant     80 CAD
-          Liabilities:CreditCard
+          Expenses:Restaurant      80 CAD
+          Liabilities:CreditCard  -80 CAD
 
         ;; Two postings on the same account.
         2012-03-15 * "Two Movies"
-          Expenses:Movie     10 CAD
-          Expenses:Movie     10 CAD
-          Liabilities:CreditCard
+          Expenses:Movie           10 CAD
+          Expenses:Movie           10 CAD
+          Liabilities:CreditCard  -20 CAD
 
         2012-03-20 note Liabilities:CreditCard "Called Amex, asked about 100 CAD dinner"
 

@@ -245,8 +245,8 @@ class TestValidateActiveAccounts(cmptest.TestCase):
         2014-01-01 open  Equity:Opening-Balances
 
         2014-02-01 * "Invalid before"
-          Assets:Temporary    1 USD
-          Equity:Opening-Balances
+          Assets:Temporary          1 USD
+          Equity:Opening-Balances  -1 USD
 
         2014-02-02 note  Assets:Temporary "Invalid note entry"
         2014-02-03 pad   Assets:Temporary Equity:Opening-Balances
@@ -254,18 +254,18 @@ class TestValidateActiveAccounts(cmptest.TestCase):
         2014-03-01 open  Assets:Temporary
 
         2014-04-01 * "Valid"
-          Assets:Temporary    1 USD
-          Equity:Opening-Balances
+          Assets:Temporary           1 USD
+          Equity:Opening-Balances   -1 USD
 
         2014-05-01 * "Unknown account"
           Assets:Temporary    1 USD
-          Equity:ImUnknown
+          Equity:ImUnknown   -1 USD
 
         2014-09-01 close Assets:Temporary
 
         2014-10-01 * "Invalid after"
-          Assets:Temporary    1 USD
-          Equity:Opening-Balances
+          Assets:Temporary           1 USD
+          Equity:Opening-Balances   -1 USD
 
         ;; These should be allowed after close.
         2014-10-02 note  Assets:Temporary "Invalid note entry again"
@@ -277,19 +277,19 @@ class TestValidateActiveAccounts(cmptest.TestCase):
         self.assertEqualEntries("""
 
         2014-02-01 * "Invalid before"
-          Assets:Temporary    1 USD
-          Equity:Opening-Balances
+          Assets:Temporary           1 USD
+          Equity:Opening-Balances   -1 USD
 
         2014-02-02 note  Assets:Temporary "Invalid note entry"
         2014-02-03 pad   Assets:Temporary Equity:Opening-Balances
 
         2014-05-01 * "Unknown account"
-          Assets:Temporary    1 USD
-          Equity:ImUnknown
+          Assets:Temporary           1 USD
+          Equity:ImUnknown          -1 USD
 
         2014-10-01 * "Invalid after"
-          Assets:Temporary    1 USD
-          Equity:Opening-Balances
+          Assets:Temporary           1 USD
+          Equity:Opening-Balances   -1 USD
 
         """, [error.entry for error in errors])
 
@@ -321,33 +321,33 @@ class TestValidateCurrencyConstraints(cmptest.TestCase):
         2014-01-01 open  Assets:Account3    USD,GOOG
 
         2014-01-02 * "Entries without cost"
-          Assets:Account1            1 USD
-          Equity:Opening-Balances
+          Assets:Account1             1 USD
+          Equity:Opening-Balances    -1 USD
 
         2014-01-03 * "Entries without cost" #expected
-          Assets:Account1            1 CAD
-          Equity:Opening-Balances
+          Assets:Account1             1 CAD
+          Equity:Opening-Balances    -1 CAD
 
         2014-01-04 * "Entries with cost"
-          Assets:Account2            1 GOOG {500 USD}
-          Equity:Opening-Balances
+          Assets:Account2             1 GOOG {500 USD}
+          Equity:Opening-Balances  -500 USD
 
         2014-01-05 * "Entries with cost" #expected
-          Assets:Account2            1 AAPL {500 USD}
-          Equity:Opening-Balances
+          Assets:Account2             1 AAPL {500 USD}
+          Equity:Opening-Balances  -500 USD
 
         2014-01-02 * "Multiple currencies"
-          Assets:Account3            1 USD
-          Assets:Account3            1 GOOG {500 USD}
-          Equity:Opening-Balances
+          Assets:Account3             1 USD
+          Assets:Account3             1 GOOG {500 USD}
+          Equity:Opening-Balances  -501 USD
 
         2014-01-05 * "Multiple currencies" #expected
-          Assets:Account3            1 CAD
-          Equity:Opening-Balances
+          Assets:Account3             1 CAD
+          Equity:Opening-Balances    -1 CAD
 
         2014-01-05 * "Multiple currencies" #expected
-          Assets:Account3            1 AAPL {500 USD}
-          Equity:Opening-Balances
+          Assets:Account3             1 AAPL {500 USD}
+          Equity:Opening-Balances  -500 USD
 
         """
         errors = validation.validate_currency_constraints(entries, options_map)
@@ -383,8 +383,8 @@ class TestValidateDataTypes(cmptest.TestCase):
     def test_validate_data_types(self, entries, errors, options_map):
         """
         2014-06-24 * "Narration"
-          Assets:Investments:Stock  1 GOOG {500 USD}
-          Assets:Investments:Cash
+          Assets:Investments:Stock    1 GOOG {500 USD}
+          Assets:Investments:Cash  -500 USD
         """
         # Just a basic test that runs the sanitation code (that should already
         # be well tested by itself).

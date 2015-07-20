@@ -13,26 +13,7 @@ from beancount.parser import cmptest
 
 class TestCompareTestFunctions(unittest.TestCase):
 
-    def test_has_auto_postings(self):
-        entries, _, __ = parser.parse_string("""
-
-          2014-01-27 * "UNION MARKET"
-            Liabilities:US:Amex:BlueCash    -22.02 USD
-            Expenses:Food:Grocery            22.02 USD
-
-        """, dedent=True)
-        self.assertFalse(cmptest.has_auto_postings(entries))
-
-        entries, _, __ = parser.parse_string("""
-
-          2014-01-27 * "UNION MARKET"
-            Liabilities:US:Amex:BlueCash    -22.02 USD
-            Expenses:Food:Grocery
-
-        """, dedent=True)
-        self.assertTrue(cmptest.has_auto_postings(entries))
-
-    def test_has_auto_postings(self):
+    def test_read_string_or_entries(self):
         with self.assertRaises(cmptest.TestError) as assctxt:
             cmptest.read_string_or_entries("""
 

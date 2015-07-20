@@ -16,23 +16,6 @@ class TestError(Exception):
     """Errors within the test implementation itself. These should never occur."""
 
 
-def has_auto_postings(entries):
-    """Detect the presence of elided amounts in Transactions.
-
-    Args:
-      entries: A list of directives.
-    Returns:
-      A boolean, true if there are some auto-postings found.
-    """
-    for entry in entries:
-        if not isinstance(entry, data.Transaction):
-            continue
-        for posting in entry.postings:
-            if posting.position is None:
-                return True
-    return False
-
-
 def read_string_or_entries(entries_or_str):
     """Read a string of entries or just entries.
 
@@ -51,7 +34,7 @@ def read_string_or_entries(entries_or_str):
             raise TestError("Unexpected errors in expected: {}".format(oss.getvalue()))
 
         # Don't accept incomplete entries either.
-        if has_auto_postings(entries):
+        if parser.has_auto_postings(entries):
             raise TestError("Entries in assertions may not use interpolation.")
     else:
         assert isinstance(entries_or_str, list)

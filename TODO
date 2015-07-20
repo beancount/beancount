@@ -2,6 +2,12 @@
 beancount: TODO
 * Booking Parser
 
+  - Check balance errors in parsedoc(), despite not doing interpolation.
+    parser.parse_string() / _file()
+    parser.parsedoc()
+    example.parse()
+
+
   - In the parser, be backwards compatible and keep supporting {{ }} with just
     an amount in it.
 

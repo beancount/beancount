@@ -901,27 +901,27 @@ class TestTruncate(cmptest.TestCase):
         """
         2014-03-10 * "A"
           Assets:US:Bank:Checking   1 USD
-          Equity:Opening-Balances
+          Equity:Opening-Balances  -1 USD
 
         2014-03-11 * "B"
           Assets:US:Bank:Checking   1 USD
-          Equity:Opening-Balances
+          Equity:Opening-Balances  -1 USD
 
         2014-03-12 * "C"
           Assets:US:Bank:Checking   1 USD
-          Equity:Opening-Balances
+          Equity:Opening-Balances  -1 USD
 
         2014-03-13 * "D1"
           Assets:US:Bank:Checking   1 USD
-          Equity:Opening-Balances
+          Equity:Opening-Balances  -1 USD
 
         2014-03-13 * "D2"
           Assets:US:Bank:Checking   1 USD
-          Equity:Opening-Balances
+          Equity:Opening-Balances  -1 USD
 
         2014-03-14 * "E"
           Assets:US:Bank:Checking   1 USD
-          Equity:Opening-Balances
+          Equity:Opening-Balances  -1 USD
         """
         self.entries = entries
 
@@ -935,15 +935,15 @@ class TestTruncate(cmptest.TestCase):
 
         2014-03-10 * "A"
           Assets:US:Bank:Checking   1 USD
-          Equity:Opening-Balances
+          Equity:Opening-Balances  -1 USD
 
         2014-03-11 * "B"
           Assets:US:Bank:Checking   1 USD
-          Equity:Opening-Balances
+          Equity:Opening-Balances  -1 USD
 
         2014-03-12 * "C"
           Assets:US:Bank:Checking   1 USD
-          Equity:Opening-Balances
+          Equity:Opening-Balances  -1 USD
 
         """, truncated_entries)
 
@@ -953,23 +953,23 @@ class TestTruncate(cmptest.TestCase):
 
         2014-03-10 * "A"
           Assets:US:Bank:Checking   1 USD
-          Equity:Opening-Balances
+          Equity:Opening-Balances  -1 USD
 
         2014-03-11 * "B"
           Assets:US:Bank:Checking   1 USD
-          Equity:Opening-Balances
+          Equity:Opening-Balances  -1 USD
 
         2014-03-12 * "C"
           Assets:US:Bank:Checking   1 USD
-          Equity:Opening-Balances
+          Equity:Opening-Balances  -1 USD
 
         2014-03-13 * "D1"
           Assets:US:Bank:Checking   1 USD
-          Equity:Opening-Balances
+          Equity:Opening-Balances  -1 USD
 
         2014-03-13 * "D2"
           Assets:US:Bank:Checking   1 USD
-          Equity:Opening-Balances
+          Equity:Opening-Balances  -1 USD
 
         """, truncated_entries)
 

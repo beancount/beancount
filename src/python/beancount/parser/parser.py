@@ -12,6 +12,7 @@ from beancount.parser import _parser
 from beancount.parser import grammar
 from beancount.parser import printer
 from beancount.parser import hashsrc
+from beancount.core import data
 
 from beancount.parser.grammar import ParserError
 from beancount.parser.grammar import ParserSyntaxError
@@ -24,6 +25,22 @@ ParserError, ParserSyntaxError, DeprecatedError # pyflakes
 # installed source.
 hashsrc.check_parser_source_files()
 
+
+def has_auto_postings(entries):
+    """Detect the presence of elided amounts in Transactions.
+
+    Args:
+      entries: A list of directives.
+    Returns:
+      A boolean, true if there are some auto-postings found.
+    """
+    for entry in entries:
+        if not isinstance(entry, data.Transaction):
+            continue
+        for posting in entry.postings:
+            if posting.position is None:
+                return True
+    return False
 
 
 def parse_file(filename, **kw):
@@ -96,6 +113,16 @@ def parsedoc(fun, no_errors=False):
                                                     report_filename=filename,
                                                     report_firstline=lineno,
                                                     dedent=True)
+
+        # Don't allow interpolation
+        if has_auto_postings(entries):
+            self.fail("parsedoc() may not use interpolation.")
+
+        ## FIXME: remove
+        # # Perform simple interpolation in literals, without a history.
+        # interp_entries, balance_errors = grammar.interpolate(entries, options_map)
+        # errors.extend(balance_errors)
+
         if no_errors:
             if errors:
                 oss = io.StringIO()
