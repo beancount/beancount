@@ -2,14 +2,14 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 from beancount.core.number import D
 from beancount.core import data
-from beancount.parser import parsedoc
 from beancount.parser import cmptest
 from beancount.plugins import implicit_prices
+from beancount import loader
 
 
 class TestImplicitPrices(cmptest.TestCase):
 
-    @parsedoc
+    @loader.loaddoc
     def test_add_implicit_prices__all_cases(self, entries, _, options_map):
         """
         2013-01-01 open Assets:Account1
@@ -109,7 +109,7 @@ class TestImplicitPrices(cmptest.TestCase):
             actual = (price.currency, price.amount.currency, price.amount.number)
             self.assertEqual(expected, actual)
 
-    @parsedoc
+    @loader.loaddoc
     def test_add_implicit_prices__other_account(self, entries, _, options_map):
         """
         2013-01-01 open Assets:Account1
@@ -142,11 +142,11 @@ class TestImplicitPrices(cmptest.TestCase):
 
         2013-04-01 *
           Assets:Account1             1500 GOOG {520 USD}
-          Assets:Other
+          Assets:Other             -780000 USD
 
         2013-04-02 *
           Assets:Account2             1500 GOOG {530 USD}
-          Assets:Other
+          Assets:Other             -795000 USD
 
         2013-04-01 price GOOG 520 USD
 
@@ -164,7 +164,7 @@ class TestImplicitPrices(cmptest.TestCase):
 
         """, new_entries)
 
-    @parsedoc
+    @loader.loaddoc
     def test_add_implicit_prices__duplicates_on_same_transaction(self,
                                                                  entries, _, options_map):
         """
@@ -194,21 +194,21 @@ class TestImplicitPrices(cmptest.TestCase):
         2013-04-01 * "Allowed because of same price"
           Assets:Account1             1500 GOOG {520 USD}
           Assets:Account2             1500 GOOG {520 USD}
-          Assets:Other
+          Assets:Other            -1560000 USD
 
         2013-04-01 price GOOG 520 USD
 
         2013-04-02 * "Second one is disallowed because of different price"
           Assets:Account1             1500 GOOG {520 USD}
           Assets:Account2             1500 GOOG {530 USD}
-          Assets:Other
+          Assets:Other            -1575000 USD
 
         2013-04-02 price GOOG 520 USD
         2013-04-02 price GOOG 530 USD  ;; Allowed for now.
 
         """, new_entries)
 
-    @parsedoc
+    @loader.loaddoc
     def test_add_implicit_prices__duplicates_on_different_transactions(self,
                                                                        entries, _,
                                                                        options_map):
@@ -244,28 +244,28 @@ class TestImplicitPrices(cmptest.TestCase):
 
         2013-04-01 * "Allowed because of same price #1"
           Assets:Account1             1500 GOOG {520 USD}
-          Assets:Other
+          Assets:Other             -780000 USD
 
         2013-04-01 * "Allowed because of same price #2"
           Assets:Account2             1500 GOOG {520 USD}
-          Assets:Other
+          Assets:Other             -780000 USD
 
         2013-04-01 price GOOG 520 USD
 
         2013-04-02 * "Second one is disallowed because of different price #1"
           Assets:Account1             1500 GOOG {520 USD}
-          Assets:Other
+          Assets:Other             -780000 USD
 
         2013-04-02 * "Second one is disallowed because of different price #2"
           Assets:Account2             1500 GOOG {530 USD}
-          Assets:Other
+          Assets:Other             -795000 USD
 
         2013-04-02 price GOOG 520 USD
         2013-04-02 price GOOG 530 USD  ;; Allowed for now.
 
         """, new_entries)
 
-    @parsedoc
+    @loader.loaddoc
     def test_add_implicit_prices__duplicates_overloaded(self, entries, _, options_map):
         """
         2013-01-01 open Assets:Account1
@@ -292,15 +292,15 @@ class TestImplicitPrices(cmptest.TestCase):
 
         2013-04-01 * "Allowed, sets the price for that day"
           Assets:Account1             1500 GOOG {520 USD}
-          Assets:Other
+          Assets:Other             -780000 USD
 
         2013-04-01 * "Will be ignored, price for the day already set"
           Assets:Account1             1500 GOOG {530 USD}
-          Assets:Other
+          Assets:Other             -795000 USD
 
         2013-04-01 * "Should be ignored too, price for the day already set"
           Assets:Account1             1500 GOOG {530 USD}
-          Assets:Other
+          Assets:Other             -795000 USD
 
         2013-04-01 price GOOG 520 USD
         2013-04-01 price GOOG 530 USD

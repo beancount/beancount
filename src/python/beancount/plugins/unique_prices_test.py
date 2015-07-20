@@ -35,7 +35,7 @@ class TestValidateAmbiguousPrices(cmptest.TestCase):
     def test_validate_unique_prices__from_costs(self, entries, errors, options_map):
         """
         2014-01-15 *
-          Income:Misc
+          Income:Misc        -201 USD
           Assets:Account1       1 HOUSE {100 USD}
           Liabilities:Account1  1 HOUSE {101 USD}
         """
