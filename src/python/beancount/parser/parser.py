@@ -85,7 +85,7 @@ def parse_string(string, **kw):
     return builder.finalize()
 
 
-def parsedoc(expect_errors=None):
+def parsedoc(expect_errors=False):
     """Factory of decorators that parse the function's docstring as an argument.
 
     Note that the decorators thus generated only run the parser on the tests,
