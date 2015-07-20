@@ -48,7 +48,23 @@ class TestParserDoc(unittest.TestCase):
 
     # Note: nose does not honor expectedFailure as of 1.3.4. We would use it
     # here instead of doing this manually.
-    def test_parsedoc_noerrors(self):
+    def test_parsedoc__errors(self):
+        @parser.parsedoc(errors=True)
+        def test_function(self, entries, errors, options_map):
+            """
+            2013-05-40 * "Nice dinner at Mermaid Inn"
+              Expenses:Restaurant         100 USD
+              Assets:US:Cash
+            """
+        try:
+            test_function(unittest.TestCase())
+            self.fail("Test should have failed.")
+        except AssertionError:
+            pass
+
+    # Note: nose does not honor expectedFailure as of 1.3.4. We would use it
+    # here instead of doing this manually.
+    def test_parsedoc__noerrors(self):
         @parser.parsedoc(errors=False)
         def test_function(self, entries, errors, options_map):
             """
