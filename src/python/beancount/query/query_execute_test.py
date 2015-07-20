@@ -696,11 +696,7 @@ class TestExecuteOptions(QueryBase):
         Assets:AssetB       4.00 USD
         Assets:AssetC       3.00 USD
         Assets:AssetE       1.00 USD
-        Equity:Rest        -5.00 USD
-        Equity:Rest        -2.00 USD
-        Equity:Rest        -4.00 USD
-        Equity:Rest        -3.00 USD
-        Equity:Rest        -1.00 USD
+        Equity:Rest       -15.00 USD
 
     """
 
