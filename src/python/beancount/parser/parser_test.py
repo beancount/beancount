@@ -50,7 +50,7 @@ class TestParserDoc(unittest.TestCase):
     # here instead of doing this manually.
     def test_parsedoc_noerrors(self):
         @parser.parsedoc(no_errors=True)
-        def test_function(self, entries, options_map):
+        def test_function(self, entries, errors, options_map):
             """
             2013-05-40 * "Nice dinner at Mermaid Inn"
               Expenses:Restaurant         100 USD

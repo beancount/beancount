@@ -132,14 +132,12 @@ def parsedoc(no_errors=False):
             # interp_entries, balance_errors = grammar.interpolate(entries, options_map)
             # errors.extend(balance_errors)
 
-            if no_errors:
-                if errors:
-                    oss = io.StringIO()
-                    printer.print_errors(errors, file=oss)
-                    self.fail("Unexpected errors:\n{}".format(oss.getvalue()))
-                return fun(self, entries, options_map)
-            else:
-                return fun(self, entries, errors, options_map)
+            if no_errors and errors:
+                oss = io.StringIO()
+                printer.print_errors(errors, file=oss)
+                self.fail("Unexpected errors:\n{}".format(oss.getvalue()))
+
+            return fun(self, entries, errors, options_map)
 
         wrapper.__input__ = wrapper.__doc__
         wrapper.__doc__ = None

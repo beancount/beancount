@@ -537,14 +537,14 @@ class TestDisplayContextOptions(unittest.TestCase):
 class TestMiscOptions(unittest.TestCase):
 
     @parser.parsedoc(no_errors=True)
-    def test_plugin_processing_mode__default(self, _, options_map):
+    def test_plugin_processing_mode__default(self, _, __, options_map):
         """
         option "plugin_processing_mode" "default"
         """
         self.assertEqual("default", options_map['plugin_processing_mode'])
 
     @parser.parsedoc(no_errors=True)
-    def test_plugin_processing_mode__raw(self, _, options_map):
+    def test_plugin_processing_mode__raw(self, _, __, options_map):
         """
         option "plugin_processing_mode" "raw"
         """
