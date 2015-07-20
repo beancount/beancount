@@ -50,8 +50,13 @@ def read_string_or_entries(entries_or_str):
             printer.print_errors(errors, file=oss)
             raise TestError("Unexpected errors in expected: {}".format(oss.getvalue()))
 
+        # Don't accept incomplete entries either.
+        if has_auto_postings(entries):
+            raise TestError("Entries in assertions may not use interpolation.")
     else:
         assert isinstance(entries_or_str, list)
+        entries = entries_or_str
+
     return entries
 
 
