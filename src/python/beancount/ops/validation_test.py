@@ -191,8 +191,8 @@ class TestValidateDuplicateBalances(cmptest.TestCase):
     @parser.parsedoc()
     def test_validate_duplicate_balances(self, entries, _, options_map):
         """
-        2014-01-01 balance Assets:US:Bank:Checking1
-        2014-01-01 balance Assets:US:Bank:Checking2
+        2014-01-01 open Assets:US:Bank:Checking1
+        2014-01-01 open Assets:US:Bank:Checking2
 
         ;; Duplicates, with different amounts (error).
         2014-03-01 balance Assets:US:Bank:Checking1  100 USD
