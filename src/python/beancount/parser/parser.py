@@ -146,16 +146,3 @@ def parsedoc(no_errors=False):
         return wrapper
 
     return decorator
-
-
-def parsedoc_noerrors(fun):
-    """Decorator like parsedoc but that further ensures no errors.
-
-    This does not pass in the errors to the callback.
-
-    Args:
-      fun: the function object to be decorated.
-    Returns:
-      The decorated function.
-    """
-    return parsedoc(no_errors=True)(fun)
