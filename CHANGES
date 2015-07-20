@@ -4,6 +4,16 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-07-20
+
+  - Numbers rendered from bean-query are now rendered using the display context
+    inferred from the input file. This means numbers are rounded nicely, using
+    the most common precision seen in the input file.
+
+  - I fixed a bug on writing UTF-8 output to the console on Mac OS X and how it
+    interacts with the 'less' pager.
+
+
 2015-07-12
 
   - Implemented support for arithmetic operations: +, -, *, / and parenthesis
