@@ -49,7 +49,7 @@ class TestParserDoc(unittest.TestCase):
     # Note: nose does not honor expectedFailure as of 1.3.4. We would use it
     # here instead of doing this manually.
     def test_parsedoc_noerrors(self):
-        @parser.parsedoc(no_errors=True)
+        @parser.parsedoc(errors=False)
         def test_function(self, entries, errors, options_map):
             """
             2013-05-40 * "Nice dinner at Mermaid Inn"

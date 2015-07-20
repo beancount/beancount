@@ -765,7 +765,7 @@ class TestInferTolerances(cmptest.TestCase):
         self.assertEqual(1, len(errors))
         self.assertTrue(errors[0].entry is entries[-1])
 
-    @loader.loaddoc(no_errors=True)
+    @loader.loaddoc(errors=False)
     def test_tolerances__legacy(self, entries, _, __):
         """
         ;; issue/47

@@ -345,7 +345,7 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
     return entries, errors
 
 
-def loaddoc(no_errors=False):
+def loaddoc(errors=None):
     """A factory of decorators that loads the docstring and calls the function with entries.
 
     This is an incredibly convenient tool to write lots of tests. Write a
@@ -353,7 +353,10 @@ def loaddoc(no_errors=False):
     function's docstring.
 
     Args:
-      no_errors: A boolean, true if we should assert that there are no errors.
+      errors: A boolean or None, with the following semantics,
+        True: Expect errors and fail if there are none.
+        False: Expect no errors and fail if there are some.
+        None: Do nothing, no check.
     Returns:
       A wrapped method that accepts a single 'self' argument.
     """
@@ -369,10 +372,15 @@ def loaddoc(no_errors=False):
         @functools.wraps(fun)
         def wrapper(self):
             entries, errors, options_map = load_string(fun.__doc__, dedent=True)
-            if no_errors and errors:
-                oss = io.StringIO()
-                printer.print_errors(errors, file=oss)
-                self.fail("Unexpected errors:\n{}".format(oss.getvalue()))
+
+            if errors is not None:
+                if errors is False and errors:
+                    oss = io.StringIO()
+                    printer.print_errors(errors, file=oss)
+                    self.fail("Unexpected errors found:\n{}".format(oss.getvalue()))
+                elif errors is True and not errors:
+                    self.fail("Expected errors, none found:")
+
             return fun(self, entries, errors, options_map)
 
         wrapper.__input__ = wrapper.__doc__
