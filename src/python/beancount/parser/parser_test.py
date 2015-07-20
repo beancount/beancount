@@ -37,8 +37,8 @@ class TestCompareTestFunctions(unittest.TestCase):
 
 class TestParserDoc(unittest.TestCase):
 
-    @parser.parsedoc()
-    def test_parsedoc(self, entries, errors, options_map):
+    @parser.parsedoc(expect_errors=None)
+    def test_parsedoc__disabled(self, entries, errors, options_map):
         """
         2013-05-40 * "Nice dinner at Mermaid Inn"
           Expenses:Restaurant         100 USD
@@ -49,7 +49,7 @@ class TestParserDoc(unittest.TestCase):
     # Note: nose does not honor expectedFailure as of 1.3.4. We would use it
     # here instead of doing this manually.
     def test_parsedoc__errors(self):
-        @parser.parsedoc(errors=True)
+        @parser.parsedoc(expect_errors=True)
         def test_function(self, entries, errors, options_map):
             """
             2013-05-40 * "Nice dinner at Mermaid Inn"
@@ -65,7 +65,7 @@ class TestParserDoc(unittest.TestCase):
     # Note: nose does not honor expectedFailure as of 1.3.4. We would use it
     # here instead of doing this manually.
     def test_parsedoc__noerrors(self):
-        @parser.parsedoc(errors=False)
+        @parser.parsedoc(expect_errors=False)
         def test_function(self, entries, errors, options_map):
             """
             2013-05-40 * "Nice dinner at Mermaid Inn"

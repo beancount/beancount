@@ -85,7 +85,7 @@ def parse_string(string, **kw):
     return builder.finalize()
 
 
-def parsedoc(errors=None):
+def parsedoc(expect_errors=None):
     """Factory of decorators that parse the function's docstring as an argument.
 
     Note that the decorators thus generated only run the parser on the tests,
@@ -93,7 +93,7 @@ def parsedoc(errors=None):
     the parsed text.
 
     Args:
-      errors: A boolean or None, with the following semantics,
+      expect_errors: A boolean or None, with the following semantics,
         True: Expect errors and fail if there are none.
         False: Expect no errors and fail if there are some.
         None: Do nothing, no check.
@@ -134,12 +134,12 @@ def parsedoc(errors=None):
             # interp_entries, balance_errors = grammar.interpolate(entries, options_map)
             # errors.extend(balance_errors)
 
-            if errors is not None:
-                if errors is False and errors:
+            if expect_errors is not None:
+                if expect_errors is False and errors:
                     oss = io.StringIO()
                     printer.print_errors(errors, file=oss)
                     self.fail("Unexpected errors found:\n{}".format(oss.getvalue()))
-                elif errors is True and not errors:
+                elif expect_errors is True and not errors:
                     self.fail("Expected errors, none found:")
 
             return fun(self, entries, errors, options_map)
