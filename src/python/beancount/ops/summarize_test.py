@@ -418,7 +418,7 @@ class TestClamp(cmptest.TestCase):
 
 class TestCap(cmptest.TestCase):
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_cap(self, entries, errors, options_map):
         """
         plugin "beancount.plugins.auto_accounts"
@@ -1030,7 +1030,7 @@ class TestEntriesFromBalance(cmptest.TestCase):
 
 class TestBalanceByAccount(cmptest.TestCase):
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def setUp(self, entries, _, __):
         """
         2014-02-01 *

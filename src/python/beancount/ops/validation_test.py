@@ -441,7 +441,7 @@ class TestValidate(cmptest.TestCase):
 
 class TestValidateTolerances(cmptest.TestCase):
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_tolerance_implicit_integral(self, entries, errors, options_map):
         """
         plugin "beancount.plugins.auto_accounts"
@@ -460,7 +460,7 @@ class TestValidateTolerances(cmptest.TestCase):
         """
         self.assertFalse(errors)
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_tolerance_implicit_fractional_global(self, entries, errors, options_map):
         """
         plugin "beancount.plugins.auto_accounts"
@@ -472,7 +472,7 @@ class TestValidateTolerances(cmptest.TestCase):
         """
         self.assertFalse(errors)
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_tolerance_implicit_fractional_specific(self, entries, errors, options_map):
         """
         plugin "beancount.plugins.auto_accounts"
@@ -484,7 +484,7 @@ class TestValidateTolerances(cmptest.TestCase):
         """
         self.assertFalse(errors)
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_tolerance_implicit_fractional_withprec(self, entries, errors, options_map):
         """
         plugin "beancount.plugins.auto_accounts"
@@ -500,7 +500,7 @@ class TestValidateTolerances(cmptest.TestCase):
     # https://groups.google.com/d/msg/beancount/5u-xgR-ttjg/sXfU32ItRscJ for a
     # discussion.
     #
-    # @loader.loaddoc
+    # @loader.loaddoc()
     # def test_tolerance_implicit_from_converted_cost(self, entries, errors, options_map):
     #     """
     #     plugin "beancount.plugins.auto_accounts"

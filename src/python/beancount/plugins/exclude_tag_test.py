@@ -8,7 +8,7 @@ from beancount.parser import cmptest
 
 class TestExampleExcludeTag(cmptest.TestCase):
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_exclude_tag(self, entries, errors, __):
         """
             plugin "beancount.plugins.exclude_tag"

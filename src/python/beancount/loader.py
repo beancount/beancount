@@ -345,7 +345,7 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
     return entries, errors
 
 
-def loaddoc(fun, no_errors=False):
+def loaddoc(no_errors=False):
     """A factory of decorators that loads the docstring and calls the function with entries.
 
     This is an incredibly convenient tool to write lots of tests. Write a
@@ -379,4 +379,4 @@ def loaddoc(fun, no_errors=False):
         wrapper.__doc__ = None
         return wrapper
 
-    return decorator(fun)
+    return decorator

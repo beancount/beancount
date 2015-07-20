@@ -9,7 +9,7 @@ from beancount import loader
 
 class TestImplicitPrices(cmptest.TestCase):
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_add_implicit_prices__all_cases(self, entries, _, options_map):
         """
         2013-01-01 open Assets:Account1
@@ -109,7 +109,7 @@ class TestImplicitPrices(cmptest.TestCase):
             actual = (price.currency, price.amount.currency, price.amount.number)
             self.assertEqual(expected, actual)
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_add_implicit_prices__other_account(self, entries, _, options_map):
         """
         2013-01-01 open Assets:Account1
@@ -164,7 +164,7 @@ class TestImplicitPrices(cmptest.TestCase):
 
         """, new_entries)
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_add_implicit_prices__duplicates_on_same_transaction(self,
                                                                  entries, _, options_map):
         """
@@ -208,7 +208,7 @@ class TestImplicitPrices(cmptest.TestCase):
 
         """, new_entries)
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_add_implicit_prices__duplicates_on_different_transactions(self,
                                                                        entries, _,
                                                                        options_map):
@@ -265,7 +265,7 @@ class TestImplicitPrices(cmptest.TestCase):
 
         """, new_entries)
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_add_implicit_prices__duplicates_overloaded(self, entries, _, options_map):
         """
         2013-01-01 open Assets:Account1

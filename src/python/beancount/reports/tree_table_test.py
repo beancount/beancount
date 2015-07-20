@@ -13,7 +13,7 @@ from beancount.reports import html_formatter
 
 class TestActiveAccounts(unittest.TestCase):
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_is_account_active(self, entries, _, __):
         """
         2014-01-01 open Assets:Inactive
@@ -34,7 +34,7 @@ class TestActiveAccounts(unittest.TestCase):
 
 class TestTables(unittest.TestCase):
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def setUp(self, entries, _, __):
         """
         2014-01-01 open Assets:US:Checking

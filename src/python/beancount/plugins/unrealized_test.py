@@ -34,7 +34,7 @@ class TestUnrealized(unittest.TestCase):
         entries, _ = unrealized.add_unrealized_gains([], options.OPTIONS_DEFAULTS.copy())
         self.assertEqual([], entries)
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_nothing_held_at_cost(self, entries, _, options_map):
         """
         2014-01-01 open Assets:Account1
@@ -56,7 +56,7 @@ class TestUnrealized(unittest.TestCase):
         self.assertEqual([],
                          unrealized.get_unrealized_entries(new_entries))
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_normal_case(self, entries, _, options_map):
         """
         2014-01-01 open Assets:Account1
@@ -97,7 +97,7 @@ class TestUnrealized(unittest.TestCase):
         self.assertEqual(2, len(mansion.postings))
         self.assertEqual(D('-100'), mansion.postings[0].position.number)
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_no_price(self, entries, _, options_map):
         """
         2014-01-01 open Assets:Account1
@@ -116,7 +116,7 @@ class TestUnrealized(unittest.TestCase):
         self.assertEqual(1, len(unreal_entries))
         self.assertEqual(ZERO, unreal_entries[0].postings[0].position.number)
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_immediate_profit(self, entries, _, options_map):
         """
         2014-01-01 open Assets:Account1
@@ -136,7 +136,7 @@ class TestUnrealized(unittest.TestCase):
         self.assertEqual(D('200'),
                          unreal_entries[0].postings[0].position.number)
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_conversions_only(self, entries, _, options_map):
         """
         2014-01-01 open Assets:Account1
@@ -150,7 +150,7 @@ class TestUnrealized(unittest.TestCase):
         new_entries, _ = unrealized.add_unrealized_gains(entries, options_map)
         self.assertEqual([], unrealized.get_unrealized_entries(new_entries))
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_with_subaccount(self, entries, _, options_map):
         """
         2014-01-01 open Assets:Account1
@@ -171,7 +171,7 @@ class TestUnrealized(unittest.TestCase):
         self.assertEqual('Assets:Account1:Gains', entry.postings[0].account)
         self.assertEqual('Income:Account1:Gains', entry.postings[1].account)
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_not_assets(self, entries, _, options_map):
         """
         2014-01-01 open Liabilities:Account1
@@ -223,7 +223,7 @@ class TestUnrealized(unittest.TestCase):
         self.assertEqual(D("30.00"), entry.postings[0].position.number)
         self.assertEqual(D("-30.00"), entry.postings[1].position.number)
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_create_open_directive(self, entries, errors, options_map):
         """
         2014-01-01 open Assets:Account1
@@ -264,7 +264,7 @@ class TestUnrealized(unittest.TestCase):
         valid_errors = validation.validate(new_entries, options_map)
         self.assertFalse(valid_errors)
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_no_units_but_leaked_cost_basis(self, entries, errors, options_map):
         """
         ;; This probable mistake triggers an error in the unrealized gains

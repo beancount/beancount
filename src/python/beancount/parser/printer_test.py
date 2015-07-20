@@ -377,7 +377,7 @@ class TestPrinterAlignment(test_utils.TestCase):
 
 class TestPrinterMisc(test_utils.TestCase):
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_no_valid_account(self, entries, errors, options_map):
         """
         2000-01-01 * "Test"

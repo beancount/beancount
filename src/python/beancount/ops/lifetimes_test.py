@@ -10,7 +10,7 @@ from beancount.utils import test_utils
 
 class TestCommodityLifetimes(test_utils.TestCase):
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_lifetimes_different_currencies(self, entries, errors, _):
         """
         2000-01-01 open Assets:US:Invest:Cash    USD
@@ -63,7 +63,7 @@ class TestCommodityLifetimes(test_utils.TestCase):
              ('IBM', 'USD'): [(datetime.date(2001, 2, 10), datetime.date(2001, 7, 24))]},
             lifetimes_map)
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_lifetimes_closed_open(self, entries, errors, _):
         """
         2000-01-01 open Assets:US:Invest:Cash    USD
@@ -111,7 +111,7 @@ class TestCommodityLifetimes(test_utils.TestCase):
                                (datetime.date(2003, 4, 10), None)]},
             lifetimes_map)
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_lifetimes_cross_accounts(self, entries, errors, _):
         """
         2000-01-01 open Assets:US:InvestA:Cash    USD

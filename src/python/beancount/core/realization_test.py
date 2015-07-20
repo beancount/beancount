@@ -277,7 +277,7 @@ class TestRealization(unittest.TestCase):
             real_account = realization.get(real_root, account_name)
             self.assertEqual(account_name, real_account.account)
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_realize(self, entries, errors, _):
         """
         2012-01-01 open Expenses:Restaurant
@@ -493,7 +493,7 @@ class TestRealOther(test_utils.TestCase):
         ra3['Sub'] = RealAccount('Assets:US:Bank:Checking:Sub')
         self.assertNotEqual(root1, root3)
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_iterate_with_balance(self, entries, _, __):
         """
         2012-01-01 open Assets:Bank:Checking
@@ -615,7 +615,7 @@ class TestRealOther(test_utils.TestCase):
             ], [(first_line, cont_line)
                 for first_line, cont_line, _1 in lines])
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_dump_balances(self, entries, _, __):
         """
         2012-01-01 open Expenses:Restaurant
@@ -654,7 +654,7 @@ class TestRealMisc(unittest.TestCase):
 
 class TestFindLastActive(unittest.TestCase):
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_find_last_active_posting(self, entries, _, __):
         """
         2012-01-01 open Assets:Target
