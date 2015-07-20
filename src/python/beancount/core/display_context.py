@@ -171,7 +171,7 @@ class DisplayContext:
     """A builder object used to construct a DisplayContext from a series of numbers.
 
     Attributes:
-      builder_infos: A dict of currency string to BuilderCurrencyInfo instance.
+      ccontext: A dict of currency string to CurrencyContext instance.
     """
     def __init__(self):
         self.ccontexts = collections.defaultdict(_CurrencyContext)

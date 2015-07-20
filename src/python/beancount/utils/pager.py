@@ -15,6 +15,7 @@ command by just using stdout.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import codecs
 import contextlib
 import os
 import sys
@@ -45,10 +46,20 @@ def create_pager(command, file):
         command = DEFAULT_PAGER
 
     pipe = None
+
+    # In case of using 'less', make sure the charset is set properly. In theory
+    # you could override this by setting PAGER to "LESSCHARSET=utf-8 less" but
+    # this shouldn't affect other programs and is unlikely to cause problems, so
+    # we set it here to make default behavior work for most people (we always
+    # write UTF-8).
+    env = os.environ.copy()
+    env['LESSCHARSET'] = "utf-8"
+
     try:
         pipe = subprocess.Popen(command, shell=True,
                                 stdin=subprocess.PIPE,
-                                stdout=file)
+                                stdout=file,
+                                env=env)
     except OSError as exc:
         logging.error("Invalid pager: {}".format(exc))
         file = file
@@ -74,7 +85,7 @@ class ConditionalPager:
         """
         self.command = command
         self.minlines = minlines
-        self.default_file = sys.stdout
+        self.default_file = codecs.getwriter("utf-8")(sys.stdout.buffer)
 
     def __enter__(self):
         """Initialize the context manager and return this instance as it."""
