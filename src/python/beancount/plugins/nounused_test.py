@@ -18,7 +18,7 @@ class TestValidateUnusedAccounts(cmptest.TestCase):
         2014-02-01 *
           Assets:Account1            1 USD
           Assets:Account2            1 USD
-          Equity:Opening-Balances
+          Equity:Opening-Balances   -2 USD
 
         2014-06-01 close Assets:Account2
         """

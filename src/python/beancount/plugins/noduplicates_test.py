@@ -52,12 +52,12 @@ class TestValidateDuplicates(cmptest.TestCase):
     def test_validate_no_duplicates__transaction(self, entries, errors, options_map):
         """
         2014-06-24 * "Go negative from zero"
-          Assets:Investments:Stock   1 GOOG {500 USD}
-          Assets:Investments:Cash
+          Assets:Investments:Stock    1 GOOG {500 USD}
+          Assets:Investments:Cash  -500 USD
 
         2014-06-24 * "Go negative from zero"
-          Assets:Investments:Stock  1 GOOG {500 USD}
-          Assets:Investments:Cash
+          Assets:Investments:Stock    1 GOOG {500 USD}
+          Assets:Investments:Cash  -500 USD
         """
         self.checkDuplicates(entries, errors, options_map)
 
