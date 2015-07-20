@@ -85,56 +85,67 @@ def parse_string(string, **kw):
     return builder.finalize()
 
 
-def parsedoc(fun, no_errors=False):
-    """Decorator that parses the function's docstring as an argument.
+def parsedoc(no_errors=False):
+    """Factory of decorators that parse the function's docstring as an argument.
 
-    Note that this only runs the parser on the tests, not the loader, so is no
-    validation nor fixup applied to the list of entries.
+    Note that the decorators thus generated only run the parser on the tests,
+    not the loader, so is no validation, balance checks, nor plugins applied to
+    the parsed text.
 
     Args:
-      fun: the function object to be decorated.
       no_errors: A boolean, true if we should assert that there are no errors.
     Returns:
-      The decorated function.
+      A decorator for test functions.
     """
-    filename = inspect.getfile(fun)
-    lines, lineno = inspect.getsourcelines(fun)
 
-    # decorator line + function definition line (I realize this is largely
-    # imperfect, but it's only for reporting in our tests) - empty first line
-    # stripped away.
-    lineno += 1
+    def decorator(fun):
+        """A decorator that parses the function's docstring as an argument.
 
-    @functools.wraps(fun)
-    def wrapper(self):
-        assert fun.__doc__ is not None, (
-            "You need to insert a docstring on {}".format(fun.__name__))
-        entries, errors, options_map = parse_string(fun.__doc__,
-                                                    report_filename=filename,
-                                                    report_firstline=lineno,
-                                                    dedent=True)
+        Args:
+          fun: the function object to be decorated.
+        Returns:
+          A decorated test function.
+        """
+        filename = inspect.getfile(fun)
+        lines, lineno = inspect.getsourcelines(fun)
 
-        # Don't allow interpolation
-        if has_auto_postings(entries):
-            self.fail("parsedoc() may not use interpolation.")
+        # decorator line + function definition line (I realize this is largely
+        # imperfect, but it's only for reporting in our tests) - empty first line
+        # stripped away.
+        lineno += 1
 
-        ## FIXME: remove
-        # # Perform simple interpolation in literals, without a history.
-        # interp_entries, balance_errors = grammar.interpolate(entries, options_map)
-        # errors.extend(balance_errors)
+        @functools.wraps(fun)
+        def wrapper(self):
+            assert fun.__doc__ is not None, (
+                "You need to insert a docstring on {}".format(fun.__name__))
+            entries, errors, options_map = parse_string(fun.__doc__,
+                                                        report_filename=filename,
+                                                        report_firstline=lineno,
+                                                        dedent=True)
 
-        if no_errors:
-            if errors:
-                oss = io.StringIO()
-                printer.print_errors(errors, file=oss)
-                self.fail("Unexpected errors:\n{}".format(oss.getvalue()))
-            return fun(self, entries, options_map)
-        else:
-            return fun(self, entries, errors, options_map)
+            # Don't allow interpolation
+            if has_auto_postings(entries):
+                self.fail("parsedoc() may not use interpolation.")
 
-    wrapper.__input__ = wrapper.__doc__
-    wrapper.__doc__ = None
-    return wrapper
+            ## FIXME: remove
+            # # Perform simple interpolation in literals, without a history.
+            # interp_entries, balance_errors = grammar.interpolate(entries, options_map)
+            # errors.extend(balance_errors)
+
+            if no_errors:
+                if errors:
+                    oss = io.StringIO()
+                    printer.print_errors(errors, file=oss)
+                    self.fail("Unexpected errors:\n{}".format(oss.getvalue()))
+                return fun(self, entries, options_map)
+            else:
+                return fun(self, entries, errors, options_map)
+
+        wrapper.__input__ = wrapper.__doc__
+        wrapper.__doc__ = None
+        return wrapper
+
+    return decorator
 
 
 def parsedoc_noerrors(fun):
@@ -147,4 +158,4 @@ def parsedoc_noerrors(fun):
     Returns:
       The decorated function.
     """
-    return parsedoc(fun, no_errors=True)
+    return parsedoc(no_errors=True)(fun)

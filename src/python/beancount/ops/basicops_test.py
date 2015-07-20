@@ -4,8 +4,7 @@ import datetime
 import unittest
 import textwrap
 
-from beancount.parser.parser import parsedoc
-from beancount.parser.parser import parse_string
+from beancount.parser import parser
 from beancount.core import data
 from beancount.ops import basicops
 
@@ -34,7 +33,7 @@ class TestBasicOpsLinks(unittest.TestCase):
     """)
 
     def test_filter_link(self):
-        entries, _, __ = parse_string(self.test_doc)
+        entries, _, __ = parser.parse_string(self.test_doc)
         self.assertEqual(6, len(entries))
 
         link_entries = list(basicops.filter_link("apple", entries))
@@ -49,7 +48,7 @@ class TestBasicOpsLinks(unittest.TestCase):
         self.assertEqual(0, len(link_entries))
 
     def test_group_entries_by_link(self):
-        entries, _, __ = parse_string(self.test_doc)
+        entries, _, __ = parser.parse_string(self.test_doc)
         entries = [entry._replace(meta=None, postings=None)
                    for entry in entries
                    if isinstance(entry, data.Transaction)]
@@ -91,7 +90,7 @@ class TestBasicOpsTags(unittest.TestCase):
     """)
 
     def test_filter_tag(self):
-        entries, _, __ = parse_string(self.test_doc)
+        entries, _, __ = parser.parse_string(self.test_doc)
         self.assertEqual(6, len(entries))
 
         tag_entries = list(basicops.filter_tag("apple", entries))
@@ -108,7 +107,7 @@ class TestBasicOpsTags(unittest.TestCase):
 
 class TestBasicOpsOther(unittest.TestCase):
 
-    @parsedoc
+    @parser.parsedoc()
     def test_get_common_accounts(self, entries, _, __):
         """
         2014-01-01 open Assets:Account1

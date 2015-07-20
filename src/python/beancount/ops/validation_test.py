@@ -54,7 +54,7 @@ class TestValidateInventoryBooking(cmptest.TestCase):
         input_str = re.sub(r'\b2\d\b', '22', self.input_str)
         self.do_validate_inventory_booking(input_str)
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_simple_negative_lots(self, entries, errors, options_map):
         """
           2013-05-01 open Assets:Bank:Investing
@@ -67,7 +67,7 @@ class TestValidateInventoryBooking(cmptest.TestCase):
         validation_errors = validation.validate_inventory_booking(entries, options_map)
         self.assertEqual([], list(map(type, validation_errors)))
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_mixed_lots_in_single_transaction(self, entries, errors, options_map):
         """
           2013-05-01 open Assets:Bank:Investing
@@ -81,7 +81,7 @@ class TestValidateInventoryBooking(cmptest.TestCase):
         validation_errors = validation.validate_inventory_booking(entries, options_map)
         self.assertEqual([validation.ValidationError], list(map(type, validation_errors)))
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_mixed_lots_in_multiple_transactions_augmenting(self,
                                                             entries, errors, options_map):
         """
@@ -99,7 +99,7 @@ class TestValidateInventoryBooking(cmptest.TestCase):
         validation_errors = validation.validate_inventory_booking(entries, options_map)
         self.assertEqual([validation.ValidationError], list(map(type, validation_errors)))
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_mixed_lots_in_multiple_transactions_reducing(self,
                                                           entries, errors, options_map):
         """
@@ -123,7 +123,7 @@ class TestValidateInventoryBooking(cmptest.TestCase):
 
 class TestValidateOpenClose(cmptest.TestCase):
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_validate_open_close__duplicate_open(self, entries, _, options_map):
         """
         ;; Regular, only appears once.
@@ -142,7 +142,7 @@ class TestValidateOpenClose(cmptest.TestCase):
                           'Assets:US:Bank:Checking3'],
                          [error.entry.account for error in errors])
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_validate_open_close__duplicate_close(self, entries, _, options_map):
         """
         2014-02-10 open  Assets:US:Bank:Checking1
@@ -166,7 +166,7 @@ class TestValidateOpenClose(cmptest.TestCase):
                           'Assets:US:Bank:Checking3'],
                          [error.entry.account for error in errors])
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_validate_open_close__close_unopened(self, entries, _, options_map):
         """
         2014-03-01 close Assets:US:Bank:Checking1
@@ -175,7 +175,7 @@ class TestValidateOpenClose(cmptest.TestCase):
         self.assertEqual(['Assets:US:Bank:Checking1'],
                          [error.entry.account for error in errors])
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_validate_open_close__ordering(self, entries, _, options_map):
         """
         2014-03-01 open  Assets:US:Bank:Checking1
@@ -188,7 +188,7 @@ class TestValidateOpenClose(cmptest.TestCase):
 
 class TestValidateDuplicateBalances(cmptest.TestCase):
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_validate_duplicate_balances(self, entries, _, options_map):
         """
         2014-01-01 balance Assets:US:Bank:Checking1
@@ -221,7 +221,7 @@ class TestValidateDuplicateBalances(cmptest.TestCase):
 
 class TestValidateDuplicateCommodities(cmptest.TestCase):
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_validate_duplicate_commodities(self, entries, _, options_map):
         """
         2014-01-01 commodity USD
@@ -239,7 +239,7 @@ class TestValidateDuplicateCommodities(cmptest.TestCase):
 
 class TestValidateActiveAccounts(cmptest.TestCase):
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_validate_active_accounts(self, entries, _, options_map):
         """
         2014-01-01 open  Equity:Opening-Balances
@@ -298,7 +298,7 @@ class TestValidateActiveAccounts(cmptest.TestCase):
              re.search('unknown.*Equity:ImUnknown', error.message))
             for error in errors))
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_validate_active_accounts__unopened(self, entries, _, options_map):
         """
         2014-02-01 *
@@ -313,7 +313,7 @@ class TestValidateActiveAccounts(cmptest.TestCase):
 
 class TestValidateCurrencyConstraints(cmptest.TestCase):
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_validate_currency_constraints(self, entries, _, options_map):
         """
         2014-01-01 open  Assets:Account1    USD
@@ -379,7 +379,7 @@ class TestValidateDocumentPaths(cmptest.TestCase):
 
 class TestValidateDataTypes(cmptest.TestCase):
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_validate_data_types(self, entries, errors, options_map):
         """
         2014-06-24 * "Narration"
@@ -396,7 +396,7 @@ class TestValidateDataTypes(cmptest.TestCase):
 
 class TestValidateCheckTransactionBalances(cmptest.TestCase):
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_validate_check_transaction_balances(self, entries, errors, options_map):
         """
         2014-06-24 * "Narration"
@@ -409,7 +409,7 @@ class TestValidateCheckTransactionBalances(cmptest.TestCase):
 
 class TestValidate(cmptest.TestCase):
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_validate(self, entries, _, options_map):
         """
         ;; Just trigger a few errors from here to ensure at least some of the plugins

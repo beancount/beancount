@@ -68,7 +68,7 @@ class TestEntryPrinter(cmptest.TestCase):
         # Compare the two output texts.
         self.assertEqual(oss2.getvalue(), oss1.getvalue())
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_Transaction(self, entries, errors, __):
         """
         2014-06-08 *
@@ -111,21 +111,21 @@ class TestEntryPrinter(cmptest.TestCase):
         """
         self.assertRoundTrip(entries, errors)
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_Balance(self, entries, errors, __):
         """
         2014-06-08 balance Assets:Account1     53.24 USD
         """
         self.assertRoundTrip(entries, errors)
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_Note(self, entries, errors, __):
         """
         2014-06-08 note Assets:Account1 "Note"
         """
         self.assertRoundTrip(entries, errors)
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_Document(self, entries, errors, __):
         """
         2014-06-08 document Assets:Account1 "/path/to/document.pdf"
@@ -133,14 +133,14 @@ class TestEntryPrinter(cmptest.TestCase):
         """
         self.assertRoundTrip(entries, errors)
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_Pad(self, entries, errors, __):
         """
         2014-06-08 pad Assets:Account1 Assets:Account2
         """
         self.assertRoundTrip(entries, errors)
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_Open(self, entries, errors, __):
         """
         2014-06-08 open Assets:Account1
@@ -149,14 +149,14 @@ class TestEntryPrinter(cmptest.TestCase):
         """
         self.assertRoundTrip(entries, errors)
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_Close(self, entries, errors, __):
         """
         2014-06-08 close Assets:Account1
         """
         self.assertRoundTrip(entries, errors)
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_Price(self, entries, errors, __):
         """
         2014-06-08 price  BEAN   53.24 USD
@@ -164,7 +164,7 @@ class TestEntryPrinter(cmptest.TestCase):
         """
         self.assertRoundTrip(entries, errors)
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_Event(self, entries, errors, __):
         """
         2014-06-08 event "location" "New York, NY, USA"
@@ -240,7 +240,7 @@ class TestDisplayContext(test_utils.TestCase):
 
     maxDiff = 2048
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_precision(self, entries, errors, options_map):
         """
         2014-07-01 *
@@ -304,7 +304,7 @@ class TestPrinterAlignment(test_utils.TestCase):
             '76400.203                               ',
             ], aligned_strings)
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_align(self, entries, errors, options_map):
         """
         2014-07-01 * "Something"
@@ -321,7 +321,7 @@ class TestPrinterAlignment(test_utils.TestCase):
         """)
         self.assertEqual(expected_str, oss.getvalue())
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_align_min_width_account(self, entries, errors, options_map):
         """
         2014-07-01 * "Something"
@@ -339,7 +339,7 @@ class TestPrinterAlignment(test_utils.TestCase):
         """)
         self.assertEqual(expected_str, oss.getvalue())
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_align_with_weight(self, entries, errors, options_map):
         """
         2014-07-01 * "Something"

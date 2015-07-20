@@ -37,7 +37,7 @@ class TestCompareTestFunctions(unittest.TestCase):
 
 class TestParserDoc(unittest.TestCase):
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_parsedoc(self, entries, errors, options_map):
         """
         2013-05-40 * "Nice dinner at Mermaid Inn"

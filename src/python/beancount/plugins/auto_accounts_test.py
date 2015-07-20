@@ -7,7 +7,7 @@ from beancount.plugins import auto_accounts
 
 class TestAutoInsertOpen(cmptest.TestCase):
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_auto_open(self, entries, _, options_map):
         """
         2014-02-01 *

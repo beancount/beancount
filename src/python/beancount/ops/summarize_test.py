@@ -23,7 +23,7 @@ from beancount import loader
 
 class TestOpenClose(cmptest.TestCase):
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def setUp(self, entries, errors, options_map):
         """
         option "account_previous_earnings"    "Earnings:Previous"
@@ -332,7 +332,7 @@ class TestOpenCloseWithOptions(TestOpenClose):
 
 class TestClamp(cmptest.TestCase):
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_clamp(self, entries, errors, options_map):
         """
         2012-03-01 * "Some income and expense to be summarized"
@@ -781,7 +781,7 @@ class TestConversions(cmptest.TestCase):
 
     ACCOUNT = 'Equity:Conversions'
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def setUp(self, entries, _, __):
         """
           2012-01-01 open Income:US:Job
@@ -896,7 +896,7 @@ class TestConversions(cmptest.TestCase):
 
 class TestTruncate(cmptest.TestCase):
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def setUp(self, entries, _, __):
         """
         2014-03-10 * "A"
@@ -1075,7 +1075,7 @@ class TestBalanceByAccount(cmptest.TestCase):
 
 class TestOpenAtDate(cmptest.TestCase):
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def setUp(self, entries, _, __):
         """
           2011-01-01 open Assets:AccountA
@@ -1171,7 +1171,7 @@ class TestOpenAtDate(cmptest.TestCase):
         """, summarize.get_open_entries(self.entries, date(2013, 1, 1)))
 
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_get_open_entries__duplicate_open(self, entries, errors, _):
         """
           2011-01-01 open Assets:AccountA
@@ -1181,7 +1181,7 @@ class TestOpenAtDate(cmptest.TestCase):
           2011-01-01 open Assets:AccountA
         """, summarize.get_open_entries(entries, date(2013, 1, 1)))
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_get_open_entries__closed_twice(self, entries, errors, _):
         """
           2011-01-01 open  Assets:AccountA
@@ -1191,7 +1191,7 @@ class TestOpenAtDate(cmptest.TestCase):
         self.assertEqualEntries("""
         """, summarize.get_open_entries(entries, date(2013, 1, 1)))
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_get_open_entries__closed_without_open(self, entries, errors, _):
         """
           2011-02-02 close Assets:AccountA

@@ -137,7 +137,7 @@ class TestGetters(unittest.TestCase):
         self.assertEqual(mapfound('Expenses:Coffee'), (True, False))
         self.assertEqual(mapfound('Expenses:Restaurant'), (True, False))
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_get_account_open_close__duplicates(self, entries, _, __):
         """
         2014-01-01 open  Assets:Checking
