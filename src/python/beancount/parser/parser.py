@@ -97,7 +97,6 @@ def parsedoc(no_errors=False):
     Returns:
       A decorator for test functions.
     """
-
     def decorator(fun):
         """A decorator that parses the function's docstring as an argument.
 

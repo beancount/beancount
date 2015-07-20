@@ -346,42 +346,37 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
 
 
 def loaddoc(fun, no_errors=False):
-    """A decorator that loads the docstring and calls the function with parsed entries.
+    """A factory of decorators that loads the docstring and calls the function with entries.
 
     This is an incredibly convenient tool to write lots of tests. Write a
     unittest using the standard TestCase class and put the input entries in the
     function's docstring.
 
     Args:
-      fun: A callable method, that accepts the three return arguments that load() returns.
       no_errors: A boolean, true if we should assert that there are no errors.
     Returns:
       A wrapped method that accepts a single 'self' argument.
     """
-    @functools.wraps(fun)
-    def wrapper(self):
-        entries, errors, options_map = load_string(fun.__doc__, dedent=True)
-        if no_errors:
-            if errors:
+    def decorator(fun):
+        """A decorator that parses the function's docstring as an argument.
+
+        Args:
+          fun: A callable method, that accepts the three return arguments that
+              load() returns.
+        Returns:
+          A decorated test function.
+        """
+        @functools.wraps(fun)
+        def wrapper(self):
+            entries, errors, options_map = load_string(fun.__doc__, dedent=True)
+            if no_errors and errors:
                 oss = io.StringIO()
                 printer.print_errors(errors, file=oss)
                 self.fail("Unexpected errors:\n{}".format(oss.getvalue()))
-            return fun(self, entries, options_map)
-        else:
             return fun(self, entries, errors, options_map)
-    wrapper.__input__ = wrapper.__doc__
-    wrapper.__doc__ = None
-    return wrapper
 
+        wrapper.__input__ = wrapper.__doc__
+        wrapper.__doc__ = None
+        return wrapper
 
-def loaddoc_noerrors(fun):
-    """Decorator like parsedoc but that further ensures no errors.
-
-    This does not pass in the errors to the callback.
-
-    Args:
-      fun: the function object to be decorated.
-    Returns:
-      The decorated function.
-    """
-    return loaddoc(fun, no_errors=True)
+    return decorator(fun)
