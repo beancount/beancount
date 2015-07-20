@@ -10,15 +10,21 @@ from beancount.core.number import Decimal
 from beancount.core import inventory
 from beancount.core import position
 from beancount.core import amount
+from beancount.core import display_context
 from beancount.query import query_render
+
 
 
 class ColumnRendererBase(unittest.TestCase):
 
     RendererClass = None
 
+    dcontext = display_context.DisplayContext()
+    dcontext.update(D('1.00'), 'USD')
+    dcontext.update(D('1.00'), 'CAD')
+
     def get(self, *values):
-        rdr = self.RendererClass()
+        rdr = self.RendererClass(self.dcontext)
         for value in values:
             rdr.update(value)
         rdr.prepare()
@@ -199,11 +205,12 @@ class TestInventoryRenderer(ColumnRendererBase):
                          rdr.format(inv))
 
 
-
-
-
-
 class TestQueryRender(unittest.TestCase):
+
+    def setUp(self):
+        self.dcontext = display_context.DisplayContext()
+        self.dcontext.update(D('1.00'), 'USD')
+        self.dcontext.update(D('1.00'), 'CAD')
 
     # pylint: disable=invalid-name
 
@@ -216,7 +223,7 @@ class TestQueryRender(unittest.TestCase):
             Row('Income:US:Babble:Vacation'),
         ]
         oss = io.StringIO()
-        query_render.render_text(types, rows, oss)
+        query_render.render_text(types, rows, self.dcontext, oss)
         # FIXME:
         # with box():
         #     print(oss.getvalue())
@@ -231,7 +238,7 @@ class TestQueryRender(unittest.TestCase):
             Row(D('456.1234')),
         ]
         oss = io.StringIO()
-        query_render.render_text(types, rows, oss)
+        query_render.render_text(types, rows, self.dcontext, oss)
         # FIXME:
         # with box():
         #     print(oss.getvalue())

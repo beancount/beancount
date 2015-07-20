@@ -26,6 +26,9 @@ class ColumnRenderer:
     # Override, the type of object to be rendered.
     dtype = None
 
+    def __init__(self, unused_dcontext):
+        pass
+
     def update(self, value):
         """Update the rendered with the given value.
         Args:
@@ -36,7 +39,9 @@ class ColumnRenderer:
         raise NotImplementedError
 
     def prepare(self):
-        """Prepare to render all values of a column."""
+        """Prepare to render all values of a column.
+        This is called after having seen all the values in calls to update().
+        """
         # No-op. Override if desired.
 
     def width(self):
@@ -63,7 +68,8 @@ class StringRenderer(ColumnRenderer):
     """A renderer for left-aligned strings."""
     dtype = str
 
-    def __init__(self):
+    def __init__(self, dcontext):
+        super().__init__(dcontext)
         self.maxlen = 0
 
     def update(self, string):
@@ -84,7 +90,8 @@ class StringSetRenderer(ColumnRenderer):
     """A renderer for sets of strings."""
     dtype = set
 
-    def __init__(self):
+    def __init__(self, dcontext):
+        super().__init__(dcontext)
         self.maxlen = 0
 
     def update(self, string_set):
@@ -111,7 +118,8 @@ class DateTimeRenderer(ColumnRenderer):
     """A renderer for decimal numbers."""
     dtype = datetime.date
 
-    def __init__(self):
+    def __init__(self, dcontext):
+        super().__init__(dcontext)
         self.empty = ' ' * 10
 
     def update(self, _):
@@ -128,7 +136,8 @@ class IntegerRenderer(ColumnRenderer):
     """A renderer for integers."""
     dtype = int
 
-    def __init__(self):
+    def __init__(self, dcontext):
+        super().__init__(dcontext)
         self.has_negative = False
         self.max_digits = 0
 
@@ -158,7 +167,10 @@ class DecimalRenderer(ColumnRenderer):
     """A renderer for decimal numbers."""
     dtype = Decimal
 
-    def __init__(self):
+    def __init__(self, dcontext):
+        super().__init__(dcontext)
+        self.dcontext = dcontext
+
         self.has_negative = False
         self.max_adjusted = 0
         self.min_exponent = 0
@@ -169,11 +181,15 @@ class DecimalRenderer(ColumnRenderer):
     def update(self, number, key=None):
         if number is None:
             return
+
+        # Quantize the number based on the display context.
+        qnumber = self.dcontext.quantize(number, key)
+
         self.num_values += 1
-        ntuple = number.as_tuple()
+        ntuple = qnumber.as_tuple()
         if ntuple.sign:
             self.has_negative = True
-        self.max_adjusted = max(self.max_adjusted, number.adjusted())
+        self.max_adjusted = max(self.max_adjusted, qnumber.adjusted())
         self.min_exponent = min(self.min_exponent, ntuple.exponent)
         self.dists[key].update(-ntuple.exponent)
 
@@ -228,9 +244,9 @@ class AmountRenderer(ColumnRenderer):
     """
     dtype = amount.Amount
 
-    def __init__(self):
-        super().__init__()
-        self.rdr = DecimalRenderer()
+    def __init__(self, dcontext):
+        super().__init__(dcontext)
+        self.rdr = DecimalRenderer(dcontext)
         self.ccylen = 0
 
     def update(self, amount_):
@@ -267,10 +283,10 @@ class PositionRenderer(ColumnRenderer):
     """
     dtype = position.Position
 
-    def __init__(self):
-        super().__init__()
-        self.units_rdr = AmountRenderer()
-        self.cost_rdr = AmountRenderer()
+    def __init__(self, dcontext):
+        super().__init__(dcontext)
+        self.units_rdr = AmountRenderer(dcontext)
+        self.cost_rdr = AmountRenderer(dcontext)
 
     def update(self, pos):
         if pos is None:
@@ -379,17 +395,19 @@ class InventoryRenderer(PositionRenderer):
             return strings
 
 
-def get_renderers(result_types, result_rows):
-    """Create renderers for each column.
+def get_renderers(result_types, result_rows, dcontext):
+    """Create renderers for each column and prepare them with the given data.
 
     Args:
       result_types: A list of items describing the names and data types of the items in
         each column.
       result_rows: A list of ResultRow instances.
+      dcontext: A DisplayContext object prepared for rendering numbers.
     Returns:
       A list of subclass instances of ColumnRenderer.
     """
-    renderers = [RENDERERS[dtype]() for _, dtype in result_types]
+    renderers = [RENDERERS[dtype](dcontext)
+                 for _, dtype in result_types]
 
     # Prime and prepare each of the renderers with the date in order to be ready
     # to begin rendering with correct alignment.
@@ -403,13 +421,14 @@ def get_renderers(result_types, result_rows):
     return renderers
 
 
-def render_text(result_types, result_rows, file, boxed=False, spaced=False):
+def render_text(result_types, result_rows, dcontext, file, boxed=False, spaced=False):
     """Render the result of executing a query in text format.
 
     Args:
       result_types: A list of items describing the names and data types of the items in
         each column.
       result_rows: A list of ResultRow instances.
+      dcontext: A DisplayContext object prepared for rendering numbers.
       file: A file object to render the results to.
       boxed: A boolean, true if we should render the results in a fancy-looking ASCII box.
       spaced: If true, leave an empty line between each of the rows. This is useful if the
@@ -428,7 +447,7 @@ def render_text(result_types, result_rows, file, boxed=False, spaced=False):
         assert len(result_types) == len(result_rows[0])
 
     # Create column renderers.
-    renderers = get_renderers(result_types, result_rows)
+    renderers = get_renderers(result_types, result_rows, dcontext)
 
     # Precompute a spacing row.
     if spaced:
