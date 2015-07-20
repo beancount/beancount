@@ -64,7 +64,7 @@ class TestParserEntryTypes(unittest.TestCase):
         """
           2013-05-18 * "Nice dinner at Mermaid Inn"
             Expenses:Restaurant         100 USD
-            Assets:US:Cash
+            Assets:US:Cash             -100 USD
         """
         check_list(self, entries, [data.Transaction])
 
@@ -73,7 +73,7 @@ class TestParserEntryTypes(unittest.TestCase):
         """
           2013-05-18 txn "Nice dinner at Mermaid Inn"
             Expenses:Restaurant         100 USD
-            Assets:US:Cash
+            Assets:US:Cash             -100 USD
         """
         check_list(self, entries, [data.Transaction])
 
@@ -276,7 +276,7 @@ class TestUglyBugs(unittest.TestCase):
           2013-05-04 event "location" "New York, USA"
           2013-05-05 * "Payee" "Narration"
             Assets:US:BestBank:Checking   100.00 USD
-            Assets:Cash
+            Assets:Cash                  -100.00 USD
           2013-05-06 note Assets:US:BestBank:Checking  "Blah, di blah."
           2013-05-07 price USD   1.0290 CAD
         """
@@ -617,7 +617,7 @@ class TestParserLinks(unittest.TestCase):
         """
           2013-05-18 * "Something something" ^38784734873
             Expenses:Restaurant         100 USD
-            Assets:US:Cash
+            Assets:US:Cash             -100 USD
 
         """
         check_list(self, entries, [data.Transaction])
@@ -631,7 +631,7 @@ class TestTransactions(unittest.TestCase):
         """
           2013-05-18 * "Nice dinner at Mermaid Inn"
             Expenses:Restaurant         100 USD
-            Assets:US:Cash
+            Assets:US:Cash             -100 USD
         """
         check_list(self, entries, [data.Transaction])
         check_list(self, errors, [])
@@ -644,11 +644,11 @@ class TestTransactions(unittest.TestCase):
 
           2013-05-18 * "Nice dinner at Mermaid Inn"
             Expenses:Restaurant         100 USD
-            Assets:US:Cash
+            Assets:US:Cash             -100 USD
 
           2013-05-20 * "Duane Reade" | "Toothbrush"
             Expenses:BathroomSupplies         4 USD
-            Assets:US:BestBank:Checking
+            Assets:US:BestBank:Checking      -4 USD
 
         """
         check_list(self, entries, [data.Transaction, data.Transaction])
@@ -663,7 +663,7 @@ class TestTransactions(unittest.TestCase):
         """
           2013-05-18 * ""
             Expenses:Restaurant         100 USD
-            Assets:US:Cash
+            Assets:US:Cash             -100 USD
         """
         check_list(self, entries, [data.Transaction])
         check_list(self, errors, [])
@@ -675,7 +675,7 @@ class TestTransactions(unittest.TestCase):
         """
           2013-05-18 *
             Expenses:Restaurant         100 USD
-            Assets:US:Cash
+            Assets:US:Cash             -100 USD
         """
         check_list(self, entries, [data.Transaction])
         check_list(self, errors, [])
@@ -687,7 +687,7 @@ class TestTransactions(unittest.TestCase):
         """
           2013-05-18 * "Mermaid Inn" |
             Expenses:Restaurant         100 USD
-            Assets:US:Cash
+            Assets:US:Cash             -100 USD
         """
         # Make sure a single string and a pipe raises an error, because '|' does
         # not carry any special meaning anymore.
@@ -701,7 +701,7 @@ class TestTransactions(unittest.TestCase):
         """
           2013-05-18 * "A" "B" "C"
             Expenses:Restaurant         100 USD
-            Assets:US:Cash
+            Assets:US:Cash             -100 USD
         """
         check_list(self, entries, [])
         check_list(self, errors, [parser.ParserError])
@@ -711,7 +711,7 @@ class TestTransactions(unittest.TestCase):
         """
           2014-04-20 * "Money from CC" ^610fa7f17e7a #trip
             Expenses:Restaurant         100 USD
-            Assets:US:Cash
+            Assets:US:Cash             -100 USD
         """
         check_list(self, entries, [data.Transaction])
         check_list(self, errors, [])
@@ -725,7 +725,7 @@ class TestTransactions(unittest.TestCase):
         """
           2014-04-20 * #trip "Money from CC" ^610fa7f17e7a
             Expenses:Restaurant         100 USD
-            Assets:US:Cash
+            Assets:US:Cash             -100 USD
         """
         check_list(self, entries, [data.Transaction])
         check_list(self, errors, [])
@@ -750,7 +750,7 @@ class TestTransactions(unittest.TestCase):
         """
           2014-04-20 * "Zero number of units"
             Assets:Investment         0 GOOG {500.00 USD}
-            Assets:Cash
+            Assets:Cash               0 USD
         """
         check_list(self, entries, [data.Transaction])
         check_list(self, errors, [parser.ParserError])
@@ -760,7 +760,7 @@ class TestTransactions(unittest.TestCase):
         """
           2014-04-20 * "Like a conversion entry"
             Assets:Investment         10 GOOG {0 USD}
-            Assets:Cash
+            Assets:Cash                0 USD
         """
         check_list(self, entries, [data.Transaction])
         check_list(self, errors, [])
@@ -963,8 +963,8 @@ class TestParseLots(unittest.TestCase):
     def test_lot_with_slashes(self, entries, errors, _):
         """
           2014-01-01 *
-            Assets:Invest:AAPL    1.1 AAPL {45.23 USD / 2015-07-16 / "blabla"}
-            Assets:Invest:Cash
+            Assets:Invest:AAPL      1.1 AAPL {45.23 USD / 2015-07-16 / "blabla"}
+            Assets:Invest:Cash   -45.23 USD
         """
         self.assertEqual(3, len(errors))
         self.assertTrue(re.search("slash", errors[0].message))
@@ -997,7 +997,7 @@ class TestTotalsAndSigns(unittest.TestCase):
         """
           2013-05-18 * ""
             Assets:Investments:MSFT      0 MSFT {-200.00 USD}
-            Assets:Investments:Cash
+            Assets:Investments:Cash      0 USD
         """
         self.assertTrue(errors)
         self.assertTrue(re.search('Amount is zero', errors[0].message))
@@ -1007,7 +1007,7 @@ class TestTotalsAndSigns(unittest.TestCase):
         """
           2013-05-18 * ""
             Assets:Investments:MSFT      -10 MSFT {0.00 USD}
-            Assets:Investments:Cash
+            Assets:Investments:Cash     0.00 USD
         """
         self.assertFalse(errors)
 
@@ -1016,7 +1016,7 @@ class TestTotalsAndSigns(unittest.TestCase):
         """
           2013-05-18 * ""
             Assets:Investments:MSFT      -10 MSFT {-200.00 USD}
-            Assets:Investments:Cash
+            Assets:Investments:Cash  2000.00 USD
         """
         self.assertTrue(errors)
         self.assertTrue(re.search('Cost is negative', errors[0].message))
@@ -1089,8 +1089,8 @@ class TestTotalsAndSigns(unittest.TestCase):
     def test_total_price_inverted(self, entries, errors, _):
         """
           2013-05-18 * ""
-            Assets:Investments:MSFT      10 MSFT @@ -2000.00 USD
-            Assets:Investments:Cash
+            Assets:Investments:MSFT         10 MSFT @@ -2000.00 USD
+            Assets:Investments:Cash   20000.00 USD
         """
         self.assertTrue(errors)
         self.assertTrue(re.search('Negative.*allowed', errors[0].message))

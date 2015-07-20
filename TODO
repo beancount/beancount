@@ -2,10 +2,11 @@
 beancount: TODO
 * Booking Parser
 
-  - Check balance errors in parsedoc(), despite not doing interpolation.
-    parser.parse_string() / _file()
-    parser.parsedoc()
-    example.parse()
+  - Convert parser.parsedoc() into a decorator factory
+    * Moved parsedoc_noerrors() calls to it.
+    * Add a parsedoc(check_balances) option.
+    * Add a parsedoc(interpolate) option (for example).
+    * Convert all tests
 
 
   - In the parser, be backwards compatible and keep supporting {{ }} with just

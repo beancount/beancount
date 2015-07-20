@@ -73,30 +73,31 @@ class TestEntryPrinter(cmptest.TestCase):
         """
         2014-06-08 *
           Assets:Account1       111.00 BEAN
-          Assets:Cash
+          Assets:Cash          -111.00 BEAN
 
         2014-06-08 * "Narration"
           Assets:Account1       111.00 BEAN
-          Assets:Cash
+          Assets:Cash          -111.00 BEAN
 
         2014-06-08 * "Payee" | "Narration"
           Assets:Account1       111.00 BEAN
-          Assets:Cash
+          Assets:Cash          -111.00 BEAN
 
         2014-06-08 * "Payee" "Narration" ^link1 ^link2 #tag1 #tag2
           Assets:Account1       111.00 BEAN
-          Assets:Cash
+          Assets:Cash          -111.00 BEAN
 
         2014-06-08 * "Narration"
           Assets:Account1       111.00 BEAN {53.24 USD}
-          Assets:Cash
+          Assets:Cash          -111.00 BEAN
 
         2014-06-08 !
           Assets:Account1       111.00 BEAN {53.24 USD} @ 55.02 USD
           Assets:Account2       111.00 BEAN {53.24 USD}
           Assets:Account3       111.00 BEAN @ 55.02 USD
           Assets:Account4       111.00 BEAN
-          Assets:Cash
+          Assets:Cash          -111.00 BEAN
+          Assets:Cash         -17926.5 BEAN
 
         2014-06-08 *
           Assets:Account1         111.00 BEAN
