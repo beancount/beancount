@@ -85,7 +85,7 @@ def parse_string(string, **kw):
     return builder.finalize()
 
 
-def parsedoc(expect_errors=False):
+def parsedoc(expect_errors=False, interpolation=False):
     """Factory of decorators that parse the function's docstring as an argument.
 
     Note that the decorators thus generated only run the parser on the tests,
@@ -97,6 +97,8 @@ def parsedoc(expect_errors=False):
         True: Expect errors and fail if there are none.
         False: Expect no errors and fail if there are some.
         None: Do nothing, no check.
+      interpolation: If true, run through local interpolation (not
+          transformations, not plugins).
     Returns:
       A decorator for test functions.
     """
@@ -125,14 +127,16 @@ def parsedoc(expect_errors=False):
                                                         report_firstline=lineno,
                                                         dedent=True)
 
-            # Don't allow interpolation
-            if has_auto_postings(entries):
-                self.fail("parsedoc() may not use interpolation.")
-
-            ## FIXME: remove
-            # # Perform simple interpolation in literals, without a history.
-            # interp_entries, balance_errors = grammar.interpolate(entries, options_map)
-            # errors.extend(balance_errors)
+            # Allow interpolation if
+            if interpolation:
+                # Perform simple interpolation in literals, without a history.
+                interp_entries, balance_errors = grammar.interpolate(entries, options_map)
+                errors.extend(balance_errors)
+            else:
+                # If interpolation is not allowed, fail the test if it is seen,
+                # because it would result in postings with None.
+                if has_auto_postings(entries):
+                    self.fail("parsedoc() may not use interpolation.")
 
             if expect_errors is not None:
                 if expect_errors is False and errors:
