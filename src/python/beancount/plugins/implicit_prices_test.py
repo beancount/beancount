@@ -109,8 +109,8 @@ class TestImplicitPrices(cmptest.TestCase):
             actual = (price.currency, price.amount.currency, price.amount.number)
             self.assertEqual(expected, actual)
 
-    @loader.loaddoc()
-    def test_add_implicit_prices__other_account(self, entries, _, options_map):
+    @loader.loaddoc(expect_errors=True)
+    def test_add_implicit_prices__other_account(self, entries, errors, options_map):
         """
         2013-01-01 open Assets:Account1
         2013-01-01 open Assets:Account2
@@ -133,6 +133,9 @@ class TestImplicitPrices(cmptest.TestCase):
           Assets:Other
 
         """
+        self.assertRegexpMatches(errors[0].message,
+                                 'Reducing position results in inventory with')
+
         new_entries, _ = implicit_prices.add_implicit_prices(entries, options_map)
         self.assertEqualEntries("""
 

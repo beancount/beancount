@@ -1033,6 +1033,10 @@ class TestBalanceByAccount(cmptest.TestCase):
     @loader.loaddoc()
     def setUp(self, entries, _, __):
         """
+        2001-01-01 open Assets:AccountA
+        2001-01-01 open Assets:AccountB
+        2001-01-01 open Equity:Opening-Balances
+
         2014-02-01 *
           Assets:AccountA   10 USD
           Equity:Opening-Balances
@@ -1058,14 +1062,14 @@ class TestBalanceByAccount(cmptest.TestCase):
         # Test on the first date (should be empty).
         balances, index = summarize.balance_by_account(self.entries,
                                                        datetime.date(2014, 2, 1))
-        self.assertEqual(0, index)
+        self.assertEqual(3, index)
         self.assertEqual({}, balances)
 
     def test_balance_by_account__middle(self):
         # Test in the middle.
         balances, index = summarize.balance_by_account(self.entries,
                                                        datetime.date(2014, 2, 10))
-        self.assertEqual(1, index)
+        self.assertEqual(4, index)
         self.assertEqual({
             'Assets:AccountA': inventory.from_string('10 USD'),
             'Equity:Opening-Balances': inventory.from_string('-10 USD'),

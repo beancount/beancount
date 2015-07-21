@@ -143,7 +143,7 @@ class TestUnrealized(unittest.TestCase):
         2014-01-01 open Income:Misc
 
         2014-01-15 *
-          Income:Misc           -780
+          Income:Misc           -780 USD
           Assets:Account1       600 EUR @ 1.3 USD
         """
         # Check to make sure values not held at cost are not included.
@@ -174,6 +174,7 @@ class TestUnrealized(unittest.TestCase):
     @loader.loaddoc()
     def test_not_assets(self, entries, _, options_map):
         """
+        2014-01-01 open Assets:Account1
         2014-01-01 open Liabilities:Account1
         2014-01-01 open Equity:Account1
         2014-01-01 open Expenses:Account1

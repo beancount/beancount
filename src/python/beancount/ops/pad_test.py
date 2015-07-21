@@ -45,7 +45,7 @@ class TestPadding(cmptest.TestCase):
         """, entries)
 
 
-    @loader.loaddoc()
+    @loader.loaddoc(expect_errors=True)
     def test_pad_no_overflow(self, entries, errors, __):
         """
 
@@ -142,7 +142,7 @@ class TestPadding(cmptest.TestCase):
 
         """, entries)
 
-    @loader.loaddoc()
+    @loader.loaddoc(expect_errors=True)
     def test_pad_used_twice_illegally(self, entries, errors, __):
         """
 
@@ -178,7 +178,7 @@ class TestPadding(cmptest.TestCase):
 
         """, entries)
 
-    @loader.loaddoc()
+    @loader.loaddoc(expect_errors=True)
     def test_pad_unused(self, entries, errors, __):
         """
 
@@ -363,7 +363,7 @@ class TestPadding(cmptest.TestCase):
 
     # Note: You could try padding A into B and B into A to see if it works.
 
-    @loader.loaddoc()
+    @loader.loaddoc(expect_errors=True)
     def test_pad_multiple_times(self, entries, errors, __):
         """
           2013-05-01 open Assets:Checking
@@ -376,7 +376,7 @@ class TestPadding(cmptest.TestCase):
         """
         self.assertEqual([pad.PadError], list(map(type, errors)))
 
-    @loader.loaddoc()
+    @loader.loaddoc(expect_errors=True)
     def test_pad_at_cost(self, entries, errors, __):
         """
           2013-05-01 open Assets:Investments
@@ -412,7 +412,7 @@ class TestPadding(cmptest.TestCase):
         """
         self.assertFalse(errors)
 
-    @loader.loaddoc()
+    @loader.loaddoc(expect_errors=True)
     def test_pad_tolerance(self, entries, errors, __):
         """
           option "experiment_explicit_tolerances" "TRUE"

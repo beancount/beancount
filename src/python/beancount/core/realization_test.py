@@ -277,9 +277,8 @@ class TestRealization(unittest.TestCase):
             real_account = realization.get(real_root, account_name)
             self.assertEqual(account_name, real_account.account)
 
-    @loader.loaddoc()
-    def test_realize(self, entries, errors, _):
-        """
+    def test_realize(self):
+        input_string = """
         2012-01-01 open Expenses:Restaurant
         2012-01-01 open Expenses:Movie
         2012-01-01 open Assets:Cash
@@ -304,12 +303,15 @@ class TestRealization(unittest.TestCase):
 
         2012-03-20 note Liabilities:CreditCard "Called Amex, asked about 100 CAD dinner"
 
-        2012-03-28 document Liabilities:CreditCard "march-statement.pdf"
+        2012-03-28 document Liabilities:CreditCard "{filename}"
 
         2013-04-01 balance Liabilities:CreditCard   204 CAD
 
         2014-01-01 close Liabilities:CreditCard
         """
+        # 'filename' is because we need an existing filename.
+        entries, errors, _ = loader.load_string(input_string.format(filename=__file__))
+
         real_account = realization.realize(entries)
         ra0_movie = realization.get(real_account, 'Expenses:Movie')
         self.assertEqual('Expenses:Movie', ra0_movie.account)
@@ -501,6 +503,8 @@ class TestRealOther(test_utils.TestCase):
         2012-01-01 open Equity:Opening-Balances
 
         2012-01-15 pad Assets:Bank:Checking Equity:Opening-Balances
+
+        2012-01-20 balance Assets:Bank:Checking  20.00 USD
 
         2012-03-01 * "With a single entry"
           Expenses:Restaurant     11.11 CAD

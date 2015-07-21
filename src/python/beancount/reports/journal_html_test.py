@@ -14,7 +14,7 @@ from beancount.reports import journal_html
 
 class TestJournalRender(unittest.TestCase):
 
-    @loader.loaddoc()
+    @loader.loaddoc(expect_errors=True)
     def setUp(self, entries, _, __):
         """
         2014-01-01 open Assets:Checking
@@ -22,6 +22,8 @@ class TestJournalRender(unittest.TestCase):
         2014-01-01 open Assets:Savings
         2014-01-01 open Income:MountainOfMoney
         2014-01-01 open Equity:Opening-Balances
+        2014-01-01 open Assets:Investing:Cash
+        2014-01-01 open Assets:Investing:Stock
 
         2014-01-05 pad Assets:Checking Equity:Opening-Balances
 
@@ -48,7 +50,6 @@ class TestJournalRender(unittest.TestCase):
 
         ;; Failing.
         2014-05-01 balance  Assets:Checking   0.00 USD
-
 
         2014-12-31 close Assets:Checking
         """

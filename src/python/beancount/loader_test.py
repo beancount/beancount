@@ -114,10 +114,10 @@ class TestLoadDoc(unittest.TestCase):
         self.assertTrue(isinstance(errors, list))
         self.assertTrue(isinstance(options_map, dict))
 
-    @loader.loaddoc()
+    @loader.loaddoc(expect_errors=True)
     def test_loaddoc_plugin(self, entries, errors, options_map):
         """
-        option "plugin" "beancount.does.not.exist"
+        plugin "beancount.does.not.exist"
         """
         self.assertTrue(isinstance(entries, list))
         self.assertTrue(isinstance(options_map, dict))

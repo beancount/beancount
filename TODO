@@ -5,8 +5,6 @@ beancount: TODO
   - Convert parser.parsedoc() into a decorator factory
     * Add a parsedoc(check_balances) option.
     * Add a parsedoc(interpolate) option (for example).
-    * Convert all tests
-    * Convert loader.loaddoc to a factor of generators.
 
   - In the parser, be backwards compatible and keep supporting {{ }} with just
     an amount in it.

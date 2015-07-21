@@ -25,7 +25,7 @@ class TestSellGains(unittest.TestCase):
         printer.print_errors(errors)
         self.assertEqual([], errors)
 
-    @loader.loaddoc()
+    @loader.loaddoc(expect_errors=True)
     def test_sellgains_fail_balance(self, entries, errors, options_map):
         """
         plugin "beancount.plugins.auto_accounts"
@@ -39,7 +39,7 @@ class TestSellGains(unittest.TestCase):
         """
         self.assertEqual([sellgains.SellGainsError], list(map(type, errors)))
 
-    @loader.loaddoc()
+    @loader.loaddoc(expect_errors=True)
     def test_sellgains_fail_imbalance(self, entries, errors, options_map):
         """
         plugin "beancount.plugins.auto_accounts"

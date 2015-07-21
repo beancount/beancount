@@ -11,7 +11,7 @@ from beancount import loader
 
 class TestBalance(unittest.TestCase):
 
-    @loader.loaddoc()
+    @loader.loaddoc(expect_errors=True)
     def test_simple_error(self, entries, errors, __):
         """
           2013-05-01 open Assets:US:Checking
@@ -276,7 +276,7 @@ class TestBalance(unittest.TestCase):
 
 class TestBalancePrecision(unittest.TestCase):
 
-    @loader.loaddoc()
+    @loader.loaddoc(expect_errors=True)
     def test_get_tolerance__legacy(self, entries, errors, options_map):
         """
           option "use_legacy_fixed_tolerances" "True"
@@ -293,7 +293,7 @@ class TestBalancePrecision(unittest.TestCase):
                       for entry in entries[1:]]
         self.assertEqual([Decimal('0.015')] * 6, tolerances)
 
-    @loader.loaddoc()
+    @loader.loaddoc(expect_errors=True)
     def test_get_tolerance__explicit(self, entries, errors, options_map):
         """
           option "experiment_explicit_tolerances" "TRUE"
@@ -310,7 +310,7 @@ class TestBalancePrecision(unittest.TestCase):
                       for entry in entries[1:]]
         self.assertEqual([Decimal('0.002')] * 6, tolerances)
 
-    @loader.loaddoc()
+    @loader.loaddoc(expect_errors=True)
     def test_get_tolerance__regular(self, entries, errors, options_map):
         """
           2015-05-01 open Assets:Bank:Checking
@@ -336,7 +336,7 @@ class TestBalancePrecision(unittest.TestCase):
                           Decimal('0.001'),
                           Decimal('0.01')], tolerances)
 
-    @loader.loaddoc()
+    @loader.loaddoc(expect_errors=True)
     def test_balance_with_tolerance(self, entries, errors, __):
         """
           option "experiment_explicit_tolerances" "TRUE"

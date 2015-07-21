@@ -97,7 +97,7 @@ class TestHoldings(unittest.TestCase):
     @loader.loaddoc()
     def test_get_final_holdings__check_no_aggregates(self, entries, _, __):
         """
-        option "plugin" "beancount.plugins.unrealized:Unrealized"
+        plugin "beancount.plugins.unrealized" "Unrealized"
 
         2013-01-01 open Assets:Investment   GOOG
         2013-01-01 open Assets:Cash         USD

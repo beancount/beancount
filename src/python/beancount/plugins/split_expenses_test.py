@@ -8,7 +8,7 @@ from beancount.parser import cmptest
 
 class TestSplitExpenses(cmptest.TestCase):
 
-    @loader.loaddoc()
+    @loader.loaddoc(expect_errors=True)
     def test_simple(self, entries, errors, __):
         """
             plugin "beancount.plugins.split_expenses" "Martin Caroline"
@@ -30,7 +30,7 @@ class TestSplitExpenses(cmptest.TestCase):
 
         """, entries)
 
-    @loader.loaddoc()
+    @loader.loaddoc(expect_errors=True)
     def test_unaffected(self, entries, errors, __):
         """
             plugin "beancount.plugins.split_expenses" "Martin Caroline"
@@ -59,7 +59,7 @@ class TestSplitExpenses(cmptest.TestCase):
         """) + self.test_work_with_auto_accounts.__input__
         self.assertEqualEntries(expected_input, entries)
 
-    @loader.loaddoc()
+    @loader.loaddoc(expect_errors=True)
     def test_with_one_member_only(self, entries, errors, __):
         """
             plugin "beancount.plugins.split_expenses" "Martin"
