@@ -580,11 +580,15 @@ lot_comp_list : empty
               }
               | lot_comp_list SLASH lot_comp
               {
-                  PyObject* rv = PyObject_CallMethod(
-                      builder, "build_grammar_error", "sis",
-                      yy_filename, yylineno + yy_firstline,
-                      "Usage of slash (/) as cost separator is deprecated; use a comma instead");
-                  Py_DECREF(rv);
+                  /*
+                   * FIXME: Add this warning once the new booking method is the main method.
+                   * In the meantime, we allow it interchangeably.
+                   */
+                  /* PyObject* rv = PyObject_CallMethod( */
+                  /*     builder, "build_grammar_error", "sis", */
+                  /*     yy_filename, yylineno + yy_firstline, */
+                  /*     "Usage of slash (/) as cost separator is deprecated; use a comma instead"); */
+                  /* Py_DECREF(rv); */
 
                   BUILDY(DECREF2($1, $3),
                          $$, "handle_list", "OO", $1, $3);
