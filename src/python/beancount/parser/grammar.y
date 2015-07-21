@@ -582,7 +582,7 @@ lot_comp_list : empty
               {
                   /*
                    * FIXME: Add this warning once the new booking method is the main method.
-                   * In the meantime, we allow it interchangeably.
+                   * In the meantime, we allow it interchangeably. Also see {a6127ff32048}.
                    */
                   /* PyObject* rv = PyObject_CallMethod( */
                   /*     builder, "build_grammar_error", "sis", */

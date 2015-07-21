@@ -4,6 +4,75 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-07-??
+
+  - Merged ongoing work from the 'booking' branch that will eventually change
+    the semantics of inventory booking; in the interest of a smooth transition,
+    and for me to be able to use either branch interchangeably, I introduced a
+    few changes that should have no user-visible effect on 'default':
+
+    * The parser.parse_string() and parser.parse_file() routines don't
+      interpolate anymore. For this reason, the tests all had to be adjusted not
+      to have interpolation. The interpolation (grammar.interpolation()) has
+      moved to a post-parser phase and is now run by loader._load(). This only
+      affects you if you wrote scripts against the parser interface directly
+      (this is highly unlikely).
+
+    * The new syntax for cost specification that will be in effect for the
+      inventory booking proposal is now supported. The syntax is
+      backward-compatible with the previous one. Previously, the following
+      syntaxes were supported:
+
+        Assets:Investments    1 HOOL {123.00 USD}
+        Assets:Investments    1 HOOL {123.00 USD, 2013-07-20}
+
+      Instead of these limited options, the new syntax supports a
+      comma-separated list of cost-specifiers which can be
+
+        <cost>, e.g. 123.00 USD
+        <lot-date>, e.g. 2015-07-20
+        <label>, e.g. "acb6602d33c3"
+        '*',  e.g. *
+
+      In order to keep current input working, either a comma (,) or a slash (/)
+      is supported to separate the components.
+
+      Those can be provided in any order. For example, these are all also valid
+      syntaxes for cost:
+
+        Assets:Investments    1 HOOL {}
+        Assets:Investments    1 HOOL {"first-shares"}
+        Assets:Investments    1 HOOL {2013-07-20, 123.00 USD}
+        Assets:Investments    1 HOOL {2013-07-20, "hooli-shares"}
+        Assets:Investments    1 HOOL {*}
+        Assets:Investments    1 HOOL {*, 123.00 USD}
+
+      Moreover, the cost amount now supports a compound amount that is expressed
+      not in terms of each unit of the currency, but in terms of the total
+      amount over all units, for example, this is how you could fold in the cost
+      of a commission:
+
+        Assets:Investments    1 HOOL {123.00 # 9.95 USD}
+
+      The syntax for a compound amount follows this pattern:
+
+          [<per-unit-cost>] # [<total-cost>] <currency>
+
+      The numbers are both optional. If no '#' separator is present, the total
+      cost component is assumed to be zero. This will eventually subsume the
+      {{...}} total cost syntax, by specifying only the total cost portion of
+      the compound amount:
+
+        Assets:Investments    100 HOOL {# 12300.00 USD}
+
+      Finally, while the new syntax is supported in the parser, the old
+      semantics for inventory lot specification is still in order. If you
+      provide an unsupported combination of lot specifiers (e.g. you use a
+      label, or a compound amount), an error will be issued. So just use the
+      cost and date as previously; I will probably bring in new features
+      incrementally within the context of this new syntax.
+
+
 2015-07-20
 
   - Numbers rendered from bean-query are now rendered using the display context

@@ -967,10 +967,13 @@ class TestParseLots(unittest.TestCase):
             Assets:Invest:AAPL      1.1 AAPL {45.23 USD / 2015-07-16 / "blabla"}
             Assets:Invest:Cash   -45.23 USD
         """
-        self.assertEqual(3, len(errors))
-        self.assertTrue(re.search("slash", errors[0].message))
-        self.assertTrue(re.search("slash", errors[1].message))
-        self.assertTrue(re.search("Labels not supported", errors[2].message))
+        # Note: When marking SLASH as deprecated, bring this check back in.
+        # {a6127ff32048}
+        # self.assertEqual(3, len(errors))
+        # self.assertTrue(re.search("slash", errors[0].message))
+        # self.assertTrue(re.search("slash", errors[1].message))
+        self.assertEqual(1, len(errors))
+        self.assertTrue(re.search("Labels not supported", errors[0].message))
         pos = entries[0].postings[0].position
         self.assertEqual(D('1.1'), pos.number)
         self.assertEqual(position.Lot('AAPL',
