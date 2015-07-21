@@ -9,7 +9,7 @@ from beancount import loader
 
 class TestContext(test_utils.TestCase):
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_context(self, entries, errors, options_map):
         """
         plugin "beancount.plugins.implicit_prices"

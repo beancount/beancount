@@ -15,7 +15,7 @@ from beancount.reports import convert_reports
 
 class TestLedgerUtilityFunctions(cmptest.TestCase):
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def setUp(self, entries, _, __):
         """
           2014-10-01 * "Buy some stock with local funds"

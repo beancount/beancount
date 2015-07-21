@@ -16,7 +16,7 @@ class TestValidateDuplicates(cmptest.TestCase):
         self.assertEqual([compare.CompareError], list(map(type, valid_errors)))
         self.assertTrue(re.search('Duplicate entry', valid_errors[0].message))
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_validate_no_duplicates__open(self, entries, errors, options_map):
         """
         2000-01-01 open Assets:Checking
@@ -24,7 +24,7 @@ class TestValidateDuplicates(cmptest.TestCase):
         """
         self.checkDuplicates(entries, errors, options_map)
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_validate_no_duplicates__close(self, entries, errors, options_map):
         """
         2000-01-01 close Assets:Checking
@@ -32,7 +32,7 @@ class TestValidateDuplicates(cmptest.TestCase):
         """
         self.checkDuplicates(entries, errors, options_map)
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_validate_no_duplicates__pad(self, entries, errors, options_map):
         """
         2000-01-01 pad Assets:Checking Equity:Opening-Balances
@@ -40,7 +40,7 @@ class TestValidateDuplicates(cmptest.TestCase):
         """
         self.checkDuplicates(entries, errors, options_map)
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_validate_no_duplicates__balance(self, entries, errors, options_map):
         """
         2000-01-01 balance Assets:Checking 201.00 USD
@@ -48,20 +48,20 @@ class TestValidateDuplicates(cmptest.TestCase):
         """
         self.checkDuplicates(entries, errors, options_map)
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_validate_no_duplicates__transaction(self, entries, errors, options_map):
         """
         2014-06-24 * "Go negative from zero"
-          Assets:Investments:Stock   1 GOOG {500 USD}
-          Assets:Investments:Cash
+          Assets:Investments:Stock    1 GOOG {500 USD}
+          Assets:Investments:Cash  -500 USD
 
         2014-06-24 * "Go negative from zero"
-          Assets:Investments:Stock  1 GOOG {500 USD}
-          Assets:Investments:Cash
+          Assets:Investments:Stock    1 GOOG {500 USD}
+          Assets:Investments:Cash  -500 USD
         """
         self.checkDuplicates(entries, errors, options_map)
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_validate_no_duplicates__note(self, entries, errors, options_map):
         """
         2000-01-01 note Assets:Checking "Something about something"
@@ -69,7 +69,7 @@ class TestValidateDuplicates(cmptest.TestCase):
         """
         self.checkDuplicates(entries, errors, options_map)
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_validate_no_duplicates__event(self, entries, errors, options_map):
         """
         2000-01-01 event "location" "Somewhere, Earth"
@@ -77,7 +77,7 @@ class TestValidateDuplicates(cmptest.TestCase):
         """
         self.checkDuplicates(entries, errors, options_map)
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_validate_no_duplicates__document(self, entries, errors, options_map):
         """
         2000-01-01 document Assets:Checking "/path/to/nowhere.pdf"
@@ -85,7 +85,7 @@ class TestValidateDuplicates(cmptest.TestCase):
         """
         self.checkDuplicates(entries, errors, options_map)
 
-    @parser.parsedoc
+    @parser.parsedoc()
     def test_validate_no_duplicates__price(self, entries, errors, options_map):
         """
         2000-01-01 price GOOG 500 USD

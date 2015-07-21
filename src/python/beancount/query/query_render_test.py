@@ -10,15 +10,21 @@ from beancount.core.number import Decimal
 from beancount.core import inventory
 from beancount.core import position
 from beancount.core import amount
+from beancount.core import display_context
 from beancount.query import query_render
+
 
 
 class ColumnRendererBase(unittest.TestCase):
 
     RendererClass = None
 
+    dcontext = display_context.DisplayContext()
+    dcontext.update(D('1.00'), 'USD')
+    dcontext.update(D('1.00'), 'CAD')
+
     def get(self, *values):
-        rdr = self.RendererClass()
+        rdr = self.RendererClass(self.dcontext)
         for value in values:
             rdr.update(value)
         rdr.prepare()
@@ -137,16 +143,24 @@ class TestAmountRenderer(ColumnRendererBase):
 
     RendererClass = query_render.AmountRenderer
 
+    def setUp(self):
+        super().setUp()
+        self.dcontext.update(D('1.0000'), 'USD')
+        self.dcontext.update(D('1.0000'), 'USD')
+        self.dcontext.update(D('1.000'), 'GOOG')
+        self.dcontext.update(D('1'), 'CA')
+        self.dcontext.update(D('1.00'), 'AAPL')
+
     def test_single_frac(self):
         pos = amount.from_string('100.00 USD')
         rdr = self.get(pos)
-        self.assertEqual('100.00 USD',
+        self.assertEqual('100.00   USD',
                          rdr.format(pos))
 
     def test_single_int(self):
         pos = amount.from_string('5 GOOG')
         rdr = self.get(pos)
-        self.assertEqual('5 GOOG',
+        self.assertEqual('5     GOOG',
                          rdr.format(pos))
 
     def test_many(self):
@@ -168,12 +182,12 @@ class TestPositionRenderer(ColumnRendererBase):
     def test_various(self):
         pos = position.from_string('100.00 USD')
         rdr = self.get(pos)
-        self.assertEqual('100.00 USD',
+        self.assertEqual('100.00   USD',
                          rdr.format(pos))
 
         pos = position.from_string('5 GOOG {500.23 USD}')
         rdr = self.get(pos)
-        self.assertEqual('5 GOOG {500.23 USD}',
+        self.assertEqual('5     GOOG {500.23   USD}',
                          rdr.format(pos))
 
 
@@ -184,26 +198,27 @@ class TestInventoryRenderer(ColumnRendererBase):
     def test_various(self):
         inv = inventory.from_string('100.00 USD')
         rdr = self.get(inv)
-        self.assertEqual('100.00 USD',
+        self.assertEqual('100.00   USD',
                          rdr.format(inv))
 
         inv = inventory.from_string('5 GOOG {500.23 USD}')
         rdr = self.get(inv)
-        self.assertEqual('5 GOOG {500.23 USD}',
+        self.assertEqual('5     GOOG {500.23   USD}',
                          rdr.format(inv))
 
         inv = inventory.from_string('5 GOOG {500.23 USD}, 12.3456 CAAD')
         rdr = self.get(inv)
-        self.assertEqual([' 5      GOOG {500.23 USD}',
-                          '12.3456 CAAD             '],
+        self.assertEqual([' 5      GOOG {500.23   USD}',
+                          '12.3456 CAAD               '],
                          rdr.format(inv))
 
 
-
-
-
-
 class TestQueryRender(unittest.TestCase):
+
+    def setUp(self):
+        self.dcontext = display_context.DisplayContext()
+        self.dcontext.update(D('1.00'), 'USD')
+        self.dcontext.update(D('1.00'), 'CAD')
 
     # pylint: disable=invalid-name
 
@@ -216,7 +231,7 @@ class TestQueryRender(unittest.TestCase):
             Row('Income:US:Babble:Vacation'),
         ]
         oss = io.StringIO()
-        query_render.render_text(types, rows, oss)
+        query_render.render_text(types, rows, self.dcontext, oss)
         # FIXME:
         # with box():
         #     print(oss.getvalue())
@@ -231,7 +246,7 @@ class TestQueryRender(unittest.TestCase):
             Row(D('456.1234')),
         ]
         oss = io.StringIO()
-        query_render.render_text(types, rows, oss)
+        query_render.render_text(types, rows, self.dcontext, oss)
         # FIXME:
         # with box():
         #     print(oss.getvalue())

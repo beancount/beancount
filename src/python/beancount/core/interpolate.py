@@ -411,7 +411,7 @@ def balance_incomplete_postings(entry, options_map):
     all the postings to this entry. Futhermore, it stores the dict
     of inferred tolerances as metadata.
 
-    WARNING: This destructively modified entry itself!
+    WARNING: This destructively modifies entry itself!
 
     Args:
       entry: An instance of a valid directive. This entry is modified by
@@ -438,7 +438,6 @@ def balance_incomplete_postings(entry, options_map):
 
     # If we could make this faster to avoid the unnecessary copying, it would
     # make parsing substantially faster.
-    # PERF(25ms): could be saved here by avoiding reparenting.
     entry.postings.clear()
     for posting in postings:
         entry.postings.append(posting)

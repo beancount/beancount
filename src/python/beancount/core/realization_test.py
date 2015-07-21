@@ -15,8 +15,9 @@ from beancount.core import data
 from beancount.core import inventory
 from beancount.core import amount
 from beancount.core import account_types
-from beancount.parser import parsedoc
+from beancount.parser import parser
 from beancount.utils import test_utils
+from beancount import loader
 
 
 def create_simple_account():
@@ -183,7 +184,7 @@ class TestRealGetters(unittest.TestCase):
 
 class TestRealization(unittest.TestCase):
 
-    @parsedoc
+    @parser.parsedoc()
     def test_postings_by_account(self, entries, errors, _):
         """
         2012-01-01 open Expenses:Restaurant
@@ -196,17 +197,17 @@ class TestRealization(unittest.TestCase):
 
         2012-03-01 * "Food"
           Expenses:Restaurant     100 CAD
-          Assets:Cash
+          Assets:Cash            -100 CAD
 
         2012-03-10 * "Food again"
-          Expenses:Restaurant     80 CAD
-          Liabilities:CreditCard
+          Expenses:Restaurant      80 CAD
+          Liabilities:CreditCard  -80 CAD
 
         ;; Two postings on the same account.
         2012-03-15 * "Two Movies"
-          Expenses:Movie     10 CAD
-          Expenses:Movie     10 CAD
-          Liabilities:CreditCard
+          Expenses:Movie           10 CAD
+          Expenses:Movie           10 CAD
+          Liabilities:CreditCard  -20 CAD
 
         2012-03-20 note Liabilities:CreditCard "Called Amex, asked about 100 CAD dinner"
 
@@ -258,7 +259,7 @@ class TestRealization(unittest.TestCase):
         self.assertEqual(set(account_types.DEFAULT_ACCOUNT_TYPES),
                          real_account.keys())
 
-    @parsedoc
+    @parser.parsedoc()
     def test_simple_realize(self, entries, errors, options_map):
         """
           2013-05-01 open Assets:US:Checking:Sub   USD
@@ -276,9 +277,8 @@ class TestRealization(unittest.TestCase):
             real_account = realization.get(real_root, account_name)
             self.assertEqual(account_name, real_account.account)
 
-    @parsedoc
-    def test_realize(self, entries, errors, _):
-        """
+    def test_realize(self):
+        input_string = """
         2012-01-01 open Expenses:Restaurant
         2012-01-01 open Expenses:Movie
         2012-01-01 open Assets:Cash
@@ -303,12 +303,15 @@ class TestRealization(unittest.TestCase):
 
         2012-03-20 note Liabilities:CreditCard "Called Amex, asked about 100 CAD dinner"
 
-        2012-03-28 document Liabilities:CreditCard "march-statement.pdf"
+        2012-03-28 document Liabilities:CreditCard "{filename}"
 
         2013-04-01 balance Liabilities:CreditCard   204 CAD
 
         2014-01-01 close Liabilities:CreditCard
         """
+        # 'filename' is because we need an existing filename.
+        entries, errors, _ = loader.load_string(input_string.format(filename=__file__))
+
         real_account = realization.realize(entries)
         ra0_movie = realization.get(real_account, 'Expenses:Movie')
         self.assertEqual('Expenses:Movie', ra0_movie.account)
@@ -392,7 +395,7 @@ class TestRealFilter(unittest.TestCase):
 
 class TestRealOther(test_utils.TestCase):
 
-    @parsedoc
+    @parser.parsedoc()
     def test_get_postings(self, entries, errors, _):
         """
         2012-01-01 open Assets:Bank:Checking
@@ -405,15 +408,15 @@ class TestRealOther(test_utils.TestCase):
 
         2012-03-01 * "Food"
           Expenses:Restaurant     11.11 CAD
-          Assets:Bank:Checking
+          Assets:Bank:Checking   -11.11 CAD
 
         2012-03-05 * "Food"
           Expenses:Movie         22.22 CAD
-          Assets:Bank:Checking
+          Assets:Bank:Checking  -22.22 CAD
 
         2012-03-10 * "Paying off credit card"
           Assets:Bank:Checking     -33.33 CAD
-          Liabilities:CreditCard
+          Liabilities:CreditCard    33.33 CAD
 
         2012-03-20 note Assets:Bank:Checking "Bla bla 444.44"
 
@@ -492,13 +495,16 @@ class TestRealOther(test_utils.TestCase):
         ra3['Sub'] = RealAccount('Assets:US:Bank:Checking:Sub')
         self.assertNotEqual(root1, root3)
 
-    @parsedoc
+    @loader.loaddoc()
     def test_iterate_with_balance(self, entries, _, __):
         """
         2012-01-01 open Assets:Bank:Checking
         2012-01-01 open Expenses:Restaurant
+        2012-01-01 open Equity:Opening-Balances
 
         2012-01-15 pad Assets:Bank:Checking Equity:Opening-Balances
+
+        2012-01-20 balance Assets:Bank:Checking  20.00 USD
 
         2012-03-01 * "With a single entry"
           Expenses:Restaurant     11.11 CAD
@@ -571,7 +577,7 @@ class TestRealOther(test_utils.TestCase):
         balance = realization.compute_balance(realization.get(real_root, 'Assets:US:Bank'))
         self.assertEqual(inventory.from_string('310 USD'), balance)
 
-    @parsedoc
+    @parser.parsedoc()
     def test_dump(self, entries, _, __):
         """
         2012-01-01 open Assets:Bank1:Checking
@@ -614,7 +620,7 @@ class TestRealOther(test_utils.TestCase):
             ], [(first_line, cont_line)
                 for first_line, cont_line, _1 in lines])
 
-    @parsedoc
+    @loader.loaddoc()
     def test_dump_balances(self, entries, _, __):
         """
         2012-01-01 open Expenses:Restaurant
@@ -653,7 +659,7 @@ class TestRealMisc(unittest.TestCase):
 
 class TestFindLastActive(unittest.TestCase):
 
-    @parsedoc
+    @loader.loaddoc()
     def test_find_last_active_posting(self, entries, _, __):
         """
         2012-01-01 open Assets:Target
@@ -669,8 +675,7 @@ class TestFindLastActive(unittest.TestCase):
 
         ;; This should get ignored because it's not one of the directives checked for
         ;; active.
-        2014-03-02 document Assets:Target  "/path/to/somewhere.txt"
-
+        2014-03-02 event "location" "Somewhere, Somewhereland"
         """
         real_account = realization.realize(entries)
         txn_postings = realization.get(real_account, 'Assets:Target').txn_postings

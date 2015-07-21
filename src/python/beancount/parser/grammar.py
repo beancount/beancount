@@ -905,7 +905,6 @@ def interpolate(entries, options_map):
         if isinstance(entry, Transaction):
             # Balance incomplete auto-postings and set the parent link to this entry as well.
             balance_errors = balance_incomplete_postings(entry, options_map)
-
             if balance_errors:
                 errors.extend(balance_errors)
 
