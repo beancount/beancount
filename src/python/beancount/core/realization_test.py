@@ -498,6 +498,7 @@ class TestRealOther(test_utils.TestCase):
         """
         2012-01-01 open Assets:Bank:Checking
         2012-01-01 open Expenses:Restaurant
+        2012-01-01 open Equity:Opening-Balances
 
         2012-01-15 pad Assets:Bank:Checking Equity:Opening-Balances
 
@@ -670,8 +671,7 @@ class TestFindLastActive(unittest.TestCase):
 
         ;; This should get ignored because it's not one of the directives checked for
         ;; active.
-        2014-03-02 document Assets:Target  "/path/to/somewhere.txt"
-
+        2014-03-02 event "location" "Somewhere, Somewhereland"
         """
         real_account = realization.realize(entries)
         txn_postings = realization.get(real_account, 'Assets:Target').txn_postings

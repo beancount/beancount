@@ -89,9 +89,12 @@ class TestBalance(cmptest.TestCase):
             ])
         self.assertEqual(inventory.from_string("5 AAPL"), residual.units())
 
-    @loader.loaddoc()
+    @loader.loaddoc(expect_errors=True)
     def test_fill_residual_posting(self, entries, _, __):
         """
+        2001-01-01 open Assets:Account1
+        2001-01-01 open Assets:Other
+
         2014-01-01 *
           Assets:Account1      100.00 USD
           Assets:Other        -100.00 USD
@@ -109,6 +112,7 @@ class TestBalance(cmptest.TestCase):
           Assets:Other        -112.69 CAD @ 0.8875 USD
         """
         account = 'Equity:Rounding'
+        entries = [entry for entry in entries if isinstance(entry, data.Transaction)]
         for index in 0, 1:
             entry = interpolate.fill_residual_posting(entries[index], account)
             self.assertEqualEntries([entries[index]], [entry])
@@ -431,12 +435,13 @@ class TestBalance(cmptest.TestCase):
 
 class TestComputeBalance(unittest.TestCase):
 
-    @loader.loaddoc()
+    @loader.loaddoc(expect_errors=True)
     def test_compute_postings_balance(self, entries, _, __):
         """
         2014-01-01 open Assets:Bank:Checking
         2014-01-01 open Assets:Bank:Savings
         2014-01-01 open Assets:Investing
+        2014-01-01 open Assets:Other
 
         2014-05-26 note Assets:Investing "Buying some shares"
 
@@ -466,6 +471,7 @@ class TestComputeBalance(unittest.TestCase):
         2014-01-01 open Assets:Bank:Checking
         2014-01-01 open Assets:Bank:Savings
         2014-01-01 open Assets:Investing
+        2014-01-01 open Assets:Other
 
         2014-06-01 *
           Assets:Bank:Checking  111.23 USD
@@ -491,9 +497,8 @@ class TestComputeBalance(unittest.TestCase):
     @loader.loaddoc()
     def test_compute_entries_balance_at_cost(self, entries, _, __):
         """
-        2014-01-01 open Assets:Bank:Checking
-        2014-01-01 open Assets:Bank:Savings
         2014-01-01 open Assets:Investing
+        2014-01-01 open Assets:Other
 
         2014-06-05 *
           Assets:Investing      30 GOOG {40 USD}
@@ -513,9 +518,8 @@ class TestComputeBalance(unittest.TestCase):
     @loader.loaddoc()
     def test_compute_entries_balance_conversions(self, entries, _, __):
         """
-        2014-01-01 open Assets:Bank:Checking
-        2014-01-01 open Assets:Bank:Savings
         2014-01-01 open Assets:Investing
+        2014-01-01 open Assets:Other
 
         2014-06-06 *
           Assets:Investing          1000 EUR @ 1.78 GBP
@@ -557,7 +561,7 @@ class TestComputeBalance(unittest.TestCase):
           Assets:Account1       5.00 USD
           Assets:Account2      -5.00 USD
 
-        2014-02-21 balance  Assets:Account1   100.00 USD
+        2014-02-21 balance  Assets:Account1   105.00 USD
 
         2014-02-25 *
           Assets:Account3       5.00 USD
@@ -592,7 +596,7 @@ class TestComputeBalance(unittest.TestCase):
 
 class TestInferTolerances(cmptest.TestCase):
 
-    @loader.loaddoc()
+    @loader.loaddoc(expect_errors=True)
     def test_tolerances__no_precision(self, entries, _, options_map):
         """
         2014-02-25 *
@@ -606,6 +610,11 @@ class TestInferTolerances(cmptest.TestCase):
     @loader.loaddoc()
     def test_tolerances__dubious_precision(self, entries, errors, options_map):
         """
+        2014-01-01 open Assets:Account1
+        2014-01-01 open Assets:Account2
+        2014-01-01 open Assets:Account3
+        2014-01-01 open Assets:Account4
+
         2014-02-25 *
           Assets:Account1       5.0000 USD
           Assets:Account2       5.000 USD
@@ -614,10 +623,10 @@ class TestInferTolerances(cmptest.TestCase):
           Assets:Account4      -5 USD
           Assets:Account4      -5 USD
         """
-        tolerances = interpolate.infer_tolerances(entries[0].postings, options_map)
+        tolerances = interpolate.infer_tolerances(entries[-1].postings, options_map)
         self.assertEqual({'USD': D('0.05')}, tolerances)
 
-    @loader.loaddoc()
+    @loader.loaddoc(expect_errors=True)
     def test_tolerances__ignore_price(self, entries, errors, options_map):
         """
         2014-02-25 *
@@ -627,7 +636,7 @@ class TestInferTolerances(cmptest.TestCase):
         tolerances = interpolate.infer_tolerances(entries[0].postings, options_map)
         self.assertEqual({'USD': D('0.005')}, tolerances)
 
-    @loader.loaddoc()
+    @loader.loaddoc(expect_errors=True)
     def test_tolerances__ignore_cost(self, entries, errors, options_map):
         """
         2014-02-25 *
@@ -638,7 +647,7 @@ class TestInferTolerances(cmptest.TestCase):
         self.assertEqual({'USD': D('0.005')}, tolerances)
 
 
-    @loader.loaddoc()
+    @loader.loaddoc(expect_errors=True)
     def test_tolerances__ignore_cost_and_price(self, entries, errors, options_map):
         """
         2014-02-25 *
@@ -648,7 +657,7 @@ class TestInferTolerances(cmptest.TestCase):
         tolerances = interpolate.infer_tolerances(entries[0].postings, options_map)
         self.assertEqual({'USD': D('0.005')}, tolerances)
 
-    @loader.loaddoc()
+    @loader.loaddoc(expect_errors=True)
     def test_tolerances__cost_and_number_ignored(self, entries, errors, options_map):
         """
         2014-02-25 *
@@ -658,7 +667,7 @@ class TestInferTolerances(cmptest.TestCase):
         tolerances = interpolate.infer_tolerances(entries[-1].postings, options_map)
         self.assertEqual({}, tolerances)
 
-    @loader.loaddoc()
+    @loader.loaddoc(expect_errors=True)
     def test_tolerances__number_on_cost_used(self, entries, _, options_map):
         """
         2014-02-25 *
@@ -670,7 +679,7 @@ class TestInferTolerances(cmptest.TestCase):
         tolerances = interpolate.infer_tolerances(entries[0].postings, options_map, True)
         self.assertEqual({'VHT': D('0.0005'), 'USD': D('0.051117')}, tolerances)
 
-    @loader.loaddoc()
+    @loader.loaddoc(expect_errors=True)
     def test_tolerances__number_on_cost_used_overrides(self, entries, _, options_map):
         """
         2014-02-25 *
@@ -706,7 +715,7 @@ class TestInferTolerances(cmptest.TestCase):
         self.assertTrue(options_map["infer_tolerance_from_cost"])
         self.assertFalse(errors)
 
-    @loader.loaddoc()
+    @loader.loaddoc(expect_errors=True)
     def test_tolerances__minimum_on_costs(self, entries, errors, options_map):
         """
         2014-02-25 *
@@ -718,7 +727,7 @@ class TestInferTolerances(cmptest.TestCase):
         tolerances = interpolate.infer_tolerances(entries[0].postings, options_map)
         self.assertEqual({'VHT': D('0.000005'), 'USD': D('0.005')}, tolerances)
 
-    @loader.loaddoc()
+    @loader.loaddoc(expect_errors=True)
     def test_tolerances__with_inference(self, entries, _, options_map):
         """
         2014-02-25 *
@@ -735,6 +744,9 @@ class TestInferTolerances(cmptest.TestCase):
     @loader.loaddoc()
     def test_tolerances__capped_inference(self, entries, _, options_map):
         """
+        2014-01-01 open Assets:Account3
+        2014-01-01 open Assets:Account4
+
         2014-02-25 *
           Assets:Account3       5.1   VHT {102.2340 USD}
           Assets:Account4
@@ -746,7 +758,7 @@ class TestInferTolerances(cmptest.TestCase):
         self.assertEqual({'VHT': D('0.05'), 'USD': D('0.5')},
                          tolerances)
 
-    @loader.loaddoc()
+    @loader.loaddoc(expect_errors=True)
     def test_tolerances__multiplier(self, entries, errors, options_map):
         """
         option "inferred_tolerance_multiplier" "1.1"
