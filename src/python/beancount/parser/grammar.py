@@ -69,6 +69,10 @@ CompoundAmount = collections.namedtuple('CompoundAmount',
                                         'number_per number_total currency')
 
 
+# A unique token used to indicate a merge of the lots of an inventory.
+MERGE = '***'
+
+
 def valid_account_regexp(options):
     """Build a regexp to validate account names from the options.
 
@@ -360,6 +364,10 @@ class Builder(lexer.LexBuilder):
         # here because we only get the number of units in the full lot spec.
         return CompoundAmount(number_per, number_total, currency)
 
+    def lot_merge(self, _):
+        """Create a 'lot merge' token."""
+        return MERGE
+
     def lot_spec(self, lot_comp_list):
         """Process a lot_cost_date grammar rule.
 
@@ -377,6 +385,7 @@ class Builder(lexer.LexBuilder):
         compound_cost = None
         lot_date = None
         label = None
+        merge = False
         for comp in lot_comp_list:
             if isinstance(comp, CompoundAmount):
                 if compound_cost is None:
@@ -385,6 +394,7 @@ class Builder(lexer.LexBuilder):
                     self.errors.append(
                         ParserError(self.get_lexer_location(),
                                     "Duplicate cost: '{}'.".format(comp), None))
+
             elif isinstance(comp, date):
                 if lot_date is None:
                     lot_date = comp
@@ -392,6 +402,10 @@ class Builder(lexer.LexBuilder):
                     self.errors.append(
                         ParserError(self.get_lexer_location(),
                                     "Duplicate date: '{}'.".format(comp), None))
+
+            elif comp is MERGE:
+                merge = True
+
             else:
                 assert isinstance(comp, str)
                 if label is None:
@@ -406,7 +420,7 @@ class Builder(lexer.LexBuilder):
                 ParserError(self.get_lexer_location(),
                             "Labels not supported yet: '{}'.".format(label), None))
 
-        return (compound_cost, lot_date, label)
+        return (compound_cost, lot_date, label, merge)
 
     def position(self, filename, lineno, amount, lot_info):
         """Process a position grammar rule.
@@ -419,7 +433,9 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new instance of Position.
         """
-        compound_cost, lot_date, label = lot_info if lot_info else (None, None, None)
+        compound_cost, lot_date, label, merge = (lot_info
+                                                 if lot_info else
+                                                 (None, None, None, None))
 
         # Compute the cost.
         if compound_cost is not None:
@@ -450,6 +466,10 @@ class Builder(lexer.LexBuilder):
                     ParserError(meta, 'Cost is negative: "{}"'.format(cost), None))
 
         ## FIXME: Complete this, incorporate the total.
+        # if istotal:
+        #     cost = amount_div(cost, abs(amount.number))
+
+        ## FIXME: Complete this, incorporate the merge flag.
         # if istotal:
         #     cost = amount_div(cost, abs(amount.number))
 

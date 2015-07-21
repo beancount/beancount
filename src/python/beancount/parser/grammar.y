@@ -606,6 +606,11 @@ lot_comp : compound_amount
          {
              $$ = $1;
          }
+         | ASTERISK
+         {
+             BUILDY(,
+                    $$, "lot_merge", "O", Py_None);
+         }
 
 
 price : DATE PRICE CURRENCY amount eol key_value_list

@@ -852,6 +852,19 @@ class TestParseLots(unittest.TestCase):
         self.assertEqual(position.Lot('AAPL', None, None), pos.lot)
 
     @parser.parsedoc(expect_errors=True)
+    def test_lot_merge(self, entries, errors, _):
+        """
+          2014-01-01 *
+            Assets:Invest:AAPL   20 AAPL {*}
+            Assets:Invest:Cash  -20 AAPL
+        """
+        self.assertEqual(1, len(errors))
+        self.assertTrue(re.search("Labels not supported", errors[0].message))
+        pos = entries[0].postings[0].position
+        self.assertEqual(D('20'), pos.number)
+        self.assertEqual(position.Lot('AAPL', None, None), pos.lot)
+
+    @parser.parsedoc(expect_errors=True)
     def test_lot_two_types(self, entries, errors, _):
         """
           2014-01-01 *
