@@ -379,13 +379,13 @@ class Builder(lexer.LexBuilder):
           may be None.
         """
         if lot_comp_list is None:
-            return (None, None, None)
+            return (None, None, None, None)
         assert isinstance(lot_comp_list, list), "Internal error in parser."
 
         compound_cost = None
         lot_date = None
         label = None
-        merge = False
+        merge = None
         for comp in lot_comp_list:
             if isinstance(comp, CompoundAmount):
                 if compound_cost is None:
@@ -404,7 +404,12 @@ class Builder(lexer.LexBuilder):
                                     "Duplicate date: '{}'.".format(comp), None))
 
             elif comp is MERGE:
-                merge = True
+                if merge is None:
+                    merge = True
+                else:
+                    self.errors.append(
+                        ParserError(self.get_lexer_location(),
+                                    "Duplicate merge spec", None))
 
             else:
                 assert isinstance(comp, str)
@@ -419,6 +424,11 @@ class Builder(lexer.LexBuilder):
             self.errors.append(
                 ParserError(self.get_lexer_location(),
                             "Labels not supported yet: '{}'.".format(label), None))
+
+        if merge is not None:
+            self.errors.append(
+                ParserError(self.get_lexer_location(),
+                            "Merge not supported yet.", None))
 
         return (compound_cost, lot_date, label, merge)
 
