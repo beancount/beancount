@@ -181,10 +181,8 @@ class DecimalRenderer(ColumnRenderer):
     def update(self, number, key=None):
         if number is None:
             return
-
         # Quantize the number based on the display context.
         qnumber = self.dcontext.quantize(number, key)
-
         self.num_values += 1
         ntuple = qnumber.as_tuple()
         if ntuple.sign:

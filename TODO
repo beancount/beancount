@@ -1,5 +1,36 @@
 -*- mode: org -*-
 beancount: TODO
+* Booking Parser
+
+  (merge into default)
+  - Bring back support for {{ }}.
+  - Add parsing of '*'
+
+
+  - In the parser, be backwards compatible and keep supporting {{ }} with just
+    an amount in it.
+
+  - Quandry: booking has to be moved from a validation-only stage, because the
+    looser interpolation will allow algorithms to select the lots, which in turn
+    decides which cost basis is used to balance the transaction. This is
+    unfortunate, because it was nice to separate this stage entirely.
+
+    At the same time, post-parsing transaction generation (e.g., by plugins) is
+    allowed... which means that we need to be able to book _after_ parsing,
+    after running the plugins.
+
+    This implies that we need to support some sort of incomplete, intermediate
+    state for postings.
+
+    Balancing incomplete postings now also has to occur in a second stage, not
+    at parsing time (balance_incomplete_postings()), at least _some_ of the
+    time, because the interpolation _may_ depend on the automatic lot
+    selection.
+
+    (This creates some interesting and difficult changes.)
+
+
+* Requirements for Shipping 2.0
 * File Cleanup
 
   - Remove plugins from ops, remove algorithms from core:

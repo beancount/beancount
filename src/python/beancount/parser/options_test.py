@@ -5,9 +5,8 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import unittest
 
-from beancount.parser import parsedoc
-from beancount.parser import options
 from beancount.parser import parser
+from beancount.parser import options
 from beancount.core import account_types
 
 
@@ -42,7 +41,7 @@ class TestOptions(unittest.TestCase):
 
 class TestAccountTypeOptions(unittest.TestCase):
 
-    @parsedoc
+    @parser.parsedoc()
     def test_custom_account_names__success(self, entries, errors, options_map):
         """
           option "name_assets" "Actif"
@@ -60,7 +59,7 @@ class TestAccountTypeOptions(unittest.TestCase):
         self.assertFalse(errors)
         self.assertEqual(5, len(entries))
 
-    @parsedoc
+    @parser.parsedoc()
     def test_custom_account_names__success_reset(self, entries, errors, options_map):
         """
           2014-01-01 open Assets:CA:RBC:Checking
@@ -72,7 +71,7 @@ class TestAccountTypeOptions(unittest.TestCase):
         self.assertFalse(errors)
         self.assertEqual(2, len(entries))
 
-    @parsedoc
+    @parser.parsedoc(expect_errors=True)
     def test_custom_account_names__basic_fail(self, entries, errors, options_map):
         """
           2014-01-04 open Actif:CA:RBC:CompteCheques
@@ -83,7 +82,7 @@ class TestAccountTypeOptions(unittest.TestCase):
         for error in errors:
             self.assertRegexpMatches(error.message, "Invalid account name")
 
-    @parsedoc
+    @parser.parsedoc(expect_errors=True)
     def test_custom_account_names__fail_invalid_order(self, entries, errors, options_map):
         """
           2014-01-04 open Actif:CA:RBC:CompteCheques
@@ -97,7 +96,7 @@ class TestAccountTypeOptions(unittest.TestCase):
 
 class TestValidateOptions(unittest.TestCase):
 
-    @parsedoc
+    @parser.parsedoc(expect_errors=True)
     def test_validate__plugin_processing_mode__invalid(self, entries, errors, options_map):
         """
           option "plugin_processing_mode" "i-dont-exist"

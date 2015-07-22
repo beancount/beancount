@@ -42,6 +42,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import copy
 import collections
+import re
 from datetime import date
 
 from beancount.core.number import ZERO
@@ -442,8 +443,11 @@ class Inventory(list):
           A new instance of Inventory with the given balances.
         """
         new_inventory = Inventory()
-        position_strs = string.split(',')
-        for position_str in filter(None, position_strs):
+        # We need to split the comma-separated positions but ignore commas
+        # occurring within a {...cost...} specification.
+        position_strs = re.split(
+            '([-+]?[0-9,.]+\s+[A-Z]+\s*(?:{[^}]*})?)\s*,?\s*', string)[1::2]
+        for position_str in position_strs:
             new_inventory.add_position(position_from_string(position_str))
         return new_inventory
 

@@ -28,7 +28,6 @@ produce a listing of them.
 
 __author__ = 'Martin Blais <blais@furius.ca>'
 
-from beancount.core import data
 from beancount.core import inventory
 from beancount.ops import basicops
 

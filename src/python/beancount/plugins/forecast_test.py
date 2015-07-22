@@ -29,30 +29,30 @@ class TestExampleForecast(cmptest.TestCase):
             2011-01-01 open Assets:Cash
 
             2011-06-17 # "Something"
-              Expenses:Restaurant                                                     50.02 USD
-              Assets:Cash                                                            -50.02 USD
+              Expenses:Restaurant           50.02 USD
+              Assets:Cash                  -50.02 USD
 
             2011-07-17 # "Something"
-              Expenses:Restaurant                                                     50.02 USD
-              Assets:Cash                                                            -50.02 USD
+              Expenses:Restaurant           50.02 USD
+              Assets:Cash                  -50.02 USD
 
             2011-08-17 # "Something"
-              Expenses:Restaurant                                                     50.02 USD
-              Assets:Cash                                                            -50.02 USD
+              Expenses:Restaurant           50.02 USD
+              Assets:Cash                  -50.02 USD
 
             2011-09-17 # "Something"
-              Expenses:Restaurant                                                     50.02 USD
-              Assets:Cash                                                            -50.02 USD
+              Expenses:Restaurant           50.02 USD
+              Assets:Cash                  -50.02 USD
 
             2011-10-17 # "Something"
-              Expenses:Restaurant                                                     50.02 USD
-              Assets:Cash                                                            -50.02 USD
+              Expenses:Restaurant           50.02 USD
+              Assets:Cash                  -50.02 USD
 
             2011-11-17 # "Something"
-              Expenses:Restaurant                                                     50.02 USD
-              Assets:Cash                                                            -50.02 USD
+              Expenses:Restaurant           50.02 USD
+              Assets:Cash                  -50.02 USD
 
             2011-12-17 # "Something"
-              Expenses:Restaurant                                                     50.02 USD
-              Assets:Cash                                                            -50.02 USD
+              Expenses:Restaurant           50.02 USD
+              Assets:Cash                  -50.02 USD
         """, entries)

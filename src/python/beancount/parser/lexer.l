@@ -156,6 +156,20 @@ int strtonl(const char* buf, size_t nchars);
 \/		{ return SLASH; }
 \(		{ return LPAREN; }
 \)		{ return RPAREN; }
+
+ /* Special handling for characters beginning a line to be ignored.
+  * I'd like to improve how this is handled. Needs own lexer, really. */
+\#		{
+    if ( yy_line_tokens != 1 ) {
+        return HASH;
+    }
+    else {
+        /* Allow org-mode titles. */
+        yy_skip_line();
+        return SKIPPED;
+    }
+}
+
 \*		{
     if ( yy_line_tokens != 1 ) {
         return ASTERISK;

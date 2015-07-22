@@ -148,6 +148,7 @@ const char* getTokenName(int token);
 %token <string> EQUAL      /* = */
 %token <string> COMMA      /* , */
 %token <string> TILDE      /* ~ */
+%token <string> HASH       /* # */
 %token <string> ASTERISK   /* * */
 %token <string> SLASH      /* / */
 %token <string> PLUS       /* + */
@@ -197,8 +198,12 @@ const char* getTokenName(int token);
 %type <pyobj> pad
 %type <pyobj> amount
 %type <pairobj> amount_tolerance
+%type <pyobj> compound_amount
+%type <pyobj> maybe_number
 %type <pyobj> position
-%type <pyobj> lot_cost_date
+%type <pyobj> lot_comp
+%type <pyobj> lot_comp_list
+%type <pyobj> lot_spec
 %type <pyobj> price
 %type <pyobj> event
 %type <pyobj> note
@@ -249,6 +254,10 @@ txn : TXN
     | ASTERISK
     {
         $$ = '*';
+    }
+    | HASH
+    {
+        $$ = '#';
     }
 
 eol : EOL
@@ -345,6 +354,10 @@ optflag : empty
             $$ = '\0';
         }
         | ASTERISK
+        {
+            $$ = '*';
+        }
+        | HASH
         {
             $$ = '*';
         }
@@ -511,37 +524,93 @@ amount_tolerance : number_expr CURRENCY
                      $$.pyobj2 = $3;
                  }
 
+maybe_number : empty
+             {
+                 Py_INCREF(Py_None);
+                 $$ = Py_None;
+             }
+             | number_expr
+             {
+                 $$ = $1;
+             }
+
+compound_amount : maybe_number CURRENCY
+                {
+                    BUILDY(DECREF2($1, $2),
+                           $$, "compound_amount", "OOO", $1, Py_None, $2);
+                }
+                | maybe_number HASH maybe_number CURRENCY
+                {
+                    BUILDY(DECREF3($1, $3, $4),
+                           $$, "compound_amount", "OOO", $1, $3, $4);
+                    ;
+                }
+
 position : amount
          {
              BUILDY(DECREF1($1),
                     $$, "position", "siOO", FILE_LINE_ARGS, $1, Py_None);
          }
-         | amount lot_cost_date
+         | amount lot_spec
          {
              BUILDY(DECREF2($1, $2),
                     $$, "position", "siOO", FILE_LINE_ARGS, $1, $2);
          }
 
-lot_cost_date : LCURL amount RCURL
+lot_spec : LCURL lot_comp_list RCURL
+         {
+             BUILDY(DECREF1($2),
+                    $$, "lot_spec", "O", $2);
+         }
+
+lot_comp_list : empty
               {
-                  BUILDY(DECREF1($2),
-                         $$, "lot_cost_date", "OOO", $2, Py_None, Py_False);
+                  Py_INCREF(Py_None);
+                  $$ = Py_None;
               }
-              | LCURL amount SLASH DATE RCURL
+              | lot_comp
               {
-                  BUILDY(DECREF2($2, $4),
-                         $$, "lot_cost_date", "OOO", $2, $4, Py_False);
+                  BUILDY(DECREF1($1),
+                         $$, "handle_list", "OO", Py_None, $1);
               }
-              | LCURLCURL amount RCURLCURL
+              | lot_comp_list COMMA lot_comp
               {
-                  BUILDY(DECREF1($2),
-                         $$, "lot_cost_date", "OOO", $2, Py_None, Py_True);
+                  BUILDY(DECREF2($1, $3),
+                         $$, "handle_list", "OO", $1, $3);
               }
-              | LCURLCURL amount SLASH DATE RCURLCURL
+              | lot_comp_list SLASH lot_comp
               {
-                  BUILDY(DECREF2($2, $4),
-                         $$, "lot_cost_date", "OOO", $2, $4, Py_True);
+                  /*
+                   * FIXME: Add this warning once the new booking method is the main method.
+                   * In the meantime, we allow it interchangeably. Also see {a6127ff32048}.
+                   */
+                  /* PyObject* rv = PyObject_CallMethod( */
+                  /*     builder, "build_grammar_error", "sis", */
+                  /*     yy_filename, yylineno + yy_firstline, */
+                  /*     "Usage of slash (/) as cost separator is deprecated; use a comma instead"); */
+                  /* Py_DECREF(rv); */
+
+                  BUILDY(DECREF2($1, $3),
+                         $$, "handle_list", "OO", $1, $3);
               }
+
+lot_comp : compound_amount
+         {
+             $$ = $1;
+         }
+         | DATE
+         {
+             $$ = $1;
+         }
+         | STRING
+         {
+             $$ = $1;
+         }
+         | ASTERISK
+         {
+             BUILDY(,
+                    $$, "lot_merge", "O", Py_None);
+         }
 
 
 price : DATE PRICE CURRENCY amount eol key_value_list
@@ -677,6 +746,8 @@ const char* getTokenName(int token)
         case RCURL     : return "RCURL";
         case EQUAL     : return "EQUAL";
         case COMMA     : return "COMMA";
+        case TILDE     : return "TILDE";
+        case HASH      : return "HASH";
         case PLUS      : return "PLUS";
         case MINUS     : return "MINUS";
         case ASTERISK  : return "ASTERISK";

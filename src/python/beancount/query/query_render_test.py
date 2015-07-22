@@ -143,16 +143,24 @@ class TestAmountRenderer(ColumnRendererBase):
 
     RendererClass = query_render.AmountRenderer
 
+    def setUp(self):
+        super().setUp()
+        self.dcontext.update(D('1.0000'), 'USD')
+        self.dcontext.update(D('1.0000'), 'USD')
+        self.dcontext.update(D('1.000'), 'GOOG')
+        self.dcontext.update(D('1'), 'CA')
+        self.dcontext.update(D('1.00'), 'AAPL')
+
     def test_single_frac(self):
         pos = amount.from_string('100.00 USD')
         rdr = self.get(pos)
-        self.assertEqual('100.00 USD',
+        self.assertEqual('100.00   USD',
                          rdr.format(pos))
 
     def test_single_int(self):
         pos = amount.from_string('5 GOOG')
         rdr = self.get(pos)
-        self.assertEqual('5 GOOG',
+        self.assertEqual('5     GOOG',
                          rdr.format(pos))
 
     def test_many(self):
@@ -174,12 +182,12 @@ class TestPositionRenderer(ColumnRendererBase):
     def test_various(self):
         pos = position.from_string('100.00 USD')
         rdr = self.get(pos)
-        self.assertEqual('100.00 USD',
+        self.assertEqual('100.00   USD',
                          rdr.format(pos))
 
         pos = position.from_string('5 GOOG {500.23 USD}')
         rdr = self.get(pos)
-        self.assertEqual('5 GOOG {500.23 USD}',
+        self.assertEqual('5     GOOG {500.23   USD}',
                          rdr.format(pos))
 
 
@@ -190,18 +198,18 @@ class TestInventoryRenderer(ColumnRendererBase):
     def test_various(self):
         inv = inventory.from_string('100.00 USD')
         rdr = self.get(inv)
-        self.assertEqual('100.00 USD',
+        self.assertEqual('100.00   USD',
                          rdr.format(inv))
 
         inv = inventory.from_string('5 GOOG {500.23 USD}')
         rdr = self.get(inv)
-        self.assertEqual('5 GOOG {500.23 USD}',
+        self.assertEqual('5     GOOG {500.23   USD}',
                          rdr.format(inv))
 
         inv = inventory.from_string('5 GOOG {500.23 USD}, 12.3456 CAAD')
         rdr = self.get(inv)
-        self.assertEqual([' 5      GOOG {500.23 USD}',
-                          '12.3456 CAAD             '],
+        self.assertEqual([' 5      GOOG {500.23   USD}',
+                          '12.3456 CAAD               '],
                          rdr.format(inv))
 
 

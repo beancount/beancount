@@ -85,7 +85,9 @@ class ConditionalPager:
         """
         self.command = command
         self.minlines = minlines
-        self.default_file = codecs.getwriter("utf-8")(sys.stdout.buffer)
+        self.default_file = (codecs.getwriter("utf-8")(sys.stdout.buffer)
+                             if hasattr(sys.stdout, 'buffer') else
+                             sys.stdout)
 
     def __enter__(self):
         """Initialize the context manager and return this instance as it."""

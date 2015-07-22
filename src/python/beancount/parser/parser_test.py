@@ -13,10 +13,32 @@ from beancount.parser import parser
 from beancount.utils import test_utils
 
 
+class TestCompareTestFunctions(unittest.TestCase):
+
+    def test_has_auto_postings(self):
+        entries, _, __ = parser.parse_string("""
+
+          2014-01-27 * "UNION MARKET"
+            Liabilities:US:Amex:BlueCash    -22.02 USD
+            Expenses:Food:Grocery            22.02 USD
+
+        """, dedent=True)
+        self.assertFalse(parser.has_auto_postings(entries))
+
+        entries, _, __ = parser.parse_string("""
+
+          2014-01-27 * "UNION MARKET"
+            Liabilities:US:Amex:BlueCash    -22.02 USD
+            Expenses:Food:Grocery
+
+        """, dedent=True)
+        self.assertTrue(parser.has_auto_postings(entries))
+
+
 class TestParserDoc(unittest.TestCase):
 
-    @parser.parsedoc
-    def test_parsedoc(self, entries, errors, options_map):
+    @parser.parsedoc(expect_errors=None)
+    def test_parsedoc__disabled(self, entries, errors, options_map):
         """
         2013-05-40 * "Nice dinner at Mermaid Inn"
           Expenses:Restaurant         100 USD
@@ -26,9 +48,25 @@ class TestParserDoc(unittest.TestCase):
 
     # Note: nose does not honor expectedFailure as of 1.3.4. We would use it
     # here instead of doing this manually.
-    def test_parsedoc_noerrors(self):
-        @parser.parsedoc_noerrors
-        def test_function(self, entries, options_map):
+    def test_parsedoc__errors(self):
+        @parser.parsedoc(expect_errors=True)
+        def test_function(self, entries, errors, options_map):
+            """
+            2013-05-40 * "Nice dinner at Mermaid Inn"
+              Expenses:Restaurant         100 USD
+              Assets:US:Cash
+            """
+        try:
+            test_function(unittest.TestCase())
+            self.fail("Test should have failed.")
+        except AssertionError:
+            pass
+
+    # Note: nose does not honor expectedFailure as of 1.3.4. We would use it
+    # here instead of doing this manually.
+    def test_parsedoc__noerrors(self):
+        @parser.parsedoc(expect_errors=False)
+        def test_function(self, entries, errors, options_map):
             """
             2013-05-40 * "Nice dinner at Mermaid Inn"
               Expenses:Restaurant         100 USD

@@ -8,7 +8,7 @@ from beancount import loader
 
 class TestOneCommodity(unittest.TestCase):
 
-    @loader.loaddoc
+    @loader.loaddoc(expect_errors=True)
     def test_one_commodity_transaction(self, _, errors, __):
         """
             plugin "beancount.plugins.onecommodity"
@@ -29,7 +29,7 @@ class TestOneCommodity(unittest.TestCase):
         self.assertTrue(re.search('Expenses:Restaurant', errors[0].message))
 
 
-    @loader.loaddoc
+    @loader.loaddoc(expect_errors=True)
     def test_one_commodity_balance(self, _, errors, __):
         """
             plugin "beancount.plugins.onecommodity"

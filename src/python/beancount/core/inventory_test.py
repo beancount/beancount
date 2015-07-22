@@ -3,6 +3,7 @@ Unit tests for the Inventory class.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import datetime
 import unittest
 import copy
 from datetime import date
@@ -118,6 +119,26 @@ class TestInventory(unittest.TestCase):
             Inventory([Position(Lot("GOOG", A('532.43 USD'), None),
                                 D('2.2')),
                        Position(Lot("EUR", None, None), D('3.413'))]),
+            inv)
+
+        inv = inventory.from_string(
+            '2.2 GOOG {532.43 USD}, 2.3 GOOG {564.00 USD, 2015-07-14}, 3.413 EUR')
+        self.assertEqual(
+            Inventory([Position(Lot("GOOG", A('532.43 USD'), None),
+                                D('2.2')),
+                       Position(Lot("GOOG", A('564.00 USD'), datetime.date(2015, 7, 14)),
+                                D('2.3')),
+                       Position(Lot("EUR", None, None),
+                                D('3.413'))]),
+            inv)
+
+        inv = inventory.from_string(
+            '1.1 GOOG {500.00 # 11.00 USD}, 100 CAD')
+        self.assertEqual(
+            Inventory([Position(Lot("GOOG", A('510.00 USD'), None),
+                                D('1.1')),
+                       Position(Lot("CAD", None, None),
+                                D('100'))]),
             inv)
 
     def test_ctor_empty_len(self):
@@ -265,7 +286,7 @@ class TestInventory(unittest.TestCase):
     POSITIONS_ALL_KINDS = [
         position.from_string('40.50 USD'),
         position.from_string('40.50 USD {1.10 CAD}'),
-        position.from_string('40.50 USD {1.10 CAD / 2012-01-01}')]
+        position.from_string('40.50 USD {1.10 CAD, 2012-01-01}')]
 
     def test_units(self):
         inv = Inventory(self.POSITIONS_ALL_KINDS +
@@ -315,7 +336,7 @@ class TestInventory(unittest.TestCase):
             position.from_string('40.50 USD {1.10 CAD}'),
             inv.get_position(Lot('USD', A('1.10 CAD'), None)))
         self.assertEqual(
-            position.from_string('40.50 USD {1.10 CAD / 2012-01-01}'),
+            position.from_string('40.50 USD {1.10 CAD, 2012-01-01}'),
             inv.get_position(Lot('USD', A('1.10 CAD'), date(2012, 1, 1))))
 
     def test_add(self):
@@ -411,7 +432,7 @@ class TestInventory(unittest.TestCase):
 
         # Test adding to a position that does exist.
         inv = Inventory.from_string(
-            '10 USD, 10 USD {1.10 CAD}, 10 USD {1.10 CAD / 2012-01-01}')
+            '10 USD, 10 USD {1.10 CAD}, 10 USD {1.10 CAD, 2012-01-01}')
         check_allow_negative(inv)
 
     def test_add_position(self):

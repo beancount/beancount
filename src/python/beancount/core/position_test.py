@@ -21,39 +21,65 @@ from beancount.core.position import lot_currency_pair
 
 class TestPosition(unittest.TestCase):
 
-    def test_from_string(self):
+    def test_from_string__empty(self):
         with self.assertRaises(ValueError):
-            pos = from_string('')
+            from_string('')
 
+    def test_from_string__simple(self):
         pos = from_string('10 USD')
         self.assertEqual(Position(Lot("USD", None, None), D('10')), pos)
 
-        pos = from_string(' 111.2934  CAD ')
-        self.assertEqual(Position(Lot("CAD", None, None), D('111.2934')), pos)
+    def test_from_string__with_spaces(self):
+        pos = from_string(' - 111.2934  CAD ')
+        self.assertEqual(Position(Lot("CAD", None, None), D('-111.2934')), pos)
 
+    def test_from_string__with_cost(self):
         pos = from_string('2.2 GOOG {532.43 USD}')
         cost = Amount(D('532.43'), 'USD')
         self.assertEqual(Position(Lot("GOOG", cost, None), D('2.2')), pos)
 
-        pos = from_string('2.2 GOOG {532.43 USD / 2014-06-15}')
+    def test_from_string__with_cost_and_date(self):
+        pos = from_string('2.2 GOOG {532.43 USD, 2014-06-15}')
         cost = Amount(D('532.43'), 'USD')
         lot_date = datetime.date(2014, 6, 15)
         self.assertEqual(Position(Lot("GOOG", cost, lot_date), D('2.2')), pos)
 
-        # Missing currency.
+    def test_from_string__with_label(self):
+        pos = from_string('2.2 GOOG {"78c3f7f1315b"}')
+        self.assertEqual(Position(Lot("GOOG", None, None), D('2.2')), pos)
+
+    def test_from_string__with_compound_cost(self):
+        pos = from_string('1.1 GOOG {500.00 # 11.00 USD}')
+        self.assertEqual(
+            Position(
+                Lot("GOOG", Amount(D('510.00'), 'USD'), None),
+                D('1.1')),
+            pos)
+
+    def test_from_string__with_merge_cost_spec(self):
+        pos = from_string('1.1 GOOG {*}')
+        self.assertEqual(Position(Lot("GOOG", None, None), D('1.1')), pos)
+
+    def test_from_string__with_everything(self):
+        pos = from_string('20 GOOG {*, 532.43 # 20.00 USD, "e4dc1a361022", 2014-06-15}')
+        cost = Amount(D('533.43'), 'USD')
+        lot_date = datetime.date(2014, 6, 15)
+        self.assertEqual(Position(Lot("GOOG", cost, lot_date), D('20')), pos)
+
+    def test_from_string__missing_currency(self):
         with self.assertRaises(ValueError):
-            pos = from_string('2.2 GOOG {532.43}')
+            from_string('2.2 GOOG {532.43}')
 
     def test_str(self):
-        pos = from_string('2.2 GOOG {532.43 USD / 2014-06-15}')
-        self.assertEqual(('2.2 GOOG {532.43 USD / 2014-06-15}'), str(pos))
+        pos = from_string('2.2 GOOG {532.43 USD, 2014-06-15}')
+        self.assertEqual(('2.2 GOOG {532.43 USD, 2014-06-15}'), str(pos))
 
     def test_to_string(self):
-        pos = from_string('2.2 GOOG {532.43 USD / 2014-06-15}')
-        self.assertEqual(('2.2 GOOG {532.43 USD / 2014-06-15}'), pos.to_string())
+        pos = from_string('2.2 GOOG {532.43 USD, 2014-06-15}')
+        self.assertEqual(('2.2 GOOG {532.43 USD, 2014-06-15}'), pos.to_string())
 
     def test_to_string_no_detail(self):
-        pos = from_string('2.2 GOOG {532.43 USD / 2014-06-15}')
+        pos = from_string('2.2 GOOG {532.43 USD, 2014-06-15}')
         self.assertEqual(('2.2 GOOG {532.43 USD}'), pos.to_string(detail=False))
 
     def test_from_amounts(self):

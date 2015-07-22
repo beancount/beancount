@@ -7,6 +7,8 @@ import datetime
 from beancount.core.number import D
 from beancount.core.number import ZERO
 from beancount.core import position
+from beancount.core import amount
+from beancount.core import data
 from beancount.ops import holdings
 from beancount.ops import prices
 from beancount import loader
@@ -16,7 +18,7 @@ class TestHoldings(unittest.TestCase):
 
     maxDiff = 4096
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_get_final_holdings(self, entries, _, __):
         """
         2013-01-01 open Assets:Account1
@@ -92,10 +94,10 @@ class TestHoldings(unittest.TestCase):
                            if holding[0].startswith('Assets')]
         self.assertEqual(expected_values, holdings_list)
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_get_final_holdings__check_no_aggregates(self, entries, _, __):
         """
-        option "plugin" "beancount.plugins.unrealized:Unrealized"
+        plugin "beancount.plugins.unrealized" "Unrealized"
 
         2013-01-01 open Assets:Investment   GOOG
         2013-01-01 open Assets:Cash         USD
@@ -112,7 +114,7 @@ class TestHoldings(unittest.TestCase):
         self.assertEqual({'Assets:Cash', 'Assets:Investment'},
                          set(holding.account for holding in holdings_list))
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_get_final_holdings_with_prices(self, entries, _, __):
         """
         2013-01-01 open Assets:Account1
@@ -148,7 +150,7 @@ class TestHoldings(unittest.TestCase):
         ]
         self.assertEqual(expected_values, holdings_list)
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_get_final_holdings__zero_position(self, entries, _, __):
         """
         1970-01-01 open Assets:Stocks:NYA
@@ -169,7 +171,7 @@ class TestHoldings(unittest.TestCase):
         self.assertEqual(1, len(holdings_list))
         self.assertEqual('EUR', holdings_list[0].cost_currency)
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_get_commodities_at_date(self, entries, _, options_map):
         """
         2013-01-01 open Assets:Account1
@@ -379,7 +381,7 @@ class TestHoldings(unittest.TestCase):
                          holdings.aggregate_holdings_by(test_holdings,
                                                         lambda holding: holding.account))
 
-    @loader.loaddoc
+    @loader.loaddoc()
     def test_convert_to_currency(self, entries, _, __):
         """
         2013-01-01 price CAD 1.1 USD
@@ -505,3 +507,53 @@ class TestHoldings(unittest.TestCase):
         actual_position = holdings.holding_to_position(test_holding)
         expected_position = position.from_string('100.00 USD')
         self.assertEqual(expected_position, actual_position)
+
+    def test_holding_to_posting(self):
+        test_holding = holdings.Holding(
+            'Assets:US:Checking', D('100'), 'MSFT', D('54.34'), 'USD',
+            D('5434.00'), D('6000.00'), D('60'), datetime.date(2012, 5, 2))
+
+        posting = holdings.holding_to_posting(test_holding)
+        self.assertTrue(isinstance(posting, data.Posting))
+
+        expected_position = position.from_string('100 MSFT {54.34 USD}')
+        self.assertEqual(expected_position, posting.position)
+
+        expected_price = amount.from_string('60.00 USD')
+        self.assertEqual(expected_price, posting.price)
+
+    def test_get_pholding_market_value(self):
+        posting = data.Posting('Account',
+                               position.from_string('100 MSFT {54.34 USD}'),
+                               amount.from_string('60.00 USD'),
+                               None, None)
+        self.assertEqual(amount.from_string('6000.00 USD'),
+                         holdings.get_pholding_market_value(posting))
+
+        posting = data.Posting('Account',
+                               position.from_string('100 MSFT {54.34 USD}'),
+                               None,
+                               None, None)
+        self.assertEqual(amount.from_string('5434.00 USD'),
+                         holdings.get_pholding_market_value(posting))
+
+        posting = data.Posting('Account',
+                               position.from_string('1000.00 USD'),
+                               None,
+                               None, None)
+        self.assertEqual(amount.from_string('1000.00 USD'),
+                         holdings.get_pholding_market_value(posting))
+
+        with self.assertRaises(AssertionError):
+            posting = data.Posting('Account',
+                                   position.from_string('1000.00 USD'),
+                                   amount.from_string('60.00 USD'),
+                                   None, None)
+            holdings.get_pholding_market_value(posting)
+
+        with self.assertRaises(AssertionError):
+            posting = data.Posting('Account',
+                                   position.from_string('1000.00 USD {1.25 CAD}'),
+                                   amount.from_string('60.00 USD'),
+                                   None, None)
+            holdings.get_pholding_market_value(posting)

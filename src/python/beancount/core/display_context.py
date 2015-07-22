@@ -205,6 +205,9 @@ class DisplayContext:
         """
         ccontext = self.ccontexts[currency]
         num_fractional_digits = ccontext.get_fractional(precision)
+        if num_fractional_digits is None:
+            # Note: We could probably logging.warn() this situation here.
+            return number
         qdigit = Decimal(1).scaleb(-num_fractional_digits)
         return number.quantize(qdigit)
 

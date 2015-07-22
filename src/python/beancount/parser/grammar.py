@@ -7,10 +7,10 @@ import copy
 import os
 import re
 from os import path
+from datetime import date
 
 from beancount.core.number import ZERO
 from beancount.core.amount import Amount
-from beancount.core.amount import amount_div
 from beancount.core import display_context
 from beancount.core.position import Lot
 from beancount.core.position import Position
@@ -55,6 +55,14 @@ DeprecatedError = collections.namedtuple('DeprecatedError', 'source message entr
 
 # Temporary holder for key-value pairs.
 KeyValue = collections.namedtuple('KeyValue', 'key value')
+
+# Convenience holding class for amounts with per-share and total value.
+CompoundAmount = collections.namedtuple('CompoundAmount',
+                                        'number_per number_total currency')
+
+
+# A unique token used to indicate a merge of the lots of an inventory.
+MERGE_COST = '***'
 
 
 def valid_account_regexp(options):
@@ -326,30 +334,124 @@ class Builder(lexer.LexBuilder):
         self.dcupdate(number, currency)
         return Amount(number, currency)
 
-    def lot_cost_date(self, cost, lot_date, istotal):
+    def compound_amount(self, number_per, number_total, currency):
+        """Process an amount grammar rule.
+
+        Args:
+          number_per: a Decimal instance, the number of the cost per share.
+          number_total: a Decimal instance, the number of the cost over all shares.
+          currency: a currency object (a str, really, see CURRENCY above)
+        Returns:
+          A triple of (Decimal, Decimal, currency string) to be processed further when
+          creating a Lot instance.
+        """
+        # Update the mapping that stores the parsed precisions.
+        # Note: This is relatively slow, adds about 70ms because of number.as_tuple().
+        if number_per is not None:
+            self.dcupdate(number_per, currency)
+        if number_total is not None:
+            self.dcupdate(number_total, currency)
+
+        # Note that we are not able to reduce the value to a number per-share
+        # here because we only get the number of units in the full lot spec.
+        return CompoundAmount(number_per, number_total, currency)
+
+    def lot_merge(self, _):
+        """Create a 'merge cost' token."""
+        return MERGE_COST
+
+    def lot_spec(self, lot_comp_list):
         """Process a lot_cost_date grammar rule.
 
         Args:
-          cost: an instance of Amount.
-          lot_date: either None or a datetime instance.
+          lot_comp_list: A list of CompoundAmountAmount, a datetime.date, or
+            label ID strings.
         Returns:
-          A pair of the input. We do very little here.
+          A lot-info tuple of CompoundAmount, lot date and label string. Any of these
+          may be None.
         """
-        assert isinstance(cost, Amount)
-        return (cost, lot_date, istotal)
+        if lot_comp_list is None:
+            return (None, None, None, None)
+        assert isinstance(lot_comp_list, list), "Internal error in parser."
 
-    def position(self, filename, lineno, amount, lot_cost_date):
+        compound_cost = None
+        lot_date = None
+        label = None
+        merge = None
+        for comp in lot_comp_list:
+            if isinstance(comp, CompoundAmount):
+                if compound_cost is None:
+                    compound_cost = comp
+                else:
+                    self.errors.append(
+                        ParserError(self.get_lexer_location(),
+                                    "Duplicate cost: '{}'.".format(comp), None))
+
+            elif isinstance(comp, date):
+                if lot_date is None:
+                    lot_date = comp
+                else:
+                    self.errors.append(
+                        ParserError(self.get_lexer_location(),
+                                    "Duplicate date: '{}'.".format(comp), None))
+
+            elif comp is MERGE_COST:
+                if merge is None:
+                    merge = True
+                else:
+                    self.errors.append(
+                        ParserError(self.get_lexer_location(),
+                                    "Duplicate merge-cost spec", None))
+
+            else:
+                assert isinstance(comp, str)
+                if label is None:
+                    label = comp
+                else:
+                    self.errors.append(
+                        ParserError(self.get_lexer_location(),
+                                    "Duplicate label: '{}'.".format(comp), None))
+
+        if label is not None:
+            self.errors.append(
+                ParserError(self.get_lexer_location(),
+                            "Labels not supported yet: '{}'.".format(label), None))
+
+        if merge is not None:
+            self.errors.append(
+                ParserError(self.get_lexer_location(),
+                            "Merge-cost not supported yet.", None))
+
+        return (compound_cost, lot_date, label, merge)
+
+    def position(self, filename, lineno, amount, lot_info):
         """Process a position grammar rule.
 
         Args:
           filename: the current filename.
           lineno: the current line number.
           amount: an instance of Amount for the position.
-          lot_cost_date: a tuple of (cost, lot-date)
+          lot_info: a tuple of (compound-cost, lot-date, label)
         Returns:
           A new instance of Position.
         """
-        cost, lot_date, istotal = lot_cost_date if lot_cost_date else (None, None, False)
+        compound_cost, lot_date, label, merge = (lot_info
+                                                 if lot_info else
+                                                 (None, None, None, None))
+
+        # Compute the cost.
+        if compound_cost is not None:
+            if (compound_cost.number_per is None or
+                compound_cost.number_total is not None):
+                self.errors.append(
+                    ParserError(self.get_lexer_location(),
+                                "Total cost not supported: '{}'".format(compound_cost),
+                                None))
+                cost = None
+            else:
+                cost = Amount(compound_cost.number_per, compound_cost.currency)
+        else:
+            cost = None
 
         # We don't allow a cost nor a price of zero. (Conversion entries may use
         # a price of zero as the only special case, but never for costs.)
@@ -365,8 +467,14 @@ class Builder(lexer.LexBuilder):
                 self.errors.append(
                     ParserError(meta, 'Cost is negative: "{}"'.format(cost), None))
 
-        if istotal:
-            cost = amount_div(cost, abs(amount.number))
+        ## FIXME: Complete this, incorporate the total.
+        # if istotal:
+        #     cost = amount_div(cost, abs(amount.number))
+
+        ## FIXME: Complete this, incorporate the merge flag.
+        # if istotal:
+        #     cost = amount_div(cost, abs(amount.number))
+
         lot = Lot(amount.currency, cost, lot_date)
 
         return Position(lot, amount.number)
@@ -769,7 +877,7 @@ class Builder(lexer.LexBuilder):
         # We now allow a single posting when its balance is zero, so we
         # commented out the check below. If a transaction has a single posting
         # with a non-zero balance, it'll get caught below int he
-        # balance_incomplete_postings code.
+        # balance_incomplete_postings() code.
         #
         # # Detect when a transaction does not have at least two legs.
         # if postings is None or len(postings) < 2:
@@ -795,21 +903,39 @@ class Builder(lexer.LexBuilder):
         links = txn_fields.links
         links = frozenset(links) if links else None
 
-        # Create the transaction. Note: we need to parent the postings.
-        entry = Transaction(meta, date, chr(flag),
-                            payee, narration, tags, links, postings)
+        # Create the transaction.
+        return Transaction(meta, date, chr(flag),
+                           payee, narration, tags, links, postings)
 
-        # Balance incomplete auto-postings and set the parent link to this entry as well.
-        balance_errors = balance_incomplete_postings(entry, self.options)
 
-        if balance_errors:
-            self.errors.extend(balance_errors)
+def interpolate(entries, options_map):
+    """Run the interpolation on a list of incomplete entries from the parser.
 
-        # Check that the balance actually is empty.
-        if __sanity_checks__:
-            residual = compute_residual(entry.postings)
-            tolerances = infer_tolerances(entry.postings, self.options)
-            assert residual.is_small(tolerances, self.options['default_tolerance']), (
-                "Invalid residual {}".format(residual))
+    !WARNING!!! This destructively modifies some of the Transaction entries directly.
 
-        return entry
+    Args:
+      incomplete_entries: A list of directives, with some postings possibly left
+        with incomplete amounts as produced by the parser.
+      options_map: An options dict as produced by the parser.
+    Returns:
+      A pair of
+        entries: A list of interpolated entries with all their postings completed.
+        errors: New errors produced during interpolation.
+    """
+    errors = []
+    for entry in entries:
+        if isinstance(entry, Transaction):
+            # Balance incomplete auto-postings and set the parent link to this
+            # entry as well.
+            balance_errors = balance_incomplete_postings(entry, options_map)
+            if balance_errors:
+                errors.extend(balance_errors)
+
+            # Check that the balance actually is empty.
+            if __sanity_checks__:
+                residual = compute_residual(entry.postings)
+                tolerances = infer_tolerances(entry.postings, options_map)
+                assert residual.is_small(tolerances, options_map['default_tolerance']), (
+                    "Invalid residual {}".format(residual))
+
+    return entries, errors

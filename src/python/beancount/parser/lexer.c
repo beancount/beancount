@@ -470,8 +470,8 @@ static void yy_fatal_error (yyconst char msg[]  );
 	*yy_cp = '\0'; \
 	(yy_c_buf_p) = yy_cp;
 
-#define YY_NUM_RULES 55
-#define YY_END_OF_BUFFER 56
+#define YY_NUM_RULES 56
+#define YY_END_OF_BUFFER 57
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -481,33 +481,33 @@ struct yy_trans_info
 	};
 static yyconst flex_int16_t yy_accept[248] =
     {   0,
-        0,    0,    0,    0,    0,    0,   56,   53,    2,    1,
-       19,   40,   19,   15,   16,   17,   12,   10,   13,   14,
-       49,   18,    5,   53,   19,   53,   19,   53,   53,   53,
-       53,   53,   53,   53,   53,   53,   53,   53,    8,    3,
-        9,   11,   54,   55,   48,   41,   55,    2,   50,    0,
-       49,   49,   18,   18,    4,    0,    0,   39,    0,   39,
-       39,   51,    0,    0,    0,    0,    0,    0,    0,    0,
-        0,    0,    0,    0,    0,    0,    0,    6,    7,   54,
-       48,   47,   45,   46,   42,   44,   43,   49,   49,   49,
-        0,   39,    0,   39,    0,   39,   39,   52,    0,    0,
+        0,    0,    0,    0,    0,    0,   57,   54,    2,    1,
+       20,   41,   17,   15,   16,   18,   12,   10,   13,   14,
+       50,   19,    5,   54,   20,   54,   20,   54,   54,   54,
+       54,   54,   54,   54,   54,   54,   54,   54,    8,    3,
+        9,   11,   55,   56,   49,   42,   56,    2,   51,    0,
+       50,   50,   19,   19,    4,    0,    0,   40,    0,   40,
+       40,   52,    0,    0,    0,    0,    0,    0,    0,    0,
+        0,    0,    0,    0,    0,    0,    0,    6,    7,   55,
+       49,   48,   46,   47,   43,   45,   44,   50,   50,   50,
+        0,   40,    0,   40,    0,   40,   40,   53,    0,    0,
 
-        0,    0,    0,    0,    0,    0,    0,   25,    0,    0,
-        0,    0,   20,   49,    0,   39,    0,   39,    0,   39,
-       35,    0,    0,    0,    0,    0,    0,   28,   22,    0,
-        0,    0,    0,    0,    0,   49,    0,   39,    0,   39,
-       38,   36,    0,   23,    0,    0,   26,    0,    0,    0,
-        0,   27,    0,    0,    0,   39,    0,   39,    0,    0,
-        0,    0,   32,   33,   31,    0,    0,    0,   39,    0,
-       39,   21,    0,    0,   34,   30,   37,    0,   39,    0,
-       39,    0,   29,    0,   39,    0,   39,   24,    0,   39,
-        0,   39,    0,   39,    0,   39,    0,   39,    0,   39,
+        0,    0,    0,    0,    0,    0,    0,   26,    0,    0,
+        0,    0,   21,   50,    0,   40,    0,   40,    0,   40,
+       36,    0,    0,    0,    0,    0,    0,   29,   23,    0,
+        0,    0,    0,    0,    0,   50,    0,   40,    0,   40,
+       39,   37,    0,   24,    0,    0,   27,    0,    0,    0,
+        0,   28,    0,    0,    0,   40,    0,   40,    0,    0,
+        0,    0,   33,   34,   32,    0,    0,    0,   40,    0,
+       40,   22,    0,    0,   35,   31,   38,    0,   40,    0,
+       40,    0,   30,    0,   40,    0,   40,   25,    0,   40,
+        0,   40,    0,   40,    0,   40,    0,   40,    0,   40,
 
-        0,   39,    0,   39,    0,   39,    0,   39,    0,   39,
-        0,   39,    0,   39,    0,   39,    0,   39,    0,   39,
-        0,   39,    0,   39,    0,   39,    0,   39,    0,   39,
-        0,   39,    0,   39,    0,   39,    0,   39,    0,   39,
-        0,   39,    0,   39,   39,   39,    0
+        0,   40,    0,   40,    0,   40,    0,   40,    0,   40,
+        0,   40,    0,   40,    0,   40,    0,   40,    0,   40,
+        0,   40,    0,   40,    0,   40,    0,   40,    0,   40,
+        0,   40,    0,   40,    0,   40,    0,   40,    0,   40,
+        0,   40,    0,   40,   40,   40,    0
     } ;
 
 static yyconst flex_int32_t yy_ec[256] =
@@ -911,11 +911,11 @@ static yyconst flex_int16_t yy_chk[1285] =
     } ;
 
 /* Table of booleans, true if rule could match eol. */
-static yyconst flex_int32_t yy_rule_can_match_eol[56] =
+static yyconst flex_int32_t yy_rule_can_match_eol[57] =
     {   0,
 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0,     };
+    0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0,     };
 
 static yy_state_type yy_last_accepting_state;
 static char *yy_last_accepting_cpos;
@@ -1353,9 +1353,25 @@ YY_RULE_SETUP
 #line 158 "src/python/beancount/parser/lexer.l"
 { return RPAREN; }
 	YY_BREAK
+/* Special handling for characters beginning a line to be ignored.
+  * I'd like to improve how this is handled. Needs own lexer, really. */
 case 17:
 YY_RULE_SETUP
-#line 159 "src/python/beancount/parser/lexer.l"
+#line 162 "src/python/beancount/parser/lexer.l"
+{
+    if ( yy_line_tokens != 1 ) {
+        return HASH;
+    }
+    else {
+        /* Allow org-mode titles. */
+        yy_skip_line();
+        return SKIPPED;
+    }
+}
+	YY_BREAK
+case 18:
+YY_RULE_SETUP
+#line 173 "src/python/beancount/parser/lexer.l"
 {
     if ( yy_line_tokens != 1 ) {
         return ASTERISK;
@@ -1368,9 +1384,9 @@ YY_RULE_SETUP
 }
 	YY_BREAK
 /* Skip commented output (but not the accompanying newline). */
-case 18:
+case 19:
 YY_RULE_SETUP
-#line 171 "src/python/beancount/parser/lexer.l"
+#line 185 "src/python/beancount/parser/lexer.l"
 {
     /* yy_skip_line(); */
     return COMMENT;
@@ -1384,9 +1400,9 @@ YY_RULE_SETUP
     beancount.core.flags, in order for round-trips between text and entries to
     be possible. {5307d8fa1e7b}
     */
-case 19:
+case 20:
 YY_RULE_SETUP
-#line 184 "src/python/beancount/parser/lexer.l"
+#line 198 "src/python/beancount/parser/lexer.l"
 {
     if ( yy_line_tokens != 1 ) {
         yylval->character = yytext[0];
@@ -1399,94 +1415,94 @@ YY_RULE_SETUP
 }
 	YY_BREAK
 /* Keywords. */
-case 20:
-YY_RULE_SETUP
-#line 196 "src/python/beancount/parser/lexer.l"
-{ return TXN; }
-	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 197 "src/python/beancount/parser/lexer.l"
-{ return BALANCE; }
+#line 210 "src/python/beancount/parser/lexer.l"
+{ return TXN; }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 198 "src/python/beancount/parser/lexer.l"
-{ return OPEN; }
+#line 211 "src/python/beancount/parser/lexer.l"
+{ return BALANCE; }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 199 "src/python/beancount/parser/lexer.l"
-{ return CLOSE; }
+#line 212 "src/python/beancount/parser/lexer.l"
+{ return OPEN; }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 200 "src/python/beancount/parser/lexer.l"
-{ return COMMODITY; }
+#line 213 "src/python/beancount/parser/lexer.l"
+{ return CLOSE; }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 201 "src/python/beancount/parser/lexer.l"
-{ return PAD; }
+#line 214 "src/python/beancount/parser/lexer.l"
+{ return COMMODITY; }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 202 "src/python/beancount/parser/lexer.l"
-{ return EVENT; }
+#line 215 "src/python/beancount/parser/lexer.l"
+{ return PAD; }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 203 "src/python/beancount/parser/lexer.l"
-{ return PRICE; }
+#line 216 "src/python/beancount/parser/lexer.l"
+{ return EVENT; }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 204 "src/python/beancount/parser/lexer.l"
-{ return NOTE; }
+#line 217 "src/python/beancount/parser/lexer.l"
+{ return PRICE; }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 205 "src/python/beancount/parser/lexer.l"
-{ return DOCUMENT; }
+#line 218 "src/python/beancount/parser/lexer.l"
+{ return NOTE; }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 206 "src/python/beancount/parser/lexer.l"
-{ return PUSHTAG; }
+#line 219 "src/python/beancount/parser/lexer.l"
+{ return DOCUMENT; }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 207 "src/python/beancount/parser/lexer.l"
-{ return POPTAG; }
+#line 220 "src/python/beancount/parser/lexer.l"
+{ return PUSHTAG; }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 208 "src/python/beancount/parser/lexer.l"
-{ return OPTION; }
+#line 221 "src/python/beancount/parser/lexer.l"
+{ return POPTAG; }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 209 "src/python/beancount/parser/lexer.l"
-{ return PLUGIN; }
+#line 222 "src/python/beancount/parser/lexer.l"
+{ return OPTION; }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 210 "src/python/beancount/parser/lexer.l"
+#line 223 "src/python/beancount/parser/lexer.l"
+{ return PLUGIN; }
+	YY_BREAK
+case 35:
+YY_RULE_SETUP
+#line 224 "src/python/beancount/parser/lexer.l"
 { return INCLUDE; }
 	YY_BREAK
 /* Boolean values. */
-case 35:
+case 36:
 YY_RULE_SETUP
-#line 213 "src/python/beancount/parser/lexer.l"
+#line 227 "src/python/beancount/parser/lexer.l"
 {
     yylval->pyobj = Py_True;
     Py_INCREF(Py_True);
     return BOOL;
 }
 	YY_BREAK
-case 36:
+case 37:
 YY_RULE_SETUP
-#line 219 "src/python/beancount/parser/lexer.l"
+#line 233 "src/python/beancount/parser/lexer.l"
 {
     yylval->pyobj = Py_False;
     Py_INCREF(Py_False);
@@ -1494,9 +1510,9 @@ YY_RULE_SETUP
 }
 	YY_BREAK
 /* Dates. */
-case 37:
+case 38:
 YY_RULE_SETUP
-#line 226 "src/python/beancount/parser/lexer.l"
+#line 240 "src/python/beancount/parser/lexer.l"
 {
     const char* year_str;
     const char* month_str;
@@ -1519,9 +1535,9 @@ YY_RULE_SETUP
 }
 	YY_BREAK
 /* Account names. */
-case 38:
+case 39:
 YY_RULE_SETUP
-#line 248 "src/python/beancount/parser/lexer.l"
+#line 262 "src/python/beancount/parser/lexer.l"
 {
     BUILD_LEX("ACCOUNT", "s", yytext);
     return ACCOUNT;
@@ -1529,9 +1545,9 @@ YY_RULE_SETUP
 	YY_BREAK
 /* Currencies. These are defined as uppercase only in order to disambiguate the
   * syntax. This is kept in sync with beancount.core.amount.CURRENCY_RE. */
-case 39:
+case 40:
 YY_RULE_SETUP
-#line 255 "src/python/beancount/parser/lexer.l"
+#line 269 "src/python/beancount/parser/lexer.l"
 {
     BUILD_LEX("CURRENCY", "s", yytext);
     return CURRENCY;
@@ -1540,9 +1556,9 @@ YY_RULE_SETUP
 /* String literals. */
 /* Note that we use an exclusive start condition.
     See section "Start Conditions" in the GNU Flex manual. */
-case 40:
+case 41:
 YY_RULE_SETUP
-#line 263 "src/python/beancount/parser/lexer.l"
+#line 277 "src/python/beancount/parser/lexer.l"
 {
     strbuf_ptr = strbuf;
     BEGIN(STRLIT);
@@ -1550,9 +1566,9 @@ YY_RULE_SETUP
 	YY_BREAK
 
 /* Saw closing quote - all done. */
-case 41:
+case 42:
 YY_RULE_SETUP
-#line 271 "src/python/beancount/parser/lexer.l"
+#line 285 "src/python/beancount/parser/lexer.l"
 {
         BEGIN(INITIAL);
         *strbuf_ptr = '\0';
@@ -1571,42 +1587,42 @@ YY_RULE_SETUP
     }
 	YY_BREAK
 /* Escape sequences. */
-case 42:
-YY_RULE_SETUP
-#line 289 "src/python/beancount/parser/lexer.l"
-SAFE_COPY_CHAR('\n');
-	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 290 "src/python/beancount/parser/lexer.l"
-SAFE_COPY_CHAR('\t');
+#line 303 "src/python/beancount/parser/lexer.l"
+SAFE_COPY_CHAR('\n');
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 291 "src/python/beancount/parser/lexer.l"
-SAFE_COPY_CHAR('\r');
+#line 304 "src/python/beancount/parser/lexer.l"
+SAFE_COPY_CHAR('\t');
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 292 "src/python/beancount/parser/lexer.l"
-SAFE_COPY_CHAR('\b');
+#line 305 "src/python/beancount/parser/lexer.l"
+SAFE_COPY_CHAR('\r');
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 293 "src/python/beancount/parser/lexer.l"
-SAFE_COPY_CHAR('\f');
+#line 306 "src/python/beancount/parser/lexer.l"
+SAFE_COPY_CHAR('\b');
 	YY_BREAK
 case 47:
-/* rule 47 can match eol */
 YY_RULE_SETUP
-#line 294 "src/python/beancount/parser/lexer.l"
-SAFE_COPY_CHAR(yytext[1]);
+#line 307 "src/python/beancount/parser/lexer.l"
+SAFE_COPY_CHAR('\f');
 	YY_BREAK
-/* All other characters. */
 case 48:
 /* rule 48 can match eol */
 YY_RULE_SETUP
-#line 297 "src/python/beancount/parser/lexer.l"
+#line 308 "src/python/beancount/parser/lexer.l"
+SAFE_COPY_CHAR(yytext[1]);
+	YY_BREAK
+/* All other characters. */
+case 49:
+/* rule 49 can match eol */
+YY_RULE_SETUP
+#line 311 "src/python/beancount/parser/lexer.l"
 {
         if ( yyleng > strbuf_end - strbuf_ptr ) {
             strbuf_realloc(yyleng);
@@ -1619,45 +1635,45 @@ YY_RULE_SETUP
 	YY_BREAK
 
 /* Numbers */
-case 49:
+case 50:
 YY_RULE_SETUP
-#line 309 "src/python/beancount/parser/lexer.l"
+#line 323 "src/python/beancount/parser/lexer.l"
 {
     BUILD_LEX("NUMBER", "s", yytext);
     return NUMBER;
 }
 	YY_BREAK
 /* Tags */
-case 50:
+case 51:
 YY_RULE_SETUP
-#line 315 "src/python/beancount/parser/lexer.l"
+#line 329 "src/python/beancount/parser/lexer.l"
 {
     BUILD_LEX("TAG", "s", &(yytext[1]));
     return TAG;
 }
 	YY_BREAK
 /* Links */
-case 51:
+case 52:
 YY_RULE_SETUP
-#line 321 "src/python/beancount/parser/lexer.l"
+#line 335 "src/python/beancount/parser/lexer.l"
 {
     BUILD_LEX("LINK", "s", &(yytext[1]));
     return LINK;
 }
 	YY_BREAK
 /* Key */
-case 52:
+case 53:
 YY_RULE_SETUP
-#line 327 "src/python/beancount/parser/lexer.l"
+#line 341 "src/python/beancount/parser/lexer.l"
 {
     BUILD_LEX("KEY", "s#", yytext, yyleng-1);
     return KEY;
 }
 	YY_BREAK
 /* Default rule. {bf253a29a820} */
-case 53:
+case 54:
 YY_RULE_SETUP
-#line 333 "src/python/beancount/parser/lexer.l"
+#line 347 "src/python/beancount/parser/lexer.l"
 {
     unput(*yytext);
     BEGIN(INVALID);
@@ -1668,7 +1684,7 @@ YY_RULE_SETUP
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(INVALID):
 case YY_STATE_EOF(STRLIT):
-#line 340 "src/python/beancount/parser/lexer.l"
+#line 354 "src/python/beancount/parser/lexer.l"
 {
   if ( yy_eof_times == 0 ) {
     yy_eof_times = 1;
@@ -1682,9 +1698,9 @@ case YY_STATE_EOF(STRLIT):
     pattern, it would take precedence over valid rules if the matched text is
     longer and thus would break the lexer. Writing our own lexer would fix
     this and more. {bba169a1d35a} */
-case 54:
+case 55:
 YY_RULE_SETUP
-#line 353 "src/python/beancount/parser/lexer.l"
+#line 367 "src/python/beancount/parser/lexer.l"
 {
     char buffer[256];
     size_t length = snprintf(buffer, 256, "Invalid token: '%s'", yytext);
@@ -1693,12 +1709,12 @@ YY_RULE_SETUP
     return LEX_ERROR;
 }
 	YY_BREAK
-case 55:
+case 56:
 YY_RULE_SETUP
-#line 362 "src/python/beancount/parser/lexer.l"
+#line 376 "src/python/beancount/parser/lexer.l"
 ECHO;
 	YY_BREAK
-#line 1702 "src/python/beancount/parser/lexer.c"
+#line 1718 "src/python/beancount/parser/lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2703,7 +2719,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 362 "src/python/beancount/parser/lexer.l"
+#line 376 "src/python/beancount/parser/lexer.l"
 
 
 /*--------------------------------------------------------------------------------------*/

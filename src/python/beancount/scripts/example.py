@@ -36,6 +36,7 @@ from beancount.core import inventory
 from beancount.core import realization
 from beancount.core import display_context
 from beancount.parser import parser
+from beancount.parser import grammar
 from beancount.parser import printer
 from beancount.ops import validation
 from beancount.ops import prices
@@ -173,11 +174,15 @@ option "operating_currency" "CCY"
 def parse(input_string, **replacements):
     """Parse some input string and assert no errors.
 
+    This parse function does not just create the object, it also triggers local
+    interpolation to fill in the missing amounts.
+
     Args:
       input_string: Beancount input text.
       **replacements: A dict of keywords to replace to their values.
     Returns:
       A list of directive objects.
+
     """
 
     if replacements:
@@ -190,10 +195,13 @@ def parse(input_string, **replacements):
     else:
         formatted_string = input_string
 
-    entries, errors, unused_options = parser.parse_string(textwrap.dedent(formatted_string))
+    entries, errors, options_map = parser.parse_string(textwrap.dedent(formatted_string))
     if errors:
         printer.print_errors(errors, file=sys.stderr)
         raise ValueError("Parsed text has errors")
+
+    # Take advantage of simple interpolation.
+    entries, unused_balance_errors = grammar.interpolate(entries, options_map)
 
     return data.sorted(entries)
 
