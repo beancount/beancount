@@ -11,7 +11,6 @@ from unittest import mock
 
 from beancount import loader
 from beancount.core import inventory
-from beancount.core import data
 from beancount.ops import prices
 from beancount.parser import cmptest
 from beancount.parser import options

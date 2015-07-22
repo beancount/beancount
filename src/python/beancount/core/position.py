@@ -318,7 +318,7 @@ class Position:
         currency = match.group(2)
 
         # Parse a cost expression.
-        cost, lot_date, label = None, None, None
+        cost, lot_date = None, None
         cost_expression = match.group(3)
         if match.group(3):
             expressions = [expr.strip() for expr in re.split('[,/]', cost_expression)]
@@ -347,14 +347,14 @@ class Position:
                 # Match a label.
                 match = re.match(r'"([^"]+)*"$', expr)
                 if match:
-                    label = match.groups(1)
+                    # label = match.groups(1)
                     logging.warning("Label not supported yet.")
                     continue
 
                 # Match a merge-cost marker.
                 match = re.match(r'\*$', expr)
                 if match:
-                    merge = True
+                    # merge = True
                     logging.warning("Merge-code not supported yet.")
                     continue
 

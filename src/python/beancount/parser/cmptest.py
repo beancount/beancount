@@ -9,7 +9,6 @@ import textwrap
 from beancount.parser import parser
 from beancount.parser import printer
 from beancount.core import compare
-from beancount.core import data
 
 
 class TestError(Exception):

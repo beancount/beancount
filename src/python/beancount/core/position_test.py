@@ -23,7 +23,7 @@ class TestPosition(unittest.TestCase):
 
     def test_from_string__empty(self):
         with self.assertRaises(ValueError):
-            pos = from_string('')
+            from_string('')
 
     def test_from_string__simple(self):
         pos = from_string('10 USD')
@@ -68,7 +68,7 @@ class TestPosition(unittest.TestCase):
 
     def test_from_string__missing_currency(self):
         with self.assertRaises(ValueError):
-            pos = from_string('2.2 GOOG {532.43}')
+            from_string('2.2 GOOG {532.43}')
 
     def test_str(self):
         pos = from_string('2.2 GOOG {532.43 USD, 2014-06-15}')

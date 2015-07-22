@@ -7,7 +7,6 @@ import unittest
 
 from beancount.parser import parser
 from beancount.parser import options
-from beancount.parser import parser
 from beancount.core import account_types
 
 

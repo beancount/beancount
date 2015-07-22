@@ -6,7 +6,6 @@ import tempfile
 import textwrap
 import re
 import os
-import warnings
 from unittest import mock
 from os import path
 

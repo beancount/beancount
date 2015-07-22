@@ -3,11 +3,7 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
-import functools
-import inspect
-import textwrap
 import copy
-import io
 import os
 import re
 from os import path
@@ -15,7 +11,6 @@ from datetime import date
 
 from beancount.core.number import ZERO
 from beancount.core.amount import Amount
-from beancount.core.amount import amount_div
 from beancount.core import display_context
 from beancount.core.position import Lot
 from beancount.core.position import Position
@@ -36,11 +31,8 @@ from beancount.core.interpolate import balance_incomplete_postings
 from beancount.core.interpolate import compute_residual
 from beancount.core.interpolate import infer_tolerances
 
-from beancount.parser import _parser
 from beancount.parser import lexer
 from beancount.parser import options
-from beancount.parser import printer
-from beancount.parser import hashsrc
 from beancount.core import account
 from beancount.core import data
 
@@ -933,7 +925,8 @@ def interpolate(entries, options_map):
     errors = []
     for entry in entries:
         if isinstance(entry, Transaction):
-            # Balance incomplete auto-postings and set the parent link to this entry as well.
+            # Balance incomplete auto-postings and set the parent link to this
+            # entry as well.
             balance_errors = balance_incomplete_postings(entry, options_map)
             if balance_errors:
                 errors.extend(balance_errors)

@@ -407,7 +407,7 @@ class TestIgnoredLines(unittest.TestCase):
         self.assertFalse(errors)
 
     @lex_tokens
-    def test_ignored__something_else(self, tokens, errors):
+    def test_ignored__something_else_non_flag(self, tokens, errors):
         """
         Xxx this sentence starts with a non-flag character.
         """

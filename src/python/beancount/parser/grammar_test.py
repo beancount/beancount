@@ -21,7 +21,6 @@ from beancount.core import interpolate_test
 from beancount.utils import test_utils
 from beancount.parser import grammar
 from beancount.parser import cmptest
-from beancount.parser import printer
 
 
 def check_list(test, objlist, explist):
@@ -1802,11 +1801,11 @@ class TestLexerAndParserErrors(cmptest.TestCase):
 
     @mock.patch('beancount.parser.grammar.Builder.compound_amount', raise_exception)
     @parser.parsedoc(expect_errors=True)
-    def test_grammar_exceptions__amount(self, entries, errors, _):
+    def test_grammar_exceptions__compound_amount(self, entries, errors, _):
         """
           2000-01-01 open Assets:Before
           2001-02-02 *
-            Assets:Before   10.00 HOOL {100.00 USD}
+            Assets:Before   10.00 HOOL {100.00 # 9.95 USD}
             Assets:After   -100.00 USD
           2010-01-01 close Assets:Before
         """
