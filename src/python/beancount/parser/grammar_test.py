@@ -1790,7 +1790,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
         self.check_entries_errors(entries, errors)
 
     @mock.patch('beancount.parser.grammar.Builder.amount', raise_exception)
-    @parser.parsedoc()
+    @parser.parsedoc(expect_errors=True)
     def test_grammar_exceptions__amount(self, entries, errors, _):
         """
           2000-01-01 open Assets:Before
