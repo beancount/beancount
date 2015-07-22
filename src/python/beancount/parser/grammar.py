@@ -70,7 +70,7 @@ CompoundAmount = collections.namedtuple('CompoundAmount',
 
 
 # A unique token used to indicate a merge of the lots of an inventory.
-MERGE = '***'
+MERGE_COST = '***'
 
 
 def valid_account_regexp(options):
@@ -365,8 +365,8 @@ class Builder(lexer.LexBuilder):
         return CompoundAmount(number_per, number_total, currency)
 
     def lot_merge(self, _):
-        """Create a 'lot merge' token."""
-        return MERGE
+        """Create a 'merge cost' token."""
+        return MERGE_COST
 
     def lot_spec(self, lot_comp_list):
         """Process a lot_cost_date grammar rule.
@@ -403,13 +403,13 @@ class Builder(lexer.LexBuilder):
                         ParserError(self.get_lexer_location(),
                                     "Duplicate date: '{}'.".format(comp), None))
 
-            elif comp is MERGE:
+            elif comp is MERGE_COST:
                 if merge is None:
                     merge = True
                 else:
                     self.errors.append(
                         ParserError(self.get_lexer_location(),
-                                    "Duplicate merge spec", None))
+                                    "Duplicate merge-cost spec", None))
 
             else:
                 assert isinstance(comp, str)
@@ -428,7 +428,7 @@ class Builder(lexer.LexBuilder):
         if merge is not None:
             self.errors.append(
                 ParserError(self.get_lexer_location(),
-                            "Merge not supported yet.", None))
+                            "Merge-cost not supported yet.", None))
 
         return (compound_cost, lot_date, label, merge)
 

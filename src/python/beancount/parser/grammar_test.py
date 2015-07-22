@@ -859,7 +859,7 @@ class TestParseLots(unittest.TestCase):
             Assets:Invest:Cash  -20 AAPL
         """
         self.assertEqual(1, len(errors))
-        self.assertTrue(re.search("Merge not supported", errors[0].message))
+        self.assertTrue(re.search("Merge-cost not supported", errors[0].message))
         pos = entries[0].postings[0].position
         self.assertEqual(D('20'), pos.number)
         self.assertEqual(position.Lot('AAPL', None, None), pos.lot)
@@ -937,7 +937,7 @@ class TestParseLots(unittest.TestCase):
         self.assertEqual(2, len(errors))
         self.assertTrue(any(re.search("Duplicate merge", error.message)
                             for error in errors))
-        self.assertTrue(any(re.search("Merge not supported", error.message)
+        self.assertTrue(any(re.search("Merge-cost not supported", error.message)
                             for error in errors))
 
     @parser.parsedoc(expect_errors=True)
