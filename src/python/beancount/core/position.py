@@ -323,8 +323,9 @@ class Position:
         if match.group(3):
             expressions = [expr.strip() for expr in re.split('[,/]', cost_expression)]
             for expr in expressions:
+
                 # Match a compound number.
-                match = re.match(r'({})\s*(?:#\s*({}))?\s+({})'.format(
+                match = re.match(r'({})\s*(?:#\s*({}))?\s+({})$'.format(
                     NUMBER_RE, NUMBER_RE, CURRENCY_RE), expr)
                 if match:
                     per_number, total_number, cost_currency = match.group(1, 2, 3)
@@ -338,16 +339,23 @@ class Position:
                     continue
 
                 # Match a date.
-                match = re.match(r'(\d\d\d\d)[-/](\d\d)[-/](\d\d)', expr)
+                match = re.match(r'(\d\d\d\d)[-/](\d\d)[-/](\d\d)$', expr)
                 if match:
                     lot_date = datetime.date(*map(int, match.group(1, 2, 3)))
                     continue
 
                 # Match a label.
-                match = re.match(r'"([^"]+)*"', expr)
+                match = re.match(r'"([^"]+)*"$', expr)
                 if match:
                     label = match.groups(1)
                     logging.warning("Label not supported yet.")
+                    continue
+
+                # Match a merge-cost marker.
+                match = re.match(r'\*$', expr)
+                if match:
+                    merge = True
+                    logging.warning("Merge-code not supported yet.")
                     continue
 
                 raise ValueError("Invalid cost component: '{}'".format(expr))
