@@ -13,37 +13,54 @@ Note: This file contains only changes in the 'default' branch.
 
     * The parser.parse_string() and parser.parse_file() routines don't
       interpolate anymore. For this reason, the tests all had to be adjusted not
-      to have interpolation. The interpolation (grammar.interpolation()) has
-      moved to a post-parser phase and is now run by loader._load(). This only
-      affects you if you wrote scripts against the parser interface directly
-      (this is highly unlikely).
+      to include interpolation. The interpolation of incomplete postings
+      (grammar.interpolation()) has moved to a separate phase and is now run by
+      loader._load() *AFTER* parsing. This is key to implementing fuzzy matching
+      semantics for matching reducing lots: we need to have all the incomplete
+      transactions parsed and sorted in order to select matching lots in date
+      order.
+
+      This only affects you if you wrote scripts against the parser
+      interface directly (this is highly unlikely).
+
+    * For writing unit tests, parser.parsedoc() and loader.loaddoc() are now
+      decorator factories. This allowed me to add options to parser.parsedoc()
+      to perform interpolation, and when not specified, to check that entries
+      with interpolation are not present in the tests. Also, I coudl merge the
+      functionality of parser.parsedoc_noerrors() and loader.loaddoc_noerrors()
+      in their respective equivalents. The docstring tests now validate that
+      there are no errors in the docstrings by default. This makes the tests
+      tighter (a few bugs in the tests themselves were found and fixed).
 
     * The new syntax for cost specification that will be in effect for the
       inventory booking proposal is now supported. The syntax is
       backward-compatible with the previous one. Previously, the following
-      syntaxes were supported:
+      syntaxes were supported for specifying the cost and optionally a lot
+      acquisition date:
 
         Assets:Investments    1 HOOL {123.00 USD}
-        Assets:Investments    1 HOOL {123.00 USD, 2013-07-20}
+        Assets:Investments    1 HOOL {123.00 USD / 2013-07-20}
 
-      Instead of these limited options, the new syntax supports a
-      comma-separated list of cost-specifiers which can be
+      Instead of these options, the new syntax supports a comma-separated list
+      of cost-specifiers which can be one of
 
-        <cost>, e.g. 123.00 USD
-        <lot-date>, e.g. 2015-07-20
-        <label>, e.g. "acb6602d33c3"
-        '*',  e.g. *
+        <cost>       -> e.g. 123.00 USD
+        <lot-date>   -> e.g. 2015-07-20
+        <label>      -> e.g. "first-lot"
+        <merge-cost> -> e.g. *
 
       In order to keep current input working, either a comma (,) or a slash (/)
-      is supported to separate the components.
+      is supported to separate the components. This is valid:
+
+        Assets:Investments    1 HOOL {2013-07-20 / 123.00 USD / "first-lot"}
 
       Those can be provided in any order. For example, these are all also valid
       syntaxes for cost:
 
         Assets:Investments    1 HOOL {}
-        Assets:Investments    1 HOOL {"first-shares"}
+        Assets:Investments    1 HOOL {"first-lot"}
         Assets:Investments    1 HOOL {2013-07-20, 123.00 USD}
-        Assets:Investments    1 HOOL {2013-07-20, "hooli-shares"}
+        Assets:Investments    1 HOOL {2013-07-20, "first-lot"}
         Assets:Investments    1 HOOL {*}
         Assets:Investments    1 HOOL {*, 123.00 USD}
 
@@ -65,12 +82,22 @@ Note: This file contains only changes in the 'default' branch.
 
         Assets:Investments    100 HOOL {# 12300.00 USD}
 
+      Of course, this combines with the other spec formats, so this is valid:
+
+        Assets:Investments    1 HOOL {123.00 # 9.95 USD, 2015-07-22}
+
       Finally, while the new syntax is supported in the parser, the old
       semantics for inventory lot specification is still in order. If you
-      provide an unsupported combination of lot specifiers (e.g. you use a
-      label, or a compound amount), an error will be issued. So just use the
-      cost and date as previously; I will probably bring in new features
-      incrementally within the context of this new syntax.
+      provide an unsupported combination of lot specifiers (e.g., you use a
+      label, a compound amount, or a merge-cost marker), an error will be issued
+      accordingly.
+
+      So just use the cost and date as previously; I will bring in new semantics
+      incrementally, semantics that will take advantage of this new syntax. I
+      will try to do so in a way that minimizes changes.
+
+  - I removed forwarded symbols from beancount.parser. Generally, in order to be
+    able to mock functions, you should always import packages, not symbols.
 
 
 2015-07-20
