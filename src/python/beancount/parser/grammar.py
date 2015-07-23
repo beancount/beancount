@@ -11,7 +11,6 @@ from datetime import date
 
 from beancount.core.number import ZERO
 from beancount.core.amount import Amount
-from beancount.core.amount import amount_div
 from beancount.core import display_context
 from beancount.core.position import Lot
 from beancount.core.position import Position
@@ -28,9 +27,6 @@ from beancount.core.data import Document
 from beancount.core.data import new_metadata
 from beancount.core.data import Posting
 from beancount.core.data import BOOKING_METHODS
-from beancount.core.interpolate import balance_incomplete_postings
-from beancount.core.interpolate import compute_residual
-from beancount.core.interpolate import infer_tolerances
 
 from beancount.parser import lexer
 from beancount.parser import options

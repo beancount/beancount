@@ -36,7 +36,6 @@ from beancount.core import inventory
 from beancount.core import realization
 from beancount.core import display_context
 from beancount.parser import parser
-from beancount.parser import grammar
 from beancount.parser import booking
 from beancount.parser import printer
 from beancount.ops import validation

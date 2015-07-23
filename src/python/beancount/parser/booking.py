@@ -2,39 +2,10 @@
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import collections
-import copy
-import os
-import re
-from os import path
-from datetime import date
-
-from beancount.core.number import ZERO
-from beancount.core.amount import Amount
-from beancount.core import display_context
-from beancount.core.position import Lot
-from beancount.core.position import Position
 from beancount.core.data import Transaction
-from beancount.core.data import Balance
-from beancount.core.data import Open
-from beancount.core.data import Close
-from beancount.core.data import Commodity
-from beancount.core.data import Pad
-from beancount.core.data import Event
-from beancount.core.data import Price
-from beancount.core.data import Note
-from beancount.core.data import Document
-from beancount.core.data import new_metadata
-from beancount.core.data import Posting
-from beancount.core.data import BOOKING_METHODS
 from beancount.core.interpolate import balance_incomplete_postings
 from beancount.core.interpolate import compute_residual
 from beancount.core.interpolate import infer_tolerances
-
-from beancount.parser import lexer
-from beancount.parser import options
-from beancount.core import account
-from beancount.core import data
 
 
 __sanity_checks__ = False

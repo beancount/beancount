@@ -15,7 +15,6 @@ from os import path
 from beancount.utils import misc_utils
 from beancount.core import data
 from beancount.parser import parser
-from beancount.parser import grammar
 from beancount.parser import booking
 from beancount.parser import options
 from beancount.parser import printer
