@@ -37,6 +37,7 @@ from beancount.core import realization
 from beancount.core import display_context
 from beancount.parser import parser
 from beancount.parser import grammar
+from beancount.parser import booking
 from beancount.parser import printer
 from beancount.ops import validation
 from beancount.ops import prices
@@ -201,7 +202,7 @@ def parse(input_string, **replacements):
         raise ValueError("Parsed text has errors")
 
     # Take advantage of simple interpolation.
-    entries, unused_balance_errors = grammar.interpolate(entries, options_map)
+    entries, unused_balance_errors = booking.interpolate(entries, options_map)
 
     return data.sorted(entries)
 

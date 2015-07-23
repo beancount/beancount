@@ -10,6 +10,7 @@ from os import path
 
 from beancount.parser import _parser
 from beancount.parser import grammar
+from beancount.parser import booking
 from beancount.parser import printer
 from beancount.parser import hashsrc
 from beancount.core import data
@@ -130,7 +131,7 @@ def parsedoc(expect_errors=False, interpolation=False):
             # Allow interpolation if
             if interpolation:
                 # Perform simple interpolation in literals, without a history.
-                interp_entries, balance_errors = grammar.interpolate(entries, options_map)
+                interp_entries, balance_errors = booking.interpolate(entries, options_map)
                 errors.extend(balance_errors)
             else:
                 # If interpolation is not allowed, fail the test if it is seen,

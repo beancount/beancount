@@ -16,6 +16,7 @@ from beancount.utils import misc_utils
 from beancount.core import data
 from beancount.parser import parser
 from beancount.parser import grammar
+from beancount.parser import booking
 from beancount.parser import options
 from beancount.parser import printer
 from beancount.ops import validation
@@ -245,7 +246,7 @@ def _load(sources, log_timings, log_errors, extra_validations, encoding):
     entries, parse_errors, options_map = _parse_recursive(sources, log_timings, encoding)
 
     # Run interpolation on incomplete entries.
-    entries, balance_errors = grammar.interpolate(entries, options_map)
+    entries, balance_errors = booking.interpolate(entries, options_map)
     parse_errors.extend(balance_errors)
 
     # Transform the entries.

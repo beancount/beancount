@@ -37,8 +37,6 @@ from beancount.core import account
 from beancount.core import data
 
 
-__sanity_checks__ = False
-
 # FIXME: This environment variable enables temporary support for negative
 # prices. If you've updated across 2015-01-10 and you're getting a lot of
 # errors, you need to fix all the signs on your @@ total price values (they are
@@ -906,36 +904,3 @@ class Builder(lexer.LexBuilder):
         # Create the transaction.
         return Transaction(meta, date, chr(flag),
                            payee, narration, tags, links, postings)
-
-
-def interpolate(entries, options_map):
-    """Run the interpolation on a list of incomplete entries from the parser.
-
-    !WARNING!!! This destructively modifies some of the Transaction entries directly.
-
-    Args:
-      incomplete_entries: A list of directives, with some postings possibly left
-        with incomplete amounts as produced by the parser.
-      options_map: An options dict as produced by the parser.
-    Returns:
-      A pair of
-        entries: A list of interpolated entries with all their postings completed.
-        errors: New errors produced during interpolation.
-    """
-    errors = []
-    for entry in entries:
-        if isinstance(entry, Transaction):
-            # Balance incomplete auto-postings and set the parent link to this
-            # entry as well.
-            balance_errors = balance_incomplete_postings(entry, options_map)
-            if balance_errors:
-                errors.extend(balance_errors)
-
-            # Check that the balance actually is empty.
-            if __sanity_checks__:
-                residual = compute_residual(entry.postings)
-                tolerances = infer_tolerances(entry.postings, options_map)
-                assert residual.is_small(tolerances, options_map['default_tolerance']), (
-                    "Invalid residual {}".format(residual))
-
-    return entries, errors
