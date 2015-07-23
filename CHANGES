@@ -4,7 +4,14 @@
 Note: This file contains only changes in the 'default' branch.
 
 
-2015-07-??
+2015-07-23
+
+  - In the conversion to the new booking syntax, I had inadventently removed
+    support for the total cost "{{ ... }}" syntax. I brought this back next to
+    the new booking syntax, and uncommented tests that had been made to skip.
+
+
+2015-07-21
 
   - Merged ongoing work from the 'booking' branch that will eventually change
     the semantics of inventory booking; in the interest of a smooth transition,

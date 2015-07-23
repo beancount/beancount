@@ -1,16 +1,9 @@
 -*- mode: org -*-
 beancount: TODO
-* Booking Parser
+* Booking
 
-  (merge into default)
-  - Bring back support for {{ }}.
-  - Add parsing of '*'
-
-
-  - In the parser, be backwards compatible and keep supporting {{ }} with just
-    an amount in it.
-
-  - Quandry: booking has to be moved from a validation-only stage, because the
+  ,--------------------------------------------------------------------------------
+    Quandry: booking has to be moved from a validation-only stage, because the
     looser interpolation will allow algorithms to select the lots, which in turn
     decides which cost basis is used to balance the transaction. This is
     unfortunate, because it was nice to separate this stage entirely.
@@ -27,7 +20,23 @@ beancount: TODO
     time, because the interpolation _may_ depend on the automatic lot
     selection.
 
-    (This creates some interesting and difficult changes.)
+    This creates some interesting and difficult changes.
+  `--------------------------------------------------------------------------------
+
+
+  - URGENT: In the parser, be backwards compatible and keep supporting {{ }}
+    with just an amount in it.
+
+  - Write test for beancount.parser.booking.
+
+  - Merge beancount.core.interpolate into booking.
+  - Merge beancount.ops.validation.validate_inventory_booking() into booking.
+
+  - This causes a problem because a tag is parsed in '#9.95':
+    10 AAPL {45.23#9.95 USD}
+
+
+
 
 
 * Requirements for Shipping 2.0

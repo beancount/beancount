@@ -27,17 +27,12 @@ from beancount.core.data import Document
 from beancount.core.data import new_metadata
 from beancount.core.data import Posting
 from beancount.core.data import BOOKING_METHODS
-from beancount.core.interpolate import balance_incomplete_postings
-from beancount.core.interpolate import compute_residual
-from beancount.core.interpolate import infer_tolerances
 
 from beancount.parser import lexer
 from beancount.parser import options
 from beancount.core import account
 from beancount.core import data
 
-
-__sanity_checks__ = False
 
 # FIXME: This environment variable enables temporary support for negative
 # prices. If you've updated across 2015-01-10 and you're getting a lot of
@@ -361,7 +356,7 @@ class Builder(lexer.LexBuilder):
         return MERGE_COST
 
     def lot_spec(self, lot_comp_list):
-        """Process a lot_cost_date grammar rule.
+        """Process a lot_spec grammar rule.
 
         Args:
           lot_comp_list: A list of CompoundAmountAmount, a datetime.date, or
@@ -424,6 +419,18 @@ class Builder(lexer.LexBuilder):
 
         return (compound_cost, lot_date, label, merge)
 
+    def lot_spec_total_legacy(self, cost, lot_date):
+        """Process a deprecated legacy 'total cost' specification.
+
+        Args:
+          cost: An instance of Amount, the total cost.
+          lot_date: A datetime.date instance, the lot date for the lot.
+        Returns:
+          Same as lot_spec().
+        """
+        compound_cost = CompoundAmount(ZERO, cost.number, cost.currency)
+        return (compound_cost, lot_date, None, None)
+
     def position(self, filename, lineno, amount, lot_info):
         """Process a position grammar rule.
 
@@ -441,15 +448,17 @@ class Builder(lexer.LexBuilder):
 
         # Compute the cost.
         if compound_cost is not None:
-            if (compound_cost.number_per is None or
-                compound_cost.number_total is not None):
-                self.errors.append(
-                    ParserError(self.get_lexer_location(),
-                                "Total cost not supported: '{}'".format(compound_cost),
-                                None))
-                cost = None
+            if compound_cost.number_total is not None:
+                # Compute the per-unit cost if there is some total cost
+                # component involved.
+                units = amount.number
+                cost_total = compound_cost.number_total
+                if compound_cost.number_per is not None:
+                    cost_total += compound_cost.number_per * units
+                unit_cost = cost_total / abs(units)
             else:
-                cost = Amount(compound_cost.number_per, compound_cost.currency)
+                unit_cost = compound_cost.number_per
+            cost = Amount(unit_cost, compound_cost.currency)
         else:
             cost = None
 
@@ -466,14 +475,6 @@ class Builder(lexer.LexBuilder):
                 meta = new_metadata(filename, lineno)
                 self.errors.append(
                     ParserError(meta, 'Cost is negative: "{}"'.format(cost), None))
-
-        ## FIXME: Complete this, incorporate the total.
-        # if istotal:
-        #     cost = amount_div(cost, abs(amount.number))
-
-        ## FIXME: Complete this, incorporate the merge flag.
-        # if istotal:
-        #     cost = amount_div(cost, abs(amount.number))
 
         lot = Lot(amount.currency, cost, lot_date)
 
@@ -906,36 +907,3 @@ class Builder(lexer.LexBuilder):
         # Create the transaction.
         return Transaction(meta, date, chr(flag),
                            payee, narration, tags, links, postings)
-
-
-def interpolate(entries, options_map):
-    """Run the interpolation on a list of incomplete entries from the parser.
-
-    !WARNING!!! This destructively modifies some of the Transaction entries directly.
-
-    Args:
-      incomplete_entries: A list of directives, with some postings possibly left
-        with incomplete amounts as produced by the parser.
-      options_map: An options dict as produced by the parser.
-    Returns:
-      A pair of
-        entries: A list of interpolated entries with all their postings completed.
-        errors: New errors produced during interpolation.
-    """
-    errors = []
-    for entry in entries:
-        if isinstance(entry, Transaction):
-            # Balance incomplete auto-postings and set the parent link to this
-            # entry as well.
-            balance_errors = balance_incomplete_postings(entry, options_map)
-            if balance_errors:
-                errors.extend(balance_errors)
-
-            # Check that the balance actually is empty.
-            if __sanity_checks__:
-                residual = compute_residual(entry.postings)
-                tolerances = infer_tolerances(entry.postings, options_map)
-                assert residual.is_small(tolerances, options_map['default_tolerance']), (
-                    "Invalid residual {}".format(residual))
-
-    return entries, errors
