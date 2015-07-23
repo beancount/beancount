@@ -939,27 +939,23 @@ class TestParseLots(unittest.TestCase):
         self.assertTrue(any(re.search("Merge-cost not supported", error.message)
                             for error in errors))
 
-    @parser.parsedoc(expect_errors=True)
+    @parser.parsedoc()
     def test_lot_both_costs(self, entries, errors, _):
         """
           2014-01-01 *
-            Assets:Invest:AAPL   10 AAPL {45.23 # 9.95 USD}
-            Assets:Invest:AAPL   10 AAPL {45.23#9.95 USD}
-            Assets:Invest:Cash
+            Assets:Invest:AAPL       10 AAPL {45.23 # 9.95 USD}
+            Assets:Invest:Cash  -110.36 USD
         """
-        self.assertTrue(errors)
-        self.assertTrue(re.search("Total cost not supported", errors[0].message))
+        self.assertEqual(D('46.225'), entries[0].postings[0].position.lot.cost.number)
 
-    @parser.parsedoc(expect_errors=True)
+    @parser.parsedoc()
     def test_lot_total_cost_only(self, entries, errors, _):
         """
           2014-01-01 *
             Assets:Invest:AAPL      10 AAPL {# 9.95 USD}
-            Assets:Invest:AAPL      10 AAPL { #9.95 USD}
             Assets:Invest:Cash  -19.90 USD
         """
-        self.assertTrue(errors)
-        self.assertTrue(re.search("Total cost not supported", errors[0].message))
+        self.assertEqual(D('0.995'), entries[0].postings[0].position.lot.cost.number)
 
     @parser.parsedoc()
     def test_lot_total_empty_total(self, entries, errors, _):
@@ -974,7 +970,7 @@ class TestParseLots(unittest.TestCase):
         self.assertEqual(position.Lot('AAPL', amount.from_string('45.23 USD'), None),
                          pos.lot)
 
-    @parser.parsedoc(expect_errors=True)
+    @parser.parsedoc()
     def test_lot_total_just_currency(self, entries, errors, _):
         """
           2014-01-01 *
@@ -982,8 +978,6 @@ class TestParseLots(unittest.TestCase):
             Assets:Invest:AAPL   20 AAPL { # USD}
             Assets:Invest:Cash    0 USD
         """
-        self.assertTrue(errors)
-        self.assertTrue(re.search("Total cost not supported", errors[0].message))
 
     @parser.parsedoc(expect_errors=True)
     def test_lot_with_slashes(self, entries, errors, _):
@@ -1048,29 +1042,27 @@ class TestTotalsAndSigns(unittest.TestCase):
         """
         self.assertTrue(re.search('Cost is negative', errors[0].message))
 
-    @unittest.skip("FIXME: Temporarily removed for booking branch; bring this back in.")
     @parser.parsedoc()
     def test_total_cost(self, entries, errors, _):
         """
           2013-05-18 * ""
             Assets:Investments:MSFT      10 MSFT {{2,000 USD}}
-            Assets:Investments:Cash
+            Assets:Investments:Cash  -20000 USD
 
           2013-05-18 * ""
             Assets:Investments:MSFT      10 MSFT {{2000 USD / 2014-02-25}}
-            Assets:Investments:Cash
+            Assets:Investments:Cash  -20000 USD
 
           2013-06-01 * ""
             Assets:Investments:MSFT      -10 MSFT {{2,000 USD}}
-            Assets:Investments:Cash
+            Assets:Investments:Cash    20000 USD
         """
         for entry in entries:
             posting = entry.postings[0]
             self.assertEqual(amount.from_string('200 USD'), posting.position.lot.cost)
             self.assertEqual(None, posting.price)
 
-    @unittest.skip("FIXME: Temporarily removed for booking branch; bring this back in.")
-    @parser.parsedoc()
+    @parser.parsedoc(expect_errors=True)
     def test_total_cost_negative(self, entries, errors, _):
         """
           2013-05-18 * ""
@@ -1130,21 +1122,20 @@ class TestAllowNegativePrices(unittest.TestCase):
     def tearDown(self):
         grammar.__allow_negative_prices__ = self.__allow_negative_prices__
 
-    @unittest.skip("FIXME: Removed while merging from default. Rebuild this test.")
     @parser.parsedoc()
     def test_total_cost(self, entries, errors, _):
         """
           2013-05-18 * ""
             Assets:Investments:MSFT      10 MSFT {{2,000 USD}}
-            Assets:Investments:Cash
+            Assets:Investments:Cash  -20000 USD
 
           2013-05-18 * ""
-            Assets:Investments:MSFT      10 MSFT {{2000 USD, 2014-02-25}}
-            Assets:Investments:Cash
+            Assets:Investments:MSFT      10 MSFT {{2000 USD / 2014-02-25}}
+            Assets:Investments:Cash  -20000 USD
 
           2013-06-01 * ""
             Assets:Investments:MSFT      -10 MSFT {{2,000 USD}}
-            Assets:Investments:Cash
+            Assets:Investments:Cash    20000 USD
         """
         self.assertFalse(errors)
         for entry in entries:
@@ -1199,17 +1190,16 @@ class TestBalance(unittest.TestCase):
         self.assertEqual(amount.from_string('200 USD'), posting.price)
         self.assertEqual(None, posting.position.lot.cost)
 
-    @unittest.skip("FIXME: Temporarily removed for booking branch; bring this back in.")
     @parser.parsedoc()
     def test_total_cost(self, entries, errors, _):
         """
           2013-05-18 * ""
             Assets:Investments:MSFT      10 MSFT {{2,000 USD}}
-            Assets:Investments:Cash
+            Assets:Investments:Cash  -20000 USD
 
           2013-05-18 * ""
             Assets:Investments:MSFT      10 MSFT {{2000 USD / 2014-02-25}}
-            Assets:Investments:Cash
+            Assets:Investments:Cash  -20000 USD
         """
         for entry in entries:
             posting = entry.postings[0]

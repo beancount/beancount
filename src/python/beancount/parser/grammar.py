@@ -11,6 +11,7 @@ from datetime import date
 
 from beancount.core.number import ZERO
 from beancount.core.amount import Amount
+from beancount.core.amount import amount_div
 from beancount.core import display_context
 from beancount.core.position import Lot
 from beancount.core.position import Position
@@ -359,7 +360,7 @@ class Builder(lexer.LexBuilder):
         return MERGE_COST
 
     def lot_spec(self, lot_comp_list):
-        """Process a lot_cost_date grammar rule.
+        """Process a lot_spec grammar rule.
 
         Args:
           lot_comp_list: A list of CompoundAmountAmount, a datetime.date, or
@@ -422,6 +423,18 @@ class Builder(lexer.LexBuilder):
 
         return (compound_cost, lot_date, label, merge)
 
+    def lot_spec_total_legacy(self, cost, lot_date):
+        """Process a deprecated legacy 'total cost' specification.
+
+        Args:
+          cost: An instance of Amount, the total cost.
+          lot_date: A datetime.date instance, the lot date for the lot.
+        Returns:
+          Same as lot_spec().
+        """
+        compound_cost = CompoundAmount(ZERO, cost.number, cost.currency)
+        return (compound_cost, lot_date, None, None)
+
     def position(self, filename, lineno, amount, lot_info):
         """Process a position grammar rule.
 
@@ -439,15 +452,17 @@ class Builder(lexer.LexBuilder):
 
         # Compute the cost.
         if compound_cost is not None:
-            if (compound_cost.number_per is None or
-                compound_cost.number_total is not None):
-                self.errors.append(
-                    ParserError(self.get_lexer_location(),
-                                "Total cost not supported: '{}'".format(compound_cost),
-                                None))
-                cost = None
+            if compound_cost.number_total is not None:
+                # Compute the per-unit cost if there is some total cost
+                # component involved.
+                units = amount.number
+                cost_total = compound_cost.number_total
+                if compound_cost.number_per is not None:
+                    cost_total += compound_cost.number_per * units
+                unit_cost = cost_total / abs(units)
             else:
-                cost = Amount(compound_cost.number_per, compound_cost.currency)
+                unit_cost = compound_cost.number_per
+            cost = Amount(unit_cost, compound_cost.currency)
         else:
             cost = None
 
@@ -464,14 +479,6 @@ class Builder(lexer.LexBuilder):
                 meta = new_metadata(filename, lineno)
                 self.errors.append(
                     ParserError(meta, 'Cost is negative: "{}"'.format(cost), None))
-
-        ## FIXME: Complete this, incorporate the total.
-        # if istotal:
-        #     cost = amount_div(cost, abs(amount.number))
-
-        ## FIXME: Complete this, incorporate the merge flag.
-        # if istotal:
-        #     cost = amount_div(cost, abs(amount.number))
 
         lot = Lot(amount.currency, cost, lot_date)
 

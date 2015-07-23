@@ -204,6 +204,7 @@ const char* getTokenName(int token);
 %type <pyobj> lot_comp
 %type <pyobj> lot_comp_list
 %type <pyobj> lot_spec
+%type <pyobj> lot_spec_total_legacy
 %type <pyobj> price
 %type <pyobj> event
 %type <pyobj> note
@@ -562,6 +563,22 @@ lot_spec : LCURL lot_comp_list RCURL
              BUILDY(DECREF1($2),
                     $$, "lot_spec", "O", $2);
          }
+         | lot_spec_total_legacy
+         {
+             $$ = $1;
+         }
+
+/* This is deprecated, but kept for legacy until the booking branch is complete. */
+lot_spec_total_legacy : LCURLCURL amount RCURLCURL
+                      {
+                          BUILDY(DECREF1($2),
+                                 $$, "lot_spec_total_legacy", "OO", $2, Py_None);
+                      }
+                      | LCURLCURL amount SLASH DATE RCURLCURL
+                      {
+                          BUILDY(DECREF2($2, $4),
+                                 $$, "lot_spec_total_legacy", "OO", $2, $4);
+                      }
 
 lot_comp_list : empty
               {
