@@ -1310,6 +1310,14 @@ http://furius.ca/beancount/doc/proposal-inter
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - KeyboardInterrupts (if you press it) in the parser will cause errors:
+
+      $ bean-report $L exportpf > /tmp/export.ofx
+      blais.beancount:42041: KeyboardInterrupt:
+
+    This is exceedinly rare but maybe worthwhile to catch regardless.
+
+
   - Write a script that, given my portfolio of ETFs, will compute the total
     exposure of AMZN (or any other stock) to the entire portfolio value.
 
