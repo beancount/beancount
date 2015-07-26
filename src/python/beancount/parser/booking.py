@@ -4,11 +4,14 @@ matching lot when reducing the content of an inventory.
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
+import os
+import logging
 
 from beancount.core.data import Transaction
 from beancount.core import interpolate
 from beancount.core import data
 from beancount.core import inventory
+from beancount.parser import printer
 
 
 
@@ -31,9 +34,46 @@ def book(incomplete_entries, options_map):
         entries: A list of completed entries with all their postings completed.
         errors: New errors produced during interpolation.
     """
-    entries, interpolation_errors = simple_interpolation(incomplete_entries, options_map)
+    if os.getenv("BEANCOUNT_BOOKING"):
+        entries, interpolation_errors = full_interpolation(incomplete_entries, options_map)
+    else:
+        # Old-school local-only interpolation.
+        entries, interpolation_errors = simple_interpolation(incomplete_entries, options_map)
+
     validation_errors = validate_inventory_booking(entries, options_map)
     return entries, (interpolation_errors + validation_errors)
+
+
+def full_interpolation(entries, options_map):
+    """Interpolate missing data from the entries using the full historical algorithm.
+
+    Args:
+      incomplete_entries: A list of directives, with some postings possibly left
+        with incomplete amounts as produced by the parser.
+      options_map: An options dict as produced by the parser.
+    Returns:
+      A pair of
+        entries: A list of interpolated entries with all their postings completed.
+        errors: New errors produced during interpolation.
+    """
+    num_transactions = 0
+    num_interpolated = 0
+    errors = []
+    for entry in entries:
+        if isinstance(entry, Transaction):
+            if any((posting.position is None or
+                    posting.position.number is None)
+                   for posting in entry.postings):
+                #printer.print_entry(entry)
+                num_interpolated += 1
+            num_transactions += 1
+
+        # FIXME: TODO
+
+    logging.info("Num interpolated: %d (%.2f%%)",
+                 num_interpolated,
+                 num_interpolated/num_transactions * 100)
+    return entries, errors
 
 
 def simple_interpolation(entries, options_map):

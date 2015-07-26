@@ -1,4 +1,34 @@
 """Beancount syntax parser.
+
+IMPORTANT: The parser (and its grammar builder) produces "incomplete"
+Transaction objects. This means that some of the data can be missing. Those
+incomplete entries are then run through the "booking" routines which find
+matching lots for reducing postings and interpolates missing numbers, and in
+doing so normalize the entries to "complete" entries.
+
+Spefically, the following pieces of data may be incomplete:
+
+- posting.position = None
+  e.g., Assets:Account
+
+- posting.position.number = None, with a non-nil lot
+  e.g., Assets:Account  USD
+
+- posting.position.price = Amount(None, None)
+  e.g., Assets:Account  100 CAD @
+
+- posting.position.price = Amount(None, currency)
+  e.g., Assets:Account  100 CAD @ USD
+
+(Note that 'posting.position.price = None' is not incomplete, it just indicates
+the absence of a price clause.)
+
+For incomplete entries, 'posting.position.lot' does not refer to a Lot instance,
+but rather to a LotSpec which needs to get resolved to a Lot. The LotSpec has a
+CompountAmount for which the 'number_per' and 'number_total' numbers may be both
+missing.
+
+See grammar_test.TestIncompleteInputs for examples and corresponding checks.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
@@ -98,8 +128,14 @@ def parsedoc(expect_errors=False, interpolation=False):
         True: Expect errors and fail if there are none.
         False: Expect no errors and fail if there are some.
         None: Do nothing, no check.
-      interpolation: If true, run through local interpolation (not
-          transformations, not plugins).
+
+      expect_errors: A boolean or None, with the following semantics,
+        True: Run the entries through local interpolation (not transformations,
+          not plugins, just simple local interpolation).
+        False: Do not run interpolation, and disallow it if some of the data
+          is missing and would stand to get interpolate.
+        None: Don't check for missing data and don't run interpolation either.
+          WARNING: This may result in incomplete postings with missing data!
     Returns:
       A decorator for test functions.
     """
@@ -129,11 +165,11 @@ def parsedoc(expect_errors=False, interpolation=False):
                                                         dedent=True)
 
             # Allow interpolation if
-            if interpolation:
+            if interpolation is True:
                 # Perform simple interpolation in literals, without a history.
                 interp_entries, balance_errors = booking.book(entries, options_map)
                 errors.extend(balance_errors)
-            else:
+            elif interpolation is False:
                 # If interpolation is not allowed, fail the test if it is seen,
                 # because it would result in postings with None.
                 if has_auto_postings(entries):

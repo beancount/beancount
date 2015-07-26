@@ -2009,3 +2009,71 @@ class TestLexerAndParserErrors(cmptest.TestCase):
           2000-01-01 open Assets:Before
         """
         self.check_entries_errors(entries, errors)
+
+
+class TestIncompleteInputs(cmptest.TestCase):
+
+    @parser.parsedoc(interpolation=None)
+    def test_missing_amount(self, entries, _, options_map):
+        """
+          2000-01-01 open Assets:Account1
+          2000-01-01 open Assets:Account2
+          2010-05-28 *
+            Assets:Account1     100.00 USD
+            Assets:Account2
+        """
+        self.assertEqual(None, entries[-1].postings[-1].position)
+
+    @parser.parsedoc(interpolation=True)
+    def test_missing_number(self, entries, _, options_map):
+        """
+          2000-01-01 open Assets:Account1
+          2000-01-01 open Assets:Account2
+          2010-05-28 *
+            Assets:Account1     100.00 USD
+            Assets:Account2            CAD
+        """
+        self.assertNotEqual(None, entries[-1].postings[-1].position)
+        self.assertEqual(None, entries[-1].postings[-1].position.number)
+        self.assertEqual("CAD", entries[-1].postings[-1].position.lot.currency)
+
+    @parser.parsedoc(interpolation=True)
+    def test_missing_price_amount(self, entries, _, options_map):
+        """
+          2000-01-01 open Assets:Account1
+          2000-01-01 open Assets:Account2
+          2010-05-28 *
+            Assets:Account1     100.00 USD @
+            Assets:Account2     120.00 CAD
+        """
+
+    @parser.parsedoc(interpolation=True)
+    def test_missing_price_number(self, entries, _, options_map):
+        """
+          2000-01-01 open Assets:Account1
+          2000-01-01 open Assets:Account2
+          2010-05-28 *
+            Assets:Account1     100.00 USD @ CAD
+            Assets:Account2     120.00 CAD
+        """
+
+    @parser.parsedoc(interpolation=True)
+    def test_missing_cost_amount(self, entries, _, options_map):
+        """
+          2000-01-01 open Assets:Account1
+          2000-01-01 open Assets:Account2
+          2010-05-28 *
+            Assets:Account1     2 HOOL {}
+            Assets:Account2     120.00 CAD
+        """
+        print(entries[-1].postings[0].position.cost)
+
+    @parser.parsedoc(interpolation=True)
+    def test_missing_cost_number(self, entries, _, options_map):
+        """
+          2000-01-01 open Assets:Account1
+          2000-01-01 open Assets:Account2
+          2010-05-28 *
+            Assets:Account1     2 HOOL {USD}
+            Assets:Account2     120.00 USD
+        """
