@@ -78,6 +78,20 @@ class TestParserDoc(unittest.TestCase):
         except AssertionError:
             pass
 
+    @parser.parsedoc(expect_errors=True, interpolation=True)
+    def test_parsedoc_with_interpolation(self, entries, errors, options_map):
+        """
+        2014-06-23 * "Go positive"
+          Assets:Investments:Stock    1 AAPL {41 USD}
+          Assets:Investments:Cash   -41 USD
+
+        2014-06-24 * "Go negative from zero"
+          Assets:Investments:Stock   -1 AAPL {42 USD}
+          Assets:Investments:Cash    42 USD
+        """
+        self.assertEqual(1, len(errors))
+        self.assertRegexpMatches(errors[0].message, 'Reducing position results')
+
 
 class TestParserInputs(unittest.TestCase):
     """Try difference sources for the parser's input."""

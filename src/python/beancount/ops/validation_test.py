@@ -2,122 +2,13 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import datetime
 import re
-import textwrap
 
 from beancount.core import data
 from beancount.parser import parser
+from beancount.parser import printer
 from beancount.parser import cmptest
 from beancount.ops import validation
 from beancount import loader
-
-
-class TestValidateInventoryBooking(cmptest.TestCase):
-
-    def setUp(self):
-        self.input_str = textwrap.dedent("""
-
-        2014-01-01 open Assets:Investments:Cash
-        2014-01-01 open Assets:Investments:Stock
-
-        2014-06-22 * "Add some positive units"
-          Assets:Investments:Stock    1 GOOG {500 USD}
-          Assets:Investments:Cash  -500 USD
-
-        2014-06-23 * "Down to zero"
-          Assets:Investments:Stock   -1 GOOG {500 USD}
-          Assets:Investments:Cash   500 USD
-
-        2014-06-24 * "Go negative from zero"
-          Assets:Investments:Stock   -1 GOOG {500 USD}
-          Assets:Investments:Cash   500 USD
-
-        2014-06-25 * "Go positive much"
-          Assets:Investments:Stock    11 GOOG {500 USD}
-          Assets:Investments:Cash  -5500 USD
-
-        2014-06-26 * "Cross to negative from above zero"
-          Assets:Investments:Stock  -15 GOOG {500 USD}
-          Assets:Investments:Cash  7500 USD
-
-        """)
-
-    def do_validate_inventory_booking(self, input_str):
-        entries, errors, options_map = parser.parse_string(input_str)
-        validation_errors = validation.validate_inventory_booking(entries, options_map)
-        self.assertEqual([], list(map(type, validation_errors)))
-
-    def test_validate_inventory_booking(self):
-        self.do_validate_inventory_booking(self.input_str)
-
-    def test_validate_inventory_booking__same_day(self):
-        input_str = re.sub(r'\b2\d\b', '22', self.input_str)
-        self.do_validate_inventory_booking(input_str)
-
-    @parser.parsedoc()
-    def test_simple_negative_lots(self, entries, errors, options_map):
-        """
-          2013-05-01 open Assets:Bank:Investing
-          2013-05-01 open Equity:Opening-Balances
-
-          2013-05-02 *
-            Assets:Bank:Investing                -1 GOOG {501 USD}
-            Equity:Opening-Balances             501 USD
-        """
-        validation_errors = validation.validate_inventory_booking(entries, options_map)
-        self.assertEqual([], list(map(type, validation_errors)))
-
-    @parser.parsedoc()
-    def test_mixed_lots_in_single_transaction(self, entries, errors, options_map):
-        """
-          2013-05-01 open Assets:Bank:Investing
-          2013-05-01 open Equity:Opening-Balances
-
-          2013-05-02 *
-            Assets:Bank:Investing                 5 GOOG {501 USD}
-            Assets:Bank:Investing                -1 GOOG {502 USD}
-            Equity:Opening-Balances           -2003 USD
-        """
-        validation_errors = validation.validate_inventory_booking(entries, options_map)
-        self.assertEqual([validation.ValidationError], list(map(type, validation_errors)))
-
-    @parser.parsedoc()
-    def test_mixed_lots_in_multiple_transactions_augmenting(self,
-                                                            entries, errors, options_map):
-        """
-          2013-05-01 open Assets:Bank:Investing
-          2013-05-01 open Equity:Opening-Balances
-
-          2013-05-02 *
-            Assets:Bank:Investing                 5 GOOG {501 USD}
-            Equity:Opening-Balances            -501 USD
-
-          2013-05-03 *
-            Assets:Bank:Investing                -1 GOOG {502 USD}
-            Equity:Opening-Balances             502 USD
-        """
-        validation_errors = validation.validate_inventory_booking(entries, options_map)
-        self.assertEqual([validation.ValidationError], list(map(type, validation_errors)))
-
-    @parser.parsedoc()
-    def test_mixed_lots_in_multiple_transactions_reducing(self,
-                                                          entries, errors, options_map):
-        """
-          2013-05-01 open Assets:Bank:Investing
-          2013-05-01 open Equity:Opening-Balances
-
-          2013-05-02 *
-            Assets:Bank:Investing                 5 GOOG {501 USD}
-            Assets:Bank:Investing                 5 GOOG {502 USD}
-            Equity:Opening-Balances           -5015 USD
-
-          2013-05-03 *
-            Assets:Bank:Investing                -6 GOOG {502 USD}
-            Equity:Opening-Balances            3012 USD
-        """
-        validation_errors = validation.validate_inventory_booking(entries, options_map)
-        self.assertEqual([validation.ValidationError], list(map(type, validation_errors)))
-
-
 
 
 class TestValidateOpenClose(cmptest.TestCase):
@@ -408,8 +299,8 @@ class TestValidateCheckTransactionBalances(cmptest.TestCase):
 
 class TestValidate(cmptest.TestCase):
 
-    @parser.parsedoc()
-    def test_validate(self, entries, _, options_map):
+    @parser.parsedoc(expect_errors=True, interpolation=True)
+    def test_validate(self, entries, errors, options_map):
         """
         ;; Just trigger a few errors from here to ensure at least some of the plugins
         ;; tested above are run.
@@ -430,12 +321,13 @@ class TestValidate(cmptest.TestCase):
           Assets:Investments:Cash  -500 USD
 
         """
-        errors = validation.validate(entries, options_map)
-        self.assertEqual(2, len(errors))
-        self.assertTrue(any(re.match('Reducing position results', error.message)
-                            for error in errors))
-        self.assertTrue(any(re.match('Invalid currency', error.message)
-                            for error in errors))
+        validation_errors = validation.validate(entries, options_map)
+
+        self.assertEqual(1, len(errors))
+        self.assertRegexpMatches(errors[0].message, 'Reducing position results')
+
+        self.assertEqual(1, len(validation_errors))
+        self.assertRegexpMatches(validation_errors[0].message, 'Invalid currency')
 
 
 class TestValidateTolerances(cmptest.TestCase):
