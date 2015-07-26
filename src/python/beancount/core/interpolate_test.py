@@ -791,7 +791,6 @@ class TestInferTolerances(cmptest.TestCase):
           Assets:B2
         """
 
-    @unittest.skip("FIXME: Temporarily removed for booking branch; bring this back in.")
     @loader.loaddoc()
     def test_tolerances__bug(self, entries, errors, _):
         """

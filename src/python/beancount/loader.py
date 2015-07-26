@@ -245,7 +245,7 @@ def _load(sources, log_timings, log_errors, extra_validations, encoding):
     entries, parse_errors, options_map = _parse_recursive(sources, log_timings, encoding)
 
     # Run interpolation on incomplete entries.
-    entries, balance_errors = booking.interpolate(entries, options_map)
+    entries, balance_errors = booking.book(entries, options_map)
     parse_errors.extend(balance_errors)
 
     # Transform the entries.

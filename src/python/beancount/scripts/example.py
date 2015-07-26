@@ -201,7 +201,7 @@ def parse(input_string, **replacements):
         raise ValueError("Parsed text has errors")
 
     # Take advantage of simple interpolation.
-    entries, unused_balance_errors = booking.interpolate(entries, options_map)
+    entries, unused_balance_errors = booking.book(entries, options_map)
 
     return data.sorted(entries)
 

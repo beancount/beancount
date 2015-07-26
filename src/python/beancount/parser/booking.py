@@ -6,13 +6,33 @@ from beancount.core.data import Transaction
 from beancount.core.interpolate import balance_incomplete_postings
 from beancount.core.interpolate import compute_residual
 from beancount.core.interpolate import infer_tolerances
+from beancount.ops import validation  ## FIXME: Pull this in later.
 
 
 __sanity_checks__ = False
 
 
-def interpolate(entries, options_map):
-    """Run the interpolation on a list of incomplete entries from the parser.
+def book(incomplete_entries, options_map):
+    """Book inventory lots and complete all positions with incomplete numbers.
+
+    Args:
+      incomplete_entries: A list of directives, with some postings possibly left
+        with incomplete amounts as produced by the parser.
+      options_map: An options dict as produced by the parser.
+    Returns:
+      A pair of
+        entries: A list of completed entries with all their postings completed.
+        errors: New errors produced during interpolation.
+    """
+    entries, interpolation_errors = simple_interpolation(incomplete_entries, options_map)
+    validation_errors = validation.validate_inventory_booking(entries, options_map)
+    return entries, (interpolation_errors + validation_errors)
+
+
+def simple_interpolation(entries, options_map):
+    """Run a local interpolation on a list of incomplete entries from the parser.
+
+    Note: this does not take previous positions into account.
 
     !WARNING!!! This destructively modifies some of the Transaction entries directly.
 
