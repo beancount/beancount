@@ -199,7 +199,7 @@ sfood-checker:
 	sfood-checker bin src/python
 
 # Check dependency constraints.
-dep-constraints: build/beancount.deps
+constraints dep-constraints: build/beancount.deps
 	./etc/dependency-constraints.py $<
 
 check-author:
