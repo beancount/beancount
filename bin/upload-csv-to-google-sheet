@@ -6,12 +6,17 @@ with the contents of a CSV file.
 
 For example:
 
-  upload-csv-to-google-sheet /tmp/file.csv 19cwo67y40oyrsNbYKw80LtUie3tzMo1JWggbDcXFtgM
+  upload-csv-to-google-sheet 19cwo....XFtgM apples.csv oranges.csv
 
-By default, this updates (overwrites) the first worksheet in the spreadsheet. If
-you want to update another sheet, use the --worksheet option, e.g.:
+By default, this updates (overwrites) the first two worksheets in the
+spreadsheet with the contents of the given CSV files. If you want to update
+another sheet or index, you can add them to the filenames, like this:
 
-  upload-csv-to-google-sheet --worksheet='Sheet1' ...
+  upload-csv-to-google-sheet 19cwo....XFtgM apples.csv:MySheet oranges.csv:2
+
+This would override the sheet "MySheet" with the contents of "apples.csv" and
+the third sheet with the contents of "oranges.csv". Note that the sheets are
+1-indexed, not 0-indexed.
 
 
 You will need to have an installation of the following libraries for this to
@@ -35,14 +40,18 @@ Beancount is only implemented using Python 3.x, so we will support exporting the
 list of holdings to a temporary CSV file and uploading it automatically to a
 spreadsheet using a variant of this script. The CSV data format should be enough
 of a bridge for us to get our work done.
+
 """
 __author__ = 'Martin Blais <blais@furius.ca>'
 
 import argparse
+import bisect
 import csv
 import codecs
 import logging
 import os
+import re
+import unittest
 from os import path
 
 import oauth2client.client
@@ -50,8 +59,8 @@ from oauth2client import tools
 from oauth2client.file import Storage
 import httplib2
 
-import gdata.spreadsheets.client
-import gdata.spreadsheets.data
+import gdata.spreadsheets.client as sheets_client
+import gdata.spreadsheets.data as sheets_data
 import gdata.gauth
 
 
@@ -161,10 +170,10 @@ def get_spreadsheets_client(args):
     http, credentials = get_authenticated_http(scopes, args)
 
     # Create a spreadsheet client.
-    client = gdata.spreadsheets.client.SpreadsheetsClient()
-    client.auth_token = gdata.gauth.OAuth2TokenFromCredentials(credentials)
+    gd_client = sheets_client.SpreadsheetsClient()
+    gd_client.auth_token = gdata.gauth.OAuth2TokenFromCredentials(credentials)
 
-    return client
+    return gd_client
 
 
 def csv_unicode_reader(source, **kwargs):
@@ -185,16 +194,121 @@ def csv_unicode_reader(source, **kwargs):
 def csv_to_batch_update(filename, batch):
     """Convert a CSV file to a batch update.
 
+    This creates cell update requests for all available data and updates of
+    empty cells where cells aren't present.
+
     Args:
       filename: A string, the CSV filename to open and parse.
       batch: A CellsFeed instance.
+    Returns:
+      A pair of (row_count, col_count), the size of the CSV batch update /
+      table.
+
     """
     # Open the CSV file and loop over the values, creating a batch request.
     csvfile = codecs.open(filename, 'r', encoding='utf-8-sig')
+    max_cols = 0
+    locations = set()
     for irow, row in enumerate(csv_unicode_reader(csvfile), 1):
-        logging.info("Row: %s", row)
+        #logging.info("Row: %s", row)
         for icol, value in enumerate(row, 1):
             batch.add_set_cell(irow, icol, value)
+            locations.add((irow, icol))
+        max_cols = max(max_cols, icol)
+    max_rows = irow
+
+    # Add empty cells.
+    for irow in range(max_rows):
+        for icol in range(max_cols):
+            location = (irow, icol)
+            if location not in locations:
+                #logging.info("Empty cell at %s,%s", irow, icol)
+                batch.add_set_cell(irow, icol, '')
+
+    return (max_rows, max_cols)
+
+
+def enumerate_arguments(args):
+    """Parse the filenames and their optional worksheet names or numbers.
+
+    Args:
+      args: A list of "filename:worksheet-id" or "filename:index" that specifies
+        CSV files to be uploaded and which worksheet id (name) or index to upload
+        them to.
+    Returns:
+      A list of string filenames and a list of names or integer index for each
+      of the spreadsheets.
+    """
+    filenames = []
+    names = []
+    for arg in args:
+        match = re.match('(.*):(.*)$', arg)
+        if match:
+            filename, name_or_index = match.groups()
+            # If the name is an integer, treat it as a worksheet index.
+            if re.match('\d+', name_or_index):
+                name_or_index = int(name_or_index) - 1
+                raise SystemExit("Invalid index for '{}'; "
+                                 "sheet indexes start at 1.".format(filename))
+        else:
+            filename = arg
+            name_or_index = None  # To be allocated below.
+
+        filenames.append(filename)
+        names.append(name_or_index)
+
+    # Compute a list of unused ids.
+    available_ids = iter(set(range(len(args))) - set(name
+                                                     for name in names
+                                                     if isinstance(name, int)))
+
+    # Compute the list of numbered pairs.
+    names = [(next(available_ids) if name is None else name)
+             for name in names]
+
+    # Check that the set of names or indexes is unique.
+    if len(set(names)) < len(names):
+        raise SystemExit('Error: Indexes {} are not unique.'.format(names))
+
+    return filenames, names
+
+
+def find_or_create_worksheets(gd_client, docid, names):
+    """Find or create all the required worksheets and resolve them to worksheet-ids.
+
+    Args:
+      docid: A string, the document id.
+      names_or_indexes: A list of strings or integers, the worksheet names or ids.
+    Returns:
+      A list of worksheets corresponding to the input names.
+    """
+    wslist = []
+    for name in names:
+        # Get the worksheet id.
+        if isinstance(name, int):
+            index = name
+            worksheets = gd_client.get_worksheets(docid)
+            try:
+                ws = worksheets.entry[index]
+            except IndexError:
+                # We have to create at least this many sheets.
+                for i in range(len(worksheets.entry), index+1):
+                    title = "Sheet {:d}".format(i)
+                    logging.info("Creating worksheet: %s", title)
+                    gd_client.add_worksheet(docid, title, 1, 1)
+
+                # Try again.
+                worksheets = gd_client.get_worksheets(docid)
+                ws = worksheets.entry[index]
+        else:
+            assert isinstance(name, str)
+            query = sheets_client.WorksheetQuery(name)
+            worksheets = gd_client.get_worksheets(docid, query=query)
+            ws = worksheets.entry[0]
+
+        wslist.append(ws)
+
+    return wslist
 
 
 def main():
@@ -202,31 +316,39 @@ def main():
 
     parser = get_argparser(description=__doc__.strip())
 
-    parser.add_argument('filename', action='store',
-                        help="CSV file to upload")
-
     parser.add_argument('docid', action='store',
                         help="Spreadsheets doc id to update")
 
-    parser.add_argument('--worksheet', action='store',
-                        help="Specific worksheet to update (default is the first one)")
+    parser.add_argument('filenames', nargs='+', action='store',
+                        help="CSV filenames[:worksheet] to upload")
 
     args = parser.parse_args()
     docid = args.docid
 
-    client = get_spreadsheets_client(args)
+    # Connect and create a client.
+    gd_client = get_spreadsheets_client(args)
 
-    # Get the worksheet id.
-    query = (gdata.spreadsheets.client.WorksheetQuery(args.worksheet)
-             if args.worksheet
-             else None)
-    worksheets = client.get_worksheets(docid, query=query)
-    wsid = worksheets.entry[0].get_worksheet_id()
+    logging.info("Resolving indexes for each of the input files.")
+    filenames, names = enumerate_arguments(args.filenames)
 
-    # Open the CSV file and loop over the values, creating a batch request.
-    batch = gdata.spreadsheets.data.build_batch_cells_update(docid, wsid)
-    csv_to_batch_update(args.filename, batch)
-    client.batch(batch, force=True)
+    logging.info("Find or create the worksheets.")
+    wslist = find_or_create_worksheets(gd_client, docid, names)
+
+    logging.info("Processing each worksheet.")
+    for ws, filename in zip(wslist, filenames):
+        title = ws.title.text
+
+        logging.info("[%-32.32s] Loading CSV data and creating batch update.", title)
+        batch = sheets_data.build_batch_cells_update(docid, ws.get_worksheet_id())
+        nrows, ncols = csv_to_batch_update(filename, batch)
+
+        logging.info("[%-32.32s] Resizing and clearing.", title)
+        ws.row_count.text = str(nrows)
+        ws.col_count.text = str(ncols)
+        gd_client.update(ws)
+
+        logging.info("[%-32.32s] Uploading data to spreadsheet.", title)
+        gd_client.batch(batch, force=True)
 
     logging.info("Done.")
 
