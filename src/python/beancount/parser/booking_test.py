@@ -3,9 +3,25 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import re
 import textwrap
 
+from beancount.core.number import D
 from beancount.parser import parser
 from beancount.parser import cmptest
 from beancount.parser import booking
+
+
+class TestSimpleBooking(cmptest.TestCase):
+
+    def test_simple_interpolation(self):
+        entries, _, options_map = parser.parse_string("""
+          2013-05-01 open Assets:Bank:Investing
+          2013-05-01 open Equity:Opening-Balances
+
+          2013-05-02 *
+            Assets:Bank:Investing                 5 GOOG {501 USD}
+            Equity:Opening-Balances
+        """)
+        interpolated_entries = booking.simple_interpolation(entries, options_map)
+        self.assertEqual(D('-2505'), entries[-1].postings[-1].position.number)
 
 
 class TestValidateInventoryBooking(cmptest.TestCase):

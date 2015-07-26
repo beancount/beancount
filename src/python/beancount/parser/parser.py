@@ -132,7 +132,6 @@ def parsedoc(expect_errors=False, interpolation=False):
             if interpolation:
                 # Perform simple interpolation in literals, without a history.
                 interp_entries, balance_errors = booking.book(entries, options_map)
-                print('balance_errors', balance_errors)
                 errors.extend(balance_errors)
             else:
                 # If interpolation is not allowed, fail the test if it is seen,
