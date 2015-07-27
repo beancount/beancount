@@ -41,6 +41,10 @@ void build_grammar_error_from_exception(void)
 {
     /* TRACE_ERROR("Grammar Builder Exception"); */
 
+#if 0
+    PyErr_Print();
+#endif
+
     /* Get the exception context. */
     PyObject* ptype;
     PyObject* pvalue;
@@ -53,16 +57,17 @@ void build_grammar_error_from_exception(void)
 
     if (pvalue != NULL) {
         /* Build and accumulate a new error object. {27d1d459c5cd} */
-        PyObject* rv = PyObject_CallMethod(builder, "build_grammar_error", "siOO",
+        PyObject* rv = PyObject_CallMethod(builder, "build_grammar_error", "siOOO",
                                            yy_filename, yylineno + yy_firstline,
-                                           pvalue, ptype);
+                                           pvalue, ptype, ptraceback);
         Py_DECREF(ptype);
         Py_DECREF(pvalue);
         Py_DECREF(ptraceback);
 
         if (rv == NULL) {
-            PyErr_SetString(PyExc_RuntimeError,
-                            "Internal error: While building exception");
+            /* Note: Leave the internal error trickling up its detail. */
+            /* PyErr_SetString(PyExc_RuntimeError, */
+            /*                 "Internal error: While building exception"); */
         }
     }
     else {

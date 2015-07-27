@@ -2047,9 +2047,15 @@ class TestIncompleteInputs(cmptest.TestCase):
             Assets:Account1     100.00 USD @
             Assets:Account2     120.00 CAD
         """
+        posting = entries[-1].postings[0]
+        pos = posting.position
+        self.assertEqual(D('100.00'), pos.number)
+        self.assertEqual('USD', pos.lot.currency)
+        self.assertIsInstance(posting.price, amount.Amount)
+        self.assertEqual(amount.Amount(None, None), posting.price)
 
     @parser.parsedoc(interpolation=None)
-    def __test_missing_price_number(self, entries, _, options_map):
+    def test_missing_price_number(self, entries, _, options_map):
         """
           2000-01-01 open Assets:Account1
           2000-01-01 open Assets:Account2
@@ -2057,6 +2063,13 @@ class TestIncompleteInputs(cmptest.TestCase):
             Assets:Account1     100.00 USD @ CAD
             Assets:Account2     120.00 CAD
         """
+        posting = entries[-1].postings[0]
+        pos = posting.position
+        self.assertEqual(D('100.00'), pos.number)
+        self.assertEqual('USD', pos.lot.currency)
+        self.assertEqual(None, pos.lot.cost)
+        self.assertIsInstance(posting.price, amount.Amount)
+        self.assertEqual(amount.Amount(None, 'CAD'), posting.price)
 
     @parser.parsedoc(interpolation=None)
     def __test_missing_cost_amount(self, entries, _, options_map):
@@ -2067,7 +2080,12 @@ class TestIncompleteInputs(cmptest.TestCase):
             Assets:Account1     2 HOOL {}
             Assets:Account2     120.00 CAD
         """
-        print(entries[-1].postings[0].position.cost)
+        posting = entries[-1].postings[0]
+        pos = posting.position
+        self.assertEqual(D('2'), pos.number)
+        self.assertEqual('HOOL', pos.lot.currency)
+        #self.assertIsInstance(pos.lot.cost, position.LotSpec)
+        ## FIXME: todo
 
     @parser.parsedoc(interpolation=None)
     def __test_missing_cost_number(self, entries, _, options_map):
@@ -2078,3 +2096,4 @@ class TestIncompleteInputs(cmptest.TestCase):
             Assets:Account1     2 HOOL {USD}
             Assets:Account2     120.00 USD
         """
+        ## FIXME: todo

@@ -119,7 +119,7 @@ class TestParserInputs(unittest.TestCase):
     def parse_stdin(cls):
         entries, errors, _ = parser.parse_file("-")
         assert entries, "Empty entries: {}".format(entries)
-        assert not errors "Errors: {}".format(errors)
+        assert not errors, "Errors: {}".format(errors)
 
     def test_parse_stdin(self):
         code = ('import beancount.parser.parser_test as p; '

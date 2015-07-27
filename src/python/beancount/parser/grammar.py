@@ -7,6 +7,7 @@ import copy
 import os
 import re
 import sys
+import traceback
 from os import path
 from datetime import date
 
@@ -184,19 +185,25 @@ class Builder(lexer.LexBuilder):
         if entries:
             self.entries = entries
 
-    def build_grammar_error(self, filename, lineno, message, exc_type=None):
+    def build_grammar_error(self, filename, lineno, message,
+                            exc_type=None, exc_traceback=None):
         """Build a grammar error and appends it to the list of pending errors.
 
         Args:
           filename: The current filename
           lineno: The current line number
-          message: The message of the error.
+          message: The message of the error, or the exc_value exception value.
           exc_type: An exception type, if an exception occurred.
+          exc_traceback: A traceback object.
         """
         if not isinstance(message, str):
             message = str(message)
         if exc_type is not None:
-            message = '{}: {}'.format(exc_type.__name__, message)
+            strings = traceback.format_exception_only(exc_type, message)
+            tblist = traceback.extract_tb(exc_traceback)
+            filename, lineno, _, __ = tblist[0]
+            message = '{} ({}:{})'.format(strings[0], filename, lineno)
+
         meta = new_metadata(filename, lineno)
         self.errors.append(
             ParserSyntaxError(meta, message, None))
@@ -474,7 +481,7 @@ class Builder(lexer.LexBuilder):
                     ParserError(meta,
                                 'Amount is zero: "{}"'.format(amount), None))
 
-            if cost.number < ZERO:
+            if cost.number is not None and cost.number < ZERO:
                 meta = new_metadata(filename, lineno)
                 self.errors.append(
                     ParserError(meta, 'Cost is negative: "{}"'.format(cost), None))
@@ -693,7 +700,7 @@ class Builder(lexer.LexBuilder):
         """
         # Prices may not be negative.
         if not __allow_negative_prices__:
-            if price and price.number < ZERO:
+            if price and price.number is not None and price.number < ZERO:
                 meta = new_metadata(filename, lineno)
                 self.errors.append(
                     ParserError(meta, (
