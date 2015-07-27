@@ -444,7 +444,8 @@ def transaction_has_conversion(transaction):
       A boolean, true if this transacation contains at least one posting with a
       price conversion.
     """
-    assert isinstance(transaction, Transaction)
+    assert isinstance(transaction, Transaction), (
+        "Invalid type of entry for Transaction: {}".format(transaction))
     for posting in transaction.postings:
         if posting_has_conversion(posting):
             return True

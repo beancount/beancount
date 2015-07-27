@@ -367,6 +367,14 @@ optflag : empty
         | FLAG
 
 price_annotation : incomplete_amount
+                 {
+                     $$ = $1;
+                 }
+                 | empty
+                 {
+                     BUILDY(,
+                            $$, "amount", "OO", Py_None, Py_None);
+                 }
 
 posting : INDENT optflag ACCOUNT position eol
         {
@@ -554,8 +562,8 @@ compound_amount : maybe_number CURRENCY
 incomplete_amount : maybe_number CURRENCY
                   {
                       BUILDY(DECREF2($1, $2),
-                             $$, "amount", "siOO", FILE_LINE_ARGS, $1, $2);
-                  }
+                             $$, "amount", "OO", $1, $2);
+                 }
 
 position : incomplete_amount
          {

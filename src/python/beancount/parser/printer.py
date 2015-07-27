@@ -316,7 +316,7 @@ def print_entries(entries, dcontext=None, render_weights=False, file=None, prefi
       render_weights: A boolean, true to render the weights for debugging.
       file: An optional file object to write the entries to.
     """
-    assert isinstance(entries, list)
+    assert isinstance(entries, list), "Entries is not a list: {}".format(entries)
     output = file or sys.stdout
     if prefix:
         output.write(prefix)

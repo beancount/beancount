@@ -36,7 +36,7 @@ def read_string_or_entries(entries_or_str):
         if parser.has_auto_postings(entries):
             raise TestError("Entries in assertions may not use interpolation.")
     else:
-        assert isinstance(entries_or_str, list)
+        assert isinstance(entries_or_str, list), "Expecting list: {}".format(entries_or_str)
         entries = entries_or_str
 
     return entries
@@ -63,7 +63,8 @@ class TestCase(unittest.TestCase):
         same, expected_missing, actual_missing = compare.compare_entries(expected_entries,
                                                                          actual_entries)
         if not same:
-            assert expected_missing or actual_missing
+            assert expected_missing or actual_missing, "Missing is missing: {}, {}".format(
+                expected_missing, actual_missing)
             oss = io.StringIO()
             if expected_missing:
                 oss.write("Present in expected set and not in actual set:\n\n")
@@ -94,7 +95,7 @@ class TestCase(unittest.TestCase):
 
         includes, missing = compare.includes_entries(subset_entries, entries)
         if not includes:
-            assert missing
+            assert missing, "Missing is empty: {}".format(missing)
             oss = io.StringIO()
             if missing:
                 oss.write("Missing from from expected set:\n\n")
@@ -120,7 +121,7 @@ class TestCase(unittest.TestCase):
 
         excludes, extra = compare.excludes_entries(subset_entries, entries)
         if not excludes:
-            assert extra
+            assert extra, "Extra is empty: {}".format(extra)
             oss = io.StringIO()
             if extra:
                 oss.write("Extra from from first/excluded set:\n\n")

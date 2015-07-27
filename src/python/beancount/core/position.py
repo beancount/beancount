@@ -33,6 +33,7 @@ from beancount.core.amount import NULL_AMOUNT
 from beancount.core.amount import amount_mult
 from beancount.core.amount import CURRENCY_RE
 from beancount.core.display_context import DEFAULT_FORMATTER
+NoneType = type(None)
 
 
 # Lots are a representations of a commodity with an optional associated cost and
@@ -93,8 +94,10 @@ class Position:
           lot: The lot of this position.
           number: An instance of Decimal, the number of units of lot.
         """
-        assert isinstance(lot, Lot)
-        assert isinstance(number, Decimal)
+        assert isinstance(lot, Lot), (
+            "Expected a lot; received '{}'".format(lot))
+        assert isinstance(number, (NoneType, Decimal)), (
+            "Expected a Decimal; received '{}'".format(number))
         self.lot = lot
         self.number = number
 

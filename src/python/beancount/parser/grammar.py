@@ -6,6 +6,7 @@ import collections
 import copy
 import os
 import re
+import sys
 from os import path
 from datetime import date
 
@@ -367,7 +368,8 @@ class Builder(lexer.LexBuilder):
         """
         if lot_comp_list is None:
             return (None, None, None, None)
-        assert isinstance(lot_comp_list, list), "Internal error in parser."
+        assert isinstance(lot_comp_list, list), (
+            "Internal error in parser: {}".format(lot_comp_list))
 
         compound_cost = None
         lot_date = None
@@ -399,7 +401,8 @@ class Builder(lexer.LexBuilder):
                                     "Duplicate merge-cost spec", None))
 
             else:
-                assert isinstance(comp, str)
+                assert isinstance(comp, str), (
+                    "Currency component is not string: '{}'".format(comp))
                 if label is None:
                     label = comp
                 else:
@@ -723,7 +726,6 @@ class Builder(lexer.LexBuilder):
         meta = new_metadata(filename, lineno)
         return Posting(account, position, price, chr(flag) if flag else None, meta)
 
-
     def txn_field_new(self, _):
         """Create a new TxnFields instance.
 
@@ -895,7 +897,7 @@ class Builder(lexer.LexBuilder):
         # Merge the tags from the stack with the explicit tags of this
         # transaction, or make None.
         tags = txn_fields.tags
-        assert isinstance(tags, (set, frozenset))
+        assert isinstance(tags, (set, frozenset)), "Tags is not a set: {}".format(tags)
         if self.tags:
             tags.update(self.tags)
         tags = frozenset(tags) if tags else None
