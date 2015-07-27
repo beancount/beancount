@@ -280,6 +280,29 @@ class ConvertInventory(query_compile.EvalFunction):
         return converted_inventory
 
 
+class Number(query_compile.EvalFunction):
+    "Extract the number from an Amount."
+    __intypes__ = [amount.Amount]
+
+    def __init__(self, operands):
+        super().__init__(operands, Decimal)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        return args[0].number
+
+class Currency(query_compile.EvalFunction):
+    "Extract the currency from an Amount."
+    __intypes__ = [amount.Amount]
+
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        return args[0].currency
+
+
 SIMPLE_FUNCTIONS = {
     'str'                                 : Str,
     'length'                              : Length,
@@ -301,6 +324,8 @@ SIMPLE_FUNCTIONS = {
     ('convert', amount.Amount, str)       : ConvertAmount,
     ('convert', position.Position, str)   : ConvertPosition,
     ('convert', inventory.Inventory, str) : ConvertInventory,
+    'number'                              : Number,
+    'currency'                            : Currency,
     }
 
 
