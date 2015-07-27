@@ -209,6 +209,7 @@ def csv_to_batch_update(filename, batch):
     csvfile = codecs.open(filename, 'r', encoding='utf-8-sig')
     max_cols = 0
     locations = set()
+    irow = 0
     for irow, row in enumerate(csv_unicode_reader(csvfile), 1):
         #logging.info("Row: %s", row)
         for icol, value in enumerate(row, 1):
@@ -248,8 +249,9 @@ def enumerate_arguments(args):
             # If the name is an integer, treat it as a worksheet index.
             if re.match('\d+', name_or_index):
                 name_or_index = int(name_or_index) - 1
-                raise SystemExit("Invalid index for '{}'; "
-                                 "sheet indexes start at 1.".format(filename))
+                if name_or_index < 0:
+                    raise SystemExit("Invalid index for '{}'; "
+                                     "sheet indexes start at 1.".format(filename))
         else:
             filename = arg
             name_or_index = None  # To be allocated below.
@@ -341,6 +343,10 @@ def main():
         logging.info("[%-32.32s] Loading CSV data and creating batch update.", title)
         batch = sheets_data.build_batch_cells_update(docid, ws.get_worksheet_id())
         nrows, ncols = csv_to_batch_update(filename, batch)
+
+        if nrows == 0:
+            logging.warn("[%-32.32s] No data, empty file. Skipping.", title)
+            continue
 
         logging.info("[%-32.32s] Resizing and clearing.", title)
         ws.row_count.text = str(nrows)
