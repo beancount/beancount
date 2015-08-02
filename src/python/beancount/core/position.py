@@ -20,7 +20,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import datetime
 import logging
-from collections import namedtuple
+import collections
 import re
 
 # Note: this file is mirrorred into ledgerhub. Relative imports only.
@@ -44,7 +44,21 @@ NoneType = type(None)
 #  currency: A string, the currency of this lot. May NOT be null.
 #  cost: An Amount, or None if this lot has no associated cost.
 #  lot_date: A datetime.date, or None if this lot has no associated date.
-Lot = namedtuple('Lot', 'currency cost lot_date')
+Lot = collections.namedtuple('Lot', 'currency cost lot_date')
+
+
+# LotSpec is a temporary data structure for holding a lot specification before
+# it gets resolved to an actual lot. This record should only be present in the
+# intermediate state between parsing and booking.
+#
+# Attributes:
+#   compound_cost: An instance of CompountAmount, possibly with empty values.
+#   lot_date: A datetime.date instance.
+#   label: A label string, or None.
+#   merge: A boolean, true if we shoud be merging the cost basis before/after
+#     the given posting.
+LotSpec = collections.namedtuple('LotSpec',
+                                 'compound_cost lot_date label merge')
 
 
 def lot_currency_pair(lot):
@@ -94,7 +108,7 @@ class Position:
           lot: The lot of this position.
           number: An instance of Decimal, the number of units of lot.
         """
-        assert isinstance(lot, Lot), (
+        assert isinstance(lot, (Lot, LotSpec)), (
             "Expected a lot; received '{}'".format(lot))
         assert isinstance(number, (NoneType, Decimal)), (
             "Expected a Decimal; received '{}'".format(number))

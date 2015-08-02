@@ -15,6 +15,7 @@ from beancount.core.number import ZERO
 from beancount.core.amount import Amount
 from beancount.core import display_context
 from beancount.core.position import Lot
+from beancount.core.position import LotSpec
 from beancount.core.position import Position
 from beancount.core.data import Transaction
 from beancount.core.data import Balance
@@ -51,9 +52,18 @@ DeprecatedError = collections.namedtuple('DeprecatedError', 'source message entr
 
 
 # Temporary holder for key-value pairs.
+#
+# Attributes:
+#  key: A string, the name of the key.
+#  value: Any object.
 KeyValue = collections.namedtuple('KeyValue', 'key value')
 
 # Convenience holding class for amounts with per-share and total value.
+#
+# Attributes:
+#   number_per: A Decimal instance, the cost/price per unit.
+#   number_total: A Decimal instance, the total cost/price.
+#   currency: A string, the commodity of the amount.
 CompoundAmount = collections.namedtuple('CompoundAmount',
                                         'number_per number_total currency')
 
@@ -374,7 +384,7 @@ class Builder(lexer.LexBuilder):
           may be None.
         """
         if lot_comp_list is None:
-            return (None, None, None, None)
+            return LotSpec(None, None, None, None)
         assert isinstance(lot_comp_list, list), (
             "Internal error in parser: {}".format(lot_comp_list))
 
@@ -427,7 +437,7 @@ class Builder(lexer.LexBuilder):
                 ParserError(self.get_lexer_location(),
                             "Merge-cost not supported yet.", None))
 
-        return (compound_cost, lot_date, label, merge)
+        return LotSpec(compound_cost, lot_date, label, merge)
 
     def lot_spec_total_legacy(self, cost, lot_date):
         """Process a deprecated legacy 'total cost' specification.
@@ -439,21 +449,34 @@ class Builder(lexer.LexBuilder):
           Same as lot_spec().
         """
         compound_cost = CompoundAmount(ZERO, cost.number, cost.currency)
-        return (compound_cost, lot_date, None, None)
+        return LotSpec(compound_cost, lot_date, None, None)
 
-    def position(self, filename, lineno, amount, lot_info):
+    def position(self, filename, lineno, amount, lot_spec):
         """Process a position grammar rule.
 
         Args:
-          filename: the current filename.
-          lineno: the current line number.
-          amount: an instance of Amount for the position.
-          lot_info: a tuple of (compound-cost, lot-date, label)
+          filename: The current filename.
+          lineno: The current line number.
+          amount: An instance of Amount for the position.
+          lot_spec: An instance of LotSpec.
         Returns:
           A new instance of Position.
         """
-        compound_cost, lot_date, label, merge = (lot_info
-                                                 if lot_info else
+        if lot_spec is None:
+            lot_spec = LotSpec(None, None, None, None)
+
+        assert isinstance(lot_spec, LotSpec), (type(lot_spec), lot_spec)
+        return Position(lot_spec, amount.number)
+
+
+
+
+
+        #--------------------------------------------------------------------------------
+        ## FIXME: Move this to the booking portion and fix all the tests.
+
+        compound_cost, lot_date, label, merge = (lot_spec
+                                                 if lot_spec is not None else
                                                  (None, None, None, None))
 
         # Compute the cost.
@@ -489,6 +512,10 @@ class Builder(lexer.LexBuilder):
         lot = Lot(amount.currency, cost, lot_date)
 
         return Position(lot, amount.number)
+
+
+
+
 
     def handle_list(self, object_list, new_object):
         """Handle a recursive list grammar rule, generically.

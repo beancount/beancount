@@ -2072,7 +2072,7 @@ class TestIncompleteInputs(cmptest.TestCase):
         self.assertEqual(amount.Amount(None, 'CAD'), posting.price)
 
     @parser.parsedoc(interpolation=None)
-    def __test_missing_cost_amount(self, entries, _, options_map):
+    def test_missing_cost_amount(self, entries, _, options_map):
         """
           2000-01-01 open Assets:Account1
           2000-01-01 open Assets:Account2
@@ -2083,12 +2083,11 @@ class TestIncompleteInputs(cmptest.TestCase):
         posting = entries[-1].postings[0]
         pos = posting.position
         self.assertEqual(D('2'), pos.number)
-        self.assertEqual('HOOL', pos.lot.currency)
-        #self.assertIsInstance(pos.lot.cost, position.LotSpec)
-        ## FIXME: todo
+        self.assertIsInstance(pos.lot, position.LotSpec)
+        self.assertEqual(position.LotSpec(None, None, None, None), pos.lot)
 
     @parser.parsedoc(interpolation=None)
-    def __test_missing_cost_number(self, entries, _, options_map):
+    def test_missing_cost_number(self, entries, _, options_map):
         """
           2000-01-01 open Assets:Account1
           2000-01-01 open Assets:Account2
@@ -2096,4 +2095,10 @@ class TestIncompleteInputs(cmptest.TestCase):
             Assets:Account1     2 HOOL {USD}
             Assets:Account2     120.00 USD
         """
-        ## FIXME: todo
+        posting = entries[-1].postings[0]
+        pos = posting.position
+        self.assertEqual(D('2'), pos.number)
+        self.assertIsInstance(pos.lot, position.LotSpec)
+        self.assertEqual(
+            position.LotSpec(grammar.CompoundAmount(None, None, 'USD'), None, None, None),
+            pos.lot)
