@@ -27,8 +27,9 @@ beancount: TODO
   - Parsing will now always return incomplete entries, and all the tests have to
     be adapted to reflect this new fact.
 
-    * Remove all parse_string() and parse_file() from all the tests except for
-      those under beancount/parser and adapt those tests to that new reality.
+    * Remove all parse_string() and parse_file() and parsedoc() from all the
+      tests except for those under beancount/parser and adapt those tests to
+      that new reality.
 
     * Remove booking hacks everywhere; only the loader should perform booking.
 
