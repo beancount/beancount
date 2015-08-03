@@ -458,6 +458,12 @@ class TestCap(cmptest.TestCase):
         self.assertEqual(9, len(capd_entries))
 
 
+INPUT_PLUGINS = """
+
+option "plugin_processing_mode" "raw"
+
+"""
+
 INPUT_OPEN = """
 
 ;; These should be preserved after summarization.
@@ -567,7 +573,8 @@ INPUT_PERIOD_REMOVED = """
 """
 
 # Join all the inputs.
-INPUT = (INPUT_OPEN +
+INPUT = (INPUT_PLUGINS +
+         INPUT_OPEN +
          INPUT_PRICES_REDUNDANT +
          INPUT_PRICES_LAST +
          INPUT_BEFORE +
@@ -699,7 +706,7 @@ class TestSummarize(cmptest.TestCase):
     OPENING_ACCOUNT = 'Equity:Opening-Balances'
 
     def test_summarize__complete(self):
-        entries, errors, options_map = parser.parse_string(INPUT)
+        entries, errors, options_map = loader.load_string(INPUT)
         self.assertFalse(errors)
         summarize_date = datetime.date(2011, 1, 1)
         summarized_entries, index = summarize.summarize(entries, summarize_date,

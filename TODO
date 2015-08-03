@@ -24,6 +24,20 @@ beancount: TODO
   `--------------------------------------------------------------------------------
 
 
+  - Parsing will now always return incomplete entries, and all the tests have to
+    be adapted to reflect this new fact.
+
+    * Remove all parse_string() and parse_file() from all the tests except for
+      those under beancount/parser and adapt those tests to that new reality.
+
+    * Remove booking hacks everywhere; only the loader should perform booking.
+
+    * Remove the beancount.ops.documents plugin, or perhaps make the loader
+      operate in a raw mode, e.g. not running any plugins.
+
+    egrep --include='*.py' -srn 'parse_(string|file)' /home/blais/p/beancount/src/python/beancount
+
+
   - URGENT: In the parser, be backwards compatible and keep supporting {{ }}
     with just an amount in it.
 
@@ -40,7 +54,6 @@ beancount: TODO
 
   - (Annoyance) All functions that return an (entries, errors, options_map)
     triple really should return (entries, options_map, errors), in this order.
-
 
 
 * Requirements for Shipping 2.0
