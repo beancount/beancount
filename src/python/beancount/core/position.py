@@ -58,7 +58,7 @@ Lot = collections.namedtuple('Lot', 'currency cost lot_date')
 #   merge: A boolean, true if we shoud be merging the cost basis before/after
 #     the given posting.
 LotSpec = collections.namedtuple('LotSpec',
-                                 'compound_cost lot_date label merge')
+                                 'currency compound_cost lot_date label merge')
 
 
 def lot_currency_pair(lot):
@@ -141,17 +141,20 @@ class Position:
 
         # Render the cost (and other lot parameters, lot-date, label, etc.).
         if detail:
-            if lot.cost or lot.lot_date:
-                cost_str_list = []
-                cost_str_list.append('{')
-                if lot.cost:
-                    cost_str_list.append(
-                        Amount(lot.cost.number, lot.cost.currency).to_string(dformat))
-                if lot.lot_date:
-                    cost_str_list.append(', {}'.format(lot.lot_date))
-                cost_str_list.append('}')
-                pos_str = '{} {}'.format(pos_str, ''.join(cost_str_list))
-
+            if isinstance(lot, Lot):
+                if lot.cost or lot.lot_date:
+                    cost_str_list = []
+                    cost_str_list.append('{')
+                    if lot.cost:
+                        cost_str_list.append(
+                            Amount(lot.cost.number, lot.cost.currency).to_string(dformat))
+                    if lot.lot_date:
+                        cost_str_list.append(', {}'.format(lot.lot_date))
+                    cost_str_list.append('}')
+                    pos_str = '{} {}'.format(pos_str, ''.join(cost_str_list))
+            else:
+                assert isinstance(lot, LotSpec)
+                pos_str = str(lot)
         else:
             # Render just the cost, if present.
             if lot.cost is not None:

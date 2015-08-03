@@ -384,7 +384,7 @@ class Builder(lexer.LexBuilder):
           may be None.
         """
         if lot_comp_list is None:
-            return LotSpec(None, None, None, None)
+            return LotSpec(None, None, None, None, None)
         assert isinstance(lot_comp_list, list), (
             "Internal error in parser: {}".format(lot_comp_list))
 
@@ -437,7 +437,7 @@ class Builder(lexer.LexBuilder):
                 ParserError(self.get_lexer_location(),
                             "Merge-cost not supported yet.", None))
 
-        return LotSpec(compound_cost, lot_date, label, merge)
+        return LotSpec(None, compound_cost, lot_date, label, merge)
 
     def lot_spec_total_legacy(self, cost, lot_date):
         """Process a deprecated legacy 'total cost' specification.
@@ -449,7 +449,7 @@ class Builder(lexer.LexBuilder):
           Same as lot_spec().
         """
         compound_cost = CompoundAmount(ZERO, cost.number, cost.currency)
-        return LotSpec(compound_cost, lot_date, None, None)
+        return LotSpec(None, compound_cost, lot_date, None, None)
 
     def position(self, filename, lineno, amount, lot_spec):
         """Process a position grammar rule.
@@ -463,59 +463,11 @@ class Builder(lexer.LexBuilder):
           A new instance of Position.
         """
         if lot_spec is None:
-            lot_spec = LotSpec(None, None, None, None)
-
-        assert isinstance(lot_spec, LotSpec), (type(lot_spec), lot_spec)
-        return Position(lot_spec, amount.number)
-
-
-
-
-
-        #--------------------------------------------------------------------------------
-        ## FIXME: Move this to the booking portion and fix all the tests.
-
-        compound_cost, lot_date, label, merge = (lot_spec
-                                                 if lot_spec is not None else
-                                                 (None, None, None, None))
-
-        # Compute the cost.
-        if compound_cost is not None:
-            if compound_cost.number_total is not None:
-                # Compute the per-unit cost if there is some total cost
-                # component involved.
-                units = amount.number
-                cost_total = compound_cost.number_total
-                if compound_cost.number_per is not None:
-                    cost_total += compound_cost.number_per * units
-                unit_cost = cost_total / abs(units)
-            else:
-                unit_cost = compound_cost.number_per
-            cost = Amount(unit_cost, compound_cost.currency)
-        else:
-            cost = None
-
-        # We don't allow a cost nor a price of zero. (Conversion entries may use
-        # a price of zero as the only special case, but never for costs.)
-        if cost is not None:
-            if amount.number == ZERO:
-                meta = new_metadata(filename, lineno)
-                self.errors.append(
-                    ParserError(meta,
-                                'Amount is zero: "{}"'.format(amount), None))
-
-            if cost.number is not None and cost.number < ZERO:
-                meta = new_metadata(filename, lineno)
-                self.errors.append(
-                    ParserError(meta, 'Cost is negative: "{}"'.format(cost), None))
-
-        lot = Lot(amount.currency, cost, lot_date)
-
-        return Position(lot, amount.number)
-
-
-
-
+            lot_spec = LotSpec(None, None, None, None, None)
+        # FIXME: Remove this assert.
+        assert isinstance(lot_spec, LotSpec), (
+            "Invalid type for Position.lot: %s (%s)".format(type(lot_spec), lot_spec))
+        return Position(lot_spec._replace(currency=amount.currency), amount.number)
 
     def handle_list(self, object_list, new_object):
         """Handle a recursive list grammar rule, generically.

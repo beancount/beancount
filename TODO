@@ -35,7 +35,11 @@ beancount: TODO
   - This causes a problem because a tag is parsed in '#9.95':
     10 AAPL {45.23#9.95 USD}
 
+  - (Annoyance) Make interpolation.balance_incomplete_postings() return a new
+    object and not work destructively. No reason not to.
 
+  - (Annoyance) All functions that return an (entries, errors, options_map)
+    triple really should return (entries, options_map, errors), in this order.
 
 
 

@@ -164,16 +164,22 @@ def parsedoc(expect_errors=False, interpolation=False):
                                                         report_firstline=lineno,
                                                         dedent=True)
 
-            # Allow interpolation if
+            # Allow interpolation if the flag requests it.
             if interpolation is True:
                 # Perform simple interpolation in literals, without a history.
-                interp_entries, balance_errors = booking.book(entries, options_map)
+                entries, balance_errors = booking.book(entries, options_map)
                 errors.extend(balance_errors)
-            elif interpolation is False:
-                # If interpolation is not allowed, fail the test if it is seen,
-                # because it would result in postings with None.
-                if has_auto_postings(entries):
-                    self.fail("parsedoc() may not use interpolation.")
+
+            else:
+                # Just convert the lot specs to lots.
+                entries, convert_errors = booking.convert_lot_specs_to_lots(entries, options_map)
+                errors.extend(convert_errors)
+
+                if interpolation is False:
+                    # If interpolation is not allowed, fail the test if it is seen,
+                    # because it would result in postings with None.
+                    if has_auto_postings(entries):
+                        self.fail("parsedoc() may not use interpolation.")
 
             if expect_errors is not None:
                 if expect_errors is False and errors:

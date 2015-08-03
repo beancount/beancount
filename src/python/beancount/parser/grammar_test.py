@@ -2084,7 +2084,7 @@ class TestIncompleteInputs(cmptest.TestCase):
         pos = posting.position
         self.assertEqual(D('2'), pos.number)
         self.assertIsInstance(pos.lot, position.LotSpec)
-        self.assertEqual(position.LotSpec(None, None, None, None), pos.lot)
+        self.assertEqual(position.LotSpec('HOOL', None, None, None, None), pos.lot)
 
     @parser.parsedoc(interpolation=None)
     def test_missing_cost_number(self, entries, _, options_map):
@@ -2100,5 +2100,6 @@ class TestIncompleteInputs(cmptest.TestCase):
         self.assertEqual(D('2'), pos.number)
         self.assertIsInstance(pos.lot, position.LotSpec)
         self.assertEqual(
-            position.LotSpec(grammar.CompoundAmount(None, None, 'USD'), None, None, None),
+            position.LotSpec('HOOL',
+                             grammar.CompoundAmount(None, None, 'USD'), None, None, None),
             pos.lot)

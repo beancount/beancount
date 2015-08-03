@@ -8,6 +8,7 @@ import textwrap
 
 from beancount.parser import parser
 from beancount.parser import printer
+from beancount.parser import booking
 from beancount.core import compare
 
 
@@ -24,7 +25,15 @@ def read_string_or_entries(entries_or_str):
       A list of directives.
     """
     if isinstance(entries_or_str, str):
-        entries, errors, __ = parser.parse_string(textwrap.dedent(entries_or_str))
+        entries, parse_errors, options_map = parser.parse_string(
+            textwrap.dedent(entries_or_str))
+
+        # Don't accept incomplete entries either.
+        if parser.has_auto_postings(entries):
+            raise TestError("Entries in assertions may not use interpolation.")
+
+        entries, booking_errors = booking.book(entries, options_map)
+        errors = parse_errors + booking_errors
 
         # Don't tolerate errors.
         if errors:
@@ -32,9 +41,6 @@ def read_string_or_entries(entries_or_str):
             printer.print_errors(errors, file=oss)
             raise TestError("Unexpected errors in expected: {}".format(oss.getvalue()))
 
-        # Don't accept incomplete entries either.
-        if parser.has_auto_postings(entries):
-            raise TestError("Entries in assertions may not use interpolation.")
     else:
         assert isinstance(entries_or_str, list), "Expecting list: {}".format(entries_or_str)
         entries = entries_or_str

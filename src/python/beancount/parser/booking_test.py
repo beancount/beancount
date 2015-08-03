@@ -20,8 +20,9 @@ class TestSimpleBooking(cmptest.TestCase):
             Assets:Bank:Investing                 5 GOOG {501 USD}
             Equity:Opening-Balances
         """)
-        interpolated_entries = booking.simple_interpolation(entries, options_map)
-        self.assertEqual(D('-2505'), entries[-1].postings[-1].position.number)
+        interpolated_entries, errors = booking.simple_interpolation(entries, options_map)
+        self.assertFalse(errors)
+        self.assertEqual(D('-2505'), interpolated_entries[-1].postings[-1].position.number)
 
 
 class TestValidateInventoryBooking(cmptest.TestCase):
