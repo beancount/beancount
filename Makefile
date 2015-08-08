@@ -230,3 +230,12 @@ pylint lint: pylint-pass
 # Check everything.
 status check: pylint pyflakes missing-tests dep-constraints multi-imports tests-quiet
 # fixmes: For later.
+
+
+
+# FIXME: Remove
+grep-import:
+	grep --include='*.py' --exclude='*/beancount/parser/*' -srn  'from beancount.parser import parser'  ~/p/beancount/src/python/beancount
+
+grep-uses:
+	grep --include='*.py' --exclude='*/beancount/parser/*' -srn  'parser.parse'  ~/p/beancount/src/python/beancount

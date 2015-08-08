@@ -38,9 +38,6 @@ beancount: TODO
     egrep --include='*.py' -srn 'parse_(string|file)' /home/blais/p/beancount/src/python/beancount
 
 
-  - URGENT: In the parser, be backwards compatible and keep supporting {{ }}
-    with just an amount in it.
-
   - Write test for beancount.parser.booking.
 
   - Merge beancount.core.interpolate into booking.
