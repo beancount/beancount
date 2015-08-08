@@ -4,7 +4,6 @@ import datetime
 import unittest
 import textwrap
 
-from beancount.parser import parser
 from beancount.core import data
 from beancount.ops import basicops
 from beancount import loader
@@ -108,7 +107,7 @@ class TestBasicOpsTags(unittest.TestCase):
 
 class TestBasicOpsOther(unittest.TestCase):
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def test_get_common_accounts(self, entries, _, __):
         """
         2014-01-01 open Assets:Account1
