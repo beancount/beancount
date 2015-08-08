@@ -5,7 +5,6 @@ import datetime
 
 from beancount.core import getters
 from beancount.core import data
-from beancount.parser import parser
 from beancount import loader
 
 
@@ -137,7 +136,7 @@ class TestGetters(unittest.TestCase):
         self.assertEqual(mapfound('Expenses:Coffee'), (True, False))
         self.assertEqual(mapfound('Expenses:Restaurant'), (True, False))
 
-    @parser.parsedoc()
+    @loader.loaddoc(expect_errors=True)
     def test_get_account_open_close__duplicates(self, entries, _, __):
         """
         2014-01-01 open  Assets:Checking
