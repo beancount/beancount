@@ -15,7 +15,6 @@ from beancount.core import data
 from beancount.core import inventory
 from beancount.core import amount
 from beancount.core import account_types
-from beancount.parser import parser
 from beancount.utils import test_utils
 from beancount import loader
 
@@ -184,9 +183,11 @@ class TestRealGetters(unittest.TestCase):
 
 class TestRealization(unittest.TestCase):
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def test_postings_by_account(self, entries, errors, _):
         """
+        option "plugin_processing_mode" "raw"
+
         2012-01-01 open Expenses:Restaurant
         2012-01-01 open Expenses:Movie
         2012-01-01 open Assets:Cash
@@ -259,7 +260,7 @@ class TestRealization(unittest.TestCase):
         self.assertEqual(set(account_types.DEFAULT_ACCOUNT_TYPES),
                          real_account.keys())
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def test_simple_realize(self, entries, errors, options_map):
         """
           2013-05-01 open Assets:US:Checking:Sub   USD
@@ -395,9 +396,11 @@ class TestRealFilter(unittest.TestCase):
 
 class TestRealOther(test_utils.TestCase):
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def test_get_postings(self, entries, errors, _):
         """
+        option "plugin_processing_mode" "raw"
+
         2012-01-01 open Assets:Bank:Checking
         2012-01-01 open Expenses:Restaurant
         2012-01-01 open Expenses:Movie
@@ -577,7 +580,7 @@ class TestRealOther(test_utils.TestCase):
         balance = realization.compute_balance(realization.get(real_root, 'Assets:US:Bank'))
         self.assertEqual(inventory.from_string('310 USD'), balance)
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def test_dump(self, entries, _, __):
         """
         2012-01-01 open Assets:Bank1:Checking
