@@ -9,12 +9,12 @@ from beancount.core import inventory
 from beancount.core import amount
 from beancount.ops import prices
 from beancount.parser import cmptest
-from beancount.parser import parser
+from beancount import loader
 
 
 class TestPriceEntries(cmptest.TestCase):
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def test_get_last_price_entries(self, entries, _, __):
         """
         2013-01-01 price  USD  1.01 CAD
@@ -52,7 +52,7 @@ class TestPriceMap(unittest.TestCase):
             self.assertEqual(('USD', 'CAD'),
                              prices.normalize_base_quote(('GOOG/USD/CAD')))
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def test_build_price_map(self, entries, _, __):
         """
         2013-06-01 price  USD  1.10 CAD
@@ -87,7 +87,7 @@ class TestPriceMap(unittest.TestCase):
 
         self.assertEqual(5, len(price_map[('CAD', 'USD')]))
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def test_lookup_price_and_inverse(self, entries, _, __):
         """
         2013-06-01 price  USD  1.01 CAD
@@ -101,7 +101,7 @@ class TestPriceMap(unittest.TestCase):
         except KeyError as exc:
             self.assertTrue(re.search("('EUR', 'USD')", str(exc)))
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def test_get_all_prices(self, entries, _, __):
         """
         2013-06-01 price  USD  1.01 CAD
@@ -128,7 +128,7 @@ class TestPriceMap(unittest.TestCase):
         with self.assertRaises(KeyError):
             prices.get_all_prices(price_map, ('EWJ', 'JPY'))
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def test_get_latest_price(self, entries, _, __):
         """
         2013-06-01 price  USD  1.01 CAD
@@ -144,7 +144,7 @@ class TestPriceMap(unittest.TestCase):
         result = prices.get_latest_price(price_map, ('EWJ', 'JPY'))
         self.assertEqual((None, None), result)
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def test_get_price(self, entries, _, __):
         """
         2013-06-01 price  USD  1.00 CAD
@@ -190,7 +190,7 @@ class TestPriceMap(unittest.TestCase):
         result = prices.get_price(price_map, ('EWJ', 'JPY'))
         self.assertEqual((None, None), result)
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def test_convert_amount(self, entries, _, __):
         """
         2013-07-01 price  USD  1.20 CAD
@@ -206,7 +206,7 @@ class TestPriceMap(unittest.TestCase):
                          prices.convert_amount(price_map, 'EUR',
                                                amount.Amount('100', 'USD')))
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def test_ordering_same_date(self, entries, _, __):
         """
         ;; The last one to appear in the file should be selected.
@@ -231,7 +231,7 @@ class TestPriceMap(unittest.TestCase):
 
 class TestMarketValue(unittest.TestCase):
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def setUp(self, entries, _, __):
         """
         2013-06-01 price  USD  1.01 CAD

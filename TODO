@@ -52,6 +52,10 @@ beancount: TODO
   - (Annoyance) All functions that return an (entries, errors, options_map)
     triple really should return (entries, options_map, errors), in this order.
 
+  - Rename parsedoc and loaddoc to parse_doc and load_doc and keep deprecated
+    aliases for a while (with a warning).
+
+
 
 * Requirements for Shipping 2.0
 * File Cleanup
