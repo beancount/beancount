@@ -14,7 +14,6 @@ from beancount.core import data
 from beancount.core import flags
 from beancount.core import interpolate
 from beancount.ops import summarize
-from beancount.parser import parser
 from beancount.parser import printer
 from beancount.parser import options
 from beancount.parser import cmptest
@@ -23,7 +22,7 @@ from beancount import loader
 
 class TestOpenClose(cmptest.TestCase):
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def setUp(self, entries, errors, options_map):
         """
         option "account_previous_earnings"    "Earnings:Previous"
@@ -33,6 +32,11 @@ class TestOpenClose(cmptest.TestCase):
         option "account_current_earnings"     "Earnings:Current"
         option "account_current_conversions"  "Conversions:Current"
         option "conversion_currency"          "NOTHING"
+
+        2012-01-01 open Income:Salary
+        2012-01-01 open Expenses:Taxes
+        2012-01-01 open Assets:US:Checking
+        2012-01-01 open Assets:CA:Checking
 
         2012-03-01 * "Some income and expense to be summarized"
           Income:Salary        10000 USD
@@ -88,6 +92,11 @@ class TestOpenClose(cmptest.TestCase):
 
         self.assertEqualEntries("""
 
+        2012-01-01 open Income:Salary
+        2012-01-01 open Expenses:Taxes
+        2012-01-01 open Assets:US:Checking
+        2012-01-01 open Assets:CA:Checking
+
         2012-05-31 S "Opening balance for 'Assets:CA:Checking' (Summarization)"
           Assets:CA:Checking             6,000 CAD
           Equity:Opening-Balances       -6,000 CAD
@@ -125,7 +134,7 @@ class TestOpenClose(cmptest.TestCase):
         """, opened_entries)
 
         # Check the index is correctly beginning after the list of summarizing entries.
-        self.assertEqual(4, index)
+        self.assertEqual(8, index)
 
         # Check that our original example list of entries does not balance.
         input_balance = interpolate.compute_entries_balance(self.entries)
@@ -149,6 +158,11 @@ class TestOpenClose(cmptest.TestCase):
                                               'Equity:Conversions:Current')
 
         self.assertEqualEntries("""
+
+        2012-01-01 open Income:Salary
+        2012-01-01 open Expenses:Taxes
+        2012-01-01 open Assets:US:Checking
+        2012-01-01 open Assets:CA:Checking
 
         2012-03-01 * "Some income and expense to be summarized"
           Income:Salary        10000 USD
@@ -179,7 +193,7 @@ class TestOpenClose(cmptest.TestCase):
         """, closed_entries)
 
         # Check the index is correctly beginning after the list of summarizing entries.
-        self.assertEqual(4, index)
+        self.assertEqual(8, index)
 
         # Check that our original example list of entries does not balance.
         input_balance = interpolate.compute_entries_balance(self.entries)
@@ -201,6 +215,11 @@ class TestOpenClose(cmptest.TestCase):
                                              'Equity:Earnings:Current')
 
         self.assertEqualEntries("""
+
+        2012-01-01 open Income:Salary
+        2012-01-01 open Expenses:Taxes
+        2012-01-01 open Assets:US:Checking
+        2012-01-01 open Assets:CA:Checking
 
         2012-03-01 * "Some income and expense to be summarized"
           Income:Salary        10000 USD
@@ -240,7 +259,7 @@ class TestOpenClose(cmptest.TestCase):
         """, clear_entries)
 
         # Check the index is correctly beginning after the list of summarizing entries.
-        self.assertEqual(5, index)
+        self.assertEqual(9, index)
 
         # Check that the cleared entries do not necessarily up to precisely zero
         # without closing.
@@ -270,6 +289,11 @@ class TestOpenClose(cmptest.TestCase):
                                              'Equity:Earnings:Current')
 
         self.assertEqualEntries("""
+
+        2012-01-01 open Income:Salary
+        2012-01-01 open Expenses:Taxes
+        2012-01-01 open Assets:US:Checking
+        2012-01-01 open Assets:CA:Checking
 
         2012-05-31 S "Opening balance for 'Assets:CA:Checking' (Summarization)"
           Assets:CA:Checking            6,000 CAD
@@ -332,9 +356,14 @@ class TestOpenCloseWithOptions(TestOpenClose):
 
 class TestClamp(cmptest.TestCase):
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def test_clamp(self, entries, errors, options_map):
         """
+        2012-01-01 open Income:Salary
+        2012-01-01 open Expenses:Taxes
+        2012-01-01 open Assets:US:Checking
+        2012-01-01 open Assets:CA:Checking
+
         2012-03-01 * "Some income and expense to be summarized"
           Income:Salary        10000.00 USD
           Expenses:Taxes        3600.00 USD
@@ -376,6 +405,11 @@ class TestClamp(cmptest.TestCase):
                                                  'Equity:Conversions')
         self.assertEqualEntries("""
 
+        2012-01-01 open Income:Salary
+        2012-01-01 open Expenses:Taxes
+        2012-01-01 open Assets:US:Checking
+        2012-01-01 open Assets:CA:Checking
+
         2012-05-31 S "Opening balance for 'Assets:CA:Checking' (Summarization)"
           Assets:CA:Checking              6000.00 CAD
           Equity:Opening-Balances         -6000.00 CAD
@@ -407,7 +441,7 @@ class TestClamp(cmptest.TestCase):
 
         """, clamped_entries)
 
-        self.assertEqual(3, index)
+        self.assertEqual(7, index)
 
         input_balance = interpolate.compute_entries_balance(entries)
         self.assertFalse(input_balance.is_empty())
@@ -788,7 +822,7 @@ class TestConversions(cmptest.TestCase):
 
     ACCOUNT = 'Equity:Conversions'
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def setUp(self, entries, _, __):
         """
           2012-01-01 open Income:US:Job
@@ -903,9 +937,12 @@ class TestConversions(cmptest.TestCase):
 
 class TestTruncate(cmptest.TestCase):
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def setUp(self, entries, _, __):
         """
+        2014-01-01 open Assets:US:Bank:Checking
+        2014-01-01 open Equity:Opening-Balances
+
         2014-03-10 * "A"
           Assets:US:Bank:Checking   1 USD
           Equity:Opening-Balances  -1 USD
@@ -934,11 +971,17 @@ class TestTruncate(cmptest.TestCase):
 
     def test_truncate__before(self):
         truncated_entries = summarize.truncate(self.entries, datetime.date(2014, 2, 15))
-        self.assertEqualEntries([], truncated_entries)
+        self.assertEqualEntries("""
+        2014-01-01 open Assets:US:Bank:Checking
+        2014-01-01 open Equity:Opening-Balances
+        """, truncated_entries)
 
     def test_truncate__normal1(self):
         truncated_entries = summarize.truncate(self.entries, datetime.date(2014, 3, 13))
         self.assertEqualEntries("""
+
+        2014-01-01 open Assets:US:Bank:Checking
+        2014-01-01 open Equity:Opening-Balances
 
         2014-03-10 * "A"
           Assets:US:Bank:Checking   1 USD
@@ -957,6 +1000,9 @@ class TestTruncate(cmptest.TestCase):
     def test_truncate__normal2(self):
         truncated_entries = summarize.truncate(self.entries, datetime.date(2014, 3, 14))
         self.assertEqualEntries("""
+
+        2014-01-01 open Assets:US:Bank:Checking
+        2014-01-01 open Equity:Opening-Balances
 
         2014-03-10 * "A"
           Assets:US:Bank:Checking   1 USD
@@ -1086,7 +1132,7 @@ class TestBalanceByAccount(cmptest.TestCase):
 
 class TestOpenAtDate(cmptest.TestCase):
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def setUp(self, entries, _, __):
         """
           2011-01-01 open Assets:AccountA
@@ -1182,7 +1228,7 @@ class TestOpenAtDate(cmptest.TestCase):
         """, summarize.get_open_entries(self.entries, date(2013, 1, 1)))
 
 
-    @parser.parsedoc()
+    @loader.loaddoc(expect_errors=True)
     def test_get_open_entries__duplicate_open(self, entries, errors, _):
         """
           2011-01-01 open Assets:AccountA
@@ -1192,7 +1238,7 @@ class TestOpenAtDate(cmptest.TestCase):
           2011-01-01 open Assets:AccountA
         """, summarize.get_open_entries(entries, date(2013, 1, 1)))
 
-    @parser.parsedoc()
+    @loader.loaddoc(expect_errors=True)
     def test_get_open_entries__closed_twice(self, entries, errors, _):
         """
           2011-01-01 open  Assets:AccountA
@@ -1202,7 +1248,7 @@ class TestOpenAtDate(cmptest.TestCase):
         self.assertEqualEntries("""
         """, summarize.get_open_entries(entries, date(2013, 1, 1)))
 
-    @parser.parsedoc()
+    @loader.loaddoc(expect_errors=True)
     def test_get_open_entries__closed_without_open(self, entries, errors, _):
         """
           2011-02-02 close Assets:AccountA
