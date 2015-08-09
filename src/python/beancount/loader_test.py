@@ -21,7 +21,7 @@ TEST_INPUT = """
 
 2014-02-22 * "Something happened."
   Assets:MyBank:Checking       100.00 USD
-  Expenses:Restaurant
+  Expenses:Restaurant         -100.00 USD
 
 2015-01-01 close Assets:MyBank:Checking
 2015-01-01 close Expenses:Restaurant

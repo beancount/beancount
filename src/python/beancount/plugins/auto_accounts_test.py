@@ -1,13 +1,15 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 from beancount.parser import parser
+from beancount.parser import printer
 from beancount.parser import cmptest
 from beancount.plugins import auto_accounts
+from beancount import loader
 
 
 class TestAutoInsertOpen(cmptest.TestCase):
 
-    @parser.parsedoc()
+    @loader.loaddoc(expect_errors=True)
     def test_auto_open(self, entries, _, options_map):
         """
         2014-02-01 *
