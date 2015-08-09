@@ -51,6 +51,7 @@ class TestEntryPrinter(cmptest.TestCase):
 
         # Print out the entries and parse them back in.
         oss1 = io.StringIO()
+        oss1.write('option "plugin_processing_mode" "raw"\n')
         printer.print_entries(entries1, file=oss1)
         entries2, errors, __ = loader.load_string(oss1.getvalue())
 
@@ -59,6 +60,7 @@ class TestEntryPrinter(cmptest.TestCase):
 
         # Print out those reparsed and parse them back in.
         oss2 = io.StringIO()
+        oss2.write('option "plugin_processing_mode" "raw"\n')
         printer.print_entries(entries2, file=oss2)
         entries3, errors, __ = loader.load_string(oss2.getvalue())
 
@@ -140,7 +142,10 @@ class TestEntryPrinter(cmptest.TestCase):
     @loader.loaddoc()
     def test_Pad(self, entries, errors, __):
         """
+        2014-01-01 open Assets:Account1
+        2014-01-01 open Assets:Account2
         2014-06-08 pad Assets:Account1 Assets:Account2
+        2014-10-01 balance Assets:Account1  1 USD
         """
         self.assertRoundTrip(entries, errors)
 
@@ -148,14 +153,15 @@ class TestEntryPrinter(cmptest.TestCase):
     def test_Open(self, entries, errors, __):
         """
         2014-06-08 open Assets:Account1
-        2014-06-08 open Assets:Account1  USD
-        2014-06-08 open Assets:Account1  USD,CAD,EUR
+        2014-06-08 open Assets:Account2  USD
+        2014-06-08 open Assets:Account3  USD,CAD,EUR
         """
         self.assertRoundTrip(entries, errors)
 
     @loader.loaddoc()
     def test_Close(self, entries, errors, __):
         """
+        2014-01-01 open  Assets:Account1
         2014-06-08 close Assets:Account1
         """
         self.assertRoundTrip(entries, errors)
