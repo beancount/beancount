@@ -4,7 +4,6 @@ import datetime
 import re
 
 from beancount.core import data
-from beancount.parser import parser
 from beancount.parser import printer
 from beancount.parser import cmptest
 from beancount.ops import validation
@@ -13,7 +12,7 @@ from beancount import loader
 
 class TestValidateOpenClose(cmptest.TestCase):
 
-    @parser.parsedoc()
+    @loader.loaddoc(expect_errors=True)
     def test_validate_open_close__duplicate_open(self, entries, _, options_map):
         """
         ;; Regular, only appears once.
@@ -32,7 +31,7 @@ class TestValidateOpenClose(cmptest.TestCase):
                           'Assets:US:Bank:Checking3'],
                          [error.entry.account for error in errors])
 
-    @parser.parsedoc()
+    @loader.loaddoc(expect_errors=True)
     def test_validate_open_close__duplicate_close(self, entries, _, options_map):
         """
         2014-02-10 open  Assets:US:Bank:Checking1
@@ -56,7 +55,7 @@ class TestValidateOpenClose(cmptest.TestCase):
                           'Assets:US:Bank:Checking3'],
                          [error.entry.account for error in errors])
 
-    @parser.parsedoc()
+    @loader.loaddoc(expect_errors=True)
     def test_validate_open_close__close_unopened(self, entries, _, options_map):
         """
         2014-03-01 close Assets:US:Bank:Checking1
@@ -65,7 +64,7 @@ class TestValidateOpenClose(cmptest.TestCase):
         self.assertEqual(['Assets:US:Bank:Checking1'],
                          [error.entry.account for error in errors])
 
-    @parser.parsedoc()
+    @loader.loaddoc(expect_errors=True)
     def test_validate_open_close__ordering(self, entries, _, options_map):
         """
         2014-03-01 open  Assets:US:Bank:Checking1
@@ -78,7 +77,7 @@ class TestValidateOpenClose(cmptest.TestCase):
 
 class TestValidateDuplicateBalances(cmptest.TestCase):
 
-    @parser.parsedoc()
+    @loader.loaddoc(expect_errors=True)
     def test_validate_duplicate_balances(self, entries, _, options_map):
         """
         2014-01-01 open Assets:US:Bank:Checking1
@@ -111,7 +110,7 @@ class TestValidateDuplicateBalances(cmptest.TestCase):
 
 class TestValidateDuplicateCommodities(cmptest.TestCase):
 
-    @parser.parsedoc()
+    @loader.loaddoc(expect_errors=True)
     def test_validate_duplicate_commodities(self, entries, _, options_map):
         """
         2014-01-01 commodity USD
@@ -120,7 +119,6 @@ class TestValidateDuplicateCommodities(cmptest.TestCase):
         2014-01-04 commodity HOOL
         2014-01-05 commodity USD
         2014-01-06 commodity HOOL
-
         """
         errors = validation.validate_duplicate_commodities(entries, options_map)
         self.assertEqual([datetime.date(2014, 1, 5), datetime.date(2014, 1, 6)],
@@ -129,7 +127,7 @@ class TestValidateDuplicateCommodities(cmptest.TestCase):
 
 class TestValidateActiveAccounts(cmptest.TestCase):
 
-    @parser.parsedoc()
+    @loader.loaddoc(expect_errors=True)
     def test_validate_active_accounts(self, entries, _, options_map):
         """
         2014-01-01 open  Equity:Opening-Balances
@@ -188,7 +186,7 @@ class TestValidateActiveAccounts(cmptest.TestCase):
              re.search('unknown.*Equity:ImUnknown', error.message))
             for error in errors))
 
-    @parser.parsedoc()
+    @loader.loaddoc(expect_errors=True)
     def test_validate_active_accounts__unopened(self, entries, _, options_map):
         """
         2014-02-01 *
@@ -203,7 +201,7 @@ class TestValidateActiveAccounts(cmptest.TestCase):
 
 class TestValidateCurrencyConstraints(cmptest.TestCase):
 
-    @parser.parsedoc()
+    @loader.loaddoc(expect_errors=True)
     def test_validate_currency_constraints(self, entries, _, options_map):
         """
         2014-01-01 open  Assets:Account1    USD
@@ -269,7 +267,7 @@ class TestValidateDocumentPaths(cmptest.TestCase):
 
 class TestValidateDataTypes(cmptest.TestCase):
 
-    @parser.parsedoc()
+    @loader.loaddoc(expect_errors=True)
     def test_validate_data_types(self, entries, errors, options_map):
         """
         2014-06-24 * "Narration"
@@ -286,7 +284,7 @@ class TestValidateDataTypes(cmptest.TestCase):
 
 class TestValidateCheckTransactionBalances(cmptest.TestCase):
 
-    @parser.parsedoc()
+    @loader.loaddoc(expect_errors=True)
     def test_validate_check_transaction_balances(self, entries, errors, options_map):
         """
         2014-06-24 * "Narration"
@@ -299,7 +297,7 @@ class TestValidateCheckTransactionBalances(cmptest.TestCase):
 
 class TestValidate(cmptest.TestCase):
 
-    @parser.parsedoc(expect_errors=True, interpolation=True)
+    @loader.loaddoc(expect_errors=True)
     def test_validate(self, entries, errors, options_map):
         """
         ;; Just trigger a few errors from here to ensure at least some of the plugins
@@ -323,8 +321,9 @@ class TestValidate(cmptest.TestCase):
         """
         validation_errors = validation.validate(entries, options_map)
 
-        self.assertEqual(1, len(errors))
+        self.assertEqual(2, len(errors))
         self.assertRegexpMatches(errors[0].message, 'Reducing position results')
+        self.assertRegexpMatches(errors[1].message, 'Invalid currency')
 
         self.assertEqual(1, len(validation_errors))
         self.assertRegexpMatches(validation_errors[0].message, 'Invalid currency')
