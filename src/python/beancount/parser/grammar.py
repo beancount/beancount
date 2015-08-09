@@ -464,7 +464,7 @@ class Builder(lexer.LexBuilder):
         """
         if lot_spec is None:
             lot_spec = LotSpec(None, None, None, None, None)
-        # FIXME: Remove this assert.
+        # FIXME: Remove this assert for performance reasons.
         assert isinstance(lot_spec, LotSpec), (
             "Invalid type for Position.lot: %s (%s)".format(type(lot_spec), lot_spec))
         return Position(lot_spec._replace(currency=amount.currency), amount.number)

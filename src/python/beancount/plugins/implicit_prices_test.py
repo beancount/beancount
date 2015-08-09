@@ -109,11 +109,11 @@ class TestImplicitPrices(cmptest.TestCase):
             actual = (price.currency, price.amount.currency, price.amount.number)
             self.assertEqual(expected, actual)
 
-    @loader.loaddoc(expect_errors=True)
+    @loader.loaddoc()
     def test_add_implicit_prices__other_account(self, entries, errors, options_map):
         """
         2013-01-01 open Assets:Account1
-        2013-01-01 open Assets:Account2
+        2013-01-01 open Assets:Account2  "NONE"
         2013-01-01 open Assets:Other
 
         2013-04-01 *
@@ -126,21 +126,18 @@ class TestImplicitPrices(cmptest.TestCase):
 
         2013-04-10 * "Reduces existing position in account 1"
           Assets:Account1            -100 GOOG {520 USD}
-          Assets:Other
+          Assets:Other              52000 USD
 
         2013-04-11 * "Does not find an existing position in account 2"
-          Assets:Account2            -200 GOOG {520 USD}
-          Assets:Other
+          Assets:Account2            -200 GOOG {531 USD}
+          Assets:Other             106200 USD
 
         """
-        self.assertRegexpMatches(errors[0].message,
-                                 'Reducing position results in inventory with')
-
         new_entries, _ = implicit_prices.add_implicit_prices(entries, options_map)
         self.assertEqualEntries("""
 
         2013-01-01 open Assets:Account1
-        2013-01-01 open Assets:Account2
+        2013-01-01 open Assets:Account2  "NONE"
         2013-01-01 open Assets:Other
 
         2013-04-01 *
@@ -156,14 +153,15 @@ class TestImplicitPrices(cmptest.TestCase):
         2013-04-02 price GOOG 530 USD
 
         2013-04-10 * "Reduces existing position in account 1"
-          Assets:Account1                       -100 GOOG     {520 USD}
-          Assets:Other                          52000 USD
+          Assets:Account1                       -100 GOOG {520 USD}
+          Assets:Other                         52000 USD
 
         2013-04-11 * "Does not find an existing position in account 2"
-          Assets:Account2                       -200 GOOG     {520 USD}
-          Assets:Other                         104000 USD
+          Assets:Account2                       -200 GOOG {531 USD}
+          Assets:Other                        106200 USD
 
-        2013-04-11 price GOOG 520 USD
+        ;; Because a match was not found against the inventory, a price will be added.
+        2013-04-11 price GOOG 531 USD
 
         """, new_entries)
 
