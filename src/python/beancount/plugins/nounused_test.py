@@ -3,11 +3,12 @@ __author__ = "Martin Blais <blais@furius.ca>"
 from beancount.parser import parser
 from beancount.parser import cmptest
 from beancount.plugins import nounused
+from beancount import loader
 
 
 class TestValidateUnusedAccounts(cmptest.TestCase):
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def test_validate_unused_accounts(self, entries, _, options_map):
         """
         2014-01-01 open  Assets:Account1 ; Used, kept open
