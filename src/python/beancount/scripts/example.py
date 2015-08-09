@@ -182,9 +182,7 @@ def parse(input_string, **replacements):
       **replacements: A dict of keywords to replace to their values.
     Returns:
       A list of directive objects.
-
     """
-
     if replacements:
         import string
         class IgnoreFormatter(string.Formatter):
@@ -200,7 +198,7 @@ def parse(input_string, **replacements):
         printer.print_errors(errors, file=sys.stderr)
         raise ValueError("Parsed text has errors")
 
-    # Take advantage of simple interpolation.
+    # Interpolation.
     entries, unused_balance_errors = booking.book(entries, options_map)
 
     return data.sorted(entries)
@@ -545,10 +543,12 @@ def generate_tax_accounts(year, date_max):
     date_federal = (date_filing + datetime.timedelta(days=random.randint(0, 4)))
     date_state = (date_filing + datetime.timedelta(days=random.randint(0, 4)))
 
-    amount_federal = D(max(random.normalvariate(500, 120), 12))
-    amount_federal_neg = amount_federal
-    amount_state = D(max(random.normalvariate(300, 100), 10))
-    amount_state_neg = amount_state
+    q = D('0.01')
+    amount_federal = D(max(random.normalvariate(500, 120), 12)).quantize(q)
+    amount_federal_neg = -amount_federal
+    amount_state = D(max(random.normalvariate(300, 100), 10)).quantize(q)
+    amount_state_neg = -amount_state
+    amount_payable = -(amount_federal + amount_state)
 
     amount_limit = RETIREMENT_LIMITS.get(year, RETIREMENT_LIMITS[None])
     amount_limit_neg = -amount_limit
@@ -574,15 +574,15 @@ def generate_tax_accounts(year, date_max):
       {date_filing} * "Filing taxes for {year}"
         Expenses:Taxes:Y{year}:CC:Federal      {amount_federal:.2f} CCY
         Expenses:Taxes:Y{year}:CC:State        {amount_state:.2f} CCY
-        Liabilities:AccountsPayable
+        Liabilities:AccountsPayable            {amount_payable:.2f} CCY
 
       {date_federal} * "FEDERAL TAXPYMT"
         Assets:CC:Bank1:Checking       {amount_federal_neg:.2f} CCY
-        Liabilities:AccountsPayable
+        Liabilities:AccountsPayable    {amount_federal:.2f} CCY
 
       {date_state} * "STATE TAX & FINANC PYMT"
         Assets:CC:Bank1:Checking       {amount_state_neg:.2f} CCY
-        Liabilities:AccountsPayable
+        Liabilities:AccountsPayable    {amount_state:.2f} CCY
 
     """, **locals())
 
@@ -690,6 +690,7 @@ def generate_banking(date_begin, date_end, amount_initial):
 
     """
     date_balance = date_begin + datetime.timedelta(days=1)
+    amount_initial_neg = -amount_initial
     return parse("""
 
       {date_begin} open Assets:CC:Bank1:Checking    CCY
@@ -697,7 +698,7 @@ def generate_banking(date_begin, date_end, amount_initial):
 
       {date_begin} * "Opening Balance for checking account"
         Assets:CC:Bank1:Checking   {amount_initial} CCY
-        Equity:Opening-Balances
+        Equity:Opening-Balances    {amount_initial_neg} CCY
 
       {date_balance} balance Assets:CC:Bank1:Checking   {amount_initial} CCY
 
@@ -776,10 +777,11 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
             # Create an entry offering dividends of 1% of the portfolio.
             portfolio_cost = total.cost().get_units('CCY').number
             amount_cash = (frac_dividend * portfolio_cost).quantize(D('0.01'))
+            amount_cash_neg = -amount_cash
             dividend = parse("""
               {next_dividend_date} * "Dividends on portfolio"
                 {account}:Cash        {amount_cash:.2f} CCY
-                {account_dividends}
+                {account_dividends}   {amount_cash_neg:.2f} CCY
             """, **locals())[0]
             new_entries.append(dividend)
 
@@ -813,9 +815,9 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
 
                     buy = parse("""
                       {date} * "Buy shares of {stock}"
-                        {account}:Cash        {amount_cash:.2f} CCY
-                        {account}:{stock}     {units:.0f} {stock} {{{price:.2f} CCY}}
-                        Expenses:Financial:Commissions   {commission:.2f} CCY
+                        {account}:Cash                  {amount_cash:.2f} CCY
+                        {account}:{stock}               {units:.0f} {stock} {{{price:.2f} CCY}}
+                        Expenses:Financial:Commissions  {commission:.2f} CCY
                     """, **locals())[0]
                     new_entries.append(buy)
 
@@ -852,12 +854,13 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
             sell_position = -sell_position
             stock = sell_position.lot.currency
             amount_cash = market_value - commission
+            amount_gain = -gain
             sell = parse("""
               {date} * "Sell shares of {stock}"
                 {account}:{stock}               {sell_position} @ {price:.2f} CCY
                 {account}:Cash                  {amount_cash:.2f} CCY
                 Expenses:Financial:Commissions  {commission:.2f} CCY
-                {account_gains}
+                {account_gains}                 {amount_gain:.2f} CCY
             """, **locals())[0]
             new_entries.append(sell)
 
