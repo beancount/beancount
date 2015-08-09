@@ -56,6 +56,10 @@ beancount: TODO
     aliases for a while (with a warning).
 
 
+  - Create a b.c.data.transactions_only() function to this common type of
+    filtering and grep/replace everywhere. This is just too common not to create
+    a utility.
+
 
 * Requirements for Shipping 2.0
 * File Cleanup
