@@ -1152,7 +1152,7 @@ class TestAllowNegativePrices(unittest.TestCase):
         """
         posting = entries[0].postings[0]
         self.assertEqual(amount.from_string('-200 USD'), posting.price)
-        self.assertEqual(None, posting.position.lot.cost)
+        self.assertEqual(None, posting.position.lot.compound_cost)
 
     @parser.parsedoc()
     def test_total_price_negative(self, entries, errors, _):
@@ -2067,7 +2067,7 @@ class TestIncompleteInputs(cmptest.TestCase):
         pos = posting.position
         self.assertEqual(D('100.00'), pos.number)
         self.assertEqual('USD', pos.lot.currency)
-        self.assertEqual(None, pos.lot.cost)
+        self.assertEqual(None, pos.lot.compound_cost)
         self.assertIsInstance(posting.price, amount.Amount)
         self.assertEqual(amount.Amount(None, 'CAD'), posting.price)
 

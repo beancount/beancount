@@ -170,16 +170,11 @@ def parsedoc(expect_errors=False, interpolation=False):
                 entries, balance_errors = booking.book(entries, options_map)
                 errors.extend(balance_errors)
 
-            else:
-                # Just convert the lot specs to lots.
-                entries, convert_errors = booking.convert_lot_specs_to_lots(entries, options_map)
-                errors.extend(convert_errors)
-
-                if interpolation is False:
-                    # If interpolation is not allowed, fail the test if it is seen,
-                    # because it would result in postings with None.
-                    if has_auto_postings(entries):
-                        self.fail("parsedoc() may not use interpolation.")
+            elif interpolation is False:
+                # If interpolation is not allowed, fail the test if it is seen,
+                # because it would result in postings with None.
+                if has_auto_postings(entries):
+                    self.fail("parsedoc() may not use interpolation.")
 
             if expect_errors is not None:
                 if expect_errors is False and errors:
