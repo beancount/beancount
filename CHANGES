@@ -4,6 +4,92 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+????-??-??
+
+  - Changed the semantics of the parsing stage, in a rather profound way.
+    This should have no visible changes to users, but people writing scripts
+    should revise their code is they were using
+    beancount.parser.parser.parse_*() functions and not just beancount.loader.load_*().
+    Just to be clear: beancount.loader.load_*() has not changed.
+
+    Here's what's going on and why: The parser used to carry out interpolation
+    of missing numbers on postings for each transaction locally, while parsing
+    the transactions. This was done by calling by calling
+    beancount.core.interpolate.balance_incomplete_postings(), here:
+    https://bitbucket.org/blais/beancount/src/ee2073aae080aaa8e260abe8a501abf872948f0e/src/python/beancount/parser/grammar.py?at=default#grammar.py-803
+
+    Loading a list of entries was carried out in two steps:
+
+                  ,-----------------------load----------------------.
+                       (recursively)
+                 ,---------------------.   ,---------.   ,------------.
+      (input)--->| parse + interpolate |-->| plugins |-->| validation |--> entries
+                 `---------------------'   `---------'   `------------'
+
+    First, the parser would run on the input and process all the input files
+    recursively (processing includes). Interpolation was carried out at that
+    stage. Then, in a second stage, the plugins were run on the entries and a
+    final validation step was run at the end.
+
+    To implement the booking proposal
+    (http://furius.ca/beancount/doc/proposal-booking), we want for the user to
+    be able to provide a partial specification of lots to be matched against an
+    account's state. The idea is that if there is no ambiguity, the user should
+    be able to specify very little (e.g. if there is a single lot in the account
+    when processing the transaction an empty spec of "{}" should be sufficient.
+    Moreover, when the specification is ambiguous, we also want to support
+    automatic selection of lots according a method specified by the user, e.g.,
+    FIFO matching.
+
+    For this to work, we need to have parsed all the inputs to incomplete
+    specifications that haven't yet been resolved to specific lots before
+    computing the state of the accounts in order to match those lot
+    specifiations to specific lots. The parser has been modified to output such
+    incomplete postings:
+
+              ,-------------------------load-------------------------.
+               (recursively)
+                 ,-------.   ,---------.   ,---------.   ,------------.
+      (input)--->| parse |-->| booking |-->| plugins |-->| validation |--> entries
+                 `-------'   `---------'   `---------'   `------------'
+                        incomplete
+                         entries
+
+    The process of filling in, "interpolating" missing information from postings
+    has been moved to a dedicated step that runs on the list of incomplete
+    entries and resolves them to the regular entries to be processed further by
+    plugins and validation. This booking step is where all the complexity will
+    be isolated and tested.
+
+    A description of the incomplete entries, with their possible intermediate
+    states, can be found here in the parser.py file, since this is what the
+    parser now spits out:
+    https://bitbucket.org/blais/beancount/src/18282452e265959b69d3d10c6d9cf32e5815c522/src/python/beancount/parser/parser.py?at=booking
+
+    At this moment, the old booking algorithm has been isolated to the booking
+    stage and the semantics should be identical to what they used to be. You
+    should observe no difference in behaviour. I've merged these changes now in
+    order to minimize the differences between the booking and default branches
+    and because I was able to do without changing any of the semantics (despite
+    the large number of lines modified). But because that code is now isolated
+    to its own stage I should be able to begin implementing the more complex
+    state-dependent booking algorithms in the 'booking' branch. (I'm excited
+    about this.)
+
+    Because the parser used to spit out regular, complete entries, it was used
+    in much of the tests so that for many of those would not have to concern
+    themselves with making sure the input passed the validation stage, e.g.
+    creating Open directives just to create some Transaction test object. All of
+    those tests had to be revised and I made them all depend on
+    beancount.loader.load_*() instead of the now weakened parser.parse_*()
+    functions. This cleans up the dependencies a bit as well.
+
+    (Note: In some cases I've had to specifically setup the input of some tests
+    in "raw" plugin processing mode to avoid triggering some unwanted and
+    unrelated errors. I'm tempted to remove even more from the default plugins.
+    This may happen in a future CL.)
+
+
 2015-07-23
 
   - In the conversion to the new booking syntax, I had inadventently removed
