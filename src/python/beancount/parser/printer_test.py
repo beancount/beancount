@@ -73,6 +73,12 @@ class TestEntryPrinter(cmptest.TestCase):
     @loader.loaddoc()
     def test_Transaction(self, entries, errors, __):
         """
+        2014-01-01 open Assets:Account1
+        2014-01-01 open Assets:Account2
+        2014-01-01 open Assets:Account3
+        2014-01-01 open Assets:Account4
+        2014-01-01 open Assets:Cash
+
         2014-06-08 *
           Assets:Account1       111.00 BEAN
           Assets:Cash          -111.00 BEAN
@@ -91,7 +97,7 @@ class TestEntryPrinter(cmptest.TestCase):
 
         2014-06-08 * "Narration"
           Assets:Account1       111.00 BEAN {53.24 USD}
-          Assets:Cash          -111.00 BEAN
+          Assets:Cash         -5909.64 USD
 
         2014-06-08 !
           Assets:Account1       111.00 BEAN {53.24 USD} @ 55.02 USD
@@ -99,7 +105,7 @@ class TestEntryPrinter(cmptest.TestCase):
           Assets:Account3       111.00 BEAN @ 55.02 USD
           Assets:Account4       111.00 BEAN
           Assets:Cash          -111.00 BEAN
-          Assets:Cash         -17926.5 BEAN
+          Assets:Cash         -17926.5 USD
 
         2014-06-08 *
           Assets:Account1         111.00 BEAN
@@ -323,45 +329,59 @@ class TestPrinterAlignment(test_utils.TestCase):
     @loader.loaddoc()
     def test_align(self, entries, errors, options_map):
         """
+        2014-01-01 open Expenses:Commissions
+
         2014-07-01 * "Something"
           Expenses:Commissions  20000 USD
           Expenses:Commissions  9.9505 USD
+          Expenses:Commissions  -20009.9505 USD
         """
         dcontext = options_map['dcontext']
         oss = io.StringIO()
         printer.print_entries(entries, dcontext, file=oss)
-        expected_str = textwrap.dedent("""
+        expected_str = textwrap.dedent("""\
+        2014-01-01 open Expenses:Commissions
+
         2014-07-01 * "Something"
-          Expenses:Commissions  20000.0000 USD
-          Expenses:Commissions      9.9505 USD
+          Expenses:Commissions   20000.0000 USD
+          Expenses:Commissions       9.9505 USD
+          Expenses:Commissions  -20009.9505 USD
         """)
         self.assertEqual(expected_str, oss.getvalue())
 
     @loader.loaddoc()
     def test_align_min_width_account(self, entries, errors, options_map):
         """
+        2014-01-01 open Expenses:Commissions
+
         2014-07-01 * "Something"
           Expenses:Commissions  20000 USD
           Expenses:Commissions  9.9505 USD
+          Expenses:Commissions  -20009.9505 USD
         """
         dcontext = options_map['dcontext']
         oss = io.StringIO()
         eprinter = printer.EntryPrinter(dcontext, min_width_account=40)
-        oss.write(eprinter(entries[0]))
+        oss.write(eprinter(entries[1]))
         expected_str = textwrap.dedent("""\
         2014-07-01 * "Something"
-          Expenses:Commissions                      20000.0000 USD
-          Expenses:Commissions                          9.9505 USD
+          Expenses:Commissions                       20000.0000 USD
+          Expenses:Commissions                           9.9505 USD
+          Expenses:Commissions                      -20009.9505 USD
         """)
         self.assertEqual(expected_str, oss.getvalue())
 
     @loader.loaddoc()
     def test_align_with_weight(self, entries, errors, options_map):
         """
+        2014-01-01 open Assets:US:Investments:GOOG
+        2014-01-01 open Expenses:Commissions
+        2014-01-01 open Assets:US:Investments:Cash
+
         2014-07-01 * "Something"
           Assets:US:Investments:GOOG          45 GOOG {504.30 USD}
           Assets:US:Investments:GOOG           4 GOOG {504.30 USD, 2014-11-11}
-          Expenses:Commissions            9.9505 USD
+          Expenses:Commissions            9.9520 USD
           Assets:US:Investments:Cash   -22473.32 CAD @ 1.10 USD
         """
         self.assertFalse(errors)
@@ -370,6 +390,9 @@ class TestPrinterAlignment(test_utils.TestCase):
         oss = io.StringIO()
         printer.print_entries(entries, dcontext, render_weights=False, file=oss)
         expected_str = ''.join([
+            '2014-01-01 open Assets:US:Investments:GOOG\n',
+            '2014-01-01 open Expenses:Commissions\n',
+            '2014-01-01 open Assets:US:Investments:Cash\n',
             '\n',
             '2014-07-01 * "Something"\n',
             '  Assets:US:Investments:GOOG         45 GOOG {504.30 USD}            \n',
@@ -381,11 +404,15 @@ class TestPrinterAlignment(test_utils.TestCase):
 
         oss = io.StringIO()
         printer.print_entries(entries, dcontext, render_weights=True, file=oss)
-        expected_str = textwrap.dedent("""
+        expected_str = textwrap.dedent("""\
+        2014-01-01 open Assets:US:Investments:GOOG
+        2014-01-01 open Expenses:Commissions
+        2014-01-01 open Assets:US:Investments:Cash
+
         2014-07-01 * "Something"
           Assets:US:Investments:GOOG         45 GOOG {504.30 USD}              ;    22693.50 USD
           Assets:US:Investments:GOOG          4 GOOG {504.30 USD, 2014-11-11}  ;     2017.20 USD
-          Expenses:Commissions             9.95 USD                            ;      9.9505 USD
+          Expenses:Commissions             9.95 USD                            ;      9.9520 USD
           Assets:US:Investments:Cash  -22473.32 CAD @ 1.1000 USD               ; -24720.6520 USD
         """)
         self.assertEqual(expected_str, oss.getvalue())
