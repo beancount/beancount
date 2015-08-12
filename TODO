@@ -1310,6 +1310,15 @@ http://furius.ca/beancount/doc/proposal-inter
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - AWESOME IDEA: Write a script that, given an input file with various sets of
+    transactions, will find sections with most similar transactions in a
+    destination file (the main file) and automatically insert those transactions
+    in the destination file in the right place and run a diff with it. This
+    should be part of the import suite. Do this as a post-process to import!
+    Maybe use org-mode or other separators as a way to segregate groups of
+    transactions.
+
+
   - KeyboardInterrupts (if you press it) in the parser will cause errors:
 
       $ bean-report $L exportpf > /tmp/export.ofx
