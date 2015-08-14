@@ -757,6 +757,22 @@ class LineNoColumn(query_compile.EvalColumn):
     def __call__(self, context):
         return context.entry.meta.lineno
 
+class FileLocationColumn(query_compile.EvalColumn):
+    """The filename:lineno where the posting was parsed from or created.
+
+    If you select this column as the first column, because it renders like
+    errors, Emacs is able to pick those up and you can navigate between an
+    arbitrary list of transactions with next-error and previous-error.
+    """
+    __intypes__ = [data.Posting]
+
+    def __init__(self):
+        super().__init__(str)
+
+    def __call__(self, context):
+        return '{}:{:d}:'.format(context.posting.meta.filename,
+                                 context.posting.meta.lineno)
+
 class DateColumn(query_compile.EvalColumn):
     "The date of the parent transaction for this posting."
     __equivalent__ = 'entry.date'
@@ -976,6 +992,7 @@ class FilterPostingsEnvironment(query_compile.CompilationEnvironment):
         'type'          : TypeColumn,
         'filename'      : FilenameColumn,
         'lineno'        : LineNoColumn,
+        'location'      : FileLocationColumn,
         'date'          : DateColumn,
         'year'          : YearColumn,
         'month'         : MonthColumn,
