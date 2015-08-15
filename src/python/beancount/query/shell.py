@@ -4,6 +4,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import atexit
 import cmd
+import codecs
 import io
 import os
 import re
@@ -133,7 +134,8 @@ class DispatchingShell(cmd.Cmd):
             return pager.ConditionalPager(self.vars.get('pager', None),
                                           minlines=misc_utils.get_screen_height())
         else:
-            return pager.flush_only(sys.stdout)
+            file = codecs.getwriter("utf-8")(sys.stdout.buffer)
+            return pager.flush_only(file)
 
     def cmdloop(self):
         """Override cmdloop to handle keyboard interrupts."""
