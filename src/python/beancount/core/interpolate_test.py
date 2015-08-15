@@ -15,7 +15,6 @@ from beancount.core import position
 from beancount.parser import parser
 from beancount.parser import booking
 from beancount.parser import cmptest
-from beancount.parser import printer
 from beancount import loader
 
 
@@ -299,7 +298,7 @@ class TestBalance(cmptest.TestCase):
 class TestBalanceIncompletePostings(cmptest.TestCase):
 
     def get_incomplete_entry(self, string):
-        """Parse an incomplete entry and convert its incomplete LotSpec representation to lots.
+        """Parse an incomplete entry and convert its LotSpec representation to a Lot.
 
         Args:
           string: The input string to parse.

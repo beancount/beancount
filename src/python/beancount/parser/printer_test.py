@@ -7,7 +7,6 @@ import re
 import textwrap
 
 from beancount.parser import printer
-from beancount.parser import parser
 from beancount.parser import cmptest
 from beancount.core import data
 from beancount.core import interpolate

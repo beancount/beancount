@@ -543,10 +543,10 @@ def generate_tax_accounts(year, date_max):
     date_federal = (date_filing + datetime.timedelta(days=random.randint(0, 4)))
     date_state = (date_filing + datetime.timedelta(days=random.randint(0, 4)))
 
-    q = D('0.01')
-    amount_federal = D(max(random.normalvariate(500, 120), 12)).quantize(q)
+    quantum = D('0.01')
+    amount_federal = D(max(random.normalvariate(500, 120), 12)).quantize(quantum)
     amount_federal_neg = -amount_federal
-    amount_state = D(max(random.normalvariate(300, 100), 10)).quantize(q)
+    amount_state = D(max(random.normalvariate(300, 100), 10)).quantize(quantum)
     amount_state_neg = -amount_state
     amount_payable = -(amount_federal + amount_state)
 

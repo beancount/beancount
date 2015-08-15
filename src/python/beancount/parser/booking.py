@@ -8,7 +8,6 @@ import os
 import logging
 
 from beancount.core.data import Transaction
-from beancount.core.data import new_metadata
 from beancount.core.position import Position
 from beancount.core.position import Lot
 from beancount.core.amount import Amount
@@ -16,8 +15,6 @@ from beancount.core.number import ZERO
 from beancount.core import interpolate
 from beancount.core import data
 from beancount.core import inventory
-from beancount.parser import printer
-
 
 
 __sanity_checks__ = False
@@ -40,10 +37,12 @@ def book(incomplete_entries, options_map):
         errors: New errors produced during interpolation.
     """
     if os.getenv("BEANCOUNT_BOOKING"):
-        entries, interpolation_errors = full_interpolation(incomplete_entries, options_map)
+        entries, interpolation_errors = full_interpolation(incomplete_entries,
+                                                           options_map)
     else:
         # Old-school local-only interpolation.
-        entries, interpolation_errors = simple_interpolation(incomplete_entries, options_map)
+        entries, interpolation_errors = simple_interpolation(incomplete_entries,
+                                                             options_map)
 
     validation_errors = validate_inventory_booking(entries, options_map)
     return entries, (interpolation_errors + validation_errors)

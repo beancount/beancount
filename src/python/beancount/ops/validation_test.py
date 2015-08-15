@@ -4,7 +4,6 @@ import datetime
 import re
 
 from beancount.core import data
-from beancount.parser import printer
 from beancount.parser import cmptest
 from beancount.ops import validation
 from beancount import loader

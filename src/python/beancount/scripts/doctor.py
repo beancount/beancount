@@ -53,7 +53,6 @@ def do_roundtrip(filename, unused_args):
     Args:
       filename: A string, the Beancount input filename.
     """
-    from beancount.parser import parser
     from beancount.parser import printer
     from beancount.core import compare
     from beancount import loader

@@ -6,7 +6,6 @@ import unittest
 from beancount.reports import misc_reports
 from beancount.reports import report_test
 from beancount.parser import options
-from beancount.parser import parser
 from beancount import loader
 
 

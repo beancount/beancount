@@ -2,7 +2,6 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import re
 
-from beancount.parser import parser
 from beancount.parser import cmptest
 from beancount.plugins import implicit_prices
 from beancount.plugins import unique_prices

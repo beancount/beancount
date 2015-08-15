@@ -1,7 +1,5 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
-from beancount.parser import parser
-from beancount.parser import printer
 from beancount.parser import cmptest
 from beancount.plugins import auto_accounts
 from beancount import loader
