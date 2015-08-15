@@ -9,6 +9,7 @@ import unittest
 
 from beancount.parser import parser
 from beancount.parser import cmptest
+from beancount.parser import booking
 
 
 class TestCompareTestFunctions(unittest.TestCase):
@@ -55,8 +56,14 @@ class TestTestCase(cmptest.TestCase):
 
     """)
 
+    def setUp(self):
+        entries, parse_errors, options_map = parser.parse_string(self.ledger_text)
+        self.entries, booking_errors = booking.book(entries, options_map)
+        self.assertFalse(parse_errors)
+        self.assertFalse(booking_errors)
+
     def test_assertEqualEntries(self):
-        entries, _, __ = parser.parse_string(self.ledger_text)
+        entries = self.entries
         self.assertEqualEntries(entries, self.ledger_text)
         self.assertEqualEntries(self.ledger_text, entries)
 
@@ -88,7 +95,7 @@ class TestTestCase(cmptest.TestCase):
             self.assertEqualEntries(entries, mod_ledger_text)
 
     def test_assertIncludesEntries(self):
-        entries, _, __ = parser.parse_string(self.ledger_text)
+        entries = self.entries
 
         # Check that non-strict inclusion succeeds.
         self.assertIncludesEntries(entries, self.ledger_text)
@@ -119,7 +126,7 @@ class TestTestCase(cmptest.TestCase):
 
 
     def test_assertExcludesEntries(self):
-        entries, _, __ = parser.parse_string(self.ledger_text)
+        entries = self.entries
 
         # Check that exclusion of all entries fails.
         with self.assertRaises(AssertionError):

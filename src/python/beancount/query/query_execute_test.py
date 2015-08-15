@@ -15,6 +15,7 @@ from beancount.query import query_execute as qx
 from beancount.parser import cmptest
 from beancount.parser import parser
 from beancount.utils import misc_utils
+from beancount import loader
 
 
 class QueryBase(cmptest.TestCase):
@@ -59,7 +60,7 @@ class QueryBase(cmptest.TestCase):
                     sort_rows=False,
                     debug=False):
 
-        entries, _, options_map = parser.parse_string(input_string)
+        entries, _, options_map = loader.load_string(input_string)
         query = self.compile(bql_string)
         result_types, result_rows = qx.execute_query(query, entries, options_map)
 
@@ -116,7 +117,7 @@ class CommonInputBase:
     """)
     def setUp(self):
         super().setUp()
-        self.entries, _, self.options_map = parser.parse_string(textwrap.dedent(self.INPUT))
+        self.entries, _, self.options_map = loader.load_string(textwrap.dedent(self.INPUT))
 
 
 class TestFilterEntries(CommonInputBase, QueryBase):

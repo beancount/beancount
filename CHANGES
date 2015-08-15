@@ -4,6 +4,123 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-08-15
+
+  - Changed the semantics of the parsing stage, in a fairly profound way.
+    This should have no visible changes to users, but people writing scripts
+    should revise their code if they were using
+    beancount.parser.parser.parse_*() functions.
+
+    Just to be clear: beancount.loader.load_*() has not changed. If you just use
+    the loader, there are no changes. Changes are only at the parser level.
+
+    Here's what's going on and why: The parser used to carry out interpolation
+    of missing numbers on postings for each transaction locally, while parsing
+    the transactions. This was done by calling by calling
+    beancount.core.interpolate.balance_incomplete_postings(), here:
+    https://bitbucket.org/blais/beancount/src/ee2073aae080aaa8e260abe8a501abf872948f0e/src/python/beancount/parser/grammar.py?at=default#grammar.py-803
+
+    Loading a list of entries was carried out in two steps:
+
+                  ,-----------------------load----------------------.
+                       (recursively)
+                 ,---------------------.   ,---------.   ,------------.
+      (input)--->| parse + interpolate |-->| plugins |-->| validation |--> entries
+                 `---------------------'   `---------'   `------------'
+
+    First, the parser would run on the input and process all the input files
+    recursively (processing includes). "Interpolation", the process of filling
+    in missing numbers, was carried out at that stage, during parsing, and only
+    locally, that is, for each transaction in isolation. "Booking" of lots, that
+    is, selecting which of an account's inventory lots to match and reduce, was
+    explicit. This booking could not take advantage of the accumulated
+    inventories in order to vary its behavior. You had to specify the entire lot
+    information unambiguously.
+
+    After this, in a second stage, the plugins were run on the entries and a
+    final validation step was run at the end.
+
+    To implement the booking proposal
+    (http://furius.ca/beancount/doc/proposal-booking), we want for the user to
+    be able to provide a partial specification of lots to be matched against an
+    account's accumulated inventory at the date the transaction is to be
+    applied. The idea is that if there is no ambiguity, the user should be able
+    to specify very little information about a lot (for example if there is a
+    single lot in the account when processing the transaction an empty spec of
+    "{}" should be sufficient). Moreover, where the specification is ambiguous,
+    we also want to support automatic selection of lots according a method
+    specified by the user, e.g., FIFO booking, LIFO booking, etc.
+
+    For this to work, we need to have parsed all the inputs to some sort of
+    incomplete specification, a representation of inputs that hasn't yet been
+    resolved to specific lots, in order to carry out booking. The parser has
+    been modified to output such incomplete postings:
+
+              ,-------------------------load-------------------------.
+               (recursively)
+                 ,-------.   ,-------------.   ,---------.   ,------------.
+      (input)--->| parse |-->|   booking   |-->| plugins |-->| validation |--> entries
+                 `-------'   |      +      |   `---------'   `------------'
+                             | interpolate |
+                             `-------------'
+                        incomplete
+                         entries
+
+    Because "interpolation" runs on the result of specific lot values, "booking"
+    must run before it, and so they are inter-related. Thus, booking and
+    inteprolation has been moved to a dedicated step that runs on the list of
+    incomplete entries and resolves them to the regular entries to be processed
+    further by plugins and validation.
+
+    This also has a nice side-effect: the booking step is where all the
+    complexity is, and it is now isolated and I will be able to test and
+    experiment on it in isolation. This is where all the fun will be.
+
+    A description of the incomplete specifications output by the parser can be
+    found here in the parser.py file, this is the description of the
+    intermediate state of postings whose lots haven't yet been matched and
+    resolved to specific inventory lots:
+    https://bitbucket.org/blais/beancount/src/18282452e265959b69d3d10c6d9cf32e5815c522/src/python/beancount/parser/parser.py?at=booking
+
+    Essentially, a posting's 'lot' attribute contains a "LotSpec" tuple instead
+    of a "Lot" tuple, and several numbers may be left unfilled (for interpolate
+    values). I don't imagine anyone will ever have to manipulate such
+    intermediate entries, only the booking code.
+
+    The previous booking algorithm has been moved to the booking stage and the
+    semantics should be identical to what they used to be. This is still the
+    default algorithm--it just runs in its own dedicated stage, still operating
+    locally on each transation. You should observe no difference in behaviour.
+
+    I've merged these changes now in order to minimize the differences between
+    the booking and default branches and because I was able to do it without
+    changing any of the semantics (despite the large number of lines and tests
+    modified). This was a necessary refactoring. Because that code is now
+    isolated to its own stage I should be able to begin implementing the more
+    complex state-dependent booking algorithms in the 'booking' branch. (I'm
+    excited about this.) I could even implement different booking heuristics and
+    switch between them.
+
+    Because the parser used to spit out regular, complete entries,
+    parser.parsedoc() was used in much of the tests instead of loader.loaddoc(),
+    so that many of those tests would not have to concern themselves with making
+    sure the input passed the validation stage run by the loader. For example,
+    creating Open directives just to create some Transaction test object wasn't
+    necessary in the tests. All of those tests had to be revised and I made them
+    all depend on beancount.loader.load_*() instead of the now weakened
+    parser.parse_*() functions which output incomplete, unbooked entries. This
+    cleans up the dependencies a bit as well. If you wrote your own unit tests
+    and were using parser.parsedoc(), you should convert them to use
+    loader.loaddoc(). In order for this change not to go unnoticed (and for
+    naming consistency with parse_string() and parse_file()) I'll probably
+    rename parser.parsedoc() to parser.parse_doc() and ditto with the loader.
+
+    (Note: In some cases I've had to specifically setup the input of some tests
+    in "raw" plugin processing mode to avoid triggering some unwanted and
+    unrelated errors. I'm tempted to remove even more from the default plugins.
+    This may happen in a future CL.)
+
+
 2015-07-23
 
   - In the conversion to the new booking syntax, I had inadventently removed

@@ -6,6 +6,8 @@ import collections
 import copy
 import os
 import re
+import sys
+import traceback
 from os import path
 from datetime import date
 
@@ -13,6 +15,7 @@ from beancount.core.number import ZERO
 from beancount.core.amount import Amount
 from beancount.core import display_context
 from beancount.core.position import Lot
+from beancount.core.position import LotSpec
 from beancount.core.position import Position
 from beancount.core.data import Transaction
 from beancount.core.data import Balance
@@ -49,9 +52,18 @@ DeprecatedError = collections.namedtuple('DeprecatedError', 'source message entr
 
 
 # Temporary holder for key-value pairs.
+#
+# Attributes:
+#  key: A string, the name of the key.
+#  value: Any object.
 KeyValue = collections.namedtuple('KeyValue', 'key value')
 
 # Convenience holding class for amounts with per-share and total value.
+#
+# Attributes:
+#   number_per: A Decimal instance, the cost/price per unit.
+#   number_total: A Decimal instance, the total cost/price.
+#   currency: A string, the commodity of the amount.
 CompoundAmount = collections.namedtuple('CompoundAmount',
                                         'number_per number_total currency')
 
@@ -183,19 +195,25 @@ class Builder(lexer.LexBuilder):
         if entries:
             self.entries = entries
 
-    def build_grammar_error(self, filename, lineno, message, exc_type=None):
+    def build_grammar_error(self, filename, lineno, message,
+                            exc_type=None, exc_traceback=None):
         """Build a grammar error and appends it to the list of pending errors.
 
         Args:
           filename: The current filename
           lineno: The current line number
-          message: The message of the error.
+          message: The message of the error, or the exc_value exception value.
           exc_type: An exception type, if an exception occurred.
+          exc_traceback: A traceback object.
         """
         if not isinstance(message, str):
             message = str(message)
         if exc_type is not None:
-            message = '{}: {}'.format(exc_type.__name__, message)
+            strings = traceback.format_exception_only(exc_type, message)
+            tblist = traceback.extract_tb(exc_traceback)
+            filename, lineno, _, __ = tblist[0]
+            message = '{} ({}:{})'.format(strings[0], filename, lineno)
+
         meta = new_metadata(filename, lineno)
         self.errors.append(
             ParserSyntaxError(meta, message, None))
@@ -366,8 +384,9 @@ class Builder(lexer.LexBuilder):
           may be None.
         """
         if lot_comp_list is None:
-            return (None, None, None, None)
-        assert isinstance(lot_comp_list, list), "Internal error in parser."
+            return LotSpec(None, None, None, None, None)
+        assert isinstance(lot_comp_list, list), (
+            "Internal error in parser: {}".format(lot_comp_list))
 
         compound_cost = None
         lot_date = None
@@ -399,7 +418,8 @@ class Builder(lexer.LexBuilder):
                                     "Duplicate merge-cost spec", None))
 
             else:
-                assert isinstance(comp, str)
+                assert isinstance(comp, str), (
+                    "Currency component is not string: '{}'".format(comp))
                 if label is None:
                     label = comp
                 else:
@@ -417,7 +437,7 @@ class Builder(lexer.LexBuilder):
                 ParserError(self.get_lexer_location(),
                             "Merge-cost not supported yet.", None))
 
-        return (compound_cost, lot_date, label, merge)
+        return LotSpec(None, compound_cost, lot_date, label, merge)
 
     def lot_spec_total_legacy(self, cost, lot_date):
         """Process a deprecated legacy 'total cost' specification.
@@ -429,56 +449,25 @@ class Builder(lexer.LexBuilder):
           Same as lot_spec().
         """
         compound_cost = CompoundAmount(ZERO, cost.number, cost.currency)
-        return (compound_cost, lot_date, None, None)
+        return LotSpec(None, compound_cost, lot_date, None, None)
 
-    def position(self, filename, lineno, amount, lot_info):
+    def position(self, filename, lineno, amount, lot_spec):
         """Process a position grammar rule.
 
         Args:
-          filename: the current filename.
-          lineno: the current line number.
-          amount: an instance of Amount for the position.
-          lot_info: a tuple of (compound-cost, lot-date, label)
+          filename: The current filename.
+          lineno: The current line number.
+          amount: An instance of Amount for the position.
+          lot_spec: An instance of LotSpec.
         Returns:
           A new instance of Position.
         """
-        compound_cost, lot_date, label, merge = (lot_info
-                                                 if lot_info else
-                                                 (None, None, None, None))
-
-        # Compute the cost.
-        if compound_cost is not None:
-            if compound_cost.number_total is not None:
-                # Compute the per-unit cost if there is some total cost
-                # component involved.
-                units = amount.number
-                cost_total = compound_cost.number_total
-                if compound_cost.number_per is not None:
-                    cost_total += compound_cost.number_per * units
-                unit_cost = cost_total / abs(units)
-            else:
-                unit_cost = compound_cost.number_per
-            cost = Amount(unit_cost, compound_cost.currency)
-        else:
-            cost = None
-
-        # We don't allow a cost nor a price of zero. (Conversion entries may use
-        # a price of zero as the only special case, but never for costs.)
-        if cost is not None:
-            if amount.number == ZERO:
-                meta = new_metadata(filename, lineno)
-                self.errors.append(
-                    ParserError(meta,
-                                'Amount is zero: "{}"'.format(amount), None))
-
-            if cost.number < ZERO:
-                meta = new_metadata(filename, lineno)
-                self.errors.append(
-                    ParserError(meta, 'Cost is negative: "{}"'.format(cost), None))
-
-        lot = Lot(amount.currency, cost, lot_date)
-
-        return Position(lot, amount.number)
+        if lot_spec is None:
+            lot_spec = LotSpec(None, None, None, None, None)
+        # FIXME: Remove this assert for performance reasons.
+        assert isinstance(lot_spec, LotSpec), (
+            "Invalid type for Position.lot: %s (%s)".format(type(lot_spec), lot_spec))
+        return Position(lot_spec._replace(currency=amount.currency), amount.number)
 
     def handle_list(self, object_list, new_object):
         """Handle a recursive list grammar rule, generically.
@@ -690,7 +679,7 @@ class Builder(lexer.LexBuilder):
         """
         # Prices may not be negative.
         if not __allow_negative_prices__:
-            if price and price.number < ZERO:
+            if price and price.number is not None and price.number < ZERO:
                 meta = new_metadata(filename, lineno)
                 self.errors.append(
                     ParserError(meta, (
@@ -722,7 +711,6 @@ class Builder(lexer.LexBuilder):
 
         meta = new_metadata(filename, lineno)
         return Posting(account, position, price, chr(flag) if flag else None, meta)
-
 
     def txn_field_new(self, _):
         """Create a new TxnFields instance.
@@ -895,7 +883,7 @@ class Builder(lexer.LexBuilder):
         # Merge the tags from the stack with the explicit tags of this
         # transaction, or make None.
         tags = txn_fields.tags
-        assert isinstance(tags, (set, frozenset))
+        assert isinstance(tags, (set, frozenset)), "Tags is not a set: {}".format(tags)
         if self.tags:
             tags.update(self.tags)
         tags = frozenset(tags) if tags else None

@@ -15,7 +15,6 @@ from beancount.core import data
 from beancount.core import inventory
 from beancount.core import amount
 from beancount.core import account_types
-from beancount.parser import parser
 from beancount.utils import test_utils
 from beancount import loader
 
@@ -184,9 +183,11 @@ class TestRealGetters(unittest.TestCase):
 
 class TestRealization(unittest.TestCase):
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def test_postings_by_account(self, entries, errors, _):
         """
+        option "plugin_processing_mode" "raw"
+
         2012-01-01 open Expenses:Restaurant
         2012-01-01 open Expenses:Movie
         2012-01-01 open Assets:Cash
@@ -259,7 +260,7 @@ class TestRealization(unittest.TestCase):
         self.assertEqual(set(account_types.DEFAULT_ACCOUNT_TYPES),
                          real_account.keys())
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def test_simple_realize(self, entries, errors, options_map):
         """
           2013-05-01 open Assets:US:Checking:Sub   USD
@@ -395,9 +396,11 @@ class TestRealFilter(unittest.TestCase):
 
 class TestRealOther(test_utils.TestCase):
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def test_get_postings(self, entries, errors, _):
         """
+        option "plugin_processing_mode" "raw"
+
         2012-01-01 open Assets:Bank:Checking
         2012-01-01 open Expenses:Restaurant
         2012-01-01 open Expenses:Movie
@@ -577,7 +580,7 @@ class TestRealOther(test_utils.TestCase):
         balance = realization.compute_balance(realization.get(real_root, 'Assets:US:Bank'))
         self.assertEqual(inventory.from_string('310 USD'), balance)
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def test_dump(self, entries, _, __):
         """
         2012-01-01 open Assets:Bank1:Checking
@@ -681,3 +684,36 @@ class TestFindLastActive(unittest.TestCase):
         txn_postings = realization.get(real_account, 'Assets:Target').txn_postings
         txn_posting = realization.find_last_active_posting(txn_postings)
         self.assertEqual(datetime.date(2014, 2, 1), txn_posting.txn.date)
+
+
+class TestComputeBalance(unittest.TestCase):
+
+    @loader.loaddoc(expect_errors=True)
+    def test_compute_postings_balance(self, entries, _, __):
+        """
+        2014-01-01 open Assets:Bank:Checking
+        2014-01-01 open Assets:Bank:Savings
+        2014-01-01 open Assets:Investing
+        2014-01-01 open Assets:Other
+
+        2014-05-26 note Assets:Investing "Buying some shares"
+
+        2014-05-30 *
+          Assets:Bank:Checking  111.23 USD
+          Assets:Bank:Savings   222.74 USD
+          Assets:Bank:Savings   17.23 CAD
+          Assets:Investing      10000 EUR
+          Assets:Investing      32 GOOG {45.203 USD}
+          Assets:Other          1000 EUR @ 1.78 GBP
+          Assets:Other          1000 EUR @@ 1780 GBP
+        """
+        postings = entries[:-1] + entries[-1].postings
+        computed_balance = realization.compute_postings_balance(postings)
+
+        expected_balance = inventory.Inventory()
+        expected_balance.add_amount(amount.Amount('333.97', 'USD'))
+        expected_balance.add_amount(amount.Amount('17.23', 'CAD'))
+        expected_balance.add_amount(amount.Amount('32', 'GOOG'),
+                                    amount.Amount('45.203', 'USD'))
+        expected_balance.add_amount(amount.Amount('12000', 'EUR'))
+        self.assertEqual(expected_balance, computed_balance)

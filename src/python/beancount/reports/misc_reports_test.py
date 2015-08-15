@@ -7,6 +7,7 @@ from beancount.reports import misc_reports
 from beancount.reports import report_test
 from beancount.parser import options
 from beancount.parser import parser
+from beancount import loader
 
 
 class TestMiscReports(unittest.TestCase):
@@ -22,7 +23,7 @@ class TestMiscReports(unittest.TestCase):
             self.assertEqual(options.OPTIONS_DEFAULTS, options_map)
             self.assertTrue(isinstance(output, str))
 
-    @parser.parsedoc(expect_errors=True)
+    @loader.loaddoc(expect_errors=True)
     def test_errors(self, entries, errors, options_map):
         """
         hello world

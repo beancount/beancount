@@ -51,16 +51,18 @@ class TestEntryPrinter(cmptest.TestCase):
 
         # Print out the entries and parse them back in.
         oss1 = io.StringIO()
+        oss1.write('option "plugin_processing_mode" "raw"\n')
         printer.print_entries(entries1, file=oss1)
-        entries2, errors, __ = parser.parse_string(oss1.getvalue())
+        entries2, errors, __ = loader.load_string(oss1.getvalue())
 
         self.assertEqualEntries(entries1, entries2)
         self.assertFalse(errors)
 
         # Print out those reparsed and parse them back in.
         oss2 = io.StringIO()
+        oss2.write('option "plugin_processing_mode" "raw"\n')
         printer.print_entries(entries2, file=oss2)
-        entries3, errors, __ = parser.parse_string(oss2.getvalue())
+        entries3, errors, __ = loader.load_string(oss2.getvalue())
 
         self.assertEqualEntries(entries1, entries3)
         self.assertFalse(errors)
@@ -68,9 +70,15 @@ class TestEntryPrinter(cmptest.TestCase):
         # Compare the two output texts.
         self.assertEqual(oss2.getvalue(), oss1.getvalue())
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def test_Transaction(self, entries, errors, __):
         """
+        2014-01-01 open Assets:Account1
+        2014-01-01 open Assets:Account2
+        2014-01-01 open Assets:Account3
+        2014-01-01 open Assets:Account4
+        2014-01-01 open Assets:Cash
+
         2014-06-08 *
           Assets:Account1       111.00 BEAN
           Assets:Cash          -111.00 BEAN
@@ -89,7 +97,7 @@ class TestEntryPrinter(cmptest.TestCase):
 
         2014-06-08 * "Narration"
           Assets:Account1       111.00 BEAN {53.24 USD}
-          Assets:Cash          -111.00 BEAN
+          Assets:Cash         -5909.64 USD
 
         2014-06-08 !
           Assets:Account1       111.00 BEAN {53.24 USD} @ 55.02 USD
@@ -97,7 +105,7 @@ class TestEntryPrinter(cmptest.TestCase):
           Assets:Account3       111.00 BEAN @ 55.02 USD
           Assets:Account4       111.00 BEAN
           Assets:Cash          -111.00 BEAN
-          Assets:Cash         -17926.5 BEAN
+          Assets:Cash         -17926.5 USD
 
         2014-06-08 *
           Assets:Account1         111.00 BEAN
@@ -111,52 +119,60 @@ class TestEntryPrinter(cmptest.TestCase):
         """
         self.assertRoundTrip(entries, errors)
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def test_Balance(self, entries, errors, __):
         """
-        2014-06-08 balance Assets:Account1     53.24 USD
+        2014-06-01 open Assets:Account1
+        2014-06-08 balance Assets:Account1     0.00 USD
         """
         self.assertRoundTrip(entries, errors)
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def test_Note(self, entries, errors, __):
         """
+        2014-06-01 open Assets:Account1
         2014-06-08 note Assets:Account1 "Note"
         """
         self.assertRoundTrip(entries, errors)
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def test_Document(self, entries, errors, __):
         """
+        option "plugin_processing_mode" "raw"
+        2014-06-01 open Assets:Account1
         2014-06-08 document Assets:Account1 "/path/to/document.pdf"
         2014-06-08 document Assets:Account1 "path/to/document.csv"
         """
         self.assertRoundTrip(entries, errors)
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def test_Pad(self, entries, errors, __):
         """
+        2014-01-01 open Assets:Account1
+        2014-01-01 open Assets:Account2
         2014-06-08 pad Assets:Account1 Assets:Account2
+        2014-10-01 balance Assets:Account1  1 USD
         """
         self.assertRoundTrip(entries, errors)
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def test_Open(self, entries, errors, __):
         """
         2014-06-08 open Assets:Account1
-        2014-06-08 open Assets:Account1  USD
-        2014-06-08 open Assets:Account1  USD,CAD,EUR
+        2014-06-08 open Assets:Account2  USD
+        2014-06-08 open Assets:Account3  USD,CAD,EUR
         """
         self.assertRoundTrip(entries, errors)
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def test_Close(self, entries, errors, __):
         """
+        2014-01-01 open  Assets:Account1
         2014-06-08 close Assets:Account1
         """
         self.assertRoundTrip(entries, errors)
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def test_Price(self, entries, errors, __):
         """
         2014-06-08 price  BEAN   53.24 USD
@@ -164,7 +180,7 @@ class TestEntryPrinter(cmptest.TestCase):
         """
         self.assertRoundTrip(entries, errors)
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def test_Event(self, entries, errors, __):
         """
         2014-06-08 event "location" "New York, NY, USA"
@@ -225,7 +241,7 @@ class TestPrinterSpacing(unittest.TestCase):
         2014-10-12 price BEAN   11 USD
         2014-10-13 price BEAN   11 USD
         """)
-        entries, _, __ = parser.parse_string(input_text)
+        entries, _, __ = loader.load_string(input_text)
 
         oss = io.StringIO()
         printer.print_entries(entries, file=oss)
@@ -240,9 +256,12 @@ class TestDisplayContext(test_utils.TestCase):
 
     maxDiff = 2048
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def test_precision(self, entries, errors, options_map):
         """
+        2014-01-01 open Assets:Account
+        2014-01-01 open Assets:Cash
+
         2014-07-01 *
           Assets:Account              1 INT
           Assets:Account            1.1 FP1
@@ -262,6 +281,9 @@ class TestDisplayContext(test_utils.TestCase):
         printer.print_entries(entries, dcontext, file=oss)
 
         expected_str = textwrap.dedent("""
+        2014-01-01 open Assets:Account
+        2014-01-01 open Assets:Cash
+
         2014-07-01 *
           Assets:Account             1 INT
           Assets:Account           1.1 FP1
@@ -304,48 +326,62 @@ class TestPrinterAlignment(test_utils.TestCase):
             '76400.203                               ',
             ], aligned_strings)
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def test_align(self, entries, errors, options_map):
         """
+        2014-01-01 open Expenses:Commissions
+
         2014-07-01 * "Something"
           Expenses:Commissions  20000 USD
           Expenses:Commissions  9.9505 USD
+          Expenses:Commissions  -20009.9505 USD
         """
         dcontext = options_map['dcontext']
         oss = io.StringIO()
         printer.print_entries(entries, dcontext, file=oss)
-        expected_str = textwrap.dedent("""
+        expected_str = textwrap.dedent("""\
+        2014-01-01 open Expenses:Commissions
+
         2014-07-01 * "Something"
-          Expenses:Commissions  20000.0000 USD
-          Expenses:Commissions      9.9505 USD
+          Expenses:Commissions   20000.0000 USD
+          Expenses:Commissions       9.9505 USD
+          Expenses:Commissions  -20009.9505 USD
         """)
         self.assertEqual(expected_str, oss.getvalue())
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def test_align_min_width_account(self, entries, errors, options_map):
         """
+        2014-01-01 open Expenses:Commissions
+
         2014-07-01 * "Something"
           Expenses:Commissions  20000 USD
           Expenses:Commissions  9.9505 USD
+          Expenses:Commissions  -20009.9505 USD
         """
         dcontext = options_map['dcontext']
         oss = io.StringIO()
         eprinter = printer.EntryPrinter(dcontext, min_width_account=40)
-        oss.write(eprinter(entries[0]))
+        oss.write(eprinter(entries[1]))
         expected_str = textwrap.dedent("""\
         2014-07-01 * "Something"
-          Expenses:Commissions                      20000.0000 USD
-          Expenses:Commissions                          9.9505 USD
+          Expenses:Commissions                       20000.0000 USD
+          Expenses:Commissions                           9.9505 USD
+          Expenses:Commissions                      -20009.9505 USD
         """)
         self.assertEqual(expected_str, oss.getvalue())
 
-    @parser.parsedoc()
+    @loader.loaddoc()
     def test_align_with_weight(self, entries, errors, options_map):
         """
+        2014-01-01 open Assets:US:Investments:GOOG
+        2014-01-01 open Expenses:Commissions
+        2014-01-01 open Assets:US:Investments:Cash
+
         2014-07-01 * "Something"
           Assets:US:Investments:GOOG          45 GOOG {504.30 USD}
           Assets:US:Investments:GOOG           4 GOOG {504.30 USD, 2014-11-11}
-          Expenses:Commissions            9.9505 USD
+          Expenses:Commissions            9.9520 USD
           Assets:US:Investments:Cash   -22473.32 CAD @ 1.10 USD
         """
         self.assertFalse(errors)
@@ -354,6 +390,9 @@ class TestPrinterAlignment(test_utils.TestCase):
         oss = io.StringIO()
         printer.print_entries(entries, dcontext, render_weights=False, file=oss)
         expected_str = ''.join([
+            '2014-01-01 open Assets:US:Investments:GOOG\n',
+            '2014-01-01 open Expenses:Commissions\n',
+            '2014-01-01 open Assets:US:Investments:Cash\n',
             '\n',
             '2014-07-01 * "Something"\n',
             '  Assets:US:Investments:GOOG         45 GOOG {504.30 USD}            \n',
@@ -365,11 +404,15 @@ class TestPrinterAlignment(test_utils.TestCase):
 
         oss = io.StringIO()
         printer.print_entries(entries, dcontext, render_weights=True, file=oss)
-        expected_str = textwrap.dedent("""
+        expected_str = textwrap.dedent("""\
+        2014-01-01 open Assets:US:Investments:GOOG
+        2014-01-01 open Expenses:Commissions
+        2014-01-01 open Assets:US:Investments:Cash
+
         2014-07-01 * "Something"
           Assets:US:Investments:GOOG         45 GOOG {504.30 USD}              ;    22693.50 USD
           Assets:US:Investments:GOOG          4 GOOG {504.30 USD, 2014-11-11}  ;     2017.20 USD
-          Expenses:Commissions             9.95 USD                            ;      9.9505 USD
+          Expenses:Commissions             9.95 USD                            ;      9.9520 USD
           Assets:US:Investments:Cash  -22473.32 CAD @ 1.1000 USD               ; -24720.6520 USD
         """)
         self.assertEqual(expected_str, oss.getvalue())
@@ -409,7 +452,7 @@ class TestPrinterMisc(test_utils.TestCase):
             settlement: 2000-01-05
 
         """)
-        entries, errors, options_map = parser.parse_string(input_string)
+        entries, errors, options_map = loader.load_string(input_string)
         self.assertFalse(errors)
         oss = io.StringIO()
         printer.print_entries(entries, file=oss)

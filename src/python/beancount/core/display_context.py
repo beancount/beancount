@@ -140,6 +140,9 @@ class _CurrencyContext:
         # on a large set of numbers, possibly even during parsing. Consider
         # reimplementing this in C, after profiling.
 
+        if number is None:
+            return
+
         # Update the signs.
         num_tuple = number.as_tuple()
         if num_tuple.sign:

@@ -4,7 +4,7 @@ import unittest
 
 from beancount.core import data
 from beancount.core import compare
-from beancount.parser import parser
+from beancount import loader
 
 
 TEST_INPUT = """
@@ -38,7 +38,7 @@ class TestCompare(unittest.TestCase):
     def test_hash_entries(self):
         previous_hashes = None
         for _ in range(64):
-            entries, errors, options_map = parser.parse_string(TEST_INPUT)
+            entries, errors, options_map = loader.load_string(TEST_INPUT)
             hashes, errors = compare.hash_entries(entries)
             self.assertFalse(errors)
             if previous_hashes is None:
@@ -47,13 +47,13 @@ class TestCompare(unittest.TestCase):
                 self.assertEqual(previous_hashes.keys(), hashes.keys())
 
     def test_hash_entries_with_duplicates(self):
-        entries, _, __ = parser.parse_string("""
+        entries, _, __ = loader.load_string("""
           2014-08-01 price GOOG  603.10 USD
         """)
         hashes, errors = compare.hash_entries(entries)
         self.assertEqual(1, len(hashes))
 
-        entries, _, __ = parser.parse_string("""
+        entries, _, __ = loader.load_string("""
           2014-08-01 price GOOG  603.10 USD
           2014-08-01 price GOOG  603.10 USD
           2014-08-01 price GOOG  603.10 USD
@@ -64,8 +64,8 @@ class TestCompare(unittest.TestCase):
         self.assertEqual(1, len(hashes))
 
     def test_compare_entries(self):
-        entries1, _, __ = parser.parse_string(TEST_INPUT)
-        entries2, _, __ = parser.parse_string(TEST_INPUT)
+        entries1, _, __ = loader.load_string(TEST_INPUT)
+        entries2, _, __ = loader.load_string(TEST_INPUT)
 
         # Check two equal sets.
         same, missing1, missing2 = compare.compare_entries(entries1, entries2)
@@ -100,8 +100,8 @@ class TestCompare(unittest.TestCase):
         self.assertTrue(isinstance(missing2.pop(), data.Open))
 
     def test_includes_entries(self):
-        entries1, _, __ = parser.parse_string(TEST_INPUT)
-        entries2, _, __ = parser.parse_string(TEST_INPUT)
+        entries1, _, __ = loader.load_string(TEST_INPUT)
+        entries2, _, __ = loader.load_string(TEST_INPUT)
 
         includes, missing = compare.includes_entries(entries1[0:-3], entries2)
         self.assertTrue(includes)
@@ -112,8 +112,8 @@ class TestCompare(unittest.TestCase):
         self.assertEqual(3, len(missing))
 
     def test_excludes_entries(self):
-        entries1, _, __ = parser.parse_string(TEST_INPUT)
-        entries2, _, __ = parser.parse_string(TEST_INPUT)
+        entries1, _, __ = loader.load_string(TEST_INPUT)
+        entries2, _, __ = loader.load_string(TEST_INPUT)
 
         excludes, extra = compare.excludes_entries(entries1[0:4], entries2)
         self.assertFalse(excludes)

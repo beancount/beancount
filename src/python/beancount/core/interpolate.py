@@ -449,24 +449,6 @@ def balance_incomplete_postings(entry, options_map):
     return errors or None
 
 
-def compute_postings_balance(txn_postings):
-    """Compute the balance of a list of Postings's or TxnPosting's positions.
-
-    Args:
-      postings: A list of Posting instances and other directives (which are
-        skipped).
-    Returns:
-      An Inventory.
-    """
-    final_balance = Inventory()
-    for txn_posting in txn_postings:
-        if isinstance(txn_posting, Posting):
-            final_balance.add_position(txn_posting.position)
-        elif isinstance(txn_posting, TxnPosting):
-            final_balance.add_position(txn_posting.posting.position)
-    return final_balance
-
-
 def compute_entries_balance(entries, prefix=None, date=None):
     """Compute the balance of all postings of a list of entries.
 

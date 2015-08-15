@@ -41,6 +41,10 @@ void build_grammar_error_from_exception(void)
 {
     /* TRACE_ERROR("Grammar Builder Exception"); */
 
+#if 0
+    PyErr_Print();
+#endif
+
     /* Get the exception context. */
     PyObject* ptype;
     PyObject* pvalue;
@@ -53,16 +57,17 @@ void build_grammar_error_from_exception(void)
 
     if (pvalue != NULL) {
         /* Build and accumulate a new error object. {27d1d459c5cd} */
-        PyObject* rv = PyObject_CallMethod(builder, "build_grammar_error", "siOO",
+        PyObject* rv = PyObject_CallMethod(builder, "build_grammar_error", "siOOO",
                                            yy_filename, yylineno + yy_firstline,
-                                           pvalue, ptype);
+                                           pvalue, ptype, ptraceback);
         Py_DECREF(ptype);
         Py_DECREF(pvalue);
         Py_DECREF(ptraceback);
 
         if (rv == NULL) {
-            PyErr_SetString(PyExc_RuntimeError,
-                            "Internal error: While building exception");
+            /* Note: Leave the internal error trickling up its detail. */
+            /* PyErr_SetString(PyExc_RuntimeError, */
+            /*                 "Internal error: While building exception"); */
         }
     }
     else {
@@ -196,10 +201,12 @@ const char* getTokenName(int token);
 %type <pyobj> commodity
 %type <pyobj> balance
 %type <pyobj> pad
-%type <pyobj> amount
 %type <pairobj> amount_tolerance
+%type <pyobj> amount
+%type <pyobj> incomplete_amount
 %type <pyobj> compound_amount
 %type <pyobj> maybe_number
+%type <pyobj> price_annotation
 %type <pyobj> position
 %type <pyobj> lot_comp
 %type <pyobj> lot_comp_list
@@ -364,17 +371,27 @@ optflag : empty
         }
         | FLAG
 
+price_annotation : incomplete_amount
+                 {
+                     $$ = $1;
+                 }
+                 | empty
+                 {
+                     BUILDY(,
+                            $$, "amount", "OO", Py_None, Py_None);
+                 }
+
 posting : INDENT optflag ACCOUNT position eol
         {
             BUILDY(DECREF2($3, $4),
                    $$, "posting", "siOOOOb", FILE_LINE_ARGS, $3, $4, Py_None, Py_False, $2);
         }
-        | INDENT optflag ACCOUNT position AT amount eol
+        | INDENT optflag ACCOUNT position AT price_annotation eol
         {
             BUILDY(DECREF3($3, $4, $6),
                    $$, "posting", "siOOOOb", FILE_LINE_ARGS, $3, $4, $6, Py_False, $2);
         }
-        | INDENT optflag ACCOUNT position ATAT amount eol
+        | INDENT optflag ACCOUNT position ATAT price_annotation eol
         {
             BUILDY(DECREF3($3, $4, $6),
                    $$, "posting", "siOOOOb", FILE_LINE_ARGS, $3, $4, $6, Py_True, $2);
@@ -547,12 +564,18 @@ compound_amount : maybe_number CURRENCY
                     ;
                 }
 
-position : amount
+incomplete_amount : maybe_number CURRENCY
+                  {
+                      BUILDY(DECREF2($1, $2),
+                             $$, "amount", "OO", $1, $2);
+                 }
+
+position : incomplete_amount
          {
              BUILDY(DECREF1($1),
                     $$, "position", "siOO", FILE_LINE_ARGS, $1, Py_None);
          }
-         | amount lot_spec
+         | incomplete_amount lot_spec
          {
              BUILDY(DECREF2($1, $2),
                     $$, "position", "siOO", FILE_LINE_ARGS, $1, $2);

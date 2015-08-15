@@ -5,35 +5,17 @@ import datetime
 import re
 import subprocess
 
+from beancount.core import data
 from beancount.utils import test_utils
 from beancount.scripts import report
 from beancount.scripts import example
 from beancount.parser import parser
 from beancount.parser import cmptest
 from beancount.reports import convert_reports
+from beancount import loader
 
 
 class TestLedgerUtilityFunctions(cmptest.TestCase):
-
-    @parser.parsedoc()
-    def setUp(self, entries, _, __):
-        """
-          2014-10-01 * "Buy some stock with local funds"
-            Assets:CA:Investment:GOOG          5 GOOG {500.00 USD}
-            Expenses:Commissions            9.95 USD
-            Assets:CA:Investment:Cash   -2509.95 USD
-
-          2014-10-02 * "Regular price conversion with fee"
-            Assets:CA:Investment:Cash    2500.00 USD
-            Expenses:Commissions            9.95 USD
-            Assets:CA:Investment:Cash   -2939.46 CAD @ 0.8879 USD
-
-          2014-10-03 * "Buy some stock with foreign currency funds"
-            Assets:CA:Investment:GOOG          5 GOOG {520.0 USD}
-            Expenses:Commissions            9.95 USD
-            Assets:CA:Investment:Cash   -2939.46 CAD @ 0.8879 USD
-        """
-        self.entries = entries
 
     def test_quote_currency(self):
         test = """
@@ -48,24 +30,51 @@ class TestLedgerUtilityFunctions(cmptest.TestCase):
         """
         self.assertEqual(expected, convert_reports.quote_currency(test))
 
+
+class TestLedgerUtilityFunctionsOnPostings(cmptest.TestCase):
+
+    @loader.loaddoc()
+    def setUp(self, entries, _, __):
+        """
+          2000-01-01 open Assets:CA:Investment:GOOG
+          2000-01-01 open Expenses:Commissions
+          2000-01-01 open Assets:CA:Investment:Cash
+
+          2014-10-01 * "Buy some stock with local funds"
+            Assets:CA:Investment:GOOG          5 GOOG {500.00 USD}
+            Expenses:Commissions            9.95 USD
+            Assets:CA:Investment:Cash   -2509.95 USD
+
+          2014-10-02 * "Regular price conversion with fee"
+            Assets:CA:Investment:Cash    2500.00 USD
+            Expenses:Commissions            9.95 USD
+            Assets:CA:Investment:Cash   -2826.84 CAD @ 0.8879 USD
+
+          2014-10-03 * "Buy some stock with foreign currency funds"
+            Assets:CA:Investment:GOOG          5 GOOG {520.0 USD}
+            Expenses:Commissions            9.95 USD
+            Assets:CA:Investment:Cash   -2939.46 CAD @ 0.8879 USD
+        """
+        self.txns = [entry for entry in entries if isinstance(entry, data.Transaction)]
+
     def test_postings_by_type(self):
-        postings_lists = convert_reports.postings_by_type(self.entries[0])
+        postings_lists = convert_reports.postings_by_type(self.txns[0])
         self.assertEqual([2, 0, 1], list(map(len, postings_lists)))
 
-        postings_lists = convert_reports.postings_by_type(self.entries[1])
+        postings_lists = convert_reports.postings_by_type(self.txns[1])
         self.assertEqual([2, 1, 0], list(map(len, postings_lists)))
 
-        postings_lists = convert_reports.postings_by_type(self.entries[2])
+        postings_lists = convert_reports.postings_by_type(self.txns[2])
         self.assertEqual([1, 1, 1], list(map(len, postings_lists)))
 
     def test_split_currency_conversions(self):
-        converted, _ = convert_reports.split_currency_conversions(self.entries[0])
+        converted, _ = convert_reports.split_currency_conversions(self.txns[0])
         self.assertFalse(converted)
 
-        converted, _ = convert_reports.split_currency_conversions(self.entries[1])
+        converted, _ = convert_reports.split_currency_conversions(self.txns[1])
         self.assertFalse(converted)
 
-        converted, new_entries = convert_reports.split_currency_conversions(self.entries[2])
+        converted, new_entries = convert_reports.split_currency_conversions(self.txns[2])
         self.assertTrue(converted)
         self.assertEqualEntries("""
 
