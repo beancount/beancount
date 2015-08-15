@@ -126,8 +126,10 @@ def convert_lot_specs_to_lots(entries, unused_options_map):
                 else:
                     cost = None
 
-                # We don't allow a cost nor a price of zero. (Conversion entries may use
-                # a price of zero as the only special case, but never for costs.)
+                # If there is a cost, we don't allow either a cost value of
+                # zero, nor a zero number of units. Note that we allow a price
+                # of zero as the only special case (for conversion entries), but
+                # never for costs.
                 if cost is not None:
                     if pos.number == ZERO:
                         errors.append(
