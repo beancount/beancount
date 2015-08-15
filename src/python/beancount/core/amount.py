@@ -205,9 +205,9 @@ def amount_sub(amount1, amount2):
       numbers, in the same currency.
     """
     assert isinstance(amount1.number, Decimal), (
-        "Amount1's number is not a Decimal instance: {}".format(amount.number))
+        "Amount1's number is not a Decimal instance: {}".format(amount1.number))
     assert isinstance(amount2.number, Decimal), (
-        "Amount2's number is not a Decimal instance: {}".format(amount.number))
+        "Amount2's number is not a Decimal instance: {}".format(amount2.number))
     if amount1.currency != amount2.currency:
         raise ValueError(
             "Unmatching currencies for operation on {} and {}".format(

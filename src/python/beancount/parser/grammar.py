@@ -6,7 +6,6 @@ import collections
 import copy
 import os
 import re
-import sys
 import traceback
 from os import path
 from datetime import date
@@ -14,7 +13,6 @@ from datetime import date
 from beancount.core.number import ZERO
 from beancount.core.amount import Amount
 from beancount.core import display_context
-from beancount.core.position import Lot
 from beancount.core.position import LotSpec
 from beancount.core.position import Position
 from beancount.core.data import Transaction

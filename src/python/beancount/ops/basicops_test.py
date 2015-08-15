@@ -107,7 +107,7 @@ class TestBasicOpsTags(unittest.TestCase):
 
 class TestBasicOpsOther(unittest.TestCase):
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_get_common_accounts(self, entries, _, __):
         """
         2014-01-01 open Assets:Account1

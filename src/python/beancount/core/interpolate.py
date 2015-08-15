@@ -14,7 +14,6 @@ from beancount.core.position import Lot
 from beancount.core.position import Position
 from beancount.core.data import Transaction
 from beancount.core.data import Posting
-from beancount.core.data import TxnPosting
 from beancount.core import getters
 
 

@@ -14,7 +14,7 @@ from beancount.reports import journal_html
 
 class TestJournalRender(unittest.TestCase):
 
-    @loader.loaddoc(expect_errors=True)
+    @loader.load_doc(expect_errors=True)
     def setUp(self, entries, _, __):
         """
         2014-01-01 open Assets:Checking

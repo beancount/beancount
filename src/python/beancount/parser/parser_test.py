@@ -37,8 +37,8 @@ class TestCompareTestFunctions(unittest.TestCase):
 
 class TestParserDoc(unittest.TestCase):
 
-    @parser.parsedoc(expect_errors=None)
-    def test_parsedoc__disabled(self, entries, errors, options_map):
+    @parser.parse_doc(expect_errors=None)
+    def test_parse_doc__disabled(self, entries, errors, options_map):
         """
         2013-05-40 * "Nice dinner at Mermaid Inn"
           Expenses:Restaurant         100 USD
@@ -48,8 +48,8 @@ class TestParserDoc(unittest.TestCase):
 
     # Note: nose does not honor expectedFailure as of 1.3.4. We would use it
     # here instead of doing this manually.
-    def test_parsedoc__errors(self):
-        @parser.parsedoc(expect_errors=True)
+    def test_parse_doc__errors(self):
+        @parser.parse_doc(expect_errors=True)
         def test_function(self, entries, errors, options_map):
             """
             2013-05-40 * "Nice dinner at Mermaid Inn"
@@ -64,8 +64,8 @@ class TestParserDoc(unittest.TestCase):
 
     # Note: nose does not honor expectedFailure as of 1.3.4. We would use it
     # here instead of doing this manually.
-    def test_parsedoc__noerrors(self):
-        @parser.parsedoc(expect_errors=False)
+    def test_parse_doc__noerrors(self):
+        @parser.parse_doc(expect_errors=False)
         def test_function(self, entries, errors, options_map):
             """
             2013-05-40 * "Nice dinner at Mermaid Inn"
@@ -78,8 +78,8 @@ class TestParserDoc(unittest.TestCase):
         except AssertionError:
             pass
 
-    @parser.parsedoc(expect_errors=True, interpolation=True)
-    def test_parsedoc_with_interpolation(self, entries, errors, options_map):
+    @parser.parse_doc(expect_errors=True, interpolation=True)
+    def test_parse_doc_with_interpolation(self, entries, errors, options_map):
         """
         2014-06-23 * "Go positive"
           Assets:Investments:Stock    1 AAPL {41 USD}

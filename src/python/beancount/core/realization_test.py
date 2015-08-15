@@ -183,7 +183,7 @@ class TestRealGetters(unittest.TestCase):
 
 class TestRealization(unittest.TestCase):
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_postings_by_account(self, entries, errors, _):
         """
         option "plugin_processing_mode" "raw"
@@ -260,7 +260,7 @@ class TestRealization(unittest.TestCase):
         self.assertEqual(set(account_types.DEFAULT_ACCOUNT_TYPES),
                          real_account.keys())
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_simple_realize(self, entries, errors, options_map):
         """
           2013-05-01 open Assets:US:Checking:Sub   USD
@@ -396,7 +396,7 @@ class TestRealFilter(unittest.TestCase):
 
 class TestRealOther(test_utils.TestCase):
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_get_postings(self, entries, errors, _):
         """
         option "plugin_processing_mode" "raw"
@@ -498,7 +498,7 @@ class TestRealOther(test_utils.TestCase):
         ra3['Sub'] = RealAccount('Assets:US:Bank:Checking:Sub')
         self.assertNotEqual(root1, root3)
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_iterate_with_balance(self, entries, _, __):
         """
         2012-01-01 open Assets:Bank:Checking
@@ -580,7 +580,7 @@ class TestRealOther(test_utils.TestCase):
         balance = realization.compute_balance(realization.get(real_root, 'Assets:US:Bank'))
         self.assertEqual(inventory.from_string('310 USD'), balance)
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_dump(self, entries, _, __):
         """
         2012-01-01 open Assets:Bank1:Checking
@@ -623,7 +623,7 @@ class TestRealOther(test_utils.TestCase):
             ], [(first_line, cont_line)
                 for first_line, cont_line, _1 in lines])
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_dump_balances(self, entries, _, __):
         """
         2012-01-01 open Expenses:Restaurant
@@ -662,7 +662,7 @@ class TestRealMisc(unittest.TestCase):
 
 class TestFindLastActive(unittest.TestCase):
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_find_last_active_posting(self, entries, _, __):
         """
         2012-01-01 open Assets:Target
@@ -688,7 +688,7 @@ class TestFindLastActive(unittest.TestCase):
 
 class TestComputeBalance(unittest.TestCase):
 
-    @loader.loaddoc(expect_errors=True)
+    @loader.load_doc(expect_errors=True)
     def test_compute_postings_balance(self, entries, _, __):
         """
         2014-01-01 open Assets:Bank:Checking

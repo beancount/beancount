@@ -13,7 +13,6 @@ from beancount.query import query_compile as qc
 from beancount.query import query_env as qe
 from beancount.query import query_execute as qx
 from beancount.parser import cmptest
-from beancount.parser import parser
 from beancount.utils import misc_utils
 from beancount import loader
 

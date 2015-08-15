@@ -121,6 +121,12 @@ Note: This file contains only changes in the 'default' branch.
     This may happen in a future CL.)
 
 
+  - Renamed beancount.parser.parser.parsedoc() to parse_doc() and
+    beancount.loader.loaddoc() to load_doc(), for consistency with the other
+    parse_*() and load_*() functions. Kept a stub that will issue a warning if
+    you use it.
+
+
 2015-07-23
 
   - In the conversion to the new booking syntax, I had inadventently removed

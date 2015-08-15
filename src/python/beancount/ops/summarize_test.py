@@ -22,7 +22,7 @@ from beancount import loader
 
 class TestOpenClose(cmptest.TestCase):
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def setUp(self, entries, errors, options_map):
         """
         option "account_previous_earnings"    "Earnings:Previous"
@@ -356,7 +356,7 @@ class TestOpenCloseWithOptions(TestOpenClose):
 
 class TestClamp(cmptest.TestCase):
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_clamp(self, entries, errors, options_map):
         """
         2012-01-01 open Income:Salary
@@ -452,7 +452,7 @@ class TestClamp(cmptest.TestCase):
 
 class TestCap(cmptest.TestCase):
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_cap(self, entries, errors, options_map):
         """
         plugin "beancount.plugins.auto_accounts"
@@ -822,7 +822,7 @@ class TestConversions(cmptest.TestCase):
 
     ACCOUNT = 'Equity:Conversions'
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def setUp(self, entries, _, __):
         """
           2012-01-01 open Income:US:Job
@@ -937,7 +937,7 @@ class TestConversions(cmptest.TestCase):
 
 class TestTruncate(cmptest.TestCase):
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def setUp(self, entries, _, __):
         """
         2014-01-01 open Assets:US:Bank:Checking
@@ -1083,7 +1083,7 @@ class TestEntriesFromBalance(cmptest.TestCase):
 
 class TestBalanceByAccount(cmptest.TestCase):
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def setUp(self, entries, _, __):
         """
         2001-01-01 open Assets:AccountA
@@ -1132,7 +1132,7 @@ class TestBalanceByAccount(cmptest.TestCase):
 
 class TestOpenAtDate(cmptest.TestCase):
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def setUp(self, entries, _, __):
         """
           2011-01-01 open Assets:AccountA
@@ -1228,7 +1228,7 @@ class TestOpenAtDate(cmptest.TestCase):
         """, summarize.get_open_entries(self.entries, date(2013, 1, 1)))
 
 
-    @loader.loaddoc(expect_errors=True)
+    @loader.load_doc(expect_errors=True)
     def test_get_open_entries__duplicate_open(self, entries, errors, _):
         """
           2011-01-01 open Assets:AccountA
@@ -1238,7 +1238,7 @@ class TestOpenAtDate(cmptest.TestCase):
           2011-01-01 open Assets:AccountA
         """, summarize.get_open_entries(entries, date(2013, 1, 1)))
 
-    @loader.loaddoc(expect_errors=True)
+    @loader.load_doc(expect_errors=True)
     def test_get_open_entries__closed_twice(self, entries, errors, _):
         """
           2011-01-01 open  Assets:AccountA
@@ -1248,7 +1248,7 @@ class TestOpenAtDate(cmptest.TestCase):
         self.assertEqualEntries("""
         """, summarize.get_open_entries(entries, date(2013, 1, 1)))
 
-    @loader.loaddoc(expect_errors=True)
+    @loader.load_doc(expect_errors=True)
     def test_get_open_entries__closed_without_open(self, entries, errors, _):
         """
           2011-02-02 close Assets:AccountA

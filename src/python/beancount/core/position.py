@@ -33,6 +33,8 @@ from beancount.core.amount import NULL_AMOUNT
 from beancount.core.amount import amount_mult
 from beancount.core.amount import CURRENCY_RE
 from beancount.core.display_context import DEFAULT_FORMATTER
+
+# pylint: disable=invalid-name
 NoneType = type(None)
 
 

@@ -4,7 +4,6 @@ import datetime
 import re
 
 from beancount.core import data
-from beancount.parser import printer
 from beancount.parser import cmptest
 from beancount.ops import validation
 from beancount import loader
@@ -12,7 +11,7 @@ from beancount import loader
 
 class TestValidateOpenClose(cmptest.TestCase):
 
-    @loader.loaddoc(expect_errors=True)
+    @loader.load_doc(expect_errors=True)
     def test_validate_open_close__duplicate_open(self, entries, _, options_map):
         """
         ;; Regular, only appears once.
@@ -31,7 +30,7 @@ class TestValidateOpenClose(cmptest.TestCase):
                           'Assets:US:Bank:Checking3'],
                          [error.entry.account for error in errors])
 
-    @loader.loaddoc(expect_errors=True)
+    @loader.load_doc(expect_errors=True)
     def test_validate_open_close__duplicate_close(self, entries, _, options_map):
         """
         2014-02-10 open  Assets:US:Bank:Checking1
@@ -55,7 +54,7 @@ class TestValidateOpenClose(cmptest.TestCase):
                           'Assets:US:Bank:Checking3'],
                          [error.entry.account for error in errors])
 
-    @loader.loaddoc(expect_errors=True)
+    @loader.load_doc(expect_errors=True)
     def test_validate_open_close__close_unopened(self, entries, _, options_map):
         """
         2014-03-01 close Assets:US:Bank:Checking1
@@ -64,7 +63,7 @@ class TestValidateOpenClose(cmptest.TestCase):
         self.assertEqual(['Assets:US:Bank:Checking1'],
                          [error.entry.account for error in errors])
 
-    @loader.loaddoc(expect_errors=True)
+    @loader.load_doc(expect_errors=True)
     def test_validate_open_close__ordering(self, entries, _, options_map):
         """
         2014-03-01 open  Assets:US:Bank:Checking1
@@ -77,7 +76,7 @@ class TestValidateOpenClose(cmptest.TestCase):
 
 class TestValidateDuplicateBalances(cmptest.TestCase):
 
-    @loader.loaddoc(expect_errors=True)
+    @loader.load_doc(expect_errors=True)
     def test_validate_duplicate_balances(self, entries, _, options_map):
         """
         2014-01-01 open Assets:US:Bank:Checking1
@@ -110,7 +109,7 @@ class TestValidateDuplicateBalances(cmptest.TestCase):
 
 class TestValidateDuplicateCommodities(cmptest.TestCase):
 
-    @loader.loaddoc(expect_errors=True)
+    @loader.load_doc(expect_errors=True)
     def test_validate_duplicate_commodities(self, entries, _, options_map):
         """
         2014-01-01 commodity USD
@@ -127,7 +126,7 @@ class TestValidateDuplicateCommodities(cmptest.TestCase):
 
 class TestValidateActiveAccounts(cmptest.TestCase):
 
-    @loader.loaddoc(expect_errors=True)
+    @loader.load_doc(expect_errors=True)
     def test_validate_active_accounts(self, entries, _, options_map):
         """
         2014-01-01 open  Equity:Opening-Balances
@@ -186,7 +185,7 @@ class TestValidateActiveAccounts(cmptest.TestCase):
              re.search('unknown.*Equity:ImUnknown', error.message))
             for error in errors))
 
-    @loader.loaddoc(expect_errors=True)
+    @loader.load_doc(expect_errors=True)
     def test_validate_active_accounts__unopened(self, entries, _, options_map):
         """
         2014-02-01 *
@@ -201,7 +200,7 @@ class TestValidateActiveAccounts(cmptest.TestCase):
 
 class TestValidateCurrencyConstraints(cmptest.TestCase):
 
-    @loader.loaddoc(expect_errors=True)
+    @loader.load_doc(expect_errors=True)
     def test_validate_currency_constraints(self, entries, _, options_map):
         """
         2014-01-01 open  Assets:Account1    USD
@@ -267,7 +266,7 @@ class TestValidateDocumentPaths(cmptest.TestCase):
 
 class TestValidateDataTypes(cmptest.TestCase):
 
-    @loader.loaddoc(expect_errors=True)
+    @loader.load_doc(expect_errors=True)
     def test_validate_data_types(self, entries, errors, options_map):
         """
         2014-06-24 * "Narration"
@@ -284,7 +283,7 @@ class TestValidateDataTypes(cmptest.TestCase):
 
 class TestValidateCheckTransactionBalances(cmptest.TestCase):
 
-    @loader.loaddoc(expect_errors=True)
+    @loader.load_doc(expect_errors=True)
     def test_validate_check_transaction_balances(self, entries, errors, options_map):
         """
         2014-06-24 * "Narration"
@@ -297,7 +296,7 @@ class TestValidateCheckTransactionBalances(cmptest.TestCase):
 
 class TestValidate(cmptest.TestCase):
 
-    @loader.loaddoc(expect_errors=True)
+    @loader.load_doc(expect_errors=True)
     def test_validate(self, entries, errors, options_map):
         """
         ;; Just trigger a few errors from here to ensure at least some of the plugins
@@ -331,7 +330,7 @@ class TestValidate(cmptest.TestCase):
 
 class TestValidateTolerances(cmptest.TestCase):
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_tolerance_implicit_integral(self, entries, errors, options_map):
         """
         plugin "beancount.plugins.auto_accounts"
@@ -350,7 +349,7 @@ class TestValidateTolerances(cmptest.TestCase):
         """
         self.assertFalse(errors)
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_tolerance_implicit_fractional_global(self, entries, errors, options_map):
         """
         plugin "beancount.plugins.auto_accounts"
@@ -362,7 +361,7 @@ class TestValidateTolerances(cmptest.TestCase):
         """
         self.assertFalse(errors)
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_tolerance_implicit_fractional_specific(self, entries, errors, options_map):
         """
         plugin "beancount.plugins.auto_accounts"
@@ -374,7 +373,7 @@ class TestValidateTolerances(cmptest.TestCase):
         """
         self.assertFalse(errors)
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_tolerance_implicit_fractional_withprec(self, entries, errors, options_map):
         """
         plugin "beancount.plugins.auto_accounts"
@@ -390,7 +389,7 @@ class TestValidateTolerances(cmptest.TestCase):
     # https://groups.google.com/d/msg/beancount/5u-xgR-ttjg/sXfU32ItRscJ for a
     # discussion.
     #
-    # @loader.loaddoc()
+    # @loader.load_doc()
     # def test_tolerance_implicit_from_converted_cost(self, entries, errors, options_map):
     #     """
     #     plugin "beancount.plugins.auto_accounts"

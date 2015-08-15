@@ -9,7 +9,6 @@ from beancount.core import data
 from beancount.utils import test_utils
 from beancount.scripts import report
 from beancount.scripts import example
-from beancount.parser import parser
 from beancount.parser import cmptest
 from beancount.reports import convert_reports
 from beancount import loader
@@ -33,7 +32,7 @@ class TestLedgerUtilityFunctions(cmptest.TestCase):
 
 class TestLedgerUtilityFunctionsOnPostings(cmptest.TestCase):
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def setUp(self, entries, _, __):
         """
           2000-01-01 open Assets:CA:Investment:GOOG

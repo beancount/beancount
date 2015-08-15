@@ -41,7 +41,7 @@ class TestOptions(unittest.TestCase):
 
 class TestAccountTypeOptions(unittest.TestCase):
 
-    @parser.parsedoc()
+    @parser.parse_doc()
     def test_custom_account_names__success(self, entries, errors, options_map):
         """
           option "name_assets" "Actif"
@@ -59,7 +59,7 @@ class TestAccountTypeOptions(unittest.TestCase):
         self.assertFalse(errors)
         self.assertEqual(5, len(entries))
 
-    @parser.parsedoc()
+    @parser.parse_doc()
     def test_custom_account_names__success_reset(self, entries, errors, options_map):
         """
           2014-01-01 open Assets:CA:RBC:Checking
@@ -71,7 +71,7 @@ class TestAccountTypeOptions(unittest.TestCase):
         self.assertFalse(errors)
         self.assertEqual(2, len(entries))
 
-    @parser.parsedoc(expect_errors=True)
+    @parser.parse_doc(expect_errors=True)
     def test_custom_account_names__basic_fail(self, entries, errors, options_map):
         """
           2014-01-04 open Actif:CA:RBC:CompteCheques
@@ -82,7 +82,7 @@ class TestAccountTypeOptions(unittest.TestCase):
         for error in errors:
             self.assertRegexpMatches(error.message, "Invalid account name")
 
-    @parser.parsedoc(expect_errors=True)
+    @parser.parse_doc(expect_errors=True)
     def test_custom_account_names__fail_invalid_order(self, entries, errors, options_map):
         """
           2014-01-04 open Actif:CA:RBC:CompteCheques
@@ -96,7 +96,7 @@ class TestAccountTypeOptions(unittest.TestCase):
 
 class TestValidateOptions(unittest.TestCase):
 
-    @parser.parsedoc(expect_errors=True)
+    @parser.parse_doc(expect_errors=True)
     def test_validate__plugin_processing_mode__invalid(self, entries, errors, options_map):
         """
           option "plugin_processing_mode" "i-dont-exist"

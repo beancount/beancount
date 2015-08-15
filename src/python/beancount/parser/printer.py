@@ -319,7 +319,10 @@ def print_entries(entries, dcontext=None, render_weights=False, file=None, prefi
       file: An optional file object to write the entries to.
     """
     assert isinstance(entries, list), "Entries is not a list: {}".format(entries)
-    output = file or codecs.getwriter("utf-8")(sys.stdout.buffer)
+    output = file or (codecs.getwriter("utf-8")(sys.stdout.buffer)
+                      if hasattr(sys.stdout, 'buffer') else
+                      sys.stdout)
+
     if prefix:
         output.write(prefix)
     previous_type = type(entries[0]) if entries else None

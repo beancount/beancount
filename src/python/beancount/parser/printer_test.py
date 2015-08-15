@@ -7,7 +7,6 @@ import re
 import textwrap
 
 from beancount.parser import printer
-from beancount.parser import parser
 from beancount.parser import cmptest
 from beancount.core import data
 from beancount.core import interpolate
@@ -70,7 +69,7 @@ class TestEntryPrinter(cmptest.TestCase):
         # Compare the two output texts.
         self.assertEqual(oss2.getvalue(), oss1.getvalue())
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_Transaction(self, entries, errors, __):
         """
         2014-01-01 open Assets:Account1
@@ -119,7 +118,7 @@ class TestEntryPrinter(cmptest.TestCase):
         """
         self.assertRoundTrip(entries, errors)
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_Balance(self, entries, errors, __):
         """
         2014-06-01 open Assets:Account1
@@ -127,7 +126,7 @@ class TestEntryPrinter(cmptest.TestCase):
         """
         self.assertRoundTrip(entries, errors)
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_Note(self, entries, errors, __):
         """
         2014-06-01 open Assets:Account1
@@ -135,7 +134,7 @@ class TestEntryPrinter(cmptest.TestCase):
         """
         self.assertRoundTrip(entries, errors)
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_Document(self, entries, errors, __):
         """
         option "plugin_processing_mode" "raw"
@@ -145,7 +144,7 @@ class TestEntryPrinter(cmptest.TestCase):
         """
         self.assertRoundTrip(entries, errors)
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_Pad(self, entries, errors, __):
         """
         2014-01-01 open Assets:Account1
@@ -155,7 +154,7 @@ class TestEntryPrinter(cmptest.TestCase):
         """
         self.assertRoundTrip(entries, errors)
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_Open(self, entries, errors, __):
         """
         2014-06-08 open Assets:Account1
@@ -164,7 +163,7 @@ class TestEntryPrinter(cmptest.TestCase):
         """
         self.assertRoundTrip(entries, errors)
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_Close(self, entries, errors, __):
         """
         2014-01-01 open  Assets:Account1
@@ -172,7 +171,7 @@ class TestEntryPrinter(cmptest.TestCase):
         """
         self.assertRoundTrip(entries, errors)
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_Price(self, entries, errors, __):
         """
         2014-06-08 price  BEAN   53.24 USD
@@ -180,7 +179,7 @@ class TestEntryPrinter(cmptest.TestCase):
         """
         self.assertRoundTrip(entries, errors)
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_Event(self, entries, errors, __):
         """
         2014-06-08 event "location" "New York, NY, USA"
@@ -256,7 +255,7 @@ class TestDisplayContext(test_utils.TestCase):
 
     maxDiff = 2048
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_precision(self, entries, errors, options_map):
         """
         2014-01-01 open Assets:Account
@@ -326,7 +325,7 @@ class TestPrinterAlignment(test_utils.TestCase):
             '76400.203                               ',
             ], aligned_strings)
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_align(self, entries, errors, options_map):
         """
         2014-01-01 open Expenses:Commissions
@@ -349,7 +348,7 @@ class TestPrinterAlignment(test_utils.TestCase):
         """)
         self.assertEqual(expected_str, oss.getvalue())
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_align_min_width_account(self, entries, errors, options_map):
         """
         2014-01-01 open Expenses:Commissions
@@ -371,7 +370,7 @@ class TestPrinterAlignment(test_utils.TestCase):
         """)
         self.assertEqual(expected_str, oss.getvalue())
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_align_with_weight(self, entries, errors, options_map):
         """
         2014-01-01 open Assets:US:Investments:GOOG
@@ -420,7 +419,7 @@ class TestPrinterAlignment(test_utils.TestCase):
 
 class TestPrinterMisc(test_utils.TestCase):
 
-    @loader.loaddoc(expect_errors=True)
+    @loader.load_doc(expect_errors=True)
     def test_no_valid_account(self, entries, errors, options_map):
         """
         2000-01-01 * "Test"

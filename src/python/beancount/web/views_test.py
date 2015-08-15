@@ -31,7 +31,7 @@ class TestViewsFromEmpty(unittest.TestCase):
 
 class TestViews(unittest.TestCase):
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def setUp(self, entries, errors, options_map):
         """
         2010-01-01 open Assets:Checking

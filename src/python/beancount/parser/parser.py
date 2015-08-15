@@ -36,6 +36,7 @@ import functools
 import inspect
 import textwrap
 import io
+import warnings
 from os import path
 
 from beancount.parser import _parser
@@ -116,7 +117,12 @@ def parse_string(string, **kw):
     return builder.finalize()
 
 
-def parsedoc(expect_errors=False, interpolation=False):
+# FIXME: Deprecate this eventually.
+def parsedoc(*args, **kw):
+    warnings.warn("parsedoc() is obsolete; use parse_doc() instead.")
+    return parse_doc(*args, **kw)
+
+def parse_doc(expect_errors=False, interpolation=False):
     """Factory of decorators that parse the function's docstring as an argument.
 
     Note that the decorators thus generated only run the parser on the tests,
@@ -174,7 +180,7 @@ def parsedoc(expect_errors=False, interpolation=False):
                 # If interpolation is not allowed, fail the test if it is seen,
                 # because it would result in postings with None.
                 if has_auto_postings(entries):
-                    self.fail("parsedoc() may not use interpolation.")
+                    self.fail("parse_doc() may not use interpolation.")
 
             if expect_errors is not None:
                 if expect_errors is False and errors:
