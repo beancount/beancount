@@ -122,7 +122,7 @@ def parsedoc(*args, **kw):
     warnings.warn("parsedoc() is obsolete; use parse_doc() instead.")
     return parse_doc(*args, **kw)
 
-def parse_doc(expect_errors=False, interpolation=False):
+def parse_doc(expect_errors=False, allow_incomplete=False):
     """Factory of decorators that parse the function's docstring as an argument.
 
     Note that the decorators thus generated only run the parser on the tests,
@@ -134,14 +134,9 @@ def parse_doc(expect_errors=False, interpolation=False):
         True: Expect errors and fail if there are none.
         False: Expect no errors and fail if there are some.
         None: Do nothing, no check.
-
-      expect_errors: A boolean or None, with the following semantics,
-        True: Run the entries through local interpolation (not transformations,
-          not plugins, just simple local interpolation).
-        False: Do not run interpolation, and disallow it if some of the data
-          is missing and would stand to get interpolate.
-        None: Don't check for missing data and don't run interpolation either.
-          WARNING: This may result in incomplete postings with missing data!
+      allow_incomplete: A boolean, if true, allow incomplete input. Otherwise
+        barf if the input would require interpolation. The default value is set
+        not to allow it because we want to minimize the features tests depend on.
     Returns:
       A decorator for test functions.
     """
@@ -170,17 +165,8 @@ def parse_doc(expect_errors=False, interpolation=False):
                                                         report_firstline=lineno,
                                                         dedent=True)
 
-            # Allow interpolation if the flag requests it.
-            if interpolation is True:
-                # Perform simple interpolation in literals, without a history.
-                entries, balance_errors = booking.book(entries, options_map)
-                errors.extend(balance_errors)
-
-            elif interpolation is False:
-                # If interpolation is not allowed, fail the test if it is seen,
-                # because it would result in postings with None.
-                if has_auto_postings(entries):
-                    self.fail("parse_doc() may not use interpolation.")
+            if not allow_incomplete and has_auto_postings(entries):
+                self.fail("parse_doc() may not use interpolation.")
 
             if expect_errors is not None:
                 if expect_errors is False and errors:

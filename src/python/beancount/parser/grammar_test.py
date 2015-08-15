@@ -2038,7 +2038,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
 
 class TestIncompleteInputs(cmptest.TestCase):
 
-    @parser.parse_doc(interpolation=None)
+    @parser.parse_doc(allow_incomplete=True)
     def test_missing_amount(self, entries, _, options_map):
         """
           2000-01-01 open Assets:Account1
@@ -2049,7 +2049,7 @@ class TestIncompleteInputs(cmptest.TestCase):
         """
         self.assertEqual(None, entries[-1].postings[-1].position)
 
-    @parser.parse_doc(interpolation=None)
+    @parser.parse_doc(allow_incomplete=True)
     def test_missing_number(self, entries, _, options_map):
         """
           2000-01-01 open Assets:Account1
@@ -2063,7 +2063,7 @@ class TestIncompleteInputs(cmptest.TestCase):
         self.assertEqual(None, pos.number)
         self.assertEqual("CAD", pos.lot.currency)
 
-    @parser.parse_doc(interpolation=None)
+    @parser.parse_doc(allow_incomplete=True)
     def test_missing_price_amount(self, entries, _, options_map):
         """
           2000-01-01 open Assets:Account1
@@ -2079,7 +2079,7 @@ class TestIncompleteInputs(cmptest.TestCase):
         self.assertIsInstance(posting.price, amount.Amount)
         self.assertEqual(amount.Amount(None, None), posting.price)
 
-    @parser.parse_doc(interpolation=None)
+    @parser.parse_doc(allow_incomplete=True)
     def test_missing_price_number(self, entries, _, options_map):
         """
           2000-01-01 open Assets:Account1
@@ -2096,7 +2096,7 @@ class TestIncompleteInputs(cmptest.TestCase):
         self.assertIsInstance(posting.price, amount.Amount)
         self.assertEqual(amount.Amount(None, 'CAD'), posting.price)
 
-    @parser.parse_doc(interpolation=None)
+    @parser.parse_doc(allow_incomplete=True)
     def test_missing_cost_amount(self, entries, _, options_map):
         """
           2000-01-01 open Assets:Account1
@@ -2111,7 +2111,7 @@ class TestIncompleteInputs(cmptest.TestCase):
         self.assertIsInstance(pos.lot, position.LotSpec)
         self.assertEqual(position.LotSpec('HOOL', None, None, None, None), pos.lot)
 
-    @parser.parse_doc(interpolation=None)
+    @parser.parse_doc(allow_incomplete=True)
     def test_missing_cost_number(self, entries, _, options_map):
         """
           2000-01-01 open Assets:Account1
