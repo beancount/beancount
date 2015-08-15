@@ -33,7 +33,7 @@ class TestLedgerUtilityFunctions(cmptest.TestCase):
 
 class TestLedgerUtilityFunctionsOnPostings(cmptest.TestCase):
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def setUp(self, entries, _, __):
         """
           2000-01-01 open Assets:CA:Investment:GOOG

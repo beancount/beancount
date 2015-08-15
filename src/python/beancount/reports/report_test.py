@@ -50,7 +50,7 @@ class TestReport(unittest.TestCase):
 
     ReportClass = ExampleReport
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def setUp(self, entries, errors, options_map):
         """
         2014-07-27 open Assets:Example
@@ -104,7 +104,7 @@ class TestTableReport(unittest.TestCase):
 
     ReportClass = ExampleTableReport
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def setUp(self, entries, errors, options_map):
         """
         2014-07-27 open Assets:Example

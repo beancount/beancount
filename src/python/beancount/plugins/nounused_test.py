@@ -8,7 +8,7 @@ from beancount import loader
 
 class TestValidateUnusedAccounts(cmptest.TestCase):
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_validate_unused_accounts(self, entries, _, options_map):
         """
         2014-01-01 open  Assets:Account1 ; Used, kept open

@@ -18,7 +18,7 @@ class TestHoldings(unittest.TestCase):
 
     maxDiff = 4096
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_get_final_holdings(self, entries, _, __):
         """
         2013-01-01 open Assets:Account1
@@ -94,7 +94,7 @@ class TestHoldings(unittest.TestCase):
                            if holding[0].startswith('Assets')]
         self.assertEqual(expected_values, holdings_list)
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_get_final_holdings__check_no_aggregates(self, entries, _, __):
         """
         plugin "beancount.plugins.unrealized" "Unrealized"
@@ -114,7 +114,7 @@ class TestHoldings(unittest.TestCase):
         self.assertEqual({'Assets:Cash', 'Assets:Investment'},
                          set(holding.account for holding in holdings_list))
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_get_final_holdings_with_prices(self, entries, _, __):
         """
         2013-01-01 open Assets:Account1
@@ -150,7 +150,7 @@ class TestHoldings(unittest.TestCase):
         ]
         self.assertEqual(expected_values, holdings_list)
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_get_final_holdings__zero_position(self, entries, _, __):
         """
         1970-01-01 open Assets:Stocks:NYA
@@ -171,7 +171,7 @@ class TestHoldings(unittest.TestCase):
         self.assertEqual(1, len(holdings_list))
         self.assertEqual('EUR', holdings_list[0].cost_currency)
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_get_commodities_at_date(self, entries, _, options_map):
         """
         2013-01-01 open Assets:Account1
@@ -381,7 +381,7 @@ class TestHoldings(unittest.TestCase):
                          holdings.aggregate_holdings_by(test_holdings,
                                                         lambda holding: holding.account))
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_convert_to_currency(self, entries, _, __):
         """
         2013-01-01 price CAD 1.1 USD

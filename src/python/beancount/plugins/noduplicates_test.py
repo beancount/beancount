@@ -18,7 +18,7 @@ class TestValidateDuplicates(cmptest.TestCase):
         self.assertTrue(re.search('Duplicate entry', valid_errors[0].message))
 
     # Note: validation already checks for dups in open/close.
-    @loader.loaddoc(expect_errors=True)
+    @loader.load_doc(expect_errors=True)
     def test_validate_no_duplicates__open(self, entries, _, options_map):
         """
         2000-01-01 open Assets:Checking
@@ -27,7 +27,7 @@ class TestValidateDuplicates(cmptest.TestCase):
         self.checkDuplicates(entries, options_map)
 
     # Note: validation already checks for dups in open/close.
-    @loader.loaddoc(expect_errors=True)
+    @loader.load_doc(expect_errors=True)
     def test_validate_no_duplicates__close(self, entries, _, options_map):
         """
         2000-01-01 close Assets:Checking
@@ -36,7 +36,7 @@ class TestValidateDuplicates(cmptest.TestCase):
         self.checkDuplicates(entries, options_map)
 
     # Note: The regular padding code will trigger an unused Pad entry error.
-    @loader.loaddoc(expect_errors=True)
+    @loader.load_doc(expect_errors=True)
     def test_validate_no_duplicates__pad(self, entries, _, options_map):
         """
         2000-01-01 open Assets:Checking
@@ -47,7 +47,7 @@ class TestValidateDuplicates(cmptest.TestCase):
         """
         self.checkDuplicates(entries, options_map)
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_validate_no_duplicates__balance(self, entries, _, options_map):
         """
         2014-01-01 open Assets:Checking
@@ -62,7 +62,7 @@ class TestValidateDuplicates(cmptest.TestCase):
         """
         self.checkDuplicates(entries, options_map)
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_validate_no_duplicates__transaction(self, entries, _, options_map):
         """
         2014-01-01 open Assets:Investments:Stock
@@ -78,7 +78,7 @@ class TestValidateDuplicates(cmptest.TestCase):
         """
         self.checkDuplicates(entries, options_map)
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_validate_no_duplicates__note(self, entries, _, options_map):
         """
         2000-01-01 open Assets:Checking
@@ -87,7 +87,7 @@ class TestValidateDuplicates(cmptest.TestCase):
         """
         self.checkDuplicates(entries, options_map)
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_validate_no_duplicates__event(self, entries, _, options_map):
         """
         2000-01-01 event "location" "Somewhere, Earth"
@@ -95,7 +95,7 @@ class TestValidateDuplicates(cmptest.TestCase):
         """
         self.checkDuplicates(entries, options_map)
 
-    @loader.loaddoc(expect_errors=True)
+    @loader.load_doc(expect_errors=True)
     def test_validate_no_duplicates__document(self, entries, _, options_map):
         """
         2000-01-01 document Assets:Checking "/path/to/nowhere.pdf"
@@ -103,7 +103,7 @@ class TestValidateDuplicates(cmptest.TestCase):
         """
         self.checkDuplicates(entries, options_map)
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_validate_no_duplicates__price(self, entries, errors, options_map):
         """
         2000-01-01 price GOOG 500 USD

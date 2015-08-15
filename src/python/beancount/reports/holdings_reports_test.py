@@ -11,7 +11,7 @@ from beancount import loader
 
 class TestHoldingsReports(unittest.TestCase):
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def setUp(self, entries, errors, options_map):
         """
         2014-01-01 open Assets:Bank1

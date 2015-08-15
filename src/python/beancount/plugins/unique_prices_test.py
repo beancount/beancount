@@ -11,7 +11,7 @@ from beancount import loader
 
 class TestValidateAmbiguousPrices(cmptest.TestCase):
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_validate_unique_prices__different(self, entries, errors, options_map):
         """
         2000-01-01 price GOOG 500.00 USD
@@ -22,7 +22,7 @@ class TestValidateAmbiguousPrices(cmptest.TestCase):
         self.assertEqual([unique_prices.UniquePricesError], list(map(type, valid_errors)))
         self.assertTrue(re.search('Disagreeing price', valid_errors[0].message))
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_validate_unique_prices__same(self, entries, errors, options_map):
         """
         2000-01-01 price GOOG 500.00 USD
@@ -32,7 +32,7 @@ class TestValidateAmbiguousPrices(cmptest.TestCase):
         _, valid_errors = unique_prices.validate_unique_prices(entries, options_map)
         self.assertEqual([], valid_errors)
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_validate_unique_prices__from_costs(self, entries, errors, options_map):
         """
         2014-01-01 open Income:Misc

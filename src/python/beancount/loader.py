@@ -345,7 +345,12 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
     return entries, errors
 
 
-def loaddoc(expect_errors=False):
+# FIXME: Deprecate this eventually.
+def loaddoc(*args, **kw):
+    warnings.warn("loaddoc() is obsolete; use load_doc() instead.")
+    return load_doc(*args, **kw)
+
+def load_doc(expect_errors=False):
     """A factory of decorators that loads the docstring and calls the function with entries.
 
     This is an incredibly convenient tool to write lots of tests. Write a

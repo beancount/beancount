@@ -9,7 +9,7 @@ from beancount import loader
 
 class TestAutoInsertOpen(cmptest.TestCase):
 
-    @loader.loaddoc(expect_errors=True)
+    @loader.load_doc(expect_errors=True)
     def test_auto_open(self, entries, _, options_map):
         """
         2014-02-01 *

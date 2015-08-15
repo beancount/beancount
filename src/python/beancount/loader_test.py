@@ -95,26 +95,26 @@ class TestLoader(unittest.TestCase):
 
 class TestLoadDoc(unittest.TestCase):
 
-    def test_loaddoc(self):
+    def test_load_doc(self):
         def test_function(self_, entries, errors, options_map):
             self.assertTrue(isinstance(entries, list))
             self.assertTrue(isinstance(errors, list))
             self.assertTrue(isinstance(options_map, dict))
 
         test_function.__doc__ = TEST_INPUT
-        test_function = loader.loaddoc(test_function)
+        test_function = loader.load_doc(test_function)
         test_function(self)
 
-    @loader.loaddoc()
-    def test_loaddoc_empty(self, entries, errors, options_map):
+    @loader.load_doc()
+    def test_load_doc_empty(self, entries, errors, options_map):
         """
         """
         self.assertTrue(isinstance(entries, list))
         self.assertTrue(isinstance(errors, list))
         self.assertTrue(isinstance(options_map, dict))
 
-    @loader.loaddoc(expect_errors=True)
-    def test_loaddoc_plugin(self, entries, errors, options_map):
+    @loader.load_doc(expect_errors=True)
+    def test_load_doc_plugin(self, entries, errors, options_map):
         """
         plugin "beancount.does.not.exist"
         """

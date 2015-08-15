@@ -23,7 +23,7 @@ class TestMiscReports(unittest.TestCase):
             self.assertEqual(options.OPTIONS_DEFAULTS, options_map)
             self.assertTrue(isinstance(output, str))
 
-    @loader.loaddoc(expect_errors=True)
+    @loader.load_doc(expect_errors=True)
     def test_errors(self, entries, errors, options_map):
         """
         hello world

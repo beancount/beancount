@@ -27,10 +27,6 @@ beancount: TODO
   - Parsing will now always return incomplete entries, and all the tests have to
     be adapted to reflect this new fact.
 
-    * Remove all parse_string() and parse_file() and parsedoc() from all the
-      tests except for those under beancount/parser and adapt those tests to
-      that new reality.
-
     * Remove booking hacks everywhere; only the loader should perform booking.
 
     * Remove the beancount.ops.documents plugin, or perhaps make the loader
@@ -52,10 +48,6 @@ beancount: TODO
 
   - (Annoyance) All functions that return an (entries, errors, options_map)
     triple really should return (entries, options_map, errors), in this order.
-
-  - Rename parsedoc and loaddoc to parse_doc and load_doc and keep deprecated
-    aliases for a while (with a warning).
-
 
   - Create a b.c.data.transactions_only() function to this common type of
     filtering and grep/replace everywhere. This is just too common not to create
@@ -186,9 +178,6 @@ beancount: TODO
 
   - Add a --auto-everything option to bean-check that automatically inserts a
     beancount.plugins.auto_accounts directive and more.
-
-  - beancount.parser.parsedoc_noerrors() has been implemented; now convert all
-    the tests to the simplified version.
 
   - In the parser or in the validation, check that the price currency matches
     that of the cost currency, if both are specified!
@@ -2429,10 +2418,6 @@ http://furius.ca/beancount/doc/proposal-inter
 
 
 
-
-
-  - Add an optional parameter to the loaddoc() and parsedoc() decorators to
-    have them automatically check for expected no-errors.
 
 
   - Add the acquisition date of each lot to each Holding, and it should be

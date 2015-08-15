@@ -66,7 +66,7 @@ class TestJournalRenderPosting(unittest.TestCase):
 
 class TestJournalTextRender(unittest.TestCase):
 
-    @loader.loaddoc(expect_errors=True)
+    @loader.load_doc(expect_errors=True)
     def setUp(self, entries, _, __):
         """
         plugin "beancount.plugins.implicit_prices"

@@ -11,7 +11,7 @@ from beancount import loader
 
 class TestBalance(unittest.TestCase):
 
-    @loader.loaddoc(expect_errors=True)
+    @loader.load_doc(expect_errors=True)
     def test_simple_error(self, entries, errors, __):
         """
           2013-05-01 open Assets:US:Checking
@@ -23,7 +23,7 @@ class TestBalance(unittest.TestCase):
         self.assertTrue(isinstance(entry, balance.Balance))
         self.assertEqual(amount.Amount('-100', 'USD'), entry.diff_amount)
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_simple_first(self, entries, errors, __):
         """
           2013-05-01 open Assets:Bank:Checking
@@ -40,7 +40,7 @@ class TestBalance(unittest.TestCase):
         self.assertTrue(isinstance(entry, balance.Balance))
         self.assertEqual(None, entry.diff_amount)
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_simple_cont(self, entries, errors, __):
         """
           2013-05-01 open Assets:Bank:Checking
@@ -60,7 +60,7 @@ class TestBalance(unittest.TestCase):
         """
         self.assertEqual([], list(map(type, errors)))
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_simple_partial_currency_first(self, entries, errors, __):
         """
           2013-05-01 open Assets:Bank:Checking
@@ -76,7 +76,7 @@ class TestBalance(unittest.TestCase):
         """
         self.assertEqual([], list(map(type, errors)))
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_simple_partial_currency_cont(self, entries, errors, __):
         """
           2013-05-01 open Assets:Bank:Checking
@@ -99,7 +99,7 @@ class TestBalance(unittest.TestCase):
         """
         self.assertEqual([], list(map(type, errors)))
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_parents(self, entries, errors, __):
         """
           2013-05-01 open Assets:Bank
@@ -131,7 +131,7 @@ class TestBalance(unittest.TestCase):
                         if isinstance(entry, balance.Balance)]
         self.assertEqual([None, None, None, None], diff_amounts)
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_parents_only(self, entries, errors, __):
         """
           2013-05-01 open Assets:Bank
@@ -155,7 +155,7 @@ class TestBalance(unittest.TestCase):
                         if isinstance(entry, balance.Balance)]
         self.assertEqual([None], diff_amounts)
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_parents_with_postings(self, entries, errors, __):
         """
           2013-05-01 open Assets:Bank
@@ -183,7 +183,7 @@ class TestBalance(unittest.TestCase):
                         if isinstance(entry, balance.Balance)]
         self.assertEqual([None], diff_amounts)
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_with_lots(self, entries, errors, __):
         """
           2013-05-01 open Assets:Bank:Investing
@@ -199,7 +199,7 @@ class TestBalance(unittest.TestCase):
 
     # This test ensures that the 'check' directives apply at the beginning of
     # the day.
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_check_samedate(self, entries, errors, __):
         """
           2013-05-01 open Assets:US:Checking   USD
@@ -214,7 +214,7 @@ class TestBalance(unittest.TestCase):
         """
         self.assertEqual([], list(map(type, errors)))
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_precision(self, entries, errors, __):
         """
           2013-05-01 open Assets:Bank:Checking
@@ -240,7 +240,7 @@ class TestBalance(unittest.TestCase):
         """
         self.assertEqual([], list(map(type, errors)))
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_balance_before_create(self, entries, errors, __):
         """
           2013-05-01 open Assets:US:Checking   USD
@@ -254,7 +254,7 @@ class TestBalance(unittest.TestCase):
         """
         self.assertEqual([], list(map(type, errors)))
 
-    @loader.loaddoc()
+    @loader.load_doc()
     def test_balance_with_prefix_account(self, entries, errors, __):
         """
           2013-05-01 open Assets:Bank:Checking
@@ -276,7 +276,7 @@ class TestBalance(unittest.TestCase):
 
 class TestBalancePrecision(unittest.TestCase):
 
-    @loader.loaddoc(expect_errors=True)
+    @loader.load_doc(expect_errors=True)
     def test_get_tolerance__legacy(self, entries, errors, options_map):
         """
           option "use_legacy_fixed_tolerances" "True"
@@ -293,7 +293,7 @@ class TestBalancePrecision(unittest.TestCase):
                       for entry in entries[1:]]
         self.assertEqual([Decimal('0.015')] * 6, tolerances)
 
-    @loader.loaddoc(expect_errors=True)
+    @loader.load_doc(expect_errors=True)
     def test_get_tolerance__explicit(self, entries, errors, options_map):
         """
           option "experiment_explicit_tolerances" "TRUE"
@@ -310,7 +310,7 @@ class TestBalancePrecision(unittest.TestCase):
                       for entry in entries[1:]]
         self.assertEqual([Decimal('0.002')] * 6, tolerances)
 
-    @loader.loaddoc(expect_errors=True)
+    @loader.load_doc(expect_errors=True)
     def test_get_tolerance__regular(self, entries, errors, options_map):
         """
           2015-05-01 open Assets:Bank:Checking
@@ -336,7 +336,7 @@ class TestBalancePrecision(unittest.TestCase):
                           Decimal('0.001'),
                           Decimal('0.01')], tolerances)
 
-    @loader.loaddoc(expect_errors=True)
+    @loader.load_doc(expect_errors=True)
     def test_balance_with_tolerance(self, entries, errors, __):
         """
           option "experiment_explicit_tolerances" "TRUE"

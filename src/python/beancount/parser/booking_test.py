@@ -27,7 +27,7 @@ class TestSimpleBooking(cmptest.TestCase):
 
 class TestBookingErrors(cmptest.TestCase):
 
-    @parser.parsedoc()
+    @parser.parse_doc()
     def test_zero_amount(self, entries, errors, options_map):
         """
           2013-05-18 * ""
@@ -38,7 +38,7 @@ class TestBookingErrors(cmptest.TestCase):
         self.assertEqual(1, len(booking_errors))
         self.assertTrue(re.search('Amount is zero', booking_errors[0].message))
 
-    @parser.parsedoc()
+    @parser.parse_doc()
     def test_cost_zero(self, entries, errors, options_map):
         """
           2013-05-18 * ""
@@ -48,7 +48,7 @@ class TestBookingErrors(cmptest.TestCase):
         booked_entries, booking_errors = booking.book(entries, options_map)
         self.assertFalse(booking_errors)
 
-    @parser.parsedoc()
+    @parser.parse_doc()
     def test_cost_negative(self, entries, errors, options_map):
         """
           2013-05-18 * ""
@@ -106,7 +106,7 @@ class TestValidateInventoryBooking(cmptest.TestCase):
         input_str = re.sub(r'\b2\d\b', '22', self.input_str)
         self.do_validate_inventory_booking(input_str)
 
-    @parser.parsedoc()
+    @parser.parse_doc()
     def test_simple_negative_lots(self, entries, errors, options_map):
         """
           2013-05-01 open Assets:Bank:Investing
@@ -119,7 +119,7 @@ class TestValidateInventoryBooking(cmptest.TestCase):
         validation_errors = booking.validate_inventory_booking(entries, options_map)
         self.assertEqual([], list(map(type, validation_errors)))
 
-    @parser.parsedoc()
+    @parser.parse_doc()
     def test_mixed_lots_in_single_transaction(self, entries, errors, options_map):
         """
           2013-05-01 open Assets:Bank:Investing
@@ -133,7 +133,7 @@ class TestValidateInventoryBooking(cmptest.TestCase):
         validation_errors = booking.validate_inventory_booking(entries, options_map)
         self.assertEqual([booking.BookingError], list(map(type, validation_errors)))
 
-    @parser.parsedoc()
+    @parser.parse_doc()
     def test_mixed_lots_in_multiple_transactions_augmenting(self,
                                                             entries, errors, options_map):
         """
@@ -151,7 +151,7 @@ class TestValidateInventoryBooking(cmptest.TestCase):
         validation_errors = booking.validate_inventory_booking(entries, options_map)
         self.assertEqual([booking.BookingError], list(map(type, validation_errors)))
 
-    @parser.parsedoc()
+    @parser.parse_doc()
     def test_mixed_lots_in_multiple_transactions_reducing(self,
                                                           entries, errors, options_map):
         """
