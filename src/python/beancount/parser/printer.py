@@ -2,6 +2,7 @@
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import codecs
 import datetime
 import io
 import re
@@ -302,7 +303,7 @@ def print_entry(entry, dcontext=None, render_weights=False, file=None):
       render_weights: A boolean, true to render the weights for debugging.
       file: An optional file object to write the entries to.
     """
-    output = file or sys.stdout
+    output = file or codecs.getwriter("utf-8")(sys.stdout.buffer)
     output.write(format_entry(entry, dcontext, render_weights))
     output.write('\n')
 
@@ -331,7 +332,8 @@ def print_entries(entries, dcontext=None, render_weights=False, file=None, prefi
             output.write('\n')
             previous_type = entry_type
 
-        output.write(eprinter(entry))
+        string = eprinter(entry)
+        output.write(string)
 
 
 def render_source(meta):
