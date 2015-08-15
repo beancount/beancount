@@ -134,7 +134,9 @@ class DispatchingShell(cmd.Cmd):
             return pager.ConditionalPager(self.vars.get('pager', None),
                                           minlines=misc_utils.get_screen_height())
         else:
-            file = codecs.getwriter("utf-8")(sys.stdout.buffer)
+            file = (codecs.getwriter("utf-8")(sys.stdout.buffer)
+                    if hasattr(sys.stdout, 'buffer') else
+                    sys.stdout)
             return pager.flush_only(file)
 
     def cmdloop(self):
