@@ -25,6 +25,45 @@ class TestSimpleBooking(cmptest.TestCase):
         self.assertEqual(D('-2505'), interpolated_entries[-1].postings[-1].position.number)
 
 
+class TestBookingErrors(cmptest.TestCase):
+
+    @parser.parsedoc()
+    def test_zero_amount(self, entries, errors, options_map):
+        """
+          2013-05-18 * ""
+            Assets:Investments:MSFT      0 MSFT {200.00 USD}
+            Assets:Investments:Cash      0 USD
+        """
+        booked_entries, booking_errors = booking.book(entries, options_map)
+        self.assertEqual(1, len(booking_errors))
+        self.assertTrue(re.search('Amount is zero', booking_errors[0].message))
+
+    @parser.parsedoc()
+    def test_cost_zero(self, entries, errors, options_map):
+        """
+          2013-05-18 * ""
+            Assets:Investments:MSFT      -10 MSFT {0.00 USD}
+            Assets:Investments:Cash  2000.00 USD
+        """
+        booked_entries, booking_errors = booking.book(entries, options_map)
+        self.assertFalse(booking_errors)
+
+    @parser.parsedoc()
+    def test_cost_negative(self, entries, errors, options_map):
+        """
+          2013-05-18 * ""
+            Assets:Investments:MSFT      -10 MSFT {-200.00 USD}
+            Assets:Investments:Cash  2000.00 USD
+        """
+        booked_entries, booking_errors = booking.book(entries, options_map)
+        self.assertEqual(1, len(booking_errors))
+        self.assertRegexpMatches(booking_errors[0].message, 'Cost is negative')
+
+
+
+
+
+
 class TestValidateInventoryBooking(cmptest.TestCase):
 
     def setUp(self):
