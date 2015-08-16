@@ -11,7 +11,7 @@ from beancount.parser import booking
 
 class TestSimpleBooking(cmptest.TestCase):
 
-    def test_simple_interpolation(self):
+    def test_simple_booking(self):
         entries, _, options_map = parser.parse_string("""
           2013-05-01 open Assets:Bank:Investing
           2013-05-01 open Equity:Opening-Balances
@@ -20,7 +20,7 @@ class TestSimpleBooking(cmptest.TestCase):
             Assets:Bank:Investing                 5 GOOG {501 USD}
             Equity:Opening-Balances
         """)
-        interpolated_entries, errors = booking.simple_interpolation(entries, options_map)
+        interpolated_entries, errors = booking.simple_booking(entries, options_map)
         self.assertFalse(errors)
         self.assertEqual(D('-2505'), interpolated_entries[-1].postings[-1].position.number)
 

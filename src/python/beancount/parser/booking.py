@@ -6,7 +6,9 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import collections
 import os
 import logging
+import sys
 
+from beancount.parser import grammar
 from beancount.core.data import Transaction
 from beancount.core.position import Position
 from beancount.core.position import Lot
@@ -36,19 +38,36 @@ def book(incomplete_entries, options_map):
         entries: A list of completed entries with all their postings completed.
         errors: New errors produced during interpolation.
     """
-    if os.getenv("BEANCOUNT_BOOKING"):
-        entries, interpolation_errors = full_interpolation(incomplete_entries,
-                                                           options_map)
+    if os.getenv("OLD_BOOKING"):
+        # Old-school local-only interpolation overrides the new one for now.
+        entries, interpolation_errors = simple_booking(incomplete_entries, options_map)
     else:
-        # Old-school local-only interpolation.
-        entries, interpolation_errors = simple_interpolation(incomplete_entries,
-                                                             options_map)
+        entries, interpolation_errors = full_booking(incomplete_entries, options_map)
 
     validation_errors = validate_inventory_booking(entries, options_map)
     return entries, (interpolation_errors + validation_errors)
 
 
-def full_interpolation(entries, options_map):
+class BookingStats:
+
+    def __init__(self):
+        self.num_transactions = 0
+        self.num_postings = 0
+        self.num_interp_amount = 0
+        self.num_interp_units = 0
+        self.num_unbooked_lots = 0
+        self.num_interp_price = 0
+
+    def __str__(self):
+        return '; '.join(["transactions: {s.num_transactions}",
+                          "postings: {s.num_postings}",
+                          "interp_amount: {s.num_interp_amount}",
+                          "interp_units: {s.num_interp_units}",
+                          "unbooked_lots: {s.num_unbooked_lots}",
+                          "interp_price: {s.num_interp_price}"]).format(s=self)
+
+
+def full_booking(entries, options_map):
     """Interpolate missing data from the entries using the full historical algorithm.
 
     Args:
@@ -60,23 +79,34 @@ def full_interpolation(entries, options_map):
         entries: A list of interpolated entries with all their postings completed.
         errors: New errors produced during interpolation.
     """
-    num_transactions = 0
-    num_interpolated = 0
+    stats = BookingStats()
     errors = []
     for entry in entries:
         if isinstance(entry, Transaction):
-            if any((posting.position is None or
-                    posting.position.number is None)
-                   for posting in entry.postings):
-                #printer.print_entry(entry)
-                num_interpolated += 1
-            num_transactions += 1
+            stats.num_transactions += 1
+            for posting in entry.postings:
+                stats.num_postings += 1
+                if posting.position is None:
+                    stats.num_interp_amount += 1
 
-        # FIXME: TODO
+                elif posting.position.number is None:
+                    stats.num_interp_units += 1
 
-    logging.info("Num interpolated: %d (%.2f%%)",
-                 num_interpolated,
-                 num_interpolated/num_transactions * 100)
+                elif posting.price and (posting.price.number is None or
+                                        posting.price.currency is None):
+                    stats.num_interp_price += 1
+
+                elif isinstance(posting.position.lot, grammar.LotSpec):
+                    stats.num_unbooked_lots += 1
+
+            # if any((posting.position is None or
+            #         posting.position.number is None)
+            #        for posting in entry.postings):
+            #     #printer.print_entry(entry)
+            #     num_interpolated += 1
+
+    logging.info("Interpolation Stats: %s", stats)
+
     return entries, errors
 
 
@@ -148,7 +178,7 @@ def convert_lot_specs_to_lots(entries, unused_options_map):
     return new_entries, errors
 
 
-def simple_interpolation(entries, options_map):
+def simple_booking(entries, options_map):
     """Run a local interpolation on a list of incomplete entries from the parser.
 
     Note: this does not take previous positions into account.
