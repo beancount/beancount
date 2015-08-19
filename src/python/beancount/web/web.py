@@ -887,7 +887,9 @@ def all(path=None):
 @handle_view(3)
 def year(year=None, path=None):
     year = int(year)
-    return views.YearView(app.entries, app.options, 'Year {:4d}'.format(year), year)
+    first_month = app.args.first_month
+    return views.YearView(app.entries, app.options, 'Year {:4d}'.format(year),
+                          year, first_month)
 
 
 @app.route(r'/view/tag/<tag:re:[^/]*>/<path:re:.*>', name='tag')
@@ -1089,6 +1091,9 @@ def add_web_arguments(argparser):
 
     group.add_argument('--public', '--inaddr-any', action='store_true',
                        help="Bind server to listen to any address, not just localhost.")
+
+    group.add_argument('--first-month', action='store', type=int, default=1,
+                       help="The first month of the calendar year.")
 
     return group
 
