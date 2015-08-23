@@ -12,6 +12,8 @@ import re
 import sys
 import time
 import threading
+import datetime
+import calendar
 
 import bottle
 from bottle import response
@@ -454,7 +456,13 @@ def doc(filename=None):
 
 viewapp = bottle.Bottle()
 V = bottle_utils.AttrMapper(lambda *args, **kw: request.app.get_url(*args, **kw))
+M = bottle_utils.AttrMapper(lambda month: month_request(month))
 
+def month_request(month):
+    month = list(calendar.month_abbr).index(month)
+    month = "{:0>2d}".format(month)
+    return app.router.build('month', year=request.view.year, month=month,
+            path=request.path[1:])
 
 def render_view(*args, **kw):
     """Render the title and contents in our standard template for a view page.
@@ -470,7 +478,11 @@ def render_view(*args, **kw):
     kw['V'] = V # View mapper
     kw['title'] = app.options['title']
     kw['view_title'] = ' - ' + request.view.title
-    kw['navigation'] = APP_NAVIGATION.render(A=A, V=V, view_title=request.view.title)
+    if request.view.monthly:
+        kw['navigation'] = APP_NAVIGATION_MONTHLY.render(A=A, V=V, M=M, view_title=request.view.title)
+    else:
+        kw['navigation'] = APP_NAVIGATION.render(A=A, V=V, view_title=request.view.title)
+
     kw['scripts'] = kw.get('scripts', '')
     kw['overlay'] = (render_overlay()
                      if request.params.pop('render_overlay', False)
@@ -490,6 +502,32 @@ APP_NAVIGATION = bottle.SimpleTemplate("""
 </ul>
 """)
 
+APP_NAVIGATION_MONTHLY = bottle.SimpleTemplate("""
+<ul>
+  <li><a href="{{A.toc}}">Table of Contents</a></li>
+  <li><span class="ledger-name">{{view_title}}:</span></li>
+  <li><a href="{{V.balsheet}}">Balance Sheet</a></li>
+  <li><a href="{{V.income}}">Income Statement</a></li>
+  <li><a href="{{V.holdings}}">Equity/Holdings</a></li>
+  <li><a href="{{V.trial}}">Trial Balance</a></li>
+  <li><a href="{{V.journal_all}}">General Journal</a></li>
+  <li><a href="{{V.index}}">Index</a></li>
+</ul>
+<ul>
+  <li><a href="{{M.Jan}}">January</a></li>
+  <li><a href="{{M.Feb}}">February</a></li>
+  <li><a href="{{M.Mar}}">March</a></li>
+  <li><a href="{{M.Apr}}">April</a></li>
+  <li><a href="{{M.May}}">May</a></li>
+  <li><a href="{{M.Jun}}">June</a></li>
+  <li><a href="{{M.Jul}}">July</a></li>
+  <li><a href="{{M.Aug}}">August</a></li>
+  <li><a href="{{M.Sep}}">September</a></li>
+  <li><a href="{{M.Oct}}">October</a></li>
+  <li><a href="{{M.Nov}}">November</a></li>
+  <li><a href="{{M.Dec}}">December</a></li>
+</ul>
+""")
 
 @viewapp.route('/', name='approot')
 def approot():
@@ -882,6 +920,14 @@ def get_all_view(app):
 def all(path=None):
     return get_all_view(app)
 
+@app.route(r'/view/year/<year:re:\d\d\d\d>/month/<month:re:\d\d>/<path:re:.*>', name='month')
+@handle_view(5)
+def month(year=None, month=None, path=None):
+    year = int(year)
+    month = int(month)
+    date = datetime.date(year,month,1)
+    text = date.strftime('%B %Y')
+    return views.MonthView(app.entries, app.options, text, year, month)
 
 @app.route(r'/view/year/<year:re:\d\d\d\d>/<path:re:.*>', name='year')
 @handle_view(3)
@@ -890,7 +936,6 @@ def year(year=None, path=None):
     first_month = app.args.first_month
     return views.YearView(app.entries, app.options, 'Year {:4d}'.format(year),
                           year, first_month)
-
 
 @app.route(r'/view/tag/<tag:re:[^/]*>/<path:re:.*>', name='tag')
 @handle_view(3)

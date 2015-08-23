@@ -3,6 +3,7 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import datetime
+import calendar
 import logging
 
 from beancount.core import data
@@ -43,6 +44,9 @@ class View:
         self.real_accounts = None
         self.opening_real_accounts = None
         self.closing_real_accounts = None
+
+        #Flag to render monthly navigation
+        self.monthly = False
 
         # Realize now, we don't need to do this lazily because we create these
         # view objects on-demand and cache them.
@@ -147,6 +151,7 @@ class YearView(View):
         if not (1 <= first_month <= 12):
             raise ValueError("Invalid month: {}".format(first_month))
         View.__init__(self, entries, options_map, title)
+        self.monthly = True #Flag to render monthly navigation
 
     def apply_filter(self, entries, options_map):
         # Clamp to the desired period.
@@ -158,6 +163,41 @@ class YearView(View):
                                                           options_map)
         return entries, index
 
+class MonthView(View):
+    """A view of the entries for just a single year."""
+
+    def __init__(self, entries, options_map, title, year, month):
+        """Create a view clamped to one year.
+
+        Args:
+          entries: A list of directives.
+          options_map: A dict of options, as produced by the parser.
+          title: A string, the title of this view.
+          year: An integer, the year of period.
+          month: An integer, the month to be used as year end.
+        """
+        self.year = year
+        self.month = month
+        View.__init__(self, entries, options_map, title)
+        self.monthly = True #Flag to render monthly navigation
+
+    def apply_filter(self, entries, options_map):
+        # Clamp to the desired period.
+        begin_date = datetime.date(self.year, self.month, 1)
+
+        if self.month == 12:
+            end_month = 1
+            end_year = self.year + 1
+        else:
+            end_month = self.month + 1
+            end_year = self.year
+        end_date = datetime.date(end_year, end_month, begin_date.day)
+
+        with misc_utils.log_time('clamp', logging.info):
+            entries, index = summarize.clamp_opt(entries,
+                                                          begin_date, end_date,
+                                                          options_map)
+        return entries, index
 
 class TagView(View):
     """A view that includes only entries some specific tags."""
