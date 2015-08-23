@@ -164,10 +164,10 @@ class YearView(View):
         return entries, index
 
 class MonthView(View):
-    """A view of the entries for just a single year."""
+    """A view of the entries for just a single month."""
 
     def __init__(self, entries, options_map, title, year, month):
-        """Create a view clamped to one year.
+        """Create a view clamped to one month.
 
         Args:
           entries: A list of directives.
