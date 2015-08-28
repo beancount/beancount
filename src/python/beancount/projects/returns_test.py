@@ -241,7 +241,7 @@ class TestReturnsPeriods(test_utils.TestCase):
         2014-08-02 balance Assets:US:Investments:Cash    0 USD
         """
         self.assertFalse(errors)
-        returns_dict, dates, _ = returns.compute_returns(
+        returns_dict, dates = returns.compute_returns(
             entries, options_map,
             'Equity:Internalized',
             ['Assets:US:Investments:ACME', 'Assets:US:Investments:Cash'], [])
@@ -268,7 +268,7 @@ class TestReturnsPeriods(test_utils.TestCase):
         2014-08-02 balance Assets:US:Investments:Cash       1,000 USD
         """
         self.assertFalse(errors)
-        returns_dict, dates, _ = returns.compute_returns(
+        returns_dict, dates = returns.compute_returns(
             entries, options_map,
             'Equity:Internalized',
             ['Assets:US:Investments:ACME', 'Assets:US:Investments:Cash'], [])
@@ -678,7 +678,7 @@ class TestReturnsInternalize(cmptest.TestCase):
         2015-01-01 balance Assets:Invest:Cash     1480.00 USD
         """
         self.assertFalse(errors)
-        returns_, dates, internalized_entries = returns.compute_returns(
+        returns_, dates = returns.compute_returns(
             entries, options_map, 'Equity:Internalized',
             {'Assets:Invest:Cash'},
             {'Expenses:Fees'},
@@ -716,7 +716,7 @@ class TestReturnsInternalize(cmptest.TestCase):
         2015-01-01 balance Assets:Invest:Cash     1000.00 USD
         """
         self.assertFalse(errors)
-        returns_, dates, internalized_entries = returns.compute_returns(
+        returns_, dates = returns.compute_returns(
             entries, options_map, 'Equity:Internalized',
             {'Assets:Invest:Cash'},
             {'Income:Invest:Dividends', 'Expenses:Fees'},
@@ -749,7 +749,7 @@ class TestReturnsInternalize(cmptest.TestCase):
         2015-01-01 balance Assets:Invest:BOOG         50 BOOG
         """
         self.assertFalse(errors)
-        returns_, dates, internalized_entries = returns.compute_returns(
+        returns_, dates = returns.compute_returns(
             entries, options_map, 'Equity:Internalized',
             {'Assets:Invest:BOOG'},
             {'Income:Invest:Dividends'},
@@ -823,7 +823,7 @@ class TestReturnsWithUnrealized(test_utils.TestCase):
 
         assets = {'Assets:US:Investments:ACME', 'Assets:US:Investments:Cash'}
         intflows = {'Income:US:Investments:Dividends'}
-        returns_, dates, internalized_entries = returns.compute_returns(
+        returns_, dates = returns.compute_returns(
             entries, options_map, 'Equity:Internalized', assets, intflows)
         self.assertEqual(expected_returns, returns_)
 
@@ -836,6 +836,6 @@ class TestReturnsWithUnrealized(test_utils.TestCase):
             date=last_entry.date - datetime.timedelta(days=20))
         new_entries = entries[:-1] + [moved_entry]
 
-        returns_, dates, internalized_entries = returns.compute_returns(
+        returns_, dates = returns.compute_returns(
             new_entries, options_map, 'Equity:Internalized', assets, intflows)
         self.assertEqual(expected_returns, returns_)
