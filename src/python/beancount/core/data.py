@@ -549,3 +549,22 @@ def find_closest(entries, filename, lineno):
                 min_diffline = diffline
                 closest_entry = entry
     return closest_entry
+
+
+def remove_account_postings(account, entries):
+    """Remove all postings with the given account.
+
+    Args:
+      account: A string, the account name whose postings we want to remove.
+    Returns:
+      A list of entries without the rounding postings.
+    """
+    new_entries = []
+    for entry in entries:
+        if isinstance(entry, Transaction) and (
+                any(posting.account == account for posting in entry.postings)):
+            entry = entry._replace(postings=[posting
+                                             for posting in entry.postings
+                                             if posting.account != account])
+        new_entries.append(entry)
+    return new_entries

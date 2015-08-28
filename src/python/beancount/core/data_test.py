@@ -206,6 +206,27 @@ class TestData(unittest.TestCase):
         self.assertTrue(
             data.find_closest(entries, "/tmp/apples.beancount", 99) is None)
 
+    def test_remove_account_postings(self):
+        meta = data.new_metadata(".", 0)
+        date = datetime.date.today()
+        entry1 = data.Open(meta, date, 'Liabilities:US:CreditCard', None, None)
+        entry2 = data.Open(meta, date, 'Equity:Rounding', None, None)
+
+        entry3 = data.Transaction(meta, date, FLAG,
+                                  None, "Something", None, None, [])
+        data.create_simple_posting(entry3, 'Liabilities:US:CreditCard', '-50', 'USD')
+        data.create_simple_posting(entry3, 'Equity:Rounding', '0.00123', 'USD')
+        data.create_simple_posting(entry3, 'Expenses:Food:Restaurant', '50', 'USD')
+
+        entry4 = data.Price(meta, date, 'HOOL', amount.from_string('23 USD'))
+
+        in_entries = [entry1, entry2, entry3, entry4]
+
+        out_entries = data.remove_account_postings('Equity:Rounding', in_entries)
+        self.assertEqual(4, len(out_entries))
+        self.assertEqual(['Liabilities:US:CreditCard', 'Expenses:Food:Restaurant'],
+                         [posting.account for posting in out_entries[2].postings])
+
 
 class TestAttrDict(unittest.TestCase):
 
