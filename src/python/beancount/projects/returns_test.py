@@ -142,13 +142,12 @@ class TestReturnsFunctions(test_utils.TestCase):
         self.assertFalse(errors)
         self.acc_types = options.get_account_types(self.options_map)
 
-    def test_find_matching(self):
-        matching_entries, (acc_assets,
-                           acc_intflows,
-                           acc_extflows,
-                           acc_internalize) = returns.find_matching(
-                               self.entries, self.acc_types,
-                               'Assets:US:Prosper', '(Income|Expenses):')
+    def test_regexps_to_accounts(self):
+        (acc_assets,
+         acc_intflows,
+         acc_extflows,
+         acc_internalize) = returns.regexps_to_accounts(
+             self.entries, 'Assets:US:Prosper', '(Income|Expenses):')
 
         self.assertEqual({'Assets:US:Prosper:InFunding',
                           'Assets:US:Prosper:Cash',
@@ -175,12 +174,10 @@ class TestReturnsFunctions(test_utils.TestCase):
         self.assertTrue(mock_obj.called)
 
     def test_compute_returns(self):
-        price_map = prices.build_price_map(self.entries)
-        matching_entries, (acc_assets, acc_intflows, _, _) = returns.find_matching(
-            self.entries, self.acc_types, '.*:Prosper', '(Income|Expenses):')
+        (acc_assets, acc_intflows, _, _) = returns.regexps_to_accounts(
+            self.entries, '.*:Prosper', '(Income|Expenses):')
         returns.compute_returns(self.entries, 'Equity:Internalized',
-                                acc_assets, acc_intflows,
-                                price_map=price_map)
+                                acc_assets, acc_intflows)
 
 
 class TestReturnsPeriods(test_utils.TestCase):

@@ -5,7 +5,9 @@ beancount: TODO
   - Implement per account, with data structures + code to combine them together
   - Trailing windows
   - Rolling windows
-  - Calcualte pre-tax returns, post-tax returns
+  - Calculate pre-tax returns, post-tax returns
+  - Output nice debugging information
+  - Warn when prices aren't within a certain date interval with their usage
 
 * Booking
 
