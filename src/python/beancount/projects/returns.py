@@ -767,60 +767,22 @@ def regexps_to_accounts(entries,
             accounts_internalize or None)
 
 
-def compute_returns_with_regexp(entries, options_map,
-                                transfer_account,
-                                assets_regexp, intflows_regexp, internalize_regexp=None,
-                                date_begin=None, date_end=None):
-    """Compute the returns of a portfolio of accounts defined by a regular expression.
-
-    Args:
-      entries: A list of directives.
-      options_map: An options dict as produced by the loader.
-      transfer_account: A string, the name of an account to use for internalizing entries
-        which need to be split between internal and external flows.
-      assets_regexp: A regular expression string that matches names of asset accounts to
-        value for the portfolio.
-      intflows_regexp: A regular expression string that matches names of accounts considered
-        internal flows to the portfolio (typically income and expenses accounts).
-      internalize_regexp: A regular expression string that matches names of accounts
-        to force internalization of. See internalize() for details.
-      date_begin: A datetime.date instance, the beginning date of the period to compute
-        returns over.
-      date_end: A datetime.date instance, the end date of the period to compute returns
-        over.
-    Returns:
-      See compute_returns().
-    """
-    # Fetch the matching entries and figure out account name groups.
-    (accounts_value,
-     accounts_intflows,
-     accounts_extflows,
-     accounts_internalize) = regexps_to_accounts(entries,
-                                                 assets_regexp,
-                                                 intflows_regexp,
-                                                 internalize_regexp)
-
-    return compute_returns(entries, transfer_account,
-                           accounts_value, accounts_intflows, accounts_internalize,
-                           date_begin, date_end)
-
-
 def main():
     parse_date = lambda s: parse_datetime(s).date()
     parser = argparse.ArgumentParser()
 
     parser.add_argument('filename', help='Ledger filename')
 
-    parser.add_argument('assets_regexp', action='store',
+    parser.add_argument('regexp_value', action='store',
                         help=("A regular expression string that matches names of asset "
                               "accounts to value for the portfolio."))
 
-    parser.add_argument('intflows_regexp', action='store',
+    parser.add_argument('regexp_internal', action='store',
                         help=("A regular expression string that matches names of accounts "
                               "considered internal flows to the portfolio (typically "
                               "income and expenses accounts)."))
 
-    parser.add_argument('--internalize_regexp', action='store',
+    parser.add_argument('--regexp_internalize', '--internalize_regexp', action='store',
                         help=("A regular expression string that matches names of internal "
                               "flow accounts to trigger an internalization."))
 
@@ -848,12 +810,18 @@ def main():
     # Load the input file and build the price database.
     entries, errors, options_map = loader.load_file(args.filename, log_errors=logging.error)
 
-    # Compute the returns.
-    returns, (date_first, date_last), _ = compute_returns_with_regexp(
-        entries, options_map,
-        args.transfer_account,
-        args.assets_regexp, args.intflows_regexp, args.internalize_regexp,
-        date_begin=args.date_begin, date_end=args.date_end)
+    # Extract the account names using the regular expressions.
+    (accounts_value,
+     accounts_internal,
+     accounts_external,
+     accounts_internalize) = regexps_to_accounts(
+         entries, args.assets_regexp, args.internal_regexp, args.internalize_regexp)
+
+    # Compute the returns using the explicit configuration.
+    returns, (date_first, date_last), _ = compute_returns(
+        entries, args.transfer_account,
+        accounts_value, accounts_internal, accounts_internalize,
+        args.date_begin, args.date_end)
 
     # Annualize the returns.
     annual_returns = annualize_returns(returns, date_first, date_last)
