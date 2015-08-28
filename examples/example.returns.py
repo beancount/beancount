@@ -83,7 +83,7 @@ def main():
                  entries, assets_regexp, intflows_regexp, None)
 
             # Compute the returns.
-            total_returns, dates = returns.compute_returns(
+            total_returns, dates = returns.compute_timeline_and_returns(
                 entries, options_map, 'Assets:Internalized',
                 accounts_value, accounts_internal, accounts_internalize,
                 date_begin, date_end)

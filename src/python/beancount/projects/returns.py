@@ -217,8 +217,9 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import argparse
 import collections
 import copy
-import re
 import logging
+import re
+import sys
 
 from dateutil.parser import parse as parse_datetime
 
@@ -270,8 +271,7 @@ def sum_balances_for_accounts(balance, entry, accounts):
     return balance
 
 
-def segment_periods(entries, accounts_value, accounts_internal,
-                    date_begin=None, date_end=None):
+def segment_periods(entries, accounts_value, accounts_internal):
     """Segment entries in terms of piecewise periods of internal flow.
 
     This function iterates through the given entries and computes balances at
@@ -285,19 +285,16 @@ def segment_periods(entries, accounts_value, accounts_internal,
         relevant).
       accounts_value: A set of the asset accounts in the related group.
       accounts_internal: A set of the internal flow accounts in the related group.
-      date_begin: A datetime.date instance, the beginning date of the period to compute
-        returns over.
-      date_end: A datetime.date instance, the end date of the period to compute returns
-        over.
     Returns:
       A timeline, which is a list of Segment instances.
     Raises:
       ValueError: If the dates create an impossible situation, the beginning
         must come before the requested end, if specified.
     """
-    logging.info("Segmenting periods.")
-    logging.info("Date begin: %s", date_begin)
-    logging.info("Date end:   %s", date_end)
+    # FIXME: Remove this, and the capability below, once we can compute the
+    # returns off the segments directly.
+    date_begin = None
+    date_end = None
 
     if date_begin and date_end and date_begin >= date_end:
         raise ValueError("Dates are not ordered correctly: {} >= {}".format(
@@ -628,8 +625,7 @@ def internalize(entries, transfer_account,
 
 def create_timeline(entries, options_map,
                     transfer_account,
-                    accounts_value, accounts_internal, accounts_internalize=None,
-                    date_begin=None, date_end=None):
+                    accounts_value, accounts_internal, accounts_internalize=None):
 
     """Compute the returns of a portfolio of accounts.
 
@@ -645,10 +641,6 @@ def create_timeline(entries, options_map,
       accounts_internalize: A set of account name strings used to force internalization.
         See internalize() for details.
       price_map: An instance of PriceMap as computed by prices.build_price_map().
-      date_begin: A datetime.date instance, the beginning date of the period to compute
-        returns over.
-      date_end: A datetime.date instance, the end date of the period to compute returns
-        over.
     Returns:
       A triple of
         returns: A dict of currency -> float total returns.
@@ -690,9 +682,7 @@ def create_timeline(entries, options_map,
     # Segment the entries, splitting at entries with external flow and computing
     # the balances before and after. This returns all such periods with the
     # balances at their beginning and end.
-    return segment_periods(entries,
-                           accounts_value, accounts_internal,
-                           date_begin, date_end)
+    return segment_periods(entries, accounts_value, accounts_internal)
 
 # FIXME: You can probably remove the dates from segment_period and do the
 # date work on computing he returns.
@@ -704,23 +694,35 @@ def create_timeline(entries, options_map,
 
 
 
-def compute_returns(entries, options_map,
-                    transfer_account,
-                    accounts_value, accounts_internal, accounts_internalize=None,
-                    date_begin=None, date_end=None):
-    """Compute the returns of a portfolio of accounts.
+def dump_timeline(timeline, file):
+    """Dump a text rendering of the timeline to a given file output for debugging.
 
     Args:
-      entries: A list of directives that may affect the account.
-      transfer_account: A string, the name of an account to use for internalizing entries
-        which need to be split between internal and external flows. A good default value
-        would be an equity account, 'Equity:Internalized' or something like that.
-      accounts_value: A set of account name strings, the names of the asset accounts
-        included in valuing the portfolio.
-      accounts_internal: A set of account name strings, the names of internal flow
-        accounts (normally income and expenses) that aren't external flows.
-      accounts_internalize: A set of account name strings used to force internalization.
-        See internalize() for details.
+      timeline: A list of Segment instances.
+      file: A file object to write to.
+    """
+    pr = lambda *args: print(*args, file=file)
+
+    for segment in timeline:
+        pr(",-----------------------------------------------------------")
+        pr(" Begin:   {}".format(segment.begin.date))
+        pr(" Balance: {}".format(segment.begin.balance.units()))
+        pr("")
+        printer.print_entries(segment.entries, file=file)
+        pr("")
+        pr(" Balance: {}".format(segment.end.balance.units()))
+        pr(" End:     {}".format(segment.end.date))
+        pr("`-----------------------------------------------------------")
+
+        printer.print_entries(segment.external_entries, file=file)
+        pr("")
+
+
+def compute_returns(timeline, price_map, date_begin=None, date_end=None):
+    """Compute the returns of a portfolio of accounts from the given timeline.
+
+    Args:
+      timeline: A list of Segment instances.
       price_map: An instance of PriceMap as computed by prices.build_price_map().
       date_begin: A datetime.date instance, the beginning date of the period to compute
         returns over.
@@ -731,16 +733,8 @@ def compute_returns(entries, options_map,
         returns: A dict of currency -> float total returns.
         dates: A pair of (date_first, date_last) datetime.date instances.
     """
-    timeline = create_timeline(entries, options_map,
-                               transfer_account,
-                               accounts_value, accounts_internal, accounts_internalize,
-                               date_begin, date_end)
-
     periods = [(s.begin.date, s.end.date, s.begin.balance, s.end.balance)
                for s in timeline]
-
-    # Compute the price map.
-    price_map = prices.build_price_map(entries)
 
     # From the period balances, compute the returns.
     logging.info("Calculating period returns.")
@@ -782,6 +776,42 @@ def compute_returns(entries, options_map,
     date_first = periods[0][0]
     date_last = periods[-1][1]
     return total_returns, (date_first, date_last)
+
+
+def compute_timeline_and_returns(entries, options_map,
+                                 transfer_account,
+                                 accounts_value, accounts_internal, accounts_internalize=None,
+                                 date_begin=None, date_end=None):
+    """Compute a timeline and the returns of a portfolio of accounts.
+
+    Args:
+      entries: A list of directives that may affect the account.
+      transfer_account: A string, the name of an account to use for internalizing entries
+        which need to be split between internal and external flows. A good default value
+        would be an equity account, 'Equity:Internalized' or something like that.
+      accounts_value: A set of account name strings, the names of the asset accounts
+        included in valuing the portfolio.
+      accounts_internal: A set of account name strings, the names of internal flow
+        accounts (normally income and expenses) that aren't external flows.
+      accounts_internalize: A set of account name strings used to force internalization.
+        See internalize() for details.
+      price_map: An instance of PriceMap as computed by prices.build_price_map().
+      date_begin: A datetime.date instance, the beginning date of the period to compute
+        returns over.
+      date_end: A datetime.date instance, the end date of the period to compute returns
+        over.
+    Returns:
+      A triple of
+        returns: A dict of currency -> float total returns.
+        dates: A pair of (date_first, date_last) datetime.date instances.
+    """
+    timeline = create_timeline(entries, options_map,
+                               transfer_account,
+                               accounts_value, accounts_internal, accounts_internalize)
+
+    price_map = prices.build_price_map(entries)
+
+    return compute_returns(timeline, price_map, date_begin, date_end)
 
 
 def regexps_to_accounts(entries,
@@ -917,7 +947,7 @@ def main():
          entries, args.regexp_value, args.regexp_internal, args.regexp_internalize)
 
     # Compute the returns using the explicit configuration.
-    returns, (date_first, date_last)= compute_returns(
+    returns, (date_first, date_last) = compute_timeline_and_returns(
         entries, options_map,
         args.transfer_account,
         accounts_value, accounts_internal, accounts_internalize,
