@@ -74,11 +74,19 @@ def main():
 
         # Loop over each period.
         for period_name, date_begin, date_end in periods:
+
+            # Extract the account names using the regular expressions.
+            (accounts_value,
+             accounts_internal,
+             accounts_external,
+             accounts_internalize) = returns.regexps_to_accounts(
+                 entries, assets_regexp, intflows_regexp, None)
+
             # Compute the returns.
-            total_returns, dates, int_entries = returns.compute_returns_with_regexp(
+            total_returns, dates, int_entries = returns.compute_returns(
                 entries, options_map, 'Assets:Internalized',
-                assets_regexp, intflows_regexp, internalize_regexp,
-                date_begin=date_begin, date_end=date_end)
+                accounts_value, accounts_internal, accounts_internalize,
+                date_begin, date_end)
 
             # Annualize the returns for the period.
             annual_returns = returns.annualize_returns(total_returns, date_begin, date_end)

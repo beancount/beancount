@@ -165,19 +165,11 @@ class TestReturnsFunctions(test_utils.TestCase):
         self.assertEqual(None,
                          acc_internalize)
 
-    @mock.patch('beancount.projects.returns.compute_returns')
-    def test_compute_returns_with_regexp(self, mock_obj):
-        returns.compute_returns_with_regexp(self.entries, self.options_map,
-                                            'Equity:Internalized',
-                                            '.*:Prosper', '(Income|Expenses):')
-        self.assertTrue([list, dict, set, set], map(type, mock_obj.call_args))
-        self.assertTrue(mock_obj.called)
-
     def test_compute_returns(self):
         (acc_assets, acc_intflows, _, _) = returns.regexps_to_accounts(
             self.entries, '.*:Prosper', '(Income|Expenses):')
-        returns.compute_returns(self.entries, 'Equity:Internalized',
-                                acc_assets, acc_intflows)
+        returns.compute_returns(self.entries, self.options_map,
+                                'Equity:Internalized', acc_assets, acc_intflows)
 
 
 class TestReturnsPeriods(test_utils.TestCase):
@@ -231,10 +223,10 @@ class TestReturnsPeriods(test_utils.TestCase):
         2014-08-02 balance Assets:US:Investments:Cash    0 USD
         """
         self.assertFalse(errors)
-        returns_dict, dates, _ = returns.compute_returns_with_regexp(
+        returns_dict, dates, _ = returns.compute_returns(
             entries, options_map,
             'Equity:Internalized',
-            '.*:Investments', '(Income|Expenses):')
+            ['Assets:US:Investments:ACME', 'Assets:US:Investments:Cash'], [])
         self.assertEqual({'USD': 1.1}, returns_dict)
         self.assertEqual((datetime.date(2014, 2, 1), datetime.date(2014, 8, 2)), dates)
 
@@ -258,10 +250,10 @@ class TestReturnsPeriods(test_utils.TestCase):
         2014-08-02 balance Assets:US:Investments:Cash       1,000 USD
         """
         self.assertFalse(errors)
-        returns_dict, dates, _ = returns.compute_returns_with_regexp(
+        returns_dict, dates, _ = returns.compute_returns(
             entries, options_map,
             'Equity:Internalized',
-            '.*:Investments', '(Income|Expenses):')
+            ['Assets:US:Investments:ACME', 'Assets:US:Investments:Cash'], [])
         self.assertEqual({'USD': 1.1}, returns_dict)
         self.assertEqual((datetime.date(1990, 1, 1), datetime.date(2014, 8, 2)), dates)
 
@@ -642,7 +634,7 @@ class TestReturnsInternalize(cmptest.TestCase):
 
 
     @loader.load_doc()
-    def test_internalization_implicit_returns(self, entries, errors, _):
+    def test_internalization_implicit_returns(self, entries, errors, options_map):
         """
         2014-01-01 open Assets:Bank:Checking    USD
         2014-01-01 open Assets:Invest:Cash      USD
@@ -661,7 +653,7 @@ class TestReturnsInternalize(cmptest.TestCase):
         """
         self.assertFalse(errors)
         returns_, dates, internalized_entries = returns.compute_returns(
-            entries, 'Equity:Internalized',
+            entries, options_map, 'Equity:Internalized',
             {'Assets:Invest:Cash'},
             {'Expenses:Fees'},
             None)
@@ -681,7 +673,7 @@ class TestReturnsInternalize(cmptest.TestCase):
                 {'Assets:Invest:Cash'}, {'Expenses:Fees'}, {'Income:Invest:PnL'})
 
     @loader.load_doc()
-    def test_internalization_explicit_returns(self, entries, errors, _):
+    def test_internalization_explicit_returns(self, entries, errors, options_map):
         """
         2014-01-01 open Assets:Bank:Checking     USD
         2014-01-01 open Assets:Invest:Cash       USD
@@ -699,7 +691,7 @@ class TestReturnsInternalize(cmptest.TestCase):
         """
         self.assertFalse(errors)
         returns_, dates, internalized_entries = returns.compute_returns(
-            entries, 'Equity:Internalized',
+            entries, options_map, 'Equity:Internalized',
             {'Assets:Invest:Cash'},
             {'Income:Invest:Dividends', 'Expenses:Fees'},
             {'Income:Invest:Dividends'})
@@ -707,7 +699,7 @@ class TestReturnsInternalize(cmptest.TestCase):
         self.assertEqual((datetime.date(2014, 1, 1), datetime.date(2015, 1, 1)), dates)
 
     @loader.load_doc()
-    def test_internalization_explicit_returns_bycash(self, entries, errors, _):
+    def test_internalization_explicit_returns_bycash(self, entries, errors, options_map):
         """
         2014-01-01 open Assets:Bank:Checking     USD
         2014-01-01 open Assets:Invest:BOOG       BOOG
@@ -732,7 +724,7 @@ class TestReturnsInternalize(cmptest.TestCase):
         """
         self.assertFalse(errors)
         returns_, dates, internalized_entries = returns.compute_returns(
-            entries, 'Equity:Internalized',
+            entries, options_map, 'Equity:Internalized',
             {'Assets:Invest:BOOG'},
             {'Income:Invest:Dividends'},
             {'Income:Invest:Dividends'})
@@ -778,7 +770,7 @@ class TestReturnsExampleScript(test_utils.TestCase):
 class TestReturnsWithUnrealized(test_utils.TestCase):
 
     @loader.load_doc()
-    def test_returns_with_unrealized(self, entries, errors, _):
+    def test_returns_with_unrealized(self, entries, errors, options_map):
         """
         plugin "beancount.plugins.unrealized"
 
@@ -806,7 +798,7 @@ class TestReturnsWithUnrealized(test_utils.TestCase):
         assets = {'Assets:US:Investments:ACME', 'Assets:US:Investments:Cash'}
         intflows = {'Income:US:Investments:Dividends'}
         returns_, dates, internalized_entries = returns.compute_returns(
-            entries, 'Equity:Internalized', assets, intflows)
+            entries, options_map, 'Equity:Internalized', assets, intflows)
         self.assertEqual(expected_returns, returns_)
 
         # Now, the unrealized gains is usually inserted at the end of the list
@@ -819,5 +811,5 @@ class TestReturnsWithUnrealized(test_utils.TestCase):
         new_entries = entries[:-1] + [moved_entry]
 
         returns_, dates, internalized_entries = returns.compute_returns(
-            new_entries, 'Equity:Internalized', assets, intflows)
+            new_entries, options_map, 'Equity:Internalized', assets, intflows)
         self.assertEqual(expected_returns, returns_)

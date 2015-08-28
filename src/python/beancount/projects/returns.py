@@ -200,6 +200,17 @@ Then, we turn to other groups that don't include value accounts:
      value of the portfolio, so we choose to ignore these transactions safely.
      (Examples of these are rare.)
 
+
+Notes:
+
+ - If you use the "account_rounding" option, the rounding postings will
+   naturally end up being external flows and that's an undesirable effect. If
+   the option is turned on, we automatically ignore those postigs. (Note that
+   another valid solution would have been to insert this account in the list of
+   internal accounts but that creates a more difficult set of resulting
+   transactions, it's a bit confusing.).
+
+
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
@@ -468,7 +479,8 @@ LINK_FORMAT = 'internalized-{:05d}'
 
 
 def internalize(entries, transfer_account,
-                accounts_value, accounts_intflows, accounts_internalize=None):
+                accounts_value, accounts_internal,
+                accounts_internalize=None):
     """Internalize flows that would be lost because booked against external
     flow accounts. This splits up entries that have accounts both in internal
     flows and external flows. A new set of entries are returned, along with a
@@ -481,7 +493,7 @@ def internalize(entries, transfer_account,
         would be an equity account, 'Equity:Internalized' or something like that.
       accounts_value: A set of account name strings, the names of the asset accounts
         included in valuing the portfolio.
-      accounts_intflows: A set of account name strings, the names of internal flow
+      accounts_internal: A set of account name strings, the names of internal flow
         accounts (normally income and expenses) that aren't external flows.
       accounts_internalize: A set of account name strings to trigger explicit
         internalization of transactions with no value account. If a transaction
@@ -508,7 +520,7 @@ def internalize(entries, transfer_account,
     assert(isinstance(transfer_account, str)), (
         "Invalid transfer account: {}".format(transfer_account))
 
-    if accounts_internalize and not (accounts_internalize <= accounts_intflows):
+    if accounts_internalize and not (accounts_internalize <= accounts_internal):
         raise ValueError(
             "Internalization accounts is not a subset of internal flows accounts.")
 
@@ -522,16 +534,17 @@ def internalize(entries, transfer_account,
 
         # Break up postings into the three categories.
         postings_assets = []
-        postings_intflows = []
-        postings_extflows = []
+        postings_internal = []
+        postings_external = []
         postings_internalize = []
+        postings_ignore = []
         for posting in entry.postings:
             if posting.account in accounts_value:
                 postings_list = postings_assets
-            elif posting.account in accounts_intflows:
-                postings_list = postings_intflows
+            elif posting.account in accounts_internal:
+                postings_list = postings_internal
             else:
-                postings_list = postings_extflows
+                postings_list = postings_external
             postings_list.append(posting)
 
             if accounts_internalize and posting.account in accounts_internalize:
@@ -539,7 +552,7 @@ def internalize(entries, transfer_account,
 
         # Check if the entry is to be internalized and split it up in two
         # entries and replace the entrie if that's the case.
-        if (postings_intflows and postings_extflows and
+        if (postings_internal and postings_external and
             (postings_assets or postings_internalize)):
 
             replaced_entries.append(entry)
@@ -550,7 +563,7 @@ def internalize(entries, transfer_account,
 
             # Calculate the weight of the balance to transfer.
             balance_transfer = inventory.Inventory()
-            for posting in postings_extflows:
+            for posting in postings_external:
                 balance_transfer.add_amount(posting.position.get_weight(posting.price))
 
             prototype_entry = entry._replace(flag=flags.FLAG_RETURNS,
@@ -561,14 +574,14 @@ def internalize(entries, transfer_account,
                 data.Posting(transfer_account, position_, None, None, None)
                 for position_ in balance_transfer.get_positions()]
             new_entries.append(prototype_entry._replace(
-                postings=(postings_assets + postings_intflows + postings_transfer_int)))
+                postings=(postings_assets + postings_internal + postings_transfer_int)))
 
             # Create external flows posting.
             postings_transfer_ext = [
                 data.Posting(transfer_account, -position_, None, None, None)
                 for position_ in balance_transfer.get_positions()]
             new_entries.append(prototype_entry._replace(
-                postings=(postings_transfer_ext + postings_extflows)))
+                postings=(postings_transfer_ext + postings_external)))
         else:
             new_entries.append(entry)
 
@@ -586,8 +599,9 @@ def internalize(entries, transfer_account,
     return new_entries, replaced_entries
 
 
-def compute_returns(entries, transfer_account,
-                    accounts_value, accounts_intflows, accounts_internalize=None,
+def compute_returns(entries, options_map,
+                    transfer_account,
+                    accounts_value, accounts_internal, accounts_internalize=None,
                     date_begin=None, date_end=None):
 
     """Compute the returns of a portfolio of accounts.
@@ -599,7 +613,7 @@ def compute_returns(entries, transfer_account,
         would be an equity account, 'Equity:Internalized' or something like that.
       accounts_value: A set of account name strings, the names of the asset accounts
         included in valuing the portfolio.
-      accounts_intflows: A set of account name strings, the names of internal flow
+      accounts_internal: A set of account name strings, the names of internal flow
         accounts (normally income and expenses) that aren't external flows.
       accounts_internalize: A set of account name strings used to force internalization.
         See internalize() for details.
@@ -618,6 +632,18 @@ def compute_returns(entries, transfer_account,
     """
     if not accounts_value:
         raise ValueError("Cannot calculate returns without assets accounts to value")
+    if isinstance(accounts_value, list):
+        accounts_value = set(accounts_value)
+    if isinstance(accounts_internal, list):
+        accounts_internal = set(accounts_internal)
+    if accounts_internalize and isinstance(accounts_internalize, list):
+        accounts_internalize = set(accounts_internalize)
+    assert accounts_internalize is None or isinstance(accounts_internalize, set)
+
+    # Add the rounding error account to the list of internal flow accounts in
+    # order to avoid causing external flows on these tiny amounts.
+    if options_map["account_rounding"]:
+        entries = remove_account_postings(options_map["account_rounding"], entries)
 
     # Compute the price map.
     price_map = prices.build_price_map(entries)
@@ -633,14 +659,15 @@ def compute_returns(entries, transfer_account,
     # Internalize entries with internal/external flows.
     entries, internalized_entries = internalize(
         entries, transfer_account,
-        accounts_value, accounts_intflows, accounts_internalize)
+        accounts_value, accounts_internal,
+        accounts_internalize)
     accounts_value.add(transfer_account)
 
     # Segment the entries, splitting at entries with external flow and computing
     # the balances before and after. This returns all such periods with the
     # balances at their beginning and end.
     periods, portfolio_entries = segment_periods(entries,
-                                                 accounts_value, accounts_intflows,
+                                                 accounts_value, accounts_internal,
                                                  date_begin, date_end)
 
     # From the period balances, compute the returns.
@@ -815,11 +842,12 @@ def main():
      accounts_internal,
      accounts_external,
      accounts_internalize) = regexps_to_accounts(
-         entries, args.assets_regexp, args.internal_regexp, args.internalize_regexp)
+         entries, args.regexp_value, args.regexp_internal, args.regexp_internalize)
 
     # Compute the returns using the explicit configuration.
     returns, (date_first, date_last), _ = compute_returns(
-        entries, args.transfer_account,
+        entries, options_map,
+        args.transfer_account,
         accounts_value, accounts_internal, accounts_internalize,
         args.date_begin, args.date_end)
 
