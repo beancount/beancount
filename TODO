@@ -1,5 +1,12 @@
 -*- mode: org -*-
 beancount: TODO
+* Returns (Revision)
+
+  - Implement per account, with data structures + code to combine them together
+  - Trailing windows
+  - Rolling windows
+  - Calcualte pre-tax returns, post-tax returns
+
 * Booking
 
   ,--------------------------------------------------------------------------------
