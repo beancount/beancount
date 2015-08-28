@@ -9,6 +9,8 @@ import subprocess
 from os import path
 from unittest import mock
 
+from beancount.projects.returns import Segment
+from beancount.projects.returns import Snapshot
 from beancount import loader
 from beancount.core import inventory
 from beancount.ops import prices
@@ -20,6 +22,20 @@ from beancount.utils import test_utils
 
 def setUp(self):
     logging.basicConfig(level=logging.DEBUG, format='%(levelname)-8s: %(message)s')
+
+
+def dates_from_timeline(timeline):
+    """Given a list of segments (timeline), return the begin/end date pairs.
+
+    This is essentially used for testing.
+
+    Args:
+      timeline: A list of Segment instances.
+    Returns:
+      A corresponding list of date pairs.
+    """
+    return [(segment.begin.date, segment.end.date)
+            for segment in timeline]
 
 
 class TestReturnsFunctions(test_utils.TestCase):
@@ -192,13 +208,15 @@ class TestReturnsPeriods(test_utils.TestCase):
         """
         self.assertFalse(errors)
         assets = {'Assets:US:Investments:Cash'}
-        periods, _ = returns.segment_periods(entries, assets, assets)
-        self.assertEqual([
-            (datetime.date(2014, 1, 1), datetime.date(2014, 2, 1),
-             inventory.from_string(''), inventory.from_string('')),
-            (datetime.date(2014, 2, 1), datetime.date(2014, 8, 1),
-             inventory.from_string('10000 USD'), inventory.from_string('10000 USD'))
-            ], periods)
+        timeline = returns.segment_periods(entries, assets, assets)
+        self.assertEqual(2, len(timeline))
+        empty = inventory.from_string('')
+        self.assertEqual(timeline[0].begin, Snapshot(datetime.date(2014, 1, 1), empty))
+        self.assertEqual(timeline[0].end, Snapshot(datetime.date(2014, 2, 1), empty))
+        self.assertEqual(timeline[1].begin, Snapshot(datetime.date(2014, 2, 1),
+                                                     inventory.from_string('10000 USD')))
+        self.assertEqual(timeline[1].end, Snapshot(datetime.date(2014, 8, 1),
+                                                   inventory.from_string('10000 USD')))
 
     # Deposit, one investment, no other changes but a price change.
     @loader.load_doc()
@@ -298,121 +316,126 @@ class TestReturnsConstrained(test_utils.TestCase):
 
     def test_segment_periods_no_constraint(self):
         # Test the default case, no beginning.
-        periods, _ = returns.segment_periods(self.entries, self.assets, self.assets)
+        timeline = returns.segment_periods(self.entries, self.assets, self.assets)
         self.assertEqual([
             (datetime.date(2014, 1, 1), datetime.date(2014, 1, 15)),
             (datetime.date(2014, 1, 15), datetime.date(2014, 6, 15)),
             (datetime.date(2014, 6, 15), datetime.date(2014, 10, 1)),
-            ], [(date_begin, date_end) for date_begin, date_end, _1, _2 in periods])
-
-        self.assertEqual(inventory.from_string(''), periods[0][2])
+            ], dates_from_timeline(timeline))
+        self.assertEqual(inventory.from_string(''), timeline[0].end.balance)
 
     def test_segment_periods_with_begin(self):
         # Test with a begin date.
-        periods, _ = returns.segment_periods(self.entries, self.assets, self.assets,
-                                             date_begin=datetime.date(2014, 4, 20))
+        timeline = returns.segment_periods(self.entries, self.assets, self.assets,
+                                           date_begin=datetime.date(2014, 4, 20))
         self.assertEqual([
             (datetime.date(2014, 4, 20), datetime.date(2014, 6, 15)),
             (datetime.date(2014, 6, 15), datetime.date(2014, 10, 1)),
-            ], [(date_begin, date_end) for date_begin, date_end, _1, _2 in periods])
+            ], dates_from_timeline(timeline))
 
         self.assertEqual(inventory.from_string('2900 USD, 21 ACME {100 USD}'),
-                         periods[0][2])
+                         timeline[0].begin.balance)
 
         # Test with another begin date.
-        periods, _ = returns.segment_periods(self.entries, self.assets, self.assets,
-                                             date_begin=datetime.date(2014, 9, 10))
+        timeline = returns.segment_periods(self.entries, self.assets, self.assets,
+                                           date_begin=datetime.date(2014, 9, 10))
         self.assertEqual([
             (datetime.date(2014, 9, 10), datetime.date(2014, 10, 1)),
-            ], [(date_begin, date_end) for date_begin, date_end, _1, _2 in periods])
+            ], dates_from_timeline(timeline))
 
         self.assertEqual(inventory.from_string('3720 USD, '
                                                '21 ACME {100 USD}, '
                                                '22 ACME {110 USD}, '
-                                               '23 ACME {120 USD}'), periods[0][2])
+                                               '23 ACME {120 USD}'),
+                         timeline[0].begin.balance)
 
         # Test with another begin date.
-        periods, _ = returns.segment_periods(self.entries, self.assets, self.assets,
-                                             date_begin=datetime.date(2014, 10, 15))
+        timeline = returns.segment_periods(self.entries, self.assets, self.assets,
+                                           date_begin=datetime.date(2014, 10, 15))
         self.assertEqual([
             (datetime.date(2014, 10, 15), datetime.date(2014, 10, 15))
-            ], [(date_begin, date_end) for date_begin, date_end, _1, _2 in periods])
+            ], dates_from_timeline(timeline))
 
         self.assertEqual(inventory.from_string('600 USD, '
                                                '21 ACME {100 USD}, '
                                                '22 ACME {110 USD}, '
                                                '23 ACME {120 USD}, '
-                                               '24 ACME {130 USD}'), periods[0][2])
+                                               '24 ACME {130 USD}'),
+                         timeline[0].begin.balance)
 
     def test_segment_periods_with_end(self):
         # Test with an end date.
-        periods, _ = returns.segment_periods(self.entries, self.assets, self.assets,
-                                             date_end=datetime.date(2014, 4, 20))
+        timeline = returns.segment_periods(self.entries, self.assets, self.assets,
+                                           date_end=datetime.date(2014, 4, 20))
         self.assertEqual([
             (datetime.date(2014, 1, 1), datetime.date(2014, 1, 15)),
             (datetime.date(2014, 1, 15), datetime.date(2014, 4, 20)),
-            ], [(date_begin, date_end) for date_begin, date_end, _1, _2 in periods])
+            ], dates_from_timeline(timeline))
 
         self.assertEqual(inventory.from_string('2900 USD, 21 ACME {100 USD}'),
-                         periods[-1][3])
+                         timeline[-1].end.balance)
 
         # Test with another end date.
-        periods, _ = returns.segment_periods(self.entries, self.assets, self.assets,
-                                             date_end=datetime.date(2014, 9, 10))
+        timeline = returns.segment_periods(self.entries, self.assets, self.assets,
+                                           date_end=datetime.date(2014, 9, 10))
         self.assertEqual([
             (datetime.date(2014, 1, 1), datetime.date(2014, 1, 15)),
             (datetime.date(2014, 1, 15), datetime.date(2014, 6, 15)),
             (datetime.date(2014, 6, 15), datetime.date(2014, 9, 10)),
-            ], [(date_begin, date_end) for date_begin, date_end, _1, _2 in periods])
+            ], dates_from_timeline(timeline))
 
         self.assertEqual(inventory.from_string('3720 USD, '
                                                '21 ACME {100 USD}, '
                                                '22 ACME {110 USD}, '
-                                               '23 ACME {120 USD}'), periods[-1][3])
+                                               '23 ACME {120 USD}'),
+                         timeline[-1].end.balance)
 
         # Test with yet another end date.
-        periods, _ = returns.segment_periods(self.entries, self.assets, self.assets,
-                                             date_end=datetime.date(2014, 10, 15))
+        timeline = returns.segment_periods(self.entries, self.assets, self.assets,
+                                           date_end=datetime.date(2014, 10, 15))
         self.assertEqual([
             (datetime.date(2014, 1, 1), datetime.date(2014, 1, 15)),
             (datetime.date(2014, 1, 15), datetime.date(2014, 6, 15)),
             (datetime.date(2014, 6, 15), datetime.date(2014, 10, 15)),
-            ], [(date_begin, date_end) for date_begin, date_end, _1, _2 in periods])
+            ], dates_from_timeline(timeline))
 
         self.assertEqual(inventory.from_string('600 USD, '
                                                '21 ACME {100 USD}, '
                                                '22 ACME {110 USD}, '
                                                '23 ACME {120 USD}, '
-                                               '24 ACME {130 USD}'), periods[-1][3])
+                                               '24 ACME {130 USD}'),
+                         timeline[-1].end.balance)
 
     def test_segment_periods_with_begin_and_end(self):
         # Test with an end date.
-        periods, _ = returns.segment_periods(self.entries, self.assets, self.assets,
-                                             date_begin=datetime.date(2014, 4, 20),
-                                             date_end=datetime.date(2014, 9, 10))
+        timeline = returns.segment_periods(self.entries, self.assets, self.assets,
+                                           date_begin=datetime.date(2014, 4, 20),
+                                           date_end=datetime.date(2014, 9, 10))
         self.assertEqual([
             (datetime.date(2014, 4, 20), datetime.date(2014, 6, 15)),
             (datetime.date(2014, 6, 15), datetime.date(2014, 9, 10)),
-            ], [(date_begin, date_end) for date_begin, date_end, _1, _2 in periods])
+            ], dates_from_timeline(timeline))
 
         self.assertEqual(inventory.from_string('3720 USD, '
                                                '21 ACME {100 USD}, '
                                                '22 ACME {110 USD}, '
-                                               '23 ACME {120 USD}'), periods[-1][3])
+                                               '23 ACME {120 USD}'),
+                         timeline[-1].end.balance)
 
     def test_segment_periods_preceding(self):
-        periods, _ = returns.segment_periods(self.entries, self.assets, self.assets,
-                                             date_begin=datetime.date(2013, 9, 1),
-                                             date_end=datetime.date(2013, 12, 1))
+        timeline = returns.segment_periods(self.entries, self.assets, self.assets,
+                                           date_begin=datetime.date(2013, 9, 1),
+                                           date_end=datetime.date(2013, 12, 1))
         self.assertEqual([
-            (datetime.date(2013, 9, 1), datetime.date(2013, 12, 1),
-             inventory.Inventory(), inventory.Inventory()),
-            ], periods)
+            Segment(Snapshot(datetime.date(2013, 9, 1), inventory.Inventory()),
+                    Snapshot(datetime.date(2013, 12, 1), inventory.Inventory()),
+                    [], [])
+        ], timeline)
 
     def test_segment_periods_following(self):
-        periods, _ = returns.segment_periods(self.entries, self.assets, self.assets,
-                                             date_begin=datetime.date(2015, 3, 1),
-                                             date_end=datetime.date(2015, 6, 1))
+        timeline = returns.segment_periods(self.entries, self.assets, self.assets,
+                                           date_begin=datetime.date(2015, 3, 1),
+                                           date_end=datetime.date(2015, 6, 1))
 
         inv_final = inventory.from_string('600 USD, '
                                           '21 ACME {100 USD}, '
@@ -420,26 +443,28 @@ class TestReturnsConstrained(test_utils.TestCase):
                                           '23 ACME {120 USD}, '
                                           '24 ACME {130 USD}')
         self.assertEqual([
-            (datetime.date(2015, 3, 1), datetime.date(2015, 6, 1), inv_final, inv_final),
-            ], periods)
+            Segment(Snapshot(datetime.date(2015, 3, 1), inv_final),
+                    Snapshot(datetime.date(2015, 6, 1), inv_final),
+                    [], []),
+        ], timeline)
 
     def test_segment_periods_around(self):
-        periods, _ = returns.segment_periods(self.entries, self.assets, self.assets,
-                                             date_begin=datetime.date(2013, 12, 1),
-                                             date_end=datetime.date(2015, 3, 1))
+        timeline = returns.segment_periods(self.entries, self.assets, self.assets,
+                                           date_begin=datetime.date(2013, 12, 1),
+                                           date_end=datetime.date(2015, 3, 1))
 
         self.assertEqual([
             (datetime.date(2013, 12, 1), datetime.date(2014, 1, 15)),
             (datetime.date(2014, 1, 15), datetime.date(2014, 6, 15)),
             (datetime.date(2014, 6, 15), datetime.date(2015, 3, 1)),
-            ], [(date_begin, date_end) for date_begin, date_end, _1, _2 in periods])
+            ], dates_from_timeline(timeline))
 
         inv_final = inventory.from_string('600 USD, '
                                           '21 ACME {100 USD}, '
                                           '22 ACME {110 USD}, '
                                           '23 ACME {120 USD}, '
                                           '24 ACME {130 USD}')
-        self.assertEqual(inv_final, periods[-1][3])
+        self.assertEqual(inv_final, timeline[-1].end.balance)
 
     @loader.load_doc()
     def test_segment_periods_hanging_last_period(self, entries, errors, _):
@@ -462,17 +487,18 @@ class TestReturnsConstrained(test_utils.TestCase):
         """
         self.assertFalse(errors)
 
-        periods, _ = returns.segment_periods(entries, self.assets, self.assets,
-                                             date_end=datetime.date(2020, 1, 1))
+        timeline = returns.segment_periods(entries, self.assets, self.assets,
+                                           date_end=datetime.date(2020, 1, 1))
 
         self.assertEqual([
             (datetime.date(2014, 1, 1), datetime.date(2014, 1, 15)),
             (datetime.date(2014, 1, 15), datetime.date(2014, 6, 15)),
             (datetime.date(2014, 6, 15), datetime.date(2020, 1, 1)),
-            ], [(date_begin, date_end) for date_begin, date_end, _1, _2 in periods])
+            ], dates_from_timeline(timeline))
 
         self.assertEqual(inventory.from_string('1400 USD, '
-                                               '21 ACME {100 USD}'), periods[-1][3])
+                                               '21 ACME {100 USD}'),
+                         timeline[-1].end.balance)
 
 
 class TestReturnsInternalize(cmptest.TestCase):

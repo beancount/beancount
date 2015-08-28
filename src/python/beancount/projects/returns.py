@@ -215,6 +215,7 @@ Notes:
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import argparse
+import collections
 import copy
 import re
 import logging
@@ -231,6 +232,25 @@ from beancount.core import getters
 from beancount.core import flags
 from beancount.ops import prices
 from beancount.utils import misc_utils
+
+
+# A snapshot of a particular set of accounts at a point in time. The balances
+# aren't converted to their prices, this is done in a separate step.
+#
+# Attributes:
+#   date: A datetime.date instance, the day of the snapshot.
+#   balance: An Inventory instance, the balance at the given date.
+Snapshot = collections.namedtuple('Snapshot', 'date balance')
+
+# A segment of a returns chain, with no external flows involved.
+#
+# Attributes:
+#   begin: The snapshot at the beginning of the period.
+#   end: The snapshot at the end of the period.
+#   entries: A list of internal entries that occur within the segment.
+#   external_entries: A list of the external entries that immediately follow
+#     this segment.
+Segment = collections.namedtuple('Segment', 'begin end entries external_entries')
 
 
 def sum_balances_for_accounts(balance, entry, accounts):
@@ -250,7 +270,7 @@ def sum_balances_for_accounts(balance, entry, accounts):
     return balance
 
 
-def segment_periods(entries, accounts_value, accounts_intflows,
+def segment_periods(entries, accounts_value, accounts_internal,
                     date_begin=None, date_end=None):
     """Segment entries in terms of piecewise periods of internal flow.
 
@@ -264,19 +284,13 @@ def segment_periods(entries, accounts_value, accounts_intflows,
         internal flow accounts (the function simply ignores that which is not
         relevant).
       accounts_value: A set of the asset accounts in the related group.
-      accounts_intflows: A set of the internal flow accounts in the related group.
+      accounts_internal: A set of the internal flow accounts in the related group.
       date_begin: A datetime.date instance, the beginning date of the period to compute
         returns over.
       date_end: A datetime.date instance, the end date of the period to compute returns
         over.
     Returns:
-      A pair of
-        periods: A list of period tuples, each of which contains:
-          period_begin: A datetime.date instance, the first day of the period.
-          period_end: A datetime.date instance, the last day of the period.
-          balance_begin: An Inventory instance, the balance at the beginning of the period.
-          balance_end: An Inventory instance, the balance at the end of the period.
-        portfolio_entries: A list of the entries that we used in computing the portfolio.
+      A timeline, which is a list of Segment instances.
     Raises:
       ValueError: If the dates create an impossible situation, the beginning
         must come before the requested end, if specified.
@@ -289,7 +303,7 @@ def segment_periods(entries, accounts_value, accounts_intflows,
         raise ValueError("Dates are not ordered correctly: {} >= {}".format(
             date_begin, date_end))
 
-    accounts_related = accounts_value | accounts_intflows
+    accounts_related = accounts_value | accounts_internal
     is_external_flow_entry = lambda entry: (isinstance(entry, data.Transaction) and
                                             any(posting.account not in accounts_related
                                                 for posting in entry.postings))
@@ -316,12 +330,13 @@ def segment_periods(entries, accounts_value, accounts_intflows,
                 entry = next(iter_entries)
         except StopIteration:
             # No periods found! Just return an empty list.
-            return [(date_begin, date_end or date_begin, balance, balance)], []
+            return [Segment(Snapshot(date_begin, balance),
+                            Snapshot(date_end or date_begin, balance), [], [])]
     else:
         period_begin = entry.date
 
     # Main loop over the entries.
-    periods = []
+    timeline = []
     entry_logger = misc_utils.LineFileProxy(logging.debug, '   ')
     done = False
     while True:
@@ -333,6 +348,7 @@ def segment_periods(entries, accounts_value, accounts_intflows,
         logging.debug("")
 
         # Consume all internal flow entries, simply accumulating the total balance.
+        segment_entries = []
         while True:
             period_end = entry.date
             if is_external_flow_entry(entry):
@@ -343,11 +359,13 @@ def segment_periods(entries, accounts_value, accounts_intflows,
                 break
             if entry:
                 printer.print_entry(entry, file=entry_logger)
+                segment_entries.append(entry)
             balance = sum_balances_for_accounts(balance, entry, accounts_value)
             try:
                 entry = next(iter_entries)
             except StopIteration:
                 done = True
+                entry = None
                 if date_end:
                     period_end = date_end
                 break
@@ -359,7 +377,12 @@ def segment_periods(entries, accounts_value, accounts_intflows,
         ## FIXME: Bring this back in, this fails for now. Something about the
         ## initialization fails it. assert period_begin <= period_end,
         ## (period_begin, period_end)
-        periods.append((period_begin, period_end, balance_begin, balance_end))
+
+        external_entries = []
+        segment = Segment(Snapshot(period_begin, balance_begin),
+                          Snapshot(period_end, balance_end),
+                          segment_entries, external_entries)
+        timeline.append(segment)
 
         logging.debug(" Balance: %s", balance_end.units())
         logging.debug(" End:     %s", period_end)
@@ -373,6 +396,7 @@ def segment_periods(entries, accounts_value, accounts_intflows,
         assert is_external_flow_entry(entry), entry
         if entry:
             printer.print_entry(entry, file=entry_logger)
+            external_entries.append(entry)
         balance = sum_balances_for_accounts(balance, entry, accounts_value)
         try:
             entry = next(iter_entries)
@@ -380,7 +404,10 @@ def segment_periods(entries, accounts_value, accounts_intflows,
             # If there is an end date, insert that final period to cover the end
             # date, with no changes.
             if date_end:
-                periods.append((period_end, date_end, balance, balance))
+                segment = Segment(Snapshot(period_end, balance),
+                                  Snapshot(date_end, balance),
+                                  [], [])
+                timeline.append(segment)
             break
 
         period_begin = period_end
@@ -388,7 +415,7 @@ def segment_periods(entries, accounts_value, accounts_intflows,
     ## FIXME: Bring this back in, this fails for now.
     # assert all(period_begin <= period_end
     #            for period_begin, period_end, _, _ in periods), periods
-    return periods, portfolio_entries
+    return timeline
 
 
 def compute_period_returns(date_begin, date_end,
@@ -643,10 +670,7 @@ def compute_returns(entries, options_map,
     # Add the rounding error account to the list of internal flow accounts in
     # order to avoid causing external flows on these tiny amounts.
     if options_map["account_rounding"]:
-        entries = remove_account_postings(options_map["account_rounding"], entries)
-
-    # Compute the price map.
-    price_map = prices.build_price_map(entries)
+        entries = data.remove_account_postings(options_map["account_rounding"], entries)
 
     # Remove unrealized entries, if any are found. (Note that unrealized gains
     # only inserted at the end of the list of entries have no effect because
@@ -666,9 +690,15 @@ def compute_returns(entries, options_map,
     # Segment the entries, splitting at entries with external flow and computing
     # the balances before and after. This returns all such periods with the
     # balances at their beginning and end.
-    periods, portfolio_entries = segment_periods(entries,
-                                                 accounts_value, accounts_internal,
-                                                 date_begin, date_end)
+    timeline = segment_periods(entries,
+                               accounts_value, accounts_internal,
+                               date_begin, date_end)
+
+    periods = [(s.begin.date, s.end.date, s.begin.balance, s.end.balance)
+               for s in timeline]
+
+    # Compute the price map.
+    price_map = prices.build_price_map(entries)
 
     # From the period balances, compute the returns.
     logging.info("Calculating period returns.")
