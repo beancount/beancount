@@ -324,6 +324,9 @@ class TestReturnsConstrained(test_utils.TestCase):
             ], dates_from_timeline(timeline))
         self.assertEqual(inventory.from_string(''), timeline[0].end.balance)
 
+# FIXME: These date cases have to be ported to work off the timeline returned
+# from segment_periods().
+
     # def test_segment_periods_with_begin(self):
     #     # Test with a begin date.
     #     timeline = returns.segment_periods(self.entries, self.assets, self.assets,

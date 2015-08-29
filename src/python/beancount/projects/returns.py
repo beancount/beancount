@@ -334,15 +334,9 @@ def segment_periods(entries, accounts_value, accounts_internal):
 
     # Main loop over the entries.
     timeline = []
-    entry_logger = misc_utils.LineFileProxy(logging.debug, '   ')
     done = False
     while True:
         balance_begin = copy.copy(balance)
-
-        logging.debug(",-----------------------------------------------------------")
-        logging.debug(" Begin:   %s", period_begin)
-        logging.debug(" Balance: %s", balance_begin.units())
-        logging.debug("")
 
         # Consume all internal flow entries, simply accumulating the total balance.
         segment_entries = []
@@ -355,7 +349,6 @@ def segment_periods(entries, accounts_value, accounts_internal):
                 done = True
                 break
             if entry:
-                printer.print_entry(entry, file=entry_logger)
                 segment_entries.append(entry)
             balance = sum_balances_for_accounts(balance, entry, accounts_value)
             try:
@@ -381,18 +374,12 @@ def segment_periods(entries, accounts_value, accounts_internal):
                           segment_entries, external_entries)
         timeline.append(segment)
 
-        logging.debug(" Balance: %s", balance_end.units())
-        logging.debug(" End:     %s", period_end)
-        logging.debug("`-----------------------------------------------------------")
-        logging.debug("")
-
         if done:
             break
 
         # Absorb the balance of the external flow entry.
         assert is_external_flow_entry(entry), entry
         if entry:
-            printer.print_entry(entry, file=entry_logger)
             external_entries.append(entry)
         balance = sum_balances_for_accounts(balance, entry, accounts_value)
         try:
@@ -694,7 +681,7 @@ def create_timeline(entries, options_map,
 
 
 
-def dump_timeline(timeline, file):
+def dump_timeline_brief(timeline, file):
     """Dump a text rendering of the timeline to a given file output for debugging.
 
     Args:
@@ -703,18 +690,38 @@ def dump_timeline(timeline, file):
     """
     pr = lambda *args: print(*args, file=file)
 
+    str_balances = [(segment.begin.balance.units().to_string(),
+                     segment.end.balance.units().to_string())
+                    for segment in timeline]
+    max_width = max(max(len(str_begin), len(str_end))
+                    for str_begin, str_end in str_balances)
+    fmt = "   {{}} -> {{}}  {{:>{w}}}  {{:>{w}}}".format(w=max_width)
+    for segment, (str_begin, str_end) in zip(timeline, str_balances):
+        pr(fmt.format(segment.begin.date, segment.end.date, str_begin, str_end))
+    pr("")
+
+
+def dump_timeline(timeline, file):
+    """Dump a text rendering of the timeline to a given file output for debugging.
+    This provides all, the detail. Useful just for debugging.
+
+    Args:
+      timeline: A list of Segment instances.
+      file: A file object to write to.
+    """
+    pr = lambda *args: print(*args, file=file)
+    indfile = misc_utils.LineFileProxy(file.write, '   ', write_newlines=True)
     for segment in timeline:
         pr(",-----------------------------------------------------------")
         pr(" Begin:   {}".format(segment.begin.date))
         pr(" Balance: {}".format(segment.begin.balance.units()))
         pr("")
-        printer.print_entries(segment.entries, file=file)
+        printer.print_entries(segment.entries, file=indfile)
         pr("")
         pr(" Balance: {}".format(segment.end.balance.units()))
         pr(" End:     {}".format(segment.end.date))
         pr("`-----------------------------------------------------------")
-
-        printer.print_entries(segment.external_entries, file=file)
+        printer.print_entries(segment.external_entries, file=indfile)
         pr("")
 
 
@@ -813,6 +820,8 @@ def compute_timeline_and_returns(entries, options_map,
 
     return compute_returns(timeline, price_map, date_begin, date_end)
 
+
+# ReturnAccounts = collections.namedtuple('ReturnAccounts', 'value internal external internalize')
 
 def regexps_to_accounts(entries,
                         regexp_value, regexp_internal, regexp_internalize=None):
