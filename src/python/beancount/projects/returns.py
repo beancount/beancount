@@ -290,15 +290,6 @@ def segment_periods(entries, accounts_value, accounts_internal):
       ValueError: If the dates create an impossible situation, the beginning
         must come before the requested end, if specified.
     """
-    # FIXME: Remove this, and the capability below, once we can compute the
-    # returns off the segments directly.
-    date_begin = None
-    date_end = None
-
-    if date_begin and date_end and date_begin >= date_end:
-        raise ValueError("Dates are not ordered correctly: {} >= {}".format(
-            date_begin, date_end))
-
     accounts_related = accounts_value | accounts_internal
     is_external_flow_entry = lambda entry: (isinstance(entry, data.Transaction) and
                                             any(posting.account not in accounts_related
@@ -314,22 +305,7 @@ def segment_periods(entries, accounts_value, accounts_internal):
     # If a beginning cut-off has been specified, skip the entries before then
     # (and make sure to accumulate the initial balance correctly).
     balance = inventory.Inventory()
-    if date_begin is not None:
-        period_begin = date_begin
-        try:
-            while True:
-                if entry.date >= date_begin:
-                    break
-                if date_end and entry.date >= date_end:
-                    break
-                sum_balances_for_accounts(balance, entry, accounts_value)
-                entry = next(iter_entries)
-        except StopIteration:
-            # No periods found! Just return an empty list.
-            return [Segment(Snapshot(date_begin, balance),
-                            Snapshot(date_end or date_begin, balance), [], [])]
-    else:
-        period_begin = entry.date
+    period_begin = entry.date
 
     # Main loop over the entries.
     timeline = []
@@ -343,10 +319,6 @@ def segment_periods(entries, accounts_value, accounts_internal):
             period_end = entry.date
             if is_external_flow_entry(entry):
                 break
-            if date_end and entry.date >= date_end:
-                period_end = date_end
-                done = True
-                break
             if entry:
                 segment_entries.append(entry)
             sum_balances_for_accounts(balance, entry, accounts_value)
@@ -355,8 +327,6 @@ def segment_periods(entries, accounts_value, accounts_internal):
             except StopIteration:
                 done = True
                 entry = None
-                if date_end:
-                    period_end = date_end
                 break
         else:
             done = True
@@ -384,13 +354,6 @@ def segment_periods(entries, accounts_value, accounts_internal):
         try:
             entry = next(iter_entries)
         except StopIteration:
-            # If there is an end date, insert that final period to cover the end
-            # date, with no changes.
-            if date_end:
-                segment = Segment(Snapshot(period_end, balance),
-                                  Snapshot(date_end, balance),
-                                  [], [])
-                timeline.append(segment)
             break
 
         period_begin = period_end

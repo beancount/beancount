@@ -13,7 +13,7 @@ beancount: TODO
     pre-render everything.
   - You need to merge the external entries when multiple ones occur on the same
     date.
-  - Handle the various FIXMEs (remove dates from segment_periods).
+  - Handle the various FIXMEs.
 
 * Booking
 
