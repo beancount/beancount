@@ -8,6 +8,12 @@ beancount: TODO
   - Calculate pre-tax returns, post-tax returns
   - Output nice debugging information
   - Warn when prices aren't within a certain date interval with their usage
+  - Render a graph of the actual values of the assets as well.
+  - There should be a separate web application that handles this, no need to
+    pre-render everything.
+  - You need to merge the external entries when multiple ones occur on the same
+    date.
+  - Handle the various FIXMEs (remove dates from segment_periods).
 
 * Booking
 

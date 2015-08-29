@@ -262,13 +262,12 @@ def sum_balances_for_accounts(balance, entry, accounts):
       entry: A directive (directives other than Transactions are ignored).
       accounts: A set of strings, the names of accounts whose postings to include.
     Returns:
-      This destructively modifies balance and returns it.
+      WARNING: This destructively modifies balance.
     """
     if isinstance(entry, data.Transaction):
         for posting in entry.postings:
             if posting.account in accounts:
                 balance.add_position(posting.position)
-    return balance
 
 
 def segment_periods(entries, accounts_value, accounts_internal):
@@ -323,7 +322,7 @@ def segment_periods(entries, accounts_value, accounts_internal):
                     break
                 if date_end and entry.date >= date_end:
                     break
-                balance = sum_balances_for_accounts(balance, entry, accounts_value)
+                sum_balances_for_accounts(balance, entry, accounts_value)
                 entry = next(iter_entries)
         except StopIteration:
             # No periods found! Just return an empty list.
@@ -350,7 +349,7 @@ def segment_periods(entries, accounts_value, accounts_internal):
                 break
             if entry:
                 segment_entries.append(entry)
-            balance = sum_balances_for_accounts(balance, entry, accounts_value)
+            sum_balances_for_accounts(balance, entry, accounts_value)
             try:
                 entry = next(iter_entries)
             except StopIteration:
@@ -381,7 +380,7 @@ def segment_periods(entries, accounts_value, accounts_internal):
         assert is_external_flow_entry(entry), entry
         if entry:
             external_entries.append(entry)
-        balance = sum_balances_for_accounts(balance, entry, accounts_value)
+        sum_balances_for_accounts(balance, entry, accounts_value)
         try:
             entry = next(iter_entries)
         except StopIteration:
@@ -821,7 +820,17 @@ def compute_timeline_and_returns(entries, options_map,
     return compute_returns(timeline, price_map, date_begin, date_end)
 
 
-# ReturnAccounts = collections.namedtuple('ReturnAccounts', 'value internal external internalize')
+# A simple structure to hold the sets of accounts used to construct a timeline
+# for a particular asset we want to compute the returns for.
+#
+# Attributes:
+#   value: A set of value account strings.
+#   internal: A set of internal account strings.
+#   external: A set of external account strings.
+#   internalize: A set of internalized account strings.
+ReturnAccounts = collections.namedtuple('ReturnAccounts',
+                                        'value internal external internalize')
+
 
 def regexps_to_accounts(entries,
                         regexp_value, regexp_internal, regexp_internalize=None):
@@ -880,29 +889,38 @@ def regexps_to_accounts(entries,
                 if match_internalize and match_internalize(posting.account):
                     accounts_internalize.add(posting.account)
 
-    logging.info('Asset accounts:')
-    for account in sorted(accounts_value):
-        logging.info('  %s', account)
+    return ReturnAccounts(accounts_value,
+                          accounts_internal,
+                          accounts_external,
+                          accounts_internalize or None)
 
-    logging.info('Internal flows:')
-    for account in sorted(accounts_internal):
-        logging.info('  %s', account)
 
-    logging.info('External flows:')
-    for account in sorted(accounts_external):
-        logging.info('  %s', account)
-    logging.info('')
+def dump_return_accounts(racc, file):
+    """Render the return accounts.
 
-    if accounts_internalize:
-        logging.info('Explicitly internalized accounts:')
-        for account in sorted(accounts_internalize):
-            logging.info('  %s', account)
-        logging.info('')
+    Args:
+      racc: A ReturnAccounts instance.
+      file: A file object to write to.
+    """
+    pr = lambda *args: print(*args, file=file)
+    pr('Asset accounts:')
+    for account in sorted(racc.value):
+        pr('  {}'.format(account))
 
-    return (accounts_value,
-            accounts_internal,
-            accounts_external,
-            accounts_internalize or None)
+    pr('Internal flows:')
+    for account in sorted(racc.internal):
+        pr('  {}'.format(account))
+
+    pr('External flows:')
+    for account in sorted(racc.external):
+        pr('  {}'.format(account))
+    pr('')
+
+    if racc.internalize:
+        pr('Explicitly internalized accounts:')
+        for account in sorted(racc.internalize):
+            pr('  {}'.format(account))
+        pr('')
 
 
 def main():
@@ -949,17 +967,14 @@ def main():
     entries, errors, options_map = loader.load_file(args.filename, log_errors=logging.error)
 
     # Extract the account names using the regular expressions.
-    (accounts_value,
-     accounts_internal,
-     accounts_external,
-     accounts_internalize) = regexps_to_accounts(
-         entries, args.regexp_value, args.regexp_internal, args.regexp_internalize)
+    racc = regexps_to_accounts(
+        entries, args.regexp_value, args.regexp_internal, args.regexp_internalize)
 
     # Compute the returns using the explicit configuration.
     returns, (date_first, date_last) = compute_timeline_and_returns(
         entries, options_map,
         args.transfer_account,
-        accounts_value, accounts_internal, accounts_internalize,
+        racc.value, racc.internal, racc.internalize,
         args.date_begin, args.date_end)
 
     # Annualize the returns.
