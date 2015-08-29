@@ -2,6 +2,8 @@
 beancount: TODO
 * Returns (Revision)
 
+  - Fix remaining tests for removal of open/balance entries from segment_periods().
+
   - Implement per account, with data structures + code to combine them together
   - Trailing windows
   - Rolling windows

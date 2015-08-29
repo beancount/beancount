@@ -218,6 +218,52 @@ class TestReturnsPeriods(test_utils.TestCase):
         self.assertEqual(timeline[1].end, Snapshot(datetime.date(2014, 8, 1),
                                                    inventory.from_string('10000 USD')))
 
+    # Verify that two external transfers on the same date convert into a single
+    # segment.
+    @loader.load_doc()
+    def test_segment_periods__compress_external(self, entries, errors, options_map):
+        """
+        1990-01-01 open Assets:US:Investments:Cash
+        1990-01-01 open Assets:US:Investments:ACME
+        1990-01-01 open Assets:US:Bank:Checking
+
+        ;;-------------------- internal
+        ;;-------------------- external
+        2014-02-01 * "Deposit #1"
+          Assets:US:Investments:Cash       10,000 USD
+          Assets:US:Bank:Checking
+
+        ;;-------------------- internal
+        2014-02-05 * "Invest"
+          Assets:US:Investments:ACME       100 ACME {90 USD}
+          Assets:US:Investments:Cash       -9,000 USD
+        ;;-------------------- external
+        2014-02-10 * "Deposit #2"
+          Assets:US:Investments:Cash       1,000 USD
+          Assets:US:Bank:Checking
+
+        ;;-------------------- internal
+        ;;-------------------- external
+        2014-02-15 * "Deposit"
+          Assets:US:Investments:Cash       1,000 USD
+          Assets:US:Bank:Checking
+        2014-02-15 * "Deposit"
+          Assets:US:Investments:Cash       1,000 USD
+          Assets:US:Bank:Checking
+
+        ;;-------------------- internal
+        2014-02-20 * "Invest"
+          Assets:US:Investments:ACME       100 ACME {90 USD}
+          Assets:US:Investments:Cash       -9,000 USD
+        ;;-------------------- external
+        """
+        self.assertFalse(errors)
+        timeline = returns.segment_periods(
+            entries, {'Assets:US:Investments:ACME', 'Assets:US:Investments:Cash'}, set())
+        self.assertEqual([(0, 1), (1, 1), (0, 2), (1, 0)],
+                         [(len(segment.entries), len(segment.external_entries))
+                          for segment in timeline])
+
     # Deposit, one investment, no other changes but a price change.
     @loader.load_doc()
     def test_returns_one_transfer(self, entries, errors, options_map):
@@ -318,11 +364,14 @@ class TestReturnsConstrained(test_utils.TestCase):
         # Test the default case, no beginning.
         timeline = returns.segment_periods(self.entries, self.assets, self.assets)
         self.assertEqual([
-            (datetime.date(2014, 1, 1), datetime.date(2014, 1, 15)),
+            (datetime.date(2014, 1, 15), datetime.date(2014, 1, 15)),
             (datetime.date(2014, 1, 15), datetime.date(2014, 6, 15)),
             (datetime.date(2014, 6, 15), datetime.date(2014, 10, 1)),
             ], dates_from_timeline(timeline))
         self.assertEqual(inventory.from_string(''), timeline[0].end.balance)
+
+
+
 
 # FIXME: These date cases have to be ported to work off the timeline returned
 # from segment_periods().

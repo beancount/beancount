@@ -248,7 +248,8 @@ Snapshot = collections.namedtuple('Snapshot', 'date balance')
 # Attributes:
 #   begin: The snapshot at the beginning of the period.
 #   end: The snapshot at the end of the period.
-#   entries: A list of internal entries that occur within the segment.
+#   entries: A list of internal entries that occur within the segment, only
+#     transactions.
 #   external_entries: A list of the external entries that immediately follow
 #     this segment.
 Segment = collections.namedtuple('Segment', 'begin end entries external_entries')
@@ -298,7 +299,8 @@ def segment_periods(entries, accounts_value, accounts_internal):
     # Create an iterator over the entries we care about.
     portfolio_entries = [entry
                          for entry in entries
-                         if getters.get_entry_accounts(entry) & accounts_value]
+                         if (isinstance(entry, data.Transaction) and
+                             getters.get_entry_accounts(entry) & accounts_value)]
     iter_entries = iter(portfolio_entries)
     entry = next(iter_entries)
 
@@ -328,14 +330,11 @@ def segment_periods(entries, accounts_value, accounts_internal):
                 done = True
                 entry = None
                 break
-        else:
-            done = True
-
         balance_end = copy.copy(balance)
 
         ## FIXME: Bring this back in, this fails for now. Something about the
-        ## initialization fails it. assert period_begin <= period_end,
-        ## (period_begin, period_end)
+        ## initialization fails it.
+        ## assert period_begin <= period_end, (period_begin, period_end)
 
         external_entries = []
         segment = Segment(Snapshot(period_begin, balance_begin),
@@ -343,17 +342,22 @@ def segment_periods(entries, accounts_value, accounts_internal):
                           segment_entries, external_entries)
         timeline.append(segment)
 
-        if done:
-            break
+        # Absorb the balance of the external flow entries as long as they're on
+        # the same date (a date change would imply a possible market value
+        # change and we would want to create a segment in such cases, even if
+        # the portfolio contents do not change).
+        if entry is not None:
+            date = entry.date
+            while is_external_flow_entry(entry) and entry.date == date:
+                external_entries.append(entry)
+                sum_balances_for_accounts(balance, entry, accounts_value)
+                try:
+                    entry = next(iter_entries)
+                except StopIteration:
+                    done = True
+                    break
 
-        # Absorb the balance of the external flow entry.
-        assert is_external_flow_entry(entry), entry
-        if entry:
-            external_entries.append(entry)
-        sum_balances_for_accounts(balance, entry, accounts_value)
-        try:
-            entry = next(iter_entries)
-        except StopIteration:
+        if done:
             break
 
         period_begin = period_end
