@@ -136,6 +136,17 @@ class Parent(query_compile.EvalFunction):
         args = self.eval_args(context)
         return account.parent(args[0])
 
+class Leaf(query_compile.EvalFunction):
+    "Get the name of the leaf subaccount."
+    __intypes__ = [str]
+
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        return account.leaf(args[0])
+
 class OpenDate(query_compile.EvalFunction):
     "Get the date of the open directive of the account."
     __intypes__ = [str]
@@ -308,6 +319,7 @@ SIMPLE_FUNCTIONS = {
     'length'                              : Length,
     'maxwidth'                            : MaxWidth,
     'parent'                              : Parent,
+    'leaf'                                : Leaf,
     'open_date'                           : OpenDate,
     'close_date'                          : CloseDate,
     'account_sortkey'                     : AccountSortKey,
