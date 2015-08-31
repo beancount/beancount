@@ -742,7 +742,7 @@ class TestReturnsInternalize(cmptest.TestCase):
         # and their amounts are of a different magnitude. I'm not sure how best
         # it is to handle this.
         self.assertEqual({'USD': 0.98}, returns_)
-        self.assertEqual((datetime.date(2014, 1, 1), datetime.date(2015, 1, 1)), dates)
+        self.assertEqual((datetime.date(2014, 1, 10), datetime.date(2014, 4, 1)), dates)
 
     def test_internalization_explicit_fails(self):
         with self.assertRaises(ValueError):
@@ -774,7 +774,7 @@ class TestReturnsInternalize(cmptest.TestCase):
             {'Income:Invest:Dividends', 'Expenses:Fees'},
             {'Income:Invest:Dividends'})
         self.assertEqual({'USD': 1.1}, returns_)
-        self.assertEqual((datetime.date(2014, 1, 1), datetime.date(2015, 1, 1)), dates)
+        self.assertEqual((datetime.date(2014, 1, 10), datetime.date(2014, 4, 1)), dates)
 
     @loader.load_doc()
     def test_internalization_explicit_returns_bycash(self, entries, errors, options_map):
@@ -807,7 +807,7 @@ class TestReturnsInternalize(cmptest.TestCase):
             {'Income:Invest:Dividends'},
             {'Income:Invest:Dividends'})
         self.assertEqual({'USD': 1.2}, returns_)
-        self.assertEqual((datetime.date(2014, 1, 1), datetime.date(2015, 1, 1)), dates)
+        self.assertEqual((datetime.date(2014, 1, 10), datetime.date(2014, 4, 1)), dates)
 
 
 class TestReturnsExampleScript(test_utils.TestCase):

@@ -637,15 +637,6 @@ def create_timeline(entries, options_map,
     # balances at their beginning and end.
     return segment_periods(entries, accounts_value, accounts_internal)
 
-# FIXME: You can probably remove the dates from segment_period and do the
-# date work on computing he returns.
-
-
-
-
-
-
-
 
 def dump_timeline_brief(timeline, file):
     """Dump a text rendering of the timeline to a given file output for debugging.
