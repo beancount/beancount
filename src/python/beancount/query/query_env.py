@@ -982,7 +982,7 @@ class WeightColumn(query_compile.EvalColumn):
         super().__init__(amount.Amount)
 
     def __call__(self, context):
-        return interpolate.get_balance_amount(context)
+        return interpolate.get_posting_weight(context.posting)
 
 class BalanceColumn(query_compile.EvalColumn):
     "The balance for the posting. These can be summed into inventories."
