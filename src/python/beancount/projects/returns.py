@@ -672,7 +672,6 @@ def dump_timeline(timeline, file):
         pr(",-----------------------------------------------------------")
         pr(" Begin:   {}".format(segment.begin.date))
         pr(" Balance: {}".format(segment.begin.balance.units()))
-        pr("")
         printer.print_entries(segment.entries, file=indfile)
         pr("")
         pr(" Balance: {}".format(segment.end.balance.units()))
