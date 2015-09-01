@@ -147,6 +147,19 @@ class Leaf(query_compile.EvalFunction):
         args = self.eval_args(context)
         return account.leaf(args[0])
 
+class Grep(query_compile.EvalFunction):
+    "Match a group against a string and return only the matched portion."
+    __intypes__ = [str, str]
+
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        match = re.search(args[0], args[1])
+        if match:
+            return match.group(0)
+
 class OpenDate(query_compile.EvalFunction):
     "Get the date of the open directive of the account."
     __intypes__ = [str]
@@ -320,6 +333,7 @@ SIMPLE_FUNCTIONS = {
     'maxwidth'                            : MaxWidth,
     'parent'                              : Parent,
     'leaf'                                : Leaf,
+    'grep'                                : Grep,
     'open_date'                           : OpenDate,
     'close_date'                          : CloseDate,
     'account_sortkey'                     : AccountSortKey,
