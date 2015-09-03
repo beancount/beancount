@@ -9,6 +9,7 @@ between each other.
 __author__ = 'Martin Blais <blais@furius.ca>'
 
 import io
+import re
 
 from beancount.query import query_parser
 from beancount.query import query_compile
@@ -73,6 +74,25 @@ def run_query(entries, options_map, query, *format_args, boxed=True, spaced=Fals
     return oss.getvalue()
 
 
+def get_participants(filename, options_map):
+    """Get the list of participants from the plugin configuration in the input file.
+
+    Args:
+      options_map: The options map, as produced by the parser.
+    Returns:
+      A list of strings, the names of participants as they should appear in the
+      account names.
+    Raises:
+      KeyError: If the configuration does not contain configuration for the list
+      of participants.
+    """
+    plugin_options = dict(options_map["plugin"])
+    try:
+        return plugin_options["beancount.plugins.split_expenses"].split()
+    except KeyError:
+        raise KeyError("Could not find the split_expenses plugin configuration.")
+
+
 def main():
     import argparse, logging
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
@@ -82,8 +102,7 @@ def main():
 
     entries, errors, options_map = loader.load_file(args.filename)
 
-    participants = ['Caroline', 'Sheila', 'Martin']
-
+    participants = get_participants(args.filename, options_map)
 
     for participant in participants:
         print("-" * 120)
@@ -98,7 +117,7 @@ def main():
           WHERE account ~ 'Expenses.*\b{}'
           GROUP BY 1
           ORDER BY 2 DESC
-        """, participant))
+        """, participant, boxed=False))
 
         print("Expenses Detail")
         print(run_query(entries, options_map, r"""
