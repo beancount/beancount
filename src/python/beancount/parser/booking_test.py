@@ -7,25 +7,10 @@ from beancount.core.number import D
 from beancount.parser import parser
 from beancount.parser import cmptest
 from beancount.parser import booking
+from beancount import loader
 
 
-class TestSimpleBooking(cmptest.TestCase):
-
-    def test_simple_booking(self):
-        entries, _, options_map = parser.parse_string("""
-          2013-05-01 open Assets:Bank:Investing
-          2013-05-01 open Equity:Opening-Balances
-
-          2013-05-02 *
-            Assets:Bank:Investing                 5 GOOG {501 USD}
-            Equity:Opening-Balances
-        """)
-        interpolated_entries, errors = booking.simple_booking(entries, options_map)
-        self.assertFalse(errors)
-        self.assertEqual(D('-2505'), interpolated_entries[-1].postings[-1].position.number)
-
-
-class TestBookingErrors(cmptest.TestCase):
+class TestInvalidAmountsErrors(cmptest.TestCase):
 
     @parser.parse_doc()
     def test_zero_amount(self, entries, errors, options_map):
@@ -60,11 +45,7 @@ class TestBookingErrors(cmptest.TestCase):
         self.assertRegexpMatches(booking_errors[0].message, 'Cost is negative')
 
 
-
-
-
-
-class TestValidateInventoryBooking(cmptest.TestCase):
+class TestBookingValidation(cmptest.TestCase):
 
     def setUp(self):
         self.input_str = textwrap.dedent("""

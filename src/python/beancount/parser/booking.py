@@ -9,6 +9,8 @@ import logging
 import sys
 
 from beancount.parser import grammar
+from beancount.parser import booking_simple
+from beancount.parser import booking_full
 from beancount.core.data import Transaction
 from beancount.core.position import Position
 from beancount.core.position import Lot
@@ -17,12 +19,9 @@ from beancount.core.number import ZERO
 from beancount.core import interpolate
 from beancount.core import data
 from beancount.core import inventory
+from beancount.core import realization
 
 
-__sanity_checks__ = False
-
-
-# An error booking a lot reduction to an existing lot.
 BookingError = collections.namedtuple('BookingError', 'source message entry')
 
 
@@ -38,181 +37,18 @@ def book(incomplete_entries, options_map):
         entries: A list of completed entries with all their postings completed.
         errors: New errors produced during interpolation.
     """
-    if os.getenv("OLD_BOOKING"):
-        # Old-school local-only interpolation overrides the new one for now.
-        entries, interpolation_errors = simple_booking(incomplete_entries, options_map)
-    else:
-        entries, interpolation_errors = full_booking(incomplete_entries, options_map)
+    booking_methods = {
+        'SIMPLE': booking_simple.book,
+        'FULL': booking_full.book,
+    }
+    try:
+        booking_fun = booking_methods[options_map['booking_method']]
+    except KeyError:
+        raise KeyError("Unsupported booking method: {}".format(method))
 
+    entries, interpolation_errors = booking_fun(incomplete_entries, options_map)
     validation_errors = validate_inventory_booking(entries, options_map)
     return entries, (interpolation_errors + validation_errors)
-
-
-class BookingStats:
-
-    def __init__(self):
-        self.num_transactions = 0
-        self.num_postings = 0
-        self.num_interp_amount = 0
-        self.num_interp_units = 0
-        self.num_unbooked_lots = 0
-        self.num_interp_price = 0
-
-    def __str__(self):
-        return '; '.join(["transactions: {s.num_transactions}",
-                          "postings: {s.num_postings}",
-                          "interp_amount: {s.num_interp_amount}",
-                          "interp_units: {s.num_interp_units}",
-                          "unbooked_lots: {s.num_unbooked_lots}",
-                          "interp_price: {s.num_interp_price}"]).format(s=self)
-
-
-def full_booking(entries, options_map):
-    """Interpolate missing data from the entries using the full historical algorithm.
-
-    Args:
-      incomplete_entries: A list of directives, with some postings possibly left
-        with incomplete amounts as produced by the parser.
-      options_map: An options dict as produced by the parser.
-    Returns:
-      A pair of
-        entries: A list of interpolated entries with all their postings completed.
-        errors: New errors produced during interpolation.
-    """
-    stats = BookingStats()
-    errors = []
-    for entry in entries:
-        if isinstance(entry, Transaction):
-            stats.num_transactions += 1
-            for posting in entry.postings:
-                stats.num_postings += 1
-                if posting.position is None:
-                    stats.num_interp_amount += 1
-
-                elif posting.position.number is None:
-                    stats.num_interp_units += 1
-
-                elif posting.price and (posting.price.number is None or
-                                        posting.price.currency is None):
-                    stats.num_interp_price += 1
-
-                elif isinstance(posting.position.lot, grammar.LotSpec):
-                    stats.num_unbooked_lots += 1
-
-            # if any((posting.position is None or
-            #         posting.position.number is None)
-            #        for posting in entry.postings):
-            #     #printer.print_entry(entry)
-            #     num_interpolated += 1
-
-    logging.info("Interpolation Stats: %s", stats)
-
-    return entries, errors
-
-
-def convert_lot_specs_to_lots(entries, unused_options_map):
-    """For all the entries, convert the posting's position's LotSpec to Lot instances.
-
-    This essentially replicates the way the old parser used to work, but
-    allowing positions to have the fuzzy lot specifications instead of the
-    resolved ones. We used to simply compute the costs locally, and this gets
-    rid of the LotSpec to produce the Lot without fuzzy matching. This is only
-    there for the sake of transition to the new matching logic.
-
-    Args:
-      entries: A list of incomplte directives as per the parser.
-      options_map: An options dict from the parser.
-    Returns:
-      A list of entries whose postings's positions have been converted to Lot
-      instances but that may still be incomplete.
-    """
-    new_entries = []
-    errors = []
-    for entry in entries:
-        if not isinstance(entry, Transaction):
-            new_entries.append(entry)
-            continue
-
-        new_postings = []
-        for posting in entry.postings:
-            pos = posting.position
-            if pos is not None:
-                currency, compound_cost, lot_date, label, merge = pos.lot
-
-                # Compute the cost.
-                if compound_cost is not None:
-                    if compound_cost.number_total is not None:
-                        # Compute the per-unit cost if there is some total cost
-                        # component involved.
-                        units = pos.number
-                        cost_total = compound_cost.number_total
-                        if compound_cost.number_per is not None:
-                            cost_total += compound_cost.number_per * units
-                        unit_cost = cost_total / abs(units)
-                    else:
-                        unit_cost = compound_cost.number_per
-                    cost = Amount(unit_cost, compound_cost.currency)
-                else:
-                    cost = None
-
-                # If there is a cost, we don't allow either a cost value of
-                # zero, nor a zero number of units. Note that we allow a price
-                # of zero as the only special case (for conversion entries), but
-                # never for costs.
-                if cost is not None:
-                    if pos.number == ZERO:
-                        errors.append(
-                            BookingError(entry.meta,
-                                         'Amount is zero: "{}"'.format(pos), None))
-
-                    if cost.number is not None and cost.number < ZERO:
-                        errors.append(
-                            BookingError(entry.meta,
-                                         'Cost is negative: "{}"'.format(cost), None))
-
-                lot = Lot(currency, cost, lot_date)
-                posting = posting._replace(position=Position(lot, pos.number))
-
-            new_postings.append(posting)
-        new_entries.append(entry._replace(postings=new_postings))
-    return new_entries, errors
-
-
-def simple_booking(entries, options_map):
-    """Run a local interpolation on a list of incomplete entries from the parser.
-
-    Note: this does not take previous positions into account.
-
-    !WARNING!!! This destructively modifies some of the Transaction entries directly.
-
-    Args:
-      incomplete_entries: A list of directives, with some postings possibly left
-        with incomplete amounts as produced by the parser.
-      options_map: An options dict as produced by the parser.
-    Returns:
-      A pair of
-        entries: A list of interpolated entries with all their postings completed.
-        errors: New errors produced during interpolation.
-    """
-    entries_with_lots, errors = convert_lot_specs_to_lots(entries, options_map)
-
-    for entry in entries_with_lots:
-        if not isinstance(entry, Transaction):
-            continue
-        # Balance incomplete auto-postings and set the parent link to this
-        # entry as well.
-        balance_errors = interpolate.balance_incomplete_postings(entry, options_map)
-        if balance_errors:
-            errors.extend(balance_errors)
-
-        # Check that the balance actually is empty.
-        if __sanity_checks__:
-            residual = interpolate.compute_residual(entry.postings)
-            tolerances = interpolate.infer_tolerances(entry.postings, options_map)
-            assert residual.is_small(tolerances, options_map['default_tolerance']), (
-                "Invalid residual {}".format(residual))
-
-    return entries_with_lots, errors
 
 
 def validate_inventory_booking(entries, unused_options_map):

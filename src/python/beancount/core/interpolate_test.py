@@ -14,6 +14,7 @@ from beancount.core import amount
 from beancount.core import position
 from beancount.parser import parser
 from beancount.parser import booking
+from beancount.parser import booking_simple
 from beancount.parser import cmptest
 from beancount import loader
 
@@ -306,7 +307,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
           A pair of (entry, list of errors).
         """
         entries, _, options_map = parser.parse_string(string, dedent=True)
-        entries_with_lots, errors = booking.convert_lot_specs_to_lots(entries, options_map)
+        entries_with_lots, errors = booking_simple.convert_lot_specs_to_lots(entries, options_map)
         entry = entries_with_lots[0]
         errors = interpolate.balance_incomplete_postings(entry, options_map)
         return entry, errors
