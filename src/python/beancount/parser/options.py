@@ -404,6 +404,15 @@ PUBLIC_OPTION_GROUPS = [
       if it is truly useful. We may be able to do without.
     """, [Opt("experiment_explicit_tolerances", False, True)]),
 
+    OptGroup("""
+      The booking method to apply, for interpolation and for matching lot
+      specifications to the available lots in an inventory at the moment of the
+      transaction. Values may be 'SIMPLE' for the original method used in
+      Beancount, or 'FULL' for the newer method that does fuzzy matching against
+      the inventory and allows multiple amounts to be interpolated (see
+      http://furius.ca/beancount/doc/proposal-booking for details).
+    """, [Opt("booking_method", "SIMPLE", "SIMPLE")]),
+
     ]
 
 
