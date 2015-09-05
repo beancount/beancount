@@ -1322,6 +1322,13 @@ http://furius.ca/beancount/doc/proposal-inter
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - Great idea: Make the printer able to (1) output "incomplete" entries and (2)
+    print out the entries in the order of (filename, line-no) in which they were
+    parsed, to produce a file that is as close as possible to output. (bw3443
+    asked for this in order to make modifications to his input and push that
+    back out to a file, this could be useful.)
+
+
   - AWESOME IDEA: Write a script that, given an input file with various sets of
     transactions, will find sections with most similar transactions in a
     destination file (the main file) and automatically insert those transactions

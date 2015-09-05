@@ -31,6 +31,7 @@ import re
 from beancount.core import data
 from beancount.core import account
 from beancount.core import getters
+from beancount.core import interpolate
 from beancount.core import account_types
 from beancount.parser import options
 
@@ -77,10 +78,18 @@ def split_expenses(entries, options_map, config):
                         subaccount = account.join(posting.account, member)
                         new_accounts.add(subaccount)
 
+                        # Ensure the modified postings are marked as
+                        # automatically calculated, so that the resulting
+                        # calculated amounts aren't used to affect inferred
+                        # tolerances.
+                        meta = posting.meta.copy()
+                        meta[interpolate.AUTOMATIC_META] = True
+
                         # Add a new posting for each member, to a new account
                         # with the name of this member.
                         new_postings.append(
-                            posting._replace(account=subaccount,
+                            posting._replace(meta=meta,
+                                             account=subaccount,
                                              position=split_position))
                 else:
                     new_postings.append(posting)

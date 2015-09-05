@@ -129,7 +129,7 @@ class AllView(View):
 class YearView(View):
     """A view of the entries for just a single year."""
 
-    def __init__(self, entries, options_map, title, year):
+    def __init__(self, entries, options_map, title, year, first_month=1):
         """Create a view clamped to one year.
 
         Note: this is the only view where the entries are summarized and
@@ -140,14 +140,18 @@ class YearView(View):
           options_map: A dict of options, as produced by the parser.
           title: A string, the title of this view.
           year: An integer, the year of the exercise period.
+          first_month: The calendar month (starting with 1) with which the year opens.
         """
         self.year = year
+        self.first_month = first_month
+        if not (1 <= first_month <= 12):
+            raise ValueError("Invalid month: {}".format(first_month))
         View.__init__(self, entries, options_map, title)
 
     def apply_filter(self, entries, options_map):
         # Clamp to the desired period.
-        begin_date = datetime.date(self.year, 1, 1)
-        end_date = datetime.date(self.year+1, 1, 1)
+        begin_date = datetime.date(self.year, self.first_month, 1)
+        end_date = datetime.date(self.year+1, self.first_month, 1)
         with misc_utils.log_time('clamp', logging.info):
             entries, index = summarize.clamp_opt(entries,
                                                           begin_date, end_date,

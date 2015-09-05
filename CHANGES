@@ -4,6 +4,19 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-08-31
+
+  - The column "weight" was broken; fixed by yagebu@.
+
+
+2015-08-30
+
+  - Fixed a very minor bug in split_expenses plugin whereby the generated
+    postings did not contain the __automatic__ metadata field, and in some
+    particular situations, their automatically calculated values would end up
+    being used for inferring the tolerances.
+
+
 2015-08-15
 
   - Changed the semantics of the parsing stage, in a fairly profound way.
