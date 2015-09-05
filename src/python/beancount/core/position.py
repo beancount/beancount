@@ -156,7 +156,7 @@ class Position:
                     pos_str = '{} {}'.format(pos_str, ''.join(cost_str_list))
             else:
                 assert isinstance(lot, LotSpec)
-                pos_str = str(lot)
+                pos_str = '{} {}'.format(pos_str, lot)
         else:
             # Render just the cost, if present.
             if lot.cost is not None:
