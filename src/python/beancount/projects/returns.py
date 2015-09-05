@@ -863,10 +863,12 @@ def dump_return_accounts(racc, file):
     pr('Asset accounts:')
     for account in sorted(racc.value):
         pr('  {}'.format(account))
+    pr('')
 
     pr('Internal flows:')
     for account in sorted(racc.internal):
         pr('  {}'.format(account))
+    pr('')
 
     pr('External flows:')
     for account in sorted(racc.external):
