@@ -4,6 +4,25 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-09-05
+
+  - Changed the semantics of the account_rounding account, so that it matches
+    that of the other account options, that is, they all specify a sub-account
+    of the Equity account. So if you had
+
+      option "account_rounding" "Equity:RoundingError"
+
+    in your input file, change this to:
+
+      option "account_rounding" "RoundingError"
+
+    To ease the transition, the parser now checks if the first component is one
+    of the five categories and if so, issues a warning and removes the prefix.
+
+    (One side-effect of this change is that the rounding error account may only
+    be an Equity account, but I'm hoping this won't be a problem for anyone.)
+
+
 2015-08-31
 
   - The column "weight" was broken; fixed by yagebu@.
