@@ -235,7 +235,7 @@ PUBLIC_OPTION_GROUPS = [
       This is unset and this feature is disabled by default; setting this value to
       an account name will automatically enable the addition of postings on all
       transactions that have a residual amount.
-    """, [Opt("account_rounding", None, "Equity:Rounding")]),
+    """, [Opt("account_rounding", None, "Rounding")]),
 
     OptGroup("""
       The imaginary currency used to convert all units for conversions at a

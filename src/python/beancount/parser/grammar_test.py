@@ -559,6 +559,15 @@ class TestMiscOptions(unittest.TestCase):
         self.assertTrue(re.match("Error for option", errors[0].message))
         self.assertEqual("default", options_map['plugin_processing_mode'])
 
+    @parser.parse_doc(expect_errors=True)
+    def test_account_rounding_old_fixup(self, _, errors, options_map):
+        """
+        option "account_rounding" "Equity:RoundingError"
+        """
+        self.assertEqual(1, len(errors))
+        self.assertRegexpMatches(errors[0].message, "should now refer to.*subaccount")
+        self.assertEqual(options_map['account_rounding'], 'RoundingError')
+
 
 class TestToleranceOptions(unittest.TestCase):
 
