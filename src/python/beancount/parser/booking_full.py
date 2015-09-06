@@ -124,7 +124,7 @@ def book(entries, options_map):
     return entries, errors
 
 
-def group_postings_by_currency(postings):
+def group_postings_by_currency(postings, balances):
     """Group the postings by the currency they declare.
 
     This is used to prepare the postings for interpolation. Interpolation is
@@ -133,11 +133,34 @@ def group_postings_by_currency(postings):
 
     Args:
       postings: A list of incomplete postings.
+      balanaces: A dict of currency to inventory contents.
     Returns:
-      A pair of:
-        groups: A dict of currency (string) to a list of postings.
-        free_postings: A list of postings without a currency association.
-          These can apply to all groups.
+      A dict of currency (string) to a list of postings. If there were
+      auto-postings - postings without a currency - they were duplicated for
+      each group that required them.
     """
-    return {}, []
-    # groups, free_postings = group_postings_by_currency(entry.postings)
+    groups = collections.defaultdict(list)
+    unknown = []
+    for posting in postings:
+        pos = posting.position
+
+        # If the posting if unspecified, go to the free list.
+        if pos is None:
+            unknown.append(posting)
+            continue
+
+        # Categorize based on the lot spec.
+        lot_spec = pos.lot
+        if lot_spec:
+            if lot_spec.compound_cost:
+                assert lot_spec.compound_cost.currency
+                groups[lot_spec.compound_cost.currency].append(posting)
+            else:
+                unknown.append(posting)
+        else:
+            groups[lot_spec.currency].append(posting)
+
+    # FIMXE: Maybe duplicate free postings here for each group so you don't have
+    # to return a list of free postings? That would make sense.
+
+    return groups
