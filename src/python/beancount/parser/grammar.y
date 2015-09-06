@@ -605,8 +605,12 @@ lot_spec_total_legacy : LCURLCURL amount RCURLCURL
 
 lot_comp_list : empty
               {
-                  Py_INCREF(Py_None);
-                  $$ = Py_None;
+                  /* We indicate that there was a cost if there */
+                  /* BUILDY(DECREF2($1, $2), */
+                  /*        $$, "compound_amount", "OOO", Py_None, Py_None, Py_None); */
+                  /* Py_INCREF(Py_None); */
+                  /* $$ = Py_None; */
+                  $$ = PyList_New(0);
               }
               | lot_comp
               {

@@ -822,7 +822,8 @@ class TestParseLots(unittest.TestCase):
         self.assertFalse(errors)
         pos = entries[0].postings[0].position
         self.assertEqual(D('20'), pos.number)
-        self.assertEqual(grammar.LotSpec('AAPL', None, None, None, None), pos.lot)
+        self.assertEqual(grammar.LotSpec('AAPL', grammar.CompoundAmount(None, None, None),
+                                         None, None, None), pos.lot)
 
     @parser.parse_doc()
     def test_lot_cost(self, entries, errors, _):
@@ -851,7 +852,8 @@ class TestParseLots(unittest.TestCase):
         pos = entries[0].postings[0].position
         self.assertEqual(D('20'), pos.number)
         self.assertEqual(
-            grammar.LotSpec('AAPL', None, datetime.date(2014, 12, 26), None, None),
+            grammar.LotSpec('AAPL', grammar.CompoundAmount(None, None, None),
+                            datetime.date(2014, 12, 26), None, None),
             pos.lot)
 
     @parser.parse_doc(expect_errors=True)
@@ -865,7 +867,8 @@ class TestParseLots(unittest.TestCase):
         self.assertTrue(re.search("Labels not supported", errors[0].message))
         pos = entries[0].postings[0].position
         self.assertEqual(D('20'), pos.number)
-        self.assertEqual(grammar.LotSpec('AAPL', None, None, "d82d55a0dbe8", None), pos.lot)
+        self.assertEqual(grammar.LotSpec('AAPL', grammar.CompoundAmount(None, None, None),
+                                         None, "d82d55a0dbe8", None), pos.lot)
 
     @parser.parse_doc(expect_errors=True)
     def test_lot_merge(self, entries, errors, _):
@@ -878,7 +881,9 @@ class TestParseLots(unittest.TestCase):
         self.assertTrue(re.search("Merge-cost not supported", errors[0].message))
         pos = entries[0].postings[0].position
         self.assertEqual(D('20'), pos.number)
-        self.assertEqual(grammar.LotSpec('AAPL', None, None, None, True), pos.lot)
+        self.assertEqual(grammar.LotSpec('AAPL', grammar.CompoundAmount(None, None, None),
+                                         None, None, True),
+                         pos.lot)
 
     @parser.parse_doc(expect_errors=True)
     def test_lot_two_types(self, entries, errors, _):
@@ -2100,25 +2105,85 @@ class TestIncompleteInputs(cmptest.TestCase):
         posting = entries[-1].postings[0]
         pos = posting.position
         self.assertEqual(D('100.00'), pos.number)
-        self.assertEqual('USD', pos.lot.currency)
-        self.assertEqual(None, pos.lot.compound_cost)
+        self.assertEqual(position.LotSpec('USD', None, None, None, None), pos.lot)
         self.assertIsInstance(posting.price, amount.Amount)
         self.assertEqual(amount.Amount(None, 'CAD'), posting.price)
 
     @parser.parse_doc(allow_incomplete=True)
-    def test_missing_cost_amount(self, entries, _, options_map):
+    def test_cost_full(self, entries, _, options_map):
         """
           2000-01-01 open Assets:Account1
           2000-01-01 open Assets:Account2
           2010-05-28 *
-            Assets:Account1     2 HOOL {}
-            Assets:Account2     120.00 CAD
+            Assets:Account1     2 HOOL {150 # 5 USD}
+            Assets:Account2     120.00 USD
         """
         posting = entries[-1].postings[0]
         pos = posting.position
         self.assertEqual(D('2'), pos.number)
         self.assertIsInstance(pos.lot, position.LotSpec)
-        self.assertEqual(position.LotSpec('HOOL', None, None, None, None), pos.lot)
+        self.assertEqual(
+            position.LotSpec('HOOL',
+                             grammar.CompoundAmount(D('150'), D('5'), 'USD'),
+                             None, None, None),
+            pos.lot)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_missing_cost_per(self, entries, _, options_map):
+        """
+          2000-01-01 open Assets:Account1
+          2000-01-01 open Assets:Account2
+          2010-05-28 *
+            Assets:Account1     2 HOOL {# 5 USD}
+            Assets:Account2     120.00 USD
+        """
+        posting = entries[-1].postings[0]
+        pos = posting.position
+        self.assertEqual(D('2'), pos.number)
+        self.assertIsInstance(pos.lot, position.LotSpec)
+        self.assertEqual(
+            position.LotSpec('HOOL',
+                             grammar.CompoundAmount(None, D('5'), 'USD'),
+                             None, None, None),
+            pos.lot)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_missing_cost_total1(self, entries, _, options_map):
+        """
+          2000-01-01 open Assets:Account1
+          2000-01-01 open Assets:Account2
+          2010-05-28 *
+            Assets:Account1     2 HOOL {150 # USD}
+            Assets:Account2     120.00 USD
+        """
+        posting = entries[-1].postings[0]
+        pos = posting.position
+        self.assertEqual(D('2'), pos.number)
+        self.assertIsInstance(pos.lot, position.LotSpec)
+        self.assertEqual(
+            position.LotSpec('HOOL',
+                             grammar.CompoundAmount(D('150'), None, 'USD'),
+                             None, None, None),
+            pos.lot)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_missing_cost_total2(self, entries, _, options_map):
+        """
+          2000-01-01 open Assets:Account1
+          2000-01-01 open Assets:Account2
+          2010-05-28 *
+            Assets:Account1     2 HOOL {150 USD}
+            Assets:Account2     120.00 USD
+        """
+        posting = entries[-1].postings[0]
+        pos = posting.position
+        self.assertEqual(D('2'), pos.number)
+        self.assertIsInstance(pos.lot, position.LotSpec)
+        self.assertEqual(
+            position.LotSpec('HOOL',
+                             grammar.CompoundAmount(D('150'), None, 'USD'),
+                             None, None, None),
+            pos.lot)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_missing_cost_number(self, entries, _, options_map):
@@ -2136,4 +2201,22 @@ class TestIncompleteInputs(cmptest.TestCase):
         self.assertEqual(
             position.LotSpec('HOOL',
                              grammar.CompoundAmount(None, None, 'USD'), None, None, None),
+            pos.lot)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_missing_cost_empty(self, entries, _, options_map):
+        """
+          2000-01-01 open Assets:Account1
+          2000-01-01 open Assets:Account2
+          2010-05-28 *
+            Assets:Account1     2 HOOL {}
+            Assets:Account2     120.00 CAD
+        """
+        posting = entries[-1].postings[0]
+        pos = posting.position
+        self.assertEqual(D('2'), pos.number)
+        self.assertIsInstance(pos.lot, position.LotSpec)
+        self.assertEqual(
+            position.LotSpec('HOOL',
+                             grammar.CompoundAmount(None, None, None), None, None, None),
             pos.lot)

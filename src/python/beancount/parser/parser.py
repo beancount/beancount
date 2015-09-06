@@ -8,17 +8,32 @@ doing so normalize the entries to "complete" entries.
 
 Spefically, the following pieces of data may be incomplete:
 
-- posting.position = None
+- position = None
   e.g., Assets:Account
 
-- posting.position.number = None, with a non-nil lot
+- position.number = None, with a non-nil lot
+  position.lot = LotSpec(currency='USD', compound_cost=None)
   e.g., Assets:Account  USD
 
-- posting.position.price = Amount(None, None)
+- position.price = Amount(None, None)
+  position.lot = LotSpec(currency='USD', compound_cost=None)
   e.g., Assets:Account  100 CAD @
 
-- posting.position.price = Amount(None, currency)
+- position.price = Amount(None, currency)
+  position.lot = LotSpec(currency='CAD', compound_cost=None)
   e.g., Assets:Account  100 CAD @ USD
+
+- position.number = 1
+  position.lot = LotSpec(currency='GOOG', compound_cost=CompoundAmount(100, 5, 'USD'))
+  e.g., Assets:Account  1 GOOG {100 # 5 USD}
+
+- position.number = 1
+  position.lot = LotSpec(currency='GOOG', compound_cost=CompoundAmount(None, None, 'USD'))
+  e.g., Assets:Account  1 GOOG {USD}
+
+- position.number = 1
+  position.lot = LotSpec(currency='GOOG', compound_cost=CompoundAmount(None, None, None))
+  e.g., Assets:Account  1 GOOG {USD}
 
 (Note that 'posting.position.price = None' is not incomplete, it just indicates
 the absence of a price clause.)

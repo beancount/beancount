@@ -139,10 +139,13 @@ def group_postings_by_currency(postings, balances):
       auto-postings - postings without a currency - they were duplicated for
       each group that required them.
     """
+    print()
+
     groups = collections.defaultdict(list)
     unknown = []
     for posting in postings:
         pos = posting.position
+        print('=====', pos)
 
         # If the posting if unspecified, go to the free list.
         if pos is None:
@@ -152,10 +155,11 @@ def group_postings_by_currency(postings, balances):
         # Categorize based on the lot spec.
         lot_spec = pos.lot
         if lot_spec:
-            if lot_spec.compound_cost:
+            if lot_spec.compound_cost is not None:
                 assert lot_spec.compound_cost.currency
                 groups[lot_spec.compound_cost.currency].append(posting)
             else:
+                print(pos)
                 unknown.append(posting)
         else:
             groups[lot_spec.currency].append(posting)

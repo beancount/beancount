@@ -14,21 +14,21 @@ from beancount.parser import booking
 from beancount import loader
 
 
-class TestGroupPostings(cmptest.TestCase):
+class ___TestGroupPostings(cmptest.TestCase):
 
     @parser.parse_doc()
-    def test_group_postings__one_group(self, inc_entries, _, options_map):
+    def test_group_postings__one_group(self, ientries, _, options_map):
         """
         2015-01-01 *
           Assets:Bank:Investing           5 GOOG {100 USD}
           Equity:Opening-Balances      -500 USD
         """
-        groups = booking_full.group_postings_by_currency(inc_entries[0].postings, {})
+        groups = booking_full.group_postings_by_currency(ientries[0].postings, {})
         self.assertEqual({'USD': 2}, dictmap(groups, valfun=len))
         self.assertFalse(free)
 
     @parser.parse_doc()
-    def test_group_postings__ambiguous_cost_no_choice(self, inc_entries, _, options_map):
+    def test_group_postings__ambiguous_cost_no_choice(self, ientries, _, options_map):
         """
         ;; Pick the USD lot, because that's all there is in the inventory
         2015-01-01 *
@@ -36,12 +36,12 @@ class TestGroupPostings(cmptest.TestCase):
           Equity:Opening-Balances       101 USD
         """
         groups, free = booking_full.group_postings_by_currency(
-            inc_entries[0].postings, {'USD': I('1 GOOG {100 USD}')})
+            ientries[0].postings, {'USD': I('1 GOOG {100 USD}')})
         self.assertEqual({'USD': 2}, dictmap(groups, valfun=len))
         self.assertFalse(free)
 
     @parser.parse_doc()
-    def test_group_postings__ambiguous_cost_choose_lot(self, inc_entries, _, options_map):
+    def test_group_postings__ambiguous_cost_choose_lot(self, ientries, _, options_map):
         """
         ;; This should know to pick the USD leg because that's the only currency
         2015-01-01 *
@@ -49,11 +49,11 @@ class TestGroupPostings(cmptest.TestCase):
           Equity:Opening-Balances       101 USD
         """
         groups, free = booking_full.group_postings_by_currency(
-            inc_entries[0].postings, {'USD': I('1 GOOG {100 USD}, '
+            ientries[0].postings, {'USD': I('1 GOOG {100 USD}, '
                                                '1 GOOG {100 CAD}')})
 
     @parser.parse_doc()
-    def test_group_postings__ambiguous_cost_choose_ccy(self, inc_entries, _, options_map):
+    def test_group_postings__ambiguous_cost_choose_ccy(self, ientries, _, options_map):
         """
         ;; Pick the USD lot, because that's all there is in the inventory
         2015-01-01 *
@@ -62,10 +62,10 @@ class TestGroupPostings(cmptest.TestCase):
           Equity:Opening-Balances       102 CAD
         """
         groups, free = booking_full.group_postings_by_currency(
-            inc_entries[0].postings, {'USD': I('1 GOOG {100 USD}')})
+            ientries[0].postings, {'USD': I('1 GOOG {100 USD}')})
 
     @parser.parse_doc()
-    def test_group_postings__ambiguous_cost_no_choice(self, inc_entries, _, options_map):
+    def test_group_postings__ambiguous_cost_no_choice(self, ientries, _, options_map):
         """
         ;; Pick the USD lot, because that's all there is in the inventory
         2015-01-01 *
@@ -73,10 +73,10 @@ class TestGroupPostings(cmptest.TestCase):
           Equity:Opening-Balances       100 USD
         """
         groups, free = booking_full.group_postings_by_currency(
-            inc_entries[0].postings, {'USD': I('1 GOOG {100 USD}')})
+            ientries[0].postings, {'USD': I('1 GOOG {100 USD}')})
 
     @parser.parse_doc()
-    def test_group_postings__ambiguous_cost_with_bal(self, inc_entries, _, options_map):
+    def test_group_postings__ambiguous_cost_with_bal(self, ientries, _, options_map):
         """
         ;; This should know to pick the USD leg because that's the only that doesn't already
         ;; balance from the other postings.
@@ -87,7 +87,7 @@ class TestGroupPostings(cmptest.TestCase):
           Assets:Cash                   102 CAD
         """
         groups, free = booking_full.group_postings_by_currency(
-            inc_entries[0].postings, {'USD': I('1 GOOG {100 USD}, '
+            ientries[0].postings, {'USD': I('1 GOOG {100 USD}, '
                                                '1 GOOG {100 CAD}')})
 
 

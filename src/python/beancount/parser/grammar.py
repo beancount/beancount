@@ -453,6 +453,11 @@ class Builder(lexer.LexBuilder):
                 ParserError(self.get_lexer_location(),
                             "Merge-cost not supported yet.", None))
 
+        # If there was a lot_comp_list, thus a "{...}" cost basis spec, you must
+        # indicate that by creating a CompoundAmount(), always.
+        if compound_cost is None:
+            compound_cost = CompoundAmount(None, None, None)
+
         return LotSpec(None, compound_cost, lot_date, label, merge)
 
     def lot_spec_total_legacy(self, cost, lot_date):
