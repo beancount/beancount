@@ -415,6 +415,8 @@ def sanity_check_types(entry):
             assert isinstance(posting, Posting), "Invalid posting type"
             assert isinstance(posting.account, str), "Invalid account type"
             assert isinstance(posting.position, (Position, NoneType)), "Invalid pos type"
+            assert isinstance(posting.position.lot, Lot), "Invalid lot type"
+            assert isinstance(posting.position.lot.cost, (Cost, NoneType)), "Invalid cost type"
             assert isinstance(posting.price, (Amount, NoneType)), "Invalid price type"
             assert isinstance(posting.flag, (str, NoneType)), "Invalid flag type"
 
