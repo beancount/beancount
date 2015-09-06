@@ -243,6 +243,21 @@ def compute_unique_clean_ids(strings):
     return idmap
 
 
+def dictmap(m, keyfun=None, valfun=None):
+    """Map a dictionary's value.
+
+    Args:
+      m: A dict.
+      key: A callable to apply to the keys.
+      value: A callable to apply to the values.
+    """
+    if keyfun is None:
+        keyfun = lambda x: x
+    if valfun is None:
+        valfun = lambda x: x
+    return {keyfun(key): valfun(val) for key, val in m.items()}
+
+
 def map_namedtuple_attributes(attributes, mapper, object_):
     """Map the value of the named attributes of object by mapper.
 
