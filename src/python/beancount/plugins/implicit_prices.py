@@ -7,6 +7,7 @@ import collections
 
 from beancount.core.data import Transaction
 from beancount.core import data
+from beancount.core import amount
 from beancount.core import inventory
 
 __plugins__ = ('add_implicit_prices',)
@@ -43,6 +44,8 @@ def add_implicit_prices(entries, unused_options_map):
         if isinstance(entry, Transaction):
             # Inspect all the postings in the transaction.
             for posting in entry.postings:
+                lot = posting.position.lot
+
                 # Check if the position is matching against an existing
                 # position.
                 _, booking = balances[posting.account].add_position(posting.position)
@@ -56,19 +59,20 @@ def add_implicit_prices(entries, unused_options_map):
                 if posting.price is not None:
                     meta = data.new_metadata(entry.meta.filename, entry.meta.lineno)
                     price_entry = data.Price(meta, entry.date,
-                                             posting.position.lot.currency,
+                                             lot.currency,
                                              posting.price)
 
                 # Add costs, when we're not matching against an existing
                 # position. This happens when we're just specifying the cost,
                 # e.g.
                 #      Assets:Account    100 GOOG {564.20}
-                elif (posting.position.lot.cost is not None and
+                elif (lot.cost is not None and
                       booking != inventory.Booking.REDUCED):
                     meta = data.new_metadata(entry.meta.filename, entry.meta.lineno)
                     price_entry = data.Price(meta, entry.date,
-                                             posting.position.lot.currency,
-                                             posting.position.lot.cost)
+                                             lot.currency,
+                                             amount.Amount(lot.cost.number,
+                                                           lot.cost.currency))
 
                 else:
                     price_entry = None
@@ -76,7 +80,7 @@ def add_implicit_prices(entries, unused_options_map):
                 if price_entry is not None:
                     key = (price_entry.date,
                            price_entry.currency,
-                           price_entry.amount.number,  # Ideally should bd removed.
+                           price_entry.amount.number,  # Ideally should be removed.
                            price_entry.amount.currency)
                     try:
                         new_price_entry_map[key]

@@ -106,7 +106,7 @@ def split_currency_conversions(entry):
         replacement_postings = []
         for posting_orig in postings_at_price:
             weight = interpolate.get_posting_weight(posting_orig)
-            simple_position = position.Position(position.Lot(weight.currency, None, None),
+            simple_position = position.Position(position.Lot(weight.currency, None),
                                                 weight.number)
             posting_pos = data.Posting(posting_orig.account, simple_position,
                                        None, None, None)
@@ -206,9 +206,11 @@ class LedgerPrinter:
              postings_at_price,
              postings_at_cost) = postings_by_type(entry)
 
-            if postings_at_price and postings_at_cost and posting.position.lot.cost:
+            lot = posting.position.lot
+            if postings_at_price and postings_at_cost and lot.cost:
                 price_str = '@ {}'.format(
-                    posting.position.lot.cost.to_string(self.dformat))
+                    amount.Amount(lot.cost.number,
+                                  lot.cost.currency).to_string(self.dformat))
             else:
                 price_str = ''
 

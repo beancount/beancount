@@ -121,7 +121,7 @@ def pad(entries, options_map):
                                              active_pad))
 
                         # Thus our padding lot is without cost by default.
-                        lot = position.Lot(check_amount.currency, None, None)
+                        lot = position.Lot(check_amount.currency, None)
                         diff_position = position.Position(
                             lot, check_amount.number - balance_amount.number)
 

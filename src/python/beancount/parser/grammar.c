@@ -634,7 +634,7 @@ static const char *const yytname[] =
   "currency_list", "pushtag", "poptag", "open", "opt_booking", "close",
   "commodity", "pad", "balance", "amount", "amount_tolerance",
   "maybe_number", "compound_amount", "incomplete_amount", "position",
-  "lot_spec", "lot_spec_total_legacy", "lot_comp_list", "lot_comp",
+  "cost_spec", "cost_spec_total_legacy", "cost_comp_list", "cost_comp",
   "price", "event", "note", "filename", "document", "entry", "option",
   "include", "plugin", "directive", "declarations", "file", YY_NULLPTR
 };
@@ -2139,118 +2139,118 @@ yyreduce:
   case 75:
 #line 585 "src/python/beancount/parser/grammar.y" 
     {
-             BUILDY(DECREF1((yyvsp[-1].pyobj)),
-                    (yyval.pyobj), "lot_spec", "O", (yyvsp[-1].pyobj));
-         }
+              BUILDY(DECREF1((yyvsp[-1].pyobj)),
+                     (yyval.pyobj), "cost_spec", "O", (yyvsp[-1].pyobj));
+          }
 #line 2146 "src/python/beancount/parser/grammar.c" 
     break;
 
   case 76:
 #line 590 "src/python/beancount/parser/grammar.y" 
     {
-             (yyval.pyobj) = (yyvsp[0].pyobj);
-         }
+              (yyval.pyobj) = (yyvsp[0].pyobj);
+          }
 #line 2154 "src/python/beancount/parser/grammar.c" 
     break;
 
   case 77:
 #line 596 "src/python/beancount/parser/grammar.y" 
     {
-                          BUILDY(DECREF1((yyvsp[-1].pyobj)),
-                                 (yyval.pyobj), "lot_spec_total_legacy", "OO", (yyvsp[-1].pyobj), Py_None);
-                      }
+                           BUILDY(DECREF1((yyvsp[-1].pyobj)),
+                                  (yyval.pyobj), "cost_spec_total_legacy", "OO", (yyvsp[-1].pyobj), Py_None);
+                       }
 #line 2163 "src/python/beancount/parser/grammar.c" 
     break;
 
   case 78:
 #line 601 "src/python/beancount/parser/grammar.y" 
     {
-                          BUILDY(DECREF2((yyvsp[-3].pyobj), (yyvsp[-1].pyobj)),
-                                 (yyval.pyobj), "lot_spec_total_legacy", "OO", (yyvsp[-3].pyobj), (yyvsp[-1].pyobj));
-                      }
+                           BUILDY(DECREF2((yyvsp[-3].pyobj), (yyvsp[-1].pyobj)),
+                                  (yyval.pyobj), "cost_spec_total_legacy", "OO", (yyvsp[-3].pyobj), (yyvsp[-1].pyobj));
+                       }
 #line 2172 "src/python/beancount/parser/grammar.c" 
     break;
 
   case 79:
 #line 607 "src/python/beancount/parser/grammar.y" 
     {
-                  /* We indicate that there was a cost if there */
-                  /* BUILDY(DECREF2($1, $2), */
-                  /*        $$, "compound_amount", "OOO", Py_None, Py_None, Py_None); */
-                  /* Py_INCREF(Py_None); */
-                  /* $$ = Py_None; */
-                  (yyval.pyobj) = PyList_New(0);
-              }
+                   /* We indicate that there was a cost if there */
+                   /* BUILDY(DECREF2($1, $2), */
+                   /*        $$, "compound_amount", "OOO", Py_None, Py_None, Py_None); */
+                   /* Py_INCREF(Py_None); */
+                   /* $$ = Py_None; */
+                   (yyval.pyobj) = PyList_New(0);
+               }
 #line 2185 "src/python/beancount/parser/grammar.c" 
     break;
 
   case 80:
 #line 616 "src/python/beancount/parser/grammar.y" 
     {
-                  BUILDY(DECREF1((yyvsp[0].pyobj)),
-                         (yyval.pyobj), "handle_list", "OO", Py_None, (yyvsp[0].pyobj));
-              }
+                   BUILDY(DECREF1((yyvsp[0].pyobj)),
+                          (yyval.pyobj), "handle_list", "OO", Py_None, (yyvsp[0].pyobj));
+               }
 #line 2194 "src/python/beancount/parser/grammar.c" 
     break;
 
   case 81:
 #line 621 "src/python/beancount/parser/grammar.y" 
     {
-                  BUILDY(DECREF2((yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
-                         (yyval.pyobj), "handle_list", "OO", (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
-              }
+                   BUILDY(DECREF2((yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
+                          (yyval.pyobj), "handle_list", "OO", (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
+               }
 #line 2203 "src/python/beancount/parser/grammar.c" 
     break;
 
   case 82:
 #line 626 "src/python/beancount/parser/grammar.y" 
     {
-                  /*
-                   * FIXME: Add this warning once the new booking method is the main method.
-                   * In the meantime, we allow it interchangeably. Also see {a6127ff32048}.
-                   */
-                  /* PyObject* rv = PyObject_CallMethod( */
-                  /*     builder, "build_grammar_error", "sis", */
-                  /*     yy_filename, yylineno + yy_firstline, */
-                  /*     "Usage of slash (/) as cost separator is deprecated; use a comma instead"); */
-                  /* Py_DECREF(rv); */
+                   /*
+                    * FIXME: Add this warning once the new booking method is the main method.
+                    * In the meantime, we allow it interchangeably. Also see {a6127ff32048}.
+                    */
+                   /* PyObject* rv = PyObject_CallMethod( */
+                   /*     builder, "build_grammar_error", "sis", */
+                   /*     yy_filename, yylineno + yy_firstline, */
+                   /*     "Usage of slash (/) as cost separator is deprecated; use a comma instead"); */
+                   /* Py_DECREF(rv); */
 
-                  BUILDY(DECREF2((yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
-                         (yyval.pyobj), "handle_list", "OO", (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
-              }
+                   BUILDY(DECREF2((yyvsp[-2].pyobj), (yyvsp[0].pyobj)),
+                          (yyval.pyobj), "handle_list", "OO", (yyvsp[-2].pyobj), (yyvsp[0].pyobj));
+               }
 #line 2222 "src/python/beancount/parser/grammar.c" 
     break;
 
   case 83:
 #line 642 "src/python/beancount/parser/grammar.y" 
     {
-             (yyval.pyobj) = (yyvsp[0].pyobj);
-         }
+              (yyval.pyobj) = (yyvsp[0].pyobj);
+          }
 #line 2230 "src/python/beancount/parser/grammar.c" 
     break;
 
   case 84:
 #line 646 "src/python/beancount/parser/grammar.y" 
     {
-             (yyval.pyobj) = (yyvsp[0].pyobj);
-         }
+              (yyval.pyobj) = (yyvsp[0].pyobj);
+          }
 #line 2238 "src/python/beancount/parser/grammar.c" 
     break;
 
   case 85:
 #line 650 "src/python/beancount/parser/grammar.y" 
     {
-             (yyval.pyobj) = (yyvsp[0].pyobj);
-         }
+              (yyval.pyobj) = (yyvsp[0].pyobj);
+          }
 #line 2246 "src/python/beancount/parser/grammar.c" 
     break;
 
   case 86:
 #line 654 "src/python/beancount/parser/grammar.y" 
     {
-             BUILDY(,
-                    (yyval.pyobj), "lot_merge", "O", Py_None);
-         }
+              BUILDY(,
+                     (yyval.pyobj), "cost_merge", "O", Py_None);
+          }
 #line 2255 "src/python/beancount/parser/grammar.c" 
     break;
 

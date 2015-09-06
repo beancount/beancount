@@ -13,6 +13,7 @@ from beancount.core.number import D
 from beancount.core.number import ZERO
 from beancount.core.position import Position
 from beancount.core.position import Lot
+from beancount.core.position import Cost
 from beancount.core.inventory import Inventory
 from beancount.core.inventory import Booking
 from beancount.core import amount
@@ -100,44 +101,45 @@ class TestInventory(unittest.TestCase):
 
         inv = inventory.from_string('10 USD')
         self.assertEqual(
-            Inventory([Position(Lot("USD", None, None), D('10'))]),
+            Inventory([Position(Lot("USD", None), D('10'))]),
             inv)
 
         inv = inventory.from_string(' 10.00  USD ')
         self.assertEqual(
-            Inventory([Position(Lot("USD", None, None), D('10'))]),
+            Inventory([Position(Lot("USD", None), D('10'))]),
             inv)
 
         inv = inventory.from_string('1 USD, 2 CAD')
         self.assertEqual(
-            Inventory([Position(Lot("USD", None, None), D('1')),
-                       Position(Lot("CAD", None, None), D('2'))]),
+            Inventory([Position(Lot("USD", None), D('1')),
+                       Position(Lot("CAD", None), D('2'))]),
             inv)
 
         inv = inventory.from_string('2.2 GOOG {532.43 USD}, 3.413 EUR')
         self.assertEqual(
-            Inventory([Position(Lot("GOOG", A('532.43 USD'), None),
+            Inventory([Position(Lot("GOOG", Cost(D('532.43'), 'USD', None, None)),
                                 D('2.2')),
-                       Position(Lot("EUR", None, None), D('3.413'))]),
+                       Position(Lot("EUR", None), D('3.413'))]),
             inv)
 
         inv = inventory.from_string(
             '2.2 GOOG {532.43 USD}, 2.3 GOOG {564.00 USD, 2015-07-14}, 3.413 EUR')
         self.assertEqual(
-            Inventory([Position(Lot("GOOG", A('532.43 USD'), None),
+            Inventory([Position(Lot("GOOG", Cost(D('532.43'), 'USD', None, None)),
                                 D('2.2')),
-                       Position(Lot("GOOG", A('564.00 USD'), datetime.date(2015, 7, 14)),
+                       Position(Lot("GOOG", Cost(D('564.00'), 'USD',
+                                                 datetime.date(2015, 7, 14), None)),
                                 D('2.3')),
-                       Position(Lot("EUR", None, None),
+                       Position(Lot("EUR", None),
                                 D('3.413'))]),
             inv)
 
         inv = inventory.from_string(
             '1.1 GOOG {500.00 # 11.00 USD}, 100 CAD')
         self.assertEqual(
-            Inventory([Position(Lot("GOOG", A('510.00 USD'), None),
+            Inventory([Position(Lot("GOOG", Cost(D('510.00'), 'USD', None, None)),
                                 D('1.1')),
-                       Position(Lot("CAD", None, None),
+                       Position(Lot("CAD", None),
                                 D('100'))]),
             inv)
 
@@ -331,13 +333,13 @@ class TestInventory(unittest.TestCase):
         inv = Inventory(self.POSITIONS_ALL_KINDS)
         self.assertEqual(
             position.from_string('40.50 USD'),
-            inv.get_position(Lot('USD', None, None)))
+            inv.get_position(Lot('USD', None)))
         self.assertEqual(
             position.from_string('40.50 USD {1.10 CAD}'),
-            inv.get_position(Lot('USD', A('1.10 CAD'), None)))
+            inv.get_position(Lot('USD', Cost(D('1.10'), 'CAD', None, None))))
         self.assertEqual(
             position.from_string('40.50 USD {1.10 CAD, 2012-01-01}'),
-            inv.get_position(Lot('USD', A('1.10 CAD'), date(2012, 1, 1))))
+            inv.get_position(Lot('USD', Cost(D('1.10'), 'CAD', date(2012, 1, 1), None))))
 
     def test_add(self):
         inv = Inventory()
@@ -392,26 +394,26 @@ class TestInventory(unittest.TestCase):
     def test_add_withlots(self):
         # Testing the strict case where everything matches, with only a cost.
         inv = Inventory()
-        inv.add_amount(A('50 GOOG'), A('700 USD'))
+        inv.add_amount(A('50 GOOG'), Cost(D('700'), 'USD', None, None))
         self.checkAmount(inv, '50', 'GOOG')
 
-        inv.add_amount(A('-40 GOOG'), A('700 USD'))
+        inv.add_amount(A('-40 GOOG'), Cost(D('700'), 'USD', None, None))
         self.checkAmount(inv, '10', 'GOOG')
 
         position_, _ = inv.add_amount(A('-12 GOOG'),
-                                      A('700 USD'))
+                                      Cost(D('700'), 'USD', None, None))
         self.assertTrue(position_.is_negative_at_cost())
 
         # Testing the strict case where everything matches, a cost and a lot-date.
         inv = Inventory()
-        inv.add_amount(A('50 GOOG'), A('700 USD'), date(2000, 1, 1))
+        inv.add_amount(A('50 GOOG'), Cost(D('700'),  'USD', date(2000, 1, 1), None))
         self.checkAmount(inv, '50', 'GOOG')
 
-        inv.add_amount(A('-40 GOOG'), A('700 USD'), date(2000, 1, 1))
+        inv.add_amount(A('-40 GOOG'), Cost(D('700'), 'USD', date(2000, 1, 1), None))
         self.checkAmount(inv, '10', 'GOOG')
 
-        position_, _ = inv.add_amount(A('-12 GOOG'), A('700 USD'),
-                                      date(2000, 1, 1))
+        position_, _ = inv.add_amount(A('-12 GOOG'), Cost(D('700'), 'USD',
+                                                          date(2000, 1, 1), None))
         self.assertTrue(position_.is_negative_at_cost())
 
     def test_add_allow_negative(self):
@@ -419,12 +421,13 @@ class TestInventory(unittest.TestCase):
         def check_allow_negative(inv):
             position_, _ = inv.add_amount(A('-11 USD'))
             self.assertFalse(position_.is_negative_at_cost())
-            position_, _ = inv.add_amount(A('-11 USD'), A('1.10 CAD'))
+            position_, _ = inv.add_amount(A('-11 USD'), Cost(D('1.10'), 'CAD', None, None))
             self.assertTrue(position_.is_negative_at_cost())
-            position_, _ = inv.add_amount(A('-11 USD'), None, date(2012, 1, 1))
+            position_, _ = inv.add_amount(A('-11 USD'),
+                                          Cost(None, None, date(2012, 1, 1), None))
             self.assertTrue(position_.is_negative_at_cost())
-            inv.add_amount(A('-11 USD'), A('1.10 CAD'))
-            inv.add_amount(A('-11 USD'), None, date(2012, 1, 1))
+            inv.add_amount(A('-11 USD'), Cost(D('1.10'), 'CAD', None, None))
+            inv.add_amount(A('-11 USD'), Cost(None, None, date(2012, 1, 1), None))
 
         # Test adding to a position that does not exist.
         inv = Inventory()

@@ -13,7 +13,8 @@ from datetime import date
 from beancount.core.number import ZERO
 from beancount.core.amount import Amount
 from beancount.core import display_context
-from beancount.core.position import LotSpec
+from beancount.core.position import Lot
+from beancount.core.position import CostSpec
 from beancount.core.position import Position
 from beancount.core.data import Transaction
 from beancount.core.data import Balance
@@ -385,30 +386,30 @@ class Builder(lexer.LexBuilder):
         # here because we only get the number of units in the full lot spec.
         return CompoundAmount(number_per, number_total, currency)
 
-    def lot_merge(self, _):
+    def cost_merge(self, _):
         """Create a 'merge cost' token."""
         return MERGE_COST
 
-    def lot_spec(self, lot_comp_list):
-        """Process a lot_spec grammar rule.
+    def cost_spec(self, cost_comp_list):
+        """Process a cost_spec grammar rule.
 
         Args:
-          lot_comp_list: A list of CompoundAmountAmount, a datetime.date, or
+          cost_comp_list: A list of CompoundAmountAmount, a datetime.date, or
             label ID strings.
         Returns:
-          A lot-info tuple of CompoundAmount, lot date and label string. Any of these
-          may be None.
+          A cost-info tuple of CompoundAmount, lot date and label string. Any of these
+          may be set to a sentinel indicating "unset".
         """
-        if lot_comp_list is None:
-            return LotSpec(None, None, None, None, None)
-        assert isinstance(lot_comp_list, list), (
-            "Internal error in parser: {}".format(lot_comp_list))
+        if cost_comp_list is None:
+            return CostSpec(None, None, None, None, None, False)
+        assert isinstance(cost_comp_list, list), (
+            "Internal error in parser: {}".format(cost_comp_list))
 
         compound_cost = None
-        lot_date = None
+        date_ = None
         label = None
         merge = None
-        for comp in lot_comp_list:
+        for comp in cost_comp_list:
             if isinstance(comp, CompoundAmount):
                 if compound_cost is None:
                     compound_cost = comp
@@ -418,8 +419,8 @@ class Builder(lexer.LexBuilder):
                                     "Duplicate cost: '{}'.".format(comp), None))
 
             elif isinstance(comp, date):
-                if lot_date is None:
-                    lot_date = comp
+                if date_ is None:
+                    date_ = comp
                 else:
                     self.errors.append(
                         ParserError(self.get_lexer_location(),
@@ -453,42 +454,39 @@ class Builder(lexer.LexBuilder):
                 ParserError(self.get_lexer_location(),
                             "Merge-cost not supported yet.", None))
 
-        # If there was a lot_comp_list, thus a "{...}" cost basis spec, you must
+        # If there was a cost_comp_list, thus a "{...}" cost basis spec, you must
         # indicate that by creating a CompoundAmount(), always.
+
         if compound_cost is None:
-            compound_cost = CompoundAmount(None, None, None)
+            number_per, number_total, currency = None, None, None
+        else:
+            number_per, number_total, currency = compound_cost
 
-        return LotSpec(None, compound_cost, lot_date, label, merge)
+        return CostSpec(number_per, number_total, currency, date_, label, merge)
 
-    def lot_spec_total_legacy(self, cost, lot_date):
+    def cost_spec_total_legacy(self, cost, date):
         """Process a deprecated legacy 'total cost' specification.
 
         Args:
           cost: An instance of Amount, the total cost.
-          lot_date: A datetime.date instance, the lot date for the lot.
+          date: A datetime.date instance, the lot date for the lot.
         Returns:
-          Same as lot_spec().
+          Same as cost_spec().
         """
-        compound_cost = CompoundAmount(ZERO, cost.number, cost.currency)
-        return LotSpec(None, compound_cost, lot_date, None, None)
+        return CostSpec(ZERO, cost.number, cost.currency, date, None, False)
 
-    def position(self, filename, lineno, amount, lot_spec):
+    def position(self, filename, lineno, amount, cost_spec):
         """Process a position grammar rule.
 
         Args:
           filename: The current filename.
           lineno: The current line number.
           amount: An instance of Amount for the position.
-          lot_spec: An instance of LotSpec.
+          cost_spec: An instance of CostSpec.
         Returns:
           A new instance of Position.
         """
-        if lot_spec is None:
-            lot_spec = LotSpec(None, None, None, None, None)
-        # FIXME: Remove this assert for performance reasons.
-        assert isinstance(lot_spec, LotSpec), (
-            "Invalid type for Position.lot: %s (%s)".format(type(lot_spec), lot_spec))
-        return Position(lot_spec._replace(currency=amount.currency), amount.number)
+        return Position(Lot(amount.currency, cost_spec), amount.number)
 
     def handle_list(self, object_list, new_object):
         """Handle a recursive list grammar rule, generically.

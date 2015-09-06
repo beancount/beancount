@@ -347,7 +347,7 @@ def get_incomplete_postings(entry, options_map):
                 BalanceError(entry.meta,
                              "Useless auto-posting: {}".format(residual), entry))
             for currency in currencies:
-                position = Position(Lot(currency, None, None), ZERO)
+                position = Position(Lot(currency, None), ZERO)
                 meta = copy.copy(old_posting.meta) if old_posting.meta else {}
                 meta[AUTOMATIC_META] = True
                 new_postings.append(

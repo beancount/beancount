@@ -83,38 +83,40 @@ def book(entries, options_map):
 
                 assert isinstance(pos.lot, grammar.LotSpec)
                 if 1:
-                    lot_spec = pos.lot
+                    lot = pos.lot
 
                     stats.num_lots += 1
 
-                    compound_cost = lot_spec.compound_cost
-                    if compound_cost is not None:
-                        if compound_cost.number_total is not None:
-                            # Compute the per-unit cost if there is some total cost
-                            # component involved.
-                            units = pos.number
-                            cost_total = compound_cost.number_total
-                            if compound_cost.number_per is not None:
-                                cost_total += compound_cost.number_per * units
-                            unit_cost = cost_total / abs(units)
-                        else:
-                            unit_cost = compound_cost.number_per
-                        cost = Amount(unit_cost, compound_cost.currency)
+                    # FIXME: This is broken; rewrite this.
 
-                        # print(cost, 'against', balances[posting.account])
+                    # compound_cost = lot.cost
+                    # if compound_cost is not None:
+                    #     if compound_cost.number_total is not None:
+                    #         # Compute the per-unit cost if there is some total cost
+                    #         # component involved.
+                    #         units = pos.number
+                    #         cost_total = compound_cost.number_total
+                    #         if compound_cost.number_per is not None:
+                    #             cost_total += compound_cost.number_per * units
+                    #         unit_cost = cost_total / abs(units)
+                    #     else:
+                    #         unit_cost = compound_cost.number_per
+                    #     cost = Amount(unit_cost, compound_cost.currency)
 
-                        lot = Lot(lot_spec.currency, cost, lot_spec.lot_date)
-                        stats.num_lots_atcost += 1
-                        # print(posting.position)
-                    else:
-                        # As per the parser, this cannot happen.
-                        assert (lot_spec.lot_date is None and
-                                lot_spec.label is None and
-                                lot_spec.merge is None), "Internal error"
+                    #     # print(cost, 'against', balances[posting.account])
 
-                        # This is a simple position.
-                        lot = Lot(lot_spec.currency, None, None)
-                    pos.lot = lot
+                    #     lot = Lot(lot_spec.currency, cost)
+                    #     stats.num_lots_atcost += 1
+                    #     # print(posting.position)
+                    # else:
+                    #     # As per the parser, this cannot happen.
+                    #     assert (lot_spec.lot_date is None and
+                    #             lot_spec.label is None and
+                    #             lot_spec.merge is None), "Internal error"
+
+                    #     # This is a simple position.
+                    #     lot = Lot(lot_spec.currency, None, None)
+                    # pos.lot = lot
 
                 balance = balances[posting.account]
                 balance.add_position(posting.position)

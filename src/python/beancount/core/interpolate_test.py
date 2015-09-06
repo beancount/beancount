@@ -299,7 +299,7 @@ class TestBalance(cmptest.TestCase):
 class TestBalanceIncompletePostings(cmptest.TestCase):
 
     def get_incomplete_entry(self, string):
-        """Parse an incomplete entry and convert its LotSpec representation to a Lot.
+        """Parse an incomplete entry and convert its CostSpec representation to a Cost.
 
         Args:
           string: The input string to parse.
@@ -307,7 +307,8 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
           A pair of (entry, list of errors).
         """
         entries, _, options_map = parser.parse_string(string, dedent=True)
-        entries_with_lots, errors = booking_simple.convert_lot_specs_to_lots(entries, options_map)
+        (entries_with_lots,
+         errors) = booking_simple.convert_lot_specs_to_lots(entries, options_map)
         entry = entries_with_lots[0]
         errors = interpolate.balance_incomplete_postings(entry, options_map)
         return entry, errors
@@ -487,7 +488,9 @@ class TestComputeBalance(unittest.TestCase):
         computed_balance = interpolate.compute_entries_balance(entries)
         expected_balance = inventory.Inventory()
         expected_balance.add_amount(amount.Amount('-400', 'USD'))
-        expected_balance.add_amount(amount.Amount('10', 'GOOG'), amount.Amount('40', 'USD'))
+        expected_balance.add_amount(amount.Amount('10', 'GOOG'),
+                                    position.Cost(D('40'), 'USD', None, None))
+
         self.assertEqual(expected_balance, computed_balance)
 
     @loader.load_doc()

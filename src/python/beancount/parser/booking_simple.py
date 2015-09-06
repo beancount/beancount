@@ -12,6 +12,7 @@ from beancount.parser import grammar
 from beancount.core.data import Transaction
 from beancount.core.position import Position
 from beancount.core.position import Lot
+from beancount.core.position import Cost
 from beancount.core.amount import Amount
 from beancount.core.number import ZERO
 from beancount.core import interpolate
@@ -90,41 +91,43 @@ def convert_lot_specs_to_lots(entries, unused_options_map):
         for posting in entry.postings:
             pos = posting.position
             if pos is not None:
-                currency, compound_cost, lot_date, label, merge = pos.lot
+                currency, cost_spec = pos.lot
+                if cost_spec is not None:
+                    number_per, number_total, cost_currency, date, label, merge = cost_spec
 
-                # Compute the cost.
-                if compound_cost is not None:
-                    if compound_cost.number_total is not None:
-                        # Compute the per-unit cost if there is some total cost
-                        # component involved.
-                        units = pos.number
-                        cost_total = compound_cost.number_total
-                        if compound_cost.number_per is not None:
-                            cost_total += compound_cost.number_per * units
-                        unit_cost = cost_total / abs(units)
+                    # Compute the cost.
+                    if number_per is not None or number_total is not None:
+                        if number_total is not None:
+                            # Compute the per-unit cost if there is some total cost
+                            # component involved.
+                            units = pos.number
+                            cost_total = number_total
+                            if number_per is not None:
+                                cost_total += number_per * units
+                            unit_cost = cost_total / abs(units)
+                        else:
+                            unit_cost = number_per
+                        cost = Cost(unit_cost, cost_currency, date, label)
                     else:
-                        unit_cost = compound_cost.number_per
-                    cost = Amount(unit_cost, compound_cost.currency)
-                else:
-                    cost = None
+                        cost = None
 
-                # If there is a cost, we don't allow either a cost value of
-                # zero, nor a zero number of units. Note that we allow a price
-                # of zero as the only special case (for conversion entries), but
-                # never for costs.
-                if cost is not None:
-                    if pos.number == ZERO:
-                        errors.append(
-                            SimpleBookingError(
-                                entry.meta, 'Amount is zero: "{}"'.format(pos), None))
+                    # If there is a cost, we don't allow either a cost value of
+                    # zero, nor a zero number of units. Note that we allow a price
+                    # of zero as the only special case (for conversion entries), but
+                    # never for costs.
+                    if cost is not None:
+                        if pos.number == ZERO:
+                            errors.append(
+                                SimpleBookingError(
+                                    entry.meta, 'Amount is zero: "{}"'.format(pos), None))
 
-                    if cost.number is not None and cost.number < ZERO:
-                        errors.append(
-                            SimpleBookingError(
-                                entry.meta, 'Cost is negative: "{}"'.format(cost), None))
+                        if cost.number is not None and cost.number < ZERO:
+                            errors.append(
+                                SimpleBookingError(
+                                    entry.meta, 'Cost is negative: "{}"'.format(cost), None))
 
-                lot = Lot(currency, cost, lot_date)
-                posting = posting._replace(position=Position(lot, pos.number))
+                    lot = Lot(currency, cost)
+                    posting = posting._replace(position=Position(lot, pos.number))
 
             new_postings.append(posting)
         new_entries.append(entry._replace(postings=new_postings))

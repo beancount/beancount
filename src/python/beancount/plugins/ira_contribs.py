@@ -155,7 +155,7 @@ def add_postings(entry, amount_, neg_account, pos_account, flag):
       A new, modified entry.
     """
     pos = position.Position(
-        position.Lot(amount_.currency, None, None),
+        position.Lot(amount_.currency, None),
         amount_.number)
 
     return entry._replace(postings=entry.postings + [

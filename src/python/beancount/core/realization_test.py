@@ -14,6 +14,7 @@ from beancount.core import realization
 from beancount.core import data
 from beancount.core import inventory
 from beancount.core import amount
+from beancount.core import position
 from beancount.core import account_types
 from beancount.utils import test_utils
 from beancount import loader
@@ -714,6 +715,6 @@ class TestComputeBalance(unittest.TestCase):
         expected_balance.add_amount(amount.Amount('333.97', 'USD'))
         expected_balance.add_amount(amount.Amount('17.23', 'CAD'))
         expected_balance.add_amount(amount.Amount('32', 'GOOG'),
-                                    amount.Amount('45.203', 'USD'))
+                                    position.Cost(D('45.203'), 'USD', None, None))
         expected_balance.add_amount(amount.Amount('12000', 'EUR'))
         self.assertEqual(expected_balance, computed_balance)

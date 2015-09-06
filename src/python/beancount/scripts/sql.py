@@ -70,6 +70,7 @@ def output_transactions(connection, entries):
             cost_number         DECIMAL(16, 6),
             cost_currency       CHARACTER(10),
             cost_date           DATE,
+            cost_label          VARCHAR,
             price_number        DECIMAL(16, 6),
             price_currency      CHARACTER(10),
             FOREIGN KEY(id) REFERENCES entries(id)
@@ -96,7 +97,7 @@ def output_transactions(connection, entries):
                 lot = position.lot
                 price = posting.price
                 connection.execute("""
-                  INSERT INTO postings VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                  INSERT INTO postings VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
                 """, (pid, eid,
                       posting.flag,
                       posting.account,
@@ -104,7 +105,8 @@ def output_transactions(connection, entries):
                       lot.currency,
                       lot.cost.number if lot.cost else None,
                       lot.cost.currency if lot.cost else None,
-                      lot.lot_date if lot else None,
+                      lot.cost.date if lot.cost else None,
+                      lot.cost.label if lot.cost else None,
                       price.number if price else None,
                       price.currency if price else None))
 

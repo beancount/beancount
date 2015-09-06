@@ -48,6 +48,7 @@ from datetime import date
 from beancount.core.number import ZERO
 from beancount.core.amount import Amount
 from beancount.core.position import Lot
+from beancount.core.position import Cost
 from beancount.core.position import Position
 from beancount.core.position import lot_currency_pair
 from beancount.core.position import from_string as position_from_string
@@ -304,11 +305,11 @@ class Inventory(list):
             if cost_currency:
                 total_cost = sum(position.get_cost().number
                                  for position in positions)
-                cost_amount = Amount(total_cost / total_units, cost_currency)
+                cost = Cost(total_cost / total_units, cost_currency, None, None)
             else:
-                cost_amount = None
+                cost = None
 
-            average_inventory.add_amount(units_amount, cost_amount)
+            average_inventory.add_amount(units_amount, cost)
 
         return average_inventory
 
@@ -339,7 +340,7 @@ class Inventory(list):
             created = True
         return found, created
 
-    def add_amount(self, amount, cost=None, lot_date=None):
+    def add_amount(self, amount, cost=None):
         """Add to this inventory using amount, cost and date. This adds with strict lot
         matching, that is, no partial matches are done on the arguments to the
         keys of the inventory.
@@ -347,18 +348,16 @@ class Inventory(list):
         Args:
           amount: An Amount instance to add. The amount's currency is used as a
             key on the inventory.
-          cost: An instance of Amount or None, as a key to the inventory.
-          lot_date: An instance of datetime.date or None, the lot-date to use in
-            the key to the inventory.
+          cost: An instance of Cost or None, as a key to the inventory.
         Returns:
           A pair of (position, booking) where 'position' is the position that
           that was modified, and where 'booking' is a Booking enum that hints at
           how the lot was booked to this inventory.
         """
         assert isinstance(amount, Amount)
-        assert cost is None or isinstance(cost, Amount), repr(cost)
-        assert lot_date is None or isinstance(lot_date, date)
-        lot = Lot(amount.currency, cost, lot_date)
+        assert cost is None or isinstance(cost, Cost), (
+            "Internal error: {!r} (type: {})".format(cost, type(cost).__name__))
+        lot = Lot(amount.currency, cost)
         return self._add(amount.number, lot)
 
     def add_position(self, new_position):

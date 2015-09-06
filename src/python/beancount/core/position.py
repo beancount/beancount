@@ -1,20 +1,7 @@
-"""A position object.
+"""A position object, which consists of units and cost, and their associated
+currency and details.
 
-This container defines a "Lot" object, which is a triple of
-
-  (currency, cost, lot-date)
-
-where
-
-  'currency' is the underlying types of units held,
-  'cost': is an instance of Amount (number and currency) expressing the cost of
-          this position, which is possibly None if the currency is not held at cost,
-  'lot-date': which is the date of acquisition of the Lot (also optional and possibly None).
-
-A "Position" represents a specific number of units of an associated lot:
-
-  (number, lot)
-
+See types below for details.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
@@ -22,6 +9,7 @@ import datetime
 import logging
 import collections
 import re
+import warnings
 
 # Note: this file is mirrorred into ledgerhub. Relative imports only.
 from beancount.core.number import ZERO
@@ -29,10 +17,10 @@ from beancount.core.number import Decimal
 from beancount.core.number import NUMBER_RE
 from beancount.core.number import D
 from beancount.core.amount import Amount
-from beancount.core.amount import NULL_AMOUNT
 from beancount.core.amount import amount_mult
 from beancount.core.amount import CURRENCY_RE
 from beancount.core.display_context import DEFAULT_FORMATTER
+
 
 # pylint: disable=invalid-name
 NoneType = type(None)
@@ -44,9 +32,10 @@ NoneType = type(None)
 #
 # Attributes:
 #   currency: A string, the currency of this lot. May NOT be null.
-#   cost: An instance of CostAmount of CostSpec (for incomplete postings), or
+#   cost: An instance of COst of CostSpec (for incomplete postings), or
 #       None if this lot has no associated cost basis.
 Lot = collections.namedtuple('Lot', 'currency cost')
+
 
 # A variant of Amount that also includes a date, a label and a merge flag.
 #
@@ -58,6 +47,7 @@ Lot = collections.namedtuple('Lot', 'currency cost')
 #   label: A string for the label of this lot, or None, if there is no label.
 Cost = collections.namedtuple(
     'Cost', 'number currency date label')
+
 
 # A stand-in for an "incomplete" Cost, that is, a container all the data that
 # was provided by the user in the input in order to resolve this lot to a
@@ -76,8 +66,55 @@ Cost = collections.namedtuple(
 CostSpec = collections.namedtuple(
     'CostSpec', 'number_per number_total currency date label merge')
 
+
 # A constant object for pieces missing of an incomplete posting.
-NA = '-(NA/MISSING)-'
+class _NA(object):
+    def __str__(self):
+        return '-(NA/MISSING)-'
+NA = _NA()
+
+
+def cost_to_str(cost, dformat, detail=True):
+    """Format an instance of Cost or a CostSpec to a string.
+
+    Args:
+      cost: An instance of Cost or CostSpec.
+      dformat: A DisplayFormatter object.
+      detail: A boolean, true if we should render the non-amount components.
+    Returns:
+      A string, suitable for formatting.
+    """
+    strlist = []
+
+    if isinstance(cost, Cost):
+        if cost.number:
+            strlist.append(Amount(cost.number, cost.currency).to_string(dformat))
+        if detail:
+            if cost.date:
+                strlist.append(cost.date.isoformat())
+            if cost.label:
+                strlist.append('"{}"'.format(cost.label))
+
+    elif isinstance(cost, CostSpec):
+        if cost.number_per:
+            amountlist = []
+            if isinstance(cost.number_per, Decimal):
+                amountlist.append(dformat.format(cost.number_per))
+            if isinstance(cost.number_total, Decimal):
+                amountlist.append('#')
+                amountlist.append(dformat.format(cost.number_total))
+            if isinstance(cost.currency, str):
+                amountlist.append(cost.currency)
+            strlist.append(' '.join(amountlist))
+        if detail:
+            if cost.date:
+                strlist.append(cost.date.isoformat())
+            if cost.label:
+                strlist.append('"{}"'.format(cost.label))
+            if cost.merge:
+                strlist.append('*')
+
+    return ', '.join(strlist)
 
 
 def lot_currency_pair(lot):
@@ -88,8 +125,7 @@ def lot_currency_pair(lot):
     Returns:
       A pair of a currency string and a cost currency string or None.
     """
-    return (lot.currency,
-            lot.cost.currency if lot.cost else None)
+    return (lot.currency, lot.cost.currency if lot.cost else None)
 
 
 # Lookup for ordering a list of currencies: we want the majors first, then the
@@ -120,6 +156,9 @@ class Position:
     """
     __slots__ = ('lot', 'number')
 
+    # Allowed data types for lot.cost
+    cost_types = (NoneType, Cost, CostSpec)
+
     def __init__(self, lot, number):
         """Constructor from a lot and a number of units of the ot.
 
@@ -127,10 +166,12 @@ class Position:
           lot: The lot of this position.
           number: An instance of Decimal, the number of units of lot.
         """
-        assert isinstance(lot, (Lot, LotSpec)), (
+        assert isinstance(lot, Lot), (
             "Expected a lot; received '{}'".format(lot))
         assert isinstance(number, (NoneType, Decimal)), (
             "Expected a Decimal; received '{}'".format(number))
+        assert isinstance(lot.cost, self.cost_types), (
+            "Invalid data type for Lot.cost; received '{}'".format(lot.cost))
         self.lot = lot
         self.number = number
 
@@ -159,25 +200,8 @@ class Position:
         pos_str = Amount(self.number, lot.currency).to_string(dformat)
 
         # Render the cost (and other lot parameters, lot-date, label, etc.).
-        if detail:
-            if isinstance(lot, Lot):
-                if lot.cost or lot.lot_date:
-                    cost_str_list = []
-                    cost_str_list.append('{')
-                    if lot.cost:
-                        cost_str_list.append(
-                            Amount(lot.cost.number, lot.cost.currency).to_string(dformat))
-                    if lot.lot_date:
-                        cost_str_list.append(', {}'.format(lot.lot_date))
-                    cost_str_list.append('}')
-                    pos_str = '{} {}'.format(pos_str, ''.join(cost_str_list))
-            else:
-                assert isinstance(lot, LotSpec)
-                pos_str = '{} {}'.format(pos_str, lot)
-        else:
-            # Render just the cost, if present.
-            if lot.cost is not None:
-                pos_str = '{} {{{}}}'.format(pos_str, lot.cost.to_string(dformat))
+        if lot.cost is not None:
+            pos_str = '{} {{{}}}'.format(pos_str, cost_to_str(lot.cost, dformat, detail))
 
         return pos_str
 
@@ -218,7 +242,14 @@ class Position:
         lot = self.lot
         currency = lot.currency
         order_units = CURRENCY_ORDER.get(currency, NCURRENCIES + len(currency))
-        return (order_units, lot.cost or NULL_AMOUNT, self.number)
+        if lot.cost is not None:
+            cost_number = lot.cost.number
+            cost_currency = lot.cost.currency
+        else:
+            cost_number = ZERO
+            cost_currency = ''
+
+        return (order_units, cost_number, cost_currency, self.number)
 
     def __lt__(self, other):
         """A least-than comparison operator for positions.
@@ -299,7 +330,7 @@ class Position:
         if cost is None:
             return self
         else:
-            return Position(Lot(cost.currency, None, None),
+            return Position(Lot(cost.currency, None),
                             self.number * cost.number)
 
     def add(self, number):
@@ -330,8 +361,7 @@ class Position:
         Returns:
           A boolean.
         """
-        return (self.number < ZERO and
-                (self.lot.cost or self.lot.lot_date))
+        return (self.number < ZERO and self.lot.cost is not None)
 
     @staticmethod
     def from_string(string):
@@ -357,7 +387,10 @@ class Position:
         currency = match.group(2)
 
         # Parse a cost expression.
-        cost, lot_date = None, None
+        cost_number = None
+        cost_currency = None
+        date = None
+        label = None
         cost_expression = match.group(3)
         if match.group(3):
             expressions = [expr.strip() for expr in re.split('[,/]', cost_expression)]
@@ -374,32 +407,32 @@ class Position:
                         # Calculate the per-unit cost.
                         total = number * per_number + total_number
                         per_number = total / number
-                    cost = Amount(per_number, cost_currency)
+                    cost_number = per_number
                     continue
 
                 # Match a date.
                 match = re.match(r'(\d\d\d\d)[-/](\d\d)[-/](\d\d)$', expr)
                 if match:
-                    lot_date = datetime.date(*map(int, match.group(1, 2, 3)))
+                    date = datetime.date(*map(int, match.group(1, 2, 3)))
                     continue
 
                 # Match a label.
                 match = re.match(r'"([^"]+)*"$', expr)
                 if match:
-                    # label = match.groups(1)
-                    logging.warning("Label not supported yet.")
+                    label = match.group(1)
                     continue
 
                 # Match a merge-cost marker.
                 match = re.match(r'\*$', expr)
                 if match:
-                    # merge = True
-                    logging.warning("Merge-code not supported yet.")
-                    continue
+                    raise ValueError("Merge-code not supported in string constructor.")
 
                 raise ValueError("Invalid cost component: '{}'".format(expr))
+            cost = Cost(cost_number, cost_currency, date, label)
+        else:
+            cost = None
 
-        return Position(Lot(currency, cost, lot_date), D(number))
+        return Position(Lot(currency, cost), D(number))
 
     @staticmethod
     def from_amounts(amount, cost_amount=None):
@@ -411,7 +444,10 @@ class Position:
         Returns:
           A Position instance.
         """
-        return Position(Lot(amount.currency, cost_amount, None), amount.number)
+        cost = (Cost(cost_amount.number, cost_amount.currency, None, None)
+                if cost_amount else
+                None)
+        return Position(Lot(amount.currency, cost), amount.number)
 
 
 # pylint: disable=invalid-name

@@ -14,6 +14,7 @@ from beancount.core.number import Decimal
 from beancount.core.number import D
 from beancount.core.position import Position
 from beancount.core.position import Lot
+from beancount.core.position import Cost
 from beancount.core.account import has_component
 
 
@@ -351,7 +352,7 @@ def create_simple_posting(entry, account, number, currency):
     else:
         if not isinstance(number, Decimal):
             number = D(number)
-        position = Position(Lot(currency, None, None), number)
+        position = Position(Lot(currency, None), number)
     posting = Posting(account, position, None, None, None)
     if entry is not None:
         entry.postings.append(posting)
@@ -380,8 +381,8 @@ def create_simple_posting_with_cost(entry, account,
         number = D(number)
     if cost_number and not isinstance(cost_number, Decimal):
         cost_number = D(cost_number)
-    cost = Amount(cost_number, cost_currency)
-    position = Position(Lot(currency, cost, None), number)
+    cost = Cost(cost_number, cost_currency, None, None)
+    position = Position(Lot(currency, cost), number)
     posting = Posting(account, position, None, None, None)
     if entry is not None:
         entry.postings.append(posting)
