@@ -401,7 +401,7 @@ class Inventory(list):
         # Find the position.
         position, created = self._get_create_position(lot)
 
-        # Note that if the positiong was created, position.number is always ZERO
+        # Note that if the position was created, position.number is always ZERO
         # here.
         reducing = (position.number * number) < 0
         position.add(number)
