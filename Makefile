@@ -24,9 +24,16 @@ clean:
 CROOT = $(SRC)/parser
 LEX = flex
 YACC = bison --report=itemset --verbose
+FILTERYACC = sed -e 's@/\*[ \t]yacc\.c:.*\*/@@'
+TMP=/tmp
+
+xy:
+	cat $(CROOT)/grammar.c | $(FILTERYACC) | less
 
 $(CROOT)/grammar.c $(CROOT)/grammar.h: $(CROOT)/grammar.y
 	$(YACC) -o $(CROOT)/grammar.c $<
+	(cat $(CROOT)/grammar.c | $(FILTERYACC) > $(TMP)/grammar.c ; mv $(TMP)/grammar.c $(CROOT)/grammar.c )
+	(cat $(CROOT)/grammar.h | $(FILTERYACC) > $(TMP)/grammar.h ; mv $(TMP)/grammar.h $(CROOT)/grammar.h )
 
 $(CROOT)/lexer.c $(CROOT)/lexer.h: $(CROOT)/lexer.l $(CROOT)/grammar.h
 	$(LEX) --outfile=$(CROOT)/lexer.c --header-file=$(CROOT)/lexer.h $<

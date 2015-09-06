@@ -101,7 +101,7 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 130 "src/python/beancount/parser/grammar.y" /* yacc.c:1909  */
+#line 130 "src/python/beancount/parser/grammar.y" 
 
     char character;
     const char* string;
@@ -111,7 +111,7 @@ union YYSTYPE
         PyObject* pyobj2;
     } pairobj;
 
-#line 115 "src/python/beancount/parser/grammar.h" /* yacc.c:1909  */
+#line 115 "src/python/beancount/parser/grammar.h" 
 };
 
 typedef union YYSTYPE YYSTYPE;
