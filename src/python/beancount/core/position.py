@@ -43,24 +43,41 @@ NoneType = type(None)
 # many objects; this makes everything much faster.)
 #
 # Attributes:
-#  currency: A string, the currency of this lot. May NOT be null.
-#  cost: An Amount, or None if this lot has no associated cost.
-#  lot_date: A datetime.date, or None if this lot has no associated date.
-Lot = collections.namedtuple('Lot', 'currency cost lot_date')
+#   currency: A string, the currency of this lot. May NOT be null.
+#   cost: An instance of CostAmount of CostSpec (for incomplete postings), or
+#       None if this lot has no associated cost basis.
+Lot = collections.namedtuple('Lot', 'currency cost')
 
-
-# LotSpec is a temporary data structure for holding a lot specification before
-# it gets resolved to an actual lot. This record should only be present in the
-# intermediate state between parsing and booking.
+# A variant of Amount that also includes a date, a label and a merge flag.
 #
 # Attributes:
-#   compound_cost: An instance of CompountAmount, possibly with empty values.
-#   lot_date: A datetime.date instance.
-#   label: A label string, or None.
-#   merge: A boolean, true if we shoud be merging the cost basis before/after
-#     the given posting.
-LotSpec = collections.namedtuple('LotSpec',
-                                 'currency compound_cost lot_date label merge')
+#   number: A Decimal, the per-unit cost.
+#   currency: A string, the cost currency.
+#   date: A datetime.date for the date that the lot was created at. There
+#      should always be a valid date.
+#   label: A string for the label of this lot, or None, if there is no label.
+Cost = collections.namedtuple(
+    'Cost', 'number currency date label')
+
+# A stand-in for an "incomplete" Cost, that is, a container all the data that
+# was provided by the user in the input in order to resolve this lot to a
+# particular lot and produce an instance of Cost. Any of the fields of this
+# object may be left unspecified, in which case they take the special value
+# "NA" (see below), if the field was absent from the input.
+#
+# Attributes:
+#   number_per: A Decimal instance, the cost/price per unit, or None if unspecified.
+#   number_total: A Decimal instance, the total cost/price, or None if unspecified.
+#   currency: A string, the commodity of the amount, or None if unspecified.
+#   date: A datetime.date, or None if unspecified.
+#   label: A string for the label of this lot, or None if unspecified.
+#   merge: A boolean, true if this specification calls for averaging the units
+#      of this lot's currency, or False if unspecified.
+CostSpec = collections.namedtuple(
+    'CostSpec', 'number_per number_total currency date label merge')
+
+# A constant object for pieces missing of an incomplete posting.
+NA = '-(NA/MISSING)-'
 
 
 def lot_currency_pair(lot):

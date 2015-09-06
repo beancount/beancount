@@ -1,49 +1,86 @@
 """Beancount syntax parser.
 
 IMPORTANT: The parser (and its grammar builder) produces "incomplete"
-Transaction objects. This means that some of the data can be missing. Those
-incomplete entries are then run through the "booking" routines which find
-matching lots for reducing postings and interpolates missing numbers, and in
-doing so normalize the entries to "complete" entries.
+Transaction objects. This means that some of the data can be found missing from
+the output of the parser and some of the data types vary slightly. Missing
+components are replaced not by None, but by a special constant 'NA' which helps
+diagnose problems if a user inadvertently attempts to work on an incomplete
+posting instead of a complete one. Those incomplete entries are then run through
+the "booking" routines which do two things simultaneously:
 
-Spefically, the following pieces of data may be incomplete:
+1. They find matching lots for reducing inventory positions, and
+2. They interpolate missing numbers.
 
-- position = None
-  e.g., Assets:Account
+In doing so they normalize the entries to "complete" entries by conversion a
+Lot's "cost" attribute from a CostSpec to a Cost. A Cost is similar to an Amount
+in that it shares "number" and "currency" attributes, but also has a label and a
+lot date.
 
-- position.number = None, with a non-nil lot
-  position.lot = LotSpec(currency='USD', compound_cost=None)
-  e.g., Assets:Account  USD
+Specifically, the following pieces of data may be missing:
 
-- position.price = Amount(None, None)
-  position.lot = LotSpec(currency='USD', compound_cost=None)
-  e.g., Assets:Account  100 CAD @
+  INPUT: Assets:Account
+  position.number = NA
+  position.lot = Lot(NA, None)
 
-- position.price = Amount(None, currency)
-  position.lot = LotSpec(currency='CAD', compound_cost=None)
-  e.g., Assets:Account  100 CAD @ USD
+  INPUT: Assets:Account  USD
+  position.number = None
+  position.lot = Lot('USD', None)
 
-- position.number = 1
-  position.lot = LotSpec(currency='GOOG', compound_cost=CompoundAmount(100, 5, 'USD'))
-  e.g., Assets:Account  1 GOOG {100 # 5 USD}
+  INPUT: Assets:Account  100 CAD @
+  position.number = 100
+  position.lot = Lot('USD', None)
+  position.price = Amount(NA, NA)
 
-- position.number = 1
-  position.lot = LotSpec(currency='GOOG', compound_cost=CompoundAmount(None, None, 'USD'))
-  e.g., Assets:Account  1 GOOG {USD}
+  INPUT: Assets:Account  100 CAD @ USD
+  position.number = 100
+  position.lot = Lot('CAD', None)
+  position.price = Amount(NA, 'USD')
 
-- position.number = 1
-  position.lot = LotSpec(currency='GOOG', compound_cost=CompoundAmount(None, None, None))
-  e.g., Assets:Account  1 GOOG {USD}
+Note that 'posting.position.price = None' is not incomplete, it just indicates
+the absence of a price clause.
 
-(Note that 'posting.position.price = None' is not incomplete, it just indicates
-the absence of a price clause.)
+If a cost basis specification is provided, a Lot's "cost" attribute it set but
+it does not refer to a Cost instance as in complete entries, but rather to
+a CostSpec instance. Any of the fields of a CostSpec may be None if it was not
+specified in the input. For exasmple:
 
-For incomplete entries, 'posting.position.lot' does not refer to a Lot instance,
-but rather to a LotSpec which needs to get resolved to a Lot. The LotSpec has a
-CompountAmount for which the 'number_per' and 'number_total' numbers may be both
-missing.
+  INPUT: Assets:Account  1 GOOG {100 # 5 USD}
+  position.number = 1
+  position.lot = Lot('GOOG', CostSpec(100, 5, 'USD', None, None, False))
+
+  INPUT: Assets:Account  1 GOOG {100 # USD}
+  position.number = 1
+  position.lot = Lot('GOOG', CostSpec(100, NA, 'USD', None, None, False))
+  (Note how this differs from the previous compound amount specification and
+   leaves an amount to be filled in)
+
+  INPUT: Assets:Account  1 GOOG {USD}
+  position.number = 1
+  position.lot = Lot('GOOG', CostSpec(NA, None, 'USD', None, None, False))
+
+  INPUT: Assets:Account  1 GOOG {}
+  position.number = 1
+  position.lot = Lot('GOOG', CostSpec(NA, None, NA, None, None, False))
+
+  INPUT: Assets:Account  1 GOOG {*}
+  position.number = 1
+  position.lot = Lot('GOOG', CostSpec(NA, None, NA, None, None, True))
+
+  INPUT: Assets:Account  1 GOOG {2015-09-06}
+  position.number = 1
+  position.lot = Lot('GOOG', CostSpec(NA, None, NA, date(2015, 9, 6), None, False))
+
+  INPUT: Assets:Account  1 GOOG {"dfa4eedc1431", 100 # 5 USD, 2015-09-06}
+  position.number = 1
+  position.lot = Lot('GOOG', CostSpec(100, 5, 'USD', date(2015, 9, 6), "dfa4eedc1431", False))
+
+For incomplete entries, 'posting.position.lot.cost' does not refer to a Cost
+instance, but rather to a CostSpec which needs to get resolved to a Cost. The
+CostSpec has fields for 'number_per' and 'number_total' numbers which may be
+both missing.
 
 See grammar_test.TestIncompleteInputs for examples and corresponding checks.
+
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
