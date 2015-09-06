@@ -24,8 +24,11 @@ clean:
 CROOT = $(SRC)/parser
 LEX = flex
 YACC = bison --report=itemset --verbose
-FILTERYACC = sed -e 's@/\*\syacc\.c:[0-9]*\s\s\*/@@'
+FILTERYACC = sed -e 's@/\*[ \t]yacc\.c:.*\*/@@'
 TMP=/tmp
+
+xy:
+	cat $(CROOT)/grammar.c | $(FILTERYACC) | less
 
 $(CROOT)/grammar.c $(CROOT)/grammar.h: $(CROOT)/grammar.y
 	$(YACC) -o $(CROOT)/grammar.c $<
