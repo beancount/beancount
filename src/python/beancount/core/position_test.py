@@ -230,7 +230,7 @@ class TestPosition(unittest.TestCase):
         self.assertEqual(A('15 AUD'), pos.get_weight())
         self.assertEqual(A('15 AUD'), pos.get_weight(A('1.6 AUD')))
 
-        cost_pos = pos.cost()
+        cost_pos = pos.cost_position()
         self.assertEqual(A('15 AUD'), cost_pos.get_units())
         self.assertEqual(A('15 AUD'), cost_pos.get_cost())
         self.assertEqual(A('15 AUD'), cost_pos.get_weight())

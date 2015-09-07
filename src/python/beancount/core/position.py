@@ -317,7 +317,7 @@ class Position:
 
         return amount
 
-    def cost(self):
+    def cost_position(self):
         """Return a Position representing the cost of this position. See get_cost().
 
         Returns:
@@ -332,6 +332,9 @@ class Position:
         else:
             return Position(Lot(cost.currency, None),
                             self.number * cost.number)
+
+    # Alias for backwards compatibility.
+    cost = cost_position
 
     def add(self, number):
         """Add a number of units to this position.
