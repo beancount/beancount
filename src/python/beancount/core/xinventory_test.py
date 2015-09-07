@@ -11,9 +11,9 @@ import types
 
 from beancount.core.number import D
 from beancount.core.number import ZERO
-from beancount.core.position import Position
-from beancount.core.position import Lot
-from beancount.core.position import Cost
+from beancount.core.xposition import Position
+from beancount.core.xposition import Lot
+from beancount.core.xposition import Cost
 from beancount.core.inventory import Inventory
 from beancount.core.inventory import Booking
 from beancount.core import amount
