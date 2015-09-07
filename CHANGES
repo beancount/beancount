@@ -6,6 +6,10 @@ Note: This file contains only changes in the 'default' branch.
 
 2015-09-06
 
+  - Removed beancount.core.position.lot_currency_pair(), converted to
+    beancount.core.position.Position.currency_pair(). This is in preparation for
+    a more major change to Position and Lot and Posting.
+
   - Renamed beancount.core.position.Position.cost() to
     beancount.core.position.Position.at_cost() in preparation to create
     a new Position class with only (units, cost).

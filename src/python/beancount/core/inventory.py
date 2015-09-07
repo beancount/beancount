@@ -50,7 +50,6 @@ from beancount.core.amount import Amount
 from beancount.core.position import Lot
 from beancount.core.position import Cost
 from beancount.core.position import Position
-from beancount.core.position import lot_currency_pair
 from beancount.core.position import from_string as position_from_string
 from beancount.core.display_context import DEFAULT_FORMATTER
 
@@ -207,8 +206,7 @@ class Inventory(list):
         Returns:
           A list of currency strings.
         """
-        return set(lot_currency_pair(position.lot)
-                   for position in self)
+        return set(position.currency_pair() for position in self)
 
     def get_positions(self):
         """Return the positions in this inventory.

@@ -19,7 +19,6 @@ from beancount.core.position import Cost
 from beancount.core.position import Position
 from beancount.core.position import from_string
 from beancount.core.position import from_amounts
-from beancount.core.position import lot_currency_pair
 
 
 class TestCost(unittest.TestCase):
@@ -255,8 +254,9 @@ class TestPosition(unittest.TestCase):
         self.assertFalse(pos1.is_negative_at_cost())
         self.assertTrue(pos2.is_negative_at_cost())
 
-    def test_lot_currency_pair(self):
+    def test_currency_pair(self):
         self.assertEqual(("USD", None),
-                         lot_currency_pair(Lot("USD", None)))
+                         Position(Lot("USD", None), D('100')).currency_pair())
         self.assertEqual(("AAPL", "USD"),
-                         lot_currency_pair(Lot("AAPL", Cost('43.23', 'USD', None, None))))
+                         Position(Lot("AAPL", Cost('43.23', 'USD', None, None)),
+                                  D('100')).currency_pair())
