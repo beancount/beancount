@@ -47,7 +47,6 @@ from datetime import date
 
 from beancount.core.number import ZERO
 from beancount.core.amount import Amount
-from beancount.core.xposition import Lot
 from beancount.core.xposition import Cost
 from beancount.core.xposition import Position
 from beancount.core.xposition import from_string as position_from_string
