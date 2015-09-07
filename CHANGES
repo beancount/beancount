@@ -7,7 +7,7 @@ Note: This file contains only changes in the 'default' branch.
 2015-09-06
 
   - Renamed beancount.core.position.Position.cost() to
-    beancount.core.position.Position.cost_position() in preparation to create
+    beancount.core.position.Position.at_cost() in preparation to create
     a new Position class with only (units, cost).
 
   - Made some breaking changes to the API. These changes are necessary in order

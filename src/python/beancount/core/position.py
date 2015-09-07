@@ -271,6 +271,15 @@ class Position:
         # Note: We use Decimal() for efficiency.
         return Position(self.lot, Decimal(self.number))
 
+    def currency_pair(self):
+        """Return the currency pair associated with this position.
+
+        Returns:
+          A pair of a currency string and a cost currency string or None.
+        """
+        lot = self.lot
+        return (lot.currency, lot.cost.currency if lot.cost else None)
+
     def get_units(self):
         """Get the Amount that correponds to this lot. The amount is the number of units
         of the currency, irrespective of its cost or lot date.
@@ -317,7 +326,7 @@ class Position:
 
         return amount
 
-    def cost_position(self):
+    def at_cost(self):
         """Return a Position representing the cost of this position. See get_cost().
 
         Returns:
@@ -334,7 +343,7 @@ class Position:
                             self.number * cost.number)
 
     # Alias for backwards compatibility.
-    cost = cost_position
+    cost = at_cost
 
     def add(self, number):
         """Add a number of units to this position.

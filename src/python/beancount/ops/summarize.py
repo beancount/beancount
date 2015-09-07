@@ -563,7 +563,7 @@ def create_entries_from_balances(balances, date, source_account, direction,
 
         for position in account_balance.get_positions():
             postings.append(data.Posting(account, position, None, None, None))
-            cost_position = position.cost_position()
+            cost_position = position.at_cost()
             postings.append(
                 data.Posting(source_account, -cost_position, None, None, None))
 
