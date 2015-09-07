@@ -357,7 +357,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
 
     def test_balance_incomplete_postings__insert_rounding(self):
         entry, errors = self.get_incomplete_entry("""
-          option "account_rounding" "Equity:RoundingError"
+          option "account_rounding" "RoundingError"
 
           2013-02-23 * "Something"
             Assets:Invest     1.245 RGAGX {43.23 USD}
@@ -391,7 +391,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
 
     def test_balance_incomplete_postings__rounding_and_quantum(self):
         entry, errors = self.get_incomplete_entry("""
-          option "account_rounding" "Equity:RoundingError"
+          option "account_rounding" "RoundingError"
           option "default_tolerance" "USD:0.01"
 
           2013-02-23 * "Something"
@@ -405,7 +405,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
         self.assertEqual(D('-0.00135'), entry.postings[2].position.number)
 
         entry, errors = self.get_incomplete_entry("""
-          option "account_rounding" "Equity:RoundingError"
+          option "account_rounding" "RoundingError"
           option "default_tolerance" "USD:0.01"
 
           2014-05-06 * "Buy mutual fund"
@@ -422,7 +422,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
         # Here we want to verify that auto-inserting rounding postings does not
         # disable non-balancing transactions. This is rather an important check!
         entries, errors, options_map = loader.load_string("""
-          option "account_rounding" "Equity:RoundingError"
+          option "account_rounding" "RoundingError"
 
           2000-01-01 open Assets:Investments:MutualFunds:XXX
           2000-01-01 open Assets:Cash:Checking
