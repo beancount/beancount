@@ -299,7 +299,7 @@ def get_position_market_value(position_, date, price_map):
     position and return itself, unchanged.
 
     Args:
-      position: An instance of Position
+      position_: An instance of Position
       date: A datetime.date instance, the date at which to market the instruments.
         If the date provided is None, the inventory is valued at the latest market
         prices.
