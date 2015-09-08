@@ -200,8 +200,16 @@ class Inventory(list):
     # Methods to access portions of an inventory.
     #
 
+    def currencies(self):
+        """Return the list of unit currencies held in this inventory.
+
+        Returns:
+          A list of currency strings.
+        """
+        return set(position.lot.currency for position in self)
+
     def currency_pairs(self):
-        """Return the commodities held in this inventory.
+        """Return the commodity pairs held in this inventory.
 
         Returns:
           A list of currency strings.
