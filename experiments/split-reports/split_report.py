@@ -16,6 +16,7 @@ from beancount.query import query_compile
 from beancount.query import query_env
 from beancount.query import query_execute
 from beancount.query import query_render
+from beancount.query import numberify
 from beancount import loader
 
 
@@ -59,13 +60,14 @@ def run_query(entries, options_map, query, *format_args, boxed=True, spaced=Fals
                                     env_entries)
 
     # Execute it to obtain the result rows.
-    result_types, result_rows = query_execute.execute_query(c_query,
-                                                            entries,
-                                                            options_map)
+    rtypes, rrows = query_execute.execute_query(c_query, entries, options_map)
+
+    # Numberify the output to prepare for a spreadsheet upload.
+    rtypes, rrows = numberify.numberify_results(rtypes, rrows)
 
     # Output the resulting rows.
     oss = io.StringIO()
-    query_render.render_text(result_types, result_rows,
+    query_render.render_text(rtypes, rrows,
                              options_map['dcontext'],
                              oss,
                              boxed=boxed,

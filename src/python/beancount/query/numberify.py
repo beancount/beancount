@@ -77,7 +77,7 @@ def numberify_results(dtypes, drows):
         name, dtype = col_desc
         convert_col_fun = CONVERTING_TYPES.get(dtype, None)
         if convert_col_fun is None:
-            converters.append(IdentityConverter(dtype, index))
+            converters.append(IdentityConverter(name, dtype, index))
         else:
             col_converters = convert_col_fun(name, drows, index)
             converters.extend(col_converters)
