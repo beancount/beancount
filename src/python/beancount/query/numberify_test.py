@@ -1,5 +1,6 @@
 __author__ = 'Martin Blais <blais@furius.ca>'
 
+import datetime
 import pprint
 import unittest
 import sys
@@ -20,7 +21,7 @@ def pr_table(types, rows):
     query_render.render_text(types, rows, display_context.DEFAULT_DISPLAY_CONTEXT, sys.stdout)
 
 
-class TestNumerify(unittest.TestCase):
+class TestNumerifySimple(unittest.TestCase):
 
     input_amounts = ["24.17 CAD",
                      "-77.02 CAD",
@@ -64,3 +65,13 @@ class TestNumerify(unittest.TestCase):
         atypes, arows = numberify.numberify_results(itypes, irows)
         self.assertEqual(self.expected_types, atypes)
         self.assertEqual(self.expected_rows, arows)
+
+
+class TestNumerifyIdentity(unittest.TestCase):
+
+    def test_identity(self):
+        itypes = [('date', datetime.date), ('name', str), ('count', int)]
+        irows = [[datetime.date(2015, 9, 8), 'Testing', 3]]
+        atypes, arows = numberify.numberify_results(itypes, irows)
+        self.assertEqual(itypes, atypes)
+        self.assertEqual(irows, arows)
