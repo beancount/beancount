@@ -219,7 +219,7 @@ def convert_col_Inventory(name, drows, index):
             currency_map[currency] += 1
     return [InventoryConverter('{} ({})'.format(name, currency), index, currency)
             for currency, _ in sorted(currency_map.items(),
-                                      key=lambda item: item[1],
+                                      key=lambda item: (item[1], item[0]),
                                       reverse=True)]
 
 

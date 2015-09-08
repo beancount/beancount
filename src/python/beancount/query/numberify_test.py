@@ -1,5 +1,6 @@
 __author__ = 'Martin Blais <blais@furius.ca>'
 
+import datetime
 import pprint
 import unittest
 import sys
@@ -20,7 +21,7 @@ def pr_table(types, rows):
     query_render.render_text(types, rows, display_context.DEFAULT_DISPLAY_CONTEXT, sys.stdout)
 
 
-class TestNumerify(unittest.TestCase):
+class TestNumerifySimple(unittest.TestCase):
 
     input_amounts = ["24.17 CAD",
                      "-77.02 CAD",
@@ -64,3 +65,31 @@ class TestNumerify(unittest.TestCase):
         atypes, arows = numberify.numberify_results(itypes, irows)
         self.assertEqual(self.expected_types, atypes)
         self.assertEqual(self.expected_rows, arows)
+
+
+class TestNumerifyIdentity(unittest.TestCase):
+
+    def test_identity(self):
+        itypes = [('date', datetime.date), ('name', str), ('count', int)]
+        irows = [[datetime.date(2015, 9, 8), 'Testing', 3]]
+        atypes, arows = numberify.numberify_results(itypes, irows)
+        self.assertEqual(itypes, atypes)
+        self.assertEqual(irows, arows)
+
+
+class TestNumerifyInventory(unittest.TestCase):
+
+    def test_inventory(self):
+        itypes = [('balance', inventory.Inventory)]
+        irows = [[inventory.from_string('10 GOOG {23.00 USD}')],
+                 [inventory.from_string('2.11 USD, 3.44 CAD')],
+                 [inventory.from_string('-2 GOOG {24.00 USD}, 5.66 CAD')]]
+        atypes, arows = numberify.numberify_results(itypes, irows)
+
+        self.assertEqual([('balance (GOOG)', Decimal),
+                          ('balance (CAD)', Decimal),
+                          ('balance (USD)', Decimal)], atypes)
+
+        self.assertEqual([[D('10'), None, None],
+                          [None, D('3.44'), D('2.11')],
+                          [D('-2'), D('5.66'), None]], arows)
