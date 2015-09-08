@@ -13,20 +13,20 @@ import itertools
 
 
 QUERY_EXPENSES = """
-  SELECT 
-     date, payee, narration, PARENT(account), 
-     number, currency, 
+  SELECT
+     date, payee, narration, PARENT(account),
+     number, currency,
      NUMBER(CONVERT(position, "USD")), CURRENCY(CONVERT(position, "USD"))
-  WHERE account ~ "{participant}" 
+  WHERE account ~ "{participant}"
     AND number >= 0
 """
 
 QUERY_CONTRIBUTIONS = """
-  SELECT 
+  SELECT
      date, payee, narration, account,
-     number, currency, 
+     number, currency,
      NUMBER(CONVERT(position, "USD")), CURRENCY(CONVERT(position, "USD"))
-  WHERE account ~ "{participant}" 
+  WHERE account ~ "{participant}"
     AND number < 0
 """
 
@@ -62,13 +62,13 @@ def get_participants(filename):
         if match:
             return match.group(1).strip().split()
 
-    
+
 def query_to_csv(sql, beancount_filename):
     pipe = subprocess.Popen(['bean-query', beancount_filename, sql],
                             stdout=subprocess.PIPE)
     out, _ = pipe.communicate()
     rows = table_to_csv(out.decode('utf8'))
-    csvfile =tempfile.NamedTemporaryFile(mode='w', suffix='.csv')
+    csvfile = tempfile.NamedTemporaryFile(mode='w', suffix='.csv')
     # Write out the CSV file.
     writer = csv.writer(csvfile)
     writer.writerows(rows)
@@ -104,7 +104,7 @@ def main():
     logging.info(str(command))
     return_value = subprocess.call(command)
     assert return_value == 0
-            
+
 
 if __name__ == '__main__':
     main()

@@ -8,8 +8,11 @@ between each other.
 """
 __author__ = 'Martin Blais <blais@furius.ca>'
 
+import argparse
 import io
 import re
+import sys
+import logging
 
 from beancount.query import query_parser
 from beancount.query import query_compile
@@ -22,8 +25,8 @@ from beancount import loader
 
 # FIXME: Move this into a reusable library under beancount.query.
 # FIXME: Add 'width' option.
-def run_query(entries, options_map, query, *format_args, boxed=True, spaced=False):
-    """Render a single query to text.
+def run_query(entries, options_map, query, *format_args):
+    """Compile and execute a query, return the result types and rows.
 
     Args:
       entries: A list of entries, as produced by the loader.
@@ -32,11 +35,6 @@ def run_query(entries, options_map, query, *format_args, boxed=True, spaced=Fals
         (e.g., {}) formatting specifications.
       format_args: A tuple of arguments to be formatted in the query. This is
         just provided as a convenience.
-      boxed: A boolean, true if we should render the results in a fancy-looking ASCII box.
-      spaced: If true, leave an empty line between each of the rows. This is useful if the
-        results have a lot of rows that render over multiple lines.
-    Returns:
-      A string containing a table rendering of the data.
     Raises:
       ParseError: If the statement cannot be parsed.
       CompilationError: If the statement cannot be compiled.
@@ -62,18 +60,49 @@ def run_query(entries, options_map, query, *format_args, boxed=True, spaced=Fals
     # Execute it to obtain the result rows.
     rtypes, rrows = query_execute.execute_query(c_query, entries, options_map)
 
+    return rtypes, rrows
+
+
+def save_query(title, participant, entries, options_map, query, *format_args,
+               boxed=True, spaced=False):
+    """Save the multiple files for this query.
+
+    Args:
+    ...
+
+      boxed: A boolean, true if we should render the results in a fancy-looking ASCII box.
+      spaced: If true, leave an empty line between each of the rows. This is useful if the
+        results have a lot of rows that render over multiple lines.
+    """
+    # Run the query.
+    rtypes, rrows = run_query(entries, options_map, query, *format_args)
+
+    # The base of all filenames.
+    filebase = '-'.join(filter(None, [title, participant]))
+
+    # Output the text file.
+    filename_txt = filebase + '.txt'
+    with open(filename_txt, 'w') as file:
+        query_render.render_text(rtypes, rrows,
+                                 options_map['dcontext'],
+                                 file,
+                                 boxed=boxed,
+                                 spaced=spaced)
+
+    # # Write out the query to stdout.
+    # sys.stdout.write(open(filename_txt).read())
+
     # Numberify the output to prepare for a spreadsheet upload.
     rtypes, rrows = numberify.numberify_results(rtypes, rrows)
 
-    # Output the resulting rows.
-    oss = io.StringIO()
-    query_render.render_text(rtypes, rrows,
-                             options_map['dcontext'],
-                             oss,
-                             boxed=boxed,
-                             spaced=spaced)
+    # # Output the resulting rows.
+    # oss = io.StringIO()
+    # query_render.render_text(rtypes, rrows,
+    #                          options_map['dcontext'],
+    #                          oss,
+    #                          boxed=boxed,
+    #                          spaced=spaced)
 
-    return oss.getvalue()
 
 
 def get_participants(filename, options_map):
@@ -96,7 +125,6 @@ def get_participants(filename, options_map):
 
 
 def main():
-    import argparse, logging
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
     parser = argparse.ArgumentParser(description=__doc__.strip())
     parser.add_argument('filename', help='Beancount input filename')
@@ -107,48 +135,42 @@ def main():
     participants = get_participants(args.filename, options_map)
 
     for participant in participants:
-        print("-" * 120)
         print(participant)
-        print()
 
-        print("Expenses by category")
-        print(run_query(entries, options_map, r"""
+        save_query("Expenses by category", participant, entries, options_map, r"""
           SELECT
             PARENT(account) AS account,
             SUM(position) AS amount
           WHERE account ~ 'Expenses.*\b{}'
           GROUP BY 1
           ORDER BY 2 DESC
-        """, participant, boxed=False))
+        """, participant, boxed=False)
 
-        print("Expenses Detail")
-        print(run_query(entries, options_map, r"""
+        save_query("Expenses Detail", participant, entries, options_map, r"""
           SELECT
             date, flag, payee, narration, PARENT(account) AS account, position, balance
           WHERE account ~ 'Expenses.*\b{}'
-        """, participant))
+        """, participant)
 
-        print("Contributions Detail")
-        print(run_query(entries, options_map, r"""
-          SELECT date, flag, payee, narration, account, position, balance
+        save_query("Contributions Detail", participant, entries, options_map, r"""
+          SELECT
+            date, flag, payee, narration, account, position, balance
           WHERE account ~ 'Income.*\b{}'
-        """, participant))
+        """, participant)
 
-        print(run_query(entries, options_map, r"""
-          SELECT SUM(position) AS total
-          WHERE account ~ ':{}'
-        """, participant))
+        # save_query("Final Balance", participant, entries, options_map, r"""
+        #   SELECT SUM(position) AS total
+        #   WHERE account ~ ':{}'
+        # """, participant)
 
 
-    query = r"""
+    save_query("Final Balances", None, entries, options_map, r"""
       SELECT
         GREP('\b({})\b', account) AS participant,
         SUM(position) AS balance
       GROUP BY 1
       ORDER BY 2
-    """.format('|'.join(participants))
-    print(run_query(entries, options_map, query))
-
+    """, '|'.join(participants))
 
     # FIXME: Make this output as separate file for each participant and zip it up.
     # FIXME: Make this output to CSV files and upload to a spreadsheet.
