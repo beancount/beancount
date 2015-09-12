@@ -16,17 +16,14 @@ import sys
 import logging
 from os import path
 
-from beancount.query import query_parser
-from beancount.query import query_compile
-from beancount.query import query_env
-from beancount.query import query_execute
 from beancount.query import query_render
+from beancount.query import query
 from beancount.query import numberify
 from beancount.query import query
 from beancount import loader
 
 
-def save_query(title, participant, entries, options_map, query, *format_args,
+def save_query(title, participant, entries, options_map, sql_query, *format_args,
                boxed=True, spaced=False, currency=None):
     """Save the multiple files for this query.
 
@@ -41,17 +38,15 @@ def save_query(title, participant, entries, options_map, query, *format_args,
     replacement = (r'\1'
                    if currency is None else
                    r'CONVERT(\1, "{}")'.format(currency))
-    query = re.sub(r'CONV\[(.*?)\]', replacement, query)
+    sql_query = re.sub(r'CONV\[(.*?)\]', replacement, sql_query)
 
     # Run the query.
-    rtypes, rrows = run_query(entries, options_map, query, *format_args)
+    rtypes, rrows = query.run_query(entries, options_map,
+                                    sql_query, *format_args,
+                                    numberify=True)
 
     # The base of all filenames.
     filebase = '-'.join(filter(None, [title.replace(' ', '-'), participant]))
-
-    # Numberify the output to prepare for a spreadsheet upload.
-    dformat = options_map['dcontext'].build()
-    rtypes, rrows = numberify.numberify_results(rtypes, rrows, dformat)
 
     fmtopts = dict(boxed=boxed,
                    spaced=spaced)
