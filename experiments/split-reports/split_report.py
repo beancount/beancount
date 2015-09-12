@@ -98,7 +98,8 @@ def save_query(title, participant, entries, options_map, query, *format_args,
     # Output the CSV files.
     if args.output_csv:
         # Numberify the output to prepare for a spreadsheet upload.
-        rtypes, rrows = numberify.numberify_results(rtypes, rrows)
+        dformat = options_map['dcontext'].build()
+        rtypes, rrows = numberify.numberify_results(rtypes, rrows, dformat)
 
         # Output the resulting rows.
         oss = io.StringIO()
