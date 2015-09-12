@@ -54,12 +54,6 @@ beancount: TODO
     a utility.
 
 
-* Split Reports Script
-
-  - Add an option to convert all reports to a single currency and test it on the
-    mexico and japan examples.
-
-
 * Requirements for Shipping 2.0
 * File Cleanup
 
