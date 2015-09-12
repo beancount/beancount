@@ -1,9 +1,7 @@
 __author__ = 'Martin Blais <blais@furius.ca>'
 
 import datetime
-import pprint
 import unittest
-import sys
 
 from beancount.core.number import Decimal
 from beancount.core.number import D
@@ -12,13 +10,6 @@ from beancount.core import position
 from beancount.core import inventory
 from beancount.core import display_context
 from beancount.query import numberify
-from beancount.query import query_render
-A = amount.from_string
-
-
-def pr_table(types, rows):
-    pprint.pprint(rows)
-    query_render.render_text(types, rows, display_context.DEFAULT_DISPLAY_CONTEXT, sys.stdout)
 
 
 class TestNumerifySimple(unittest.TestCase):
@@ -47,7 +38,7 @@ class TestNumerifySimple(unittest.TestCase):
 
     def test_amount(self):
         itypes = [('pos', amount.Amount)]
-        irows = [(A(string),) for string in self.input_amounts]
+        irows = [(amount.from_string(string),) for string in self.input_amounts]
         atypes, arows = numberify.numberify_results(itypes, irows)
         self.assertEqual(self.expected_types, atypes)
         self.assertEqual(self.expected_rows, arows)

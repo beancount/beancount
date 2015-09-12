@@ -28,7 +28,6 @@ __author__ = 'Martin Blais <blais@furius.ca>'
 from os import path
 import argparse
 import copy
-import io
 import logging
 import os
 import re

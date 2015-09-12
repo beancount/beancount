@@ -1,10 +1,7 @@
 __author__ = 'Martin Blais <blais@furius.ca>'
 
 from os import path
-import datetime
-import pprint
 import unittest
-import sys
 
 from beancount.query import query
 from beancount.utils import test_utils
