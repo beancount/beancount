@@ -23,6 +23,33 @@ Note: This file contains only changes in the 'default' branch.
   - Added a new file "examples/sharing/duxbury2015.beancount" which contains a
     new example of sharing expenses on a trip between three people.
 
+  - Starter cleanup of beancount.el contributed by Stefan Monnier. More changes
+    to come, this is basically a no-op patch. It just moves code around and
+    makes other such cosmetic changes to silence some compiler warnings, prepare
+    for subsequent changes, better follow coding conventions etc. Detail:
+
+    * beancount.el: Add some standard file headers, license, and
+      sectioning comments.  Sprinkle a few FIXMEs while I'm here.
+      (beancount-font-lock-defaults): Rename from beancount-font-lock-keywords,
+      since this corresponds to font-lock-keywords and not to
+      font-lock-defaults.
+      (beancount-directive-names, beancount-font-lock-keywords,
+      beancount-accounts):  Move variables before their first use (to silence
+      the compiler).
+      (beancount-mode-map): Use a proper defvar instead of define-minor-mode's
+      half-broken :keymap.
+      (beancount-mode): Merge the make-local-variables into their corresponding
+      `set'.
+      (beancount-accounts): Move make-variable-buffer-local to top-level since
+      it's a global operation.
+      (beancount): Declare this group, already used in define-minor-mode.
+      (beancount-hash-keys): Mark unused arg `v' with an underscore.
+      (beancount-transaction-set-flag): Don't use replace-string (designed for
+      interactive use) from Elisp.
+      (beancount-for-line-in-region): Use copy-marker and eobp.
+      (beancount-align-numbers): Break lines to avoid hiding arguments.
+      (compilation-read-command): Declare variable to silence byte-compiler.
+
 
 2015-09-06
 
