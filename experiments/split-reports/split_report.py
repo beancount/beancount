@@ -11,8 +11,10 @@ __author__ = 'Martin Blais <blais@furius.ca>'
 import argparse
 import io
 import re
+import os
 import sys
 import logging
+from os import path
 
 from beancount.query import query_parser
 from beancount.query import query_compile
@@ -80,28 +82,32 @@ def save_query(title, participant, entries, options_map, query, *format_args,
     # The base of all filenames.
     filebase = '-'.join(filter(None, [title.replace(' ', '-'), participant]))
 
-    # Output the text file.
-    filename_txt = filebase + '.txt'
-    with open(filename_txt, 'w') as file:
-        query_render.render_text(rtypes, rrows,
-                                 options_map['dcontext'],
-                                 file,
-                                 boxed=boxed,
-                                 spaced=spaced)
+    # Output the text files.
+    if args.output_text:
+        filename_txt = path.join(args.output_text, filebase + '.txt')
+        with open(filename_txt, 'w') as file:
+            query_render.render_text(rtypes, rrows,
+                                     options_map['dcontext'],
+                                     file,
+                                     boxed=boxed,
+                                     spaced=spaced)
 
     # # Write out the query to stdout.
     # sys.stdout.write(open(filename_txt).read())
 
-    # Numberify the output to prepare for a spreadsheet upload.
-    rtypes, rrows = numberify.numberify_results(rtypes, rrows)
+    # Output the CSV files.
+    if args.output_csv:
+        # Numberify the output to prepare for a spreadsheet upload.
+        rtypes, rrows = numberify.numberify_results(rtypes, rrows)
 
-    # # Output the resulting rows.
-    # oss = io.StringIO()
-    # query_render.render_text(rtypes, rrows,
-    #                          options_map['dcontext'],
-    #                          oss,
-    #                          boxed=boxed,
-    #                          spaced=spaced)
+        # Output the resulting rows.
+        oss = io.StringIO()
+        query_render.render_text(rtypes, rrows,
+                                 options_map['dcontext'],
+                                 oss,
+                                 boxed=boxed,
+                                 spaced=spaced)
+        print(oss.getvalue())
 
 
 
@@ -128,7 +134,17 @@ def main():
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
     parser = argparse.ArgumentParser(description=__doc__.strip())
     parser.add_argument('filename', help='Beancount input filename')
+    parser.add_argument('-t', '-o', '--output-text', action='store',
+                        help="Render results to text boxes")
+    parser.add_argument('-c', '--output-csv', action='store',
+                        help="Render results to CSV files")
+    global args
     args = parser.parse_args()
+
+    # Ensure the directories exist.
+    for directory in [args.output_text, args.output_csv]:
+        if directory and not path.exists(directory):
+            os.makedirs(directory, exist_ok=True)
 
     entries, errors, options_map = loader.load_file(args.filename)
 
