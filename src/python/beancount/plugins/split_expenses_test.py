@@ -1,9 +1,13 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import textwrap
+import unittest
+from os import path
 
 from beancount import loader
 from beancount.parser import cmptest
+from beancount.plugins import split_expenses
+from beancount.utils import test_utils
 
 
 class TestSplitExpenses(cmptest.TestCase):
@@ -98,3 +102,29 @@ class TestSplitExpenses(cmptest.TestCase):
             2011-05-30 balance Expenses:Restaurant  2.00 USD
             2011-06-01 close   Expenses:Restaurant
         """, entries)
+
+
+class TestSplitReports(unittest.TestCase):
+
+    def run_split_reports(self, args):
+        """Run the split_reports command.
+
+        Args:
+          args: A list of extra arguments (beyond the filename).
+        """
+        rootdir = test_utils.find_repository_root(__file__)
+        filename = path.join(rootdir, 'examples', 'sharing', 'duxbury2015.beancount')
+        with test_utils.capture() as stdout:
+            test_utils.run_with_args(split_expenses.main, args + [filename])
+        output = stdout.getvalue()
+        self.assertRegexpMatches(output, "Participant")
+        self.assertRegexpMatches(output, "Expenses:Food:Restaurant")
+        self.assertRegexpMatches(output, "payee")
+        self.assertRegexpMatches(output, "narration")
+        self.assertRegexpMatches(output, "balance")
+
+    def test_split_reports(self):
+        self.run_split_reports([])
+
+    def test_split_reports_with_currency(self):
+        self.run_split_reports(['--currency=USD'])

@@ -755,6 +755,12 @@ http://furius.ca/beancount/doc/proposal-query
 
 * Standalone Tools
 
+  - Build a function and command-line tool that can injest either a table of
+    results or a CSV file and infer that an entire column is of numbers and
+    pairs of numbers and can accordingly split the column into multiple columns
+    and put the currency in the header so you can import that up to a
+    spreadsheet.
+
   - Build an 'statement' tool that will render a treeified balance sheet in two
     columns! Limit it to use the beginning of a line, and hard-code to use the
     five known categories (optionally changeable). It's okay if the tool is a
