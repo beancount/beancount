@@ -66,7 +66,7 @@ def run_query(entries, options_map, query, *format_args):
 
 
 def save_query(title, participant, entries, options_map, query, *format_args,
-               boxed=True, spaced=False):
+               boxed=True, spaced=False, currency=None):
     """Save the multiple files for this query.
 
     Args:
@@ -76,40 +76,44 @@ def save_query(title, participant, entries, options_map, query, *format_args,
       spaced: If true, leave an empty line between each of the rows. This is useful if the
         results have a lot of rows that render over multiple lines.
     """
+    # Replace CONV() to convert the currencies or not.
+    replacement = (r'\1'
+                   if currency is None else
+                   r'CONVERT(\1, "{}")'.format(currency))
+    query = re.sub(r'CONV\[(.*?)\]', replacement, query)
+
     # Run the query.
     rtypes, rrows = run_query(entries, options_map, query, *format_args)
 
     # The base of all filenames.
     filebase = '-'.join(filter(None, [title.replace(' ', '-'), participant]))
 
+    # Numberify the output to prepare for a spreadsheet upload.
+    dformat = options_map['dcontext'].build()
+    rtypes, rrows = numberify.numberify_results(rtypes, rrows, dformat)
+
+    fmtopts = dict(boxed=boxed,
+                   spaced=spaced)
+
     # Output the text files.
     if args.output_text:
         filename_txt = path.join(args.output_text, filebase + '.txt')
         with open(filename_txt, 'w') as file:
-            query_render.render_text(rtypes, rrows,
-                                     options_map['dcontext'],
-                                     file,
-                                     boxed=boxed,
-                                     spaced=spaced)
-
-    # # Write out the query to stdout.
-    # sys.stdout.write(open(filename_txt).read())
+            query_render.render_text(rtypes, rrows, options_map['dcontext'],
+                                     file, **fmtopts)
 
     # Output the CSV files.
     if args.output_csv:
-        # Numberify the output to prepare for a spreadsheet upload.
-        dformat = options_map['dcontext'].build()
-        rtypes, rrows = numberify.numberify_results(rtypes, rrows, dformat)
+        logging.error("CSV rendering i not supported yet.")
+        if False:
+            filename_csv = path.join(args.output_text, filebase + '.csv')
+            with open(filename_csv, 'w') as file:
+                query_render.render_csv(rtypes, rrows, options_map['dcontext'],
+                                        file, **fmtopts)
 
-        # Output the resulting rows.
-        oss = io.StringIO()
-        query_render.render_text(rtypes, rrows,
-                                 options_map['dcontext'],
-                                 oss,
-                                 boxed=boxed,
-                                 spaced=spaced)
-        print(oss.getvalue())
-
+    # Write out the query to stdout.
+    query_render.render_text(rtypes, rrows, options_map['dcontext'],
+                             sys.stdout, **fmtopts)
 
 
 def get_participants(filename, options_map):
@@ -135,10 +139,16 @@ def main():
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
     parser = argparse.ArgumentParser(description=__doc__.strip())
     parser.add_argument('filename', help='Beancount input filename')
-    parser.add_argument('-t', '-o', '--output-text', action='store',
-                        help="Render results to text boxes")
-    parser.add_argument('-c', '--output-csv', action='store',
-                        help="Render results to CSV files")
+
+    parser.add_argument('-c', '--currency', action='store',
+                        help="Convert all the amounts to a single common currency")
+
+    oparser = parser.add_argument_group('Outputs')
+    oparser.add_argument('-o', '--output-text', '--text', action='store',
+                         help="Render results to text boxes")
+    oparser.add_argument('--output-csv', '--csv', action='store',
+                         help="Render results to CSV files")
+
     global args
     args = parser.parse_args()
 
@@ -157,37 +167,33 @@ def main():
         save_query("Expenses by category", participant, entries, options_map, r"""
           SELECT
             PARENT(account) AS account,
-            SUM(position) AS amount
+            CONV[SUM(position)] AS amount
           WHERE account ~ 'Expenses.*\b{}'
           GROUP BY 1
           ORDER BY 2 DESC
-        """, participant, boxed=False)
+        """, participant, boxed=False, currency=args.currency)
 
         save_query("Expenses Detail", participant, entries, options_map, r"""
           SELECT
-            date, flag, payee, narration, PARENT(account) AS account, position, balance
+            date, flag, payee, narration,
+            PARENT(account) AS account,
+            CONV[position], CONV[balance]
           WHERE account ~ 'Expenses.*\b{}'
-        """, participant)
+        """, participant, currency=args.currency)
 
         save_query("Contributions Detail", participant, entries, options_map, r"""
           SELECT
-            date, flag, payee, narration, account, position, balance
+            date, flag, payee, narration, account, CONV[position], CONV[balance]
           WHERE account ~ 'Income.*\b{}'
-        """, participant)
-
-        # save_query("Final Balance", participant, entries, options_map, r"""
-        #   SELECT SUM(position) AS total
-        #   WHERE account ~ ':{}'
-        # """, participant)
-
+        """, participant, currency=args.currency)
 
     save_query("Final Balances", None, entries, options_map, r"""
       SELECT
         GREP('\b({})\b', account) AS participant,
-        SUM(position) AS balance
+        CONV[SUM(position)] AS balance
       GROUP BY 1
       ORDER BY 2
-    """, '|'.join(participants))
+    """, '|'.join(participants), currency=args.currency)
 
     # FIXME: Make this output as separate file for each participant and zip it up.
     # FIXME: Make this output to CSV files and upload to a spreadsheet.
