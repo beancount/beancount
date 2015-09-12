@@ -50,6 +50,10 @@ Notes:
   number of currencies and we want to only operate on a restricte set of
   operating currencies.
 
+* If you provide a DisplayForamtter object to the numberification routine, they
+  quantize each column according to their currency's precision. It is
+  recommended that you do that.
+
 """
 __author__ = 'Martin Blais <blais@furius.ca>'
 
@@ -61,13 +65,16 @@ from beancount.core import position
 from beancount.core import inventory
 
 
-def numberify_results(dtypes, drows):
+def numberify_results(dtypes, drows, dformat=None):
     """Number rows containing Amount, Position or Inventory types.
 
     Args:
       result_types: A list of items describing the names and data types of the items in
         each column.
       result_rows: A list of ResultRow instances.
+      dformat: An optional DisplayFormatter. If set, quantize the numbers by
+        their currency-specific precision when converting the Amount's,
+        Position's or Inventory'es..
     Returns:
       A pair of modified (result_types, result_rows) with converted datatypes.
     """
@@ -91,7 +98,7 @@ def numberify_results(dtypes, drows):
     for drow in drows:
         orow = []
         for converter in converters:
-            orow.append(converter(drow))
+            orow.append(converter(drow, dformat))
         orows.append(orow)
 
     return otypes, orows
@@ -105,7 +112,7 @@ class IdentityConverter:
         self.dtype = dtype
         self.index = index
 
-    def __call__(self, drow):
+    def __call__(self, drow, _):
         return drow[self.index]
 
 
@@ -119,11 +126,15 @@ class AmountConverter:
         self.index = index
         self.currency = currency
 
-    def __call__(self, drow):
+    def __call__(self, drow, dformat):
         vamount = drow[self.index]
-        return (vamount.number
-                if vamount and vamount.currency == self.currency
-                else None)
+        if vamount and vamount.currency == self.currency:
+            number = vamount.number
+            if dformat:
+                number = dformat.quantize(number, self.currency)
+        else:
+            number = None
+        return number
 
 
 def convert_col_Amount(name, drows, index):
@@ -143,7 +154,7 @@ def convert_col_Amount(name, drows, index):
             currency_map[vamount.currency] += 1
     return [AmountConverter('{} ({})'.format(name, currency), index, currency)
             for currency, _ in sorted(currency_map.items(),
-                                      key=lambda item: item[1],
+                                      key=lambda item: (item[1], item[0]),
                                       reverse=True)]
 
 
@@ -157,11 +168,15 @@ class PositionConverter:
         self.index = index
         self.currency = currency
 
-    def __call__(self, drow):
+    def __call__(self, drow, dformat):
         pos = drow[self.index]
-        return (pos.number
-                if pos and pos.lot and pos.lot.currency == self.currency
-                else None)
+        if pos and pos.lot and pos.lot.currency == self.currency:
+            number = pos.number
+            if dformat:
+                number = dformat.quantize(pos.number, self.currency)
+        else:
+            number = None
+        return number
 
 
 def convert_col_Position(name, drows, index):
@@ -181,7 +196,7 @@ def convert_col_Position(name, drows, index):
             currency_map[pos.lot.currency] += 1
     return [PositionConverter('{} ({})'.format(name, currency), index, currency)
             for currency, _ in sorted(currency_map.items(),
-                                      key=lambda item: item[1],
+                                      key=lambda item: (item[1], item[0]),
                                       reverse=True)]
 
 
@@ -196,9 +211,13 @@ class InventoryConverter:
         self.index = index
         self.currency = currency
 
-    def __call__(self, drow):
+    def __call__(self, drow, dformat):
         inv = drow[self.index]
+        # Note: get_units() returns ZERO and not None when the value isn't
+        # present. This should be fixed to distinguish between the two.
         number = inv.get_units(self.currency).number
+        if number and dformat:
+            number = dformat.quantize(number, self.currency)
         return number or None
 
 
@@ -221,7 +240,6 @@ def convert_col_Inventory(name, drows, index):
             for currency, _ in sorted(currency_map.items(),
                                       key=lambda item: (item[1], item[0]),
                                       reverse=True)]
-
 
 
 # A mapping of data types to their converter factory.

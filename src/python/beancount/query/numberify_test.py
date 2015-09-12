@@ -93,3 +93,60 @@ class TestNumerifyInventory(unittest.TestCase):
         self.assertEqual([[D('10'), None, None],
                           [None, D('3.44'), D('2.11')],
                           [D('-2'), D('5.66'), None]], arows)
+
+
+class TestNumerifyPrecision(unittest.TestCase):
+
+    def test_precision(self):
+        # Some display context.
+        dcontext = display_context.DisplayContext()
+        dcontext.update(D('111'), 'JPY')
+        dcontext.update(D('1.111'), 'RGAGX')
+        dcontext.update(D('1.11'), 'USD')
+        dformat = dcontext.build()
+
+        # Input data.
+        itypes = [('number', Decimal),
+                  ('amount', amount.Amount),
+                  ('position', position.Position),
+                  ('inventory', inventory.Inventory)]
+        irows = [[D(num.split()[0]),
+                  amount.from_string(num),
+                  position.from_string(num),
+                  inventory.from_string(num)]
+                 for num in ['123.45678909876 JPY',
+                             '1.67321232123 RGAGX',
+                             '5.67345434543 USD']]
+
+        # First check with no explicit quantization.
+        atypes, arows = numberify.numberify_results(itypes, irows)
+        erows = [[D('123.45678909876'),
+                  None, None, D('123.45678909876'),
+                  None, None, D('123.45678909876'),
+                  None, None, D('123.45678909876')],
+                 [D('1.67321232123'),
+                  None, D('1.67321232123'), None,
+                  None, D('1.67321232123'), None,
+                  None, D('1.67321232123'), None],
+                 [D('5.67345434543'),
+                  D('5.67345434543'), None, None,
+                  D('5.67345434543'), None, None,
+                  D('5.67345434543'), None, None]]
+        self.assertEqual(erows, arows)
+
+        # Then compare with quantization.
+        atypes, arows = numberify.numberify_results(itypes, irows, dformat)
+
+        erows = [[D('123.45678909876'),
+                  None, None, D('123'),
+                  None, None, D('123'),
+                  None, None, D('123')],
+                 [D('1.67321232123'),
+                  None, D('1.673'), None, None,
+                  D('1.673'), None, None,
+                  D('1.673'), None],
+                 [D('5.67345434543'),
+                  D('5.67'), None, None,
+                  D('5.67'), None, None,
+                  D('5.67'), None, None]]
+        self.assertEqual(erows, arows)
