@@ -78,7 +78,7 @@ def save_query(title, participant, entries, options_map, query, *format_args,
     rtypes, rrows = run_query(entries, options_map, query, *format_args)
 
     # The base of all filenames.
-    filebase = '-'.join(filter(None, [title, participant]))
+    filebase = '-'.join(filter(None, [title.replace(' ', '-'), participant]))
 
     # Output the text file.
     filename_txt = filebase + '.txt'
