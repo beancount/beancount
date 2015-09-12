@@ -22,47 +22,8 @@ from beancount.query import query_env
 from beancount.query import query_execute
 from beancount.query import query_render
 from beancount.query import numberify
+from beancount.query import query
 from beancount import loader
-
-
-# FIXME: Move this into a reusable library under beancount.query.
-# FIXME: Add 'width' option.
-def run_query(entries, options_map, query, *format_args):
-    """Compile and execute a query, return the result types and rows.
-
-    Args:
-      entries: A list of entries, as produced by the loader.
-      options_map: A dict of options, as produced by the loader.
-      query: A string, a single BQL query, optionally containing some new-style
-        (e.g., {}) formatting specifications.
-      format_args: A tuple of arguments to be formatted in the query. This is
-        just provided as a convenience.
-    Raises:
-      ParseError: If the statement cannot be parsed.
-      CompilationError: If the statement cannot be compiled.
-
-    """
-    env_targets = query_env.TargetsEnvironment()
-    env_entries = query_env.FilterEntriesEnvironment()
-    env_postings = query_env.FilterPostingsEnvironment()
-
-    # Apply formatting to the query.
-    formatted_query = query.format(*format_args)
-
-    # Parse the statement.
-    parser = query_parser.Parser()
-    statement = parser.parse(formatted_query)
-
-    # Compile the SELECT statement.
-    c_query = query_compile.compile(statement,
-                                    env_targets,
-                                    env_postings,
-                                    env_entries)
-
-    # Execute it to obtain the result rows.
-    rtypes, rrows = query_execute.execute_query(c_query, entries, options_map)
-
-    return rtypes, rrows
 
 
 def save_query(title, participant, entries, options_map, query, *format_args,
@@ -157,8 +118,8 @@ def main():
         if directory and not path.exists(directory):
             os.makedirs(directory, exist_ok=True)
 
+    # Load the input file and get the list of participants.
     entries, errors, options_map = loader.load_file(args.filename)
-
     participants = get_participants(args.filename, options_map)
 
     for participant in participants:
@@ -195,8 +156,9 @@ def main():
       ORDER BY 2
     """, '|'.join(participants), currency=args.currency)
 
-    # FIXME: Make this output as separate file for each participant and zip it up.
     # FIXME: Make this output to CSV files and upload to a spreadsheet.
+    # FIXME: Add a fixed with option. This requires changing adding this to the
+    # the renderer to be able to have elastic space and line splitting..
 
 
 if __name__ == '__main__':
