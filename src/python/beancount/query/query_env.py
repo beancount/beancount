@@ -239,8 +239,7 @@ class OnlyInventory(query_compile.EvalFunction):
 
     def __call__(self, context):
         currency, inventory_ = self.eval_args(context)
-        lot = position.Lot(currency, None, None)
-        return inventory_.get_position(lot)
+        return inventory_.get_units(currency)
 
 
 class ConvertAmount(query_compile.EvalFunction):
