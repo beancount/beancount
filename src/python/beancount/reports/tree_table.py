@@ -169,7 +169,7 @@ def table_of_balances(real_root, operating_currencies, formatter, classes=None):
 
         # FIXME: This little algorithm is inefficient; rewrite it.
         for currency in operating_currencies:
-            position_ = line_balance.get_position(position.Lot(currency, None))
+            position_ = line_balance.get_units(currency)
             if position_:
                 positions.remove(position_)
                 cells.append(formatter.render_number(position_.number, currency))
