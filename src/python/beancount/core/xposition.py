@@ -326,6 +326,16 @@ class Position:
 
     __neg__ = get_negative
 
+    def __mul__(self, scalar):
+        """Scale/multiply the contents of the position.
+
+        Args:
+          scalar: A Decimal.
+        Returns:
+          An instance of Inventory.
+        """
+        return Position(amount_mult(self.units, scalar), self.cost)
+
     def is_negative_at_cost(self):
         """Return true if the position is held at cost and negative.
 

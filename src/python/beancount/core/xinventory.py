@@ -191,8 +191,7 @@ class Inventory(list):
         Returns:
           An instance of Inventory.
         """
-        return Inventory([Position(position.lot, position.number * scalar)
-                          for position in self])
+        return Inventory([position * scalar for position in self])
 
     #
     # Methods to access portions of an inventory.

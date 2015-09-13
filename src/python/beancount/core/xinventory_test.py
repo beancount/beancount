@@ -203,6 +203,13 @@ class TestInventory(unittest.TestCase):
         ninv = Inventory.from_string('-1.50 JPY, -1.51 USD, -1.52 CAD')
         self.assertEqual(pinv, -ninv)
 
+    def test_op_mul(self):
+        inv = inventory.from_string('10 GOOG {1.11 USD}, 2.22 CAD')
+        inv2 = inv * D('3')
+        self.assertEqual(inventory.from_string('30 GOOG {1.11 USD}, 6.66 CAD'), inv2)
+        with self.assertRaises(AssertionError):
+            inv2 = inv * 3
+
     def test_get_units(self):
         inv = Inventory.from_string('40.50 JPY, 40.51 USD {1.01 CAD}, 40.52 CAD')
         self.assertEqual(inv.get_units('JPY'), A('40.50 JPY'))
