@@ -421,14 +421,11 @@ def check_invariants(inv):
       True if the invariants are respected.
     """
     # Check that all the keys are unique.
-    positions = inv.get_positions()
-
-    # lots = set((position.units.currency, position.cost) for position in positions)
-    # assert len(lots) == len(inventory), "Invalid inventory: {}".format(inventory)
-
-    # # Check that none of the amounts is zero.
-    # for position in positions:
-    #     assert position.number, position
+    lots = set((pos.units.currency, pos.cost) for pos in inv)
+    assert len(lots) == len(inv), "Invalid inventory: {}".format(inv)
+    # Check that none of the amounts is zero.
+    for pos in inv:
+        assert pos.units.number != ZERO, "Invalid position size: {}".format(pos)
 
 
 def get_tolerance(tolerances, default_tolerances, currency):

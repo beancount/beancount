@@ -25,13 +25,12 @@ A = amount.from_string
 
 
 def setUp(module):
-    # invariants.instrument_invariants(Inventory,
-    #                                  inventory.check_invariants,
-    #                                  inventory.check_invariants)
-    pass
+    invariants.instrument_invariants(Inventory,
+                                     inventory.check_invariants,
+                                     inventory.check_invariants)
 
 def tearDown(module):
-    pass #invariants.uninstrument_invariants(Inventory)
+    invariants.uninstrument_invariants(Inventory)
 
 
 class TestInventory(unittest.TestCase):

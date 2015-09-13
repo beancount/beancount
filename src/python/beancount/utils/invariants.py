@@ -38,13 +38,13 @@ def invariant_check(method, prefun, postfun):
     """
     reentrant = []
     def new_method(self, *args, **kw):
-        if not reentrant:
-            prefun(self)
         reentrant.append(None)
+        if len(reentrant) == 1:
+            prefun(self)
         result = method(self, *args, **kw)
-        reentrant.pop()
-        if not reentrant:
+        if len(reentrant) == 1:
             postfun(self)
+        reentrant.pop()
         return result
     return new_method
 
