@@ -824,7 +824,7 @@ class TestParseLots(unittest.TestCase):
         self.assertEqual(D('20'), pos.number)
         self.assertEqual(
             position.Lot('AAPL',
-                         position.CostSpec(None, None, None, None, None, None)),
+                         position.CostSpec(None, None, None, None, None, False)),
             pos.lot)
 
     @parser.parse_doc()
@@ -839,7 +839,7 @@ class TestParseLots(unittest.TestCase):
         self.assertEqual(D('20'), pos.number)
         self.assertEqual(
             position.Lot('AAPL',
-                         position.CostSpec(D('45.23'), None, 'USD', None, None, None)),
+                         position.CostSpec(D('45.23'), None, 'USD', None, None, False)),
             pos.lot)
 
     @parser.parse_doc()
@@ -855,7 +855,7 @@ class TestParseLots(unittest.TestCase):
         self.assertEqual(
             position.Lot('AAPL',
                          position.CostSpec(None, None, None,
-                                           datetime.date(2014, 12, 26), None, None)),
+                                           datetime.date(2014, 12, 26), None, False)),
             pos.lot)
 
     @parser.parse_doc(expect_errors=True)
@@ -871,7 +871,7 @@ class TestParseLots(unittest.TestCase):
         self.assertEqual(D('20'), pos.number)
         self.assertEqual(
             position.Lot('AAPL', position.CostSpec(None, None, None,
-                                                   None, "d82d55a0dbe8", None)),
+                                                   None, "d82d55a0dbe8", False)),
             pos.lot)
 
     @parser.parse_doc(expect_errors=True)
@@ -973,7 +973,7 @@ class TestParseLots(unittest.TestCase):
             Assets:Invest:Cash  -110.36 USD
         """
         pos = entries[0].postings[0].position
-        self.assertEqual(position.CostSpec(D('45.23'), D('9.95'), 'USD', None, None, None),
+        self.assertEqual(position.CostSpec(D('45.23'), D('9.95'), 'USD', None, None, False),
                          pos.lot.cost)
 
     @parser.parse_doc()
@@ -984,7 +984,7 @@ class TestParseLots(unittest.TestCase):
             Assets:Invest:Cash  -19.90 USD
         """
         pos = entries[0].postings[0].position
-        self.assertEqual(position.CostSpec(None, D('9.95'), 'USD', None, None, None),
+        self.assertEqual(position.CostSpec(None, D('9.95'), 'USD', None, None, False),
                          pos.lot.cost)
 
     @parser.parse_doc()
@@ -999,7 +999,7 @@ class TestParseLots(unittest.TestCase):
         self.assertEqual(D('20'), pos.number)
         self.assertEqual(
             position.Lot('AAPL',
-                         position.CostSpec(D('45.23'), None, 'USD', None, None, None)),
+                         position.CostSpec(D('45.23'), None, 'USD', None, None, False)),
             pos.lot)
 
     @parser.parse_doc()
@@ -1030,7 +1030,7 @@ class TestParseLots(unittest.TestCase):
         self.assertEqual(
             position.Lot('AAPL',
                          position.CostSpec(D('45.23'), None, 'USD',
-                                           datetime.date(2015, 7, 16), 'blabla', None)),
+                                           datetime.date(2015, 7, 16), 'blabla', False)),
             pos.lot)
 
 
@@ -2128,7 +2128,7 @@ class TestIncompleteInputs(cmptest.TestCase):
         self.assertIsInstance(pos.lot, position.Lot)
         self.assertEqual('HOOL', pos.lot.currency)
         self.assertEqual(
-            position.CostSpec(D('150'), D('5'), 'USD',None, None, None),
+            position.CostSpec(D('150'), D('5'), 'USD', None, None, False),
             pos.lot.cost)
 
     @parser.parse_doc(allow_incomplete=True)
@@ -2146,7 +2146,7 @@ class TestIncompleteInputs(cmptest.TestCase):
         self.assertIsInstance(pos.lot, position.Lot)
         self.assertEqual(
             position.Lot('HOOL',
-                         position.CostSpec(None, D('5'), 'USD', None, None, None)),
+                         position.CostSpec(None, D('5'), 'USD', None, None, False)),
             pos.lot)
 
     @parser.parse_doc(allow_incomplete=True)
@@ -2164,7 +2164,7 @@ class TestIncompleteInputs(cmptest.TestCase):
         self.assertIsInstance(pos.lot, position.Lot)
         self.assertEqual(
             position.Lot('HOOL',
-                         position.CostSpec(D('150'), None, 'USD', None, None, None)),
+                         position.CostSpec(D('150'), None, 'USD', None, None, False)),
             pos.lot)
 
     @parser.parse_doc(allow_incomplete=True)
@@ -2182,7 +2182,7 @@ class TestIncompleteInputs(cmptest.TestCase):
         self.assertIsInstance(pos.lot, position.Lot)
         self.assertEqual(
             position.Lot('HOOL',
-                         position.CostSpec(D('150'), None, 'USD', None, None, None)),
+                         position.CostSpec(D('150'), None, 'USD', None, None, False)),
             pos.lot)
 
     @parser.parse_doc(allow_incomplete=True)
@@ -2200,7 +2200,7 @@ class TestIncompleteInputs(cmptest.TestCase):
         self.assertIsInstance(pos.lot, position.Lot)
         self.assertEqual(
             position.Lot('HOOL',
-                         position.CostSpec(None, None, 'USD', None, None, None)),
+                         position.CostSpec(None, None, 'USD', None, None, False)),
             pos.lot)
 
     @parser.parse_doc(allow_incomplete=True)
@@ -2218,5 +2218,5 @@ class TestIncompleteInputs(cmptest.TestCase):
         self.assertIsInstance(pos.lot, position.Lot)
         self.assertEqual('HOOL', pos.lot.currency)
         self.assertEqual(
-            position.CostSpec(None, None, None, None, None, None),
+            position.CostSpec(None, None, None, None, None, False),
             pos.lot.cost)

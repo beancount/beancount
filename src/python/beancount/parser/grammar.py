@@ -461,6 +461,9 @@ class Builder(lexer.LexBuilder):
         else:
             number_per, number_total, currency = compound_cost
 
+        if merge is None:
+            merge = False
+
         return CostSpec(number_per, number_total, currency, date_, label, merge)
 
     def cost_spec_total_legacy(self, cost, date):
