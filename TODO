@@ -2,30 +2,23 @@
 beancount: TODO
 * Booking
 
-  ,--------------------------------------------------------------------------------
-    Quandry: booking has to be moved from a validation-only stage, because the
-    looser interpolation will allow algorithms to select the lots, which in turn
-    decides which cost basis is used to balance the transaction. This is
-    unfortunate, because it was nice to separate this stage entirely.
-
-    At the same time, post-parsing transaction generation (e.g., by plugins) is
-    allowed... which means that we need to be able to book _after_ parsing,
-    after running the plugins.
-
-    This implies that we need to support some sort of incomplete, intermediate
-    state for postings.
-
-    Balancing incomplete postings now also has to occur in a second stage, not
-    at parsing time (balance_incomplete_postings()), at least _some_ of the
-    time, because the interpolation _may_ depend on the automatic lot
-    selection.
-
-    This creates some interesting and difficult changes.
-  `--------------------------------------------------------------------------------
-
-
   - Merge oposition_test.py and xposition_test.py into a single test that uses
     the abstract interface. Hide the specifics of each implementation.
+
+  - Merge oinventory with xinventory accessing Position using only its external
+    interface.
+
+  - Port beangrind & ledgerhub to avoid using lots as well.
+
+  - Complete testing incomplete output with CostSpec:
+
+    - This causes a problem because a tag is parsed in '#9.95':
+      10 AAPL {45.23#9.95 USD}
+
+    - Make sure parsing {3.00 # USD} does not produce the smae CostSpec as {3.00 USD}.
+
+    - Remove OLD comments from parser.py and update the description to use the
+      xposition class.
 
   - Parsing will now always return incomplete entries, and all the tests have to
     be adapted to reflect this new fact.
@@ -38,17 +31,10 @@ beancount: TODO
     egrep --include='*.py' -srn 'parse_(string|file)' /home/blais/p/beancount/src/python/beancount
 
 
-  - Remove OLD from parser.py and update the description to use the xposition class.
-
   - Write test for beancount.parser.booking.
 
   - Merge beancount.core.interpolate into booking.
   - Merge beancount.ops.validation.validate_inventory_booking() into booking.
-
-  - This causes a problem because a tag is parsed in '#9.95':
-    10 AAPL {45.23#9.95 USD}
-
-  - Make sure parsing {3.00 # USD} does not produce the smae CostSpec as {3.00 USD}.
 
   - (Annoyance) Make interpolation.balance_incomplete_postings() return a new
     object and not work destructively. No reason not to.
