@@ -121,9 +121,9 @@ def pad(entries, options_map):
                                              active_pad))
 
                         # Thus our padding lot is without cost by default.
-                        lot = position.Lot(check_amount.currency, None)
-                        diff_position = position.Position(
-                            lot, check_amount.number - balance_amount.number)
+                        diff_position = position.Position.from_amounts(
+                            amount.Amount(check_amount.number - balance_amount.number,
+                                          check_amount.currency))
 
                         # Synthesize a new transaction entry for the difference.
                         narration = ('(Padding inserted for Balance of {} for '

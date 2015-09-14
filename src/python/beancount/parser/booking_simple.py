@@ -64,20 +64,21 @@ def book(entries, options_map):
 
 
 def convert_lot_specs_to_lots(entries, unused_options_map):
-    """For all the entries, convert the posting's position's LotSpec to Lot instances.
+    """For all the entries, convert the posting's position's CostSpec to Cost
+    instances.
 
     This essentially replicates the way the old parser used to work, but
     allowing positions to have the fuzzy lot specifications instead of the
     resolved ones. We used to simply compute the costs locally, and this gets
-    rid of the LotSpec to produce the Lot without fuzzy matching. This is only
+    rid of the CostSpec to produce the Cost without fuzzy matching. This is only
     there for the sake of transition to the new matching logic.
 
     Args:
-      entries: A list of incomplte directives as per the parser.
+      entries: A list of incomplete directives as per the parser.
       options_map: An options dict from the parser.
     Returns:
-      A list of entries whose postings's positions have been converted to Lot
-      instances but that may still be incomplete.
+      A list of entries whose postings's position costs have been converted to
+      Cost instances but that may still be incomplete.
     """
     new_entries = []
     errors = []

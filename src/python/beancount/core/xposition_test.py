@@ -114,7 +114,6 @@ class TestPosition(unittest.TestCase):
     # Not supported in string constructor.
     # def test_from_string__with_merge_cost_spec(self):
     #     pos = from_string('1.1 GOOG {*}')
-    #     self.assertEqual(Position(Lot("GOOG", None, None), D('1.1')), pos)
 
     def test_from_string__with_everything(self):
         pos = from_string('20 GOOG {532.43 # 20.00 USD, "e4dc1a361022", 2014-06-15}')

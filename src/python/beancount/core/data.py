@@ -14,7 +14,9 @@ from beancount.core.number import Decimal
 from beancount.core.number import D
 from beancount.core.position import Position
 from beancount.core.position import Cost
+from beancount.core.position import CostSpec
 from beancount.core.account import has_component
+from beancount.core import position
 
 
 def new_directive(clsname, fields):
@@ -414,8 +416,13 @@ def sanity_check_types(entry):
             assert isinstance(posting, Posting), "Invalid posting type"
             assert isinstance(posting.account, str), "Invalid account type"
             assert isinstance(posting.position, (Position, NoneType)), "Invalid pos type"
-            # assert isinstance(posting.position.lot, Lot), "Invalid lot type"
-            # assert isinstance(posting.position.lot.cost, (Cost, NoneType)), "Invalid cost type"
+            if hasattr(posting.position, 'lot'):
+                assert isinstance(posting.position.lot, position.Lot), "Invalid lot type"
+                assert isinstance(posting.position.lot.cost, (Cost, CostSpec, NoneType)), (
+                    "Invalid cost type")
+            else:
+                assert isinstance(posting.position.cost, (Cost, CostSpec, NoneType)), (
+                    "Invalid cost type")
             assert isinstance(posting.price, (Amount, NoneType)), "Invalid price type"
             assert isinstance(posting.flag, (str, NoneType)), "Invalid flag type"
 

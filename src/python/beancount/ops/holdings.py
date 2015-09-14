@@ -450,11 +450,11 @@ def holding_to_position(holding):
     Returns:
       An instance of Position.
     """
-    cost = (position.Cost(holding.cost_number, holding.cost_currency, None, None)
-            if holding.cost_number
-            else None)
-    return position.Position(position.Lot(holding.currency, cost),
-                             holding.number)
+    return position.Position.from_amounts(
+        amount.Amount(holding.number, holding.currency),
+        (position.Cost(holding.cost_number, holding.cost_currency, None, None)
+         if holding.cost_number
+         else None))
 
 
 def holding_to_posting(holding):

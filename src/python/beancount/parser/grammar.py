@@ -372,7 +372,7 @@ class Builder(lexer.LexBuilder):
           currency: a currency object (a str, really, see CURRENCY above)
         Returns:
           A triple of (Decimal, Decimal, currency string) to be processed further when
-          creating a Lot instance.
+          creating the final per-unit cost number.
         """
         # Update the mapping that stores the parsed precisions.
         # Note: This is relatively slow, adds about 70ms because of number.as_tuple().
