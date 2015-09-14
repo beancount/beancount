@@ -9,16 +9,17 @@ import copy
 from datetime import date
 import types
 
+from beancount.core import oposition as position
+from beancount.core import oinventory as inventory
+from beancount.core.oposition import Position
+from beancount.core.oposition import Lot
+from beancount.core.oposition import Cost
+from beancount.core.oinventory import Inventory
+from beancount.core.oinventory import Booking
+
 from beancount.core.number import D
 from beancount.core.number import ZERO
-from beancount.core.position import Position
-from beancount.core.position import Lot
-from beancount.core.position import Cost
-from beancount.core.inventory import Inventory
-from beancount.core.inventory import Booking
 from beancount.core import amount
-from beancount.core import position
-from beancount.core import inventory
 from beancount.utils import invariants
 
 

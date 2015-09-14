@@ -9,16 +9,17 @@ import copy
 import random
 from datetime import date
 
+from beancount.core import oposition as position
+from beancount.core.oposition import Lot
+from beancount.core.oposition import Cost
+from beancount.core.oposition import Position
+from beancount.core.oposition import from_string
+from beancount.core.oposition import from_amounts
+
 from beancount.core.number import ZERO
 from beancount.core.number import D
 from beancount.core.amount import Amount
 from beancount.core import display_context
-from beancount.core import position
-from beancount.core.position import Lot
-from beancount.core.position import Cost
-from beancount.core.position import Position
-from beancount.core.position import from_string
-from beancount.core.position import from_amounts
 
 
 class TestCost(unittest.TestCase):
