@@ -13,7 +13,6 @@ from beancount.parser import booking_simple
 from beancount.parser import booking_full
 from beancount.core.data import Transaction
 from beancount.core.position import Position
-from beancount.core.position import Lot
 from beancount.core.amount import Amount
 from beancount.core.number import ZERO
 from beancount.core import interpolate

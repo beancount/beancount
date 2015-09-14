@@ -306,7 +306,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
         Returns:
           A pair of (entry, list of errors).
         """
-        entries, _, options_map = parser.parse_string(string, dedent=True)
+        entries, errors, options_map = parser.parse_string(string, dedent=True)
         (entries_with_lots,
          errors) = booking_simple.convert_lot_specs_to_lots(entries, options_map)
         entry = entries_with_lots[0]

@@ -8,9 +8,9 @@ import copy
 from beancount.core.number import D
 from beancount.core.number import ONE
 from beancount.core.number import ZERO
+from beancount.core.amount import Amount
 from beancount.core.inventory import Inventory
 from beancount.core import inventory
-from beancount.core.position import Lot
 from beancount.core.position import Position
 from beancount.core.data import Transaction
 from beancount.core.data import Posting
@@ -347,7 +347,7 @@ def get_incomplete_postings(entry, options_map):
                 BalanceError(entry.meta,
                              "Useless auto-posting: {}".format(residual), entry))
             for currency in currencies:
-                position = Position(Lot(currency, None), ZERO)
+                position = Position.from_amounts(Amount(ZERO, currency))
                 meta = copy.copy(old_posting.meta) if old_posting.meta else {}
                 meta[AUTOMATIC_META] = True
                 new_postings.append(

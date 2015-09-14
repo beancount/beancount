@@ -144,7 +144,7 @@ class TestPosition(unittest.TestCase):
         self.assertEqual(Position(Lot("USD", None), D('10')), pos)
 
         pos = from_amounts(Amount(D('10'), 'GOOG'),
-                           Amount(D('510.00'), 'USD'))
+                           Cost(D('510.00'), 'USD', None, None))
         self.assertEqual(
             Position(Lot("GOOG", Cost(D('510'), 'USD', None, None)), D('10')), pos)
 
@@ -198,10 +198,6 @@ class TestPosition(unittest.TestCase):
         pos4 = Position(Lot("USD", Cost(D('12'), 'USD', None, None)), D('1'))
 
         positions = [pos3, pos2, pos1, pos4]
-        print(pos1)
-        print(pos2)
-        print(pos3)
-        print(pos4)
         self.assertEqual([pos1, pos2, pos3, pos4], sorted(positions))
 
         for _ in range(64):

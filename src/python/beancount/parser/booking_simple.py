@@ -11,7 +11,6 @@ import sys
 from beancount.parser import grammar
 from beancount.core.data import Transaction
 from beancount.core.position import Position
-from beancount.core.position import Lot
 from beancount.core.position import Cost
 from beancount.core.amount import Amount
 from beancount.core.number import ZERO
@@ -126,8 +125,8 @@ def convert_lot_specs_to_lots(entries, unused_options_map):
                                 SimpleBookingError(
                                     entry.meta, 'Cost is negative: "{}"'.format(cost), None))
 
-                    lot = Lot(currency, cost)
-                    posting = posting._replace(position=Position(lot, pos.number))
+                    units = Amount(pos.number, currency)
+                    posting = posting._replace(position=Position.from_amounts(units, cost))
 
             new_postings.append(posting)
         new_entries.append(entry._replace(postings=new_postings))

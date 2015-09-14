@@ -278,6 +278,14 @@ class Position:
         """
         return Amount(self.number, self.lot.currency)
 
+    def has_cost(self):
+        """Return true if the position has a cost.
+
+        Returns:
+          A boolean.
+        """
+        return self.lot.cost is not None
+
     def get_cost(self):
         """Return the cost associated with this position. The cost is the number of
         units of the lot times the cost of the lot. If the lot has no associated
@@ -436,18 +444,17 @@ class Position:
         return Position(Lot(currency, cost), D(number))
 
     @staticmethod
-    def from_amounts(amount, cost_amount=None):
+    def from_amounts(amount, cost=None):
         """Create a position from an amount and a cost.
 
         Args:
           amount: An amount, that represents the number of units and the lot currency.
-          cost_amount: If not None, represents the cost amount.
+          cost: If not None, an instance of Cost or CostSpec.
         Returns:
           A Position instance.
         """
-        cost = (Cost(cost_amount.number, cost_amount.currency, None, None)
-                if cost_amount else
-                None)
+        assert cost is None or isinstance(cost, (Cost, CostSpec)), (
+            "Invalid type for cost: {}".format(cost))
         return Position(Lot(amount.currency, cost), amount.number)
 
 

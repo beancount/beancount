@@ -22,10 +22,6 @@ from beancount.core.amount import CURRENCY_RE
 from beancount.core.display_context import DEFAULT_FORMATTER
 
 
-# pylint: disable=invalid-name
-NoneType = type(None)
-
-
 # A variant of Amount that also includes a date, a label and a merge flag.
 #
 # Attributes:
@@ -135,14 +131,14 @@ class Position:
     __slots__ = ('units', 'cost')
 
     # Allowed data types for lot.cost
-    cost_types = (NoneType, Cost, CostSpec)
+    cost_types = (Cost, CostSpec)
 
     def __init__(self, units, cost=None):
         assert isinstance(units, Amount), (
             "Expected an Amount for units; received '{}'".format(units))
         assert isinstance(units.currency, str), (
             "Expected a str for units currency; received '{}'".format(units.currency))
-        assert isinstance(cost, self.cost_types), (
+        assert cost is None or isinstance(cost, self.cost_types), (
             "Expected a Cost for cost; received '{}'".format(cost))
         self.units = units
         self.cost = cost
@@ -251,6 +247,14 @@ class Position:
           An instance of Amount.
         """
         return self.units
+
+    def has_cost(self):
+        """Return true if the position has a cost.
+
+        Returns:
+          A boolean.
+        """
+        return self.cost is not None
 
     def get_cost(self):
         """Return the cost associated with this position. The cost is the number of

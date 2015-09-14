@@ -251,6 +251,21 @@ class Inventory(list):
                 total_units += position.number
         return Amount(total_units, currency)
 
+    def segregate_units(self, currencies):
+        """Split up the list of positions to the given currencies.
+
+        Args:
+          currencies: A list of currency strings, the currencies to isolate.
+        Returns:
+          A dict of currency to Inventory instances.
+        """
+        per_currency_dict = collections.defaultdict(Inventory)
+        for position in self:
+            currency = position.lot.currency
+            key = (currency if currency in currencies else None)
+            per_currency_dict[key].add_position(position)
+        return per_currency_dict
+
 
     #
     # Methods to convert an Inventory into another.

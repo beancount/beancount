@@ -13,7 +13,6 @@ from beancount.core.amount import Amount
 from beancount.core.number import Decimal
 from beancount.core.number import D
 from beancount.core.position import Position
-from beancount.core.position import Lot
 from beancount.core.position import Cost
 from beancount.core.account import has_component
 
@@ -352,7 +351,7 @@ def create_simple_posting(entry, account, number, currency):
     else:
         if not isinstance(number, Decimal):
             number = D(number)
-        position = Position(Lot(currency, None), number)
+        position = Position.from_amounts(Amount(number, currency))
     posting = Posting(account, position, None, None, None)
     if entry is not None:
         entry.postings.append(posting)
@@ -382,7 +381,7 @@ def create_simple_posting_with_cost(entry, account,
     if cost_number and not isinstance(cost_number, Decimal):
         cost_number = D(cost_number)
     cost = Cost(cost_number, cost_currency, None, None)
-    position = Position(Lot(currency, cost), number)
+    position = Position.from_amounts(Amount(number, currency), cost)
     posting = Posting(account, position, None, None, None)
     if entry is not None:
         entry.postings.append(posting)
@@ -415,8 +414,8 @@ def sanity_check_types(entry):
             assert isinstance(posting, Posting), "Invalid posting type"
             assert isinstance(posting.account, str), "Invalid account type"
             assert isinstance(posting.position, (Position, NoneType)), "Invalid pos type"
-            assert isinstance(posting.position.lot, Lot), "Invalid lot type"
-            assert isinstance(posting.position.lot.cost, (Cost, NoneType)), "Invalid cost type"
+            # assert isinstance(posting.position.lot, Lot), "Invalid lot type"
+            # assert isinstance(posting.position.lot.cost, (Cost, NoneType)), "Invalid cost type"
             assert isinstance(posting.price, (Amount, NoneType)), "Invalid price type"
             assert isinstance(posting.flag, (str, NoneType)), "Invalid flag type"
 
@@ -432,7 +431,7 @@ def posting_has_conversion(posting):
     Return:
       A boolean, true if this posting has a price conversion.
     """
-    return (posting.position.lot.cost is None and
+    return (not posting.position.has_cost() and
             posting.price is not None)
 
 

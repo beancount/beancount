@@ -13,7 +13,6 @@ from datetime import date
 from beancount.core.number import ZERO
 from beancount.core.amount import Amount
 from beancount.core import display_context
-from beancount.core.position import Lot
 from beancount.core.position import CostSpec
 from beancount.core.position import Position
 from beancount.core.data import Transaction
@@ -486,7 +485,7 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new instance of Position.
         """
-        return Position(Lot(amount.currency, cost_spec), amount.number)
+        return Position.from_amounts(amount, cost_spec)
 
     def handle_list(self, object_list, new_object):
         """Handle a recursive list grammar rule, generically.
