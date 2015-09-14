@@ -4,6 +4,35 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-09-??
+
+  - Made some important changes to the beancount.core.position.Position and
+    beancount.core.inventory.Inventory classes.
+
+    The '.number' and '.lot' attributes of a Position are not directly
+    accessible anymore; instead, there is an interface that provides the
+    contents of a Position via its '.units' and '.cost' attributes. There is no
+    access to the beancount.core.position.Lot object anymore. You can create a
+    Position object using the Position.from_amounts() constructor, never via an
+    explicit Lot. The reason for these changes is manifold:
+
+    * I'm going to be changing the internal representation of Position and
+      Inventory to use these 'units' and 'cost' objects directly instead of a
+      Lot.
+
+    * Users should never has had to know about Lot representation anyway, so
+      it's hidden under these accessors now.
+
+    * This representation is much closer to the syntax. It's also flatter and
+      simpler. (I may eventually flatten further by making Posting just be an
+      enriched Position object that happens to also have 'account' and 'price'
+      attributes, instead of containing a 'position' Position attribute.)
+
+    * Finally, and most importantly, these changes are driven by the need for
+      the parser to output incomplete cost specifications. Lot objects did not
+      make much sense anymore.
+
+
 2015-09-12
 
   - Added to beancount.plugins.split_expenses a new script that is able to
