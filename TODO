@@ -35,6 +35,8 @@ beancount: TODO
     egrep --include='*.py' -srn 'parse_(string|file)' /home/blais/p/beancount/src/python/beancount
 
 
+  - Remove OLD from parser.py and update the description to use the xposition class.
+
   - Write test for beancount.parser.booking.
 
   - Merge beancount.core.interpolate into booking.
@@ -42,6 +44,8 @@ beancount: TODO
 
   - This causes a problem because a tag is parsed in '#9.95':
     10 AAPL {45.23#9.95 USD}
+
+  - Make sure parsing {3.00 # USD} does not produce the smae CostSpec as {3.00 USD}.
 
   - (Annoyance) Make interpolation.balance_incomplete_postings() return a new
     object and not work destructively. No reason not to.

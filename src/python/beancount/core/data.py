@@ -416,13 +416,8 @@ def sanity_check_types(entry):
             assert isinstance(posting, Posting), "Invalid posting type"
             assert isinstance(posting.account, str), "Invalid account type"
             assert isinstance(posting.position, (Position, NoneType)), "Invalid pos type"
-            if hasattr(posting.position, 'lot'):
-                assert isinstance(posting.position.lot, position.Lot), "Invalid lot type"
-                assert isinstance(posting.position.lot.cost, (Cost, CostSpec, NoneType)), (
-                    "Invalid cost type")
-            else:
-                assert isinstance(posting.position.cost, (Cost, CostSpec, NoneType)), (
-                    "Invalid cost type")
+            assert isinstance(posting.position.cost, (Cost, CostSpec, NoneType)), (
+                "Invalid cost type")
             assert isinstance(posting.price, (Amount, NoneType)), "Invalid price type"
             assert isinstance(posting.flag, (str, NoneType)), "Invalid flag type"
 
@@ -438,7 +433,7 @@ def posting_has_conversion(posting):
     Return:
       A boolean, true if this posting has a price conversion.
     """
-    return (posting.position.cost is not None and
+    return (posting.position.cost is None and
             posting.price is not None)
 
 

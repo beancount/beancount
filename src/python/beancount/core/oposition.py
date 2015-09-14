@@ -341,9 +341,6 @@ class Position:
             return Position(Lot(cost.currency, None),
                             self.number * cost.number)
 
-    # Alias for backwards compatibility.
-    cost = at_cost
-
     def add(self, number):
         """Add a number of units to this position.
 

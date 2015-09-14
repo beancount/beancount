@@ -111,9 +111,9 @@ def pad(entries, options_map):
                         # positions with that currency have no cost.
                         positions = [pos
                                      for pos in pad_balance.get_positions()
-                                     if pos.lot.currency == check_amount.currency]
+                                     if pos.units.currency == check_amount.currency]
                         for position_ in positions:
-                            if position_.lot.cost is not None:
+                            if position_.cost is not None:
                                 pad_errors.append(
                                     PadError(entry.meta,
                                              ("Attempt to pad an entry with cost for "

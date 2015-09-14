@@ -309,13 +309,14 @@ def get_commodity_map(entries, options_map, create_missing=True):
 
         elif isinstance(entry, Transaction):
             for posting in entry.postings:
+                pos = posting.position
 
                 # Main currency.
-                lot = posting.position.lot
-                commodities_map.setdefault(lot.currency, None)
+                units = pos.units
+                commodities_map.setdefault(units.currency, None)
 
                 # Currency in cost.
-                cost = lot.cost
+                cost = pos.cost
                 if cost:
                     commodities_map.setdefault(cost.currency, None)
 

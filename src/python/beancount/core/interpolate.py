@@ -67,8 +67,7 @@ def has_nontrivial_balance(posting):
     Returns:
       A boolean.
     """
-    lot = posting.position.lot
-    return lot.cost or posting.price
+    return posting.position.cost or posting.price
 
 
 def compute_residual(postings):
@@ -157,10 +156,9 @@ def infer_tolerances(postings, options_map, use_cost=None):
         position_ = posting.position
         if position_ is None:
             continue
-        lot = position_.lot
 
         # Compute bounds on the number.
-        currency = lot.currency
+        currency = position_.units.currency
         expo = position_.number.as_tuple().exponent
         if expo < 0:
             # Note: the exponent is a negative value.
@@ -172,9 +170,10 @@ def infer_tolerances(postings, options_map, use_cost=None):
                 continue
 
             # Compute bounds on the smallest digit of the number implied as cost.
-            if lot.cost is not None:
-                cost_currency = lot.cost.currency
-                cost_tolerance = min(tolerance * lot.cost.number, MAXIMUM_TOLERANCE)
+            cost = position_.cost
+            if cost is not None:
+                cost_currency = cost.currency
+                cost_tolerance = min(tolerance * cost.number, MAXIMUM_TOLERANCE)
                 cost_tolerances[cost_currency] += cost_tolerance
 
             # Compute bounds on the smallest digit of the number implied as cost.
@@ -298,13 +297,12 @@ def get_incomplete_postings(entry, options_map):
     has_nonzero_amount = False
     has_regular_postings = False
     for i, posting in enumerate(postings):
-        position = posting.position
-
-        if position is None:
+        pos = posting.position
+        if pos is None:
             # This posting will have to get auto-completed.
             auto_postings_indices.append(i)
         else:
-            currencies.add(position.lot.currency)
+            currencies.add(pos.units.currency)
 
             # Compute the amount to balance and update the inventory.
             weight = get_posting_weight(posting)
@@ -357,13 +355,13 @@ def get_incomplete_postings(entry, options_map):
         else:
             # Convert all the residual positions in inventory into a posting for
             # each position.
-            for position in residual_positions:
-                position = -position
+            for pos in residual_positions:
+                pos = -pos
 
                 # Applying rounding to the default tolerance, if there is one.
                 tolerance = inventory.get_tolerance(tolerances,
                                                     default_tolerances,
-                                                    position.lot.currency)
+                                                    pos.units.currency)
                 if tolerance:
                     quantum = (tolerance * 2).normalize()
 
@@ -377,17 +375,17 @@ def get_incomplete_postings(entry, options_map):
                     # quantized exponent is always equal to that of the
                     # right-hand operand.
                     if len(quantum.as_tuple().digits) < MAX_TOLERANCE_DIGITS:
-                        position.number = position.number.quantize(quantum)
+                        pos.number = pos.number.quantize(quantum)
 
                 meta = copy.copy(old_posting.meta) if old_posting.meta else {}
                 meta[AUTOMATIC_META] = True
                 new_postings.append(
-                    Posting(old_posting.account, position,
+                    Posting(old_posting.account, pos,
                             None, old_posting.flag, meta))
                 has_inserted = True
 
                 # Update the residuals inventory.
-                weight = position.get_weight(None)
+                weight = pos.get_weight(None)
                 residual.add_amount(weight)
 
         postings[index:index+1] = new_postings
