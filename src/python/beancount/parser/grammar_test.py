@@ -1429,8 +1429,8 @@ class TestArithmetic(unittest.TestCase):
         """
         self.assertEqual(1, len(entries))
         postings = entries[0].postings
-        self.assertEqual(D('15'), postings[0].position.number)
-        self.assertEqual(D('10.6'), postings[1].position.number)
+        self.assertEqual(D('15'), postings[0].position.units.number)
+        self.assertEqual(D('10.6'), postings[1].position.units.number)
 
     @parser.parse_doc()
     def test_number_expr__subtract(self, entries, errors, _):
@@ -1441,8 +1441,8 @@ class TestArithmetic(unittest.TestCase):
         """
         self.assertEqual(1, len(entries))
         postings = entries[0].postings
-        self.assertEqual(D('9'), postings[0].position.number)
-        self.assertEqual(D('4.4'), postings[1].position.number)
+        self.assertEqual(D('9'), postings[0].position.units.number)
+        self.assertEqual(D('4.4'), postings[1].position.units.number)
 
     @parser.parse_doc()
     def test_number_expr__multiply(self, entries, errors, _):
@@ -1453,8 +1453,8 @@ class TestArithmetic(unittest.TestCase):
         """
         self.assertEqual(1, len(entries))
         postings = entries[0].postings
-        self.assertEqual(D('36'), postings[0].position.number)
-        self.assertEqual(D('23.25'), postings[1].position.number)
+        self.assertEqual(D('36'), postings[0].position.units.number)
+        self.assertEqual(D('23.25'), postings[1].position.units.number)
 
     @parser.parse_doc()
     def test_number_expr__divide(self, entries, errors, _):
@@ -1465,8 +1465,8 @@ class TestArithmetic(unittest.TestCase):
         """
         self.assertEqual(1, len(entries))
         postings = entries[0].postings
-        self.assertEqual(D('4'), postings[0].position.number)
-        self.assertEqual(D('2.5'), postings[1].position.number)
+        self.assertEqual(D('4'), postings[0].position.units.number)
+        self.assertEqual(D('2.5'), postings[1].position.units.number)
 
     @parser.parse_doc()
     def test_number_expr__negative(self, entries, errors, _):
@@ -1478,9 +1478,9 @@ class TestArithmetic(unittest.TestCase):
         """
         self.assertEqual(1, len(entries))
         postings = entries[0].postings
-        self.assertEqual(D('-12'), postings[0].position.number)
-        self.assertEqual(D('-7.5'), postings[1].position.number)
-        self.assertEqual(D('-7.5'), postings[2].position.number)
+        self.assertEqual(D('-12'), postings[0].position.units.number)
+        self.assertEqual(D('-7.5'), postings[1].position.units.number)
+        self.assertEqual(D('-7.5'), postings[2].position.units.number)
 
     @parser.parse_doc()
     def test_number_expr__positive(self, entries, errors, _):
@@ -1491,7 +1491,7 @@ class TestArithmetic(unittest.TestCase):
         """
         self.assertEqual(1, len(entries))
         postings = entries[0].postings
-        self.assertEqual(D('12'), postings[0].position.number)
+        self.assertEqual(D('12'), postings[0].position.units.number)
 
     @parser.parse_doc()
     def test_number_expr__precedence(self, entries, errors, _):
@@ -1505,7 +1505,7 @@ class TestArithmetic(unittest.TestCase):
         self.assertEqual(1, len(entries))
         self.assertListEqual(
             [D('10'), D('14'), D('-10'), D('-4')],
-            [posting.position.number for posting in entries[0].postings])
+            [posting.position.units.number for posting in entries[0].postings])
 
     @parser.parse_doc()
     def test_number_expr__groups(self, entries, errors, _):
@@ -1517,7 +1517,7 @@ class TestArithmetic(unittest.TestCase):
         self.assertEqual(1, len(entries))
         self.assertListEqual(
             [D('-4'), D('-2')],
-            [posting.position.number
+            [posting.position.units.number
              for posting in entries[0].postings])
 
     @parser.parse_doc()
@@ -1531,7 +1531,7 @@ class TestArithmetic(unittest.TestCase):
         """
         self.assertFalse(errors)
         self.assertEqual(2, len(entries))
-        self.assertEqual(D('-12'), entries[0].postings[0].position.number)
+        self.assertEqual(D('-12'), entries[0].postings[0].position.units.number)
         self.assertEqual(D('252.021'),
                          entries[0].postings[0].position.cost.number_per)
         self.assertEqual(None,
@@ -2060,7 +2060,7 @@ class TestIncompleteInputs(cmptest.TestCase):
         """
         pos = entries[-1].postings[-1].position
         self.assertFalse(pos is None)
-        self.assertEqual(None, pos.number)
+        self.assertEqual(None, pos.units.number)
         self.assertEqual("CAD", pos.units.currency)
 
     @parser.parse_doc(allow_incomplete=True)
@@ -2074,7 +2074,7 @@ class TestIncompleteInputs(cmptest.TestCase):
         """
         posting = entries[-1].postings[0]
         pos = posting.position
-        self.assertEqual(D('100.00'), pos.number)
+        self.assertEqual(D('100.00'), pos.units.number)
         self.assertEqual('USD', pos.units.currency)
         self.assertIsInstance(posting.price, amount.Amount)
         self.assertEqual(amount.Amount(None, None), posting.price)

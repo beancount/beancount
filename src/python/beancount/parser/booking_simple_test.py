@@ -25,4 +25,4 @@ class TestSimpleBooking(cmptest.TestCase):
             Equity:Opening-Balances
         """
         # interpolated_entries, errors = booking.simple_booking(entries, options_map)
-        self.assertEqual(D('-2505'), entries[-1].postings[-1].position.number)
+        self.assertEqual(D('-2505'), entries[-1].postings[-1].position.units.number)

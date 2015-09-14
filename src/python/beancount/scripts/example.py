@@ -608,7 +608,7 @@ def generate_retirement_employer_match(entries, account_invest, account_income):
     """, date=entries[0].date, account_income=account_income)
 
     for txn_posting, balances in postings_for(entries, [account_invest]):
-        amount = txn_posting.posting.position.number * match_frac
+        amount = txn_posting.posting.position.units.number * match_frac
         amount_neg = -amount
         date = txn_posting.txn.date + ONE_DAY
         new_entries.extend(parse("""
@@ -1103,7 +1103,7 @@ def check_non_negative(entries, account, currency):
         balance = balances[account]
         date = txn_posting.txn.date
         if date != previous_date:
-            assert all(pos.number >= ZERO for pos in balance.get_positions()), (
+            assert all(pos.units.number >= ZERO for pos in balance.get_positions()), (
                 "Negative balance: {} at: {}".format(balance, txn_posting.txn.date))
         previous_date = date
 

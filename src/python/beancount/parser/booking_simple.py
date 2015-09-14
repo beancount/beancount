@@ -101,7 +101,7 @@ def convert_lot_specs_to_lots(entries, unused_options_map):
                         if number_total is not None:
                             # Compute the per-unit cost if there is some total cost
                             # component involved.
-                            units = pos.number
+                            units = pos.units.number
                             cost_total = number_total
                             if number_per is not None:
                                 cost_total += number_per * units
@@ -117,7 +117,7 @@ def convert_lot_specs_to_lots(entries, unused_options_map):
                     # of zero as the only special case (for conversion entries), but
                     # never for costs.
                     if cost is not None:
-                        if pos.number == ZERO:
+                        if pos.units.number == ZERO:
                             errors.append(
                                 SimpleBookingError(
                                     entry.meta, 'Amount is zero: "{}"'.format(pos), None))
@@ -127,7 +127,7 @@ def convert_lot_specs_to_lots(entries, unused_options_map):
                                 SimpleBookingError(
                                     entry.meta, 'Cost is negative: "{}"'.format(cost), None))
 
-                    units = Amount(pos.number, currency)
+                    units = Amount(pos.units.number, currency)
                     posting = posting._replace(position=Position.from_amounts(units, cost))
 
             new_postings.append(posting)

@@ -112,4 +112,4 @@ class __TestFullBooking(cmptest.TestCase):
             Assets:Bank:Investing           5 GOOG {501 USD}
             Equity:Opening-Balances     -2505 USD
         """
-        self.assertEqual(D('-2505'), entries[-1].postings[-1].position.number)
+        self.assertEqual(D('-2505'), entries[-1].postings[-1].position.units.number)

@@ -159,7 +159,7 @@ def infer_tolerances(postings, options_map, use_cost=None):
 
         # Compute bounds on the number.
         currency = position_.units.currency
-        expo = position_.number.as_tuple().exponent
+        expo = position_.units.number.as_tuple().exponent
         if expo < 0:
             # Note: the exponent is a negative value.
             tolerance = ONE.scaleb(expo) * inferred_tolerance_multiplier
@@ -375,7 +375,7 @@ def get_incomplete_postings(entry, options_map):
                     # quantized exponent is always equal to that of the
                     # right-hand operand.
                     if len(quantum.as_tuple().digits) < MAX_TOLERANCE_DIGITS:
-                        pos.number = pos.number.quantize(quantum)
+                        pos.number = pos.units.number.quantize(quantum)
 
                 meta = copy.copy(old_posting.meta) if old_posting.meta else {}
                 meta[AUTOMATIC_META] = True

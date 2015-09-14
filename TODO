@@ -24,12 +24,8 @@ beancount: TODO
   `--------------------------------------------------------------------------------
 
 
-  - grep -srn  '\.lot\b'  /home/blais/p/beancount/src/python/beancount | egrep -v
-    '/o(position|inventory)' | grep -v :OLD
-
   - Merge oposition_test.py and xposition_test.py into a single test that uses
     the abstract interface. Hide the specifics of each implementation.
-    Remove 'Position.lot'. Hide 'Position.number'.
 
   - Parsing will now always return incomplete entries, and all the tests have to
     be adapted to reflect this new fact.

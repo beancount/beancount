@@ -714,7 +714,7 @@ class Builder(lexer.LexBuilder):
         # If the price is specified for the entire amount, compute the effective
         # price here and forget about that detail of the input syntax.
         if istotal:
-            if position.number == ZERO:
+            if position.units.number == ZERO:
                 number = ZERO
             else:
                 if __allow_negative_prices__:

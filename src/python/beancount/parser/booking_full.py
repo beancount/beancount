@@ -73,7 +73,7 @@ def book(entries, options_map):
                 if pos is None:
                     stats.num_interp_amount += 1
 
-                elif pos.number is None:
+                elif pos.units.number is None:
                     stats.num_interp_units += 1
 
                 elif posting.price and (posting.price.number is None or
@@ -90,7 +90,7 @@ def book(entries, options_map):
                     #     if compound_cost.number_total is not None:
                     #         # Compute the per-unit cost if there is some total cost
                     #         # component involved.
-                    #         units = pos.number
+                    #         units = pos.units.number
                     #         cost_total = compound_cost.number_total
                     #         if compound_cost.number_per is not None:
                     #             cost_total += compound_cost.number_per * units

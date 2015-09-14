@@ -379,7 +379,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
             Assets:Cash
         """)
         self.assertFalse(errors)
-        self.assertEqual(D('-53.82'), entry.postings[1].position.number)
+        self.assertEqual(D('-53.82'), entry.postings[1].position.units.number)
 
         entry, errors = self.get_incomplete_entry("""
           option "default_tolerance" "USD:0.001"
@@ -389,7 +389,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
             Assets:Cash
         """)
         self.assertFalse(errors)
-        self.assertEqual(D('-53.821'), entry.postings[1].position.number)
+        self.assertEqual(D('-53.821'), entry.postings[1].position.units.number)
 
     def test_balance_incomplete_postings__rounding_and_quantum(self):
         entry, errors = self.get_incomplete_entry("""
@@ -402,9 +402,9 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
         """)
         self.assertFalse(errors)
         self.assertEqual(3, len(entry.postings))
-        self.assertEqual(D('-53.82'), entry.postings[1].position.number)
+        self.assertEqual(D('-53.82'), entry.postings[1].position.units.number)
         self.assertEqual('Equity:RoundingError', entry.postings[2].account)
-        self.assertEqual(D('-0.00135'), entry.postings[2].position.number)
+        self.assertEqual(D('-0.00135'), entry.postings[2].position.units.number)
 
         entry, errors = self.get_incomplete_entry("""
           option "account_rounding" "RoundingError"
@@ -416,9 +416,9 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
         """)
         self.assertFalse(errors)
         self.assertEqual(3, len(entry.postings))
-        self.assertEqual(D('-227.2100'), entry.postings[1].position.number)
+        self.assertEqual(D('-227.2100'), entry.postings[1].position.units.number)
         self.assertEqual('Equity:RoundingError', entry.postings[2].account)
-        self.assertEqual(D('0.0033'), entry.postings[2].position.number)
+        self.assertEqual(D('0.0033'), entry.postings[2].position.units.number)
 
     def test_balance_incomplete_postings__rounding_with_error(self):
         # Here we want to verify that auto-inserting rounding postings does not
