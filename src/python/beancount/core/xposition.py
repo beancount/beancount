@@ -239,23 +239,6 @@ class Position:
         """
         return (self.units.currency, self.cost.currency if self.cost else None)
 
-    def get_units(self):
-        """Get the Amount that correponds to this lot. The amount is the number of units
-        of the currency, irrespective of its cost or lot date.
-
-        Returns:
-          An instance of Amount.
-        """
-        return self.units
-
-    def has_cost(self):
-        """Return true if the position has a cost.
-
-        Returns:
-          A boolean.
-        """
-        return self.cost is not None
-
     def get_cost(self):
         """Return the cost associated with this position. The cost is the number of
         units of the lot times the cost of the lot. If the lot has no associated

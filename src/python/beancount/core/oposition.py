@@ -269,7 +269,8 @@ class Position:
         lot = self.lot
         return (lot.currency, lot.cost.currency if lot.cost else None)
 
-    def get_units(self):
+    @property
+    def units(self):
         """Get the Amount that correponds to this lot. The amount is the number of units
         of the currency, irrespective of its cost or lot date.
 
@@ -278,13 +279,14 @@ class Position:
         """
         return Amount(self.number, self.lot.currency)
 
-    def has_cost(self):
-        """Return true if the position has a cost.
+    @property
+    def cost(self):
+        """Return the Cost or CostSpec object associated to this position.
 
         Returns:
-          A boolean.
+          An instance of Cost or CostSpec.
         """
-        return self.lot.cost is not None
+        return self.lot.cost
 
     def get_cost(self):
         """Return the cost associated with this position. The cost is the number of
@@ -373,7 +375,7 @@ class Position:
         return (self.number < ZERO and self.lot.cost is not None)
 
     @staticmethod
-    def from_string(string):
+    def from_string(string, spec=False):
         """Create a position from a string specification.
 
         This is a miniature parser used for building tests.
@@ -381,6 +383,10 @@ class Position:
         Args:
           string: A string of <number> <currency> with an optional {<number>
             <currency>} for the cost, similar to the parser syntax.
+          spec: A boolean, true if we should produce a CostSpec and not a Cost
+            instance, if the input includes cost basis specification. A CostSpec
+            is what is produced by the parser, and a Cost is what is the result
+            of booking.
         Returns:
           A new instance of Position.
         """
@@ -396,27 +402,26 @@ class Position:
         currency = match.group(2)
 
         # Parse a cost expression.
+        cost_number_per = None
+        cost_number_total = None
         cost_number = None
         cost_currency = None
         date = None
         label = None
+        merge = False
         cost_expression = match.group(3)
-        if match.group(3):
+        if cost_expression is None:
+            cost = None
+        else:
             expressions = [expr.strip() for expr in re.split('[,/]', cost_expression)]
-            for expr in expressions:
-
+            for expr in filter(None, expressions):
                 # Match a compound number.
                 match = re.match(r'({})\s*(?:#\s*({}))?\s+({})$'.format(
                     NUMBER_RE, NUMBER_RE, CURRENCY_RE), expr)
                 if match:
-                    per_number, total_number, cost_currency = match.group(1, 2, 3)
-                    per_number = D(per_number) if per_number else ZERO
-                    total_number = D(total_number) if total_number else ZERO
-                    if total_number:
-                        # Calculate the per-unit cost.
-                        total = number * per_number + total_number
-                        per_number = total / number
-                    cost_number = per_number
+                    str_number_per, str_number_total, cost_currency = match.group(1, 2, 3)
+                    cost_number_per = D(str_number_per) if str_number_per else ZERO
+                    cost_number_total = D(str_number_total) if str_number_total else ZERO
                     continue
 
                 # Match a date.
@@ -434,12 +439,25 @@ class Position:
                 # Match a merge-cost marker.
                 match = re.match(r'\*$', expr)
                 if match:
-                    raise ValueError("Merge-code not supported in string constructor.")
+                    merge = True
+                    continue
 
                 raise ValueError("Invalid cost component: '{}'".format(expr))
-            cost = Cost(cost_number, cost_currency, date, label)
-        else:
-            cost = None
+
+            if spec:
+                # Create a CostSpec, as the parser does.
+                cost = CostSpec(cost_number_per, cost_number_total, cost_currency,
+                                date, label, merge)
+            else:
+                # Create a Cost, as the completed entries include. This is the default.
+                if cost_number_total:
+                    # Calculate the per-unit cost.
+                    total = number * cost_number_per + cost_number_total
+                    cost_number_per = total / number
+
+                if merge:
+                    raise ValueError("Merge-code not supported in string constructor.")
+                cost = Cost(cost_number_per, cost_currency, date, label)
 
         return Position(Lot(currency, cost), D(number))
 

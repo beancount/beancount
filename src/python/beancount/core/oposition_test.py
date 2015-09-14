@@ -215,19 +215,19 @@ class TestPosition(unittest.TestCase):
         A = Amount.from_string  # pylint: disable=invalid-name
 
         pos = Position(Lot("USD", None), D('10'))
-        self.assertEqual(A('10 USD'), pos.get_units())
+        self.assertEqual(A('10 USD'), pos.units)
         self.assertEqual(A('10 USD'), pos.get_cost())
         self.assertEqual(A('10 USD'), pos.get_weight())
         self.assertEqual(A('16 AUD'), pos.get_weight(A('1.6 AUD')))
 
         pos = Position(Lot("USD", Cost(D('1.5'), 'AUD', None, None)), D('10'))
-        self.assertEqual(A('10 USD'), pos.get_units())
+        self.assertEqual(A('10 USD'), pos.units)
         self.assertEqual(A('15 AUD'), pos.get_cost())
         self.assertEqual(A('15 AUD'), pos.get_weight())
         self.assertEqual(A('15 AUD'), pos.get_weight(A('1.6 AUD')))
 
         cost_pos = pos.at_cost()
-        self.assertEqual(A('15 AUD'), cost_pos.get_units())
+        self.assertEqual(A('15 AUD'), cost_pos.units)
         self.assertEqual(A('15 AUD'), cost_pos.get_cost())
         self.assertEqual(A('15 AUD'), cost_pos.get_weight())
         with self.assertRaises(AssertionError):
@@ -236,13 +236,13 @@ class TestPosition(unittest.TestCase):
     def test_add(self):
         pos = Position(Lot("USD", Cost(D('10'), 'AUD', None, None)), D('28372'))
         pos.add(D('337'))
-        self.assertEqual(Amount('28709', 'USD'), pos.get_units())
+        self.assertEqual(Amount('28709', 'USD'), pos.units)
         self.assertEqual(Amount('287090', 'AUD'), pos.get_cost())
 
     def test_negative(self):
         pos = Position(Lot("USD", Cost(D('10'), 'AUD', None, None)), D('28372'))
         negpos = pos.get_negative()
-        self.assertEqual(Amount('-28372', 'USD'), negpos.get_units())
+        self.assertEqual(Amount('-28372', 'USD'), negpos.units)
         self.assertEqual(Amount('-283720', 'AUD'), negpos.get_cost())
 
     def test_is_negative_at_cost(self):
