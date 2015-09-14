@@ -11,73 +11,75 @@ the "booking" routines which do two things simultaneously:
 1. They find matching lots for reducing inventory positions, and
 2. They interpolate missing numbers.
 
-In doing so they normalize the entries to "complete" entries by conversion a
-Lot's "cost" attribute from a CostSpec to a Cost. A Cost is similar to an Amount
-in that it shares "number" and "currency" attributes, but also has a label and a
-lot date.
+In doing so they normalize the entries to "complete" entries by converting a
+position/lot's "cost" attribute from a CostSpec to a Cost. A Cost is similar to
+an Amount in that it shares "number" and "currency" attributes, but also has a
+label and a lot date. A CostSpec is similar to a Cost, but has all optional
+data; it consists in a specification for matching against a particular inventory
+lot.
 
-Specifically, the following pieces of data may be missing:
-
-  INPUT: Assets:Account
-  position.number = NA
-  position.lot = Lot(NA, None)
-
-  INPUT: Assets:Account  USD
-  position.number = None
-  position.lot = Lot('USD', None)
-
-  INPUT: Assets:Account  100 CAD @
-  position.number = 100
-  position.lot = Lot('USD', None)
-  position.price = Amount(NA, NA)
-
-  INPUT: Assets:Account  100 CAD @ USD
-  position.number = 100
-  position.lot = Lot('CAD', None)
-  position.price = Amount(NA, 'USD')
-
-Note that 'posting.position.price = None' is not incomplete, it just indicates
-the absence of a price clause.
-
-If a cost basis specification is provided, a Lot's "cost" attribute it set but
-it does not refer to a Cost instance as in complete entries, but rather to
-a CostSpec instance. Any of the fields of a CostSpec may be None if it was not
-specified in the input. For exasmple:
-
-  INPUT: Assets:Account  1 GOOG {100 # 5 USD}
-  position.number = 1
-  position.lot = Lot('GOOG', CostSpec(100, 5, 'USD', None, None, False))
-
-  INPUT: Assets:Account  1 GOOG {100 # USD}
-  position.number = 1
-  position.lot = Lot('GOOG', CostSpec(100, NA, 'USD', None, None, False))
-  (Note how this differs from the previous compound amount specification and
-   leaves an amount to be filled in)
-
-  INPUT: Assets:Account  1 GOOG {USD}
-  position.number = 1
-  position.lot = Lot('GOOG', CostSpec(NA, None, 'USD', None, None, False))
-
-  INPUT: Assets:Account  1 GOOG {}
-  position.number = 1
-  position.lot = Lot('GOOG', CostSpec(NA, None, NA, None, None, False))
-
-  INPUT: Assets:Account  1 GOOG {*}
-  position.number = 1
-  position.lot = Lot('GOOG', CostSpec(NA, None, NA, None, None, True))
-
-  INPUT: Assets:Account  1 GOOG {2015-09-06}
-  position.number = 1
-  position.lot = Lot('GOOG', CostSpec(NA, None, NA, date(2015, 9, 6), None, False))
-
-  INPUT: Assets:Account  1 GOOG {"dfa4eedc1431", 100 # 5 USD, 2015-09-06}
-  position.number = 1
-  position.lot = Lot('GOOG', CostSpec(100, 5, 'USD', date(2015, 9, 6), "dfa4eedc1431", False))
-
-For incomplete entries, 'posting.position.lot.cost' does not refer to a Cost
-instance, but rather to a CostSpec which needs to get resolved to a Cost. The
-CostSpec has fields for 'number_per' and 'number_total' numbers which may be
-both missing.
+OLD Specifically, the following pieces of data may be missing:
+OLD
+OLD   INPUT: Assets:Account
+OLD   position.number = NA
+OLD   position.lot = Lot(NA, None)
+OLD
+OLD   INPUT: Assets:Account  USD
+OLD   position.number = None
+OLD   position.lot = Lot('USD', None)
+OLD
+OLD   INPUT: Assets:Account  100 CAD @
+OLD   position.number = 100
+OLD   position.lot = Lot('USD', None)
+OLD   position.price = Amount(NA, NA)
+OLD
+OLD   INPUT: Assets:Account  100 CAD @ USD
+OLD   position.number = 100
+OLD   position.lot = Lot('CAD', None)
+OLD   position.price = Amount(NA, 'USD')
+OLD
+OLD Note that 'posting.position.price = None' is not incomplete, it just indicates
+OLD the absence of a price clause.
+OLD
+OLD If a cost basis specification is provided, a Lot's "cost" attribute it set but
+OLD it does not refer to a Cost instance as in complete entries, but rather to
+OLD a CostSpec instance. Any of the fields of a CostSpec may be None if it was not
+OLD specified in the input. For exasmple:
+OLD
+OLD   INPUT: Assets:Account  1 GOOG {100 # 5 USD}
+OLD   position.number = 1
+OLD   position.lot = Lot('GOOG', CostSpec(100, 5, 'USD', None, None, False))
+OLD
+OLD   INPUT: Assets:Account  1 GOOG {100 # USD}
+OLD   position.number = 1
+OLD   position.lot = Lot('GOOG', CostSpec(100, NA, 'USD', None, None, False))
+OLD   (Note how this differs from the previous compound amount specification and
+OLD    leaves an amount to be filled in)
+OLD
+OLD   INPUT: Assets:Account  1 GOOG {USD}
+OLD   position.number = 1
+OLD   position.lot = Lot('GOOG', CostSpec(NA, None, 'USD', None, None, False))
+OLD
+OLD   INPUT: Assets:Account  1 GOOG {}
+OLD   position.number = 1
+OLD   position.lot = Lot('GOOG', CostSpec(NA, None, NA, None, None, False))
+OLD
+OLD   INPUT: Assets:Account  1 GOOG {*}
+OLD   position.number = 1
+OLD   position.lot = Lot('GOOG', CostSpec(NA, None, NA, None, None, True))
+OLD
+OLD   INPUT: Assets:Account  1 GOOG {2015-09-06}
+OLD   position.number = 1
+OLD   position.lot = Lot('GOOG', CostSpec(NA, None, NA, date(2015, 9, 6), None, False))
+OLD
+OLD   INPUT: Assets:Account  1 GOOG {"dfa4eedc1431", 100 # 5 USD, 2015-09-06}
+OLD   position.number = 1
+OLD   position.lot = Lot('GOOG', CostSpec(100, 5, 'USD', date(2015, 9, 6), "dfa4eedc1431", False))
+OLD
+OLD For incomplete entries, 'posting.position.lot.cost' does not refer to a Cost
+OLD instance, but rather to a CostSpec which needs to get resolved to a Cost. The
+OLD CostSpec has fields for 'number_per' and 'number_total' numbers which may be
+OLD both missing.
 
 See grammar_test.TestIncompleteInputs for examples and corresponding checks.
 
