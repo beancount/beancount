@@ -104,7 +104,7 @@ def validate_sell_gains(entries, options_map):
         # Find transactins whose lots at cost all have a price.
         postings_at_cost = [posting
                             for posting in entry.postings
-                            if posting.position.lot.cost is not None]
+                            if posting.position.cost is not None]
         if not postings_at_cost or not all(posting.price is not None
                                            for posting in postings_at_cost):
             continue
@@ -116,7 +116,7 @@ def validate_sell_gains(entries, options_map):
         for posting in entry.postings:
             position = posting.position
             # If the posting is held at cost, add the priced value to the balance.
-            if position.lot.cost is not None:
+            if position.cost is not None:
                 assert posting.price
                 price = posting.price
                 total_price.add_amount(amount.amount_mult(price, -position.number))
@@ -128,9 +128,9 @@ def validate_sell_gains(entries, options_map):
                         interpolate.get_posting_weight(posting))
 
         # Compare inventories, currency by currency.
-        dict_price = {pos.lot.currency: pos.number
+        dict_price = {pos.units.currency: pos.units.number
                       for pos in total_price}
-        dict_proceeds = {pos.lot.currency: pos.number
+        dict_proceeds = {pos.units.currency: pos.units.number
                          for pos in total_proceeds}
 
         tolerances = interpolate.infer_tolerances(entry.postings, options_map)

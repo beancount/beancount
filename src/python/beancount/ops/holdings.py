@@ -95,35 +95,35 @@ def get_final_holdings(entries, included_account_types=None, price_map=None, dat
                 continue
 
         for pos in real_account.balance.get_positions():
-            if pos.lot.cost is not None:
+            if pos.cost is not None:
                 # Get price information if we have a price_map.
                 market_value = None
                 if price_map is not None:
-                    base_quote = (pos.lot.currency, pos.lot.cost.currency)
+                    base_quote = (pos.units.currency, pos.cost.currency)
                     price_date, price_number = prices.get_price(price_map,
                                                                 base_quote, date)
                     if price_number is not None:
-                        market_value = pos.number * price_number
+                        market_value = pos.units.number * price_number
                 else:
                     price_date, price_number = None, None
 
                 holding = Holding(real_account.account,
-                                  pos.number,
-                                  pos.lot.currency,
-                                  pos.lot.cost.number,
-                                  pos.lot.cost.currency,
-                                  pos.number * pos.lot.cost.number,
+                                  pos.units.number,
+                                  pos.units.currency,
+                                  pos.cost.number,
+                                  pos.cost.currency,
+                                  pos.units.number * pos.cost.number,
                                   market_value,
                                   price_number,
                                   price_date)
             else:
                 holding = Holding(real_account.account,
-                                  pos.number,
-                                  pos.lot.currency,
+                                  pos.units.number,
+                                  pos.units.currency,
                                   None,
-                                  pos.lot.currency,
-                                  pos.number,
-                                  pos.number,
+                                  pos.units.currency,
+                                  pos.units.number,
+                                  pos.units.number,
                                   None,
                                   None)
             holdings.append(holding)
@@ -484,21 +484,14 @@ def get_pholding_market_value(pholding):
       An instance of Amount.
     """
     price = pholding.price
-    position_ = pholding.position
+    pos = pholding.position
     if price is None:
-        cost = position_.lot.cost
-        if cost:
-            return amount.Amount(position_.number * cost.number,
-                                 cost.currency)
-        else:
-            return amount.Amount(position_.number,
-                                 position_.lot.currency)
+        return pos.get_cost()
     else:
-        assert price.currency != position_.lot.currency, (
+        assert price.currency != pos.units.currency, (
             "Invalid currency: '{}'".format(pholding))
-        cost = position_.lot.cost
+        cost = pos.cost
         if cost:
             assert price.currency == cost.currency, (
                 "Invalid currency vs. cost: '{}'".format(pholding))
-        return amount.Amount(position_.number * price.number,
-                             price.currency)
+        return amount.Amount(pos.units.number * price.number, price.currency)

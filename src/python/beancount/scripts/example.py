@@ -834,11 +834,11 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
             # Choose the lot with the highest gain or highest loss.
             gains = []
             for position in stocks_inventory.get_positions():
-                base_quote = (position.lot.currency, position.lot.cost.currency)
+                base_quote = (position.units.currency, position.cost.currency)
                 _, price = prices.get_price(price_map, base_quote, date)
-                if price == position.lot.cost.number:
+                if price == position.cost.number:
                     continue # Skip lots without movement.
-                market_value = position.number * price
+                market_value = position.units.number * price
                 book_value = position.get_cost().number
                 gain = market_value - book_value
                 gains.append((gain, market_value, price, position))
@@ -852,7 +852,7 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
             #logging.info('Selling {} for {}'.format(sell_position, market_value))
 
             sell_position = -sell_position
-            stock = sell_position.lot.currency
+            stock = sell_position.units.currency
             amount_cash = market_value - commission
             amount_gain = -gain
             sell = parse("""

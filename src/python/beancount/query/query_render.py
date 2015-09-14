@@ -290,10 +290,8 @@ class PositionRenderer(ColumnRenderer):
     def update(self, pos):
         if pos is None:
             return
-        lot = pos.lot
-        cost = lot.cost
         self.units_rdr.update(pos.units)
-        self.cost_rdr.update(cost)
+        self.cost_rdr.update(pos.cost)
 
     def prepare(self):
         self.units_rdr.prepare()
@@ -327,13 +325,11 @@ class PositionRenderer(ColumnRenderer):
 
         strings = []
         if self.fmt_with_cost is None:
-            lot = pos.lot
             strings.append(
                 self.fmt_without_cost.format(
                     self.units_rdr.format(pos.units)))
         else:
-            lot = pos.lot
-            cost = lot.cost
+            cost = pos.cost
             if cost:
                 strings.append(
                     self.fmt_with_cost.format(
@@ -368,14 +364,12 @@ class InventoryRenderer(PositionRenderer):
         strings = []
         if self.fmt_with_cost is None:
             for pos in inv.get_positions():
-                lot = pos.lot
                 strings.append(
                     self.fmt_without_cost.format(
                         self.units_rdr.format(pos.units)))
         else:
             for pos in inv.get_positions():
-                lot = pos.lot
-                cost = lot.cost
+                cost = pos.cost
                 if cost:
                     strings.append(
                         self.fmt_with_cost.format(

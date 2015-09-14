@@ -939,30 +939,31 @@ class CurrencyColumn(query_compile.EvalColumn):
         super().__init__(str)
 
     def __call__(self, context):
-        return context.posting.position.lot.currency
+        return context.posting.position.units.currency
 
 class CostNumberColumn(query_compile.EvalColumn):
     "The number of cost units of the posting."
-    __equivalent__ = 'posting.position.lot.cost'
+    __equivalent__ = 'posting.position.cost'
     __intypes__ = [data.Posting]
 
     def __init__(self):
         super().__init__(Decimal)
 
     def __call__(self, context):
-        cost = context.posting.position.lot.cost
+        pos = context.posting.position
+        cost = amount.Amount(position.cost.number, position.cost.currency)
         return cost.number if cost else ZERO
 
 class CostCurrencyColumn(query_compile.EvalColumn):
     "The cost currency of the posting."
-    __equivalent__ = 'posting.lot.cost.cost_currency'
+    __equivalent__ = 'posting.position.cost.currency'
     __intypes__ = [data.Posting]
 
     def __init__(self):
         super().__init__(str)
 
     def __call__(self, context):
-        cost = context.posting.position.lot.cost
+        cost = context.posting.position.cost
         return cost.currency if cost else ''
 
 class PositionColumn(query_compile.EvalColumn):

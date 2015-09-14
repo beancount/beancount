@@ -94,19 +94,20 @@ def output_transactions(connection, entries):
             for posting in entry.postings:
                 pid = next(postings_count)
                 position = posting.position
-                lot = position.lot
+                units = position.units
+                cost = position.cost
                 price = posting.price
                 connection.execute("""
                   INSERT INTO postings VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
                 """, (pid, eid,
                       posting.flag,
                       posting.account,
-                      position.number,
-                      lot.currency,
-                      lot.cost.number if lot.cost else None,
-                      lot.cost.currency if lot.cost else None,
-                      lot.cost.date if lot.cost else None,
-                      lot.cost.label if lot.cost else None,
+                      units.number,
+                      units.currency,
+                      cost.number if cost else None,
+                      cost.currency if cost else None,
+                      cost.date if cost else None,
+                      cost.label if cost else None,
                       price.number if price else None,
                       price.currency if price else None))
 

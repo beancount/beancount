@@ -80,10 +80,7 @@ def book(entries, options_map):
                                         posting.price.currency is None):
                     stats.num_interp_price += 1
 
-                assert isinstance(pos.lot, grammar.LotSpec)
                 if 1:
-                    lot = pos.lot
-
                     stats.num_lots += 1
 
                     # FIXME: This is broken; rewrite this.
@@ -115,7 +112,6 @@ def book(entries, options_map):
 
                     #     # This is a simple position.
                     #     lot = Lot(lot_spec.currency, None, None)
-                    # pos.lot = lot
 
                 balance = balances[posting.account]
                 balance.add_position(posting.position)
@@ -154,16 +150,14 @@ def group_postings_by_currency(postings, balances):
             continue
 
         # Categorize based on the lot spec.
-        lot_spec = pos.lot
-        if lot_spec:
-            if lot_spec.compound_cost is not None:
-                assert lot_spec.compound_cost.currency
-                groups[lot_spec.compound_cost.currency].append(posting)
+        cost_spec = pos.cost
+        if cost_spec is not None:
+            if cost_spec.currency:
+                groups[cost_spec.currency].append(posting)
             else:
-                print(pos)
                 unknown.append(posting)
         else:
-            groups[lot_spec.currency].append(posting)
+            groups[pos.units.currency].append(posting)
 
     # FIMXE: Maybe duplicate free postings here for each group so you don't have
     # to return a list of free postings? That would make sense.

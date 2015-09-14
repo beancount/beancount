@@ -44,7 +44,7 @@ def add_implicit_prices(entries, unused_options_map):
         if isinstance(entry, Transaction):
             # Inspect all the postings in the transaction.
             for posting in entry.postings:
-                lot = posting.position.lot
+                pos = posting.position
 
                 # Check if the position is matching against an existing
                 # position.
@@ -59,20 +59,20 @@ def add_implicit_prices(entries, unused_options_map):
                 if posting.price is not None:
                     meta = data.new_metadata(entry.meta.filename, entry.meta.lineno)
                     price_entry = data.Price(meta, entry.date,
-                                             lot.currency,
+                                             pos.units.currency,
                                              posting.price)
 
                 # Add costs, when we're not matching against an existing
                 # position. This happens when we're just specifying the cost,
                 # e.g.
                 #      Assets:Account    100 GOOG {564.20}
-                elif (lot.cost is not None and
+                elif (pos.cost is not None and
                       booking != inventory.Booking.REDUCED):
                     meta = data.new_metadata(entry.meta.filename, entry.meta.lineno)
                     price_entry = data.Price(meta, entry.date,
-                                             lot.currency,
-                                             amount.Amount(lot.cost.number,
-                                                           lot.cost.currency))
+                                             pos.units.currency,
+                                             amount.Amount(pos.cost.number,
+                                                           pos.cost.currency))
 
                 else:
                     price_entry = None

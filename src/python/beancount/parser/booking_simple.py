@@ -91,7 +91,8 @@ def convert_lot_specs_to_lots(entries, unused_options_map):
         for posting in entry.postings:
             pos = posting.position
             if pos is not None:
-                currency, cost_spec = pos.lot
+                currency = pos.units.currency
+                cost_spec = pos.cost
                 if cost_spec is not None:
                     number_per, number_total, cost_currency, date, label, merge = cost_spec
 

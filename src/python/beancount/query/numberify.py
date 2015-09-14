@@ -170,10 +170,10 @@ class PositionConverter:
 
     def __call__(self, drow, dformat):
         pos = drow[self.index]
-        if pos and pos.lot and pos.lot.currency == self.currency:
-            number = pos.number
+        if pos and pos.units.currency == self.currency:
+            number = pos.units.number
             if dformat:
-                number = dformat.quantize(pos.number, self.currency)
+                number = dformat.quantize(pos.units.number, self.currency)
         else:
             number = None
         return number
@@ -192,8 +192,8 @@ def convert_col_Position(name, drows, index):
     currency_map = collections.defaultdict(int)
     for drow in drows:
         pos = drow[index]
-        if pos and pos.lot and pos.lot.currency:
-            currency_map[pos.lot.currency] += 1
+        if pos and pos.units.currency:
+            currency_map[pos.units.currency] += 1
     return [PositionConverter('{} ({})'.format(name, currency), index, currency)
             for currency, _ in sorted(currency_map.items(),
                                       key=lambda item: (item[1], item[0]),

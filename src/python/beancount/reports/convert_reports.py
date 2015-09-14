@@ -54,7 +54,7 @@ def postings_by_type(entry):
     postings_at_price = []
     postings_simple = []
     for posting in entry.postings:
-        if posting.position.lot.cost:
+        if posting.position.cost:
             accumlator = postings_at_cost
         elif posting.price:
             accumlator = postings_at_price
@@ -205,11 +205,11 @@ class LedgerPrinter:
              postings_at_price,
              postings_at_cost) = postings_by_type(entry)
 
-            lot = posting.position.lot
-            if postings_at_price and postings_at_cost and lot.cost:
+            cost = posting.position.cost
+            if postings_at_price and postings_at_cost and cost:
                 price_str = '@ {}'.format(
-                    amount.Amount(lot.cost.number,
-                                  lot.cost.currency).to_string(self.dformat))
+                    amount.Amount(cost.number,
+                                  cost.currency).to_string(self.dformat))
             else:
                 price_str = ''
 

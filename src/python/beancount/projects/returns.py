@@ -411,12 +411,12 @@ def compute_period_returns(date_begin, date_end,
     for mktvalue, single in [(mktvalue_begin, single_begin),
                              (mktvalue_end, single_end)]:
         for pos in mktvalue.get_positions():
-            if pos.lot.cost:
+            if pos.cost:
                 logging.error('Could not reduce position "%s" to its value', pos)
             else:
-                currencies.add(pos.lot.currency)
-                assert pos.lot.currency not in single
-                single[pos.lot.currency] = pos.number
+                currencies.add(pos.units.currency)
+                assert pos.units.currency not in single
+                single[pos.units.currency] = pos.units.number
 
     # Now for each of the currencies, compute the returns. Handle cases where
     # the currency is not present as a zero value for that currency.

@@ -263,8 +263,8 @@ def render_posting(posting, number_format):
         number_format.format(units.number, units.currency)
         ]
 
-    if position.lot.cost:
-        cost = position.lot.cost
+    cost = position.cost
+    if cost:
         strings.append('{{{}}}'.format(number_format.format(cost.number,
                                                             cost.currency).strip()))
 

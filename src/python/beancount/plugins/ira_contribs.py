@@ -123,7 +123,7 @@ def add_ira_contribs(entries, options_map, config):
 
                     # Get the new account legs to insert.
                     neg_account, pos_account = account_transforms[posting.account]
-                    assert posting.position.lot.cost is None
+                    assert posting.position.cost is None
 
                     # Insert income/expense entries for 401k.
                     entry = add_postings(
