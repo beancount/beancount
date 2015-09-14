@@ -638,7 +638,7 @@ def dump_balances(real_account, at_cost=False, fullnames=False, file=None):
                 rinv = real_account.balance.cost()
             else:
                 rinv = real_account.balance.units()
-            amounts = [position.get_units() for position in rinv.get_positions()]
+            amounts = [position.units for position in rinv.get_positions()]
             positions = ['{0.number:12,.2f} {0.currency}'.format(amount_)
                          for amount_ in sorted(amounts, key=amount.amount_sortkey)]
         else:

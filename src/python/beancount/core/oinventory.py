@@ -279,7 +279,7 @@ class Inventory(list):
         """
         units_inventory = Inventory()
         for position in self:
-            units_inventory.add_amount(position.get_units())
+            units_inventory.add_amount(position.units)
         return units_inventory
 
     def cost(self):

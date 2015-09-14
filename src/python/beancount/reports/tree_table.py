@@ -175,7 +175,7 @@ def table_of_balances(real_root, operating_currencies, formatter, classes=None):
         # Render all the rest of the inventory in the last cell.
         if None in ccy_dict:
             ccy_balance = ccy_dict[None]
-            last_cell = '<br/>'.join(formatter.render_amount(pos.get_units())
+            last_cell = '<br/>'.join(formatter.render_amount(pos.units)
                                      for pos in sorted(ccy_balance))
         else:
             last_cell = ''

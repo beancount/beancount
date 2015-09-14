@@ -438,7 +438,7 @@ def posting_has_conversion(posting):
     Return:
       A boolean, true if this posting has a price conversion.
     """
-    return (not posting.position.has_cost() and
+    return (posting.position.cost is not None and
             posting.price is not None)
 
 

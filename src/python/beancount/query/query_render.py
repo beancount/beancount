@@ -292,7 +292,7 @@ class PositionRenderer(ColumnRenderer):
             return
         lot = pos.lot
         cost = lot.cost
-        self.units_rdr.update(pos.get_units())
+        self.units_rdr.update(pos.units)
         self.cost_rdr.update(cost)
 
     def prepare(self):
@@ -330,19 +330,19 @@ class PositionRenderer(ColumnRenderer):
             lot = pos.lot
             strings.append(
                 self.fmt_without_cost.format(
-                    self.units_rdr.format(pos.get_units())))
+                    self.units_rdr.format(pos.units)))
         else:
             lot = pos.lot
             cost = lot.cost
             if cost:
                 strings.append(
                     self.fmt_with_cost.format(
-                        self.units_rdr.format(pos.get_units()),
+                        self.units_rdr.format(pos.units),
                         self.cost_rdr.format(cost)))
             else:
                 strings.append(
                     self.fmt_without_cost.format(
-                        self.units_rdr.format(pos.get_units())))
+                        self.units_rdr.format(pos.units)))
 
         if len(strings) == 1:
             return strings[0]
@@ -371,7 +371,7 @@ class InventoryRenderer(PositionRenderer):
                 lot = pos.lot
                 strings.append(
                     self.fmt_without_cost.format(
-                        self.units_rdr.format(pos.get_units())))
+                        self.units_rdr.format(pos.units)))
         else:
             for pos in inv.get_positions():
                 lot = pos.lot
@@ -379,12 +379,12 @@ class InventoryRenderer(PositionRenderer):
                 if cost:
                     strings.append(
                         self.fmt_with_cost.format(
-                            self.units_rdr.format(pos.get_units()),
+                            self.units_rdr.format(pos.units),
                             self.cost_rdr.format(cost)))
                 else:
                     strings.append(
                         self.fmt_without_cost.format(
-                            self.units_rdr.format(pos.get_units())))
+                            self.units_rdr.format(pos.units)))
 
         if len(strings) == 1:
             return strings[0]

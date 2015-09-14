@@ -277,8 +277,8 @@ def html_entries_table(oss, txn_postings, formatter, render_postings=True):
                 '''.format(' '.join(classes),
                            posting.flag or '',
                            formatter.render_account(posting.account),
-                           posting.position.get_units(),
-                           posting.position.lot.cost or '',
+                           posting.position.units,
+                           posting.position.cost or '',
                            posting.price or '',
                            interpolate.get_posting_weight(posting)))
 
