@@ -1,0 +1,62 @@
+From 0d55dac755472be991957d6f0d1f7e8e2c671bcd Mon Sep 17 00:00:00 2001
+From: Stefan Monnier <monnier@iro.umontreal.ca>
+Date: Mon, 14 Sep 2015 09:55:27 -0400
+Subject: [PATCH 2/3] * beancount.el: Make ido use optional
+
+(beancount-use-ido): New custom var.
+(beancount-account-completion-table): New function.
+(beancount--completion-overrides): New const.
+(completion-category-defaults, completion-category-overrides): Use it.
+(beancount-insert-account): Use them.
+---
+ src/elisp/beancount.el | 32 +++++++++++++++++++++++++++++---
+ 1 file changed, 29 insertions(+), 3 deletions(-)
+
+diff --git a/src/elisp/beancount.el b/src/elisp/beancount.el
+index fbba7e7..425ce6c 100644
+--- a/src/elisp/beancount.el
++++ b/src/elisp/beancount.el
+@@ -190,11 +190,37 @@ declarations only."
+         (puthash (match-string-no-properties 0) nil accounts)))
+     (sort (beancount-hash-keys accounts) 'string<)))
+ 
++(defcustom beancount-use-ido t
++  "If non-nil, use ido-style completion rather than the standard completion."
++  :type 'boolean)
++
++(defun beancount-account-completion-table (string pred action)
++  (if (eq action 'metadata)
++      '(metadata (category . beancount-account))
++    (complete-with-action action beancount-accounts string pred)))
++
++;; Default to substring completion for beancount accounts.
++(defconst beancount--completion-overrides
++  '(beancount-account (styles basic partial-completion substring)))
++(cond
++ ((boundp 'completion-category-defaults)
++  (add-to-list 'completion-category-defaults beancount--completion-overrides))
++ ((and (boundp 'completion-category-overrides)
++       (not (assq 'beancount-account completion-category-overrides)))
++  (push beancount--completion-overrides completion-category-overrides)))
++
+ (defun beancount-insert-account (account-name)
+-  "Insert one of the valid account names in this file (using ido
+-niceness)."
++  "Insert one of the valid account names in this file.
++Uses ido niceness according to `beancount-use-ido'."
+   (interactive
+-   (list (ido-completing-read "Account: " beancount-accounts nil nil (thing-at-point 'word))))
++   (list
++    (if beancount-use-ido
++        ;; `ido-completing-read' is too dumb to understand functional
++        ;; completion tables!
++        (ido-completing-read "Account: " beancount-accounts
++                             nil nil (thing-at-point 'word))
++      (completing-read "Account: " #'beancount-account-completion-table
++                       nil t (thing-at-point 'word)))))
+   (let ((bounds (bounds-of-thing-at-point 'word)))
+     (when bounds
+       (delete-region (car bounds) (cdr bounds))))
+-- 
+2.5.1
+
