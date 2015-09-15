@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-09-14
+
+  - Merged more changes to beancount.el (Emacs support) by Stefan Monnier - Use
+    syntax-tables for comments and strings.
+
+
 2015-09-12
 
   - Added to beancount.plugins.split_expenses a new script that is able to

@@ -50,13 +50,7 @@
   "A list of the directive names.")
 
 (defvar beancount-font-lock-keywords
-  `(;; Comments
-    (";.+" . font-lock-comment-face)
-
-    ;; Strings
-    ("\".*?\"" . font-lock-string-face)
-
-    ;; Reserved keywords
+  `(;; Reserved keywords
     (,(regexp-opt beancount-directive-names) . font-lock-keyword-face)
 
     ;; Tags & Links
@@ -89,6 +83,13 @@
     ;; FIXME: There's actually no function by that name!
     (define-key map [(control c)(p)] #'beancount-test-align)
     map))
+
+(defvar beancount-mode-syntax-table
+  (let ((st (make-syntax-table)))
+    (modify-syntax-entry ?\" "\"\"" st)
+    (modify-syntax-entry ?\; "<" st)
+    (modify-syntax-entry ?\n ">" st)
+    st))
 
 ;;;###autoload
 (define-minor-mode beancount-mode
@@ -123,20 +124,26 @@ is great for sectioning large files with many transactions.
 
   ;; Customize font-lock for beancount.
   ;;
+  (set-syntax-table beancount-mode-syntax-table)
+  ;; Force font-lock to use the syntax-table to find strings-and-comments,
+  ;; regardless of what the "host major mode" decided.
+  (set (make-local-variable 'font-lock-keywords-only) nil)
   ;; Important: you have to use 'nil for the mode here because in certain major
   ;; modes (e.g. org-mode) the font-lock-keywords is a buffer-local variable.
   (if beancount-mode
       (font-lock-add-keywords nil beancount-font-lock-keywords)
     (font-lock-remove-keywords nil beancount-font-lock-keywords))
-  (font-lock-fontify-buffer)
+  (if (fboundp 'font-lock-flush)
+      (font-lock-flush)
+    (with-no-warnings (font-lock-fontify-buffer)))
 
   (when beancount-mode
     (beancount-init-accounts))
   )
 
 (defvar beancount-accounts nil
-  "A list of the accounts available in this buffer. This is a
-  cache of the value computed by beancount-get-accounts.")
+  "A list of the accounts available in this buffer.
+This is a cache of the value computed by `beancount-get-accounts'.")
 (make-variable-buffer-local 'beancount-accounts)
 
 (defun beancount-init-accounts ()
