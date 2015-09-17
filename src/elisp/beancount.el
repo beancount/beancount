@@ -127,7 +127,8 @@ is great for sectioning large files with many transactions.
   (set-syntax-table beancount-mode-syntax-table)
   (when (fboundp 'syntax-ppss-flush-cache)
     (syntax-ppss-flush-cache (point-min))
-    (set (make-local-variable 'syntax-begin-function) nil))
+    (set (make-local-variable 'syntax-begin-function)
+         (lambda () (goto-char (point-min)))))
   ;; Force font-lock to use the syntax-table to find strings-and-comments,
   ;; regardless of what the "host major mode" decided.
   (set (make-local-variable 'font-lock-keywords-only) nil)
