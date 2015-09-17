@@ -193,11 +193,37 @@ declarations only."
         (puthash (match-string-no-properties 0) nil accounts)))
     (sort (beancount-hash-keys accounts) 'string<)))
 
+(defcustom beancount-use-ido t
+  "If non-nil, use ido-style completion rather than the standard completion."
+  :type 'boolean)
+
+(defun beancount-account-completion-table (string pred action)
+  (if (eq action 'metadata)
+      '(metadata (category . beancount-account))
+    (complete-with-action action beancount-accounts string pred)))
+
+;; Default to substring completion for beancount accounts.
+(defconst beancount--completion-overrides
+  '(beancount-account (styles basic partial-completion substring)))
+(cond
+ ((boundp 'completion-category-defaults)
+  (add-to-list 'completion-category-defaults beancount--completion-overrides))
+ ((and (boundp 'completion-category-overrides)
+       (not (assq 'beancount-account completion-category-overrides)))
+  (push beancount--completion-overrides completion-category-overrides)))
+
 (defun beancount-insert-account (account-name)
-  "Insert one of the valid account names in this file (using ido
-niceness)."
+  "Insert one of the valid account names in this file.
+Uses ido niceness according to `beancount-use-ido'."
   (interactive
-   (list (ido-completing-read "Account: " beancount-accounts nil nil (thing-at-point 'word))))
+   (list
+    (if beancount-use-ido
+        ;; `ido-completing-read' is too dumb to understand functional
+        ;; completion tables!
+        (ido-completing-read "Account: " beancount-accounts
+                             nil nil (thing-at-point 'word))
+      (completing-read "Account: " #'beancount-account-completion-table
+                       nil t (thing-at-point 'word)))))
   (let ((bounds (bounds-of-thing-at-point 'word)))
     (when bounds
       (delete-region (car bounds) (cdr bounds))))
