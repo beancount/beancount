@@ -65,6 +65,7 @@ class Booking(Enum):
     CREATED = 1   # A new lot was created.
     REDUCED = 2   # An existing lot was reduced.
     AUGMENTED = 3 # An existing lot was augmented.
+    IGNORED = 4   # No change was applied.
 
 
 class Inventory(list):
@@ -336,7 +337,8 @@ class Inventory(list):
         Returns:
           A pair of (position, booking) where 'position' is the position that
           that was modified, and where 'booking' is a Booking enum that hints at
-          how the lot was booked to this inventory.
+          how the lot was booked to this inventory. Position may be None if there
+          is no corresponding Position object, e.g. the position was deleted.
         """
         assert isinstance(units, Amount), (
             "Internal error: {!r} (type: {})".format(units, type(units).__name__))
@@ -366,9 +368,13 @@ class Inventory(list):
                 break
         else:
             # If not found, create a new one.
-            position = Position(units, cost)
-            self.append(position)
-            booking = Booking.CREATED
+            if units.number == ZERO:
+                position = None
+                booking = Booking.IGNORED
+            else:
+                position = Position(units, cost)
+                self.append(position)
+                booking = Booking.CREATED
 
         return position, booking
 

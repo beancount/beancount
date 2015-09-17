@@ -260,6 +260,15 @@ class Position:
         # Note: We use Decimal() for efficiency.
         return Position(self.lot, Decimal(self.number))
 
+    def set_units(self, units):
+        """Set the units.
+
+        Args:
+          units: An instance of Amount.
+        """
+        self.number = units.number
+        self.lot = self.lot._replace(currency=units.currency)
+
     def currency_pair(self):
         """Return the currency pair associated with this position.
 

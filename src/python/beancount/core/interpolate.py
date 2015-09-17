@@ -28,10 +28,23 @@ MAXIMUM_TOLERANCE = D('0.5')
 
 
 # The maximum number of user-specified coefficient digits we should allow for a
-# tolerance setting. This would allow the user to provide a tolerance like
-# 0.1234 but not 0.123456. This is used to detect whether a tolerance value
-# is input by the user and not inferred automatically.
+# tolerance setting.
 MAX_TOLERANCE_DIGITS = 5
+
+def is_tolerance_user_specified(tolerance):
+    """Return true if the given tolerance number was user-specified.
+
+    This would allow the user to provide a tolerance like # 0.1234 but not
+    0.123456. This is used to detect whether a tolerance value # is input by the
+    user and not inferred automatically.
+
+    Args:
+      tolerance: An instance of Decimal.
+    Returns:
+      A boolean.
+    """
+    return len(tolerance.as_tuple().digits) < MAX_TOLERANCE_DIGITS
+
 
 
 # An error from balancing the postings.
@@ -39,6 +52,7 @@ BalanceError = collections.namedtuple('BalanceError', 'source message entry')
 
 
 def get_posting_weight(posting):
+
     """Get the amount that will need to be balanced from a posting of a transaction.
 
     This is a *key* element of the semantics of transactions in this software. A
@@ -315,7 +329,6 @@ def get_incomplete_postings(entry, options_map):
     # If there are auto-postings, fill them in.
     has_inserted = False
     if auto_postings_indices:
-
         # If there are too many such postings, we can't do anything, barf.
         if len(auto_postings_indices) > 1:
             balance_errors.append(
@@ -374,8 +387,9 @@ def get_incomplete_postings(entry, options_map):
                     # guarantees that, unless there is an error condition, the
                     # quantized exponent is always equal to that of the
                     # right-hand operand.
-                    if len(quantum.as_tuple().digits) < MAX_TOLERANCE_DIGITS:
-                        pos.number = pos.units.number.quantize(quantum)
+                    if is_tolerance_user_specified(quantum):
+                        pos.set_units(Amount(pos.units.number.quantize(quantum),
+                                             pos.units.currency))
 
                 meta = copy.copy(old_posting.meta) if old_posting.meta else {}
                 meta[AUTOMATIC_META] = True

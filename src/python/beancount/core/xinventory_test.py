@@ -302,7 +302,7 @@ class TestInventory(unittest.TestCase):
         inv = I('40 AAPL {1.01 USD}, 10 GOOG {2.02 USD}')
         self.assertEqual(set([('AAPL', 'USD'), ('GOOG', 'USD')]), inv.currency_pairs())
 
-    def test_add(self):
+    def test_add_amount(self):
         inv = Inventory()
         inv.add_amount(A('100.00 USD'))
         self.checkAmount(inv, '100', 'USD')
@@ -327,7 +327,12 @@ class TestInventory(unittest.TestCase):
         inv.add_amount(A('18.72 USD'))
         self.checkAmount(inv, '10', 'USD')
 
-    def test_add__booking(self):
+    def test_add_amount__zero(self):
+        inv = Inventory()
+        inv.add_amount(A('0 USD'))
+        self.assertEqual(0, len(inv))
+
+    def test_add_amount__booking(self):
         inv = Inventory()
         _, booking = inv.add_amount(A('100.00 USD'))
         self.assertEqual(Booking.CREATED, booking)
@@ -341,7 +346,7 @@ class TestInventory(unittest.TestCase):
         _, booking = inv.add_amount(A('-100 USD'))
         self.assertEqual(Booking.REDUCED, booking)
 
-    def test_add_multi_currency(self):
+    def test_add_amount__multi_currency(self):
         inv = Inventory()
         inv.add_amount(A('100 USD'))
         inv.add_amount(A('100 CAD'))
@@ -352,7 +357,7 @@ class TestInventory(unittest.TestCase):
         self.checkAmount(inv, '125', 'USD')
         self.checkAmount(inv, '100', 'CAD')
 
-    def test_add_withlots(self):
+    def test_add_amount__withlots(self):
         # Testing the strict case where everything matches, with only a cost.
         inv = Inventory()
         inv.add_amount(A('50 GOOG'), Cost(D('700'), 'USD', None, None))
@@ -377,7 +382,7 @@ class TestInventory(unittest.TestCase):
                                                           date(2000, 1, 1), None))
         self.assertTrue(position_.is_negative_at_cost())
 
-    def test_add_allow_negative(self):
+    def test_add_amount__allow_negative(self):
 
         def check_allow_negative(inv):
             position_, _ = inv.add_amount(A('-11 USD'))
