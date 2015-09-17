@@ -62,19 +62,19 @@ class TestInventory(unittest.TestCase):
                        Position(Lot("CAD", None), D('2'))]),
             inv)
 
-        inv = inventory.from_string('2.2 GOOG {532.43 USD}, 3.413 EUR')
+        inv = inventory.from_string('2.2 HOOL {532.43 USD}, 3.413 EUR')
         self.assertEqual(
-            Inventory([Position(Lot("GOOG", Cost(D('532.43'), 'USD', None, None)),
+            Inventory([Position(Lot("HOOL", Cost(D('532.43'), 'USD', None, None)),
                                 D('2.2')),
                        Position(Lot("EUR", None), D('3.413'))]),
             inv)
 
         inv = inventory.from_string(
-            '2.2 GOOG {532.43 USD}, 2.3 GOOG {564.00 USD, 2015-07-14}, 3.413 EUR')
+            '2.2 HOOL {532.43 USD}, 2.3 HOOL {564.00 USD, 2015-07-14}, 3.413 EUR')
         self.assertEqual(
-            Inventory([Position(Lot("GOOG", Cost(D('532.43'), 'USD', None, None)),
+            Inventory([Position(Lot("HOOL", Cost(D('532.43'), 'USD', None, None)),
                                 D('2.2')),
-                       Position(Lot("GOOG", Cost(D('564.00'), 'USD',
+                       Position(Lot("HOOL", Cost(D('564.00'), 'USD',
                                                  datetime.date(2015, 7, 14), None)),
                                 D('2.3')),
                        Position(Lot("EUR", None),
@@ -82,9 +82,9 @@ class TestInventory(unittest.TestCase):
             inv)
 
         inv = inventory.from_string(
-            '1.1 GOOG {500.00 # 11.00 USD}, 100 CAD')
+            '1.1 HOOL {500.00 # 11.00 USD}, 100 CAD')
         self.assertEqual(
-            Inventory([Position(Lot("GOOG", Cost(D('510.00'), 'USD', None, None)),
+            Inventory([Position(Lot("HOOL", Cost(D('510.00'), 'USD', None, None)),
                                 D('1.1')),
                        Position(Lot("CAD", None),
                                 D('100'))]),
@@ -190,13 +190,13 @@ class TestInventory(unittest.TestCase):
         self.assertFalse(inv.is_small({}, {'JPY': D('0.02')}))
 
     def test_is_mixed(self):
-        inv = Inventory.from_string('100 GOOG {250 USD}, 101 GOOG {251 USD}')
+        inv = Inventory.from_string('100 HOOL {250 USD}, 101 HOOL {251 USD}')
         self.assertFalse(inv.is_mixed())
 
-        inv = Inventory.from_string('100 GOOG {250 USD}, -1 GOOG {251 USD}')
+        inv = Inventory.from_string('100 HOOL {250 USD}, -1 HOOL {251 USD}')
         self.assertTrue(inv.is_mixed())
 
-        inv = Inventory.from_string('-2 GOOG {250 USD}, -1 GOOG {251 USD}')
+        inv = Inventory.from_string('-2 HOOL {250 USD}, -1 HOOL {251 USD}')
         self.assertFalse(inv.is_mixed())
 
     def test_op_neg(self):
@@ -217,6 +217,17 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(inv.get_units('AUD'), A('0 AUD'))
         self.assertEqual(inv.get_units('NZD'), A('0 NZD'))
 
+    def test_segregate_units(self):
+        inv = inventory.from_string(
+            '2.2 HOOL {532.43 USD}, 2.3 HOOL {564.00 USD, 2015-07-14}, 3.41 CAD, 101.20 USD')
+        ccymap = inv.segregate_units(['HOOL', 'USD', 'EUR'])
+        self.assertEqual({
+            None: inventory.from_string('3.41 CAD'),
+            'USD': inventory.from_string('101.20 USD'),
+            'EUR': inventory.Inventory(),
+            'HOOL': inventory.from_string('2.2 HOOL {532.43 USD}, '
+                                          '2.3 HOOL {564.00 USD, 2015-07-14}')}, ccymap)
+
     def test_units1(self):
         inv = Inventory()
         self.assertEqual(inv.units(), Inventory.from_string(''))
@@ -226,11 +237,11 @@ class TestInventory(unittest.TestCase):
                          Inventory.from_string('40.50 JPY, 40.51 USD, 40.52 CAD'))
 
         # Check that the same units coalesce.
-        inv = Inventory.from_string('2 GOOG {400 USD}, 3 GOOG {410 USD}')
-        self.assertEqual(inv.units(), Inventory.from_string('5 GOOG'))
+        inv = Inventory.from_string('2 HOOL {400 USD}, 3 HOOL {410 USD}')
+        self.assertEqual(inv.units(), Inventory.from_string('5 HOOL'))
 
-        inv = Inventory.from_string('2 GOOG {400 USD}, -3 GOOG {410 USD}')
-        self.assertEqual(inv.units(), Inventory.from_string('-1 GOOG'))
+        inv = Inventory.from_string('2 HOOL {400 USD}, -3 HOOL {410 USD}')
+        self.assertEqual(inv.units(), Inventory.from_string('-1 HOOL'))
 
     POSITIONS_ALL_KINDS = [
         position.from_string('40.50 USD'),
@@ -263,8 +274,8 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(inv.average(), Inventory.from_string('80.00 USD {1.015 CAD}'))
 
         # Aggregation, more units.
-        inv = Inventory.from_string('2 GOOG {500 USD}, 3 GOOG {520 USD}, 4 GOOG {530 USD}')
-        self.assertEqual(inv.average(), Inventory.from_string('9 GOOG {520 USD}'))
+        inv = Inventory.from_string('2 HOOL {500 USD}, 3 HOOL {520 USD}, 4 HOOL {530 USD}')
+        self.assertEqual(inv.average(), Inventory.from_string('9 HOOL {520 USD}'))
 
     def test_currencies(self):
         inv = Inventory()
@@ -273,8 +284,8 @@ class TestInventory(unittest.TestCase):
         inv = Inventory.from_string('40 USD {1.01 CAD}, 40 USD')
         self.assertEqual({'USD'}, inv.currencies())
 
-        inv = Inventory.from_string('40 AAPL {1.01 USD}, 10 GOOG {2.02 USD}')
-        self.assertEqual({'AAPL', 'GOOG'}, inv.currencies())
+        inv = Inventory.from_string('40 AAPL {1.01 USD}, 10 HOOL {2.02 USD}')
+        self.assertEqual({'AAPL', 'HOOL'}, inv.currencies())
 
     def test_currency_pairs(self):
         inv = Inventory()
@@ -283,20 +294,8 @@ class TestInventory(unittest.TestCase):
         inv = Inventory.from_string('40 USD {1.01 CAD}, 40 USD')
         self.assertEqual(set([('USD', 'CAD'), ('USD', None)]), inv.currency_pairs())
 
-        inv = Inventory.from_string('40 AAPL {1.01 USD}, 10 GOOG {2.02 USD}')
-        self.assertEqual(set([('AAPL', 'USD'), ('GOOG', 'USD')]), inv.currency_pairs())
-
-    def test_get_position(self):
-        inv = Inventory(self.POSITIONS_ALL_KINDS)
-        self.assertEqual(
-            position.from_string('40.50 USD'),
-            inv.get_position(Lot('USD', None)))
-        self.assertEqual(
-            position.from_string('40.50 USD {1.10 CAD}'),
-            inv.get_position(Lot('USD', Cost(D('1.10'), 'CAD', None, None))))
-        self.assertEqual(
-            position.from_string('40.50 USD {1.10 CAD, 2012-01-01}'),
-            inv.get_position(Lot('USD', Cost(D('1.10'), 'CAD', date(2012, 1, 1), None))))
+        inv = Inventory.from_string('40 AAPL {1.01 USD}, 10 HOOL {2.02 USD}')
+        self.assertEqual(set([('AAPL', 'USD'), ('HOOL', 'USD')]), inv.currency_pairs())
 
     def test_add(self):
         inv = Inventory()
@@ -351,25 +350,25 @@ class TestInventory(unittest.TestCase):
     def test_add_withlots(self):
         # Testing the strict case where everything matches, with only a cost.
         inv = Inventory()
-        inv.add_amount(A('50 GOOG'), Cost(D('700'), 'USD', None, None))
-        self.checkAmount(inv, '50', 'GOOG')
+        inv.add_amount(A('50 HOOL'), Cost(D('700'), 'USD', None, None))
+        self.checkAmount(inv, '50', 'HOOL')
 
-        inv.add_amount(A('-40 GOOG'), Cost(D('700'), 'USD', None, None))
-        self.checkAmount(inv, '10', 'GOOG')
+        inv.add_amount(A('-40 HOOL'), Cost(D('700'), 'USD', None, None))
+        self.checkAmount(inv, '10', 'HOOL')
 
-        position_, _ = inv.add_amount(A('-12 GOOG'),
+        position_, _ = inv.add_amount(A('-12 HOOL'),
                                       Cost(D('700'), 'USD', None, None))
         self.assertTrue(position_.is_negative_at_cost())
 
         # Testing the strict case where everything matches, a cost and a lot-date.
         inv = Inventory()
-        inv.add_amount(A('50 GOOG'), Cost(D('700'),  'USD', date(2000, 1, 1), None))
-        self.checkAmount(inv, '50', 'GOOG')
+        inv.add_amount(A('50 HOOL'), Cost(D('700'),  'USD', date(2000, 1, 1), None))
+        self.checkAmount(inv, '50', 'HOOL')
 
-        inv.add_amount(A('-40 GOOG'), Cost(D('700'), 'USD', date(2000, 1, 1), None))
-        self.checkAmount(inv, '10', 'GOOG')
+        inv.add_amount(A('-40 HOOL'), Cost(D('700'), 'USD', date(2000, 1, 1), None))
+        self.checkAmount(inv, '10', 'HOOL')
 
-        position_, _ = inv.add_amount(A('-12 GOOG'), Cost(D('700'), 'USD',
+        position_, _ = inv.add_amount(A('-12 HOOL'), Cost(D('700'), 'USD',
                                                           date(2000, 1, 1), None))
         self.assertTrue(position_.is_negative_at_cost())
 
@@ -423,7 +422,7 @@ class TestInventory(unittest.TestCase):
 
         inv2 = Inventory()
         inv2.add_amount(A('20 CAD'))
-        inv2.add_amount(A('55 GOOG'))
+        inv2.add_amount(A('55 HOOL'))
 
         inv1 + inv2
 

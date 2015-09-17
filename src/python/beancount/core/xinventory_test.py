@@ -218,6 +218,17 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(inv.get_units('AUD'), A('0 AUD'))
         self.assertEqual(inv.get_units('NZD'), A('0 NZD'))
 
+    def test_segregate_units(self):
+        inv = inventory.from_string(
+            '2.2 HOOL {532.43 USD}, 2.3 HOOL {564.00 USD, 2015-07-14}, 3.41 CAD, 101.20 USD')
+        ccymap = inv.segregate_units(['HOOL', 'USD', 'EUR'])
+        self.assertEqual({
+            None: inventory.from_string('3.41 CAD'),
+            'USD': inventory.from_string('101.20 USD'),
+            'EUR': inventory.Inventory(),
+            'HOOL': inventory.from_string('2.2 HOOL {532.43 USD}, '
+                                          '2.3 HOOL {564.00 USD, 2015-07-14}')}, ccymap)
+
     def test_units1(self):
         inv = Inventory()
         self.assertEqual(inv.units(), Inventory.from_string(''))
@@ -266,6 +277,16 @@ class TestInventory(unittest.TestCase):
         # Aggregation, more units.
         inv = Inventory.from_string('2 GOOG {500 USD}, 3 GOOG {520 USD}, 4 GOOG {530 USD}')
         self.assertEqual(inv.average(), Inventory.from_string('9 GOOG {520 USD}'))
+
+    def test_currencies(self):
+        inv = Inventory()
+        self.assertEqual(set(), inv.currencies())
+
+        inv = Inventory.from_string('40 USD {1.01 CAD}, 40 USD')
+        self.assertEqual({'USD'}, inv.currencies())
+
+        inv = Inventory.from_string('40 AAPL {1.01 USD}, 10 GOOG {2.02 USD}')
+        self.assertEqual({'AAPL', 'GOOG'}, inv.currencies())
 
     def test_currency_pairs(self):
         inv = Inventory()

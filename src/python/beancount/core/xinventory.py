@@ -197,6 +197,14 @@ class Inventory(list):
     # Methods to access portions of an inventory.
     #
 
+    def currencies(self):
+        """Return the list of unit currencies held in this inventory.
+
+        Returns:
+          A list of currency strings.
+        """
+        return set(position.units.currency for position in self)
+
     def currency_pairs(self):
         """Return the commodities held in this inventory.
 
@@ -227,6 +235,23 @@ class Inventory(list):
             if position.units.currency == currency:
                 total_units += position.units.number
         return Amount(total_units, currency)
+
+    def segregate_units(self, currencies):
+        """Split up the list of positions to the given currencies.
+
+        Args:
+          currencies: A list of currency strings, the currencies to isolate.
+        Returns:
+          A dict of currency to Inventory instances.
+        """
+        per_currency_dict = {currency: Inventory()
+                             for currency in currencies}
+        per_currency_dict[None] = Inventory()
+        for position in self:
+            currency = position.units.currency
+            key = (currency if currency in currencies else None)
+            per_currency_dict[key].add_position(position)
+        return per_currency_dict
 
 
     #

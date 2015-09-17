@@ -224,18 +224,6 @@ class Inventory(list):
         """
         return list(self)
 
-    def get_position(self, lot):
-        """Find a position by lot, or return None.
-
-        Args:
-          lot: An instance of Lot to key by.
-        Returns:
-          An instance of Position for the matching lot.
-        """
-        for position in self:
-            if position.lot == lot:
-                return position
-
     def get_units(self, currency):
         """Fetch the total amount across all the position in the given currency.
         This may sum multiple lots in the same currency denomination.
@@ -259,7 +247,9 @@ class Inventory(list):
         Returns:
           A dict of currency to Inventory instances.
         """
-        per_currency_dict = collections.defaultdict(Inventory)
+        per_currency_dict = {currency: Inventory()
+                             for currency in currencies}
+        per_currency_dict[None] = Inventory()
         for position in self:
             currency = position.lot.currency
             key = (currency if currency in currencies else None)
