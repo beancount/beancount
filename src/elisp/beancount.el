@@ -5,6 +5,7 @@
 
 ;; Version: 0
 ;; Author: Martin Blais <blais@furius.ca>
+;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 
 ;; This file is not part of GNU Emacs.
 
