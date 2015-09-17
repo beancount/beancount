@@ -21,7 +21,11 @@ from beancount.core.number import ZERO
 from beancount.core.amount import Amount
 from beancount.core import amount
 from beancount.utils import invariants
+
+
 A = amount.from_string
+P = position.from_string
+I = inventory.from_string
 
 
 def setUp(module):
@@ -90,13 +94,13 @@ class TestInventory(unittest.TestCase):
         self.assertTrue(inv.is_empty())
         self.assertEqual(0, len(inv))
 
-        inv = Inventory([position.from_string('100.00 USD'),
-                         position.from_string('101.00 USD')])
+        inv = Inventory([P('100.00 USD'),
+                         P('101.00 USD')])
         self.assertFalse(inv.is_empty())
         self.assertEqual(1, len(inv))
 
-        inv = Inventory([position.from_string('100.00 USD'),
-                         position.from_string('100.00 CAD')])
+        inv = Inventory([P('100.00 USD'),
+                         P('100.00 CAD')])
         self.assertFalse(inv.is_empty())
         self.assertEqual(2, len(inv))
 
@@ -108,7 +112,7 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(2, len(inv))
 
     def test_str(self):
-        inv = Inventory.from_string('100.00 USD, 101.00 CAD')
+        inv = I('100.00 USD, 101.00 CAD')
         self.assertEqual('(100.00 USD, 101.00 CAD)', str(inv))
 
     def test_copy(self):
@@ -125,24 +129,24 @@ class TestInventory(unittest.TestCase):
         self.checkAmount(inv, '100', 'USD')
 
     def test_op_eq(self):
-        inv1 = Inventory.from_string('100 USD, 100 CAD')
-        inv2 = Inventory.from_string('100 CAD, 100 USD')
+        inv1 = I('100 USD, 100 CAD')
+        inv2 = I('100 CAD, 100 USD')
         self.assertEqual(inv1, inv2)
         self.assertEqual(inv2, inv1)
 
-        inv3 = Inventory.from_string('200 USD, 100 CAD')
+        inv3 = I('200 USD, 100 CAD')
         self.assertNotEqual(inv1, inv3)
         self.assertNotEqual(inv3, inv1)
 
-        inv4 = Inventory.from_string('100 USD, 100 JPY')
+        inv4 = I('100 USD, 100 JPY')
         self.assertNotEqual(inv1, inv4)
         self.assertNotEqual(inv4, inv1)
 
-        inv5 = Inventory.from_string('100 JPY, 100 USD')
+        inv5 = I('100 JPY, 100 USD')
         self.assertEqual(inv4, inv5)
 
     def test_is_small__value(self):
-        test_inv = Inventory.from_string('1.50 JPY, 1.51 USD, 1.52 CAD')
+        test_inv = I('1.50 JPY, 1.51 USD, 1.52 CAD')
         for inv in test_inv, -test_inv:
             self.assertFalse(inv.is_small(D('1.49')))
             self.assertFalse(inv.is_small(D('1.50')))
@@ -150,7 +154,7 @@ class TestInventory(unittest.TestCase):
             self.assertTrue(inv.is_small(D('1.52')))
 
     def test_is_small__dict(self):
-        test_inv = Inventory.from_string('0.03 JPY, 0.003 USD')
+        test_inv = I('0.03 JPY, 0.003 USD')
         for inv in test_inv, -test_inv:
             # Test all four types of inequalities.
             self.assertTrue(inv.is_small({'JPY': D('0.05'), 'USD': D('0.005')}))
@@ -177,20 +181,20 @@ class TestInventory(unittest.TestCase):
             self.assertFalse(inv.is_small({}))
 
     def test_is_small__with_default(self):
-        inv = Inventory.from_string('0.03 JPY')
+        inv = I('0.03 JPY')
         self.assertTrue(inv.is_small({'JPY': D('0.05')}))
         self.assertFalse(inv.is_small({'JPY': D('0.02')}))
         self.assertTrue(inv.is_small({}, {'JPY': D('0.05')}))
         self.assertFalse(inv.is_small({}, {'JPY': D('0.02')}))
 
     def test_is_mixed(self):
-        inv = Inventory.from_string('100 GOOG {250 USD}, 101 GOOG {251 USD}')
+        inv = I('100 GOOG {250 USD}, 101 GOOG {251 USD}')
         self.assertFalse(inv.is_mixed())
 
-        inv = Inventory.from_string('100 GOOG {250 USD}, -1 GOOG {251 USD}')
+        inv = I('100 GOOG {250 USD}, -1 GOOG {251 USD}')
         self.assertTrue(inv.is_mixed())
 
-        inv = Inventory.from_string('-2 GOOG {250 USD}, -1 GOOG {251 USD}')
+        inv = I('-2 GOOG {250 USD}, -1 GOOG {251 USD}')
         self.assertFalse(inv.is_mixed())
 
     def test_op_neg(self):
@@ -199,19 +203,19 @@ class TestInventory(unittest.TestCase):
         ninv = -inv
         self.checkAmount(ninv, '-10', 'USD')
 
-        pinv = Inventory.from_string('1.50 JPY, 1.51 USD, 1.52 CAD')
-        ninv = Inventory.from_string('-1.50 JPY, -1.51 USD, -1.52 CAD')
+        pinv = I('1.50 JPY, 1.51 USD, 1.52 CAD')
+        ninv = I('-1.50 JPY, -1.51 USD, -1.52 CAD')
         self.assertEqual(pinv, -ninv)
 
     def test_op_mul(self):
-        inv = inventory.from_string('10 GOOG {1.11 USD}, 2.22 CAD')
+        inv = I('10 GOOG {1.11 USD}, 2.22 CAD')
         inv2 = inv * D('3')
-        self.assertEqual(inventory.from_string('30 GOOG {1.11 USD}, 6.66 CAD'), inv2)
+        self.assertEqual(I('30 GOOG {1.11 USD}, 6.66 CAD'), inv2)
         with self.assertRaises(AssertionError):
             inv2 = inv * 3
 
     def test_get_units(self):
-        inv = Inventory.from_string('40.50 JPY, 40.51 USD {1.01 CAD}, 40.52 CAD')
+        inv = I('40.50 JPY, 40.51 USD {1.01 CAD}, 40.52 CAD')
         self.assertEqual(inv.get_units('JPY'), A('40.50 JPY'))
         self.assertEqual(inv.get_units('USD'), A('40.51 USD'))
         self.assertEqual(inv.get_units('CAD'), A('40.52 CAD'))
@@ -219,83 +223,83 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(inv.get_units('NZD'), A('0 NZD'))
 
     def test_segregate_units(self):
-        inv = inventory.from_string(
+        inv = I(
             '2.2 HOOL {532.43 USD}, 2.3 HOOL {564.00 USD, 2015-07-14}, 3.41 CAD, 101.20 USD')
         ccymap = inv.segregate_units(['HOOL', 'USD', 'EUR'])
         self.assertEqual({
-            None: inventory.from_string('3.41 CAD'),
-            'USD': inventory.from_string('101.20 USD'),
+            None: I('3.41 CAD'),
+            'USD': I('101.20 USD'),
             'EUR': inventory.Inventory(),
-            'HOOL': inventory.from_string('2.2 HOOL {532.43 USD}, '
+            'HOOL': I('2.2 HOOL {532.43 USD}, '
                                           '2.3 HOOL {564.00 USD, 2015-07-14}')}, ccymap)
 
     def test_units1(self):
         inv = Inventory()
-        self.assertEqual(inv.units(), Inventory.from_string(''))
+        self.assertEqual(inv.units(), I(''))
 
-        inv = Inventory.from_string('40.50 JPY, 40.51 USD {1.01 CAD}, 40.52 CAD')
+        inv = I('40.50 JPY, 40.51 USD {1.01 CAD}, 40.52 CAD')
         self.assertEqual(inv.units(),
-                         Inventory.from_string('40.50 JPY, 40.51 USD, 40.52 CAD'))
+                         I('40.50 JPY, 40.51 USD, 40.52 CAD'))
 
         # Check that the same units coalesce.
-        inv = Inventory.from_string('2 GOOG {400 USD}, 3 GOOG {410 USD}')
-        self.assertEqual(inv.units(), Inventory.from_string('5 GOOG'))
+        inv = I('2 GOOG {400 USD}, 3 GOOG {410 USD}')
+        self.assertEqual(inv.units(), I('5 GOOG'))
 
-        inv = Inventory.from_string('2 GOOG {400 USD}, -3 GOOG {410 USD}')
-        self.assertEqual(inv.units(), Inventory.from_string('-1 GOOG'))
+        inv = I('2 GOOG {400 USD}, -3 GOOG {410 USD}')
+        self.assertEqual(inv.units(), I('-1 GOOG'))
 
     POSITIONS_ALL_KINDS = [
-        position.from_string('40.50 USD'),
-        position.from_string('40.50 USD {1.10 CAD}'),
-        position.from_string('40.50 USD {1.10 CAD, 2012-01-01}')]
+        P('40.50 USD'),
+        P('40.50 USD {1.10 CAD}'),
+        P('40.50 USD {1.10 CAD, 2012-01-01}')]
 
     def test_units(self):
         inv = Inventory(self.POSITIONS_ALL_KINDS +
-                        [position.from_string('50.00 CAD')])
+                        [P('50.00 CAD')])
         inv_cost = inv.units()
-        self.assertEqual(Inventory.from_string('121.50 USD, 50.00 CAD'), inv_cost)
+        self.assertEqual(I('121.50 USD, 50.00 CAD'), inv_cost)
 
     def test_cost(self):
         inv = Inventory(self.POSITIONS_ALL_KINDS +
-                        [position.from_string('50.00 CAD')])
+                        [P('50.00 CAD')])
         inv_cost = inv.cost()
-        self.assertEqual(Inventory.from_string('40.50 USD, 139.10 CAD'), inv_cost)
+        self.assertEqual(I('40.50 USD, 139.10 CAD'), inv_cost)
 
     def test_average(self):
         # Identity, no aggregation.
-        inv = Inventory.from_string('40.50 JPY, 40.51 USD {1.01 CAD}, 40.52 CAD')
+        inv = I('40.50 JPY, 40.51 USD {1.01 CAD}, 40.52 CAD')
         self.assertEqual(inv.average(), inv)
 
         # Identity, no aggregation, with a mix of lots at cost and without cost.
-        inv = Inventory.from_string('40 USD {1.01 CAD}, 40 USD')
+        inv = I('40 USD {1.01 CAD}, 40 USD')
         self.assertEqual(inv.average(), inv)
 
         # Aggregation.
-        inv = Inventory.from_string('40 USD {1.01 CAD}, 40 USD {1.02 CAD}')
-        self.assertEqual(inv.average(), Inventory.from_string('80.00 USD {1.015 CAD}'))
+        inv = I('40 USD {1.01 CAD}, 40 USD {1.02 CAD}')
+        self.assertEqual(inv.average(), I('80.00 USD {1.015 CAD}'))
 
         # Aggregation, more units.
-        inv = Inventory.from_string('2 GOOG {500 USD}, 3 GOOG {520 USD}, 4 GOOG {530 USD}')
-        self.assertEqual(inv.average(), Inventory.from_string('9 GOOG {520 USD}'))
+        inv = I('2 GOOG {500 USD}, 3 GOOG {520 USD}, 4 GOOG {530 USD}')
+        self.assertEqual(inv.average(), I('9 GOOG {520 USD}'))
 
     def test_currencies(self):
         inv = Inventory()
         self.assertEqual(set(), inv.currencies())
 
-        inv = Inventory.from_string('40 USD {1.01 CAD}, 40 USD')
+        inv = I('40 USD {1.01 CAD}, 40 USD')
         self.assertEqual({'USD'}, inv.currencies())
 
-        inv = Inventory.from_string('40 AAPL {1.01 USD}, 10 GOOG {2.02 USD}')
+        inv = I('40 AAPL {1.01 USD}, 10 GOOG {2.02 USD}')
         self.assertEqual({'AAPL', 'GOOG'}, inv.currencies())
 
     def test_currency_pairs(self):
         inv = Inventory()
         self.assertEqual(set(), inv.currency_pairs())
 
-        inv = Inventory.from_string('40 USD {1.01 CAD}, 40 USD')
+        inv = I('40 USD {1.01 CAD}, 40 USD')
         self.assertEqual(set([('USD', 'CAD'), ('USD', None)]), inv.currency_pairs())
 
-        inv = Inventory.from_string('40 AAPL {1.01 USD}, 10 GOOG {2.02 USD}')
+        inv = I('40 AAPL {1.01 USD}, 10 GOOG {2.02 USD}')
         self.assertEqual(set([('AAPL', 'USD'), ('GOOG', 'USD')]), inv.currency_pairs())
 
     def test_add(self):
@@ -391,7 +395,7 @@ class TestInventory(unittest.TestCase):
         check_allow_negative(inv)
 
         # Test adding to a position that does exist.
-        inv = Inventory.from_string(
+        inv = I(
             '10 USD, 10 USD {1.10 CAD}, 10 USD {1.10 CAD, 2012-01-01}')
         check_allow_negative(inv)
 
@@ -402,18 +406,18 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(Inventory(self.POSITIONS_ALL_KINDS), inv)
 
     def test_op_add(self):
-        inv1 = Inventory.from_string('17.00 USD')
-        orig_inv1 = Inventory.from_string('17.00 USD')
-        inv2 = Inventory.from_string('21.00 CAD')
+        inv1 = I('17.00 USD')
+        orig_inv1 = I('17.00 USD')
+        inv2 = I('21.00 CAD')
         inv3 = inv1 + inv2
-        self.assertEqual(Inventory.from_string('17.00 USD, 21.00 CAD'), inv3)
+        self.assertEqual(I('17.00 USD, 21.00 CAD'), inv3)
         self.assertEqual(orig_inv1, inv1)
 
     def test_update(self):
-        inv1 = Inventory.from_string('11 USD')
-        inv2 = Inventory.from_string('12 CAD')
+        inv1 = I('11 USD')
+        inv2 = I('12 CAD')
         inv_updated = inv1.add_inventory(inv2)
-        expect_updated = Inventory.from_string('11 USD, 12 CAD')
+        expect_updated = I('11 USD, 12 CAD')
         self.assertEqual(expect_updated, inv_updated)
         self.assertEqual(expect_updated, inv1)
 
