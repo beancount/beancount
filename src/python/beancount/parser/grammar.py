@@ -488,7 +488,7 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new instance of Position.
         """
-        return Position.from_amounts(amount, cost_spec)
+        return Position(amount, cost_spec)
 
     def handle_list(self, object_list, new_object):
         """Handle a recursive list grammar rule, generically.

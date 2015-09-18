@@ -148,22 +148,6 @@ class Position:
     # Allowed data types for lot.cost
     cost_types = (NoneType, Cost, CostSpec)
 
-    # def __init__(self, lot, number):
-    #     """Constructor from a lot and a number of units of the ot.
-    #
-    #     Args:
-    #       lot: The lot of this position.
-    #       number: An instance of Decimal, the number of units of lot.
-    #     """
-    #     assert isinstance(lot, Lot), (
-    #         "Expected a lot; received '{}'".format(lot))
-    #     assert isinstance(number, (NoneType, Decimal)), (
-    #         "Expected a Decimal; received '{}'".format(number))
-    #     assert isinstance(lot.cost, self.cost_types), (
-    #         "Invalid data type for Lot.cost; received '{}'".format(lot.cost))
-    #     self.lot = lot
-    #     self.number = number
-
     def __init__(self, units, cost=None):
         """Constructor from a lot and a number of units of the ot.
 
@@ -179,6 +163,25 @@ class Position:
             "Expected a Cost for cost; received '{}'".format(cost))
         self.number = units.number
         self.lot = Lot(units.currency, cost)
+
+    @staticmethod
+    def from_lot(lot, number):
+        """Constructor from a lot and a number of units of the ot.
+
+        Args:
+          lot: The lot of this position.
+          number: An instance of Decimal, the number of units of lot.
+        """
+        assert isinstance(lot, Lot), (
+            "Expected a lot; received '{}'".format(lot))
+        assert isinstance(number, (NoneType, Decimal)), (
+            "Expected a Decimal; received '{}'".format(number))
+        assert isinstance(lot.cost, Position.cost_types), (
+            "Invalid data type for Lot.cost; received '{}'".format(lot.cost))
+        pos = Position(Amount(number, lot.currency))
+        pos.lot = lot
+        pos.number = number
+        return pos
 
     def __hash__(self):
         """Compute a hash for this position.
@@ -274,7 +277,7 @@ class Position:
           A shallow copy of this position.
         """
         # Note: We use Decimal() for efficiency.
-        return Position(self.lot, Decimal(self.number))
+        return Position.from_lot(self.lot, Decimal(self.number))
 
     def set_units(self, units):
         """Set the units.
@@ -363,7 +366,7 @@ class Position:
         if cost is None:
             return self
         else:
-            return Position(Lot(cost.currency, None),
+            return Position.from_lot(Lot(cost.currency, None),
                             self.number * cost.number)
 
     def add(self, number):
@@ -384,7 +387,7 @@ class Position:
           An instance of Position which represents the inserse of this Position.
         """
         # Note: We use Decimal() for efficiency.
-        return Position(self.lot, Decimal(-self.number))
+        return Position.from_lot(self.lot, Decimal(-self.number))
 
     __neg__ = get_negative
 
@@ -481,10 +484,10 @@ class Position:
                     raise ValueError("Merge-code not supported in string constructor.")
                 cost = Cost(cost_number_per, cost_currency, date, label)
 
-        return Position(Lot(currency, cost), D(number))
+        return Position.from_lot(Lot(currency, cost), D(number))
 
     @staticmethod
-    def from_amounts(amount, cost=None):
+    def from_amounts(amount, cost_amount=None):
         """Create a position from an amount and a cost.
 
         Args:
@@ -493,9 +496,12 @@ class Position:
         Returns:
           A Position instance.
         """
-        assert cost is None or isinstance(cost, (Cost, CostSpec)), (
-            "Invalid type for cost: {}".format(cost))
-        return Position(Lot(amount.currency, cost), amount.number)
+        assert cost_amount is None or isinstance(cost_amount, Amount), (
+            "Invalid type for cost: {}".format(cost_amount))
+        cost = (Cost(cost_amount.number, cost_amount.currency, None, None)
+                if cost_amount else
+                None)
+        return Position.from_lot(Lot(amount.currency, cost), amount.number)
 
 
 # pylint: disable=invalid-name

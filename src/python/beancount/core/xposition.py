@@ -138,7 +138,7 @@ class Position:
             "Expected an Amount for units; received '{}'".format(units))
         assert isinstance(units.currency, str), (
             "Expected a str for units currency; received '{}'".format(units.currency))
-        assert cost is None or isinstance(cost, self.cost_types), (
+        assert cost is None or isinstance(cost, Position.cost_types), (
             "Expected a Cost for cost; received '{}'".format(cost))
         self.units = units
         self.cost = cost
@@ -422,6 +422,8 @@ class Position:
         Returns:
           A Position instance.
         """
+        assert cost_amount is None or isinstance(cost_amount, Amount), (
+            "Invalid type for cost: {}".format(cost_amount))
         cost = (Cost(cost_amount.number, cost_amount.currency, None, None)
                 if cost_amount else
                 None)

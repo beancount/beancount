@@ -9,11 +9,11 @@ import copy
 import random
 from datetime import date
 
-from beancount.core import xposition as position
-from beancount.core.xposition import Cost
-from beancount.core.xposition import Position
-from beancount.core.xposition import from_string
-from beancount.core.xposition import from_amounts
+from beancount.core import position
+from beancount.core.position import Cost
+from beancount.core.position import Position
+from beancount.core.position import from_string
+from beancount.core.position import from_amounts
 
 from beancount.core.number import ZERO
 from beancount.core.number import D
