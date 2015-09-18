@@ -36,6 +36,7 @@ import sys
 from beancount import loader
 from beancount.core import account
 from beancount.core import account_types
+from beancount.core import amount
 from beancount.core import data
 from beancount.core import getters
 from beancount.core import interpolate
@@ -79,7 +80,9 @@ def split_expenses(entries, options_map, config):
 
                     # Split this posting into multiple postings.
                     split_position = copy.copy(posting.position)
-                    split_position.units.number /= len(members)
+                    split_position.set_units(
+                        amount.Amount(split_position.units.number / len(members),
+                                      split_position.units.currency))
 
                     for member in members:
                         # Mark the account as new if never seen before.
