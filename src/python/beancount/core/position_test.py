@@ -174,7 +174,7 @@ class TestPosition(unittest.TestCase):
 
     def test_mul(self):
         pos = position.from_string("2 HOOL {100.00 USD}")
-        pos2 = pos * 3
+        pos2 = pos * D('3')
         self.assertEqual(position.from_string("6 HOOL {100.00 USD}"),
                          pos2)
 

@@ -79,7 +79,7 @@ def split_expenses(entries, options_map, config):
 
                     # Split this posting into multiple postings.
                     split_position = copy.copy(posting.position)
-                    split_position.number /= len(members)
+                    split_position.units.number /= len(members)
 
                     for member in members:
                         # Mark the account as new if never seen before.

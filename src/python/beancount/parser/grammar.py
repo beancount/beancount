@@ -718,9 +718,9 @@ class Builder(lexer.LexBuilder):
                 number = ZERO
             else:
                 if __allow_negative_prices__:
-                    number = price.number/position.number
+                    number = price.number/position.units.number
                 else:
-                    number = price.number/abs(position.number)
+                    number = price.number/abs(position.units.number)
             price = Amount(number, price.currency)
 
         # Note: Allow zero prices because we need them for round-trips for
