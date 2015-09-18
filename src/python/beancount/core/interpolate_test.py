@@ -299,7 +299,7 @@ class TestBalance(cmptest.TestCase):
 class TestBalanceIncompletePostings(cmptest.TestCase):
 
     def get_incomplete_entry(self, string):
-        """Parse an incomplete entry and convert its CostSpec representation to a Cost.
+        """Parse a single incomplete entry and convert its CostSpec representation to a Cost.
 
         Args:
           string: The input string to parse.
@@ -307,8 +307,11 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
           A pair of (entry, list of errors).
         """
         entries, errors, options_map = parser.parse_string(string, dedent=True)
-        (entries_with_lots,
-         errors) = booking_simple.convert_lot_specs_to_lots(entries, options_map)
+        self.assertFalse(errors)
+        self.assertEqual(1, entries)
+        (entries_with_lots, errors) = booking_simple.convert_lot_specs_to_lots(
+            entries, options_map)
+        self.assertEqual(1, len(entries))
         entry = entries_with_lots[0]
         errors = interpolate.balance_incomplete_postings(entry, options_map)
         return entry, errors

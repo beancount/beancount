@@ -238,7 +238,7 @@ class Position:
         Args:
           units: An instance of Amount.
         """
-        assert isinstance(units, amount.Amount)
+        assert isinstance(units, Amount)
         self.units = units
 
     def currency_pair(self):
