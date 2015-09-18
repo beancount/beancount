@@ -7,6 +7,7 @@ from beancount.core.number import D
 from beancount.parser import parser
 from beancount.parser import cmptest
 from beancount.parser import booking
+from beancount.parser import booking_simple
 from beancount import loader
 
 
@@ -75,9 +76,13 @@ class TestBookingValidation(cmptest.TestCase):
 
         """)
 
+    def convert_and_validate(self, entries, options_map):
+        entries, _ = booking_simple.convert_lot_specs_to_lots(entries, options_map)
+        return booking.validate_inventory_booking(entries, options_map)
+
     def do_validate_inventory_booking(self, input_str):
         entries, errors, options_map = parser.parse_string(input_str)
-        validation_errors = booking.validate_inventory_booking(entries, options_map)
+        validation_errors = self.convert_and_validate(entries, options_map)
         self.assertEqual([], list(map(type, validation_errors)))
 
     def test_validate_inventory_booking(self):
@@ -97,7 +102,7 @@ class TestBookingValidation(cmptest.TestCase):
             Assets:Bank:Investing                -1 GOOG {501 USD}
             Equity:Opening-Balances             501 USD
         """
-        validation_errors = booking.validate_inventory_booking(entries, options_map)
+        validation_errors = self.convert_and_validate(entries, options_map)
         self.assertEqual([], list(map(type, validation_errors)))
 
     @parser.parse_doc()
@@ -111,7 +116,7 @@ class TestBookingValidation(cmptest.TestCase):
             Assets:Bank:Investing                -1 GOOG {502 USD}
             Equity:Opening-Balances           -2003 USD
         """
-        validation_errors = booking.validate_inventory_booking(entries, options_map)
+        validation_errors = self.convert_and_validate(entries, options_map)
         self.assertEqual([booking.BookingError], list(map(type, validation_errors)))
 
     @parser.parse_doc()
@@ -129,7 +134,7 @@ class TestBookingValidation(cmptest.TestCase):
             Assets:Bank:Investing                -1 GOOG {502 USD}
             Equity:Opening-Balances             502 USD
         """
-        validation_errors = booking.validate_inventory_booking(entries, options_map)
+        validation_errors = self.convert_and_validate(entries, options_map)
         self.assertEqual([booking.BookingError], list(map(type, validation_errors)))
 
     @parser.parse_doc()
@@ -148,5 +153,5 @@ class TestBookingValidation(cmptest.TestCase):
             Assets:Bank:Investing                -6 GOOG {502 USD}
             Equity:Opening-Balances            3012 USD
         """
-        validation_errors = booking.validate_inventory_booking(entries, options_map)
+        validation_errors = self.convert_and_validate(entries, options_map)
         self.assertEqual([booking.BookingError], list(map(type, validation_errors)))
