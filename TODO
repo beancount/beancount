@@ -2,12 +2,6 @@
 beancount: TODO
 * Booking
 
-  - Merge oposition_test.py and xposition_test.py into a single test that uses
-    the abstract interface. Hide the specifics of each implementation.
-
-  - Merge oinventory with xinventory accessing Position using only its external
-    interface.
-
   - Port beangrind & ledgerhub to avoid using lots as well.
 
   - Complete testing incomplete output with CostSpec:

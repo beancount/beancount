@@ -26,7 +26,7 @@ from beancount.core.display_context import DEFAULT_FORMATTER
 NoneType = type(None)
 
 
-# Lots are a representations of a commodity with an optional associated cost and
+# _Lots are a representations of a commodity with an optional associated cost and
 # optional acquisition date. (There are considered immutable and shared between
 # many objects; this makes everything much faster.)
 #
@@ -34,7 +34,7 @@ NoneType = type(None)
 #   currency: A string, the currency of this lot. May NOT be null.
 #   cost: An instance of COst of CostSpec (for incomplete postings), or
 #       None if this lot has no associated cost basis.
-Lot = collections.namedtuple('Lot', 'currency cost')
+_Lot = collections.namedtuple('_Lot', 'currency cost')
 
 
 # A variant of Amount that also includes a date, a label and a merge flag.
@@ -140,7 +140,7 @@ class Position:
     This is used to track inventories.
 
     Attributes:
-      lot: An instance of Lot (see above), the lot of this position.
+      lot: An instance of _Lot (see above), the lot of this position.
       number: A Decimal object, the number of units of 'lot'.
     """
     __slots__ = ('lot', 'number')
@@ -162,7 +162,7 @@ class Position:
         assert cost is None or isinstance(cost, self.cost_types), (
             "Expected a Cost for cost; received '{}'".format(cost))
         self.number = units.number
-        self.lot = Lot(units.currency, cost)
+        self.lot = _Lot(units.currency, cost)
 
     @staticmethod
     def from_lot(lot, number):
@@ -172,12 +172,12 @@ class Position:
           lot: The lot of this position.
           number: An instance of Decimal, the number of units of lot.
         """
-        assert isinstance(lot, Lot), (
+        assert isinstance(lot, _Lot), (
             "Expected a lot; received '{}'".format(lot))
         assert isinstance(number, (NoneType, Decimal)), (
             "Expected a Decimal; received '{}'".format(number))
         assert isinstance(lot.cost, Position.cost_types), (
-            "Invalid data type for Lot.cost; received '{}'".format(lot.cost))
+            "Invalid data type for _Lot.cost; received '{}'".format(lot.cost))
         pos = Position(Amount(number, lot.currency))
         pos.lot = lot
         pos.number = number
@@ -366,7 +366,7 @@ class Position:
         if cost is None:
             return self
         else:
-            return Position.from_lot(Lot(cost.currency, None),
+            return Position.from_lot(_Lot(cost.currency, None),
                             self.number * cost.number)
 
     def add(self, number):
@@ -494,7 +494,7 @@ class Position:
                     raise ValueError("Merge-code not supported in string constructor.")
                 cost = Cost(cost_number_per, cost_currency, date, label)
 
-        return Position.from_lot(Lot(currency, cost), D(number))
+        return Position.from_lot(_Lot(currency, cost), D(number))
 
     @staticmethod
     def from_amounts(amount, cost_amount=None):
@@ -511,7 +511,7 @@ class Position:
         cost = (Cost(cost_amount.number, cost_amount.currency, None, None)
                 if cost_amount else
                 None)
-        return Position.from_lot(Lot(amount.currency, cost), amount.number)
+        return Position.from_lot(_Lot(amount.currency, cost), amount.number)
 
 
 # pylint: disable=invalid-name
