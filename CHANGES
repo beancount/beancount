@@ -32,6 +32,11 @@ Note: This file contains only changes in the 'default' branch.
       the parser to output incomplete cost specifications. Lot objects did not
       make much sense anymore.
 
+    * If you were creating Position objects, please look at the new interface
+      and make necessary changes to your code. Apologies if this turns out to be
+      painful, this was useful for performance and having a schema for fuzzy
+      cost specifications that makes sense.
+
 
 2015-09-12
 
