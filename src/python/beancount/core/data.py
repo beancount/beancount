@@ -382,8 +382,8 @@ def create_simple_posting_with_cost(entry, account,
         number = D(number)
     if cost_number and not isinstance(cost_number, Decimal):
         cost_number = D(cost_number)
-    cost = Cost(cost_number, cost_currency, None, None)
-    position = Position.from_amounts(Amount(number, currency), cost)
+    position = Position(Amount(number, currency),
+                        Cost(cost_number, cost_currency, None, None))
     posting = Posting(account, position, None, None, None)
     if entry is not None:
         entry.postings.append(posting)

@@ -128,7 +128,7 @@ def convert_lot_specs_to_lots(entries, unused_options_map):
                                     entry.meta, 'Cost is negative: "{}"'.format(cost), None))
 
                     units = Amount(pos.units.number, currency)
-                    posting = posting._replace(position=Position.from_amounts(units, cost))
+                    posting = posting._replace(position=Position(units, cost))
 
             new_postings.append(posting)
         new_entries.append(entry._replace(postings=new_postings))

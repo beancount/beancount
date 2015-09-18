@@ -450,7 +450,7 @@ def holding_to_position(holding):
     Returns:
       An instance of Position.
     """
-    return position.Position.from_amounts(
+    return position.Position(
         amount.Amount(holding.number, holding.currency),
         (position.Cost(holding.cost_number, holding.cost_currency, None, None)
          if holding.cost_number

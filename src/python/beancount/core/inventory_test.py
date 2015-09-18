@@ -9,12 +9,12 @@ import copy
 from datetime import date
 import types
 
-from beancount.core.xposition import Position
-from beancount.core.xposition import Cost
-from beancount.core.xinventory import Inventory
-from beancount.core.xinventory import Booking
-from beancount.core import xposition as position
-from beancount.core import xinventory as inventory
+from beancount.core.position import Position
+from beancount.core.position import Cost
+from beancount.core.inventory import Inventory
+from beancount.core.inventory import Booking
+from beancount.core import position as position
+from beancount.core import inventory as inventory
 
 from beancount.core.number import D
 from beancount.core.number import ZERO
@@ -211,8 +211,6 @@ class TestInventory(unittest.TestCase):
         inv = I('10 GOOG {1.11 USD}, 2.22 CAD')
         inv2 = inv * D('3')
         self.assertEqual(I('30 GOOG {1.11 USD}, 6.66 CAD'), inv2)
-        with self.assertRaises(AssertionError):
-            inv2 = inv * 3
 
     def test_get_units(self):
         inv = I('40.50 JPY, 40.51 USD {1.01 CAD}, 40.52 CAD')
