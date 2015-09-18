@@ -22,6 +22,9 @@ from beancount.core.amount import Amount
 from beancount.core import display_context
 
 
+A = Amount.from_string  # pylint: disable=invalid-name
+
+
 class TestCost(unittest.TestCase):
 
     dformat = display_context.DisplayContext().build()

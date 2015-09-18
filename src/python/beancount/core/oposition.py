@@ -148,21 +148,37 @@ class Position:
     # Allowed data types for lot.cost
     cost_types = (NoneType, Cost, CostSpec)
 
-    def __init__(self, lot, number):
+    # def __init__(self, lot, number):
+    #     """Constructor from a lot and a number of units of the ot.
+    #
+    #     Args:
+    #       lot: The lot of this position.
+    #       number: An instance of Decimal, the number of units of lot.
+    #     """
+    #     assert isinstance(lot, Lot), (
+    #         "Expected a lot; received '{}'".format(lot))
+    #     assert isinstance(number, (NoneType, Decimal)), (
+    #         "Expected a Decimal; received '{}'".format(number))
+    #     assert isinstance(lot.cost, self.cost_types), (
+    #         "Invalid data type for Lot.cost; received '{}'".format(lot.cost))
+    #     self.lot = lot
+    #     self.number = number
+
+    def __init__(self, units, cost=None):
         """Constructor from a lot and a number of units of the ot.
 
         Args:
           lot: The lot of this position.
           number: An instance of Decimal, the number of units of lot.
         """
-        assert isinstance(lot, Lot), (
-            "Expected a lot; received '{}'".format(lot))
-        assert isinstance(number, (NoneType, Decimal)), (
-            "Expected a Decimal; received '{}'".format(number))
-        assert isinstance(lot.cost, self.cost_types), (
-            "Invalid data type for Lot.cost; received '{}'".format(lot.cost))
-        self.lot = lot
-        self.number = number
+        assert isinstance(units, Amount), (
+            "Expected an Amount for units; received '{}'".format(units))
+        assert isinstance(units.currency, str), (
+            "Expected a str for units currency; received '{}'".format(units.currency))
+        assert cost is None or isinstance(cost, self.cost_types), (
+            "Expected a Cost for cost; received '{}'".format(cost))
+        self.number = units.number
+        self.lot = Lot(units.currency, cost)
 
     def __hash__(self):
         """Compute a hash for this position.

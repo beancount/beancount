@@ -9,15 +9,18 @@ import copy
 import random
 from datetime import date
 
-from beancount.core.number import ZERO
-from beancount.core.number import D
-from beancount.core.amount import Amount
-from beancount.core import display_context
 from beancount.core import xposition as position
 from beancount.core.xposition import Cost
 from beancount.core.xposition import Position
 from beancount.core.xposition import from_string
 from beancount.core.xposition import from_amounts
+
+from beancount.core.number import ZERO
+from beancount.core.number import D
+from beancount.core.amount import Amount
+from beancount.core import display_context
+
+
 A = Amount.from_string  # pylint: disable=invalid-name
 
 
