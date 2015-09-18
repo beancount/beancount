@@ -44,6 +44,42 @@ class TestPadding(cmptest.TestCase):
 
         """, entries)
 
+    @loader.load_doc()
+    def test_pad_to_zero(self, entries, errors, __):
+        """
+          ;; Test the case that this directive generates a padding entry, padding to zero.
+          2013-01-01 open Assets:Checking
+          2013-01-01 open Equity:Opening-Balances
+
+          2013-02-01 *
+            Assets:Checking           234.56 USD
+            Equity:Opening-Balances  -234.56 USD
+
+          2013-05-01 pad Assets:Checking Equity:Opening-Balances
+
+          2013-05-03 balance Assets:Checking                                 0.00 USD
+
+        """
+        self.assertFalse(errors)
+        self.assertEqualEntries("""
+
+          2013-01-01 open Assets:Checking
+          2013-01-01 open Equity:Opening-Balances
+
+          2013-02-01 *
+            Assets:Checking           234.56 USD
+            Equity:Opening-Balances  -234.56 USD
+
+          2013-05-01 pad Assets:Checking Equity:Opening-Balances
+
+          ;; Check this is inserted.
+          2013-05-01 P "(Padding inserted for Balance of 0.00 USD for difference -234.56 USD)"
+            Assets:Checking          -234.56 USD
+            Equity:Opening-Balances   234.56 USD
+
+          2013-05-03 balance Assets:Checking                                 0.00 USD
+
+        """, entries)
 
     @loader.load_doc(expect_errors=True)
     def test_pad_no_overflow(self, entries, errors, __):

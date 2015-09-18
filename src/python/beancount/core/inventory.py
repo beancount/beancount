@@ -346,37 +346,37 @@ class Inventory(list):
             "Internal error: {!r} (type: {})".format(cost, type(cost).__name__))
 
         # Find the position.
-        for index, position in enumerate(self):
-            if (position.units.currency == units.currency and
-                position.cost == cost):
+        for index, pos in enumerate(self):
+            if (pos.units.currency == units.currency and
+                pos.cost == cost):
 
                 # Check if reducing.
                 booking = (Booking.REDUCED
-                           if (position.units.number * units.number) < ZERO else
+                           if (pos.units.number * units.number) < ZERO else
                            Booking.AUGMENTED)
 
                 # Compute the new number ofunits.
-                number = position.units.number + units.number
+                number = pos.units.number + units.number
                 if number == ZERO:
                     # If empty, delete the position.
                     del self[index]
-                    position = None
+                    pos = None
                 else:
                     # Otherwise update it.
-                    position = Position(Amount(number, units.currency), cost)
-                    self[index] = position
+                    pos = Position(Amount(number, units.currency), cost)
+                    self[index] = pos
                 break
         else:
             # If not found, create a new one.
             if units.number == ZERO:
-                position = None
+                pos = None
                 booking = Booking.IGNORED
             else:
-                position = Position(units, cost)
-                self.append(position)
+                pos = Position(units, cost)
+                self.append(pos)
                 booking = Booking.CREATED
 
-        return position, booking
+        return pos, booking
 
     def add_position(self, position):
         """Add using a position (with strict lot matching).
