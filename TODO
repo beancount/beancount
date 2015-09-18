@@ -14,18 +14,12 @@ beancount: TODO
     - Remove OLD comments from parser.py and update the description to use the
       xposition class.
 
-  - Parsing will now always return incomplete entries, and all the tests have to
-    be adapted to reflect this new fact.
-
-    * Remove booking hacks everywhere; only the loader should perform booking.
-
-    * Remove the beancount.ops.documents plugin, or perhaps make the loader
-      operate in a raw mode, e.g. not running any plugins.
+  - Remove the beancount.ops.documents plugin, or perhaps make the loader
+    operate in a raw mode, e.g. not running any plugins.
 
     egrep --include='*.py' -srn 'parse_(string|file)' /home/blais/p/beancount/src/python/beancount
 
-
-  - Write test for beancount.parser.booking.
+  - Write test for beancount.parser.booking_full.
 
   - Merge beancount.core.interpolate into booking.
   - Merge beancount.ops.validation.validate_inventory_booking() into booking.
@@ -35,6 +29,10 @@ beancount: TODO
 
   - (Annoyance) All functions that return an (entries, errors, options_map)
     triple really should return (entries, options_map, errors), in this order.
+
+  - Improve the ability to detect a user-specific tolerance in
+    is_tolerance_user_specified(). This heuristic is not great, find some better
+    way.
 
   - Create a b.c.data.transactions_only() function to this common type of
     filtering and grep/replace everywhere. This is just too common not to create
