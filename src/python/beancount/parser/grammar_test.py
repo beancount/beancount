@@ -13,6 +13,7 @@ from unittest import mock
 from beancount.core.number import D
 from beancount.core.number import ZERO
 from beancount.core.amount import from_string as A
+from beancount.core.amount import Amount
 from beancount.core.position import CostSpec
 from beancount.parser import parser
 from beancount.parser import lexer
@@ -2038,11 +2039,22 @@ class TestLexerAndParserErrors(cmptest.TestCase):
 
 class TestIncompleteInputs(cmptest.TestCase):
 
+    #
+    # Units
+    #
+
     @parser.parse_doc(allow_incomplete=True)
-    def test_missing_amount(self, entries, _, options_map):
+    def test_units_full(self, entries, _, options_map):
         """
-          2000-01-01 open Assets:Account1
-          2000-01-01 open Assets:Account2
+          2010-05-28 *
+            Assets:Account1     100.00 USD
+            Assets:Account2
+        """
+        self.assertEqual(A('100 USD'), entries[-1].postings[0].position.units)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_units_missing(self, entries, _, options_map):
+        """
           2010-05-28 *
             Assets:Account1     100.00 USD
             Assets:Account2
@@ -2050,21 +2062,41 @@ class TestIncompleteInputs(cmptest.TestCase):
         self.assertEqual(None, entries[-1].postings[-1].position)
 
     @parser.parse_doc(allow_incomplete=True)
-    def test_missing_number(self, entries, _, options_map):
+    def test_units_missing_number(self, entries, _, options_map):
         """
-          2000-01-01 open Assets:Account1
-          2000-01-01 open Assets:Account2
           2010-05-28 *
             Assets:Account1     100.00 USD
-            Assets:Account2            CAD
+            Assets:Account2            USD
         """
-        pos = entries[-1].postings[-1].position
-        self.assertFalse(pos is None)
-        self.assertEqual(None, pos.units.number)
-        self.assertEqual("CAD", pos.units.currency)
+        units = entries[-1].postings[-1].position.units
+        self.assertEqual(Amount(None, 'USD'), units)
+
+    @parser.parse_doc(allow_incomplete=True, expect_errors=True)
+    def test_units_missing_currency(self, entries, _, options_map):
+        """
+          2010-05-28 *
+            Assets:Account1     100.00 USD
+            Assets:Account2    -100.00
+        """
+        self.assertFalse(entries)
+
+    #
+    # Price
+    #
 
     @parser.parse_doc(allow_incomplete=True)
-    def test_missing_price_amount(self, entries, _, options_map):
+    def test_price_none(self, entries, _, options_map):
+        """
+          2010-05-28 *
+            Assets:Account1     100.00 USD
+            Assets:Account2     120.00 CAD
+        """
+        posting = entries[-1].postings[0]
+        self.assertEqual(None, posting.position.cost)
+        self.assertEqual(None, posting.price)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_price_missing(self, entries, _, options_map):
         """
           2000-01-01 open Assets:Account1
           2000-01-01 open Assets:Account2
@@ -2074,108 +2106,105 @@ class TestIncompleteInputs(cmptest.TestCase):
         """
         posting = entries[-1].postings[0]
         pos = posting.position
-        self.assertEqual(D('100.00'), pos.units.number)
-        self.assertEqual('USD', pos.units.currency)
-        self.assertIsInstance(posting.price, amount.Amount)
-        self.assertEqual(amount.Amount(None, None), posting.price)
+        self.assertEqual(A('100.00 USD'), pos.units)
+        self.assertIsInstance(posting.price, Amount)
+        self.assertEqual(Amount(None, None), posting.price)
 
     @parser.parse_doc(allow_incomplete=True)
-    def test_missing_price_number(self, entries, _, options_map):
+    def test_price_missing_number(self, entries, _, options_map):
         """
-          2000-01-01 open Assets:Account1
-          2000-01-01 open Assets:Account2
           2010-05-28 *
             Assets:Account1     100.00 USD @ CAD
             Assets:Account2     120.00 CAD
         """
         posting = entries[-1].postings[0]
-        pos = posting.position
+        self.assertIsInstance(posting.price, Amount)
+        self.assertEqual(Amount(None, 'CAD'), posting.price)
 
-        self.assertEqual(A('100.00 USD'), pos.units)
-        self.assertEqual(None, pos.cost)
-        self.assertIsInstance(posting.price, amount.Amount)
-        self.assertEqual(amount.Amount(None, 'CAD'), posting.price)
+    @parser.parse_doc(allow_incomplete=True, expect_errors=True)
+    def test_price_missing_currency(self, entries, _, options_map):
+        """
+          2010-05-28 * "THIS IS NOT LEGAL, THIS CAUSES AN ERROR"
+            Assets:Account1     100.00 USD @ 1.2
+            Assets:Account2     120.00 CAD
+        """
+
+    #
+    # Cost
+    #
 
     @parser.parse_doc(allow_incomplete=True)
     def test_cost_full(self, entries, _, options_map):
         """
-          2000-01-01 open Assets:Account1
-          2000-01-01 open Assets:Account2
           2010-05-28 *
             Assets:Account1     2 HOOL {150 # 5 USD}
             Assets:Account2     120.00 USD
         """
-        posting = entries[-1].postings[0]
-        pos = posting.position
+        pos = entries[-1].postings[0].position
         self.assertEqual(A('2 HOOL'), pos.units)
         self.assertEqual(CostSpec(D('150'), D('5'), 'USD', None, None, False), pos.cost)
 
     @parser.parse_doc(allow_incomplete=True)
-    def test_missing_cost_per(self, entries, _, options_map):
+    def test_cost_missing_number_per(self, entries, _, options_map):
         """
-          2000-01-01 open Assets:Account1
-          2000-01-01 open Assets:Account2
           2010-05-28 *
             Assets:Account1     2 HOOL {# 5 USD}
             Assets:Account2     120.00 USD
         """
-        posting = entries[-1].postings[0]
-        pos = posting.position
+        pos = entries[-1].postings[0].position
         self.assertEqual(A('2 HOOL'), pos.units)
         self.assertEqual(CostSpec(None, D('5'), 'USD', None, None, False), pos.cost)
 
     @parser.parse_doc(allow_incomplete=True)
-    def test_missing_cost_total1(self, entries, _, options_map):
+    def test_cost_missing_number_total(self, entries, _, options_map):
         """
-          2000-01-01 open Assets:Account1
-          2000-01-01 open Assets:Account2
           2010-05-28 *
             Assets:Account1     2 HOOL {150 # USD}
             Assets:Account2     120.00 USD
         """
-        posting = entries[-1].postings[0]
-        pos = posting.position
+        pos = entries[-1].postings[0].position
         self.assertEqual(A('2 HOOL'), pos.units)
+        # FIXME: This case should be different.
         self.assertEqual(CostSpec(D('150'), None, 'USD', None, None, False), pos.cost)
 
     @parser.parse_doc(allow_incomplete=True)
-    def test_missing_cost_total2(self, entries, _, options_map):
+    def test_cost_no_number_total(self, entries, _, options_map):
         """
-          2000-01-01 open Assets:Account1
-          2000-01-01 open Assets:Account2
           2010-05-28 *
             Assets:Account1     2 HOOL {150 USD}
             Assets:Account2     120.00 USD
         """
-        posting = entries[-1].postings[0]
-        pos = posting.position
+        pos = entries[-1].postings[0].position
         self.assertEqual(A('2 HOOL'), pos.units)
         self.assertEqual(CostSpec(D('150'), None, 'USD', None, None, False), pos.cost)
 
     @parser.parse_doc(allow_incomplete=True)
-    def test_missing_cost_number(self, entries, _, options_map):
+    def test_cost_missing_numbers(self, entries, _, options_map):
         """
-          2000-01-01 open Assets:Account1
-          2000-01-01 open Assets:Account2
           2010-05-28 *
             Assets:Account1     2 HOOL {USD}
             Assets:Account2     120.00 USD
         """
-        posting = entries[-1].postings[0]
-        pos = posting.position
+        pos = entries[-1].postings[0].position
         self.assertEqual(A('2 HOOL'), pos.units)
         self.assertEqual(CostSpec(None, None, 'USD', None, None, False), pos.cost)
+
+    @parser.parse_doc(allow_incomplete=True, expect_errors=True)
+    def test_cost_missing_currency(self, entries, _, options_map):
+        """
+          2010-05-28 *
+            Assets:Account1     2 HOOL {150}
+            Assets:Account2     120.00 USD
+        """
+        self.assertFalse(entries)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_missing_cost_empty(self, entries, _, options_map):
         """
-          2000-01-01 open Assets:Account1
-          2000-01-01 open Assets:Account2
           2010-05-28 *
             Assets:Account1     2 HOOL {}
             Assets:Account2     120.00 CAD
         """
-        posting = entries[-1].postings[0]
-        pos = posting.position
+        pos = entries[-1].postings[0].position
         self.assertEqual(A('2 HOOL'), pos.units)
         self.assertEqual(CostSpec(None, None, None, None, None, False), pos.cost)

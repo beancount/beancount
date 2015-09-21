@@ -18,7 +18,7 @@ label and a lot date. A CostSpec is similar to a Cost, but has all optional
 data; it consists in a specification for matching against a particular inventory
 lot.
 
-OLD Specifically, the following pieces of data may be missing:
+OLD Specifically, the following pieces of data may be left missing:
 OLD
 OLD   INPUT: Assets:Account
 OLD   position.number = NA
