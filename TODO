@@ -1328,6 +1328,31 @@ http://furius.ca/beancount/doc/proposal-inter
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - Provide a way to save and easily render a query, from the input file. e.g.
+
+      2015-09-23 query "cash" 'SELECT CONVERT(SUM(position), "USD") WHERE account ~ "Cash"'"
+
+    Typing "cash" in the shell should run this query.
+
+    Also, there should be an option to bean-query (or less likely, a dedicated
+    command) to generate all the queries defined in an input file.
+
+
+  - web: Don't render the transaction detail anymore; instead, the full context
+    should come up in a tooltip that is computed on-demand. Rendering the basic
+    table should not have to render all the detail upfront, that is always
+    overkill.
+
+  - Highlight (e.g., in the color red) the postings to accounts that are in
+    contra value, e.g. a positive Income, or a negative Expenses posting.
+
+
+
+  - query: Provide a column for the "other accounts" of a selected posting's
+    transactions, so you can select that.
+
+
+
   - Great idea: Make the printer able to (1) output "incomplete" entries and (2)
     print out the entries in the order of (filename, line-no) in which they were
     parsed, to produce a file that is as close as possible to output. (bw3443
