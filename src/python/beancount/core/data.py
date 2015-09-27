@@ -3,7 +3,6 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import builtins
-import collections
 import datetime
 from collections import namedtuple
 import sys

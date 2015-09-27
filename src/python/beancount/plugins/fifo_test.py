@@ -2,11 +2,9 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import unittest
 import textwrap
-import pprint
 
 from beancount import loader
 from beancount.parser import cmptest
-from beancount.parser import printer
 from beancount.plugins import fifo
 from beancount.utils import test_utils
 
@@ -258,7 +256,6 @@ class TestExtractTradesScript(unittest.TestCase):
         """
         with test_utils.capture() as stdout:
             test_utils.run_with_args(fifo.main, [filename])
-        output = stdout.getvalue()
         self.assertEqual(textwrap.dedent("""\
            Units  Currency  Cost Currency    Buy Date  Buy Price   Sell Date  Sell Price     P/L
         --------  --------  -------------  ----------  ---------  ----------  ----------  ------
@@ -267,4 +264,4 @@ class TestExtractTradesScript(unittest.TestCase):
         1.000000       BTC            USD  2015-09-05     260.00  2015-09-21      310.00   50.00
         2.000000       BTC            USD  2015-09-05     260.00  2015-09-22      330.00  140.00
         --------  --------  -------------  ----------  ---------  ----------  ----------  ------
-        """), output)
+        """), stdout.getvalue())

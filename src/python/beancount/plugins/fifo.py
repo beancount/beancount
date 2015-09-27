@@ -73,18 +73,15 @@ import argparse
 import collections
 import copy
 import logging
-import pprint
 import re
 import sys
 import uuid
 
 from beancount.core.number import ZERO
-from beancount.core.number import D
 from beancount.core.amount import Amount
 from beancount.core.position import Position
 from beancount.core.inventory import Inventory
 from beancount.core import data
-from beancount.parser import printer
 from beancount import loader
 from beancount.reports import table
 
@@ -130,7 +127,7 @@ def augment_inventory(fifo_lots, posting, eindex):
     number = posting.position.number
     pos = Position(lot, number)
     new_posting = posting._replace(position=pos)
-    fifo_lots.append( ([number], new_posting, eindex) )
+    fifo_lots.append(([number], new_posting, eindex))
     return new_posting
 
 
@@ -307,11 +304,11 @@ def book_price_conversions_as_fifo(entries, assets_account, income_account):
                     for pos in pnl:
                         meta = data.new_metadata('<fifo>', 0)
                         new_postings.append(
-                            data.Posting(income_account,
-                                         data.Position(data.Lot(pos.lot.currency, None, None),
-                                                       -pos.number),
-                                         None, None,
-                                         meta))
+                            data.Posting(
+                                income_account,
+                                data.Position(data.Lot(pos.lot.currency, None, None),
+                                              -pos.number),
+                                None, None, meta))
 
             # Third, add back all the other unrelated legs in.
             for posting in other:
