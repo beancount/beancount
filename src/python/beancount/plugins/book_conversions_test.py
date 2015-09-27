@@ -5,16 +5,16 @@ import textwrap
 
 from beancount import loader
 from beancount.parser import cmptest
-from beancount.plugins import fifo
+from beancount.plugins import book_conversions
 from beancount.utils import test_utils
 
 
-class TestbookFIFO(cmptest.TestCase):
+class TestBookConversions(cmptest.TestCase):
 
     @loader.load_doc()
-    def test_fifo_example(self, entries, errors, __):
+    def test_book_conversions_example(self, entries, errors, __):
         """
-          plugin "beancount.plugins.fifo" "Assets:Bitcoin,Income:Bitcoin"
+          plugin "beancount.plugins.book_conversions" "Assets:Bitcoin,Income:Bitcoin"
 
           2015-01-01 open Assets:Bitcoin
           2015-01-01 open Income:Bitcoin
@@ -62,17 +62,17 @@ class TestbookFIFO(cmptest.TestCase):
         metadata are consistent with those computed at conversion time, for
         all tests.
         """
-        entries, errors, matches = fifo.book_price_conversions_as_fifo(
+        entries, errors, matches = book_conversions.book_price_conversions(
             entries, "Assets:Bitcoin", "Income:Bitcoin")
         self.assertFalse(errors)
-        trades = fifo.extract_trades(entries)
+        trades = book_conversions.extract_trades(entries)
         self.assertEqual(matches, trades)
         return entries
 
     @loader.load_doc()
-    def test_fifo_split_augmenting(self, entries, errors, __):
+    def test_book_conversions_split_augmenting(self, entries, errors, __):
         """
-          ;; plugin "beancount.plugins.fifo" "Assets:Bitcoin,Income:Bitcoin"
+          ;; plugin "beancount.plugins.book_conversions" "Assets:Bitcoin,Income:Bitcoin"
 
           2015-01-01 open Assets:Bitcoin
           2015-01-01 open Income:Bitcoin
@@ -125,7 +125,7 @@ class TestbookFIFO(cmptest.TestCase):
         """, entries)
 
     @loader.load_doc()
-    def test_fifo_split_reducing(self, entries, errors, __):
+    def test_book_conversions_split_reducing(self, entries, errors, __):
         """
           2015-01-01 open Assets:Bitcoin
           2015-01-01 open Income:Bitcoin
@@ -179,9 +179,9 @@ class TestbookFIFO(cmptest.TestCase):
         """, entries)
 
     @loader.load_doc(expect_errors=True)
-    def test_fifo_split_partial_failure(self, entries, errors, __):
+    def test_book_conversions_split_partial_failure(self, entries, errors, __):
         """
-          plugin "beancount.plugins.fifo" "Assets:Bitcoin,Income:Bitcoin"
+          plugin "beancount.plugins.book_conversions" "Assets:Bitcoin,Income:Bitcoin"
           plugin "beancount.plugins.auto_accounts"
 
           2015-09-04 *
@@ -195,9 +195,9 @@ class TestbookFIFO(cmptest.TestCase):
         self.assertRegexpMatches(errors[0].message, "Could not match position")
 
     @loader.load_doc(expect_errors=True)
-    def test_fifo_split_complete_failure(self, entries, errors, __):
+    def test_book_conversions_split_complete_failure(self, entries, errors, __):
         """
-          plugin "beancount.plugins.fifo" "Assets:Bitcoin,Income:Bitcoin"
+          plugin "beancount.plugins.book_conversions" "Assets:Bitcoin,Income:Bitcoin"
           plugin "beancount.plugins.auto_accounts"
 
           2015-09-04 *
@@ -215,9 +215,9 @@ class TestbookFIFO(cmptest.TestCase):
         self.assertRegexpMatches(errors[0].message, "Could not match position")
 
     @loader.load_doc(expect_errors=True)
-    def test_fifo_bad_configuration(self, entries, errors, __):
+    def test_book_conversions_bad_configuration(self, entries, errors, __):
         """
-          plugin "beancount.plugins.fifo" "Assets:Bitcoin"
+          plugin "beancount.plugins.book_conversions" "Assets:Bitcoin"
         """
         self.assertRegexpMatches(errors[0].message, "Invalid configuration")
 
@@ -227,7 +227,7 @@ class TestExtractTradesScript(unittest.TestCase):
     @test_utils.docfile
     def test_extract_trades(self, filename):
         """
-          plugin "beancount.plugins.fifo" "Assets:Bitcoin,Income:Bitcoin"
+          plugin "beancount.plugins.book_conversions" "Assets:Bitcoin,Income:Bitcoin"
 
           2015-01-01 open Assets:Bitcoin
           2015-01-01 open Income:Bitcoin
@@ -255,7 +255,7 @@ class TestExtractTradesScript(unittest.TestCase):
             Expenses:Something
         """
         with test_utils.capture() as stdout:
-            test_utils.run_with_args(fifo.main, [filename])
+            test_utils.run_with_args(book_conversions.main, [filename])
         self.assertEqual(textwrap.dedent("""\
            Units  Currency  Cost Currency    Buy Date  Buy Price   Sell Date  Sell Price     P/L
         --------  --------  -------------  ----------  ---------  ----------  ----------  ------

@@ -7,7 +7,7 @@ particular account, which you provide. For each of those accounts, it also
 requires a corresponding Income account to book the profit/loss of reducing
 lots (i.e., sales):
 
-  plugin "beancount.plugins.fifo" "Assets:Bitcoin,Income:Bitcoin"
+  plugin "beancount.plugins.book_conversions" "Assets:Bitcoin,Income:Bitcoin"
 
 Then, simply input the transactions with price conversion. We use "Bitcoins" in
 this example, converting Bitcoin purchases that were carried out as currency
@@ -53,16 +53,23 @@ transformations of the postings that run in in a plugin.
 
 Implementation notes:
 
-- Instead of keeping a list of (Position, Transcation) pairs for the pending
+- This code uses the FIFO method only for now. However, it would be very easy to
+  customize it to provide other booking methods, e.g. LIFO, or otherwise. This
+  will be added eventually, and I'm hoping to reuse the same inventory
+  abstractions that will be used to implement the fallback booking methods from
+  the booking proposal review (http://furius.ca/beancount/doc/proposal-booking).
+
+- Instead of keeping a list of (Position, Transaction) pairs for the pending
   FIFO lots, we really ought to use a beancount.core.inventory.Inventory
   instance. However, the class does not contain sufficient data to carry out
   FIFO booking at the moment. A newer implementation, living in the "booking"
   branch, does, and will be used in the future.
 
 - This code assumes that a positive number of units is an augmenting lot and a
-  reducing one has a negative number of units. This is not strictly true;
-  however, we would need an Inventory in order to figrue this out. This will be
-  done in the future and is not difficult to do.
+  reducing one has a negative number of units, though we never call them that
+  way on purpose (to eventually allow this code to handle short positions). This
+  is not strictly true; however, we would need an Inventory in order to figrue
+  this out. This will be done in the future and is not difficult to do.
 
 """
 
@@ -78,9 +85,10 @@ import sys
 import uuid
 
 from beancount.core.number import ZERO
-from beancount.core.amount import Amount
-from beancount.core.position import Position
-from beancount.core.inventory import Inventory
+from beancount.core import amount
+from beancount.core import position
+from beancount.core import inventory
+from beancount.core import account
 from beancount.core import data
 from beancount import loader
 from beancount.reports import table
@@ -94,29 +102,28 @@ META = 'trades'
 ConfigError = collections.namedtuple('ConfigError', 'source message entry')
 
 # A failure to find a matching lot.
-FIFOError = collections.namedtuple('FIFOError', 'source message entry')
+BookConversionError = collections.namedtuple('BookConversionError', 'source message entry')
 
 
 def is_matching(posting, account):
-    """"A special posting is one in the FIFO currency that doesn't have a cost and that
-    has a price.
+    """"Identify if the given posting is one to be booked.
 
     Args:
       posting: An instance of a Posting.
       account: The account name configured.
     Returns:
-      A boolean, true if this posting is one that we should be concerned with.
+      A boolean, true if this posting is one that we should be adding a cost to.
     """
     return (posting.account == account and
             posting.position.lot.cost is None and
             posting.price is not None)
 
 
-def augment_inventory(fifo_lots, posting, eindex):
+def augment_inventory(pending_lots, posting, eindex):
     """Add the lots from the given posting to the running inventory.
 
     Args:
-      fifo_lots: A list of pending ([number], Posting, Transaction) to be matched.
+      pending_lots: A list of pending ([number], Posting, Transaction) to be matched.
         The number is modified in-place, destructively.
       posting: The posting whose position is to be added.
       eindex: The index of the parent transaction housing this posting.
@@ -125,17 +132,17 @@ def augment_inventory(fifo_lots, posting, eindex):
     """
     lot = posting.position.lot._replace(cost=copy.copy(posting.price))
     number = posting.position.number
-    pos = Position(lot, number)
+    pos = position.Position(lot, number)
     new_posting = posting._replace(position=pos)
-    fifo_lots.append(([number], new_posting, eindex))
+    pending_lots.append(([number], new_posting, eindex))
     return new_posting
 
 
-def reduce_inventory(fifo_lots, posting, eindex):
-    """Match a reducing posting against a list of lots.
+def reduce_inventory(pending_lots, posting, eindex):
+    """Match a reducing posting against a list of lots (using FIFO order).
 
     Args:
-      fifo_lots: A list of pending ([number], Posting, Transaction) to be matched.
+      pending_lots: A list of pending ([number], Posting, Transaction) to be matched.
         The number is modified in-place, destructively.
       posting: The posting whose position is to be added.
       eindex: The index of the parent transaction housing this posting.
@@ -158,7 +165,7 @@ def reduce_inventory(fifo_lots, posting, eindex):
     while match_number != ZERO:
 
         # Find the first lot with matching currency.
-        for fnumber, fposting, findex in fifo_lots:
+        for fnumber, fposting, findex in pending_lots:
             fposition = fposting.position
             if (fposition.lot.currency == match_currency and
                 fposition.lot.cost and fposition.lot.cost.currency == cost_currency):
@@ -166,21 +173,21 @@ def reduce_inventory(fifo_lots, posting, eindex):
                 break
         else:
             errors.append(
-                FIFOError(posting.meta,
+                BookConversionError(posting.meta,
                           "Could not match position {}".format(posting), None))
             break
 
-        # Reduce the FIFO lots.
+        # Reduce the pending lots.
         number = min(match_number, fnumber[0])
         cost = fposition.lot.cost
         match_number -= number
         fnumber[0] -= number
         if fnumber[0] == ZERO:
-            fifo_lots.pop(0)
+            pending_lots.pop(0)
 
         # Add a corresponding posting.
-        pos = Position(posting.position.lot._replace(cost=copy.copy(cost)),
-                       -number)
+        pos = position.Position(posting.position.lot._replace(cost=copy.copy(cost)),
+                                -number)
         rposting = posting._replace(position=pos)
         new_postings.append(rposting)
 
@@ -203,12 +210,10 @@ def link_entries_with_metadata(entries, all_matches):
       A list of pairs of (index, Posting) for the new (augmenting, reducing)
       annotated postings.
     """
-    new_matches = []
-
     # Allocate trade names and compute a map of posting to trade names.
     link_map = collections.defaultdict(list)
     for (aug_index, aug_posting), (red_index, red_posting) in all_matches:
-        link = 'fifo-{}'.format(str(uuid.uuid4()).split('-')[-1])
+        link = 'trade-{}'.format(str(uuid.uuid4()).split('-')[-1])
         link_map[id(aug_posting)].append(link)
         link_map[id(red_posting)].append(link)
 
@@ -234,8 +239,8 @@ def link_entries_with_metadata(entries, all_matches):
             for (aug_index, aug_posting), (red_index, red_posting) in all_matches]
 
 
-def book_price_conversions_as_fifo(entries, assets_account, income_account):
-    """Rewrite transactions to insert cost basis according to FIFO.
+def book_price_conversions(entries, assets_account, income_account):
+    """Rewrite transactions to insert cost basis according to a booking method.
 
     See module docstring for full details.
 
@@ -253,7 +258,7 @@ def book_price_conversions_as_fifo(entries, assets_account, income_account):
     """
     # Pairs of (Position, Transaction) instances used to match augmenting
     # entries with reducing ones.
-    fifo_lots = []
+    pending_lots = []
 
     # A list of pairs of matching (augmenting, reducing) postings.
     all_matches = []
@@ -283,32 +288,32 @@ def book_price_conversions_as_fifo(entries, assets_account, income_account):
 
             # Convert all the augmenting postings to cost basis.
             for posting in augmenting:
-                new_postings.append(augment_inventory(fifo_lots, posting, eindex))
+                new_postings.append(augment_inventory(pending_lots, posting, eindex))
 
             # Then process reducing postings.
             if reducing:
-                # Process all the reducing postings, booking them to FIFO basis.
-                pnl = Inventory()
+                # Process all the reducing postings, booking them to matching lots.
+                pnl = inventory.Inventory()
                 for posting in reducing:
                     rpostings, matches, posting_pnl, new_errors = (
-                        reduce_inventory(fifo_lots, posting, eindex))
+                        reduce_inventory(pending_lots, posting, eindex))
                     new_postings.extend(rpostings)
                     all_matches.extend(matches)
                     errors.extend(new_errors)
-                    pnl.add_amount(Amount(posting_pnl, posting.price.currency))
+                    pnl.add_amount(amount.Amount(posting_pnl, posting.price.currency))
 
                 # If some reducing lots were seen in this transaction, insert an
                 # Income leg to absorb the P/L. We need to do this for each currency
                 # which incurred P/L.
                 if not pnl.is_empty():
                     for pos in pnl:
-                        meta = data.new_metadata('<fifo>', 0)
+                        meta = data.new_metadata('<book_conversions>', 0)
                         new_postings.append(
-                            data.Posting(
-                                income_account,
-                                data.Position(data.Lot(pos.lot.currency, None, None),
-                                              -pos.number),
-                                None, None, meta))
+                            data.Posting(income_account,
+                                         position.Position(
+                                             position.Lot(pos.lot.currency, None, None),
+                                             -pos.number),
+                                         None, None, meta))
 
             # Third, add back all the other unrelated legs in.
             for posting in other:
@@ -367,9 +372,9 @@ def extract_trades(entries):
 
 
 def book_price_conversions_plugin(entries, options_map, config):
-    """A plugin that rewrites transactions to insert cost basis according to FIFO.
+    """Plugin that rewrites transactions to insert cost basis according to a booking method.
 
-    See book_price_conversions_as_fifo() for details.
+    See book_price_conversions() for details.
 
     Args:
       entries: A list of entry instances.
@@ -384,17 +389,17 @@ def book_price_conversions_plugin(entries, options_map, config):
     errors = []
     try:
         assets_account, income_account = re.split(r'[,; \t]', config)
-    except Exception as exc:
+        if not account.is_valid(assets_account) or not account.is_valid(income_account):
+            raise ValueError("Invalid account string")
+    except ValueError as exc:
         errors.append(
-            ConfigError(None,
-                        ('Invalid configuration: "{}"; '
-                         'should be two accounts, skipping booking').format(config),
-                        None))
+            ConfigError(
+                None,
+                ('Invalid configuration: "{}": {}, skipping booking').format(config, exc),
+                None))
         return entries, errors
 
-    new_entries, errors, _ = book_price_conversions_as_fifo(entries,
-                                                            assets_account,
-                                                            income_account)
+    new_entries, errors, _ = book_price_conversions(entries, assets_account, income_account)
     return new_entries, errors
 
 
@@ -449,10 +454,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-
-# FIXME: TODO
-#
-# - Rename this to not include "FIFO" in the name, it should be more general
-#   than this, other booking methods should eventually be supported.
