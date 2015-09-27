@@ -1,8 +1,11 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import pprint
+
 from beancount import loader
 from beancount.parser import cmptest
 from beancount.parser import printer
+from beancount.plugins import fifo
 
 
 class TestbookFIFO(cmptest.TestCase):
@@ -29,7 +32,6 @@ class TestbookFIFO(cmptest.TestCase):
             Assets:Bitcoin       -6.000000 BTC @ 230.50 USD
             Expenses:Something
         """
-
         self.assertEqualEntries("""
 
           2015-01-01 open Assets:Bitcoin
@@ -53,10 +55,21 @@ class TestbookFIFO(cmptest.TestCase):
 
         """, entries)
 
+    def _convert_and_check_matches(self, entries):
+        """Perform the conversion and cross-check output matches with
+        extracted matches.
+        """
+        entries, errors, matches = fifo.book_price_conversions_as_fifo(
+            entries, "Assets:Bitcoin", "Income:Bitcoin")
+        self.assertFalse(errors)
+        trades = fifo.extract_trades(entries)
+        self.assertEqual(matches, trades)
+        return entries
+
     @loader.load_doc()
     def test_fifo_split_augmenting(self, entries, errors, __):
         """
-          plugin "beancount.plugins.fifo" "Assets:Bitcoin,Income:Bitcoin"
+          ;; plugin "beancount.plugins.fifo" "Assets:Bitcoin,Income:Bitcoin"
 
           2015-01-01 open Assets:Bitcoin
           2015-01-01 open Income:Bitcoin
@@ -80,6 +93,7 @@ class TestbookFIFO(cmptest.TestCase):
             Expenses:Something
 
         """
+        entries = self._convert_and_check_matches(entries)
         self.assertEqualEntries("""
 
           2015-01-01 open Assets:Bitcoin
@@ -111,8 +125,6 @@ class TestbookFIFO(cmptest.TestCase):
     @loader.load_doc()
     def test_fifo_split_reducing(self, entries, errors, __):
         """
-          plugin "beancount.plugins.fifo" "Assets:Bitcoin,Income:Bitcoin"
-
           2015-01-01 open Assets:Bitcoin
           2015-01-01 open Income:Bitcoin
           2015-01-01 open Assets:Bank
@@ -135,7 +147,7 @@ class TestbookFIFO(cmptest.TestCase):
             Expenses:Something
 
         """
-
+        entries = self._convert_and_check_matches(entries)
         self.assertEqualEntries("""
 
           2015-01-01 open Assets:Bitcoin

@@ -67,7 +67,7 @@ Implementation notes:
 """
 
 __author__ = 'Martin Blais <blais@furius.ca>'
-__plugins__ = ('book_price_conversions_as_fifo',)
+__plugins__ = ('book_price_conversions_plugin',)
 
 import pprint
 import copy
@@ -111,37 +111,38 @@ def is_matching(posting, account):
             posting.price is not None)
 
 
-def augment_inventory(fifo_lots, posting):
+def augment_inventory(fifo_lots, posting, eindex):
     """Add the lots from the given posting to the running inventory.
 
     Args:
-      fifo_lots: A list of pending ([number], Posting) to be matched. The
-        number is modified in-place, destructively.
+      fifo_lots: A list of pending ([number], Posting, Transaction) to be matched.
+        The number is modified in-place, destructively.
       posting: The posting whose position is to be added.
+      eindex: The index of the parent transaction housing this posting.
     Returns:
       A new posting with cost basis inserted to be added to a transformed transaction.
-
     """
     lot = posting.position.lot._replace(cost=copy.copy(posting.price))
     number = posting.position.number
     pos = Position(lot, number)
     new_posting = posting._replace(position=pos)
-    fifo_lots.append( ([number], new_posting) )
+    fifo_lots.append( ([number], new_posting, eindex) )
     return new_posting
 
 
-def reduce_inventory(fifo_lots, matches, posting):
+def reduce_inventory(fifo_lots, posting, eindex):
     """Match a reducing posting against a list of lots.
 
     Args:
-      fifo_lots: A list of pending ([number], Posting) to be matched. The
-        number is modified in-place, destructively.
+      fifo_lots: A list of pending ([number], Posting, Transaction) to be matched.
+        The number is modified in-place, destructively.
       posting: The posting whose position is to be added.
+      eindex: The index of the parent transaction housing this posting.
     Returns:
       A tuple of
         postings: A list of new Posting instances corresponding to the given
           posting, that were booked to the current list of lots.
-        matches: A list of pairs of (number, augmenting-posting, reducing-posting).
+        matches: A list of pairs of (augmenting-posting, reducing-posting).
         pnl: A Decimal, the P/L incurred in reducing these lots.
         errors: A list of new errors generated in reducing these lots.
     """
@@ -156,7 +157,7 @@ def reduce_inventory(fifo_lots, matches, posting):
     while match_number != ZERO:
 
         # Find the first lot with matching currency.
-        for fnumber, fposting in fifo_lots:
+        for fnumber, fposting, findex in fifo_lots:
             fposition = fposting.position
             if (fposition.lot.currency == match_currency and
                 fposition.lot.cost and fposition.lot.cost.currency == cost_currency):
@@ -186,7 +187,8 @@ def reduce_inventory(fifo_lots, matches, posting):
         pnl += number * (posting.price.number - pos.lot.cost.number)
 
         # Add to the list of matches.
-        matches.append((number, fposting, rposting))
+        matches.append(((findex, fposting),
+                        (eindex, rposting)))
 
     return new_postings, matches, pnl, errors
 
@@ -196,14 +198,21 @@ def link_entries_with_metadata(entries, all_matches):
 
     Args:
       entries: The list of entries to modify.
+    Returns:
+      A list of pairs of (index, Posting) for the new (augmenting, reducing)
+      annotated postings.
     """
+    new_matches = []
 
+    # Allocate trade names and compute a map of posting to trade names.
     link_map = collections.defaultdict(list)
-    for _, aug_posting, red_posting in all_matches:
+    for (aug_index, aug_posting), (red_index, red_posting) in all_matches:
         link = 'fifo-{}'.format(str(uuid.uuid4()).split('-')[-1])
         link_map[id(aug_posting)].append(link)
         link_map[id(red_posting)].append(link)
 
+    # Modify the postings.
+    postings_repl_map = {}
     for entry in entries:
         if isinstance(entry, data.Transaction):
             for index, posting in enumerate(entry.postings):
@@ -212,33 +221,35 @@ def link_entries_with_metadata(entries, all_matches):
                     new_posting = posting._replace(meta=posting.meta.copy())
                     new_posting.meta[META] = ','.join(links)
                     entry.postings[index] = new_posting
+                    postings_repl_map[id(posting)] = new_posting
 
     # Just a sanity check.
     assert not link_map, "Internal error: not all matches found."
 
+    # Return a list of the modified postings (mapping the old matches to the
+    # newly created ones).
+    return [((aug_index, postings_repl_map[id(aug_posting)]),
+             (red_index, postings_repl_map[id(red_posting)]))
+            for (aug_index, aug_posting), (red_index, red_posting) in all_matches]
 
-def book_price_conversions_as_fifo(entries, options_map, config):
-    """Plugin that filters transactions to insert cost basis according to FIFO.
+
+def book_price_conversions_as_fifo(entries, assets_account, income_account):
+    """Rewrite transactions to insert cost basis according to FIFO.
 
     See module docstring for full details.
 
     Args:
       entries: A list of entry instances.
-      options_map: A dict of options parsed from the file.
-      config: A string, in "<ACCOUNT1>,<ACCOUNT2>" format.
+      assets_account: An account string, the name of the account to process.
+      income_account: An account string, the name of the account to use for booking
+        realized profit/loss.
+    Returns:
+      A tuple of
+        entries: A list of new, modified entries.
+        errors: A list of errors generated by this plugin.
+        matches: A list of (number, augmenting-posting, reducing-postings) for all
+          matched lots.
     """
-    # The expected configuration is two account names, separated by whitespace.
-    errors = []
-    try:
-        assets_account, income_account = re.split(r'[,; \t]', config)
-    except Exception as exc:
-        errors.append(
-            ConfigError(None,
-                        ('Invalid configuration: "{}"; '
-                         'should be two accounts, skipping booking').format(config),
-                        None))
-        return entries, errors
-
     # Pairs of (Position, Transaction) instances used to match augmenting
     # entries with reducing ones.
     fifo_lots = []
@@ -247,6 +258,7 @@ def book_price_conversions_as_fifo(entries, options_map, config):
     all_matches = []
 
     new_entries = []
+    errors = []
     for eindex, entry in enumerate(entries):
 
         # Figure out if this transaction has postings in Bitcoins without a cost.
@@ -270,7 +282,7 @@ def book_price_conversions_as_fifo(entries, options_map, config):
 
             # Convert all the augmenting postings to cost basis.
             for posting in augmenting:
-                new_postings.append(augment_inventory(fifo_lots, posting))
+                new_postings.append(augment_inventory(fifo_lots, posting, eindex))
 
             # Then process reducing postings.
             if reducing:
@@ -278,7 +290,7 @@ def book_price_conversions_as_fifo(entries, options_map, config):
                 pnl = Inventory()
                 for posting in reducing:
                     rpostings, matches, posting_pnl, new_errors = (
-                        reduce_inventory(fifo_lots, entry, posting))
+                        reduce_inventory(fifo_lots, posting, eindex))
                     new_postings.extend(rpostings)
                     all_matches.extend(matches)
                     errors.extend(new_errors)
@@ -307,23 +319,14 @@ def book_price_conversions_as_fifo(entries, options_map, config):
         new_entries.append(entry)
 
     # Add matching metadata to all matching postings.
-    link_entries_with_metadata(new_entries, all_matches)
+    mod_matches = link_entries_with_metadata(new_entries, all_matches)
 
-    # # Print matches.
-    # for number, aug_posting, red_posting in all_matches:
-    #     print(number)
-    #     print(aug_posting)
-    #     print(red_posting)
-    #     print()
+    # Resolve the indexes to their possibly modified Transaction instances.
+    matches = [(data.TxnPosting(new_entries[aug_index], aug_posting),
+                data.TxnPosting(new_entries[red_index], red_posting))
+               for (aug_index, aug_posting), (red_index, red_posting) in mod_matches]
 
-    trades = extract_trades(new_entries)
-    pprint.pprint(trades)
-
-    # FIXME: sanity check to ensure they match, this should be moved to a test.
-    # Perhaps output 'all_matches' in an intermediate function just to test it,
-    # and have a second function that just drops it to process the plugin.
-
-    return new_entries, errors
+    return new_entries, errors, matches
 
 
 def extract_trades(entries):
@@ -338,8 +341,8 @@ def extract_trades(entries):
     Returns:
       A list of (number, augmenting-posting, reducing-posting).
     """
-    trades = collections.defaultdict(list)
-    for entry in entries:
+    trade_map = collections.defaultdict(list)
+    for index, entry in enumerate(entries):
         if not isinstance(entry, data.Transaction):
             continue
         for posting in entry.postings:
@@ -347,12 +350,55 @@ def extract_trades(entries):
             if links_str:
                 links = links_str.split(',')
                 for link in links:
-                    trades[link].append(posting)
+                    trade_map[link].append((index, entry, posting))
 
-    for postings in trades.values():
-        assert len(postings) >= 2
+    # Sort matches according to the index of the first entry, drop the index
+    # used for doing this, and convert the objects to tuples..
+    trades = [(data.TxnPosting(augmenting[1], augmenting[2]),
+               data.TxnPosting(reducing[1], reducing[2]))
+              for augmenting, reducing in sorted(trade_map.values())]
 
-    return trades.values()
+    # Sanity check.
+    for matches in trades:
+        assert len(matches) == 2
+
+    return trades
+
+
+def book_price_conversions_plugin(entries, options_map, config):
+    """A plugin that rewrites transactions to insert cost basis according to FIFO.
+
+    See book_price_conversions_as_fifo() for details.
+
+    Args:
+      entries: A list of entry instances.
+      options_map: A dict of options parsed from the file.
+      config: A string, in "<ACCOUNT1>,<ACCOUNT2>" format.
+    Returns:
+      A tuple of
+        entries: A list of new, modified entries.
+        errors: A list of errors generated by this plugin.
+    """
+    # The expected configuration is two account names, separated by whitespace.
+    errors = []
+    try:
+        assets_account, income_account = re.split(r'[,; \t]', config)
+    except Exception as exc:
+        errors.append(
+            ConfigError(None,
+                        ('Invalid configuration: "{}"; '
+                         'should be two accounts, skipping booking').format(config),
+                        None))
+        return entries, errors
+
+    new_entries, errors, _ = book_price_conversions_as_fifo(entries,
+                                                            assets_account,
+                                                            income_account)
+    return new_entries, errors
+
+
+
+
 
 # FIXME: TODO
 #
