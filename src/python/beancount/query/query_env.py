@@ -265,9 +265,12 @@ class ConvertAmount(query_compile.EvalFunction):
 
     def __call__(self, context):
         args = self.eval_args(context)
-        return (prices.convert_amount(context.price_map, args[1], args[0])
-                if args[1] is None else
-                None)
+        amount_, currency = args
+        converted = prices.convert_amount(context.price_map, currency, amount_)
+        if converted is None:
+            logging.warn('Could not convert Amount "{}" to USD'.format(amount_))
+            converted = amount_
+        return converted
 
 class ConvertPosition(query_compile.EvalFunction):
     "Coerce an amount to a particular currency."
@@ -279,8 +282,12 @@ class ConvertPosition(query_compile.EvalFunction):
     def __call__(self, context):
         args = self.eval_args(context)
         position_, currency = args
-        return prices.convert_amount(context.price_map,
-                                     currency, position_.get_cost())
+        amount_ = position_.get_cost()
+        converted = prices.convert_amount(context.price_map, currency, amount_)
+        if converted is None:
+            logging.warn('Could not convert Position "{}" to USD'.format(amount_))
+            converted = amount_
+        return converted
 
 class ConvertInventory(query_compile.EvalFunction):
     "Coerce an inventory to a particular currency."
@@ -294,11 +301,13 @@ class ConvertInventory(query_compile.EvalFunction):
         inventory_, currency = args
         converted_inventory = inventory.Inventory()
         for position_ in inventory_:
+            amount_ = position_.get_cost()
             converted_amount = prices.convert_amount(context.price_map,
-                                                     currency, position_.get_cost())
+                                                     currency, amount_)
             if converted_amount is None:
-                # Note: Not sure if I should issue a warning here.
-                logging.warn("Skipping position: {}".format(position_))
+                logging.warn('Could not convert Inventory position "{}" to USD'.format(
+                    amount_))
+                converted_inventory.add_amount(amount_)
             else:
                 converted_inventory.add_amount(converted_amount)
         return converted_inventory

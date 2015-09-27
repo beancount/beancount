@@ -1328,6 +1328,10 @@ http://furius.ca/beancount/doc/proposal-inter
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - What happens if you specify the same plugin twice, with different
+    configuration strings?
+
+
   - Provide a way to save and easily render a query, from the input file. e.g.
 
       2015-09-23 query "cash" 'SELECT CONVERT(SUM(position), "USD") WHERE account ~ "Cash"'"

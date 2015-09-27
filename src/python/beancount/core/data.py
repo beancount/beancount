@@ -3,7 +3,6 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import builtins
-import collections
 import datetime
 from collections import namedtuple
 import sys
@@ -28,7 +27,7 @@ def new_directive(clsname, fields):
     Returns:
       A type object for the new directive type.
     """
-    return collections.namedtuple(clsname, 'meta date {}'.format(fields))
+    return namedtuple(clsname, 'meta date {}'.format(fields))
 
 
 # All possible types of entries. These are the main data structures in use
