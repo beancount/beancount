@@ -8,9 +8,10 @@ import io
 import itertools
 
 
-# An unrendered table data structure. This is a table-like report data structure
-# - a two-dimensional array of cells - that is used as an intermediate state
-# between the internal data structures of Beancount and format-specific reports.
+# An unrendered table data structure. This is a table-like report data
+# structure--a two-dimensional array of cells--that is used as an intermediate
+# state between the internal data structures of Beancount and format-specific
+# reports.
 #
 # Attributes:
 #   columns: A sequence of strings, names for each column.
