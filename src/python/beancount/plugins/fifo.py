@@ -69,11 +69,13 @@ Implementation notes:
 __author__ = 'Martin Blais <blais@furius.ca>'
 __plugins__ = ('book_price_conversions_plugin',)
 
-import pprint
-import copy
+import argparse
 import collections
+import copy
 import logging
+import pprint
 import re
+import sys
 import uuid
 
 from beancount.core.number import ZERO
@@ -83,6 +85,8 @@ from beancount.core.position import Position
 from beancount.core.inventory import Inventory
 from beancount.core import data
 from beancount.parser import printer
+from beancount import loader
+from beancount.reports import table
 
 
 # The name of the metadata field used to link matched postings.
@@ -397,13 +401,59 @@ def book_price_conversions_plugin(entries, options_map, config):
     return new_entries, errors
 
 
+def main():
+    """Extract trades from metadata-annotated postings and report on them.
+    """
+    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
+    parser = argparse.ArgumentParser(description=__doc__.strip())
+    parser.add_argument('filename', help='Beancount input filename')
+
+    oparser = parser.add_argument_group('Outputs')
+    oparser.add_argument('-o', '--output-text', '--text', action='store',
+                         help="Render results to text boxes")
+    oparser.add_argument('--output-csv', '--csv', action='store',
+                         help="Render results to CSV files")
+
+    args = parser.parse_args()
+
+    # Load the input file.
+    entries, errors, options_map = loader.load_file(args.filename)
+
+    # Get the list of trades.
+    trades = extract_trades(entries)
+
+    # Produce a table of all the trades.
+    columns = ('units currency cost_currency '
+               'buy_date buy_price sell_date sell_price pnl').split()
+    header = ['Units', 'Currency', 'Cost Currency',
+              'Buy Date', 'Buy Price', 'Sell Date', 'Sell Price',
+              'P/L']
+    body = []
+    for aug, red in trades:
+        units = -red.posting.position.number
+        buy_price = aug.posting.price.number
+        sell_price = red.posting.price.number
+        pnl = (units * (sell_price - buy_price)).quantize(buy_price)
+        body.append([
+            -red.posting.position.number,
+            red.posting.position.lot.currency,
+            red.posting.price.currency,
+            aug.txn.date.isoformat(), buy_price,
+            red.txn.date.isoformat(), sell_price,
+            pnl
+            ])
+    trades_table = table.Table(columns, header, body)
+
+    # Render the table as text or CSV.
+    table.render_table(trades_table, sys.stdout, 'text')
+
+
+if __name__ == '__main__':
+    main()
 
 
 
 # FIXME: TODO
-#
-# - Write a script that outputs the list of trades, running this file as a
-#   script.
 #
 # - Rename this to not include "FIFO" in the name, it should be more general
 #   than this, other booking methods should eventually be supported.

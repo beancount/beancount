@@ -1,11 +1,14 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import unittest
+import textwrap
 import pprint
 
 from beancount import loader
 from beancount.parser import cmptest
 from beancount.parser import printer
 from beancount.plugins import fifo
+from beancount.utils import test_utils
 
 
 class TestbookFIFO(cmptest.TestCase):
@@ -57,7 +60,9 @@ class TestbookFIFO(cmptest.TestCase):
 
     def _convert_and_check_matches(self, entries):
         """Perform the conversion and cross-check output matches with
-        extracted matches.
+        extracted matches. We do this to ensure that trades extracted from
+        metadata are consistent with those computed at conversion time, for
+        all tests.
         """
         entries, errors, matches = fifo.book_price_conversions_as_fifo(
             entries, "Assets:Bitcoin", "Income:Bitcoin")
@@ -91,7 +96,6 @@ class TestbookFIFO(cmptest.TestCase):
           2015-09-22 *
             Assets:Bitcoin       -0.347826 BTC @ 233.00 USD
             Expenses:Something
-
         """
         entries = self._convert_and_check_matches(entries)
         self.assertEqualEntries("""
@@ -218,3 +222,49 @@ class TestbookFIFO(cmptest.TestCase):
           plugin "beancount.plugins.fifo" "Assets:Bitcoin"
         """
         self.assertRegexpMatches(errors[0].message, "Invalid configuration")
+
+
+class TestExtractTradesScript(unittest.TestCase):
+
+    @test_utils.docfile
+    def test_extract_trades(self, filename):
+        """
+          plugin "beancount.plugins.fifo" "Assets:Bitcoin,Income:Bitcoin"
+
+          2015-01-01 open Assets:Bitcoin
+          2015-01-01 open Income:Bitcoin
+          2015-01-01 open Assets:Bank
+          2015-01-01 open Expenses:Something
+
+          2015-09-04 *
+            Assets:Bank           -500.00 USD
+            Assets:Bitcoin       3.000000 BTC @ 250.00 USD
+
+          2015-09-05 *
+            Assets:Bank           -520.00 USD
+            Assets:Bitcoin       3.000000 BTC @ 260.00 USD
+
+          2015-09-20 *
+            Assets:Bitcoin       -2.000000 BTC @ 300.00 USD
+            Expenses:Something
+
+          2015-09-21 *
+            Assets:Bitcoin       -2.000000 BTC @ 310.00 USD
+            Expenses:Something
+
+          2015-09-22 *
+            Assets:Bitcoin       -2.000000 BTC @ 330.00 USD
+            Expenses:Something
+        """
+        with test_utils.capture() as stdout:
+            test_utils.run_with_args(fifo.main, [filename])
+        output = stdout.getvalue()
+        self.assertEqual(textwrap.dedent("""\
+           Units  Currency  Cost Currency    Buy Date  Buy Price   Sell Date  Sell Price     P/L
+        --------  --------  -------------  ----------  ---------  ----------  ----------  ------
+        2.000000       BTC            USD  2015-09-04     250.00  2015-09-20      300.00  100.00
+        1.000000       BTC            USD  2015-09-04     250.00  2015-09-21      310.00   60.00
+        1.000000       BTC            USD  2015-09-05     260.00  2015-09-21      310.00   50.00
+        2.000000       BTC            USD  2015-09-05     260.00  2015-09-22      330.00  140.00
+        --------  --------  -------------  ----------  ---------  ----------  ----------  ------
+        """), output)
