@@ -5,6 +5,7 @@ import textwrap
 
 from beancount import loader
 from beancount.parser import cmptest
+from beancount.parser import printer
 from beancount.plugins import book_conversions
 from beancount.utils import test_utils
 
@@ -178,6 +179,43 @@ class TestBookConversions(cmptest.TestCase):
 
         """, entries)
 
+    @loader.load_doc()
+    def test_book_conversions_zero_pnl(self, entries, errors, __):
+        """
+          2015-01-01 open Assets:Bitcoin
+          2015-01-01 open Income:Bitcoin
+          2015-01-01 open Assets:Bank
+          2015-01-01 open Expenses:Something
+
+          2015-09-04 *
+            Assets:Bank           -500.00 USD
+            Assets:Bitcoin       2.000000 BTC @ 250.00 USD
+
+          2015-09-20 *
+            Assets:Bitcoin       -1.500000 BTC @ 250.00 USD
+            Expenses:Something
+
+        """
+        entries = self._convert_and_check_matches(entries)
+        self.assertEqualEntries("""
+
+          2015-01-01 open Assets:Bitcoin
+          2015-01-01 open Income:Bitcoin
+          2015-01-01 open Assets:Bank
+          2015-01-01 open Expenses:Something
+
+          2015-09-04 *
+            Assets:Bitcoin  2.000000 BTC {250.00 USD} @ 250.00 USD
+              trades: "trade-17a8973230ee"
+            Assets:Bank      -500.00 USD
+
+          2015-09-20 *
+            Assets:Bitcoin         -1.500000 BTC {250.00 USD} @ 250.00 USD
+              trades: "trade-17a8973230ee"
+            Expenses:Something  375.00000000 USD
+
+        """, entries)
+
     @loader.load_doc(expect_errors=True)
     def test_book_conversions_split_partial_failure(self, entries, errors, __):
         """
@@ -235,11 +273,11 @@ class TestExtractTradesScript(unittest.TestCase):
           2015-01-01 open Expenses:Something
 
           2015-09-04 *
-            Assets:Bank           -500.00 USD
+            Assets:Bank           -750.00 USD
             Assets:Bitcoin       3.000000 BTC @ 250.00 USD
 
           2015-09-05 *
-            Assets:Bank           -520.00 USD
+            Assets:Bank           -780.00 USD
             Assets:Bitcoin       3.000000 BTC @ 260.00 USD
 
           2015-09-20 *
