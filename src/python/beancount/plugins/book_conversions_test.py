@@ -5,7 +5,6 @@ import textwrap
 
 from beancount import loader
 from beancount.parser import cmptest
-from beancount.parser import printer
 from beancount.plugins import book_conversions
 from beancount.utils import test_utils
 
