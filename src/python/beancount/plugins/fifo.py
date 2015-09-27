@@ -409,10 +409,11 @@ def main():
     parser.add_argument('filename', help='Beancount input filename')
 
     oparser = parser.add_argument_group('Outputs')
-    oparser.add_argument('-o', '--output-text', '--text', action='store',
-                         help="Render results to text boxes")
-    oparser.add_argument('--output-csv', '--csv', action='store',
-                         help="Render results to CSV files")
+    oparser.add_argument('-o', '--output', action='store',
+                         help="Filename to output results to (default goes to stdout)")
+    oparser.add_argument('-f', '--format', default='text',
+                         choices=['text', 'csv'],
+                         help="Output format to render to (text, csv)")
 
     args = parser.parse_args()
 
@@ -445,7 +446,8 @@ def main():
     trades_table = table.Table(columns, header, body)
 
     # Render the table as text or CSV.
-    table.render_table(trades_table, sys.stdout, 'text')
+    outfile = open(args.output, 'w') if args.output else sys.stdout
+    table.render_table(trades_table, outfile, args.format)
 
 
 if __name__ == '__main__':
