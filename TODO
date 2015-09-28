@@ -2323,31 +2323,6 @@ http://furius.ca/beancount/doc/proposal-inter
           Assets:Investment:Cash          -35359.95 CAD
           Expenses:Commissions                 9.95 CAD
 
-  - (IDEA) In order to create suitable stock split entries that would look like
-    this:
-
-      2013-04-01 * "split 4:1"
-        Assets:CA:ITrade:AAPL             -40 AAPL {{5483.09 USD}}
-        Assets:CA:ITrade:AAPL             160 AAPL {{5483.09 USD}}
-
-    You could easily add support for a directive that looks like this:
-
-      2013-04-01 split Assets:CA:ITrade:AAPL  4:1  AAPL
-
-    This would allow the user to do some processing specific to stock splits by
-    processing the explicit stock split entries.
-
-  - Include this in the user examples, + stock splits:
-
-       2013-04-01 * "name change"
-
-         Assets:CA:ITrade:AAPL             -40 AAPL {{5483.09 USD}}
-         Assets:CA:ITrade:NEWAAPL             40 NEWAAPL {{5483.09 USD}}
-
-       2013-04-01 * "spinoff"
-         Assets:CA:ITrade:KRFT             -100 KRFT {{20000 USD}}
-         Assets:CA:ITrade:KRFT              100 KRFT {{17000 USD}}
-         Assets:CA:ITrade:FOO                20 FOO  {{ 3000 USD}}
 
   - Remove the parsing of "CHECK" at some point, that was just there for
     compatibility.
@@ -3412,6 +3387,57 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 
 
 * Plugins
+** Stock Splits
+
+  - Find a way to automatically create multiple currencies to account for stock
+    splits. The user should not have to do this themselves:
+
+      "One choice you have is whether you want to keep the same symbol pre and post
+      split. If you keep the same symbol the price database will show a drop in
+      price over time. If not, choose a new symbol for the post split period. So far
+      in my own file I use the same symbol but I think eventually I'd like to find a
+      way to differentiate them automatically and have a multiplier in the price
+      database, because doing it manually is not nice. In any case both methods
+      work."
+
+    Perhaps a directive could be created to declare them that would
+    automatically insert converting transactions, but that makes it difficult to
+    deal with weird cases, like GOOG -> GOOGL+GOOG with widely unequal splits,
+    or cases with spinoffs, as below. Perhaps the splitting transaction should
+    be inserted automatically, but that the split directive would just create a
+    new currency name, internally.
+
+    A currency would then be referred to by a pair of (name, date), and that
+    would resolve to a internal currency name.
+
+
+  - (IDEA) In order to create suitable stock split entries that would look like
+    this:
+
+      2013-04-01 * "split 4:1"
+        Assets:CA:ITrade:AAPL             -40 AAPL {{5483.09 USD}}
+        Assets:CA:ITrade:AAPL             160 AAPL {{5483.09 USD}}
+
+    You could easily add support for a directive that looks like this:
+
+      2013-04-01 split Assets:CA:ITrade:AAPL  4:1  AAPL
+
+    This would allow the user to do some processing specific to stock splits by
+    processing the explicit stock split entries.
+
+
+  - Include this in the user examples, + stock splits:
+
+       2013-04-01 * "name change"
+
+         Assets:CA:ITrade:AAPL             -40 AAPL {{5483.09 USD}}
+         Assets:CA:ITrade:NEWAAPL             40 NEWAAPL {{5483.09 USD}}
+
+       2013-04-01 * "spinoff"
+         Assets:CA:ITrade:KRFT             -100 KRFT {{20000 USD}}
+         Assets:CA:ITrade:KRFT              100 KRFT {{17000 USD}}
+         Assets:CA:ITrade:FOO                20 FOO  {{ 3000 USD}}
+
 ** Wash Sales
 
   - (script) Write a script to check whether an account's trades are subject to
