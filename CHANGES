@@ -4,6 +4,21 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-09-29
+
+  - Added a new column 'description' to the SQL client in order to produce more
+    compact reports.
+
+    Oftentimes the payee is left to an empty value and journals
+    have a lot of wasted whitespace. Concatenating the payee and the narration
+    in a single field goes a long way towards producing reports that aren't
+    nearly as wide. I could have added a CONCAT() function but this is so common
+    and convenient that a dedicated 'description' alias is justified. You can
+    use it in posting context ("SELECT description ..." or "SELECT ... WHERE
+    description ~ '...'") or transaction context ("SELECT ... FROM description ~
+    '...'")..
+
+
 2015-09-27
 
   - Implemented a plugin that can book price conversions using a particular

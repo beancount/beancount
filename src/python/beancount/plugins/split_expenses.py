@@ -252,7 +252,7 @@ def main():
 
         save_query("Expenses Detail", participant, entries, options_map, r"""
           SELECT
-            date, flag, payee, narration,
+            date, flag, description,
             PARENT(account) AS account,
             CONV[position], CONV[balance]
           WHERE account ~ 'Expenses.*\b{}'
@@ -260,7 +260,7 @@ def main():
 
         save_query("Contributions Detail", participant, entries, options_map, r"""
           SELECT
-            date, flag, payee, narration, account, CONV[position], CONV[balance]
+            date, flag, description, account, CONV[position], CONV[balance]
           WHERE account ~ 'Income.*\b{}'
         """, participant, args=args)
 

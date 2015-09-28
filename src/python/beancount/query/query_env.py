@@ -671,6 +671,21 @@ class NarrationEntryColumn(query_compile.EvalColumn):
                 if isinstance(entry, Transaction)
                 else None)
 
+# This is convenient, because many times the payee is empty and using a
+# combination produces more compact listings.
+class DescriptionEntryColumn(query_compile.EvalColumn):
+    "A combination of the payee + narration of the transaction, if present."
+    __intypes__ = [data.Transaction]
+
+    def __init__(self):
+        super().__init__(str)
+
+    def __call__(self, entry):
+        return (' | '.join(filter(None, [entry.payee, entry.narration]))
+                if isinstance(entry, Transaction)
+                else None)
+
+
 # A globally available empty set to fill in for None's.
 EMPTY_SET = frozenset()
 
@@ -728,19 +743,20 @@ class FilterEntriesEnvironment(query_compile.CompilationEnvironment):
     """
     context_name = 'FROM clause'
     columns = {
-        'id'        : IdEntryColumn,
-        'type'      : TypeEntryColumn,
-        'filename'  : FilenameEntryColumn,
-        'lineno'    : LineNoEntryColumn,
-        'date'      : DateEntryColumn,
-        'year'      : YearEntryColumn,
-        'month'     : MonthEntryColumn,
-        'day'       : DayEntryColumn,
-        'flag'      : FlagEntryColumn,
-        'payee'     : PayeeEntryColumn,
-        'narration' : NarrationEntryColumn,
-        'tags'      : TagsEntryColumn,
-        'links'     : LinksEntryColumn,
+        'id'          : IdEntryColumn,
+        'type'        : TypeEntryColumn,
+        'filename'    : FilenameEntryColumn,
+        'lineno'      : LineNoEntryColumn,
+        'date'        : DateEntryColumn,
+        'year'        : YearEntryColumn,
+        'month'       : MonthEntryColumn,
+        'day'         : DayEntryColumn,
+        'flag'        : FlagEntryColumn,
+        'payee'       : PayeeEntryColumn,
+        'narration'   : NarrationEntryColumn,
+        'description' : DescriptionEntryColumn,
+        'tags'        : TagsEntryColumn,
+        'links'       : LinksEntryColumn,
         }
     functions = copy.copy(SIMPLE_FUNCTIONS)
     functions.update(ENTRY_FUNCTIONS)
@@ -884,6 +900,21 @@ class NarrationColumn(query_compile.EvalColumn):
 
     def __call__(self, context):
         return context.entry.narration
+
+# This is convenient, because many times the payee is empty and using a
+# combination produces more compact listings.
+class DescriptionColumn(query_compile.EvalColumn):
+    "A combination of the payee + narration for the transaction of this posting."
+    __intypes__ = [data.Posting]
+
+    def __init__(self):
+        super().__init__(str)
+
+    def __call__(self, context):
+        entry = context.entry
+        return (' | '.join(filter(None, [entry.payee, entry.narration]))
+                if isinstance(entry, Transaction)
+                else None)
 
 class TagsColumn(query_compile.EvalColumn):
     "The set of tags of the parent transaction for this posting."
@@ -1035,6 +1066,7 @@ class FilterPostingsEnvironment(query_compile.CompilationEnvironment):
         'flag'          : FlagColumn,
         'payee'         : PayeeColumn,
         'narration'     : NarrationColumn,
+        'description'   : DescriptionColumn,
         'tags'          : TagsColumn,
         'links'         : LinksColumn,
         'posting_flag'  : PostingFlagColumn,
