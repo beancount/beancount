@@ -1409,6 +1409,10 @@ http://furius.ca/beancount/doc/proposal-inter
     using bean-query and views using bean-web.
 
 
+  - Make the Pad directive accept #tags and propagate those to the generated
+    transactions:
+    https://bitbucket.org/blais/beancount/issues/70/add-tag-to-the-pad-directive-and-propagate
+
 
   - bean-doctor context should accept a LINK, not just a line number from
     context.
