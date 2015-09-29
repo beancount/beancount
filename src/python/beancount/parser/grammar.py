@@ -11,6 +11,8 @@ from os import path
 from datetime import date
 
 from beancount.core.number import ZERO
+from beancount.core.number import MISSING
+from beancount.core.number import Decimal
 from beancount.core.amount import Amount
 from beancount.core import display_context
 from beancount.core.position import CostSpec
@@ -360,7 +362,8 @@ class Builder(lexer.LexBuilder):
         """
         # Update the mapping that stores the parsed precisions.
         # Note: This is relatively slow, adds about 70ms because of number.as_tuple().
-        self.dcupdate(number, currency)
+        if isinstance(number, Decimal) and currency:
+            self.dcupdate(number, currency)
         return Amount(number, currency)
 
     def compound_amount(self, number_per, number_total, currency):
@@ -376,9 +379,9 @@ class Builder(lexer.LexBuilder):
         """
         # Update the mapping that stores the parsed precisions.
         # Note: This is relatively slow, adds about 70ms because of number.as_tuple().
-        if number_per is not None:
+        if isinstance(number_per, Decimal):
             self.dcupdate(number_per, currency)
-        if number_total is not None:
+        if isinstance(number_total, Decimal):
             self.dcupdate(number_total, currency)
 
         # Note that we are not able to reduce the value to a number per-share
@@ -399,8 +402,8 @@ class Builder(lexer.LexBuilder):
           A cost-info tuple of CompoundAmount, lot date and label string. Any of these
           may be set to a sentinel indicating "unset".
         """
-        if cost_comp_list is None:
-            return CostSpec(None, None, None, None, None, False)
+        if not cost_comp_list:
+            return CostSpec(MISSING, None, MISSING, None, None, False)
         assert isinstance(cost_comp_list, list), (
             "Internal error in parser: {}".format(cost_comp_list))
 
@@ -443,21 +446,11 @@ class Builder(lexer.LexBuilder):
                         ParserError(self.get_lexer_location(),
                                     "Duplicate label: '{}'.".format(comp), None))
 
-        if label is not None:
-            self.errors.append(
-                ParserError(self.get_lexer_location(),
-                            "Labels not supported yet: '{}'.".format(label), None))
-
-        if merge is not None:
-            self.errors.append(
-                ParserError(self.get_lexer_location(),
-                            "Merge-cost not supported yet.", None))
-
         # If there was a cost_comp_list, thus a "{...}" cost basis spec, you must
         # indicate that by creating a CompoundAmount(), always.
 
         if compound_cost is None:
-            number_per, number_total, currency = None, None, None
+            number_per, number_total, currency = MISSING, None, MISSING
         else:
             number_per, number_total, currency = compound_cost
 
@@ -700,7 +693,7 @@ class Builder(lexer.LexBuilder):
         """
         # Prices may not be negative.
         if not __allow_negative_prices__:
-            if price and price.number is not None and price.number < ZERO:
+            if price and isinstance(price.number, Decimal) and price.number < ZERO:
                 meta = new_metadata(filename, lineno)
                 self.errors.append(
                     ParserError(meta, (

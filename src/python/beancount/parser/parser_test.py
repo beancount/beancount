@@ -15,24 +15,20 @@ from beancount.utils import test_utils
 
 class TestCompareTestFunctions(unittest.TestCase):
 
-    def test_has_auto_postings(self):
+    def test_is_entry_incomplete(self):
         entries, _, __ = parser.parse_string("""
 
           2014-01-27 * "UNION MARKET"
             Liabilities:US:Amex:BlueCash    -22.02 USD
             Expenses:Food:Grocery            22.02 USD
 
-        """, dedent=True)
-        self.assertFalse(parser.has_auto_postings(entries))
-
-        entries, _, __ = parser.parse_string("""
-
           2014-01-27 * "UNION MARKET"
             Liabilities:US:Amex:BlueCash    -22.02 USD
             Expenses:Food:Grocery
 
         """, dedent=True)
-        self.assertTrue(parser.has_auto_postings(entries))
+        self.assertFalse(parser.is_entry_incomplete(entries[0]))
+        self.assertTrue(parser.is_entry_incomplete(entries[1]))
 
 
 class TestParserDoc(unittest.TestCase):

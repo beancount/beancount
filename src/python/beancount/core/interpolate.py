@@ -167,13 +167,13 @@ def infer_tolerances(postings, options_map, use_cost=None):
         # Skip the precision on automatically inferred postings.
         if posting.meta and AUTOMATIC_META in posting.meta:
             continue
-        position_ = posting.position
-        if position_ is None:
+        pos = posting.position
+        if not isinstance(pos, Position):
             continue
 
         # Compute bounds on the number.
-        currency = position_.units.currency
-        expo = position_.units.number.as_tuple().exponent
+        currency = pos.units.currency
+        expo = pos.units.number.as_tuple().exponent
         if expo < 0:
             # Note: the exponent is a negative value.
             tolerance = ONE.scaleb(expo) * inferred_tolerance_multiplier
@@ -184,7 +184,7 @@ def infer_tolerances(postings, options_map, use_cost=None):
                 continue
 
             # Compute bounds on the smallest digit of the number implied as cost.
-            cost = position_.cost
+            cost = pos.cost
             if cost is not None:
                 cost_currency = cost.currency
                 cost_tolerance = min(tolerance * cost.number, MAXIMUM_TOLERANCE)
@@ -312,7 +312,7 @@ def get_incomplete_postings(entry, options_map):
     has_regular_postings = False
     for i, posting in enumerate(postings):
         pos = posting.position
-        if pos is None:
+        if not isinstance(pos, Position):
             # This posting will have to get auto-completed.
             auto_postings_indices.append(i)
         else:

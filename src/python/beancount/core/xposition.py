@@ -52,13 +52,6 @@ CostSpec = collections.namedtuple(
     'CostSpec', 'number_per number_total currency date label merge')
 
 
-# A constant object for pieces missing of an incomplete posting.
-class _NA(object):
-    def __str__(self):
-        return '-(NA/MISSING)-'
-NA = _NA()
-
-
 def cost_to_str(cost, dformat, detail=True):
     """Format an instance of Cost or a CostSpec to a string.
 

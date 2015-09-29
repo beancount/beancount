@@ -38,6 +38,8 @@ beancount: TODO
     filtering and grep/replace everywhere. This is just too common not to create
     a utility.
 
+  - Unref the constants in finalizer for module, here: {48414425cf78}.
+
 
 ** API Revamp / Simplification
 

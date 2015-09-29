@@ -18,71 +18,93 @@ label and a lot date. A CostSpec is similar to a Cost, but has all optional
 data; it consists in a specification for matching against a particular inventory
 lot.
 
-OLD Specifically, the following pieces of data may be left missing:
-OLD
-OLD   INPUT: Assets:Account
-OLD   position.number = NA
-OLD   position.lot = Lot(NA, None)
-OLD
-OLD   INPUT: Assets:Account  USD
-OLD   position.number = None
-OLD   position.lot = Lot('USD', None)
-OLD
-OLD   INPUT: Assets:Account  100 CAD @
-OLD   position.number = 100
-OLD   position.lot = Lot('USD', None)
-OLD   position.price = Amount(NA, NA)
-OLD
-OLD   INPUT: Assets:Account  100 CAD @ USD
-OLD   position.number = 100
-OLD   position.lot = Lot('CAD', None)
-OLD   position.price = Amount(NA, 'USD')
-OLD
-OLD Note that 'posting.position.price = None' is not incomplete, it just indicates
-OLD the absence of a price clause.
-OLD
-OLD If a cost basis specification is provided, a Lot's "cost" attribute it set but
-OLD it does not refer to a Cost instance as in complete entries, but rather to
-OLD a CostSpec instance. Any of the fields of a CostSpec may be None if it was not
-OLD specified in the input. For exasmple:
-OLD
-OLD   INPUT: Assets:Account  1 GOOG {100 # 5 USD}
-OLD   position.number = 1
-OLD   position.lot = Lot('GOOG', CostSpec(100, 5, 'USD', None, None, False))
-OLD
-OLD   INPUT: Assets:Account  1 GOOG {100 # USD}
-OLD   position.number = 1
-OLD   position.lot = Lot('GOOG', CostSpec(100, NA, 'USD', None, None, False))
-OLD   (Note how this differs from the previous compound amount specification and
-OLD    leaves an amount to be filled in)
-OLD
-OLD   INPUT: Assets:Account  1 GOOG {USD}
-OLD   position.number = 1
-OLD   position.lot = Lot('GOOG', CostSpec(NA, None, 'USD', None, None, False))
-OLD
-OLD   INPUT: Assets:Account  1 GOOG {}
-OLD   position.number = 1
-OLD   position.lot = Lot('GOOG', CostSpec(NA, None, NA, None, None, False))
-OLD
-OLD   INPUT: Assets:Account  1 GOOG {*}
-OLD   position.number = 1
-OLD   position.lot = Lot('GOOG', CostSpec(NA, None, NA, None, None, True))
-OLD
-OLD   INPUT: Assets:Account  1 GOOG {2015-09-06}
-OLD   position.number = 1
-OLD   position.lot = Lot('GOOG', CostSpec(NA, None, NA, date(2015, 9, 6), None, False))
-OLD
-OLD   INPUT: Assets:Account  1 GOOG {"dfa4eedc1431", 100 # 5 USD, 2015-09-06}
-OLD   position.number = 1
-OLD   position.lot = Lot('GOOG', CostSpec(100, 5, 'USD', date(2015, 9, 6), "dfa4eedc1431", False))
-OLD
-OLD For incomplete entries, 'posting.position.lot.cost' does not refer to a Cost
-OLD instance, but rather to a CostSpec which needs to get resolved to a Cost. The
-OLD CostSpec has fields for 'number_per' and 'number_total' numbers which may be
-OLD both missing.
+Other parts of a posting may also be missing, not just parts of the cost.
+Leaving out some parts of the input is used to invoke interpolation, to tell
+Beancount to automatically compute the missing numbers (if possible).
 
-See grammar_test.TestIncompleteInputs for examples and corresponding checks.
+Missing components will be set to the special value
+"beancount.core.number.MISSING" until inventory booking and number interpolation
+has been completed. The "MISSING" value should never appear in completed, loaded
+transaction postings.
 
+For instance, all of the units may be missing:
+
+  INPUT: Assets:Account
+  posting.position.units = MISSING
+
+Or just the number of the units:
+
+  INPUT: Assets:Account                    USD
+  posting.position.units = Amount(MISSING, "USD")
+
+You must always specify the currency.
+
+If a price annotation is simply absent, it appears as None:
+
+  INPUT: Assets:Account                 2 MXN
+  posting.price = None
+
+However, you may indicate that there is a price but have Beancount compute it
+automatically:
+
+  INPUT: Assets:Account                 2 MXN @
+  posting.position.price = Amount(MISSING, MISSING)
+
+Indicating the conversion currency is also possible (and recommended):
+
+  INPUT: Assets:Account                 2 MXN @ USD
+  posting.position.price = Amount(MISSING, "USD")
+
+If a cost specification is provided, a "cost" attribute it set but it does not
+refer to a Cost instance (as in complete entries) but rather to a CostSpec
+instance. Some of the fields of a CostSpec may be MISSING if they were not
+specified in the input. For exammple:
+
+  INPUT: Assets:Account  1 GOOG {100 # 5 USD}
+  posting.position.cost = CostSpec(Decimal("100"), Decimal("5"), "USD", None, None, False))
+
+Note how we never consider the label of date override to be MISSING; this is
+because those inputs are optional: A missing label is simply left unset in the
+computed Cost, and a missing date override uses the date of the transaction
+that contains the posting.
+
+You can indicate that there is a total number to be filled in like this:
+
+  INPUT: Assets:Account  1 GOOG {100 # USD}
+  posting.position.cost = CostSpec(Decimal("100"), MISSING, "USD", None, None, False))
+
+This is in contrast to the total value simple not being used:
+
+  INPUT: Assets:Account  1 GOOG {100 USD}
+  posting.position.cost = CostSpec(Decimal("100"), None, "USD", None, None, False))
+
+Both per-unit and total numbers may be omitted as well, in which case, only the
+number-per-unit portion of the CostSpec will appear as MISSING:
+
+  INPUT: Assets:Account  1 GOOG {USD}
+  posting.position.cost = CostSpec(MISSING, None, "USD", None, None, False))
+
+And furthermore, all the cost basis may be missing:
+
+  INPUT: Assets:Account  1 GOOG {}
+  posting.position.cost = CostSpec(MISSING, None, MISSING, None, None, False))
+
+If you ask for the lots to be merged, you get this:
+
+  INPUT: Assets:Account  1 GOOG {*}
+  posting.position.cost = CostSpec(MISSING, None, MISSING, None, None, True))
+
+The numbers have to be computed by Beancount, so we output this with MISSING
+values.
+
+Of course, you can provide only the non-basis informations, like just the date
+or label:
+
+  INPUT: Assets:Account  1 GOOG {2015-09-21}
+  posting.position.cost = CostSpec(MISSING, None, MISSING, date(2015, 9, 21), None, True)
+
+See the test beancount.parser.grammar_test.TestIncompleteInputs for examples and
+corresponding expected values.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
@@ -98,6 +120,7 @@ from beancount.parser import grammar
 from beancount.parser import printer
 from beancount.parser import hashsrc
 from beancount.core import data
+from beancount.core.number import MISSING
 
 from beancount.parser.grammar import ParserError
 from beancount.parser.grammar import ParserSyntaxError
@@ -111,20 +134,47 @@ ParserError, ParserSyntaxError, DeprecatedError # pyflakes
 hashsrc.check_parser_source_files()
 
 
-def has_auto_postings(entries):
+def is_posting_incomplete(posting):
+    """Detect the presence of any elided amounts in a Posting.
+
+    If any of the possible amounts are missing, this returns True.
+
+    Args:
+      entries: A directive.
+    Returns:
+      A boolean, true if there are some missing portions of any postings found.
+    """
+    pos = posting.position
+    if (pos is None or pos is MISSING):
+        return True
+    units = pos.units
+    if (units.number is MISSING or
+        units.currency is MISSING):
+        return True
+    price = posting.price
+    if (price is MISSING or
+        price is not None and (price.number is MISSING or
+                               price.currency is MISSING)):
+        return True
+    cost = pos.cost
+    if cost is not None and (cost.number_per is MISSING or
+                             cost.number_total is MISSING or
+                             cost.currency is MISSING):
+        return True
+    return False
+
+
+def is_entry_incomplete(entry):
     """Detect the presence of elided amounts in Transactions.
 
     Args:
-      entries: A list of directives.
+      entries: A directive.
     Returns:
-      A boolean, true if there are some auto-postings found.
+      A boolean, true if there are some missing portions of any postings found.
     """
-    for entry in entries:
-        if not isinstance(entry, data.Transaction):
-            continue
-        for posting in entry.postings:
-            if posting.position is None:
-                return True
+    if isinstance(entry, data.Transaction):
+        if any(is_posting_incomplete(posting) for posting in entry.postings):
+            return True
     return False
 
 
@@ -218,7 +268,8 @@ def parse_doc(expect_errors=False, allow_incomplete=False):
                                                         report_firstline=lineno,
                                                         dedent=True)
 
-            if not allow_incomplete and has_auto_postings(entries):
+            if not allow_incomplete and any(is_entry_incomplete(entry)
+                                            for entry in entries):
                 self.fail("parse_doc() may not use interpolation.")
 
             if expect_errors is not None:

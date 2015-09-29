@@ -5,7 +5,7 @@
 
 
 extern PyObject* builder;
-
+extern PyObject* missing_obj;
 
 /* #define DO_TRACE_ERRORS   1 */
 
