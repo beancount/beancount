@@ -6,6 +6,34 @@ Note: This file contains only changes in the 'default' branch.
 
 2015-09-29
 
+  - Tightened the screws on the Amount() constructor a bit and made changes ini
+    order to allow it to accept a sentinel value for MISSING values from the
+    parser. Changes to beancount.core.amount.Amount are:
+
+    1. A string for the number is not accepted anymore, that is, Amount(str,
+       str) is not supported anymore. Amount() now unconditionally requires a
+       Decimal instance, so you must use Amount(Decimal, str). In any case, this
+       constrcutros was likely abused only by me in the tests. I'd rather have
+       a tighter, less permissive constructor.
+       
+    2. The convenience constructor beancount.core.amount.from_string() is now
+       officially aliased as beancount.core.amount.A, so you can "from
+       beancount.core.amount import A". I now commit to using this constructor
+       and converted all the tests to use it. This is great for writing tests.
+       Amount really is a fundamental piece that deserves a very short alias
+       like this.
+
+    In summary, how to create Amount instances:
+
+    * If you use explicit values, use Amount(Decimal, str), e.g.,
+      Amount(D('100.00'), 'USD'), Amount(number, currency)
+
+    * If you need a convenience constructor, use A(str), e.g.,
+      A('100.00 USD'), A('32,000 KRW')
+
+
+2015-09-29
+
   - Added a new column 'description' to the SQL client in order to produce more
     compact reports.
 

@@ -12,6 +12,7 @@ from unittest import mock
 
 from beancount.core.number import D
 from beancount.core.number import ZERO
+from beancount.core.amount import A
 from beancount.parser import parser
 from beancount.parser import lexer
 from beancount.core import data
@@ -1118,7 +1119,7 @@ class TestTotalsAndSigns(unittest.TestCase):
             Assets:Investments:Cash  -2000.00 USD
         """
         posting = entries[0].postings[0]
-        self.assertEqual(amount.from_string('200 USD'), posting.price)
+        self.assertEqual(A('200 USD'), posting.price)
         self.assertEqual(None, posting.position.lot.compound_cost)
 
     @parser.parse_doc()
@@ -1129,7 +1130,7 @@ class TestTotalsAndSigns(unittest.TestCase):
             Assets:Investments:Cash  20000.00 USD
         """
         posting = entries[0].postings[0]
-        self.assertEqual(amount.from_string('200 USD'), posting.price)
+        self.assertEqual(A('200 USD'), posting.price)
         self.assertEqual(None, posting.position.lot.compound_cost)
 
     @parser.parse_doc(expect_errors=True)
@@ -1181,7 +1182,7 @@ class TestAllowNegativePrices(unittest.TestCase):
             Assets:Investments:Cash  2000.00 USD
         """
         posting = entries[0].postings[0]
-        self.assertEqual(amount.from_string('-200 USD'), posting.price)
+        self.assertEqual(A('-200 USD'), posting.price)
         self.assertEqual(None, posting.position.lot.compound_cost)
 
     @parser.parse_doc()
@@ -1192,7 +1193,7 @@ class TestAllowNegativePrices(unittest.TestCase):
             Assets:Investments:Cash   20000.00 USD
         """
         posting = entries[0].postings[0]
-        self.assertEqual(amount.from_string('-200 USD'), posting.price)
+        self.assertEqual(A('-200 USD'), posting.price)
         self.assertEqual(None, posting.position.lot.compound_cost)
 
     @parser.parse_doc()
@@ -1203,7 +1204,7 @@ class TestAllowNegativePrices(unittest.TestCase):
             Assets:Investments:Cash  -20000.00 USD
         """
         posting = entries[0].postings[0]
-        self.assertEqual(amount.from_string('-200 USD'), posting.price)
+        self.assertEqual(A('-200 USD'), posting.price)
         self.assertEqual(None, posting.position.lot.compound_cost)
 
 
@@ -1217,7 +1218,7 @@ class TestBalance(unittest.TestCase):
             Assets:Investments:Cash  -20000 USD
         """
         posting = entries[0].postings[0]
-        self.assertEqual(amount.from_string('200 USD'), posting.price)
+        self.assertEqual(A('200 USD'), posting.price)
         self.assertEqual(None, posting.position.lot.compound_cost)
 
     @parser.parse_doc()
@@ -1419,7 +1420,7 @@ class TestMetaData(unittest.TestCase):
             'currency': 'GOOG',
             'tag': 'trip-florida',
             'number': D('345.67'),
-            'amount': amount.from_string('345.67 USD'),
+            'amount': A('345.67 USD'),
             'boolt': True,
             'boolf': False,
             }, entries[0].meta)

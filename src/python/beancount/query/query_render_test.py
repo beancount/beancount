@@ -7,9 +7,9 @@ import collections
 
 from beancount.core.number import D
 from beancount.core.number import Decimal
+from beancount.core.amount import A
 from beancount.core import inventory
 from beancount.core import position
-from beancount.core import amount
 from beancount.core import display_context
 from beancount.query import query_render
 
@@ -152,19 +152,19 @@ class TestAmountRenderer(ColumnRendererBase):
         self.dcontext.update(D('1.00'), 'AAPL')
 
     def test_single_frac(self):
-        pos = amount.from_string('100.00 USD')
+        pos = A('100.00 USD')
         rdr = self.get(pos)
         self.assertEqual('100.00   USD',
                          rdr.format(pos))
 
     def test_single_int(self):
-        pos = amount.from_string('5 GOOG')
+        pos = A('5 GOOG')
         rdr = self.get(pos)
         self.assertEqual('5     GOOG',
                          rdr.format(pos))
 
     def test_many(self):
-        amounts = [amount.from_string(x)
+        amounts = [A(x)
                    for x in ('0.0001 USD', '20.002 GOOG', '33 CA', '1098.20 AAPL')]
         rdr = self.get(*amounts)
         self.assertEqual(['   0.0001 USD ',

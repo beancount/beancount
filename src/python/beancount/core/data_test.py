@@ -62,14 +62,14 @@ class TestData(unittest.TestCase):
         posting = data.create_simple_posting(
             entry, 'Assets:Bank:Checking', '123.45', 'USD')
         self.assertFalse(data.posting_has_conversion(posting))
-        posting = posting._replace(price=amount.Amount('153.02', 'CAD'))
+        posting = posting._replace(price=amount.Amount(D('153.02'), 'CAD'))
         self.assertTrue(data.posting_has_conversion(posting))
 
     def test_transaction_has_conversion(self):
         entry = self.create_empty_transaction()
         posting = data.create_simple_posting(
             entry, 'Assets:Bank:Checking', '123.45', 'USD')
-        posting = posting._replace(price=amount.Amount('153.02', 'CAD'))
+        posting = posting._replace(price=amount.Amount(D('153.02'), 'CAD'))
         entry.postings[0] = posting
         self.assertTrue(data.transaction_has_conversion(entry))
 

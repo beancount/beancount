@@ -11,6 +11,7 @@ import types
 
 from beancount.core.number import D
 from beancount.core.number import ZERO
+from beancount.core.amount import A
 from beancount.core.position import Position
 from beancount.core.position import Lot
 from beancount.core.inventory import Inventory
@@ -18,9 +19,6 @@ from beancount.core.inventory import Booking
 from beancount.core import amount
 from beancount.core import position
 from beancount.core import inventory
-
-
-A = amount.from_string
 
 
 def invariant_check(method, prefun, postfun):
@@ -90,6 +88,8 @@ def tearDown(module):
 class TestInventory(unittest.TestCase):
 
     def checkAmount(self, inventory, number, currency):
+        if isinstance(number, str):
+            number = D(number)
         amount_ = amount.Amount(number, currency)
         inv_amount = inventory.get_units(amount_.currency)
         self.assertEqual(inv_amount, amount_)

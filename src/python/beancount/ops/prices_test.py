@@ -196,15 +196,15 @@ class TestPriceMap(unittest.TestCase):
         2013-07-01 price  USD  1.20 CAD
         """
         price_map = prices.build_price_map(entries)
-        self.assertEqual(amount.Amount('120', 'CAD'),
+        self.assertEqual(amount.Amount(D('120'), 'CAD'),
                          prices.convert_amount(price_map, 'CAD',
-                                               amount.Amount('100', 'USD')))
-        self.assertEqual(amount.Amount('100', 'CAD'),
+                                               amount.Amount(D('100'), 'USD')))
+        self.assertEqual(amount.Amount(D('100'), 'CAD'),
                          prices.convert_amount(price_map, 'CAD',
-                                               amount.Amount('100', 'CAD')))
+                                               amount.Amount(D('100'), 'CAD')))
         self.assertEqual(None,
                          prices.convert_amount(price_map, 'EUR',
-                                               amount.Amount('100', 'USD')))
+                                               amount.Amount(D('100'), 'USD')))
 
     @loader.load_doc()
     def test_ordering_same_date(self, entries, _, __):

@@ -5,6 +5,7 @@ import unittest
 
 from beancount.core.number import Decimal
 from beancount.core.number import D
+from beancount.core.amount import A
 from beancount.core import amount
 from beancount.core import position
 from beancount.core import inventory
@@ -38,7 +39,7 @@ class TestNumerifySimple(unittest.TestCase):
 
     def test_amount(self):
         itypes = [('pos', amount.Amount)]
-        irows = [(amount.from_string(string),) for string in self.input_amounts]
+        irows = [(A(string),) for string in self.input_amounts]
         atypes, arows = numberify.numberify_results(itypes, irows)
         self.assertEqual(self.expected_types, atypes)
         self.assertEqual(self.expected_rows, arows)
@@ -101,11 +102,11 @@ class TestNumerifyPrecision(unittest.TestCase):
                   ('amount', amount.Amount),
                   ('position', position.Position),
                   ('inventory', inventory.Inventory)]
-        irows = [[D(num.split()[0]),
-                  amount.from_string(num),
-                  position.from_string(num),
-                  inventory.from_string(num)]
-                 for num in ['123.45678909876 JPY',
+        irows = [[D(amt.split()[0]),
+                  A(amt),
+                  position.from_string(amt),
+                  inventory.from_string(amt)]
+                 for amt in ['123.45678909876 JPY',
                              '1.67321232123 RGAGX',
                              '5.67345434543 USD']]
 
