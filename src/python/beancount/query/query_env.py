@@ -136,6 +136,30 @@ class Parent(query_compile.EvalFunction):
         args = self.eval_args(context)
         return account.parent(args[0])
 
+class Leaf(query_compile.EvalFunction):
+    "Get the name of the leaf subaccount."
+    __intypes__ = [str]
+
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        return account.leaf(args[0])
+
+class Grep(query_compile.EvalFunction):
+    "Match a group against a string and return only the matched portion."
+    __intypes__ = [str, str]
+
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        match = re.search(args[0], args[1])
+        if match:
+            return match.group(0)
+
 class OpenDate(query_compile.EvalFunction):
     "Get the date of the open directive of the account."
     __intypes__ = [str]
@@ -241,9 +265,12 @@ class ConvertAmount(query_compile.EvalFunction):
 
     def __call__(self, context):
         args = self.eval_args(context)
-        return (prices.convert_amount(context.price_map, args[1], args[0])
-                if args[1] is None else
-                None)
+        amount_, currency = args
+        converted = prices.convert_amount(context.price_map, currency, amount_)
+        if converted is None:
+            logging.warn('Could not convert Amount "{}" to USD'.format(amount_))
+            converted = amount_
+        return converted
 
 class ConvertPosition(query_compile.EvalFunction):
     "Coerce an amount to a particular currency."
@@ -255,8 +282,12 @@ class ConvertPosition(query_compile.EvalFunction):
     def __call__(self, context):
         args = self.eval_args(context)
         position_, currency = args
-        return prices.convert_amount(context.price_map,
-                                     currency, position_.get_cost())
+        amount_ = position_.get_cost()
+        converted = prices.convert_amount(context.price_map, currency, amount_)
+        if converted is None:
+            logging.warn('Could not convert Position "{}" to USD'.format(amount_))
+            converted = amount_
+        return converted
 
 class ConvertInventory(query_compile.EvalFunction):
     "Coerce an inventory to a particular currency."
@@ -270,11 +301,13 @@ class ConvertInventory(query_compile.EvalFunction):
         inventory_, currency = args
         converted_inventory = inventory.Inventory()
         for position_ in inventory_:
+            amount_ = position_.get_cost()
             converted_amount = prices.convert_amount(context.price_map,
-                                                     currency, position_.get_cost())
+                                                     currency, amount_)
             if converted_amount is None:
-                # Note: Not sure if I should issue a warning here.
-                logging.warn("Skipping position: {}".format(position_))
+                logging.warn('Could not convert Inventory position "{}" to USD'.format(
+                    amount_))
+                converted_inventory.add_amount(amount_)
             else:
                 converted_inventory.add_amount(converted_amount)
         return converted_inventory
@@ -308,6 +341,8 @@ SIMPLE_FUNCTIONS = {
     'length'                              : Length,
     'maxwidth'                            : MaxWidth,
     'parent'                              : Parent,
+    'leaf'                                : Leaf,
+    'grep'                                : Grep,
     'open_date'                           : OpenDate,
     'close_date'                          : CloseDate,
     'account_sortkey'                     : AccountSortKey,
@@ -636,6 +671,21 @@ class NarrationEntryColumn(query_compile.EvalColumn):
                 if isinstance(entry, Transaction)
                 else None)
 
+# This is convenient, because many times the payee is empty and using a
+# combination produces more compact listings.
+class DescriptionEntryColumn(query_compile.EvalColumn):
+    "A combination of the payee + narration of the transaction, if present."
+    __intypes__ = [data.Transaction]
+
+    def __init__(self):
+        super().__init__(str)
+
+    def __call__(self, entry):
+        return (' | '.join(filter(None, [entry.payee, entry.narration]))
+                if isinstance(entry, Transaction)
+                else None)
+
+
 # A globally available empty set to fill in for None's.
 EMPTY_SET = frozenset()
 
@@ -693,19 +743,20 @@ class FilterEntriesEnvironment(query_compile.CompilationEnvironment):
     """
     context_name = 'FROM clause'
     columns = {
-        'id'        : IdEntryColumn,
-        'type'      : TypeEntryColumn,
-        'filename'  : FilenameEntryColumn,
-        'lineno'    : LineNoEntryColumn,
-        'date'      : DateEntryColumn,
-        'year'      : YearEntryColumn,
-        'month'     : MonthEntryColumn,
-        'day'       : DayEntryColumn,
-        'flag'      : FlagEntryColumn,
-        'payee'     : PayeeEntryColumn,
-        'narration' : NarrationEntryColumn,
-        'tags'      : TagsEntryColumn,
-        'links'     : LinksEntryColumn,
+        'id'          : IdEntryColumn,
+        'type'        : TypeEntryColumn,
+        'filename'    : FilenameEntryColumn,
+        'lineno'      : LineNoEntryColumn,
+        'date'        : DateEntryColumn,
+        'year'        : YearEntryColumn,
+        'month'       : MonthEntryColumn,
+        'day'         : DayEntryColumn,
+        'flag'        : FlagEntryColumn,
+        'payee'       : PayeeEntryColumn,
+        'narration'   : NarrationEntryColumn,
+        'description' : DescriptionEntryColumn,
+        'tags'        : TagsEntryColumn,
+        'links'       : LinksEntryColumn,
         }
     functions = copy.copy(SIMPLE_FUNCTIONS)
     functions.update(ENTRY_FUNCTIONS)
@@ -850,6 +901,21 @@ class NarrationColumn(query_compile.EvalColumn):
     def __call__(self, context):
         return context.entry.narration
 
+# This is convenient, because many times the payee is empty and using a
+# combination produces more compact listings.
+class DescriptionColumn(query_compile.EvalColumn):
+    "A combination of the payee + narration for the transaction of this posting."
+    __intypes__ = [data.Posting]
+
+    def __init__(self):
+        super().__init__(str)
+
+    def __call__(self, context):
+        entry = context.entry
+        return (' | '.join(filter(None, [entry.payee, entry.narration]))
+                if isinstance(entry, Transaction)
+                else None)
+
 class TagsColumn(query_compile.EvalColumn):
     "The set of tags of the parent transaction for this posting."
     __equivalent__ = 'entry.tags'
@@ -970,7 +1036,7 @@ class WeightColumn(query_compile.EvalColumn):
         super().__init__(amount.Amount)
 
     def __call__(self, context):
-        return interpolate.get_balance_amount(context)
+        return interpolate.get_posting_weight(context.posting)
 
 class BalanceColumn(query_compile.EvalColumn):
     "The balance for the posting. These can be summed into inventories."
@@ -1000,6 +1066,7 @@ class FilterPostingsEnvironment(query_compile.CompilationEnvironment):
         'flag'          : FlagColumn,
         'payee'         : PayeeColumn,
         'narration'     : NarrationColumn,
+        'description'   : DescriptionColumn,
         'tags'          : TagsColumn,
         'links'         : LinksColumn,
         'posting_flag'  : PostingFlagColumn,

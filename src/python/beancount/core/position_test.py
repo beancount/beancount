@@ -11,7 +11,7 @@ from datetime import date
 
 from beancount.core.number import ZERO
 from beancount.core.number import D
-from beancount.core.amount import Amount
+from beancount.core.amount import A
 from beancount.core.position import Lot
 from beancount.core.position import Position
 from beancount.core.position import from_string
@@ -35,12 +35,12 @@ class TestPosition(unittest.TestCase):
 
     def test_from_string__with_cost(self):
         pos = from_string('2.2 GOOG {532.43 USD}')
-        cost = Amount(D('532.43'), 'USD')
+        cost = A('532.43 USD')
         self.assertEqual(Position(Lot("GOOG", cost, None), D('2.2')), pos)
 
     def test_from_string__with_cost_and_date(self):
         pos = from_string('2.2 GOOG {532.43 USD, 2014-06-15}')
-        cost = Amount(D('532.43'), 'USD')
+        cost = A('532.43 USD')
         lot_date = datetime.date(2014, 6, 15)
         self.assertEqual(Position(Lot("GOOG", cost, lot_date), D('2.2')), pos)
 
@@ -52,7 +52,7 @@ class TestPosition(unittest.TestCase):
         pos = from_string('1.1 GOOG {500.00 # 11.00 USD}')
         self.assertEqual(
             Position(
-                Lot("GOOG", Amount(D('510.00'), 'USD'), None),
+                Lot("GOOG", A('510.00 USD'), None),
                 D('1.1')),
             pos)
 
@@ -62,7 +62,7 @@ class TestPosition(unittest.TestCase):
 
     def test_from_string__with_everything(self):
         pos = from_string('20 GOOG {*, 532.43 # 20.00 USD, "e4dc1a361022", 2014-06-15}')
-        cost = Amount(D('533.43'), 'USD')
+        cost = A('533.43 USD')
         lot_date = datetime.date(2014, 6, 15)
         self.assertEqual(Position(Lot("GOOG", cost, lot_date), D('20')), pos)
 
@@ -83,18 +83,18 @@ class TestPosition(unittest.TestCase):
         self.assertEqual(('2.2 GOOG {532.43 USD}'), pos.to_string(detail=False))
 
     def test_from_amounts(self):
-        pos = from_amounts(Amount(D('10.00'), 'USD'))
+        pos = from_amounts(A('10.00 USD'))
         self.assertEqual(Position(Lot("USD", None, None), D('10')), pos)
 
-        pos = from_amounts(Amount(D('10'), 'GOOG'),
-                           Amount(D('510.00'), 'USD'))
+        pos = from_amounts(A('10 GOOG'),
+                           A('510.00 USD'))
         self.assertEqual(
-            Position(Lot("GOOG", Amount(D('510'), 'USD'), None), D('10')), pos)
+            Position(Lot("GOOG", A('510 USD'), None), D('10')), pos)
 
     def test_constructors(self):
         Position(Lot('USD', None, None), D('123.45'))
-        Position(Lot('USD', Amount('74.00', 'CAD'), None), D('123.45'))
-        Position(Lot('USD', Amount('74.00', 'CAD'), date(2013, 2, 3)), D('123.45'))
+        Position(Lot('USD', A('74.00 CAD'), None), D('123.45'))
+        Position(Lot('USD', A('74.00 CAD'), date(2013, 2, 3)), D('123.45'))
         with self.assertRaises(Exception):
             Position(None, D('123.45'))
         Position(Lot('USD', None, None), None)
@@ -136,9 +136,9 @@ class TestPosition(unittest.TestCase):
 
     def test_eq_and_sortkey__bycost(self):
         pos1 = Position(Lot("USD", None, None), D('1'))
-        pos2 = Position(Lot("USD", Amount.from_string('10 USD'), None), D('1'))
-        pos3 = Position(Lot("USD", Amount.from_string('11 USD'), None), D('1'))
-        pos4 = Position(Lot("USD", Amount.from_string('12 USD'), None), D('1'))
+        pos2 = Position(Lot("USD", A('10 USD'), None), D('1'))
+        pos3 = Position(Lot("USD", A('11 USD'), None), D('1'))
+        pos4 = Position(Lot("USD", A('12 USD'), None), D('1'))
 
         positions = [pos3, pos2, pos1, pos4]
         self.assertEqual([pos1, pos2, pos3, pos4], sorted(positions))
@@ -154,8 +154,6 @@ class TestPosition(unittest.TestCase):
         self.assertTrue(pos1.lot is pos2.lot)
 
     def test_quantities(self):
-        A = Amount.from_string  # pylint: disable=invalid-name
-
         pos = Position(Lot("USD", None, None), D('10'))
         self.assertEqual(A('10 USD'), pos.get_units())
         self.assertEqual(A('10 USD'), pos.get_cost())
@@ -176,20 +174,20 @@ class TestPosition(unittest.TestCase):
             self.assertEqual(A('15 AUD'), cost_pos.get_weight(A('1.6 AUD')))
 
     def test_add(self):
-        pos = Position(Lot("USD", Amount('10', 'AUD'), None), D('28372'))
+        pos = Position(Lot("USD", A('10 AUD'), None), D('28372'))
         pos.add(D('337'))
-        self.assertEqual(Amount('28709', 'USD'), pos.get_units())
-        self.assertEqual(Amount('287090', 'AUD'), pos.get_cost())
+        self.assertEqual(A('28709 USD'), pos.get_units())
+        self.assertEqual(A('287090 AUD'), pos.get_cost())
 
     def test_negative(self):
-        pos = Position(Lot("USD", Amount('10', 'AUD'), None), D('28372'))
+        pos = Position(Lot("USD", A('10 AUD'), None), D('28372'))
         negpos = pos.get_negative()
-        self.assertEqual(Amount('-28372', 'USD'), negpos.get_units())
-        self.assertEqual(Amount('-283720', 'AUD'), negpos.get_cost())
+        self.assertEqual(A('-28372 USD'), negpos.get_units())
+        self.assertEqual(A('-283720 AUD'), negpos.get_cost())
 
     def test_is_negative_at_cost(self):
-        pos1 = Position(Lot("USD", Amount('10', 'AUD'), None), D('1'))
-        pos2 = Position(Lot("USD", Amount('10', 'AUD'), None), D('-1'))
+        pos1 = Position(Lot("USD", A('10 AUD'), None), D('1'))
+        pos2 = Position(Lot("USD", A('10 AUD'), None), D('-1'))
         self.assertFalse(pos1.is_negative_at_cost())
         self.assertTrue(pos2.is_negative_at_cost())
 
@@ -197,4 +195,4 @@ class TestPosition(unittest.TestCase):
         self.assertEqual(("USD", None),
                          lot_currency_pair(Lot("USD", None, None)))
         self.assertEqual(("AAPL", "USD"),
-                         lot_currency_pair(Lot("AAPL", Amount('43.23', 'USD'), None)))
+                         lot_currency_pair(Lot("AAPL", A('43.23 USD'), None)))

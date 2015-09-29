@@ -41,7 +41,6 @@ from os import path
 
 from beancount.parser import _parser
 from beancount.parser import grammar
-from beancount.parser import booking
 from beancount.parser import printer
 from beancount.parser import hashsrc
 from beancount.core import data
