@@ -6,10 +6,8 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import copy
 import datetime
-import logging
 import collections
 import re
-import warnings
 
 # Note: this file is mirrorred into ledgerhub. Relative imports only.
 from beancount.core.number import ZERO

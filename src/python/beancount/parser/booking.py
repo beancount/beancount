@@ -4,21 +4,11 @@ matching lot when reducing the content of an inventory.
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
-import os
-import logging
-import sys
 
-from beancount.parser import grammar
 from beancount.parser import booking_simple
 from beancount.parser import booking_full
-from beancount.core.data import Transaction
-from beancount.core.position import Position
-from beancount.core.amount import Amount
-from beancount.core.number import ZERO
-from beancount.core import interpolate
 from beancount.core import data
 from beancount.core import inventory
-from beancount.core import realization
 
 
 BookingError = collections.namedtuple('BookingError', 'source message entry')
@@ -40,10 +30,11 @@ def book(incomplete_entries, options_map):
         'SIMPLE': booking_simple.book,
         'FULL': booking_full.book,
     }
+    method_name = options_map['booking_method']
     try:
-        booking_fun = booking_methods[options_map['booking_method']]
+        booking_fun = booking_methods[method_name]
     except KeyError:
-        raise KeyError("Unsupported booking method: {}".format(method))
+        raise KeyError("Unsupported booking method: {}".format(method_name))
 
     entries, interpolation_errors = booking_fun(incomplete_entries, options_map)
     validation_errors = validate_inventory_booking(entries, options_map)

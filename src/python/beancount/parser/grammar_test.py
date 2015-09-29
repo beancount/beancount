@@ -20,7 +20,6 @@ from beancount.parser import parser
 from beancount.parser import lexer
 from beancount.core import data
 from beancount.core import amount
-from beancount.core import position
 from beancount.core import interpolate
 from beancount.core import interpolate_test
 from beancount.utils import test_utils

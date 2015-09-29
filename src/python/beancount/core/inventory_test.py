@@ -7,26 +7,20 @@ import datetime
 import unittest
 import copy
 from datetime import date
-import types
 
 from beancount.core.number import D
 from beancount.core.number import ZERO
 from beancount.core.amount import A
+from beancount.core import amount
 from beancount.core.position import Position
 from beancount.core.position import Cost
 from beancount.core.inventory import Inventory
 from beancount.core.inventory import Booking
 from beancount.core import position as position
 from beancount.core import inventory as inventory
-
-from beancount.core.number import D
-from beancount.core.number import ZERO
-from beancount.core.amount import Amount
-from beancount.core import amount
 from beancount.utils import invariants
 
 
-A = amount.from_string
 P = position.from_string
 I = inventory.from_string
 
@@ -226,8 +220,9 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(inv.get_units('NZD'), A('0 NZD'))
 
     def test_segregate_units(self):
-        inv = I(
-            '2.2 HOOL {532.43 USD}, 2.3 HOOL {564.00 USD, 2015-07-14}, 3.41 CAD, 101.20 USD')
+        inv = I('2.2 HOOL {532.43 USD}, '
+                '2.3 HOOL {564.00 USD, 2015-07-14}, '
+                '3.41 CAD, 101.20 USD')
         ccymap = inv.segregate_units(['HOOL', 'USD', 'EUR'])
         self.assertEqual({
             None: I('3.41 CAD'),
@@ -375,7 +370,7 @@ class TestInventory(unittest.TestCase):
 
         # Testing the strict case where everything matches, a cost and a lot-date.
         inv = Inventory()
-        inv.add_amount(A('50 GOOG'), Cost(D('700'),  'USD', date(2000, 1, 1), None))
+        inv.add_amount(A('50 GOOG'), Cost(D('700'), 'USD', date(2000, 1, 1), None))
         self.checkAmount(inv, '50', 'GOOG')
 
         inv.add_amount(A('-40 GOOG'), Cost(D('700'), 'USD', date(2000, 1, 1), None))

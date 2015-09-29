@@ -4,20 +4,13 @@ matching lot when reducing the content of an inventory.
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
-import os
-import logging
-import sys
 
-from beancount.parser import grammar
 from beancount.core.data import Transaction
 from beancount.core.position import Position
 from beancount.core.position import Cost
 from beancount.core.amount import Amount
 from beancount.core.number import ZERO
 from beancount.core import interpolate
-from beancount.core import data
-from beancount.core import inventory
-from beancount.core import realization
 
 
 __sanity_checks__ = False
@@ -124,8 +117,9 @@ def convert_lot_specs_to_lots(entries, unused_options_map):
 
                         if cost.number is not None and cost.number < ZERO:
                             errors.append(
-                                SimpleBookingError(
-                                    entry.meta, 'Cost is negative: "{}"'.format(cost), None))
+                                SimpleBookingError(entry.meta,
+                                                   'Cost is negative: "{}"'.format(cost),
+                                                   None))
 
                     units = Amount(pos.units.number, currency)
                     posting = posting._replace(position=Position(units, cost))

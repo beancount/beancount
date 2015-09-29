@@ -43,7 +43,6 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import copy
 import collections
 import re
-from datetime import date
 
 from beancount.core.number import ZERO
 from beancount.core.amount import Amount

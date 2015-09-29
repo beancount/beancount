@@ -19,10 +19,6 @@ function.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import datetime
-import unittest
-import copy
-from datetime import date
 import types
 
 

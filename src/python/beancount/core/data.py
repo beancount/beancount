@@ -15,7 +15,6 @@ from beancount.core.position import Position
 from beancount.core.position import Cost
 from beancount.core.position import CostSpec
 from beancount.core.account import has_component
-from beancount.core import position
 
 
 def new_directive(clsname, fields):

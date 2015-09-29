@@ -1,6 +1,5 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import itertools
 import unittest
 from beancount.utils import invariants
 

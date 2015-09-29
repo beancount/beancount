@@ -14,7 +14,6 @@ from beancount.core.realization import RealAccount
 from beancount.core import realization
 from beancount.core import data
 from beancount.core import inventory
-from beancount.core import amount
 from beancount.core import position
 from beancount.core import account_types
 from beancount.utils import test_utils

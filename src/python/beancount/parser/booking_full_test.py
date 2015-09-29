@@ -1,20 +1,15 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import re
-import textwrap
-import pprint
-
 from beancount.core.number import D
 from beancount.core.inventory import from_string as I
 from beancount.utils.misc_utils import dictmap
 from beancount.parser import parser
 from beancount.parser import booking_full
 from beancount.parser import cmptest
-from beancount.parser import booking
 from beancount import loader
 
 
-class ___TestGroupPostings(cmptest.TestCase):
+class ___TestGroupPostings(cmptest.TestCase): # pylint: disable=invalid-name
 
     @parser.parse_doc()
     def test_group_postings__one_group(self, ientries, _, options_map):
@@ -25,7 +20,6 @@ class ___TestGroupPostings(cmptest.TestCase):
         """
         groups = booking_full.group_postings_by_currency(ientries[0].postings, {})
         self.assertEqual({'USD': 2}, dictmap(groups, valfun=len))
-        self.assertFalse(free)
 
     @parser.parse_doc()
     def test_group_postings__ambiguous_cost_no_choice(self, ientries, _, options_map):
@@ -50,7 +44,7 @@ class ___TestGroupPostings(cmptest.TestCase):
         """
         groups, free = booking_full.group_postings_by_currency(
             ientries[0].postings, {'USD': I('1 GOOG {100 USD}, '
-                                               '1 GOOG {100 CAD}')})
+                                            '1 GOOG {100 CAD}')})
 
     @parser.parse_doc()
     def test_group_postings__ambiguous_cost_choose_ccy(self, ientries, _, options_map):
@@ -99,7 +93,7 @@ class ___TestGroupPostings(cmptest.TestCase):
 
 
 
-class __TestFullBooking(cmptest.TestCase):
+class __TestFullBooking(cmptest.TestCase): # pylint: disable=invalid-name
 
     @loader.load_doc()
     def test_full_booking(self, entries, _, options_map):

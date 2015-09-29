@@ -5,7 +5,6 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import io
 
 from beancount.core import account_types
-from beancount.core import position
 from beancount.core import data
 from beancount.core import inventory
 from beancount.core import realization

@@ -3,20 +3,10 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
-import os
 import logging
-import sys
 
-from beancount.parser import grammar
-from beancount.parser import booking_simple
 from beancount.core.data import Transaction
-from beancount.core.position import Position
-from beancount.core.amount import Amount
-from beancount.core.number import ZERO
-from beancount.core import interpolate
-from beancount.core import data
 from beancount.core import inventory
-from beancount.core import realization
 
 
 FullBookingError = collections.namedtuple('FullBookingError', 'source message entry')
@@ -130,7 +120,7 @@ def group_postings_by_currency(postings, balances):
 
     Args:
       postings: A list of incomplete postings.
-      balanaces: A dict of currency to inventory contents.
+      balances: A dict of currency to inventory contents.
     Returns:
       A dict of currency (string) to a list of postings. If there were
       auto-postings - postings without a currency - they were duplicated for

@@ -13,7 +13,6 @@ from beancount.core import data
 from beancount.core import inventory
 from beancount.core import position
 from beancount.parser import parser
-from beancount.parser import booking
 from beancount.parser import booking_simple
 from beancount.parser import cmptest
 from beancount import loader
@@ -299,7 +298,7 @@ class TestBalance(cmptest.TestCase):
 class TestBalanceIncompletePostings(cmptest.TestCase):
 
     def get_incomplete_entry(self, string):
-        """Parse a single incomplete entry and convert its CostSpec representation to a Cost.
+        """Parse a single incomplete entry and convert its CostSpec to a Cost.
 
         Args:
           string: The input string to parse.

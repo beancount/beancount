@@ -6,10 +6,8 @@ See types below for details.
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import datetime
-import logging
 import collections
 import re
-import warnings
 
 # Note: this file is mirrorred into ledgerhub. Relative imports only.
 from beancount.core.number import ZERO
@@ -432,7 +430,6 @@ class Position:
         # Parse a cost expression.
         cost_number_per = None
         cost_number_total = None
-        cost_number = None
         cost_currency = None
         date = None
         label = None
