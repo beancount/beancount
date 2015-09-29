@@ -4,8 +4,8 @@ import re
 import unittest
 
 from beancount.core.number import D
+from beancount.core.amount import A
 from beancount.ops import balance
-from beancount.core import amount
 from beancount import loader
 
 
@@ -21,7 +21,7 @@ class TestBalance(unittest.TestCase):
         self.assertEqual([balance.BalanceError], list(map(type, errors)))
         entry = entries[1]
         self.assertTrue(isinstance(entry, balance.Balance))
-        self.assertEqual(amount.Amount(D('-100'), 'USD'), entry.diff_amount)
+        self.assertEqual(A('-100 USD'), entry.diff_amount)
 
     @loader.load_doc()
     def test_simple_first(self, entries, errors, __):

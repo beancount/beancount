@@ -11,7 +11,6 @@ from datetime import date
 
 from beancount.core.number import ZERO
 from beancount.core.number import D
-from beancount.core.amount import Amount
 from beancount.core.amount import A
 from beancount.core.position import Lot
 from beancount.core.position import Position
@@ -36,12 +35,12 @@ class TestPosition(unittest.TestCase):
 
     def test_from_string__with_cost(self):
         pos = from_string('2.2 GOOG {532.43 USD}')
-        cost = Amount(D('532.43'), 'USD')
+        cost = A('532.43 USD')
         self.assertEqual(Position(Lot("GOOG", cost, None), D('2.2')), pos)
 
     def test_from_string__with_cost_and_date(self):
         pos = from_string('2.2 GOOG {532.43 USD, 2014-06-15}')
-        cost = Amount(D('532.43'), 'USD')
+        cost = A('532.43 USD')
         lot_date = datetime.date(2014, 6, 15)
         self.assertEqual(Position(Lot("GOOG", cost, lot_date), D('2.2')), pos)
 
@@ -53,7 +52,7 @@ class TestPosition(unittest.TestCase):
         pos = from_string('1.1 GOOG {500.00 # 11.00 USD}')
         self.assertEqual(
             Position(
-                Lot("GOOG", Amount(D('510.00'), 'USD'), None),
+                Lot("GOOG", A('510.00 USD'), None),
                 D('1.1')),
             pos)
 
@@ -63,7 +62,7 @@ class TestPosition(unittest.TestCase):
 
     def test_from_string__with_everything(self):
         pos = from_string('20 GOOG {*, 532.43 # 20.00 USD, "e4dc1a361022", 2014-06-15}')
-        cost = Amount(D('533.43'), 'USD')
+        cost = A('533.43 USD')
         lot_date = datetime.date(2014, 6, 15)
         self.assertEqual(Position(Lot("GOOG", cost, lot_date), D('20')), pos)
 
@@ -84,13 +83,13 @@ class TestPosition(unittest.TestCase):
         self.assertEqual(('2.2 GOOG {532.43 USD}'), pos.to_string(detail=False))
 
     def test_from_amounts(self):
-        pos = from_amounts(Amount(D('10.00'), 'USD'))
+        pos = from_amounts(A('10.00 USD'))
         self.assertEqual(Position(Lot("USD", None, None), D('10')), pos)
 
-        pos = from_amounts(Amount(D('10'), 'GOOG'),
-                           Amount(D('510.00'), 'USD'))
+        pos = from_amounts(A('10 GOOG'),
+                           A('510.00 USD'))
         self.assertEqual(
-            Position(Lot("GOOG", Amount(D('510'), 'USD'), None), D('10')), pos)
+            Position(Lot("GOOG", A('510 USD'), None), D('10')), pos)
 
     def test_constructors(self):
         Position(Lot('USD', None, None), D('123.45'))
