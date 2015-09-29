@@ -2,9 +2,9 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import re
 
+from beancount.core.amount import A
 from beancount.core import inventory
 from beancount.core import data
-from beancount.core import amount
 from beancount.core import realization
 from beancount.ops import pad
 from beancount.ops import balance
@@ -388,14 +388,14 @@ class TestPadding(cmptest.TestCase):
                 self.assertFalse(position_.is_negative_at_cost())
             balances.append((type(txn_posting), pad_balance.get_units('USD')))
 
-        self.assertEqual(balances, [(data.Open, amount.from_string('0.00 USD')),
-                                    (data.Pad, amount.from_string('0.00 USD')),
-                                    (data.TxnPosting, amount.from_string('95.00 USD')),
-                                    (data.TxnPosting, amount.from_string('105.00 USD')),
-                                    (data.Balance, amount.from_string('105.00 USD')),
-                                    (data.TxnPosting, amount.from_string('125.00 USD')),
-                                    (data.TxnPosting, amount.from_string('145.00 USD')),
-                                    (data.Balance, amount.from_string('145.00 USD'))])
+        self.assertEqual(balances, [(data.Open, A('0.00 USD')),
+                                    (data.Pad, A('0.00 USD')),
+                                    (data.TxnPosting, A('95.00 USD')),
+                                    (data.TxnPosting, A('105.00 USD')),
+                                    (data.Balance, A('105.00 USD')),
+                                    (data.TxnPosting, A('125.00 USD')),
+                                    (data.TxnPosting, A('145.00 USD')),
+                                    (data.Balance, A('145.00 USD'))])
 
     # Note: You could try padding A into B and B into A to see if it works.
 

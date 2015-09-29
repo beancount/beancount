@@ -5,8 +5,8 @@ import datetime
 import re
 
 from beancount.core.number import D
+from beancount.core.amount import A
 from beancount.core import inventory
-from beancount.core import amount
 from beancount.ops import prices
 from beancount.parser import cmptest
 from beancount import loader
@@ -196,15 +196,15 @@ class TestPriceMap(unittest.TestCase):
         2013-07-01 price  USD  1.20 CAD
         """
         price_map = prices.build_price_map(entries)
-        self.assertEqual(amount.Amount('120', 'CAD'),
+        self.assertEqual(A('120 CAD'),
                          prices.convert_amount(price_map, 'CAD',
-                                               amount.Amount('100', 'USD')))
-        self.assertEqual(amount.Amount('100', 'CAD'),
+                                               A('100 USD')))
+        self.assertEqual(A('100 CAD'),
                          prices.convert_amount(price_map, 'CAD',
-                                               amount.Amount('100', 'CAD')))
+                                               A('100 CAD')))
         self.assertEqual(None,
                          prices.convert_amount(price_map, 'EUR',
-                                               amount.Amount('100', 'USD')))
+                                               A('100 USD')))
 
     @loader.load_doc()
     def test_ordering_same_date(self, entries, _, __):

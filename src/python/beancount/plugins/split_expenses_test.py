@@ -119,8 +119,7 @@ class TestSplitReports(unittest.TestCase):
         output = stdout.getvalue()
         self.assertRegexpMatches(output, "Participant")
         self.assertRegexpMatches(output, "Expenses:Food:Restaurant")
-        self.assertRegexpMatches(output, "payee")
-        self.assertRegexpMatches(output, "narration")
+        self.assertRegexpMatches(output, "description")
         self.assertRegexpMatches(output, "balance")
 
     def test_split_reports(self):

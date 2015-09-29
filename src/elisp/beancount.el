@@ -5,6 +5,7 @@
 
 ;; Version: 0
 ;; Author: Martin Blais <blais@furius.ca>
+;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 
 ;; This file is not part of GNU Emacs.
 
@@ -50,13 +51,7 @@
   "A list of the directive names.")
 
 (defvar beancount-font-lock-keywords
-  `(;; Comments
-    (";.+" . font-lock-comment-face)
-
-    ;; Strings
-    ("\".*?\"" . font-lock-string-face)
-
-    ;; Reserved keywords
+  `(;; Reserved keywords
     (,(regexp-opt beancount-directive-names) . font-lock-keyword-face)
 
     ;; Tags & Links
@@ -89,6 +84,13 @@
     ;; FIXME: There's actually no function by that name!
     (define-key map [(control c)(p)] #'beancount-test-align)
     map))
+
+(defvar beancount-mode-syntax-table
+  (let ((st (make-syntax-table)))
+    (modify-syntax-entry ?\" "\"\"" st)
+    (modify-syntax-entry ?\; "<" st)
+    (modify-syntax-entry ?\n ">" st)
+    st))
 
 ;;;###autoload
 (define-minor-mode beancount-mode
@@ -123,20 +125,30 @@ is great for sectioning large files with many transactions.
 
   ;; Customize font-lock for beancount.
   ;;
+  (set-syntax-table beancount-mode-syntax-table)
+  (when (fboundp 'syntax-ppss-flush-cache)
+    (syntax-ppss-flush-cache (point-min))
+    (set (make-local-variable 'syntax-begin-function)
+         (lambda () (goto-char (point-min)))))
+  ;; Force font-lock to use the syntax-table to find strings-and-comments,
+  ;; regardless of what the "host major mode" decided.
+  (set (make-local-variable 'font-lock-keywords-only) nil)
   ;; Important: you have to use 'nil for the mode here because in certain major
   ;; modes (e.g. org-mode) the font-lock-keywords is a buffer-local variable.
   (if beancount-mode
       (font-lock-add-keywords nil beancount-font-lock-keywords)
     (font-lock-remove-keywords nil beancount-font-lock-keywords))
-  (font-lock-fontify-buffer)
+  (if (fboundp 'font-lock-flush)
+      (font-lock-flush)
+    (with-no-warnings (font-lock-fontify-buffer)))
 
   (when beancount-mode
     (beancount-init-accounts))
   )
 
 (defvar beancount-accounts nil
-  "A list of the accounts available in this buffer. This is a
-  cache of the value computed by beancount-get-accounts.")
+  "A list of the accounts available in this buffer.
+This is a cache of the value computed by `beancount-get-accounts'.")
 (make-variable-buffer-local 'beancount-accounts)
 
 (defun beancount-init-accounts ()
@@ -182,11 +194,37 @@ declarations only."
         (puthash (match-string-no-properties 0) nil accounts)))
     (sort (beancount-hash-keys accounts) 'string<)))
 
+(defcustom beancount-use-ido t
+  "If non-nil, use ido-style completion rather than the standard completion."
+  :type 'boolean)
+
+(defun beancount-account-completion-table (string pred action)
+  (if (eq action 'metadata)
+      '(metadata (category . beancount-account))
+    (complete-with-action action beancount-accounts string pred)))
+
+;; Default to substring completion for beancount accounts.
+(defconst beancount--completion-overrides
+  '(beancount-account (styles basic partial-completion substring)))
+(cond
+ ((boundp 'completion-category-defaults)
+  (add-to-list 'completion-category-defaults beancount--completion-overrides))
+ ((and (boundp 'completion-category-overrides)
+       (not (assq 'beancount-account completion-category-overrides)))
+  (push beancount--completion-overrides completion-category-overrides)))
+
 (defun beancount-insert-account (account-name)
-  "Insert one of the valid account names in this file (using ido
-niceness)."
+  "Insert one of the valid account names in this file.
+Uses ido niceness according to `beancount-use-ido'."
   (interactive
-   (list (ido-completing-read "Account: " beancount-accounts nil nil (thing-at-point 'word))))
+   (list
+    (if beancount-use-ido
+        ;; `ido-completing-read' is too dumb to understand functional
+        ;; completion tables!
+        (ido-completing-read "Account: " beancount-accounts
+                             nil nil (thing-at-point 'word))
+      (completing-read "Account: " #'beancount-account-completion-table
+                       nil t (thing-at-point 'word)))))
   (let ((bounds (bounds-of-thing-at-point 'word)))
     (when bounds
       (delete-region (car bounds) (cdr bounds))))
@@ -353,6 +391,9 @@ what that column is and returns it (an integer)."
         ))
     column))
 
+(defvar beancount-install-dir nil
+  "Directory in which Beancount's source is located.
+Only useful if you have not installed Beancount properly in your PATH.")
 
 (defvar beancount-check-program "bean-check"
   "Program to run to run just the parser and validator on an
@@ -360,45 +401,63 @@ what that column is and returns it (an integer)."
 
 (defvar compilation-read-command)
 
-(defun beancount-check ()
-  (interactive)
-  (let ((compilation-read-command nil)
-        (compile-command
-         (format "%s %s" beancount-check-program (buffer-file-name))))
+(defun beancount--run (prog &rest args)
+  (let ((process-environment
+         (if beancount-install-dir
+             `(,(concat "PYTHONPATH="
+                        (expand-file-name "src/python"
+                                          beancount-install-dir))
+               ,(concat "PATH="
+                        (expand-file-name "bin" beancount-install-dir)
+                        ":" (getenv "PATH"))
+               ,@process-environment)
+           process-environment))
+        (compile-command (mapconcat (lambda (arg)
+                                      (if (stringp arg)
+                                          (shell-quote-argument arg) ""))
+                                    (cons prog args)
+                                    " ")))
     (call-interactively 'compile)))
 
+(defun beancount-check ()
+  "Run `beancount-check-program'."
+  (interactive)
+  (let ((compilation-read-command nil))
+    (beancount--run beancount-check-program
+                    (file-relative-name buffer-file-name))))
 
 (defvar beancount-query-program "bean-query"
   "Program to run to run just the parser and validator on an
   input file.")
 
 (defun beancount-query ()
+  "Run bean-query."
   (interactive)
-  (let ((compile-command
-         (format "%s %s " beancount-query-program (buffer-file-name))))
-    (call-interactively 'compile)))
+  ;; Don't let-bind compilation-read-command this time, since the default
+  ;; command is incomplete.
+  (beancount--run beancount-query-program
+                  (file-relative-name buffer-file-name) t))
 
 
 (defvar beancount-doctor-program "bean-doctor"
   "Program to run the doctor commands.")
 
 (defun beancount-context ()
+  "Get the \"context\" from `beancount-doctor-program'."
   (interactive)
-  (let ((compilation-read-command nil)
-        (compile-command
-         (format "%s %s %s %d"
-                 beancount-doctor-program "context"
-                 (buffer-file-name) (line-number-at-pos (point)))))
-    (call-interactively 'compile)))
+  (let ((compilation-read-command nil))
+    (beancount--run beancount-doctor-program "context"
+                    (file-relative-name buffer-file-name)
+                    (number-to-string (line-number-at-pos)))))
+
 
 (defun beancount-linked ()
+  "Get the \"linked\" info from `beancount-doctor-program'."
   (interactive)
-  (let ((compilation-read-command nil)
-        (compile-command
-         (format "%s %s %s %d"
-                 beancount-doctor-program "linked"
-                 (buffer-file-name) (line-number-at-pos (point)))))
-    (call-interactively 'compile)))
+  (let ((compilation-read-command nil))
+    (beancount--run beancount-doctor-program "linked"
+                    (file-relative-name buffer-file-name)
+                    (line-number-at-pos))))
 
 
 (provide 'beancount)

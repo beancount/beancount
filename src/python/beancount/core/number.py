@@ -24,6 +24,11 @@ ZERO = Decimal()
 HALF = Decimal('0.5')
 ONE = Decimal('1')
 
+# A constant used to make incomplete data, e.g. missing numbers in the cost spec
+# to be filled in automatically. We define this as a class so that it appears in
+# errors that would occur from attempts to access incomplete data.
+class MISSING: pass
+
 # Regular expression for parsing a number in Python.
 NUMBER_RE = r"[+-]?\s*[0-9,]*(?:\.[0-9]*)?"
 

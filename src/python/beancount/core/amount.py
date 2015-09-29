@@ -60,6 +60,9 @@ class Amount:
 
     __slots__ = ('number', 'currency')
 
+    valid_types_number = (Decimal, type, type(None))
+    valid_types_currency = (str, type, type(None))
+
     def __init__(self, number, currency):
         """Constructor from a number and currency.
 
@@ -67,7 +70,9 @@ class Amount:
           number: A string or Decimal instance. Will get converted automatically.
           currency: A string, the currency symbol to use.
         """
-        self.number = _D(number) if number is not None else None
+        assert isinstance(number, self.valid_types_number)
+        assert isinstance(currency, self.valid_types_currency)
+        self.number = number
         self.currency = currency
 
     def to_string(self, dformat=DEFAULT_FORMATTER):
@@ -215,5 +220,5 @@ def amount_sub(amount1, amount2):
     return Amount(amount1.number - amount2.number, amount1.currency)
 
 
-from_string = Amount.from_string  # pylint: disable=invalid-name
+A = from_string = Amount.from_string  # pylint: disable=invalid-name
 NULL_AMOUNT = Amount(ZERO, '')

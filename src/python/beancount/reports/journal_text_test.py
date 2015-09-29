@@ -4,8 +4,8 @@ import io
 import unittest
 
 from beancount.core.number import D
+from beancount.core.amount import A
 from beancount.core import realization
-from beancount.core import amount
 from beancount.core import position
 from beancount.core import data
 from beancount.reports import journal_text
@@ -48,7 +48,7 @@ class TestJournalRenderPosting(unittest.TestCase):
         str_posting = journal_text.render_posting(
             data.Posting('Assets:Something',
                          position.from_string('10 VHT'),
-                         amount.from_string('45.32 USD'), None, None),
+                         A('45.32 USD'), None, None),
             self.number_format)
         self.assertEqual('  Assets:Something                 10 VHT @ 45.32 USD',
                          str_posting)
@@ -57,7 +57,7 @@ class TestJournalRenderPosting(unittest.TestCase):
         str_posting = journal_text.render_posting(
             data.Posting('Assets:Something',
                          position.from_string('10 VHT {45.32 USD}'),
-                         amount.from_string('47.00 USD'), None, None),
+                         A('47.00 USD'), None, None),
             self.number_format)
         self.assertEqual(
             '  Assets:Something                 10 VHT {45.32 USD} @ 47.00 USD',

@@ -17,11 +17,9 @@ from beancount.core.position import from_amounts
 
 from beancount.core.number import ZERO
 from beancount.core.number import D
+from beancount.core.amount import A
 from beancount.core.amount import Amount
 from beancount.core import display_context
-
-
-A = Amount.from_string  # pylint: disable=invalid-name
 
 
 class TestCost(unittest.TestCase):
@@ -140,11 +138,11 @@ class TestPosition(unittest.TestCase):
         self.assertEqual(('2.2 GOOG {532.43 USD}'), pos.to_string(detail=False))
 
     def test_from_amounts(self):
-        pos = from_amounts(Amount(D('10.00'), 'USD'))
+        pos = from_amounts(A('10.00 USD'))
         self.assertEqual(Position(A("10 USD")), pos)
 
-        pos = from_amounts(Amount(D('10'), 'GOOG'),
-                           Amount(D('510.00'), 'USD'))
+        pos = from_amounts(A('10 GOOG'),
+                           A('510.00 USD'))
         self.assertEqual(
             Position(A("10 GOOG"), Cost(D('510'), 'USD', None, None)), pos)
 
@@ -153,7 +151,7 @@ class TestPosition(unittest.TestCase):
         Position(A('123.45 USD'), Cost('74.00', 'CAD', None, None))
         Position(A('123.45 USD'), Cost('74.00', 'CAD', date(2013, 2, 3), None))
         with self.assertRaises(Exception):
-            Position(Amount('123.45', None), None)
+            Position(Amount(D('123.45'), None), None)
         Position(Amount(None, 'USD'), None)
 
     def test_compare_zero_to_none(self):
@@ -241,14 +239,14 @@ class TestPosition(unittest.TestCase):
     def test_add(self):
         pos = Position(A("28372 USD"), Cost(D('10'), 'AUD', None, None))
         pos.add(D('337'))
-        self.assertEqual(Amount('28709', 'USD'), pos.units)
-        self.assertEqual(Amount('287090', 'AUD'), pos.get_cost())
+        self.assertEqual(A('28709 USD'), pos.units)
+        self.assertEqual(A('287090 AUD'), pos.get_cost())
 
     def test_negative(self):
         pos = Position(A("28372 USD"), Cost(D('10'), 'AUD', None, None))
         negpos = pos.get_negative()
-        self.assertEqual(Amount('-28372', 'USD'), negpos.units)
-        self.assertEqual(Amount('-283720', 'AUD'), negpos.get_cost())
+        self.assertEqual(A('-28372 USD'), negpos.units)
+        self.assertEqual(A('-283720 AUD'), negpos.get_cost())
 
     def test_is_negative_at_cost(self):
         pos1 = Position(A("1 USD"), Cost('10', 'AUD', None, None))

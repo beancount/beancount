@@ -6,8 +6,8 @@ import datetime
 
 from beancount.core.number import D
 from beancount.core.number import ZERO
+from beancount.core.amount import A
 from beancount.core import position
-from beancount.core import amount
 from beancount.core import data
 from beancount.ops import holdings
 from beancount.ops import prices
@@ -519,41 +519,41 @@ class TestHoldings(unittest.TestCase):
         expected_position = position.from_string('100 MSFT {54.34 USD}')
         self.assertEqual(expected_position, posting.position)
 
-        expected_price = amount.from_string('60.00 USD')
+        expected_price = A('60.00 USD')
         self.assertEqual(expected_price, posting.price)
 
     def test_get_pholding_market_value(self):
         posting = data.Posting('Account',
                                position.from_string('100 MSFT {54.34 USD}'),
-                               amount.from_string('60.00 USD'),
+                               A('60.00 USD'),
                                None, None)
-        self.assertEqual(amount.from_string('6000.00 USD'),
+        self.assertEqual(A('6000.00 USD'),
                          holdings.get_pholding_market_value(posting))
 
         posting = data.Posting('Account',
                                position.from_string('100 MSFT {54.34 USD}'),
                                None,
                                None, None)
-        self.assertEqual(amount.from_string('5434.00 USD'),
+        self.assertEqual(A('5434.00 USD'),
                          holdings.get_pholding_market_value(posting))
 
         posting = data.Posting('Account',
                                position.from_string('1000.00 USD'),
                                None,
                                None, None)
-        self.assertEqual(amount.from_string('1000.00 USD'),
+        self.assertEqual(A('1000.00 USD'),
                          holdings.get_pholding_market_value(posting))
 
         with self.assertRaises(AssertionError):
             posting = data.Posting('Account',
                                    position.from_string('1000.00 USD'),
-                                   amount.from_string('60.00 USD'),
+                                   A('60.00 USD'),
                                    None, None)
             holdings.get_pholding_market_value(posting)
 
         with self.assertRaises(AssertionError):
             posting = data.Posting('Account',
                                    position.from_string('1000.00 USD {1.25 CAD}'),
-                                   amount.from_string('60.00 USD'),
+                                   A('60.00 USD'),
                                    None, None)
             holdings.get_pholding_market_value(posting)

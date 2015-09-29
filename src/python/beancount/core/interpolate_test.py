@@ -5,12 +5,12 @@ import textwrap
 import unittest
 
 from beancount.core.number import D
+from beancount.core.amount import A
 from beancount.core.data import create_simple_posting as P
 from beancount.core.data import create_simple_posting_with_cost as PCost
 from beancount.core import interpolate
 from beancount.core import data
 from beancount.core import inventory
-from beancount.core import amount
 from beancount.core import position
 from beancount.parser import parser
 from beancount.parser import booking
@@ -37,22 +37,22 @@ class TestBalance(cmptest.TestCase):
 
         # Entry without cost, without price.
         posting = P(None, "Assets:Bank:Checking", "105.50", "USD")
-        self.assertEqual(amount.Amount("105.50", "USD"),
+        self.assertEqual(A("105.50 USD"),
                          interpolate.get_posting_weight(posting))
 
         # Entry without cost, with price.
-        posting = posting._replace(price=amount.Amount("0.90", "CAD"))
-        self.assertEqual(amount.Amount("94.95", "CAD"),
+        posting = posting._replace(price=A("0.90 CAD"))
+        self.assertEqual(A("94.95 CAD"),
                          interpolate.get_posting_weight(posting))
 
         # Entry with cost, without price.
         posting = PCost(None, "Assets:Bank:Checking", "105.50", "USD", "0.80", "EUR")
-        self.assertEqual(amount.Amount("84.40", "EUR"),
+        self.assertEqual(A("84.40 EUR"),
                          interpolate.get_posting_weight(posting))
 
         # Entry with cost, and with price (the price should be ignored).
-        posting = posting._replace(price=amount.Amount("2.00", "CAD"))
-        self.assertEqual(amount.Amount("84.40", "EUR"),
+        posting = posting._replace(price=A("2.00 CAD"))
+        self.assertEqual(A("84.40 EUR"),
                          interpolate.get_posting_weight(posting))
 
     def test_has_nontrivial_balance(self):
@@ -62,7 +62,7 @@ class TestBalance(cmptest.TestCase):
         self.assertFalse(interpolate.has_nontrivial_balance(posting))
 
         # Entry without cost, with price.
-        posting = posting._replace(price=amount.Amount("0.90", "CAD"))
+        posting = posting._replace(price=A("0.90 CAD"))
         self.assertTrue(interpolate.has_nontrivial_balance(posting))
 
         # Entry with cost, without price.
@@ -70,7 +70,7 @@ class TestBalance(cmptest.TestCase):
         self.assertTrue(interpolate.has_nontrivial_balance(posting))
 
         # Entry with cost, and with price (the price should be ignored).
-        posting = posting._replace(price=amount.Amount("2.00", "CAD"))
+        posting = posting._replace(price=A("2.00 CAD"))
         self.assertTrue(interpolate.has_nontrivial_balance(posting))
 
     def test_compute_residual(self):
@@ -490,8 +490,8 @@ class TestComputeBalance(unittest.TestCase):
         """
         computed_balance = interpolate.compute_entries_balance(entries)
         expected_balance = inventory.Inventory()
-        expected_balance.add_amount(amount.Amount('-400', 'USD'))
-        expected_balance.add_amount(amount.Amount('10', 'GOOG'),
+        expected_balance.add_amount(A('-400 USD'))
+        expected_balance.add_amount(A('10 GOOG'),
                                     position.Cost(D('40'), 'USD', None, None))
 
         self.assertEqual(expected_balance, computed_balance)
@@ -512,8 +512,8 @@ class TestComputeBalance(unittest.TestCase):
         """
         computed_balance = interpolate.compute_entries_balance(entries)
         expected_balance = inventory.Inventory()
-        expected_balance.add_amount(amount.Amount('2000.00', 'EUR'))
-        expected_balance.add_amount(amount.Amount('-3560.00', 'GBP'))
+        expected_balance.add_amount(A('2000.00 EUR'))
+        expected_balance.add_amount(A('-3560.00 GBP'))
         self.assertEqual(expected_balance, computed_balance)
 
     @loader.load_doc()

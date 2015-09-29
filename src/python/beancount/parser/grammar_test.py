@@ -1411,7 +1411,7 @@ class TestMetaData(unittest.TestCase):
             'currency': 'GOOG',
             'tag': 'trip-florida',
             'number': D('345.67'),
-            'amount': amount.from_string('345.67 USD'),
+            'amount': A('345.67 USD'),
             'boolt': True,
             'boolf': False,
             }, entries[0].meta)
