@@ -1351,6 +1351,11 @@ http://furius.ca/beancount/doc/proposal-inter
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - Idea for one of those constraint plugins: Create a plugin whereby you
+    declare some currencies and assert that any units in them are always held at
+    cost.
+
+
   - What happens if you specify the same plugin twice, with different
     configuration strings?
 
