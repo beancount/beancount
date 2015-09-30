@@ -36,6 +36,8 @@ def book(entries, options_map):
         entries: A list of interpolated entries with all their postings completed.
         errors: New errors produced during interpolation.
     """
+    # Perform simple booking, that is convert the CostSpec instances to Cost,
+    # not even looking at inventory contents.
     entries_with_lots, errors = convert_lot_specs_to_lots(entries, options_map)
 
     for entry in entries_with_lots:
@@ -59,7 +61,8 @@ def book(entries, options_map):
 
 def convert_lot_specs_to_lots(entries, unused_options_map):
     """For all the entries, convert the posting's position's CostSpec to Cost
-    instances.
+    instances. In the simple method, the data provided in the CostSpec must
+    unambiguously provide a way to compute the cost amount.
 
     This essentially replicates the way the old parser used to work, but
     allowing positions to have the fuzzy lot specifications instead of the
