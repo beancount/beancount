@@ -2086,6 +2086,17 @@ class TestIncompleteInputs(cmptest.TestCase):
         """
         self.assertFalse(entries)
 
+    @parser.parse_doc(allow_incomplete=True)
+    def test_units_missing_with_cost(self, entries, _, options_map):
+        """
+          2010-05-28 *
+            Assets:Account1    HOOL {300.00 USD}
+            Assets:Account2    -600.00 USD
+        """
+        pos = entries[-1].postings[0].position
+        self.assertEqual(Amount(MISSING, 'HOOL'), pos.units)
+        self.assertEqual(CostSpec(D('300'), None, 'USD', None, None, False), pos.cost)
+
     #
     # Price
     #
