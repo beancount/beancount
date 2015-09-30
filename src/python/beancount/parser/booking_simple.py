@@ -10,6 +10,7 @@ from beancount.core.position import Position
 from beancount.core.position import Cost
 from beancount.core.amount import Amount
 from beancount.core.number import ZERO
+from beancount.core.number import MISSING
 from beancount.core import interpolate
 
 
@@ -90,13 +91,13 @@ def convert_lot_specs_to_lots(entries, unused_options_map):
                     number_per, number_total, cost_currency, date, label, merge = cost_spec
 
                     # Compute the cost.
-                    if number_per is not None or number_total is not None:
+                    if number_per is not MISSING or number_total is not None:
                         if number_total is not None:
                             # Compute the per-unit cost if there is some total cost
                             # component involved.
                             units = pos.units.number
                             cost_total = number_total
-                            if number_per is not None:
+                            if number_per is not MISSING:
                                 cost_total += number_per * units
                             unit_cost = cost_total / abs(units)
                         else:

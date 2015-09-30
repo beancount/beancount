@@ -1,6 +1,7 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 from beancount.core.number import D
+from beancount.core import data
 from beancount.parser import cmptest
 from beancount import loader
 
@@ -16,8 +17,22 @@ class TestSimpleBooking(cmptest.TestCase):
           2013-05-01 open Equity:Opening-Balances
 
           2013-05-02 *
-            Assets:Bank:Investing                 5 GOOG {501 USD}
+            Assets:Bank:Investing                 5 HOOL {502 USD}
+            Equity:Opening-Balances
+
+          2013-05-02 *
+            Assets:Bank:Investing                 5 HOOL {500 # 10 USD}
+            Equity:Opening-Balances
+
+          2013-05-02 *
+            Assets:Bank:Investing                 5 HOOL {# 2510 USD}
+            Equity:Opening-Balances
+
+          2013-05-02 *
+            Assets:Bank:Investing                 2510 USD
             Equity:Opening-Balances
         """
-        # interpolated_entries, errors = booking.simple_booking(entries, options_map)
-        self.assertEqual(D('-2505'), entries[-1].postings[-1].position.units.number)
+        for entry in entries:
+            if not isinstance(entry, data.Transaction):
+                continue
+            self.assertEqual(D('-2510'), entry.postings[-1].position.units.number)
