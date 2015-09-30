@@ -379,7 +379,7 @@ class TestCommodityExport(unittest.TestCase):
           Equity:Opening-Balances
 
         2015-04-08 *
-          Assets:Investing           1 GOOG {500.00 USD}
+          Assets:Investing           1 HOOL {500.00 USD}
           Equity:Opening-Balances
 
         """
@@ -387,7 +387,7 @@ class TestCommodityExport(unittest.TestCase):
                                                    aggregate_by_commodity=True)
         self.assertListEqual([
             ('NASDAQ:AAPL', 'USD', D('5'), D('404.00'), False, '', None),
-            ('GOOG', 'USD', D('1'), D('500.00'), False, '', None),
+            ('HOOL', 'USD', D('1'), D('500.00'), False, '', None),
             ], exported)
         self.assertFalse(converted)
         self.assertFalse(ignored)

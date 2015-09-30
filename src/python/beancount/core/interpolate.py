@@ -48,8 +48,8 @@ def get_posting_weight(posting):
 
       Assets:Account  5234.50 USD                             ->  5234.50 USD
       Assets:Account  3877.41 EUR @ 1.35 USD                  ->  5234.50 USD
-      Assets:Account       10 GOOG {523.45 USD}               ->  5234.50 USD
-      Assets:Account       10 GOOG {523.45 USD} @ 545.60 CAD  ->  5234.50 USD
+      Assets:Account       10 HOOL {523.45 USD}               ->  5234.50 USD
+      Assets:Account       10 HOOL {523.45 USD} @ 545.60 CAD  ->  5234.50 USD
 
     Args:
       posting: A Posting instance.

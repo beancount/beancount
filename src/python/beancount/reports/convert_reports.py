@@ -75,7 +75,7 @@ def split_currency_conversions(entry):
     transaction like this one:
 
       2014-11-02 * "Buy some stock with foreign currency funds"
-        Assets:CA:Investment:GOOG          5 GOOG {520.0 USD}
+        Assets:CA:Investment:HOOL          5 HOOL {520.0 USD}
         Expenses:Commissions            9.95 USD
         Assets:CA:Investment:Cash   -2939.46 CAD @ 0.8879 USD
 

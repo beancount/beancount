@@ -151,26 +151,26 @@ var lexTests = []lexTest{
 	{"number", "-876", []item{{NUMBER, 0, "-876"}, tEOF}},
 	{"number", "+876", []item{{NUMBER, 0, "+876"}, tEOF}},
 
-	{"inventory_price_only", "987.65 GOOG @ 704.01 USD", []item{
+	{"inventory_price_only", "987.65 HOOL @ 704.01 USD", []item{
 		{NUMBER, 0, "987.65"},
-		{CURRENCY, 0, "GOOG"},
+		{CURRENCY, 0, "HOOL"},
 		{AT, 0, "@"},
 		{NUMBER, 0, "704.01"},
 		{CURRENCY, 0, "USD"},
 		tEOF}},
 
-	{"inventory_cost_only", "987.65 GOOG {765.03 USD}", []item{
+	{"inventory_cost_only", "987.65 HOOL {765.03 USD}", []item{
 		{NUMBER, 0, "987.65"},
-		{CURRENCY, 0, "GOOG"},
+		{CURRENCY, 0, "HOOL"},
 		{LCURL, 0, "{"},
 		{NUMBER, 0, "765.03"},
 		{CURRENCY, 0, "USD"},
 		{RCURL, 0, "}"},
 		tEOF}},
 
-	{"inventory_cost_with_date", "987.65 GOOG {765.03 USD / 2013-04-18}", []item{
+	{"inventory_cost_with_date", "987.65 HOOL {765.03 USD / 2013-04-18}", []item{
 		{NUMBER, 0, "987.65"},
-		{CURRENCY, 0, "GOOG"},
+		{CURRENCY, 0, "HOOL"},
 		{LCURL, 0, "{"},
 		{NUMBER, 0, "765.03"},
 		{CURRENCY, 0, "USD"},
@@ -179,9 +179,9 @@ var lexTests = []lexTest{
 		{RCURL, 0, "}"},
 		tEOF}},
 
-	{"inventory_cost_and_price", "987.65 GOOG {765.03 USD} @ 704.01 USD", []item{
+	{"inventory_cost_and_price", "987.65 HOOL {765.03 USD} @ 704.01 USD", []item{
 		{NUMBER, 0, "987.65"},
-		{CURRENCY, 0, "GOOG"},
+		{CURRENCY, 0, "HOOL"},
 		{LCURL, 0, "{"},
 		{NUMBER, 0, "765.03"},
 		{CURRENCY, 0, "USD"},
@@ -191,9 +191,9 @@ var lexTests = []lexTest{
 		{CURRENCY, 0, "USD"},
 		tEOF}},
 
-	// {"inventory", "987.65 GOOG {765.03 USD} @ 704.01 USD", []item{
+	// {"inventory", "987.65 HOOL {765.03 USD} @ 704.01 USD", []item{
 	// 	{NUMBER, 0, "987.65"},
-	// 	{CURRENCY, 0, "GOOG"},
+	// 	{CURRENCY, 0, "HOOL"},
 	// 	tEOF}},
 
 	{"directive", "open", []item{{OPEN, 0, "open"}, tEOF}},

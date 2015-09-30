@@ -201,7 +201,7 @@ Event = new_directive('Event', 'type description')
 # Attributes:
 #   meta: See above.
 #   date: See above.
-#  currency: A string, the currency that is being priced, e.g. GOOG.
+#  currency: A string, the currency that is being priced, e.g. HOOL.
 #  amount: An instance of Amount, the number of units and currency that
 #    'currency' is worth, for instance 1200.12 USD.
 Price = new_directive('Price', 'currency amount')
