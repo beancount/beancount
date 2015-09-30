@@ -1328,6 +1328,10 @@ http://furius.ca/beancount/doc/proposal-inter
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - Reconcile all usage of account regexps to beancount.core.account.ACCOUNT_RE
+    throughout the code  (grep --include='*.py'  -srn A-Z    ~/p/beancount/src/python/beancount).
+
+
   - What happens if you specify the same plugin twice, with different
     configuration strings?
 
