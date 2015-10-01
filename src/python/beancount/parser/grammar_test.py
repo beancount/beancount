@@ -2090,12 +2090,23 @@ class TestIncompleteInputs(cmptest.TestCase):
     def test_units_missing_with_cost(self, entries, _, options_map):
         """
           2010-05-28 *
-            Assets:Account1    HOOL {300.00 USD}
+            Assets:Account1            HOOL {300.00 USD}
             Assets:Account2    -600.00 USD
         """
         pos = entries[-1].postings[0].position
         self.assertEqual(Amount(MISSING, 'HOOL'), pos.units)
         self.assertEqual(CostSpec(D('300'), None, 'USD', None, None, False), pos.cost)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_units_missing_with_price(self, entries, _, options_map):
+        """
+          2010-05-28 *
+            Assets:Account2            CAD @ 1.2 USD
+            Assets:Account1     100.00 USD @
+        """
+        posting = entries[-1].postings[0]
+        self.assertEqual(Amount(MISSING, 'CAD'), posting.position.units)
+        self.assertEqual(Amount(D('1.2'), 'USD'), posting.price)
 
     #
     # Price
@@ -2141,6 +2152,14 @@ class TestIncompleteInputs(cmptest.TestCase):
         """
           2010-05-28 * "THIS IS NOT LEGAL, THIS CAUSES AN ERROR"
             Assets:Account1     100.00 USD @ 1.2
+            Assets:Account2     120.00 CAD
+        """
+
+    @parser.parse_doc(allow_incomplete=True, expect_errors=True)
+    def test_price_missing_currency(self, entries, _, options_map):
+        """
+          2010-05-28 * "THIS IS NOT LEGAL, THIS CAUSES AN ERROR"
+            Assets:Account1                @ 1.2 USD
             Assets:Account2     120.00 CAD
         """
 
