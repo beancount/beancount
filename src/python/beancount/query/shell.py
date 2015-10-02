@@ -89,7 +89,14 @@ class DispatchingShell(cmd.Cmd):
     doc_header = "Shell utility commands (type help <topic>):"
     misc_header = "Beancount query commands:"
 
-    def __init__(self, is_interactive, parser):
+    def __init__(self, is_interactive, parser, outfile):
+        """Create a shell with history.
+
+        Args:
+          is_interactive: A boolean, true if this serves an interactive tty.
+          parser: A command parser.
+          outfile: An output file object to write communications to.
+        """
         super().__init__()
         if is_interactive:
             load_history(path.expanduser(HISTORY_FILENAME))
@@ -97,6 +104,7 @@ class DispatchingShell(cmd.Cmd):
         self.parser = parser
         self.initialize_vars()
         self.add_help()
+        self.outfile = outfile
 
     def initialize_vars(self):
         """Initialize the setting variables of the interactive shell."""
@@ -121,7 +129,8 @@ class DispatchingShell(cmd.Cmd):
                 continue
             command_name = match.group(1)
             setattr(self.__class__, 'help_{}'.format(command_name.lower()),
-                    lambda _, fun=func: print(textwrap.dedent(fun.__doc__).strip()))
+                    lambda _, fun=func: print(textwrap.dedent(fun.__doc__).strip(),
+                                              file=self.outfile))
 
     def get_pager(self):
         """Create and return a context manager to write to, a pager subprocess if required.
@@ -146,7 +155,7 @@ class DispatchingShell(cmd.Cmd):
                 super().cmdloop()
                 break
             except KeyboardInterrupt:
-                print('\n(Interrupted)')
+                print('\n(Interrupted)', file=self.outfile)
 
     def do_history(self, _):
         "Print the command-line history statement."
