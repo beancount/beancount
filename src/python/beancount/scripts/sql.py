@@ -258,6 +258,19 @@ class EventWriter(DirectiveWriter):
                 entry.description)
 
 
+class QueryWriter(DirectiveWriter):
+    type = data.Query
+
+    columns = """
+      name                VARCHAR
+      query_string        VARCHAR
+    """
+
+    def get_detail(self, entry):
+        return (entry.name,
+                entry.query_string)
+
+
 class PriceWriter(DirectiveWriter):
     type = data.Price
 

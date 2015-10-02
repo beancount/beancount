@@ -281,6 +281,10 @@ class EntryPrinter:
         oss.write('{e.date} event "{e.type}" "{e.description}"\n'.format(e=entry))
         self.write_metadata(entry.meta, oss)
 
+    def Query(self, entry, oss):
+        oss.write('{e.date} query "{e.name}" "{e.query_string}"\n'.format(e=entry))
+        self.write_metadata(entry.meta, oss)
+
 
 def format_entry(entry, dcontext=None, render_weights=False):
     """Format an entry into a string in the same input syntax the parser accepts.
