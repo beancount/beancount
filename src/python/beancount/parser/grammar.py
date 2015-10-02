@@ -631,10 +631,11 @@ class Builder(lexer.LexBuilder):
         if not self.options['experiment_query_directive']:
             self.errors.append(
                 ParserError(meta, (
-                    "Query directive is not supported yet."
+                    "Query directive is not supported. "
                     "You have to enable 'experiment_query_directive' to enable it."), None))
-
-        return Query(meta, date, query_name, query_string)
+            return None
+        else:
+            return Query(meta, date, query_name, query_string)
 
     def price(self, filename, lineno, date, currency, amount, kvlist):
         """Process a price directive.

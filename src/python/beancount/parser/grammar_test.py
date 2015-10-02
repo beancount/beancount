@@ -170,6 +170,14 @@ class TestParserEntryTypes(unittest.TestCase):
         """
         check_list(self, entries, [data.Query])
 
+    @parser.parse_doc(expect_errors=True)
+    def test_entry_query__not_enabled(self, entries, errors, __):
+        """
+          2013-05-18 query "cash" "SELECT SUM(position) WHERE currency = 'USD'"
+        """
+        self.assertRegexpMatches(errors[0].message, "Query directive is not supported")
+        self.assertEqual([], entries)
+
     @parser.parse_doc()
     def test_entry_note(self, entries, _, __):
         """
