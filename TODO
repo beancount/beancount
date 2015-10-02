@@ -1,5 +1,11 @@
 -*- mode: org -*-
 beancount: TODO
+* Event
+
+  - Should we validate that the query is legit before we even run it? I think
+    so. Compile after parsing.
+
+
 * Booking
 
   ,--------------------------------------------------------------------------------

@@ -22,6 +22,7 @@ from beancount.core.data import Close
 from beancount.core.data import Commodity
 from beancount.core.data import Pad
 from beancount.core.data import Event
+from beancount.core.data import Query
 from beancount.core.data import Price
 from beancount.core.data import Note
 from beancount.core.data import Document
@@ -613,6 +614,28 @@ class Builder(lexer.LexBuilder):
         meta = new_metadata(filename, lineno, kvlist)
         return Event(meta, date, event_type, description)
 
+    def query(self, filename, lineno, date, query_name, query_string, kvlist):
+        """Process a document directive.
+
+        Args:
+          filename: the current filename.
+          lineno: the current line number.
+          date: a datetime object.
+          query_name: a str, the name of the query.
+          query_string: a str, the SQL query itself.
+          kvlist: a list of KeyValue instances.
+        Returns:
+          A new Query object.
+        """
+        meta = new_metadata(filename, lineno, kvlist)
+        if not self.options['experiment_query_directive']:
+            self.errors.append(
+                ParserError(meta, (
+                    "Query directive is not supported yet."
+                    "You have to enable 'experiment_query_directive' to enable it."), None))
+
+        return Query(meta, date, query_name, query_string)
+
     def price(self, filename, lineno, date, currency, amount, kvlist):
         """Process a price directive.
 
@@ -674,7 +697,7 @@ class Builder(lexer.LexBuilder):
           account: A string, the account the document relates to.
           document_filename: A str, the name of the document file.
         Returns:
-          A new Document object.
+          A new KeyValue object.
         """
         return KeyValue(key, value)
 

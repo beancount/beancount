@@ -743,6 +743,7 @@ def event(event=None):
         contents=render_report(misc_reports.EventsReport, app.entries,
                                ['--expr', event]))
 
+
 @viewapp.route('/event', name='event_index')
 def event_index():
     "Render the latest values of all events and an index."

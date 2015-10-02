@@ -51,6 +51,7 @@ class TestEntryPrinter(cmptest.TestCase):
         # Print out the entries and parse them back in.
         oss1 = io.StringIO()
         oss1.write('option "plugin_processing_mode" "raw"\n')
+        oss1.write('option "experiment_query_directive" "TRUE"\n')
         printer.print_entries(entries1, file=oss1)
         entries2, errors, __ = loader.load_string(oss1.getvalue())
 
@@ -60,6 +61,7 @@ class TestEntryPrinter(cmptest.TestCase):
         # Print out those reparsed and parse them back in.
         oss2 = io.StringIO()
         oss2.write('option "plugin_processing_mode" "raw"\n')
+        oss2.write('option "experiment_query_directive" "TRUE"\n')
         printer.print_entries(entries2, file=oss2)
         entries3, errors, __ = loader.load_string(oss2.getvalue())
 
@@ -145,6 +147,14 @@ class TestEntryPrinter(cmptest.TestCase):
         self.assertRoundTrip(entries, errors)
 
     @loader.load_doc()
+    def test_Query(self, entries, errors, __):
+        """
+        option "plugin_processing_mode" "raw"
+        2014-06-08 query "cash" "SELECT sum(position) WHERE currency = 'USD'"
+        """
+        self.assertRoundTrip(entries, errors)
+
+    @loader.load_doc()
     def test_Pad(self, entries, errors, __):
         """
         2014-01-01 open Assets:Account1
@@ -184,6 +194,14 @@ class TestEntryPrinter(cmptest.TestCase):
         """
         2014-06-08 event "location" "New York, NY, USA"
         2014-06-08 event "employer" "Four Square"
+        """
+        self.assertRoundTrip(entries, errors)
+
+    @loader.load_doc()
+    def test_Query(self, entries, errors, __):
+        """
+        option "experiment_query_directive" "TRUE"
+        2014-06-08 query "cash" "SELECT SUM(position) WHERE currency = 'USD'"
         """
         self.assertRoundTrip(entries, errors)
 

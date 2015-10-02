@@ -163,6 +163,14 @@ class TestParserEntryTypes(unittest.TestCase):
         check_list(self, entries, [data.Event])
 
     @parser.parse_doc()
+    def test_entry_query(self, entries, _, __):
+        """
+          option "experiment_query_directive" "TRUE"
+          2013-05-18 query "cash" "SELECT SUM(position) WHERE currency = 'USD'"
+        """
+        check_list(self, entries, [data.Query])
+
+    @parser.parse_doc()
     def test_entry_note(self, entries, _, __):
         """
           2013-05-18 note Assets:US:BestBank:Checking  "Blah, di blah."
