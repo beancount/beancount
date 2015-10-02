@@ -252,16 +252,25 @@ class BQLShell(DispatchingShell):
     """
     prompt = 'beancount> '
 
-    def __init__(self, is_interactive, entries, errors, options_map):
+    def __init__(self, is_interactive, loadfun):
         super().__init__(is_interactive, query_parser.Parser())
 
-        self.entries = entries
-        self.errors = errors
-        self.options_map = options_map
+        self.loadfun = loadfun
+        self.entries = None
+        self.errors = None
+        self.options_map = None
 
         self.env_targets = query_env.TargetsEnvironment()
         self.env_entries = query_env.FilterEntriesEnvironment()
         self.env_postings = query_env.FilterPostingsEnvironment()
+
+    def on_Reload(self, unused_statement=None):
+        """
+        Reload the input file without restarting the shell.
+        """
+        self.entries, self.errors, self.options_map = self.loadfun()
+        if self.is_interactive:
+            print_statistics(self.entries, self.options_map)
 
     def on_Errors(self, errors_statement):
         """
@@ -611,3 +620,16 @@ def summary_statistics(entries):
             num_transactions += 1
             num_postings += len(entry.postings)
     return (num_directives, num_transactions, num_postings)
+
+
+def print_statistics(entries, options_map):
+    """Print summary statistics to stdout.
+
+    Args:
+      entries: A list of directives.
+    """
+    num_directives, num_transactions, num_postings = summary_statistics(entries)
+    if 'title' in options_map:
+        print('Input file: "{}"'.format(options_map['title']))
+    print("Ready with {} directives ({} postings in {} transactions).".format(
+        num_directives, num_postings, num_transactions))

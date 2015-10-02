@@ -38,23 +38,20 @@ def main():
     args = parser.parse_args()
 
     # Parse the input file.
-    errors_file = None if args.no_errors else sys.stderr
-    with misc_utils.log_time('beancount.loader (total)', logging.info):
-        entries, errors, options_map = loader.load_file(args.filename,
-                                                        log_timings=logging.info,
-                                                        log_errors=errors_file)
+    def load():
+        errors_file = None if args.no_errors else sys.stderr
+        with misc_utils.log_time('beancount.loader (total)', logging.info):
+            return loader.load_file(args.filename,
+                                    log_timings=logging.info,
+                                    log_errors=errors_file)
 
     # Create the shell.
-    is_insteractive = os.isatty(sys.stdin.fileno()) and not args.query
-    shell_obj = shell.BQLShell(is_insteractive, entries, errors, options_map)
+    is_interactive = os.isatty(sys.stdin.fileno()) and not args.query
+    shell_obj = shell.BQLShell(is_interactive, load)
+    shell_obj.on_Reload()
 
-    if is_insteractive:
-        # Run interactively if we're a TTY and no query is supplied.
-        num_directives, num_transactions, num_postings = shell.summary_statistics(entries)
-        if 'title' in options_map:
-            print('Input file: "{}"'.format(options_map['title']))
-        print("Ready with {} directives ({} postings in {} transactions).".format(
-            num_directives, num_postings, num_transactions))
+    # Run interactively if we're a TTY and no query is supplied.
+    if is_interactive:
         try:
             shell_obj.cmdloop()
         except KeyboardInterrupt:

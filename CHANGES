@@ -25,6 +25,10 @@ Note: This file contains only changes in the 'default' branch.
     to figure out what they look like.
 
 
+  - Implemented a "reload" command in the shell. Typing "reload" will refresh
+    the data from the latest file contents.
+
+
 2015-09-29
 
   - Tightened the screws on the Amount() constructor a bit and made changes ini
