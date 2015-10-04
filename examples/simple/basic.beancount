@@ -39,7 +39,7 @@ option "operating_currency" "CAD"
 ;;;   multiple commodities in the same Ledger.
 ;;;
 ;;; - No distinction is made between currency commodities (e.g.
-;;;   USD, EUR, USD) and investment commodities (e.g. GOOG,
+;;;   USD, EUR, USD) and investment commodities (e.g. FB, AMZN,
 ;;;   AAPL, MSFT).
 ;;;
 ;;; - The Assets, Liabilities, Equity, Income, Expenses
