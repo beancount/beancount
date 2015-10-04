@@ -9,14 +9,14 @@ import re
 import unittest
 
 from beancount.core.number import D
+from beancount.core.amount import A
 from beancount.core.realization import RealAccount
 from beancount.core import realization
 from beancount.core import data
 from beancount.core import inventory
-from beancount.core import amount
 from beancount.core import account_types
-from beancount.parser import parsedoc
 from beancount.utils import test_utils
+from beancount import loader
 
 
 def create_simple_account():
@@ -59,17 +59,17 @@ class TestRealAccount(unittest.TestCase):
 
     def test_equality(self):
         ra1 = RealAccount('Assets:US:Bank:Checking')
-        ra1.balance.add_amount(amount.Amount('100', 'USD'))
+        ra1.balance.add_amount(A('100 USD'))
         ra1.txn_postings.extend(['a', 'b'])
 
         ra2 = RealAccount('Assets:US:Bank:Checking')
-        ra2.balance.add_amount(amount.Amount('100', 'USD'))
+        ra2.balance.add_amount(A('100 USD'))
         ra2.txn_postings.extend(['a', 'b'])
 
         self.assertEqual(ra1, ra2)
 
         saved_balance = ra2.balance
-        ra2.balance.add_amount(amount.Amount('0.01', 'USD'))
+        ra2.balance.add_amount(A('0.01 USD'))
         self.assertNotEqual(ra1, ra2)
         ra2.balance = saved_balance
 
@@ -183,9 +183,11 @@ class TestRealGetters(unittest.TestCase):
 
 class TestRealization(unittest.TestCase):
 
-    @parsedoc
+    @loader.load_doc()
     def test_postings_by_account(self, entries, errors, _):
         """
+        option "plugin_processing_mode" "raw"
+
         2012-01-01 open Expenses:Restaurant
         2012-01-01 open Expenses:Movie
         2012-01-01 open Assets:Cash
@@ -196,17 +198,17 @@ class TestRealization(unittest.TestCase):
 
         2012-03-01 * "Food"
           Expenses:Restaurant     100 CAD
-          Assets:Cash
+          Assets:Cash            -100 CAD
 
         2012-03-10 * "Food again"
-          Expenses:Restaurant     80 CAD
-          Liabilities:CreditCard
+          Expenses:Restaurant      80 CAD
+          Liabilities:CreditCard  -80 CAD
 
         ;; Two postings on the same account.
         2012-03-15 * "Two Movies"
-          Expenses:Movie     10 CAD
-          Expenses:Movie     10 CAD
-          Liabilities:CreditCard
+          Expenses:Movie           10 CAD
+          Expenses:Movie           10 CAD
+          Liabilities:CreditCard  -20 CAD
 
         2012-03-20 note Liabilities:CreditCard "Called Amex, asked about 100 CAD dinner"
 
@@ -258,7 +260,7 @@ class TestRealization(unittest.TestCase):
         self.assertEqual(set(account_types.DEFAULT_ACCOUNT_TYPES),
                          real_account.keys())
 
-    @parsedoc
+    @loader.load_doc()
     def test_simple_realize(self, entries, errors, options_map):
         """
           2013-05-01 open Assets:US:Checking:Sub   USD
@@ -276,9 +278,8 @@ class TestRealization(unittest.TestCase):
             real_account = realization.get(real_root, account_name)
             self.assertEqual(account_name, real_account.account)
 
-    @parsedoc
-    def test_realize(self, entries, errors, _):
-        """
+    def test_realize(self):
+        input_string = """
         2012-01-01 open Expenses:Restaurant
         2012-01-01 open Expenses:Movie
         2012-01-01 open Assets:Cash
@@ -303,17 +304,20 @@ class TestRealization(unittest.TestCase):
 
         2012-03-20 note Liabilities:CreditCard "Called Amex, asked about 100 CAD dinner"
 
-        2012-03-28 document Liabilities:CreditCard "march-statement.pdf"
+        2012-03-28 document Liabilities:CreditCard "{filename}"
 
         2013-04-01 balance Liabilities:CreditCard   204 CAD
 
         2014-01-01 close Liabilities:CreditCard
         """
+        # 'filename' is because we need an existing filename.
+        entries, errors, _ = loader.load_string(input_string.format(filename=__file__))
+
         real_account = realization.realize(entries)
         ra0_movie = realization.get(real_account, 'Expenses:Movie')
         self.assertEqual('Expenses:Movie', ra0_movie.account)
         expected_balance = inventory.Inventory()
-        expected_balance.add_amount(amount.Amount('20', 'CAD'))
+        expected_balance.add_amount(A('20 CAD'))
         self.assertEqual(expected_balance, ra0_movie.balance)
 
 
@@ -392,9 +396,11 @@ class TestRealFilter(unittest.TestCase):
 
 class TestRealOther(test_utils.TestCase):
 
-    @parsedoc
+    @loader.load_doc()
     def test_get_postings(self, entries, errors, _):
         """
+        option "plugin_processing_mode" "raw"
+
         2012-01-01 open Assets:Bank:Checking
         2012-01-01 open Expenses:Restaurant
         2012-01-01 open Expenses:Movie
@@ -405,15 +411,15 @@ class TestRealOther(test_utils.TestCase):
 
         2012-03-01 * "Food"
           Expenses:Restaurant     11.11 CAD
-          Assets:Bank:Checking
+          Assets:Bank:Checking   -11.11 CAD
 
         2012-03-05 * "Food"
           Expenses:Movie         22.22 CAD
-          Assets:Bank:Checking
+          Assets:Bank:Checking  -22.22 CAD
 
         2012-03-10 * "Paying off credit card"
           Assets:Bank:Checking     -33.33 CAD
-          Liabilities:CreditCard
+          Liabilities:CreditCard    33.33 CAD
 
         2012-03-20 note Assets:Bank:Checking "Bla bla 444.44"
 
@@ -460,16 +466,16 @@ class TestRealOther(test_utils.TestCase):
         # Check that value comparison uses our balance comparison properly.
         map1 = {'Assets:US:Bank:Checking': inventory.Inventory()}
         map2 = {'Assets:US:Bank:Checking': inventory.Inventory()}
-        map2['Assets:US:Bank:Checking'].add_amount(amount.Amount('0.01', 'USD'))
+        map2['Assets:US:Bank:Checking'].add_amount(A('0.01 USD'))
         self.assertNotEqual(map1, map2)
 
         # Now check this with accounts.
         root1 = RealAccount('')
         ra1 = realization.get_or_create(root1, 'Assets:US:Bank:Checking')
-        ra1.balance.add_amount(amount.Amount('0.01', 'USD'))
+        ra1.balance.add_amount(A('0.01 USD'))
         root2 = RealAccount('')
         ra2 = realization.get_or_create(root2, 'Assets:US:Bank:Checking')
-        ra2.balance.add_amount(amount.Amount('0.01', 'USD'))
+        ra2.balance.add_amount(A('0.01 USD'))
         self.assertEqual(ra1, ra2)
 
         root3 = copy.deepcopy(root2)
@@ -479,7 +485,7 @@ class TestRealOther(test_utils.TestCase):
 
         root3 = copy.deepcopy(root2)
         ra3 = realization.get(root3, 'Assets:US:Bank:Checking')
-        ra3.balance.add_amount(amount.Amount('0.01', 'CAD'))
+        ra3.balance.add_amount(A('0.01 CAD'))
         self.assertNotEqual(root1, root3)
 
         root3 = copy.deepcopy(root2)
@@ -492,13 +498,16 @@ class TestRealOther(test_utils.TestCase):
         ra3['Sub'] = RealAccount('Assets:US:Bank:Checking:Sub')
         self.assertNotEqual(root1, root3)
 
-    @parsedoc
+    @loader.load_doc()
     def test_iterate_with_balance(self, entries, _, __):
         """
         2012-01-01 open Assets:Bank:Checking
         2012-01-01 open Expenses:Restaurant
+        2012-01-01 open Equity:Opening-Balances
 
         2012-01-15 pad Assets:Bank:Checking Equity:Opening-Balances
+
+        2012-01-20 balance Assets:Bank:Checking  20.00 USD
 
         2012-03-01 * "With a single entry"
           Expenses:Restaurant     11.11 CAD
@@ -571,7 +580,7 @@ class TestRealOther(test_utils.TestCase):
         balance = realization.compute_balance(realization.get(real_root, 'Assets:US:Bank'))
         self.assertEqual(inventory.from_string('310 USD'), balance)
 
-    @parsedoc
+    @loader.load_doc()
     def test_dump(self, entries, _, __):
         """
         2012-01-01 open Assets:Bank1:Checking
@@ -614,7 +623,7 @@ class TestRealOther(test_utils.TestCase):
             ], [(first_line, cont_line)
                 for first_line, cont_line, _1 in lines])
 
-    @parsedoc
+    @loader.load_doc()
     def test_dump_balances(self, entries, _, __):
         """
         2012-01-01 open Expenses:Restaurant
@@ -653,7 +662,7 @@ class TestRealMisc(unittest.TestCase):
 
 class TestFindLastActive(unittest.TestCase):
 
-    @parsedoc
+    @loader.load_doc()
     def test_find_last_active_posting(self, entries, _, __):
         """
         2012-01-01 open Assets:Target
@@ -669,10 +678,42 @@ class TestFindLastActive(unittest.TestCase):
 
         ;; This should get ignored because it's not one of the directives checked for
         ;; active.
-        2014-03-02 document Assets:Target  "/path/to/somewhere.txt"
-
+        2014-03-02 event "location" "Somewhere, Somewhereland"
         """
         real_account = realization.realize(entries)
         txn_postings = realization.get(real_account, 'Assets:Target').txn_postings
         txn_posting = realization.find_last_active_posting(txn_postings)
         self.assertEqual(datetime.date(2014, 2, 1), txn_posting.txn.date)
+
+
+class TestComputeBalance(unittest.TestCase):
+
+    @loader.load_doc(expect_errors=True)
+    def test_compute_postings_balance(self, entries, _, __):
+        """
+        2014-01-01 open Assets:Bank:Checking
+        2014-01-01 open Assets:Bank:Savings
+        2014-01-01 open Assets:Investing
+        2014-01-01 open Assets:Other
+
+        2014-05-26 note Assets:Investing "Buying some shares"
+
+        2014-05-30 *
+          Assets:Bank:Checking  111.23 USD
+          Assets:Bank:Savings   222.74 USD
+          Assets:Bank:Savings   17.23 CAD
+          Assets:Investing      10000 EUR
+          Assets:Investing      32 HOOL {45.203 USD}
+          Assets:Other          1000 EUR @ 1.78 GBP
+          Assets:Other          1000 EUR @@ 1780 GBP
+        """
+        postings = entries[:-1] + entries[-1].postings
+        computed_balance = realization.compute_postings_balance(postings)
+
+        expected_balance = inventory.Inventory()
+        expected_balance.add_amount(A('333.97 USD'))
+        expected_balance.add_amount(A('17.23 CAD'))
+        expected_balance.add_amount(A('32 HOOL'),
+                                    A('45.203 USD'))
+        expected_balance.add_amount(A('12000 EUR'))
+        self.assertEqual(expected_balance, computed_balance)

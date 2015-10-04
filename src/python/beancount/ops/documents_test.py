@@ -9,8 +9,8 @@ from os import path
 
 from beancount.core import account_test
 from beancount.ops import documents
-from beancount.parser import parser
 from beancount.parser import cmptest
+from beancount import loader
 
 
 class TestDocuments(account_test.TmpFilesTestBase, cmptest.TestCase):
@@ -29,6 +29,7 @@ class TestDocuments(account_test.TmpFilesTestBase, cmptest.TestCase):
         input_filename = path.join(self.root, 'input.beancount')
         open(input_filename, 'w').write(textwrap.dedent("""
 
+          option "plugin_processing_mode" "raw"
           option "documents" "ROOT"
 
           2014-01-01 open Assets:US:Bank:Checking
@@ -37,7 +38,7 @@ class TestDocuments(account_test.TmpFilesTestBase, cmptest.TestCase):
           2014-07-10 document Liabilities:US:Bank  "does-not-exist.pdf"
 
         """).replace('ROOT', self.root))
-        entries, _, options_map = parser.parse_file(input_filename)
+        entries, _, options_map = loader.load_file(input_filename)
 
         # In this test we set the root to the directory root, but only the
         # checking account is declared, and so only that entry should get
@@ -49,7 +50,8 @@ class TestDocuments(account_test.TmpFilesTestBase, cmptest.TestCase):
         entries, errors = documents.process_documents(entries, options_map)
 
         # Check entries.
-        expected_entries, _, __ = parser.parse_string(textwrap.dedent("""
+        expected_entries, _, __ = loader.load_string(textwrap.dedent("""
+          option "plugin_processing_mode" "raw"
           2014-06-08 document Assets:US:Bank:Checking "ROOT/Assets/US/Bank/Checking/2014-06-08.bank-statement.pdf"
           2014-07-10 document Liabilities:US:Bank "ROOT/does-not-exist.pdf"
         """).replace('ROOT', self.root))
@@ -61,7 +63,8 @@ class TestDocuments(account_test.TmpFilesTestBase, cmptest.TestCase):
         self.assertEqual(0, len(errors))
 
     def test_verify_document_files_exist(self):
-        entries, _, options_map = parser.parse_string(textwrap.dedent("""
+        entries, _, options_map = loader.load_string(textwrap.dedent("""
+          option "plugin_processing_mode" "raw"
           2014-06-08 document Assets:US:Bank:Checking "ROOT/Assets/US/Bank/Checking/2014-06-08.bank-statement.pdf"
           2014-07-01 document Assets:US:Bank:Savings  "ROOT/Assets/US/Bank/Savings/2014-07-01.savings.pdf"
           2014-07-10 document Assets:US:Bank:Savings  "ROOT/Assets/US/Bank/Savings/2014-07-10.something-else.pdf"

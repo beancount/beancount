@@ -51,7 +51,7 @@ institution, then account (the file has multiple sections).
 
 Note that the 'units' deposited in accounts are entirely arbitrary--there
 is no need to declare them in advance. For instance, I have US dollars
-(USD), Canadian dollars (CAD), and others, stocks (e.g. GOOG, AAPL, etc.),
+(USD), Canadian dollars (CAD), and others, stocks (e.g. AMZN, FB, MSFT, AAPL, etc.),
 my condo unit was a 'LOFT', I track vacation hours as 'VACHR' units, and I
 can even track airmiles with it (as 'AIRMILES') if I want to. The
 possibilities are endless.

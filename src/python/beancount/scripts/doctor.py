@@ -53,7 +53,6 @@ def do_roundtrip(filename, unused_args):
     Args:
       filename: A string, the Beancount input filename.
     """
-    from beancount.parser import parser
     from beancount.parser import printer
     from beancount.core import compare
     from beancount import loader
@@ -72,9 +71,14 @@ def do_roundtrip(filename, unused_args):
             printer.print_entries(entries, file=outfile)
 
         logging.info("Read the entries from that file")
-        # Note that we don't want to run any of the auto-generation here...
-        # parse-only, not load.
-        entries_roundtrip, errors, options_map = parser.parse_file(round1_filename)
+
+        # Note that we don't want to run any of the auto-generation here, but
+        # parsing now returns incomplete objects and we assume idempotence on a
+        # file that was output from the printer after having been processed, so
+        # it shouldn't add anything new. That is, a processed file printed and
+        # resolve when parsed again should contain the same entries, i.e.
+        # nothing new should be generated.
+        entries_roundtrip, errors, options_map = loader.load_file(round1_filename)
 
         # Print out the list of errors from parsing the results.
         if errors:

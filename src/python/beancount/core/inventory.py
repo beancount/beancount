@@ -7,7 +7,7 @@ association list of positions, where each position is defined as
 
 where
 
-  'currency': the commodity under consideration, USD, CAD, or stock units such as GOOG,
+  'currency': the commodity under consideration, USD, CAD, or stock units such as HOOL,
     MSFT;
 
   'cost': the amount (as a pair of (number, currency)) that the position is held under,
@@ -42,6 +42,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import copy
 import collections
+import re
 from datetime import date
 
 from beancount.core.number import ZERO
@@ -199,8 +200,16 @@ class Inventory(list):
     # Methods to access portions of an inventory.
     #
 
+    def currencies(self):
+        """Return the list of unit currencies held in this inventory.
+
+        Returns:
+          A list of currency strings.
+        """
+        return set(position.lot.currency for position in self)
+
     def currency_pairs(self):
-        """Return the commodities held in this inventory.
+        """Return the commodity pairs held in this inventory.
 
         Returns:
           A list of currency strings.
@@ -264,13 +273,13 @@ class Inventory(list):
 
         For example, an inventory that contains these lots:
 
-           2 GOOGL
-           3 GOOG {300.00 USD}
-           4 GOOG {310.00 USD / 2014-10-28}
+           2 HOOLB
+           3 HOOL {300.00 USD}
+           4 HOOL {310.00 USD / 2014-10-28}
 
         will provide:
 
-           2 GOOGL
+           2 HOOLB
            2140 USD
 
         Returns:
@@ -442,8 +451,11 @@ class Inventory(list):
           A new instance of Inventory with the given balances.
         """
         new_inventory = Inventory()
-        position_strs = string.split(',')
-        for position_str in filter(None, position_strs):
+        # We need to split the comma-separated positions but ignore commas
+        # occurring within a {...cost...} specification.
+        position_strs = re.split(
+            '([-+]?[0-9,.]+\s+[A-Z]+\s*(?:{[^}]*})?)\s*,?\s*', string)[1::2]
+        for position_str in position_strs:
             new_inventory.add_position(position_from_string(position_str))
         return new_inventory
 

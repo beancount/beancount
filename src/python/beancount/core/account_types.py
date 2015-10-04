@@ -57,7 +57,7 @@ def get_account_type(account_name):
       A string, the type of the account in 'account_name'.
 
     """
-    assert isinstance(account_name, str), account_name
+    assert isinstance(account_name, str), "Account is not a string: {}".format(account_name)
     return account.split(account_name)[0]
 
 
@@ -75,9 +75,10 @@ def is_root_account(account_name, account_types=None):
     Returns:
       A boolean, true if the account is root account.
     """
-    assert isinstance(account_name, str)
+    assert isinstance(account_name, str), "Account is not a string: {}".format(account_name)
     if account_types is not None:
-        assert isinstance(account_types, AccountTypes)
+        assert isinstance(account_types, AccountTypes), (
+            "Account types has invalid type: {}".format(account_types))
         return account_name in account_types
     else:
         return (account_name and
@@ -95,8 +96,9 @@ def is_balance_sheet_account(account_name, account_types):
     Returns:
       A boolean, true if the account is a balance sheet account.
     """
-    assert isinstance(account_name, str)
-    assert isinstance(account_types, AccountTypes)
+    assert isinstance(account_name, str), "Account is not a string: {}".format(account_name)
+    assert isinstance(account_types, AccountTypes), (
+        "Account types has invalid type: {}".format(account_types))
     account_type = get_account_type(account_name)
     return account_type in (account_types.assets,
                             account_types.liabilities,
@@ -113,8 +115,9 @@ def is_income_statement_account(account_name, account_types):
     Returns:
       A boolean, true if the account is an income statement account.
     """
-    assert isinstance(account_name, str)
-    assert isinstance(account_types, AccountTypes), account_types
+    assert isinstance(account_name, str), "Account is not a string: {}".format(account_name)
+    assert isinstance(account_types, AccountTypes), (
+        "Account types has invalid type: {}".format(account_types))
     account_type = get_account_type(account_name)
     return account_type in (account_types.income,
                             account_types.expenses)
@@ -129,8 +132,9 @@ def is_equity_account(account_name, account_types):
     Returns:
       A boolean, true if the account is an equityaccount.
     """
-    assert isinstance(account_name, str)
-    assert isinstance(account_types, AccountTypes)
+    assert isinstance(account_name, str), "Account is not a string: {}".format(account_name)
+    assert isinstance(account_types, AccountTypes), (
+        "Account types has invalid type: {}".format(account_types))
     account_type = get_account_type(account_name)
     return account_type == account_types.equity
 
@@ -146,7 +150,7 @@ def get_account_sign(account_name, account_types=None):
     """
     if account_types is None:
         account_types = DEFAULT_ACCOUNT_TYPES
-    assert isinstance(account_name, str), account_name
+    assert isinstance(account_name, str), "Account is not a string: {}".format(account_name)
     account_type = get_account_type(account_name)
     return (+1
             if account_type in (account_types.assets,

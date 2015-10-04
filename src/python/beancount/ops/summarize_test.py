@@ -14,7 +14,6 @@ from beancount.core import data
 from beancount.core import flags
 from beancount.core import interpolate
 from beancount.ops import summarize
-from beancount.parser import parser
 from beancount.parser import printer
 from beancount.parser import options
 from beancount.parser import cmptest
@@ -23,7 +22,7 @@ from beancount import loader
 
 class TestOpenClose(cmptest.TestCase):
 
-    @parser.parsedoc
+    @loader.load_doc()
     def setUp(self, entries, errors, options_map):
         """
         option "account_previous_earnings"    "Earnings:Previous"
@@ -34,10 +33,15 @@ class TestOpenClose(cmptest.TestCase):
         option "account_current_conversions"  "Conversions:Current"
         option "conversion_currency"          "NOTHING"
 
+        2012-01-01 open Income:Salary
+        2012-01-01 open Expenses:Taxes
+        2012-01-01 open Assets:US:Checking
+        2012-01-01 open Assets:CA:Checking
+
         2012-03-01 * "Some income and expense to be summarized"
           Income:Salary        10000 USD
           Expenses:Taxes        3600 USD
-          Assets:US:Checking
+          Assets:US:Checking  -13600 USD
 
         2012-03-02 * "Some conversion to be summarized"
           Assets:US:Checking   -5000 USD @ 1.2 CAD
@@ -48,7 +52,7 @@ class TestOpenClose(cmptest.TestCase):
         2012-08-01 * "Some income and expense to show"
           Income:Salary        11000 USD
           Expenses:Taxes        3200 USD
-          Assets:US:Checking
+          Assets:US:Checking  -14200 USD
 
         2012-08-02 * "Some other conversion to be summarized"
           Assets:US:Checking   -3000 USD @ 1.25 CAD
@@ -59,7 +63,7 @@ class TestOpenClose(cmptest.TestCase):
         2012-11-01 * "Some income and expense to be truncated"
           Income:Salary        10000 USD
           Expenses:Taxes        3600 USD
-          Assets:US:Checking
+          Assets:US:Checking  -13600 USD
 
         """
         self.assertFalse(errors)
@@ -87,6 +91,11 @@ class TestOpenClose(cmptest.TestCase):
                                              'Equity:Conversions:Previous')
 
         self.assertEqualEntries("""
+
+        2012-01-01 open Income:Salary
+        2012-01-01 open Expenses:Taxes
+        2012-01-01 open Assets:US:Checking
+        2012-01-01 open Assets:CA:Checking
 
         2012-05-31 S "Opening balance for 'Assets:CA:Checking' (Summarization)"
           Assets:CA:Checking             6,000 CAD
@@ -125,7 +134,7 @@ class TestOpenClose(cmptest.TestCase):
         """, opened_entries)
 
         # Check the index is correctly beginning after the list of summarizing entries.
-        self.assertEqual(4, index)
+        self.assertEqual(8, index)
 
         # Check that our original example list of entries does not balance.
         input_balance = interpolate.compute_entries_balance(self.entries)
@@ -150,10 +159,15 @@ class TestOpenClose(cmptest.TestCase):
 
         self.assertEqualEntries("""
 
+        2012-01-01 open Income:Salary
+        2012-01-01 open Expenses:Taxes
+        2012-01-01 open Assets:US:Checking
+        2012-01-01 open Assets:CA:Checking
+
         2012-03-01 * "Some income and expense to be summarized"
           Income:Salary        10000 USD
           Expenses:Taxes        3600 USD
-          Assets:US:Checking
+          Assets:US:Checking  -13600 USD
 
         2012-03-02 * "Some conversion to be summarized"
           Assets:US:Checking   -5000 USD @ 1.2 CAD
@@ -164,7 +178,7 @@ class TestOpenClose(cmptest.TestCase):
         2012-08-01 * "Some income and expense to show"
           Income:Salary        11000 USD
           Expenses:Taxes        3200 USD
-          Assets:US:Checking
+          Assets:US:Checking  -14200 USD
 
         2012-08-02 * "Some other conversion to be summarized"
           Assets:US:Checking   -3000 USD @ 1.25 CAD
@@ -179,7 +193,7 @@ class TestOpenClose(cmptest.TestCase):
         """, closed_entries)
 
         # Check the index is correctly beginning after the list of summarizing entries.
-        self.assertEqual(4, index)
+        self.assertEqual(8, index)
 
         # Check that our original example list of entries does not balance.
         input_balance = interpolate.compute_entries_balance(self.entries)
@@ -202,10 +216,15 @@ class TestOpenClose(cmptest.TestCase):
 
         self.assertEqualEntries("""
 
+        2012-01-01 open Income:Salary
+        2012-01-01 open Expenses:Taxes
+        2012-01-01 open Assets:US:Checking
+        2012-01-01 open Assets:CA:Checking
+
         2012-03-01 * "Some income and expense to be summarized"
           Income:Salary        10000 USD
           Expenses:Taxes        3600 USD
-          Assets:US:Checking
+          Assets:US:Checking  -13600 USD
 
         2012-03-02 * "Some conversion to be summarized"
           Assets:US:Checking   -5000 USD @ 1.2 CAD
@@ -216,7 +235,7 @@ class TestOpenClose(cmptest.TestCase):
         2012-08-01 * "Some income and expense to show"
           Income:Salary        11000 USD
           Expenses:Taxes        3200 USD
-          Assets:US:Checking
+          Assets:US:Checking  -14200 USD
 
         2012-08-02 * "Some other conversion to be summarized"
           Assets:US:Checking   -3000 USD @ 1.25 CAD
@@ -240,7 +259,7 @@ class TestOpenClose(cmptest.TestCase):
         """, clear_entries)
 
         # Check the index is correctly beginning after the list of summarizing entries.
-        self.assertEqual(5, index)
+        self.assertEqual(9, index)
 
         # Check that the cleared entries do not necessarily up to precisely zero
         # without closing.
@@ -270,6 +289,11 @@ class TestOpenClose(cmptest.TestCase):
                                              'Equity:Earnings:Current')
 
         self.assertEqualEntries("""
+
+        2012-01-01 open Income:Salary
+        2012-01-01 open Expenses:Taxes
+        2012-01-01 open Assets:US:Checking
+        2012-01-01 open Assets:CA:Checking
 
         2012-05-31 S "Opening balance for 'Assets:CA:Checking' (Summarization)"
           Assets:CA:Checking            6,000 CAD
@@ -332,13 +356,18 @@ class TestOpenCloseWithOptions(TestOpenClose):
 
 class TestClamp(cmptest.TestCase):
 
-    @parser.parsedoc
+    @loader.load_doc()
     def test_clamp(self, entries, errors, options_map):
         """
+        2012-01-01 open Income:Salary
+        2012-01-01 open Expenses:Taxes
+        2012-01-01 open Assets:US:Checking
+        2012-01-01 open Assets:CA:Checking
+
         2012-03-01 * "Some income and expense to be summarized"
           Income:Salary        10000.00 USD
           Expenses:Taxes        3600.00 USD
-          Assets:US:Checking
+          Assets:US:Checking  -13600.00 USD
 
         2012-03-02 * "Some conversion to be summarized"
           Assets:US:Checking   -5000.00 USD @ 1.2 CAD
@@ -349,7 +378,7 @@ class TestClamp(cmptest.TestCase):
         2012-08-01 * "Some income and expense to show"
           Income:Salary        11000.00 USD
           Expenses:Taxes        3200.00 USD
-          Assets:US:Checking
+          Assets:US:Checking  -14200.00 USD
 
         2012-08-02 * "Some other conversion to be summarized"
           Assets:US:Checking   -3000.00 USD @ 1.25 CAD
@@ -360,7 +389,7 @@ class TestClamp(cmptest.TestCase):
         2012-11-01 * "Some income and expense to be truncated"
           Income:Salary        10000.00 USD
           Expenses:Taxes        3600.00 USD
-          Assets:US:Checking
+          Assets:US:Checking  -13600.00 USD
 
         """
         self.assertFalse(errors)
@@ -375,6 +404,11 @@ class TestClamp(cmptest.TestCase):
                                                  'Equity:Opening-Balances',
                                                  'Equity:Conversions')
         self.assertEqualEntries("""
+
+        2012-01-01 open Income:Salary
+        2012-01-01 open Expenses:Taxes
+        2012-01-01 open Assets:US:Checking
+        2012-01-01 open Assets:CA:Checking
 
         2012-05-31 S "Opening balance for 'Assets:CA:Checking' (Summarization)"
           Assets:CA:Checking              6000.00 CAD
@@ -407,7 +441,7 @@ class TestClamp(cmptest.TestCase):
 
         """, clamped_entries)
 
-        self.assertEqual(3, index)
+        self.assertEqual(7, index)
 
         input_balance = interpolate.compute_entries_balance(entries)
         self.assertFalse(input_balance.is_empty())
@@ -418,9 +452,11 @@ class TestClamp(cmptest.TestCase):
 
 class TestCap(cmptest.TestCase):
 
-    @parser.parsedoc
+    @loader.load_doc()
     def test_cap(self, entries, errors, options_map):
         """
+        plugin "beancount.plugins.auto_accounts"
+
         2014-03-01 * "Some income and expense"
           Income:Salary        10000.00 USD
           Expenses:Taxes        3500.00 USD
@@ -433,9 +469,9 @@ class TestCap(cmptest.TestCase):
         self.assertFalse(errors)
         account_types = options.get_account_types(options_map)
         capd_entries = summarize.cap(entries, account_types,
-                                         'NOTHING',
-                                         'Equity:Earnings',
-                                         'Equity:Conversions')
+                                     'NOTHING',
+                                     'Equity:Earnings',
+                                     'Equity:Conversions')
 
         self.assertIncludesEntries(entries, capd_entries)
         self.assertIncludesEntries("""
@@ -453,14 +489,20 @@ class TestCap(cmptest.TestCase):
           Equity:Conversions   -6000.00 CAD @ 0 NOTHING
 
         """, capd_entries)
-        self.assertEqual(5, len(capd_entries))
+        self.assertEqual(9, len(capd_entries))
 
+
+INPUT_PLUGINS = """
+
+option "plugin_processing_mode" "raw"
+
+"""
 
 INPUT_OPEN = """
 
 ;; These should be preserved after summarization.
 2010-01-01 open  Assets:US:Chase:Checking
-2010-01-01 open  Assets:US:Investing:GOOG
+2010-01-01 open  Assets:US:Investing:HOOL
 2010-01-01 open  Assets:CA:BMO:Checking
 2010-01-01 open  Liabilities:US:Chase:CreditCard
 2010-01-01 open  Income:US:Employer:Salary
@@ -506,18 +548,18 @@ INPUT_BEFORE = """
 
 2010-11-20 * "First hit on credit card account"
   Liabilities:US:Chase:CreditCard   -67.20 USD
-  Expenses:Restaurant
+  Expenses:Restaurant                67.20 USD
 
 2010-11-26 * "Second hit on credit card account (same account)"
   Liabilities:US:Chase:CreditCard   -345.23 USD
-  Expenses:Flights
+  Expenses:Flights                   345.23 USD
 
 2010-11-30 *
   Assets:US:Chase:Checking      -80.02 USD
-  Expenses:Internet
+  Expenses:Internet              80.02 USD
 
 2010-12-05 * "Unit held at cost"
-  Assets:US:Investing:GOOG      5 GOOG {510.00 USD}
+  Assets:US:Investing:HOOL        5 HOOL {510.00 USD}
   Assets:US:Chase:Checking    -2550 USD
 
 2010-12-05 * "Conversion"
@@ -543,13 +585,13 @@ INPUT_PERIOD = """
 
 2011-01-20 * "Dinner at Cull & Pistol"
   Liabilities:US:Chase:CreditCard   -89.23 USD
-  Expenses:Restaurant
+  Expenses:Restaurant                89.23 USD
 
 2011-02-01 open  Assets:Cash
 
 2011-02-02 * "Cafe Mogador"
   Expenses:Restaurant      37.92 USD
-  Assets:Cash
+  Assets:Cash             -37.92 USD
 
 2011-02-16 *
   Income:US:Employer:Salary    -5000.00 USD
@@ -565,7 +607,8 @@ INPUT_PERIOD_REMOVED = """
 """
 
 # Join all the inputs.
-INPUT = (INPUT_OPEN +
+INPUT = (INPUT_PLUGINS +
+         INPUT_OPEN +
          INPUT_PRICES_REDUNDANT +
          INPUT_PRICES_LAST +
          INPUT_BEFORE +
@@ -618,8 +661,8 @@ class TestTransferBalances(cmptest.TestCase):
         self.assertIncludesEntries(self.entries, xfer_entries)
         self.assertIncludesEntries("""
 
-        2010-12-31 T "Transfer balance for 'Assets:US:Investing:GOOG' (Transfer balance)"
-          Assets:US:Investing:GOOG                                               -5 GOOG     {510.00 USD}                  ;   -2550.00 USD
+        2010-12-31 T "Transfer balance for 'Assets:US:Investing:HOOL' (Transfer balance)"
+          Assets:US:Investing:HOOL                                               -5 HOOL     {510.00 USD}                  ;   -2550.00 USD
           Equity:Transfer                                                       2550.00 USD                                   ;    2550.00 USD
 
         """, xfer_entries)
@@ -697,7 +740,7 @@ class TestSummarize(cmptest.TestCase):
     OPENING_ACCOUNT = 'Equity:Opening-Balances'
 
     def test_summarize__complete(self):
-        entries, errors, options_map = parser.parse_string(INPUT)
+        entries, errors, options_map = loader.load_string(INPUT)
         self.assertFalse(errors)
         summarize_date = datetime.date(2011, 1, 1)
         summarized_entries, index = summarize.summarize(entries, summarize_date,
@@ -724,8 +767,8 @@ class TestSummarize(cmptest.TestCase):
           Assets:US:Chase:Checking                                              2459.98 USD
           Equity:Opening-Balances                                              -2459.98 USD
 
-        2010-12-31 S "Opening balance for 'Assets:US:Investing:GOOG' (Summarization)"
-          Assets:US:Investing:GOOG                                                5 GOOG     {510.00 USD}                  ;    2550.00 USD
+        2010-12-31 S "Opening balance for 'Assets:US:Investing:HOOL' (Summarization)"
+          Assets:US:Investing:HOOL                                                5 HOOL     {510.00 USD}                  ;    2550.00 USD
           Equity:Opening-Balances                                              -2550.00 USD                                   ;   -2550.00 USD
 
         2010-12-31 S "Opening balance for 'Expenses:Flights' (Summarization)"
@@ -779,7 +822,7 @@ class TestConversions(cmptest.TestCase):
 
     ACCOUNT = 'Equity:Conversions'
 
-    @parser.parsedoc
+    @loader.load_doc()
     def setUp(self, entries, _, __):
         """
           2012-01-01 open Income:US:Job
@@ -894,54 +937,63 @@ class TestConversions(cmptest.TestCase):
 
 class TestTruncate(cmptest.TestCase):
 
-    @parser.parsedoc
+    @loader.load_doc()
     def setUp(self, entries, _, __):
         """
+        2014-01-01 open Assets:US:Bank:Checking
+        2014-01-01 open Equity:Opening-Balances
+
         2014-03-10 * "A"
           Assets:US:Bank:Checking   1 USD
-          Equity:Opening-Balances
+          Equity:Opening-Balances  -1 USD
 
         2014-03-11 * "B"
           Assets:US:Bank:Checking   1 USD
-          Equity:Opening-Balances
+          Equity:Opening-Balances  -1 USD
 
         2014-03-12 * "C"
           Assets:US:Bank:Checking   1 USD
-          Equity:Opening-Balances
+          Equity:Opening-Balances  -1 USD
 
         2014-03-13 * "D1"
           Assets:US:Bank:Checking   1 USD
-          Equity:Opening-Balances
+          Equity:Opening-Balances  -1 USD
 
         2014-03-13 * "D2"
           Assets:US:Bank:Checking   1 USD
-          Equity:Opening-Balances
+          Equity:Opening-Balances  -1 USD
 
         2014-03-14 * "E"
           Assets:US:Bank:Checking   1 USD
-          Equity:Opening-Balances
+          Equity:Opening-Balances  -1 USD
         """
         self.entries = entries
 
     def test_truncate__before(self):
         truncated_entries = summarize.truncate(self.entries, datetime.date(2014, 2, 15))
-        self.assertEqualEntries([], truncated_entries)
+        self.assertEqualEntries("""
+        2014-01-01 open Assets:US:Bank:Checking
+        2014-01-01 open Equity:Opening-Balances
+        """, truncated_entries)
 
     def test_truncate__normal1(self):
         truncated_entries = summarize.truncate(self.entries, datetime.date(2014, 3, 13))
         self.assertEqualEntries("""
 
+        2014-01-01 open Assets:US:Bank:Checking
+        2014-01-01 open Equity:Opening-Balances
+
         2014-03-10 * "A"
           Assets:US:Bank:Checking   1 USD
-          Equity:Opening-Balances
+          Equity:Opening-Balances  -1 USD
 
         2014-03-11 * "B"
           Assets:US:Bank:Checking   1 USD
-          Equity:Opening-Balances
+          Equity:Opening-Balances  -1 USD
 
         2014-03-12 * "C"
           Assets:US:Bank:Checking   1 USD
-          Equity:Opening-Balances
+          Equity:Opening-Balances  -1 USD
 
         """, truncated_entries)
 
@@ -949,25 +1001,28 @@ class TestTruncate(cmptest.TestCase):
         truncated_entries = summarize.truncate(self.entries, datetime.date(2014, 3, 14))
         self.assertEqualEntries("""
 
+        2014-01-01 open Assets:US:Bank:Checking
+        2014-01-01 open Equity:Opening-Balances
+
         2014-03-10 * "A"
           Assets:US:Bank:Checking   1 USD
-          Equity:Opening-Balances
+          Equity:Opening-Balances  -1 USD
 
         2014-03-11 * "B"
           Assets:US:Bank:Checking   1 USD
-          Equity:Opening-Balances
+          Equity:Opening-Balances  -1 USD
 
         2014-03-12 * "C"
           Assets:US:Bank:Checking   1 USD
-          Equity:Opening-Balances
+          Equity:Opening-Balances  -1 USD
 
         2014-03-13 * "D1"
           Assets:US:Bank:Checking   1 USD
-          Equity:Opening-Balances
+          Equity:Opening-Balances  -1 USD
 
         2014-03-13 * "D2"
           Assets:US:Bank:Checking   1 USD
-          Equity:Opening-Balances
+          Equity:Opening-Balances  -1 USD
 
         """, truncated_entries)
 
@@ -992,7 +1047,7 @@ class TestEntriesFromBalance(cmptest.TestCase):
     def setUp(self):
         self.balances = collections.defaultdict(inventory.Inventory)
         self.balances['Assets:US:Investment'] = (
-            inventory.from_string('10 GOOG {500.00 USD}'))
+            inventory.from_string('10 HOOL {500.00 USD}'))
         self.balances['Assets:US:Bank:Checking'] = inventory.from_string('1823.23 USD')
 
     def test_create_entries_from_balances__simple(self):
@@ -1006,7 +1061,7 @@ class TestEntriesFromBalance(cmptest.TestCase):
             Equity:Opening-Balances                                               -1823.23 USD
 
           2014-01-01 ! "Narration for Assets:US:Investment at 2014-01-01"
-            Assets:US:Investment                                                   10 GOOG     {500.00 USD}
+            Assets:US:Investment                                                   10 HOOL     {500.00 USD}
             Equity:Opening-Balances                                               -5000.00 USD
         """, entries)
 
@@ -1021,16 +1076,20 @@ class TestEntriesFromBalance(cmptest.TestCase):
             Equity:Opening-Balances                                                1823.23 USD
 
           2014-01-01 * "Narration for Assets:US:Investment at 2014-01-01"
-            Assets:US:Investment                                                  -10 GOOG     {500.00 USD}
+            Assets:US:Investment                                                  -10 HOOL     {500.00 USD}
             Equity:Opening-Balances                                                5000.00 USD
         """, entries)
 
 
 class TestBalanceByAccount(cmptest.TestCase):
 
-    @parser.parsedoc
+    @loader.load_doc()
     def setUp(self, entries, _, __):
         """
+        2001-01-01 open Assets:AccountA
+        2001-01-01 open Assets:AccountB
+        2001-01-01 open Equity:Opening-Balances
+
         2014-02-01 *
           Assets:AccountA   10 USD
           Equity:Opening-Balances
@@ -1056,14 +1115,14 @@ class TestBalanceByAccount(cmptest.TestCase):
         # Test on the first date (should be empty).
         balances, index = summarize.balance_by_account(self.entries,
                                                        datetime.date(2014, 2, 1))
-        self.assertEqual(0, index)
+        self.assertEqual(3, index)
         self.assertEqual({}, balances)
 
     def test_balance_by_account__middle(self):
         # Test in the middle.
         balances, index = summarize.balance_by_account(self.entries,
                                                        datetime.date(2014, 2, 10))
-        self.assertEqual(1, index)
+        self.assertEqual(4, index)
         self.assertEqual({
             'Assets:AccountA': inventory.from_string('10 USD'),
             'Equity:Opening-Balances': inventory.from_string('-10 USD'),
@@ -1073,7 +1132,7 @@ class TestBalanceByAccount(cmptest.TestCase):
 
 class TestOpenAtDate(cmptest.TestCase):
 
-    @parser.parsedoc
+    @loader.load_doc()
     def setUp(self, entries, _, __):
         """
           2011-01-01 open Assets:AccountA
@@ -1169,7 +1228,7 @@ class TestOpenAtDate(cmptest.TestCase):
         """, summarize.get_open_entries(self.entries, date(2013, 1, 1)))
 
 
-    @parser.parsedoc
+    @loader.load_doc(expect_errors=True)
     def test_get_open_entries__duplicate_open(self, entries, errors, _):
         """
           2011-01-01 open Assets:AccountA
@@ -1179,7 +1238,7 @@ class TestOpenAtDate(cmptest.TestCase):
           2011-01-01 open Assets:AccountA
         """, summarize.get_open_entries(entries, date(2013, 1, 1)))
 
-    @parser.parsedoc
+    @loader.load_doc(expect_errors=True)
     def test_get_open_entries__closed_twice(self, entries, errors, _):
         """
           2011-01-01 open  Assets:AccountA
@@ -1189,7 +1248,7 @@ class TestOpenAtDate(cmptest.TestCase):
         self.assertEqualEntries("""
         """, summarize.get_open_entries(entries, date(2013, 1, 1)))
 
-    @parser.parsedoc
+    @loader.load_doc(expect_errors=True)
     def test_get_open_entries__closed_without_open(self, entries, errors, _):
         """
           2011-02-02 close Assets:AccountA

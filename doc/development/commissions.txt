@@ -3,7 +3,7 @@
 
 2014-01-01 open Assets:US:Bank:Checking
 2014-01-01 open Assets:US:Invest:Cash
-2014-01-01 open Assets:US:Invest:GOOG
+2014-01-01 open Assets:US:Invest:HOOL
 2014-01-01 open Income:US:Invest:PnL
 2014-01-01 open Expenses:US:Invest:Commissions
 
@@ -20,10 +20,10 @@ commissions:
 2014-06-13 * "Transactions with Commissions"
   Assets:US:Invest:Cash            -5009.95 USD                  ;  5009.95 USD
   Expenses:US:Invest:Commissions       9.95 USD                  ;     9.95 USD
-  Assets:US:Invest:GOOG               10.00 GOOG {500.00 USD}    ;  5000.00 USD
+  Assets:US:Invest:HOOL               10.00 HOOL {500.00 USD}    ;  5000.00 USD
 
 2014-06-20 * "Transactions with Commissions"
-  Assets:US:Invest:GOOG              -10.00 GOOG {500.00 USD}    ; -5000.00 USD
+  Assets:US:Invest:HOOL              -10.00 HOOL {500.00 USD}    ; -5000.00 USD
   Expenses:US:Invest:Commissions       9.95 USD                  ;     9.95 USD
   Assets:US:Invest:Cash             5090.05 USD                  ;  5090.05 USD
   Income:US:Invest:PnL              -100.00 USD                  ;  -100.00 USD
@@ -36,10 +36,10 @@ available on each posting):
 2014-06-13 * "Transactions with Commissions"
   Assets:US:Invest:Cash              -5009.95 USD                  ;  5009.95 USD
   + Expenses:US:Invest:Commissions       9.95 USD                  ;     0.00 USD (+)
-  Assets:US:Invest:GOOG                 10.00 GOOG {500.00 USD +}  ;  5009.95 USD =  10.00 GOOG {500.995 USD}
+  Assets:US:Invest:HOOL                 10.00 HOOL {500.00 USD +}  ;  5009.95 USD =  10.00 HOOL {500.995 USD}
 
 2014-06-20 * "Transactions with Commissions"
-  Assets:US:Invest:GOOG                -10.00 GOOG {2014-06-13 -}  ; -5009.95 USD = -10.00 GOOG {500.995 USD}
+  Assets:US:Invest:HOOL                -10.00 HOOL {2014-06-13 -}  ; -5009.95 USD = -10.00 HOOL {500.995 USD}
   - Expenses:US:Invest:Commissions       9.95 USD                  ;     0.00 USD (-)
   Assets:US:Invest:Cash               5090.05 USD                  ;  5090.05 USD
   Income:US:Invest:PnL                 -80.10 USD                  ;   -80.10 USD
@@ -75,7 +75,7 @@ anyhow?
   Assets:US:Invest:Cash              -5009.95 USD                  ;  5009.95 USD
   + Expenses:US:Invest:Commissions       9.95 USD                  ;     0.00 USD (+)
   + Income:US:Invest:Commissions-Rebate
-  Assets:US:Invest:GOOG                 10.00 GOOG {500.00 USD +}  ;  5009.95 USD =  10.00 GOOG {500.995 USD}
+  Assets:US:Invest:HOOL                 10.00 HOOL {500.00 USD +}  ;  5009.95 USD =  10.00 HOOL {500.995 USD}
 
 I'm not quite sure how to solve this yet.
 
