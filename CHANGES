@@ -38,6 +38,11 @@ Note: This file contains only changes in the 'default' branch.
       cost specifications that makes sense.
 
 
+2015-10-04
+
+  - Implemented --output=<filename> option for bean-query tool.
+
+
 2015-10-02
 
   - Implemented an experimental new Query directive whose purpose is to define

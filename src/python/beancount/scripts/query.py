@@ -20,11 +20,10 @@ def main():
     #                     choices=['text', 'csv', 'html', 'htmldiv', 'beancount', 'xls'],
     #                     help="Output format.")
 
-    ## FIXME: implement this.
-    # parser.add_argument('-o', '--output', action='store',
-    #                     help=("Output filename. If not specified, the output goes "
-    #                           "to stdout. The filename is inspected to select a "
-    #                           "sensible default format, if one is not requested."))
+    parser.add_argument('-o', '--output', action='store',
+                        help=("Output filename. If not specified, the output goes "
+                              "to stdout. The filename is inspected to select a "
+                              "sensible default format, if one is not requested."))
 
     parser.add_argument('-q', '--no-errors', action='store_true',
                         help='Do not report errors')
@@ -45,9 +44,12 @@ def main():
                                     log_timings=logging.info,
                                     log_errors=errors_file)
 
+    # Create a receiver for output.
+    outfile = sys.stdout if args.output is None else open(args.output, 'w')
+
     # Create the shell.
     is_interactive = os.isatty(sys.stdin.fileno()) and not args.query
-    shell_obj = shell.BQLShell(is_interactive, load)
+    shell_obj = shell.BQLShell(is_interactive, load, outfile)
     shell_obj.on_Reload()
 
     # Run interactively if we're a TTY and no query is supplied.
