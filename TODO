@@ -3447,10 +3447,10 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 
     Perhaps a directive could be created to declare them that would
     automatically insert converting transactions, but that makes it difficult to
-    deal with weird cases, like GOOG -> GOOGL+GOOG with widely unequal splits,
-    or cases with spinoffs, as below. Perhaps the splitting transaction should
-    be inserted automatically, but that the split directive would just create a
-    new currency name, internally.
+    deal with weird cases, like oddly unequal splits (e.g. Google A/C), or cases
+    with spinoffs, as below. Perhaps the splitting transaction should be
+    inserted automatically, but that the split directive would just create a new
+    currency name, internally.
 
     A currency would then be referred to by a pair of (name, date), and that
     would resolve to a internal currency name.
