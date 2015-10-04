@@ -38,6 +38,31 @@ Note: This file contains only changes in the 'default' branch.
       cost specifications that makes sense.
 
 
+2015-10-02
+
+  - Implemented an experimental new Query directive whose purpose is to define
+    pre-canned SQL queries in the Beancount file itself and to then build tools
+    to automate the generation of reports of those queries.
+
+    For the moment being, I'm just playing with this to convince myself that
+    this can be powerful and generic enough to provide more generally. I've
+    found myself running specific queries on speific files, e.g., during trips
+    and I'd like to automate those to some extend, perhaps replace the script
+    code that lives in beancount.plugins.split_expenses with this.
+
+    Anyhow, this is not supported but if you understand this and really want to
+    turn it on, set this option in your input file:
+
+      option "experimental_query_directive" "TRUE"
+
+    The directives aren't used anywhere yet, and you'll have to read source code
+    to figure out what they look like.
+
+
+  - Implemented a "reload" command in the shell. Typing "reload" will refresh
+    the data from the latest file contents.
+
+
 2015-09-29
 
   - Tightened the screws on the Amount() constructor a bit and made changes ini
@@ -49,7 +74,7 @@ Note: This file contains only changes in the 'default' branch.
        Decimal instance, so you must use Amount(Decimal, str). In any case, this
        constrcutros was likely abused only by me in the tests. I'd rather have
        a tighter, less permissive constructor.
-       
+
     2. The convenience constructor beancount.core.amount.from_string() is now
        officially aliased as beancount.core.amount.A, so you can "from
        beancount.core.amount import A". I now commit to using this constructor

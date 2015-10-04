@@ -55,7 +55,7 @@ def add_implicit_prices(entries, unused_options_map):
                 #      Assets:Account    100 USD @ 1.10 CAD
                 # or, if a cost is also specified, as the current price of the
                 # underlying instrument, e.g.
-                #      Assets:Account    100 GOOG {564.20} @ {581.97} USD
+                #      Assets:Account    100 HOOL {564.20} @ {581.97} USD
                 if posting.price is not None:
                     meta = data.new_metadata(entry.meta.filename, entry.meta.lineno)
                     price_entry = data.Price(meta, entry.date,
@@ -65,7 +65,7 @@ def add_implicit_prices(entries, unused_options_map):
                 # Add costs, when we're not matching against an existing
                 # position. This happens when we're just specifying the cost,
                 # e.g.
-                #      Assets:Account    100 GOOG {564.20}
+                #      Assets:Account    100 HOOL {564.20}
                 elif (pos.cost is not None and
                       booking != inventory.Booking.REDUCED):
                     meta = data.new_metadata(entry.meta.filename, entry.meta.lineno)

@@ -525,7 +525,7 @@ def create_entries_from_balances(balances, date, source_account, direction,
     'balances' dict to/from another account specified in 'source_account'.
 
     The balancing posting is created with the equivalent at cost. In other
-    words, if you attempt to balance 10 GOOG {500 USD}, this will synthesize a
+    words, if you attempt to balance 10 HOOL {500 USD}, this will synthesize a
     posting with this position on one leg, and with 5000 USD on the
     'source_account' leg.
 

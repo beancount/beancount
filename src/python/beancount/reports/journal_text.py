@@ -21,6 +21,7 @@ TEXT_SHORT_NAME = {
     data.Transaction: 'txn',
     data.Note: 'note',
     data.Event: 'event',
+    data.Query: 'query',
     data.Price: 'price',
     data.Document: 'doc',
     }

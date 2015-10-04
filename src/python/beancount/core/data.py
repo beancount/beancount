@@ -190,6 +190,20 @@ Note = new_directive('Note', 'account comment')
 #     of the transaction.
 Event = new_directive('Event', 'type description')
 
+# A named query declaration. This directive is used to create pre-canned queries
+# that can then be automatically run or made available to the shell, or perhaps be
+# rendered as part of a web interface. The purpose of this routine is to define
+# useful queries for the context of the particular given Beancount input file.
+#
+# Attributes:
+#   meta: See above.
+#   date: The date at which this query should be run. All directives following
+#     this date will be ignored automatically. This is essentially equivalent to
+#     the CLOSE modifier in the shell syntax.
+#   name: A string, the unique idenfitier for the query.
+#   query_string: The SQL query string to be run or made available.
+Query = new_directive('Query', 'name query_string')
+
 # A price declaration directive. This establishes the price of a currency in
 # terms of another currency as of the directive's date. A history of the prices
 # for each currency pairs is built and can be queried within the bookkeeping
@@ -202,7 +216,7 @@ Event = new_directive('Event', 'type description')
 # Attributes:
 #   meta: See above.
 #   date: See above.
-#  currency: A string, the currency that is being priced, e.g. GOOG.
+#  currency: A string, the currency that is being priced, e.g. HOOL.
 #  amount: An instance of Amount, the number of units and currency that
 #    'currency' is worth, for instance 1200.12 USD.
 Price = new_directive('Price', 'currency amount')
@@ -220,7 +234,7 @@ Price = new_directive('Price', 'currency amount')
 # Attributes:
 #   meta: See above.
 #   date: See above.
-#   account: A string, the accountwhich the statement or document is associated
+#   account: A string, the account which the statement or document is associated
 #     with.
 #   filename: The absolute filename of the document file.
 Document = new_directive('Document', 'account filename')
@@ -228,7 +242,7 @@ Document = new_directive('Document', 'account filename')
 
 # A list of all the valid directive types.
 ALL_DIRECTIVES = (
-    Open, Close, Commodity, Pad, Balance, Transaction, Note, Event, Price, Document
+    Open, Close, Commodity, Pad, Balance, Transaction, Note, Event, Query, Price, Document
 )
 
 

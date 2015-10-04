@@ -190,10 +190,10 @@ class TestBalance(unittest.TestCase):
           2013-05-01 open Equity:Opening-Balances
 
           2013-05-02 *
-            Assets:Bank:Investing                1 GOOG {501 USD}
+            Assets:Bank:Investing                1 HOOL {501 USD}
             Equity:Opening-Balances
 
-          2013-05-03 balance Assets:Bank:Investing    1 GOOG
+          2013-05-03 balance Assets:Bank:Investing    1 HOOL
         """
         self.assertFalse(errors)
 

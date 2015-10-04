@@ -92,59 +92,59 @@ class TestPosition(unittest.TestCase):
         self.assertEqual(Position(A("-111.2934 CAD")), pos)
 
     def test_from_string__with_cost(self):
-        pos = from_string('2.2 GOOG {532.43 USD}')
+        pos = from_string('2.2 HOOL {532.43 USD}')
         cost = Cost(D('532.43'), 'USD', None, None)
-        self.assertEqual(Position(A("2.2 GOOG"), cost), pos)
+        self.assertEqual(Position(A("2.2 HOOL"), cost), pos)
 
     def test_from_string__with_cost_and_date(self):
-        pos = from_string('2.2 GOOG {532.43 USD, 2014-06-15}')
+        pos = from_string('2.2 HOOL {532.43 USD, 2014-06-15}')
         cost = Cost(D('532.43'), 'USD', datetime.date(2014, 6, 15), None)
-        self.assertEqual(Position(A("2.2 GOOG"), cost), pos)
+        self.assertEqual(Position(A("2.2 HOOL"), cost), pos)
 
     def test_from_string__with_label(self):
-        pos = from_string('2.2 GOOG {"78c3f7f1315b"}')
+        pos = from_string('2.2 HOOL {"78c3f7f1315b"}')
         self.assertEqual(
-            Position(A("2.2 GOOG"), Cost(None, None, None, "78c3f7f1315b")), pos)
+            Position(A("2.2 HOOL"), Cost(None, None, None, "78c3f7f1315b")), pos)
 
     def test_from_string__with_compound_cost(self):
-        pos = from_string('1.1 GOOG {500.00 # 11.00 USD}')
+        pos = from_string('1.1 HOOL {500.00 # 11.00 USD}')
         self.assertEqual(
-            Position(A("1.1 GOOG"), Cost(D('510.00'), 'USD', None, None)),
+            Position(A("1.1 HOOL"), Cost(D('510.00'), 'USD', None, None)),
             pos)
 
     # Not supported in string constructor.
     # def test_from_string__with_merge_cost_spec(self):
-    #     pos = from_string('1.1 GOOG {*}')
+    #     pos = from_string('1.1 HOOL {*}')
 
     def test_from_string__with_everything(self):
-        pos = from_string('20 GOOG {532.43 # 20.00 USD, "e4dc1a361022", 2014-06-15}')
+        pos = from_string('20 HOOL {532.43 # 20.00 USD, "e4dc1a361022", 2014-06-15}')
         cost = Cost(D('533.43'), 'USD', datetime.date(2014, 6, 15), "e4dc1a361022")
-        self.assertEqual(Position(A("20 GOOG"), cost), pos)
+        self.assertEqual(Position(A("20 HOOL"), cost), pos)
 
     def test_from_string__missing_currency(self):
         with self.assertRaises(ValueError):
-            from_string('2.2 GOOG {532.43}')
+            from_string('2.2 HOOL {532.43}')
 
     def test_str(self):
-        pos = from_string('2.2 GOOG {532.43 USD, 2014-06-15}')
-        self.assertEqual(('2.2 GOOG {532.43 USD, 2014-06-15}'), str(pos))
+        pos = from_string('2.2 HOOL {532.43 USD, 2014-06-15}')
+        self.assertEqual(('2.2 HOOL {532.43 USD, 2014-06-15}'), str(pos))
 
     def test_to_string(self):
-        pos = from_string('2.2 GOOG {532.43 USD, 2014-06-15}')
-        self.assertEqual(('2.2 GOOG {532.43 USD, 2014-06-15}'), pos.to_string())
+        pos = from_string('2.2 HOOL {532.43 USD, 2014-06-15}')
+        self.assertEqual(('2.2 HOOL {532.43 USD, 2014-06-15}'), pos.to_string())
 
     def test_to_string_no_detail(self):
-        pos = from_string('2.2 GOOG {532.43 USD, 2014-06-15}')
-        self.assertEqual(('2.2 GOOG {532.43 USD}'), pos.to_string(detail=False))
+        pos = from_string('2.2 HOOL {532.43 USD, 2014-06-15}')
+        self.assertEqual(('2.2 HOOL {532.43 USD}'), pos.to_string(detail=False))
 
     def test_from_amounts(self):
         pos = from_amounts(A('10.00 USD'))
         self.assertEqual(Position(A("10 USD")), pos)
 
-        pos = from_amounts(A('10 GOOG'),
+        pos = from_amounts(A('10 HOOL'),
                            A('510.00 USD'))
         self.assertEqual(
-            Position(A("10 GOOG"), Cost(D('510'), 'USD', None, None)), pos)
+            Position(A("10 HOOL"), Cost(D('510'), 'USD', None, None)), pos)
 
     def test_constructors(self):
         Position(A('123.45 USD'), None)

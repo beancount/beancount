@@ -405,6 +405,16 @@ PUBLIC_OPTION_GROUPS = [
     """, [Opt("experiment_explicit_tolerances", False, True)]),
 
     OptGroup("""
+      Enable an EXPERIMENTAL feature that supports a new "name query" directive,
+      whose purpsoe is to define useful queries for the context of the
+      particular given Beancount input file. We can play with this feature for a
+      while to figure out if it is sufficiently powerful and generic to include
+      unconditionally.
+
+      WARNING: This feature may go away at any time.
+    """, [Opt("experiment_query_directive", False, True)]),
+
+    OptGroup("""
       The booking method to apply, for interpolation and for matching lot
       specifications to the available lots in an inventory at the moment of the
       transaction. Values may be 'SIMPLE' for the original method used in

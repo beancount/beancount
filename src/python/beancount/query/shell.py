@@ -89,7 +89,14 @@ class DispatchingShell(cmd.Cmd):
     doc_header = "Shell utility commands (type help <topic>):"
     misc_header = "Beancount query commands:"
 
-    def __init__(self, is_interactive, parser):
+    def __init__(self, is_interactive, parser, outfile):
+        """Create a shell with history.
+
+        Args:
+          is_interactive: A boolean, true if this serves an interactive tty.
+          parser: A command parser.
+          outfile: An output file object to write communications to.
+        """
         super().__init__()
         if is_interactive:
             load_history(path.expanduser(HISTORY_FILENAME))
@@ -97,6 +104,7 @@ class DispatchingShell(cmd.Cmd):
         self.parser = parser
         self.initialize_vars()
         self.add_help()
+        self.outfile = outfile
 
     def initialize_vars(self):
         """Initialize the setting variables of the interactive shell."""
@@ -121,7 +129,8 @@ class DispatchingShell(cmd.Cmd):
                 continue
             command_name = match.group(1)
             setattr(self.__class__, 'help_{}'.format(command_name.lower()),
-                    lambda _, fun=func: print(textwrap.dedent(fun.__doc__).strip()))
+                    lambda _, fun=func: print(textwrap.dedent(fun.__doc__).strip(),
+                                              file=self.outfile))
 
     def get_pager(self):
         """Create and return a context manager to write to, a pager subprocess if required.
@@ -146,7 +155,7 @@ class DispatchingShell(cmd.Cmd):
                 super().cmdloop()
                 break
             except KeyboardInterrupt:
-                print('\n(Interrupted)')
+                print('\n(Interrupted)', file=self.outfile)
 
     def do_history(self, _):
         "Print the command-line history statement."
@@ -252,16 +261,25 @@ class BQLShell(DispatchingShell):
     """
     prompt = 'beancount> '
 
-    def __init__(self, is_interactive, entries, errors, options_map):
+    def __init__(self, is_interactive, loadfun):
         super().__init__(is_interactive, query_parser.Parser())
 
-        self.entries = entries
-        self.errors = errors
-        self.options_map = options_map
+        self.loadfun = loadfun
+        self.entries = None
+        self.errors = None
+        self.options_map = None
 
         self.env_targets = query_env.TargetsEnvironment()
         self.env_entries = query_env.FilterEntriesEnvironment()
         self.env_postings = query_env.FilterPostingsEnvironment()
+
+    def on_Reload(self, unused_statement=None):
+        """
+        Reload the input file without restarting the shell.
+        """
+        self.entries, self.errors, self.options_map = self.loadfun()
+        if self.is_interactive:
+            print_statistics(self.entries, self.options_map)
 
     def on_Errors(self, errors_statement):
         """
@@ -611,3 +629,16 @@ def summary_statistics(entries):
             num_transactions += 1
             num_postings += len(entry.postings)
     return (num_directives, num_transactions, num_postings)
+
+
+def print_statistics(entries, options_map):
+    """Print summary statistics to stdout.
+
+    Args:
+      entries: A list of directives.
+    """
+    num_directives, num_transactions, num_postings = summary_statistics(entries)
+    if 'title' in options_map:
+        print('Input file: "{}"'.format(options_map['title']))
+    print("Ready with {} directives ({} postings in {} transactions).".format(
+        num_directives, num_postings, num_transactions))

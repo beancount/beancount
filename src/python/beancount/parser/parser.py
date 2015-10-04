@@ -60,7 +60,7 @@ refer to a Cost instance (as in complete entries) but rather to a CostSpec
 instance. Some of the fields of a CostSpec may be MISSING if they were not
 specified in the input. For exammple:
 
-  INPUT: Assets:Account  1 GOOG {100 # 5 USD}
+  INPUT: Assets:Account  1 HOOL {100 # 5 USD}
   posting.position.cost = CostSpec(Decimal("100"), Decimal("5"), "USD", None, None, False))
 
 Note how we never consider the label of date override to be MISSING; this is
@@ -70,28 +70,28 @@ that contains the posting.
 
 You can indicate that there is a total number to be filled in like this:
 
-  INPUT: Assets:Account  1 GOOG {100 # USD}
+  INPUT: Assets:Account  1 HOOL {100 # USD}
   posting.position.cost = CostSpec(Decimal("100"), MISSING, "USD", None, None, False))
 
 This is in contrast to the total value simple not being used:
 
-  INPUT: Assets:Account  1 GOOG {100 USD}
+  INPUT: Assets:Account  1 HOOL {100 USD}
   posting.position.cost = CostSpec(Decimal("100"), None, "USD", None, None, False))
 
 Both per-unit and total numbers may be omitted as well, in which case, only the
 number-per-unit portion of the CostSpec will appear as MISSING:
 
-  INPUT: Assets:Account  1 GOOG {USD}
+  INPUT: Assets:Account  1 HOOL {USD}
   posting.position.cost = CostSpec(MISSING, None, "USD", None, None, False))
 
 And furthermore, all the cost basis may be missing:
 
-  INPUT: Assets:Account  1 GOOG {}
+  INPUT: Assets:Account  1 HOOL {}
   posting.position.cost = CostSpec(MISSING, None, MISSING, None, None, False))
 
 If you ask for the lots to be merged, you get this:
 
-  INPUT: Assets:Account  1 GOOG {*}
+  INPUT: Assets:Account  1 HOOL {*}
   posting.position.cost = CostSpec(MISSING, None, MISSING, None, None, True))
 
 The numbers have to be computed by Beancount, so we output this with MISSING
@@ -100,7 +100,7 @@ values.
 Of course, you can provide only the non-basis informations, like just the date
 or label:
 
-  INPUT: Assets:Account  1 GOOG {2015-09-21}
+  INPUT: Assets:Account  1 HOOL {2015-09-21}
   posting.position.cost = CostSpec(MISSING, None, MISSING, date(2015, 9, 21), None, True)
 
 See the test beancount.parser.grammar_test.TestIncompleteInputs for examples and

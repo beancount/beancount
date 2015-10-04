@@ -704,7 +704,7 @@ class TestComputeBalance(unittest.TestCase):
           Assets:Bank:Savings   222.74 USD
           Assets:Bank:Savings   17.23 CAD
           Assets:Investing      10000 EUR
-          Assets:Investing      32 GOOG {45.203 USD}
+          Assets:Investing      32 HOOL {45.203 USD}
           Assets:Other          1000 EUR @ 1.78 GBP
           Assets:Other          1000 EUR @@ 1780 GBP
         """
@@ -714,7 +714,7 @@ class TestComputeBalance(unittest.TestCase):
         expected_balance = inventory.Inventory()
         expected_balance.add_amount(A('333.97 USD'))
         expected_balance.add_amount(A('17.23 CAD'))
-        expected_balance.add_amount(A('32 GOOG'),
+        expected_balance.add_amount(A('32 HOOL'),
                                     position.Cost(D('45.203'), 'USD', None, None))
         expected_balance.add_amount(A('12000 EUR'))
         self.assertEqual(expected_balance, computed_balance)

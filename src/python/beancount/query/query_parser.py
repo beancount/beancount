@@ -69,6 +69,9 @@ Print = collections.namedtuple('Print', 'from_clause')
 # Errors command (prints errors and context around them).
 Errors = collections.namedtuple('Errors', '')
 
+# Reload command (reloads the input file).
+Reload = collections.namedtuple('Reload', '')
+
 # Explains a command (prints out AST for debugging).
 #
 # Attributes:
@@ -188,7 +191,7 @@ class Lexer:
         'EXPLAIN',
         'SELECT', 'AS', 'FROM', 'WHERE', 'OPEN', 'CLOSE', 'CLEAR', 'ON',
         'BALANCES', 'JOURNAL', 'PRINT', 'AT',
-        'ERRORS',
+        'ERRORS', 'RELOAD',
         'GROUP', 'BY', 'HAVING', 'ORDER', 'DESC', 'ASC', 'PIVOT',
         'LIMIT', 'FLATTEN', 'DISTINCT',
         'AND', 'OR', 'NOT', 'IN',
@@ -621,6 +624,7 @@ class Parser(SelectParser):
                   | journal_statement
                   | print_statement
                   | errors_statement
+                  | reload_statement
         """
         p[0] = p[1]
 
@@ -661,6 +665,12 @@ class Parser(SelectParser):
         errors_statement : ERRORS
         """
         p[0] = Errors()
+
+    def p_reload_statement(self, p):
+        """
+        reload_statement : RELOAD
+        """
+        p[0] = Reload()
 
 
 def get_expression_name(expr):
