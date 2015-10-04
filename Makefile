@@ -199,7 +199,7 @@ fixmes:
 	egrep -srn '\b(FIXME|TODO\()' $(SRC) || true
 
 filter-terms:
-	egrep --exclude-dir='.hg' -srn 'GOOGL?' $(PWD) | grep -v GOOGLE_APIS || true
+	egrep --exclude-dir='.hg' --exclude-dir='__pycache__' -srn 'GOOGL?' $(PWD) | grep -v GOOGLE_APIS || true
 
 multi-imports:
 	egrep -srn '^(from.*)?import.*,' $(SRC) || true
