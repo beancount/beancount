@@ -48,17 +48,17 @@ class TestCompare(unittest.TestCase):
 
     def test_hash_entries_with_duplicates(self):
         entries, _, __ = loader.load_string("""
-          2014-08-01 price GOOG  603.10 USD
+          2014-08-01 price HOOL  603.10 USD
         """)
         hashes, errors = compare.hash_entries(entries)
         self.assertEqual(1, len(hashes))
 
         entries, _, __ = loader.load_string("""
-          2014-08-01 price GOOG  603.10 USD
-          2014-08-01 price GOOG  603.10 USD
-          2014-08-01 price GOOG  603.10 USD
-          2014-08-01 price GOOG  603.10 USD
-          2014-08-01 price GOOG  603.10 USD
+          2014-08-01 price HOOL  603.10 USD
+          2014-08-01 price HOOL  603.10 USD
+          2014-08-01 price HOOL  603.10 USD
+          2014-08-01 price HOOL  603.10 USD
+          2014-08-01 price HOOL  603.10 USD
         """)
         hashes, errors = compare.hash_entries(entries)
         self.assertEqual(1, len(hashes))

@@ -25,27 +25,27 @@ class TestImplicitPrices(cmptest.TestCase):
 
         ;; This should book at price at the cost.
         2013-04-02 * "A transaction with a cost."
-          Assets:Account1             1500 GOOG {520 USD}
+          Assets:Account1             1500 HOOL {520 USD}
           Assets:Other
 
         ;; This one should be IGNORED because it books against the above.
         2013-04-03 * "A transaction with a cost that reduces an existing position"
-          Assets:Account1            -500 GOOG {520 USD}
+          Assets:Account1            -500 HOOL {520 USD}
           Assets:Other
 
         ;; This one should generate the price, even if it is reducing.
         2013-04-04 * "A transaction with a cost that reduces existing position, with price"
-          Assets:Account1            -100 GOOG {520 USD} @ 530 USD
+          Assets:Account1            -100 HOOL {520 USD} @ 530 USD
           Assets:Other
 
         ;; This is not reducing and should also book a price at cost.
         2013-04-05 * "A transaction with another cost that is not reducing."
-          Assets:Account1             500 GOOG {540 USD}
+          Assets:Account1             500 HOOL {540 USD}
           Assets:Other
 
         ;; The price here overrides the cost and should create an entry.
         2013-04-06 * "A transaction with a cost and a price."
-          Assets:Account1             500 GOOG {540 USD} @ 560 USD
+          Assets:Account1             500 HOOL {540 USD} @ 560 USD
           Assets:Other
         """
         self.assertEqual(10, len(entries))
@@ -68,42 +68,42 @@ class TestImplicitPrices(cmptest.TestCase):
         2013-04-01 price USD 1.12 CAD
 
         2013-04-02 * "A transaction with a cost."
-          Assets:Account1                      1500 GOOG     {520 USD}
+          Assets:Account1                      1500 HOOL     {520 USD}
           Assets:Other                       -780000 USD
 
-        2013-04-02 price GOOG 520 USD
+        2013-04-02 price HOOL 520 USD
 
         2013-04-03 * "A transaction with a cost that reduces an existing position"
-          Assets:Account1                      -500 GOOG     {520 USD}
+          Assets:Account1                      -500 HOOL     {520 USD}
           Assets:Other                        260000 USD
 
         2013-04-04 * "A transaction with a cost that reduces existing position, with price"
-          Assets:Account1                      -100 GOOG     {520 USD}     @ 530 USD
+          Assets:Account1                      -100 HOOL     {520 USD}     @ 530 USD
           Assets:Other                         52000 USD
 
-        2013-04-04 price GOOG 530 USD
+        2013-04-04 price HOOL 530 USD
 
         2013-04-05 * "A transaction with another cost that is not reducing."
-          Assets:Account1                       500 GOOG     {540 USD}
+          Assets:Account1                       500 HOOL     {540 USD}
           Assets:Other                       -270000 USD
 
-        2013-04-05 price GOOG 540 USD
+        2013-04-05 price HOOL 540 USD
 
         2013-04-06 * "A transaction with a cost and a price."
-          Assets:Account1                       500 GOOG     {540 USD}     @ 560 USD
+          Assets:Account1                       500 HOOL     {540 USD}     @ 560 USD
           Assets:Other                       -270000 USD
 
-        2013-04-06 price GOOG 560 USD
+        2013-04-06 price HOOL 560 USD
         """, new_entries)
 
         self.assertEqual(6, len(price_entries))
         expected_values = [(x[0], x[1], D(x[2])) for x in [
             ('USD', 'CAD', '1.10'),
             ('USD', 'CAD', '1.12'),
-            ('GOOG', 'USD', '520.00'),
-            ('GOOG', 'USD', '530.00'),
-            ('GOOG', 'USD', '540.00'),
-            ('GOOG', 'USD', '560.00')
+            ('HOOL', 'USD', '520.00'),
+            ('HOOL', 'USD', '530.00'),
+            ('HOOL', 'USD', '540.00'),
+            ('HOOL', 'USD', '560.00')
             ]]
         for expected, price in zip(expected_values, price_entries):
             actual = (price.currency, price.amount.currency, price.amount.number)
@@ -117,19 +117,19 @@ class TestImplicitPrices(cmptest.TestCase):
         2013-01-01 open Assets:Other
 
         2013-04-01 *
-          Assets:Account1             1500 GOOG {520 USD}
+          Assets:Account1             1500 HOOL {520 USD}
           Assets:Other
 
         2013-04-02 *
-          Assets:Account2             1500 GOOG {530 USD}
+          Assets:Account2             1500 HOOL {530 USD}
           Assets:Other
 
         2013-04-10 * "Reduces existing position in account 1"
-          Assets:Account1            -100 GOOG {520 USD}
+          Assets:Account1            -100 HOOL {520 USD}
           Assets:Other              52000 USD
 
         2013-04-11 * "Does not find an existing position in account 2"
-          Assets:Account2            -200 GOOG {531 USD}
+          Assets:Account2            -200 HOOL {531 USD}
           Assets:Other             106200 USD
 
         """
@@ -141,27 +141,27 @@ class TestImplicitPrices(cmptest.TestCase):
         2013-01-01 open Assets:Other
 
         2013-04-01 *
-          Assets:Account1             1500 GOOG {520 USD}
+          Assets:Account1             1500 HOOL {520 USD}
           Assets:Other             -780000 USD
 
         2013-04-02 *
-          Assets:Account2             1500 GOOG {530 USD}
+          Assets:Account2             1500 HOOL {530 USD}
           Assets:Other             -795000 USD
 
-        2013-04-01 price GOOG 520 USD
+        2013-04-01 price HOOL 520 USD
 
-        2013-04-02 price GOOG 530 USD
+        2013-04-02 price HOOL 530 USD
 
         2013-04-10 * "Reduces existing position in account 1"
-          Assets:Account1                       -100 GOOG {520 USD}
+          Assets:Account1                       -100 HOOL {520 USD}
           Assets:Other                         52000 USD
 
         2013-04-11 * "Does not find an existing position in account 2"
-          Assets:Account2                       -200 GOOG {531 USD}
+          Assets:Account2                       -200 HOOL {531 USD}
           Assets:Other                        106200 USD
 
         ;; Because a match was not found against the inventory, a price will be added.
-        2013-04-11 price GOOG 531 USD
+        2013-04-11 price HOOL 531 USD
 
         """, new_entries)
 
@@ -174,13 +174,13 @@ class TestImplicitPrices(cmptest.TestCase):
         2013-01-01 open Assets:Other
 
         2013-04-01 * "Allowed because of same price"
-          Assets:Account1             1500 GOOG {520 USD}
-          Assets:Account2             1500 GOOG {520 USD}
+          Assets:Account1             1500 HOOL {520 USD}
+          Assets:Account2             1500 HOOL {520 USD}
           Assets:Other
 
         2013-04-02 * "Second one is disallowed because of different price"
-          Assets:Account1             1500 GOOG {520 USD}
-          Assets:Account2             1500 GOOG {530 USD}
+          Assets:Account1             1500 HOOL {520 USD}
+          Assets:Account2             1500 HOOL {530 USD}
           Assets:Other
 
         """
@@ -193,19 +193,19 @@ class TestImplicitPrices(cmptest.TestCase):
         2013-01-01 open Assets:Other
 
         2013-04-01 * "Allowed because of same price"
-          Assets:Account1             1500 GOOG {520 USD}
-          Assets:Account2             1500 GOOG {520 USD}
+          Assets:Account1             1500 HOOL {520 USD}
+          Assets:Account2             1500 HOOL {520 USD}
           Assets:Other            -1560000 USD
 
-        2013-04-01 price GOOG 520 USD
+        2013-04-01 price HOOL 520 USD
 
         2013-04-02 * "Second one is disallowed because of different price"
-          Assets:Account1             1500 GOOG {520 USD}
-          Assets:Account2             1500 GOOG {530 USD}
+          Assets:Account1             1500 HOOL {520 USD}
+          Assets:Account2             1500 HOOL {530 USD}
           Assets:Other            -1575000 USD
 
-        2013-04-02 price GOOG 520 USD
-        2013-04-02 price GOOG 530 USD  ;; Allowed for now.
+        2013-04-02 price HOOL 520 USD
+        2013-04-02 price HOOL 530 USD  ;; Allowed for now.
 
         """, new_entries)
 
@@ -219,19 +219,19 @@ class TestImplicitPrices(cmptest.TestCase):
         2013-01-01 open Assets:Other
 
         2013-04-01 * "Allowed because of same price #1"
-          Assets:Account1             1500 GOOG {520 USD}
+          Assets:Account1             1500 HOOL {520 USD}
           Assets:Other
 
         2013-04-01 * "Allowed because of same price #2"
-          Assets:Account2             1500 GOOG {520 USD}
+          Assets:Account2             1500 HOOL {520 USD}
           Assets:Other
 
         2013-04-02 * "Second one is disallowed because of different price #1"
-          Assets:Account1             1500 GOOG {520 USD}
+          Assets:Account1             1500 HOOL {520 USD}
           Assets:Other
 
         2013-04-02 * "Second one is disallowed because of different price #2"
-          Assets:Account2             1500 GOOG {530 USD}
+          Assets:Account2             1500 HOOL {530 USD}
           Assets:Other
 
         """
@@ -244,25 +244,25 @@ class TestImplicitPrices(cmptest.TestCase):
         2013-01-01 open Assets:Other
 
         2013-04-01 * "Allowed because of same price #1"
-          Assets:Account1             1500 GOOG {520 USD}
+          Assets:Account1             1500 HOOL {520 USD}
           Assets:Other             -780000 USD
 
         2013-04-01 * "Allowed because of same price #2"
-          Assets:Account2             1500 GOOG {520 USD}
+          Assets:Account2             1500 HOOL {520 USD}
           Assets:Other             -780000 USD
 
-        2013-04-01 price GOOG 520 USD
+        2013-04-01 price HOOL 520 USD
 
         2013-04-02 * "Second one is disallowed because of different price #1"
-          Assets:Account1             1500 GOOG {520 USD}
+          Assets:Account1             1500 HOOL {520 USD}
           Assets:Other             -780000 USD
 
         2013-04-02 * "Second one is disallowed because of different price #2"
-          Assets:Account2             1500 GOOG {530 USD}
+          Assets:Account2             1500 HOOL {530 USD}
           Assets:Other             -795000 USD
 
-        2013-04-02 price GOOG 520 USD
-        2013-04-02 price GOOG 530 USD  ;; Allowed for now.
+        2013-04-02 price HOOL 520 USD
+        2013-04-02 price HOOL 530 USD  ;; Allowed for now.
 
         """, new_entries)
 
@@ -273,15 +273,15 @@ class TestImplicitPrices(cmptest.TestCase):
         2013-01-01 open Assets:Other
 
         2013-04-01 * "Allowed, sets the price for that day"
-          Assets:Account1             1500 GOOG {520 USD}
+          Assets:Account1             1500 HOOL {520 USD}
           Assets:Other
 
         2013-04-01 * "Will be ignored, price for the day already set"
-          Assets:Account1             1500 GOOG {530 USD}
+          Assets:Account1             1500 HOOL {530 USD}
           Assets:Other
 
         2013-04-01 * "Should be ignored too, price for the day already set"
-          Assets:Account1             1500 GOOG {530 USD}
+          Assets:Account1             1500 HOOL {530 USD}
           Assets:Other
         """
         new_entries, errors = implicit_prices.add_implicit_prices(entries, options_map)
@@ -292,18 +292,18 @@ class TestImplicitPrices(cmptest.TestCase):
         2013-01-01 open Assets:Other
 
         2013-04-01 * "Allowed, sets the price for that day"
-          Assets:Account1             1500 GOOG {520 USD}
+          Assets:Account1             1500 HOOL {520 USD}
           Assets:Other             -780000 USD
 
         2013-04-01 * "Will be ignored, price for the day already set"
-          Assets:Account1             1500 GOOG {530 USD}
+          Assets:Account1             1500 HOOL {530 USD}
           Assets:Other             -795000 USD
 
         2013-04-01 * "Should be ignored too, price for the day already set"
-          Assets:Account1             1500 GOOG {530 USD}
+          Assets:Account1             1500 HOOL {530 USD}
           Assets:Other             -795000 USD
 
-        2013-04-01 price GOOG 520 USD
-        2013-04-01 price GOOG 530 USD
+        2013-04-01 price HOOL 520 USD
+        2013-04-01 price HOOL 530 USD
 
         """, new_entries)

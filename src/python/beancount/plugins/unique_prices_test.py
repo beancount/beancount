@@ -13,8 +13,8 @@ class TestValidateAmbiguousPrices(cmptest.TestCase):
     @loader.load_doc()
     def test_validate_unique_prices__different(self, entries, errors, options_map):
         """
-        2000-01-01 price GOOG 500.00 USD
-        2000-01-01 price GOOG 500.01 USD
+        2000-01-01 price HOOL 500.00 USD
+        2000-01-01 price HOOL 500.01 USD
         """
         self.assertEqual([], errors)
         _, valid_errors = unique_prices.validate_unique_prices(entries, options_map)
@@ -24,8 +24,8 @@ class TestValidateAmbiguousPrices(cmptest.TestCase):
     @loader.load_doc()
     def test_validate_unique_prices__same(self, entries, errors, options_map):
         """
-        2000-01-01 price GOOG 500.00 USD
-        2000-01-01 price GOOG 500.00 USD
+        2000-01-01 price HOOL 500.00 USD
+        2000-01-01 price HOOL 500.00 USD
         """
         self.assertEqual([], errors)
         _, valid_errors = unique_prices.validate_unique_prices(entries, options_map)

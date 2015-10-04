@@ -214,6 +214,7 @@ close		{ return CLOSE; }
 commodity	{ return COMMODITY; }
 pad		{ return PAD; }
 event		{ return EVENT; }
+query		{ return QUERY; }
 price		{ return PRICE; }
 note		{ return NOTE; }
 document	{ return DOCUMENT; }

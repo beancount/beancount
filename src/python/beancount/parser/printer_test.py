@@ -51,6 +51,7 @@ class TestEntryPrinter(cmptest.TestCase):
         # Print out the entries and parse them back in.
         oss1 = io.StringIO()
         oss1.write('option "plugin_processing_mode" "raw"\n')
+        oss1.write('option "experiment_query_directive" "TRUE"\n')
         printer.print_entries(entries1, file=oss1)
         entries2, errors, __ = loader.load_string(oss1.getvalue())
 
@@ -60,6 +61,7 @@ class TestEntryPrinter(cmptest.TestCase):
         # Print out those reparsed and parse them back in.
         oss2 = io.StringIO()
         oss2.write('option "plugin_processing_mode" "raw"\n')
+        oss2.write('option "experiment_query_directive" "TRUE"\n')
         printer.print_entries(entries2, file=oss2)
         entries3, errors, __ = loader.load_string(oss2.getvalue())
 
@@ -145,6 +147,14 @@ class TestEntryPrinter(cmptest.TestCase):
         self.assertRoundTrip(entries, errors)
 
     @loader.load_doc()
+    def test_Query(self, entries, errors, __):
+        """
+        option "plugin_processing_mode" "raw"
+        2014-06-08 query "cash" "SELECT sum(position) WHERE currency = 'USD'"
+        """
+        self.assertRoundTrip(entries, errors)
+
+    @loader.load_doc()
     def test_Pad(self, entries, errors, __):
         """
         2014-01-01 open Assets:Account1
@@ -184,6 +194,14 @@ class TestEntryPrinter(cmptest.TestCase):
         """
         2014-06-08 event "location" "New York, NY, USA"
         2014-06-08 event "employer" "Four Square"
+        """
+        self.assertRoundTrip(entries, errors)
+
+    @loader.load_doc()
+    def test_Query(self, entries, errors, __):
+        """
+        option "experiment_query_directive" "TRUE"
+        2014-06-08 query "cash" "SELECT SUM(position) WHERE currency = 'USD'"
         """
         self.assertRoundTrip(entries, errors)
 
@@ -306,8 +324,8 @@ class TestPrinterAlignment(test_utils.TestCase):
 
     def test_align_position_strings(self):
         aligned_strings, width = printer.align_position_strings([
-            '45 GOOG {504.30 USD}',
-            '4 GOOG {504.30 USD / 2014-11-11}',
+            '45 HOOL {504.30 USD}',
+            '4 HOOL {504.30 USD / 2014-11-11}',
             '9.9505 USD',
             '',
             '-22473.32 CAD @ 1.10 USD',
@@ -316,8 +334,8 @@ class TestPrinterAlignment(test_utils.TestCase):
         ])
         self.assertEqual(40, width)
         self.assertEqual([
-            '       45 GOOG {504.30 USD}             ',
-            '        4 GOOG {504.30 USD / 2014-11-11}',
+            '       45 HOOL {504.30 USD}             ',
+            '        4 HOOL {504.30 USD / 2014-11-11}',
             '   9.9505 USD                           ',
             '                                        ',
             '-22473.32 CAD @ 1.10 USD                ',
@@ -373,13 +391,13 @@ class TestPrinterAlignment(test_utils.TestCase):
     @loader.load_doc()
     def test_align_with_weight(self, entries, errors, options_map):
         """
-        2014-01-01 open Assets:US:Investments:GOOG
+        2014-01-01 open Assets:US:Investments:HOOL
         2014-01-01 open Expenses:Commissions
         2014-01-01 open Assets:US:Investments:Cash
 
         2014-07-01 * "Something"
-          Assets:US:Investments:GOOG          45 GOOG {504.30 USD}
-          Assets:US:Investments:GOOG           4 GOOG {504.30 USD, 2014-11-11}
+          Assets:US:Investments:HOOL          45 HOOL {504.30 USD}
+          Assets:US:Investments:HOOL           4 HOOL {504.30 USD, 2014-11-11}
           Expenses:Commissions            9.9520 USD
           Assets:US:Investments:Cash   -22473.32 CAD @ 1.10 USD
         """
@@ -389,13 +407,13 @@ class TestPrinterAlignment(test_utils.TestCase):
         oss = io.StringIO()
         printer.print_entries(entries, dcontext, render_weights=False, file=oss)
         expected_str = ''.join([
-            '2014-01-01 open Assets:US:Investments:GOOG\n',
+            '2014-01-01 open Assets:US:Investments:HOOL\n',
             '2014-01-01 open Expenses:Commissions\n',
             '2014-01-01 open Assets:US:Investments:Cash\n',
             '\n',
             '2014-07-01 * "Something"\n',
-            '  Assets:US:Investments:GOOG         45 GOOG {504.30 USD}            \n',
-            '  Assets:US:Investments:GOOG          4 GOOG {504.30 USD, 2014-11-11}\n',
+            '  Assets:US:Investments:HOOL         45 HOOL {504.30 USD}            \n',
+            '  Assets:US:Investments:HOOL          4 HOOL {504.30 USD, 2014-11-11}\n',
             '  Expenses:Commissions             9.95 USD                          \n',
             '  Assets:US:Investments:Cash  -22473.32 CAD @ 1.1000 USD             \n',
             ])
@@ -404,13 +422,13 @@ class TestPrinterAlignment(test_utils.TestCase):
         oss = io.StringIO()
         printer.print_entries(entries, dcontext, render_weights=True, file=oss)
         expected_str = textwrap.dedent("""\
-        2014-01-01 open Assets:US:Investments:GOOG
+        2014-01-01 open Assets:US:Investments:HOOL
         2014-01-01 open Expenses:Commissions
         2014-01-01 open Assets:US:Investments:Cash
 
         2014-07-01 * "Something"
-          Assets:US:Investments:GOOG         45 GOOG {504.30 USD}              ;    22693.50 USD
-          Assets:US:Investments:GOOG          4 GOOG {504.30 USD, 2014-11-11}  ;     2017.20 USD
+          Assets:US:Investments:HOOL         45 HOOL {504.30 USD}              ;    22693.50 USD
+          Assets:US:Investments:HOOL          4 HOOL {504.30 USD, 2014-11-11}  ;     2017.20 USD
           Expenses:Commissions             9.95 USD                            ;      9.9520 USD
           Assets:US:Investments:Cash  -22473.32 CAD @ 1.1000 USD               ; -24720.6520 USD
         """)

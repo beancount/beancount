@@ -50,7 +50,7 @@ class TestPriceMap(unittest.TestCase):
                          prices.normalize_base_quote(('USD/CAD')))
         with self.assertRaises(AssertionError):
             self.assertEqual(('USD', 'CAD'),
-                             prices.normalize_base_quote(('GOOG/USD/CAD')))
+                             prices.normalize_base_quote(('HOOL/USD/CAD')))
 
     @loader.load_doc()
     def test_build_price_map(self, entries, _, __):
@@ -240,11 +240,11 @@ class TestMarketValue(unittest.TestCase):
         2013-06-07 price  USD  1.07 CAD
         2013-06-10 price  USD  1.10 CAD
 
-        2013-06-01 price  GOOG  101.00 USD
-        2013-06-05 price  GOOG  105.00 USD
-        2013-06-06 price  GOOG  106.00 USD
-        2013-06-07 price  GOOG  107.00 USD
-        2013-06-10 price  GOOG  110.00 USD
+        2013-06-01 price  HOOL  101.00 USD
+        2013-06-05 price  HOOL  105.00 USD
+        2013-06-06 price  HOOL  106.00 USD
+        2013-06-07 price  HOOL  107.00 USD
+        2013-06-10 price  HOOL  110.00 USD
 
         2013-06-01 price  AAPL  91.00 USD
         2013-06-05 price  AAPL  95.00 USD
@@ -276,21 +276,21 @@ class TestMarketValue(unittest.TestCase):
         self.assertEqual(inventory.from_string('100 USD, 90 CAD'), market_value)
 
     def test_stock_single(self):
-        balances = inventory.from_string('5 GOOG {0.01 USD}')
+        balances = inventory.from_string('5 HOOL {0.01 USD}')
         market_value = prices.get_inventory_market_value(balances,
                                                          datetime.date(2013, 6, 6),
                                                          self.price_map)
         self.assertEqual(inventory.from_string('530 USD'), market_value)
 
     def test_stock_many_lots(self):
-        balances = inventory.from_string('2 GOOG {0.01 USD}, 3 GOOG {0.02 USD}')
+        balances = inventory.from_string('2 HOOL {0.01 USD}, 3 HOOL {0.02 USD}')
         market_value = prices.get_inventory_market_value(balances,
                                                          datetime.date(2013, 6, 6),
                                                          self.price_map)
         self.assertEqual(inventory.from_string('530 USD'), market_value)
 
     def test_stock_different_ones(self):
-        balances = inventory.from_string('2 GOOG {0.01 USD}, 2 AAPL {0.02 USD}')
+        balances = inventory.from_string('2 HOOL {0.01 USD}, 2 AAPL {0.02 USD}')
         market_value = prices.get_inventory_market_value(balances,
                                                          datetime.date(2013, 6, 6),
                                                          self.price_map)

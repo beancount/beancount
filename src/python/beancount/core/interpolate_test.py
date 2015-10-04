@@ -475,18 +475,18 @@ class TestComputeBalance(unittest.TestCase):
         2014-01-01 open Assets:Other
 
         2014-06-05 *
-          Assets:Investing      30 GOOG {40 USD}
+          Assets:Investing      30 HOOL {40 USD}
           Assets:Other
 
         2014-06-05 *
-          Assets:Investing      -20 GOOG {40 USD}
+          Assets:Investing      -20 HOOL {40 USD}
           Assets:Other
 
         """
         computed_balance = interpolate.compute_entries_balance(entries)
         expected_balance = inventory.Inventory()
         expected_balance.add_amount(A('-400 USD'))
-        expected_balance.add_amount(A('10 GOOG'), A('40 USD'))
+        expected_balance.add_amount(A('10 HOOL'), A('40 USD'))
         self.assertEqual(expected_balance, computed_balance)
 
     @loader.load_doc()

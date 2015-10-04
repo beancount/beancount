@@ -89,7 +89,14 @@ class DispatchingShell(cmd.Cmd):
     doc_header = "Shell utility commands (type help <topic>):"
     misc_header = "Beancount query commands:"
 
-    def __init__(self, is_interactive, parser):
+    def __init__(self, is_interactive, parser, outfile):
+        """Create a shell with history.
+
+        Args:
+          is_interactive: A boolean, true if this serves an interactive tty.
+          parser: A command parser.
+          outfile: An output file object to write communications to.
+        """
         super().__init__()
         if is_interactive:
             load_history(path.expanduser(HISTORY_FILENAME))
@@ -97,6 +104,7 @@ class DispatchingShell(cmd.Cmd):
         self.parser = parser
         self.initialize_vars()
         self.add_help()
+        self.outfile = outfile
 
     def initialize_vars(self):
         """Initialize the setting variables of the interactive shell."""
@@ -121,7 +129,8 @@ class DispatchingShell(cmd.Cmd):
                 continue
             command_name = match.group(1)
             setattr(self.__class__, 'help_{}'.format(command_name.lower()),
-                    lambda _, fun=func: print(textwrap.dedent(fun.__doc__).strip()))
+                    lambda _, fun=func: print(textwrap.dedent(fun.__doc__).strip(),
+                                              file=self.outfile))
 
     def get_pager(self):
         """Create and return a context manager to write to, a pager subprocess if required.
@@ -146,12 +155,12 @@ class DispatchingShell(cmd.Cmd):
                 super().cmdloop()
                 break
             except KeyboardInterrupt:
-                print('\n(Interrupted)')
+                print('\n(Interrupted)', file=self.outfile)
 
     def do_history(self, _):
         "Print the command-line history statement."
         for index, line in enumerate(get_history(self.max_entries)):
-            print(line)
+            print(line, file=self.outfile)
 
     def do_clear(self, _):
         "Clear the history."
@@ -161,47 +170,47 @@ class DispatchingShell(cmd.Cmd):
         "Get/set shell settings variables."
         if not line:
             for varname, value in sorted(self.vars.items()):
-                print('{}: {}'.format(varname, value))
+                print('{}: {}'.format(varname, value), file=self.outfile)
         else:
             components = shlex.split(line)
             varname = components[0]
             if len(components) == 1:
                 try:
                     value = self.vars[varname]
-                    print('{}: {}'.format(varname, value))
+                    print('{}: {}'.format(varname, value), file=self.outfile)
                 except KeyError:
-                    print("Variable '{}' does not exist.".format(varname))
+                    print("Variable '{}' does not exist.".format(varname), file=self.outfile)
             elif len(components) == 2:
                 value = components[1]
                 try:
                     converted_value = self.vars_types[varname](value)
                     self.vars[varname] = converted_value
-                    print('{}: {}'.format(varname, converted_value))
+                    print('{}: {}'.format(varname, converted_value), file=self.outfile)
                 except KeyError:
-                    print("Variable '{}' does not exist.".format(varname))
+                    print("Variable '{}' does not exist.".format(varname), file=self.outfile)
             else:
-                print("Invalid number of arguments.")
+                print("Invalid number of arguments.", file=self.outfile)
 
     def do_lex(self, line):
         "Just run the lexer on the following command and print the output."
         try:
             self.parser.tokenize(line)
         except query_parser.ParseError as exc:
-            print(exc)
+            print(exc, file=self.outfile)
 
     do_tokenize = do_lex
 
     def do_parse(self, line):
         "Just run the parser on the following command and print the output."
-        print("INPUT: {}".format(repr(line)))
+        print("INPUT: {}".format(repr(line)), file=self.outfile)
         try:
             statement = self.parser.parse(line, True)
-            print(statement)
+            print(statement, file=self.outfile)
         except (query_parser.ParseError,
                 query_compile.CompilationError) as exc:
-            print(exc)
+            print(exc, file=self.outfile)
         except Exception as exc:
-            traceback.print_exc()
+            traceback.print_exc(file=self.outfile)
 
     def dispatch(self, statement):
         """Dispatch the given statement to a suitable method.
@@ -214,7 +223,8 @@ class DispatchingShell(cmd.Cmd):
         try:
             method = getattr(self, 'on_{}'.format(type(statement).__name__))
         except AttributeError:
-            print("Internal error: statement '{}' is unsupported.".format(statement))
+            print("Internal error: statement '{}' is unsupported.".format(statement),
+                  file=self.outfile)
         else:
             return method(statement)
 
@@ -228,9 +238,9 @@ class DispatchingShell(cmd.Cmd):
             statement = self.parser.parse(line)
             self.dispatch(statement)
         except query_parser.ParseError as exc:
-            print(exc)
+            print(exc, file=self.outfile)
         except Exception as exc:
-            traceback.print_exc()
+            traceback.print_exc(file=self.outfile)
 
     def emptyline(self):
         """Do nothing on an empty line."""
@@ -238,7 +248,7 @@ class DispatchingShell(cmd.Cmd):
 
     def exit(self, _):
         """Exit the parser."""
-        print('exit')
+        print('exit', file=self.outfile)
         return 1
 
     # Commands to exit.
@@ -252,16 +262,25 @@ class BQLShell(DispatchingShell):
     """
     prompt = 'beancount> '
 
-    def __init__(self, is_interactive, entries, errors, options_map):
-        super().__init__(is_interactive, query_parser.Parser())
+    def __init__(self, is_interactive, loadfun, outfile):
+        super().__init__(is_interactive, query_parser.Parser(), outfile)
 
-        self.entries = entries
-        self.errors = errors
-        self.options_map = options_map
+        self.loadfun = loadfun
+        self.entries = None
+        self.errors = None
+        self.options_map = None
 
         self.env_targets = query_env.TargetsEnvironment()
         self.env_entries = query_env.FilterEntriesEnvironment()
         self.env_postings = query_env.FilterPostingsEnvironment()
+
+    def on_Reload(self, unused_statement=None):
+        """
+        Reload the input file without restarting the shell.
+        """
+        self.entries, self.errors, self.options_map = self.loadfun()
+        if self.is_interactive:
+            print_statistics(self.entries, self.options_map)
 
     def on_Errors(self, errors_statement):
         """
@@ -270,7 +289,7 @@ class BQLShell(DispatchingShell):
         if self.errors:
             printer.print_errors(self.errors)
         else:
-            print('(No errors)')
+            print('(No errors)', file=self.outfile)
 
     def on_Print(self, print_stmt):
         """
@@ -296,11 +315,15 @@ class BQLShell(DispatchingShell):
                                             self.env_postings,
                                             self.env_entries)
         except query_compile.CompilationError as exc:
-            print('ERROR: {}.'.format(str(exc).rstrip('.')))
+            print('ERROR: {}.'.format(str(exc).rstrip('.')), file=self.outfile)
             return
 
-        with self.get_pager() as file:
-            query_execute.execute_print(c_print, self.entries, self.options_map, file)
+        if self.outfile is sys.stdout:
+            query_execute.execute_print(c_print, self.entries, self.options_map,
+                                        file=self.outfile)
+        else:
+            with self.get_pager() as file:
+                query_execute.execute_print(c_print, self.entries, self.options_map, file)
 
     def on_Select(self, statement):
         """
@@ -353,7 +376,7 @@ class BQLShell(DispatchingShell):
                                             self.env_postings,
                                             self.env_entries)
         except query_compile.CompilationError as exc:
-            print('ERROR: {}.'.format(str(exc).rstrip('.')))
+            print('ERROR: {}.'.format(str(exc).rstrip('.')), file=self.outfile)
             return
 
         # Execute it to obtain the result rows.
@@ -363,17 +386,24 @@ class BQLShell(DispatchingShell):
 
         # Output the resulting rows.
         if not result_rows:
-            print("(empty)")
+            print("(empty)", file=self.outfile)
         else:
             # FIXME: Implement output to other formats; use 'formats' to dispatch.
             output_format = self.vars['format']
             if output_format != 'text':
-                print("Unsupported output format '{}'.".format(output_format))
+                print("Unsupported output format '{}'.".format(output_format), file=self.outfile)
 
-            with self.get_pager() as file:
+            if self.outfile is sys.stdout:
+                with self.get_pager() as file:
+                    query_render.render_text(result_types, result_rows,
+                                                         self.options_map['dcontext'],
+                                                         file,
+                                                         boxed=self.vars['boxed'],
+                                                         spaced=self.vars['spaced'])
+            else:
                 query_render.render_text(result_types, result_rows,
                                          self.options_map['dcontext'],
-                                         file,
+                                         self.outfile,
                                          boxed=self.vars['boxed'],
                                          spaced=self.vars['spaced'])
 
@@ -411,9 +441,10 @@ class BQLShell(DispatchingShell):
         """
         Compile and print a compiled statement for debugging.
         """
-        print("Parsed statement:")
-        print("  {}".format(explain.statement))
-        print()
+        pr = lambda *args: print(*args, file=self.outfile)
+        pr("Parsed statement:")
+        pr("  {}".format(explain.statement))
+        pr()
 
         # Compile the select statement and print it uot.
         try:
@@ -422,19 +453,19 @@ class BQLShell(DispatchingShell):
                                           self.env_postings,
                                           self.env_entries)
         except query_compile.CompilationError as exc:
-            print(str(exc).rstrip('.'))
+            pr(str(exc).rstrip('.'))
             return
 
-        print("Compiled query:")
-        print("  {}".format(query))
-        print()
-        print("Targets:")
+        pr("Compiled query:")
+        pr("  {}".format(query))
+        pr()
+        pr("Targets:")
         for c_target in query.c_targets:
-            print("  '{}'{}: {}".format(
+            pr("  '{}'{}: {}".format(
                 c_target.name or '(invisible)',
                 ' (aggregate)' if query_compile.is_aggregate(c_target.c_expr) else '',
                 c_target.c_expr.dtype.__name__))
-        print()
+        pr()
 
     def help_targets(self):
         template = textwrap.dedent("""
@@ -453,7 +484,8 @@ class BQLShell(DispatchingShell):
           {aggregates}
 
         """).strip()
-        print(template.format(**generate_env_attribute_list(self.env_targets)))
+        print(template.format(**generate_env_attribute_list(self.env_targets)),
+              file=self.outfile)
 
     def help_from(self):
         template = textwrap.dedent("""
@@ -468,7 +500,8 @@ class BQLShell(DispatchingShell):
           {functions}
 
         """).strip()
-        print(template.format(**generate_env_attribute_list(self.env_entries)))
+        print(template.format(**generate_env_attribute_list(self.env_entries)),
+              file=self.outfile)
 
     def help_where(self):
         template = textwrap.dedent("""
@@ -483,7 +516,8 @@ class BQLShell(DispatchingShell):
           {functions}
 
         """).strip()
-        print(template.format(**generate_env_attribute_list(self.env_postings)))
+        print(template.format(**generate_env_attribute_list(self.env_postings)),
+              file=self.outfile)
 
     def help_attributes(self):
         template = textwrap.dedent("""
@@ -511,7 +545,7 @@ class BQLShell(DispatchingShell):
             "  {:40}: {}\n".format(*pair) for pair in entry_pairs)
         posting_attributes = ''.join(
             "  {:40}: {}\n".format(*pair) for pair in posting_pairs)
-        print(template.format(**locals()))
+        print(template.format(**locals()), file=self.outfile)
 
 
 def generate_env_attribute_list(env):
@@ -611,3 +645,17 @@ def summary_statistics(entries):
             num_transactions += 1
             num_postings += len(entry.postings)
     return (num_directives, num_transactions, num_postings)
+
+
+def print_statistics(entries, options_map):
+    """Print summary statistics to stdout.
+
+    Args:
+      entries: A list of directives.
+    """
+    num_directives, num_transactions, num_postings = summary_statistics(entries)
+    if 'title' in options_map:
+        print('Input file: "{}"'.format(options_map['title']), file=self.outfile)
+    print("Ready with {} directives ({} postings in {} transactions).".format(
+        num_directives, num_postings, num_transactions),
+          file=self.outfile)

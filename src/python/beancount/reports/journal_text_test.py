@@ -17,8 +17,8 @@ class TestAmountColumnSizer(unittest.TestCase):
     def test_sizer(self):
         sizer = journal_text.AmountColumnSizer('balance')
         sizer.update(D('10'), 'USD')
-        sizer.update(D('200'), 'GOOG')
-        sizer.update(D('3000.01'), 'GOOGL')
+        sizer.update(D('200'), 'HOOL')
+        sizer.update(D('3000.01'), 'HOOLB')
         self.assertEqual(4, sizer.get_number_width())
         self.assertEqual('{0:>10.4f} {1:<5}', sizer.get_format(4))
         self.assertEqual('{balance:<16}', sizer.get_generic_format(4))

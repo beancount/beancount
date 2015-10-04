@@ -198,6 +198,9 @@ missing-tests:
 fixmes:
 	egrep -srn '\b(FIXME|TODO\()' $(SRC) || true
 
+filter-terms:
+	egrep --exclude-dir='.hg' -srn 'GOOGL?' $(PWD) | grep -v GOOGLE_APIS || true
+
 multi-imports:
 	egrep -srn '^(from.*)?import.*,' $(SRC) || true
 
@@ -234,8 +237,9 @@ pyflakes:
 pylint lint: pylint-pass
 
 
+
 # Check everything.
-status check: pylint pyflakes missing-tests dep-constraints multi-imports tests-quiet
+status check: pylint pyflakes filter-terms missing-tests dep-constraints multi-imports tests-quiet
 # fixmes: For later.
 
 

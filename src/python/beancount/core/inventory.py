@@ -7,7 +7,7 @@ association list of positions, where each position is defined as
 
 where
 
-  'currency': the commodity under consideration, USD, CAD, or stock units such as GOOG,
+  'currency': the commodity under consideration, USD, CAD, or stock units such as HOOL,
     MSFT;
 
   'cost': the amount (as a pair of (number, currency)) that the position is held under,
@@ -273,13 +273,13 @@ class Inventory(list):
 
         For example, an inventory that contains these lots:
 
-           2 GOOGL
-           3 GOOG {300.00 USD}
-           4 GOOG {310.00 USD / 2014-10-28}
+           2 HOOLB
+           3 HOOL {300.00 USD}
+           4 HOOL {310.00 USD / 2014-10-28}
 
         will provide:
 
-           2 GOOGL
+           2 HOOLB
            2140 USD
 
         Returns:

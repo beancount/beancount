@@ -163,6 +163,22 @@ class TestParserEntryTypes(unittest.TestCase):
         check_list(self, entries, [data.Event])
 
     @parser.parse_doc()
+    def test_entry_query(self, entries, _, __):
+        """
+          option "experiment_query_directive" "TRUE"
+          2013-05-18 query "cash" "SELECT SUM(position) WHERE currency = 'USD'"
+        """
+        check_list(self, entries, [data.Query])
+
+    @parser.parse_doc(expect_errors=True)
+    def test_entry_query__not_enabled(self, entries, errors, __):
+        """
+          2013-05-18 query "cash" "SELECT SUM(position) WHERE currency = 'USD'"
+        """
+        self.assertRegexpMatches(errors[0].message, "Query directive is not supported")
+        self.assertEqual([], entries)
+
+    @parser.parse_doc()
     def test_entry_note(self, entries, _, __):
         """
           2013-05-18 note Assets:US:BestBank:Checking  "Blah, di blah."
@@ -760,7 +776,7 @@ class TestTransactions(unittest.TestCase):
     def test_zero_units(self, entries, errors, _):
         """
           2014-04-20 * "Zero number of units"
-            Assets:Investment         0 GOOG {500.00 USD}
+            Assets:Investment         0 HOOL {500.00 USD}
             Assets:Cash               0 USD
         """
         check_list(self, entries, [data.Transaction])
@@ -771,7 +787,7 @@ class TestTransactions(unittest.TestCase):
     def test_zero_costs(self, entries, errors, _):
         """
           2014-04-20 * "Like a conversion entry"
-            Assets:Investment         10 GOOG {0 USD}
+            Assets:Investment         10 HOOL {0 USD}
             Assets:Cash                0 USD
         """
         check_list(self, entries, [data.Transaction])
@@ -1389,7 +1405,7 @@ class TestMetaData(unittest.TestCase):
           2013-03-01 document Assets:Investments "/path/to/something.pdf"
             test1: "Something"
 
-          2013-03-01 price  GOOG  500 USD
+          2013-03-01 price  HOOL  500 USD
             test1: "Something"
         """
         self.assertEqual(9, len(entries))
@@ -1401,7 +1417,7 @@ class TestMetaData(unittest.TestCase):
             string: "Something"
             account: Assets:Investments:Cash
             date: 2012-01-01
-            currency: GOOG
+            currency: HOOL
             tag: #trip-florida
             number: 345.67
             amount: 345.67 USD
@@ -1417,7 +1433,7 @@ class TestMetaData(unittest.TestCase):
             'string': 'Something',
             'account': 'Assets:Investments:Cash',
             'date': datetime.date(2012, 1, 1),
-            'currency': 'GOOG',
+            'currency': 'HOOL',
             'tag': 'trip-florida',
             'number': D('345.67'),
             'amount': A('345.67 USD'),

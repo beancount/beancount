@@ -17,6 +17,12 @@ beancount: TODO
     date.
   - Handle the various FIXMEs.
 
+* Event
+
+  - Should we validate that the query is legit before we even run it? I think
+    so. Compile after parsing.
+
+
 * Booking
 
   ,--------------------------------------------------------------------------------
@@ -894,8 +900,8 @@ http://furius.ca/beancount/doc/proposal-inventory
 
   - PROBLEM: You need be able to provide the cost with both and addition and a
     reduction, e.g.
-       -2 GOOG {* 650 USD} ;; Should be possible even if current avg cost if 600 USD
-        2 GOOG {* 650 USD} ;; Means "add at this cost and then convert to avg
+       -2 HOOL {* 650 USD} ;; Should be possible even if current avg cost if 600 USD
+        2 HOOL {* 650 USD} ;; Means "add at this cost and then convert to avg
     cost"
 
     This is nice! The "*" now always means "after applying this operation,
@@ -1343,6 +1349,10 @@ http://furius.ca/beancount/doc/proposal-inter
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+  - Reconcile all usage of account regexps to beancount.core.account.ACCOUNT_RE
+    throughout the code  (grep --include='*.py'  -srn A-Z    ~/p/beancount/src/python/beancount).
 
 
   - What happens if you specify the same plugin twice, with different
@@ -2162,7 +2172,7 @@ http://furius.ca/beancount/doc/proposal-inter
       with multiple matching lots of the same cost with just differing dates, which
       would only be required if the posting constrains it to. One can imagine
       relaxing the matching rules between a posting and inventory further to allow
-      one to just specify "-40 GOOG" above, without a cost, and if unambiguous, to
+      one to just specify "-40 HOOL" above, without a cost, and if unambiguous, to
       allow it to just select the only lot that is available."
 
     Idea: Generalize lot-date to just a "lot" string. Doesn't have to be a date
@@ -2175,14 +2185,14 @@ http://furius.ca/beancount/doc/proposal-inter
 
        (augment)
        2014-06-17 *
-          Assets:US:Investing:GOOG    10 GOOG {523.45 USD / i-want-more}
+          Assets:US:Investing:HOOL    10 HOOL {523.45 USD / i-want-more}
 
        (reducing) All of the following should be allowed:
-          Assets:US:Investing:GOOG    -7 GOOG ; possibly ambiguous
-          Assets:US:Investing:GOOG    -7 GOOG [] ; possibly ambiguous
-          Assets:US:Investing:GOOG    -7 GOOG [523.45 USD]
-          Assets:US:Investing:GOOG    -7 GOOG [2014-06-17]
-          Assets:US:Investing:GOOG    -7 GOOG [i-want-more]
+          Assets:US:Investing:HOOL    -7 HOOL ; possibly ambiguous
+          Assets:US:Investing:HOOL    -7 HOOL [] ; possibly ambiguous
+          Assets:US:Investing:HOOL    -7 HOOL [523.45 USD]
+          Assets:US:Investing:HOOL    -7 HOOL [2014-06-17]
+          Assets:US:Investing:HOOL    -7 HOOL [i-want-more]
 
     By enforcing a distinct syntax, the user is telling us that this leg is
     expected to reduce an existing position. This information is useful, in
@@ -2340,7 +2350,7 @@ http://furius.ca/beancount/doc/proposal-inter
     the lot. This would enable the following:
 
         2013-07-22 * "Bought some US investment in a CAD account"
-          Assets:Investment:GOOG           50 GOOG {700 USD} @ 1.01 USD   ;; 35350 CAD
+          Assets:Investment:HOOL           50 HOOL {700 USD} @ 1.01 USD   ;; 35350 CAD
           Assets:Investment:Cash          -35359.95 CAD
           Expenses:Commissions                 9.95 CAD
 
@@ -2426,11 +2436,11 @@ http://furius.ca/beancount/doc/proposal-inter
   - Create a new directive for balance that checks for the complete balance.
     Ideas for syntax:
 
-      2014-06-20 balance      Assets:Some:Account    10 GOOG, 640.40 USD   FULL
-      2014-06-20 balance      Assets:Some:Account    [10 GOOG, 640.40 USD]
-      2014-06-20 balance      Assets:Some:Account    <10 GOOG, 640.40 USD>
-      2014-06-20 balance*     Assets:Some:Account    10 GOOG, 640.40 USD
-      2014-06-20 full_balance Assets:Some:Account    10 GOOG, 640.40 USD
+      2014-06-20 balance      Assets:Some:Account    10 HOOL, 640.40 USD   FULL
+      2014-06-20 balance      Assets:Some:Account    [10 HOOL, 640.40 USD]
+      2014-06-20 balance      Assets:Some:Account    <10 HOOL, 640.40 USD>
+      2014-06-20 balance*     Assets:Some:Account    10 HOOL, 640.40 USD
+      2014-06-20 full_balance Assets:Some:Account    10 HOOL, 640.40 USD
 
     Maybe we should define a general syntax for input'ing an Inventory object,
     that could be read at parsing time.
@@ -2644,11 +2654,11 @@ http://furius.ca/beancount/doc/proposal-inter
     the cost, so that technically you could check that there are a specific number
 
   2013-03-01 * buy
-    Assets:Checking        10 GOOG # 700 USD
+    Assets:Checking        10 HOOL # 700 USD
     Assets:Investment     -7000 USD
 
   2013-03-15 * sell
-    Assets:Checking       -10 GOOG # 700 USD @ 800 USD
+    Assets:Checking       -10 HOOL # 700 USD @ 800 USD
     Income:RealizedPnL    -1000 USD
     Assets:Investment      8000 USD
 
@@ -3186,11 +3196,11 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 
   - Consider making the lot syntax like this:
 
-       -4 {GOOG @ 790.83 USD}
+       -4 {HOOL @ 790.83 USD}
 
     instead of:
 
-       -4 GOOG {790.83 USD}
+       -4 HOOL {790.83 USD}
 
     It's actually a lot more accurate to what's going on...
 
@@ -3423,10 +3433,10 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 
     Perhaps a directive could be created to declare them that would
     automatically insert converting transactions, but that makes it difficult to
-    deal with weird cases, like GOOG -> GOOGL+GOOG with widely unequal splits,
-    or cases with spinoffs, as below. Perhaps the splitting transaction should
-    be inserted automatically, but that the split directive would just create a
-    new currency name, internally.
+    deal with weird cases, like oddly unequal splits (e.g. Google A/C), or cases
+    with spinoffs, as below. Perhaps the splitting transaction should be
+    inserted automatically, but that the split directive would just create a new
+    currency name, internally.
 
     A currency would then be referred to by a pair of (name, date), and that
     would resolve to a internal currency name.
