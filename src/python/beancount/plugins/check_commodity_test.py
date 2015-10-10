@@ -8,7 +8,7 @@ from beancount.plugins import check_commodity
 
 class TestCheckCommodity(unittest.TestCase):
 
-    @loader.loaddoc
+    @loader.load_doc(expect_errors=True)
     def test_check_commodity_transaction(self, _, errors, __):
         """
             plugin "beancount.plugins.check_commodity"
@@ -28,7 +28,7 @@ class TestCheckCommodity(unittest.TestCase):
                          list(map(type, errors)))
 
 
-    @loader.loaddoc
+    @loader.load_doc(expect_errors=True)
     def test_check_commodity_used_in_balance_only(self, _, errors, __):
         """
             plugin "beancount.plugins.check_commodity"
@@ -46,7 +46,7 @@ class TestCheckCommodity(unittest.TestCase):
         self.assertEqual([check_commodity.CheckCommodityError] * 2,
                          list(map(type, errors)))
 
-    @loader.loaddoc
+    @loader.load_doc()
     def test_check_commodity_okay(self, _, errors, __):
         """
             plugin "beancount.plugins.check_commodity"

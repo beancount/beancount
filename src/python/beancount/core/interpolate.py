@@ -14,8 +14,8 @@ from beancount.core.position import Lot
 from beancount.core.position import Position
 from beancount.core.data import Transaction
 from beancount.core.data import Posting
-from beancount.core.data import TxnPosting
 from beancount.core import getters
+from beancount.core import account
 
 
 # The default tolerances value to use for legacy tolerances.
@@ -48,8 +48,8 @@ def get_posting_weight(posting):
 
       Assets:Account  5234.50 USD                             ->  5234.50 USD
       Assets:Account  3877.41 EUR @ 1.35 USD                  ->  5234.50 USD
-      Assets:Account       10 GOOG {523.45 USD}               ->  5234.50 USD
-      Assets:Account       10 GOOG {523.45 USD} @ 545.60 CAD  ->  5234.50 USD
+      Assets:Account       10 HOOL {523.45 USD}               ->  5234.50 USD
+      Assets:Account       10 HOOL {523.45 USD} @ 545.60 CAD  ->  5234.50 USD
 
     Args:
       posting: A Posting instance.
@@ -411,7 +411,7 @@ def balance_incomplete_postings(entry, options_map):
     all the postings to this entry. Futhermore, it stores the dict
     of inferred tolerances as metadata.
 
-    WARNING: This destructively modified entry itself!
+    WARNING: This destructively modifies entry itself!
 
     Args:
       entry: An instance of a valid directive. This entry is modified by
@@ -431,14 +431,14 @@ def balance_incomplete_postings(entry, options_map):
     # If we need to accumulate rounding error to accumulate the residual, add
     # suitable postings here.
     if not residual.is_empty():
-        account_rounding = options_map["account_rounding"]
-        if account_rounding:
+        rounding_subaccount = options_map["account_rounding"]
+        if rounding_subaccount:
+            account_rounding = account.join(options_map['name_equity'], rounding_subaccount)
             rounding_postings = get_residual_postings(residual, account_rounding)
             postings.extend(rounding_postings)
 
     # If we could make this faster to avoid the unnecessary copying, it would
     # make parsing substantially faster.
-    # PERF(25ms): could be saved here by avoiding reparenting.
     entry.postings.clear()
     for posting in postings:
         entry.postings.append(posting)
@@ -448,24 +448,6 @@ def balance_incomplete_postings(entry, options_map):
     entry.meta['__tolerances__'] = tolerances
 
     return errors or None
-
-
-def compute_postings_balance(txn_postings):
-    """Compute the balance of a list of Postings's or TxnPosting's positions.
-
-    Args:
-      postings: A list of Posting instances and other directives (which are
-        skipped).
-    Returns:
-      An Inventory.
-    """
-    final_balance = Inventory()
-    for txn_posting in txn_postings:
-        if isinstance(txn_posting, Posting):
-            final_balance.add_position(txn_posting.position)
-        elif isinstance(txn_posting, TxnPosting):
-            final_balance.add_position(txn_posting.posting.position)
-    return final_balance
 
 
 def compute_entries_balance(entries, prefix=None, date=None):

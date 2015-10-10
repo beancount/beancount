@@ -4,9 +4,8 @@ from datetime import date
 import unittest
 import datetime
 
-from beancount.core.number import D
+from beancount.core.amount import A
 from beancount.core import data
-from beancount.core import amount
 
 
 META = data.new_metadata('beancount/core/testing.beancount', 12345)
@@ -62,14 +61,14 @@ class TestData(unittest.TestCase):
         posting = data.create_simple_posting(
             entry, 'Assets:Bank:Checking', '123.45', 'USD')
         self.assertFalse(data.posting_has_conversion(posting))
-        posting = posting._replace(price=amount.Amount('153.02', 'CAD'))
+        posting = posting._replace(price=A('153.02 CAD'))
         self.assertTrue(data.posting_has_conversion(posting))
 
     def test_transaction_has_conversion(self):
         entry = self.create_empty_transaction()
         posting = data.create_simple_posting(
             entry, 'Assets:Bank:Checking', '123.45', 'USD')
-        posting = posting._replace(price=amount.Amount('153.02', 'CAD'))
+        posting = posting._replace(price=A('153.02 CAD'))
         entry.postings[0] = posting
         self.assertTrue(data.transaction_has_conversion(entry))
 
@@ -90,7 +89,7 @@ class TestData(unittest.TestCase):
                              None, "Next day", None, None, []),
             data.Close(data.new_metadata(".", 1000), date2, account),
             data.Balance(data.new_metadata(".", 1001), date2, account,
-                         amount.Amount(D('200.00'), 'USD"'), None, None),
+                         A('200.00 USD"'), None, None),
             data.Open(data.new_metadata(".", 1002), date2, account, 'USD', None),
             data.Transaction(data.new_metadata(".", 1009), date2, FLAG,
                              None, "Transaction 2", None, None, []),

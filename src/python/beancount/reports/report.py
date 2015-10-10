@@ -17,6 +17,7 @@ from beancount.reports import table
 from beancount.reports import html_formatter
 from beancount.parser import options
 from beancount.core import realization
+from beancount.core import display_context
 
 
 class ReportError(Exception):
@@ -127,7 +128,8 @@ class HTMLReport(Report):
     def __init__(self, *args, formatter=None, css_id=None, css_class=None):
         super().__init__(*args)
         if formatter is None:
-            formatter = html_formatter.HTMLFormatter()
+            formatter = html_formatter.HTMLFormatter(
+                display_context.DEFAULT_DISPLAY_CONTEXT)
         self.formatter = formatter
         self.css_id = css_id
         self.css_class = css_class

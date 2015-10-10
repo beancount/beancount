@@ -9,7 +9,7 @@ from beancount import loader
 
 class TestContext(test_utils.TestCase):
 
-    @loader.loaddoc
+    @loader.load_doc()
     def test_context(self, entries, errors, options_map):
         """
         plugin "beancount.plugins.implicit_prices"
@@ -56,7 +56,7 @@ class TestContext(test_utils.TestCase):
 
         search_filename = entries[0].meta.filename
         search_lineno = entries[-3].meta.lineno + 2
-        dcontext = options_map['display_context']
+        dcontext = options_map['dcontext']
         str_context = context.render_entry_context(entries, options_map, dcontext,
                                                    search_filename, search_lineno)
 

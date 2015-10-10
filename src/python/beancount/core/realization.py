@@ -35,7 +35,6 @@ from beancount.core import inventory
 from beancount.core import amount
 from beancount.core import data
 from beancount.core import account
-from beancount.core import interpolate
 from beancount.core import flags
 
 
@@ -260,7 +259,7 @@ def realize(entries, min_accounts=None, compute_balance=True):
         real_account = get_or_create(real_root, account_name)
         real_account.txn_postings = txn_postings
         if compute_balance:
-            real_account.balance = interpolate.compute_postings_balance(txn_postings)
+            real_account.balance = compute_postings_balance(txn_postings)
 
     # Ensure a minimum set of accounts that should exist. This is typically
     # called with an instance of AccountTypes to make sure that those exist.
@@ -658,3 +657,21 @@ def dump_balances(real_account, at_cost=False, fullnames=False, file=None):
 
     if file is None:
         return output.getvalue()
+
+
+def compute_postings_balance(txn_postings):
+    """Compute the balance of a list of Postings's or TxnPosting's positions.
+
+    Args:
+      postings: A list of Posting instances and other directives (which are
+        skipped).
+    Returns:
+      An Inventory.
+    """
+    final_balance = inventory.Inventory()
+    for txn_posting in txn_postings:
+        if isinstance(txn_posting, Posting):
+            final_balance.add_position(txn_posting.position)
+        elif isinstance(txn_posting, TxnPosting):
+            final_balance.add_position(txn_posting.posting.position)
+    return final_balance

@@ -2,19 +2,19 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import re
 
+from beancount.core.amount import A
 from beancount.core import inventory
 from beancount.core import data
-from beancount.core import amount
 from beancount.core import realization
-from beancount.loader import loaddoc
 from beancount.ops import pad
 from beancount.ops import balance
 from beancount.parser import cmptest
+from beancount import loader
 
 
 class TestPadding(cmptest.TestCase):
 
-    @loaddoc
+    @loader.load_doc()
     def test_pad_simple(self, entries, errors, __):
         """
 
@@ -45,7 +45,7 @@ class TestPadding(cmptest.TestCase):
         """, entries)
 
 
-    @loaddoc
+    @loader.load_doc(expect_errors=True)
     def test_pad_no_overflow(self, entries, errors, __):
         """
 
@@ -90,7 +90,7 @@ class TestPadding(cmptest.TestCase):
 
         """, entries)
 
-    @loaddoc
+    @loader.load_doc()
     def test_pad_used_twice_legally(self, entries, errors, __):
         """
 
@@ -142,7 +142,7 @@ class TestPadding(cmptest.TestCase):
 
         """, entries)
 
-    @loaddoc
+    @loader.load_doc(expect_errors=True)
     def test_pad_used_twice_illegally(self, entries, errors, __):
         """
 
@@ -178,7 +178,7 @@ class TestPadding(cmptest.TestCase):
 
         """, entries)
 
-    @loaddoc
+    @loader.load_doc(expect_errors=True)
     def test_pad_unused(self, entries, errors, __):
         """
 
@@ -213,7 +213,7 @@ class TestPadding(cmptest.TestCase):
 
         """, entries)
 
-    @loaddoc
+    @loader.load_doc()
     def test_pad_parents(self, entries, errors, __):
         """
 
@@ -264,7 +264,7 @@ class TestPadding(cmptest.TestCase):
 
         """, entries)
 
-    @loaddoc
+    @loader.load_doc()
     def test_pad_multiple_currencies(self, entries, errors, __):
         """
           2013-05-01 open Assets:Checking
@@ -315,7 +315,7 @@ class TestPadding(cmptest.TestCase):
 
         """, entries)
 
-    @loaddoc
+    @loader.load_doc()
     def test_pad_check_balances(self, entries, errors, __):
         """
           2013-05-01 open Assets:Checking
@@ -352,18 +352,18 @@ class TestPadding(cmptest.TestCase):
                 self.assertFalse(position_.is_negative_at_cost())
             balances.append((type(txn_posting), pad_balance.get_units('USD')))
 
-        self.assertEqual(balances, [(data.Open, amount.from_string('0.00 USD')),
-                                    (data.Pad, amount.from_string('0.00 USD')),
-                                    (data.TxnPosting, amount.from_string('95.00 USD')),
-                                    (data.TxnPosting, amount.from_string('105.00 USD')),
-                                    (data.Balance, amount.from_string('105.00 USD')),
-                                    (data.TxnPosting, amount.from_string('125.00 USD')),
-                                    (data.TxnPosting, amount.from_string('145.00 USD')),
-                                    (data.Balance, amount.from_string('145.00 USD'))])
+        self.assertEqual(balances, [(data.Open, A('0.00 USD')),
+                                    (data.Pad, A('0.00 USD')),
+                                    (data.TxnPosting, A('95.00 USD')),
+                                    (data.TxnPosting, A('105.00 USD')),
+                                    (data.Balance, A('105.00 USD')),
+                                    (data.TxnPosting, A('125.00 USD')),
+                                    (data.TxnPosting, A('145.00 USD')),
+                                    (data.Balance, A('145.00 USD'))])
 
     # Note: You could try padding A into B and B into A to see if it works.
 
-    @loaddoc
+    @loader.load_doc(expect_errors=True)
     def test_pad_multiple_times(self, entries, errors, __):
         """
           2013-05-01 open Assets:Checking
@@ -376,7 +376,7 @@ class TestPadding(cmptest.TestCase):
         """
         self.assertEqual([pad.PadError], list(map(type, errors)))
 
-    @loaddoc
+    @loader.load_doc(expect_errors=True)
     def test_pad_at_cost(self, entries, errors, __):
         """
           2013-05-01 open Assets:Investments
@@ -394,7 +394,7 @@ class TestPadding(cmptest.TestCase):
         self.assertTrue(re.search('Attempt to pad an entry with cost for',
                                   errors[0].message))
 
-    @loaddoc
+    @loader.load_doc()
     def test_pad_parent(self, entries, errors, __):
         """
           1998-01-01 open Assets:CA:Bank:Checking     CAD
@@ -412,7 +412,7 @@ class TestPadding(cmptest.TestCase):
         """
         self.assertFalse(errors)
 
-    @loaddoc
+    @loader.load_doc(expect_errors=True)
     def test_pad_tolerance(self, entries, errors, __):
         """
           option "experiment_explicit_tolerances" "TRUE"

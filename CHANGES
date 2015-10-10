@@ -4,7 +4,543 @@
 Note: This file contains only changes in the 'default' branch.
 
 
-2015-07-09
+2015-10-04
+
+  - Implemented --output=<filename> option for bean-query tool.
+
+
+2015-10-02
+
+  - Implemented an experimental new Query directive whose purpose is to define
+    pre-canned SQL queries in the Beancount file itself and to then build tools
+    to automate the generation of reports of those queries.
+
+    For the moment being, I'm just playing with this to convince myself that
+    this can be powerful and generic enough to provide more generally. I've
+    found myself running specific queries on speific files, e.g., during trips
+    and I'd like to automate those to some extend, perhaps replace the script
+    code that lives in beancount.plugins.split_expenses with this.
+
+    Anyhow, this is not supported but if you understand this and really want to
+    turn it on, set this option in your input file:
+
+      option "experimental_query_directive" "TRUE"
+
+    The directives aren't used anywhere yet, and you'll have to read source code
+    to figure out what they look like.
+
+
+  - Implemented a "reload" command in the shell. Typing "reload" will refresh
+    the data from the latest file contents.
+
+
+2015-09-29
+
+  - Tightened the screws on the Amount() constructor a bit and made changes ini
+    order to allow it to accept a sentinel value for MISSING values from the
+    parser. Changes to beancount.core.amount.Amount are:
+
+    1. A string for the number is not accepted anymore, that is, Amount(str,
+       str) is not supported anymore. Amount() now unconditionally requires a
+       Decimal instance, so you must use Amount(Decimal, str). In any case, this
+       constrcutros was likely abused only by me in the tests. I'd rather have
+       a tighter, less permissive constructor.
+
+    2. The convenience constructor beancount.core.amount.from_string() is now
+       officially aliased as beancount.core.amount.A, so you can "from
+       beancount.core.amount import A". I now commit to using this constructor
+       and converted all the tests to use it. This is great for writing tests.
+       Amount really is a fundamental piece that deserves a very short alias
+       like this.
+
+    In summary, how to create Amount instances:
+
+    * If you use explicit values, use Amount(Decimal, str), e.g.,
+      Amount(D('100.00'), 'USD'), Amount(number, currency)
+
+    * If you need a convenience constructor, use A(str), e.g.,
+      A('100.00 USD'), A('32,000 KRW')
+
+
+2015-09-29
+
+  - Added a new column 'description' to the SQL client in order to produce more
+    compact reports.
+
+    Oftentimes the payee is left to an empty value and journals
+    have a lot of wasted whitespace. Concatenating the payee and the narration
+    in a single field goes a long way towards producing reports that aren't
+    nearly as wide. I could have added a CONCAT() function but this is so common
+    and convenient that a dedicated 'description' alias is justified. You can
+    use it in posting context ("SELECT description ..." or "SELECT ... WHERE
+    description ~ '...'") or transaction context ("SELECT ... FROM description ~
+    '...'")..
+
+
+2015-09-27
+
+  - Implemented a plugin that can book price conversions using a particular
+    booking method, in this case, FIFO. This idea stemmed from a suggestion I
+    made on the mailing-list a few weeks ago, which was to process a particular
+    account's price conversions to insert cost basis specifications and in doing
+    so to book reducing postings to FIFO order automatically. This could all be
+    done via a plugin, so I did it. (See tag {c395de691449} on the mailing-list
+    for more context.)
+
+    You can find it under "beancount.plugins.book_conversions". You use it like
+    this: first you load the plugin:
+
+      plugin "beancount.plugins.book_conversions" "Assets:Bitcoin,Income:Bitcoin"
+
+    The configuration requires you provide two accounts:
+
+    1. An assets account to process, whereby all price conversions (in any currency)
+       occurring in that account will have their cost basis automatically inserted,
+       and,
+
+    2. An Income account that is inserted on reducing transactions to absorb the
+       profit or loss of the sale.
+
+    Then you book your transactions as simple price conversions, without worrying
+    about cost basis, for example, this input:
+
+      2015-09-04 *
+        Assets:Bank           -750.00 USD
+        Assets:Bitcoin       3.000000 BTC @ 250.00 USD
+
+      2015-09-05 *
+        Assets:Bank           -780.00 USD
+        Assets:Bitcoin       3.000000 BTC @ 260.00 USD
+
+      2015-09-20 *
+        Assets:Bitcoin       -2.000000 BTC @ 300.00 USD
+        Expenses:Something
+
+      2015-09-21 *
+        Assets:Bitcoin       -2.000000 BTC @ 310.00 USD
+        Expenses:Something
+
+      2015-09-22 *
+        Assets:Bitcoin       -2.000000 BTC @ 330.00 USD
+        Expenses:Something
+
+    Would get translated by the plugin into the equivalent of this:
+
+      2015-09-04 *
+        Assets:Bitcoin  3.000000 BTC {250.00 USD} @ 250.00 USD
+          trades: "trade-ff4c3e592147,trade-6b9c8689ed50"
+        Assets:Bank      -750.00 USD
+
+      2015-09-05 *
+        Assets:Bitcoin  3.000000 BTC {260.00 USD} @ 260.00 USD
+          trades: "trade-91e2245de593,trade-d622a89c614d"
+        Assets:Bank      -780.00 USD
+
+      2015-09-20 *
+        Assets:Bitcoin          -2.000000 BTC {250.00 USD} @ 300.00 USD
+          trades: "trade-ff4c3e592147"
+        Income:Bitcoin      -100.00000000 USD
+        Expenses:Something   600.00000000 USD
+
+      2015-09-21 *
+        Assets:Bitcoin          -1.000000 BTC {250.00 USD} @ 310.00 USD
+          trades: "trade-6b9c8689ed50"
+        Assets:Bitcoin          -1.000000 BTC {260.00 USD} @ 310.00 USD
+          trades: "trade-91e2245de593"
+        Income:Bitcoin      -110.00000000 USD
+        Expenses:Something   620.00000000 USD
+
+      2015-09-22 *
+        Assets:Bitcoin          -2.000000 BTC {260.00 USD} @ 330.00 USD
+          trades: "trade-d622a89c614d"
+        Income:Bitcoin      -140.00000000 USD
+        Expenses:Something   660.00000000 USD
+
+    Note that the price annotations are kept as in the input file. The plugin only
+    inserts the cost basis and splits postings where required.
+
+    Secondly, a unique trade identifier is allocated for each matching pair of
+    postings that were booked and is added to the metadata of those postings.
+    Its value is a comma-separated list. This metadata is useful because it
+    allows you to load the entries and from it, to build a list of trades to
+    produce a suitable report for reporting.
+
+    So the plugin also contains code to do this. You can invoke it as a main
+    program, like this:
+
+      python3 -m beancount.plugins.book_conversions <filename.beancount>
+
+    On the file above, it should generate the following output, which I believe is
+    the report you're really after for reporting purposes:
+
+       Units  Currency  Cost Currency    Buy Date  Buy Price   Sell Date  Sell Price     P/L
+    --------  --------  -------------  ----------  ---------  ----------  ----------  ------
+    2.000000       BTC            USD  2015-09-04     250.00  2015-09-20      300.00  100.00
+    1.000000       BTC            USD  2015-09-04     250.00  2015-09-21      310.00   60.00
+    1.000000       BTC            USD  2015-09-05     260.00  2015-09-21      310.00   50.00
+    2.000000       BTC            USD  2015-09-05     260.00  2015-09-22      330.00  140.00
+    --------  --------  -------------  ----------  ---------  ----------  ----------  ------
+
+    Use the '--format=csv' option if you want to produce output suitable for
+    including in a spreadsheet. If you need to customize the output further, see the
+    source code (file:book_conversions.py). It is not possible to generate this list
+    of trades using the SQL client yet, to change the output columns you would have
+    to create a standalone script; you can copy just the main() function in the
+    plugin if you need to do that and import the rest. (Note: The function that
+    extracts the list of matches provides both the posting and its parent
+    Transaction object, so you can output data from the transaction if you want,
+    e.g. the narration of the selling transaction.)
+
+
+2015-09-14
+
+  - Merged more changes to beancount.el (Emacs support) by Stefan Monnier:
+    * Use syntax-tables for comments and strings.
+    * Make ido use optional in Emacs config.
+    * Quote filenames on command lines
+    Thank you Stefan!
+
+
+2015-09-12
+
+  - Added to beancount.plugins.split_expenses a new script that is able to
+    generate the typical kinds of reports you would need to provide to
+    participants in a shared project or travel on their specific expenses and
+    contributions, as well as a breakdown of their expenses per category
+    (expenses account) and final balances for each participants. Invoke it like
+    this:
+
+      python3 -m beancount.plugins.split_expenses <filename>
+
+    The script lives in the same file as the split_expenses plugin, because it
+    is tightly related to it. It presumes the input file will process through
+    this plugin. Try to run it on the example files under
+    beancount/examples/sharing.
+
+  - Added a new file "examples/sharing/duxbury2015.beancount" which contains a
+    new example of sharing expenses on a trip between three people.
+
+  - Starter cleanup of beancount.el contributed by Stefan Monnier. More changes
+    to come, this is basically a no-op patch. It just moves code around and
+    makes other such cosmetic changes to silence some compiler warnings, prepare
+    for subsequent changes, better follow coding conventions etc. Detail:
+
+    * beancount.el: Add some standard file headers, license, and
+      sectioning comments.  Sprinkle a few FIXMEs while I'm here.
+      (beancount-font-lock-defaults): Rename from beancount-font-lock-keywords,
+      since this corresponds to font-lock-keywords and not to
+      font-lock-defaults.
+      (beancount-directive-names, beancount-font-lock-keywords,
+      beancount-accounts):  Move variables before their first use (to silence
+      the compiler).
+      (beancount-mode-map): Use a proper defvar instead of define-minor-mode's
+      half-broken :keymap.
+      (beancount-mode): Merge the make-local-variables into their corresponding
+      `set'.
+      (beancount-accounts): Move make-variable-buffer-local to top-level since
+      it's a global operation.
+      (beancount): Declare this group, already used in define-minor-mode.
+      (beancount-hash-keys): Mark unused arg `v' with an underscore.
+      (beancount-transaction-set-flag): Don't use replace-string (designed for
+      interactive use) from Elisp.
+      (beancount-for-line-in-region): Use copy-marker and eobp.
+      (beancount-align-numbers): Break lines to avoid hiding arguments.
+      (compilation-read-command): Declare variable to silence byte-compiler.
+
+
+2015-09-06
+
+  - Filter out platform-specific comments from the code generated by GNU Bison,
+    in order to avoid unnecessary diffs when I switch between Linux and Mac OS X.
+
+
+2015-09-05
+
+  - Changed the semantics of the account_rounding account, so that it matches
+    that of the other account options, that is, they all specify a sub-account
+    of the Equity account. So if you had
+
+      option "account_rounding" "Equity:RoundingError"
+
+    in your input file, change this to:
+
+      option "account_rounding" "RoundingError"
+
+    To ease the transition, the parser now checks if the first component is one
+    of the five categories and if so, issues a warning and removes the prefix.
+
+    (One side-effect of this change is that the rounding error account may only
+    be an Equity account, but I'm hoping this won't be a problem for anyone.)
+
+
+2015-08-31
+
+  - The column "weight" was broken; fixed by yagebu@.
+
+
+2015-08-30
+
+  - Fixed a very minor bug in split_expenses plugin whereby the generated
+    postings did not contain the __automatic__ metadata field, and in some
+    particular situations, their automatically calculated values would end up
+    being used for inferring the tolerances.
+
+
+2015-08-15
+
+  - Changed the semantics of the parsing stage, in a fairly profound way.
+    This should have no visible changes to users, but people writing scripts
+    should revise their code if they were using
+    beancount.parser.parser.parse_*() functions.
+
+    Just to be clear: beancount.loader.load_*() has not changed. If you just use
+    the loader, there are no changes. Changes are only at the parser level.
+
+    Here's what's going on and why: The parser used to carry out interpolation
+    of missing numbers on postings for each transaction locally, while parsing
+    the transactions. This was done by calling by calling
+    beancount.core.interpolate.balance_incomplete_postings(), here:
+    https://bitbucket.org/blais/beancount/src/ee2073aae080aaa8e260abe8a501abf872948f0e/src/python/beancount/parser/grammar.py?at=default#grammar.py-803
+
+    Loading a list of entries was carried out in two steps:
+
+                  ,-----------------------load----------------------.
+                       (recursively)
+                 ,---------------------.   ,---------.   ,------------.
+      (input)--->| parse + interpolate |-->| plugins |-->| validation |--> entries
+                 `---------------------'   `---------'   `------------'
+
+    First, the parser would run on the input and process all the input files
+    recursively (processing includes). "Interpolation", the process of filling
+    in missing numbers, was carried out at that stage, during parsing, and only
+    locally, that is, for each transaction in isolation. "Booking" of lots, that
+    is, selecting which of an account's inventory lots to match and reduce, was
+    explicit. This booking could not take advantage of the accumulated
+    inventories in order to vary its behavior. You had to specify the entire lot
+    information unambiguously.
+
+    After this, in a second stage, the plugins were run on the entries and a
+    final validation step was run at the end.
+
+    To implement the booking proposal
+    (http://furius.ca/beancount/doc/proposal-booking), we want for the user to
+    be able to provide a partial specification of lots to be matched against an
+    account's accumulated inventory at the date the transaction is to be
+    applied. The idea is that if there is no ambiguity, the user should be able
+    to specify very little information about a lot (for example if there is a
+    single lot in the account when processing the transaction an empty spec of
+    "{}" should be sufficient). Moreover, where the specification is ambiguous,
+    we also want to support automatic selection of lots according a method
+    specified by the user, e.g., FIFO booking, LIFO booking, etc.
+
+    For this to work, we need to have parsed all the inputs to some sort of
+    incomplete specification, a representation of inputs that hasn't yet been
+    resolved to specific lots, in order to carry out booking. The parser has
+    been modified to output such incomplete postings:
+
+              ,-------------------------load-------------------------.
+               (recursively)
+                 ,-------.   ,-------------.   ,---------.   ,------------.
+      (input)--->| parse |-->|   booking   |-->| plugins |-->| validation |--> entries
+                 `-------'   |      +      |   `---------'   `------------'
+                             | interpolate |
+                             `-------------'
+                        incomplete
+                         entries
+
+    Because "interpolation" runs on the result of specific lot values, "booking"
+    must run before it, and so they are inter-related. Thus, booking and
+    inteprolation has been moved to a dedicated step that runs on the list of
+    incomplete entries and resolves them to the regular entries to be processed
+    further by plugins and validation.
+
+    This also has a nice side-effect: the booking step is where all the
+    complexity is, and it is now isolated and I will be able to test and
+    experiment on it in isolation. This is where all the fun will be.
+
+    A description of the incomplete specifications output by the parser can be
+    found here in the parser.py file, this is the description of the
+    intermediate state of postings whose lots haven't yet been matched and
+    resolved to specific inventory lots:
+    https://bitbucket.org/blais/beancount/src/18282452e265959b69d3d10c6d9cf32e5815c522/src/python/beancount/parser/parser.py?at=booking
+
+    Essentially, a posting's 'lot' attribute contains a "LotSpec" tuple instead
+    of a "Lot" tuple, and several numbers may be left unfilled (for interpolate
+    values). I don't imagine anyone will ever have to manipulate such
+    intermediate entries, only the booking code.
+
+    The previous booking algorithm has been moved to the booking stage and the
+    semantics should be identical to what they used to be. This is still the
+    default algorithm--it just runs in its own dedicated stage, still operating
+    locally on each transation. You should observe no difference in behaviour.
+
+    I've merged these changes now in order to minimize the differences between
+    the booking and default branches and because I was able to do it without
+    changing any of the semantics (despite the large number of lines and tests
+    modified). This was a necessary refactoring. Because that code is now
+    isolated to its own stage I should be able to begin implementing the more
+    complex state-dependent booking algorithms in the 'booking' branch. (I'm
+    excited about this.) I could even implement different booking heuristics and
+    switch between them.
+
+    Because the parser used to spit out regular, complete entries,
+    parser.parsedoc() was used in much of the tests instead of loader.loaddoc(),
+    so that many of those tests would not have to concern themselves with making
+    sure the input passed the validation stage run by the loader. For example,
+    creating Open directives just to create some Transaction test object wasn't
+    necessary in the tests. All of those tests had to be revised and I made them
+    all depend on beancount.loader.load_*() instead of the now weakened
+    parser.parse_*() functions which output incomplete, unbooked entries. This
+    cleans up the dependencies a bit as well. If you wrote your own unit tests
+    and were using parser.parsedoc(), you should convert them to use
+    loader.loaddoc(). In order for this change not to go unnoticed (and for
+    naming consistency with parse_string() and parse_file()) I'll probably
+    rename parser.parsedoc() to parser.parse_doc() and ditto with the loader.
+
+    (Note: In some cases I've had to specifically setup the input of some tests
+    in "raw" plugin processing mode to avoid triggering some unwanted and
+    unrelated errors. I'm tempted to remove even more from the default plugins.
+    This may happen in a future CL.)
+
+
+  - Renamed beancount.parser.parser.parsedoc() to parse_doc() and
+    beancount.loader.loaddoc() to load_doc(), for consistency with the other
+    parse_*() and load_*() functions. Kept a stub that will issue a warning if
+    you use it.
+
+
+2015-07-23
+
+  - In the conversion to the new booking syntax, I had inadventently removed
+    support for the total cost "{{ ... }}" syntax. I brought this back next to
+    the new booking syntax, and uncommented tests that had been made to skip.
+
+
+2015-07-21
+
+  - Merged ongoing work from the 'booking' branch that will eventually change
+    the semantics of inventory booking; in the interest of a smooth transition,
+    and for me to be able to use either branch interchangeably, I introduced a
+    few changes that should have no user-visible effect on 'default':
+
+    * The parser.parse_string() and parser.parse_file() routines don't
+      interpolate anymore. For this reason, the tests all had to be adjusted not
+      to include interpolation. The interpolation of incomplete postings
+      (grammar.interpolation()) has moved to a separate phase and is now run by
+      loader._load() *AFTER* parsing. This is key to implementing fuzzy matching
+      semantics for matching reducing lots: we need to have all the incomplete
+      transactions parsed and sorted in order to select matching lots in date
+      order.
+
+      This only affects you if you wrote scripts against the parser
+      interface directly (this is highly unlikely).
+
+    * For writing unit tests, parser.parsedoc() and loader.loaddoc() are now
+      decorator factories. This allowed me to add options to parser.parsedoc()
+      to perform interpolation, and when not specified, to check that entries
+      with interpolation are not present in the tests. Also, I coudl merge the
+      functionality of parser.parsedoc_noerrors() and loader.loaddoc_noerrors()
+      in their respective equivalents. The docstring tests now validate that
+      there are no errors in the docstrings by default. This makes the tests
+      tighter (a few bugs in the tests themselves were found and fixed).
+
+    * The new syntax for cost specification that will be in effect for the
+      inventory booking proposal is now supported. The syntax is
+      backward-compatible with the previous one. Previously, the following
+      syntaxes were supported for specifying the cost and optionally a lot
+      acquisition date:
+
+        Assets:Investments    1 HOOL {123.00 USD}
+        Assets:Investments    1 HOOL {123.00 USD / 2013-07-20}
+
+      Instead of these options, the new syntax supports a comma-separated list
+      of cost-specifiers which can be one of
+
+        <cost>       -> e.g. 123.00 USD
+        <lot-date>   -> e.g. 2015-07-20
+        <label>      -> e.g. "first-lot"
+        <merge-cost> -> e.g. *
+
+      In order to keep current input working, either a comma (,) or a slash (/)
+      is supported to separate the components. This is valid:
+
+        Assets:Investments    1 HOOL {2013-07-20 / 123.00 USD / "first-lot"}
+
+      Those can be provided in any order. For example, these are all also valid
+      syntaxes for cost:
+
+        Assets:Investments    1 HOOL {}
+        Assets:Investments    1 HOOL {"first-lot"}
+        Assets:Investments    1 HOOL {2013-07-20, 123.00 USD}
+        Assets:Investments    1 HOOL {2013-07-20, "first-lot"}
+        Assets:Investments    1 HOOL {*}
+        Assets:Investments    1 HOOL {*, 123.00 USD}
+
+      Moreover, the cost amount now supports a compound amount that is expressed
+      not in terms of each unit of the currency, but in terms of the total
+      amount over all units, for example, this is how you could fold in the cost
+      of a commission:
+
+        Assets:Investments    1 HOOL {123.00 # 9.95 USD}
+
+      The syntax for a compound amount follows this pattern:
+
+          [<per-unit-cost>] # [<total-cost>] <currency>
+
+      The numbers are both optional. If no '#' separator is present, the total
+      cost component is assumed to be zero. This will eventually subsume the
+      {{...}} total cost syntax, by specifying only the total cost portion of
+      the compound amount:
+
+        Assets:Investments    100 HOOL {# 12300.00 USD}
+
+      Of course, this combines with the other spec formats, so this is valid:
+
+        Assets:Investments    1 HOOL {123.00 # 9.95 USD, 2015-07-22}
+
+      Finally, while the new syntax is supported in the parser, the old
+      semantics for inventory lot specification is still in order. If you
+      provide an unsupported combination of lot specifiers (e.g., you use a
+      label, a compound amount, or a merge-cost marker), an error will be issued
+      accordingly.
+
+      So just use the cost and date as previously; I will bring in new semantics
+      incrementally, semantics that will take advantage of this new syntax. I
+      will try to do so in a way that minimizes changes.
+
+  - I removed forwarded symbols from beancount.parser. Generally, in order to be
+    able to mock functions, you should always import packages, not symbols.
+
+
+2015-07-20
+
+  - Numbers rendered from bean-query are now rendered using the display context
+    inferred from the input file. This means numbers are rounded nicely, using
+    the most common precision seen in the input file.
+
+  - I fixed a bug on writing UTF-8 output to the console on Mac OS X and how it
+    interacts with the 'less' pager.
+
+
+2015-07-12
+
+  - Implemented support for arithmetic operations: +, -, *, / and parenthesis
+    groupings are now supported, anywhere that a number can be seen in the input
+    file, including postings, costs & prices, and balance numbers.
+
+
+2015-07-12
+
+  - Changed how web & report rendering code renders numbers so that it uses the
+    DisplayContext inferred from the numbers in the input file. Numbers in the
+    reports were previously using the default precision and that led to all
+    sorts of inconsistencies. The numbers are now rendered using the most common
+    precision which has been seen in the input files. (This work had been
+    planned for a while, as part of converting everything to use the
+    DisplayContext. Next up will be converting the shell's rendering routines.)
+
+
+2015-07-11
 
   - WARNING: API CHANGES AHEAD. If you wrote plugins, you will need to remove
     the 'entry' parameter to constructors of Posting().

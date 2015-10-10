@@ -168,7 +168,7 @@ PRIVATE_OPTION_GROUPS = [
       An instance of DisplayContext, which is used to format numbers for output
       with precision inferred from that in the input file. This is created
       automatically by the parser.
-    """, [Opt("display_context", display_context.DisplayContext())]),
+    """, [Opt("dcontext", display_context.DisplayContext())]),
 
     OptGroup("""
       A set of all the commodities that we have seen in the file.
@@ -235,7 +235,7 @@ PUBLIC_OPTION_GROUPS = [
       This is unset and this feature is disabled by default; setting this value to
       an account name will automatically enable the addition of postings on all
       transactions that have a residual amount.
-    """, [Opt("account_rounding", None, "Equity:Rounding")]),
+    """, [Opt("account_rounding", None, "Rounding")]),
 
     OptGroup("""
       The imaginary currency used to convert all units for conversions at a
@@ -403,6 +403,16 @@ PUBLIC_OPTION_GROUPS = [
       WARNING: This feature may go away at any time. It is an exploration to see
       if it is truly useful. We may be able to do without.
     """, [Opt("experiment_explicit_tolerances", False, True)]),
+
+    OptGroup("""
+      Enable an EXPERIMENTAL feature that supports a new "name query" directive,
+      whose purpsoe is to define useful queries for the context of the
+      particular given Beancount input file. We can play with this feature for a
+      while to figure out if it is sufficiently powerful and generic to include
+      unconditionally.
+
+      WARNING: This feature may go away at any time.
+    """, [Opt("experiment_query_directive", False, True)]),
 
     ]
 
