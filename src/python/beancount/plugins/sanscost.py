@@ -2,17 +2,7 @@
 """
 import collections
 
-from beancount.core.amount import Decimal, ZERO
 from beancount.core import data
-from beancount.core import account
-from beancount.core import getters
-from beancount.core.account_types import is_valid_account_name
-from beancount.core.data import Transaction, Posting, FileLocation
-from beancount.core.position import Lot, Position
-from beancount.core import flags
-from beancount.ops import holdings
-from beancount.ops import prices
-from beancount.parser import options
 
 
 __plugins__ = ('gains_without_cost',)
@@ -65,7 +55,7 @@ def gains_without_cost(entries, options_map):
             any(posting.flag == FLAG_SANSCOST
                 for posting in entry.postings)):
 
-            entry, error = fold_gains_in_cost(entry)
+            entry, error = fold_commissions_in_cost(entry)
             if error is not None:
                 errors.append(error)
         sans_entries.append(entry)
@@ -73,7 +63,7 @@ def gains_without_cost(entries, options_map):
     return sans_entries, errors
 
 
-def fold_commissions_in_costs(entry):
+def fold_commissions_in_cost(entry):
     """Fold the commissions in a single position cost leg.
 
     Args:
@@ -82,4 +72,4 @@ def fold_commissions_in_costs(entry):
       A modified directive and an error (or None), in most cases.
     """
     # FIXME: TODO - see test.
-    return entry, error
+    return entry, None

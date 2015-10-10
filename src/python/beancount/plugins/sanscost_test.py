@@ -1,15 +1,14 @@
 import unittest
 
 from beancount.plugins import sanscost
-from beancount.loader import loaddoc
+from beancount import loader
 
 
 class TestSansCost(unittest.TestCase):
 
-    @loaddoc
+    @loader.load_doc()
     def test_simple(self, entries, _, options_map):
         """
-
         2014-01-01 open  Assets:US:Invest:Cash
         2014-01-01 open  Assets:US:Invest:GOOG
         2014-01-01 open  Income:US:Invest:Rebates
