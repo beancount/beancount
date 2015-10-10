@@ -25,7 +25,7 @@ class TestScriptFormat(test_utils.TestCase):
           2014-03-05 balance   Assets:Cash  -50.02 USD
 
           2014-03-10 * "Something"
-            Assets:Other   10 GOOG {500.23} USD ; Bla
+            Assets:Other   10 HOOL {500.23} USD ; Bla
             Assets:Cash
 
         """
@@ -47,7 +47,7 @@ class TestScriptFormat(test_utils.TestCase):
           2014-03-05 balance   Assets:Cash  -50.02 USD
 
           2014-03-10 * "Something"
-            Assets:Other                        10 GOOG {500.23} USD ; Bla
+            Assets:Other                        10 HOOL {500.23} USD ; Bla
             Assets:Cash
 
         """), stdout.getvalue())

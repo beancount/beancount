@@ -12,7 +12,7 @@ from beancount import loader
 
 class TestHoldingsReports(unittest.TestCase):
 
-    @loader.loaddoc
+    @loader.load_doc()
     def setUp(self, entries, errors, options_map):
         """
         2014-01-01 open Assets:Bank1
@@ -42,7 +42,7 @@ class TestHoldingsReports(unittest.TestCase):
 class TestCommodityClassifications(unittest.TestCase):
 
     def classify(fun):
-        @loader.loaddoc
+        @loader.load_doc()
         @functools.wraps(fun)
         def wrapped(self, entries, unused_errors, options_map):
             holdings_list, _ = holdings_reports.get_assets_holdings(entries, options_map)
@@ -148,7 +148,7 @@ class TestCommodityClassifications(unittest.TestCase):
         self.assertEqual(1, len(action_holdings))
         self.assertEqual("MUTF:VMMXX", action_holdings[0][0])
 
-    @loader.loaddoc
+    @loader.load_doc()
     def test_get_money_instruments(self, entries, errors, options_map):
         """
         1900-01-01 commodity VMMXX
@@ -179,7 +179,7 @@ class TestCommodityExport(unittest.TestCase):
                 [e._replace(holdings=None) for e in converted],
                 holdings_ignored)
 
-    @loader.loaddoc
+    @loader.load_doc()
     def test_export_implicit_stock(self, entries, unused_errors, options_map):
         """
         2000-01-01 open Assets:Investing
@@ -197,7 +197,7 @@ class TestCommodityExport(unittest.TestCase):
             EE('NASDAQ:AAPL', 'USD', D('2'), D('410.00'), False, '', None),
             ], exported)
 
-    @loader.loaddoc
+    @loader.load_doc()
     def test_export_implicit_mutfund(self, entries, unused_errors, options_map):
         """
         2000-01-01 open Assets:Investing
@@ -215,7 +215,7 @@ class TestCommodityExport(unittest.TestCase):
             EE('MUTF_CA:RBF1005', 'CAD', D('10.2479'), D('10.00'), True, '', None),
             ], exported)
 
-    @loader.loaddoc
+    @loader.load_doc()
     def test_export_implicit_unspecified(self, entries, unused_errors, options_map):
         """
         2000-01-01 open Assets:Investing
@@ -232,7 +232,7 @@ class TestCommodityExport(unittest.TestCase):
             EE('AAPL', 'USD', D('2'), D('410.00'), False, '', None),
             ], exported)
 
-    @loader.loaddoc
+    @loader.load_doc()
     def test_export_implicit_absent(self, entries, unused_errors, options_map):
         """
         2000-01-01 open Assets:Investing
@@ -247,7 +247,7 @@ class TestCommodityExport(unittest.TestCase):
             EE('AAPL', 'USD', D('2'), D('410.00'), False, '', None),
             ], exported)
 
-    @loader.loaddoc
+    @loader.load_doc()
     def test_export_explicit_stock(self, entries, unused_errors, options_map):
         """
         2000-01-01 open Assets:Investing
@@ -265,7 +265,7 @@ class TestCommodityExport(unittest.TestCase):
             EE('NASDAQ:AAPL', 'USD', D('2'), D('410.00'), False, '', None),
             ], exported)
 
-    @loader.loaddoc
+    @loader.load_doc()
     def test_export_cash_at_cost(self, entries, unused_errors, options_map):
         """
         2000-01-01 open Assets:Investing
@@ -290,7 +290,7 @@ class TestCommodityExport(unittest.TestCase):
             EE('MUTF:VMMXX', 'USD', D('820.00'), D('1.00'), True, '', None),
             ], converted)
 
-    @loader.loaddoc
+    @loader.load_doc()
     def test_export_cash_at_price(self, entries, unused_errors, options_map):
         """
         2000-01-01 open Assets:Investing
@@ -315,7 +315,7 @@ class TestCommodityExport(unittest.TestCase):
             EE('MUTF:VMMXX', 'USD', D('820.00'), D('1.00'), True, '', None),
             ], converted)
 
-    @loader.loaddoc
+    @loader.load_doc()
     def test_export_cash_ignored_no_money(self, entries, unused_errors, options_map):
         """
         2000-01-01 open Assets:Investing
@@ -338,7 +338,7 @@ class TestCommodityExport(unittest.TestCase):
         self.assertFalse(converted)
         self.assertEqual(1, len(ignored))
 
-    @loader.loaddoc
+    @loader.load_doc()
     def test_export_ignored(self, entries, unused_errors, options_map):
         """
         2000-01-01 open Assets:Investing
@@ -361,7 +361,7 @@ class TestCommodityExport(unittest.TestCase):
         self.assertFalse(converted)
         self.assertEqual(1, len(ignored))
 
-    @loader.loaddoc
+    @loader.load_doc()
     def test_export_aggregate(self, entries, unused_errors, options_map):
         """
         2000-01-01 open Assets:Investing
@@ -379,7 +379,7 @@ class TestCommodityExport(unittest.TestCase):
           Equity:Opening-Balances
 
         2015-04-08 *
-          Assets:Investing           1 GOOG {500.00 USD}
+          Assets:Investing           1 HOOL {500.00 USD}
           Equity:Opening-Balances
 
         """
@@ -387,7 +387,7 @@ class TestCommodityExport(unittest.TestCase):
                                                    aggregate_by_commodity=True)
         self.assertListEqual([
             ('NASDAQ:AAPL', 'USD', D('5'), D('404.00'), False, '', None),
-            ('GOOG', 'USD', D('1'), D('500.00'), False, '', None),
+            ('HOOL', 'USD', D('1'), D('500.00'), False, '', None),
             ], exported)
         self.assertFalse(converted)
         self.assertFalse(ignored)

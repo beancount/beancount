@@ -31,7 +31,7 @@ class TestViewsFromEmpty(unittest.TestCase):
 
 class TestViews(unittest.TestCase):
 
-    @loader.loaddoc
+    @loader.load_doc()
     def setUp(self, entries, errors, options_map):
         """
         2010-01-01 open Assets:Checking
@@ -114,6 +114,12 @@ class TestViews(unittest.TestCase):
         self.assertNotEqual(self.empty_realization, view.real_accounts)
         self.assertNotEqual(self.empty_realization, view.opening_real_accounts)
         self.assertNotEqual(self.empty_realization, view.closing_real_accounts)
+
+        view = views.YearView(self.entries, self.options_map, 'Year', 2013, 2)
+        with self.assertRaises(ValueError):
+            view = views.YearView(self.entries, self.options_map, 'Year', 2013, 0)
+        with self.assertRaises(ValueError):
+            view = views.YearView(self.entries, self.options_map, 'Year', 2013, 13)
 
     def test_TagView(self):
         view = views.TagView(self.entries, self.options_map, 'Tag', {'trip1'})

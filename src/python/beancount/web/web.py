@@ -52,8 +52,8 @@ class HTMLFormatter(html_formatter.HTMLFormatter):
       build_url: A function used to render links to a Bottle application.
       leafonly: a boolean, if true, render only the name of the leaf nodes.
     """
-    def __init__(self, build_url, leaf_only, view_links=True):
-        super().__init__()
+    def __init__(self, dcontext, build_url, leaf_only, view_links=True):
+        super().__init__(dcontext)
         self.build_url = build_url
         self.leaf_only = leaf_only
         self.view_links = view_links
@@ -147,7 +147,8 @@ def render_report(report_class, entries, args=None,
     Returns:
       A string, the rendered report.
     """
-    formatter = HTMLFormatter(request.app.get_url, leaf_only)
+    formatter = HTMLFormatter(app.options['dcontext'],
+                              request.app.get_url, leaf_only)
     oss = io.StringIO()
     if center:
         oss.write('<center>\n')
@@ -175,7 +176,8 @@ def render_real_report(report_class, real_root, args=None, leaf_only=False):
     Returns:
       A string, the rendered report.
     """
-    formatter = HTMLFormatter(request.app.get_url, leaf_only)
+    formatter = HTMLFormatter(app.options['dcontext'],
+                              request.app.get_url, leaf_only)
     oss = io.StringIO()
     report_ = report_class.from_args(args, formatter=formatter)
     report_.render_real_htmldiv(real_root, app.options, oss)
@@ -350,7 +352,8 @@ def link(link=None):
     linked_entries = basicops.filter_link(link, app.entries)
 
     oss = io.StringIO()
-    formatter = HTMLFormatter(request.app.get_url, False, view_links=False)
+    formatter = HTMLFormatter(app.options['dcontext'],
+                              request.app.get_url, False, view_links=False)
     journal_html.html_entries_table_with_balance(oss, linked_entries, formatter)
     return render_global(
         pagetitle="Link: {}".format(link),
@@ -374,11 +377,11 @@ def context_(ehash=None):
         print("ERROR: Ambiguous entries for '{}'".format(ehash),
               file=oss)
         print(file=oss)
-        dcontext = app.options['display_context']
+        dcontext = app.options['dcontext']
         printer.print_entries(matching_entries, dcontext, file=oss)
 
     else:
-        dcontext = app.options['display_context']
+        dcontext = app.options['dcontext']
         oss.write("<pre>\n")
         for entry in matching_entries:
             oss.write(context.render_entry_context(
@@ -740,6 +743,7 @@ def event(event=None):
         contents=render_report(misc_reports.EventsReport, app.entries,
                                ['--expr', event]))
 
+
 @viewapp.route('/event', name='event_index')
 def event_index():
     "Render the latest values of all events and an index."
@@ -884,7 +888,9 @@ def all(path=None):
 @handle_view(3)
 def year(year=None, path=None):
     year = int(year)
-    return views.YearView(app.entries, app.options, 'Year {:4d}'.format(year), year)
+    first_month = app.args.first_month
+    return views.YearView(app.entries, app.options, 'Year {:4d}'.format(year),
+                          year, first_month)
 
 
 @app.route(r'/view/tag/<tag:re:[^/]*>/<path:re:.*>', name='tag')
@@ -1086,6 +1092,9 @@ def add_web_arguments(argparser):
 
     group.add_argument('--public', '--inaddr-any', action='store_true',
                        help="Bind server to listen to any address, not just localhost.")
+
+    group.add_argument('--first-month', action='store', type=int, default=1,
+                       help="The first month of the calendar year.")
 
     return group
 

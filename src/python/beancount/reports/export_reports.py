@@ -131,7 +131,7 @@ def export_holdings(entries, options_map, promiscuous, aggregate_by_commodity=Fa
     # Get the desired list of holdings.
     holdings_list, price_map = holdings_reports.get_assets_holdings(entries, options_map)
     commodities_map = getters.get_commodity_map(entries, options_map)
-    dcontext = options_map['display_context']
+    dcontext = options_map['dcontext']
 
     # Aggregate the holdings, if requested. Google Finance is notoriously
     # finnicky and if you have many holdings this might help.
@@ -442,7 +442,7 @@ class ExportPortfolioReport(report.TableReport):
         # A list of all accumulated commodities.
         commodities = set()
 
-        dcontext = options_map['display_context']
+        dcontext = options_map['dcontext']
 
         invtranlist_io = io.StringIO()
         skipped_holdings = []

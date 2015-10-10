@@ -53,7 +53,6 @@ def do_roundtrip(filename, unused_args):
     Args:
       filename: A string, the Beancount input filename.
     """
-    from beancount.parser import parser
     from beancount.parser import printer
     from beancount.core import compare
     from beancount import loader
@@ -72,9 +71,14 @@ def do_roundtrip(filename, unused_args):
             printer.print_entries(entries, file=outfile)
 
         logging.info("Read the entries from that file")
-        # Note that we don't want to run any of the auto-generation here...
-        # parse-only, not load.
-        entries_roundtrip, errors, options_map = parser.parse_file(round1_filename)
+
+        # Note that we don't want to run any of the auto-generation here, but
+        # parsing now returns incomplete objects and we assume idempotence on a
+        # file that was output from the printer after having been processed, so
+        # it shouldn't add anything new. That is, a processed file printed and
+        # resolve when parsed again should contain the same entries, i.e.
+        # nothing new should be generated.
+        entries_roundtrip, errors, options_map = loader.load_file(round1_filename)
 
         # Print out the list of errors from parsing the results.
         if errors:
@@ -199,7 +203,7 @@ def do_context(filename, args):
     # Load the input file.
     entries, errors, options_map = loader.load_file(filename)
 
-    dcontext = options_map['display_context']
+    dcontext = options_map['dcontext']
 
     # Note: Make sure to use the absolute filename used by the parser to resolve
     # the file.
@@ -299,7 +303,7 @@ def do_missing_open(filename, args):
                 data.Open(data.new_metadata(filename, 0), first_use_date, account,
                           None, None))
 
-    dcontext = options_map['display_context']
+    dcontext = options_map['dcontext']
     printer.print_entries(data.sorted(new_entries), dcontext)
 
 
@@ -313,7 +317,7 @@ def do_display_context(filename, args):
     """
     from beancount import loader
     entries, errors, options_map = loader.load_file(filename)
-    dcontext = options_map['display_context']
+    dcontext = options_map['dcontext']
     sys.stdout.write(str(dcontext))
 
 

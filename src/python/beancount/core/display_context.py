@@ -140,6 +140,9 @@ class _CurrencyContext:
         # on a large set of numbers, possibly even during parsing. Consider
         # reimplementing this in C, after profiling.
 
+        if number is None:
+            return
+
         # Update the signs.
         num_tuple = number.as_tuple()
         if num_tuple.sign:
@@ -171,7 +174,7 @@ class DisplayContext:
     """A builder object used to construct a DisplayContext from a series of numbers.
 
     Attributes:
-      builder_infos: A dict of currency string to BuilderCurrencyInfo instance.
+      ccontext: A dict of currency string to CurrencyContext instance.
     """
     def __init__(self):
         self.ccontexts = collections.defaultdict(_CurrencyContext)
@@ -203,8 +206,12 @@ class DisplayContext:
         Returns:
           A Decimal instance, the quantized number.
         """
+        assert isinstance(number, Decimal), "Invalid data: {}".format(number)
         ccontext = self.ccontexts[currency]
         num_fractional_digits = ccontext.get_fractional(precision)
+        if num_fractional_digits is None:
+            # Note: We could probably logging.warn() this situation here.
+            return number
         qdigit = Decimal(1).scaleb(-num_fractional_digits)
         return number.quantize(qdigit)
 
@@ -225,7 +232,7 @@ class DisplayContext:
             raise ValueError("Unknown alignment: {}".format(alignment))
         fmtstrings = build_method(precision, commas, reserved)
 
-        return DisplayFormatter(self, fmtstrings)
+        return DisplayFormatter(self, precision, fmtstrings)
 
     def _build_natural(self, precision, commas, reserved):
         comma_str = ',' if commas else ''
@@ -325,11 +332,13 @@ class DisplayFormatter:
 
     Attributes:
       dcontext: A DisplayContext instance.
+      precision: An enum of Precision from which it was built.
       fmtstrings: A dict of currency to pre-baked format strings for it.
       fmtfuncs: A dict of currency to pre-baked formatting functionsfor it.
     """
-    def __init__(self, dcontext, fmtstrings):
+    def __init__(self, dcontext, precision, fmtstrings):
         self.dcontext = dcontext
+        self.precision = precision
         self.fmtstrings = fmtstrings
         self.fmtfuncs = {currency: fmtstr.format
                          for currency, fmtstr in fmtstrings.items()}
@@ -343,6 +352,9 @@ class DisplayFormatter:
         except KeyError:
             func = self.fmtfuncs['__default__']
         return func(number)
+
+    def quantize(self, number, currency='__default__'):
+        return self.dcontext.quantize(number, currency, self.precision)
 
     __call__ = format
 

@@ -167,15 +167,17 @@ def table_of_balances(real_root, operating_currencies, formatter, classes=None):
         # currencies.
         positions = list(line_balance.get_positions())
 
+        # FIXME: This little algorithm is inefficient; rewrite it.
         for currency in operating_currencies:
             position_ = line_balance.get_position(position.Lot(currency, None, None))
             if position_:
                 positions.remove(position_)
-                cells.append('{:,.2f}'.format(position_.number))
+                cells.append(formatter.render_number(position_.number, currency))
             else:
                 cells.append('')
 
         # Render all the rest of the inventory in the last cell.
-        cells.append('<br/>'.join(map(str, positions)))
+        cells.append('<br/>'.join(formatter.render_amount(position_.get_units())
+                                  for position_ in sorted(positions)))
 
     return oss.getvalue()

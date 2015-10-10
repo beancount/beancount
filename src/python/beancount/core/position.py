@@ -19,18 +19,23 @@ A "Position" represents a specific number of units of an associated lot:
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import datetime
-from collections import namedtuple
+import logging
+import collections
 import re
 
 # Note: this file is mirrorred into ledgerhub. Relative imports only.
 from beancount.core.number import ZERO
 from beancount.core.number import Decimal
+from beancount.core.number import NUMBER_RE
 from beancount.core.number import D
 from beancount.core.amount import Amount
 from beancount.core.amount import NULL_AMOUNT
 from beancount.core.amount import amount_mult
 from beancount.core.amount import CURRENCY_RE
 from beancount.core.display_context import DEFAULT_FORMATTER
+
+# pylint: disable=invalid-name
+NoneType = type(None)
 
 
 # Lots are a representations of a commodity with an optional associated cost and
@@ -41,7 +46,21 @@ from beancount.core.display_context import DEFAULT_FORMATTER
 #  currency: A string, the currency of this lot. May NOT be null.
 #  cost: An Amount, or None if this lot has no associated cost.
 #  lot_date: A datetime.date, or None if this lot has no associated date.
-Lot = namedtuple('Lot', 'currency cost lot_date')
+Lot = collections.namedtuple('Lot', 'currency cost lot_date')
+
+
+# LotSpec is a temporary data structure for holding a lot specification before
+# it gets resolved to an actual lot. This record should only be present in the
+# intermediate state between parsing and booking.
+#
+# Attributes:
+#   compound_cost: An instance of CompountAmount, possibly with empty values.
+#   lot_date: A datetime.date instance.
+#   label: A label string, or None.
+#   merge: A boolean, true if we shoud be merging the cost basis before/after
+#     the given posting.
+LotSpec = collections.namedtuple('LotSpec',
+                                 'currency compound_cost lot_date label merge')
 
 
 def lot_currency_pair(lot):
@@ -91,8 +110,10 @@ class Position:
           lot: The lot of this position.
           number: An instance of Decimal, the number of units of lot.
         """
-        assert isinstance(lot, Lot)
-        assert isinstance(number, Decimal)
+        assert isinstance(lot, (Lot, LotSpec)), (
+            "Expected a lot; received '{}'".format(lot))
+        assert isinstance(number, (NoneType, Decimal)), (
+            "Expected a Decimal; received '{}'".format(number))
         self.lot = lot
         self.number = number
 
@@ -122,17 +143,20 @@ class Position:
 
         # Render the cost (and other lot parameters, lot-date, label, etc.).
         if detail:
-            if lot.cost or lot.lot_date:
-                cost_str_list = []
-                cost_str_list.append('{')
-                if lot.cost:
-                    cost_str_list.append(
-                        Amount(lot.cost.number, lot.cost.currency).to_string(dformat))
-                if lot.lot_date:
-                    cost_str_list.append(' / {}'.format(lot.lot_date))
-                cost_str_list.append('}')
-                pos_str = '{} {}'.format(pos_str, ''.join(cost_str_list))
-
+            if isinstance(lot, Lot):
+                if lot.cost or lot.lot_date:
+                    cost_str_list = []
+                    cost_str_list.append('{')
+                    if lot.cost:
+                        cost_str_list.append(
+                            Amount(lot.cost.number, lot.cost.currency).to_string(dformat))
+                    if lot.lot_date:
+                        cost_str_list.append(', {}'.format(lot.lot_date))
+                    cost_str_list.append('}')
+                    pos_str = '{} {}'.format(pos_str, ''.join(cost_str_list))
+            else:
+                assert isinstance(lot, LotSpec)
+                pos_str = str(lot)
         else:
             # Render just the cost, if present.
             if lot.cost is not None:
@@ -305,23 +329,59 @@ class Position:
           A new instance of Position.
         """
         match = re.match(
-            (r'\s*([-+]?[0-9.]+)\s+({currency})'
-             r'(\s+{{([-+]?[0-9.]+)\s+({currency})'
-             r'(\s*/\s*(\d\d\d\d-\d\d-\d\d))?}})?'
-             r'\s*$').format(currency=CURRENCY_RE),
+            (r'\s*({})\s+({})'
+             r'(?:\s+{{([^}}]*)}})?'
+             r'\s*$').format(NUMBER_RE, CURRENCY_RE),
             string)
         if not match:
             raise ValueError("Invalid string for position: '{}'".format(string))
-        number, currency = match.group(1, 2)
+
+        number = D(match.group(1))
+        currency = match.group(2)
+
+        # Parse a cost expression.
+        cost, lot_date = None, None
+        cost_expression = match.group(3)
         if match.group(3):
-            cost_number, cost_currency = match.group(4, 5)
-            cost = Amount(D(cost_number), cost_currency)
-        else:
-            cost = None
-        if match.group(6):
-            lot_date = datetime.datetime.strptime(match.group(7), '%Y-%m-%d').date()
-        else:
-            lot_date = None
+            expressions = [expr.strip() for expr in re.split('[,/]', cost_expression)]
+            for expr in expressions:
+
+                # Match a compound number.
+                match = re.match(r'({})\s*(?:#\s*({}))?\s+({})$'.format(
+                    NUMBER_RE, NUMBER_RE, CURRENCY_RE), expr)
+                if match:
+                    per_number, total_number, cost_currency = match.group(1, 2, 3)
+                    per_number = D(per_number) if per_number else ZERO
+                    total_number = D(total_number) if total_number else ZERO
+                    if total_number:
+                        # Calculate the per-unit cost.
+                        total = number * per_number + total_number
+                        per_number = total / number
+                    cost = Amount(per_number, cost_currency)
+                    continue
+
+                # Match a date.
+                match = re.match(r'(\d\d\d\d)[-/](\d\d)[-/](\d\d)$', expr)
+                if match:
+                    lot_date = datetime.date(*map(int, match.group(1, 2, 3)))
+                    continue
+
+                # Match a label.
+                match = re.match(r'"([^"]+)*"$', expr)
+                if match:
+                    # label = match.groups(1)
+                    logging.warning("Label not supported yet.")
+                    continue
+
+                # Match a merge-cost marker.
+                match = re.match(r'\*$', expr)
+                if match:
+                    # merge = True
+                    logging.warning("Merge-code not supported yet.")
+                    continue
+
+                raise ValueError("Invalid cost component: '{}'".format(expr))
+
         return Position(Lot(currency, cost, lot_date), D(number))
 
     @staticmethod

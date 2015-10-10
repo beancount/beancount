@@ -93,7 +93,7 @@ def iterate_html_postings(txn_postings, formatter):
                                    entry.diff_amount)
                 extra_class = 'fail'
 
-            amount_str = str(entry.amount)
+            amount_str = formatter.render_amount(entry.amount)
 
         elif isinstance(entry, (data.Open, data.Close)):
             description = '{} {}'.format(entry.__class__.__name__,

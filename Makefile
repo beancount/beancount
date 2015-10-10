@@ -17,16 +17,23 @@ clean:
 	rm -f $(CROOT)/grammar.h $(CROOT)/grammar.c
 	rm -f $(CROOT)/lexer.h $(CROOT)/lexer.c
 	rm -f $(CROOT)/*.so
-	find . -name __pycache__ -exec rm -r "{}" \;
+	find . -name __pycache__ -exec rm -r "{}" \; -prune
 
 
 # Targets to generate and compile the C parser.
 CROOT = $(SRC)/beancount/parser
 LEX = flex
 YACC = bison --report=itemset --verbose
+FILTERYACC = sed -e 's@/\*[ \t]yacc\.c:.*\*/@@'
+TMP=/tmp
+
+xy:
+	cat $(CROOT)/grammar.c | $(FILTERYACC) | less
 
 $(CROOT)/grammar.c $(CROOT)/grammar.h: $(CROOT)/grammar.y
 	$(YACC) -o $(CROOT)/grammar.c $<
+	(cat $(CROOT)/grammar.c | $(FILTERYACC) > $(TMP)/grammar.c ; mv $(TMP)/grammar.c $(CROOT)/grammar.c )
+	(cat $(CROOT)/grammar.h | $(FILTERYACC) > $(TMP)/grammar.h ; mv $(TMP)/grammar.h $(CROOT)/grammar.h )
 
 $(CROOT)/lexer.c $(CROOT)/lexer.h: $(CROOT)/lexer.l $(CROOT)/grammar.h
 	$(LEX) --outfile=$(CROOT)/lexer.c --header-file=$(CROOT)/lexer.h $<
@@ -177,6 +184,9 @@ missing-tests:
 fixmes:
 	egrep -srn '\b(FIXME|TODO\()' $(SRC) || true
 
+filter-terms:
+	egrep --exclude-dir='.hg' --exclude-dir='__pycache__' -srn 'GOOGL?' $(PWD) | grep -v GOOGLE_APIS || true
+
 multi-imports:
 	egrep -srn '^(from.*)?import.*,' $(SRC) || true
 
@@ -185,7 +195,7 @@ sfood-checker:
 	sfood-checker bin src/python
 
 # Check dependency constraints.
-dep-constraints: build/beancount.deps
+constraints dep-constraints: build/beancount.deps
 	./etc/dependency-constraints.py $<
 
 check-author:
@@ -213,6 +223,16 @@ pyflakes:
 pylint lint: pylint-pass
 
 
+
 # Check everything.
-# Note: Add fixmes checks again later.
-status check: pylint pyflakes check-author missing-tests dep-constraints multi-imports
+status check: pylint pyflakes filter-terms missing-tests dep-constraints multi-imports tests-quiet
+# fixmes: For later.
+
+
+
+# FIXME: Remove
+grep-import:
+	grep --include='*.py' --exclude='*/beancount/parser/*' -srn  'from beancount.parser import parser'  ~/p/beancount/src/python/beancount
+
+grep-uses:
+	grep --include='*.py' --exclude='*/beancount/parser/*' -srn  'parser.parse'  ~/p/beancount/src/python/beancount
