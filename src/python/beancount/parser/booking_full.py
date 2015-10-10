@@ -124,28 +124,43 @@ def categorize_by_currency(entry, balances):
     outset of this routine, we should have distinct groups of currencies without
     any ambiguities regarding which currency they need to balance against.
 
-    Here's how this works. Postings with no cost come in two varieties:
+    Here's how this works. Postings with no cost nor price come in two
+    varieties:
 
-      1. No cost, with currency, e.g.
+      1. No cost, no price, with currency, e.g.
            Assets:Something       213.45 USD
          or
            Assets:Something              USD
          This is obvious, it buckets into the units currency, i.e., USD.
 
-      2. No cost, no currency, e.g.
+      2. No cost, no price, no currency, e.g.
            Assets:Something
          This is an auto-posting. One of these should be replicated for every
          currency present in the transaction.
 
+
+    Postings with a price define their currency:
+
+      3. No cost with price:
+           Assets:Something       1000 JPY @ 120.0000 USD
+         or
+           Assets:Something       1000 JPY @          USD
+         We use the price currency, e.g. USD
+
+      4. No cost and no price currency:
+           Assets:Something       1000 JPY @
+         In this case, we must consult the other postings. We look
+
+
     Then, we have postings with costs, which also come in two varieties:
 
-      3. With an explicit cost currency, e.g.
+      5. With an explicit cost currency, e.g.
            Assets:Something       100 HOOL {12.23 USD}
          Or with missing amounts, e.g.,
            Assets:Something       100 HOOL {USD}
          This clearly goes into the USD bucket.
 
-      4. With no explicit cost currency, e.g.,
+      6. With no explicit cost currency, e.g.,
            Assets:Something       100 HOOL {2014-09-30}
            Assets:Something       100 HOOL {"1b24b1151261"}
            Assets:Something       100 HOOL {}
@@ -172,6 +187,11 @@ def categorize_by_currency(entry, balances):
         Assets:Investments:AAPL       -40 AAPL {}
         Assets:Investments:AAPL        80 AAPL {}
 
+    Finally, note that postings with both a cost and a price must have a
+    currency that matches, as constrained by the parser. If only the price or
+    the cost is specified, we used that currency. Both a price and a cost may
+    not be missing--that would leave two DOF to fill in.
+
     Args:
       postings: A list of incomplete postings to categorize.
       balances: A dict of currency to inventory contents.
@@ -180,6 +200,7 @@ def categorize_by_currency(entry, balances):
       auto-postings (postings without a currency nor cost) - the index may
       appear in multiple groups and the posting need to be duplicated for each
       currency that requires them.
+
     """
     errors = []
 
@@ -194,6 +215,12 @@ def categorize_by_currency(entry, balances):
         if pos is MISSING or pos is None:
             unknown.append(posting)
             continue
+
+        if posting.price is not None:
+            currency = posting.price.currency
+            if currency is not MISSING:
+                groups[currency].add(index)
+                continue
 
         if pos.cost is None:
             # Deal with postings with no cost.
@@ -230,6 +257,11 @@ def categorize_by_currency(entry, balances):
 
     # FIMXE: Maybe duplicate free postings here for each group so you don't have
     # to return a list of free postings? That would make sense.
+
+    # User the weight to categorize the posting.
+
+    # Also, consider using the intersection of inventory and other currencies.
+
 
     return groups, errors
 

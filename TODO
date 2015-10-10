@@ -49,6 +49,9 @@ beancount: TODO
 
   - Unref the constants in finalizer for module, here: {48414425cf78}.
 
+  - Write a test to ensure that an auto-posting with no effect results in no
+    new posting getting inserted.
+
 
 ** API Revamp / Simplification
 

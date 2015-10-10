@@ -1,25 +1,99 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import textwrap
+
 from beancount.core.number import D
 from beancount.core.inventory import from_string as I
 from beancount.utils.misc_utils import dictmap
 from beancount.parser import parser
+from beancount.parser import printer
 from beancount.parser import booking_full
 from beancount.parser import cmptest
 from beancount import loader
 
 
+def _gen_missing_combinations(template, args):
+    """Generate all possible expansions of args in template.
+
+    Args:
+      template: A string, the template in new-sytle formatting.
+      args: A list of strings to be included or excluded from the template.
+    Yields:
+      Strings of formatted template.
+    """
+    for mask in range(2 ** len(args)):
+        actual_args = [arg if not (1<<i & mask) else ''
+                       for i, arg in enumerate(args)]
+        yield template.format(*actual_args)
+
+
+class TestAllInterpolationCombinations(cmptest.TestCase):
+
+    def test_all_currency_interpolations(self):
+        template = textwrap.dedent("""
+          2015-10-02 *
+            Assets:Account  {}
+            Assets:Other
+        """)
+        for pos_template, args in [
+                ('100.00 {:3}',
+                 ['USD']),
+                ('100.00 {:3} @ 1.20 {:3}',
+                 ['USD', 'CAD']),
+                ('10 {:4} {{100.00 {:3}}}',
+                 ['HOOL', 'USD']),
+                ('10 {:4} {{100.00 {:3}}} @ 120.00 {:3}',
+                 ['HOOL', 'USD', 'USD']),
+        ]:
+            for string in _gen_missing_combinations(template.format(pos_template), args):
+                print(string)
+                entries, errors, _ = parser.parse_string(string)
+                print(len(entries))
+                printer.print_errors(errors)
+                print()
+                print()
+                print()
+
+    # def test_all_interpolation_combinations(self):
+    #     template = textwrap.dedent("""
+    #       2015-10-02 *
+    #         Assets:Account  {}
+    #         Assets:Other
+    #     """)
+    #     for pos_template, args in [
+    #             ('{:7} {:3}',
+    #              ['100.00', 'USD']),
+    #             ('{:7} {:3} @ {:7} {:3}',
+    #              ['100.00', 'USD', '1.20', 'CAD']),
+    #             ('{:2} {:4} {{{:7} {:3}}}',
+    #              ['10', 'HOOL', '100.00', 'USD']),
+    #             ('{:2} {:4} {{{:7} # {:7} {:3}}}',
+    #              ['10', 'HOOL', '100.00', '9.95', 'USD']),
+    #             ('{:2} {:4} {{{:7} # {:7} {:3}}} @ {:7} {:3}',
+    #              ['10', 'HOOL', '100.00', '9.95', 'USD', '120.00', 'USD']),
+    #     ]:
+    #         for string in _gen_missing_combinations(template.format(pos_template), args):
+    #             print(string)
+    #             entries, errors, _ = parser.parse_string(string)
+    #             print(len(entries))
+    #             printer.print_errors(errors)
+    #             print()
+    #             print()
+    #             print()
+
+
+
 class TestGroupPostings(cmptest.TestCase):
 
     @parser.parse_doc(allow_incomplete=True)
-    def test_categorize_by_currency__no_cost_with_currency(self, entries, _, options_map):
+    def test_categorize_by_currency__unambiguous_units(self, entries, _, options_map):
         """
         2015-01-01 *
-          Assets:Bank:Investing           5 HOOL {100 USD}
+          Assets:Bank:Investing         500 USD
           Equity:Opening-Balances      -500 USD
 
         2015-01-01 *
-          Assets:Bank:Investing           5 HOOL {100 USD}
+          Assets:Bank:Investing         500 USD
           Equity:Opening-Balances           USD
         """
         for entry in entries:
@@ -27,9 +101,125 @@ class TestGroupPostings(cmptest.TestCase):
             self.assertFalse(errors)
             self.assertEqual({'USD': {0,1}}, groups)
 
+    @parser.parse_doc(allow_incomplete=True)
+    def test_categorize_by_currency__unambiguous_prices(self, entries, _, options_map):
+        """
+        2015-01-01 *
+          Assets:Bank:Investing         500 USD
+          Equity:Opening-Balances      -600 CAD @ 1.20 USD
+
+        2015-01-01 *
+          Assets:Bank:Investing         500 USD
+          Equity:Opening-Balances      -600 CAD @      USD
+
+        2015-01-01 *
+          Assets:Bank:Investing         500 USD
+          Equity:Opening-Balances           CAD @ 1.20 USD
+        2015-01-01 *
+          Assets:Bank:Investing         500 USD
+          Equity:Opening-Balances           CAD @ 1.20 USD
+        """
+        for entry in entries:
+            groups, errors = booking_full.categorize_by_currency(entry, {})
+            self.assertFalse(errors)
+            self.assertEqual({'USD': {0,1}}, groups)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_categorize_by_currency__unambiguous_costs(self, entries, _, options_map):
+        """
+        2015-01-01 *
+          Assets:Bank:Investing         100 HOOL {12.23 USD}
+          Equity:Opening-Balances     -1223.00 USD
+
+        2015-01-01 *
+          Assets:Bank:Investing         100 HOOL {USD}
+          Equity:Opening-Balances     -1223.00 USD
+        """
+        for entry in entries:
+            groups, errors = booking_full.categorize_by_currency(entry, {})
+            self.assertFalse(errors)
+            self.assertEqual({'USD': {0,1}}, groups)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_categorize_by_currency__auto_simple(self, entries, _, options_map):
+        """
+        2015-01-01 *
+          Assets:Bank:Investing         500 USD
+          Equity:Opening-Balances
+        """
+        # for entry in entries:
+        #     groups, errors = booking_full.categorize_by_currency(entry, {})
+        #     self.assertFalse(errors)
+        #     self.assertEqual({'USD': {0,1}}, groups)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_categorize_by_currency__auto_with_price(self, entries, _, options_map):
+        """
+        2015-01-01 *
+          Assets:Bank:Investing         500 USD
+          Equity:Opening-Balances               @ 1.20 CAD
+
+        2015-01-01 *
+          Assets:Bank:Investing         500 USD
+          Equity:Opening-Balances           USD @ 1.20 CAD
+        """
+        # for entry in entries:
+        #     groups, errors = booking_full.categorize_by_currency(entry, {})
+        #     self.assertFalse(errors)
+        #     self.assertEqual({'USD': {0,1}}, groups)
+
+
+
+
 ## FIXME: Continue here.
 
 
+        # FIXME: What do I do with this? Treat this like a missing cost.
+        """
+          2010-05-28 *
+            Assets:Account1     100.00 USD @
+            Assets:Account2     120.00 CAD
+        """
+
+
+# FIXME: Categorize an example with both cost and price.
+
+
+
+
+# FIXME: When the other amounts balance, this should be doable.
+        """
+          2010-05-28 *
+            Assets:Account1     100.00 CAD
+            Assets:Account2     -80.00 CAD
+            Assets:Account3     -20.00 CAD
+            Assets:Account4     200.00 USD
+            Assets:Account5
+        """
+
+# FIXME: When the other amounts balance, this should be doable.
+# In this example, the first three postings in CAD balance each other.
+# the 4th posting is USD and not completely balanced, and the last is
+# unknown. We should look at the two groups of CAD and USD postings,
+# realize that the first group is already balanced and that the second
+# isn't, and automatically select the USD group.
+        """
+          2010-05-28 *
+            Assets:Account1     100.00 CAD
+            Assets:Account2     -80.00 CAD
+            Assets:Account3     -20.00 CAD
+            Assets:Account4      20.00 USD
+            Assets:Account4    -100.00 CAD @
+        """
+
+
+# FIXME: If there is only a single other group, we should be able infer the
+# price is for CAD here. Currently this raises an error.
+        """
+          2010-05-28 *
+            Assets:Account1     100.00 USD @ 1.2
+            Assets:Account2     120.00 CAD
+        """
 
 
 

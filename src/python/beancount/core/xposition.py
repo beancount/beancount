@@ -127,8 +127,6 @@ class Position:
     def __init__(self, units, cost=None):
         assert isinstance(units, Amount), (
             "Expected an Amount for units; received '{}'".format(units))
-        assert isinstance(units.currency, str), (
-            "Expected a str for units currency; received '{}'".format(units.currency))
         assert cost is None or isinstance(cost, Position.cost_types), (
             "Expected a Cost for cost; received '{}'".format(cost))
         self.units = units

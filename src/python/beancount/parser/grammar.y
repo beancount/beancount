@@ -207,6 +207,7 @@ const char* getTokenName(int token);
 %type <pyobj> incomplete_amount
 %type <pyobj> compound_amount
 %type <pyobj> maybe_number
+%type <pyobj> maybe_currency
 %type <pyobj> price_annotation
 %type <pyobj> position
 %type <pyobj> cost_comp
@@ -243,7 +244,7 @@ const char* getTokenName(int token);
 %start file
 
 /* We have some number of expected shift/reduce conflicts at 'eol'. */
-%expect 13
+%expect 17
 
 
 /*--------------------------------------------------------------------------------*/
@@ -376,11 +377,6 @@ optflag : empty
 price_annotation : incomplete_amount
                  {
                      $$ = $1;
-                 }
-                 | empty
-                 {
-                     BUILDY(,
-                            $$, "amount", "OO", missing_obj, missing_obj);
                  }
 
 posting : INDENT optflag ACCOUNT position eol
@@ -554,7 +550,22 @@ maybe_number : empty
                  $$ = $1;
              }
 
+maybe_currency : empty
+             {
+                 Py_INCREF(missing_obj);
+                 $$ = missing_obj;
+             }
+             | CURRENCY
+             {
+                 $$ = $1;
+             }
+
 compound_amount : maybe_number CURRENCY
+                {
+                    BUILDY(DECREF2($1, $2),
+                           $$, "compound_amount", "OOO", $1, Py_None, $2);
+                }
+                | number_expr maybe_currency
                 {
                     BUILDY(DECREF2($1, $2),
                            $$, "compound_amount", "OOO", $1, Py_None, $2);
@@ -566,18 +577,13 @@ compound_amount : maybe_number CURRENCY
                     ;
                 }
 
-incomplete_amount : maybe_number CURRENCY
+incomplete_amount : maybe_number maybe_currency
                   {
                       BUILDY(DECREF2($1, $2),
                              $$, "amount", "OO", $1, $2);
                  }
 
-position : incomplete_amount
-         {
-             BUILDY(DECREF1($1),
-                    $$, "position", "siOO", FILE_LINE_ARGS, $1, Py_None);
-         }
-         | incomplete_amount cost_spec
+position : incomplete_amount cost_spec
          {
              BUILDY(DECREF2($1, $2),
                     $$, "position", "siOO", FILE_LINE_ARGS, $1, $2);
@@ -591,6 +597,11 @@ cost_spec : LCURL cost_comp_list RCURL
           | cost_spec_total_legacy
           {
               $$ = $1;
+          }
+          | empty
+          {
+              Py_INCREF(Py_None);
+              $$ = Py_None;
           }
 
 /* This is deprecated, but kept for legacy until the booking branch is complete. */
