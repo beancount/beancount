@@ -96,10 +96,10 @@ class TestMiscUtils(unittest.TestCase):
         # pylint: disable=invalid-name
         Something = namedtuple('Something', 'a b c d e')
         SomethingElse = namedtuple('SomethingElse', 'f g h')
-        class A(str): pass
-        ntuple = Something(1, 2, SomethingElse(A('a'), None, 2), [A('b'), 'c'], 5)
-        values = misc_utils.get_tuple_values(ntuple, lambda x: isinstance(x, A))
-        self.assertEqual([A('a'), A('b')], list(values))
+        class Dummy(str): pass
+        ntuple = Something(1, 2, SomethingElse(Dummy('a'), None, 2), [Dummy('b'), 'c'], 5)
+        values = misc_utils.get_tuple_values(ntuple, lambda x: isinstance(x, Dummy))
+        self.assertEqual([Dummy('a'), Dummy('b')], list(values))
 
     def test_replace_tuple_values(self):
         # pylint: disable=invalid-name

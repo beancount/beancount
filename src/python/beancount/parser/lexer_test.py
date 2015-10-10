@@ -58,7 +58,7 @@ class TestLexer(unittest.TestCase):
           Assets:US:Bank:Checking
           Liabilities:US:Bank:Credit
           Other:Bank
-          USD GOOG TEST_D TEST_3 TEST-D TEST-3 NT
+          USD HOOL TEST_D TEST_3 TEST-D TEST-3 NT
           "Nice dinner at Mermaid Inn"
           ""
           123 123.45 123.456789 -123 -123.456789
@@ -78,7 +78,7 @@ class TestLexer(unittest.TestCase):
             ('ACCOUNT', 4, 'Other:Bank', 'Other:Bank'),
             ('EOL', 5, '\n', None),
             ('CURRENCY', 5, 'USD', 'USD'),
-            ('CURRENCY', 5, 'GOOG', 'GOOG'),
+            ('CURRENCY', 5, 'HOOL', 'HOOL'),
             ('CURRENCY', 5, 'TEST_D', 'TEST_D'),
             ('CURRENCY', 5, 'TEST_3', 'TEST_3'),
             ('CURRENCY', 5, 'TEST-D', 'TEST-D'),
@@ -92,8 +92,10 @@ class TestLexer(unittest.TestCase):
             ('NUMBER', 8, '123', D('123')),
             ('NUMBER', 8, '123.45', D('123.45')),
             ('NUMBER', 8, '123.456789', D('123.456789')),
-            ('NUMBER', 8, '-123', D('-123')),
-            ('NUMBER', 8, '-123.456789', D('-123.456789')),
+            ('MINUS', 8, '-', None),
+            ('NUMBER', 8, '123', D('123')),
+            ('MINUS', 8, '-', None),
+            ('NUMBER', 8, '123.456789', D('123.456789')),
             ('EOL', 9, '\n', None),
             ('TAG', 9, '#sometag123', 'sometag123'),
             ('EOL', 10, '\n', None),
@@ -112,7 +114,7 @@ class TestLexer(unittest.TestCase):
         """
         self.assertEqual([
             ('DATE', 1, '2014-07-05', datetime.date(2014, 7, 5)),
-            ('FLAG', 1, '*', None),
+            ('ASTERISK', 1, '*', None),
             ('EOL', 2, '\n', None),
             ('INDENT', 2, '  ', None),
             ('ACCOUNT', 2, 'Equity:Something', 'Equity:Something'),
@@ -158,7 +160,7 @@ class TestLexer(unittest.TestCase):
         """\
           - 1002.00 USD
         """
-        self.assertTrue(errors)
+        self.assertFalse(errors)
 
     @lex_tokens
     def test_number_dots(self, tokens, errors):
@@ -357,6 +359,74 @@ class TestLexer(unittest.TestCase):
         self.assertTrue(tokens[1], 'EOL')
 
 
+class TestIgnoredLines(unittest.TestCase):
+
+    @lex_tokens
+    def test_ignored__long_comment(self, tokens, errors):
+        """
+        ;; Long comment line about something something.
+        """
+        self.assertEqual([
+            ('EOL', 2, '\n', None),
+            ('COMMENT', 2, ';; Long comment line about something something.', None),
+            ('EOL', 3, '\n', None),
+            ('EOL', 3, '\x00', None),
+            ], tokens)
+        self.assertFalse(errors)
+
+    @lex_tokens
+    def test_ignored__indented_comment(self, tokens, errors):
+        """
+        option "title" "The Title"
+          ;; Something something.
+        """
+        self.assertEqual([
+            ('EOL', 2, '\n', None),
+            ('OPTION', 2, 'option', None),
+            ('STRING', 2, '"', 'title'),
+            ('STRING', 2, '"', 'The Title'),
+            ('EOL', 3, '\n', None),
+            ('SKIPPED', 3, '  ', None),
+            ('COMMENT', 3, ';; Something something.', None),
+            ('EOL', 4, '\n', None),
+            ('EOL', 4, '\x00', None),
+        ], tokens)
+        self.assertFalse(errors)
+
+    @lex_tokens
+    def test_ignored__something_else(self, tokens, errors):
+        """
+        Regular prose appearing mid-file which starts with a flag character.
+        """
+        self.assertEqual([
+            ('EOL', 2, '\n', None),
+            ('SKIPPED', 2, 'R', None),
+            ('EOL', 3, '\n', None),
+            ('EOL', 3, '\x00', None),
+            ], tokens)
+        self.assertFalse(errors)
+
+    @lex_tokens
+    def test_ignored__something_else_non_flag(self, tokens, errors):
+        """
+        Xxx this sentence starts with a non-flag character.
+        """
+        self.assertTrue(errors)
+
+    @lex_tokens
+    def test_ignored__org_mode_title(self, tokens, errors):
+        """
+        * This sentence is an org-mode title.
+        """
+        self.assertEqual([
+            ('EOL', 2, '\n', None),
+            ('SKIPPED', 2, '*', None),
+            ('EOL', 3, '\n', None),
+            ('EOL', 3, '\x00', None),
+        ], tokens)
+        self.assertFalse(errors)
+
+
 class TestLexerErrors(unittest.TestCase):
     """Test lexer error handling.
     """
@@ -364,12 +434,12 @@ class TestLexerErrors(unittest.TestCase):
     @lex_tokens
     def test_lexer_invalid_token(self, tokens, errors):
         """
-          2000-01-01 open ) USD
+          2000-01-01 open ` USD
         """
         self.assertEqual([('EOL', 2, '\n', None),
                           ('DATE', 2, '2000-01-01', datetime.date(2000, 1, 1)),
                           ('OPEN', 2, 'open', None),
-                          ('LEX_ERROR', 2, ')', None),
+                          ('LEX_ERROR', 2, '`', None),
                           ('CURRENCY', 2, 'USD', 'USD'),
                           ('EOL', 3, '\n', None),
                           ('EOL', 3, '\x00', None)],

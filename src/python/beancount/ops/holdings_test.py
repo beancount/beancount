@@ -6,7 +6,9 @@ import datetime
 
 from beancount.core.number import D
 from beancount.core.number import ZERO
+from beancount.core.amount import A
 from beancount.core import position
+from beancount.core import data
 from beancount.ops import holdings
 from beancount.ops import prices
 from beancount import loader
@@ -16,7 +18,7 @@ class TestHoldings(unittest.TestCase):
 
     maxDiff = 4096
 
-    @loader.loaddoc
+    @loader.load_doc()
     def test_get_final_holdings(self, entries, _, __):
         """
         2013-01-01 open Assets:Account1
@@ -31,15 +33,15 @@ class TestHoldings(unittest.TestCase):
           Assets:Cash			50000 USD
 
         2013-04-01 *
-          Assets:Account1             15 GOOG {518.73 USD}
+          Assets:Account1             15 HOOL {518.73 USD}
           Assets:Cash
 
         2013-04-02 *
-          Assets:Account1             10 GOOG {523.46 USD}
+          Assets:Account1             10 HOOL {523.46 USD}
           Assets:Cash
 
         2013-04-03 *
-          Assets:Account1             -4 GOOG {518.73 USD}
+          Assets:Account1             -4 HOOL {518.73 USD}
           Assets:Cash
 
         2013-04-02 *
@@ -47,7 +49,7 @@ class TestHoldings(unittest.TestCase):
           Assets:Cash
 
         2013-04-03 *
-          Assets:Account3             50 GOOG {540.00 USD} @ 560.00 USD
+          Assets:Account3             50 HOOL {540.00 USD} @ 560.00 USD
           Assets:Cash
 
         2013-04-10 *
@@ -58,13 +60,13 @@ class TestHoldings(unittest.TestCase):
 
         holdings_list = sorted(map(tuple, holdings_list))
         expected_values = [
-            ('Assets:Account1', D('10'), 'GOOG', D('523.46'), 'USD',
+            ('Assets:Account1', D('10'), 'HOOL', D('523.46'), 'USD',
              D('5234.60'), None, None, None),
-            ('Assets:Account1', D('11'), 'GOOG', D('518.73'), 'USD',
+            ('Assets:Account1', D('11'), 'HOOL', D('518.73'), 'USD',
              D('5706.03'), None, None, None),
             ('Assets:Account2', D('20'), 'ITOT', D('85.195'), 'USD',
              D('1703.900'), None, None, None),
-            ('Assets:Account3', D('50'), 'GOOG', D('540.00'), 'USD',
+            ('Assets:Account3', D('50'), 'HOOL', D('540.00'), 'USD',
              D('27000.00'), None, None, None),
             ('Assets:Cash', D('15466.470'), 'USD', None, 'USD',
              D('15466.470'), D('15466.470'), None, None),
@@ -92,19 +94,19 @@ class TestHoldings(unittest.TestCase):
                            if holding[0].startswith('Assets')]
         self.assertEqual(expected_values, holdings_list)
 
-    @loader.loaddoc
+    @loader.load_doc()
     def test_get_final_holdings__check_no_aggregates(self, entries, _, __):
         """
-        option "plugin" "beancount.plugins.unrealized:Unrealized"
+        plugin "beancount.plugins.unrealized" "Unrealized"
 
-        2013-01-01 open Assets:Investment   GOOG
+        2013-01-01 open Assets:Investment   HOOL
         2013-01-01 open Assets:Cash         USD
 
         2013-04-01 *
-          Assets:Investment             15 GOOG {518.73 USD}
+          Assets:Investment             15 HOOL {518.73 USD}
           Assets:Cash
 
-        2013-06-01 price GOOG  600.00 USD
+        2013-06-01 price HOOL  600.00 USD
         """
         holdings_list = holdings.get_final_holdings(entries)
 
@@ -112,7 +114,7 @@ class TestHoldings(unittest.TestCase):
         self.assertEqual({'Assets:Cash', 'Assets:Investment'},
                          set(holding.account for holding in holdings_list))
 
-    @loader.loaddoc
+    @loader.load_doc()
     def test_get_final_holdings_with_prices(self, entries, _, __):
         """
         2013-01-01 open Assets:Account1
@@ -126,10 +128,10 @@ class TestHoldings(unittest.TestCase):
           Assets:Cash			50000 USD
 
         2013-04-01 *
-          Assets:Account1             15 GOOG {518.73 USD}
+          Assets:Account1             15 HOOL {518.73 USD}
           Assets:Cash
 
-        2013-06-01 price GOOG  578.02 USD
+        2013-06-01 price HOOL  578.02 USD
 
         """
         price_map = prices.build_price_map(entries)
@@ -139,7 +141,7 @@ class TestHoldings(unittest.TestCase):
 
         holdings_list = sorted(map(tuple, holdings_list))
         expected_values = [
-            ('Assets:Account1', D('15'), 'GOOG', D('518.73'), 'USD',
+            ('Assets:Account1', D('15'), 'HOOL', D('518.73'), 'USD',
              D('7780.95'), D('8670.30'),
              D('578.02'), datetime.date(2013, 6, 1)),
             ('Assets:Cash', D('42219.05'), 'USD', None, 'USD',
@@ -148,7 +150,7 @@ class TestHoldings(unittest.TestCase):
         ]
         self.assertEqual(expected_values, holdings_list)
 
-    @loader.loaddoc
+    @loader.load_doc()
     def test_get_final_holdings__zero_position(self, entries, _, __):
         """
         1970-01-01 open Assets:Stocks:NYA
@@ -169,7 +171,7 @@ class TestHoldings(unittest.TestCase):
         self.assertEqual(1, len(holdings_list))
         self.assertEqual('EUR', holdings_list[0].cost_currency)
 
-    @loader.loaddoc
+    @loader.load_doc()
     def test_get_commodities_at_date(self, entries, _, options_map):
         """
         2013-01-01 open Assets:Account1
@@ -179,7 +181,7 @@ class TestHoldings(unittest.TestCase):
         2013-01-01 open Liabilities:Loan
         2013-01-01 open Equity:Unknown
 
-        2000-01-01 commodity GOOG
+        2000-01-01 commodity HOOL
           quote: USD
 
         2000-01-01 commodity ITOT
@@ -190,15 +192,15 @@ class TestHoldings(unittest.TestCase):
           Assets:Cash			50000 USD
 
         2013-04-01 *
-          Assets:Account1             15 GOOG {518.73 USD}
+          Assets:Account1             15 HOOL {518.73 USD}
           Assets:Cash
 
         2013-04-02 *
-          Assets:Account1             10 GOOG {523.46 USD}
+          Assets:Account1             10 HOOL {523.46 USD}
           Assets:Cash
 
         2013-04-03 *
-          Assets:Account1             -4 GOOG {518.73 USD}
+          Assets:Account1             -4 HOOL {518.73 USD}
           Assets:Cash
 
         2013-04-02 *
@@ -206,7 +208,7 @@ class TestHoldings(unittest.TestCase):
           Assets:Cash
 
         2013-04-03 *
-          Assets:Account3             50 GOOG {540.00 USD} @ 560.00 USD
+          Assets:Account3             50 HOOL {540.00 USD} @ 560.00 USD
           Assets:Cash
 
         2013-04-10 *
@@ -214,62 +216,62 @@ class TestHoldings(unittest.TestCase):
           Liabilities:Loan
         """
         commodities = holdings.get_commodities_at_date(entries, options_map)
-        self.assertEqual([('GOOG', 'USD', 'USD', None),
+        self.assertEqual([('HOOL', 'USD', 'USD', None),
                           ('ITOT', 'USD', None, 'NYSEARCA:ITOT'),
                           ('USD', 'USD', None, None)],
                          commodities)
 
         commodities = holdings.get_commodities_at_date(entries, options_map,
                                                        date=datetime.date(2013, 4, 2))
-        self.assertEqual([('GOOG', 'USD', 'USD', None),
+        self.assertEqual([('HOOL', 'USD', 'USD', None),
                           ('USD', 'USD', None, None)],
                          commodities)
 
 
     def test_aggregate_holdings_list(self):
         test_holdings = list(itertools.starmap(holdings.Holding, [
-            ('Assets:Account1', D('10'), 'GOOG', D('518.73'), 'USD',
+            ('Assets:Account1', D('10'), 'HOOL', D('518.73'), 'USD',
              D('5187.30'), D('5780.20'), D('578.02'), datetime.date(2014, 2, 1)),
-            ('Assets:Account2', D('20'), 'GOOG', D('519.24'), 'USD',
+            ('Assets:Account2', D('20'), 'HOOL', D('519.24'), 'USD',
              D('10384.80'), D('11622.00'), D('581.10'), datetime.date(2014, 2, 15)),
         ]))
         expected_holding = holdings.Holding(
-            'Assets', D('30'), 'GOOG', D('519.07'), 'USD',
+            'Assets', D('30'), 'HOOL', D('519.07'), 'USD',
             D('15572.10'), D('17402.20'), D('580.0733333333333333333333333'), None)
         self.assertEqual(expected_holding, holdings.aggregate_holdings_list(test_holdings))
 
         # Test with zero units.
         test_holdings = list(itertools.starmap(holdings.Holding, [
-            ('Assets:Acc1', D('10'), 'GOOG', D('300'), 'USD', D('3000'),
+            ('Assets:Acc1', D('10'), 'HOOL', D('300'), 'USD', D('3000'),
              None, None, None),
-            ('Assets:Acc1', D('-10'), 'GOOG', D('400'), 'USD', D('-4000'),
+            ('Assets:Acc1', D('-10'), 'HOOL', D('400'), 'USD', D('-4000'),
              None, None, None),
         ]))
         expected_holding = holdings.Holding(
-            'Assets:Acc1', D('0'), 'GOOG', None, 'USD', D('-1000'), None, None, None)
+            'Assets:Acc1', D('0'), 'HOOL', None, 'USD', D('-1000'), None, None, None)
         self.assertEqual(expected_holding, holdings.aggregate_holdings_list(test_holdings))
 
         # Test with aggregate holdings with no cost nor price price.
         test_holdings = list(itertools.starmap(holdings.Holding, [
-            ('Assets:Account1', D('10'), 'GOOG', None, 'USD',
+            ('Assets:Account1', D('10'), 'HOOL', None, 'USD',
              D('5187.30'), D('5780.20'), None, None),
-            ('Assets:Account2', D('20'), 'GOOG', None, 'USD',
+            ('Assets:Account2', D('20'), 'HOOL', None, 'USD',
              D('10384.80'), D('11622.00'), None, None),
         ]))
         expected_holding = holdings.Holding(
-            'Assets', D('30'), 'GOOG', D('519.07'), 'USD',
+            'Assets', D('30'), 'HOOL', D('519.07'), 'USD',
             D('15572.10'), D('17402.20'), D('580.0733333333333333333333333'), None)
         self.assertEqual(expected_holding, holdings.aggregate_holdings_list(test_holdings))
 
     def test_aggregate_holdings_by__commodity(self):
-        # Note: Two different prices on GOOG on purpose.
+        # Note: Two different prices on HOOL on purpose.
         test_holdings = list(itertools.starmap(holdings.Holding, [
             ('Assets:Cash', D('101.11'), 'USD', None, None,
              None, None, None, None),
 
-            ('Assets:Account1', D('10'), 'GOOG', D('518.73'), 'USD',
+            ('Assets:Account1', D('10'), 'HOOL', D('518.73'), 'USD',
              D('5187.30'), D('5780.20'), D('578.02'), datetime.date(2014, 2, 1)),
-            ('Assets:Account2', D('20'), 'GOOG', D('519.24'), 'USD',
+            ('Assets:Account2', D('20'), 'HOOL', D('519.24'), 'USD',
              D('10384.80'), D('11622.00'), D('581.10'), datetime.date(2014, 2, 15)),
 
             ('Assets:Account1', D('10'), 'AAPL', D('593.27'), 'USD',
@@ -279,7 +281,7 @@ class TestHoldings(unittest.TestCase):
             ('Assets:Account1', D('10'), 'AAPL', D('593.27'), 'USD',
              D('5932.70'), D('6000.10'), D('600.01'), datetime.date(2014, 3, 1)),
 
-            ('Assets', D('30'), 'GOOG', D('519.07'), 'USD',
+            ('Assets', D('30'), 'HOOL', D('519.07'), 'USD',
              D('15572.10'), D('17402.20'), D('580.0733333333333333333333333'), None),
 
             ('Assets:Cash', D('101.11'), 'USD', None, None,
@@ -294,9 +296,9 @@ class TestHoldings(unittest.TestCase):
             ('Assets:Cash', D('101.11'), 'USD', None, None,
              None, None, None, None),
 
-            ('Assets:Account1', D('10'), 'GOOG', D('518.73'), 'USD',
+            ('Assets:Account1', D('10'), 'HOOL', D('518.73'), 'USD',
              D('5187.30'), D('5780.20'), D('578.02'), datetime.date(2014, 2, 1)),
-            ('Assets:Account2', D('20'), 'GOOG', D('519.24'), 'USD',
+            ('Assets:Account2', D('20'), 'HOOL', D('519.24'), 'USD',
              D('10384.80'), D('11622.00'), D('581.10'), datetime.date(2014, 2, 15)),
 
             ('Assets:Account1', D('10'), 'AAPL', D('593.27'), 'USD',
@@ -306,7 +308,7 @@ class TestHoldings(unittest.TestCase):
             ('Assets:Account1', D('0'), '*', D('556.00'), 'USD',
              D('11120.00'), D('11780.30'), D('589.015'), None),
 
-            ('Assets:Account2', D('20'), 'GOOG', D('519.24'), 'USD',
+            ('Assets:Account2', D('20'), 'HOOL', D('519.24'), 'USD',
              D('10384.80'), D('11622.00'), D('581.10'), datetime.date(2014, 2, 15)),
 
             ('Assets:Cash', D('101.11'), 'USD', None, None,
@@ -318,13 +320,13 @@ class TestHoldings(unittest.TestCase):
 
     def test_aggregate_holdings__same_price_same_date(self):
         test_holdings = list(itertools.starmap(holdings.Holding, [
-            ('Assets:Account1', D('10'), 'GOOG', D('500'), 'USD', D('5000'), D('6000'),
+            ('Assets:Account1', D('10'), 'HOOL', D('500'), 'USD', D('5000'), D('6000'),
              D('600'), datetime.date(2014, 2, 1)),
-            ('Assets:Account1', D('20'), 'GOOG', D('530'), 'USD', D('10600'), D('12000'),
+            ('Assets:Account1', D('20'), 'HOOL', D('530'), 'USD', D('10600'), D('12000'),
              D('600'), datetime.date(2014, 2, 1)),
         ]))
         expected_holdings = sorted(itertools.starmap(holdings.Holding, [
-            ('Assets:Account1', D('30'), 'GOOG', D('520'), 'USD', D('15600'), D('18000'),
+            ('Assets:Account1', D('30'), 'HOOL', D('520'), 'USD', D('15600'), D('18000'),
              D('600'), datetime.date(2014, 2, 1)),
         ]))
         self.assertEqual(expected_holdings,
@@ -333,14 +335,14 @@ class TestHoldings(unittest.TestCase):
 
     def test_aggregate_holdings__diff_price_same_date(self):
         test_holdings = list(itertools.starmap(holdings.Holding, [
-            ('Assets:Account1', D('10'), 'GOOG', D('500'), 'USD', D('5000'), D('6000'),
+            ('Assets:Account1', D('10'), 'HOOL', D('500'), 'USD', D('5000'), D('6000'),
              D('600'), datetime.date(2014, 2, 1)),
-            ('Assets:Account1', D('20'), 'GOOG', D('530'), 'USD', D('10600'), D('12000'),
+            ('Assets:Account1', D('20'), 'HOOL', D('530'), 'USD', D('10600'), D('12000'),
              D('630'), datetime.date(2014, 2, 1)),
         ]))
         # Price is recalculated from the market value, date is maintained.
         expected_holdings = sorted(itertools.starmap(holdings.Holding, [
-            ('Assets:Account1', D('30'), 'GOOG', D('520'), 'USD', D('15600'), D('18000'),
+            ('Assets:Account1', D('30'), 'HOOL', D('520'), 'USD', D('15600'), D('18000'),
              D('600'), datetime.date(2014, 2, 1)),
         ]))
         self.assertEqual(expected_holdings,
@@ -349,14 +351,14 @@ class TestHoldings(unittest.TestCase):
 
     def test_aggregate_holdings__same_price_diff_date(self):
         test_holdings = list(itertools.starmap(holdings.Holding, [
-            ('Assets:Account1', D('10'), 'GOOG', D('500'), 'USD', D('5000'), D('6000'),
+            ('Assets:Account1', D('10'), 'HOOL', D('500'), 'USD', D('5000'), D('6000'),
              D('600'), datetime.date(2014, 2, 1)),
-            ('Assets:Account1', D('20'), 'GOOG', D('530'), 'USD', D('10600'), D('12000'),
+            ('Assets:Account1', D('20'), 'HOOL', D('530'), 'USD', D('10600'), D('12000'),
              D('600'), datetime.date(2014, 2, 2)),
         ]))
         # Date is cleared.
         expected_holdings = sorted(itertools.starmap(holdings.Holding, [
-            ('Assets:Account1', D('30'), 'GOOG', D('520'), 'USD', D('15600'), D('18000'),
+            ('Assets:Account1', D('30'), 'HOOL', D('520'), 'USD', D('15600'), D('18000'),
              D('600'), None),
         ]))
         self.assertEqual(expected_holdings,
@@ -365,21 +367,21 @@ class TestHoldings(unittest.TestCase):
 
     def test_aggregate_holdings__diff_price_diff_date(self):
         test_holdings = list(itertools.starmap(holdings.Holding, [
-            ('Assets:Account1', D('10'), 'GOOG', D('500'), 'USD', D('5000'), D('6000'),
+            ('Assets:Account1', D('10'), 'HOOL', D('500'), 'USD', D('5000'), D('6000'),
              D('610'), datetime.date(2014, 2, 1)),
-            ('Assets:Account1', D('20'), 'GOOG', D('530'), 'USD', D('10600'), D('12000'),
+            ('Assets:Account1', D('20'), 'HOOL', D('530'), 'USD', D('10600'), D('12000'),
              D('600'), datetime.date(2014, 2, 2)),
         ]))
         # Price is recalculated from the market value, date is maintained.
         expected_holdings = sorted(itertools.starmap(holdings.Holding, [
-            ('Assets:Account1', D('30'), 'GOOG', D('520'), 'USD', D('15600'), D('18000'),
+            ('Assets:Account1', D('30'), 'HOOL', D('520'), 'USD', D('15600'), D('18000'),
              D('600'), None),
         ]))
         self.assertEqual(expected_holdings,
                          holdings.aggregate_holdings_by(test_holdings,
                                                         lambda holding: holding.account))
 
-    @loader.loaddoc
+    @loader.load_doc()
     def test_convert_to_currency(self, entries, _, __):
         """
         2013-01-01 price CAD 1.1 USD
@@ -505,3 +507,53 @@ class TestHoldings(unittest.TestCase):
         actual_position = holdings.holding_to_position(test_holding)
         expected_position = position.from_string('100.00 USD')
         self.assertEqual(expected_position, actual_position)
+
+    def test_holding_to_posting(self):
+        test_holding = holdings.Holding(
+            'Assets:US:Checking', D('100'), 'MSFT', D('54.34'), 'USD',
+            D('5434.00'), D('6000.00'), D('60'), datetime.date(2012, 5, 2))
+
+        posting = holdings.holding_to_posting(test_holding)
+        self.assertTrue(isinstance(posting, data.Posting))
+
+        expected_position = position.from_string('100 MSFT {54.34 USD}')
+        self.assertEqual(expected_position, posting.position)
+
+        expected_price = A('60.00 USD')
+        self.assertEqual(expected_price, posting.price)
+
+    def test_get_pholding_market_value(self):
+        posting = data.Posting('Account',
+                               position.from_string('100 MSFT {54.34 USD}'),
+                               A('60.00 USD'),
+                               None, None)
+        self.assertEqual(A('6000.00 USD'),
+                         holdings.get_pholding_market_value(posting))
+
+        posting = data.Posting('Account',
+                               position.from_string('100 MSFT {54.34 USD}'),
+                               None,
+                               None, None)
+        self.assertEqual(A('5434.00 USD'),
+                         holdings.get_pholding_market_value(posting))
+
+        posting = data.Posting('Account',
+                               position.from_string('1000.00 USD'),
+                               None,
+                               None, None)
+        self.assertEqual(A('1000.00 USD'),
+                         holdings.get_pholding_market_value(posting))
+
+        with self.assertRaises(AssertionError):
+            posting = data.Posting('Account',
+                                   position.from_string('1000.00 USD'),
+                                   A('60.00 USD'),
+                                   None, None)
+            holdings.get_pholding_market_value(posting)
+
+        with self.assertRaises(AssertionError):
+            posting = data.Posting('Account',
+                                   position.from_string('1000.00 USD {1.25 CAD}'),
+                                   A('60.00 USD'),
+                                   None, None)
+            holdings.get_pholding_market_value(posting)

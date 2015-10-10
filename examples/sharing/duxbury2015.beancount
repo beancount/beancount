@@ -1,0 +1,109 @@
+;; -*- mode: org; mode: beancount; fill-column: 200 -*-
+;;
+;; Joint expenses for a short trip to Duxbury, MA for an Oustanding in the Field dinner, August 2015.
+;;
+
+* Options
+
+option "title" "Duxbury - Oustanding in the Field - August 2015"
+
+option "default_tolerance" "USD:0.005"
+
+plugin "beancount.plugins.split_expenses" "Martin Caroline Sheila"
+plugin "beancount.plugins.auto_accounts"
+plugin "beancount.plugins.implicit_prices"
+
+option "operating_currency" "USD"
+
+
+;; External accounts for Martin.
+2015-02-01 open Income:Martin:Cash
+2015-02-01 open Income:Martin:CreditCard
+
+;; External accounts for Caroline.
+2015-02-01 open Income:Caroline
+
+;; External accounts for Sheila.
+2015-02-01 open Income:Sheila
+
+
+* Preparation
+
+;; Owed previously from Caroline, so booking as if Sheila paid her own
+2015-03-20 * "Outstanding in the Field dinner" "Dinner tickets"
+  Income:Sheila                                     -244.06 USD
+  Income:Caroline                                   -488.12 USD
+  Expenses:Food:Restaurant
+
+2015-03-20 * "Fairfield Marriott Inn - New Bedford" "Hotel"
+  Income:Caroline                                   -233.46 USD
+  Expenses:Accommodation:Hotel:Martin                116.73 USD
+  Expenses:Accommodation:Hotel:Caroline              116.73 USD
+
+;; Caroline says Sheila ended up paying about 10$ more, so estimating
+2015-04-01 * "Fairfield Marriott Inn - New Bedford" "Hotel - Sheila only"
+  Income:Sheila                                     -126.73 USD
+  Expenses:Accommodation:Hotel:Sheila
+
+
+
+* During Travel
+
+2015-08-28 * "Union Market" "Snacks for the trip - Sheila didn't have any"
+  Income:Caroline                                    -30.00 USD
+  Expenses:Food:Grocery:Martin                           15 USD
+  Expenses:Food:Grocery:Caroline                         15 USD
+
+2015-08-29 * "Taxi to Hertz - Caroline & Martin only"
+  Income:Martin:Cash                                 -20.00 USD
+  Expenses:Transport:Taxi:Martin                      10.00 USD
+  Expenses:Transport:Taxi:Caroline                    10.00 USD
+
+2015-08-29 * "Toll fee - erroneously paid, car already had an EZPass"
+  Expenses:Car:Tolls                                   8.00 USD
+  Income:Caroline
+
+2015-08-29 * "Parking in New Haven"
+  Expenses:Car:Parking                                 3.00 USD
+  Income:Martin:CreditCard ;; Google Wallet card
+
+2015-08-29 * "Heirloom" "Lunch in New Haven"
+  Expenses:Food:Restaurant                            96.89 USD
+  Income:Martin:CreditCard
+
+2015-08-29 * "Parkmeter in Providence near Bolt Coffee"
+  Expenses:Car:Parking                                 0.50 USD
+  Income:Sheila
+
+2015-08-29 * "Bolt Coffee" "Coffee"
+  Expenses:Food:Restaurant                            13.50 USD
+  Income:Caroline
+
+2015-08-29 * "Gulf Oil" "Gasoline - refill #1"
+  Expenses:Car:Gas                                    38.59 USD
+  Income:Martin:CreditCard
+
+2015-08-30 * "Whale Museum" "Tickets"
+  Expenses:Fun:Museum                                 42.00 USD
+  Income:Caroline
+
+2015-08-30 * "Seaman's Bethel" "Donations to old lady"
+  Income:Martin:Cash                                  -2.00 USD
+  Income:Sheila                                       -5.00 USD
+  Expenses:Fun:Museum
+
+2015-08-30 * "Green Bean" "Coffees before leaving"
+  Expenses:Food:Restaurant                            13.56 USD
+  Income:Martin:CreditCard
+
+2015-08-30 * "Captain Scott Lobster Place" "Lobster lunch"
+  Expenses:Food:Restaurant                            82.77 USD
+  Income:Sheila
+
+2015-08-30 * "BP" "Final gas refill before returning the car"
+  Expenses:Car:Gas                                    28.06 USD
+  Income:Martin:CreditCard
+
+2015-08-30 * "Hertz" "Car rental - final charge"
+  Expenses:Car:Rental                                207.00 USD
+  Income:Martin:CreditCard

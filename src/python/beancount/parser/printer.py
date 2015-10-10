@@ -2,6 +2,7 @@
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import codecs
 import datetime
 import io
 import re
@@ -25,8 +26,8 @@ def align_position_strings(strings):
     This is perhaps best explained with an example. The following positions will
     be aligned around the column marked with '^':
 
-              45 GOOG {504.30 USD}
-               4 GOOG {504.30 USD / 2014-11-11}
+              45 HOOL {504.30 USD}
+               4 HOOL {504.30 USD, 2014-11-11}
             9.95 USD
        -22473.32 CAD @ 1.10 USD
                  ^
@@ -258,8 +259,9 @@ class EntryPrinter:
         self.write_metadata(entry.meta, oss)
 
     def Open(self, entry, oss):
-        oss.write('{e.date} open {e.account:47} {currencies}\n'.format(
-            e=entry, currencies=','.join(entry.currencies or [])))
+        oss.write('{e.date} open {e.account:47} {currencies}'.format(
+            e=entry, currencies=','.join(entry.currencies or [])).rstrip())
+        oss.write('\n')
         self.write_metadata(entry.meta, oss)
 
     def Close(self, entry, oss):
@@ -277,6 +279,10 @@ class EntryPrinter:
 
     def Event(self, entry, oss):
         oss.write('{e.date} event "{e.type}" "{e.description}"\n'.format(e=entry))
+        self.write_metadata(entry.meta, oss)
+
+    def Query(self, entry, oss):
+        oss.write('{e.date} query "{e.name}" "{e.query_string}"\n'.format(e=entry))
         self.write_metadata(entry.meta, oss)
 
 
@@ -302,7 +308,7 @@ def print_entry(entry, dcontext=None, render_weights=False, file=None):
       render_weights: A boolean, true to render the weights for debugging.
       file: An optional file object to write the entries to.
     """
-    output = file or sys.stdout
+    output = file or codecs.getwriter("utf-8")(sys.stdout.buffer)
     output.write(format_entry(entry, dcontext, render_weights))
     output.write('\n')
 
@@ -316,8 +322,11 @@ def print_entries(entries, dcontext=None, render_weights=False, file=None, prefi
       render_weights: A boolean, true to render the weights for debugging.
       file: An optional file object to write the entries to.
     """
-    assert isinstance(entries, list)
-    output = file or sys.stdout
+    assert isinstance(entries, list), "Entries is not a list: {}".format(entries)
+    output = file or (codecs.getwriter("utf-8")(sys.stdout.buffer)
+                      if hasattr(sys.stdout, 'buffer') else
+                      sys.stdout)
+
     if prefix:
         output.write(prefix)
     previous_type = type(entries[0]) if entries else None
@@ -331,7 +340,8 @@ def print_entries(entries, dcontext=None, render_weights=False, file=None, prefi
             output.write('\n')
             previous_type = entry_type
 
-        output.write(eprinter(entry))
+        string = eprinter(entry)
+        output.write(string)
 
 
 def render_source(meta):
