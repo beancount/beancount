@@ -42,7 +42,7 @@ class ErrorReport(report.HTMLReport):
         printer.print_errors(errors, file=file)
 
     def render_htmldiv(self, entries, errors, options_map, file):
-        dcontext = options_map['display_context']
+        dcontext = options_map['dcontext']
         file.write('<div id="errors">\n')
         for error in errors:
             file.write('<div class="error">\n')
@@ -68,7 +68,7 @@ class PrintReport(report.Report):
     default_format = 'beancount'
 
     def render_beancount(self, entries, errors, options_map, file):
-        dcontext = options_map['display_context']
+        dcontext = options_map['dcontext']
         printer.print_entries(entries, dcontext, file=file)
 
 
@@ -161,7 +161,8 @@ class ActivityReport(report.HTMLReport,
             for unused_first_line, unused_cont_line, real_account in realization.dump(
                     realization.get(real_root, root)):
 
-                last_posting = realization.find_last_active_posting(real_account.postings)
+                last_posting = realization.find_last_active_posting(
+                    real_account.txn_postings)
 
                 # Don't render updates to accounts that have been closed.
                 # Note: this is O(N), maybe we can store this at realization.
@@ -191,7 +192,8 @@ class ActivityReport(report.HTMLReport,
             for real_account, cells, row_classes in table:
                 if not isinstance(real_account, realization.RealAccount):
                     continue
-                last_posting = realization.find_last_active_posting(real_account.postings)
+                last_posting = realization.find_last_active_posting(
+                    real_account.txn_postings)
 
                 # Don't render updates to accounts that have been closed.
                 # Note: this is O(N), maybe we can store this at realization.
@@ -207,7 +209,7 @@ class ActivityReport(report.HTMLReport,
 
                 # Okay, we need to render this. Append.
                 cells.append(data.get_entry(last_posting).date
-                             if real_account.postings
+                             if real_account.txn_postings
                              else '-')
                 num_cells += 1
 

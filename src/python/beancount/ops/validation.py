@@ -19,7 +19,6 @@ from beancount.core.data import Document
 from beancount.core.data import Note
 from beancount.core import data
 from beancount.core import getters
-from beancount.core import inventory
 from beancount.core import interpolate
 from beancount.utils import misc_utils
 
@@ -30,61 +29,6 @@ ValidationError = collections.namedtuple('ValidationError', 'source message entr
 
 # Directive types that should be allowed after the account is closed.
 ALLOW_AFTER_CLOSE = (Document, Note)
-
-
-def validate_inventory_booking(entries, unused_options_map):
-    """Validate that no position at cost is allowed to go negative.
-
-    This routine checks that when a posting reduces a position, existing or not,
-    that the subsequent inventory does not result in a position with a negative
-    number of units. A negative number of units would only be required for short
-    trades of trading spreads on futures, and right now this is not supported.
-    It would not be difficult to support this, however, but we want to be strict
-    about it, because being pedantic about this is otherwise a great way to
-    detect user data entry mistakes.
-
-    Args:
-      entries: A list of directives.
-      unused_options_map: An options map.
-    Returns:
-      A list of errors.
-    """
-    errors = []
-
-    # A mapping of account name to booking method, accumulated in the main loop.
-    booking_methods = {}
-
-    balances = collections.defaultdict(inventory.Inventory)
-    for entry in entries:
-        if isinstance(entry, data.Transaction):
-            for posting in entry.postings:
-                # Update the balance of each posting on its respective account
-                # without allowing booking to a negative position, and if an error
-                # is encountered, catch it and return it.
-                running_balance = balances[posting.account]
-                position_, _ = running_balance.add_position(posting.position)
-
-                # Skip this check if the booking method is set to ignore it.
-                if booking_methods.get(posting.account, None) == 'NONE':
-                    continue
-
-                # Check if the resulting inventory is mixed, which is not
-                # allowed under the STRICT method.
-                if running_balance.is_mixed():
-                    errors.append(
-                        ValidationError(
-                            posting.entry.meta,
-                            ("Reducing position results in inventory with positive "
-                             "and negative lots: {}").format(position_),
-                            posting.entry))
-
-        elif isinstance(entry, data.Open):
-            # These Open directives should always appear beforehand as per the
-            # assumptions on the list of entries, so should never be a problem
-            # finding them. If not, move this loop to a dedicated before.
-            booking_methods[entry.account] = entry.booking
-
-    return errors
 
 
 def validate_open_close(entries, unused_options_map):
@@ -408,8 +352,7 @@ def validate_check_transaction_balances(entries, options_map):
 
 
 # A list of reasonably fast validations to always run by default.
-BASIC_VALIDATIONS = [validate_inventory_booking,
-                     validate_open_close,
+BASIC_VALIDATIONS = [validate_open_close,
                      validate_active_accounts,
                      validate_currency_constraints,
                      validate_duplicate_balances,

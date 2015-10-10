@@ -10,10 +10,10 @@ from beancount.parser import printer
 
 class TestSellGains(unittest.TestCase):
 
-    @loader.loaddoc
+    @loader.load_doc()
     def test_sellgains_success(self, entries, errors, options_map):
         """
-        plugin "beancount.ops.auto_accounts"
+        plugin "beancount.plugins.auto_accounts"
         plugin "beancount.plugins.sellgains"
 
         1999-07-31 * "Sell"
@@ -25,10 +25,10 @@ class TestSellGains(unittest.TestCase):
         printer.print_errors(errors)
         self.assertEqual([], errors)
 
-    @loader.loaddoc
+    @loader.load_doc(expect_errors=True)
     def test_sellgains_fail_balance(self, entries, errors, options_map):
         """
-        plugin "beancount.ops.auto_accounts"
+        plugin "beancount.plugins.auto_accounts"
         plugin "beancount.plugins.sellgains"
 
         1999-07-31 * "Sell"
@@ -39,10 +39,10 @@ class TestSellGains(unittest.TestCase):
         """
         self.assertEqual([sellgains.SellGainsError], list(map(type, errors)))
 
-    @loader.loaddoc
+    @loader.load_doc(expect_errors=True)
     def test_sellgains_fail_imbalance(self, entries, errors, options_map):
         """
-        plugin "beancount.ops.auto_accounts"
+        plugin "beancount.plugins.auto_accounts"
         plugin "beancount.plugins.sellgains"
 
         1999-07-31 * "Sell"
@@ -53,10 +53,10 @@ class TestSellGains(unittest.TestCase):
         self.assertEqual([sellgains.SellGainsError,
                           validation.ValidationError], list(map(type, errors)))
 
-    @loader.loaddoc
+    @loader.load_doc()
     def test_sellgains_other_currency(self, entries, errors, options_map):
         """
-        plugin "beancount.ops.auto_accounts"
+        plugin "beancount.plugins.auto_accounts"
         plugin "beancount.plugins.sellgains"
 
         1999-07-31 * "Sell"

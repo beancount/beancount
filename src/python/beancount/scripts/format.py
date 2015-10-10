@@ -73,8 +73,9 @@ def align_beancount(contents):
     # so it's safe.
     # open('/tmp/before', 'w').write(re.sub(r'[ \t]+', ' ', contents))
     # open('/tmp/after', 'w').write(re.sub(r'[ \t]+', ' ', formatted_contents))
-    assert (re.sub(r'[ \t]+', ' ', contents.rstrip()) ==
-            re.sub(r'[ \t]+', ' ', formatted_contents.rstrip()))
+    old_stripped = re.sub(r'[ \t\n]+', ' ', contents.rstrip())
+    new_stripped = re.sub(r'[ \t\n]+', ' ', formatted_contents.rstrip())
+    assert (old_stripped == new_stripped), (old_stripped, new_stripped)
 
     return formatted_contents
 

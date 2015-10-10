@@ -103,9 +103,9 @@ def get_holdings_entries(entries, options_map):
         position_ = holdings.holding_to_position(holding)
 
         entry.postings.append(
-            data.Posting(entry, holding.account, position_, None, None, None))
+            data.Posting(holding.account, position_, None, None, None))
         entry.postings.append(
-            data.Posting(entry, equity_account, -position_.cost(), None, None, None))
+            data.Posting(equity_account, -position_.cost(), None, None, None))
 
         holdings_entries.append(entry)
 
@@ -260,7 +260,7 @@ class HoldingsReport(report.TableReport):
 
         # Get the summarized entries and print them out.
         holdings_entries = get_holdings_entries(entries, options_map)
-        dcontext = options_map['display_context']
+        dcontext = options_map['dcontext']
         printer.print_entries(holdings_entries, dcontext, file=file)
 
 

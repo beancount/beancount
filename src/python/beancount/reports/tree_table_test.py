@@ -6,12 +6,14 @@ import unittest
 
 from beancount import loader
 from beancount.core import realization
+from beancount.core import display_context
 from beancount.reports import tree_table
+from beancount.reports import html_formatter
 
 
 class TestActiveAccounts(unittest.TestCase):
 
-    @loader.loaddoc
+    @loader.load_doc()
     def test_is_account_active(self, entries, _, __):
         """
         2014-01-01 open Assets:Inactive
@@ -32,7 +34,7 @@ class TestActiveAccounts(unittest.TestCase):
 
 class TestTables(unittest.TestCase):
 
-    @loader.loaddoc
+    @loader.load_doc()
     def setUp(self, entries, _, __):
         """
         2014-01-01 open Assets:US:Checking
@@ -70,7 +72,8 @@ class TestTables(unittest.TestCase):
         self.assertTrue(re.search('Assets:US:Checking', html))
 
     def test_table_of_balances(self):
-        html = tree_table.table_of_balances(self.real_root, ['USD', 'CAD'], None,
+        formatter = html_formatter.HTMLFormatter(display_context.DEFAULT_DISPLAY_CONTEXT)
+        html = tree_table.table_of_balances(self.real_root, ['USD', 'CAD'], formatter,
                                             classes=['586e8200b379'])
         self.assertTrue(re.search('<table', html))
         self.assertTrue(re.search('USD', html))

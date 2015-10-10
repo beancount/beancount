@@ -11,7 +11,6 @@ from unittest import mock
 
 from beancount import loader
 from beancount.core import inventory
-from beancount.core import data
 from beancount.ops import prices
 from beancount.parser import cmptest
 from beancount.parser import options
@@ -187,7 +186,7 @@ class TestReturnsFunctions(test_utils.TestCase):
 class TestReturnsPeriods(test_utils.TestCase):
 
     # Ensure that prelude and epiloge periods are correctly found and returned.
-    @loader.loaddoc
+    @loader.load_doc()
     def test_segment_periods(self, entries, errors, options_map):
         """
         2014-01-01 open Assets:US:Investments:Cash
@@ -213,10 +212,10 @@ class TestReturnsPeriods(test_utils.TestCase):
             ], periods)
 
     # Deposit, one investment, no other changes but a price change.
-    @loader.loaddoc
+    @loader.load_doc()
     def test_returns_one_transfer(self, entries, errors, options_map):
         """
-        plugin "beancount.ops.auto_accounts"
+        plugin "beancount.plugins.auto_accounts"
 
         2014-02-01 * "Deposit"
           Assets:US:Investments:Cash       10,000 USD
@@ -243,7 +242,7 @@ class TestReturnsPeriods(test_utils.TestCase):
         self.assertEqual((datetime.date(2014, 2, 1), datetime.date(2014, 8, 2)), dates)
 
     # Dilute returns from a faraway initial date.
-    @loader.loaddoc
+    @loader.load_doc()
     def test_returns_diluted(self, entries, errors, options_map):
         """
         1990-01-01 open Assets:US:Investments:Cash
@@ -272,7 +271,7 @@ class TestReturnsPeriods(test_utils.TestCase):
 
 class TestReturnsConstrained(test_utils.TestCase):
 
-    @loader.loaddoc
+    @loader.load_doc()
     def setUp(self, entries, errors, _):
         """
         2014-01-01 open Assets:US:Investments:ACME
@@ -453,7 +452,7 @@ class TestReturnsConstrained(test_utils.TestCase):
                                           '24 ACME {130 USD}')
         self.assertEqual(inv_final, periods[-1][3])
 
-    @loader.loaddoc
+    @loader.load_doc()
     def test_segment_periods_hanging_last_period(self, entries, errors, _):
         """
         2014-01-01 open Assets:US:Investments:ACME
@@ -490,7 +489,7 @@ class TestReturnsConstrained(test_utils.TestCase):
 class TestReturnsInternalize(cmptest.TestCase):
 
     # Check internalization of all transaction categories.
-    @loader.loaddoc
+    @loader.load_doc()
     def test_internalization_implicit(self, entries, errors, _):
         """
         ;; Value accounts
@@ -599,7 +598,7 @@ class TestReturnsInternalize(cmptest.TestCase):
         2014-01-01 open Equity:Internalized
         """, new_entries)
 
-    @loader.loaddoc
+    @loader.load_doc()
     def test_internalization_explicit(self, entries, errors, _):
         """
         2014-01-01 open Assets:Invest:Cash      USD
@@ -645,7 +644,7 @@ class TestReturnsInternalize(cmptest.TestCase):
         """, replaced_entries)
 
 
-    @loader.loaddoc
+    @loader.load_doc()
     def test_internalization_implicit_returns(self, entries, errors, _):
         """
         2014-01-01 open Assets:Bank:Checking    USD
@@ -684,7 +683,7 @@ class TestReturnsInternalize(cmptest.TestCase):
                 [], 'Equity:Internalized',
                 {'Assets:Invest:Cash'}, {'Expenses:Fees'}, {'Income:Invest:PnL'})
 
-    @loader.loaddoc
+    @loader.load_doc()
     def test_internalization_explicit_returns(self, entries, errors, _):
         """
         2014-01-01 open Assets:Bank:Checking     USD
@@ -710,7 +709,7 @@ class TestReturnsInternalize(cmptest.TestCase):
         self.assertEqual({'USD': 1.1}, returns_)
         self.assertEqual((datetime.date(2014, 1, 1), datetime.date(2015, 1, 1)), dates)
 
-    @loader.loaddoc
+    @loader.load_doc()
     def test_internalization_explicit_returns_bycash(self, entries, errors, _):
         """
         2014-01-01 open Assets:Bank:Checking     USD
@@ -725,6 +724,7 @@ class TestReturnsInternalize(cmptest.TestCase):
         2014-01-10 * "Buying"
           Assets:Invest:Cash       -500.00 USD
           Assets:Invest:BOOG            50 BOOG {10.00 USD}
+        2014-01-10 price      BOOG   10.00 USD
 
         2014-04-01 * "Dividends"
           Assets:Invest:Cash         100.00 USD
@@ -780,7 +780,7 @@ class TestReturnsExampleScript(test_utils.TestCase):
 
 class TestReturnsWithUnrealized(test_utils.TestCase):
 
-    @loader.loaddoc
+    @loader.load_doc()
     def test_returns_with_unrealized(self, entries, errors, _):
         """
         plugin "beancount.plugins.unrealized"
@@ -817,8 +817,8 @@ class TestReturnsWithUnrealized(test_utils.TestCase):
         # it. Try moving the unrealized gains a bit earlier, just to make sure
         # it has no effect.
         last_entry = entries[-1]
-        moved_entry = data.entry_replace(last_entry,
-                                         date=last_entry.date - datetime.timedelta(days=20))
+        moved_entry = last_entry._replace(
+            date=last_entry.date - datetime.timedelta(days=20))
         new_entries = entries[:-1] + [moved_entry]
 
         returns_, dates, internalized_entries = returns.compute_returns(

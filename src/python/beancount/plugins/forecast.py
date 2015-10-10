@@ -63,9 +63,8 @@ def forecast_plugin(entries, options_map):
             for month in range(date_today.month + 1, 13):
                 # Create a new entry at the given datė
                 forecast_date = date_today.replace(month=month)
-                forecast_entry = data.entry_replace(entry,
-                                                    date=forecast_date,
-                                                    narration=forecast_narration)
+                forecast_entry = entry._replace(date=forecast_date,
+                                                narration=forecast_narration)
                 new_entries.append(forecast_entry)
 
     # Make sure the new entries inserted are sorted.

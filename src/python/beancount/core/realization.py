@@ -24,6 +24,7 @@ import copy
 
 from beancount.core.data import Transaction
 from beancount.core.data import Posting
+from beancount.core.data import TxnPosting
 from beancount.core.data import Balance
 from beancount.core.data import Open
 from beancount.core.data import Close
@@ -34,7 +35,6 @@ from beancount.core import inventory
 from beancount.core import amount
 from beancount.core import data
 from beancount.core import account
-from beancount.core import interpolate
 from beancount.core import flags
 
 
@@ -47,7 +47,7 @@ class RealAccount(dict):
         include the postings of children accounts).
       balance: The final balance of the list of postings associated with this account.
     """
-    __slots__ = ('account', 'postings', 'balance')
+    __slots__ = ('account', 'txn_postings', 'balance')
 
     def __init__(self, account_name, *args, **kwargs):
         """Create a RealAccount instance.
@@ -58,7 +58,7 @@ class RealAccount(dict):
         super().__init__(*args, **kwargs)
         assert isinstance(account_name, str)
         self.account = account_name
-        self.postings = []
+        self.txn_postings = []
         self.balance = inventory.Inventory()
 
     def __setitem__(self, key, value):
@@ -103,7 +103,7 @@ class RealAccount(dict):
         return (dict.__eq__(self, other) and
                 self.account == other.account and
                 self.balance == other.balance and
-                self.postings == other.postings)
+                self.txn_postings == other.txn_postings)
 
     def __ne__(self, other):
         """Not-equality predicate. See __eq__.
@@ -219,13 +219,13 @@ def realize(entries, min_accounts=None, compute_balance=True):
        +-------------+           +------+
                                      |
                                      v
-                                +---------+     +-------------+
-                                | Posting |---->| Transaction |
-                                +---------+     +-------------+
-                                     |                         \
-                                     v                       +---------+
-                                  +-----+                    | Posting |
-                                  | Pad |                    +---------+
+                              +------------+     +-------------+
+                              | TxnPosting |---->| Transaction |
+                              +------------+     +-------------+
+                                     |      \                 \\\
+                                     v       `\.__          +---------+
+                                  +-----+         `-------->| Posting |
+                                  | Pad |                   +---------+
                                   +-----+
                                      |
                                      v
@@ -251,15 +251,15 @@ def realize(entries, min_accounts=None, compute_balance=True):
       The root RealAccount instance.
     """
     # Create lists of the entries by account.
-    postings_map = postings_by_account(entries)
+    txn_postings_map = postings_by_account(entries)
 
     # Create a RealAccount tree and compute the balance for each.
     real_root = RealAccount('')
-    for account_name, postings in postings_map.items():
+    for account_name, txn_postings in txn_postings_map.items():
         real_account = get_or_create(real_root, account_name)
-        real_account.postings = postings
+        real_account.txn_postings = txn_postings
         if compute_balance:
-            real_account.balance = interpolate.compute_postings_balance(postings)
+            real_account.balance = compute_postings_balance(txn_postings)
 
     # Ensure a minimum set of accounts that should exist. This is typically
     # called with an instance of AccountTypes to make sure that those exist.
@@ -282,28 +282,28 @@ def postings_by_account(entries):
     Args:
       entries: A list of directives.
     Returns:
-       A mapping of account name to list of postings, sorted in the same order
-       as the entries.
-
+       A mapping of account name to list of TxnPosting instances or
+       non-Transaction directives, sorted in the same order as the entries.
     """
-    postings_map = collections.defaultdict(list)
+    txn_postings_map = collections.defaultdict(list)
     for entry in entries:
 
         if isinstance(entry, Transaction):
             # Insert an entry for each of the postings.
             for posting in entry.postings:
-                postings_map[posting.account].append(posting)
+                txn_postings_map[posting.account].append(
+                    TxnPosting(entry, posting))
 
         elif isinstance(entry, (Open, Close, Balance, Note, Document)):
             # Append some other entries in the realized list.
-            postings_map[entry.account].append(entry)
+            txn_postings_map[entry.account].append(entry)
 
         elif isinstance(entry, Pad):
             # Insert the pad entry in both realized accounts.
-            postings_map[entry.account].append(entry)
-            postings_map[entry.source_account].append(entry)
+            txn_postings_map[entry.account].append(entry)
+            txn_postings_map[entry.source_account].append(entry)
 
-    return postings_map
+    return txn_postings_map
 
 
 def filter(real_account, predicate):
@@ -326,7 +326,7 @@ def filter(real_account, predicate):
 
     real_copy = RealAccount(real_account.account)
     real_copy.balance = real_account.balance
-    real_copy.postings = real_account.postings
+    real_copy.txn_postings = real_account.txn_postings
 
     for child_name, real_child in real_account.items():
         real_child_copy = filter(real_child, predicate)
@@ -349,12 +349,12 @@ def get_postings(real_account):
     # because we need to return them sorted.
     accumulator = []
     for real_child in iter_children(real_account):
-        accumulator.extend(real_child.postings)
+        accumulator.extend(real_child.txn_postings)
     accumulator.sort(key=data.posting_sortkey)
     return accumulator
 
 
-def iterate_with_balance(postings_or_entries):
+def iterate_with_balance(txn_postings):
     """Iterate over the entries, accumulating the running balance.
 
     For each entry, this yields tuples of the form:
@@ -381,7 +381,7 @@ def iterate_with_balance(postings_or_entries):
       the entry, to decide whether to render this entry's change for a
       particular entry type.
 
-    Note that if the input list of postings_or_entries is not in sorted date
+    Note that if the input list of postings-or-entries is not in sorted date
     order, two postings for the same entry appearing twice with a different date
     in between will cause the entry appear twice. This is correct behavior, and
     it is expected that in practice this should never happen anyway, because the
@@ -389,7 +389,7 @@ def iterate_with_balance(postings_or_entries):
     detect this and raises an assertion if this is seen.
 
     Args:
-      postings_or_entries: A list of postings or directive instances.
+      txn_postings: A list of postings or directive instances.
         Postings affect the balance; other entries do not.
     Yields:
       Tuples of (entry, postings, change, balance) as described above.
@@ -405,15 +405,16 @@ def iterate_with_balance(postings_or_entries):
     date_entries = []
 
     first = lambda pair: pair[0]
-    for posting_or_entry in postings_or_entries:
+    for txn_posting in txn_postings:
 
         # Get the posting if we are dealing with one.
-        if isinstance(posting_or_entry, Posting):
-            posting = posting_or_entry
-            entry = posting.entry
+        assert not isinstance(txn_posting, Posting)
+        if isinstance(txn_posting, TxnPosting):
+            posting = txn_posting.posting
+            entry = txn_posting.txn
         else:
             posting = None
-            entry = posting_or_entry
+            entry = txn_posting
 
         if entry.date != prev_date:
             assert prev_date is None or entry.date > prev_date, (
@@ -473,7 +474,7 @@ def compute_balance(real_account):
     return total_balance
 
 
-def find_last_active_posting(postings):
+def find_last_active_posting(txn_postings):
     """Look at the end of the list of postings, and find the last
     posting or entry that is not an automatically added directive.
     Note that if the account is closed, the last posting is assumed
@@ -481,19 +482,21 @@ def find_last_active_posting(postings):
     and checks without errors.
 
     Args:
-      postings: a list of postings or entries.
+      txn_postings: a list of postings or entries.
     Returns:
       An entry, or None, if the input list was empty.
     """
-    for posting in reversed(postings):
-        if not isinstance(posting, (Posting, Open, Close, Pad, Balance, Note)):
+    for txn_posting in reversed(txn_postings):
+        assert not isinstance(txn_posting, Posting)
+
+        if not isinstance(txn_posting, (TxnPosting, Open, Close, Pad, Balance, Note)):
             continue
 
         # pylint: disable=bad-continuation
-        if (isinstance(posting, Posting) and
-            posting.entry.flag == flags.FLAG_UNREALIZED):
+        if (isinstance(txn_posting, TxnPosting) and
+            txn_posting.txn.flag == flags.FLAG_UNREALIZED):
             continue
-        return posting
+        return txn_posting
 
 
 def index_key(sequence, value, key, cmp):
@@ -654,3 +657,21 @@ def dump_balances(real_account, at_cost=False, fullnames=False, file=None):
 
     if file is None:
         return output.getvalue()
+
+
+def compute_postings_balance(txn_postings):
+    """Compute the balance of a list of Postings's or TxnPosting's positions.
+
+    Args:
+      postings: A list of Posting instances and other directives (which are
+        skipped).
+    Returns:
+      An Inventory.
+    """
+    final_balance = inventory.Inventory()
+    for txn_posting in txn_postings:
+        if isinstance(txn_posting, Posting):
+            final_balance.add_position(txn_posting.position)
+        elif isinstance(txn_posting, TxnPosting):
+            final_balance.add_position(txn_posting.posting.position)
+    return final_balance

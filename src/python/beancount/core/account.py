@@ -16,6 +16,10 @@ from os import path
 sep = ':'
 
 
+# Regular expression string that matchs a valid account.
+ACCOUNT_RE = '[A-Z][A-Za-z0-9\-]+(?:{}[A-Z][A-Za-z0-9\-]+)+'.format(sep)
+
+
 def is_valid(string):
     """Return true if the given string is a valid account name.
     This does not check for the root account types, just the general syntax.
@@ -26,8 +30,7 @@ def is_valid(string):
       A boolean, true if the string has the form of an account's name.
     """
     return (isinstance(string, str) and
-            bool(re.match('([A-Z][A-Za-z0-9\-]+)({}[A-Z][A-Za-z0-9\-]+)+$'.format(sep),
-                          string)))
+            bool(re.match('{}$'.format(ACCOUNT_RE), string)))
 
 
 def join(*components):

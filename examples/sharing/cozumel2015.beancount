@@ -4,8 +4,8 @@
 ;;
 option "title" "Mexico Trip: Cozumel & Tulum SCUBA Diving"
 
-;plugin "beancount.projects.split_expenses" "Martin Caroline"
-plugin "beancount.ops.auto_accounts"
+plugin "beancount.plugins.split_expenses" "Martin Caroline"
+plugin "beancount.plugins.auto_accounts"
 
 option "operating_currency" "USD"
 option "operating_currency" "MXN"

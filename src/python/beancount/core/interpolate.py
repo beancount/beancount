@@ -14,9 +14,8 @@ from beancount.core.position import Lot
 from beancount.core.position import Position
 from beancount.core.data import Transaction
 from beancount.core.data import Posting
-from beancount.core.data import reparent_posting
-from beancount.core.data import entry_replace
 from beancount.core import getters
+from beancount.core import account
 
 
 # The default tolerances value to use for legacy tolerances.
@@ -49,8 +48,8 @@ def get_posting_weight(posting):
 
       Assets:Account  5234.50 USD                             ->  5234.50 USD
       Assets:Account  3877.41 EUR @ 1.35 USD                  ->  5234.50 USD
-      Assets:Account       10 GOOG {523.45 USD}               ->  5234.50 USD
-      Assets:Account       10 GOOG {523.45 USD} @ 545.60 CAD  ->  5234.50 USD
+      Assets:Account       10 HOOL {523.45 USD}               ->  5234.50 USD
+      Assets:Account       10 HOOL {523.45 USD} @ 545.60 CAD  ->  5234.50 USD
 
     Args:
       posting: A Posting instance.
@@ -210,7 +209,7 @@ def get_residual_postings(residual, account_rounding):
     """
     meta = {AUTOMATIC_META: True,
             AUTOMATIC_RESIDUAL: True}
-    return [Posting(None, account_rounding, -position, None, None, meta.copy())
+    return [Posting(account_rounding, -position, None, None, meta.copy())
             for position in residual.get_positions()]
 
 
@@ -239,7 +238,7 @@ def fill_residual_posting(entry, account_rounding):
     else:
         new_postings = list(entry.postings)
         new_postings.extend(get_residual_postings(residual, account_rounding))
-        return entry_replace(entry, postings=new_postings)
+        return entry._replace(postings=new_postings)
 
 
 def get_incomplete_postings(entry, options_map):
@@ -352,7 +351,7 @@ def get_incomplete_postings(entry, options_map):
                 meta = copy.copy(old_posting.meta) if old_posting.meta else {}
                 meta[AUTOMATIC_META] = True
                 new_postings.append(
-                    Posting(entry, old_posting.account, position,
+                    Posting(old_posting.account, position,
                             None, old_posting.flag, old_posting.meta))
                 has_inserted = True
         else:
@@ -383,7 +382,7 @@ def get_incomplete_postings(entry, options_map):
                 meta = copy.copy(old_posting.meta) if old_posting.meta else {}
                 meta[AUTOMATIC_META] = True
                 new_postings.append(
-                    Posting(entry, old_posting.account, position,
+                    Posting(old_posting.account, position,
                             None, old_posting.flag, meta))
                 has_inserted = True
 
@@ -412,7 +411,7 @@ def balance_incomplete_postings(entry, options_map):
     all the postings to this entry. Futhermore, it stores the dict
     of inferred tolerances as metadata.
 
-    WARNING: This destructively modified entry itself!
+    WARNING: This destructively modifies entry itself!
 
     Args:
       entry: An instance of a valid directive. This entry is modified by
@@ -432,39 +431,23 @@ def balance_incomplete_postings(entry, options_map):
     # If we need to accumulate rounding error to accumulate the residual, add
     # suitable postings here.
     if not residual.is_empty():
-        account_rounding = options_map["account_rounding"]
-        if account_rounding:
+        rounding_subaccount = options_map["account_rounding"]
+        if rounding_subaccount:
+            account_rounding = account.join(options_map['name_equity'], rounding_subaccount)
             rounding_postings = get_residual_postings(residual, account_rounding)
             postings.extend(rounding_postings)
 
     # If we could make this faster to avoid the unnecessary copying, it would
     # make parsing substantially faster.
-    # PERF(25ms): could be saved here by avoiding reparenting.
     entry.postings.clear()
     for posting in postings:
-        entry.postings.append(reparent_posting(posting, entry))
+        entry.postings.append(posting)
 
     if entry.meta is None:
         entry.meta = {}
     entry.meta['__tolerances__'] = tolerances
 
     return errors or None
-
-
-def compute_postings_balance(postings):
-    """Compute the balance of a list of Postings's positions.
-
-    Args:
-      postings: A list of Posting instances and other directives (which are
-        skipped).
-    Returns:
-      An Inventory.
-    """
-    final_balance = Inventory()
-    for posting in postings:
-        if isinstance(posting, Posting):
-            final_balance.add_position(posting.position)
-    return final_balance
 
 
 def compute_entries_balance(entries, prefix=None, date=None):

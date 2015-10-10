@@ -75,7 +75,7 @@ def split_currency_conversions(entry):
     transaction like this one:
 
       2014-11-02 * "Buy some stock with foreign currency funds"
-        Assets:CA:Investment:GOOG          5 GOOG {520.0 USD}
+        Assets:CA:Investment:HOOL          5 HOOL {520.0 USD}
         Expenses:Commissions            9.95 USD
         Assets:CA:Investment:Cash   -2939.46 CAD @ 0.8879 USD
 
@@ -108,19 +108,18 @@ def split_currency_conversions(entry):
             weight = interpolate.get_posting_weight(posting_orig)
             simple_position = position.Position(position.Lot(weight.currency, None, None),
                                                 weight.number)
-            posting_pos = data.Posting(None, posting_orig.account, simple_position,
+            posting_pos = data.Posting(posting_orig.account, simple_position,
                                        None, None, None)
-            posting_neg = data.Posting(None, posting_orig.account, -simple_position,
+            posting_neg = data.Posting(posting_orig.account, -simple_position,
                                        None, None, None)
 
-            currency_entry = data.entry_replace(
-                entry,
+            currency_entry = entry._replace(
                 postings=[posting_orig, posting_neg],
                 narration=entry.narration + ' (Currency conversion)')
             new_entries.append(currency_entry)
             replacement_postings.append(posting_pos)
 
-        converted_entry = data.entry_replace(entry, postings=(
+        converted_entry = entry._replace(postings=(
             postings_at_cost + postings_simple + replacement_postings))
         new_entries.append(converted_entry)
     else:
@@ -186,9 +185,9 @@ class LedgerPrinter:
                                                          e=entry))
 
         for posting in entry.postings:
-            self.Posting(posting, oss)
+            self.Posting(posting, entry, oss)
 
-    def Posting(self, posting, oss):
+    def Posting(self, posting, entry, oss):
         flag = '{} '.format(posting.flag) if posting.flag else ''
         assert posting.account is not None
 
@@ -205,7 +204,7 @@ class LedgerPrinter:
             # See https://groups.google.com/d/msg/ledger-cli/35hA0Dvhom0/WX8gY_5kHy0J
             (postings_simple,
              postings_at_price,
-             postings_at_cost) = postings_by_type(posting.entry)
+             postings_at_cost) = postings_by_type(entry)
 
             if postings_at_price and postings_at_cost and posting.position.lot.cost:
                 price_str = '@ {}'.format(
@@ -265,6 +264,10 @@ class LedgerPrinter:
         oss.write(
             ';; Event: {e.date:%Y/%m/%d} "{e.type}" "{e.description}"\n'.format(e=entry))
 
+    def Query(_, entry, oss):
+        oss.write(
+            ';; Query: {e.date:%Y/%m/%d} "{e.name}" "{e.query_string}"\n'.format(e=entry))
+
 
 class HLedgerReport(report.Report):
     """Print out the entries in a format that can be parsed by HLedger."""
@@ -284,7 +287,7 @@ class HLedgerPrinter(LedgerPrinter):
 
     # pylint: disable=invalid-name
 
-    def Posting(self, posting, oss):
+    def Posting(self, posting, entry, oss):
         flag = '{} '.format(posting.flag) if posting.flag else ''
         assert posting.account is not None
 

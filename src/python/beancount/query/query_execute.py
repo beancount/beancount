@@ -109,6 +109,9 @@ class RowContext:
     # The current posting being evaluated.
     posting = None
 
+    # The current transaction of the posting being evaluated.
+    entry = None
+
     # The current running balance *after* applying the posting.
     balance = None
 
@@ -151,8 +154,9 @@ def execute_query(query, entries, options_map):
           'result_types'.
     """
     # Filter the entries using the WHERE clause.
-    if query.c_from is not None:
-        entries = filter_entries(query.c_from, entries, options_map)
+    filt_entries = (filter_entries(query.c_from, entries, options_map)
+                    if query.c_from is not None else
+                    entries)
 
     # Figure out the result types that describe what we return.
     result_types = [(target.name, target.c_expr.dtype)
@@ -207,8 +211,9 @@ def execute_query(query, entries, options_map):
                           for c_target in query.c_targets]
 
         # Iterate over all the postings once and produce schwartzian rows.
-        for entry in entries:
+        for entry in filt_entries:
             if isinstance(entry, data.Transaction):
+                context.entry = entry
                 for posting in entry.postings:
                     context.posting = posting
                     if c_where is None or c_where(context):
@@ -251,8 +256,9 @@ def execute_query(query, entries, options_map):
 
         # Iterate over all the postings to evaluate the aggregates.
         agg_store = {}
-        for entry in entries:
+        for entry in filt_entries:
             if isinstance(entry, data.Transaction):
+                context.entry = entry
                 for posting in entry.postings:
                     context.posting = posting
                     if c_where is None or c_where(context):

@@ -36,6 +36,7 @@ from beancount.core import inventory
 from beancount.core import realization
 from beancount.core import display_context
 from beancount.parser import parser
+from beancount.parser import booking
 from beancount.parser import printer
 from beancount.ops import validation
 from beancount.ops import prices
@@ -173,13 +174,15 @@ option "operating_currency" "CCY"
 def parse(input_string, **replacements):
     """Parse some input string and assert no errors.
 
+    This parse function does not just create the object, it also triggers local
+    interpolation to fill in the missing amounts.
+
     Args:
       input_string: Beancount input text.
       **replacements: A dict of keywords to replace to their values.
     Returns:
       A list of directive objects.
     """
-
     if replacements:
         import string
         class IgnoreFormatter(string.Formatter):
@@ -190,10 +193,13 @@ def parse(input_string, **replacements):
     else:
         formatted_string = input_string
 
-    entries, errors, unused_options = parser.parse_string(textwrap.dedent(formatted_string))
+    entries, errors, options_map = parser.parse_string(textwrap.dedent(formatted_string))
     if errors:
         printer.print_errors(errors, file=sys.stderr)
         raise ValueError("Parsed text has errors")
+
+    # Interpolation.
+    entries, unused_balance_errors = booking.book(entries, options_map)
 
     return data.sorted(entries)
 
@@ -265,7 +271,7 @@ def merge_postings(entries, accounts):
       entries: A list of directives.
       accounts: A list of account strings to get the balances for.
     Yields:
-      A list of postings for all the accounts, in sorted order.
+      A list of TxnPosting's for all the accounts, in sorted order.
     """
     real_root = realization.realize(entries)
     merged_postings = []
@@ -273,10 +279,10 @@ def merge_postings(entries, accounts):
         real_account = realization.get(real_root, account)
         if real_account is None:
             continue
-        merged_postings.extend(posting
-                               for posting in real_account.postings
-                               if isinstance(posting, data.Posting))
-    merged_postings.sort(key=lambda posting: posting.entry.date)
+        merged_postings.extend(txn_posting
+                               for txn_posting in real_account.txn_postings
+                               if isinstance(txn_posting, data.TxnPosting))
+    merged_postings.sort(key=lambda txn_posting: txn_posting.txn.date)
     return merged_postings
 
 
@@ -292,20 +298,21 @@ def postings_for(entries, accounts, before=False):
         The default is to yield the balance after applying the position.
     Yields:
       Tuples of:
-        posting: An instance of Posting
+        posting: An instance of TxnPosting
         balances: A dict of Inventory balances for the given accounts _after_
           applying the posting. These inventory objects can be mutated to adjust
           the balance due to generated transactions to be applied later.
     """
     assert isinstance(accounts, list)
-    merged_postings = merge_postings(entries, accounts)
+    merged_txn_postings = merge_postings(entries, accounts)
     balances = collections.defaultdict(inventory.Inventory)
-    for posting in merged_postings:
+    for txn_posting in merged_txn_postings:
         if before:
-            yield posting, balances
+            yield txn_posting, balances
+        posting = txn_posting.posting
         balances[posting.account].add_position(posting.position)
         if not before:
-            yield posting, balances
+            yield txn_posting, balances
 
 
 def iter_dates_with_balance(date_begin, date_end, entries, accounts):
@@ -323,12 +330,13 @@ def iter_dates_with_balance(date_begin, date_end, entries, accounts):
           balance.
     """
     balances = collections.defaultdict(inventory.Inventory)
-    merged_postings = iter(merge_postings(entries, accounts))
-    posting = next(merged_postings, None)
+    merged_txn_postings = iter(merge_postings(entries, accounts))
+    txn_posting = next(merged_txn_postings, None)
     for date in date_iter(date_begin, date_end):
-        while posting and posting.entry.date == date:
+        while txn_posting and txn_posting.txn.date == date:
+            posting = txn_posting.posting
             balances[posting.account].add_position(posting.position)
-            posting = next(merged_postings, None)
+            txn_posting = next(merged_txn_postings, None)
         yield date, balances
 
 
@@ -367,7 +375,7 @@ def get_minimum_balance(entries, account, currency):
       A Decimal number, the minimum amount throughout the history of this account.
     """
     min_amount = ZERO
-    for posting, balances in postings_for(data.sorted(entries), [account]):
+    for _, balances in postings_for(data.sorted(entries), [account]):
         balance = balances[account]
         current = balance.get_units(currency).number
         if current < min_amount:
@@ -535,10 +543,12 @@ def generate_tax_accounts(year, date_max):
     date_federal = (date_filing + datetime.timedelta(days=random.randint(0, 4)))
     date_state = (date_filing + datetime.timedelta(days=random.randint(0, 4)))
 
-    amount_federal = D(max(random.normalvariate(500, 120), 12))
-    amount_federal_neg = amount_federal
-    amount_state = D(max(random.normalvariate(300, 100), 10))
-    amount_state_neg = amount_state
+    quantum = D('0.01')
+    amount_federal = D(max(random.normalvariate(500, 120), 12)).quantize(quantum)
+    amount_federal_neg = -amount_federal
+    amount_state = D(max(random.normalvariate(300, 100), 10)).quantize(quantum)
+    amount_state_neg = -amount_state
+    amount_payable = -(amount_federal + amount_state)
 
     amount_limit = RETIREMENT_LIMITS.get(year, RETIREMENT_LIMITS[None])
     amount_limit_neg = -amount_limit
@@ -564,15 +574,15 @@ def generate_tax_accounts(year, date_max):
       {date_filing} * "Filing taxes for {year}"
         Expenses:Taxes:Y{year}:CC:Federal      {amount_federal:.2f} CCY
         Expenses:Taxes:Y{year}:CC:State        {amount_state:.2f} CCY
-        Liabilities:AccountsPayable
+        Liabilities:AccountsPayable            {amount_payable:.2f} CCY
 
       {date_federal} * "FEDERAL TAXPYMT"
         Assets:CC:Bank1:Checking       {amount_federal_neg:.2f} CCY
-        Liabilities:AccountsPayable
+        Liabilities:AccountsPayable    {amount_federal:.2f} CCY
 
       {date_state} * "STATE TAX & FINANC PYMT"
         Assets:CC:Bank1:Checking       {amount_state_neg:.2f} CCY
-        Liabilities:AccountsPayable
+        Liabilities:AccountsPayable    {amount_state:.2f} CCY
 
     """, **locals())
 
@@ -597,10 +607,10 @@ def generate_retirement_employer_match(entries, account_invest, account_income):
 
     """, date=entries[0].date, account_income=account_income)
 
-    for posting, balances in postings_for(entries, [account_invest]):
-        amount = posting.position.number * match_frac
+    for txn_posting, balances in postings_for(entries, [account_invest]):
+        amount = txn_posting.posting.position.number * match_frac
         amount_neg = -amount
-        date = posting.entry.date + ONE_DAY
+        date = txn_posting.txn.date + ONE_DAY
         new_entries.extend(parse("""
 
           {date} * "Employer match for contribution"
@@ -636,12 +646,12 @@ def generate_retirement_investments(entries, account, commodities_items, price_m
         """, **locals()))
 
     new_entries = []
-    for posting, balances in postings_for(entries, [account_cash]):
+    for txn_posting, balances in postings_for(entries, [account_cash]):
         balance = balances[account_cash]
         amount_to_invest = balance.get_units('CCY').number
 
         # Find the date the following Monday, the date to invest.
-        txn_date = posting.entry.date
+        txn_date = txn_posting.txn.date
         while txn_date.weekday() != calendar.MONDAY:
             txn_date += ONE_DAY
 
@@ -680,6 +690,7 @@ def generate_banking(date_begin, date_end, amount_initial):
 
     """
     date_balance = date_begin + datetime.timedelta(days=1)
+    amount_initial_neg = -amount_initial
     return parse("""
 
       {date_begin} open Assets:CC:Bank1:Checking    CCY
@@ -687,7 +698,7 @@ def generate_banking(date_begin, date_end, amount_initial):
 
       {date_begin} * "Opening Balance for checking account"
         Assets:CC:Bank1:Checking   {amount_initial} CCY
-        Equity:Opening-Balances
+        Equity:Opening-Balances    {amount_initial_neg} CCY
 
       {date_balance} balance Assets:CC:Bank1:Checking   {amount_initial} CCY
 
@@ -766,10 +777,11 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
             # Create an entry offering dividends of 1% of the portfolio.
             portfolio_cost = total.cost().get_units('CCY').number
             amount_cash = (frac_dividend * portfolio_cost).quantize(D('0.01'))
+            amount_cash_neg = -amount_cash
             dividend = parse("""
               {next_dividend_date} * "Dividends on portfolio"
                 {account}:Cash        {amount_cash:.2f} CCY
-                {account_dividends}
+                {account_dividends}   {amount_cash_neg:.2f} CCY
             """, **locals())[0]
             new_entries.append(dividend)
 
@@ -803,9 +815,9 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
 
                     buy = parse("""
                       {date} * "Buy shares of {stock}"
-                        {account}:Cash        {amount_cash:.2f} CCY
-                        {account}:{stock}     {units:.0f} {stock} {{{price:.2f} CCY}}
-                        Expenses:Financial:Commissions   {commission:.2f} CCY
+                        {account}:Cash                  {amount_cash:.2f} CCY
+                        {account}:{stock}               {units:.0f} {stock} {{{price:.2f} CCY}}
+                        Expenses:Financial:Commissions  {commission:.2f} CCY
                     """, **locals())[0]
                     new_entries.append(buy)
 
@@ -842,12 +854,13 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
             sell_position = -sell_position
             stock = sell_position.lot.currency
             amount_cash = market_value - commission
+            amount_gain = -gain
             sell = parse("""
               {date} * "Sell shares of {stock}"
                 {account}:{stock}               {sell_position} @ {price:.2f} CCY
                 {account}:Cash                  {amount_cash:.2f} CCY
                 Expenses:Financial:Commissions  {commission:.2f} CCY
-                {account_gains}
+                {account_gains}                 {amount_gain:.2f} CCY
             """, **locals())[0]
             new_entries.append(sell)
 
@@ -904,7 +917,7 @@ def generate_clearing_entries(date_iter,
       date_iter: An iterator of datetime.date instances.
       payee: A string, the payee name to use on the transactions.
       narration: A string, the narration to use on the transactions.
-      postings_iter: Iterator for postings and balances, as per postings_for().
+      entries: A list of entries.
       account_clear: The account to clear.
       account_from: The source account to clear 'account_clear' from.
     Returns:
@@ -915,11 +928,11 @@ def generate_clearing_entries(date_iter,
 
     # Iterate over all the postings of the account to clear.
     new_entries = []
-    for posting, balances in postings_for(entries, [account_clear]):
+    for txn_posting, balances in postings_for(entries, [account_clear]):
         balance_clear = balances[account_clear]
 
         # Check if we need to clear.
-        if next_date <= posting.entry.date:
+        if next_date <= txn_posting.txn.date:
             pos_amount = balance_clear.get_units('CCY')
             neg_amount = -pos_amount
             new_entries.extend(parse("""
@@ -966,8 +979,8 @@ def generate_outgoing_transfers(entries,
 
     # Reverse the balance amounts taking into account the minimum balance for
     # all time in the future.
-    amounts = [(balances[account].get_units('CCY').number, posting)
-               for posting, balances in postings_for(entries, [account])]
+    amounts = [(balances[account].get_units('CCY').number, txn_posting)
+               for txn_posting, balances in postings_for(entries, [account])]
     reversed_amounts = []
     last_amount, _ = amounts[-1]
     for current_amount, _ in reversed(amounts):
@@ -981,8 +994,8 @@ def generate_outgoing_transfers(entries,
     # Create transfers outward where the future allows it.
     new_entries = []
     offset_amount = ZERO
-    for current_amount, (_, posting) in zip(capped_amounts, amounts):
-        if posting.entry.date >= last_date:
+    for current_amount, (_, txn_posting) in zip(capped_amounts, amounts):
+        if txn_posting.txn.date >= last_date:
             break
 
         adjusted_amount = current_amount - offset_amount
@@ -990,7 +1003,7 @@ def generate_outgoing_transfers(entries,
             amount_transfer = round_to(adjusted_amount - transfer_minimum,
                                        transfer_increment)
 
-            date = posting.entry.date + datetime.timedelta(days=1)
+            date = txn_posting.txn.date + datetime.timedelta(days=1)
             amount_transfer_neg = -amount_transfer
             new_entries.extend(parse("""
               {date} * "Transfering accumulated savings to other account"
@@ -1064,8 +1077,8 @@ def generate_balance_checks(entries, account, date_iter):
     date_iter = iter(date_iter)
     next_date = next(date_iter)
     with misc_utils.swallow(StopIteration):
-        for posting, balance in postings_for(entries, [account], before=True):
-            while posting.entry.date >= next_date:
+        for txn_posting, balance in postings_for(entries, [account], before=True):
+            while txn_posting.txn.date >= next_date:
                 amount = balance[account].get_units('CCY').number
                 balance_checks.extend(parse("""
                   {next_date} balance {account} {amount} CCY
@@ -1086,12 +1099,12 @@ def check_non_negative(entries, account, currency):
       AssertionError: if the balance goes negative.
     """
     previous_date = None
-    for posting, balances in postings_for(data.sorted(entries), [account], before=True):
+    for txn_posting, balances in postings_for(data.sorted(entries), [account], before=True):
         balance = balances[account]
-        date = posting.entry.date
+        date = txn_posting.txn.date
         if date != previous_date:
             assert all(pos.number >= ZERO for pos in balance.get_positions()), (
-                "Negative balance: {} at: {}".format(balance, posting.entry.date))
+                "Negative balance: {} at: {}".format(balance, txn_posting.txn.date))
         previous_date = date
 
 
@@ -1158,10 +1171,10 @@ def generate_banking_expenses(date_begin, date_end, account, rent_amount):
         lambda: random.normalvariate(60, 10))
 
     return data.sorted(fee_expenses +
-                     rent_expenses +
-                     electricity_expenses +
-                     internet_expenses +
-                     phone_expenses)
+                       rent_expenses +
+                       electricity_expenses +
+                       internet_expenses +
+                       phone_expenses)
 
 
 def generate_regular_credit_expenses(date_birth, date_begin, date_end,

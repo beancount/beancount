@@ -4,8 +4,8 @@ import io
 import unittest
 
 from beancount.core.number import D
+from beancount.core.amount import A
 from beancount.core import realization
-from beancount.core import amount
 from beancount.core import position
 from beancount.core import data
 from beancount.reports import journal_text
@@ -17,8 +17,8 @@ class TestAmountColumnSizer(unittest.TestCase):
     def test_sizer(self):
         sizer = journal_text.AmountColumnSizer('balance')
         sizer.update(D('10'), 'USD')
-        sizer.update(D('200'), 'GOOG')
-        sizer.update(D('3000.01'), 'GOOGL')
+        sizer.update(D('200'), 'HOOL')
+        sizer.update(D('3000.01'), 'HOOLB')
         self.assertEqual(4, sizer.get_number_width())
         self.assertEqual('{0:>10.4f} {1:<5}', sizer.get_format(4))
         self.assertEqual('{balance:<16}', sizer.get_generic_format(4))
@@ -30,7 +30,7 @@ class TestJournalRenderPosting(unittest.TestCase):
 
     def test_render_posting_no_cost(self):
         str_posting = journal_text.render_posting(
-            data.Posting(None, 'Assets:Something',
+            data.Posting('Assets:Something',
                          position.from_string('100 USD'), None, None, None),
             self.number_format)
         self.assertEqual('  Assets:Something                 100 USD',
@@ -38,7 +38,7 @@ class TestJournalRenderPosting(unittest.TestCase):
 
     def test_render_posting_cost(self):
         str_posting = journal_text.render_posting(
-            data.Posting(None, 'Assets:Something',
+            data.Posting('Assets:Something',
                          position.from_string('10 VHT {45.32 USD}'), None, None, None),
             self.number_format)
         self.assertEqual('  Assets:Something                 10 VHT {45.32 USD}',
@@ -46,18 +46,18 @@ class TestJournalRenderPosting(unittest.TestCase):
 
     def test_render_posting_price(self):
         str_posting = journal_text.render_posting(
-            data.Posting(None, 'Assets:Something',
+            data.Posting('Assets:Something',
                          position.from_string('10 VHT'),
-                         amount.from_string('45.32 USD'), None, None),
+                         A('45.32 USD'), None, None),
             self.number_format)
         self.assertEqual('  Assets:Something                 10 VHT @ 45.32 USD',
                          str_posting)
 
     def test_render_posting_cost_price(self):
         str_posting = journal_text.render_posting(
-            data.Posting(None, 'Assets:Something',
+            data.Posting('Assets:Something',
                          position.from_string('10 VHT {45.32 USD}'),
-                         amount.from_string('47.00 USD'), None, None),
+                         A('47.00 USD'), None, None),
             self.number_format)
         self.assertEqual(
             '  Assets:Something                 10 VHT {45.32 USD} @ 47.00 USD',
@@ -66,9 +66,11 @@ class TestJournalRenderPosting(unittest.TestCase):
 
 class TestJournalTextRender(unittest.TestCase):
 
-    @loader.loaddoc
+    @loader.load_doc(expect_errors=True)
     def setUp(self, entries, _, __):
         """
+        plugin "beancount.plugins.implicit_prices"
+
         2014-01-01 open Assets:Checking
         2014-01-01 open Assets:Investing
         2014-01-01 open Assets:Savings
