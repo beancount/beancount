@@ -58,7 +58,7 @@ class TestLexer(unittest.TestCase):
           Assets:US:Bank:Checking
           Liabilities:US:Bank:Credit
           Other:Bank
-          USD GOOG TEST_D TEST_3 TEST-D TEST-3 NT
+          USD HOOL TEST_D TEST_3 TEST-D TEST-3 NT
           "Nice dinner at Mermaid Inn"
           ""
           123 123.45 123.456789 -123 -123.456789
@@ -78,7 +78,7 @@ class TestLexer(unittest.TestCase):
             ('ACCOUNT', 4, 'Other:Bank', 'Other:Bank'),
             ('EOL', 5, '\n', None),
             ('CURRENCY', 5, 'USD', 'USD'),
-            ('CURRENCY', 5, 'GOOG', 'GOOG'),
+            ('CURRENCY', 5, 'HOOL', 'HOOL'),
             ('CURRENCY', 5, 'TEST_D', 'TEST_D'),
             ('CURRENCY', 5, 'TEST_3', 'TEST_3'),
             ('CURRENCY', 5, 'TEST-D', 'TEST-D'),
@@ -407,7 +407,7 @@ class TestIgnoredLines(unittest.TestCase):
         self.assertFalse(errors)
 
     @lex_tokens
-    def test_ignored__something_else(self, tokens, errors):
+    def test_ignored__something_else_non_flag(self, tokens, errors):
         """
         Xxx this sentence starts with a non-flag character.
         """

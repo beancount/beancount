@@ -1,6 +1,7 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import re
+import sys
 import unittest
 from os import path
 
@@ -26,8 +27,11 @@ class TestUseCases(unittest.TestCase):
 
     def runshell(function):
         def test_function(self):
+            def loadfun():
+                return entries, errors, options_map
             with test_utils.capture('stdout') as stdout:
-                shell_obj = shell.BQLShell(False, entries, errors, options_map)
+                shell_obj = shell.BQLShell(False, loadfun, sys.stdout)
+                shell_obj.on_Reload()
                 shell_obj.onecmd(function.__doc__)
             return function(self, stdout.getvalue())
         test_function.__name__ = function.__name__
@@ -46,9 +50,9 @@ class TestUseCases(unittest.TestCase):
         SELECT DISTINCT account, open_date(account)
         ORDER BY account_sortkey(account);
         """
-        self.assertTrue(re.search('Assets:US:BofA:Checking *2013-01-01', output))
-        self.assertTrue(re.search('Equity:Opening-Balances *1980-05-12', output))
-        self.assertTrue(re.search('Expenses:Financial:Commissions *1980-05-12', output))
+        self.assertRegexpMatches(output, 'Assets:US:BofA:Checking *2013-01-01')
+        self.assertRegexpMatches(output, 'Equity:Opening-Balances *1980-05-12')
+        self.assertRegexpMatches(output, 'Expenses:Financial:Commissions *1980-05-12')
 
     @runshell
     def test_commodities(self, output):

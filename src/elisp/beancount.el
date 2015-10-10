@@ -1,77 +1,40 @@
 ;;; beancount.el --- A minor mode that can be used to edit beancount input files.
 
 ;; Copyright (C) 2013 Martin Blais <blais@furius.ca>
+;; Copyright (C) 2015 Free Software Foundation, Inc.
+
+;; Version: 0
+;; Author: Martin Blais <blais@furius.ca>
+;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 
 ;; This file is not part of GNU Emacs.
 
+;; This package is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This package is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this package.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+;; TODO: Add a flymake rule, using bean-check
+
+;;; Code:
+
+;; FIXME: AFAIK, both of those `require's aren't needed.
 (require 'ido) ;; For completing read.
 (require 'font-lock)
 
-
-(define-minor-mode beancount-mode
-  "A minor mode to help editing Beancount files.
-This can be used within other text modes, in particular, org-mode
-is great for sectioning large files with many transactions."
-  :init-value nil
-  :lighter " Beancount"
-  :keymap
-  '(
-    ([(control c)(\')] . beancount-insert-account)
-    ([(control c)(control g)] . beancount-transaction-set-flag)
-    ([(control c)(r)] . beancount-init-accounts)
-    ([(control c)(l)] . beancount-check)
-    ([(control c)(q)] . beancount-query)
-    ([(control c)(x)] . beancount-context)
-    ([(control c)(k)] . beancount-linked)
-    ([(control c)(\;)] . beancount-align-to-previous-number)
-    ([(control c)(\:)] . beancount-align-numbers)
-    ([(control c)(p)] . beancount-test-align)
-    )
-  :group 'beancount
-
-  ;; The following is mostly lifted from lisp-mode.
-  (make-local-variable 'paragraph-ignore-fill-prefix)
-  (setq paragraph-ignore-fill-prefix t)
-  (make-local-variable 'fill-paragraph-function)
-  (setq fill-paragraph-function 'lisp-fill-paragraph)
-
-  (make-local-variable 'comment-start)
-  (setq comment-start ";; ")
-  (make-local-variable 'comment-start-skip)
-
-  ;; Look within the line for a ; following an even number of backslashes
-  ;; after either a non-backslash or the line beginning.
-  (setq comment-start-skip "\\(\\(^\\|[^\\\\\n]\\)\\(\\\\\\\\\\)*\\);+ *")
-  (make-local-variable 'font-lock-comment-start-skip)
-  ;; Font lock mode uses this only when it KNOWS a comment is starting.
-  (setq font-lock-comment-start-skip ";+ *")
-  (make-local-variable 'comment-add)
-  (setq comment-add 1) ;; Default to `;;' in comment-region
-
-  ;; No tabs by default.
-  (set (make-local-variable 'indent-tabs-mode) nil)
-
-  ;; Customize font-lock for beancount.
-  ;;
-  ;; Important: you have to use 'nil for the mode here because in certain major
-  ;; modes (e.g. org-mode) the font-lock-keywords is a buffer-local variable.
-  (if beancount-mode
-      (font-lock-add-keywords nil beancount-font-lock-defaults)
-    (font-lock-remove-keywords nil beancount-font-lock-defaults))
-  (font-lock-fontify-buffer)
-
-  (when beancount-mode
-    (make-variable-buffer-local 'beancount-accounts)
-    (beancount-init-accounts))
-  )
-
-
-(defun beancount-init-accounts ()
-  "Initialize or reset the list of accounts."
-  (interactive)
-  (setq beancount-accounts (beancount-get-accounts))
-  (message "Accounts updated."))
-
+(defgroup beancount ()
+  "Editing mode for Beancount files."
+  :group 'external)                     ;FIXME: Really?  "external"?
 
 (defvar beancount-directive-names '("txn"
                                     "open"
@@ -87,15 +50,8 @@ is great for sectioning large files with many transactions."
                                     "poptag")
   "A list of the directive names.")
 
-
-(defvar beancount-font-lock-defaults
-  `(;; Comments
-    (";.+" . font-lock-comment-face)
-
-    ;; Strings
-    ("\".*?\"" . font-lock-string-face)
-
-    ;; Reserved keywords
+(defvar beancount-font-lock-keywords
+  `(;; Reserved keywords
     (,(regexp-opt beancount-directive-names) . font-lock-keyword-face)
 
     ;; Tags & Links
@@ -114,6 +70,92 @@ is great for sectioning large files with many transactions."
     ;;; ("\\([\\-+]?[0-9,]+\\(\\.[0-9]+\\)?\\)\\s-+\\([A-Z][A-Z0-9'\.]\\{1,10\\}\\)" . )
     ))
 
+(defvar beancount-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map [(control c)(\')] #'beancount-insert-account)
+    (define-key map [(control c)(control g)] #'beancount-transaction-set-flag)
+    (define-key map [(control c)(r)] #'beancount-init-accounts)
+    (define-key map [(control c)(l)] #'beancount-check)
+    (define-key map [(control c)(q)] #'beancount-query)
+    (define-key map [(control c)(x)] #'beancount-context)
+    (define-key map [(control c)(k)] #'beancount-linked)
+    (define-key map [(control c)(\;)] #'beancount-align-to-previous-number)
+    (define-key map [(control c)(\:)] #'beancount-align-numbers)
+    ;; FIXME: There's actually no function by that name!
+    (define-key map [(control c)(p)] #'beancount-test-align)
+    map))
+
+(defvar beancount-mode-syntax-table
+  (let ((st (make-syntax-table)))
+    (modify-syntax-entry ?\" "\"\"" st)
+    (modify-syntax-entry ?\; "<" st)
+    (modify-syntax-entry ?\n ">" st)
+    st))
+
+;;;###autoload
+(define-minor-mode beancount-mode
+  "A minor mode to help editing Beancount files.
+This can be used within other text modes, in particular, org-mode
+is great for sectioning large files with many transactions.
+
+\\{beancount-mode-map}"
+  :init-value nil
+  :lighter " Beancount"
+  :group 'beancount
+
+  ;; The following is mostly lifted from lisp-mode.
+
+  (set (make-local-variable 'paragraph-ignore-fill-prefix) t)
+  (set (make-local-variable 'fill-paragraph-function) #'lisp-fill-paragraph)
+
+  (set (make-local-variable 'comment-start) ";; ")
+
+  ;; Look within the line for a ; following an even number of backslashes
+  ;; after either a non-backslash or the line beginning.
+  (set (make-local-variable 'comment-start-skip)
+       "\\(\\(^\\|[^\\\\\n]\\)\\(\\\\\\\\\\)*\\);+ *")
+  ;; Font lock mode uses this only when it KNOWS a comment is starting.
+  ;; FIXME: Why bother?
+  (set (make-local-variable 'font-lock-comment-start-skip) ";+ *")
+  ;; Default to `;;' in comment-region.
+  (set (make-local-variable 'comment-add) 1)
+
+  ;; No tabs by default.
+  (set (make-local-variable 'indent-tabs-mode) nil)
+
+  ;; Customize font-lock for beancount.
+  ;;
+  (set-syntax-table beancount-mode-syntax-table)
+  (when (fboundp 'syntax-ppss-flush-cache)
+    (syntax-ppss-flush-cache (point-min))
+    (set (make-local-variable 'syntax-begin-function)
+         (lambda () (goto-char (point-min)))))
+  ;; Force font-lock to use the syntax-table to find strings-and-comments,
+  ;; regardless of what the "host major mode" decided.
+  (set (make-local-variable 'font-lock-keywords-only) nil)
+  ;; Important: you have to use 'nil for the mode here because in certain major
+  ;; modes (e.g. org-mode) the font-lock-keywords is a buffer-local variable.
+  (if beancount-mode
+      (font-lock-add-keywords nil beancount-font-lock-keywords)
+    (font-lock-remove-keywords nil beancount-font-lock-keywords))
+  (if (fboundp 'font-lock-flush)
+      (font-lock-flush)
+    (with-no-warnings (font-lock-fontify-buffer)))
+
+  (when beancount-mode
+    (beancount-init-accounts))
+  )
+
+(defvar beancount-accounts nil
+  "A list of the accounts available in this buffer.
+This is a cache of the value computed by `beancount-get-accounts'.")
+(make-variable-buffer-local 'beancount-accounts)
+
+(defun beancount-init-accounts ()
+  "Initialize or reset the list of accounts."
+  (interactive)
+  (setq beancount-accounts (beancount-get-accounts))
+  (message "Accounts updated."))
 
 (defvar beancount-date-regexp "[0-9][0-9][0-9][0-9][-/][0-9][0-9][-/][0-9][0-9]"
   "A regular expression to match dates.")
@@ -132,16 +174,11 @@ is great for sectioning large files with many transactions."
 (defvar beancount-currency-regexp "[A-Z][A-Z-_'.]*"
   "A regular expression to match currencies in beancount.")
 
-
-(defvar beancount-accounts nil
-  "A list of the accounts available in this buffer. This is a
-  cache of the value computed by beancount-get-accounts.")
-
-
 (defun beancount-hash-keys (hashtable)
   "Extract all the keys of the given hashtable. Return a sorted list."
   (let (rlist)
-    (maphash (lambda (k v) (push k rlist)) hashtable)
+    (maphash (lambda (k _v) (push k rlist)) hashtable)
+    ;; FIXME: Doesn't look very sorted!
     rlist))
 
 
@@ -157,12 +194,37 @@ declarations only."
         (puthash (match-string-no-properties 0) nil accounts)))
     (sort (beancount-hash-keys accounts) 'string<)))
 
+(defcustom beancount-use-ido t
+  "If non-nil, use ido-style completion rather than the standard completion."
+  :type 'boolean)
+
+(defun beancount-account-completion-table (string pred action)
+  (if (eq action 'metadata)
+      '(metadata (category . beancount-account))
+    (complete-with-action action beancount-accounts string pred)))
+
+;; Default to substring completion for beancount accounts.
+(defconst beancount--completion-overrides
+  '(beancount-account (styles basic partial-completion substring)))
+(cond
+ ((boundp 'completion-category-defaults)
+  (add-to-list 'completion-category-defaults beancount--completion-overrides))
+ ((and (boundp 'completion-category-overrides)
+       (not (assq 'beancount-account completion-category-overrides)))
+  (push beancount--completion-overrides completion-category-overrides)))
 
 (defun beancount-insert-account (account-name)
-  "Insert one of the valid account names in this file (using ido
-niceness)."
+  "Insert one of the valid account names in this file.
+Uses ido niceness according to `beancount-use-ido'."
   (interactive
-   (list (ido-completing-read "Account: " beancount-accounts nil nil (thing-at-point 'word))))
+   (list
+    (if beancount-use-ido
+        ;; `ido-completing-read' is too dumb to understand functional
+        ;; completion tables!
+        (ido-completing-read "Account: " beancount-accounts
+                             nil nil (thing-at-point 'word))
+      (completing-read "Account: " #'beancount-account-completion-table
+                       nil t (thing-at-point 'word)))))
   (let ((bounds (bounds-of-thing-at-point 'word)))
     (when bounds
       (delete-region (car bounds) (cdr bounds))))
@@ -174,16 +236,17 @@ niceness)."
   (save-excursion
     (backward-paragraph 1)
     (forward-line 1)
-    (replace-string "!" "*" nil (line-beginning-position) (line-end-position))))
+    (while (search-forward "!" (line-end-position) t)
+      (replace-match "*"))))
 
 
 (defmacro beancount-for-line-in-region (begin end &rest exprs)
   "Iterate over each line in region until an empty line is encountered."
   `(save-excursion
-     (let ((end-marker (set-marker (make-marker) ,end)))
+     (let ((end-marker (copy-marker ,end)))
        (goto-char ,begin)
        (beginning-of-line)
-       (while (and (not (= (point) (point-max))) (< (point) end-marker))
+       (while (and (not (eobp)) (< (point) end-marker))
          (beginning-of-line)
          (progn ,@exprs)
          (forward-line 1)
@@ -226,7 +289,8 @@ align with the fill-column."
                                    "[ \t]+"
                                    "\\(" beancount-number-regexp "\\)"
                                    "[ \t]+"
-                                   beancount-currency-regexp) line)
+                                   beancount-currency-regexp)
+                           line)
          (push (length (match-string 1 line)) prefix-widths)
          (push (length (match-string 2 line)) number-widths)
          )))
@@ -252,7 +316,8 @@ align with the fill-column."
                                        "[ \t]+"
                                        "\\(" beancount-number-regexp "\\)"
                                        "[ \t]+"
-                                       "\\(.*\\)$") line)
+                                       "\\(.*\\)$")
+                               line)
              (delete-region (line-beginning-position) (line-end-position))
              (let* ((prefix (match-string 1 line))
                     (number (match-string 2 line))
@@ -326,50 +391,74 @@ what that column is and returns it (an integer)."
         ))
     column))
 
+(defvar beancount-install-dir nil
+  "Directory in which Beancount's source is located.
+Only useful if you have not installed Beancount properly in your PATH.")
 
 (defvar beancount-check-program "bean-check"
   "Program to run to run just the parser and validator on an
   input file.")
 
-(defun beancount-check ()
-  (interactive)
-  (let ((compilation-read-command nil)
-        (compile-command
-         (format "%s %s" beancount-check-program (buffer-file-name))))
+(defvar compilation-read-command)
+
+(defun beancount--run (prog &rest args)
+  (let ((process-environment
+         (if beancount-install-dir
+             `(,(concat "PYTHONPATH="
+                        (expand-file-name "src/python"
+                                          beancount-install-dir))
+               ,(concat "PATH="
+                        (expand-file-name "bin" beancount-install-dir)
+                        ":" (getenv "PATH"))
+               ,@process-environment)
+           process-environment))
+        (compile-command (mapconcat (lambda (arg)
+                                      (if (stringp arg)
+                                          (shell-quote-argument arg) ""))
+                                    (cons prog args)
+                                    " ")))
     (call-interactively 'compile)))
 
+(defun beancount-check ()
+  "Run `beancount-check-program'."
+  (interactive)
+  (let ((compilation-read-command nil))
+    (beancount--run beancount-check-program
+                    (file-relative-name buffer-file-name))))
 
 (defvar beancount-query-program "bean-query"
   "Program to run to run just the parser and validator on an
   input file.")
 
 (defun beancount-query ()
+  "Run bean-query."
   (interactive)
-  (let ((compile-command
-         (format "%s %s " beancount-query-program (buffer-file-name))))
-    (call-interactively 'compile)))
+  ;; Don't let-bind compilation-read-command this time, since the default
+  ;; command is incomplete.
+  (beancount--run beancount-query-program
+                  (file-relative-name buffer-file-name) t))
 
 
 (defvar beancount-doctor-program "bean-doctor"
   "Program to run the doctor commands.")
 
 (defun beancount-context ()
+  "Get the \"context\" from `beancount-doctor-program'."
   (interactive)
-  (let ((compilation-read-command nil)
-        (compile-command
-         (format "%s %s %s %d"
-                 beancount-doctor-program "context"
-                 (buffer-file-name) (line-number-at-pos (point)))))
-    (call-interactively 'compile)))
+  (let ((compilation-read-command nil))
+    (beancount--run beancount-doctor-program "context"
+                    (file-relative-name buffer-file-name)
+                    (number-to-string (line-number-at-pos)))))
+
 
 (defun beancount-linked ()
+  "Get the \"linked\" info from `beancount-doctor-program'."
   (interactive)
-  (let ((compilation-read-command nil)
-        (compile-command
-         (format "%s %s %s %d"
-                 beancount-doctor-program "linked"
-                 (buffer-file-name) (line-number-at-pos (point)))))
-    (call-interactively 'compile)))
+  (let ((compilation-read-command nil))
+    (beancount--run beancount-doctor-program "linked"
+                    (file-relative-name buffer-file-name)
+                    (line-number-at-pos))))
 
 
 (provide 'beancount)
+;;; beancount.el ends here

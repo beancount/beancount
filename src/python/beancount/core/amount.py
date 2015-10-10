@@ -60,6 +60,9 @@ class Amount:
 
     __slots__ = ('number', 'currency')
 
+    valid_types_number = (Decimal, type, type(None))
+    valid_types_currency = (str, type, type(None))
+
     def __init__(self, number, currency):
         """Constructor from a number and currency.
 
@@ -67,7 +70,9 @@ class Amount:
           number: A string or Decimal instance. Will get converted automatically.
           currency: A string, the currency symbol to use.
         """
-        self.number = _D(number)
+        assert isinstance(number, self.valid_types_number)
+        assert isinstance(currency, self.valid_types_currency)
+        self.number = number
         self.currency = currency
 
     def to_string(self, dformat=DEFAULT_FORMATTER):
@@ -173,8 +178,10 @@ def amount_mult(amount, number):
     Returns:
       An Amount, with the same currency, but with 'number' times units.
     """
-    assert isinstance(amount.number, Decimal), repr(amount)
-    assert isinstance(number, Decimal), repr(number)
+    assert isinstance(amount.number, Decimal), (
+        "Amount's number is not a Decimal instance: {}".format(amount.number))
+    assert isinstance(number, Decimal), (
+        "Number is not a Decimal instance: {}".format(amount.number))
     return Amount(amount.number * number, amount.currency)
 
 def amount_div(amount, number):
@@ -186,8 +193,10 @@ def amount_div(amount, number):
     Returns:
       An Amount, with the same currency, but with amount units divided by 'number'.
     """
-    assert isinstance(amount.number, Decimal)
-    assert isinstance(number, Decimal)
+    assert isinstance(amount.number, Decimal), (
+        "Amount's number is not a Decimal instance: {}".format(amount.number))
+    assert isinstance(number, Decimal), (
+        "Number is not a Decimal instance: {}".format(amount.number))
     return Amount(amount.number / number, amount.currency)
 
 def amount_sub(amount1, amount2):
@@ -200,8 +209,10 @@ def amount_sub(amount1, amount2):
       An instance of Amount, with the difference between the two amount's
       numbers, in the same currency.
     """
-    assert isinstance(amount1.number, Decimal)
-    assert isinstance(amount2.number, Decimal)
+    assert isinstance(amount1.number, Decimal), (
+        "Amount1's number is not a Decimal instance: {}".format(amount1.number))
+    assert isinstance(amount2.number, Decimal), (
+        "Amount2's number is not a Decimal instance: {}".format(amount2.number))
     if amount1.currency != amount2.currency:
         raise ValueError(
             "Unmatching currencies for operation on {} and {}".format(
@@ -209,5 +220,5 @@ def amount_sub(amount1, amount2):
     return Amount(amount1.number - amount2.number, amount1.currency)
 
 
-from_string = Amount.from_string  # pylint: disable=invalid-name
+A = from_string = Amount.from_string  # pylint: disable=invalid-name
 NULL_AMOUNT = Amount(ZERO, '')

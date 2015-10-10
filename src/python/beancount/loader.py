@@ -15,6 +15,7 @@ from os import path
 from beancount.utils import misc_utils
 from beancount.core import data
 from beancount.parser import parser
+from beancount.parser import booking
 from beancount.parser import options
 from beancount.parser import printer
 from beancount.ops import validation
@@ -243,6 +244,10 @@ def _load(sources, log_timings, log_errors, extra_validations, encoding):
     # Parse all the files recursively.
     entries, parse_errors, options_map = _parse_recursive(sources, log_timings, encoding)
 
+    # Run interpolation on incomplete entries.
+    entries, balance_errors = booking.book(entries, options_map)
+    parse_errors.extend(balance_errors)
+
     # Transform the entries.
     entries, errors = run_transformations(entries, parse_errors, options_map, log_timings)
 
@@ -340,22 +345,51 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
     return entries, errors
 
 
-def loaddoc(fun):
-    """A decorator that loads the docstring and calls the function with parsed entries.
+# FIXME: Deprecate this eventually.
+def loaddoc(*args, **kw):
+    warnings.warn("loaddoc() is obsolete; use load_doc() instead.")
+    return load_doc(*args, **kw)
+
+def load_doc(expect_errors=False):
+    """A factory of decorators that loads the docstring and calls the function with entries.
 
     This is an incredibly convenient tool to write lots of tests. Write a
     unittest using the standard TestCase class and put the input entries in the
     function's docstring.
 
     Args:
-      fun: A callable method, that accepts the three return arguments that load() returns.
+      expect_errors: A boolean or None, with the following semantics,
+        True: Expect errors and fail if there are none.
+        False: Expect no errors and fail if there are some.
+        None: Do nothing, no check.
     Returns:
       A wrapped method that accepts a single 'self' argument.
     """
-    @functools.wraps(fun)
-    def wrapper(self):
-        entries, errors, options_map = load_string(fun.__doc__, dedent=True)
-        return fun(self, entries, errors, options_map)
-    wrapper.__input__ = wrapper.__doc__
-    wrapper.__doc__ = None
-    return wrapper
+    def decorator(fun):
+        """A decorator that parses the function's docstring as an argument.
+
+        Args:
+          fun: A callable method, that accepts the three return arguments that
+              load() returns.
+        Returns:
+          A decorated test function.
+        """
+        @functools.wraps(fun)
+        def wrapper(self):
+            entries, errors, options_map = load_string(fun.__doc__, dedent=True)
+
+            if expect_errors is not None:
+                if expect_errors is False and errors:
+                    oss = io.StringIO()
+                    printer.print_errors(errors, file=oss)
+                    self.fail("Unexpected errors found:\n{}".format(oss.getvalue()))
+                elif expect_errors is True and not errors:
+                    self.fail("Expected errors, none found:")
+
+            return fun(self, entries, errors, options_map)
+
+        wrapper.__input__ = wrapper.__doc__
+        wrapper.__doc__ = None
+        return wrapper
+
+    return decorator

@@ -9,7 +9,7 @@ from beancount.core.number import ZERO
 from beancount.core import data
 from beancount.parser import options
 from beancount.ops import validation
-from beancount.loader import loaddoc
+from beancount import loader
 
 
 def get_entries_with_narration(entries, regexp):
@@ -34,7 +34,7 @@ class TestUnrealized(unittest.TestCase):
         entries, _ = unrealized.add_unrealized_gains([], options.OPTIONS_DEFAULTS.copy())
         self.assertEqual([], entries)
 
-    @loaddoc
+    @loader.load_doc()
     def test_nothing_held_at_cost(self, entries, _, options_map):
         """
         2014-01-01 open Assets:Account1
@@ -56,7 +56,7 @@ class TestUnrealized(unittest.TestCase):
         self.assertEqual([],
                          unrealized.get_unrealized_entries(new_entries))
 
-    @loaddoc
+    @loader.load_doc()
     def test_normal_case(self, entries, _, options_map):
         """
         2014-01-01 open Assets:Account1
@@ -97,7 +97,7 @@ class TestUnrealized(unittest.TestCase):
         self.assertEqual(2, len(mansion.postings))
         self.assertEqual(D('-100'), mansion.postings[0].position.number)
 
-    @loaddoc
+    @loader.load_doc()
     def test_no_price(self, entries, _, options_map):
         """
         2014-01-01 open Assets:Account1
@@ -116,7 +116,7 @@ class TestUnrealized(unittest.TestCase):
         self.assertEqual(1, len(unreal_entries))
         self.assertEqual(ZERO, unreal_entries[0].postings[0].position.number)
 
-    @loaddoc
+    @loader.load_doc()
     def test_immediate_profit(self, entries, _, options_map):
         """
         2014-01-01 open Assets:Account1
@@ -136,21 +136,21 @@ class TestUnrealized(unittest.TestCase):
         self.assertEqual(D('200'),
                          unreal_entries[0].postings[0].position.number)
 
-    @loaddoc
+    @loader.load_doc()
     def test_conversions_only(self, entries, _, options_map):
         """
         2014-01-01 open Assets:Account1
         2014-01-01 open Income:Misc
 
         2014-01-15 *
-          Income:Misc           -780
+          Income:Misc           -780 USD
           Assets:Account1       600 EUR @ 1.3 USD
         """
         # Check to make sure values not held at cost are not included.
         new_entries, _ = unrealized.add_unrealized_gains(entries, options_map)
         self.assertEqual([], unrealized.get_unrealized_entries(new_entries))
 
-    @loaddoc
+    @loader.load_doc()
     def test_with_subaccount(self, entries, _, options_map):
         """
         2014-01-01 open Assets:Account1
@@ -171,9 +171,10 @@ class TestUnrealized(unittest.TestCase):
         self.assertEqual('Assets:Account1:Gains', entry.postings[0].account)
         self.assertEqual('Income:Account1:Gains', entry.postings[1].account)
 
-    @loaddoc
+    @loader.load_doc()
     def test_not_assets(self, entries, _, options_map):
         """
+        2014-01-01 open Assets:Account1
         2014-01-01 open Liabilities:Account1
         2014-01-01 open Equity:Account1
         2014-01-01 open Expenses:Account1
@@ -223,7 +224,7 @@ class TestUnrealized(unittest.TestCase):
         self.assertEqual(D("30.00"), entry.postings[0].position.number)
         self.assertEqual(D("-30.00"), entry.postings[1].position.number)
 
-    @loaddoc
+    @loader.load_doc()
     def test_create_open_directive(self, entries, errors, options_map):
         """
         2014-01-01 open Assets:Account1
@@ -264,7 +265,7 @@ class TestUnrealized(unittest.TestCase):
         valid_errors = validation.validate(new_entries, options_map)
         self.assertFalse(valid_errors)
 
-    @loaddoc
+    @loader.load_doc()
     def test_no_units_but_leaked_cost_basis(self, entries, errors, options_map):
         """
         ;; This probable mistake triggers an error in the unrealized gains

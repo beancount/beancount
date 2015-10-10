@@ -156,6 +156,20 @@ int strtonl(const char* buf, size_t nchars);
 \/		{ return SLASH; }
 \(		{ return LPAREN; }
 \)		{ return RPAREN; }
+
+ /* Special handling for characters beginning a line to be ignored.
+  * I'd like to improve how this is handled. Needs own lexer, really. */
+\#		{
+    if ( yy_line_tokens != 1 ) {
+        return HASH;
+    }
+    else {
+        /* Allow org-mode titles. */
+        yy_skip_line();
+        return SKIPPED;
+    }
+}
+
 \*		{
     if ( yy_line_tokens != 1 ) {
         return ASTERISK;
@@ -200,6 +214,7 @@ close		{ return CLOSE; }
 commodity	{ return COMMODITY; }
 pad		{ return PAD; }
 event		{ return EVENT; }
+query		{ return QUERY; }
 price		{ return PRICE; }
 note		{ return NOTE; }
 document	{ return DOCUMENT; }
@@ -324,7 +339,7 @@ FALSE		{
 }
 
  /* Key */
-[a-z][a-z0-9\-_]+: 		{
+[a-z][a-zA-Z0-9\-_]+: 		{
     BUILD_LEX("KEY", "s#", yytext, yyleng-1);
     return KEY;
 }

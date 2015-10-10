@@ -1,4 +1,34 @@
 """Beancount syntax parser.
+
+IMPORTANT: The parser (and its grammar builder) produces "incomplete"
+Transaction objects. This means that some of the data can be missing. Those
+incomplete entries are then run through the "booking" routines which find
+matching lots for reducing postings and interpolates missing numbers, and in
+doing so normalize the entries to "complete" entries.
+
+Spefically, the following pieces of data may be incomplete:
+
+- posting.position = None
+  e.g., Assets:Account
+
+- posting.position.number = None, with a non-nil lot
+  e.g., Assets:Account  USD
+
+- posting.position.price = Amount(None, None)
+  e.g., Assets:Account  100 CAD @
+
+- posting.position.price = Amount(None, currency)
+  e.g., Assets:Account  100 CAD @ USD
+
+(Note that 'posting.position.price = None' is not incomplete, it just indicates
+the absence of a price clause.)
+
+For incomplete entries, 'posting.position.lot' does not refer to a Lot instance,
+but rather to a LotSpec which needs to get resolved to a Lot. The LotSpec has a
+CompountAmount for which the 'number_per' and 'number_total' numbers may be both
+missing.
+
+See grammar_test.TestIncompleteInputs for examples and corresponding checks.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
@@ -6,12 +36,14 @@ import functools
 import inspect
 import textwrap
 import io
+import warnings
 from os import path
 
 from beancount.parser import _parser
 from beancount.parser import grammar
 from beancount.parser import printer
 from beancount.parser import hashsrc
+from beancount.core import data
 
 from beancount.parser.grammar import ParserError
 from beancount.parser.grammar import ParserSyntaxError
@@ -24,6 +56,22 @@ ParserError, ParserSyntaxError, DeprecatedError # pyflakes
 # installed source.
 hashsrc.check_parser_source_files()
 
+
+def has_auto_postings(entries):
+    """Detect the presence of elided amounts in Transactions.
+
+    Args:
+      entries: A list of directives.
+    Returns:
+      A boolean, true if there are some auto-postings found.
+    """
+    for entry in entries:
+        if not isinstance(entry, data.Transaction):
+            continue
+        for posting in entry.postings:
+            if posting.position is None:
+                return True
+    return False
 
 
 def parse_file(filename, **kw):
@@ -68,54 +116,69 @@ def parse_string(string, **kw):
     return builder.finalize()
 
 
-def parsedoc(fun, no_errors=False):
-    """Decorator that parses the function's docstring as an argument.
+# FIXME: Deprecate this eventually.
+def parsedoc(*args, **kw):
+    warnings.warn("parsedoc() is obsolete; use parse_doc() instead.")
+    return parse_doc(*args, **kw)
 
-    Note that this only runs the parser on the tests, not the loader, so is no
-    validation nor fixup applied to the list of entries.
+def parse_doc(expect_errors=False, allow_incomplete=False):
+    """Factory of decorators that parse the function's docstring as an argument.
+
+    Note that the decorators thus generated only run the parser on the tests,
+    not the loader, so is no validation, balance checks, nor plugins applied to
+    the parsed text.
 
     Args:
-      fun: the function object to be decorated.
-      no_errors: A boolean, true if we should assert that there are no errors.
+      expect_errors: A boolean or None, with the following semantics,
+        True: Expect errors and fail if there are none.
+        False: Expect no errors and fail if there are some.
+        None: Do nothing, no check.
+      allow_incomplete: A boolean, if true, allow incomplete input. Otherwise
+        barf if the input would require interpolation. The default value is set
+        not to allow it because we want to minimize the features tests depend on.
     Returns:
-      The decorated function.
+      A decorator for test functions.
     """
-    filename = inspect.getfile(fun)
-    lines, lineno = inspect.getsourcelines(fun)
+    def decorator(fun):
+        """A decorator that parses the function's docstring as an argument.
 
-    # decorator line + function definition line (I realize this is largely
-    # imperfect, but it's only for reporting in our tests) - empty first line
-    # stripped away.
-    lineno += 1
+        Args:
+          fun: the function object to be decorated.
+        Returns:
+          A decorated test function.
+        """
+        filename = inspect.getfile(fun)
+        lines, lineno = inspect.getsourcelines(fun)
 
-    @functools.wraps(fun)
-    def wrapper(self):
-        assert fun.__doc__ is not None, (
-            "You need to insert a docstring on {}".format(fun.__name__))
-        entries, errors, options_map = parse_string(fun.__doc__,
-                                                    report_filename=filename,
-                                                    report_firstline=lineno,
-                                                    dedent=True)
-        if no_errors:
-            if errors:
-                oss = io.StringIO()
-                printer.print_errors(errors, file=oss)
-                self.fail("Unexpected errors:\n{}".format(oss.getvalue()))
-            return fun(self, entries, options_map)
-        else:
+        # decorator line + function definition line (I realize this is largely
+        # imperfect, but it's only for reporting in our tests) - empty first line
+        # stripped away.
+        lineno += 1
+
+        @functools.wraps(fun)
+        def wrapper(self):
+            assert fun.__doc__ is not None, (
+                "You need to insert a docstring on {}".format(fun.__name__))
+            entries, errors, options_map = parse_string(fun.__doc__,
+                                                        report_filename=filename,
+                                                        report_firstline=lineno,
+                                                        dedent=True)
+
+            if not allow_incomplete and has_auto_postings(entries):
+                self.fail("parse_doc() may not use interpolation.")
+
+            if expect_errors is not None:
+                if expect_errors is False and errors:
+                    oss = io.StringIO()
+                    printer.print_errors(errors, file=oss)
+                    self.fail("Unexpected errors found:\n{}".format(oss.getvalue()))
+                elif expect_errors is True and not errors:
+                    self.fail("Expected errors, none found:")
+
             return fun(self, entries, errors, options_map)
 
-    wrapper.__input__ = wrapper.__doc__
-    wrapper.__doc__ = None
-    return wrapper
+        wrapper.__input__ = wrapper.__doc__
+        wrapper.__doc__ = None
+        return wrapper
 
-
-def parsedoc_noerrors(fun):
-    """Decorator like parsedoc but that further ensures no errors.
-
-    Args:
-      fun: the function object to be decorated.
-    Returns:
-      The decorated function.
-    """
-    return parsedoc(fun, no_errors=True)
+    return decorator

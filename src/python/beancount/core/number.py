@@ -14,6 +14,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 # Note: Python 3.3 guarantees a fast "C" decimal implementation. No need to
 # install cdecimal anymore.
 import decimal
+import re
 
 # pylint: disable=invalid-name
 Decimal = decimal.Decimal
@@ -23,6 +24,15 @@ ZERO = Decimal()
 HALF = Decimal('0.5')
 ONE = Decimal('1')
 
+# A constant used to make incomplete data, e.g. missing numbers in the cost spec
+# to be filled in automatically. We define this as a class so that it appears in
+# errors that would occur from attempts to access incomplete data.
+class MISSING: pass
+
+# Regular expression for parsing a number in Python.
+NUMBER_RE = r"[+-]?\s*[0-9,]*(?:\.[0-9]*)?"
+
+_CLEAN_NUMBER_RE = re.compile('[, ]')
 
 # pylint: disable=invalid-name
 def D(strord=None):
@@ -43,7 +53,7 @@ def D(strord=None):
         if strord is None or strord == '':
             return Decimal()
         elif isinstance(strord, str):
-            return Decimal(strord.replace(',', ''))
+            return Decimal(_CLEAN_NUMBER_RE.sub('', strord))
         elif isinstance(strord, Decimal):
             return strord
         elif isinstance(strord, (int, float)):

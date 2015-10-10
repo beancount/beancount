@@ -5,9 +5,25 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import textwrap
 import re
+import unittest
 
 from beancount.parser import parser
 from beancount.parser import cmptest
+from beancount.parser import booking
+
+
+class TestCompareTestFunctions(unittest.TestCase):
+
+    def test_read_string_or_entries(self):
+        with self.assertRaises(cmptest.TestError) as assctxt:
+            cmptest.read_string_or_entries("""
+
+              2014-01-27 * "UNION MARKET"
+                Liabilities:US:Amex:BlueCash    -22.02 USD
+                Expenses:Food:Grocery
+
+            """)
+        self.assertRegexpMatches(str(assctxt.exception), "may not use interpolation")
 
 
 class TestTestCase(cmptest.TestCase):
@@ -16,32 +32,38 @@ class TestTestCase(cmptest.TestCase):
 
       2014-01-27 * "UNION MARKET -  HOUSNEW YORK / 131129      GROCERY STORE"
         Liabilities:US:Amex:BlueCash                                           -22.02 USD
-        Expenses:Food:Grocery
+        Expenses:Food:Grocery                                                   22.02 USD
 
       2014-01-30 * "T-MOBILE RECURNG PMTT-MOBILE / 1093555839 828422957        98006"
         Liabilities:US:Amex:BlueCash                                           -73.64 USD
-        Expenses:Communications:Phone:TMobile
+        Expenses:Communications:Phone:TMobile                                   73.64 USD
 
       2014-01-30 * "AMAZON SERVICES-KIND866-216-107 / PRYETZFD58N DIGITAL"
         Liabilities:US:Amex:BlueCash                                           -12.74 USD
-        Expenses:Books
+        Expenses:Books                                                          12.74 USD
 
       2014-02-01 * "LAFAYETTE STREET PARNEW YORK / 5869184     RESTAURANT" | "Drinks w/ Jo"
         Liabilities:US:Amex:BlueCash                                           -34.40 USD
-        Expenses:Food:Alcohol
+        Expenses:Food:Alcohol                                                   34.40 USD
 
       2014-02-01 * "SPOTIFY USA         31630876101 / 2714214519  WWW.SPOTIFY.COM"
         Liabilities:US:Amex:BlueCash                                            -9.99 USD
-        Expenses:Fun:Music
+        Expenses:Fun:Music                                                       9.99 USD
 
       2014-02-01 * "BALABOOSTA          214 MULBERR / 2129667366"
         Liabilities:US:Amex:BlueCash                                           -45.65 USD
-        Expenses:Food:Restaurant
+        Expenses:Food:Restaurant                                                45.65 USD
 
     """)
 
+    def setUp(self):
+        entries, parse_errors, options_map = parser.parse_string(self.ledger_text)
+        self.entries, booking_errors = booking.book(entries, options_map)
+        self.assertFalse(parse_errors)
+        self.assertFalse(booking_errors)
+
     def test_assertEqualEntries(self):
-        entries, _, __ = parser.parse_string(self.ledger_text)
+        entries = self.entries
         self.assertEqualEntries(entries, self.ledger_text)
         self.assertEqualEntries(self.ledger_text, entries)
 
@@ -73,7 +95,7 @@ class TestTestCase(cmptest.TestCase):
             self.assertEqualEntries(entries, mod_ledger_text)
 
     def test_assertIncludesEntries(self):
-        entries, _, __ = parser.parse_string(self.ledger_text)
+        entries = self.entries
 
         # Check that non-strict inclusion succeeds.
         self.assertIncludesEntries(entries, self.ledger_text)
@@ -90,21 +112,21 @@ class TestTestCase(cmptest.TestCase):
 
               2014-02-01 * "PLAY"
                 Liabilities:US:Amex:BlueCash     -9.99 USD
-                Expenses:Fun:Music
+                Expenses:Fun:Music                9.99 USD
 
             """, entries)
 
         self.assertIncludesEntries("""
 
           2014-01-30 * "AMAZON SERVICES-KIND866-216-107 / PRYETZFD58N DIGITAL"
-            Liabilities:US:Amex:BlueCash                                           -12.74 USD
-            Expenses:Books
+            Liabilities:US:Amex:BlueCash        -12.74 USD
+            Expenses:Books                       12.74 USD
 
         """, entries)
 
 
     def test_assertExcludesEntries(self):
-        entries, _, __ = parser.parse_string(self.ledger_text)
+        entries = self.entries
 
         # Check that exclusion of all entries fails.
         with self.assertRaises(AssertionError):
@@ -121,7 +143,7 @@ class TestTestCase(cmptest.TestCase):
 
           2014-02-01 * "PLAY"
             Liabilities:US:Amex:BlueCash     -9.99 USD
-            Expenses:Fun:Music
+            Expenses:Fun:Music                9.99 USD
 
         """, entries)
 
@@ -129,7 +151,7 @@ class TestTestCase(cmptest.TestCase):
             self.assertExcludesEntries("""
 
               2014-01-30 * "AMAZON SERVICES-KIND866-216-107 / PRYETZFD58N DIGITAL"
-                Liabilities:US:Amex:BlueCash                                           -12.74 USD
-                Expenses:Books
+                Liabilities:US:Amex:BlueCash             -12.74 USD
+                Expenses:Books                            12.74 USD
 
             """, entries)
