@@ -280,7 +280,7 @@ class BQLShell(DispatchingShell):
         """
         self.entries, self.errors, self.options_map = self.loadfun()
         if self.is_interactive:
-            print_statistics(self.entries, self.options_map)
+            print_statistics(self.entries, self.options_map, self.outfile)
 
     def on_Errors(self, errors_statement):
         """
@@ -647,15 +647,17 @@ def summary_statistics(entries):
     return (num_directives, num_transactions, num_postings)
 
 
-def print_statistics(entries, options_map):
+def print_statistics(entries, options_map, outfile):
     """Print summary statistics to stdout.
 
     Args:
       entries: A list of directives.
+      options_map: An options map. as produced by the parser.
+      outfile: A file object to write to.
     """
     num_directives, num_transactions, num_postings = summary_statistics(entries)
     if 'title' in options_map:
-        print('Input file: "{}"'.format(options_map['title']), file=self.outfile)
+        print('Input file: "{}"'.format(options_map['title']), file=outfile)
     print("Ready with {} directives ({} postings in {} transactions).".format(
         num_directives, num_postings, num_transactions),
-          file=self.outfile)
+          file=outfile)
