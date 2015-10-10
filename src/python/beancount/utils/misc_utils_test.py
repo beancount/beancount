@@ -4,6 +4,7 @@ Tests for general utils.
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import unittest
+from unittest import mock
 import re
 import time
 import textwrap
@@ -12,6 +13,15 @@ from collections import namedtuple
 
 from beancount.utils import misc_utils
 from beancount.utils import test_utils
+
+
+def raise_import_error(*args, **kw):
+    """Raises an ImportError. This is patched in a test.
+
+    Raises:
+      ImportError, unconditionally.
+    """
+    raise ImportError("Could not import module")
 
 
 class TestMiscUtils(unittest.TestCase):
@@ -86,10 +96,10 @@ class TestMiscUtils(unittest.TestCase):
         # pylint: disable=invalid-name
         Something = namedtuple('Something', 'a b c d e')
         SomethingElse = namedtuple('SomethingElse', 'f g h')
-        class A(str): pass
-        ntuple = Something(1, 2, SomethingElse(A('a'), None, 2), [A('b'), 'c'], 5)
-        values = misc_utils.get_tuple_values(ntuple, lambda x: isinstance(x, A))
-        self.assertEqual([A('a'), A('b')], list(values))
+        class Dummy(str): pass
+        ntuple = Something(1, 2, SomethingElse(Dummy('a'), None, 2), [Dummy('b'), 'c'], 5)
+        values = misc_utils.get_tuple_values(ntuple, lambda x: isinstance(x, Dummy))
+        self.assertEqual([Dummy('a'), Dummy('b')], list(values))
 
     def test_replace_tuple_values(self):
         # pylint: disable=invalid-name
@@ -151,6 +161,16 @@ class TestMiscUtils(unittest.TestCase):
         # Note: Allow zero because the console function fails in nose when
         # capture is disabled.
         self.assertLess(-1, max_width)
+
+    @mock.patch('beancount.utils.misc_utils.import_curses', raise_import_error)
+    def test_no_curses(self):
+        # Make sure the patch works.
+        with self.assertRaises(ImportError):
+            misc_utils.import_curses()
+
+        # Test functions that would require curses.
+        self.assertEqual(0, misc_utils.get_screen_width())
+        self.assertEqual(0, misc_utils.get_screen_height())
 
     def test_get_screen_height(self):
         max_height = misc_utils.get_screen_height()
@@ -229,18 +249,6 @@ class TestUniquify(unittest.TestCase):
                          list(unique_data))
 
 
-class TestDistribution(unittest.TestCase):
-
-    def test_distribution(self):
-        dist = misc_utils.Distribution()
-        dist.update(1)
-        dist.update(2)
-        dist.update(2)
-        dist.update(2)
-        dist.update(3)
-        dist.update(3)
-        dist.update(4)
-        self.assertEqual(2, dist.mode())
 
 
 class TestLineFileProxy(unittest.TestCase):

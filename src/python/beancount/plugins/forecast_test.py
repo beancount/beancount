@@ -11,7 +11,7 @@ class TestExampleForecast(cmptest.TestCase):
     def test_forecast(self):
         input_text = textwrap.dedent("""
 
-            option "plugin" "beancount.plugins.forecast"
+            plugin "beancount.plugins.forecast"
 
             2011-01-01 open Expenses:Restaurant
             2011-01-01 open Assets:Cash
@@ -29,30 +29,30 @@ class TestExampleForecast(cmptest.TestCase):
             2011-01-01 open Assets:Cash
 
             2011-06-17 # "Something"
-              Expenses:Restaurant                                                     50.02 USD
-              Assets:Cash                                                            -50.02 USD
+              Expenses:Restaurant           50.02 USD
+              Assets:Cash                  -50.02 USD
 
             2011-07-17 # "Something"
-              Expenses:Restaurant                                                     50.02 USD
-              Assets:Cash                                                            -50.02 USD
+              Expenses:Restaurant           50.02 USD
+              Assets:Cash                  -50.02 USD
 
             2011-08-17 # "Something"
-              Expenses:Restaurant                                                     50.02 USD
-              Assets:Cash                                                            -50.02 USD
+              Expenses:Restaurant           50.02 USD
+              Assets:Cash                  -50.02 USD
 
             2011-09-17 # "Something"
-              Expenses:Restaurant                                                     50.02 USD
-              Assets:Cash                                                            -50.02 USD
+              Expenses:Restaurant           50.02 USD
+              Assets:Cash                  -50.02 USD
 
             2011-10-17 # "Something"
-              Expenses:Restaurant                                                     50.02 USD
-              Assets:Cash                                                            -50.02 USD
+              Expenses:Restaurant           50.02 USD
+              Assets:Cash                  -50.02 USD
 
             2011-11-17 # "Something"
-              Expenses:Restaurant                                                     50.02 USD
-              Assets:Cash                                                            -50.02 USD
+              Expenses:Restaurant           50.02 USD
+              Assets:Cash                  -50.02 USD
 
             2011-12-17 # "Something"
-              Expenses:Restaurant                                                     50.02 USD
-              Assets:Cash                                                            -50.02 USD
+              Expenses:Restaurant           50.02 USD
+              Assets:Cash                  -50.02 USD
         """, entries)

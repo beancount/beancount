@@ -8,8 +8,7 @@ import re
 import tempfile
 
 from beancount.core import data
-from beancount.core import account
-from beancount.core.amount import Decimal
+from beancount.core.number import Decimal
 from beancount.parser import _parser
 
 
@@ -17,9 +16,13 @@ LexerError = collections.namedtuple('LexerError', 'source message entry')
 
 
 class LexBuilder(object):
-    """A builder used only for getting the lexer to pass.
-    The methods do nothing."""
+    """A builder used only for building lexer objects.
 
+    Attributes:
+      long_string_maxlines_default: Number of lines for a string to trigger a
+          warning. This is meant to help users detecting dangling quotes in
+          their source.
+    """
     # pylint: disable=invalid-name
 
     def __init__(self):
@@ -28,6 +31,9 @@ class LexBuilder(object):
 
         # A regexp for valid account names.
         self.account_regexp = re.compile('([A-Z][A-Za-z0-9\-]+)(:[A-Z][A-Za-z0-9\-]+)*$')
+
+        # A set of all the commodities that we have seen in the file.
+        self.commodities = set()
 
         # Errors that occurred during lexing and parsing.
         self.errors = []
@@ -47,24 +53,25 @@ class LexBuilder(object):
         """
         return 'Equity:InvalidAccountName'
 
-    def get_long_string_maxlines(self):
-        """Number of lines for a string to trigger a warning.
-        This is meant to help users detecting dangling quotes in their source.
-
-        Returns:
-          An integer, the number of characters beyond which to warm about a string.
-        """
-        return self.long_string_maxlines_default
-
     def get_lexer_location(self):
         return data.new_metadata(_parser.get_yyfilename(),
                                  _parser.get_yylineno())
 
-    def ERROR(self, string):
+    # Note: We could simplify the code by removing this if we could find a good
+    # way to have the lexer communicate the error contents to the parser.
+    def build_lexer_error(self, message, exc_type=None): # {0e31aeca3363}
+        """Build a lexer error and appends it to the list of pending errors.
+
+        Args:
+          message: The message of the error.
+          exc_type: An exception type, if an exception occurred.
+        """
+        if not isinstance(message, str):
+            message = str(message)
+        if exc_type is not None:
+            message = '{}: {}'.format(exc_type.__name__, message)
         self.errors.append(
-            LexerError(self.get_lexer_location(),
-                       "Lexer error; erroneous token: '{}'".format(string),
-                       None))
+            LexerError(self.get_lexer_location(), message, None))
 
     def DATE(self, year, month, day):
         """Process a DATE token.
@@ -76,12 +83,7 @@ class LexBuilder(object):
         Returns:
           A new datetime object.
         """
-        try:
-            return datetime.date(year, month, day)
-        except ValueError as exc:
-            self.errors.append(
-                LexerError(self.get_lexer_location(), str(exc), None))
-            return None
+        return datetime.date(year, month, day)
 
     def ACCOUNT(self, account_name):
         """Process an ACCOUNT token.
@@ -92,23 +94,16 @@ class LexBuilder(object):
         Args:
           account_name: a str, the valid name of an account.
         Returns:
-          A string, the naem of the account.
+          A string, the name of the account.
         """
         # Check account name validity.
         if not self.account_regexp.match(account_name):
-            self.errors.append(
-                LexerError(self.get_lexer_location(),
-                           "Invalid account name: {}".format(account_name),
-                           None))
-            return account.join(self.get_invalid_account())
+            raise ValueError("Invalid account name: {}".format(account_name))
 
-        # Create an account, reusing their strings as we go.
-        try:
-            account_name = self.accounts[account_name]
-        except KeyError:
-            self.accounts[account_name] = account_name
-
-        return account_name
+        # Reuse (intern) account strings as much as possible. This potentially
+        # reduces memory usage a fair bit, because these strings are repeated
+        # liberally.
+        return self.accounts.setdefault(account_name, account_name)
 
     def CURRENCY(self, currency_name):
         """Process a CURRENCY token.
@@ -119,6 +114,7 @@ class LexBuilder(object):
           A new currency object; for now, these are simply represented
           as the currency name.
         """
+        self.commodities.add(currency_name)
         return currency_name
 
     def STRING(self, string):
@@ -133,11 +129,12 @@ class LexBuilder(object):
         # If a multiline string, warm over a certain number of lines.
         if '\n' in string:
             num_lines = string.count('\n') + 1
-            if num_lines > self.get_long_string_maxlines():
+            if num_lines > self.long_string_maxlines_default:
+                # This is just a warning; accept the string anyhow.
                 self.errors.append(
                     LexerError(
                         self.get_lexer_location(),
-                        "Overly long string ({} lines); possible error".format(num_lines),
+                        "String too long ({} lines); possible error".format(num_lines),
                         None))
         return string
 
@@ -149,16 +146,11 @@ class LexBuilder(object):
         Returns:
           A Decimal instance built of the number string.
         """
-        try:
-            # Note: We don't use D() for efficiency here.
-            if ',' in number:
-                number = number.replace(',', '')
-            return Decimal(number)
-        except Exception as e:
-            self.errors.append(
-                LexerError(self.get_lexer_location(),
-                           "Error parsing NUMBER for token '{}': {}".format(number, e),
-                           None))
+        # Note: We don't use D() for efficiency here.
+        # The lexer will only yield valid number strings.
+        if ',' in number:
+            number = number.replace(',', '')
+        return Decimal(number)
 
     def TAG(self, tag):
         """Process a TAG token.
@@ -182,25 +174,26 @@ class LexBuilder(object):
         """
         return link
 
-    def KEY(self, key):
-        """Process a KEY token.
+    def KEY(self, ident):
+        """Process an identifier token.
 
         Args:
-          key: a str, the name of the key string.
+          ident: a str, the name of the key string.
         Returns:
           The link string itself. For now we don't need to represent this by
           an object.
         """
-        return key
+        return ident
 
 
-def lex_iter(file, builder=None):
+def lex_iter(file, builder=None, encoding=None):
     """An iterator that yields all the tokens in the given file.
 
     Args:
       file: A string, the filename to run the lexer on, or a file object.
       builder: A builder of your choice. If not specified, a LexBuilder is
         used and discarded (along with its errors).
+      encoding: A string (or None), the default encoding to use for strings.
     Yields:
       Tuples of the token (a string), the matched text (a string), and the line
       no (an integer).
@@ -211,26 +204,28 @@ def lex_iter(file, builder=None):
         filename = file.name
     if builder is None:
         builder = LexBuilder()
-    _parser.lexer_init(filename, builder)
+    _parser.lexer_initialize(filename, builder, encoding)
     while 1:
         token_tuple = _parser.lexer_next()
         if token_tuple is None:
             break
         yield token_tuple
+    _parser.lexer_finalize()
 
 
-def lex_iter_string(string, builder=None):
+def lex_iter_string(string, builder=None, encoding=None):
     """Parse an input string and print the tokens to an output file.
 
     Args:
-      input_string: a str, the contents of the ledger to be parsed.
+      input_string: a str or bytes, the contents of the ledger to be parsed.
       builder: A builder of your choice. If not specified, a LexBuilder is
         used and discarded (along with its errors).
+      encoding: A string (or None), the default encoding to use for strings.
     Returns:
       A iterator on the string. See lex_iter() for details.
     """
-    tmp_file = tempfile.NamedTemporaryFile('w')
+    tmp_file = tempfile.NamedTemporaryFile('w' if isinstance(string, str) else 'wb')
     tmp_file.write(string)
     tmp_file.flush()
-    return lex_iter(tmp_file, builder) # Note: We pass in the file object in
-                                       # order to keep it alive during parsing.
+    # Note: We pass in the file object in order to keep it alive during parsing.
+    return lex_iter(tmp_file, builder, encoding)

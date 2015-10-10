@@ -17,16 +17,23 @@ clean:
 	rm -f $(CROOT)/grammar.h $(CROOT)/grammar.c
 	rm -f $(CROOT)/lexer.h $(CROOT)/lexer.c
 	rm -f $(CROOT)/*.so
-	find . -name __pycache__ -exec rm -r "{}" \;
+	find . -name __pycache__ -exec rm -r "{}" \; -prune
 
 
 # Targets to generate and compile the C parser.
 CROOT = $(SRC)/parser
 LEX = flex
 YACC = bison --report=itemset --verbose
+FILTERYACC = sed -e 's@/\*[ \t]yacc\.c:.*\*/@@'
+TMP=/tmp
+
+xy:
+	cat $(CROOT)/grammar.c | $(FILTERYACC) | less
 
 $(CROOT)/grammar.c $(CROOT)/grammar.h: $(CROOT)/grammar.y
 	$(YACC) -o $(CROOT)/grammar.c $<
+	(cat $(CROOT)/grammar.c | $(FILTERYACC) > $(TMP)/grammar.c ; mv $(TMP)/grammar.c $(CROOT)/grammar.c )
+	(cat $(CROOT)/grammar.h | $(FILTERYACC) > $(TMP)/grammar.h ; mv $(TMP)/grammar.h $(CROOT)/grammar.h )
 
 $(CROOT)/lexer.c $(CROOT)/lexer.h: $(CROOT)/lexer.l $(CROOT)/grammar.h
 	$(LEX) --outfile=$(CROOT)/lexer.c --header-file=$(CROOT)/lexer.h $<
@@ -68,6 +75,10 @@ CLUSTERS_REGEXPS =							\
 	beancount/core			 	core			\
 	beancount/ops/.*_test\.py	 	ops/tests		\
 	beancount/ops			 	ops			\
+	beancount/parser/printer_test\.py 	printer/tests		\
+	beancount/parser/printer.py	 	printer			\
+	beancount/parser/options_test\.py 	options/tests		\
+	beancount/parser/options.py	 	options			\
 	beancount/parser/.*_test\.py	 	parser/tests		\
 	beancount/parser		 	parser			\
 	beancount/plugins/.*_test\.py	 	plugins/tests		\
@@ -82,6 +93,8 @@ CLUSTERS_REGEXPS =							\
 	beancount/utils			 	utils			\
 	beancount/web/.*_test\.py	 	web/tests		\
 	beancount/web			 	web			\
+	beancount/query/.*_test\.py	 	query/tests		\
+	beancount/query			 	query			\
 	beancount/load.*_test\.py	 	load/tests		\
 	beancount/load.*\.py		 	load			\
 	beancount                        	load
@@ -89,7 +102,7 @@ CLUSTERS_REGEXPS =							\
 GRAPHER = dot
 
 build/beancount.pdf: build/beancount.deps
-	cat $< | sfood-cluster-regexp $(CLUSTERS_REGEXPS) | grep -v /tests| sfood-graph | $(GRAPHER) -Tps | ps2pdf - $@
+	cat $< | sfood-cluster-regexp $(CLUSTERS_REGEXPS) | grep -v /tests | sfood-graph | $(GRAPHER) -Tps | ps2pdf - $@
 	evince $@
 
 build/beancount_tests.pdf: build/beancount.deps
@@ -128,11 +141,10 @@ debug:
 
 
 # Run the unittests.
-test tests unittests:
-	nosetests -v $(SRC)
+vtest vtests verbose-test verbose-tests:
+	nosetests -v -s $(SRC)
 
-
-tests-quiet:
+qtest qtests quiet-test quiet-tests test tests:
 	nosetests $(SRC)
 
 nakedtests:
@@ -151,7 +163,7 @@ demo:
 
 
 # Generate the tutorial files from the example file.
-EXAMPLE=examples/tutorial/example.beancount
+EXAMPLE=examples/example.beancount
 example $(EXAMPLE):
 	./bin/bean-example --seed=0 -o $(EXAMPLE)
 
@@ -186,6 +198,9 @@ missing-tests:
 fixmes:
 	egrep -srn '\b(FIXME|TODO\()' $(SRC) || true
 
+filter-terms:
+	egrep --exclude-dir='.hg' --exclude-dir='__pycache__' -srn 'GOOGL?' $(PWD) | grep -v GOOGLE_APIS || true
+
 multi-imports:
 	egrep -srn '^(from.*)?import.*,' $(SRC) || true
 
@@ -194,7 +209,7 @@ sfood-checker:
 	sfood-checker bin src/python
 
 # Check dependency constraints.
-dep-constraints: build/beancount.deps
+constraints dep-constraints: build/beancount.deps
 	./etc/dependency-constraints.py $<
 
 check-author:
@@ -205,6 +220,7 @@ check-author:
 LINT_PASS=line-too-long,bad-whitespace,bad-indentation,unused-import,invalid-name,reimported
 LINT_FAIL=bad-continuation
 
+
 pylint-pass:
 	pylint --rcfile=$(PWD)/etc/pylintrc --disable=all --enable=$(LINT_PASS) $(SRC)
 
@@ -214,9 +230,23 @@ pylint-fail:
 pylint-all:
 	pylint --rcfile=$(PWD)/etc/pylintrc $(SRC)
 
+pyflakes:
+	pyflakes $(SRC)
+
 # Run all currently configured linter checks.
-lint: pylint-pass
+pylint lint: pylint-pass
+
 
 
 # Check everything.
-status check: pylint-pass missing-tests fixmes dep-constraints tests-quiet multi-imports
+status check: pylint pyflakes filter-terms missing-tests dep-constraints multi-imports tests-quiet
+# fixmes: For later.
+
+
+
+# FIXME: Remove
+grep-import:
+	grep --include='*.py' --exclude='*/beancount/parser/*' -srn  'from beancount.parser import parser'  ~/p/beancount/src/python/beancount
+
+grep-uses:
+	grep --include='*.py' --exclude='*/beancount/parser/*' -srn  'parser.parse'  ~/p/beancount/src/python/beancount

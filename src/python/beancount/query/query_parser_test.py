@@ -1,7 +1,9 @@
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import datetime
 import unittest
 
-from beancount.core.amount import D
+from beancount.core.number import D
 from beancount.query import query_parser as qp
 
 
@@ -162,7 +164,7 @@ class TestSelectExpression(QueryParserTestBase):
             qSelect([qp.Target(qp.GreaterEq(qp.Column('a'), qp.Constant(42)), None)]),
             "SELECT a >= 42;")
 
-    def test_expr_lte(self):
+    def test_expr_lt(self):
         self.assertParse(
             qSelect([qp.Target(qp.Less(qp.Column('a'), qp.Constant(42)), None)]),
             "SELECT a < 42;")

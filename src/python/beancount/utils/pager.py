@@ -13,6 +13,9 @@ upon exit we close the file object. This also silences broken pipe errors
 triggered by the user exiting the sub-process, and recovers from a failing pager
 command by just using stdout.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
+import codecs
 import contextlib
 import os
 import sys
@@ -43,10 +46,20 @@ def create_pager(command, file):
         command = DEFAULT_PAGER
 
     pipe = None
+
+    # In case of using 'less', make sure the charset is set properly. In theory
+    # you could override this by setting PAGER to "LESSCHARSET=utf-8 less" but
+    # this shouldn't affect other programs and is unlikely to cause problems, so
+    # we set it here to make default behavior work for most people (we always
+    # write UTF-8).
+    env = os.environ.copy()
+    env['LESSCHARSET'] = "utf-8"
+
     try:
         pipe = subprocess.Popen(command, shell=True,
                                 stdin=subprocess.PIPE,
-                                stdout=file)
+                                stdout=file,
+                                env=env)
     except OSError as exc:
         logging.error("Invalid pager: {}".format(exc))
         file = file
@@ -61,9 +74,20 @@ class ConditionalPager:
     lines has been printed to it.
     """
     def __init__(self, command, minlines=None):
+        """Create a conditional pager.
+
+        Args:
+          command: A string, the shell command to run as a pager.
+          minlines: If set, the number of lines under which you should not bother starting
+            a pager. This avoids kicking off a pager if the screen is high enough to
+            render the contents. If the value is unset, always starts a pager (which is
+            fine behavior too).
+        """
         self.command = command
         self.minlines = minlines
-        self.default_file = sys.stdout
+        self.default_file = (codecs.getwriter("utf-8")(sys.stdout.buffer)
+                             if hasattr(sys.stdout, 'buffer') else
+                             sys.stdout)
 
     def __enter__(self):
         """Initialize the context manager and return this instance as it."""

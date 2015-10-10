@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.0.  */
+/* A Bison parser, made by GNU Bison 3.0.4.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ extern int yydebug;
 # define YYTOKENTYPE
   enum yytokentype
   {
-    ERROR = 258,
+    LEX_ERROR = 258,
     INDENT = 259,
     EOL = 260,
     COMMENT = 261,
@@ -59,45 +59,63 @@ extern int yydebug;
     RCURL = 269,
     EQUAL = 270,
     COMMA = 271,
-    SLASH = 272,
-    FLAG = 273,
-    TXN = 274,
-    BALANCE = 275,
-    OPEN = 276,
-    CLOSE = 277,
-    PAD = 278,
-    EVENT = 279,
-    PRICE = 280,
-    NOTE = 281,
-    DOCUMENT = 282,
-    PUSHTAG = 283,
-    POPTAG = 284,
-    OPTION = 285,
-    PLUGIN = 286,
-    DATE = 287,
-    ACCOUNT = 288,
-    CURRENCY = 289,
-    STRING = 290,
-    NUMBER = 291,
-    TAG = 292,
-    LINK = 293,
-    KEY = 294
+    TILDE = 272,
+    HASH = 273,
+    ASTERISK = 274,
+    SLASH = 275,
+    PLUS = 276,
+    MINUS = 277,
+    LPAREN = 278,
+    RPAREN = 279,
+    FLAG = 280,
+    TXN = 281,
+    BALANCE = 282,
+    OPEN = 283,
+    CLOSE = 284,
+    COMMODITY = 285,
+    PAD = 286,
+    EVENT = 287,
+    PRICE = 288,
+    NOTE = 289,
+    DOCUMENT = 290,
+    QUERY = 291,
+    PUSHTAG = 292,
+    POPTAG = 293,
+    OPTION = 294,
+    INCLUDE = 295,
+    PLUGIN = 296,
+    BOOL = 297,
+    DATE = 298,
+    ACCOUNT = 299,
+    CURRENCY = 300,
+    STRING = 301,
+    NUMBER = 302,
+    TAG = 303,
+    LINK = 304,
+    KEY = 305,
+    NEGATIVE = 306
   };
 #endif
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-typedef union YYSTYPE YYSTYPE;
+
 union YYSTYPE
 {
-#line 59 "src/python/beancount/parser/grammar.y" /* yacc.c:1909  */
+#line 130 "src/python/beancount/parser/grammar.y" 
 
     char character;
     const char* string;
     PyObject* pyobj;
+    struct {
+        PyObject* pyobj1;
+        PyObject* pyobj2;
+    } pairobj;
 
-#line 100 "src/python/beancount/parser/grammar.h" /* yacc.c:1909  */
+#line 116 "src/python/beancount/parser/grammar.h" 
 };
+
+typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
 #endif

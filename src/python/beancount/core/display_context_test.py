@@ -4,9 +4,9 @@ import unittest
 import re
 from decimal import Decimal
 
-from . import display_context
-from .display_context import Precision
-from .display_context import Align
+from beancount.core import display_context
+from beancount.core.display_context import Precision
+from beancount.core.display_context import Align
 
 
 def decimalize(number_list):
@@ -53,7 +53,7 @@ class TestDisplayContext(DisplayContextBaseTest):
         dcontext = display_context.DisplayContext()
         dcontext.update(Decimal('1.234'))
         dcontext.update(Decimal('1.23'), 'USD')
-        dcontext.update(Decimal('7'), 'GOOG')
+        dcontext.update(Decimal('7'), 'HOOL')
         self.assertTrue(re.search('sign=', str(dcontext)))
 
 

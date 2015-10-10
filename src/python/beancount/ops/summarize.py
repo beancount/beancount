@@ -11,6 +11,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import datetime
 import collections
 
+from beancount.core.number import ZERO
 from beancount.core.data import Transaction
 from beancount.core.data import Open
 from beancount.core.data import Close
@@ -491,10 +492,9 @@ def conversions(entries, conversion_account, conversion_currency, date=None):
         # invariant. (This is the only single place we cheat on the balance rule
         # in the entire system and this is necessary; see documentation on
         # Conversions.)
-        price = amount.Amount(amount.ZERO, conversion_currency)
+        price = amount.Amount(ZERO, conversion_currency)
         conversion_entry.postings.append(
-            data.Posting(conversion_entry, conversion_account, -position, price,
-                         None, None))
+            data.Posting(conversion_account, -position, price, None, None))
 
     # Make a copy of the list of entries and insert the new transaction into it.
     new_entries = list(entries)
@@ -525,7 +525,7 @@ def create_entries_from_balances(balances, date, source_account, direction,
     'balances' dict to/from another account specified in 'source_account'.
 
     The balancing posting is created with the equivalent at cost. In other
-    words, if you attempt to balance 10 GOOG {500 USD}, this will synthesize a
+    words, if you attempt to balance 10 HOOL {500 USD}, this will synthesize a
     posting with this position on one leg, and with 5000 USD on the
     'source_account' leg.
 
@@ -562,10 +562,10 @@ def create_entries_from_balances(balances, date, source_account, direction,
             meta, date, flag, None, narration, None, None, postings)
 
         for position in account_balance.get_positions():
-            postings.append(data.Posting(new_entry, account, position, None, None, None))
+            postings.append(data.Posting(account, position, None, None, None))
             cost_position = position.cost()
             postings.append(
-                data.Posting(new_entry, source_account, -cost_position, None, None, None))
+                data.Posting(source_account, -cost_position, None, None, None))
 
         new_entries.append(new_entry)
 

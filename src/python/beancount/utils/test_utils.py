@@ -2,6 +2,7 @@
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import builtins
 import textwrap
 import unittest
 import io
@@ -85,29 +86,61 @@ def run_with_args(function, args):
 
 
 @contextlib.contextmanager
-def tempdir():
+def tempdir(delete=True, **kw):
     """A context manager that creates a temporary directory and deletes its
     contents unconditionally once done.
 
+    Args:
+      delete: A boolean, true if we want to delete the directory after running.
+      **kw: Keyword arguments for mkdtemp.
     Yields:
       A string, the name of the temporary directory created.
     """
-    tempdir = tempfile.mkdtemp(prefix="beancount-test-tmpdir.")
+    tempdir = tempfile.mkdtemp(prefix="beancount-test-tmpdir.", **kw)
     try:
         yield tempdir
     finally:
-        shutil.rmtree(tempdir, ignore_errors=True)
+        if delete:
+            shutil.rmtree(tempdir, ignore_errors=True)
 
 
-def capture(attributes='stdout'):
+def create_temporary_files(root, contents_map):
+    """Create a number of temporary files under 'root'.
+
+    This routine is used to initialize the contents of multiple files under a
+    temporary directory.
+
+    Args:
+      root: A string, the name of the directory under which to create the files.
+      contents_map: A dict of relative filenames to their contents. The content
+        strings will be automatically dedented for convenience. In addition, the
+        string 'ROOT' in the contents will be automatically replaced by the root
+        directory name.
+    """
+    os.makedirs(root, exist_ok=True)
+    for relative_filename, contents in contents_map.items():
+        assert not path.isabs(relative_filename)
+        filename = path.join(root, relative_filename)
+        os.makedirs(path.dirname(filename), exist_ok=True)
+
+        clean_contents = textwrap.dedent(contents.replace('{root}', root))
+        with open(filename, 'w') as f:
+            f.write(clean_contents)
+
+
+def capture(*attributes):
     """A context manager that captures what's printed to stdout.
 
     Args:
-      attributes: A string or a list of strings, the name of the sys attributes to override
+      *attributes: A tuple of strings, the name of the sys attributes to override
         with StringIO instances.
     Yields:
       A StringIO string accumulator.
     """
+    if not attributes:
+        attributes = 'stdout'
+    elif len(attributes) == 1:
+        attributes = attributes[0]
     return patch(sys, attributes, io.StringIO)
 
 
@@ -212,3 +245,24 @@ class TestCase(unittest.TestCase):
         with capture() as oss:
             yield oss
         self.assertLines(textwrap.dedent(expected_text), oss.getvalue())
+
+
+def make_failing_importer(*removed_module_names):
+    """Make an importer that raise an ImportError for some modules.
+
+    Use it like this:
+
+      @mock.patch('builtins.__import__', make_failing_importer('setuptools'))
+      def test_...
+
+    Args:
+      removed_module_name: The name of the module import that should raise an exception.
+    Returns:
+      A decorated test decorator.
+    """
+    def failing_import(name, *args, **kwargs):
+        if name in removed_module_names:
+            raise ImportError("Could not import {}".format(name))
+        else:
+            return builtins.__import__(name, *args, **kwargs)
+    return failing_import

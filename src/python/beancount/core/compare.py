@@ -5,14 +5,14 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import collections
 import hashlib
 
-from .data import Price
-from . import data
+from beancount.core.data import Price
+from beancount.core import data
 
 
 CompareError = collections.namedtuple('CompareError', 'source message entry')
 
 # A list of field names that are being ignored for persistence.
-IGNORED_FIELD_NAMES = {'meta', 'entry', 'diff_amount'}
+IGNORED_FIELD_NAMES = {'meta', 'diff_amount'}
 
 
 def stable_hash_namedtuple(objtuple, ignore=frozenset()):
@@ -75,8 +75,6 @@ def hash_entries(entries):
     errors = []
     num_legal_duplicates = 0
     for entry in entries:
-        entry_type = type(entry)
-
         hash_ = hash_entry(entry)
 
         if hash_ in entry_hash_dict:
@@ -128,8 +126,8 @@ def compare_entries(entries1, entries2):
         raise ValueError(str(error))
 
     same = keys1 == keys2
-    missing1 = data.sort([hashes1[key] for key in keys1 - keys2])
-    missing2 = data.sort([hashes2[key] for key in keys2 - keys1])
+    missing1 = data.sorted([hashes1[key] for key in keys1 - keys2])
+    missing2 = data.sorted([hashes2[key] for key in keys2 - keys1])
     return (same, missing1, missing2)
 
 
@@ -154,7 +152,7 @@ def includes_entries(subset_entries, entries):
         raise ValueError(str(error))
 
     includes = subset_keys.issubset(keys)
-    missing = data.sort([subset_hashes[key] for key in subset_keys - keys])
+    missing = data.sorted([subset_hashes[key] for key in subset_keys - keys])
     return (includes, missing)
 
 
@@ -180,5 +178,5 @@ def excludes_entries(subset_entries, entries):
 
     intersection = keys.intersection(subset_keys)
     excludes = not bool(intersection)
-    extra = data.sort([subset_hashes[key] for key in intersection])
+    extra = data.sorted([subset_hashes[key] for key in intersection])
     return (excludes, extra)

@@ -43,9 +43,9 @@ def is_complete(filename):
     Returns:
       A boolean, true if the tests are complete.
     """
-    contents = open(filename).read()
+    contents = open(filename, encoding='utf-8').read()
     return not (re.search('^__incomplete__', contents, re.M) or
-                re.search(r'\bNotImplementedError\b', contents, re.M))
+                re.search(r'raise \bNotImplementedError\b', contents, re.M))
 
 
 def main():

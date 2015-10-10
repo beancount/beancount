@@ -46,10 +46,9 @@ class TestScriptSQL(test_utils.TestCase):
 
     def convert_to_sql(self, filename):
         dbfile = tempfile.NamedTemporaryFile('w', suffix='.db')
-        with test_utils.capture('stdout') as stdout:
-            with test_utils.capture('stderr') as stderr:
-                result = test_utils.run_with_args(sql.main,
-                                                  [filename, dbfile.name])
+        with test_utils.capture('stdout', 'stderr'):
+            result = test_utils.run_with_args(sql.main,
+                                              [filename, dbfile.name])
         self.assertEqual(0, result)
         self.assertNotEqual(0, path.getsize(dbfile.name))
         return dbfile

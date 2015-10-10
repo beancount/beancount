@@ -1,18 +1,20 @@
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import datetime
 import io
 import unittest
 import textwrap
 
-from beancount.core.amount import D
-from beancount.core.amount import Decimal
+from beancount.core.number import D
+from beancount.core.number import Decimal
 from beancount.core import inventory
 from beancount.query import query_parser
 from beancount.query import query_compile as qc
 from beancount.query import query_env as qe
 from beancount.query import query_execute as qx
 from beancount.parser import cmptest
-from beancount.parser import parser
 from beancount.utils import misc_utils
+from beancount import loader
 
 
 class QueryBase(cmptest.TestCase):
@@ -57,7 +59,7 @@ class QueryBase(cmptest.TestCase):
                     sort_rows=False,
                     debug=False):
 
-        entries, _, options_map = parser.parse_string(input_string)
+        entries, _, options_map = loader.load_string(input_string)
         query = self.compile(bql_string)
         result_types, result_rows = qx.execute_query(query, entries, options_map)
 
@@ -89,19 +91,19 @@ class CommonInputBase:
 
     2010-01-01 * "Dinner with Cero"
       Assets:Bank:Checking       100.00 USD
-      Expenses:Restaurant
+      Expenses:Restaurant       -100.00 USD
 
     2011-01-01 * "Dinner with Uno"
       Assets:Bank:Checking       101.00 USD
-      Expenses:Restaurant
+      Expenses:Restaurant       -101.00 USD
 
     2012-02-02 * "Dinner with Dos"
       Assets:Bank:Checking       102.00 USD
-      Expenses:Restaurant
+      Expenses:Restaurant       -102.00 USD
 
     2013-03-03 * "Dinner with Tres"
       Assets:Bank:Checking       103.00 USD
-      Expenses:Restaurant
+      Expenses:Restaurant       -103.00 USD
 
     2013-10-10 * "International Transfer"
       Assets:Bank:Checking         -50.00 USD
@@ -109,12 +111,12 @@ class CommonInputBase:
 
     2014-04-04 * "Dinner with Quatro"
       Assets:Bank:Checking       104.00 USD
-      Expenses:Restaurant
+      Expenses:Restaurant       -104.00 USD
 
     """)
     def setUp(self):
         super().setUp()
-        self.entries, _, self.options_map = parser.parse_string(textwrap.dedent(self.INPUT))
+        self.entries, _, self.options_map = loader.load_string(textwrap.dedent(self.INPUT))
 
 
 class TestFilterEntries(CommonInputBase, QueryBase):
@@ -198,8 +200,8 @@ class TestFilterEntries(CommonInputBase, QueryBase):
         self.assertEqualEntries(self.INPUT + textwrap.dedent("""
 
           2014-04-04 C "Conversion for (-50.00 USD, -60.00 CAD)"
-            Equity:Conversions:Current                                              50.00 USD                    @ 0.00 NOTHING
-            Equity:Conversions:Current                                              60.00 CAD                    @ 0.00 NOTHING
+            Equity:Conversions:Current  50.00 USD @ 0 NOTHING
+            Equity:Conversions:Current  60.00 CAD @ 0 NOTHING
 
         """), filtered_entries)
 
@@ -324,7 +326,7 @@ class TestExecuteNonAggregatedQuery(QueryBase):
 
       2010-02-23 * "Bla"
         Assets:Bank:Checking       100.00 USD
-        Expenses:Restaurant
+        Expenses:Restaurant       -100.00 USD
 
     """
 
@@ -394,7 +396,7 @@ class TestExecuteAggregatedQuery(QueryBase):
 
       2010-02-23 * "Bla"
         Assets:Bank:Checking       100.00 USD
-        Expenses:Restaurant
+        Expenses:Restaurant       -100.00 USD
 
     """
 
@@ -434,11 +436,11 @@ class TestExecuteAggregatedQuery(QueryBase):
             """
             2010-02-21 * "First"
               Assets:Bank:Checking       -1.00 USD
-              Expenses:Restaurant
+              Expenses:Restaurant         1.00 USD
 
             2010-02-23 * "Second"
               Liabilities:Credit-Card    -2.00 USD
-              Expenses:Restaurant
+              Expenses:Restaurant         2.00 USD
             """,
             """
             SELECT account, length(account) as len
@@ -532,11 +534,11 @@ class TestExecuteAggregatedQuery(QueryBase):
             """
             2010-02-21 * "First"
               Assets:Bank:Checking       -1.00 USD
-              Expenses:Restaurant
+              Expenses:Restaurant         1.00 USD
 
             2010-02-23 * "Second"
               Liabilities:Credit-Card    -2.00 USD
-              Expenses:Restaurant
+              Expenses:Restaurant         2.00 USD
             """,
             """
             SELECT account, count(account) as num, sum(number) as sum
@@ -561,11 +563,11 @@ class TestExecuteAggregatedQuery(QueryBase):
             """
             2010-02-21 * "First"
               Assets:Bank:Checking       -1.00 USD
-              Expenses:Restaurant
+              Expenses:Restaurant         1.00 USD
 
             2010-02-23 * "Second"
               Liabilities:Credit-Card    -2.00 USD
-              Expenses:Restaurant
+              Expenses:Restaurant         2.00 USD
             """,
             """
             SELECT account, count(account) as num
@@ -608,11 +610,11 @@ class TestExecuteAggregatedQuery(QueryBase):
             """
             2010-02-21 * "First"
               Assets:Bank:Checking       -1.00 USD
-              Expenses:Restaurant
+              Expenses:Restaurant         1.00 USD
 
             2010-02-23 * "Second"
               Liabilities:Credit-Card    -2.00 USD
-              Expenses:Restaurant
+              Expenses:Restaurant         2.00 USD
             """,
             """
             SELECT count(account) as num
@@ -635,11 +637,11 @@ class TestExecuteAggregatedQuery(QueryBase):
             """
             2010-02-21 * "First"
               Assets:Bank:Checking       -1.00 USD
-              Expenses:Restaurant
+              Expenses:Restaurant         1.00 USD
 
             2010-02-23 * "Second"
               Liabilities:Credit-Card    -2.00 USD
-              Expenses:Restaurant
+              Expenses:Restaurant         2.00 USD
             """,
             """
             SELECT count(account) as num, sum(number) as sum
@@ -663,11 +665,11 @@ class TestExecuteAggregatedQuery(QueryBase):
             """
             2010-02-21 * "First"
               Assets:Bank:Checking       -1.00 USD
-              Expenses:Restaurant
+              Expenses:Restaurant         1.00 USD
 
             2010-02-23 * "Second"
               Liabilities:Credit-Card    -2.00 USD
-              Expenses:Restaurant
+              Expenses:Restaurant         2.00 USD
             """,
             """
             SELECT count(account) as num
@@ -694,7 +696,7 @@ class TestExecuteOptions(QueryBase):
         Assets:AssetB       4.00 USD
         Assets:AssetC       3.00 USD
         Assets:AssetE       1.00 USD
-        Equity:Rest
+        Equity:Rest       -15.00 USD
 
     """
 
@@ -783,7 +785,9 @@ class TestExecuteOptions(QueryBase):
                 Assets:AssetA       5.00 USD
                 Assets:AssetA       2.00 USD
                 Assets:AssetA       4.00 USD
-                Equity:Rest
+                Equity:Rest        -5.00 USD
+                Equity:Rest        -2.00 USD
+                Equity:Rest        -4.00 USD
             """,
             """
             SELECT DISTINCT account ;
@@ -821,12 +825,12 @@ class TestExecuteFlatten(QueryBase):
 
     INPUT = """
 
-      plugin "beancount.ops.auto_accounts"
+      plugin "beancount.plugins.auto_accounts"
 
       2010-02-23 *
         Assets:Something       5.00 USD
         Assets:Something       2.00 CAD
-        Assets:Something       4 GOOG {531.20 USD}
+        Assets:Something       4 HOOL {531.20 USD}
         Equity:Rest
 
     """
@@ -847,5 +851,5 @@ class TestExecuteFlatten(QueryBase):
                 ],
             [
                 ('Assets:Something',
-                 inventory.from_string("5.00 USD, 2.00 CAD, 4 GOOG {531.20 USD}")),
+                 inventory.from_string("5.00 USD, 2.00 CAD, 4 HOOL {531.20 USD}")),
                 ])

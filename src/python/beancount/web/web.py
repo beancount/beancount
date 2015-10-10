@@ -41,6 +41,10 @@ from beancount.reports import misc_reports
 from beancount.reports import context
 
 
+# The default view page to redirect to.
+DEFAULT_VIEW_REDIRECT = 'balsheet'
+
+
 class HTMLFormatter(html_formatter.HTMLFormatter):
     """A formatter object that can be used to render accounts links.
 
@@ -48,8 +52,8 @@ class HTMLFormatter(html_formatter.HTMLFormatter):
       build_url: A function used to render links to a Bottle application.
       leafonly: a boolean, if true, render only the name of the leaf nodes.
     """
-    def __init__(self, build_url, leaf_only, view_links=True):
-        super().__init__()
+    def __init__(self, dcontext, build_url, leaf_only, view_links=True):
+        super().__init__(dcontext)
         self.build_url = build_url
         self.leaf_only = leaf_only
         self.view_links = view_links
@@ -143,7 +147,8 @@ def render_report(report_class, entries, args=None,
     Returns:
       A string, the rendered report.
     """
-    formatter = HTMLFormatter(request.app.get_url, leaf_only)
+    formatter = HTMLFormatter(app.options['dcontext'],
+                              request.app.get_url, leaf_only)
     oss = io.StringIO()
     if center:
         oss.write('<center>\n')
@@ -171,7 +176,8 @@ def render_real_report(report_class, real_root, args=None, leaf_only=False):
     Returns:
       A string, the rendered report.
     """
-    formatter = HTMLFormatter(request.app.get_url, leaf_only)
+    formatter = HTMLFormatter(app.options['dcontext'],
+                              request.app.get_url, leaf_only)
     oss = io.StringIO()
     report_ = report_class.from_args(args, formatter=formatter)
     report_.render_real_htmldiv(real_root, app.options, oss)
@@ -241,7 +247,7 @@ def root():
     bottle.redirect(app.get_url('toc'))
 
 
-@app.route('/toc', name='toc')
+@app.route('/index', name='toc')
 def toc():
     entries_no_open_close = [entry for entry in app.entries
                              if not isinstance(entry, (data.Open, data.Close))]
@@ -251,7 +257,7 @@ def toc():
         mindate, maxdate = getters.get_min_max_dates(entries_no_open_close)
 
     def view_url(name, **kw):
-        return app.router.build(name, path='', **kw)
+        return app.router.build(name, path=DEFAULT_VIEW_REDIRECT, **kw)
 
     viewboxes = []
     if app.args.view:
@@ -346,7 +352,8 @@ def link(link=None):
     linked_entries = basicops.filter_link(link, app.entries)
 
     oss = io.StringIO()
-    formatter = HTMLFormatter(request.app.get_url, False, view_links=False)
+    formatter = HTMLFormatter(app.options['dcontext'],
+                              request.app.get_url, False, view_links=False)
     journal_html.html_entries_table_with_balance(oss, linked_entries, formatter)
     return render_global(
         pagetitle="Link: {}".format(link),
@@ -370,15 +377,15 @@ def context_(ehash=None):
         print("ERROR: Ambiguous entries for '{}'".format(ehash),
               file=oss)
         print(file=oss)
-        dcontext = app.options['display_context']
+        dcontext = app.options['dcontext']
         printer.print_entries(matching_entries, dcontext, file=oss)
 
     else:
-        dcontext = app.options['display_context']
+        dcontext = app.options['dcontext']
         oss.write("<pre>\n")
         for entry in matching_entries:
             oss.write(context.render_entry_context(
-                app.entries, dcontext, entry.meta.filename, entry.meta.lineno))
+                app.entries, app.options, dcontext, entry.meta.filename, entry.meta.lineno))
         oss.write("</pre>\n")
 
     return render_global(
@@ -402,7 +409,7 @@ GLOBAL_NAVIGATION = bottle.SimpleTemplate("""
 """).render(A=A)
 
 
-@app.route('/web.css', name='style')
+@app.route('/resources/web.css', name='style')
 def style():
     "Stylesheet for the entire document."
     response.content_type = 'text/css'
@@ -478,7 +485,7 @@ APP_NAVIGATION = bottle.SimpleTemplate("""
   <li><a href="{{V.income}}">Income Statement</a></li>
   <li><a href="{{V.holdings}}">Equity/Holdings</a></li>
   <li><a href="{{V.trial}}">Trial Balance</a></li>
-  <li><a href="{{V.journal_root}}">General Journal</a></li>
+  <li><a href="{{V.journal_all}}">General Journal</a></li>
   <li><a href="{{V.index}}">Index</a></li>
 </ul>
 """)
@@ -486,7 +493,7 @@ APP_NAVIGATION = bottle.SimpleTemplate("""
 
 @viewapp.route('/', name='approot')
 def approot():
-    bottle.redirect(request.app.get_url('balsheet'))
+    bottle.redirect(request.app.get_url(DEFAULT_VIEW_REDIRECT))
 
 
 @viewapp.route('/index', name='index')
@@ -500,7 +507,7 @@ def index():
             ("Balance Sheet", "balsheet"),
             ("Opening Balances", "openbal"),
             ("Income Statement", "income"),
-            ("General Journal", "journal_root"),
+            ("General Journal", "journal_all"),
             ("Conversions", "conversions"),
             ("Documents", "documents"),
             ("Holdings (Full Detail)", "holdings"),
@@ -631,8 +638,8 @@ def networth():
 
 
 
-@viewapp.route('/journal', name='journal_root')
-def journal_root():
+@viewapp.route('/journal/all', name='journal_all')
+def journal_all():
     "A list of all the entries in this realization."
     bottle.redirect(request.app.get_url('journal', account_name=''))
 
@@ -653,8 +660,17 @@ def journal_(account_name=None):
             real_accounts = request.view.closing_real_accounts
 
     # Render the report.
+    args = []
+    if account_name:
+        args.append('--account={}'.format(account_name))
+
+    render_postings = request.params.get('postings', True)
+    if isinstance(render_postings, str):
+        render_postings = render_postings.lower() in ('1', 'true')
+    if render_postings:
+        args.append('--verbose')
+
     try:
-        args = ['--account={}'.format(account_name)] if account_name else []
         html_journal = render_real_report(journal_reports.JournalReport,
                                           real_accounts, args, leaf_only=False)
     except KeyError as e:
@@ -680,7 +696,7 @@ def conversions():
 # this with 'doc' or 'link' and a redirect moves it to the corresponding global
 # page.
 @viewapp.route('/doc/<filename:re:.*>', name=doc_name)
-def doc(filename=None):
+def doc__view(filename=None):
     # Redirect to global page.
     bottle.redirect(app.router.build('doc', filename=filename))
 
@@ -693,7 +709,9 @@ def documents():
                                request.view.entries, leaf_only=False))
 
 
-@viewapp.route('/prices/<base:re:[A-Z0-9._\']+>/<quote:re:[A-Z0-9._\']+>', name='prices')
+@viewapp.route('/prices'
+               '/<base:re:[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]>'
+               '/<quote:re:[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]>', name='prices')
 def prices_values(base=None, quote=None):
     "Render all the values for a particular price pair."
     html_table = render_report(price_reports.CommodityPricesReport, request.view.entries,
@@ -715,7 +733,7 @@ def commodities():
         contents=html_table)
 
 
-@viewapp.route('/event/<event:re:([a-zA-Z0-9._]+)?>', name='event')
+@viewapp.route('/event/<event:re:([A-Za-z0-9\-_/.]+)?>', name='event')
 def event(event=None):
     "Render all values of a particular event."
     if not event:
@@ -724,6 +742,7 @@ def event(event=None):
         pagetitle="Event: {}".format(event),
         contents=render_report(misc_reports.EventsReport, app.entries,
                                ['--expr', event]))
+
 
 @viewapp.route('/event', name='event_index')
 def event_index():
@@ -831,7 +850,8 @@ def url_restrict_generator(url_prefix):
                                       '/errors',
                                       '/source',
                                       '/link',
-                                      '/context']]
+                                      '/context',
+                                      '/third_party']]
 
     def url_restrict_handler(callback):
         def wrapper(*args, **kwargs):
@@ -868,7 +888,9 @@ def all(path=None):
 @handle_view(3)
 def year(year=None, path=None):
     year = int(year)
-    return views.YearView(app.entries, app.options, 'Year {:4d}'.format(year), year)
+    first_month = app.args.first_month
+    return views.YearView(app.entries, app.options, 'Year {:4d}'.format(year),
+                          year, first_month)
 
 
 @app.route(r'/view/tag/<tag:re:[^/]*>/<path:re:.*>', name='tag')
@@ -961,6 +983,9 @@ def incognito(callback):
     return wrapper
 
 
+# Global template.
+template = None
+
 def run_app(args, quiet=None):
     logging.basicConfig(level=logging.INFO,
                         format='%(levelname)-8s: %(message)s')
@@ -996,7 +1021,8 @@ def run_app(args, quiet=None):
 
     # Run the server.
     app.args = args
-    app.run(host='localhost', port=args.port,
+    bind_address = '0.0.0.0' if args.public else 'localhost'
+    app.run(host=bind_address, port=args.port,
             debug=args.debug, reloader=False,
             quiet=args.quiet if hasattr(args, 'quiet') else quiet)
 
@@ -1063,6 +1089,13 @@ def add_web_arguments(argparser):
 
     group.add_argument('--view', action='store',
                        help="Render only the specified view (identify by URL)")
+
+    group.add_argument('--public', '--inaddr-any', action='store_true',
+                       help="Bind server to listen to any address, not just localhost.")
+
+    group.add_argument('--first-month', action='store', type=int, default=1,
+                       help="The first month of the calendar year.")
+
     return group
 
 

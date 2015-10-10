@@ -7,7 +7,7 @@ import itertools
 import math
 import textwrap
 
-from beancount.core.amount import ZERO
+from beancount.core.number import ZERO
 from beancount.core import data
 from beancount.core import realization
 
@@ -21,6 +21,7 @@ TEXT_SHORT_NAME = {
     data.Transaction: 'txn',
     data.Note: 'note',
     data.Event: 'event',
+    data.Query: 'query',
     data.Price: 'price',
     data.Document: 'doc',
     }

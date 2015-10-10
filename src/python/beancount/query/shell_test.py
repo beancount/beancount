@@ -1,4 +1,7 @@
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import re
+import sys
 import unittest
 from os import path
 
@@ -6,6 +9,9 @@ from beancount.utils import test_utils
 from beancount.query import shell
 from beancount import loader
 
+
+# pylint: disable=invalid-name
+entries, errors, options_map = None, None, None
 
 def setUp(self):
     example_filename = path.join(test_utils.find_repository_root(__file__),
@@ -21,8 +27,11 @@ class TestUseCases(unittest.TestCase):
 
     def runshell(function):
         def test_function(self):
+            def loadfun():
+                return entries, errors, options_map
             with test_utils.capture('stdout') as stdout:
-                shell_obj = shell.BQLShell(False, entries, errors, options_map)
+                shell_obj = shell.BQLShell(False, loadfun, sys.stdout)
+                shell_obj.on_Reload()
                 shell_obj.onecmd(function.__doc__)
             return function(self, stdout.getvalue())
         test_function.__name__ = function.__name__
@@ -41,9 +50,9 @@ class TestUseCases(unittest.TestCase):
         SELECT DISTINCT account, open_date(account)
         ORDER BY account_sortkey(account);
         """
-        self.assertTrue(re.search('Assets:US:BofA:Checking *2012-01-01', output))
-        self.assertTrue(re.search('Equity:Opening-Balances *1980-05-12', output))
-        self.assertTrue(re.search('Expenses:Financial:Commissions *1980-05-12', output))
+        self.assertRegexpMatches(output, 'Assets:US:BofA:Checking *2013-01-01')
+        self.assertRegexpMatches(output, 'Equity:Opening-Balances *1980-05-12')
+        self.assertRegexpMatches(output, 'Expenses:Financial:Commissions *1980-05-12')
 
     @runshell
     def test_commodities(self, output):
@@ -79,7 +88,7 @@ class TestUseCases(unittest.TestCase):
         """
         BALANCES AT cost;
         """
-        self.assertTrue(re.search('Liabilities:AccountsPayable *-3664.80 USD', output))
+        self.assertTrue(re.search('Liabilities:AccountsPayable *-2094.10 USD', output))
 
     @runshell
     def test_balances_with_where(self, output):
@@ -94,7 +103,7 @@ class TestUseCases(unittest.TestCase):
         BALANCES AT cost
         FROM OPEN ON 2014-01-01 CLOSE ON 2015-01-01 CLEAR;
         """
-        self.assertTrue(re.search('Assets:US:ETrade:Cash *9692.61 USD', output))
+        self.assertTrue(re.search('Assets:US:ETrade:Cash *834.92 USD', output))
 
     @runshell
     def test_income_statement(self, output):

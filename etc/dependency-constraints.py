@@ -11,26 +11,25 @@ import sys
 from os import path
 
 
-ALLOWED = [
-    ('beancount/.*_test$', 'beancount/loader'),
-    ('beancount/.*_test$', 'beancount/utils'),
-
-    ('beancount/loader', 'beancount/(core|utils|parser|ops)'),
-
-    ('beancount/core', 'beancount/(core)'),
-    ('beancount/core/.*_test', 'beancount/parser'),
-
-    ('beancount/parser', 'beancount/(core|parser)'),
-
-    ('beancount/ops', 'beancount/(core|utils|ops)'),
-    ('beancount/ops/.*_test', 'beancount/parser'),
-
-    ('beancount/plugins', 'beancount/(core|parser|ops|plugins)'),
-
-    ('beancount/reports', 'beancount/(core|utils|ops|parser|reports)'),
-
-    ('beancount/scripts', 'beancount/(core|utils|parser|web|ops|loader$|reports|scripts)'),
-    ('beancount/web', 'beancount/(core|utils|parser|ops|loader$|reports|web)'),
+RULES = [
+    ('ALLOW',    'beancount/.*_test$', 'beancount/loader'),
+    ('ALLOW',    'beancount/.*_test$', 'beancount/utils'),
+    ('ALLOW',    'beancount/loader', 'beancount/(core|utils|parser|ops)'),
+    ('ALLOW',    'beancount/core', 'beancount/(core)'),
+    ('ALLOW',    'beancount/core/.*_test', 'beancount/parser'),
+    ('DISALLOW', 'beancount/core/(?!interpolate)', 'beancount/core/interpolate'),
+    ('ALLOW',    'beancount/parser', 'beancount/(core|parser)'),
+    ('ALLOW',    'beancount/ops', 'beancount/(core|utils|ops)'),
+    ('ALLOW',    'beancount/ops/.*_test', 'beancount/parser'),
+    ('ALLOW',    'beancount/plugins', 'beancount/(core|parser|ops|plugins)'),
+    ('ALLOW',    'beancount/reports', 'beancount/(core|utils|ops|parser|reports)'),
+    ('ALLOW',    'beancount/query', 'beancount/(core|utils|ops|parser|query)'),
+    ('ALLOW',    'beancount/scripts', 'beancount/(core|utils|parser|web|ops|loader$|reports|query|scripts)'),
+    ('ALLOW',    'beancount/web', 'beancount/(core|utils|parser|ops|loader$|reports|web)'),
+    ('ALLOW',    'beancount/projects', 'beancount/(core|utils|parser|web|ops|loader$|reports|scripts)'),
+    ('ALLOW',    'beancount/projects/.*_test', 'beancount/(projects)'),
+    ('ALLOW',    'beancount/docs/.*_test', 'beancount/docs'),
+    ('ALLOW',    'beancount/docs', 'beancount/(docs|parser|utils)'),
     ]
 
 
@@ -54,17 +53,30 @@ def main():
         from_file = from_file.replace('.py', '')
         to_file = to_file.replace('.py', '')
 
-        # If there's a single rule that matches, pass the dependency.
-        if any(re.match(from_regex, from_file) and re.match(to_regex, to_file)
-               for (from_regex, to_regex) in ALLOWED):
-            continue
+        # Find all the rules that match the source file.
+        matching_rules = [rule
+                          for rule in RULES
+                          if re.match(rule[1], from_file)]
 
-        # Failed!
-        logging.error('Invalid dependency:  {:40} -> {:40}'.format(from_file, to_file))
-        has_errors = True
+        # If any disallowing rules match, disallow.
+        allow_rules = [rule
+                       for rule in matching_rules
+                       if rule[0] == 'ALLOW' and re.match(rule[2], to_file)]
 
-    sys.exit(1 if has_errors else 0)
+        # If none of the allowing rules match, disallow.
+        disallow_rules = [rule
+                          for rule in matching_rules
+                          if rule[0] == 'DISALLOW' and re.match(rule[2], to_file)]
+
+        # At least one of the allowing rules must match and none of the
+        # disallowing rules may match.
+        if disallow_rules or not allow_rules:
+            # Failed!
+            logging.error('Invalid dependency:  {:40} -> {:40}'.format(from_file, to_file))
+            has_errors = True
+
+    return 1 if has_errors else 0
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

@@ -2,7 +2,7 @@
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import sqlite3
+import sqlite3 as dbapi
 import argparse
 import logging
 import sys
@@ -258,6 +258,19 @@ class EventWriter(DirectiveWriter):
                 entry.description)
 
 
+class QueryWriter(DirectiveWriter):
+    type = data.Query
+
+    columns = """
+      name                VARCHAR
+      query_string        VARCHAR
+    """
+
+    def get_detail(self, entry):
+        return (entry.name,
+                entry.query_string)
+
+
 class PriceWriter(DirectiveWriter):
     type = data.Price
 
@@ -312,8 +325,8 @@ def convert_decimal(string):
 def setup_decimal_support():
     """Setup sqlite3 to support conversions to/from Decimal numbers.
     """
-    sqlite3.register_adapter(Decimal, adapt_decimal)
-    sqlite3.register_converter("decimal", convert_decimal)
+    dbapi.register_adapter(Decimal, adapt_decimal)
+    dbapi.register_converter("decimal", convert_decimal)
 
 
 def main():
@@ -334,8 +347,7 @@ def main():
         os.remove(args.database)
 
     # The only supported DBAPI-2.0 backend for now is SQLite3.
-    dbapi = sqlite3
-    connection = sqlite3.connect(args.database)
+    connection = dbapi.connect(args.database)
 
     setup_decimal_support()
     for function in [

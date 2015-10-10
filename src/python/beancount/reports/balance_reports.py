@@ -95,7 +95,7 @@ class BalanceSheetReport(report.HTMLReport,
                  </div>
 
                </div>
-            """.format(**vars()))
+            """.format(**locals()))
 
 
 class IncomeStatementReport(report.HTMLReport,
@@ -134,7 +134,7 @@ class IncomeStatementReport(report.HTMLReport,
              </div>
 
            </div>
-        """.format(**vars()))
+        """.format(**locals()))
 
 
 __reports__ = [

@@ -34,7 +34,6 @@ def get_list_report_string(only_report=None):
         # Filter the name
         if only_report and only_report not in report_class.names:
             continue
-        name = report_class.names[0]
 
         # Get the texttual description.
         description = textwrap.fill(
@@ -49,7 +48,7 @@ def get_list_report_string(only_report=None):
         report_class.add_args(parser)
 
         # Get the list of supported formats.
-        formats = report_class.get_supported_formats()
+        ## formats = report_class.get_supported_formats()
 
         oss.write('{}:\n{}\n'.format(','.join(report_.names),
                                      description))
@@ -208,8 +207,8 @@ def main():
     # Force hardcore validations, just for check.
     extra_validations = (validation.HARDCORE_VALIDATIONS if is_check else None)
 
-    if args.timings:
-        logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
+    logging.basicConfig(level=logging.INFO if args.timings else logging.WARNING,
+                        format='%(levelname)-8s: %(message)s')
 
     # Parse the input file.
     errors_file = None if args.no_errors else sys.stderr

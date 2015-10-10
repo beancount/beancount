@@ -28,7 +28,6 @@ produce a listing of them.
 
 __author__ = 'Martin Blais <blais@furius.ca>'
 
-from beancount.core import data
 from beancount.core import inventory
 from beancount.ops import basicops
 
@@ -73,7 +72,7 @@ def tag_pending_transactions(entries, tag_name='PENDING'):
                     pending_entry_ids.add(id(entry))
 
     # Insert tags if marked.
-    return [(data.entry_replace(entry, tags=(entry.tags or set()) | set((tag_name,)))
+    return [(entry._replace(tags=(entry.tags or set()) | set((tag_name,)))
              if id(entry) in pending_entry_ids
              else entry)
             for entry in entries]

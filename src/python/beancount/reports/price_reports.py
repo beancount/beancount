@@ -3,6 +3,7 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import datetime
+import re
 
 from beancount.reports import report
 from beancount.reports import table
@@ -10,6 +11,8 @@ from beancount.reports import gviz
 from beancount.parser import printer
 from beancount.core import data
 from beancount.core import amount
+from beancount.core import account
+from beancount.core import getters
 from beancount.ops import prices
 from beancount.ops import lifetimes
 
@@ -67,16 +70,21 @@ class CommodityPricesReport(report.TableReport):
     def add_args(cls, parser):
         parser.add_argument('-c', '--commodity', '--currency',
                             action='store', default=None,
-                            help="The commodity to display.")
+                            help="The commodity pair to display.")
 
     def get_date_rates(self, entries):
         if not self.args.commodity:
-            self.parser.error("Commodity must be specified")
+            self.parser.error("Commodity pair must be specified (in BASE/QUOTE format)")
+        if not re.match('{ccy}/{ccy}$'.format(ccy=amount.CURRENCY_RE),
+                        self.args.commodity):
+            self.parser.error(('Invalid commodity pair "{}"; '
+                               'must be in BASE/QUOTE format').format(self.args.commodity))
         price_map = prices.build_price_map(entries)
         try:
             date_rates = prices.get_all_prices(price_map, self.args.commodity)
         except KeyError:
-            raise KeyError("Invalid commodity: {}".format(self.args.commodity))
+            self.parser.error(
+                "Commodity not present in database: {}".format(self.args.commodity))
         return date_rates
 
     def generate_table(self, entries, errors, options_map):
@@ -120,8 +128,8 @@ class PricesReport(report.Report):
         price_entries = [entry
                          for entry in entries
                          if isinstance(entry, data.Price)]
-        dcontext = options_map['display_context']
-        printer.print_entries(price_entries, file=file)
+        dcontext = options_map['dcontext']
+        printer.print_entries(price_entries, dcontext, file=file)
 
 
 class PriceDBReport(report.Report):
@@ -139,7 +147,7 @@ class PriceDBReport(report.Report):
     default_format = 'beancount'
 
     def render_beancount(self, entries, errors, options_map, file):
-        dcontext = options_map['display_context']
+        dcontext = options_map['dcontext']
         price_map = prices.build_price_map(entries)
         meta = data.new_metadata('<report_prices_db>', 0)
         for base_quote in price_map.forward_pairs:
@@ -151,10 +159,32 @@ class PriceDBReport(report.Report):
             file.write('\n')
 
 
+class TickerReport(report.TableReport):
+    """Print a parseable mapping of (base, quote, ticker, name) for all commodities."""
+
+    names = ['tickers', 'symbols']
+
+    def generate_table(self, entries, errors, options_map):
+        commodity_map = getters.get_commodity_map(entries, options_map)
+        ticker_info = getters.get_values_meta(commodity_map, 'name', 'ticker', 'quote')
+
+        price_rows = [
+            (currency, cost_currency, ticker, name)
+            for currency, (name, ticker, cost_currency) in sorted(ticker_info.items())
+            if ticker]
+
+        return table.create_table(price_rows,
+                                  [(0, "Currency"),
+                                   (1, "Cost-Currency"),
+                                   (2, "Symbol"),
+                                   (3, "Name")])
+
+
 __reports__ = [
     CommoditiesReport,
     CommodityLifetimes,
     CommodityPricesReport,
     PricesReport,
     PriceDBReport,
+    TickerReport,
     ]

@@ -7,7 +7,7 @@ association list of positions, where each position is defined as
 
 where
 
-  'currency': the commodity under consideration, USD, CAD, or stock units such as GOOG,
+  'currency': the commodity under consideration, USD, CAD, or stock units such as HOOL,
     MSFT;
 
   'cost': the amount (as a pair of (number, currency)) that the position is held under,
@@ -42,15 +42,30 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import copy
 import collections
+import re
 from datetime import date
 
-from .amount import ZERO
-from .amount import Amount
-from .position import Lot
-from .position import Position
-from .position import lot_currency_pair
-from .position import from_string as position_from_string
-from .display_context import DEFAULT_FORMATTER
+from beancount.core.number import ZERO
+from beancount.core.amount import Amount
+from beancount.core.position import Lot
+from beancount.core.position import Position
+from beancount.core.position import lot_currency_pair
+from beancount.core.position import from_string as position_from_string
+from beancount.core.display_context import DEFAULT_FORMATTER
+
+# pylint: disable=invalid-name
+try:
+    import enum
+    Enum = enum.Enum
+except ImportError:
+    Enum = object
+
+
+class Booking(Enum):
+    """Result of booking a new lot to an existing inventory."""
+    CREATED = 1   # A new lot was created.
+    REDUCED = 2   # An existing lot was reduced.
+    AUGMENTED = 3 # An existing lot was augmented.
 
 
 class Inventory(list):
@@ -125,17 +140,41 @@ class Inventory(list):
         """
         return sorted(self) == sorted(other)
 
-    def is_small(self, epsilon):
+    def is_small(self, tolerances, default_tolerances={}):
         """Return true if all the positions in the inventory are small.
 
         Args:
-          epsilon: A Decimal, the small number of units under which a position
-            is considered small as well.
+          tolerances: A Decimal, the small number of units under which a position
+            is considered small, or a dict of currency to such epsilon precision.
         Returns:
           A boolean.
         """
-        return all(abs(position.number) <= epsilon
-                   for position in self)
+        if isinstance(tolerances, dict):
+            for position in self:
+                tolerance = get_tolerance(tolerances, default_tolerances,
+                                          position.lot.currency)
+
+                if abs(position.number) > tolerance:
+                    return False
+            return True
+        else:
+            return not any(abs(position.number) > tolerances
+                           for position in self)
+
+    def is_mixed(self):
+        """Return true if the inventory contains a mix of positive and negative lots for
+        at least one instrument.
+
+        Returns:
+          A boolean.
+        """
+        signs_map = {}
+        for position in self:
+            sign = position.number >= 0
+            prev_sign = signs_map.setdefault(position.lot.currency, sign)
+            if sign != prev_sign:
+                return True
+        return False
 
     def __neg__(self):
         """Return an inventory with the negative of values of this one.
@@ -146,12 +185,31 @@ class Inventory(list):
         return Inventory([Position(position.lot, -(position.number))
                           for position in self])
 
+    def __mul__(self, scalar):
+        """Scale/multiply the contents of the inventory.
+
+        Args:
+          scalar: A Decimal.
+        Returns:
+          An instance of Inventory.
+        """
+        return Inventory([Position(position.lot, position.number * scalar)
+                          for position in self])
+
     #
     # Methods to access portions of an inventory.
     #
 
+    def currencies(self):
+        """Return the list of unit currencies held in this inventory.
+
+        Returns:
+          A list of currency strings.
+        """
+        return set(position.lot.currency for position in self)
+
     def currency_pairs(self):
-        """Return the commodities held in this inventory.
+        """Return the commodity pairs held in this inventory.
 
         Returns:
           A list of currency strings.
@@ -215,13 +273,13 @@ class Inventory(list):
 
         For example, an inventory that contains these lots:
 
-           2 GOOGL
-           3 GOOG {300.00 USD}
-           4 GOOG {310.00 USD / 2014-10-28}
+           2 HOOLB
+           3 HOOL {300.00 USD}
+           4 HOOL {310.00 USD / 2014-10-28}
 
         will provide:
 
-           2 GOOGL
+           2 HOOLB
            2140 USD
 
         Returns:
@@ -273,17 +331,21 @@ class Inventory(list):
         Args:
           lot: An instance of Lot to key by.
         Returns:
-          An instance of Position, either the position that was found, or a new
-          Position instance that was created for this lot.
+          An pair of
+            found: An instance of Position, either the position that was found, or a new
+              Position instance that was created for this lot.
+            created: A boolean, true if the position had to be created.
         """
         for position in self:
             if position.lot == lot:
                 found = position
+                created = False
                 break
         else:
             found = Position(lot, ZERO)
             self.append(found)
-        return found
+            created = True
+        return found, created
 
     def add_amount(self, amount, cost=None, lot_date=None):
         """Add to this inventory using amount, cost and date. This adds with strict lot
@@ -297,7 +359,9 @@ class Inventory(list):
           lot_date: An instance of datetime.date or None, the lot-date to use in
             the key to the inventory.
         Returns:
-          True if this position was booked against and reduced another.
+          A pair of (position, booking) where 'position' is the position that
+          that was modified, and where 'booking' is a Booking enum that hints at
+          how the lot was booked to this inventory.
         """
         assert isinstance(amount, Amount)
         assert cost is None or isinstance(cost, Amount), repr(cost)
@@ -312,7 +376,9 @@ class Inventory(list):
         Args:
           new_position: The position to add to this inventory.
         Returns:
-          True if this position was booked against and reduced another.
+          A pair of (position, booking) where 'position' is the position that
+          that was modified, and where 'booking' is a Booking enum that hints at
+          how the lot was booked to this inventory.
         """
         assert isinstance(new_position, Position), new_position
         return self._add(new_position.number, new_position.lot)
@@ -336,22 +402,29 @@ class Inventory(list):
           number: The number of units to add the given lot by.
           lot: The lot that we want to add to.
         Returns:
-          A pair of (position, reducing) where 'position' is the position that
-          that was modified, and where 'reducing' indicates whether this change
-          is a reduction of an existing position (vs. an increase or addition
-          of a new position).
+          A pair of (position, booking) where 'position' is the position that
+          that was modified, and where 'booking' is a Booking enum that hints at
+          how the lot was booked to this inventory.
         """
         # Find the position.
-        position = self._get_create_position(lot)
+        position, created = self._get_create_position(lot)
+
+        # Note that if the positiong was created, position.number is always ZERO
+        # here.
         reducing = (position.number * number) < 0
         position.add(number)
+        assert not (created and reducing), (
+            "Internal error: It's impossible to reduce a created position.")
 
         # If the resulting position is a zero position, remove it. We want to
         # avoid zero positions in the Inventory as an invariant.
         if position.number == ZERO:
             self.remove(position)
 
-        return position, reducing
+        return position, (
+            Booking.REDUCED if reducing else
+            Booking.CREATED if created else
+            Booking.AUGMENTED)
 
     def __add__(self, other):
         """Add another inventory to this one. This inventory is not modified.
@@ -378,8 +451,11 @@ class Inventory(list):
           A new instance of Inventory with the given balances.
         """
         new_inventory = Inventory()
-        position_strs = string.split(',')
-        for position_str in filter(None, position_strs):
+        # We need to split the comma-separated positions but ignore commas
+        # occurring within a {...cost...} specification.
+        position_strs = re.split(
+            '([-+]?[0-9,.]+\s+[A-Z]+\s*(?:{[^}]*})?)\s*,?\s*', string)[1::2]
+        for position_str in position_strs:
             new_inventory.add_position(position_from_string(position_str))
         return new_inventory
 
@@ -404,3 +480,24 @@ def check_invariants(inventory):
     # Check that none of the amounts is zero.
     for position in positions:
         assert position.number, position
+
+
+def get_tolerance(tolerances, default_tolerances, currency):
+    """Given dicts of tolerances, return the tolerance for the currency.
+
+    If a tolerance hasn't been specified for the given currency, return the
+    global default tolerance, or the default value (zero).
+
+    Args:
+      tolerances: A dict of currency to a tolerance Decimal value.
+      default_tolerances: A fallback dict of currency to a tolerance Decimal value.
+      currency: A string, the currency to look up.
+    Returns:
+      A Decimal value, the tolerance to check for.
+    """
+    tolerance = tolerances.get(currency, None)
+    if tolerance is None:
+        tolerance = default_tolerances.get(currency, None)
+        if tolerance is None:
+            tolerance = default_tolerances.get('*', ZERO)
+    return tolerance

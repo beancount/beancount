@@ -86,29 +86,31 @@ class TestScriptPositions(test_utils.TestCase):
     @test_utils.docfile
     def test_print_trial_empty(self, filename):
         ""
-        with test_utils.capture() as stdout:
+        with test_utils.capture():
             test_utils.run_with_args(report.main, [filename, 'trial'])
 
     @test_utils.docfile
     def test_all_prices(self, filename):
         """
+        plugin "beancount.plugins.implicit_prices"
+
         2014-01-01 open Assets:Account1
         2014-01-01 open Income:Misc
 
         2014-01-15 *
-          Assets:Account1       10 GOOG @ 512.01 USD
+          Assets:Account1       10 HOOL @ 512.01 USD
           Income:Misc
 
-        2014-02-01 price GOOG 524.02 USD
-        2014-02-10 price GOOG 536.03 USD
+        2014-02-01 price HOOL 524.02 USD
+        2014-02-10 price HOOL 536.03 USD
         """
         with test_utils.capture() as stdout:
             test_utils.run_with_args(report.main, [filename, 'all_prices'])
         output = stdout.getvalue()
         self.assertLines("""
-           2014-01-15 price GOOG             512.01 USD
-           2014-02-01 price GOOG             524.02 USD
-           2014-02-10 price GOOG             536.03 USD
+           2014-01-15 price HOOL             512.01 USD
+           2014-02-01 price HOOL             524.02 USD
+           2014-02-10 price HOOL             536.03 USD
         """, output)
 
     @test_utils.docfile
@@ -132,7 +134,7 @@ class TestScriptPositions(test_utils.TestCase):
     @test_utils.docfile
     def test_list_accounts_empty(self, filename):
         ""
-        with test_utils.capture() as stdout:
+        with test_utils.capture():
             test_utils.run_with_args(report.main, [filename, 'accounts'])
 
     def test_export_portfolio_on_example(self):

@@ -2,13 +2,17 @@
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import codecs
+import datetime
 import io
 import re
 import sys
 import textwrap
 
-from beancount.core import interpolate
+from beancount.core.number import Decimal
+from beancount.core import amount
 from beancount.core import data
+from beancount.core import interpolate
 from beancount.core import display_context
 
 
@@ -22,8 +26,8 @@ def align_position_strings(strings):
     This is perhaps best explained with an example. The following positions will
     be aligned around the column marked with '^':
 
-              45 GOOG {504.30 USD}
-               4 GOOG {504.30 USD / 2014-11-11}
+              45 HOOL {504.30 USD}
+               4 HOOL {504.30 USD, 2014-11-11}
             9.95 USD
        -22473.32 CAD @ 1.10 USD
                  ^
@@ -107,6 +111,33 @@ class EntryPrinter:
         method(obj, oss)
         return oss.getvalue()
 
+    META_IGNORE = set(['filename', 'lineno', '__automatic__'])
+
+    def write_metadata(self, meta, oss, prefix='  '):
+        """Write metadata to the file object, excluding filename and line number.
+
+        Args:
+          meta: An instance of AttrDict that contains the metadata for this directive.
+          oss: A file object to write to.
+        """
+        if meta is None:
+            return
+        for key, value in sorted(meta.items()):
+            if key not in self.META_IGNORE:
+                value_str = None
+                if isinstance(value, str):
+                    value_str = '"{}"'.format(value)
+                elif isinstance(value, (Decimal, datetime.date, amount.Amount)):
+                    value_str = str(value)
+                elif isinstance(value, bool):
+                    value_str = 'TRUE' if value else 'FALSE'
+                elif isinstance(value, dict):
+                    pass # Ignore dicts, don't print them out.
+                else:
+                    raise ValueError("Unexpected value: '{!r}'".format(value))
+                if value_str is not None:
+                    oss.write("{}{}: {}\n".format(prefix, key, value_str))
+
     def Transaction(self, entry, oss):
         # Compute the string for the payee and narration line.
         strings = []
@@ -126,6 +157,7 @@ class EntryPrinter:
                 strings.append('^{}'.format(link))
 
         oss.write('{e.date} {e.flag} {}\n'.format(' '.join(strings), e=entry))
+        self.write_metadata(entry.meta, oss)
 
         rows = [self.render_posting_strings(posting)
                 for posting in entry.postings]
@@ -145,22 +177,37 @@ class EntryPrinter:
         if non_trivial_balance:
             fmt = "  {{:{0}}}  {{:{1}}}  ; {{:{2}}}\n".format(
                 width_account, width_position, width_weight).format
-            for account, position_str, weight_str in zip(strs_account,
-                                                         strs_position,
-                                                         strs_weight):
+            for posting, account, position_str, weight_str in zip(entry.postings,
+                                                                  strs_account,
+                                                                  strs_position,
+                                                                  strs_weight):
                 oss.write(fmt(account,
                               position_str,
                               weight_str if non_trivial_balance else ''))
+                if posting.meta:
+                    self.write_metadata(posting.meta, oss, '    ')
         else:
             fmt = "  {{:{0}}}  {{:{1}}}\n".format(width_account, width_position).format
-            for account, position_str in zip(strs_account, strs_position):
+            for posting, account, position_str in zip(entry.postings,
+                                                      strs_account,
+                                                      strs_position):
                 oss.write(fmt(account, position_str))
+                if posting.meta:
+                    self.write_metadata(posting.meta, oss, '    ')
 
     def render_posting_strings(self, posting):
-        # This renders the three components of a posting: the account and its
-        # optional posting flag, the position, and finally, the weight of the
-        # position.
+        """This renders the three components of a posting: the account and its optional
+        posting flag, the position, and finally, the weight of the position. The
+        purpose is to align these in the caller.
 
+        Args:
+          posting: An instance of Posting, the posting to render.
+        Returns:
+          A tuple of
+            flag_account: A string, the account name including the flag.
+            position_str: A string, the rendered position string.
+            weight_str: A string, the rendered weight of the posting.
+        """
         # Render a string of the flag and hte account.
         flag = '{} '.format(posting.flag) if posting.flag else ''
         flag_account = flag + posting.account
@@ -169,7 +216,8 @@ class EntryPrinter:
         # present. Also render a string with the weight.
         if posting.position:
             position_str = posting.position.to_string(self.dformat)
-            weight_str = interpolate.get_posting_weight(posting).to_string(self.dformat)
+            # Note: we render weights at maximum precision, for debugging.
+            weight_str = str(interpolate.get_posting_weight(posting))
         else:
             position_str = ''
             weight_str = ''
@@ -184,7 +232,11 @@ class EntryPrinter:
         # method rendering a transaction attempts to align the posting strings
         # together.
         flag_account, position_str, weight_str = self.render_posting_strings(posting)
-        oss.write('  {:64} {} {}\n'.format(flag_account, position_str, weight_str).rstrip())
+        oss.write('  {:64} {} ; {}\n'.format(flag_account,
+                                             position_str,
+                                             weight_str).rstrip())
+        if posting.meta:
+            self.write_metadata(posting.meta, oss, '    ')
 
     def Balance(self, entry, oss):
         comment = '   ; Diff: {}'.format(entry.diff_amount) if entry.diff_amount else ''
@@ -192,29 +244,46 @@ class EntryPrinter:
                    '{comment}\n').format(e=entry,
                                          amount=entry.amount.to_string(self.dformat),
                                          comment=comment))
+        self.write_metadata(entry.meta, oss)
 
-    def Note(_, entry, oss):
+    def Note(self, entry, oss):
         oss.write('{e.date} note {e.account} "{e.comment}"\n'.format(e=entry))
+        self.write_metadata(entry.meta, oss)
 
-    def Document(_, entry, oss):
+    def Document(self, entry, oss):
         oss.write('{e.date} document {e.account} "{e.filename}"\n'.format(e=entry))
+        self.write_metadata(entry.meta, oss)
 
-    def Pad(_, entry, oss):
+    def Pad(self, entry, oss):
         oss.write('{e.date} pad {e.account} {e.source_account}\n'.format(e=entry))
+        self.write_metadata(entry.meta, oss)
 
-    def Open(_, entry, oss):
-        oss.write('{e.date} open {e.account:47} {currencies}\n'.format(
-            e=entry, currencies=','.join(entry.currencies or [])))
+    def Open(self, entry, oss):
+        oss.write('{e.date} open {e.account:47} {currencies}'.format(
+            e=entry, currencies=','.join(entry.currencies or [])).rstrip())
+        oss.write('\n')
+        self.write_metadata(entry.meta, oss)
 
-    def Close(_, entry, oss):
+    def Close(self, entry, oss):
         oss.write('{e.date} close {e.account}\n'.format(e=entry))
+        self.write_metadata(entry.meta, oss)
+
+    def Commodity(self, entry, oss):
+        oss.write('{e.date} commodity {e.currency}\n'.format(e=entry))
+        self.write_metadata(entry.meta, oss)
 
     def Price(self, entry, oss):
         oss.write('{e.date} price {e.currency:<22} {amount:>22}\n'.format(
             e=entry, amount=entry.amount.to_string(self.dformat_max)))
+        self.write_metadata(entry.meta, oss)
 
-    def Event(_, entry, oss):
+    def Event(self, entry, oss):
         oss.write('{e.date} event "{e.type}" "{e.description}"\n'.format(e=entry))
+        self.write_metadata(entry.meta, oss)
+
+    def Query(self, entry, oss):
+        oss.write('{e.date} query "{e.name}" "{e.query_string}"\n'.format(e=entry))
+        self.write_metadata(entry.meta, oss)
 
 
 def format_entry(entry, dcontext=None, render_weights=False):
@@ -239,7 +308,7 @@ def print_entry(entry, dcontext=None, render_weights=False, file=None):
       render_weights: A boolean, true to render the weights for debugging.
       file: An optional file object to write the entries to.
     """
-    output = file or sys.stdout
+    output = file or codecs.getwriter("utf-8")(sys.stdout.buffer)
     output.write(format_entry(entry, dcontext, render_weights))
     output.write('\n')
 
@@ -253,8 +322,11 @@ def print_entries(entries, dcontext=None, render_weights=False, file=None, prefi
       render_weights: A boolean, true to render the weights for debugging.
       file: An optional file object to write the entries to.
     """
-    assert isinstance(entries, list)
-    output = file or sys.stdout
+    assert isinstance(entries, list), "Entries is not a list: {}".format(entries)
+    output = file or (codecs.getwriter("utf-8")(sys.stdout.buffer)
+                      if hasattr(sys.stdout, 'buffer') else
+                      sys.stdout)
+
     if prefix:
         output.write(prefix)
     previous_type = type(entries[0]) if entries else None
@@ -263,11 +335,13 @@ def print_entries(entries, dcontext=None, render_weights=False, file=None, prefi
         # Insert a newline between transactions and between blocks of directives
         # of the same type.
         entry_type = type(entry)
-        if entry_type is data.Transaction or entry_type is not previous_type:
+        if (entry_type in (data.Transaction, data.Commodity) or
+            entry_type is not previous_type):
             output.write('\n')
             previous_type = entry_type
 
-        output.write(eprinter(entry))
+        string = eprinter(entry)
+        output.write(string)
 
 
 def render_source(meta):

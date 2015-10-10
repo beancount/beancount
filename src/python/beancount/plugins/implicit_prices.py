@@ -1,10 +1,5 @@
-"""This module has code that can build a database of historical prices at
-various times, from which unrealized capital gains and market value can be
-deduced.
-
-Prices are deduced from Price entries found in the file, or perhaps
-created by scripts (for example you could build a script that will fetch
-live prices online and create entries on-the-fly).
+"""This plugin synthesizes Price directives for all Postings with a price or
+directive or if it is an augmenting posting, has a cost directive.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
@@ -50,14 +45,14 @@ def add_implicit_prices(entries, unused_options_map):
             for posting in entry.postings:
                 # Check if the position is matching against an existing
                 # position.
-                _, reducing = balances[posting.account].add_position(posting.position)
+                _, booking = balances[posting.account].add_position(posting.position)
 
                 # Add prices when they're explicitly specified on a posting. An
                 # explicitly specified price may occur in a conversion, e.g.
                 #      Assets:Account    100 USD @ 1.10 CAD
                 # or, if a cost is also specified, as the current price of the
                 # underlying instrument, e.g.
-                #      Assets:Account    100 GOOG {564.20} @ {581.97} USD
+                #      Assets:Account    100 HOOL {564.20} @ {581.97} USD
                 if posting.price is not None:
                     meta = data.new_metadata(entry.meta.filename, entry.meta.lineno)
                     price_entry = data.Price(meta, entry.date,
@@ -67,8 +62,9 @@ def add_implicit_prices(entries, unused_options_map):
                 # Add costs, when we're not matching against an existing
                 # position. This happens when we're just specifying the cost,
                 # e.g.
-                #      Assets:Account    100 GOOG {564.20}
-                elif posting.position.lot.cost is not None and not reducing:
+                #      Assets:Account    100 HOOL {564.20}
+                elif (posting.position.lot.cost is not None and
+                      booking != inventory.Booking.REDUCED):
                     meta = data.new_metadata(entry.meta.filename, entry.meta.lineno)
                     price_entry = data.Price(meta, entry.date,
                                              posting.position.lot.currency,
@@ -83,7 +79,7 @@ def add_implicit_prices(entries, unused_options_map):
                            price_entry.amount.number,  # Ideally should bd removed.
                            price_entry.amount.currency)
                     try:
-                        dup_entry = new_price_entry_map[key]
+                        new_price_entry_map[key]
 
                         ## Do not fail for now. We still have many valid use
                         ## cases of duplicate prices on the same date, for
@@ -93,6 +89,7 @@ def add_implicit_prices(entries, unused_options_map):
                         ## Keeping both for now. We should ideally not use the
                         ## number in the de-dup key above.
                         #
+                        # dup_entry = new_price_entry_map[key]
                         # if price_entry.amount.number == dup_entry.amount.number:
                         #     # Skip duplicates.
                         #     continue

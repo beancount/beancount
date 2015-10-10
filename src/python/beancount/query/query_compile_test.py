@@ -1,9 +1,11 @@
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import datetime
 import re
 import unittest
 
-from beancount.core.amount import D
-from beancount.core.amount import Decimal
+from beancount.core.number import D
+from beancount.core.number import Decimal
 from beancount.query import query_parser as qp
 from beancount.query import query_compile as qc
 from beancount.query import query_env as qe
@@ -309,16 +311,16 @@ class TestCompileSelect(CompileSelectBase):
             query = self.compile("SELECT account FROM sum(payee) != 0;")
 
     def test_compile_from_invalid_dates(self):
-        query = self.compile("""
+        self.compile("""
           SELECT account FROM  OPEN ON 2014-03-01  CLOSE ON 2014-03-02;
         """)
 
-        query = self.compile("""
+        self.compile("""
           SELECT account FROM  OPEN ON 2014-03-02  CLOSE ON 2014-03-02;
         """)
 
         with self.assertRaises(qc.CompilationError):
-            query = self.compile("""
+            self.compile("""
               SELECT account FROM  OPEN ON 2014-03-03  CLOSE ON 2014-03-02;
             """)
 
@@ -504,7 +506,7 @@ class TestCompileSelectOrderBy(CompileSelectBase):
         self.assertEqual([0], query.group_indexes)
         self.assertEqual([0], query.order_indexes)
 
-    def test_compile_order_by_simple(self):
+    def test_compile_order_by_simple_2(self):
         query = self.compile("""
           SELECT account, length(narration) GROUP BY account, 2 ORDER BY 1, 2;
         """)

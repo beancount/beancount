@@ -5,7 +5,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import unittest
 
-from beancount.parser import parsedoc
+from beancount.parser import parser
 from beancount.parser import options
 from beancount.core import account_types
 
@@ -13,7 +13,7 @@ from beancount.core import account_types
 class TestOptions(unittest.TestCase):
 
     def test_get_account_types(self):
-        options_ = options.DEFAULT_OPTIONS.copy()
+        options_ = options.OPTIONS_DEFAULTS.copy()
         result = options.get_account_types(options_)
         expected = account_types.AccountTypes(assets='Assets',
                                               liabilities='Liabilities',
@@ -23,13 +23,13 @@ class TestOptions(unittest.TestCase):
         self.assertEqual(expected, result)
 
     def test_get_previous_accounts(self):
-        options_ = options.DEFAULT_OPTIONS.copy()
+        options_ = options.OPTIONS_DEFAULTS.copy()
         result = options.get_previous_accounts(options_)
         self.assertEqual(3, len(result))
         self.assertTrue(all(isinstance(x, str) for x in result))
 
     def test_get_current_accounts(self):
-        options_ = options.DEFAULT_OPTIONS.copy()
+        options_ = options.OPTIONS_DEFAULTS.copy()
         result = options.get_current_accounts(options_)
         self.assertEqual(2, len(result))
         self.assertTrue(all(isinstance(x, str) for x in result))
@@ -41,7 +41,7 @@ class TestOptions(unittest.TestCase):
 
 class TestAccountTypeOptions(unittest.TestCase):
 
-    @parsedoc
+    @parser.parse_doc()
     def test_custom_account_names__success(self, entries, errors, options_map):
         """
           option "name_assets" "Actif"
@@ -59,7 +59,7 @@ class TestAccountTypeOptions(unittest.TestCase):
         self.assertFalse(errors)
         self.assertEqual(5, len(entries))
 
-    @parsedoc
+    @parser.parse_doc()
     def test_custom_account_names__success_reset(self, entries, errors, options_map):
         """
           2014-01-01 open Assets:CA:RBC:Checking
@@ -71,31 +71,56 @@ class TestAccountTypeOptions(unittest.TestCase):
         self.assertFalse(errors)
         self.assertEqual(2, len(entries))
 
-    @parsedoc
+    @parser.parse_doc(expect_errors=True)
     def test_custom_account_names__basic_fail(self, entries, errors, options_map):
         """
           2014-01-04 open Actif:CA:RBC:CompteCheques
           2014-01-04 open Passif:CA:RBC:CarteDeCredit
         """
-        self.assertTrue(errors)
-        self.assertEqual(2, len(entries))
+        self.assertEqual(0, len(entries))
+        self.assertEqual(2, len(errors))
+        for error in errors:
+            self.assertRegexpMatches(error.message, "Invalid account name")
 
-    @parsedoc
+    @parser.parse_doc(expect_errors=True)
     def test_custom_account_names__fail_invalid_order(self, entries, errors, options_map):
         """
           2014-01-04 open Actif:CA:RBC:CompteCheques
 
           option "name_assets" "Actif"
         """
-        self.assertTrue(errors)
-        self.assertEqual(1, len(entries))
+        self.assertEqual(0, len(entries))
+        self.assertEqual(1, len(errors))
+        self.assertRegexpMatches(errors[0].message, "Invalid account name")
 
 
 class TestValidateOptions(unittest.TestCase):
 
-    @parsedoc
+    @parser.parse_doc(expect_errors=True)
     def test_validate__plugin_processing_mode__invalid(self, entries, errors, options_map):
         """
           option "plugin_processing_mode" "i-dont-exist"
         """
         self.assertTrue(errors)
+
+    def test_validate__use_legacy_fixed_tolerances(self):
+        for input_value, expected_value in [
+                ('TRUE', True),
+                ('True', True),
+                ('true', True),
+                ('1', True),
+                ('42', False),
+                ('FALSE', False),
+                ('False', False),
+                ('false', False),
+                ('0', False),
+                ('something', False),
+                ('other', False),
+             ]:
+            input_str = """
+              option "use_legacy_fixed_tolerances" "{}"
+            """.format(input_value)
+            _, errors, options_map = parser.parse_string(input_str)
+            self.assertFalse(errors)
+            self.assertEqual(expected_value,
+                             options_map['use_legacy_fixed_tolerances'])

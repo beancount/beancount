@@ -1,5 +1,7 @@
 """Parser for Beancount Query Language.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import collections
 import datetime
 import io
@@ -10,7 +12,7 @@ import dateutil.parser
 import ply.lex
 import ply.yacc
 
-from beancount.core.amount import D
+from beancount.core.number import D
 from beancount.utils.misc_utils import cmptuple
 
 
@@ -66,6 +68,9 @@ Print = collections.namedtuple('Print', 'from_clause')
 
 # Errors command (prints errors and context around them).
 Errors = collections.namedtuple('Errors', '')
+
+# Reload command (reloads the input file).
+Reload = collections.namedtuple('Reload', '')
 
 # Explains a command (prints out AST for debugging).
 #
@@ -186,7 +191,7 @@ class Lexer:
         'EXPLAIN',
         'SELECT', 'AS', 'FROM', 'WHERE', 'OPEN', 'CLOSE', 'CLEAR', 'ON',
         'BALANCES', 'JOURNAL', 'PRINT', 'AT',
-        'ERRORS',
+        'ERRORS', 'RELOAD',
         'GROUP', 'BY', 'HAVING', 'ORDER', 'DESC', 'ASC', 'PIVOT',
         'LIMIT', 'FLATTEN', 'DISTINCT',
         'AND', 'OR', 'NOT', 'IN',
@@ -241,12 +246,12 @@ class Lexer:
 
     # Numbers.
     def t_DECIMAL(self, token):
-        r"[0-9]*\.[0-9]*"
+        r"[-+]?[0-9]*\.[0-9]*"
         token.value = D(token.value)
         return token
 
     def t_INTEGER(self, token):
-        r"[0-9]+"
+        r"[-+]?[0-9]+"
         token.value = int(token.value)
         return token
 
@@ -619,6 +624,7 @@ class Parser(SelectParser):
                   | journal_statement
                   | print_statement
                   | errors_statement
+                  | reload_statement
         """
         p[0] = p[1]
 
@@ -659,6 +665,12 @@ class Parser(SelectParser):
         errors_statement : ERRORS
         """
         p[0] = Errors()
+
+    def p_reload_statement(self, p):
+        """
+        reload_statement : RELOAD
+        """
+        p[0] = Reload()
 
 
 def get_expression_name(expr):

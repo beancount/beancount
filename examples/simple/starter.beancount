@@ -209,7 +209,7 @@ option "operating_currency" "USD"
 ;; capital gain, we want to make sure that we have at least the
 ;; book value for each position. (Ideally we'd go backwards
 ;; and enter all the real transactions in the past.)
-2011-03-15 open   Assets:US:ETrade:Investment:GOOG  GOOG
+2011-03-15 open   Assets:US:ETrade:Investment:HOOL  HOOL
 2011-03-15 open   Assets:US:ETrade:Investment:AAPL  AAPL
 
 
@@ -218,17 +218,17 @@ option "operating_currency" "USD"
 ;; that position, which provides its cost (book value).
 
 2013-02-03 * "Bought some stock"
-  Assets:US:ETrade:Investment:GOOG         8 GOOG {701.20 USD}
+  Assets:US:ETrade:Investment:HOOL         8 HOOL {701.20 USD}
   Expenses:Financial:Commissions         7.95 USD
   Assets:US:ETrade:Investment:Cash
 
 2013-09-03 * "Bought some stock"
-  Assets:US:ETrade:Investment:GOOG         4 GOOG {850.08 USD}
+  Assets:US:ETrade:Investment:HOOL         4 HOOL {850.08 USD}
   Expenses:Financial:Commissions         7.95 USD
   Assets:US:ETrade:Investment:Cash
 
-2013-12-22 balance  Assets:US:ETrade:Investment:GOOG  12 GOOG
-2013-12-22 price  GOOG   1101.02 USD
+2013-12-22 balance  Assets:US:ETrade:Investment:HOOL  12 HOOL
+2013-12-22 price  HOOL   1101.02 USD
 
 
 ;; Some other stock.
