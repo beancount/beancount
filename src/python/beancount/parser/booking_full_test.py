@@ -48,11 +48,7 @@ class TestAllInterpolationCombinations(cmptest.TestCase):
             for string in _gen_missing_combinations(template.format(pos_template), args):
                 print(string)
                 entries, errors, _ = parser.parse_string(string)
-                print(len(entries))
                 printer.print_errors(errors)
-                print()
-                print()
-                print()
 
     # def test_all_interpolation_combinations(self):
     #     template = textwrap.dedent("""
@@ -86,38 +82,15 @@ class TestAllInterpolationCombinations(cmptest.TestCase):
 class TestGroupPostings(cmptest.TestCase):
 
     @parser.parse_doc(allow_incomplete=True)
-    def test_categorize_by_currency__unambiguous_units(self, entries, _, options_map):
+    def test_categorize__units__unambiguous(self, entries, _, options_map):
         """
-        2015-01-01 *
-          Assets:Bank:Investing         500 USD
-          Equity:Opening-Balances      -500 USD
+        2015-10-02 *
+          Assets:Account  100.00 USD
+          Assets:Other   -100.00 USD
 
-        2015-01-01 *
-          Assets:Bank:Investing         500 USD
-          Equity:Opening-Balances           USD
-        """
-        for entry in entries:
-            groups, errors = booking_full.categorize_by_currency(entry, {})
-            self.assertFalse(errors)
-            self.assertEqual({'USD': {0,1}}, groups)
-
-    @parser.parse_doc(allow_incomplete=True)
-    def test_categorize_by_currency__unambiguous_prices(self, entries, _, options_map):
-        """
-        2015-01-01 *
-          Assets:Bank:Investing         500 USD
-          Equity:Opening-Balances      -600 CAD @ 1.20 USD
-
-        2015-01-01 *
-          Assets:Bank:Investing         500 USD
-          Equity:Opening-Balances      -600 CAD @      USD
-
-        2015-01-01 *
-          Assets:Bank:Investing         500 USD
-          Equity:Opening-Balances           CAD @ 1.20 USD
-        2015-01-01 *
-          Assets:Bank:Investing         500 USD
-          Equity:Opening-Balances           CAD @ 1.20 USD
+        2015-10-02 *
+          Assets:Account         USD
+          Assets:Other   -100.00 USD
         """
         for entry in entries:
             groups, errors = booking_full.categorize_by_currency(entry, {})
@@ -125,64 +98,262 @@ class TestGroupPostings(cmptest.TestCase):
             self.assertEqual({'USD': {0,1}}, groups)
 
     @parser.parse_doc(allow_incomplete=True)
-    def test_categorize_by_currency__unambiguous_costs(self, entries, _, options_map):
+    def test_categorize__units__ambiguous(self, entries, _, options_map):
         """
-        2015-01-01 *
-          Assets:Bank:Investing         100 HOOL {12.23 USD}
-          Equity:Opening-Balances     -1223.00 USD
+        ;; Uses the other legs to disambiguate.
+        2015-10-02 *
+          Assets:Account  100.00
+          Assets:Other   -100.00 USD
 
-        2015-01-01 *
-          Assets:Bank:Investing         100 HOOL {USD}
-          Equity:Opening-Balances     -1223.00 USD
+        ;; Uses the inventory contents to disambiguate.
+        2015-10-02 *
+          Assets:Account  100.00
+          Assets:Other
         """
-        for entry in entries:
-            groups, errors = booking_full.categorize_by_currency(entry, {})
+        groups, errors = booking_full.categorize_by_currency(entries[0], {})
+        self.assertFalse(errors)
+        self.assertEqual({'USD': {0,1}}, groups)
+
+        groups, errors = booking_full.categorize_by_currency(
+            entries[1], {'Assets:Account': I('1.00 USD')})
+        self.assertFalse(errors)
+        self.assertEqual({'USD': {0,1}}, groups)
+        groups, errors = booking_full.categorize_by_currency(
+            entries[1], {})
+        self.assertTrue(errors)
+        self.assertRegexpMatches(errors[0].message, 'Failed to categorize posting')
+        self.assertEqual({}, groups)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_categorize__units_price__unambiguous(self, entries, _, options_map):
+        """
+        2015-10-02 *
+          Assets:Account  100.00 USD @ 1.20 CAD
+          Assets:Other   -120.00 CAD
+
+        2015-10-02 *
+          Assets:Account  100.00     @ 1.20 CAD
+          Assets:Other   -120.00 CAD
+        """
+        groups, errors = booking_full.categorize_by_currency(entries[0], {})
+        self.assertFalse(errors)
+        self.assertEqual({'CAD': {0,1}}, groups)
+
+        groups, errors = booking_full.categorize_by_currency(
+            entries[1], {'Assets:Account': I('1.00 USD')})
+        self.assertFalse(errors)
+        self.assertEqual({'CAD': {0,1}}, groups)
+        groups, errors = booking_full.categorize_by_currency(
+            entries[1], {})
+        self.assertTrue(errors)
+        self.assertRegexpMatches(errors[0].message, 'Could not resolve currency')
+        self.assertEqual({'CAD': {0,1}}, groups)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_categorize__units_price__ambiguous(self, entries, _, options_map):
+        """
+        ;; Uses the other legs to disambiguate.
+        2015-10-02 *
+          Assets:Account  100.00 USD @ 1.20
+          Assets:Other   -120.00 CAD
+
+        2015-10-02 *
+          Assets:Account  100.00     @ 1.20
+          Assets:Other   -120.00 CAD
+
+        ;; These cases fail, because using the inventory tells nothing which price to
+        ;; convert from.
+        2015-10-02 *
+          Assets:Account  100.00 USD @ 1.20
+          Assets:Other
+
+        2015-10-02 *
+          Assets:Account  100.00     @ 1.20
+          Assets:Other
+        """
+        groups, errors = booking_full.categorize_by_currency(entries[0], {})
+        self.assertFalse(errors)
+        self.assertEqual({'CAD': {0,1}}, groups)
+
+        groups, errors = booking_full.categorize_by_currency(
+            entries[1], {'Assets:Account': I('1.00 USD')})
+        self.assertFalse(errors)
+        self.assertEqual({'CAD': {0,1}}, groups)
+        groups, errors = booking_full.categorize_by_currency(entries[1], {})
+        self.assertTrue(errors)
+        self.assertRegexpMatches(errors[0].message, 'Could not resolve currency')
+        self.assertEqual({'CAD': {0,1}}, groups)
+
+        for i in 2, 3:
+            groups, errors = booking_full.categorize_by_currency(entries[i], {})
+            self.assertEqual(1, len(errors))
+            self.assertRegexpMatches(errors[0].message, 'Failed to categorize posting')
+            self.assertEqual({}, groups)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_categorize__units_cost__unambiguous(self, entries, _, options_map):
+        """
+        2015-10-02 *
+          Assets:Account    10 HOOL {100.00 USD}
+          Assets:Other   -1000 USD
+
+        2015-10-02 *
+          Assets:Account    10      {100.00 USD}
+          Assets:Other   -1000 USD
+        """
+        groups, errors = booking_full.categorize_by_currency(entries[0], {})
+        self.assertFalse(errors)
+        self.assertEqual({'USD': {0,1}}, groups)
+
+        groups, errors = booking_full.categorize_by_currency(
+            entries[1], {'Assets:Account': I('1 HOOL {1.00 USD}')})
+        self.assertFalse(errors)
+        self.assertEqual({'USD': {0,1}}, groups)
+        groups, errors = booking_full.categorize_by_currency(entries[1], {})
+        self.assertTrue(errors)
+        self.assertRegexpMatches(errors[0].message, 'Could not resolve currency')
+        self.assertEqual({'USD': {0,1}}, groups)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_categorize__units_cost__ambiguous(self, entries, _, options_map):
+        """
+        ;; Uses the other legs to disambiguate.
+        2015-10-02 *
+          Assets:Account    10 HOOL {100.00    }
+          Assets:Other   -1000 USD
+
+        2015-10-02 *
+          Assets:Account    10      {100.00    }
+          Assets:Other   -1000 USD
+
+        ;; Disambiguate using the inventory cost, if some other lots exist in the
+        ;; balance.
+        2015-10-02 *
+          Assets:Account    10 HOOL {100.00    }
+          Assets:Other
+
+        2015-10-02 *
+          Assets:Account    10      {100.00    }
+          Assets:Other
+        """
+        groups, errors = booking_full.categorize_by_currency(entries[0], {})
+        self.assertFalse(errors)
+        self.assertEqual({'USD': {0,1}}, groups)
+
+        groups, errors = booking_full.categorize_by_currency(
+            entries[1], {'Assets:Account': I('1 HOOL {1.00 USD}')})
+        self.assertFalse(errors)
+        self.assertEqual({'USD': {0,1}}, groups)
+        groups, errors = booking_full.categorize_by_currency(entries[1], {})
+        self.assertTrue(errors)
+        self.assertRegexpMatches(errors[0].message, 'Could not resolve currency')
+        self.assertEqual({'USD': {0,1}}, groups)
+
+        for i in 2, 3:
+            groups, errors = booking_full.categorize_by_currency(
+                entries[i], {'Assets:Account': I('1 HOOL {1.00 USD}')})
+            self.assertFalse(errors)
+            self.assertEqual({'USD': {0,1}}, groups)
+            groups, errors = booking_full.categorize_by_currency(
+                entries[i], {})
+            self.assertEqual(1, len(errors))
+            self.assertRegexpMatches(errors[0].message, 'Failed to categorize posting')
+            self.assertEqual({}, groups)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_categorize__units_cost_price__unambiguous(self, entries, _, options_map):
+        """
+        2015-10-02 *
+          Assets:Account  10 HOOL {100.00 USD} @ 120.00 USD
+          Assets:Other
+
+        2015-10-02 *
+          Assets:Account  10      {100.00 USD} @ 120.00 USD
+          Assets:Other
+
+        2015-10-02 *
+          Assets:Account  10 HOOL {100.00    } @ 120.00 USD
+          Assets:Other
+
+        2015-10-02 *
+          Assets:Account  10      {100.00    } @ 120.00 USD
+          Assets:Other
+
+        2015-10-02 *
+          Assets:Account  10 HOOL {100.00 USD} @ 120.00
+          Assets:Other
+
+        2015-10-02 *
+          Assets:Account  10      {100.00 USD} @ 120.00
+          Assets:Other
+        """
+        for i in 0, 2, 4:
+            groups, errors = booking_full.categorize_by_currency(entries[i], {})
             self.assertFalse(errors)
             self.assertEqual({'USD': {0,1}}, groups)
 
-    @parser.parse_doc(allow_incomplete=True)
-    def test_categorize_by_currency__auto_simple(self, entries, _, options_map):
-        """
-        2015-01-01 *
-          Assets:Bank:Investing         500 USD
-          Equity:Opening-Balances
-        """
-        # for entry in entries:
-        #     groups, errors = booking_full.categorize_by_currency(entry, {})
-        #     self.assertFalse(errors)
-        #     self.assertEqual({'USD': {0,1}}, groups)
+        for i in 1, 3, 5:
+            groups, errors = booking_full.categorize_by_currency(entries[i], {})
+            self.assertEqual(1, len(errors))
+            self.assertRegexpMatches(errors[0].message, 'Could not resolve currency')
+            self.assertEqual({'USD': {0,1}}, groups)
 
     @parser.parse_doc(allow_incomplete=True)
-    def test_categorize_by_currency__auto_with_price(self, entries, _, options_map):
+    def test_categorize__units_cost_price__ambiguous(self, entries, _, options_map):
         """
-        2015-01-01 *
-          Assets:Bank:Investing         500 USD
-          Equity:Opening-Balances               @ 1.20 CAD
+        ;; Uses the other legs to disambiguate.
+        2015-10-02 *
+          Assets:Account   10 HOOL {100.00    } @ 120.00
+          Assets:Other  -1000 USD
 
-        2015-01-01 *
-          Assets:Bank:Investing         500 USD
-          Equity:Opening-Balances           USD @ 1.20 CAD
+        2015-10-02 *
+          Assets:Account   10      {100.00    } @ 120.00
+          Assets:Other  -1000 USD
+
+        ;; Uses the cost to disambiguate.
+        2015-10-02 *
+          Assets:Account   10 HOOL {100.00    } @ 120.00
+          Assets:Other
+
+        2015-10-02 *
+          Assets:Account   10      {100.00    } @ 120.00
+          Assets:Other
         """
-        # for entry in entries:
-        #     groups, errors = booking_full.categorize_by_currency(entry, {})
-        #     self.assertFalse(errors)
-        #     self.assertEqual({'USD': {0,1}}, groups)
+        groups, errors = booking_full.categorize_by_currency(entries[0], {})
+        self.assertFalse(errors)
+        self.assertEqual({'USD': {0,1}}, groups)
 
+        groups, errors = booking_full.categorize_by_currency(entries[1], {})
+        self.assertTrue(errors)
+        self.assertRegexpMatches(errors[0].message, 'Could not resolve currency')
+        self.assertEqual({'USD': {0,1}}, groups)
 
+        for i in 2, 3:
+            groups, errors = booking_full.categorize_by_currency(
+                entries[i], {'Assets:Account': I('1 HOOL {1.00 USD}')})
+            self.assertFalse(errors)
+            self.assertEqual({'USD': {0,1}}, groups)
+            groups, errors = booking_full.categorize_by_currency(
+                entries[i], {})
+            self.assertTrue(errors)
+            self.assertRegexpMatches(errors[0].message, 'Failed to categorize posting')
+            self.assertEqual({}, groups)
 
-
-## FIXME: Continue here.
-
-
-        # FIXME: What do I do with this? Treat this like a missing cost.
+    @parser.parse_doc(allow_incomplete=True)
+    def test_categorize__redundant_auto_postings(self, entries, _, options_map):
         """
-          2010-05-28 *
-            Assets:Account1     100.00 USD @
-            Assets:Account2     120.00 CAD
+        ;; Uses the other legs to disambiguate.
+        2015-10-02 *
+          Assets:Account   10 HOOL {100.00    } @ 120.00
+          Assets:Other
+          Assets:Other
         """
+        groups, errors = booking_full.categorize_by_currency(entries[0], {})
+        self.assertTrue(errors)
 
 
-# FIXME: Categorize an example with both cost and price.
+
+
 
 
 

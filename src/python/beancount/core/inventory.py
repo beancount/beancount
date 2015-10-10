@@ -205,6 +205,16 @@ class Inventory(list):
         """
         return set(position.units.currency for position in self)
 
+    def cost_currencies(self):
+        """Return the list of unit currencies held in this inventory.
+
+        Returns:
+          A list of currency strings.
+        """
+        return set(position.cost.currency
+                   for position in self
+                   if position.cost is not None)
+
     def currency_pairs(self):
         """Return the commodities held in this inventory.
 

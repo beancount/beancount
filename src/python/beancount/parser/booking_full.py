@@ -4,6 +4,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
 import logging
+import pprint
 
 from beancount.core.number import MISSING
 from beancount.core.data import Transaction
@@ -47,8 +48,6 @@ def book(entries, options_map):
         entries: A list of interpolated entries with all their postings completed.
         errors: New errors produced during interpolation.
     """
-    print()
-
     balances = collections.defaultdict(inventory.Inventory)
     stats = BookingStats()
     errors = []
@@ -116,6 +115,21 @@ def book(entries, options_map):
 # An error raised if we failed to bucket a posting to a particular currency.
 CategorizationError = collections.namedtuple('CategorizationError', 'source message entry')
 
+
+def get_bucket_currency(refer):
+    _, units_currency, cost_currency, price_currency = refer
+    currency = None
+    if isinstance(cost_currency, str):
+        currency = cost_currency
+    elif isinstance(price_currency, str):
+        currency = price_currency
+    elif (cost_currency is None and
+          price_currency is None and
+          isinstance(units_currency, str)):
+        currency = units_currency
+    return currency
+
+
 def categorize_by_currency(entry, balances):
     """Group the postings by the currency they declare.
 
@@ -124,7 +138,214 @@ def categorize_by_currency(entry, balances):
     outset of this routine, we should have distinct groups of currencies without
     any ambiguities regarding which currency they need to balance against.
 
-    Here's how this works. Postings with no cost nor price come in two
+    Here's how this works.
+
+    - First we apply the constraint that cost-currency and price-currency must
+      match, if there is both a cost and a price. This reduces the space of
+      possibilities somewahte.
+
+    - If the currency is explicitly specified, we put the posting in that
+      currency's bucket.
+
+    - If not, we have a few methods left to disambiguate the currency:
+
+      1. We look at the remaining postings... if they are all of a single
+         currency, the posting must be in that currency too.
+
+      2. If we cannot do that, we inspect the contents of the inventory of the
+         account for the posting. If all the contents are of a single currency,
+         we use that one.
+
+    Args:
+      postings: A list of incomplete postings to categorize.
+      balances: A dict of currency to inventory contents.
+    Returns:
+      A dict of currency (string) to indexes of the postings. Note that for
+      auto-postings (postings without a currency nor cost) - the index may
+      appear in multiple groups and the posting need to be duplicated for each
+      currency that requires them.
+
+    """
+    errors = []
+
+    groups = collections.defaultdict(list)
+    auto_postings = []
+    unknown = []
+    for index, posting in enumerate(entry.postings):
+        position = posting.position
+
+        # Extract and override the currencies locally.
+        units_currency = (position.units.currency
+                          if position is not MISSING
+                          else None)
+        cost_currency = (position.cost.currency
+                         if position is not MISSING and position.cost is not None
+                         else None)
+        price_currency = (posting.price.currency
+                          if posting.price is not None
+                          else None)
+
+        # First we apply the constraint that cost-currency and price-currency
+        # must match, if there is both a cost and a price. This reduces the
+        # space of possibilities somewhat.
+        if cost_currency is MISSING and isinstance(price_currency, str):
+            cost_currency = price_currency
+        if price_currency is MISSING and isinstance(cost_currency, str):
+            price_currency = cost_currency
+
+        refer = (index, units_currency, cost_currency, price_currency)
+
+        if position is MISSING and price_currency is None:
+            # Bucket auto-postings separately from unknown.
+            auto_postings.append(refer)
+        else:
+            # Bucket with what we know so far.
+            currency = get_bucket_currency(refer)
+            if currency is not None:
+                groups[currency].append(refer)
+            else:
+                # If we need to infer the currency, store in unknown.
+                unknown.append(refer)
+
+    # We look at the remaining postings... if they are all of a single currency,
+    # the posting must be in that currency too.
+    if unknown and len(unknown) == 1 and len(groups) == 1:
+        (index, units_currency, cost_currency, price_currency) = unknown.pop()
+
+        other_currency = next(iter(groups.keys()))
+        if price_currency is None and cost_currency is None:
+            # Infer to the units currency.
+            units_currency = other_currency
+        else:
+            # Infer to the cost and price currencies.
+            if price_currency is MISSING:
+                price_currency = other_currency
+            if cost_currency is MISSING:
+                cost_currency = other_currency
+
+        refer = (index, units_currency, cost_currency, price_currency)
+        currency = get_bucket_currency(refer)
+        assert currency is not None
+        groups[currency].append(refer)
+
+    # Finally, try to resolve all the unknown legs using the inventory contents
+    # of each account.
+    for refer in unknown:
+        (index, units_currency, cost_currency, price_currency) = unknown.pop()
+        posting = entry.postings[index]
+        balance = balances.get(posting.account, None)
+        if balance is None:
+            balance = inventory.Inventory()
+
+        if units_currency is MISSING:
+            balance_currencies = balance.currencies()
+            if len(balance_currencies) == 1:
+                units_currency = balance_currencies.pop()
+
+        if cost_currency is MISSING or price_currency is MISSING:
+            balance_cost_currencies = balance.cost_currencies()
+            if len(balance_cost_currencies) == 1:
+                balance_cost_currency = balance_cost_currencies.pop()
+                if price_currency is MISSING:
+                    price_currency = balance_cost_currency
+                if cost_currency is MISSING:
+                    cost_currency = balance_cost_currency
+
+        refer = (index, units_currency, cost_currency, price_currency)
+        currency = get_bucket_currency(refer)
+        if currency is not None:
+            groups[currency].append(refer)
+        else:
+            errors.append(
+                CategorizationError(posting.meta, "Failed to categorize posting", entry))
+
+    # Fill in missing units currencies if some remain as missing. This may occur
+    # if we used the cost or price to bucket the currency but the units currency
+    # was missing.
+    for currency, refers in groups.items():
+        for ri, refer in enumerate(refers):
+            index, units_currency, cost_currency, price_currency = refer
+            if units_currency is MISSING:
+                posting = entry.postings[index]
+                balance = balances.get(posting.account, None)
+                if balance is None:
+                    continue
+                balance_currencies = balance.currencies()
+                if len(balance_currencies) == 1:
+                    units_currency = balance_currencies.pop()
+                    new_refer = index, units_currency, cost_currency, price_currency
+                    refers[ri] = new_refer
+
+    # Deal with auto-postings.
+    if len(auto_postings) > 1:
+        index, _, __, ___ = auto_postings[-1]
+        posting = entry.postings[index]
+        errors.append(
+            CategorizationError(posting.meta,
+                                "You may not have more than one auto-posting", entry))
+        auto_postings = auto_postings[0:1]
+    for refer in auto_postings:
+        index, _, __, ___ = refer
+        for currency in groups.keys():
+            groups[currency].append((index, currency, None, None))
+
+    # Issue error for all currencies which we could not resolve.
+    for currency, refers in groups.items():
+        for refer in refers:
+            index, units_currency, cost_currency, price_currency = refer
+            posting = entry.postings[index]
+            if units_currency is MISSING:
+                errors.append(
+                    CategorizationError(posting.meta,
+                                        "Could not resolve currency", entry))
+
+    index_groups = {currency: {refer[0] for refer in refers}
+                    for currency, refers in groups.items()}
+
+    return index_groups, errors
+
+
+
+
+
+
+#------------------------------------------------------------------------------------------------------------------------
+"""Implementation notes:
+
+Between book and interpolation:
+
+- You can't perform interpolation first, because the booked cost basis will
+  provide necessary amounts to fill in for interpolation.
+
+- You can perform booking first, though there may be cases where interppolation
+  would yield a number that could disambiguate booking. For example, consider
+  this case:
+
+    With an inventory of 100.00 USD and 101.00 USD shares.
+
+    2015-09-30 *
+      Assets:Investments   -10 HOOL {USD}
+      Assets:Cash               1000 USD
+
+  If you performed interpolation beforehand you could back out a cost of 100.00 USD
+  and then the cost booking would be unambiguous.
+
+We would like to be able to infer those cases. So maybe we can
+- Perform a simple, partial interpolation, where possible.
+- Do the booking
+- Perform the remaining, full interpolation (with a resolution required).
+
+Separate the augmenting legs from the reducing legs. Reducing legs may allow
+less DOF because they have to match against the inventory.
+
+"""
+
+
+
+"""
+
+
+
     varieties:
 
       1. No cost, no price, with currency, e.g.
@@ -191,112 +412,5 @@ def categorize_by_currency(entry, balances):
     currency that matches, as constrained by the parser. If only the price or
     the cost is specified, we used that currency. Both a price and a cost may
     not be missing--that would leave two DOF to fill in.
-
-    Args:
-      postings: A list of incomplete postings to categorize.
-      balances: A dict of currency to inventory contents.
-    Returns:
-      A dict of currency (string) to indexes of the postings. Note that for
-      auto-postings (postings without a currency nor cost) - the index may
-      appear in multiple groups and the posting need to be duplicated for each
-      currency that requires them.
-
-    """
-    errors = []
-
-    groups = collections.defaultdict(set)
-    auto_postings = []
-    unknown = []
-    for index, posting in enumerate(entry.postings):
-        pos = posting.position
-
-        # If the posting if unspecified, go to the free list to be processed
-        # after this loop.
-        if pos is MISSING or pos is None:
-            unknown.append(posting)
-            continue
-
-        if posting.price is not None:
-            currency = posting.price.currency
-            if currency is not MISSING:
-                groups[currency].add(index)
-                continue
-
-        if pos.cost is None:
-            # Deal with postings with no cost.
-
-            # If the posting has an explicit currency, just use it.
-            currency = pos.units.currency
-            assert currency is not MISSING
-            groups[currency].add(index)
-            continue
-
-        else:
-            # Deal with postings that have cost.
-
-            # If the posting has an explicit cost currency, just use it.
-            cost_currency = pos.cost.currency
-            if cost_currency is not MISSING:
-                groups[cost_currency].add(index)
-                continue
-
-        errors.append(
-            CategorizationError(posting.meta, "Failed to categorize posting", entry))
-        continue
-
-
-        # # Categorize based on the lot spec.
-        # cost_spec = pos.cost
-        # if cost_spec is not None:
-        #     if cost_spec.currency:
-        #         groups[cost_spec.currency].append(posting)
-        #     else:
-        #         unknown.append(posting)
-        # else:
-        #     groups[pos.units.currency].append(posting)
-
-    # FIMXE: Maybe duplicate free postings here for each group so you don't have
-    # to return a list of free postings? That would make sense.
-
-    # User the weight to categorize the posting.
-
-    # Also, consider using the intersection of inventory and other currencies.
-
-
-    return groups, errors
-
-
-
-
-
-
-#------------------------------------------------------------------------------------------------------------------------
-"""Implementation notes:
-
-Between book and interpolation:
-
-- You can't perform interpolation first, because the booked cost basis will
-  provide necessary amounts to fill in for interpolation.
-
-- You can perform booking first, though there may be cases where interppolation
-  would yield a number that could disambiguate booking. For example, consider
-  this case:
-
-    With an inventory of 100.00 USD and 101.00 USD shares.
-
-    2015-09-30 *
-      Assets:Investments   -10 HOOL {USD}
-      Assets:Cash               1000 USD
-
-  If you performed interpolation beforehand you could back out a cost of 100.00 USD
-  and then the cost booking would be unambiguous.
-
-We would like to be able to infer those cases. So maybe we can
-- Perform a simple, partial interpolation, where possible.
-- Do the booking
-- Perform the remaining, full interpolation (with a resolution required).
-
-Separate the augmenting legs from the reducing legs. Reducing legs may allow
-less DOF because they have to match against the inventory.
 
 """
