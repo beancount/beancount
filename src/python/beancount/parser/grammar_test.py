@@ -1441,6 +1441,19 @@ class TestMetaData(unittest.TestCase):
             'boolf': False,
             }, entries[0].meta)
 
+    @parser.parse_doc()
+    def test_metadata_key_syntax(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            nameoncard: "Jim"
+            nameOnCard: "Joe"
+            name-on-card: "Bob"
+            name_on_card: "John"
+        """
+        self.assertEqual(1, len(entries))
+        self.assertLessEqual(set('nameoncard nameOnCard name-on-card name_on_card'.split()),
+                             set(entries[0].meta.keys()))
+
 
 class TestArithmetic(unittest.TestCase):
 
