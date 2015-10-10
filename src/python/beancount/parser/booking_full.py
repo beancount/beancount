@@ -294,10 +294,14 @@ def categorize_by_currency(entry, balances):
         for refer in refers:
             index, units_currency, cost_currency, price_currency = refer
             posting = entry.postings[index]
-            if units_currency is MISSING:
-                errors.append(
-                    CategorizationError(posting.meta,
-                                        "Could not resolve currency", entry))
+            for currency, name in [(units_currency, 'units'),
+                                   (cost_currency, 'cost'),
+                                   (price_currency, 'price')]:
+                if currency is MISSING:
+                    errors.append(CategorizationError(
+                        posting.meta,
+                        "Could not resolve {} currency".format(name),
+                        entry))
 
     index_groups = {currency: {refer[0] for refer in refers}
                     for currency, refers in groups.items()}

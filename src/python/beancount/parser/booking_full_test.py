@@ -146,7 +146,7 @@ class TestGroupPostings(cmptest.TestCase):
         groups, errors = booking_full.categorize_by_currency(
             entries[1], {})
         self.assertTrue(errors)
-        self.assertRegexpMatches(errors[0].message, 'Could not resolve currency')
+        self.assertRegexpMatches(errors[0].message, 'Could not resolve units currency')
         self.assertEqual({'CAD': {0,1}}, groups)
 
     @parser.parse_doc(allow_incomplete=True)
@@ -181,7 +181,7 @@ class TestGroupPostings(cmptest.TestCase):
         self.assertEqual({'CAD': {0,1}}, groups)
         groups, errors = booking_full.categorize_by_currency(entries[1], {})
         self.assertTrue(errors)
-        self.assertRegexpMatches(errors[0].message, 'Could not resolve currency')
+        self.assertRegexpMatches(errors[0].message, 'Could not resolve units currency')
         self.assertEqual({'CAD': {0,1}}, groups)
 
         for i in 2, 3:
@@ -211,7 +211,7 @@ class TestGroupPostings(cmptest.TestCase):
         self.assertEqual({'USD': {0,1}}, groups)
         groups, errors = booking_full.categorize_by_currency(entries[1], {})
         self.assertTrue(errors)
-        self.assertRegexpMatches(errors[0].message, 'Could not resolve currency')
+        self.assertRegexpMatches(errors[0].message, 'Could not resolve units currency')
         self.assertEqual({'USD': {0,1}}, groups)
 
     @parser.parse_doc(allow_incomplete=True)
@@ -246,7 +246,7 @@ class TestGroupPostings(cmptest.TestCase):
         self.assertEqual({'USD': {0,1}}, groups)
         groups, errors = booking_full.categorize_by_currency(entries[1], {})
         self.assertTrue(errors)
-        self.assertRegexpMatches(errors[0].message, 'Could not resolve currency')
+        self.assertRegexpMatches(errors[0].message, 'Could not resolve units currency')
         self.assertEqual({'USD': {0,1}}, groups)
 
         for i in 2, 3:
@@ -295,7 +295,7 @@ class TestGroupPostings(cmptest.TestCase):
         for i in 1, 3, 5:
             groups, errors = booking_full.categorize_by_currency(entries[i], {})
             self.assertEqual(1, len(errors))
-            self.assertRegexpMatches(errors[0].message, 'Could not resolve currency')
+            self.assertRegexpMatches(errors[0].message, 'Could not resolve units currency')
             self.assertEqual({'USD': {0,1}}, groups)
 
     @parser.parse_doc(allow_incomplete=True)
@@ -325,7 +325,7 @@ class TestGroupPostings(cmptest.TestCase):
 
         groups, errors = booking_full.categorize_by_currency(entries[1], {})
         self.assertTrue(errors)
-        self.assertRegexpMatches(errors[0].message, 'Could not resolve currency')
+        self.assertRegexpMatches(errors[0].message, 'Could not resolve units currency')
         self.assertEqual({'USD': {0,1}}, groups)
 
         for i in 2, 3:
