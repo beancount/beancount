@@ -1,6 +1,8 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import textwrap
+import unittest
+import pprint
 
 from beancount.core.number import D
 from beancount.core.inventory import from_string as I
@@ -78,8 +80,13 @@ class TestAllInterpolationCombinations(cmptest.TestCase):
     #             print()
 
 
+def indexes(groups):
+    """Return only the index sets from currency categorized groups."""
+    return {currency: {refer[0] for refer in refers}
+            for currency, refers in groups.items()}
 
-class TestGroupPostings(cmptest.TestCase):
+
+class TestGroupPostings(unittest.TestCase):
 
     @parser.parse_doc(allow_incomplete=True)
     def test_categorize__units__unambiguous(self, entries, _, options_map):
@@ -95,7 +102,7 @@ class TestGroupPostings(cmptest.TestCase):
         for entry in entries:
             groups, errors = booking_full.categorize_by_currency(entry, {})
             self.assertFalse(errors)
-            self.assertEqual({'USD': {0,1}}, groups)
+            self.assertEqual({'USD': {0,1}}, indexes(groups))
 
     @parser.parse_doc(allow_incomplete=True)
     def test_categorize__units__ambiguous(self, entries, _, options_map):
@@ -112,17 +119,17 @@ class TestGroupPostings(cmptest.TestCase):
         """
         groups, errors = booking_full.categorize_by_currency(entries[0], {})
         self.assertFalse(errors)
-        self.assertEqual({'USD': {0,1}}, groups)
+        self.assertEqual({'USD': {0,1}}, indexes(groups))
 
         groups, errors = booking_full.categorize_by_currency(
             entries[1], {'Assets:Account': I('1.00 USD')})
         self.assertFalse(errors)
-        self.assertEqual({'USD': {0,1}}, groups)
+        self.assertEqual({'USD': {0,1}}, indexes(groups))
         groups, errors = booking_full.categorize_by_currency(
             entries[1], {})
         self.assertTrue(errors)
         self.assertRegexpMatches(errors[0].message, 'Failed to categorize posting')
-        self.assertEqual({}, groups)
+        self.assertEqual({}, indexes(groups))
 
     @parser.parse_doc(allow_incomplete=True)
     def test_categorize__units_price__unambiguous(self, entries, _, options_map):
@@ -137,17 +144,17 @@ class TestGroupPostings(cmptest.TestCase):
         """
         groups, errors = booking_full.categorize_by_currency(entries[0], {})
         self.assertFalse(errors)
-        self.assertEqual({'CAD': {0,1}}, groups)
+        self.assertEqual({'CAD': {0,1}}, indexes(groups))
 
         groups, errors = booking_full.categorize_by_currency(
             entries[1], {'Assets:Account': I('1.00 USD')})
         self.assertFalse(errors)
-        self.assertEqual({'CAD': {0,1}}, groups)
+        self.assertEqual({'CAD': {0,1}}, indexes(groups))
         groups, errors = booking_full.categorize_by_currency(
             entries[1], {})
         self.assertTrue(errors)
         self.assertRegexpMatches(errors[0].message, 'Could not resolve units currency')
-        self.assertEqual({'CAD': {0,1}}, groups)
+        self.assertEqual({'CAD': {0,1}}, indexes(groups))
 
     @parser.parse_doc(allow_incomplete=True)
     def test_categorize__units_price__ambiguous(self, entries, _, options_map):
@@ -173,22 +180,22 @@ class TestGroupPostings(cmptest.TestCase):
         """
         groups, errors = booking_full.categorize_by_currency(entries[0], {})
         self.assertFalse(errors)
-        self.assertEqual({'CAD': {0,1}}, groups)
+        self.assertEqual({'CAD': {0,1}}, indexes(groups))
 
         groups, errors = booking_full.categorize_by_currency(
             entries[1], {'Assets:Account': I('1.00 USD')})
         self.assertFalse(errors)
-        self.assertEqual({'CAD': {0,1}}, groups)
+        self.assertEqual({'CAD': {0,1}}, indexes(groups))
         groups, errors = booking_full.categorize_by_currency(entries[1], {})
         self.assertTrue(errors)
         self.assertRegexpMatches(errors[0].message, 'Could not resolve units currency')
-        self.assertEqual({'CAD': {0,1}}, groups)
+        self.assertEqual({'CAD': {0,1}}, indexes(groups))
 
         for i in 2, 3:
             groups, errors = booking_full.categorize_by_currency(entries[i], {})
             self.assertEqual(1, len(errors))
             self.assertRegexpMatches(errors[0].message, 'Failed to categorize posting')
-            self.assertEqual({}, groups)
+            self.assertEqual({}, indexes(groups))
 
     @parser.parse_doc(allow_incomplete=True)
     def test_categorize__units_cost__unambiguous(self, entries, _, options_map):
@@ -203,16 +210,16 @@ class TestGroupPostings(cmptest.TestCase):
         """
         groups, errors = booking_full.categorize_by_currency(entries[0], {})
         self.assertFalse(errors)
-        self.assertEqual({'USD': {0,1}}, groups)
+        self.assertEqual({'USD': {0,1}}, indexes(groups))
 
         groups, errors = booking_full.categorize_by_currency(
             entries[1], {'Assets:Account': I('1 HOOL {1.00 USD}')})
         self.assertFalse(errors)
-        self.assertEqual({'USD': {0,1}}, groups)
+        self.assertEqual({'USD': {0,1}}, indexes(groups))
         groups, errors = booking_full.categorize_by_currency(entries[1], {})
         self.assertTrue(errors)
         self.assertRegexpMatches(errors[0].message, 'Could not resolve units currency')
-        self.assertEqual({'USD': {0,1}}, groups)
+        self.assertEqual({'USD': {0,1}}, indexes(groups))
 
     @parser.parse_doc(allow_incomplete=True)
     def test_categorize__units_cost__ambiguous(self, entries, _, options_map):
@@ -238,27 +245,27 @@ class TestGroupPostings(cmptest.TestCase):
         """
         groups, errors = booking_full.categorize_by_currency(entries[0], {})
         self.assertFalse(errors)
-        self.assertEqual({'USD': {0,1}}, groups)
+        self.assertEqual({'USD': {0,1}}, indexes(groups))
 
         groups, errors = booking_full.categorize_by_currency(
             entries[1], {'Assets:Account': I('1 HOOL {1.00 USD}')})
         self.assertFalse(errors)
-        self.assertEqual({'USD': {0,1}}, groups)
+        self.assertEqual({'USD': {0,1}}, indexes(groups))
         groups, errors = booking_full.categorize_by_currency(entries[1], {})
         self.assertTrue(errors)
         self.assertRegexpMatches(errors[0].message, 'Could not resolve units currency')
-        self.assertEqual({'USD': {0,1}}, groups)
+        self.assertEqual({'USD': {0,1}}, indexes(groups))
 
         for i in 2, 3:
             groups, errors = booking_full.categorize_by_currency(
                 entries[i], {'Assets:Account': I('1 HOOL {1.00 USD}')})
             self.assertFalse(errors)
-            self.assertEqual({'USD': {0,1}}, groups)
+            self.assertEqual({'USD': {0,1}}, indexes(groups))
             groups, errors = booking_full.categorize_by_currency(
                 entries[i], {})
             self.assertEqual(1, len(errors))
             self.assertRegexpMatches(errors[0].message, 'Failed to categorize posting')
-            self.assertEqual({}, groups)
+            self.assertEqual({}, indexes(groups))
 
     @parser.parse_doc(allow_incomplete=True)
     def test_categorize__units_cost_price__unambiguous(self, entries, _, options_map):
@@ -290,13 +297,13 @@ class TestGroupPostings(cmptest.TestCase):
         for i in 0, 2, 4:
             groups, errors = booking_full.categorize_by_currency(entries[i], {})
             self.assertFalse(errors)
-            self.assertEqual({'USD': {0,1}}, groups)
+            self.assertEqual({'USD': {0,1}}, indexes(groups))
 
         for i in 1, 3, 5:
             groups, errors = booking_full.categorize_by_currency(entries[i], {})
             self.assertEqual(1, len(errors))
             self.assertRegexpMatches(errors[0].message, 'Could not resolve units currency')
-            self.assertEqual({'USD': {0,1}}, groups)
+            self.assertEqual({'USD': {0,1}}, indexes(groups))
 
     @parser.parse_doc(allow_incomplete=True)
     def test_categorize__units_cost_price__ambiguous(self, entries, _, options_map):
@@ -321,23 +328,35 @@ class TestGroupPostings(cmptest.TestCase):
         """
         groups, errors = booking_full.categorize_by_currency(entries[0], {})
         self.assertFalse(errors)
-        self.assertEqual({'USD': {0,1}}, groups)
+        self.assertEqual({'USD': {0,1}}, indexes(groups))
 
         groups, errors = booking_full.categorize_by_currency(entries[1], {})
         self.assertTrue(errors)
         self.assertRegexpMatches(errors[0].message, 'Could not resolve units currency')
-        self.assertEqual({'USD': {0,1}}, groups)
+        self.assertEqual({'USD': {0,1}}, indexes(groups))
 
         for i in 2, 3:
             groups, errors = booking_full.categorize_by_currency(
                 entries[i], {'Assets:Account': I('1 HOOL {1.00 USD}')})
             self.assertFalse(errors)
-            self.assertEqual({'USD': {0,1}}, groups)
+            self.assertEqual({'USD': {0,1}}, indexes(groups))
             groups, errors = booking_full.categorize_by_currency(
                 entries[i], {})
             self.assertTrue(errors)
             self.assertRegexpMatches(errors[0].message, 'Failed to categorize posting')
-            self.assertEqual({}, groups)
+            self.assertEqual({}, indexes(groups))
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_categorize__multiple_auto_postings(self, entries, _, options_map):
+        """
+        2015-10-02 *
+          Assets:Account   100.00 USD
+          Assets:Account   100.00 CAD
+          Assets:Other
+        """
+        groups, errors = booking_full.categorize_by_currency(entries[0], {})
+        self.assertFalse(errors)
+        self.assertEqual({'USD': {0,2}, 'CAD': {1,2}}, indexes(groups))
 
     @parser.parse_doc(allow_incomplete=True)
     def test_categorize__redundant_auto_postings(self, entries, _, options_map):
@@ -352,21 +371,94 @@ class TestGroupPostings(cmptest.TestCase):
         self.assertTrue(errors)
 
 
+class TestReplacePostings(unittest.TestCase):
 
+    def check(self, expected, entry):
+        groups, errors = booking_full.categorize_by_currency(entry, {})
+        self.assertFalse(errors)
+        posting_groups = booking_full.replace_currencies(entry.postings, groups)
+        check_groups = {
+            currency: [(posting.position.units.currency,
+                        posting.position.cost.currency if posting.position.cost else None,
+                        posting.price.currency if posting.price else None)
+                       for posting in postings]
+            for currency, postings in posting_groups.items()}
+        self.assertEqual(expected, check_groups)
+
+        # Check all the postings are unique instances.
+        all_postings = [posting
+                        for postings in posting_groups.values()
+                        for posting in postings]
+        self.assertEqual(len(set(map(id, all_postings))), len(all_postings))
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_auto_posting(self, entries, _, options_map):
+        """
+        2015-10-02 *
+          Assets:Account   100.00 USD
+          Assets:Other
+
+        2015-10-02 *
+          Assets:Account   100.00 USD
+          Assets:Account   100.00 CAD
+          Assets:Other
+        """
+        self.check({'USD': [('USD', None, None),
+                            ('USD', None, None)]}, entries[0])
+        self.check({'CAD': [('CAD', None, None),
+                            ('CAD', None, None)],
+                    'USD': [('USD', None, None),
+                            ('USD', None, None)]}, entries[1])
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_missing(self, entries, _, options_map):
+        """
+        2015-10-02 *
+          Assets:Account   100.00
+          Assets:Other    -100.00 USD
+
+        2015-10-02 *
+          Assets:Account   100.00 USD @ 120.00
+          Assets:Other    -120.00 CAD
+
+        2015-10-02 *
+          Assets:Account   10 HOOL {100.00}
+          Assets:Other    -1000.00 USD
+
+        2015-10-02 *
+          Assets:Account   10 HOOL {100.00} @ 120.00 USD
+          Assets:Other    -1000.00 USD
+        2015-10-02 *
+          Assets:Account   10 HOOL {100.00 USD} @ 120.00
+          Assets:Other    -1000.00 USD
+        """
+        self.check({'USD': [('USD', None, None),
+                            ('USD', None, None)]}, entries[0])
+
+        self.check({'CAD': [('USD', None, 'CAD'),
+                            ('CAD', None, None)]}, entries[1])
+
+        self.check({'USD': [('HOOL', 'USD', None),
+                            ('USD', None, None)]}, entries[2])
+
+        self.check({'USD': [('HOOL', 'USD', 'USD'),
+                            ('USD', None, None)]}, entries[3])
+        self.check({'USD': [('HOOL', 'USD', 'USD'),
+                            ('USD', None, None)]}, entries[4])
 
 
 
 
 
 # FIXME: When the other amounts balance, this should be doable.
-        """
-          2010-05-28 *
-            Assets:Account1     100.00 CAD
-            Assets:Account2     -80.00 CAD
-            Assets:Account3     -20.00 CAD
-            Assets:Account4     200.00 USD
-            Assets:Account5
-        """
+"""
+  2010-05-28 *
+    Assets:Account1     100.00 CAD
+    Assets:Account2     -80.00 CAD
+    Assets:Account3     -20.00 CAD
+    Assets:Account4     200.00 USD
+    Assets:Account5
+"""
 
 # FIXME: When the other amounts balance, this should be doable.
 # In this example, the first three postings in CAD balance each other.
@@ -374,25 +466,26 @@ class TestGroupPostings(cmptest.TestCase):
 # unknown. We should look at the two groups of CAD and USD postings,
 # realize that the first group is already balanced and that the second
 # isn't, and automatically select the USD group.
-        """
-          2010-05-28 *
-            Assets:Account1     100.00 CAD
-            Assets:Account2     -80.00 CAD
-            Assets:Account3     -20.00 CAD
-            Assets:Account4      20.00 USD
-            Assets:Account4    -100.00 CAD @
-        """
+"""
+  2010-05-28 *
+    Assets:Account1     100.00 CAD
+    Assets:Account2     -80.00 CAD
+    Assets:Account3     -20.00 CAD
+    Assets:Account4      20.00 USD
+    Assets:Account4    -100.00 CAD @
+"""
 
 
 # FIXME: If there is only a single other group, we should be able infer the
 # price is for CAD here. Currently this raises an error.
-        """
-          2010-05-28 *
-            Assets:Account1     100.00 USD @ 1.2
-            Assets:Account2     120.00 CAD
-        """
+"""
+  2010-05-28 *
+    Assets:Account1     100.00 USD @ 1.2
+    Assets:Account2     120.00 CAD
+"""
 
 
+class Whatever:
 
     @parser.parse_doc()
     def __test_categorize_by_currency__ambiguous_cost_no_choice(self, ientries, _, options_map):

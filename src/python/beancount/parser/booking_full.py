@@ -8,6 +8,9 @@ import pprint
 
 from beancount.core.number import MISSING
 from beancount.core.data import Transaction
+from beancount.core.amount import Amount
+from beancount.core import amount
+from beancount.core import position
 from beancount.core import inventory
 
 
@@ -53,61 +56,24 @@ def book(entries, options_map):
     errors = []
     for entry in entries:
         if isinstance(entry, Transaction):
-            stats.num_transactions += 1
 
             # Group postings by currency.
-            groups, free_postings = group_postings_by_currency(entry.postings)
+            refer_groups, cat_errors = categorize_by_currency(entry, balances)
+            if cat_errors:
+                errors.extend(cat_errors)
+                continue
+            posting_groups = replace_currencies(entry.postings, refer_groups)
 
-            for posting in entry.postings:
-                stats.num_postings += 1
-                pos = posting.position
-                if pos is None:
-                    stats.num_interp_amount += 1
+            # Resolve each group of postings.
+            ## FIXME: TODO
+            postings = entry.postings
 
-                elif pos.units.number is None:
-                    stats.num_interp_units += 1
-
-                elif posting.price and (posting.price.number is None or
-                                        posting.price.currency is None):
-                    stats.num_interp_price += 1
-
-                if 1:
-                    stats.num_lots += 1
-
-                    # FIXME: This is broken; rewrite this.
-
-                    # compound_cost = lot.cost
-                    # if compound_cost is not None:
-                    #     if compound_cost.number_total is not None:
-                    #         # Compute the per-unit cost if there is some total cost
-                    #         # component involved.
-                    #         units = pos.units.number
-                    #         cost_total = compound_cost.number_total
-                    #         if compound_cost.number_per is not None:
-                    #             cost_total += compound_cost.number_per * units
-                    #         unit_cost = cost_total / abs(units)
-                    #     else:
-                    #         unit_cost = compound_cost.number_per
-                    #     cost = Amount(unit_cost, compound_cost.currency)
-
-                    #     # print(cost, 'against', balances[posting.account])
-
-                    #     lot = Lot(lot_spec.currency, cost)
-                    #     stats.num_lots_atcost += 1
-                    #     # print(posting.position)
-                    # else:
-                    #     # As per the parser, this cannot happen.
-                    #     assert (lot_spec.lot_date is None and
-                    #             lot_spec.label is None and
-                    #             lot_spec.merge is None), "Internal error"
-
-                    #     # This is a simple position.
-                    #     lot = Lot(lot_spec.currency, None, None)
-
+            # Update running balances using the interpolate values.
+            for posting in postings:
                 balance = balances[posting.account]
                 balance.add_position(posting.position)
 
-    logging.info("Interpolation Stats: %s", stats)
+    #logging.info("Interpolation Stats: %s", stats)
 
     return entries, errors
 
@@ -117,17 +83,25 @@ CategorizationError = collections.namedtuple('CategorizationError', 'source mess
 
 
 def get_bucket_currency(refer):
-    _, units_currency, cost_currency, price_currency = refer
+    """Given currency references for a posting, return the bucket currency.
+
+    Args:
+      refer: An instance of Refer.
+    Returns:
+      A currency string.
+    """
     currency = None
-    if isinstance(cost_currency, str):
-        currency = cost_currency
-    elif isinstance(price_currency, str):
-        currency = price_currency
-    elif (cost_currency is None and
-          price_currency is None and
-          isinstance(units_currency, str)):
-        currency = units_currency
+    if isinstance(refer.cost_currency, str):
+        currency = refer.cost_currency
+    elif isinstance(refer.price_currency, str):
+        currency = refer.price_currency
+    elif (refer.cost_currency is None and
+          refer.price_currency is None and
+          isinstance(refer.units_currency, str)):
+        currency = refer.units_currency
     return currency
+
+Refer = collections.namedtuple('Refer', 'index units_currency cost_currency price_currency')
 
 
 def categorize_by_currency(entry, balances):
@@ -160,11 +134,14 @@ def categorize_by_currency(entry, balances):
       postings: A list of incomplete postings to categorize.
       balances: A dict of currency to inventory contents.
     Returns:
-      A dict of currency (string) to indexes of the postings. Note that for
-      auto-postings (postings without a currency nor cost) - the index may
-      appear in multiple groups and the posting need to be duplicated for each
-      currency that requires them.
-
+      A dict of currency (string) to a list of tuples describing each postings
+      and its interpolated currencies, and a list of generated errors for
+      currency interpolation. The entry's original postings are left unmodified.
+      Each tuple in the value-list contains:
+        index: The posting index in the original entry.
+        units_currency: The interpolated currency for units.
+        cost_currency: The interpolated currency for cost.
+        price_currency: The interpolated currency for price.
     """
     errors = []
 
@@ -172,14 +149,14 @@ def categorize_by_currency(entry, balances):
     auto_postings = []
     unknown = []
     for index, posting in enumerate(entry.postings):
-        position = posting.position
+        pos = posting.position
 
         # Extract and override the currencies locally.
-        units_currency = (position.units.currency
-                          if position is not MISSING
+        units_currency = (pos.units.currency
+                          if pos is not MISSING
                           else None)
-        cost_currency = (position.cost.currency
-                         if position is not MISSING and position.cost is not None
+        cost_currency = (pos.cost.currency
+                         if pos is not MISSING and pos.cost is not None
                          else None)
         price_currency = (posting.price.currency
                           if posting.price is not None
@@ -193,9 +170,9 @@ def categorize_by_currency(entry, balances):
         if price_currency is MISSING and isinstance(cost_currency, str):
             price_currency = cost_currency
 
-        refer = (index, units_currency, cost_currency, price_currency)
+        refer = Refer(index, units_currency, cost_currency, price_currency)
 
-        if position is MISSING and price_currency is None:
+        if pos is MISSING and price_currency is None:
             # Bucket auto-postings separately from unknown.
             auto_postings.append(refer)
         else:
@@ -223,7 +200,7 @@ def categorize_by_currency(entry, balances):
             if cost_currency is MISSING:
                 cost_currency = other_currency
 
-        refer = (index, units_currency, cost_currency, price_currency)
+        refer = Refer(index, units_currency, cost_currency, price_currency)
         currency = get_bucket_currency(refer)
         assert currency is not None
         groups[currency].append(refer)
@@ -251,63 +228,98 @@ def categorize_by_currency(entry, balances):
                 if cost_currency is MISSING:
                     cost_currency = balance_cost_currency
 
-        refer = (index, units_currency, cost_currency, price_currency)
+        refer = Refer(index, units_currency, cost_currency, price_currency)
         currency = get_bucket_currency(refer)
         if currency is not None:
             groups[currency].append(refer)
         else:
             errors.append(
-                CategorizationError(posting.meta, "Failed to categorize posting", entry))
+                CategorizationError(posting.meta,
+                                    "Failed to categorize posting {}".format(index),
+                                    entry))
 
     # Fill in missing units currencies if some remain as missing. This may occur
     # if we used the cost or price to bucket the currency but the units currency
     # was missing.
     for currency, refers in groups.items():
         for ri, refer in enumerate(refers):
-            index, units_currency, cost_currency, price_currency = refer
-            if units_currency is MISSING:
-                posting = entry.postings[index]
+            if refer.units_currency is MISSING:
+                posting = entry.postings[refer.index]
                 balance = balances.get(posting.account, None)
                 if balance is None:
                     continue
                 balance_currencies = balance.currencies()
                 if len(balance_currencies) == 1:
-                    units_currency = balance_currencies.pop()
-                    new_refer = index, units_currency, cost_currency, price_currency
-                    refers[ri] = new_refer
+                    refers[ri] = refer._replace(units_currency=balance_currencies.pop())
 
     # Deal with auto-postings.
     if len(auto_postings) > 1:
-        index, _, __, ___ = auto_postings[-1]
-        posting = entry.postings[index]
+        refer = auto_postings[-1]
+        posting = entry.postings[refer.index]
         errors.append(
             CategorizationError(posting.meta,
                                 "You may not have more than one auto-posting", entry))
         auto_postings = auto_postings[0:1]
     for refer in auto_postings:
-        index, _, __, ___ = refer
         for currency in groups.keys():
-            groups[currency].append((index, currency, None, None))
+            groups[currency].append(Refer(refer.index, currency, None, None))
 
     # Issue error for all currencies which we could not resolve.
     for currency, refers in groups.items():
         for refer in refers:
-            index, units_currency, cost_currency, price_currency = refer
-            posting = entry.postings[index]
-            for currency, name in [(units_currency, 'units'),
-                                   (cost_currency, 'cost'),
-                                   (price_currency, 'price')]:
+            posting = entry.postings[refer.index]
+            for currency, name in [(refer.units_currency, 'units'),
+                                   (refer.cost_currency, 'cost'),
+                                   (refer.price_currency, 'price')]:
                 if currency is MISSING:
                     errors.append(CategorizationError(
                         posting.meta,
                         "Could not resolve {} currency".format(name),
                         entry))
 
-    index_groups = {currency: {refer[0] for refer in refers}
-                    for currency, refers in groups.items()}
+    return groups, errors
 
-    return index_groups, errors
 
+def replace_currencies(postings, refer_groups):
+    """Replace resolved currencies in the entry's Postings.
+
+    Args:
+      postings: A list of Posting instances to replace.
+      refer_groups: A dict of currency to list of posting references as per
+        categorize_by_currency().
+    Returns:
+      A new mapping of currency to a list of Postings, postings for which the
+      currencies have been replaced by their interpolated currency values.
+    """
+    new_groups = {}
+    for currency, refers in refer_groups.items():
+        new_postings = []
+        for refer in sorted(refers, key=lambda r: r.index):
+            posting = postings[refer.index]
+            pos = posting.position
+            if pos is MISSING:
+                posting = posting._replace(position=position.Position(
+                    Amount(MISSING, refer.units_currency)))
+            else:
+                replace = False
+                units = pos.units
+                cost = pos.cost
+                price = posting.price
+                if units.currency is MISSING:
+                    units = Amount(units.number, refer.units_currency)
+                    replace = True
+                if cost and cost.currency is MISSING:
+                    cost = cost._replace(currency=refer.cost_currency)
+                    replace = True
+                if price and price.currency is MISSING:
+                    price = Amount(price.number, refer.price_currency)
+                    replace = True
+                if replace:
+                    posting = posting._replace(position=position.Position(units, cost),
+                                               price=price)
+            new_postings.append(posting)
+        new_groups[currency] = new_postings
+    return new_groups
 
 
 
