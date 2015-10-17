@@ -48,7 +48,6 @@ class TestAllInterpolationCombinations(cmptest.TestCase):
                  ['HOOL', 'USD', 'USD']),
         ]:
             for string in _gen_missing_combinations(template.format(pos_template), args):
-                print(string)
                 entries, errors, _ = parser.parse_string(string)
                 printer.print_errors(errors)
 

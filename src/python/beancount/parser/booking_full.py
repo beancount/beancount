@@ -68,7 +68,7 @@ def book(entries, options_map):
             ## FIXME: TODO
             postings = entry.postings
 
-            # Update running balances using the interpolate values.
+            # Update running balances using the interpolated values.
             for posting in postings:
                 balance = balances[posting.account]
                 balance.add_position(posting.position)
@@ -320,6 +320,23 @@ def replace_currencies(postings, refer_groups):
             new_postings.append(posting)
         new_groups[currency] = new_postings
     return new_groups
+
+
+def interpolate_group(postings, balances):
+    """Interpolate missing numbers in the set of postings.
+
+    Args:
+      postings: A list of Posting instances.
+      balances: A dict of account to its ante-inventory.
+    Returns:
+      A list of new posting instances and a list of errors.
+    """
+    errors = []
+    new_postings = []
+    for posting in postings:
+        print(posting)
+        new_postings.append(posting)
+    return new_posting
 
 
 
