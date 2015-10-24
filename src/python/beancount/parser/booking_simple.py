@@ -38,7 +38,7 @@ def book(entries, options_map):
     """
     # Perform simple booking, that is convert the CostSpec instances to Cost,
     # not even looking at inventory contents.
-    entries_with_lots, errors = convert_lot_specs_to_lots(entries, options_map)
+    entries_with_lots, errors = convert_lot_specs_to_lots(entries)
 
     for entry in entries_with_lots:
         if not isinstance(entry, Transaction):
@@ -59,7 +59,7 @@ def book(entries, options_map):
     return entries_with_lots, errors
 
 
-def convert_lot_specs_to_lots(entries, unused_options_map):
+def convert_lot_specs_to_lots(entries):
     """For all the entries, convert the posting's position's CostSpec to Cost
     instances. In the simple method, the data provided in the CostSpec must
     unambiguously provide a way to compute the cost amount.
@@ -72,7 +72,6 @@ def convert_lot_specs_to_lots(entries, unused_options_map):
 
     Args:
       entries: A list of incomplete directives as per the parser.
-      options_map: An options dict from the parser.
     Returns:
       A list of entries whose postings's position costs have been converted to
       Cost instances but that may still be incomplete.

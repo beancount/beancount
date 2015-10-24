@@ -75,7 +75,7 @@ class TestBookingValidation(cmptest.TestCase):
         """)
 
     def convert_and_validate(self, entries, options_map):
-        entries, _ = booking_simple.convert_lot_specs_to_lots(entries, options_map)
+        entries, _ = booking_simple.convert_lot_specs_to_lots(entries)
         return booking.validate_inventory_booking(entries, options_map)
 
     def do_validate_inventory_booking(self, input_str):

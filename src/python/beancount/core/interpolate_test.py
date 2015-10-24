@@ -308,8 +308,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
         entries, errors, options_map = parser.parse_string(string, dedent=True)
         self.assertFalse(errors)
         self.assertEqual(1, len(entries))
-        (entries_with_lots, errors) = booking_simple.convert_lot_specs_to_lots(
-            entries, options_map)
+        (entries_with_lots, errors) = booking_simple.convert_lot_specs_to_lots(entries)
         self.assertEqual(1, len(entries))
         entry = entries_with_lots[0]
         errors = interpolate.balance_incomplete_postings(entry, options_map)
