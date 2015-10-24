@@ -7,6 +7,7 @@ import pprint
 from beancount.core.number import D
 from beancount.core.inventory import from_string as I
 from beancount.utils.misc_utils import dictmap
+from beancount.core import inventory
 from beancount.parser import parser
 from beancount.parser import printer
 from beancount.parser import booking_full
@@ -85,7 +86,8 @@ def indexes(groups):
             for currency, refers in groups.items()}
 
 
-class TestGroupPostings(unittest.TestCase):
+class TestCategorizeCurrencyGroup(unittest.TestCase):
+    "Tests of per-currency categorization of postings."
 
     @parser.parse_doc(allow_incomplete=True)
     def test_categorize__units__unambiguous(self, entries, _, options_map):
@@ -370,7 +372,8 @@ class TestGroupPostings(unittest.TestCase):
         self.assertTrue(errors)
 
 
-class TestReplacePostings(unittest.TestCase):
+class TestReplaceCurrenciesInGroup(unittest.TestCase):
+    "Tests the replacement of currencies inferred in the categorization step."
 
     def check(self, expected, entry):
         groups, errors = booking_full.categorize_by_currency(entry, {})
@@ -446,7 +449,170 @@ class TestReplacePostings(unittest.TestCase):
                             ('USD', None, None)]}, entries[4])
 
 
+def normalize_postings(postings):
+    """Normalize a list of postings ready for direct comparison, for testing.
 
+    This sorts them by line order and removes metadata.
+
+    Args:
+      postings: A list of Posting instances.
+    Returns:
+      A new reordered and normalized Posting instances.
+    """
+    return [posting._replace(meta=None)
+            for posting in sorted(postings,
+                                  key=lambda posting: posting.meta['lineno'])]
+
+
+class TestInterpolateCurrencyGroup(unittest.TestCase):
+    "Tests the replacement of currencies inferred in the categorization step."
+
+    maxDiff = 8192
+
+    def check(self, entry, interpolated, expected=None, num_errors=0, balances=None):
+        groups, errors = booking_full.categorize_by_currency(entry, {})
+        self.assertFalse(errors)
+        posting_groups = booking_full.replace_currencies(entry.postings, groups)
+        if balances is None:
+            balances = inventory.Inventory()
+        for currency, postings in posting_groups.items():
+            new_postings, errors, interpolated = booking_full.interpolate_group(postings,
+                                                                                balances,
+                                                                                currency)
+
+            # Check the expected number of errors.
+            self.assertEqual(num_errors, len(errors))
+
+            if 0:
+                print()
+                for p in new_postings:
+                    print(p)
+                for e in errors:
+                    print(e)
+                print()
+
+            # Check the expected postings.
+            if expected:
+                for currency, string in expected.items():
+                    exp_entries, exp_errors, _ = parser.parse_string(string, dedent=True)
+                    self.assertFalse(exp_errors, "Internal error in test")
+                    self.assertEqual(1, len(exp_entries),
+                                     "Internal error, expected one entry")
+                    exp_postings = normalize_postings(exp_entries[0].postings)
+                    self.assertEqual(exp_postings, normalize_postings(new_postings))
+
+        return errors
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_complete(self, entries, _, options_map):
+        """
+        2015-10-02 *
+          Assets:Account   100.00 USD
+          Assets:Other    -100.00 USD
+        """
+        self.check(entries[0], False)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_incomplete_impossible_diffmiss_units(self, entries, _, options_map):
+        """
+        2015-10-02 *
+          Assets:Account          USD
+          Assets:Other            USD
+        """
+        self.check(entries[0], False, num_errors=1)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_incomplete_impossible_diffmiss_cost_and_units(self, entries, _, options_map):
+        """
+        2015-10-02 *
+          Assets:Account   2 GOOG {USD}
+          Assets:Other            USD
+        """
+        self.check(entries[0], False, num_errors=1)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_incomplete_impossible_samemiss_posting(self, entries, _, options_map):
+        """
+        2015-10-02 *
+          Assets:Account   GOOG {USD}
+          Assets:Other      -100.00 USD
+        """
+        self.check(entries[0], False, num_errors=1)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_incomplete_units(self, entries, _, options_map):
+        """
+        2015-10-02 *
+          Assets:Account          USD
+          Assets:Other    -100.00 USD
+        """
+        self.check(entries[0], False,
+                   expected={'USD': """
+        2015-10-02 *
+          Assets:Account   100.00 USD
+          Assets:Other    -100.00 USD
+                   """})
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_incomplete_cost_both(self, entries, _, options_map):
+        """
+        2015-10-02 *
+          Assets:Account       10 GOOG {USD}
+          Assets:Other   -1009.95 USD
+        """
+        self.check(entries[0], False,
+                   expected={'USD': """
+        2015-10-02 *
+          Assets:Account       10 GOOG {100.995 USD}
+          Assets:Other   -1009.95 USD
+                   """})
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_incomplete_cost_per(self, entries, _, options_map):
+        """
+        2015-10-02 *
+          Assets:Account       10 GOOG {# 9.95 USD}
+          Assets:Other   -1009.95 USD
+        """
+        self.check(entries[0], False,
+                   expected={'USD': """
+        2015-10-02 *
+          Assets:Account       10 GOOG {100.00 # 9.95 USD}
+          Assets:Other   -1009.95 USD
+                   """})
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_incomplete_cost_total(self, entries, _, options_map):
+        """
+        2015-10-02 *
+          Assets:Account       10 GOOG {100.00 # USD}
+          Assets:Other   -1009.95 USD
+        """
+        self.check(entries[0], False,
+                   expected={'USD': """
+        2015-10-02 *
+          Assets:Account       10 GOOG {100.00 # 9.95 USD}
+          Assets:Other   -1009.95 USD
+                   """})
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_incomplete_price(self, entries, _, options_map):
+        """
+        2015-10-02 *
+          Assets:Account  120.00 CAD @ USD
+          Assets:Other   -100.00 USD
+        """
+        self.check(entries[0], False,
+                   expected={'USD': """
+        2015-10-02 *
+          Assets:Account  120.00 CAD @ 1.2 USD
+          Assets:Other   -100.00 USD
+                   """})
+
+
+
+# You need to test the missing value for each variant of possible posting.
+# You need to test with mulitple groups as well.
 
 
 # FIXME: When the other amounts balance, this should be doable.

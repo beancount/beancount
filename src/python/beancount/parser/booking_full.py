@@ -6,12 +6,23 @@ import collections
 import logging
 import pprint
 
+# pylint: disable=invalid-name
+try:
+    import enum
+    Enum = enum.Enum
+except ImportError:
+    Enum = object
+
 from beancount.core.number import MISSING
+from beancount.core.number import ZERO
 from beancount.core.data import Transaction
 from beancount.core.amount import Amount
+from beancount.core.position import Position
+from beancount.core.position import Cost
 from beancount.core import amount
 from beancount.core import position
 from beancount.core import inventory
+from beancount.core import interpolate
 
 
 
@@ -322,23 +333,155 @@ def replace_currencies(postings, refer_groups):
     return new_groups
 
 
-def interpolate_group(postings, balances):
+class MissingType(Enum):
+    """The type of missing number."""
+    UNITS      = 1
+    COST_PER   = 2
+    COST_TOTAL = 3
+    PRICE      = 4
+
+
+# An error raised if we are not able to interpolate.
+InterpolationError = collections.namedtuple('InterpolationError', 'source message entry')
+
+
+def interpolate_group(postings, balances, currency):
     """Interpolate missing numbers in the set of postings.
 
     Args:
       postings: A list of Posting instances.
       balances: A dict of account to its ante-inventory.
+      currency: The weight currency of this group, used for reporting errors.
     Returns:
-      A list of new posting instances and a list of errors.
+      A tuple of
+        postings: A lit of new posting instances.
+        errors: A list of errors generated during interpolation.
+        interpolated: A boolean, true if we did have to interpolate.
     """
     errors = []
-    new_postings = []
-    for posting in postings:
-        print(posting)
-        new_postings.append(posting)
-    return new_posting
 
+    # Figure out which type of amount is missing, by creating a list of
+    # incomplete postings and which type of units is missing.
+    incomplete = []
+    balance = inventory.Inventory()
+    for index, posting in enumerate(postings):
+        pos = posting.position
 
+        # Identify incomplete postings.
+        pre_incomplete = len(incomplete)
+        if pos.units.number is MISSING:
+            incomplete.append((MissingType.UNITS, index))
+        if pos.cost and pos.cost.number_per is MISSING:
+            incomplete.append((MissingType.COST_PER, index))
+        if pos.cost and pos.cost.number_total is MISSING:
+            incomplete.append((MissingType.COST_TOTAL, index))
+        if posting.price and posting.price.number is MISSING:
+            incomplete.append((MissingType.PRICE, index))
+
+    if len(incomplete) == 0:
+        # If there are no missing numbers, return the original list of postings.
+        return postings, errors, False
+
+    elif len(incomplete) > 1:
+        # If there is more than a single value to be interpolated, generate an
+        # error.
+        _, posting_index = incomplete[0]
+        errors.append(InterpolationError(
+            postings[posting_index].meta,
+            "Too many missing numbers for currency group '{}'".format(currency),
+            None))
+        return postings, errors, False
+
+    else:
+        # If there is a single missing number, calculate it and fill it in here.
+        missing, index = incomplete[0]
+        incomplete_posting = postings[index]
+
+        # Compute the balance of the other postings.
+        residual = interpolate.compute_residual(posting
+                                                for posting in postings
+                                                if posting is not incomplete_posting)
+        assert len(residual) < 2, "Internal error in grouping postings by currencies."
+        if not residual.is_empty():
+            respos = residual[0]
+            assert respos.cost is None, (
+                "Internal error; cost appears in weight calculation.")
+            assert respos.units.currency == currency, (
+                "Internal error; residual different than currency group.")
+            weight = -respos.units.number
+            weight_currency = respos.units.currency
+        else:
+            weight = ZERO
+            weight_currency = currency
+
+        if missing == MissingType.UNITS:
+            old_pos = incomplete_posting.position
+            assert old_pos.units.currency == weight_currency, (
+                "Internal error; residual currency different than missing currency.")
+            new_pos = Position(Amount(weight, currency), old_pos.cost)
+            new_posting  = incomplete_posting._replace(position=new_pos)
+
+        elif missing == MissingType.COST_PER:
+            old_pos = incomplete_posting.position
+            assert old_pos.cost.currency == weight_currency, (
+                "Internal error; residual currency different than missing currency.")
+            old_units = old_pos.units
+            old_cost = old_pos.cost
+            number_per = (weight - (old_cost.number_total or ZERO)) / old_units.number
+            new_cost = old_pos.cost._replace(number_per=number_per)
+            new_pos = Position(old_units, new_cost)
+            new_posting  = incomplete_posting._replace(position=new_pos)
+
+        elif missing == MissingType.COST_TOTAL:
+            old_pos = incomplete_posting.position
+            assert old_pos.cost.currency == weight_currency, (
+                "Internal error; residual currency different than missing currency.")
+            old_units = old_pos.units
+            old_cost = old_pos.cost
+            number_total = (weight - old_cost.number_per * old_units.number)
+            new_cost = old_pos.cost._replace(number_total=number_total)
+            new_pos = Position(old_units, new_cost)
+            new_posting  = incomplete_posting._replace(position=new_pos)
+
+        elif missing == MissingType.PRICE:
+            old_price = incomplete_posting.price
+            assert old_price.currency == weight_currency, (
+                "Internal error; residual currency different than missing currency.")
+            old_pos = incomplete_posting.position
+            old_units = old_pos.units
+            new_price_number = abs(old_units.number / weight)
+            new_posting  = incomplete_posting._replace(price=Amount(new_price_number,
+                                                                    old_price.currency))
+
+        else:
+            assert False, "Internal error; Invalid missing type."
+
+        if 0:
+            # Convert the CostSpec instance into a corresponding Cost.
+            pos = new_posting.position
+            cost = pos.cost
+            if cost is not None:
+                units = pos.units.number
+                number_per = cost.number_per
+                number_total = cost.number_total
+                if number_total is not None:
+                    # Compute the per-unit cost if there is some total cost
+                    # component involved.
+                    cost_total = number_total
+                    if number_per is not MISSING:
+                        cost_total += number_per * units
+                    unit_cost = cost_total / abs(units)
+                else:
+                    unit_cost = number_per
+                new_cost = Cost(unit_cost, cost.currency, cost.date, cost.label)
+                new_posting = new_posting._replace(
+                    position=position.Position(pos.units, new_cost))
+
+        # Replace the number in the posting.
+        postings = list(postings)
+        postings[index] = new_posting
+
+        return postings, errors, True
 
 
 
@@ -376,8 +519,6 @@ less DOF because they have to match against the inventory.
 
 
 """
-
-
 
     varieties:
 
