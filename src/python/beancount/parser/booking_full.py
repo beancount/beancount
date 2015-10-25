@@ -416,9 +416,17 @@ def interpolate_group(postings, balances, currency):
 
         if missing == MissingType.UNITS:
             old_pos = incomplete_posting.position
-            assert old_pos.units.currency == weight_currency, (
-                "Internal error; residual currency different than missing currency.")
-            new_pos = Position(Amount(weight, currency), old_pos.cost)
+            old_cost = old_pos.cost
+            if old_cost:
+                assert old_cost.currency == weight_currency, (
+                    "Internal error; residual currency different than missing currency.")
+                cost_total = old_cost.number_total or ZERO
+                units_number = (weight - cost_total) / old_cost.number_per
+            else:
+                assert old_pos.units.currency == weight_currency, (
+                    "Internal error; residual currency different than missing currency.")
+                units_number = weight
+            new_pos = Position(Amount(units_number, old_pos.units.currency), old_cost)
             new_posting  = incomplete_posting._replace(position=new_pos)
 
         elif missing == MissingType.COST_PER:

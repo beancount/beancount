@@ -545,6 +545,14 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
         2015-10-02 *
           Assets:Account          USD
           Assets:Other    -100.00 USD
+
+        2015-10-02 *
+          Assets:Account          GOOG {100.00 # 9.95 USD}
+          Assets:Other   -1009.95 USD
+
+        2015-10-02 *
+          Assets:Account          GOOG {100.00 USD}
+          Assets:Other   -1000.00 USD
         """
         self.check(entries[0], False,
                    expected={'USD': """
@@ -552,6 +560,33 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
           Assets:Account   100.00 USD
           Assets:Other    -100.00 USD
                    """})
+        self.check(entries[1], False,
+                   expected={'USD': """
+        2015-10-02 *
+          Assets:Account       10 GOOG {100.00 # 9.95 USD}
+          Assets:Other   -1009.95 USD
+                   """})
+        self.check(entries[2], False,
+                   expected={'USD': """
+        2015-10-02 *
+          Assets:Account       10 GOOG {100.00 USD}
+          Assets:Other   -1000.00 USD
+                   """})
+
+
+        # 2015-10-02 *
+        #   Assets:Account          GOOG {# 1000.00 USD}
+        #   Assets:Other   -1000.00 USD
+
+
+
+
+
+
+
+
+
+
 
     @parser.parse_doc(allow_incomplete=True)
     def test_incomplete_cost_both(self, entries, _, options_map):
