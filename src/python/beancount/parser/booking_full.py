@@ -357,6 +357,13 @@ def interpolate_group(postings, balances, currency):
         postings: A lit of new posting instances.
         errors: A list of errors generated during interpolation.
         interpolated: A boolean, true if we did have to interpolate.
+
+      In the case of an error, this returns the original list of postings, which
+      is still incomplete. If an error is returned, you should probably skip the
+      transaction altogether, or just not include the postings in it. (An
+      alternative behaviour would be to return only the list of valid postings,
+      but that would likely result in an unbalanced transaction. We do it this
+      way by choice.)
     """
     errors = []
 
@@ -415,51 +422,68 @@ def interpolate_group(postings, balances, currency):
             weight_currency = currency
 
         if missing == MissingType.UNITS:
-            old_pos = incomplete_posting.position
-            old_cost = old_pos.cost
-            if old_cost:
-                assert old_cost.currency == weight_currency, (
+            pos = incomplete_posting.position
+            cost = pos.cost
+            if cost:
+                # Handle the special case where we only have total cost.
+                if cost.number_per == ZERO:
+                    errors.append(InterpolationError(
+                        incomplete_posting.meta,
+                        "Cannot infer per-unit cost only from total", None))
+                    return postings, errors, True
+
+                assert cost.currency == weight_currency, (
                     "Internal error; residual currency different than missing currency.")
-                cost_total = old_cost.number_total or ZERO
-                units_number = (weight - cost_total) / old_cost.number_per
+                cost_total = cost.number_total or ZERO
+                units_number = (weight - cost_total) / cost.number_per
+            elif incomplete_posting.price:
+                assert incomplete_posting.price.currency == weight_currency, (
+                    "Internal error; residual currency different than missing currency.")
+                units_number = weight / incomplete_posting.price.number
             else:
-                assert old_pos.units.currency == weight_currency, (
+                assert pos.units.currency == weight_currency, (
                     "Internal error; residual currency different than missing currency.")
                 units_number = weight
-            new_pos = Position(Amount(units_number, old_pos.units.currency), old_cost)
+            new_pos = Position(Amount(units_number, pos.units.currency), cost)
             new_posting  = incomplete_posting._replace(position=new_pos)
 
         elif missing == MissingType.COST_PER:
-            old_pos = incomplete_posting.position
-            assert old_pos.cost.currency == weight_currency, (
+            pos = incomplete_posting.position
+            assert pos.cost.currency == weight_currency, (
                 "Internal error; residual currency different than missing currency.")
-            old_units = old_pos.units
-            old_cost = old_pos.cost
-            number_per = (weight - (old_cost.number_total or ZERO)) / old_units.number
-            new_cost = old_pos.cost._replace(number_per=number_per)
-            new_pos = Position(old_units, new_cost)
+            units = pos.units
+            cost = pos.cost
+            number_per = (weight - (cost.number_total or ZERO)) / units.number
+            new_cost = pos.cost._replace(number_per=number_per)
+            new_pos = Position(units, new_cost)
             new_posting  = incomplete_posting._replace(position=new_pos)
 
         elif missing == MissingType.COST_TOTAL:
-            old_pos = incomplete_posting.position
-            assert old_pos.cost.currency == weight_currency, (
+            pos = incomplete_posting.position
+            assert pos.cost.currency == weight_currency, (
                 "Internal error; residual currency different than missing currency.")
-            old_units = old_pos.units
-            old_cost = old_pos.cost
-            number_total = (weight - old_cost.number_per * old_units.number)
-            new_cost = old_pos.cost._replace(number_total=number_total)
-            new_pos = Position(old_units, new_cost)
+            units = pos.units
+            cost = pos.cost
+            number_total = (weight - cost.number_per * units.number)
+            new_cost = pos.cost._replace(number_total=number_total)
+            new_pos = Position(units, new_cost)
             new_posting  = incomplete_posting._replace(position=new_pos)
 
         elif missing == MissingType.PRICE:
-            old_price = incomplete_posting.price
-            assert old_price.currency == weight_currency, (
-                "Internal error; residual currency different than missing currency.")
-            old_pos = incomplete_posting.position
-            old_units = old_pos.units
-            new_price_number = abs(old_units.number / weight)
-            new_posting  = incomplete_posting._replace(price=Amount(new_price_number,
-                                                                    old_price.currency))
+            pos = incomplete_posting.position
+            if pos.cost is not None:
+                errors.append(InterpolationError(
+                    incomplete_posting.meta,
+                    "Cannot infer price for postings with units held at cost", None))
+                return postings, errors, True
+            else:
+                price = incomplete_posting.price
+                assert price.currency == weight_currency, (
+                    "Internal error; residual currency different than missing currency.")
+                units = pos.units
+                new_price_number = abs(units.number / weight)
+                new_posting  = incomplete_posting._replace(price=Amount(new_price_number,
+                                                                        price.currency))
 
         else:
             assert False, "Internal error; Invalid missing type."
