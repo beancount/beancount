@@ -244,6 +244,8 @@ def do_linked(filename, args):
 
     # Find its links.
     links = closest_entry.links
+    if closest_entry is None:
+        raise SystemExit("No entry could be found before {}:{}".format(filename, lineno))
     if not links:
         return
 
