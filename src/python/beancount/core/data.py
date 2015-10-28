@@ -5,6 +5,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import builtins
 import datetime
 from collections import namedtuple
+from os import path
 import sys
 
 # Note: this file is mirrorred into ledgerhub. Relative imports only.
@@ -552,6 +553,9 @@ def find_closest(entries, filename, lineno):
       The closest entry found in the given file for the given filename, or
       None, if none could be found.
     """
+    if not path.isabs(filename):
+        filename = path.abspath(filename)
+
     min_diffline = sys.maxsize
     closest_entry = None
     for entry in entries:

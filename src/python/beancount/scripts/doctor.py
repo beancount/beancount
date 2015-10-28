@@ -240,7 +240,7 @@ def do_linked(filename, args):
     entries, errors, options_map = loader.load_file(filename)
 
     # Find the closest entry.
-    closest_entry = data.find_closest(entries, filename, lineno)
+    closest_entry = data.find_closest(entries, options_map['filename'], lineno)
 
     # Find its links.
     links = closest_entry.links
