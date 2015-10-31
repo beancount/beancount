@@ -457,7 +457,7 @@ Only useful if you have not installed Beancount properly in your PATH.")
   (let ((compilation-read-command nil))
     (beancount--run beancount-doctor-program "linked"
                     (file-relative-name buffer-file-name)
-                    (line-number-at-pos))))
+                    (number-to-string (line-number-at-pos)))))
 
 
 (provide 'beancount)
