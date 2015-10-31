@@ -7,7 +7,7 @@ import datetime
 from urllib import request
 from urllib import parse
 
-from beancount.core.amount import D
+from beancount.core.number import D
 
 
 __source_name__ = 'google'
@@ -138,9 +138,9 @@ def get_historical_price(ticker, date):
 
     # Make the query.
     params = parse.urlencode(sorted({
-        'q': self._symbol,
-        'startdate': begin_date.strftime('%b %d, %Y'),
-        'enddate': end_date.strftime('%b %d, %Y'),
+        'q': ticker,
+        'startdate': begin_date.strftime('%b+%d,%Y'),
+        'enddate': end_date.strftime('%b+%d,%Y'),
         'num': 5,
         'output': 'csv',
     }.items()))

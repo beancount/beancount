@@ -6,7 +6,7 @@ import datetime
 from urllib import request
 from urllib import parse
 
-from beancount.core.amount import D
+from beancount.core.number import D
 
 
 __source_name__ = 'yahoo'

@@ -1,5 +1,58 @@
 -*- mode: org -*-
 beancount: TODO
+* Price Script
+
+  - process_args should be moved back into main, and not breaking all the
+    arguments in return values, just using args is best.
+
+  - I don't like the input syntax; files should be the default, maybe a prefix
+    character would be useful otherwise, e.g. @google/TSE:XIC.
+
+  - There should only be a few modules for this:
+    - This code, which calls the fetching modules
+    - Code to figure out the list of jobs from files, from symbol lists, active
+      set of assets, trade dates, etc.
+    - Utility code
+    - Each source implementation.
+
+  - The implementation of fetchers should be imported dynamically. The name of
+    importers really ought to be the same as the named of modules, e.g.
+    "@beanprice.sources.google/NASDAQ:AAPL". Maybe the prefix should be attempted
+    be resolved to the "@beanprice.sources.NAME" prefix automatically, but beyond
+    that, would be a straight-up import, so that you may define your own outside
+    of this.
+
+  - Note: From get_jobs_from_file():
+    FIXME - TODO: We should also separately use the history of commodities
+    held-at-cost, as well as the list of commodities held at the particular
+    point in time, in order to determine the final set of commodities.
+
+  - Also allow the specification of a delta used to allow dates "near" the correct
+    date to stand-in for necessary dates. This should be able to work with the
+    returns calculation script.
+
+  - Using an option/command-line listing the jobs without actually fetching the
+    prices. This should be used to cross-check the finding routines in unit tests.
+
+  - You need to add a unit test for the inverted case, make sure just swapping the
+    currencies results in the correct output.
+
+  - Move the two utility functions into common util.
+
+  - We must support multiple sources, because any source will not necessarily
+    support every ticket. When an explicit source hasn't been specified, you
+    should try multiple sources in turn. In fact, maybe the "source" parameter
+    should always be a list of preferences.
+
+  - The "ticker" field of the commodity directive really should be a list of
+    sources, e.g.,
+
+    1976-04-01 commodity AAPL
+      ...
+      ticker: "google/NASDAQ:AAPL,yahoo/AAPL"
+
+
+
 * Event
 
   - Should we validate that the query is legit before we even run it? I think

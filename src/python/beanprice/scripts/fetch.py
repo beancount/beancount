@@ -72,6 +72,7 @@ import collections
 import datetime
 import io
 import functools
+import threading
 from os import path
 import shelve
 import tempfile
@@ -83,6 +84,7 @@ import urllib.parse
 import hashlib
 import argparse
 import logging
+from concurrent import futures
 
 from dateutil.parser import parse as parse_datetime
 
@@ -90,8 +92,9 @@ from beancount import loader
 from beancount.core import data
 from beancount.core import amount
 from beancount.ops import holdings
-from beanprice.sources import yahoo_finance
-from beanprice.sources import google_finance
+from beancount.parser import printer
+from beanprice.sources import yahoo_finance  # FIXME: remove this, should be dynamic
+from beanprice.sources import google_finance   # FIXME: remove this, should be dynamic
 
 
 def retrying_urlopen(url, timeout=5):
@@ -105,6 +108,7 @@ def retrying_urlopen(url, timeout=5):
       The contents of the fetched URL.
     """
     while 1:
+        logging.info("Fetching %s", url)
         response = urlopen(url, timeout=timeout)
         if response:
             break
@@ -123,6 +127,7 @@ def memoize_recent(function, cache_filename):
       A memoized version of the function.
     """
     urlcache = shelve.open(cache_filename)
+    urlcache.lock = threading.Lock()  # Note: 'shelve' is not thread-safe.
     @functools.wraps(function)
     def memoized(*args, **kw):
         md5 = hashlib.md5()
@@ -130,13 +135,16 @@ def memoize_recent(function, cache_filename):
         md5.update(str(args).encode('utf-8'))
         md5.update(str(sorted(kw.items())).encode('utf-8'))
         hash_ = md5.hexdigest()
+
         try:
-            contents = urlcache[hash_]
+            with urlcache.lock:
+                contents = urlcache[hash_]
         except KeyError:
             fileobj = function(*args, **kw)
             if fileobj:
                 contents = fileobj.read()
-                urlcache[hash_] = contents
+                with urlcache.lock:
+                    urlcache[hash_] = contents
             else:
                 contents = None
         return io.BytesIO(contents) if contents else None
@@ -190,6 +198,9 @@ def parse_ticker(ticker, default_source='google'):
 def get_jobs_from_file(filename, date, default_source):
     """Given a Beancount input file, extract price fetching jobs.
 
+    This is where we're looking at the input file and using the list of
+    commodities or its history, we figure how which prices should be fetched.
+
     Args:
       filename: A string, the name of the file whose prices to fetch.
       date: A datetime.date instance, the date at which to extract the
@@ -198,6 +209,7 @@ def get_jobs_from_file(filename, date, default_source):
         ticker symbols don't specify one.
     Returns:
       A list of Job instances, to be processed.
+
     """
     entries, errors, options_map = loader.load_file(filename)
 
@@ -214,37 +226,39 @@ def get_jobs_from_file(filename, date, default_source):
         base = currency
         quote = quote_currency or cost_currency
 
-        jobs.append(
-            Job(source, symbol, date, base, quote, invert))
+        jobs.append(Job(source, symbol, date, base, quote, invert))
 
     return jobs
 
 
-def process_jobs(jobs, source_map):
+def fetch_price(job, source_map):
     """Run the given jobs using modules from the given source map.
 
     Args:
       jobs: A list of Job instances.
       source_map: A mapping of source string to a source module object.
     Returns:
-      A list of
+      A list of Price entries corresponding to the outputs of the jobs processed.
     """
-    for job in jobs:
-        logging.info(job)
+    source_module = source_map[job.source]
+    if job.date is None:
+        price, time = source_module.get_latest_price(job.symbol)
+    else:
+        price, time = source_module.get_historical_price(job.symbol, job.date)
 
-        source_module = source_map[job.source]
-        if job.date is None:
-            price, time = source_module.get_latest_price(job.symbol)
-        else:
-            price, time = source_module.get_historical_price(job.symbol, job.date)
-        print(price, time)
+    if price is None:
+        logging.error("Could not fetch for job: %s", job)
+        return
 
+    # Invert the currencies if the rate if the rate is inverted..
+    base, quote = job.base, job.quote
+    if job.invert:
+        base, quote = quote, base
 
-#         fileloc = data.new_metadata('<{}>'.format(type(fetcher).__name__), 0)
-#         price_entries.append(
-#             data.Price(fileloc, time.date(), base, amount.Amount(price, quote)))
-#
-#     return price_entries
+    assert base is not None
+    assert quote is not None
+    fileloc = data.new_metadata('<{}>'.format(type(job.source).__name__), 0)
+    return data.Price(fileloc, time.date(), base, amount.Amount(price, quote))
 
 
 def process_args(argv, valid_price_sources):
@@ -256,10 +270,11 @@ def process_args(argv, valid_price_sources):
       valid_price_sources: A list of strings, the names of valid price sources.
         The first item is taken to be the default price source.
     Returns:
-      A list of Job tuples and a 'do-cache' boolean, true if we should use the
-      cache.
+      A list of Job tuples, a verbose boolean, and a filename string, set if we
+      should use it as a cache (if None, cache is disabled).
     Raises:
       SystemExit: If something could not be parsed.
+
     """
     default_source = valid_price_sources[0]
 
@@ -268,15 +283,22 @@ def process_args(argv, valid_price_sources):
     parser.add_argument('uri_list', nargs='+',
                         help='A list of URIs specifying which prices to fetch')
 
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        help="Ouptut fetching progress log")
+
     parse_date = lambda s: parse_datetime(s).date()
     parser.add_argument('--date', action='store', type=parse_date,
                         help="Specify the date for which to fetch the holdings")
 
-    parser.add_argument('--source', action='store',
+    parser.add_argument('--default_source', action='store',
                         choices=valid_price_sources, default=default_source,
                         help="Specify the default source of data for unspecified tickers.")
 
-    parser.add_argument('--no-cache', dest='do_cache', action='store_false', default=True,
+    filename = path.join(tempfile.gettempdir(),
+                         "{}.cache.db".format(path.basename(sys.argv[0])))
+    parser.add_argument('--cache', dest='cache_filename', action='store', default=filename,
+                        help="Enable the cache and set the cache name")
+    parser.add_argument('--no-cache', dest='cache_filename', action='store', const=None,
                         help="Disable the price cache")
 
     args = parser.parse_args(argv)
@@ -290,8 +312,9 @@ def process_args(argv, valid_price_sources):
         if parsed_uri.scheme == 'price':
             source, symbol, invert = parse_ticker(''.join((parsed_uri.netloc,
                                                            parsed_uri.path)))
-            jobs.append(
-                Job(source, symbol, args.date, None, None, invert))
+            base = symbol.split(':')[-1]
+            quote = 'USD'  ## FIXME: How do we specify the quote currency here?
+            jobs.append(Job(source, symbol, args.date, base, quote, invert))
 
         # Parse symbols from a file.
         elif parsed_uri.scheme in ('file', ''):
@@ -299,7 +322,7 @@ def process_args(argv, valid_price_sources):
             if not (path.exists(filename) and path.isfile(filename)):
                 parser.error('File does not exist: "{}"'.format(filename))
             jobs.extend(
-                get_jobs_from_file(filename, args.date, args.source))
+                get_jobs_from_file(filename, args.date, args.default_source))
         else:
             parser.error('Invalid scheme "{}"'.format(parsed_uri.scheme))
 
@@ -308,34 +331,30 @@ def process_args(argv, valid_price_sources):
         if job.source not in valid_price_sources:
             parser.error('Invalid source "{}"'.format(job.source))
 
-    return jobs, args.do_cache
+    return jobs, args.verbose, args.cache_filename
 
 
 def main():
-    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
-
     source_modules = [google_finance, yahoo_finance]
+    source_map = {module.__source_name__: module for module in source_modules}
 
     # Parse the arguments.
     source_names = [module.__source_name__ for module in source_modules]
-    jobs, do_cache = process_args(sys.argv[1:], price_source_names)
+    jobs, verbose, cache_filename = process_args(sys.argv[1:], source_names)
+    logging.basicConfig(level=logging.INFO if verbose else logging.WARN,
+                        format='%(levelname)-8s: %(message)s')
 
     # Install the cache.
-    if do_cache:
-        cache_filename = path.join(tempfile.gettempdir(),
-                                   path.basename(sys.argv[0]))
-        urllib.request.urlopen = memoize_recent(retrying_urlopen)
+    if cache_filename:
+        logging.info('Using cache at "{}"'.format(cache_filename))
+        urllib.request.urlopen = memoize_recent(retrying_urlopen, cache_filename)
 
     # Process the jobs.
-    source_map = {module.__source_name__: module for module in source_modules}
-    process_jobs(jobs, source_map)
+    executor = futures.ThreadPoolExecutor(max_workers=3)
+    price_entries = [
+        entry
+        for entry in executor.map(lambda job: fetch_price(job, source_map), jobs)
+        if entry is not None]
 
-    # price_entries = []
-    #     # Invert the currencies if the rate is to be inverted.
-    #     if job.invert:
-    #         ticker = ticker[2:]
-    #         currency, quote_currency = quote_currency, currency
-    #     fileloc = data.new_metadata('<fetch-prices>', 0)
-    #     price_entries.append(
-    #         data.Price(fileloc, price_time.date(), currency, amount.Amount(price, quote_currency)))
-    # printer.print_entries(price_entries)
+    # Print out the entries.
+    printer.print_entries(price_entries)
