@@ -346,6 +346,10 @@ PUBLIC_OPTION_GROUPS = [
       their associated unit strings. This allows you to import the numbers in a
       spreadsheet (e.g, "101.00 USD" does not get parsed by a spreadsheet
       import, but "101.00" does).
+
+      If you need to enter a list of operating currencies, you may input this
+      option multiple times, that is, you repeat the entire directive once for
+      each desired operating currency.
     """, [Opt("operating_currency", [], "USD")]),
 
     OptGroup("""
