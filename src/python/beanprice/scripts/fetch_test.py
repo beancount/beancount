@@ -37,13 +37,13 @@ class FetchArgsSpec(unittest.TestCase):
     def test_empty(self):
         with self.assertRaises(SystemExit):
             with test_utils.capture('stderr'):
-                jobs, do_cache = fetch.process_args([], SOURCES)
+                jobs, _, do_cache = fetch.process_args([], SOURCES)
                 self.assertEqual([], jobs)
 
     def test_cache(self):
-        jobs, do_cache = fetch.process_args([self.bogus_spec], SOURCES)
+        jobs, _, do_cache = fetch.process_args([self.bogus_spec], SOURCES)
         self.assertTrue(do_cache)
-        jobs, do_cache = fetch.process_args(['--no-cache', self.bogus_spec], SOURCES)
+        jobs, _, do_cache = fetch.process_args(['--no-cache', self.bogus_spec], SOURCES)
         self.assertFalse(do_cache)
 
     def test_explicit_invalid(self):
@@ -54,24 +54,24 @@ class FetchArgsSpec(unittest.TestCase):
     def test_explicit_price__invalid(self):
         with test_utils.capture('stderr'):
             with self.assertRaises(SystemExit):
-                jobs, do_cache = fetch.process_args(['price://bleh/AAPL'], SOURCES)
+                jobs, _, do_cache = fetch.process_args(['price://bleh/AAPL'], SOURCES)
 
     def test_explicit_price__valid(self):
-        jobs, do_cache = fetch.process_args(['price://google/AAPL'], SOURCES)
-        self.assertEqual([fetch.Job('google', 'AAPL', None, None, None, False)], jobs)
+        jobs, _, do_cache = fetch.process_args(['price://google/AAPL'], SOURCES)
+        self.assertEqual([fetch.Job('google', 'AAPL', None, 'AAPL', '?', False)], jobs)
 
     def test_explicit_price__multi(self):
-        jobs, do_cache = fetch.process_args(['price://yahoo/FB', 'price://google/AAPL'],
+        jobs, _, do_cache = fetch.process_args(['price://yahoo/FB', 'price://google/AAPL'],
                                             SOURCES)
         self.assertEqual([
-            fetch.Job('yahoo', 'FB', None, None, None, False),
-            fetch.Job('google', 'AAPL', None, None, None, False),
+            fetch.Job('yahoo', 'FB', None, 'FB', '?', False),
+            fetch.Job('google', 'AAPL', None, 'AAPL', '?', False),
             ], jobs)
 
     def test_explicit_file__nonexist(self):
         with test_utils.capture('stderr'):
             with self.assertRaises(SystemExit):
-                jobs, do_cache = fetch.process_args(['file:///path/to/nowhere'], SOURCES)
+                jobs, _, do_cache = fetch.process_args(['file:///path/to/nowhere'], SOURCES)
 
     @test_utils.docfile
     def test_explicit_file__valid(self, filename):
@@ -98,8 +98,8 @@ class FetchArgsSpec(unittest.TestCase):
         2015-02-20 *
           Assets:Invest       10000 JPY
         """
-        jobs, do_cache = fetch.process_args(["file://{}".format(filename)],
-                                            SOURCES)
+        jobs, _, do_cache = fetch.process_args(["file://{}".format(filename)],
+                                               SOURCES)
         self.assertEqual([
             fetch.Job('google', 'CURRENCY:USDJPY', None, 'JPY', 'USD', True),
             fetch.Job('google', 'NYSEARCA:VEA', None, 'VEA', 'USD', False),
@@ -127,9 +127,9 @@ class FetchArgsSpec(unittest.TestCase):
           Assets:Invest         100 VWO {45.3000 USD}
           Equity:Opening-Balances
         """
-        jobs, do_cache = fetch.process_args(["--date=2015-02-12",
-                                             "file://{}".format(filename)],
-                                            SOURCES)
+        jobs, _, do_cache = fetch.process_args(["--date=2015-02-12",
+                                                "file://{}".format(filename)],
+                                               SOURCES)
         self.assertEqual([
             fetch.Job('google', 'NYSEARCA:VEA', datetime.date(2015, 2, 12),
                       'VEA', 'USD', False),
@@ -142,15 +142,14 @@ class FetchArgsSpec(unittest.TestCase):
         2015-01-01 open Assets:Invest
         2015-01-01 open USD ;; Error
         """
-        jobs, do_cache = fetch.process_args(["file://{}".format(filename)],
-                                            SOURCES)
+        jobs, _, do_cache = fetch.process_args(["file://{}".format(filename)],
+                                               SOURCES)
         self.assertEqual([], jobs)
 
     def test_implicit_file(self):
         with test_utils.capture('stderr'):
             with self.assertRaises(SystemExit):
-                jobs, do_cache = fetch.process_args(['/path/to/nowhere'],
-                                                    SOURCES)
+                fetch.process_args(['/path/to/nowhere'], SOURCES)
 
     @test_utils.docfile
     def test_source(self, filename):
@@ -165,9 +164,9 @@ class FetchArgsSpec(unittest.TestCase):
           Assets:Invest         100 VEA {41.2000 USD}
           Equity:Opening-Balances
         """
-        jobs, do_cache = fetch.process_args(["--source=yahoo",
-                                             "file://{}".format(filename)],
-                                            SOURCES)
+        jobs, _, do_cache = fetch.process_args(["--default_source=yahoo",
+                                                "file://{}".format(filename)],
+                                               SOURCES)
         self.assertEqual([
             fetch.Job('yahoo', 'VEA', None, 'VEA', 'USD', False),
             ], sorted(jobs))

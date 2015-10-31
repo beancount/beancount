@@ -2,6 +2,16 @@
 beancount: TODO
 * Price Script
 
+  - Figure out how to output a price directive when there is no quote currency
+    for a source... is a default to USD reasonable? Perhaps we should output
+    just the number... perhaps this should be a separate script after all.
+
+      HA! SOLUTION: Let the importer itself make it possible to declare the
+      quoted currency. If not returned, use the one declared in the Beancount
+      file or substitute for '?'. You'll need to change the interface to
+      importers in order to do this.
+
+
   - process_args should be moved back into main, and not breaking all the
     arguments in return values, just using args is best.
 
@@ -50,7 +60,6 @@ beancount: TODO
     1976-04-01 commodity AAPL
       ...
       ticker: "google/NASDAQ:AAPL,yahoo/AAPL"
-
 
 
 * Event

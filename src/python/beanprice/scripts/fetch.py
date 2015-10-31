@@ -1,38 +1,52 @@
 """Fetch prices from the internet and output them in Beancount format.
 
-This script accepts a list of URIs that specify what prices to fetch and from
-where. It attempts a list of either a Beancount input filename:
+This driver script accepts a list of strings that specifies what prices to
+fetch, e.g.,
 
-  bean-price file://<filename>
+  bean-price @google/TSE:XUS, @yahoo/AAPL, @mysource/MUTF:RBF1005
 
-e.g.,
+The general format of each of these input strings is
 
-  bean-price file:///path/to/my/file.beancount
+  @<module>/<ticker>
 
+The "module" is the name of a Python module that contains an object which can
+connect to a data source an extract price data. These are automatically imported
+and instantiated in order to pull the price from a particular data source. This
+allows you to write your own supplementary fetcher codes without having to
+modify this script.
 
-Or explicit price sources:
+Note that as a convenience, the module name is always first searched under
+"beancount.prices.sources". This is how, for example, in order to use the Google
+Finance data fetcher you don't have to write
+"@beancount.prices.sources.yahoo/AAPL" but simply "@yahoo/AAPL". This will work
+for all the price fetchers provided by default, which between them shoudl cover
+a large universe of investment types.
 
-  bean-price price://<source>/<ticker>
+You can also provide a filename to extract the list of tickers to fetch from a
+Beancount input file, e.g.:
 
-e.g.,
+  bean-price /home/joe/finances/joe.beancount
 
-  bean-price price://google/TSE:XUS
-  bean-price price://yahoo/AAPL
+By default, this specifies the full list of tickers in existence in the file.
+You may use the options to restrict this list to the list of active tickers at
+the fetch date.
 
-Without a URI prefix, the input is interpreted as a filename:
-
-  bean-price /path/to/my/file.beancount
-
-
-You can specify a date for the data like this:
+By default, this script will fetch prices at the latest available date & time.
+You can use the option to provide a desired date in the past:
 
   bean-price --date=2015-02-03
 
-If you don't specify a date, it attempts to fetch the current/latest available
-data from the source. IMPORTANT: Note that each source may support a different
-routine for getting its latest data and for fetching historical/dated data, and
-that each of these may differ in their support. For example, Google Finance does
-not support fetching historical data for its CURRENCY:* instruments.
+
+
+
+
+
+TODO: complete this --- extend for sources
+
+IMPORTANT: Note that each source may support a different routine for getting its
+latest data and for fetching historical/dated data, and that each of these may
+differ in their support. For example, Google Finance does not support fetching
+historical data for its CURRENCY:* instruments.
 
 If you use a Beancount filename, the corresponding Ledger is loaded and the list
 of holdings is computed at the specified date (if no date is specified, the
@@ -298,7 +312,7 @@ def process_args(argv, valid_price_sources):
                          "{}.cache.db".format(path.basename(sys.argv[0])))
     parser.add_argument('--cache', dest='cache_filename', action='store', default=filename,
                         help="Enable the cache and set the cache name")
-    parser.add_argument('--no-cache', dest='cache_filename', action='store', const=None,
+    parser.add_argument('--no-cache', dest='cache_filename', action='store_const', const=None,
                         help="Disable the price cache")
 
     args = parser.parse_args(argv)
@@ -313,7 +327,7 @@ def process_args(argv, valid_price_sources):
             source, symbol, invert = parse_ticker(''.join((parsed_uri.netloc,
                                                            parsed_uri.path)))
             base = symbol.split(':')[-1]
-            quote = 'USD'  ## FIXME: How do we specify the quote currency here?
+            quote = '?'  ## FIXME: How do we specify the quote currency here?
             jobs.append(Job(source, symbol, args.date, base, quote, invert))
 
         # Parse symbols from a file.
