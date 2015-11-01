@@ -61,6 +61,9 @@ beancount: TODO
       ...
       ticker: "google/NASDAQ:AAPL,yahoo/AAPL"
 
+  - Add a --clear-cache option to first remove the cache before running. That's
+    a way to refresh that cache.
+
 
 * Event
 

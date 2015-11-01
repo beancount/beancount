@@ -41,7 +41,14 @@ You can use the option to provide a desired date in the past:
 
 
 
+
+
+
+
 TODO: complete this --- extend for sources
+
+
+
 
 IMPORTANT: Note that each source may support a different routine for getting its
 latest data and for fetching historical/dated data, and that each of these may
@@ -108,7 +115,7 @@ from beancount.core import amount
 from beancount.ops import holdings
 from beancount.parser import printer
 from beanprice.sources import yahoo_finance  # FIXME: remove this, should be dynamic
-from beanprice.sources import google_finance   # FIXME: remove this, should be dynamic
+from beancount.prices.sources import google as google_finance   # FIXME: remove this, should be dynamic
 
 
 UNKNOWN_CURRENCY = '?'
@@ -259,23 +266,24 @@ def fetch_price(job, source_map):
     """
     source_module = source_map[job.source]
     if job.date is None:
-        price, time = source_module.get_latest_price(job.symbol)
+        srcprice = source_module.get_latest_price(job.symbol)
     else:
-        price, time = source_module.get_historical_price(job.symbol, job.date)
+        srcprice = source_module.get_historical_price(job.symbol, job.date)
 
-    if price is None:
+    if srcprice is None:
         logging.error("Could not fetch for job: %s", job)
         return
 
     # Invert the currencies if the rate if the rate is inverted..
-    base, quote = job.base, job.quote
+    base, quote = job.base, job.quote or srcprice.quote_currency
     if job.invert:
         base, quote = quote, base
 
     assert base is not None
     assert quote is not None
     fileloc = data.new_metadata('<{}>'.format(type(job.source).__name__), 0)
-    return data.Price(fileloc, time.date(), base, amount.Amount(price, quote))
+    return data.Price(fileloc, srcprice.time.date(), base,
+                      amount.Amount(srcprice.price, quote))
 
 
 def process_args(argv, valid_price_sources):
@@ -352,11 +360,12 @@ def process_args(argv, valid_price_sources):
 
 
 def main():
-    source_modules = [google_finance, yahoo_finance]
-    source_map = {module.__source_name__: module for module in source_modules}
+    # FIXME: Replace this by an importer.
+    source_map = {'google': google_finance.Source(),
+                  'yahoo': yahoo_finance.Source()}
 
     # Parse the arguments.
-    source_names = [module.__source_name__ for module in source_modules]
+    source_names = list(source_map.keys())
     jobs, verbose, cache_filename = process_args(sys.argv[1:], source_names)
     logging.basicConfig(level=logging.INFO if verbose else logging.WARN,
                         format='%(levelname)-8s: %(message)s')

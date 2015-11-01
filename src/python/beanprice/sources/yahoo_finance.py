@@ -16,29 +16,15 @@ __source_name__ = 'yahoo'
 # http://finance.yahoo.com/webservice/v1/symbols/allcurrencies/quote
 
 
-class PriceSource:
+class Source:
 
-    def __init__(self, symbol, base, quote):
-        """Create a price fetcher for Yahoo Finance.
-
-        Args:
-          symbol: A string, the name of the instrument, in the Yahoo symbology.
-          base: A string, the asset we're actually pricing.
-          quote: A string, the currency units of the price quote.
-        """
-        self._symbol = symbol
-
-        # These are intended to be public.
-        self.base = base
-        self.quote = quote
-
-    def get_latest_price(self):
+    def get_latest_price(self, ticker):
         """Return the latest price found for the symbol.
 
         Returns:
           A Decimal object.
         """
-        url = 'http://finance.yahoo.com/d/quotes.csv?s={}&f={}'.format(self._symbol, 'b3b2')
+        url = 'http://finance.yahoo.com/d/quotes.csv?s={}&f={}'.format(ticker, 'b3b2')
         data = request.urlopen(url).read().decode('utf-8')
         bid_str, ask_str = data.split(',')
         if bid_str == 'N/A' or ask_str == 'N/A':
@@ -46,7 +32,7 @@ class PriceSource:
         bid, ask = D(bid_str), D(ask_str)
         return ((bid + ask)/2, datetime.datetime.now())
 
-    def get_historical_price(self, date):
+    def get_historical_price(self, ticker, date):
         """Return the historical price found for the symbol at the given date.
 
         This should work even if querying for a date that is on a weekend or a
@@ -65,7 +51,7 @@ class PriceSource:
 
         # Make the query.
         params = parse.urlencode(sorted({
-            's': self._symbol,
+            's': ticker,
             'a': begin_date.month - 1,
             'b': begin_date.day,
             'c': begin_date.year,
