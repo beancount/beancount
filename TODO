@@ -21,7 +21,6 @@ beancount: TODO
     - This code, which calls the fetching modules
     - Code to figure out the list of jobs from files, from symbol lists, active
       set of assets, trade dates, etc.
-    - Utility code
     - Each source implementation.
 
   - The implementation of fetchers should be imported dynamically. The name of
@@ -45,8 +44,6 @@ beancount: TODO
 
   - You need to add a unit test for the inverted case, make sure just swapping the
     currencies results in the correct output.
-
-  - Move the two utility functions into common util.
 
   - We must support multiple sources, because any source will not necessarily
     support every ticket. When an explicit source hasn't been specified, you

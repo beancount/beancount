@@ -30,53 +30,11 @@ from beancount.ops import holdings
 from beancount.parser import printer
 from beancount.prices.sources import yahoo     # FIXME: remove this, should be dynamic
 from beancount.prices.sources import google    # FIXME: remove this, should be dynamic
-from beancount.utils import net_utils    # FIXME: remove this, should be dynamic
+from beancount.utils import net_utils
+from beancount.utils import memo
 
 
 UNKNOWN_CURRENCY = '?'
-
-
-
-
-def memoize_recent(function, cache_filename, date_format='%Y%m%d%H'):
-    """Memoize recent calls to the given function.
-
-    Args:
-      function: A callable object.
-      cache_filename: A string, the path to the database file to cache to.
-      date_format: A format string for a datetime instance, that we use to hash
-        into the key in order to invalidate the cache this often.
-    Returns:
-      A memoized version of the function.
-    """
-    urlcache = shelve.open(cache_filename)
-    urlcache.lock = threading.Lock()  # Note: 'shelve' is not thread-safe.
-    @functools.wraps(function)
-    def memoized(*args, **kw):
-        md5 = hashlib.md5()
-
-        # Encode the arguments.
-        md5.update(str(args).encode('utf-8'))
-        md5.update(str(sorted(kw.items())).encode('utf-8'))
-
-        # Put a date string in order to invalidate over time.
-        md5.update(datetime.datetime.now().strftime(date_format).encode('utf-8'))
-
-        hash_ = md5.hexdigest()
-
-        try:
-            with urlcache.lock:
-                contents = urlcache[hash_]
-        except KeyError:
-            fileobj = function(*args, **kw)
-            if fileobj:
-                contents = fileobj.read()
-                with urlcache.lock:
-                    urlcache[hash_] = contents
-            else:
-                contents = None
-        return io.BytesIO(contents) if contents else None
-    return memoized
 
 
 # A price fetching job description.
@@ -287,7 +245,9 @@ def main():
     # Install the cache.
     if cache_filename:
         logging.info('Using cache at "{}"'.format(cache_filename))
-        request.urlopen = memoize_recent(request.urlopen, cache_filename)
+        #request.urlopen = memo.memoize_recent_fileobj(request.urlopen, cache_filename)
+        net_utils.retrying_urlopen = memo.memoize_recent_fileobj(net_utils.retrying_urlopen,
+                                                                 cache_filename)
 
     # Process the jobs.
     executor = futures.ThreadPoolExecutor(max_workers=3)
