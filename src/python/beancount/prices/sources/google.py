@@ -29,6 +29,7 @@ from urllib import error
 
 from beancount.core.number import D
 from beancount.prices import source
+from beancount.utils import net_utils
 
 
 class Source(source.Source):
@@ -67,7 +68,7 @@ class Source(source.Source):
             parse.urlencode(sorted(params_dict.items())))
 
         # Fetch the data.
-        data = request.urlopen(url).read().decode('utf-8')
+        data = net_utils.retrying_urlopen(url).read().decode('utf-8')
         data = parse.unquote(data).strip()
 
         # Process the meta-data.
@@ -119,7 +120,7 @@ class Source(source.Source):
         }.items()))
         url = 'http://www.google.com/finance/historical?{}'.format(params)
         try:
-            data = request.urlopen(url).read()
+            data = net_utils.retrying_urlopen(url).read()
         except error.HTTPError:
             # When the instrument is incorrect, you will get a 404.
             return None

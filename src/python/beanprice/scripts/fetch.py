@@ -11,10 +11,10 @@ import threading
 from os import path
 import shelve
 import tempfile
-from urllib.request import urlopen
 import re
 import sys
-import urllib
+from urllib import parse
+from urllib import request
 import urllib.parse
 import hashlib
 import argparse
@@ -30,30 +30,12 @@ from beancount.ops import holdings
 from beancount.parser import printer
 from beancount.prices.sources import yahoo     # FIXME: remove this, should be dynamic
 from beancount.prices.sources import google    # FIXME: remove this, should be dynamic
+from beancount.utils import net_utils    # FIXME: remove this, should be dynamic
 
 
 UNKNOWN_CURRENCY = '?'
 
 
-def retrying_urlopen(url, timeout=5, max_retry=5):
-    """Open and download the given URL, retrying if it times out.
-
-    Args:
-      url: A string, the URL to fetch.
-      timeout: A timeout after which to stop waiting for a respone and return an
-        error.
-      max_retry: The maximum number of times to retry.
-    Returns:
-      The contents of the fetched URL.
-    """
-    for _ in range(max_retry):
-        logging.info("Fetching %s", url)
-        response = urlopen(url, timeout=timeout)
-        if response:
-            break
-    if response.getcode() != 200:
-        return None
-    return response
 
 
 def memoize_recent(function, cache_filename, date_format='%Y%m%d%H'):
@@ -78,7 +60,7 @@ def memoize_recent(function, cache_filename, date_format='%Y%m%d%H'):
         md5.update(str(sorted(kw.items())).encode('utf-8'))
 
         # Put a date string in order to invalidate over time.
-        md5.update(datetime.date.now().strftime(date_format).encode('utf-8'))
+        md5.update(datetime.datetime.now().strftime(date_format).encode('utf-8'))
 
         hash_ = md5.hexdigest()
 
@@ -218,7 +200,6 @@ def fetch_price(job, source_map):
 --cache
 --no-cache
 --clear-cache
-
 """
 
 def process_args(argv, valid_price_sources):
@@ -264,7 +245,7 @@ def process_args(argv, valid_price_sources):
     # Prepare a list of jobs.
     jobs = []
     for uri in args.uri_list:
-        parsed_uri = urllib.parse.urlparse(uri)
+        parsed_uri = parse.urlparse(uri)
 
         # Parse an explicit price.
         if parsed_uri.scheme == 'price':
@@ -304,10 +285,9 @@ def main():
                         format='%(levelname)-8s: %(message)s')
 
     # Install the cache.
-    urllib.request.urlopen = retrying_urlopen
     if cache_filename:
         logging.info('Using cache at "{}"'.format(cache_filename))
-        urllib.request.urlopen = memoize_recent(urllib.request.urlopen, cache_filename)
+        request.urlopen = memoize_recent(request.urlopen, cache_filename)
 
     # Process the jobs.
     executor = futures.ThreadPoolExecutor(max_workers=3)

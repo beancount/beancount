@@ -12,6 +12,7 @@ from urllib import error
 
 from beancount.core.number import D
 from beancount.prices import source
+from beancount.utils import net_utils
 
 
 class Source(source.Source):
@@ -21,7 +22,7 @@ class Source(source.Source):
         """See contract in beancount.prices.source.Source."""
 
         url = 'http://finance.yahoo.com/d/quotes.csv?s={}&f={}'.format(ticker, 'b3b2')
-        data = request.urlopen(url).read().decode('utf-8').strip()
+        data = net_utils.retrying_urlopen(url).read().decode('utf-8').strip()
         if not data:
             return None
         bid_str, ask_str = data.split(',')
@@ -52,7 +53,7 @@ class Source(source.Source):
         }.items()))
         url = 'http://ichart.yahoo.com/table.csv?{}'.format(params)
         try:
-            data = request.urlopen(url).read()
+            data = net_utils.retrying_urlopen(url).read()
         except error.HTTPError:
             return None
         data = data.decode('utf-8').strip()
