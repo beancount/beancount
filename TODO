@@ -11,7 +11,6 @@ beancount: TODO
       file or substitute for '?'. You'll need to change the interface to
       importers in order to do this.
 
-
   - process_args should be moved back into main, and not breaking all the
     arguments in return values, just using args is best.
 
@@ -70,6 +69,8 @@ beancount: TODO
   - Update the doc about the syntax of ticker, when the code parses a list of
     source/tickers, mention how this is intended to work in the doc.
 
+  - Maybe rename the beancount.ops.prices to beancount.ops.pricedb, this would
+    make sense.
 
 
 * Event

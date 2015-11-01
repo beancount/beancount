@@ -1,96 +1,5 @@
-"""Fetch prices from the internet and output them in Beancount format.
-
-This driver script accepts a list of strings that specifies what prices to
-fetch, e.g.,
-
-  bean-price @google/TSE:XUS, @yahoo/AAPL, @mysource/MUTF:RBF1005
-
-The general format of each of these input strings is
-
-  @<module>/<ticker>
-
-The "module" is the name of a Python module that contains an object which can
-connect to a data source an extract price data. These are automatically imported
-and instantiated in order to pull the price from a particular data source. This
-allows you to write your own supplementary fetcher codes without having to
-modify this script.
-
-Note that as a convenience, the module name is always first searched under
-"beancount.prices.sources". This is how, for example, in order to use the Google
-Finance data fetcher you don't have to write
-"@beancount.prices.sources.yahoo/AAPL" but simply "@yahoo/AAPL". This will work
-for all the price fetchers provided by default, which between them shoudl cover
-a large universe of investment types.
-
-You can also provide a filename to extract the list of tickers to fetch from a
-Beancount input file, e.g.:
-
-  bean-price /home/joe/finances/joe.beancount
-
-By default, this specifies the full list of tickers in existence in the file.
-You may use the options to restrict this list to the list of active tickers at
-the fetch date.
-
-By default, this script will fetch prices at the latest available date & time.
-You can use the option to provide a desired date in the past:
-
-  bean-price --date=2015-02-03
-
-
-
-
-
-
-
-
-
-
-TODO: complete this --- extend for sources
-
-
-
-Add a syntax about how to fetch the inverse.
-
-
-
-
-
-IMPORTANT: Note that each source may support a different routine for getting its
-latest data and for fetching historical/dated data, and that each of these may
-differ in their support. For example, Google Finance does not support fetching
-historical data for its CURRENCY:* instruments.
-
-If you use a Beancount filename, the corresponding Ledger is loaded and the list
-of holdings is computed at the specified date (if no date is specified, the
-final list of holdings is used). For each of the holdings, the corresponding
-Commodity directives are consulted and their "ticker" metadata fields are used
-if present as the ticker symbols whose prices to fetch. You should have
-directives like this in your input file:
-
-  2007-07-20 commodity VEA
-    ticker: "NYSEARCA:VEA"
-
-So if there is a holding in units of "VEA" at the requested date, this would
-fetch a Price entry for "price://google/NYSEARCA:VEA".
-
-Values for ticker fields may be prefixed with their source:
-
-  2007-07-20 commodity VEA
-    ticker: "price://google/NYSEARCA:VEA"
-
-The default source if left unspecified is Google Finance ("google"). You may
-specify an alternate default price source using the --source option:
-
-  bean-price --source=yahoo ...
-
-Note that this will not override explicitly specified price sources.
-
-Finally, prices are automatically cached at a resolution of one hour. You can
-disable the cache with an option:
-
-  bean-price --no-cache
-
-"""
+# In demolition progress. See beancount.prices.prices, where this is being
+# reconstructed and redesigned.
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import csv
@@ -126,17 +35,18 @@ from beancount.prices.sources import google    # FIXME: remove this, should be d
 UNKNOWN_CURRENCY = '?'
 
 
-def retrying_urlopen(url, timeout=5):
+def retrying_urlopen(url, timeout=5, max_retry=5):
     """Open and download the given URL, retrying if it times out.
 
     Args:
       url: A string, the URL to fetch.
       timeout: A timeout after which to stop waiting for a respone and return an
         error.
+      max_retry: The maximum number of times to retry.
     Returns:
       The contents of the fetched URL.
     """
-    while 1:
+    for _ in range(max_retry):
         logging.info("Fetching %s", url)
         response = urlopen(url, timeout=timeout)
         if response:
@@ -146,12 +56,14 @@ def retrying_urlopen(url, timeout=5):
     return response
 
 
-def memoize_recent(function, cache_filename):
+def memoize_recent(function, cache_filename, date_format='%Y%m%d%H'):
     """Memoize recent calls to the given function.
 
     Args:
       function: A callable object.
       cache_filename: A string, the path to the database file to cache to.
+      date_format: A format string for a datetime instance, that we use to hash
+        into the key in order to invalidate the cache this often.
     Returns:
       A memoized version of the function.
     """
@@ -160,9 +72,14 @@ def memoize_recent(function, cache_filename):
     @functools.wraps(function)
     def memoized(*args, **kw):
         md5 = hashlib.md5()
-        md5.update(str(datetime.date.today()).encode('utf-8'))
+
+        # Encode the arguments.
         md5.update(str(args).encode('utf-8'))
         md5.update(str(sorted(kw.items())).encode('utf-8'))
+
+        # Put a date string in order to invalidate over time.
+        md5.update(datetime.date.now().strftime(date_format).encode('utf-8'))
+
         hash_ = md5.hexdigest()
 
         try:
@@ -290,6 +207,19 @@ def fetch_price(job, source_map):
     return data.Price(fileloc, srcprice.time.date(), base,
                       amount.Amount(srcprice.price, quote))
 
+
+"""
+--date
+--always-invert
+--all-instruments
+--clobber
+--debug
+
+--cache
+--no-cache
+--clear-cache
+
+"""
 
 def process_args(argv, valid_price_sources):
     """Process command-line arguments and return a list of jobs to process.
