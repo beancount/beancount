@@ -148,18 +148,6 @@ def fetch_price(job, source_map):
                       amount.Amount(srcprice.price, quote))
 
 
-"""
---date
---always-invert
---all-instruments
---clobber
---debug
-
---cache
---no-cache
---clear-cache
-"""
-
 def process_args(argv, valid_price_sources):
     """Process command-line arguments and return a list of jobs to process.
 

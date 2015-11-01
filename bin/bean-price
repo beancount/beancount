@@ -1,2 +1,2 @@
 #!/usr/bin/env python3
-from beanprice.scripts.fetch import main; main()
+from beancount.prices.prices import main; main()

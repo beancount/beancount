@@ -1,134 +1,108 @@
-"""Fetch prices from the internet and output them as Beancount price directives.
-
-This general purpose price fetching script accepts a list of strings that
-specifies what prices to fetch, e.g.,
-
-  bean-price @google/TSE:XUS @yahoo/AAPL @mysource/MUTF:RBF1005
-
-The general format of each of these "source" strings is
-
-  @<module>/[^]<ticker>
-
-The "module" is the name of a Python module that contains a Source class which
-can be instantiated and connect to a data source to extract price data. These
-modules are automatically imported by name and instantiated in order to pull the
-price from a particular data source. This allows you to write your own
-supplementary fetcher codes without having to modify this script.
-
-Note that as a convenience, the module name is always first searched under
-"beancount.prices.sources". This is how, for example, in order to use the
-provided Google Finance data fetcher you don't have to write
-"@beancount.prices.sources.yahoo/AAPL" but simply "@yahoo/AAPL". This will work
-for all the price fetchers provided with Beancount, which between them should
-cover a large universe of common public investment types (e.g. stock tickers).
-
-Date
-----
-
-By default, this script will fetch prices at the latest available date & time.
-You can use an option to fetch historical prices for a desired date instead:
-
-  bean-price --date=2015-02-03
-
-Inverse
--------
-
-Sometimes, prices are available for the inverse of an instrument. This is often
-the case for currencies. For example, the price of "CAD" in USD" is provided by
-the USD/CAD market, which gives the price of a US dollar in Canadian dollars. In
-order specify this, you can prepend "^" to the instrument to instruct the driver
-to compute the inverse of the given price:
-
-  bean-price @google/^CURRENCY:USDCAD
-
-If a source price is to be inverted, like this, the precision could be different
-than what is fetched. For instance, if the price of USD/CAD is 1.32759, it would
-output be this from the above directive:
-
-  2015-10-28 price CAD  0.753244601119 USD
-
-If a source price to be inverted is specified from a Commodity directive and
-thus we are given the base and quote commodity names, the output directive may
-simply swap the base & quote currencies and output the forward amount. For
-example, if the input file contains this:
-
-  1867-01-01 commodity CAD
-    quote: USD
-    ticker: "^CURRENCY:USDCAD"
-
-The corresponding output directive would be this:
-
-  2015-10-28 price USD   1.32759 CAD
-
-This is done since the Beancount price database computes and interpolates the
-reciprocals automatically for all pairs of commodities in its database. You can
-disable this behavior with the --always-invert option.
-
-Prices Need from a Beancount File
----------------------------------
-
-You can also provide a filename to extract the list of tickers to fetch from a
-Beancount input file, e.g.:
-
-  bean-price /home/joe/finances/joe.beancount
-
-There are many ways to extract a list of commodities with needed prices from a
-Baancount input file:
-
-- Prices for all the holdings that were seen held-at-cost at a particular date.
-
-- Prices for holdings held at a particular date which were price converted from
-  some other commodity in the past (i.e., for currencies).
-
-- The list of all Commodity directives present in the file. For each of thoe
-  holdings, the corresponding Commodity directive is cconsulted and its "ticker"
-  metadata field is used to specify where to attempt to fetch prices. You should
-  have directives like this in your input file:
-
-    2007-07-20 commodity VEA
-      ticker: "google/NYSEARCA:VEA"
-
-  The "ticker" metadata can be a comma-separated list of sources to try out, in
-  which case each of the sources will be looked at :
-
-    2007-07-20 commodity VEA
-      ticker: "google/CURRENCY:USDCAD,yahoo/USDCAD"
-
-- Existing price directives for the same data are excluded by default, since the
-  price is already in the file.
-
-By default, the list of tickers to be fetched includes only the intersection of
-these lists. The general intent of the user of this script is to fetch missing
-prices, and only needed ones, for a particular date.
-
-* Use the --date option to change the applied date.
-* Use the --all-instruments option to fetch the entire set of prices, regardless
-  of holdings and date.
-* Use --clobber to ignore existing price directives.
-
-You can also print the list of prices to be fetched with the --debug option,
-which stops short of actually fetching the missing prices (it just prints the
-list of fetches it would attempt).
-
-Caching
--------
-
-Prices are automatically cached at a resolution of one hour, on the hour. You
-can disable the cache with an option:
-
-  bean-price --no-cache
-
-You can also instruct the script to clear the cache before fetching its prices:
-
-  bean-price --clear-cache
-
-About Sources and Data Availability
------------------------------------
-
-IMPORTANT: Note that each source may support a different routine for getting its
-latest data and for fetching historical/dated data, and that each of these may
-differ in their support. For example, Google Finance does not support fetching
-historical data for its CURRENCY:* instruments.
-
+"""Driver code for the price script.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
+
+import csv
+import collections
+import datetime
+import io
+import functools
+import threading
+from os import path
+import shelve
+import tempfile
+import re
+import os
+import sys
+from urllib import parse
+from urllib import request
+import urllib.parse
+import hashlib
+import argparse
+import logging
+from concurrent import futures
+
+from dateutil.parser import parse as parse_datetime
+
+import beancount.prices
+from beancount import loader
+from beancount.core import data
+from beancount.core import amount
+from beancount.ops import holdings
+from beancount.parser import printer
+from beancount.prices.sources import yahoo     # FIXME: remove this, should be dynamic
+from beancount.prices.sources import google    # FIXME: remove this, should be dynamic
+from beancount.utils import net_utils
+from beancount.utils import memo
+
+
+def setup_cache(cache_filename, clear_cache):
+    """Setup the results cache.
+
+    Args:
+      cache_filename: A string or None, the filename for the cache.
+      clear_cache: A boolean, if true, delete the cache before beginning.
+    """
+    if clear_cache and cache_filename and path.exists(cache_filename):
+        logging.info("Clearing cache %s", cache_filename)
+        os.remove(cache_filename)
+
+    if cache_filename:
+        logging.info('Using cache at "{}"'.format(cache_filename))
+        #request.urlopen = memo.memoize_recent_fileobj(request.urlopen, cache_filename)
+        net_utils.retrying_urlopen = memo.memoize_recent_fileobj(net_utils.retrying_urlopen,
+                                                                 cache_filename)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=beancount.prices.__doc__)
+
+    # Input sources or filenames.
+    parser.add_argument('inputs', nargs='+',
+                        help='A list of filenames or price sources to fetch.')
+
+    # Regular options.
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        help="Print out progress log.")
+
+    parse_date = lambda s: parse_datetime(s).date()
+    parser.add_argument('--date', action='store', type=parse_date,
+                        help="Specify the date for which to fetch the prices.")
+
+    parser.add_argument('-i', '--always-invert', action='store_true',
+                        help=("Never just swap currencies for inversion, always invert the "
+                              "actual rate"))
+
+    parser.add_argument('-a', '--all', '--all-commodities', '--all-instruments',
+                        action='store_true',
+                        help=("Select all commodities from files, not just the ones active "
+                              "on the date"))
+
+    parser.add_argument('-c', '--clobber', action='store_true',
+                        help=("Do not skip prices which are already present in input "
+                              "files; fetch them anyway."))
+
+    parser.add_argument('-n', '--dry-run', '--jobs', '--print-only', action='store_true',
+                        help=("Don't actually fetch the prices, just print the list of the "
+                              "ones to be fetched."))
+
+    # Caching options.
+    cache_group = parser.add_argument_group('cache')
+    cache_filename = path.join(tempfile.gettempdir(),
+                               "{}.cache".format(path.basename(sys.argv[0])))
+    cache_group.add_argument('--cache', dest='cache_filename',
+                             action='store', default=cache_filename,
+                             help="Enable the cache and with the given cache name.")
+    cache_group.add_argument('--no-cache', dest='cache_filename',
+                             action='store_const', const=None,
+                             help="Disable the price cache.")
+
+    cache_group.add_argument('--clear-cache', action='store_true',
+                             help="Clear the cache prior to startup")
+
+    args = parser.parse_args(argv)
+
+    # Setup for processing.
+    logging.basicConfig(level=logging.INFO if args.verbose else logging.WARN,
+                        format='%(levelname)-8s: %(message)s')
+    setup_cache(args.cache_filename, args.clear_cache)
