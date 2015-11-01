@@ -67,6 +67,10 @@ beancount: TODO
   - Cache key should be reviewed to include the source and requested date/time
     as well. Perhaps quantize the date/time to 10 minutes or something.
 
+  - Update the doc about the syntax of ticker, when the code parses a list of
+    source/tickers, mention how this is intended to work in the doc.
+
+
 
 * Event
 
