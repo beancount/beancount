@@ -47,7 +47,6 @@ __source_name__ = 'google'
 #         self.base = base
 #         self.quote = quote
 
-
 def get_latest_price(ticker):
     """Return the latest price found for the symbol.
 

@@ -7,7 +7,7 @@ from unittest import mock
 import urllib.request
 
 
-from ledgerhub.prices import yahoo_finance
+from beanprice.sources import yahoo_finance
 from beancount.core.amount import D, Decimal
 
 

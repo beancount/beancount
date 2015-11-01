@@ -111,6 +111,9 @@ from beanprice.sources import yahoo_finance  # FIXME: remove this, should be dyn
 from beanprice.sources import google_finance   # FIXME: remove this, should be dynamic
 
 
+UNKNOWN_CURRENCY = '?'
+
+
 def retrying_urlopen(url, timeout=5):
     """Open and download the given URL, retrying if it times out.
 
@@ -327,7 +330,7 @@ def process_args(argv, valid_price_sources):
             source, symbol, invert = parse_ticker(''.join((parsed_uri.netloc,
                                                            parsed_uri.path)))
             base = symbol.split(':')[-1]
-            quote = '?'  ## FIXME: How do we specify the quote currency here?
+            quote = UNKNOWN_CURRENCY
             jobs.append(Job(source, symbol, args.date, base, quote, invert))
 
         # Parse symbols from a file.
@@ -359,9 +362,10 @@ def main():
                         format='%(levelname)-8s: %(message)s')
 
     # Install the cache.
+    urllib.request.urlopen = retrying_urlopen
     if cache_filename:
         logging.info('Using cache at "{}"'.format(cache_filename))
-        urllib.request.urlopen = memoize_recent(retrying_urlopen, cache_filename)
+        urllib.request.urlopen = memoize_recent(urllib.request.urlopen, cache_filename)
 
     # Process the jobs.
     executor = futures.ThreadPoolExecutor(max_workers=3)
