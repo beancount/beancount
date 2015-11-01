@@ -49,6 +49,11 @@ TODO: complete this --- extend for sources
 
 
 
+Add a syntax about how to fetch the inverse.
+
+
+
+
 
 IMPORTANT: Note that each source may support a different routine for getting its
 latest data and for fetching historical/dated data, and that each of these may
