@@ -35,15 +35,8 @@ class Source(source.Source):
     "Google Finance price source extractor."
 
     def get_latest_price(self, ticker):
-        """Return the latest price found for the symbol.
+        """See contract in beancount.prices.source.Source."""
 
-        Args:
-          ticker: An 'ExchangeCode:Symbol' string that is the unambiguous ticker
-            for the particular financial instrument to query.
-        Returns:
-          A pair of a price (a Decimal object) and the actual date of that price
-          (a datetime.datetime instance).
-        """
         if ':' in ticker:
             exchange, symbol = ticker.split(':')
         else:
@@ -64,6 +57,11 @@ class Source(source.Source):
         else:
             params_dict['p'] = '5d'
             params_dict['i'] = 300 # secs, to get the most recent.
+
+        if exchange in ('TSE', 'MUTF_CA'):
+            quote_currency = 'CAD'
+        else:
+            quote_currency = 'USD'
 
         url = 'http://www.google.com/finance/getprices?{}'.format(
             parse.urlencode(sorted(params_dict.items())))
@@ -101,20 +99,10 @@ class Source(source.Source):
 
             price = D(price_str)
 
-        return source.SourcePrice(price, time, None)
+        return source.SourcePrice(price, time, quote_currency)
 
     def get_historical_price(self, ticker, date):
-        """Return the historical price found for the symbol at the given date.
-
-        This should work even if queryign for a date that is on a weekend or a
-        market holiday.
-
-        Args:
-          date: A datetime.date instance.
-        Returns:
-          A pair of a price (a Decimal object) and the actual date of that price
-          (a datetime.date instance).
-        """
+        """See contract in beancount.prices.source.Source."""
 
         # Look back some number of days in the past in order to make sure we hop
         # over national holidays.

@@ -64,6 +64,9 @@ beancount: TODO
   - Add a --clear-cache option to first remove the cache before running. That's
     a way to refresh that cache.
 
+  - Cache key should be reviewed to include the source and requested date/time
+    as well. Perhaps quantize the date/time to 10 minutes or something.
+
 
 * Event
 

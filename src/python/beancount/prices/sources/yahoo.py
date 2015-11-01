@@ -1,49 +1,38 @@
 """Fetch prices from Yahoo Finance.
+
+There is also a web service XML/JSON API:
+http://finance.yahoo.com/webservice/v1/symbols/allcurrencies/quote
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import datetime
 from urllib import request
 from urllib import parse
+from urllib import error
 
 from beancount.core.number import D
+from beancount.prices import source
 
 
-__source_name__ = 'yahoo'
-
-
-# There is also a web service XML/JSON API:
-# http://finance.yahoo.com/webservice/v1/symbols/allcurrencies/quote
-
-
-class Source:
+class Source(source.Source):
+    "Yahoo Finance price source extractor."
 
     def get_latest_price(self, ticker):
-        """Return the latest price found for the symbol.
+        """See contract in beancount.prices.source.Source."""
 
-        Returns:
-          A Decimal object.
-        """
         url = 'http://finance.yahoo.com/d/quotes.csv?s={}&f={}'.format(ticker, 'b3b2')
-        data = request.urlopen(url).read().decode('utf-8')
+        data = request.urlopen(url).read().decode('utf-8').strip()
+        if not data:
+            return None
         bid_str, ask_str = data.split(',')
         if bid_str == 'N/A' or ask_str == 'N/A':
-            return None, None
+            return None
         bid, ask = D(bid_str), D(ask_str)
-        return ((bid + ask)/2, datetime.datetime.now())
+        return source.SourcePrice((bid + ask)/2, datetime.datetime.now(), None)
 
     def get_historical_price(self, ticker, date):
-        """Return the historical price found for the symbol at the given date.
+        """See contract in beancount.prices.source.Source."""
 
-        This should work even if querying for a date that is on a weekend or a
-        market holiday.
-
-        Args:
-          date: A datetime.date instance.
-        Returns:
-          A pair of a price (a Decimal object) and the actual date of that price
-          (a datetime.date instance).
-        """
         # Look back some number of days in the past in order to make sure we hop
         # over national holidays.
         begin_date = date - datetime.timedelta(days=5)
@@ -62,7 +51,11 @@ class Source:
             'ignore': '.csv',
         }.items()))
         url = 'http://ichart.yahoo.com/table.csv?{}'.format(params)
-        data = request.urlopen(url).read().decode('utf-8').strip()
+        try:
+            data = request.urlopen(url).read()
+        except error.HTTPError:
+            return None
+        data = data.decode('utf-8').strip()
 
         lines = data.splitlines()
         assert len(lines) >= 2, "Too few lines in returned data: {}".format(len(lines))
@@ -77,6 +70,6 @@ class Source:
         # Get the latest data returned.
         most_recent_data = lines[1].split(',')
         close_price = D(most_recent_data[index_price])
-        date = datetime.datetime.strptime(most_recent_data[index_date], '%Y-%m-%d').date()
+        date = datetime.datetime.strptime(most_recent_data[index_date], '%Y-%m-%d')
 
-        return (close_price, date)
+        return source.SourcePrice(close_price, date, None)

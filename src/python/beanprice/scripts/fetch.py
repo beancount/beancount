@@ -119,8 +119,8 @@ from beancount.core import data
 from beancount.core import amount
 from beancount.ops import holdings
 from beancount.parser import printer
-from beanprice.sources import yahoo_finance  # FIXME: remove this, should be dynamic
-from beancount.prices.sources import google as google_finance   # FIXME: remove this, should be dynamic
+from beancount.prices.sources import yahoo     # FIXME: remove this, should be dynamic
+from beancount.prices.sources import google    # FIXME: remove this, should be dynamic
 
 
 UNKNOWN_CURRENCY = '?'
@@ -306,8 +306,6 @@ def process_args(argv, valid_price_sources):
       SystemExit: If something could not be parsed.
 
     """
-    default_source = valid_price_sources[0]
-
     parser = argparse.ArgumentParser(description=__doc__)
 
     parser.add_argument('uri_list', nargs='+',
@@ -320,8 +318,8 @@ def process_args(argv, valid_price_sources):
     parser.add_argument('--date', action='store', type=parse_date,
                         help="Specify the date for which to fetch the holdings")
 
-    parser.add_argument('--default_source', action='store',
-                        choices=valid_price_sources, default=default_source,
+    parser.add_argument('--default-source', action='store', default='google',
+                        choices=valid_price_sources,
                         help="Specify the default source of data for unspecified tickers.")
 
     filename = path.join(tempfile.gettempdir(),
@@ -366,8 +364,8 @@ def process_args(argv, valid_price_sources):
 
 def main():
     # FIXME: Replace this by an importer.
-    source_map = {'google': google_finance.Source(),
-                  'yahoo': yahoo_finance.Source()}
+    source_map = {'google': google.Source(),
+                  'yahoo': yahoo.Source()}
 
     # Parse the arguments.
     source_names = list(source_map.keys())
