@@ -54,12 +54,38 @@ def setup_cache(cache_filename, clear_cache):
                                                                  cache_filename)
 
 
+def get_jobs_from_args(sources, date):
+    """Given a list of source strings or filenames, return a list of jobs to be carried out.
+
+    Args:
+      sources: A list of source or filename strings.
+      date: A datetime.date instance.
+    Returns:
+      A list of Job objects.
+    Raises:
+      IOError: If an inexistent filename is specified.
+      ValueError: If an invalid source string is provided.
+    """
+    jobs = []
+    for arg in sources:
+        # Handle a source specification (which includes a comma-separated list).
+        if arg.startswith('@'):
+            for source in arg[1:].split(','):
+                jobs.append(find_prices.parse_source(arg))
+        else:
+            if not path.exists(arg) or not path.isfile(arg):
+                raise IOError('File does not exist: "{}"'.format(arg))
+            jobs.extend(find_prices.jobs_from_file(arg, date))
+    return jobs
+
+
 def main():
     parser = argparse.ArgumentParser(description=beancount.prices.__doc__)
 
     # Input sources or filenames.
-    parser.add_argument('inputs', nargs='+',
-                        help='A list of filenames or price sources to fetch.')
+    parser.add_argument('sources', nargs='+',
+                        help=("A list of price sources or filenames from which to create a "
+                              "list of jobs."))
 
     # Regular options.
     parser.add_argument('-v', '--verbose', action='store_true',
@@ -100,9 +126,11 @@ def main():
     cache_group.add_argument('--clear-cache', action='store_true',
                              help="Clear the cache prior to startup")
 
-    args = parser.parse_args(argv)
+    args = parser.parse_args(sys.argv)
 
     # Setup for processing.
     logging.basicConfig(level=logging.INFO if args.verbose else logging.WARN,
                         format='%(levelname)-8s: %(message)s')
     setup_cache(args.cache_filename, args.clear_cache)
+
+    jobs = get_jobs_from_args(args.sources)

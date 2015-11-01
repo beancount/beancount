@@ -28,8 +28,7 @@ from beancount.core import data
 from beancount.core import amount
 from beancount.ops import holdings
 from beancount.parser import printer
-from beancount.prices.sources import yahoo     # FIXME: remove this, should be dynamic
-from beancount.prices.sources import google    # FIXME: remove this, should be dynamic
+from beancount.prices import find_prices
 from beancount.utils import net_utils
 from beancount.utils import memo
 
@@ -37,18 +36,6 @@ from beancount.utils import memo
 UNKNOWN_CURRENCY = '?'
 
 
-# A price fetching job description.
-#
-# Attributes:
-#   source: A string identifier for a data source.
-#   symbol: A ticker symbol in the universe of the source.
-#   date: A datetime.date object for the date to be fetched, or None
-#     with the meaning of fetching the latest price.
-#   base: A currency, the base currency for the given symbol. This may be
-#     null, in which case we simply issue the price value, not a price directive.
-#   quote: A currency, the quote currency for the given syumbol.
-#   invert: A boolean, true if we need to invert the currency.
-Job = collections.namedtuple('Job', 'source symbol date base quote invert')
 
 
 def parse_ticker(ticker, default_source='google'):
@@ -112,7 +99,7 @@ def get_jobs_from_file(filename, date, default_source):
         base = currency
         quote = quote_currency or cost_currency
 
-        jobs.append(Job(source, symbol, date, base, quote, invert))
+        jobs.append(find_prices.Job(source, symbol, date, invert, base, quote))
 
     return jobs
 
@@ -126,7 +113,7 @@ def fetch_price(job, source_map):
     Returns:
       A list of Price entries corresponding to the outputs of the jobs processed.
     """
-    source_module = source_map[job.source]
+    source_module = source_map[job.module]
     if job.date is None:
         srcprice = source_module.get_latest_price(job.symbol)
     else:
@@ -143,9 +130,15 @@ def fetch_price(job, source_map):
 
     assert base is not None
     assert quote is not None
-    fileloc = data.new_metadata('<{}>'.format(type(job.source).__name__), 0)
+    fileloc = data.new_metadata('<{}>'.format(type(job.module).__name__), 0)
     return data.Price(fileloc, srcprice.time.date(), base,
                       amount.Amount(srcprice.price, quote))
+
+
+def import_source(module_name):
+    name = 'beancount.prices.sources.{}'.format(module_name)
+    __import__(name)
+    return sys.modules[name]
 
 
 def process_args(argv, valid_price_sources):
@@ -199,7 +192,7 @@ def process_args(argv, valid_price_sources):
                                                            parsed_uri.path)))
             base = symbol.split(':')[-1]
             quote = UNKNOWN_CURRENCY
-            jobs.append(Job(source, symbol, args.date, base, quote, invert))
+            jobs.append(find_prices.Job(source, symbol, args.date, invert, base, quote))
 
         # Parse symbols from a file.
         elif parsed_uri.scheme in ('file', ''):
@@ -213,14 +206,16 @@ def process_args(argv, valid_price_sources):
 
     # Validate price sources.
     for job in jobs:
-        if job.source not in valid_price_sources:
-            parser.error('Invalid source "{}"'.format(job.source))
+        if job.module not in valid_price_sources:
+            parser.error('Invalid source "{}"'.format(job.module))
 
     return jobs, args.verbose, args.cache_filename
 
 
 def main():
     # FIXME: Replace this by an importer.
+    from beancount.prices.sources import google
+    from beancount.prices.sources import yahoo
     source_map = {'google': google.Source(),
                   'yahoo': yahoo.Source()}
 

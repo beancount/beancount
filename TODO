@@ -69,6 +69,11 @@ beancount: TODO
   - Maybe rename the beancount.ops.prices to beancount.ops.pricedb, this would
     make sense.
 
+  - You need to make it possible to easily have other processes create jobs,
+    e.g. the returns code for all needed prices, or "every price every friday"
+    and then to run those price fetching jobs.
+
+
 
 * Event
 
