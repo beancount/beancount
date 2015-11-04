@@ -260,6 +260,30 @@ def render_ofx_date(dtime):
                               int(dtime.microsecond / 1000))
 
 
+def get_google_symbol(sources):
+    """Filter a source specification to its corresponding Google ticker.
+
+    Args:
+      source: A comma-separated list of sources as a  string, such as
+        "google/NASDAQ:AAPL,yahoo/AAPL".
+    Returns:
+      The symbol for the Google Finance source.
+    Raises:
+      ValueError: If the sources does not contain a ticker for the
+        google source.
+    """
+
+    # If the ticker is a list of <source>/<symbol>, extract the symbol
+    # from it.
+    for source in sources.split(','):
+        match = re.match('([a-zA-Z][a-zA-Z0-9._]+)/(.*)', source.strip())
+        if match and re.match(r'.*\bgoogle', match.group(1)):
+            return match.group(2)
+    else:
+        raise ValueError(
+            'Invalid source "{}" does not contain Google ticker'.format(sources))
+
+
 class ExportPortfolioReport(report.TableReport):
     """Holdings lists that can be exported to external portfolio management software."""
 
@@ -383,7 +407,6 @@ class ExportPortfolioReport(report.TableReport):
                             help=("Group the holdings by account. This may help if your "
                                   "portfolio fails to import and you have many holdings."))
 
-
     EXPORT_FORMAT = ("{atype}  "
                      "{0.number:10.2f} {0.symbol:16}  "
                      "{cost_number:10.2f} {0.cost_currency:16}  "
@@ -460,7 +483,7 @@ class ExportPortfolioReport(report.TableReport):
             fitid = index + 1
             dttrade = render_ofx_date(trade_date)
             memo = export.memo
-            uniqueid = export.symbol
+            uniqueid = get_google_symbol(export.symbol)
             units = export.number
             unitprice = export.cost_number
             fee = ZERO
@@ -468,7 +491,7 @@ class ExportPortfolioReport(report.TableReport):
             buytype = 'BUY'
 
             invtranlist_io.write(self.TRANSACTION.format(**locals()))
-            commodities.add((export.symbol, export.mutual_fund))
+            commodities.add((get_google_symbol(export.symbol), export.mutual_fund))
 
         invtranlist = invtranlist_io.getvalue()
 
