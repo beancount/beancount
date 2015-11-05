@@ -73,6 +73,9 @@ beancount: TODO
     e.g. the returns code for all needed prices, or "every price every friday"
     and then to run those price fetching jobs.
 
+  - Fix important bug with bean-report ... exportpf, the ticker symbols must not
+    include the source...
+
 
 
 * Event
