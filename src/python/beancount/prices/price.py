@@ -140,6 +140,14 @@ def process_args():
 
 def main():
     args, jobs = process_args()
-
     logging.basicConfig(level=logging.INFO if args.verbose else logging.WARN,
                         format='%(levelname)-8s: %(message)s')
+
+    # If we're just being asked to list the jobs, do this here.
+    if args.dry_run:
+        for job in jobs:
+            print(job)
+
+    # TODO: Define the jobs as cascading.
+
+    # TODO: Validate modules here for all jobs.
