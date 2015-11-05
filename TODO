@@ -2,6 +2,15 @@
 beancount: TODO
 * Price Script
 
+  - A "job" should really be a cascading list of jobs. Only the first one that
+    succeeds should be used, searched in the order specified. This will need
+    some amount of redefinition.
+
+  - Cache key should be reviewed to include the source and requested date/time
+    as well. Perhaps quantize the date/time to 10 minutes or something.
+
+
+
   - Figure out how to output a price directive when there is no quote currency
     for a source... is a default to USD reasonable? Perhaps we should output
     just the number... perhaps this should be a separate script after all.
@@ -33,8 +42,9 @@ beancount: TODO
     date to stand-in for necessary dates. This should be able to work with the
     returns calculation script.
 
-  - Using an option/command-line listing the jobs without actually fetching the
-    prices. This should be used to cross-check the finding routines in unit tests.
+  - Implement using an option/command-line listing the jobs without actually
+    fetching the prices, with --dry-run. This should be used to cross-check the
+    finding routines in unit tests.
 
   - You need to add a unit test for the inverted case, make sure just swapping the
     currencies results in the correct output.
@@ -51,24 +61,12 @@ beancount: TODO
       ...
       ticker: "google/NASDAQ:AAPL,yahoo/AAPL"
 
-  - Cache key should be reviewed to include the source and requested date/time
-    as well. Perhaps quantize the date/time to 10 minutes or something.
-
   - Update the doc about the syntax of ticker, when the code parses a list of
     source/tickers, mention how this is intended to work in the doc.
 
   - You need to make it possible to easily have other processes create jobs,
     e.g. the returns code for all needed prices, or "every price every friday"
     and then to run those price fetching jobs.
-
-  - Fix important bug with bean-report ... exportpf, the ticker symbols must not
-    include the source...
-
-  - Maybe rename the beancount.ops.prices to beancount.ops.pricedb, this would
-    make sense, so there is no confusion on the name of the module, though
-    perhaps not the best idea since other codes may depend on this. Try to find
-    a better name for the new one. Or add a warning, which would be the most
-    consistent way to do this.
 
 
 

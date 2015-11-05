@@ -19,7 +19,12 @@ class TestGoogleFinanceSource(unittest.TestCase):
         self.fetcher = google.Source()
         self.url_object = mock.MagicMock()
         self.url_object.read = mock.MagicMock()
+        self.url_object.getcode = mock.MagicMock(return_value=200)
+        self.saved_urlopen = request.urlopen
         request.urlopen = mock.MagicMock(return_value=self.url_object)
+
+    def tearDown(self):
+        request.urlopen = self.saved_urlopen
 
     def test_get_latest_price(self):
         self.url_object.read.return_value = textwrap.dedent("""\

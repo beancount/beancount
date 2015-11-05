@@ -19,6 +19,7 @@ class YahooFinancePriceFetcher(unittest.TestCase):
         self.fetcher = yahoo.Source()
         self.url_object = mock.MagicMock()
         self.url_object.read = mock.MagicMock()
+        self.url_object.getcode = mock.MagicMock(return_value=200)
         request.urlopen = mock.MagicMock(return_value=self.url_object)
 
     def test_get_latest_price(self):
