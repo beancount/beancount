@@ -1,13 +1,19 @@
 """Fetch prices from the internet and output them as Beancount price directives.
 
-This general purpose price fetching script accepts a list of strings that
-specifies what prices to fetch, e.g.,
+This script accepts a list of Beancount input filenames, and fetches prices
+required to compute market values for current positions:
 
-  bean-price @google/TSE:XUS @yahoo/AAPL @mysource/MUTF:RBF1005
+  bean-price /home/joe/finances/joe.beancount
 
-The general format of each of these "source" strings is
+The list of fetching jobs to carry out is derived automatically from the input
+file (see section below for full details). It is also possible to provide a list
+of specific price fetching jobs to run, e.g.,
 
-  @<module>/[^]<ticker>
+  bean-price -e google/TSE:XUS yahoo/AAPL mysources.morningstar/MUTF:RBF1005
+
+The general format of each of these "source strings" is
+
+  <module>/[^]<ticker>
 
 The "module" is the name of a Python module that contains a Source class which
 can be instantiated and connect to a data source to extract price data. These
@@ -15,12 +21,13 @@ modules are automatically imported by name and instantiated in order to pull the
 price from a particular data source. This allows you to write your own
 supplementary fetcher codes without having to modify this script.
 
-Note that as a convenience, the module name is always first searched under
-"beancount.prices.sources". This is how, for example, in order to use the
-provided Google Finance data fetcher you don't have to write
-"@beancount.prices.sources.yahoo/AAPL" but simply "@yahoo/AAPL". This will work
-for all the price fetchers provided with Beancount, which between them should
-cover a large universe of common public investment types (e.g. stock tickers).
+Default implementations are provided to provide access to prices from Yahoo!
+Finance or Google Finance, which cover a large universe of common public
+investment types (e.g. stock tickers). As a convenience, the module name is
+always first searched under the "beancount.prices.sources" package, where those
+default source implementations live. This is how, for example, in order to use
+the provided Google Finance data fetcher you don't have to write
+"beancount.prices.sources.yahoo/AAPL" but simply "yahoo/AAPL".
 
 Date
 ----
@@ -39,7 +46,7 @@ the USD/CAD market, which gives the price of a US dollar in Canadian dollars. In
 order specify this, you can prepend "^" to the instrument to instruct the driver
 to compute the inverse of the given price:
 
-  bean-price @google/^CURRENCY:USDCAD
+  bean-price google/^CURRENCY:USDCAD
 
 If a source price is to be inverted, like this, the precision could be different
 than what is fetched. For instance, if the price of USD/CAD is 1.32759, it would

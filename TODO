@@ -11,12 +11,6 @@ beancount: TODO
       file or substitute for '?'. You'll need to change the interface to
       importers in order to do this.
 
-  - process_args should be moved back into main, and not breaking all the
-    arguments in return values, just using args is best.
-
-  - I don't like the input syntax; files should be the default, maybe a prefix
-    character would be useful otherwise, e.g. @google/TSE:XIC.
-
   - There should only be a few modules for this:
     - This code, which calls the fetching modules
     - Code to figure out the list of jobs from files, from symbol lists, active
@@ -57,17 +51,11 @@ beancount: TODO
       ...
       ticker: "google/NASDAQ:AAPL,yahoo/AAPL"
 
-  - Add a --clear-cache option to first remove the cache before running. That's
-    a way to refresh that cache.
-
   - Cache key should be reviewed to include the source and requested date/time
     as well. Perhaps quantize the date/time to 10 minutes or something.
 
   - Update the doc about the syntax of ticker, when the code parses a list of
     source/tickers, mention how this is intended to work in the doc.
-
-  - Maybe rename the beancount.ops.prices to beancount.ops.pricedb, this would
-    make sense.
 
   - You need to make it possible to easily have other processes create jobs,
     e.g. the returns code for all needed prices, or "every price every friday"
@@ -75,6 +63,12 @@ beancount: TODO
 
   - Fix important bug with bean-report ... exportpf, the ticker symbols must not
     include the source...
+
+  - Maybe rename the beancount.ops.prices to beancount.ops.pricedb, this would
+    make sense, so there is no confusion on the name of the module, though
+    perhaps not the best idea since other codes may depend on this. Try to find
+    a better name for the new one. Or add a warning, which would be the most
+    consistent way to do this.
 
 
 

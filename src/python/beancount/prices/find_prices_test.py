@@ -26,20 +26,20 @@ class TestParseSource(unittest.TestCase):
 
     def test_source_invalid(self):
         with self.assertRaises(ValueError):
-            find_prices.parse_source('AAPL')
+            find_prices.parse_source_string('AAPL')
         with self.assertRaises(ValueError):
-            find_prices.parse_source('***//--')
+            find_prices.parse_source_string('***//--')
 
         # The module does not get imported at this stage.
-        find_prices.parse_source('invalid.module.name/NASDAQ:AAPL')
+        find_prices.parse_source_string('invalid.module.name/NASDAQ:AAPL')
 
     def test_source_valid(self):
-        job = find_prices.parse_source('google/NASDAQ:AAPL')
+        job = find_prices.parse_source_string('google/NASDAQ:AAPL')
         self.assertEqual(
             find_prices.Job('google', 'NASDAQ:AAPL',
                             None, False, None, None), job)
 
-        job = find_prices.parse_source('beancount.prices.sources.yahoo/AAPL')
+        job = find_prices.parse_source_string('beancount.prices.sources.yahoo/AAPL')
         self.assertEqual(
             find_prices.Job('beancount.prices.sources.yahoo', 'AAPL',
                             None, False, None, None), job)

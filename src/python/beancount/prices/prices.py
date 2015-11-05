@@ -30,10 +30,9 @@ from beancount.core import data
 from beancount.core import amount
 from beancount.ops import holdings
 from beancount.parser import printer
-from beancount.prices.sources import yahoo     # FIXME: remove this, should be dynamic
-from beancount.prices.sources import google    # FIXME: remove this, should be dynamic
 from beancount.utils import net_utils
 from beancount.utils import memo
+from beancount.prices import find_prices
 
 
 def setup_cache(cache_filename, clear_cache):
@@ -54,38 +53,21 @@ def setup_cache(cache_filename, clear_cache):
                                                                  cache_filename)
 
 
-def get_jobs_from_args(sources, date):
-    """Given a list of source strings or filenames, return a list of jobs to be carried out.
+def process_args():
+    """Process the arguments.
 
-    Args:
-      sources: A list of source or filename strings.
-      date: A datetime.date instance.
     Returns:
-      A list of Job objects.
-    Raises:
-      IOError: If an inexistent filename is specified.
-      ValueError: If an invalid source string is provided.
+      A pair of 'args' the receiver of arguments and a list of Job objects.
     """
-    jobs = []
-    for arg in sources:
-        # Handle a source specification (which includes a comma-separated list).
-        if arg.startswith('@'):
-            for source in arg[1:].split(','):
-                jobs.append(find_prices.parse_source(arg))
-        else:
-            if not path.exists(arg) or not path.isfile(arg):
-                raise IOError('File does not exist: "{}"'.format(arg))
-            jobs.extend(find_prices.jobs_from_file(arg, date))
-    return jobs
-
-
-def main():
     parser = argparse.ArgumentParser(description=beancount.prices.__doc__)
 
     # Input sources or filenames.
     parser.add_argument('sources', nargs='+',
-                        help=("A list of price sources or filenames from which to create a "
-                              "list of jobs."))
+                        help=('A list of filenames (or source "module/symbol", if -e is '
+                              'specified) from which to create a list of jobs.'))
+
+    parser.add_argument('-e', '--expressions', '--expression', action='store_true',
+                        help='Interpret the arguments as "module/symbol" source strings.')
 
     # Regular options.
     parser.add_argument('-v', '--verbose', action='store_true',
@@ -126,11 +108,38 @@ def main():
     cache_group.add_argument('--clear-cache', action='store_true',
                              help="Clear the cache prior to startup")
 
-    args = parser.parse_args(sys.argv)
+    args = parser.parse_args()
 
     # Setup for processing.
-    logging.basicConfig(level=logging.INFO if args.verbose else logging.WARN,
-                        format='%(levelname)-8s: %(message)s')
     setup_cache(args.cache_filename, args.clear_cache)
 
-    jobs = get_jobs_from_args(args.sources)
+    # Get the list of jobs from the arguments.
+    jobs = []
+    if args.expressions:
+        # Interpret the arguments as price sources.
+        for sourcelist in args.sources:
+            try:
+                for source in sourcelist.split(','):
+                    jobs.append(find_prices.parse_source_string(source))
+            except ValueError:
+                if path.exists(sourcelist):
+                    msg = 'Invalid source "{}"; did you provide a filename?'
+                else:
+                    msg = 'Invalid source "{}"'
+                parser.error(msg.format(sourcelist))
+    else:
+        # Interpret the arguments as Beancount input filenames.
+        for filename in args.sources:
+            if not path.exists(filename) or not path.isfile(filename):
+                parser.error('File does not exist: "{}"'.format(filename))
+            else:
+                jobs.extend(find_prices.jobs_from_file(filename, args.date))
+
+    return args, jobs
+
+
+def main():
+    args, jobs = process_args()
+
+    logging.basicConfig(level=logging.INFO if args.verbose else logging.WARN,
+                        format='%(levelname)-8s: %(message)s')

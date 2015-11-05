@@ -13,7 +13,9 @@ from urllib import request
 from urllib import error
 
 from beancount.prices import prices
+from beancount.prices import find_prices
 from beancount.core.number import D, Decimal
+from beancount.utils import test_utils
 
 
 class TestSetupCache(unittest.TestCase):
@@ -56,28 +58,53 @@ class TestSetupCache(unittest.TestCase):
                 self.assertTrue(path.exists(filename))
 
 
-# class TestPriceFetcherCache(unittest.TestCase):
+class TestProcessArguments(unittest.TestCase):
+
+    def test_filename_not_exists(self):
+        with test_utils.capture('stderr') as stderr:
+            with self.assertRaises(SystemExit):
+                args, jobs = test_utils.run_with_args(
+                    prices.process_args, ['--no-cache', '/some/file.beancount'])
+
+    def test_filename_exists(self):
+        with tempfile.NamedTemporaryFile('w') as tmpfile:
+            with test_utils.capture('stderr') as stderr:
+                args, jobs = test_utils.run_with_args(
+                    prices.process_args, ['--no-cache', tmpfile.name])
+                self.assertEqual([], jobs)  # Empty file.
+
+    def test_expressions(self):
+        with test_utils.capture('stderr') as stderr:
+            args, jobs = test_utils.run_with_args(
+                prices.process_args, ['--no-cache', '-e', 'google/NASDAQ:AAPL'])
+            self.assertEqual(
+                [find_prices.Job('google', 'NASDAQ:AAPL', None, False, None, None)], jobs)
 
 
 
 
-    # parse_date = lambda s: parse_datetime(s).date()
-    # parser.add_argument('--date', action='store', type=parse_date,
-    #                     help="Specify the date for which to fetch the prices.")
+# FIXME: TODO - Behavior to be implemented and tested.
+"""
+    parse_date = lambda s: parse_datetime(s).date()
+    parser.add_argument('--date', action='store', type=parse_date,
+                        help="Specify the date for which to fetch the prices.")
 
-    # parser.add_argument('-i', '--always-invert', action='store_true',
-    #                     help=("Never just swap currencies for inversion, always invert the "
-    #                           "actual rate"))
+    parser.add_argument('-i', '--always-invert', action='store_true',
+                        help=("Never just swap currencies for inversion, always invert the "
+                              "actual rate"))
 
-    # parser.add_argument('-a', '--all', '--all-commodities', '--all-instruments',
-    #                     action='store_true',
-    #                     help=("Select all commodities from files, not just the ones active "
-    #                           "on the date"))
+    parser.add_argument('-a', '--all', '--all-commodities', '--all-instruments',
+                        action='store_true',
+                        help=("Select all commodities from files, not just the ones active "
+                              "on the date"))
 
-    # parser.add_argument('-c', '--clobber', action='store_true',
-    #                     help=("Do not skip prices which are already present in input "
-    #                           "files; fetch them anyway."))
+    parser.add_argument('-c', '--clobber', action='store_true',
+                        help=("Do not skip prices which are already present in input "
+                              "files; fetch them anyway."))
 
-    # parser.add_argument('-n', '--dry-run', '--jobs', '--print-only', action='store_true',
-    #                     help=("Don't actually fetch the prices, just print the list of the "
-    #                           "ones to be fetched."))
+    parser.add_argument('-n', '--dry-run', '--jobs', '--print-only', action='store_true',
+                        help=("Don't actually fetch the prices, just print the list of the "
+                              "ones to be fetched."))
+"""
+
+__incomplete__ = True

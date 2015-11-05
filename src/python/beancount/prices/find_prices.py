@@ -23,7 +23,7 @@ import sys
 Job = collections.namedtuple('Job', 'module symbol date invert base quote')
 
 
-def parse_source(source):
+def parse_source_string(source):
     """Parse a single source string.
 
     Source specifications follow the syntax: @<module>/[^]<ticker>
