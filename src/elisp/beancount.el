@@ -220,8 +220,7 @@ This is a cache of the value computed by `beancount-get-accounts'.")
           "\\(?::[[:upper:]][" beancount-account-chars "]+\\)")
   "A regular expression to match account names.")
 
-(defvar beancount-number-regexp "[-+]?[0-9,\\.]+"
-  ;; FIXME: Do we really want to allow backslashes in numbers?
+(defvar beancount-number-regexp "[-+]?[0-9,]+\\(\\.[0-9]*\\)?"
   "A regular expression to match decimal numbers in beancount.")
 
 (defvar beancount-currency-regexp "[A-Z][A-Z-_'.]*"
@@ -246,8 +245,10 @@ Excludes tags appearing on the current line."
     (delete-dups found)))
 
 (defconst beancount-txn-regexp
-  ;; FIXME: The doc doesn't say what a "flag" can look like, so we assume
-  ;; it's a single char that's neither a space nor a lower-case letter.
+  ;; For the full definition of a flag, see the rule that emits FLAG in
+  ;; beancount/parser/lexer.l. For this, let's assume that it's a single char
+  ;; that's neither a space nor a lower-case letter. This should be updated as
+  ;; the parser is improved.
   "^[0-9-/]+ +\\(?:txn +\\)?[^ [:lower:]]\\($\\| \\)")
 
 (defun beancount-inside-txn-p ()
@@ -334,9 +335,7 @@ Excludes tags appearing on the current line."
   "Extract all the keys of the given hashtable. Return a sorted list."
   (let (rlist)
     (maphash (lambda (k _v) (push k rlist)) hashtable)
-    ;; FIXME: Doesn't look very sorted!
-    rlist))
-
+    (sort rlist 'string<)))
 
 (defun beancount-get-accounts ()
   "Heuristically obtain a list of all the accounts used in all the postings.
