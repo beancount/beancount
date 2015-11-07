@@ -2,6 +2,10 @@
 beancount: TODO
 * Price Script
 
+  - First thing in parsing for sources and importing: Normalize the default
+    sources to have the full import name beancount.prices.sources.<name>,
+    isolating the alias itself for further checks down the road.
+
   - A "job" should really be a cascading list of jobs. Only the first one that
     succeeds should be used, searched in the order specified. This will need
     some amount of redefinition.
