@@ -1,5 +1,6 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import datetime
 import re
 
 from beancount.core.amount import A
@@ -9,6 +10,7 @@ from beancount.core import realization
 from beancount.ops import pad
 from beancount.ops import balance
 from beancount.parser import cmptest
+from beancount.parser import printer
 from beancount import loader
 
 
@@ -432,3 +434,74 @@ class TestPadding(cmptest.TestCase):
         """
         self.assertEqual(1, len(errors))
         self.assertTrue(re.search('Unused Pad entry', errors[0].message))
+
+    @loader.load_doc(expect_errors=True)
+    def test_pad_zero_padding_issue78a(self, entries, errors, __):
+        """
+        1970-01-01 open Assets:Cash
+        1970-01-01 open Expenses:Food
+
+        2015-09-15 pad Assets:Cash Expenses:Food
+
+        2015-09-16 balance Assets:Cash 0 HKD
+
+        ;; The error should be reported here, not on the previous balance check.
+        2015-11-02 balance Assets:Cash 1000 HKD
+        """
+        self.assertEqual(2, len(errors))
+
+        self.assertRegexpMatches(errors[0].message, "Unused")
+        self.assertEqual(datetime.date(2015, 9, 15), errors[0].entry.date)
+
+        self.assertRegexpMatches(errors[1].message, "Balance failed")
+        self.assertEqual(datetime.date(2015, 11, 2), errors[1].entry.date)
+
+    @loader.load_doc(expect_errors=True)
+    def test_pad_zero_padding_issue78a_original(self, entries, errors, __):
+        """
+        1970-01-01 open Assets:Cash
+        1970-01-01 open Expenses:Food
+
+        ;; Inserted this before the pad, because it was in the original example.
+        2015-09-15 balance Assets:Cash 0 HKD
+
+        2015-09-15 pad Assets:Cash Expenses:Food
+
+        2015-09-16 balance Assets:Cash 0 HKD
+
+        ;; The error should be reported here, not on the previous balance check.
+        2015-11-02 balance Assets:Cash 1000 HKD
+        """
+        self.assertEqual(2, len(errors))
+
+        self.assertRegexpMatches(errors[0].message, "Unused")
+        self.assertEqual(datetime.date(2015, 9, 15), errors[0].entry.date)
+
+        self.assertRegexpMatches(errors[1].message, "Balance failed")
+        self.assertEqual(datetime.date(2015, 11, 2), errors[1].entry.date)
+
+    @loader.load_doc(expect_errors=True)
+    def test_pad_zero_padding_issue78b(self, entries, errors, __):
+        """
+        1970-01-01 open Assets:Cash
+        1970-01-01 open Expenses:Food
+
+        2015-09-15 balance Assets:Cash 1 HKD
+
+        ;; We should expect a "unused pad entry" error here.
+        2015-09-15 pad Assets:Cash Expenses:Food
+
+        2015-09-16 balance Assets:Cash 1 HKD
+        """
+        printer.print_entries(entries)
+
+        self.assertFalse(any(isinstance(entry, data.Transaction)
+                             for entry in entries))
+
+        self.assertEqual(2, len(errors))
+
+        self.assertRegexpMatches(errors[0].message, "Balance failed")
+        self.assertEqual(datetime.date(2015, 9, 15), errors[0].entry.date)
+
+        self.assertRegexpMatches(errors[1].message, "Unused")
+        self.assertEqual(datetime.date(2015, 9, 15), errors[0].entry.date)
