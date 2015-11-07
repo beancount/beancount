@@ -1408,6 +1408,18 @@ http://furius.ca/beancount/doc/proposal-inter
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - An important option exists around the behavior of balance checks: Should
+    balance checks bring their balance to the balance amount? In other words,
+    should a balance check imply an automatic, on-demand Pad behavior on
+    failure? This has an impact on following balance checks further in time. The
+    current behavior is not to pad a failure, so if there are multiple balance
+    checks, a single mistake before them would generate a number of errors. An
+    equally valid behavior would be to trigger only a single error, isolating
+    the periods between balance checks. Both semantics have advantages. You
+    should provide an option to ustomize this behavior, the user should be able
+    to choose. option "pad_failing_balances".
+
+
   - Reconcile all usage of account regexps to beancount.core.account.ACCOUNT_RE
     throughout the code  (grep --include='*.py'  -srn A-Z    ~/p/beancount/src/python/beancount).
 

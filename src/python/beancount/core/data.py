@@ -546,16 +546,15 @@ def find_closest(entries, filename, lineno):
 
     Args:
       entries: A list of directives.
-      filename: A string, the name of the ledger file to look for.
+      filename: A string, the name of the ledger file to look for. Be careful
+        to provide the very same filename, and note that the parser stores the
+        absolute path of the filename here.
       lineno: An integer, the line number closest after the directive we're
         looking for. This may be the exact/first line of the directive.
     Returns:
       The closest entry found in the given file for the given filename, or
       None, if none could be found.
     """
-    if not path.isabs(filename):
-        filename = path.abspath(filename)
-
     min_diffline = sys.maxsize
     closest_entry = None
     for entry in entries:

@@ -34,21 +34,73 @@
 
 (defgroup beancount ()
   "Editing mode for Beancount files."
-  :group 'external)                     ;FIXME: Really?  "external"?
+  :group 'beancount)
 
-(defvar beancount-directive-names '("txn"
-                                    "open"
-                                    "close"
-                                    "commodity"
-                                    "balance"
-                                    "pad"
-                                    "event"
-                                    "price"
-                                    "note"
-                                    "document"
-                                    "pushtag"
-                                    "poptag")
+(defconst beancount-timestamped-directive-names
+  '("balance"
+    "open"
+    "close"
+    "pad"
+    "document"
+    "note"
+    ;; The ones below are not followed by an account name.
+    "event"
+    "price"
+    "commodity"
+    "query"
+    "txn")
+  "Directive names that can appear after a date.")
+
+(defconst beancount-nontimestamped-directive-names
+  '("pushtag"
+    "poptag"
+    "option"
+    "include"
+    "plugin")
+  "Directive names that can appear after a date.")
+
+(defvar beancount-directive-names
+  (append beancount-nontimestamped-directive-names
+          beancount-timestamped-directive-names)
   "A list of the directive names.")
+
+(defconst beancount-tag-chars "[:alnum:]-_/.")
+
+(defconst beancount-account-categories
+  '("Assets" "Liabilities" "Equity" "Income" "Expenses"))
+
+(defconst beancount-account-chars "[:alnum:]-_:")
+
+(defconst beancount-option-names
+  ;; This list is kept in sync with the options defined in
+  ;; src/python/beancount/parser/options.py.
+  ;; Note: We should eventually build a tool that spits out the current list
+  ;; automatically.
+  '("title"
+    "name_assets"
+    "name_liabilities"
+    "name_equity"
+    "name_income"
+    "name_expenses"
+    "account_previous_balances"
+    "account_previous_earnings"
+    "account_previous_conversions"
+    "account_current_earnings"
+    "account_current_conversions"
+    "account_rounding"
+    "conversion_currency"
+    "default_tolerance"
+    "inferred_tolerance_multiplier"
+    "infer_tolerance_from_cost"
+    "tolerance"
+    "use_legacy_fixed_tolerances"
+    "documents"
+    "operating_currency"
+    "render_commas"
+    "plugin_processing_mode"
+    "plugin"
+    "long_string_maxlines"
+    ))
 
 (defvar beancount-font-lock-keywords
   `(;; Reserved keywords
@@ -81,8 +133,10 @@
     (define-key map [(control c)(k)] #'beancount-linked)
     (define-key map [(control c)(\;)] #'beancount-align-to-previous-number)
     (define-key map [(control c)(\:)] #'beancount-align-numbers)
-    ;; FIXME: There's actually no function by that name!
-    (define-key map [(control c)(p)] #'beancount-test-align)
+
+    ;; FIXME: Binding TAB breaks expected org-mode behavior to fold/unfold. We
+    ;; need to find a better solution.
+    ;;(define-key map [?\t] #'beancount-tab)
     map))
 
 (defvar beancount-mode-syntax-table
@@ -91,6 +145,8 @@
     (modify-syntax-entry ?\; "<" st)
     (modify-syntax-entry ?\n ">" st)
     st))
+
+(defun beancount--goto-bob () (goto-char (point-min)))
 
 ;;;###autoload
 (define-minor-mode beancount-mode
@@ -123,13 +179,16 @@ is great for sectioning large files with many transactions.
   ;; No tabs by default.
   (set (make-local-variable 'indent-tabs-mode) nil)
 
+  (add-hook 'completion-at-point-functions
+            #'beancount-completion-at-point nil t)
+  (set (make-local-variable 'completion-ignore-case) t)
+
   ;; Customize font-lock for beancount.
   ;;
   (set-syntax-table beancount-mode-syntax-table)
   (when (fboundp 'syntax-ppss-flush-cache)
     (syntax-ppss-flush-cache (point-min))
-    (set (make-local-variable 'syntax-begin-function)
-         (lambda () (goto-char (point-min)))))
+    (set (make-local-variable 'syntax-begin-function) #'beancount--goto-bob))
   ;; Force font-lock to use the syntax-table to find strings-and-comments,
   ;; regardless of what the "host major mode" decided.
   (set (make-local-variable 'font-lock-keywords-only) nil)
@@ -160,27 +219,139 @@ This is a cache of the value computed by `beancount-get-accounts'.")
 (defvar beancount-date-regexp "[0-9][0-9][0-9][0-9][-/][0-9][0-9][-/][0-9][0-9]"
   "A regular expression to match dates.")
 
-(defvar beancount-account-regexp (concat (regexp-opt '("Assets"
-                                                       "Liabilities"
-                                                       "Equity"
-                                                       "Income"
-                                                       "Expenses"))
-                                         "\\(?::[A-Z][A-Za-z0-9-_:]+\\)")
+(defvar beancount-account-regexp
+  (concat (regexp-opt beancount-account-categories)
+          "\\(?::[[:upper:]][" beancount-account-chars "]+\\)")
   "A regular expression to match account names.")
 
-(defvar beancount-number-regexp "[-+]?[0-9,\\.]+"
+(defvar beancount-number-regexp "[-+]?[0-9,]+\\(\\.[0-9]*\\)?"
   "A regular expression to match decimal numbers in beancount.")
 
 (defvar beancount-currency-regexp "[A-Z][A-Z-_'.]*"
   "A regular expression to match currencies in beancount.")
 
+(defun beancount-tab ()
+  "Try to use the right meaning of TAB."
+  (interactive)
+  (let ((cdata (beancount-completion-at-point)))
+    (if cdata
+        ;; There's beancount-specific completion at point.
+        (call-interactively #'completion-at-point)
+      (let* ((beancount-mode nil)
+             (fallback (key-binding (this-command-keys))))
+        (if (commandp fallback)
+            (command-execute fallback))))))
+
+(defun beancount-tags (prefix)
+  "Return list of all tags starting with PREFIX in current buffer.
+Excludes tags appearing on the current line."
+  (unless (string-match "\\`[#^]" prefix)
+    (error "Unexpected prefix to search tags: %S" prefix))
+  (let ((found ())
+        (re (concat prefix "[" beancount-tag-chars "]*")))
+    (save-excursion
+      (forward-line 0)
+      (while (re-search-backward re nil t)
+        (push (match-string 0) found)))
+    ;; Ignore tags on current line.
+    (save-excursion
+      (forward-line 1)
+      (while (re-search-forward re nil t)
+        (push (match-string 0) found)))
+    (delete-dups found)))
+
+(defconst beancount-txn-regexp
+  ;; For the full definition of a flag, see the rule that emits FLAG in
+  ;; beancount/parser/lexer.l. For this, let's assume that it's a single char
+  ;; that's neither a space nor a lower-case letter. This should be updated as
+  ;; the parser is improved.
+  "^[0-9-/]+ +\\(?:txn +\\)?[^ [:lower:]]\\($\\| \\)")
+
+(defun beancount-inside-txn-p ()
+  ;; FIXME: The doc doesn't actually say how the legs of a transaction can be
+  ;; layed out.  We assume that they all start with some space on the line.
+  (save-excursion
+    (forward-line 0)
+    (while (and (looking-at "[ \t]") (not (bobp)))
+      (forward-line -1))
+    (looking-at beancount-txn-regexp)))
+
+(defun beancount-completion-at-point ()
+  "Return the completion data relevant for the text at point."
+  (let ((bp (buffer-substring (line-beginning-position) (point))))
+    (cond
+     ((string-match "\\`[a-z]*\\'" bp)
+      ;; A directive starting at BOL (hence non-timestamped).
+      (list (line-beginning-position)
+            (save-excursion (skip-chars-forward "a-z") (point))
+            '("pushtag" "poptag")))
+
+     ((string-match
+       (concat "\\`option +\\(\"[a-z_]*\\)?\\'")
+       bp)
+      (list (- (point)
+               (if (match-end 1) (- (match-end 1) (match-beginning 1)) 0))
+            (save-excursion (skip-chars-forward "a-z_")
+                            (if (looking-at "\"") (forward-char 1))
+                            (point))
+            (mapcar (lambda (s) (concat "\"" s "\"")) beancount-option-names)))
+
+     ((string-match
+       (concat "\\`poptag +\\(#[" beancount-tag-chars "]*\\)?\\'")
+       bp)
+      (list (- (point)
+               (if (match-end 1) (- (match-end 1) (match-beginning 1)) 0))
+            (save-excursion (skip-chars-forward beancount-tag-chars) (point))
+            (save-excursion
+              (let ((opened ()))
+                (while (re-search-backward
+                        (concat "^pushtag +\\(#[" beancount-tag-chars "]+\\)")
+                        nil t)
+                  (push (match-string 1) opened))
+                opened))))
+
+     ((string-match "\\`[0-9-/]+ +\\([[:alpha:]]*\\'\\)" bp)
+      ;; A timestamped directive.
+      (list (- (point) (- (match-end 1) (match-beginning 1)))
+            (save-excursion (skip-chars-forward "[:alpha:]") (point))
+            beancount-timestamped-directive-names))
+
+     ((and (beancount-inside-txn-p)
+           (string-match (concat "\\`[ \t]+\\(["
+                                 beancount-account-chars "]*\\)\\'")
+                         bp))
+      ;; Hopefully, an account name.  We don't force the partially-written
+      ;; account name to start with a capital, so that it's possible to use
+      ;; substring completion and also so we can rely on completion to put the
+      ;; right capitalization (thanks to completion-ignore-case).
+      (list (- (point) (- (match-end 1) (match-beginning 1)))
+            (save-excursion (skip-chars-forward beancount-account-chars)
+                            (point))
+            #'beancount-account-completion-table))
+
+     ((string-match (concat "\\`[0-9-/]+ +\\("
+                            (regexp-opt beancount-timestamped-directive-names)
+                            "\\) +\\([" beancount-account-chars "]*\\'\\)")
+                    bp)
+      (list (- (point) (- (match-end 2) (match-beginning 2)))
+            (save-excursion (skip-chars-forward beancount-account-chars)
+                            (point))
+            (if (equal (match-string 1 bp) "open")
+                (append
+                 (mapcar (lambda (c) (concat c ":")) beancount-account-categories)
+                 beancount-accounts)
+              #'beancount-account-completion-table)))
+
+     ((string-match (concat "[#^][" beancount-tag-chars "]*\\'") bp)
+      (list (- (point) (- (match-end 0) (match-beginning 0)))
+            (save-excursion (skip-chars-forward beancount-tag-chars) (point))
+            (completion-table-dynamic #'beancount-tags))))))
+
 (defun beancount-hash-keys (hashtable)
   "Extract all the keys of the given hashtable. Return a sorted list."
   (let (rlist)
     (maphash (lambda (k _v) (push k rlist)) hashtable)
-    ;; FIXME: Doesn't look very sorted!
-    rlist))
-
+    (sort rlist 'string<)))
 
 (defun beancount-get-accounts ()
   "Heuristically obtain a list of all the accounts used in all the postings.
