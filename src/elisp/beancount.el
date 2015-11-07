@@ -83,6 +83,7 @@
     (define-key map [(control c)(\:)] #'beancount-align-numbers)
     ;; FIXME: There's actually no function by that name!
     (define-key map [(control c)(p)] #'beancount-test-align)
+    (define-key map [?\t] #'beancount-tab)
     map))
 
 (defvar beancount-mode-syntax-table
@@ -174,6 +175,18 @@ This is a cache of the value computed by `beancount-get-accounts'.")
 
 (defvar beancount-currency-regexp "[A-Z][A-Z-_'.]*"
   "A regular expression to match currencies in beancount.")
+
+(defun beancount-tab ()
+  "Try to use the right meaning of TAB."
+  (interactive)
+  (let ((cdata (beancount-completion-at-point)))
+    (if cdata
+        ;; There's beancount-specific completion at point.
+        (call-interactively #'completion-at-point)
+      (let* ((beancount-mode nil)
+             (fallback (key-binding (this-command-keys))))
+        (if (commandp fallback)
+            (command-execute fallback))))))
 
 (defun beancount-hash-keys (hashtable)
   "Extract all the keys of the given hashtable. Return a sorted list."
