@@ -52,6 +52,10 @@ beancount: TODO
   - Write a test to ensure that an auto-posting with no effect results in no
     new posting getting inserted.
 
+  - Replace Holding by the new, flattened Position, it's a _lot_ more like it.
+    Makes a lot of sense now. Move the price_date to .meta, I don't think it's
+    actually used.
+
 
 ** API Revamp / Simplification
 
