@@ -260,14 +260,14 @@ def render_ofx_date(dtime):
                               int(dtime.microsecond / 1000))
 
 
-def get_google_symbol(sources):
-    """Filter a source specification to its corresponding Google ticker.
+def get_symbol(sources, prefer='google'):
+    """Filter a source specification to some corresponding ticker.
 
     Args:
-      source: A comma-separated list of sources as a  string, such as
+      source: A comma-separated list of sources as a string, such as
         "google/NASDAQ:AAPL,yahoo/AAPL".
     Returns:
-      The symbol for the Google Finance source.
+      The symbol string.
     Raises:
       ValueError: If the sources does not contain a ticker for the
         google source.
@@ -275,13 +275,22 @@ def get_google_symbol(sources):
 
     # If the ticker is a list of <source>/<symbol>, extract the symbol
     # from it.
-    for source in sources.split(','):
-        match = re.match('([a-zA-Z][a-zA-Z0-9._]+)/(.*)', source.strip())
-        if match and re.match(r'.*\bgoogle', match.group(1)):
-            return match.group(2)
-    else:
+    symbol_items = []
+    for source in map(str.strip, sources.split(',')):
+        match = re.match('([a-zA-Z][a-zA-Z0-9._]+)/(.*)', source)
+        if match:
+            source, symbol = match.groups()
+        else:
+            source, symbol = None, source
+        symbol_items.append((source, symbol))
+    if not symbol_items:
         raise ValueError(
-            'Invalid source "{}" does not contain Google ticker'.format(sources))
+            'Invalid source "{}" does not contain a ticker'.format(sources))
+    symbol_map = dict(symbol_items)
+    symbol = symbol_map.get(prefer, None)
+    if symbol is None:
+        # If not found, return the first symbol.
+        return symbol_items[0][1]
 
 
 class ExportPortfolioReport(report.TableReport):
@@ -483,7 +492,7 @@ class ExportPortfolioReport(report.TableReport):
             fitid = index + 1
             dttrade = render_ofx_date(trade_date)
             memo = export.memo
-            uniqueid = get_google_symbol(export.symbol)
+            uniqueid = get_symbol(export.symbol)
             units = export.number
             unitprice = export.cost_number
             fee = ZERO
@@ -491,7 +500,7 @@ class ExportPortfolioReport(report.TableReport):
             buytype = 'BUY'
 
             invtranlist_io.write(self.TRANSACTION.format(**locals()))
-            commodities.add((get_google_symbol(export.symbol), export.mutual_fund))
+            commodities.add((get_symbol(export.symbol), export.mutual_fund))
 
         invtranlist = invtranlist_io.getvalue()
 
