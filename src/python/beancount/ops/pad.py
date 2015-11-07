@@ -157,7 +157,6 @@ def pad(entries, options_map):
         padded_entries.append(entry)
         if isinstance(entry, data.Pad):
             entry_list = new_entries[id(entry)]
-            print(entry_list)
             if entry_list:
                 padded_entries.extend(entry_list)
             else:

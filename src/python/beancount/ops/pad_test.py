@@ -486,22 +486,20 @@ class TestPadding(cmptest.TestCase):
         1970-01-01 open Assets:Cash
         1970-01-01 open Expenses:Food
 
+        ;; Balance should fail here.
         2015-09-15 balance Assets:Cash 1 HKD
 
-        ;; We should expect a "unused pad entry" error here.
+        ;; This will not end up being marked as unused because it will fill in a transaction
+        ;; for the missing amount, even though there was a matching balance check earlier. A
+        ;; failing balance check does not automatically bring the balance to its value.
         2015-09-15 pad Assets:Cash Expenses:Food
 
         2015-09-16 balance Assets:Cash 1 HKD
         """
-        printer.print_entries(entries)
+        self.assertTrue(any(isinstance(entry, data.Transaction)
+                            for entry in entries))
 
-        self.assertFalse(any(isinstance(entry, data.Transaction)
-                             for entry in entries))
-
-        self.assertEqual(2, len(errors))
+        self.assertEqual(1, len(errors))
 
         self.assertRegexpMatches(errors[0].message, "Balance failed")
-        self.assertEqual(datetime.date(2015, 9, 15), errors[0].entry.date)
-
-        self.assertRegexpMatches(errors[1].message, "Unused")
         self.assertEqual(datetime.date(2015, 9, 15), errors[0].entry.date)
