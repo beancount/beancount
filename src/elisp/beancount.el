@@ -133,7 +133,10 @@
     (define-key map [(control c)(k)] #'beancount-linked)
     (define-key map [(control c)(\;)] #'beancount-align-to-previous-number)
     (define-key map [(control c)(\:)] #'beancount-align-numbers)
-    (define-key map [?\t] #'beancount-tab)
+
+    ;; FIXME: Binding TAB breaks expected org-mode behavior to fold/unfold. We
+    ;; need to find a better solution.
+    ;;(define-key map [?\t] #'beancount-tab)
     map))
 
 (defvar beancount-mode-syntax-table
