@@ -87,20 +87,28 @@ class TestProcessArguments(unittest.TestCase):
 """
     parse_date = lambda s: parse_datetime(s).date()
     parser.add_argument('--date', action='store', type=parse_date,
-                        help="Specify the date for which to fetch the price.")
+                        help="Specify the date for which to fetch the prices.")
 
     parser.add_argument('-i', '--always-invert', action='store_true',
                         help=("Never just swap currencies for inversion, always invert the "
                               "actual rate"))
 
-    parser.add_argument('-a', '--all', '--all-commodities', '--all-instruments',
+    parser.add_argument('-c', '--inactive',
                         action='store_true',
-                        help=("Select all commodities from files, not just the ones active "
-                              "on the date"))
+                        help=("Select all commodities from input files, not just the ones "
+                              "active on the date"))
+
+    parser.add_argument('-u', '--undeclared', action='store_true',
+                        help="Include commodities viewed in the file even without a "
+                        "corresponding Commodity directive. The currency name itself is "
+                        "used as the lookup symbol in the default sources.")
 
     parser.add_argument('-c', '--clobber', action='store_true',
                         help=("Do not skip prices which are already present in input "
                               "files; fetch them anyway."))
+
+    parser.add_argument('-a', '--all', action='store_true',
+                        help="A shorthand for --inactive, --undeclared, --clobber.")
 
     parser.add_argument('-n', '--dry-run', '--jobs', '--print-only', action='store_true',
                         help=("Don't actually fetch the prices, just print the list of the "
