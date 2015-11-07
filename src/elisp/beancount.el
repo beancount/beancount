@@ -34,7 +34,7 @@
 
 (defgroup beancount ()
   "Editing mode for Beancount files."
-  :group 'external)                     ;FIXME: Really?  "external"?
+  :group 'beancount)
 
 (defvar beancount-directive-names '("txn"
                                     "open"
