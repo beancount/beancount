@@ -77,11 +77,12 @@ def process_args():
     parser.add_argument('--date', action='store', type=parse_date,
                         help="Specify the date for which to fetch the prices.")
 
-    parser.add_argument('-i', '--always-invert', action='store_true',
-                        help=("Never just swap currencies for inversion, always invert the "
-                              "actual rate"))
+    parser.add_argument('-t', '--always-invert', action='store_true',
+                        help=("Never just swap currencies for inversion, invert the actual "
+                              "rate when necessary, so that all price definitions are in "
+                              "the expected order"))
 
-    parser.add_argument('-c', '--inactive',
+    parser.add_argument('-i', '--inactive',
                         action='store_true',
                         help=("Select all commodities from input files, not just the ones "
                               "active on the date"))
@@ -124,20 +125,21 @@ def process_args():
     # Setup for processing.
     setup_cache(args.cache_filename, args.clear_cache)
 
-    # Get the list of jobs from the arguments.
+    # Get the list of DatedPrice jobs to get from the arguments.
     jobs = []
     if args.expressions:
         # Interpret the arguments as price sources.
         for sourcelist in args.sources:
             try:
-                for source in sourcelist.split(','):
-                    jobs.append(find_prices.parse_source_string(source))
+                sources = list(map(find_prices.parse_source_string, sourcelist.split(',')))
             except ValueError:
                 if path.exists(sourcelist):
                     msg = 'Invalid source "{}"; did you provide a filename?'
                 else:
                     msg = 'Invalid source "{}"'
                 parser.error(msg.format(sourcelist))
+            else:
+                jobs.append(find_prices.DatedPrice(None, None, args.date, sources))
     else:
         # Interpret the arguments as Beancount input filenames.
         for filename in args.sources:

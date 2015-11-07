@@ -14,6 +14,7 @@ from urllib import error
 
 from beancount.prices import price
 from beancount.prices import find_prices
+from beancount.prices.sources import google
 from beancount.core.number import D, Decimal
 from beancount.utils import test_utils
 
@@ -78,7 +79,9 @@ class TestProcessArguments(unittest.TestCase):
             args, jobs = test_utils.run_with_args(
                 price.process_args, ['--no-cache', '-e', 'google/NASDAQ:AAPL'])
             self.assertEqual(
-                [find_prices.Job('google', 'NASDAQ:AAPL', None, False, None, None)], jobs)
+                [find_prices.DatedPrice(
+                    None, None, None,
+                    [find_prices.PriceSource(google, 'NASDAQ:AAPL', False)])], jobs)
 
 
 
@@ -89,11 +92,12 @@ class TestProcessArguments(unittest.TestCase):
     parser.add_argument('--date', action='store', type=parse_date,
                         help="Specify the date for which to fetch the prices.")
 
-    parser.add_argument('-i', '--always-invert', action='store_true',
-                        help=("Never just swap currencies for inversion, always invert the "
-                              "actual rate"))
+    parser.add_argument('-t', '--always-invert', action='store_true',
+                        help=("Never just swap currencies for inversion, invert the actual "
+                              "rate when necessary, so that all price definitions are in "
+                              "the expected order"))
 
-    parser.add_argument('-c', '--inactive',
+    parser.add_argument('-i', '--inactive',
                         action='store_true',
                         help=("Select all commodities from input files, not just the ones "
                               "active on the date"))

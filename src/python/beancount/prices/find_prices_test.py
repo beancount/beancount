@@ -6,6 +6,8 @@ import types
 import unittest
 
 from beancount.prices import find_prices
+from beancount.prices.sources import google
+from beancount.prices.sources import yahoo
 
 
 class TestImportSource(unittest.TestCase):
@@ -30,16 +32,16 @@ class TestParseSource(unittest.TestCase):
         with self.assertRaises(ValueError):
             find_prices.parse_source_string('***//--')
 
-        # The module does not get imported at this stage.
-        find_prices.parse_source_string('invalid.module.name/NASDAQ:AAPL')
+        # The module gets imported at this stage.
+        with self.assertRaises(ImportError):
+            find_prices.parse_source_string('invalid.module.name/NASDAQ:AAPL')
 
     def test_source_valid(self):
-        job = find_prices.parse_source_string('google/NASDAQ:AAPL')
-        self.assertEqual(
-            find_prices.Job('google', 'NASDAQ:AAPL',
-                            None, False, None, None), job)
+        psource = find_prices.parse_source_string('google/NASDAQ:AAPL')
+        self.assertEqual(find_prices.PriceSource(google, 'NASDAQ:AAPL', False),
+                         psource)
 
-        job = find_prices.parse_source_string('beancount.prices.sources.yahoo/AAPL')
+        psource = find_prices.parse_source_string('beancount.prices.sources.yahoo/AAPL')
         self.assertEqual(
-            find_prices.Job('beancount.prices.sources.yahoo', 'AAPL',
-                            None, False, None, None), job)
+            find_prices.PriceSource(yahoo, 'AAPL', False),
+            psource)
