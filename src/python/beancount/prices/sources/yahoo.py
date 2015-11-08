@@ -1,11 +1,18 @@
-"""Fetch prices from Yahoo Finance.
+"""Fetch prices from Yahoo Finance's CSV API.
 
-There is also a web service XML/JSON API:
+Fields:
+https://code.google.com/p/yahoo-finance-managed/wiki/enumQuoteProperty
+
+Yahoo also has a web service with a query language (YQL) that outputs XML or
+JSON but it requires a key, so that's why we're using the CSV API here, for
+simplicity's sake. In any case, the YQL API docs is located here:
 http://finance.yahoo.com/webservice/v1/symbols/allcurrencies/quote
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import datetime
+import logging
+import re
 from urllib import request
 from urllib import parse
 from urllib import error
@@ -16,20 +23,41 @@ from beancount.utils import net_utils
 
 
 class Source(source.Source):
-    "Yahoo Finance price source extractor."
+    "Yahoo Finance CSV API price extractor."
 
     def get_latest_price(self, ticker):
         """See contract in beancount.prices.source.Source."""
 
-        url = 'http://finance.yahoo.com/d/quotes.csv?s={}&f={}'.format(ticker, 'b3b2')
-        data = net_utils.retrying_urlopen(url).read().decode('utf-8').strip()
-        if not data:
+        # Try "realtime" and just regular bid/ask pairs.
+        for fields, num_prices in [('l1d1', 1),
+                                   ('b3b2d2', 2),
+                                   ('b0a0d2', 2),
+                                   ('p0d2', 2)]:
+            url = 'http://finance.yahoo.com/d/quotes.csv?s={}&f=c4{}'.format(ticker, fields)
+            data = net_utils.retrying_urlopen(url).read().decode('utf-8').strip()
+            if data and not re.match('N/A', data):
+                break
+        else:
             return None
-        bid_str, ask_str = data.split(',')
-        if bid_str == 'N/A' or ask_str == 'N/A':
-            return None
-        bid, ask = D(bid_str), D(ask_str)
-        return source.SourcePrice((bid + ask)/2, datetime.datetime.now(), None)
+        components = data.split(',')
+
+        # Get the currency.
+        currency = components[0].strip('"')
+
+        # Get the
+        if num_prices == 1:
+            # Process just a price.
+            price = D(components[1])
+        else:
+            # Process separate bid/offer.
+            bid = D(components[1])
+            ask = D(components[2])
+            price = (bid + ask)/2
+
+        # Get the trade date for that price.
+        trade_date = datetime.datetime.strptime(components[-1], '"%m/%d/%Y"')
+
+        return source.SourcePrice(price, trade_date, currency)
 
     def get_historical_price(self, ticker, date):
         """See contract in beancount.prices.source.Source."""
