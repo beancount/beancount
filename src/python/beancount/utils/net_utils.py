@@ -18,7 +18,7 @@ def retrying_urlopen(url, timeout=5, max_retry=5):
       The contents of the fetched URL.
     """
     for _ in range(max_retry):
-        logging.info("Opening %s", url)
+        logging.debug("Reading %s", url)
         response = request.urlopen(url, timeout=timeout)
         if response:
             break

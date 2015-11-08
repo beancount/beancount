@@ -121,7 +121,7 @@ def fetch_price(job, source_map):
 
     if srcprice is None:
         logging.error("Could not fetch for job: %s", job)
-        return
+        return None
 
     # Invert the currencies if the rate if the rate is inverted..
     base, quote = job.base, job.quote or srcprice.quote_currency

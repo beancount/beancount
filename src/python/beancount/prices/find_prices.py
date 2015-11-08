@@ -247,6 +247,8 @@ def get_price_jobs_at_date(entries, date=None, inactive=False, undeclared=False)
     # given date.
     if not inactive:
         balance_currencies = find_balance_currencies(entries, date)
+        for x in balance_currencies:
+            print('b', x)
         currencies = currencies & balance_currencies
 
     # Build up the list of jobs to fetch prices for.

@@ -35,6 +35,39 @@ from beancount.utils import memo
 from beancount.prices import find_prices
 
 
+def fetch_price(dprice):
+    """Fetch a price for the DatePrice job..
+
+    Args:
+      dprice: A DatedPrice instances.
+      source_map: A mapping of source string to a source module object.
+    Returns:
+      A list of Price entries corresponding to the outputs of the jobs processed.
+    """
+    for psource in dprice.sources:
+        source = psource.module.Source()
+        srcprice = (
+            source.get_latest_price(psource.symbol)
+            if dprice.date is None else
+            source.get_historical_price(psource.symbol, psource.date))
+        if srcprice is not None:
+            break
+    else:
+        logging.error("Could not fetch for job: %s", dprice)
+        return None
+
+    # Invert the currencies if the rate if the rate is inverted.
+    base, quote = dprice.base, dprice.quote or srcprice.quote_currency
+    if psource.invert:
+        base, quote = quote, base
+
+    assert base is not None
+    assert quote is not None
+    fileloc = data.new_metadata('<{}>'.format(type(psource.module).__name__), 0)
+    return data.Price(fileloc, srcprice.time.date(), base,
+                      amount.Amount(srcprice.price, quote))
+
+
 def setup_cache(cache_filename, clear_cache):
     """Setup the results cache.
 
@@ -48,7 +81,6 @@ def setup_cache(cache_filename, clear_cache):
 
     if cache_filename:
         logging.info('Using price cache at "{}"'.format(cache_filename))
-        #request.urlopen = memo.memoize_recent_fileobj(request.urlopen, cache_filename)
         net_utils.retrying_urlopen = memo.memoize_recent_fileobj(net_utils.retrying_urlopen,
                                                                  cache_filename)
 
@@ -129,7 +161,7 @@ def process_args():
     setup_cache(args.cache_filename, args.clear_cache)
 
     # Get the list of DatedPrice jobs to get from the arguments.
-    logging.info("Processing at date: %s", args.date)
+    logging.info("Processing at date: %s", args.date or datetime.date.today())
     jobs = []
     if args.expressions:
         # Interpret the arguments as price sources.
@@ -150,7 +182,7 @@ def process_args():
             if not path.exists(filename) or not path.isfile(filename):
                 parser.error('File does not exist: "{}"'.format(filename))
                 continue
-            logging.info("Loading: %s", args.date)
+            logging.info('Loading "%s"', filename)
             entries, errors, options_map = loader.load_file(filename)
             jobs.extend(
                 find_prices.get_price_jobs_at_date(
@@ -166,9 +198,22 @@ def main():
     if args.dry_run:
         for dprice in jobs:
             print(find_prices.format_dated_price_str(dprice))
+        return
 
     # FIXME: Implement clobber here.
 
 
     # FIXME: Should I also create a function to gather pairs implied from
     # previous price directives?
+
+    # FIXME: Should I always include conversions between currencies and all the
+    # operating currencies? This could solve the problem of INR and USD only
+    # having ever been converted to CAD in my history. Write a test for this.
+
+
+    # Fetch all the required prices, processing all the jobs.
+    executor = futures.ThreadPoolExecutor(max_workers=3)
+    price_entries = sorted(filter(None, executor.map(fetch_price, jobs)))
+
+    # Print out the entries.
+    printer.print_entries(price_entries)
