@@ -145,8 +145,11 @@ def process_args():
         for filename in args.sources:
             if not path.exists(filename) or not path.isfile(filename):
                 parser.error('File does not exist: "{}"'.format(filename))
-            else:
-                jobs.extend(find_prices.jobs_from_file(filename, args.date))
+                continue
+            entries, errors, options_map = loader.load_file(filename)
+            jobs.extend(
+                find_prices.price_jobs_at_date(filename,
+                                               args.inactive, args.undeclared, args.date))
 
     return args, jobs
 

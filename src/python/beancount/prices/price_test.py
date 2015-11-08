@@ -84,6 +84,11 @@ class TestProcessArguments(unittest.TestCase):
                     [find_prices.PriceSource(google, 'NASDAQ:AAPL', False)])], jobs)
 
 
+class TestFileFilter(unittest.TestCase):
+
+    def test_expressions(self):
+
+
 
 
 # FIXME: TODO - Behavior to be implemented and tested.

@@ -6,6 +6,9 @@ import collections
 import re
 import sys
 
+from beancount.core import data
+from beancount.ops import summarize
+
 
 # A dated price source description.
 #
@@ -81,8 +84,8 @@ def import_source(module_name):
                 module_name, exc))
 
 
-def jobs_from_file(filename, date):
-    """Get a list of prices to fetch from a given Beancount file.
+def price_jobs_at_date(entries, date=None, inactive=False, undeclared=False):
+    """Get a list of prices to fetch from a stream of entries.
 
     The active holdings held on the given date are included.
 
@@ -94,3 +97,43 @@ def jobs_from_file(filename, date):
     """
     # FIXME - TODO(blais): Implement this.
     return []
+
+
+def currencies_held_at_cost_at_date(entries, date=None):
+    """Return currencies held-at-cost at the given date.
+
+    Args:
+      entries: A list of directives.
+      date: A datetime.date instance.
+    Returns:
+      A set of (base, quote) currencies.
+    """
+    currencies = set()
+    balances, _ = summarize.balance_by_account(entries, date)
+    for _, balance in balances.items():
+        for pos in balance:
+            if pos.lot.cost is not None:
+                currencies.add((pos.lot.currency, pos.lot.cost.currency))
+    return currencies
+
+
+def currencies_priced_at_date(entries, date):
+    """Return currencies that were price converted up to the given date.
+
+    Args:
+      entries: A list of directives.
+      date: A datetime.date instance.
+    Returns:
+      A list of (base, quote) currencies.
+    """
+    currencies = set()
+    for entry in entries:
+        if not isinstance(entry, data.Transaction):
+            continue
+        if date and entry.date >= date:
+            break
+        for posting in entry.postings:
+            if posting.price is None:
+                continue
+            currencies.add((posting.position.lot.currency, posting.price.currency))
+    return currencies

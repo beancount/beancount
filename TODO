@@ -2,10 +2,6 @@
 beancount: TODO
 * Price Script
 
-  - First thing in parsing for sources and importing: Normalize the default
-    sources to have the full import name beancount.prices.sources.<name>,
-    isolating the alias itself for further checks down the road.
-
   - Cache key should be reviewed to include the source and requested date/time
     as well. Perhaps quantize the date/time to 10 minutes or something.
 
