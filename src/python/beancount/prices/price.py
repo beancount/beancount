@@ -56,7 +56,8 @@ def fetch_price(dprice):
         if srcprice is not None:
             break
     else:
-        logging.error("Could not fetch for job: %s", dprice)
+        if dprice.sources:
+            logging.error("Could not fetch for job: %s", dprice)
         return None
 
     # Invert the currencies if the rate if the rate is inverted.
@@ -153,7 +154,8 @@ def process_args():
 
     args = parser.parse_args()
 
-    verbose_levels = {0: logging.WARN,
+    verbose_levels = {None: logging.WARN,
+                      0: logging.WARN,
                       1: logging.INFO,
                       2: logging.DEBUG}
     logging.basicConfig(level=verbose_levels[args.verbose],

@@ -237,6 +237,18 @@ def find_balance_currencies(entries, date=None):
     return currencies
 
 
+def log_currency_list(message, currencies):
+    """Lot a list of currencies to debug output.
+
+    Args:
+      message: A message string to prepend.
+      currencies: A list of (base, quote) currency pair.
+    """
+    for base, quote in currencies:
+        cur_str = '{} / {}'.format(base, quote)
+        logging.debug("{}: {:>24}".format(message, cur_str))
+
+
 def get_price_jobs_at_date(entries, date=None, inactive=False, undeclared=False):
     """Get a list of prices to fetch from a stream of entries.
 
@@ -262,16 +274,19 @@ def get_price_jobs_at_date(entries, date=None, inactive=False, undeclared=False)
         cur_converted = find_currencies_converted(entries, date)
         cur_priced = find_currencies_priced(entries, date)
         currencies = cur_at_cost | cur_converted | cur_priced
+        log_currency_list("Currency at cost  ", cur_at_cost)
+        log_currency_list("Currency converted", cur_converted)
+        log_currency_list("Currency priced   ", cur_priced)
     else:
         # Use the currencies from the Commodity directives.
         currencies = set(ticker_map.keys())
-        for currency in currencies:
-            logging.debug("Currency declared: %s", currency)
+        log_currency_list("Currency declared ", currencies)
 
     # By default, restrict to only the currencies with non-zero balances at the
     # given date.
     if not inactive:
         balance_currencies = find_balance_currencies(entries, date)
+        log_currency_list("Balance currencies", balance_currencies)
         currencies = currencies & balance_currencies
 
     # Build up the list of jobs to fetch prices for.

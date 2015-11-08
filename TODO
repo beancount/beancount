@@ -53,13 +53,6 @@ beancount: TODO
     should try multiple sources in turn. In fact, maybe the "source" parameter
     should always be a list of preferences.
 
-  - The "ticker" field of the commodity directive really should be a list of
-    sources, e.g.,
-
-    1976-04-01 commodity AAPL
-      ...
-      ticker: "google/NASDAQ:AAPL,yahoo/AAPL"
-
   - Update the doc about the syntax of ticker, when the code parses a list of
     source/tickers, mention how this is intended to work in the doc.
 
@@ -67,6 +60,12 @@ beancount: TODO
     e.g. the returns code for all needed prices, or "every price every friday"
     and then to run those price fetching jobs.
 
+  - To get currencies right, the ticker should have more than a single target
+    currency, maybe something like this:
+
+    1976-04-01 commodity USD
+      ...
+      ticker: "CAD:google/CURRENCY:USDCAD,yahoo/USDCAD;GBP:google/^CURRENCY:GBPUSD"
 
 
 * Event
