@@ -1398,36 +1398,36 @@ def generate_commodity_entries(date_birth):
         2009-05-01 commodity RGAGX
           name: "American Funds The Growth Fund of America Class R-6"
           quote: USD
-          ticker: "MUTF:RGAGX"
+          ticker: "yahoo/MUTF:RGAGX"
 
         1995-09-18 commodity VBMPX
           name: "Vanguard Total Bond Market Index Fund Institutional Plus Shares"
           quote: USD
-          ticker: "MUTF:VBMPX"
+          ticker: "yahoo/MUTF:VBMPX"
 
         2004-01-20 commodity ITOT
           name: "iShares Core S&P Total U.S. Stock Market ETF"
           quote: USD
-          ticker: "NYSEARCA:ITOT"
+          ticker: "yahoo/NYSEARCA:ITOT"
 
         2007-07-20 commodity VEA
           name: "Vanguard FTSE Developed Markets ETF"
           quote: USD
-          ticker: "NYSEARCA:VEA"
+          ticker: "yahoo/NYSEARCA:VEA"
 
         2004-01-26 commodity VHT
           name: "Vanguard Health Care ETF"
           quote: USD
-          ticker: "NYSEARCA:VHT"
+          ticker: "yahoo/NYSEARCA:VHT"
 
         2004-11-01 commodity GLD
           name: "SPDR Gold Trust (ETF)"
           quote: USD
-          ticker: "NYSEARCA:GLD"
+          ticker: "yahoo/NYSEARCA:GLD"
 
         1900-01-01 commodity VMMXX
           quote: USD
-          ticker: "MUTF:VMMXX"
+          ticker: "yahoo/MUTF:VMMXX"
           export: "MONEY"
 
     """, **locals())
