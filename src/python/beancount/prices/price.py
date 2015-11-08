@@ -47,14 +47,14 @@ def setup_cache(cache_filename, clear_cache):
         os.remove(cache_filename)
 
     if cache_filename:
-        logging.info('Using cache at "{}"'.format(cache_filename))
+        logging.info('Using price cache at "{}"'.format(cache_filename))
         #request.urlopen = memo.memoize_recent_fileobj(request.urlopen, cache_filename)
         net_utils.retrying_urlopen = memo.memoize_recent_fileobj(net_utils.retrying_urlopen,
                                                                  cache_filename)
 
 
 def process_args():
-    """Process the arguments.
+    """Process the arguments. This also initializes the logging module.
 
     Returns:
       A pair of 'args' the receiver of arguments and a list of Job objects.
@@ -74,7 +74,7 @@ def process_args():
                         help="Print out progress log.")
 
     parse_date = lambda s: parse_datetime(s).date()
-    parser.add_argument('--date', action='store', type=parse_date,
+    parser.add_argument('-d', '--date', action='store', type=parse_date,
                         help="Specify the date for which to fetch the prices.")
 
     parser.add_argument('-t', '--always-invert', action='store_true',
@@ -119,6 +119,9 @@ def process_args():
 
     args = parser.parse_args()
 
+    logging.basicConfig(level=logging.INFO if args.verbose else logging.WARN,
+                        format='%(levelname)-8s: %(message)s')
+
     if args.all:
         args.inactive = args.undeclared = args.clobber = True
 
@@ -126,18 +129,19 @@ def process_args():
     setup_cache(args.cache_filename, args.clear_cache)
 
     # Get the list of DatedPrice jobs to get from the arguments.
+    logging.info("Processing at date: %s", args.date)
     jobs = []
     if args.expressions:
         # Interpret the arguments as price sources.
-        for sourcelist in args.sources:
+        for source_list in args.sources:
             try:
-                sources = list(map(find_prices.parse_source_string, sourcelist.split(',')))
+                sources = list(map(find_prices.parse_source_string, source_list.split(',')))
             except ValueError:
-                if path.exists(sourcelist):
+                if path.exists(source_list):
                     msg = 'Invalid source "{}"; did you provide a filename?'
                 else:
                     msg = 'Invalid source "{}"'
-                parser.error(msg.format(sourcelist))
+                parser.error(msg.format(source_list))
             else:
                 jobs.append(find_prices.DatedPrice(None, None, args.date, sources))
     else:
@@ -146,24 +150,25 @@ def process_args():
             if not path.exists(filename) or not path.isfile(filename):
                 parser.error('File does not exist: "{}"'.format(filename))
                 continue
+            logging.info("Loading: %s", args.date)
             entries, errors, options_map = loader.load_file(filename)
             jobs.extend(
-                find_prices.price_jobs_at_date(filename,
-                                               args.inactive, args.undeclared, args.date))
+                find_prices.get_price_jobs_at_date(
+                    entries, args.date, args.inactive, args.undeclared))
 
     return args, jobs
 
 
 def main():
     args, jobs = process_args()
-    logging.basicConfig(level=logging.INFO if args.verbose else logging.WARN,
-                        format='%(levelname)-8s: %(message)s')
 
     # If we're just being asked to list the jobs, do this here.
     if args.dry_run:
-        for job in jobs:
-            print(job)
+        for dprice in jobs:
+            print(find_prices.format_dated_price_str(dprice))
 
-    # TODO: Define the jobs as cascading.
+    # FIXME: Implement clobber here.
 
-    # TODO: Validate modules here for all jobs.
+
+    # FIXME: Should I also create a function to gather pairs implied from
+    # previous price directives?
