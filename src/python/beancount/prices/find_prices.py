@@ -47,7 +47,7 @@ def format_dated_price_str(dprice):
                                 psource.symbol)
               for psource in dprice.sources]
     base_quote = '{} / {}'.format(dprice.base, dprice.quote)
-    return '{:>24} @ {:10} [ {} ]'.format(base_quote,
+    return '{:>32} @ {:10} [ {} ]'.format(base_quote,
                                         dprice.date or 'latest',
                                         ','.join(psstrs))
 
@@ -211,9 +211,6 @@ def find_balance_currencies(entries, date=None):
     Returns:
       A set of (base, quote) currencies.
     """
-    # Find the price conversions until this date.
-    converted = find_currencies_converted(entries, date)
-
     # Compute the balances.
     currencies = set()
     currencies_on_books = set()
@@ -228,11 +225,16 @@ def find_balance_currencies(entries, date=None):
                 # Add regular currencies.
                 currencies_on_books.add(lot.currency)
 
-    # Add currency pairs that contain the currency whose balanace
-    for currency in currencies_on_books:
-        for base, quote in converted:
-            if base == currency or quote == currency:
-                currencies.add((base, quote))
+    # Create currency pairs from the currencies which are on account balances.
+    # In order to figure out the the quote currencies, we use the list of price
+    # conversions until this date.
+    converted = (find_currencies_converted(entries, date) |
+                 find_currencies_priced(entries, date))
+    for cbase in currencies_on_books:
+        for base_quote in converted:
+            base, quote = base_quote
+            if base == cbase:
+                currencies.add(base_quote)
 
     return currencies
 
@@ -246,7 +248,7 @@ def log_currency_list(message, currencies):
     """
     for base, quote in currencies:
         cur_str = '{} / {}'.format(base, quote)
-        logging.debug("{}: {:>24}".format(message, cur_str))
+        logging.debug("{}: {:>32}".format(message, cur_str))
 
 
 def get_price_jobs_at_date(entries, date=None, inactive=False, undeclared=False):
