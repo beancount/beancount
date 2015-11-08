@@ -2,6 +2,9 @@
 beancount: TODO
 * Price Script
 
+  - Add lots of logging to ensure it's easily debuggable for --inactive and
+    --undeclared.
+
   - Cache key should be reviewed to include the source and requested date/time
     as well. Perhaps quantize the date/time to 10 minutes or something.
 

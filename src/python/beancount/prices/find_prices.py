@@ -41,12 +41,12 @@ def format_dated_price_str(dprice):
     Returns:
       The string for a DatedPrice instance.
     """
-    psstrs = ['{} {}{}'.format(psource.module.__name__,
-                               '1/' if psource.invert else '',
-                               psource.symbol)
+    psstrs = ['{}({}{})'.format(psource.module.__name__,
+                                '1/' if psource.invert else '',
+                                psource.symbol)
               for psource in dprice.sources]
     base_quote = '{} / {}'.format(dprice.base, dprice.quote)
-    return '{:>24} @ {:10} ({})'.format(base_quote,
+    return '{:>24} @ {:10} [ {} ]'.format(base_quote,
                                         dprice.date or 'latest',
                                         ','.join(psstrs))
 
@@ -247,8 +247,6 @@ def get_price_jobs_at_date(entries, date=None, inactive=False, undeclared=False)
     # given date.
     if not inactive:
         balance_currencies = find_balance_currencies(entries, date)
-        for x in balance_currencies:
-            print('b', x)
         currencies = currencies & balance_currencies
 
     # Build up the list of jobs to fetch prices for.
