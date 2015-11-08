@@ -29,10 +29,8 @@ class TestImportSource(unittest.TestCase):
 class TestParseSource(unittest.TestCase):
 
     def test_source_invalid(self):
-        with self.assertRaises(ValueError):
-            find_prices.parse_source_string('AAPL')
-        with self.assertRaises(ValueError):
-            find_prices.parse_source_string('***//--')
+        self.assertIsNone(find_prices.parse_source_string('AAPL'))
+        self.assertIsNone(find_prices.parse_source_string('***//--'))
 
         # The module gets imported at this stage.
         with self.assertRaises(ImportError):
@@ -144,17 +142,18 @@ class TestFromFile(unittest.TestCase):
     def test_find_balance_currencies(self):
         currencies = find_prices.find_balance_currencies(self.entries, None)
         self.assertEqual({('QQQ', 'USD'),
-                          ('GBP', 'USD'), ('USD', 'CAD')}, currencies)
+                          ('GBP', 'USD'), ('GBP', 'CAD'), ('USD', 'CAD')}, currencies)
 
         currencies = find_prices.find_balance_currencies(self.entries,
                                                          datetime.date(2015, 12, 1))
         self.assertEqual({('XSP', 'CAD'),
-                          ('QQQ', 'USD'), ('GBP', 'USD'), ('USD', 'CAD')}, currencies)
+                          ('QQQ', 'USD'), ('GBP', 'USD'), ('GBP', 'CAD'), ('USD', 'CAD')},
+                         currencies)
 
         currencies = find_prices.find_balance_currencies(self.entries,
                                                          datetime.date(2015, 11, 1))
         self.assertEqual({('QQQ', 'USD'),
-                          ('GBP', 'USD'), ('USD', 'CAD')}, currencies)
+                          ('GBP', 'USD'), ('GBP', 'CAD'), ('USD', 'CAD')}, currencies)
 
         currencies = find_prices.find_balance_currencies(self.entries,
                                                          datetime.date(2015, 2, 1))
