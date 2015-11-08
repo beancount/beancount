@@ -385,6 +385,10 @@ def load_doc(expect_errors=False):
                 elif expect_errors is True and not errors:
                     self.fail("Expected errors, none found:")
 
+            # Note: Even if we expected no errors, we call this function with an
+            # empty 'errors' list. This is so that the interface does not change
+            # based on the arguments to the decorator, which would be somewhat
+            # ugly and which would require explanation.
             return fun(self, entries, errors, options_map)
 
         wrapper.__input__ = wrapper.__doc__
