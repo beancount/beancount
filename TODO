@@ -2,13 +2,14 @@
 beancount: TODO
 * Price Script
 
-  - Add lots of logging to ensure it's easily debuggable for --inactive and
-    --undeclared.
+  - Fix Yahoo test, test for all possible scenarios of availability!
 
-  - Cache key should be reviewed to include the source and requested date/time
-    as well. Perhaps quantize the date/time to 10 minutes or something.
+  - You need to add a unit test for the inverted case, make sure just swapping the
+    currencies results in the correct output. Plus test --always-invert.
 
 
+
+  The next two questions are inter-related:
 
   - Figure out how to output a price directive when there is no quote currency
     for a source... is a default to USD reasonable? Perhaps we should output
@@ -19,46 +20,12 @@ beancount: TODO
       file or substitute for '?'. You'll need to change the interface to
       importers in order to do this.
 
-  - There should only be a few modules for this:
-    - This code, which calls the fetching modules
-    - Code to figure out the list of jobs from files, from symbol lists, active
-      set of assets, trade dates, etc.
-    - Each source implementation.
+  - Should I always include conversions between currencies and all the operating
+    currencies? This could solve the problem of INR and USD only having ever
+    been converted to CAD in my history. Write a test for this. Add a routine,
+    maybe this should be an option.
 
-  - The implementation of fetchers should be imported dynamically. The name of
-    importers really ought to be the same as the named of modules, e.g.
-    "@beanprice.sources.google/NASDAQ:AAPL". Maybe the prefix should be attempted
-    be resolved to the "@beanprice.sources.NAME" prefix automatically, but beyond
-    that, would be a straight-up import, so that you may define your own outside
-    of this.
 
-  - Note: From get_jobs_from_file():
-    FIXME - TODO: We should also separately use the history of commodities
-    held-at-cost, as well as the list of commodities held at the particular
-    point in time, in order to determine the final set of commodities.
-
-  - Also allow the specification of a delta used to allow dates "near" the correct
-    date to stand-in for necessary dates. This should be able to work with the
-    returns calculation script.
-
-  - Implement using an option/command-line listing the jobs without actually
-    fetching the prices, with --dry-run. This should be used to cross-check the
-    finding routines in unit tests.
-
-  - You need to add a unit test for the inverted case, make sure just swapping the
-    currencies results in the correct output.
-
-  - We must support multiple sources, because any source will not necessarily
-    support every ticket. When an explicit source hasn't been specified, you
-    should try multiple sources in turn. In fact, maybe the "source" parameter
-    should always be a list of preferences.
-
-  - Update the doc about the syntax of ticker, when the code parses a list of
-    source/tickers, mention how this is intended to work in the doc.
-
-  - You need to make it possible to easily have other processes create jobs,
-    e.g. the returns code for all needed prices, or "every price every friday"
-    and then to run those price fetching jobs.
 
   - To get currencies right, the ticker should have more than a single target
     currency, maybe something like this:
@@ -66,6 +33,16 @@ beancount: TODO
     1976-04-01 commodity USD
       ...
       ticker: "CAD:google/CURRENCY:USDCAD,yahoo/USDCAD;GBP:google/^CURRENCY:GBPUSD"
+
+
+  - Complete the doc:
+    https://docs.google.com/document/d/1EZCP8VX3cOuyp2CKECfsq0LAfaXcHTVr7-EKIsRJBa8/edit
+
+
+  (separate)
+  - Write a script that will iterate and fetch all the missing dates on Friday,
+    or last DOM for the required portfolio during the entire duration.
+
 
 
 * Event
@@ -1400,6 +1377,13 @@ http://furius.ca/beancount/doc/proposal-inter
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+  - Implement a simple pickle cache that automatically creates .beancountc files
+    and updates them when the input file changes. This should be done
+    automatically, in the loader, and disabled with a global command-line
+    option. The goal is to speed up calculations when the file hasn't changed.
+    Measure the time it takes, not entirely sure this is worth it (probably is).
 
 
   - An important option exists around the behavior of balance checks: Should
