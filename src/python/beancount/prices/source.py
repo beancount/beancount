@@ -22,7 +22,11 @@ class Source:
     "Interface to be implemented by all price sources."
 
     def get_latest_price(self, ticker):
-        """Fetch the current latest price.
+        """Fetch the current latest price. The date may differ.
+
+        This routine attempts to fetch the most recent available price, and
+        returns the actual date of the quoted price, which may differ from the
+        date this call is made at. {1cfa25e37fc1}
 
         Args:
           ticker: A string, the ticker to be fetched by the source. This ticker
@@ -34,6 +38,7 @@ class Source:
           returned and another source should be consulted. There is never any
           guarantee that a price source will be able to fetch its value; client
           code must be able to handle this.
+
         """
 
     def get_historical_price(self, ticker, date):
