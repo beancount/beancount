@@ -35,7 +35,13 @@ from beancount.utils import memo
 from beancount.prices import find_prices
 
 
+# Stand-in currency name for unknown currencies.
 UNKNOWN_CURRENCY = '?'
+
+
+# Expire the cache after a few hours. It is mainly used for debugging this
+# script.
+CACHE_EXPIRATION = datetime.timedelta(seconds=3*60*60)
 
 
 def fetch_price(dprice):
@@ -83,16 +89,59 @@ def setup_cache(cache_filename, clear_cache):
         os.remove(cache_filename)
 
     if cache_filename:
-        logging.info('Using price cache at "{}"'.format(cache_filename))
+        logging.info('Using price cache at "{}" (with {} expiration)'.format(
+            cache_filename, CACHE_EXPIRATION))
         net_utils.retrying_urlopen = memo.memoize_recent_fileobj(net_utils.retrying_urlopen,
-                                                                 cache_filename)
+                                                                 cache_filename,
+                                                                 CACHE_EXPIRATION)
+
+
+def filter_redundant_prices(price_entries, existing_entries, diffs=False):
+    """Filter out new entries that are redundant from an existing set.
+
+    If the price differs, we override it with the new entry only on demand. This
+    is because this would create conflict with existing price entries when
+    parsing, if the new entries are simply inserted into the input.
+
+    Args:
+      price_entries: A list of newly created, proposed to be added Price directives.
+      existing_entries: A list of existing entries we are proposing to add to.
+      diffs: A boolean, true if we should output differing price entries
+        at the same date.
+    Returns:
+      A filtered list of remaining entries, and a list of ignored entries.
+    """
+    # Note: We have to be careful with the dates, because requesting the latest
+    # price for a date may yield the price at a previous date. Clobber needs to
+    # take this into account. See {1cfa25e37fc1}.
+    existing_prices = {(entry.date, entry.currency): entry
+                       for entry in existing_entries
+                       if isinstance(entry, data.Price)}
+    filtered_prices = []
+    ignored_prices = []
+    for entry in price_entries:
+        key = (entry.date, entry.currency)
+        if key in existing_prices:
+            if diffs:
+                existing_entry = existing_prices[key]
+                if existing_entry.amount == entry.amount:
+                    output = ignored_prices
+            else:
+                output = ignored_prices
+        else:
+            output = filtered_prices
+        output.append(entry)
+    return filtered_prices, ignored_prices
 
 
 def process_args():
     """Process the arguments. This also initializes the logging module.
 
     Returns:
-      A pair of 'args' the receiver of arguments and a list of Job objects.
+      A tuple of:
+        args: The argparse receiver of command-line arguments.
+        jobs: A list of DatedPrice job objects.
+        entries: A list of all the parsed entries.
     """
     parser = argparse.ArgumentParser(description=beancount.prices.__doc__)
 
@@ -170,6 +219,7 @@ def process_args():
     # Get the list of DatedPrice jobs to get from the arguments.
     logging.info("Processing at date: %s", args.date or datetime.date.today())
     jobs = []
+    all_entries = []
     if args.expressions:
         # Interpret the arguments as price sources.
         for source_list in args.sources:
@@ -196,12 +246,13 @@ def process_args():
             jobs.extend(
                 find_prices.get_price_jobs_at_date(
                     entries, args.date, args.inactive, args.undeclared))
+            all_entries.extend(entries)
 
-    return args, jobs
+    return args, jobs, data.sorted(all_entries)
 
 
 def main():
-    args, jobs = process_args()
+    args, jobs, entries = process_args()
 
     # If we're just being asked to list the jobs, do this here.
     if args.dry_run:
@@ -209,20 +260,15 @@ def main():
             print(find_prices.format_dated_price_str(dprice))
         return
 
-    # FIXME: Implement clobber here.
-
-
-    # FIXME: Should I also create a function to gather pairs implied from
-    # previous price directives?
-
-    # FIXME: Should I always include conversions between currencies and all the
-    # operating currencies? This could solve the problem of INR and USD only
-    # having ever been converted to CAD in my history. Write a test for this.
-
-
     # Fetch all the required prices, processing all the jobs.
     executor = futures.ThreadPoolExecutor(max_workers=3)
     price_entries = sorted(filter(None, executor.map(fetch_price, jobs)))
+
+    # Avoid clobber, remove redundant entries.
+    if not args.clobber:
+        price_entries, ignored_entries = filter_redundant_prices(price_entries, entries)
+        for entry in ignored_entries:
+            logging.info("Ignored to avoid clobber: %s %s", entry.date, entry.currency)
 
     # Print out the entries.
     printer.print_entries(price_entries)

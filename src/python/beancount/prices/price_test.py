@@ -17,6 +17,8 @@ from beancount.prices import find_prices
 from beancount.prices.sources import google
 from beancount.core.number import D, Decimal
 from beancount.utils import test_utils
+from beancount.parser import cmptest
+from beancount import loader
 
 
 class TestSetupCache(unittest.TestCase):
@@ -64,7 +66,7 @@ class TestProcessArguments(unittest.TestCase):
     def test_filename_not_exists(self):
         with test_utils.capture('stderr') as stderr:
             with self.assertRaises(SystemExit):
-                args, jobs = test_utils.run_with_args(
+                args, jobs, _ = test_utils.run_with_args(
                     price.process_args, ['--no-cache', '/some/file.beancount'])
 
     @test_utils.docfile
@@ -74,65 +76,88 @@ class TestProcessArguments(unittest.TestCase):
         2015-01-01 open USD ;; Error
         """
         with test_utils.capture('stderr') as stderr:
-            args, jobs = test_utils.run_with_args(
+            args, jobs, _ = test_utils.run_with_args(
                 price.process_args, ['--no-cache', filename])
             self.assertEqual([], jobs)
 
     def test_filename_exists(self):
         with tempfile.NamedTemporaryFile('w') as tmpfile:
             with test_utils.capture('stderr') as stderr:
-                args, jobs = test_utils.run_with_args(
+                args, jobs, _ = test_utils.run_with_args(
                     price.process_args, ['--no-cache', tmpfile.name])
                 self.assertEqual([], jobs)  # Empty file.
 
     def test_expressions(self):
         with test_utils.capture('stderr') as stderr:
-            args, jobs = test_utils.run_with_args(
+            args, jobs, _ = test_utils.run_with_args(
                 price.process_args, ['--no-cache', '-e', 'google/NASDAQ:AAPL'])
             self.assertEqual(
                 [find_prices.DatedPrice(
-                    None, None, None,
+                    'NASDAQ:AAPL', None, None,
                     [find_prices.PriceSource(google, 'NASDAQ:AAPL', False)])], jobs)
 
 
-class TestMisc(unittest.TestCase):
+class TestClobber(cmptest.TestCase):
 
-    def test_misc(self):
-        pass
+    @loader.load_doc()
+    def setUp(self, entries, _, __):
+        """
+          ;; Existing file.
+          2015-01-05 price HDV                                 75.56 USD
+          2015-01-23 price HDV                                 77.34 USD
+          2015-02-06 price HDV                                 77.16 USD
+          2015-02-12 price HDV                                 78.17 USD
+          2015-05-01 price HDV                                 77.48 USD
+          2015-06-02 price HDV                                 76.33 USD
+          2015-06-29 price HDV                                 73.74 USD
+          2015-07-06 price HDV                                 73.79 USD
+          2015-08-11 price HDV                                 74.19 USD
+          2015-09-04 price HDV                                 68.98 USD
+        """
+        self.entries = entries
+
+        # New entries.
+        self.price_entries, _, __ = loader.load_string("""
+          2015-01-27 price HDV                                 76.83 USD
+          2015-02-06 price HDV                                 77.16 USD
+          2015-02-19 price HDV                                  77.5 USD
+          2015-06-02 price HDV                                 76.33 USD
+          2015-06-19 price HDV                                    76 USD
+          2015-07-06 price HDV                                 73.79 USD
+          2015-07-31 price HDV                                 74.64 USD
+          2015-08-11 price HDV                                 74.20 USD ;; Different
+        """, dedent=True)
+
+    def test_clobber_nodiffs(self):
+        new_price_entries, _ = price.filter_redundant_prices(self.price_entries, self.entries,
+                                                             diffs=False)
+        self.assertEqualEntries("""
+          2015-01-27 price HDV                                 76.83 USD
+          2015-02-19 price HDV                                  77.5 USD
+          2015-06-19 price HDV                                    76 USD
+          2015-07-31 price HDV                                 74.64 USD
+        """, new_price_entries)
+
+    def test_clobber_diffs(self):
+        new_price_entries, _ = price.filter_redundant_prices(self.price_entries, self.entries,
+                                                             diffs=True)
+        self.assertEqualEntries("""
+          2015-01-27 price HDV                                 76.83 USD
+          2015-02-19 price HDV                                  77.5 USD
+          2015-06-19 price HDV                                    76 USD
+          2015-07-31 price HDV                                 74.64 USD
+          2015-08-11 price HDV                                 74.20 USD ;; Different
+        """, new_price_entries)
 
 
 
 # FIXME: TODO - Behavior to be implemented and tested.
 """
-    parse_date = lambda s: parse_datetime(s).date()
-    parser.add_argument('--date', action='store', type=parse_date,
-                        help="Specify the date for which to fetch the prices.")
-
     parser.add_argument('-t', '--always-invert', action='store_true',
                         help=("Never just swap currencies for inversion, invert the actual "
                               "rate when necessary, so that all price definitions are in "
                               "the expected order"))
-
-    parser.add_argument('-i', '--inactive',
-                        action='store_true',
-                        help=("Select all commodities from input files, not just the ones "
-                              "active on the date"))
-
-    parser.add_argument('-u', '--undeclared', action='store_true',
-                        help="Include commodities viewed in the file even without a "
-                        "corresponding Commodity directive. The currency name itself is "
-                        "used as the lookup symbol in the default sources.")
-
-    parser.add_argument('-c', '--clobber', action='store_true',
-                        help=("Do not skip prices which are already present in input "
-                              "files; fetch them anyway."))
-
-    parser.add_argument('-a', '--all', action='store_true',
-                        help="A shorthand for --inactive, --undeclared, --clobber.")
-
-    parser.add_argument('-n', '--dry-run', '--jobs', '--print-only', action='store_true',
-                        help=("Don't actually fetch the prices, just print the list of the "
-                              "ones to be fetched."))
 """
+
 
 __incomplete__ = True
