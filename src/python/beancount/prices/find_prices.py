@@ -4,6 +4,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
 import itertools
+import logging
 import re
 import sys
 
@@ -21,7 +22,7 @@ from beancount.ops import summarize
 #     may be null.
 #   date: A datetime.date object for the date to be fetched, or None
 #     with the meaning of fetching the latest price.
-#   sources: A list of PriceSource instances.
+#   sources: A list of PriceSource instances describing where to fetch prices from.
 DatedPrice = collections.namedtuple('DatedPrice', 'base quote date sources')
 
 
@@ -61,13 +62,12 @@ def parse_source_string(source):
     Args:
       source: A single source string specification.
     Returns:
-      A PriceSource tuple.
-    Raises:
-      ValueError: If the source is invalid.
+      A PriceSource tuple, or None, if invalid.
     """
     match = re.match(r'([a-zA-Z]+[a-zA-Z0-9\.]+)/(\^?)([a-zA-Z0-9:_\-\.]+)', source)
     if not match:
-        raise ValueError('Invalid source name: "{}"'.format(source))
+        logging.warning('Invalid source name: "%s"', source)
+        return None
     short_module_name, invert, symbol = match.groups()
     full_module_name = import_source(short_module_name)
     return PriceSource(full_module_name, symbol, bool(invert))
@@ -127,7 +127,8 @@ def find_currencies_declared(entries, date=None):
 def find_currencies_at_cost(entries):
     """Return all currencies that were held at cost at some point.
 
-    This returns all of them, over all time.
+    This returns all of them, even if not on the books at a particular point in
+    time. This code does not look at account balances.
 
     Args:
       entries: A list of directives.
@@ -147,17 +148,17 @@ def find_currencies_at_cost(entries):
 
 
 def find_currencies_converted(entries, date=None):
-    """Return currencies that were price converted.
+    """Return currencies from price conversions.
 
-    This considers only the price conversions that occurred up to the given
-    date.
+    This function looks at all price conversions that occurred until some date
+    and produces a list of them. Note: This does not include Price directives,
+    only postings with price conversions.
 
     Args:
       entries: A list of directives.
       date: A datetime.date instance.
     Returns:
       A list of (base, quote) currencies.
-
     """
     currencies = set()
     for entry in entries:
@@ -171,6 +172,25 @@ def find_currencies_converted(entries, date=None):
             if lot.cost is not None or price is None:
                 continue
             currencies.add((lot.currency, price.currency))
+    return currencies
+
+
+def find_currencies_priced(entries, date=None):
+    """Return currencies seen in Price directives.
+
+    Args:
+      entries: A list of directives.
+      date: A datetime.date instance.
+    Returns:
+      A list of (base, quote) currencies.
+    """
+    currencies = set()
+    for entry in entries:
+        if not isinstance(entry, data.Price):
+            continue
+        if date and entry.date >= date:
+            break
+        currencies.add((entry.currency, entry.amount.currency))
     return currencies
 
 
@@ -235,13 +255,18 @@ def get_price_jobs_at_date(entries, date=None, inactive=False, undeclared=False)
     ticker_map = {(base, quote): ticker
                   for base, quote, ticker in declared_triples}
 
-    # Compute full list of currencies to of interest.
+    # Compute the initial list of currencies to consider.
     if undeclared:
+        # USe the full set of possible currencies.
         cur_at_cost = find_currencies_at_cost(entries)
         cur_converted = find_currencies_converted(entries, date)
-        currencies = cur_at_cost | cur_converted
+        cur_priced = find_currencies_priced(entries, date)
+        currencies = cur_at_cost | cur_converted | cur_priced
     else:
+        # Use the currencies from the Commodity directives.
         currencies = set(ticker_map.keys())
+        for currency in currencies:
+            logging.debug("Currency declared: %s", currency)
 
     # By default, restrict to only the currencies with non-zero balances at the
     # given date.
@@ -254,7 +279,7 @@ def get_price_jobs_at_date(entries, date=None, inactive=False, undeclared=False)
     for base_quote in currencies:
         source_list = ticker_map.get(base_quote, None)
         if source_list:
-            sources = list(map(parse_source_string, source_list.split(',')))
+            sources = list(filter(None, map(parse_source_string, source_list.split(','))))
         else:
             sources = []
         base, quote = base_quote

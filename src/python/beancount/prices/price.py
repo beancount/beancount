@@ -35,6 +35,9 @@ from beancount.utils import memo
 from beancount.prices import find_prices
 
 
+UNKNOWN_CURRENCY = '?'
+
+
 def fetch_price(dprice):
     """Fetch a price for the DatePrice job..
 
@@ -62,10 +65,9 @@ def fetch_price(dprice):
         base, quote = quote, base
 
     assert base is not None
-    assert quote is not None
     fileloc = data.new_metadata('<{}>'.format(type(psource.module).__name__), 0)
     return data.Price(fileloc, srcprice.time.date(), base,
-                      amount.Amount(srcprice.price, quote))
+                      amount.Amount(srcprice.price, quote or UNKNOWN_CURRENCY))
 
 
 def setup_cache(cache_filename, clear_cache):
@@ -102,8 +104,8 @@ def process_args():
                         help='Interpret the arguments as "module/symbol" source strings.')
 
     # Regular options.
-    parser.add_argument('-v', '--verbose', action='store_true',
-                        help="Print out progress log.")
+    parser.add_argument('-v', '--verbose', action='count',
+                        help="Print out progress log. Specify twice for debugging info.")
 
     parse_date = lambda s: parse_datetime(s).date()
     parser.add_argument('-d', '--date', action='store', type=parse_date,
@@ -151,7 +153,10 @@ def process_args():
 
     args = parser.parse_args()
 
-    logging.basicConfig(level=logging.INFO if args.verbose else logging.WARN,
+    verbose_levels = {0: logging.WARN,
+                      1: logging.INFO,
+                      2: logging.DEBUG}
+    logging.basicConfig(level=verbose_levels[args.verbose],
                         format='%(levelname)-8s: %(message)s')
 
     if args.all:
@@ -166,16 +171,18 @@ def process_args():
     if args.expressions:
         # Interpret the arguments as price sources.
         for source_list in args.sources:
-            try:
-                sources = list(map(find_prices.parse_source_string, source_list.split(',')))
-            except ValueError:
-                if path.exists(source_list):
-                    msg = 'Invalid source "{}"; did you provide a filename?'
-                else:
-                    msg = 'Invalid source "{}"'
-                parser.error(msg.format(source_list))
-            else:
-                jobs.append(find_prices.DatedPrice(None, None, args.date, sources))
+            psources = []
+            for source in source_list.split(','):
+                psource = find_prices.parse_source_string(source)
+                if psource is None:
+                    if path.exists(source_list):
+                        msg = 'Invalid source "{}"; did you provide a filename?'
+                    else:
+                        msg = 'Invalid source "{}"'
+                    parser.error(msg.format(psource))
+                psources.append(psource)
+            jobs.append(
+                find_prices.DatedPrice(psources[0].symbol, None, args.date, psources))
     else:
         # Interpret the arguments as Beancount input filenames.
         for filename in args.sources:

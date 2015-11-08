@@ -74,7 +74,10 @@ class TestFromFile(unittest.TestCase):
 
         2015-02-06 *
           Assets:Cash                     1505.00 USD
-          Assets:External                -1000.00 GBP @ 1.505 USD
+          Assets:External                -1000.00 GBP @ 1.5050 USD
+
+        2015-02-08 price GBP  1.5050 USD
+        2015-02-08 price GBP  1.8301 CAD
 
         2015-04-13 *
           Assets:US:Investments:QQQ             3 QQQ {107.48 USD}
@@ -96,6 +99,7 @@ class TestFromFile(unittest.TestCase):
           Assets:CA:Investments:XSP            -2 XSP {24.28 CAD} @ 27.00 USD
           Assets:Cash
 
+        2015-12-03 price XSP   27.32 USD
 
         ;; Because neither of these currencies remain, they should not be there.
         2015-06-22 *
@@ -128,6 +132,14 @@ class TestFromFile(unittest.TestCase):
     def test_find_currencies_at_cost(self):
         currencies = find_prices.find_currencies_at_cost(self.entries)
         self.assertEqual({('XSP', 'CAD'), ('QQQ', 'USD')}, currencies)
+
+    def test_find_currencies_priced(self):
+        currencies = find_prices.find_currencies_priced(self.entries)
+        self.assertEqual({('XSP', 'USD'), ('GBP', 'USD'), ('GBP', 'CAD')}, currencies)
+
+        currencies = find_prices.find_currencies_priced(self.entries,
+                                                        datetime.date(2015, 12, 1))
+        self.assertEqual({('GBP', 'USD'), ('GBP', 'CAD')}, currencies)
 
     def test_find_balance_currencies(self):
         currencies = find_prices.find_balance_currencies(self.entries, None)
