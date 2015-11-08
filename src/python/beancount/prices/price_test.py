@@ -67,6 +67,17 @@ class TestProcessArguments(unittest.TestCase):
                 args, jobs = test_utils.run_with_args(
                     price.process_args, ['--no-cache', '/some/file.beancount'])
 
+    @test_utils.docfile
+    def test_explicit_file__badcontents(self, filename):
+        """
+        2015-01-01 open Assets:Invest
+        2015-01-01 open USD ;; Error
+        """
+        with test_utils.capture('stderr') as stderr:
+            args, jobs = test_utils.run_with_args(
+                price.process_args, ['--no-cache', filename])
+            self.assertEqual([], jobs)
+
     def test_filename_exists(self):
         with tempfile.NamedTemporaryFile('w') as tmpfile:
             with test_utils.capture('stderr') as stderr:

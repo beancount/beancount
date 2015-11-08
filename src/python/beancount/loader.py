@@ -60,7 +60,6 @@ def load_file(filename, log_timings=None, log_errors=None, extra_validations=Non
         errors: A list of error objects generated while parsing and validating
           the file.
         options_map: A dict of the options parsed from the file.
-
     """
     if not path.isabs(filename):
         filename = path.normpath(path.join(os.getcwd(), filename))

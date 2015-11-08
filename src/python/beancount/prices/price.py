@@ -183,7 +183,7 @@ def process_args():
                 parser.error('File does not exist: "{}"'.format(filename))
                 continue
             logging.info('Loading "%s"', filename)
-            entries, errors, options_map = loader.load_file(filename)
+            entries, errors, options_map = loader.load_file(filename, log_errors=sys.stderr)
             jobs.extend(
                 find_prices.get_price_jobs_at_date(
                     entries, args.date, args.inactive, args.undeclared))
