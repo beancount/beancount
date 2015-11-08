@@ -10,15 +10,12 @@ import functools
 import io
 
 
-DEFAULT_EXPIRATION = datetime.timedelta(seconds=10*60)
-
-
 def now():
     "Indirection on datetime.datetime.now() for testing."
     return datetime.datetime.now()
 
 
-def memoize_recent_fileobj(function, cache_filename, expiration=DEFAULT_EXPIRATION):
+def memoize_recent_fileobj(function, cache_filename, expiration=None):
     """Memoize recent calls to the given function which returns a file object.
 
     The results of the cache expire after some time.
@@ -26,7 +23,8 @@ def memoize_recent_fileobj(function, cache_filename, expiration=DEFAULT_EXPIRATI
     Args:
       function: A callable object.
       cache_filename: A string, the path to the database file to cache to.
-      expiration: The time during which the results will be kept valid.
+      expiration: The time during which the results will be kept valid. Use
+        'None' to never the cache (this is the default).
     Returns:
       A memoized version of the function.
     """
@@ -47,7 +45,7 @@ def memoize_recent_fileobj(function, cache_filename, expiration=DEFAULT_EXPIRATI
             with urlcache.lock:
                 time_orig, contents = urlcache[hash_]
             #time_orig = datetime.strptime(time_orig_str, time_fmt)
-            if (time_now - time_orig) > expiration:
+            if expiration is not None and (time_now - time_orig) > expiration:
                 raise KeyError
         except KeyError:
             fileobj = function(*args, **kw)
