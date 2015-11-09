@@ -6,9 +6,11 @@ import functools
 import textwrap
 import importlib
 import collections
+import logging
 import io
 import itertools
 import os
+import pickle
 import warnings
 from os import path
 
@@ -41,6 +43,10 @@ DEPRECATED_MODULES = {
     }
 
 
+# Filename pattern for the pickle-cache.
+PICKLE_CACHE_FILENAME = '.{filename}.picklecache'
+
+
 def load_file(filename, log_timings=None, log_errors=None, extra_validations=None,
               encoding=None):
     """Open a Beancount input file, parse it, run transformations and validate.
@@ -60,7 +66,6 @@ def load_file(filename, log_timings=None, log_errors=None, extra_validations=Non
         errors: A list of error objects generated while parsing and validating
           the file.
         options_map: A dict of the options parsed from the file.
-
     """
     if not path.isabs(filename):
         filename = path.normpath(path.join(os.getcwd(), filename))
@@ -72,8 +77,53 @@ def load_file(filename, log_timings=None, log_errors=None, extra_validations=Non
 load = load_file
 
 
+def pickle_cache_function(pattern, function):
+    """Decorate a function to make it loads its result from a pickle cache.
+
+    This only considers the first argument as a variant and assumes it's a
+    filename. It's essentially a special case for an on-disk memoizer. If
+    the file is more recent than the cache, the function is recomputed.
+
+    Args:
+      pattern: A string, the filename pattern for the pickled cache file.
+        A {filename} in it gets replaced by the input filename.
+    Returns:
+      A decorated function which will pull its result from a cache file if
+      it is available.
+    """
+    @functools.wraps(function)
+    def wrapped(filename, *args, **kw):
+        abs_filename = path.abspath(filename)
+        cache_filename = path.join(
+            path.dirname(abs_filename),
+            pattern.format(filename=path.basename(filename)))
+
+        # Attempt to read the result from the cache.
+        if (path.exists(cache_filename) and
+            path.getmtime(filename) < path.getmtime(cache_filename)):
+            with open(cache_filename, 'rb') as file:
+                result = pickle.load(file)
+        else:
+            # We failed; recompute the value and overwrite the cache file.
+            result = function(filename, *args, **kw)
+            try:
+                with open(cache_filename, 'wb') as file:
+                    pickle.dump(result, file)
+            except Exception:
+                logging.warning("Could not write to picklecache file {}".format(
+                    cache_filename))
+        return result
+    return wrapped
+
+
+# If the environment variable is set, use the pickle-cache.
+if os.getenv('BEANCOUNT_LOAD_CACHE'):
+    load_file = pickle_cache_function(PICKLE_CACHE_FILENAME, load_file)
+
+
 def load_string(string, log_timings=None, log_errors=None, extra_validations=None,
                 dedent=False, encoding=None):
+
     """Open a Beancount input string, parse it, run transformations and validate.
 
     Args:
