@@ -265,6 +265,14 @@ class AttrDict(dict):
     __getattr__ = dict.__getitem__
     __setattr__ = dict.__setitem__
 
+    def __getstate__(self):
+        "Ensure this object may be pickled."
+        return self
+
+    def __setstate__(self, state):
+        "Ensure this object may be pickled."
+        self.update(state)
+
     def _replace(self, **kwds):
         """A method similar to collections.namedtuple's _replace.
 
