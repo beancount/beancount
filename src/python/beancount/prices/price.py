@@ -45,7 +45,7 @@ CACHE_EXPIRATION = datetime.timedelta(seconds=3*60*60)
 
 
 def fetch_price(dprice):
-    """Fetch a price for the DatePrice job..
+    """Fetch a price for the DatePrice job.
 
     Args:
       dprice: A DatedPrice instances.
@@ -58,7 +58,7 @@ def fetch_price(dprice):
         srcprice = (
             source.get_latest_price(psource.symbol)
             if dprice.date is None else
-            source.get_historical_price(psource.symbol, psource.date))
+            source.get_historical_price(psource.symbol, dprice.date))
         if srcprice is not None:
             break
     else:
