@@ -2,6 +2,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 from datetime import date
 import unittest
+import pickle
 import datetime
 
 from beancount.core.amount import A
@@ -233,3 +234,13 @@ class TestAttrDict(unittest.TestCase):
         meta = data.new_metadata('records.beancount', 563)
         metacopy = meta.copy()
         self.assertEqual(data.AttrDict, type(metacopy))
+
+
+class TestPickle(unittest.TestCase):
+
+    def test_data_tuples_support_pickle(self):
+        txn1 = data.Transaction(META, date(2014, 1, 15), FLAG, None,
+                               "Some example narration", None, None, [])
+        pickled_str = pickle.dumps(txn1)
+        txn2 = pickle.loads(pickled_str)
+        self.assertEqual(txn1, txn2)

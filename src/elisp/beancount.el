@@ -224,7 +224,7 @@ This is a cache of the value computed by `beancount-get-accounts'.")
           "\\(?::[[:upper:]][" beancount-account-chars "]+\\)")
   "A regular expression to match account names.")
 
-(defvar beancount-number-regexp "[-+]?[0-9,]+\\(\\.[0-9]*\\)?"
+(defvar beancount-number-regexp "[-+]?[0-9,]+\\(?:\\.[0-9]*\\)?"
   "A regular expression to match decimal numbers in beancount.")
 
 (defvar beancount-currency-regexp "[A-Z][A-Z-_'.]*"
