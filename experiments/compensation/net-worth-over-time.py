@@ -59,9 +59,8 @@ def main():
     weekly = rrule.rrule(rrule.WEEKLY, byweekday=rrule.FR,
                          dtstart=dtstart,
                          until=entries[-1].date)
-    num_points = 4
 
-    for dtime in monthly:
+    for dtime in weekly:
         date = dtime.date()
         logging.info(date)
 
@@ -98,6 +97,7 @@ def main():
             net_worths_dict[currency].append((date, holdings_list[0].market_value))
 
     # Extrapolate milestones in various currencies.
+    num_points = 4
     for currency, currency_data in net_worths_dict.items():
         recent_data = currency_data[-num_points:]
         dates = [time.mktime(date.timetuple()) for date, _ in recent_data]
