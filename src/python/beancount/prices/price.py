@@ -143,49 +143,46 @@ def process_args():
         jobs: A list of DatedPrice job objects.
         entries: A list of all the parsed entries.
     """
-    parser = argparse.ArgumentParser(description=beancount.prices.__doc__)
+    parser = argparse.ArgumentParser(description=beancount.prices.__doc__.splitlines()[0])
 
     # Input sources or filenames.
-    parser.add_argument('sources', nargs='+',
-                        help=('A list of filenames (or source "module/symbol", if -e is '
-                              'specified) from which to create a list of jobs.'))
+    parser.add_argument('sources', nargs='+', help=(
+        'A list of filenames (or source "module/symbol", if -e is '
+        'specified) from which to create a list of jobs.'))
 
-    parser.add_argument('-e', '--expressions', '--expression', action='store_true',
-                        help='Interpret the arguments as "module/symbol" source strings.')
+    parser.add_argument('-e', '--expressions', '--expression', action='store_true', help=(
+        'Interpret the arguments as "module/symbol" source strings.'))
 
     # Regular options.
-    parser.add_argument('-v', '--verbose', action='count',
-                        help="Print out progress log. Specify twice for debugging info.")
+    parser.add_argument('-v', '--verbose', action='count', help=(
+        "Print out progress log. Specify twice for debugging info."))
 
     parse_date = lambda s: parse_datetime(s).date()
-    parser.add_argument('-d', '--date', action='store', type=parse_date,
-                        help="Specify the date for which to fetch the prices.")
+    parser.add_argument('-d', '--date', action='store', type=parse_date, help=(
+        "Specify the date for which to fetch the prices."))
 
-    parser.add_argument('-t', '--always-invert', action='store_true',
-                        help=("Never just swap currencies for inversion, invert the actual "
-                              "rate when necessary, so that all price definitions are in "
-                              "the expected order"))
+    parser.add_argument('-s', '--swap-inverted', action='store_true', help=(
+        "For inverted sources, swap currencies instead of inverting the rate. "
+        "For example, if fetching the rate for CAD from 'USD:google/^CURRENCY:USDCAD' "
+        "results in 1.25, by default we would output \"price CAD  0.8000 USD\". "
+        "Using this option we would instead output \" price USD   1.2500 CAD\"."))
 
-    parser.add_argument('-i', '--inactive',
-                        action='store_true',
-                        help=("Select all commodities from input files, not just the ones "
-                              "active on the date"))
+    parser.add_argument('-i', '--inactive', action='store_true', help=(
+        "Select all commodities from input files, not just the ones active on the date"))
 
-    parser.add_argument('-u', '--undeclared', action='store_true',
-                        help="Include commodities viewed in the file even without a "
-                        "corresponding Commodity directive. The currency name itself is "
-                        "used as the lookup symbol in the default sources.")
+    parser.add_argument('-u', '--undeclared', action='store_true', help=(
+        "Include commodities viewed in the file even without a "
+        "corresponding Commodity directive. The currency name itself is "
+        "used as the lookup symbol in the default sources."))
 
-    parser.add_argument('-c', '--clobber', action='store_true',
-                        help=("Do not skip prices which are already present in input "
-                              "files; fetch them anyway."))
+    parser.add_argument('-c', '--clobber', action='store_true', help=(
+        "Do not skip prices which are already present in input files; fetch them anyway."))
 
-    parser.add_argument('-a', '--all', action='store_true',
-                        help="A shorthand for --inactive, --undeclared, --clobber.")
+    parser.add_argument('-a', '--all', action='store_true', help=(
+        "A shorthand for --inactive, --undeclared, --clobber."))
 
-    parser.add_argument('-n', '--dry-run', '--jobs', '--print-only', action='store_true',
-                        help=("Don't actually fetch the prices, just print the list of the "
-                              "ones to be fetched."))
+    parser.add_argument('-n', '--dry-run', action='store_true', help=(
+        "Don't actually fetch the prices, just print the list of the ones to be fetched."))
 
     # Caching options.
     cache_group = parser.add_argument_group('cache')

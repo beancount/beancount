@@ -4,13 +4,30 @@ beancount: TODO
 
   - Fix Yahoo test, test for all possible scenarios of availability!
 
-  - You need to add a unit test for the inverted case, make sure just swapping the
-    currencies results in the correct output. Plus test --always-invert.
+
+
+  - Implement --always-invert:
+
+    * Consider giving it the following behavior by default: never swap the
+      currencies. The behavior is straight-forward and more predictable.
+
+    * You have to deal with the case whereby two currencies provide incompatible
+      conversions of each other. This would potentially result in colliding
+      entries in the price database. Not sure how to deal with those yet.
+
+    * Infer the rendering precision for inverted currencies from only the list
+      of previous prices. Run a DisplayContext on those and do appropriate
+      rounding automatically. This would make sense.
+
+
+    - You need to add a unit test for the inverted case, make sure just swapping the
+      currencies results in the correct output. Plus test --always-invert.
 
 
   - Make sure that the lookup cache works when the requested date != than
     the fetched date. The cache should be able to provide cached values in this
     case too.
+
 
 
   The next two questions are inter-related:
@@ -19,24 +36,23 @@ beancount: TODO
     for a source... is a default to USD reasonable? Perhaps we should output
     just the number... perhaps this should be a separate script after all.
 
-      HA! SOLUTION: Let the importer itself make it possible to declare the
-      quoted currency. If not returned, use the one declared in the Beancount
-      file or substitute for '?'. You'll need to change the interface to
-      importers in order to do this.
-
   - Should I always include conversions between currencies and all the operating
     currencies? This could solve the problem of INR and USD only having ever
     been converted to CAD in my history. Write a test for this. Add a routine,
     maybe this should be an option.
 
+  - SOLUTION: The importer syntax should be prefixed by the quote currency, like this:
+
+      1976-04-01 commodity USD
+        ...
+        ticker: "CAD:google/CURRENCY:USDCAD,yahoo/USDCAD;GBP:google/^CURRENCY:GBPUSD"
+
+    This should be required in all cases. This way we can also remove the code
+    that accesses the "quote:" metadata key. Less dependencies.
 
 
-  - To get currencies right, the ticker should have more than a single target
-    currency, maybe something like this:
-
-    1976-04-01 commodity USD
-      ...
-      ticker: "CAD:google/CURRENCY:USDCAD,yahoo/USDCAD;GBP:google/^CURRENCY:GBPUSD"
+  - Maybe "ticker" should be renamed to "price" as well, before we go public.
+    This would make sense: it's the "price" script and the "price" feature. Do this.
 
 
   - Complete the doc:

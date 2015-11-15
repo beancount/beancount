@@ -153,10 +153,11 @@ class TestClobber(cmptest.TestCase):
 
 # FIXME: TODO - Behavior to be implemented and tested.
 """
-    parser.add_argument('-t', '--always-invert', action='store_true',
-                        help=("Never just swap currencies for inversion, invert the actual "
-                              "rate when necessary, so that all price definitions are in "
-                              "the expected order"))
+    parser.add_argument('-s', '--swap-inverted', action='store_true', help=(
+        "For inverted sources, swap currencies instead of inverting the rate. "
+        "For example, if fetching the rate for CAD from 'USD:google/^CURRENCY:USDCAD' "
+        "results in 1.25, by default we would output \"price CAD  0.8000 USD\". "
+        "Using this option we would instead output \" price USD   1.2500 CAD\"."))
 """
 
 
