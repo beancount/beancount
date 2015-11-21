@@ -287,10 +287,8 @@ def get_symbol(sources, prefer='google'):
         raise ValueError(
             'Invalid source "{}" does not contain a ticker'.format(sources))
     symbol_map = dict(symbol_items)
-    symbol = symbol_map.get(prefer, None)
-    if symbol is None:
-        # If not found, return the first symbol.
-        return symbol_items[0][1]
+    # If not found, return the first symbol in the list of items.
+    return symbol_map.get(prefer, symbol_items[0][1])
 
 
 class ExportPortfolioReport(report.TableReport):
