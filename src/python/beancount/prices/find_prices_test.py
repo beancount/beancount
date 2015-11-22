@@ -29,6 +29,28 @@ class TestImportSource(unittest.TestCase):
             module = find_prices.import_source('non.existing.module')
 
 
+class TestParseSource(unittest.TestCase):
+
+    def test_source_invalid(self):
+        with self.assertRaises(ValueError):
+            find_prices.parse_single_source('AAPL')
+        with self.assertRaises(ValueError):
+            find_prices.parse_single_source('***//--')
+
+        # The module gets imported at this stage.
+        with self.assertRaises(ImportError):
+            find_prices.parse_single_source('invalid.module.name/NASDAQ:AAPL')
+
+    def test_source_valid(self):
+        psource = find_prices.parse_single_source('google/NASDAQ:AAPL')
+        self.assertEqual(find_prices.PriceSource(google, 'NASDAQ:AAPL', False),
+                         psource)
+
+        psource = find_prices.parse_single_source('beancount.prices.sources.yahoo/AAPL')
+        self.assertEqual(
+            find_prices.PriceSource(yahoo, 'AAPL', False),
+            psource)
+
 
 class TestParseSourceMap(unittest.TestCase):
 
@@ -76,29 +98,6 @@ class TestParseSourceMap(unittest.TestCase):
             {'USD': [PS('beancount.prices.sources.google', 'CURRENCY:GBPUSD', True),
                      PS('beancount.prices.sources.yahoo', 'GBPUSD', True)]},
             self._clean_source_map(smap))
-
-
-class TestParseSource(unittest.TestCase):
-
-    def test_source_invalid(self):
-        with self.assertRaises(ValueError):
-            find_prices.parse_single_source('AAPL')
-        with self.assertRaises(ValueError):
-            find_prices.parse_single_source('***//--')
-
-        # The module gets imported at this stage.
-        with self.assertRaises(ImportError):
-            find_prices.parse_single_source('invalid.module.name/NASDAQ:AAPL')
-
-    def test_source_valid(self):
-        psource = find_prices.parse_single_source('google/NASDAQ:AAPL')
-        self.assertEqual(find_prices.PriceSource(google, 'NASDAQ:AAPL', False),
-                         psource)
-
-        psource = find_prices.parse_single_source('beancount.prices.sources.yahoo/AAPL')
-        self.assertEqual(
-            find_prices.PriceSource(yahoo, 'AAPL', False),
-            psource)
 
 
 class TestFromFile(unittest.TestCase):
