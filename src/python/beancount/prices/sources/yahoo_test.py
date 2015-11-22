@@ -23,10 +23,45 @@ class YahooFinancePriceFetcher(unittest.TestCase):
         request.urlopen = mock.MagicMock(return_value=self.url_object)
 
     def test_get_latest_price(self):
-        self.url_object.read.return_value = b'550.74,556.00\r\n'
+        # Test all four possible URL fetches.
+
+        # c4l1d1
+        self.url_object.read.side_effect = [b'USD,553.37,"12/7/2015"\r\n']
         srcprice = self.fetcher.get_latest_price('GOOG')
         self.assertTrue(isinstance(srcprice.price, Decimal))
         self.assertEqual(D('553.37'), srcprice.price)
+
+        # c4b3b2d2
+        self.url_object.read.side_effect = [b'N/A,N/A\r\n',
+                                            b'USD,553.37,556.70,"12/7/2015"\r\n']
+        srcprice = self.fetcher.get_latest_price('GOOG')
+        self.assertTrue(isinstance(srcprice.price, Decimal))
+        self.assertEqual(D('555.035'), srcprice.price)
+
+        # c4b0a0d2
+        self.url_object.read.side_effect = [b'N/A,N/A\r\n',
+                                            b'N/A,N/A\r\n',
+                                            b'USD,553.37,556.70,"12/7/2015"\r\n']
+        srcprice = self.fetcher.get_latest_price('GOOG')
+        self.assertTrue(isinstance(srcprice.price, Decimal))
+        self.assertEqual(D('555.035'), srcprice.price)
+
+        # c4p0d2
+        self.url_object.read.side_effect = [b'N/A,N/A\r\n',
+                                            b'N/A,N/A\r\n',
+                                            b'N/A,N/A\r\n',
+                                            b'USD,553.37,"12/7/2015"\r\n']
+        srcprice = self.fetcher.get_latest_price('GOOG')
+        self.assertTrue(isinstance(srcprice.price, Decimal))
+        self.assertEqual(D('553.37'), srcprice.price)
+
+        # None is valid.
+        self.url_object.read.side_effect = [b'N/A,N/A\r\n',
+                                            b'N/A,N/A\r\n',
+                                            b'N/A,N/A\r\n',
+                                            b'N/A,N/A\r\n']
+        srcprice = self.fetcher.get_latest_price('GOOG')
+        self.assertIsNone(srcprice)
 
     def test_get_latest_price__invalid(self):
         self.url_object.read.return_value = b'N/A,N/A\r\n'
