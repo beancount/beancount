@@ -90,10 +90,10 @@ class TestProcessArguments(unittest.TestCase):
     def test_expressions(self):
         with test_utils.capture('stderr') as stderr:
             args, jobs, _ = test_utils.run_with_args(
-                price.process_args, ['--no-cache', '-e', 'google/NASDAQ:AAPL'])
+                price.process_args, ['--no-cache', '-e', 'USD:google/NASDAQ:AAPL'])
             self.assertEqual(
                 [find_prices.DatedPrice(
-                    'NASDAQ:AAPL', None, None,
+                    'NASDAQ:AAPL', 'USD', None,
                     [find_prices.PriceSource(google, 'NASDAQ:AAPL', False)])], jobs)
 
 

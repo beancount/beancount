@@ -59,8 +59,9 @@ class TestParseSourceMap(unittest.TestCase):
                 for currency, sources in smap.items()}
 
     def test_source_map_invalid(self):
-        with self.assertRaises(ValueError):
-            find_prices.parse_source_map('USD')
+        for expr in 'USD', 'something else', 'USD:NASDAQ:AAPL':
+            with self.assertRaises(ValueError):
+                find_prices.parse_source_map(expr)
 
     def test_source_map_onecur_single(self):
         smap = find_prices.parse_source_map('USD:google/NASDAQ:AAPL')

@@ -102,7 +102,10 @@ def parse_source_map(source_map_spec):
 def parse_single_source(source):
     """Parse a single source string.
 
-    Source specifications follow the syntax: @<module>/[^]<ticker>
+    Source specifications follow the syntax:
+
+      <module>/[^]<ticker>
+
     The <module> is resolved against the Python path, but first looked up
     under the package where the default price extractors lie.
 
@@ -342,11 +345,19 @@ def get_price_jobs_at_date(entries, date=None, inactive=False, undeclared=False)
     # Build up the list of jobs to fetch prices for.
     jobs = []
     for base_quote in currencies:
-        source_list = ticker_map.get(base_quote, None)
-        if source_list:
-            sources = list(filter(None, map(parse_single_source, source_list.split(','))))
+        source_str = ticker_map.get(base_quote, None)
+        if not source_str:
+            continue
+        try:
+            source_map = parse_source_map(source_str)
+        except ValueError:
+            logging.warning('Invalid source: "{}"'.format(source_str))
         else:
-            sources = []
-        base, quote = base_quote
-        jobs.append(DatedPrice(base, quote, date, sources))
+            base, quote = base_quote
+            try:
+                psources = psource_map[quote]
+            except KeyError:
+                logging.warning('Missing source for quote currency {}'.format(quote))
+            else:
+                jobs.append(find_prices.DatedPrice(base, quote, args.date, psources))
     return sorted(jobs)

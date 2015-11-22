@@ -219,24 +219,26 @@ def process_args():
     all_entries = []
     if args.expressions:
         # Interpret the arguments as price sources.
-        for source_list in args.sources:
+        for source_str in args.sources:
             psources = []
-            for source in source_list.split(','):
-                psource = find_prices.parse_single_source(source)
-                if psource is None:
-                    if path.exists(source_list):
-                        msg = 'Invalid source "{}"; did you provide a filename?'
-                    else:
-                        msg = 'Invalid source "{}"'
-                    parser.error(msg.format(psource))
-                psources.append(psource)
-            jobs.append(
-                find_prices.DatedPrice(psources[0].symbol, None, args.date, psources))
+            try:
+                psource_map = find_prices.parse_source_map(source_str)
+            except ValueError:
+                if path.exists(source_str):
+                    msg = 'Invalid source "{}"; did you provide a filename?'
+                else:
+                    msg = 'Invalid source "{}"'
+                parser.error(msg.format(source_str))
+            else:
+                for currency, psources in psource_map.items():
+                    jobs.append(find_prices.DatedPrice(
+                        psources[0].symbol, currency, args.date, psources))
     else:
         # Interpret the arguments as Beancount input filenames.
         for filename in args.sources:
             if not path.exists(filename) or not path.isfile(filename):
-                parser.error('File does not exist: "{}"'.format(filename))
+                parser.error('File does not exist: "{}"; '
+                             'did you mean to use -e?'.format(filename))
                 continue
             logging.info('Loading "%s"', filename)
             entries, errors, options_map = loader.load_file(filename, log_errors=sys.stderr)
