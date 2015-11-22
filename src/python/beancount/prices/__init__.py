@@ -46,7 +46,7 @@ the USD/CAD market, which gives the price of a US dollar in Canadian dollars. In
 order specify this, you can prepend "^" to the instrument to instruct the driver
 to compute the inverse of the given price:
 
-  bean-price google/^CURRENCY:USDCAD
+  bean-price -e USD:google/^CURRENCY:USDCAD
 
 If a source price is to be inverted, like this, the precision could be different
 than what is fetched. For instance, if the price of USD/CAD is 1.32759, it would
@@ -61,7 +61,7 @@ example, if the input file contains this:
 
   1867-01-01 commodity CAD
     quote: USD
-    ticker: "^CURRENCY:USDCAD"
+    price: "google/^CURRENCY:USDCAD"
 
 The corresponding output directive would be this:
 
@@ -93,13 +93,13 @@ Baancount input file:
   have directives like this in your input file:
 
     2007-07-20 commodity VEA
-      ticker: "google/NYSEARCA:VEA"
+      price: "google/NYSEARCA:VEA"
 
-  The "ticker" metadata can be a comma-separated list of sources to try out, in
+  The "price" metadata can be a comma-separated list of sources to try out, in
   which case each of the sources will be looked at :
 
     2007-07-20 commodity VEA
-      ticker: "google/CURRENCY:USDCAD,yahoo/USDCAD"
+      price: "google/CURRENCY:USDCAD,yahoo/USDCAD"
 
 - Existing price directives for the same data are excluded by default, since the
   price is already in the file.

@@ -25,21 +25,6 @@ beancount: TODO
 
 
 
-  The next two questions are inter-related:
-
-  - Figure out how to output a price directive when there is no quote currency
-    for a source... is a default to USD reasonable? Perhaps we should output
-    just the number... perhaps this should be a separate script after all.
-
-  - Should I always include conversions between currencies and all the operating
-    currencies? This could solve the problem of INR and USD only having ever
-    been converted to CAD in my history. Write a test for this. Add a routine,
-    maybe this should be an option.
-
-  - Maybe "ticker" should be renamed to "price" as well, before we go public.
-    This would make sense: it's the "price" script and the "price" feature. Do this.
-
-
   - Complete the doc:
     https://docs.google.com/document/d/1EZCP8VX3cOuyp2CKECfsq0LAfaXcHTVr7-EKIsRJBa8/edit
 

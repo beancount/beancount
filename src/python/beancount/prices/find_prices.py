@@ -157,21 +157,54 @@ def import_source(module_name):
 def find_currencies_declared(entries, date=None):
     """Return currencies declared in Commodity directives.
 
+    If a 'price' metadata field is provided, include all the quote currencies
+    there-in. Otherwise, the Commodity directive is ignored.
+
     Args:
       entries: A list of directives.
       date: A datetime.date instance.
     Returns:
-      A set of (base, quote, sources-string) currencies.
+      A list of (base, quote, list of PriceSource) currencies. The list of
+      (base, quote) pairs is guaranteed to be unique.
     """
-    currencies = set()
+    currencies = []
     for entry in entries:
         if not isinstance(entry, data.Commodity):
             continue
         if date and entry.date >= date:
             break
-        if 'quote' not in entry.meta:
-            continue
-        currencies.add((entry.currency, entry.meta['quote'], entry.meta.get('ticker', None)))
+
+        # Here we have to infer which quote currencies the commodity is for
+        # (maybe down the road this should be better handled by providing a list
+        # of quote currencies in the Commodity directive itself).
+        #
+        # First, we look for a "price" metadata field, which defines conversions
+        # for various currencies. Each of these quote currencies generates a
+        # pair in the output.
+        source_str = entry.meta.get('price', None)
+        if source_str:
+            try:
+                source_map = parse_source_map(source_str)
+            except ValueError:
+                logging.warning("Ignoring currency with invalid 'price' source: %s",
+                                entry.currency)
+            else:
+                for quote, psources in source_map.items():
+                    currencies.append((entry.currency, quote, psources))
+        else:
+            # If to "price" metadata is found, we inspect the "quote" metadata
+            # field, which can be used to say which currency the currency is
+            # quoted in.
+            quote =  entry.meta.get('quote', None)
+            if quote is not None:
+                currencies.append((entry.currency, quote, None))
+            else:
+                # Finally, otherwise we simply ignore the declaration. That is,
+                # a Commodity directive without any "price" nor "quote" metadata
+                # would not register as a declared currency. Note: I'm not
+                # entirely sure that this is the best approach yet, but going
+                # with this behavior for now [blais/2015-11-22].
+                logging.warning("Ignoring currency with no metadata: %s", entry.currency)
     return currencies
 
 
@@ -317,8 +350,8 @@ def get_price_jobs_at_date(entries, date=None, inactive=False, undeclared=False)
     # tickers for each (base, quote) pair. This is the only place tickers
     # appear.
     declared_triples = find_currencies_declared(entries, date)
-    ticker_map = {(base, quote): ticker
-                  for base, quote, ticker in declared_triples}
+    currency_map = {(base, quote): psources
+                  for base, quote, psources in declared_triples}
 
     # Compute the initial list of currencies to consider.
     if undeclared:
@@ -332,7 +365,7 @@ def get_price_jobs_at_date(entries, date=None, inactive=False, undeclared=False)
         log_currency_list("Currency priced   ", cur_priced)
     else:
         # Use the currencies from the Commodity directives.
-        currencies = set(ticker_map.keys())
+        currencies = set(currency_map.keys())
         log_currency_list("Currency declared ", currencies)
 
     # By default, restrict to only the currencies with non-zero balances at the
@@ -345,19 +378,9 @@ def get_price_jobs_at_date(entries, date=None, inactive=False, undeclared=False)
     # Build up the list of jobs to fetch prices for.
     jobs = []
     for base_quote in currencies:
-        source_str = ticker_map.get(base_quote, None)
-        if not source_str:
+        psources = currency_map.get(base_quote, None)
+        if not psources:
             continue
-        try:
-            source_map = parse_source_map(source_str)
-        except ValueError:
-            logging.warning('Invalid source: "{}"'.format(source_str))
-        else:
-            base, quote = base_quote
-            try:
-                psources = psource_map[quote]
-            except KeyError:
-                logging.warning('Missing source for quote currency {}'.format(quote))
-            else:
-                jobs.append(find_prices.DatedPrice(base, quote, args.date, psources))
+        base, quote = base_quote
+        jobs.append(find_prices.DatedPrice(base, quote, args.date, psources))
     return sorted(jobs)

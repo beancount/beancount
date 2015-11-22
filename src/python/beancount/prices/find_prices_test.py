@@ -117,8 +117,7 @@ class TestFromFile(unittest.TestCase):
 
         2010-01-01 commodity QQQ
           name: "PowerShares QQQ Trust, Series 1 (ETF)"
-          ticker: "google/NASDAQ:QQQ"
-          quote: USD
+          price: "USD:google/NASDAQ:QQQ"
 
         2010-01-01 commodity XSP
           name: "iShares S&P 500 Index Fund (CAD Hedged)"
@@ -166,8 +165,8 @@ class TestFromFile(unittest.TestCase):
 
     def test_find_currencies_declared(self):
         currencies = find_prices.find_currencies_declared(self.entries, None)
-        self.assertEqual({('QQQ', 'USD', 'google/NASDAQ:QQQ'),
-                          ('XSP', 'CAD', None)}, currencies)
+        currencies2 = [(base, quote) for base, quote, _ in currencies]
+        self.assertEqual([('QQQ', 'USD'), ('XSP', 'CAD')], currencies2)
 
     def test_find_currencies_converted(self):
         currencies = find_prices.find_currencies_converted(self.entries, None)
