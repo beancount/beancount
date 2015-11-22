@@ -222,7 +222,7 @@ def process_args():
         for source_list in args.sources:
             psources = []
             for source in source_list.split(','):
-                psource = find_prices.parse_source_string(source)
+                psource = find_prices.parse_single_source(source)
                 if psource is None:
                     if path.exists(source_list):
                         msg = 'Invalid source "{}"; did you provide a filename?'

@@ -5,11 +5,14 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import datetime
 import types
 import unittest
+import pprint
 
 from beancount.prices import find_prices
 from beancount.prices.sources import google
 from beancount.prices.sources import yahoo
 from beancount import loader
+
+PS = find_prices.PriceSource
 
 
 class TestImportSource(unittest.TestCase):
@@ -26,22 +29,73 @@ class TestImportSource(unittest.TestCase):
             module = find_prices.import_source('non.existing.module')
 
 
+
+class TestParseSourceMap(unittest.TestCase):
+
+    def _clean_source_map(self, smap):
+        return {currency: [PS(s[0].__name__, s[1], s[2]) for s in sources]
+                for currency, sources in smap.items()}
+
+    def test_source_map_invalid(self):
+        with self.assertRaises(ValueError):
+            find_prices.parse_source_map('USD')
+
+    def test_source_map_onecur_single(self):
+        smap = find_prices.parse_source_map('USD:google/NASDAQ:AAPL')
+        self.assertEqual(
+            {'USD': [PS('beancount.prices.sources.google', 'NASDAQ:AAPL', False)]},
+            self._clean_source_map(smap))
+
+    def test_source_map_onecur_multiple(self):
+        smap = find_prices.parse_source_map('USD:google/NASDAQ:AAPL,yahoo/AAPL')
+        self.assertEqual(
+            {'USD': [PS('beancount.prices.sources.google', 'NASDAQ:AAPL', False),
+                     PS('beancount.prices.sources.yahoo', 'AAPL', False)]},
+            self._clean_source_map(smap))
+
+    def test_source_map_manycur_single(self):
+        smap = find_prices.parse_source_map('USD:google/CURRENCY:GBPUSD '
+                                            'CAD:google/CURRENCY:GBPCAD')
+        self.assertEqual(
+            {'USD': [PS('beancount.prices.sources.google', 'CURRENCY:GBPUSD', False)],
+             'CAD': [PS('beancount.prices.sources.google', 'CURRENCY:GBPCAD', False)]},
+            self._clean_source_map(smap))
+
+    def test_source_map_manycur_multiple(self):
+        smap = find_prices.parse_source_map('USD:google/CURRENCY:GBPUSD,yahoo/GBPUSD '
+                                            'CAD:google/CURRENCY:GBPCAD')
+        self.assertEqual(
+            {'USD': [PS('beancount.prices.sources.google', 'CURRENCY:GBPUSD', False),
+                     PS('beancount.prices.sources.yahoo', 'GBPUSD', False)],
+             'CAD': [PS('beancount.prices.sources.google', 'CURRENCY:GBPCAD', False)]},
+            self._clean_source_map(smap))
+
+    def test_source_map_inverse(self):
+        smap = find_prices.parse_source_map('USD:google/^CURRENCY:GBPUSD,yahoo/^GBPUSD')
+        self.assertEqual(
+            {'USD': [PS('beancount.prices.sources.google', 'CURRENCY:GBPUSD', True),
+                     PS('beancount.prices.sources.yahoo', 'GBPUSD', True)]},
+            self._clean_source_map(smap))
+
+
 class TestParseSource(unittest.TestCase):
 
     def test_source_invalid(self):
-        self.assertIsNone(find_prices.parse_source_string('AAPL'))
-        self.assertIsNone(find_prices.parse_source_string('***//--'))
+        with self.assertRaises(ValueError):
+            find_prices.parse_single_source('AAPL')
+        with self.assertRaises(ValueError):
+            find_prices.parse_single_source('***//--')
 
         # The module gets imported at this stage.
         with self.assertRaises(ImportError):
-            find_prices.parse_source_string('invalid.module.name/NASDAQ:AAPL')
+            find_prices.parse_single_source('invalid.module.name/NASDAQ:AAPL')
 
     def test_source_valid(self):
-        psource = find_prices.parse_source_string('google/NASDAQ:AAPL')
+        psource = find_prices.parse_single_source('google/NASDAQ:AAPL')
         self.assertEqual(find_prices.PriceSource(google, 'NASDAQ:AAPL', False),
                          psource)
 
-        psource = find_prices.parse_source_string('beancount.prices.sources.yahoo/AAPL')
+        psource = find_prices.parse_single_source('beancount.prices.sources.yahoo/AAPL')
         self.assertEqual(
             find_prices.PriceSource(yahoo, 'AAPL', False),
             psource)

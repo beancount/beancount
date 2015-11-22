@@ -9,6 +9,7 @@ import re
 import sys
 
 from beancount.core import data
+from beancount.core import amount
 from beancount.ops import summarize
 
 
@@ -52,7 +53,53 @@ def format_dated_price_str(dprice):
                                         ','.join(psstrs))
 
 
-def parse_source_string(source):
+def parse_source_map(source_map_spec):
+    """Parse a source map specification string.
+
+    Source map specifications allow the speification of multiple sources for
+    multiple quote currencies and follow the following syntax:
+
+       <currency1>:<source1>,<source2>,... <currency2>:<source1>,...
+
+    Where a <source> itself follows:
+
+       <module>/[^]<ticker>
+
+    The <module> is resolved against the Python path, but first looked up under
+    the package where the default price extractors lie. The presence of a '^'
+    character indicates that twe should use the inverse of the rate pull from
+    this source.
+
+    For example, for prices of AAPL in USD:
+
+       USD:google/NASDAQ:AAPL,yahoo/AAPL
+
+    Or for the exchange rate of a currency, such as INR in USD or in CAD:
+
+       USD:google/^CURRENCY:USDINR CAD:google/^CURRENCY:CADINR
+
+    Args:
+      source_map_spec: A string, a full source map specification to be parsed.
+    Returns:
+      FIXME: TODO
+    Raises:
+      ValueError: If an invalid pattern has been specified.
+    """
+    source_map = collections.defaultdict(list)
+    for source_list_spec in re.split('[ ;]', source_map_spec):
+        match = re.match('({}):(.*)$'.format(amount.CURRENCY_RE),
+                         source_list_spec)
+        if not match:
+            raise ValueError('Invalid source map pattern: "{}"'.format(source_list_spec))
+
+        currency, source_strs = match.groups()
+        source_map[currency].extend(
+            parse_single_source(source_str)
+            for source_str in source_strs.split(','))
+    return source_map
+
+
+def parse_single_source(source):
     """Parse a single source string.
 
     Source specifications follow the syntax: @<module>/[^]<ticker>
@@ -62,12 +109,13 @@ def parse_source_string(source):
     Args:
       source: A single source string specification.
     Returns:
-      A PriceSource tuple, or None, if invalid.
+      A PriceSource tuple, or
+    Raises:
+      ValueError: If invalid.
     """
     match = re.match(r'([a-zA-Z]+[a-zA-Z0-9\.]+)/(\^?)([a-zA-Z0-9:_\-\.]+)', source)
     if not match:
-        logging.warning('Invalid source name: "%s"', source)
-        return None
+        raise ValueError('Invalid source name: "{}"'.format(source))
     short_module_name, invert, symbol = match.groups()
     full_module_name = import_source(short_module_name)
     return PriceSource(full_module_name, symbol, bool(invert))
@@ -296,7 +344,7 @@ def get_price_jobs_at_date(entries, date=None, inactive=False, undeclared=False)
     for base_quote in currencies:
         source_list = ticker_map.get(base_quote, None)
         if source_list:
-            sources = list(filter(None, map(parse_source_string, source_list.split(','))))
+            sources = list(filter(None, map(parse_single_source, source_list.split(','))))
         else:
             sources = []
         base, quote = base_quote
