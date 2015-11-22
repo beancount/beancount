@@ -12,6 +12,7 @@ from os import path
 import shelve
 import tempfile
 import re
+import hashlib
 import os
 import sys
 from urllib import parse
@@ -39,9 +40,90 @@ from beancount.prices import find_prices
 UNKNOWN_CURRENCY = '?'
 
 
-# Expire the cache after a few hours. It is mainly used for debugging this
-# script.
-CACHE_EXPIRATION = datetime.timedelta(seconds=3*60*60)
+# A cache for the prices.
+_cache = None
+
+# Expiration for latest prices in the cache.
+DEFAULT_EXPIRATION = datetime.timedelta(seconds=30*60)  # 30 mins.
+
+
+def now():
+    "Indirection in order to be able to mock it out in the tests."
+    return datetime.datetime.now()
+
+
+def fetch_cached_price(source, symbol, date):
+    """Call Source to fetch a price, but look and/or update the cache first.
+
+    This function entirely deals with caching and correct expiration. It keeps
+    old prices if they were fetched in the past, and it quickly expires
+    intra-day prices if they are fetched on the same day.
+
+    Args:
+      source: A Python module object.
+      symbol: A string, the ticker to fetch.
+      date: A datetime.date instance, None if we're to fetch the latest date.
+    Returns:
+      A SourcePrice instance.
+    """
+    time_now = now()
+    if _cache is None:
+        # The cache is disabled; just call and return.
+        result = (source.get_latest_price(symbol)
+                  if date is None else
+                  source.get_historical_price(symbol, date))
+    elif date is None or date >= time_now.date():
+        # The cache is enabled and we have to compute the current/latest price.
+        # Fetch from the cache but miss if the price is too old.
+        md5 = hashlib.md5()
+        md5.update(str((type(source).__module__, symbol)).encode('utf-8'))
+        key = md5.hexdigest()
+        try:
+            time_created, result = _cache[key]
+            if (time_now - time_created) > _cache.expiration:
+                raise KeyError
+        except KeyError:
+            result = source.get_latest_price(symbol)
+            _cache[key] = (time_now, result)
+    else:
+        # The cache is enabled and we are asked to provide an old price. Assume
+        # it doesn't change and return the cached value if at all available.
+        md5 = hashlib.md5()
+        md5.update(str((source.__file__, symbol, date)).encode('utf-8'))
+        key = md5.hexdigest()
+        try:
+            _, result = _cache[key]
+        except KeyError:
+            result = source.get_historical_price(symbol, date)
+            _cache[key] = (None, result)
+    return result
+
+
+def setup_cache(cache_filename, clear_cache):
+    """Setup the results cache.
+
+    Args:
+      cache_filename: A string or None, the filename for the cache.
+      clear_cache: A boolean, if true, delete the cache before beginning.
+    """
+    if clear_cache and cache_filename and path.exists(cache_filename):
+        logging.info("Clearing cache %s", cache_filename)
+        os.remove(cache_filename)
+
+    if cache_filename:
+        logging.info('Using price cache at "{}" (with indefinite expiration)'.format(
+            cache_filename))
+
+        global _cache
+        _cache = shelve.open(cache_filename)
+        _cache.expiration = DEFAULT_EXPIRATION
+        _cache.lock = threading.Lock()  # Note: 'shelve' is not thread-safe by itself.
+
+
+def reset_cache():
+    """Reset the cache to its uninitialized state."""
+    global _cache
+    _cache = None
 
 
 def fetch_price(dprice):
@@ -55,10 +137,7 @@ def fetch_price(dprice):
     """
     for psource in dprice.sources:
         source = psource.module.Source()
-        srcprice = (
-            source.get_latest_price(psource.symbol)
-            if dprice.date is None else
-            source.get_historical_price(psource.symbol, dprice.date))
+        srcprice = fetch_cached_price(source, psource.symbol, dprice.date)
         if srcprice is not None:
             break
     else:
@@ -75,25 +154,6 @@ def fetch_price(dprice):
     fileloc = data.new_metadata('<{}>'.format(type(psource.module).__name__), 0)
     return data.Price(fileloc, srcprice.time.date(), base,
                       amount.Amount(srcprice.price, quote or UNKNOWN_CURRENCY))
-
-
-def setup_cache(cache_filename, clear_cache):
-    """Setup the results cache.
-
-    Args:
-      cache_filename: A string or None, the filename for the cache.
-      clear_cache: A boolean, if true, delete the cache before beginning.
-    """
-    if clear_cache and cache_filename and path.exists(cache_filename):
-        logging.info("Clearing cache %s", cache_filename)
-        os.remove(cache_filename)
-
-    if cache_filename:
-        logging.info('Using price cache at "{}" (with {} expiration)'.format(
-            cache_filename, CACHE_EXPIRATION))
-        net_utils.retrying_urlopen = memo.memoize_recent_fileobj(net_utils.retrying_urlopen,
-                                                                 cache_filename,
-                                                                 CACHE_EXPIRATION)
 
 
 def filter_redundant_prices(price_entries, existing_entries, diffs=False):

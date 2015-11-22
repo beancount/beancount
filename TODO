@@ -19,12 +19,6 @@ beancount: TODO
       currencies results in the correct output. Plus test --always-invert.
 
 
-  - Make sure that the lookup cache works when the requested date != than
-    the fetched date. The cache should be able to provide cached values in this
-    case too.
-
-
-
   - Complete the doc:
     https://docs.google.com/document/d/1EZCP8VX3cOuyp2CKECfsq0LAfaXcHTVr7-EKIsRJBa8/edit
 

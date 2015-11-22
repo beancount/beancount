@@ -25,9 +25,11 @@ class TestRetryingUrlopen(unittest.TestCase):
     def test_timeout_once(self):
         response = http.client.HTTPResponse(mock.MagicMock())
         response.status = 200
-        with mock.patch('urllib.request.urlopen', side_effect=[None, response]):
+        with mock.patch('urllib.request.urlopen',
+                        side_effect=[None, response]):
             self.assertIs(net_utils.retrying_urlopen('http://nowhere.com'), response)
 
     def test_max_retry(self):
-        with mock.patch('urllib.request.urlopen', side_effect=[None, None, None, None, None, None]):
+        with mock.patch('urllib.request.urlopen',
+                        side_effect=[None, None, None, None, None, None]):
             self.assertIsNone(net_utils.retrying_urlopen('http://nowhere.com'))

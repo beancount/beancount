@@ -38,7 +38,6 @@ class Source:
           returned and another source should be consulted. There is never any
           guarantee that a price source will be able to fetch its value; client
           code must be able to handle this.
-
         """
 
     def get_historical_price(self, ticker, date):

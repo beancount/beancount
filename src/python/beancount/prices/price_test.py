@@ -61,6 +61,91 @@ class TestSetupCache(unittest.TestCase):
                 self.assertTrue(path.exists(filename))
 
 
+class TestCache(unittest.TestCase):
+
+
+    def test_fetch_cached_price__disabled(self):
+        # Latest.
+        with mock.patch('beancount.prices.price._cache', None) as cache:
+            self.assertIsNone(price._cache)
+            source = mock.MagicMock()
+            result = price.fetch_cached_price(source, 'HOOL', None)
+            self.assertTrue(source.get_latest_price.called)
+
+        # Historical.
+        with mock.patch('beancount.prices.price._cache', None) as cache:
+            self.assertIsNone(price._cache)
+            source = mock.MagicMock()
+            result = price.fetch_cached_price(source, 'HOOL', datetime.date.today())
+            self.assertTrue(source.get_historical_price.called)
+
+    def test_fetch_cached_price__latest(self):
+        tmpfile = path.join(tempfile.gettempdir(), 'prices.cache')
+        try:
+            price.setup_cache(tmpfile, False)
+
+            source = mock.MagicMock()
+            source.get_latest_price.return_value = 42
+            source.__file__ = '<module>'
+
+            # Cache miss.
+            result = price.fetch_cached_price(source, 'HOOL', None)
+            self.assertTrue(source.get_latest_price.called)
+            self.assertEqual(1, len(price._cache))
+            self.assertEqual(42, result)
+
+            source.get_latest_price.reset_mock()
+
+            # Cache hit.
+            result = price.fetch_cached_price(source, 'HOOL', None)
+            self.assertFalse(source.get_latest_price.called)
+            self.assertEqual(1, len(price._cache))
+            self.assertEqual(42, result)
+
+            source.get_latest_price.reset_mock()
+            source.get_latest_price.return_value = 71
+
+            # Cache expired.
+            time_beyond = datetime.datetime.now() + price._cache.expiration * 2
+            with mock.patch('beancount.prices.price.now', return_value=time_beyond):
+                result = price.fetch_cached_price(source, 'HOOL', None)
+                self.assertTrue(source.get_latest_price.called)
+                self.assertEqual(1, len(price._cache))
+                self.assertEqual(71, result)
+        finally:
+            if path.exists(tmpfile):
+                os.remove(tmpfile)
+            price.reset_cache()
+
+    def test_fetch_cached_price__historical(self):
+        tmpfile = path.join(tempfile.gettempdir(), 'prices.cache')
+        try:
+            price.setup_cache(tmpfile, False)
+
+            source = mock.MagicMock()
+            source.get_historical_price.return_value = 42
+            source.__file__ = '<module>'
+
+            # Cache miss.
+            day = datetime.date(2006, 1, 2)
+            result = price.fetch_cached_price(source, 'HOOL', day)
+            self.assertTrue(source.get_historical_price.called)
+            self.assertEqual(1, len(price._cache))
+            self.assertEqual(42, result)
+
+            source.get_historical_price.reset_mock()
+
+            # Cache hit.
+            result = price.fetch_cached_price(source, 'HOOL', day)
+            self.assertFalse(source.get_historical_price.called)
+            self.assertEqual(1, len(price._cache))
+            self.assertEqual(42, result)
+        finally:
+            if path.exists(tmpfile):
+                os.remove(tmpfile)
+            price.reset_cache()
+
+
 class TestProcessArguments(unittest.TestCase):
 
     def test_filename_not_exists(self):
