@@ -204,7 +204,8 @@ def find_currencies_declared(entries, date=None):
                 # would not register as a declared currency. Note: I'm not
                 # entirely sure that this is the best approach yet, but going
                 # with this behavior for now [blais/2015-11-22].
-                logging.warning("Ignoring currency with no metadata: %s", entry.currency)
+                logging.debug("Ignoring currency with no metadata: %s", entry.currency)
+
     return currencies
 
 
