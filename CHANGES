@@ -4,6 +4,13 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-11-22
+
+  - Removed beancount.core.data.AttrDict and replace it by a regular dict. This
+    removes some annoyances when pickling and copying metadata. Metadata is now
+    represented by a plain old dict. (Fixes issue #79.)
+
+
 2015-11-09
 
   - Implemented a simple pickle-date on beancount.loader.load_file(), which will

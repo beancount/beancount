@@ -117,7 +117,7 @@ class EntryPrinter:
         """Write metadata to the file object, excluding filename and line number.
 
         Args:
-          meta: An instance of AttrDict that contains the metadata for this directive.
+          meta: A dict that contains the metadata for this directive.
           oss: A file object to write to.
         """
         if meta is None:
@@ -349,12 +349,12 @@ def render_source(meta):
     Emacs and align and rendered nicely.
 
     Args:
-      meta: an instance of AttrDict.
+      meta: A dict with the metadata.
     Returns:
       A string, rendered to be interpretable as a message location for Emacs or
       other editors.
     """
-    return '{}:{:8}'.format(meta.filename, '{}:'.format(meta.lineno))
+    return '{}:{:8}'.format(meta['filename'], '{}:'.format(meta['lineno']))
 
 
 def format_error(error):

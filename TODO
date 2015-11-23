@@ -1363,13 +1363,6 @@ http://furius.ca/beancount/doc/proposal-inter
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
-  - Implement a simple pickle cache that automatically creates .beancountc files
-    and updates them when the input file changes. This should be done
-    automatically, in the loader, and disabled with a global command-line
-    option. The goal is to speed up calculations when the file hasn't changed.
-    Measure the time it takes, not entirely sure this is worth it (probably is).
-
-
   - An important option exists around the behavior of balance checks: Should
     balance checks bring their balance to the balance amount? In other words,
     should a balance check imply an automatic, on-demand Pad behavior on

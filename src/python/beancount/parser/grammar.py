@@ -818,7 +818,7 @@ class Builder(lexer.LexBuilder):
 
         Args:
           txn_fields: The current TxnFields accumulator.
-          meta: An AttrDict metadata for errors generated in this routine.
+          meta: A metadata dict for errors generated in this routine.
         Returns:
           A pair of (payee, narration) strings or None objects, or None, if
           there was an error.
