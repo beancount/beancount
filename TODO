@@ -1334,6 +1334,14 @@ http://furius.ca/beancount/doc/proposal-inter
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - Remove AttrDict... we can do away with a regular dict:
+
+      grep -srn  'meta\.'  /home/blais/p/beancount/src/python/beancount | grep -E -v 'meta\.(get|copy|items|keys|values)'
+
+    See issue #79.
+
+
+
   - An important option exists around the behavior of balance checks: Should
     balance checks bring their balance to the balance amount? In other words,
     should a balance check imply an automatic, on-demand Pad behavior on
