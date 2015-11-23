@@ -568,25 +568,25 @@ class TypeEntryColumn(query_compile.EvalColumn):
 
 class FilenameEntryColumn(query_compile.EvalColumn):
     "The filename where the directive was parsed from or created."
-    __equivalent__ = 'entry.meta.filename'
+    __equivalent__ = 'entry.meta["filename"]'
     __intypes__ = [data.Transaction]
 
     def __init__(self):
         super().__init__(str)
 
     def __call__(self, entry):
-        return entry.meta.filename
+        return entry.meta["filename"]
 
 class LineNoEntryColumn(query_compile.EvalColumn):
     "The line number from the file the directive was parsed from."
-    __equivalent__ = 'entry.meta.lineno'
+    __equivalent__ = 'entry.meta["lineno"]'
     __intypes__ = [data.Transaction]
 
     def __init__(self):
         super().__init__(int)
 
     def __call__(self, entry):
-        return entry.meta.lineno
+        return entry.meta["lineno"]
 
 class DateEntryColumn(query_compile.EvalColumn):
     "The date of the directive."
@@ -788,25 +788,25 @@ class TypeColumn(query_compile.EvalColumn):
 
 class FilenameColumn(query_compile.EvalColumn):
     "The filename where the posting was parsed from or created."
-    __equivalent__ = 'entry.meta.filename'
+    __equivalent__ = 'entry.meta["filename"]'
     __intypes__ = [data.Posting]
 
     def __init__(self):
         super().__init__(str)
 
     def __call__(self, context):
-        return context.entry.meta.filename
+        return context.entry.meta["filename"]
 
 class LineNoColumn(query_compile.EvalColumn):
     "The line number from the file the posting was parsed from."
-    __equivalent__ = 'entry.meta.lineno'
+    __equivalent__ = 'entry.meta["lineno"]'
     __intypes__ = [data.Posting]
 
     def __init__(self):
         super().__init__(int)
 
     def __call__(self, context):
-        return context.entry.meta.lineno
+        return context.entry.meta["lineno"]
 
 class FileLocationColumn(query_compile.EvalColumn):
     """The filename:lineno where the posting was parsed from or created.
@@ -821,8 +821,8 @@ class FileLocationColumn(query_compile.EvalColumn):
         super().__init__(str)
 
     def __call__(self, context):
-        return '{}:{:d}:'.format(context.posting.meta.filename,
-                                 context.posting.meta.lineno)
+        return '{}:{:d}:'.format(context.posting.meta["filename"],
+                                 context.posting.meta["lineno"])
 
 class DateColumn(query_compile.EvalColumn):
     "The date of the parent transaction for this posting."
