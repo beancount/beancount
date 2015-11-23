@@ -382,5 +382,5 @@ def get_price_jobs_at_date(entries, date=None, inactive=False, undeclared=False)
         if not psources:
             continue
         base, quote = base_quote
-        jobs.append(find_prices.DatedPrice(base, quote, args.date, psources))
+        jobs.append(DatedPrice(base, quote, date, psources))
     return sorted(jobs)

@@ -2,30 +2,33 @@
 beancount: TODO
 * Price Script
 
-  - Implement --always-invert:
+  - Implement --swap-inverted:
 
-    * Consider giving it the following behavior by default: never swap the
-      currencies. The behavior is straight-forward and more predictable.
-
-    * You have to deal with the case whereby two currencies provide incompatible
-      conversions of each other. This would potentially result in colliding
-      entries in the price database. Not sure how to deal with those yet.
+    - You need to add a unit test for the inverted case, make sure just swapping the
+      currencies results in the correct output. Plus test --always-invert.
 
     * Infer the rendering precision for inverted currencies from only the list
       of previous prices. Run a DisplayContext on those and do appropriate
       rounding automatically. This would make sense.
 
-    - You need to add a unit test for the inverted case, make sure just swapping the
-      currencies results in the correct output. Plus test --always-invert.
+    * You have to deal with the case whereby two currencies provide incompatible
+      conversions of each other. This would potentially result in colliding
+      entries in the price database. Not sure how to deal with those yet.
+
+
+
+  - BUG: Why does bean-price not fetch INR/USD from my books? It should, there's
+    a balance. Not sure what's going on.
+
 
 
   - Complete the doc:
     https://docs.google.com/document/d/1EZCP8VX3cOuyp2CKECfsq0LAfaXcHTVr7-EKIsRJBa8/edit
 
-
-  (separate)
   - Write a script that will iterate and fetch all the missing dates on Friday,
-    or last DOM for the required portfolio during the entire duration.
+    or last DOM for the required portfolio during the entire duration, or allow
+    providing a frequency string (does rrule have one?) and let bean-price do
+    this natively.
 
 
 
