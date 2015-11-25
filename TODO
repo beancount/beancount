@@ -4044,6 +4044,15 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
     an archive a lot faster in many cases).
 
 
+* Import
+** GnuCash
+
+  - Write a converter of GnuCash XML files into Beancount.
+
+  - Contact xentac@ for an example GnuCash input file with 2-3 years of data.
+    Willing to share (see email).
+
+
 * Export
 ** HTML Export as File
 
