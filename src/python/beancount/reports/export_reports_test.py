@@ -152,13 +152,10 @@ class TestCommodityClassifications(unittest.TestCase):
     def test_get_money_instruments(self, entries, errors, options_map):
         """
         1900-01-01 commodity VMMXX
-          quote: USD
-          ticker: "MUTF:VMMXX"
-          export: "MONEY"
+          export: "MUTF:VMMXX (MONEY:USD)"
 
         1900-01-01 commodity IGI806
-          quote: CAD
-          export: "MONEY"
+          export: "(MONEY:CAD)"
         """
         commodities_map = getters.get_commodity_map(entries, options_map)
         self.assertEqual({'USD': 'MUTF:VMMXX',

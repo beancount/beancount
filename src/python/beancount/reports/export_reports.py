@@ -23,6 +23,10 @@ from beancount.reports import report
 from beancount.reports import holdings_reports
 
 
+# The name of the metadata field used by this report.
+FIELD = 'export'
+
+
 # An entry to be exported.
 #
 # Attributes:
@@ -62,7 +66,7 @@ def classify_holdings_for_export(holdings_list, commodities_map):
     """
     # Get the map of commodities to tickers and export meta tags.
     tickers = getters.get_values_meta(commodities_map, 'ticker')
-    exports = getters.get_values_meta(commodities_map, 'export')
+    exports = getters.get_values_meta(commodities_map, FIELD)
 
     # Classify the holdings based on their commodities' ticker metadata field.
     action_holdings = []
@@ -103,9 +107,14 @@ def get_money_instruments(commodities_map):
       A dict of quote currency to the ticker symbol that stands for it,
       e.g. {'USD': 'VMMXX'}.
     """
-    return {entry.meta.get('quote', None): entry.meta.get('ticker', currency)
-            for currency, entry in commodities_map.items()
-            if entry.meta.get('export', None) == 'MONEY'}
+    instruments = {}
+    for currency, entry in commodities_map.items():
+        export = entry.meta.get(FIELD, '')
+        match = re.search(r'\(MONEY:(.*)\)', export)
+        if match:
+            instruments[match.group(1)] = (re.sub(r'\(.*\)', '', export).strip() or
+                                           currency)
+    return instruments
 
 
 def export_holdings(entries, options_map, promiscuous, aggregate_by_commodity=False):
