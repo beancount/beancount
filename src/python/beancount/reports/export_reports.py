@@ -76,8 +76,8 @@ def classify_holdings_for_export(holdings_list, commodities_map):
                 action_holdings.append(('IGNORE', holding))
             elif export.upper() == "MONEY":
                 # Hmm this is an interesting case... an actual holding is in
-                # units of our money-market standing. We could disallow this,
-                # but we can also just export it. Let's export it with the
+                # units of our money-market standing currency. We could disallow
+                # this, but we can also just export it. Let's export it with the
                 # ticker value or commodity if present.
                 action_holdings.append((ticker if ticker else holding.currency, holding))
             else:
