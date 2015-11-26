@@ -4,6 +4,23 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-11-26
+
+  - I redesigned the portfolio export process in order to (a) simplify it
+    greatly (the process was a bit confusing, between the use of three metadat
+    fields: "ticker", "export" and "quote"), and (b) to separate it entirely
+    from the upcoming price fetching script metadata.
+
+    The new outcome is very similiar, however, except it uses only a SINGLE
+    metadata field: "export", and the documentation has been rewritten to
+    reflect this:
+    https://docs.google.com/document/d/1mNyE_ONuyEkF_I2l6V_AoAU5HJgI654AOBhHsnNPPqw/edit#
+
+    I think the new process is much simpler to understand and the documentation
+    shorter and easier to read. It should be a trivial exercise to convert one's
+    input file to the newer format.
+
+
 2015-11-22
 
   - Removed beancount.core.data.AttrDict and replace it by a regular dict. This
