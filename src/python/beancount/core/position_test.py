@@ -150,8 +150,7 @@ class TestPosition(unittest.TestCase):
         Position(A('123.45 USD'), None)
         Position(A('123.45 USD'), Cost('74.00', 'CAD', None, None))
         Position(A('123.45 USD'), Cost('74.00', 'CAD', date(2013, 2, 3), None))
-        with self.assertRaises(Exception):
-            Position(Amount(D('123.45'), None), None)
+        Position(Amount(D('123.45'), None), None)
         Position(Amount(None, 'USD'), None)
 
     def test_compare_zero_to_none(self):
