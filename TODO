@@ -1,5 +1,15 @@
 -*- mode: org -*-
 beancount: TODO
+* Export Simplification
+
+  - Remove from export_reports the dependency on 'quote' and 'ticker'.
+
+    * Make export: "MONEY" -> export: "MUTF:VMMXX (MONEY:CAD)"
+    * Remove the usage of "quote:"
+    * Ensure that all the examples still work, with only the "export" field.
+    * Update the documentation.
+
+
 * Event
 
   - Should we validate that the query is legit before we even run it? I think

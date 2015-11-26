@@ -18,9 +18,8 @@ option "operating_currency" "USD"
   name: "US Dollar"
 
 1900-01-01 commodity VMMXX
-  export: "MONEY"
   quote: USD
-  ticker: "MUTF:VMMXX"
+  export: "MUTF:VMMXX (USD:MONEY)"
 
 1980-05-12 commodity VACHR
   export: "IGNORE"
@@ -33,39 +32,39 @@ option "operating_currency" "USD"
 1995-09-18 commodity VBMPX
   name: "Vanguard Total Bond Market Index Fund Institutional Plus Shares"
   quote: USD
-  ticker: "MUTF:VBMPX"
+  export: "MUTF:VBMPX"
 
 2004-01-20 commodity ITOT
   name: "iShares Core S&P Total U.S. Stock Market ETF"
   quote: USD
-  ticker: "NYSEARCA:ITOT"
+  export: "NYSEARCA:ITOT"
 
 2004-01-26 commodity VHT
   name: "Vanguard Health Care ETF"
   quote: USD
-  ticker: "NYSEARCA:VHT"
+  export: "NYSEARCA:VHT"
 
 2004-11-01 commodity GLD
   name: "SPDR Gold Trust (ETF)"
   quote: USD
-  ticker: "NYSEARCA:GLD"
+  export: "NYSEARCA:GLD"
 
 2007-07-20 commodity VEA
   name: "Vanguard FTSE Developed Markets ETF"
   quote: USD
-  ticker: "NYSEARCA:VEA"
+  export: "NYSEARCA:VEA"
 
 2009-05-01 commodity RGAGX
   name: "American Funds The Growth Fund of America® Class R-6"
   quote: USD
-  ticker: "MUTF:RGAGX"
+  export: "MUTF:RGAGX"
 
 
 
 * Equity Accounts
 
-1980-05-12 open Equity:Opening-Balances                         
-1980-05-12 open Liabilities:AccountsPayable                     
+1980-05-12 open Equity:Opening-Balances
+1980-05-12 open Liabilities:AccountsPayable
 
 
 
@@ -2395,44 +2394,44 @@ option "operating_currency" "USD"
   Assets:US:ETrade:Cash                                 0 USD
 
 2013-09-22 * "Buy shares of ITOT"
-  Assets:US:ETrade:Cash                          -1011.60 USD              
+  Assets:US:ETrade:Cash                          -1011.60 USD
   Assets:US:ETrade:ITOT                                 5 ITOT {200.53 USD}
-  Expenses:Financial:Commissions                     8.95 USD              
+  Expenses:Financial:Commissions                     8.95 USD
 
 2013-09-22 * "Buy shares of VHT"
-  Assets:US:ETrade:Cash                          -1193.54 USD              
+  Assets:US:ETrade:Cash                          -1193.54 USD
   Assets:US:ETrade:VHT                                 11 VHT {107.69 USD}
-  Expenses:Financial:Commissions                     8.95 USD              
+  Expenses:Financial:Commissions                     8.95 USD
 
 2013-09-22 * "Buy shares of GLD"
-  Assets:US:ETrade:Cash                          -1143.27 USD              
+  Assets:US:ETrade:Cash                          -1143.27 USD
   Assets:US:ETrade:GLD                                 11 GLD {103.12 USD}
-  Expenses:Financial:Commissions                     8.95 USD              
+  Expenses:Financial:Commissions                     8.95 USD
 
 2013-09-22 * "Buy shares of VEA"
-  Assets:US:ETrade:Cash                          -1198.21 USD              
+  Assets:US:ETrade:Cash                          -1198.21 USD
   Assets:US:ETrade:VEA                                  9 VEA {132.14 USD}
-  Expenses:Financial:Commissions                     8.95 USD              
+  Expenses:Financial:Commissions                     8.95 USD
 
 2013-11-09 * "Buy shares of VEA"
-  Assets:US:ETrade:Cash                          -1072.79 USD              
+  Assets:US:ETrade:Cash                          -1072.79 USD
   Assets:US:ETrade:VEA                                  8 VEA {132.98 USD}
-  Expenses:Financial:Commissions                     8.95 USD              
+  Expenses:Financial:Commissions                     8.95 USD
 
 2013-11-09 * "Buy shares of GLD"
-  Assets:US:ETrade:Cash                          -1098.85 USD              
+  Assets:US:ETrade:Cash                          -1098.85 USD
   Assets:US:ETrade:GLD                                 10 GLD {108.99 USD}
-  Expenses:Financial:Commissions                     8.95 USD              
+  Expenses:Financial:Commissions                     8.95 USD
 
 2013-11-09 * "Buy shares of ITOT"
-  Assets:US:ETrade:Cash                          -1035.30 USD              
+  Assets:US:ETrade:Cash                          -1035.30 USD
   Assets:US:ETrade:ITOT                                 5 ITOT {205.27 USD}
-  Expenses:Financial:Commissions                     8.95 USD              
+  Expenses:Financial:Commissions                     8.95 USD
 
 2013-11-09 * "Buy shares of VHT"
-  Assets:US:ETrade:Cash                          -1065.15 USD              
+  Assets:US:ETrade:Cash                          -1065.15 USD
   Assets:US:ETrade:VHT                                 10 VHT {105.62 USD}
-  Expenses:Financial:Commissions                     8.95 USD              
+  Expenses:Financial:Commissions                     8.95 USD
 
 2013-12-17 * "Dividends on portfolio"
   Assets:US:ETrade:Cash                             34.99 USD
@@ -2440,19 +2439,19 @@ option "operating_currency" "USD"
 
 2014-01-07 * "Sell shares of ITOT"
   Assets:US:ETrade:ITOT                                -5 ITOT {200.53 USD} @ 214.53 USD
-  Assets:US:ETrade:Cash                           1063.70 USD                           
-  Expenses:Financial:Commissions                     8.95 USD                           
-  Income:US:ETrade:Gains                           -70.00 USD                           
+  Assets:US:ETrade:Cash                           1063.70 USD
+  Expenses:Financial:Commissions                     8.95 USD
+  Income:US:ETrade:Gains                           -70.00 USD
 
 2014-01-10 * "Buy shares of GLD"
-  Assets:US:ETrade:Cash                           -532.45 USD              
+  Assets:US:ETrade:Cash                           -532.45 USD
   Assets:US:ETrade:GLD                                  5 GLD {104.70 USD}
-  Expenses:Financial:Commissions                     8.95 USD              
+  Expenses:Financial:Commissions                     8.95 USD
 
 2014-01-10 * "Buy shares of VHT"
-  Assets:US:ETrade:Cash                           -534.25 USD              
+  Assets:US:ETrade:Cash                           -534.25 USD
   Assets:US:ETrade:VHT                                  5 VHT {105.06 USD}
-  Expenses:Financial:Commissions                     8.95 USD              
+  Expenses:Financial:Commissions                     8.95 USD
 
 2014-03-18 * "Dividends on portfolio"
   Assets:US:ETrade:Cash                             39.18 USD
@@ -2460,101 +2459,101 @@ option "operating_currency" "USD"
 
 2014-04-17 * "Sell shares of GLD"
   Assets:US:ETrade:GLD                                -10 GLD {108.99 USD} @ 101.44 USD
-  Assets:US:ETrade:Cash                           1005.45 USD                           
-  Expenses:Financial:Commissions                     8.95 USD                           
-  Income:US:ETrade:Gains                            75.50 USD                           
+  Assets:US:ETrade:Cash                           1005.45 USD
+  Expenses:Financial:Commissions                     8.95 USD
+  Income:US:ETrade:Gains                            75.50 USD
 
 2014-05-02 * "Buy shares of VEA"
-  Assets:US:ETrade:Cash                           -151.72 USD              
+  Assets:US:ETrade:Cash                           -151.72 USD
   Assets:US:ETrade:VEA                                  1 VEA {142.77 USD}
-  Expenses:Financial:Commissions                     8.95 USD              
+  Expenses:Financial:Commissions                     8.95 USD
 
 2014-05-02 * "Buy shares of VHT"
-  Assets:US:ETrade:Cash                           -118.06 USD              
+  Assets:US:ETrade:Cash                           -118.06 USD
   Assets:US:ETrade:VHT                                  1 VHT {109.11 USD}
-  Expenses:Financial:Commissions                     8.95 USD              
+  Expenses:Financial:Commissions                     8.95 USD
 
 2014-05-02 * "Buy shares of GLD"
-  Assets:US:ETrade:Cash                           -203.23 USD             
+  Assets:US:ETrade:Cash                           -203.23 USD
   Assets:US:ETrade:GLD                                  2 GLD {97.14 USD}
-  Expenses:Financial:Commissions                     8.95 USD             
+  Expenses:Financial:Commissions                     8.95 USD
 
 2014-06-18 * "Dividends on portfolio"
   Assets:US:ETrade:Cash                             40.97 USD
   Income:US:ETrade:Dividends                       -40.97 USD
 
 2014-07-19 * "Buy shares of ITOT"
-  Assets:US:ETrade:Cash                          -1770.78 USD              
+  Assets:US:ETrade:Cash                          -1770.78 USD
   Assets:US:ETrade:ITOT                                 7 ITOT {251.69 USD}
-  Expenses:Financial:Commissions                     8.95 USD              
+  Expenses:Financial:Commissions                     8.95 USD
 
 2014-07-19 * "Buy shares of VHT"
-  Assets:US:ETrade:Cash                          -1798.54 USD              
+  Assets:US:ETrade:Cash                          -1798.54 USD
   Assets:US:ETrade:VHT                                 17 VHT {105.27 USD}
-  Expenses:Financial:Commissions                     8.95 USD              
+  Expenses:Financial:Commissions                     8.95 USD
 
 2014-07-27 * "Sell shares of ITOT"
   Assets:US:ETrade:ITOT                                -5 ITOT {205.27 USD} @ 252.17 USD
-  Assets:US:ETrade:Cash                           1251.90 USD                           
-  Expenses:Financial:Commissions                     8.95 USD                           
-  Income:US:ETrade:Gains                          -234.50 USD                           
+  Assets:US:ETrade:Cash                           1251.90 USD
+  Expenses:Financial:Commissions                     8.95 USD
+  Income:US:ETrade:Gains                          -234.50 USD
 
 2014-07-28 * "Buy shares of VEA"
-  Assets:US:ETrade:Cash                           -464.35 USD              
+  Assets:US:ETrade:Cash                           -464.35 USD
   Assets:US:ETrade:VEA                                  3 VEA {151.80 USD}
-  Expenses:Financial:Commissions                     8.95 USD              
+  Expenses:Financial:Commissions                     8.95 USD
 
 2014-07-28 * "Buy shares of VHT"
-  Assets:US:ETrade:Cash                           -548.65 USD              
+  Assets:US:ETrade:Cash                           -548.65 USD
   Assets:US:ETrade:VHT                                  5 VHT {107.94 USD}
-  Expenses:Financial:Commissions                     8.95 USD              
+  Expenses:Financial:Commissions                     8.95 USD
 
 2014-08-01 * "Sell shares of VEA"
   Assets:US:ETrade:VEA                                 -9 VEA {132.14 USD} @ 151.94 USD
-  Assets:US:ETrade:Cash                           1358.51 USD                           
-  Expenses:Financial:Commissions                     8.95 USD                           
-  Income:US:ETrade:Gains                          -178.20 USD                           
+  Assets:US:ETrade:Cash                           1358.51 USD
+  Expenses:Financial:Commissions                     8.95 USD
+  Income:US:ETrade:Gains                          -178.20 USD
 
 2014-08-22 * "Buy shares of GLD"
-  Assets:US:ETrade:Cash                           -491.95 USD             
+  Assets:US:ETrade:Cash                           -491.95 USD
   Assets:US:ETrade:GLD                                  5 GLD {96.60 USD}
-  Expenses:Financial:Commissions                     8.95 USD             
+  Expenses:Financial:Commissions                     8.95 USD
 
 2014-08-22 * "Buy shares of ITOT"
-  Assets:US:ETrade:Cash                           -502.81 USD              
+  Assets:US:ETrade:Cash                           -502.81 USD
   Assets:US:ETrade:ITOT                                 2 ITOT {246.93 USD}
-  Expenses:Financial:Commissions                     8.95 USD              
+  Expenses:Financial:Commissions                     8.95 USD
 
 2014-08-22 * "Buy shares of VEA"
-  Assets:US:ETrade:Cash                           -477.10 USD              
+  Assets:US:ETrade:Cash                           -477.10 USD
   Assets:US:ETrade:VEA                                  3 VEA {156.05 USD}
-  Expenses:Financial:Commissions                     8.95 USD              
+  Expenses:Financial:Commissions                     8.95 USD
 
 2014-09-03 * "Sell shares of VEA"
   Assets:US:ETrade:VEA                                 -8 VEA {132.98 USD} @ 155.99 USD
-  Assets:US:ETrade:Cash                           1238.97 USD                           
-  Expenses:Financial:Commissions                     8.95 USD                           
-  Income:US:ETrade:Gains                          -184.08 USD                           
+  Assets:US:ETrade:Cash                           1238.97 USD
+  Expenses:Financial:Commissions                     8.95 USD
+  Income:US:ETrade:Gains                          -184.08 USD
 
 2014-09-05 * "Buy shares of VEA"
-  Assets:US:ETrade:Cash                           -163.67 USD              
+  Assets:US:ETrade:Cash                           -163.67 USD
   Assets:US:ETrade:VEA                                  1 VEA {154.72 USD}
-  Expenses:Financial:Commissions                     8.95 USD              
+  Expenses:Financial:Commissions                     8.95 USD
 
 2014-09-05 * "Buy shares of VHT"
-  Assets:US:ETrade:Cash                           -224.61 USD              
+  Assets:US:ETrade:Cash                           -224.61 USD
   Assets:US:ETrade:VHT                                  2 VHT {107.83 USD}
-  Expenses:Financial:Commissions                     8.95 USD              
+  Expenses:Financial:Commissions                     8.95 USD
 
 2014-09-05 * "Buy shares of GLD"
-  Assets:US:ETrade:Cash                           -295.00 USD             
+  Assets:US:ETrade:Cash                           -295.00 USD
   Assets:US:ETrade:GLD                                  3 GLD {95.35 USD}
-  Expenses:Financial:Commissions                     8.95 USD             
+  Expenses:Financial:Commissions                     8.95 USD
 
 2014-09-05 * "Buy shares of ITOT"
-  Assets:US:ETrade:Cash                           -250.59 USD              
+  Assets:US:ETrade:Cash                           -250.59 USD
   Assets:US:ETrade:ITOT                                 1 ITOT {241.64 USD}
-  Expenses:Financial:Commissions                     8.95 USD              
+  Expenses:Financial:Commissions                     8.95 USD
 
 2014-09-18 * "Dividends on portfolio"
   Assets:US:ETrade:Cash                             68.53 USD
@@ -2562,63 +2561,63 @@ option "operating_currency" "USD"
 
 2014-09-20 * "Sell shares of VHT"
   Assets:US:ETrade:VHT                                -17 VHT {105.27 USD} @ 111.69 USD
-  Assets:US:ETrade:Cash                           1889.78 USD                           
-  Expenses:Financial:Commissions                     8.95 USD                           
-  Income:US:ETrade:Gains                          -109.14 USD                           
+  Assets:US:ETrade:Cash                           1889.78 USD
+  Expenses:Financial:Commissions                     8.95 USD
+  Income:US:ETrade:Gains                          -109.14 USD
 
 2014-10-01 * "Buy shares of VHT"
-  Assets:US:ETrade:Cash                          -1537.33 USD              
+  Assets:US:ETrade:Cash                          -1537.33 USD
   Assets:US:ETrade:VHT                                 14 VHT {109.17 USD}
-  Expenses:Financial:Commissions                     8.95 USD              
+  Expenses:Financial:Commissions                     8.95 USD
 
 2014-10-01 * "Buy shares of GLD"
-  Assets:US:ETrade:Cash                          -1542.23 USD             
+  Assets:US:ETrade:Cash                          -1542.23 USD
   Assets:US:ETrade:GLD                                 16 GLD {95.83 USD}
-  Expenses:Financial:Commissions                     8.95 USD             
+  Expenses:Financial:Commissions                     8.95 USD
 
 2014-10-01 * "Buy shares of ITOT"
-  Assets:US:ETrade:Cash                          -1554.85 USD              
+  Assets:US:ETrade:Cash                          -1554.85 USD
   Assets:US:ETrade:ITOT                                 6 ITOT {257.65 USD}
-  Expenses:Financial:Commissions                     8.95 USD              
+  Expenses:Financial:Commissions                     8.95 USD
 
 2014-10-01 * "Buy shares of VEA"
-  Assets:US:ETrade:Cash                          -1563.65 USD              
+  Assets:US:ETrade:Cash                          -1563.65 USD
   Assets:US:ETrade:VEA                                 10 VEA {155.47 USD}
-  Expenses:Financial:Commissions                     8.95 USD              
+  Expenses:Financial:Commissions                     8.95 USD
 
 2014-12-17 * "Dividends on portfolio"
   Assets:US:ETrade:Cash                             93.18 USD
   Income:US:ETrade:Dividends                       -93.18 USD
 
 2014-12-27 * "Buy shares of GLD"
-  Assets:US:ETrade:Cash                          -2424.45 USD             
+  Assets:US:ETrade:Cash                          -2424.45 USD
   Assets:US:ETrade:GLD                                 25 GLD {96.62 USD}
-  Expenses:Financial:Commissions                     8.95 USD             
+  Expenses:Financial:Commissions                     8.95 USD
 
 2014-12-27 * "Buy shares of ITOT"
-  Assets:US:ETrade:Cash                          -2363.91 USD              
+  Assets:US:ETrade:Cash                          -2363.91 USD
   Assets:US:ETrade:ITOT                                 8 ITOT {294.37 USD}
-  Expenses:Financial:Commissions                     8.95 USD              
+  Expenses:Financial:Commissions                     8.95 USD
 
 2014-12-27 * "Buy shares of VEA"
-  Assets:US:ETrade:Cash                          -2417.35 USD              
+  Assets:US:ETrade:Cash                          -2417.35 USD
   Assets:US:ETrade:VEA                                 15 VEA {160.56 USD}
-  Expenses:Financial:Commissions                     8.95 USD              
+  Expenses:Financial:Commissions                     8.95 USD
 
 2015-02-15 * "Buy shares of GLD"
-  Assets:US:ETrade:Cash                          -1433.03 USD              
+  Assets:US:ETrade:Cash                          -1433.03 USD
   Assets:US:ETrade:GLD                                 14 GLD {101.72 USD}
-  Expenses:Financial:Commissions                     8.95 USD              
+  Expenses:Financial:Commissions                     8.95 USD
 
 2015-02-15 * "Buy shares of ITOT"
-  Assets:US:ETrade:Cash                          -1396.55 USD              
+  Assets:US:ETrade:Cash                          -1396.55 USD
   Assets:US:ETrade:ITOT                                 5 ITOT {277.52 USD}
-  Expenses:Financial:Commissions                     8.95 USD              
+  Expenses:Financial:Commissions                     8.95 USD
 
 2015-02-15 * "Buy shares of VEA"
-  Assets:US:ETrade:Cash                          -1431.94 USD              
+  Assets:US:ETrade:Cash                          -1431.94 USD
   Assets:US:ETrade:VEA                                  9 VEA {158.11 USD}
-  Expenses:Financial:Commissions                     8.95 USD              
+  Expenses:Financial:Commissions                     8.95 USD
 
 
 
@@ -2635,19 +2634,19 @@ option "operating_currency" "USD"
 
 2013-01-07 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          3.281 VBMPX {146.28 USD}
-  Assets:US:Vanguard:Cash                         -479.94 USD                
+  Assets:US:Vanguard:Cash                         -479.94 USD
 
 2013-01-07 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          9.912 RGAGX {72.64 USD}
-  Assets:US:Vanguard:Cash                         -720.01 USD               
+  Assets:US:Vanguard:Cash                         -720.01 USD
 
 2013-01-07 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          1.641 VBMPX {146.28 USD}
-  Assets:US:Vanguard:Cash                         -240.05 USD                
+  Assets:US:Vanguard:Cash                         -240.05 USD
 
 2013-01-07 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          4.956 RGAGX {72.64 USD}
-  Assets:US:Vanguard:Cash                         -360.00 USD               
+  Assets:US:Vanguard:Cash                         -360.00 USD
 
 2013-01-18 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                          600.00 USD
@@ -2655,19 +2654,19 @@ option "operating_currency" "USD"
 
 2013-01-21 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          3.382 VBMPX {141.92 USD}
-  Assets:US:Vanguard:Cash                         -479.97 USD                
+  Assets:US:Vanguard:Cash                         -479.97 USD
 
 2013-01-21 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          9.970 RGAGX {72.22 USD}
-  Assets:US:Vanguard:Cash                         -720.03 USD               
+  Assets:US:Vanguard:Cash                         -720.03 USD
 
 2013-01-21 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          1.691 VBMPX {141.92 USD}
-  Assets:US:Vanguard:Cash                         -239.99 USD                
+  Assets:US:Vanguard:Cash                         -239.99 USD
 
 2013-01-21 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          4.985 RGAGX {72.22 USD}
-  Assets:US:Vanguard:Cash                         -360.02 USD               
+  Assets:US:Vanguard:Cash                         -360.02 USD
 
 2013-02-01 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                          600.00 USD
@@ -2675,19 +2674,19 @@ option "operating_currency" "USD"
 
 2013-02-04 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          3.389 VBMPX {141.65 USD}
-  Assets:US:Vanguard:Cash                         -480.05 USD                
+  Assets:US:Vanguard:Cash                         -480.05 USD
 
 2013-02-04 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          9.853 RGAGX {73.07 USD}
-  Assets:US:Vanguard:Cash                         -719.96 USD               
+  Assets:US:Vanguard:Cash                         -719.96 USD
 
 2013-02-04 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          1.694 VBMPX {141.65 USD}
-  Assets:US:Vanguard:Cash                         -239.96 USD                
+  Assets:US:Vanguard:Cash                         -239.96 USD
 
 2013-02-04 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          4.927 RGAGX {73.07 USD}
-  Assets:US:Vanguard:Cash                         -360.02 USD               
+  Assets:US:Vanguard:Cash                         -360.02 USD
 
 2013-02-15 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                          600.00 USD
@@ -2695,19 +2694,19 @@ option "operating_currency" "USD"
 
 2013-02-18 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          3.396 VBMPX {141.34 USD}
-  Assets:US:Vanguard:Cash                         -479.99 USD                
+  Assets:US:Vanguard:Cash                         -479.99 USD
 
 2013-02-18 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          9.722 RGAGX {74.06 USD}
-  Assets:US:Vanguard:Cash                         -720.01 USD               
+  Assets:US:Vanguard:Cash                         -720.01 USD
 
 2013-02-18 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          1.698 VBMPX {141.34 USD}
-  Assets:US:Vanguard:Cash                         -240.00 USD                
+  Assets:US:Vanguard:Cash                         -240.00 USD
 
 2013-02-18 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          4.861 RGAGX {74.06 USD}
-  Assets:US:Vanguard:Cash                         -360.01 USD               
+  Assets:US:Vanguard:Cash                         -360.01 USD
 
 2013-03-01 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                          600.00 USD
@@ -2715,19 +2714,19 @@ option "operating_currency" "USD"
 
 2013-03-04 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          3.388 VBMPX {141.69 USD}
-  Assets:US:Vanguard:Cash                         -480.05 USD                
+  Assets:US:Vanguard:Cash                         -480.05 USD
 
 2013-03-04 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          9.609 RGAGX {74.93 USD}
-  Assets:US:Vanguard:Cash                         -720.00 USD               
+  Assets:US:Vanguard:Cash                         -720.00 USD
 
 2013-03-04 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          1.694 VBMPX {141.69 USD}
-  Assets:US:Vanguard:Cash                         -240.02 USD                
+  Assets:US:Vanguard:Cash                         -240.02 USD
 
 2013-03-04 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          4.804 RGAGX {74.93 USD}
-  Assets:US:Vanguard:Cash                         -359.96 USD               
+  Assets:US:Vanguard:Cash                         -359.96 USD
 
 2013-03-15 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                          600.00 USD
@@ -2735,19 +2734,19 @@ option "operating_currency" "USD"
 
 2013-03-18 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          3.366 VBMPX {142.60 USD}
-  Assets:US:Vanguard:Cash                         -479.99 USD                
+  Assets:US:Vanguard:Cash                         -479.99 USD
 
 2013-03-18 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          9.476 RGAGX {75.98 USD}
-  Assets:US:Vanguard:Cash                         -719.99 USD               
+  Assets:US:Vanguard:Cash                         -719.99 USD
 
 2013-03-18 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          1.683 VBMPX {142.60 USD}
-  Assets:US:Vanguard:Cash                         -240.00 USD                
+  Assets:US:Vanguard:Cash                         -240.00 USD
 
 2013-03-18 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          4.738 RGAGX {75.98 USD}
-  Assets:US:Vanguard:Cash                         -359.99 USD               
+  Assets:US:Vanguard:Cash                         -359.99 USD
 
 2013-03-29 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                          600.00 USD
@@ -2755,19 +2754,19 @@ option "operating_currency" "USD"
 
 2013-04-01 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          3.353 VBMPX {143.17 USD}
-  Assets:US:Vanguard:Cash                         -480.05 USD                
+  Assets:US:Vanguard:Cash                         -480.05 USD
 
 2013-04-01 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          9.472 RGAGX {76.01 USD}
-  Assets:US:Vanguard:Cash                         -719.97 USD               
+  Assets:US:Vanguard:Cash                         -719.97 USD
 
 2013-04-01 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          1.676 VBMPX {143.17 USD}
-  Assets:US:Vanguard:Cash                         -239.95 USD                
+  Assets:US:Vanguard:Cash                         -239.95 USD
 
 2013-04-01 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          4.736 RGAGX {76.01 USD}
-  Assets:US:Vanguard:Cash                         -359.98 USD               
+  Assets:US:Vanguard:Cash                         -359.98 USD
 
 2013-04-12 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                          600.00 USD
@@ -2775,19 +2774,19 @@ option "operating_currency" "USD"
 
 2013-04-15 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          3.361 VBMPX {142.83 USD}
-  Assets:US:Vanguard:Cash                         -480.05 USD                
+  Assets:US:Vanguard:Cash                         -480.05 USD
 
 2013-04-15 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          9.426 RGAGX {76.39 USD}
-  Assets:US:Vanguard:Cash                         -720.05 USD               
+  Assets:US:Vanguard:Cash                         -720.05 USD
 
 2013-04-15 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          1.680 VBMPX {142.83 USD}
-  Assets:US:Vanguard:Cash                         -239.95 USD                
+  Assets:US:Vanguard:Cash                         -239.95 USD
 
 2013-04-15 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          4.712 RGAGX {76.39 USD}
-  Assets:US:Vanguard:Cash                         -359.95 USD               
+  Assets:US:Vanguard:Cash                         -359.95 USD
 
 2013-04-26 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                          600.00 USD
@@ -2795,19 +2794,19 @@ option "operating_currency" "USD"
 
 2013-04-29 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          3.272 VBMPX {146.69 USD}
-  Assets:US:Vanguard:Cash                         -479.97 USD                
+  Assets:US:Vanguard:Cash                         -479.97 USD
 
 2013-04-29 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          9.378 RGAGX {76.78 USD}
-  Assets:US:Vanguard:Cash                         -720.04 USD               
+  Assets:US:Vanguard:Cash                         -720.04 USD
 
 2013-04-29 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          1.636 VBMPX {146.69 USD}
-  Assets:US:Vanguard:Cash                         -239.98 USD                
+  Assets:US:Vanguard:Cash                         -239.98 USD
 
 2013-04-29 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          4.689 RGAGX {76.78 USD}
-  Assets:US:Vanguard:Cash                         -360.02 USD               
+  Assets:US:Vanguard:Cash                         -360.02 USD
 
 2013-05-10 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                          600.00 USD
@@ -2815,19 +2814,19 @@ option "operating_currency" "USD"
 
 2013-05-13 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          3.268 VBMPX {146.88 USD}
-  Assets:US:Vanguard:Cash                         -480.00 USD                
+  Assets:US:Vanguard:Cash                         -480.00 USD
 
 2013-05-13 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          9.295 RGAGX {77.46 USD}
-  Assets:US:Vanguard:Cash                         -719.99 USD               
+  Assets:US:Vanguard:Cash                         -719.99 USD
 
 2013-05-13 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          1.634 VBMPX {146.88 USD}
-  Assets:US:Vanguard:Cash                         -240.00 USD                
+  Assets:US:Vanguard:Cash                         -240.00 USD
 
 2013-05-13 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          4.648 RGAGX {77.46 USD}
-  Assets:US:Vanguard:Cash                         -360.03 USD               
+  Assets:US:Vanguard:Cash                         -360.03 USD
 
 2013-05-24 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                          600.00 USD
@@ -2835,19 +2834,19 @@ option "operating_currency" "USD"
 
 2013-05-27 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          3.203 VBMPX {149.88 USD}
-  Assets:US:Vanguard:Cash                         -480.07 USD                
+  Assets:US:Vanguard:Cash                         -480.07 USD
 
 2013-05-27 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          9.228 RGAGX {78.02 USD}
-  Assets:US:Vanguard:Cash                         -719.97 USD               
+  Assets:US:Vanguard:Cash                         -719.97 USD
 
 2013-05-27 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          1.601 VBMPX {149.88 USD}
-  Assets:US:Vanguard:Cash                         -239.96 USD                
+  Assets:US:Vanguard:Cash                         -239.96 USD
 
 2013-05-27 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          4.614 RGAGX {78.02 USD}
-  Assets:US:Vanguard:Cash                         -359.98 USD               
+  Assets:US:Vanguard:Cash                         -359.98 USD
 
 2013-06-07 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                          600.00 USD
@@ -2855,19 +2854,19 @@ option "operating_currency" "USD"
 
 2013-06-10 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          3.203 VBMPX {149.85 USD}
-  Assets:US:Vanguard:Cash                         -479.97 USD                
+  Assets:US:Vanguard:Cash                         -479.97 USD
 
 2013-06-10 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          9.259 RGAGX {77.76 USD}
-  Assets:US:Vanguard:Cash                         -719.98 USD               
+  Assets:US:Vanguard:Cash                         -719.98 USD
 
 2013-06-10 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          1.602 VBMPX {149.85 USD}
-  Assets:US:Vanguard:Cash                         -240.06 USD                
+  Assets:US:Vanguard:Cash                         -240.06 USD
 
 2013-06-10 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          4.630 RGAGX {77.76 USD}
-  Assets:US:Vanguard:Cash                         -360.03 USD               
+  Assets:US:Vanguard:Cash                         -360.03 USD
 
 2013-06-21 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                          600.00 USD
@@ -2875,19 +2874,19 @@ option "operating_currency" "USD"
 
 2013-06-24 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          3.178 VBMPX {151.05 USD}
-  Assets:US:Vanguard:Cash                         -480.04 USD                
+  Assets:US:Vanguard:Cash                         -480.04 USD
 
 2013-06-24 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          9.188 RGAGX {78.36 USD}
-  Assets:US:Vanguard:Cash                         -719.97 USD               
+  Assets:US:Vanguard:Cash                         -719.97 USD
 
 2013-06-24 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          1.589 VBMPX {151.05 USD}
-  Assets:US:Vanguard:Cash                         -240.02 USD                
+  Assets:US:Vanguard:Cash                         -240.02 USD
 
 2013-06-24 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          4.594 RGAGX {78.36 USD}
-  Assets:US:Vanguard:Cash                         -359.99 USD               
+  Assets:US:Vanguard:Cash                         -359.99 USD
 
 2013-07-05 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                          600.00 USD
@@ -2895,19 +2894,19 @@ option "operating_currency" "USD"
 
 2013-07-08 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          3.189 VBMPX {150.50 USD}
-  Assets:US:Vanguard:Cash                         -479.94 USD                
+  Assets:US:Vanguard:Cash                         -479.94 USD
 
 2013-07-08 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          9.182 RGAGX {78.41 USD}
-  Assets:US:Vanguard:Cash                         -719.96 USD               
+  Assets:US:Vanguard:Cash                         -719.96 USD
 
 2013-07-08 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          1.595 VBMPX {150.50 USD}
-  Assets:US:Vanguard:Cash                         -240.05 USD                
+  Assets:US:Vanguard:Cash                         -240.05 USD
 
 2013-07-08 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          4.592 RGAGX {78.41 USD}
-  Assets:US:Vanguard:Cash                         -360.06 USD               
+  Assets:US:Vanguard:Cash                         -360.06 USD
 
 2013-07-19 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                          350.00 USD
@@ -2915,19 +2914,19 @@ option "operating_currency" "USD"
 
 2013-07-22 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          1.836 VBMPX {152.52 USD}
-  Assets:US:Vanguard:Cash                         -280.03 USD                
+  Assets:US:Vanguard:Cash                         -280.03 USD
 
 2013-07-22 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          5.468 RGAGX {76.81 USD}
-  Assets:US:Vanguard:Cash                         -420.00 USD               
+  Assets:US:Vanguard:Cash                         -420.00 USD
 
 2013-07-22 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          0.918 VBMPX {152.52 USD}
-  Assets:US:Vanguard:Cash                         -140.01 USD                
+  Assets:US:Vanguard:Cash                         -140.01 USD
 
 2013-07-22 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          2.733 RGAGX {76.81 USD}
-  Assets:US:Vanguard:Cash                         -209.92 USD               
+  Assets:US:Vanguard:Cash                         -209.92 USD
 
 2014-01-03 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                          600.00 USD
@@ -2935,19 +2934,19 @@ option "operating_currency" "USD"
 
 2014-01-06 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          2.978 VBMPX {161.18 USD}
-  Assets:US:Vanguard:Cash                         -479.99 USD                
+  Assets:US:Vanguard:Cash                         -479.99 USD
 
 2014-01-06 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          9.208 RGAGX {78.19 USD}
-  Assets:US:Vanguard:Cash                         -719.97 USD               
+  Assets:US:Vanguard:Cash                         -719.97 USD
 
 2014-01-06 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          1.489 VBMPX {161.18 USD}
-  Assets:US:Vanguard:Cash                         -240.00 USD                
+  Assets:US:Vanguard:Cash                         -240.00 USD
 
 2014-01-06 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          4.604 RGAGX {78.19 USD}
-  Assets:US:Vanguard:Cash                         -359.99 USD               
+  Assets:US:Vanguard:Cash                         -359.99 USD
 
 2014-01-17 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                          600.00 USD
@@ -2955,19 +2954,19 @@ option "operating_currency" "USD"
 
 2014-01-20 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          2.948 VBMPX {162.84 USD}
-  Assets:US:Vanguard:Cash                         -480.05 USD                
+  Assets:US:Vanguard:Cash                         -480.05 USD
 
 2014-01-20 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          9.219 RGAGX {78.10 USD}
-  Assets:US:Vanguard:Cash                         -720.00 USD               
+  Assets:US:Vanguard:Cash                         -720.00 USD
 
 2014-01-20 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          1.474 VBMPX {162.84 USD}
-  Assets:US:Vanguard:Cash                         -240.03 USD                
+  Assets:US:Vanguard:Cash                         -240.03 USD
 
 2014-01-20 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          4.609 RGAGX {78.10 USD}
-  Assets:US:Vanguard:Cash                         -359.96 USD               
+  Assets:US:Vanguard:Cash                         -359.96 USD
 
 2014-01-31 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                          600.00 USD
@@ -2975,19 +2974,19 @@ option "operating_currency" "USD"
 
 2014-02-03 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          2.950 VBMPX {162.74 USD}
-  Assets:US:Vanguard:Cash                         -480.08 USD                
+  Assets:US:Vanguard:Cash                         -480.08 USD
 
 2014-02-03 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          9.074 RGAGX {79.35 USD}
-  Assets:US:Vanguard:Cash                         -720.02 USD               
+  Assets:US:Vanguard:Cash                         -720.02 USD
 
 2014-02-03 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          1.475 VBMPX {162.74 USD}
-  Assets:US:Vanguard:Cash                         -240.04 USD                
+  Assets:US:Vanguard:Cash                         -240.04 USD
 
 2014-02-03 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          4.536 RGAGX {79.35 USD}
-  Assets:US:Vanguard:Cash                         -359.93 USD               
+  Assets:US:Vanguard:Cash                         -359.93 USD
 
 2014-02-14 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                          600.00 USD
@@ -2995,19 +2994,19 @@ option "operating_currency" "USD"
 
 2014-02-17 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          2.919 VBMPX {164.45 USD}
-  Assets:US:Vanguard:Cash                         -480.03 USD                
+  Assets:US:Vanguard:Cash                         -480.03 USD
 
 2014-02-17 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          9.350 RGAGX {77.00 USD}
-  Assets:US:Vanguard:Cash                         -719.95 USD               
+  Assets:US:Vanguard:Cash                         -719.95 USD
 
 2014-02-17 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          1.459 VBMPX {164.45 USD}
-  Assets:US:Vanguard:Cash                         -239.93 USD                
+  Assets:US:Vanguard:Cash                         -239.93 USD
 
 2014-02-17 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          4.675 RGAGX {77.00 USD}
-  Assets:US:Vanguard:Cash                         -359.98 USD               
+  Assets:US:Vanguard:Cash                         -359.98 USD
 
 2014-02-28 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                          600.00 USD
@@ -3015,19 +3014,19 @@ option "operating_currency" "USD"
 
 2014-03-03 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          2.899 VBMPX {165.56 USD}
-  Assets:US:Vanguard:Cash                         -479.96 USD                
+  Assets:US:Vanguard:Cash                         -479.96 USD
 
 2014-03-03 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          9.373 RGAGX {76.82 USD}
-  Assets:US:Vanguard:Cash                         -720.03 USD               
+  Assets:US:Vanguard:Cash                         -720.03 USD
 
 2014-03-03 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          1.450 VBMPX {165.56 USD}
-  Assets:US:Vanguard:Cash                         -240.06 USD                
+  Assets:US:Vanguard:Cash                         -240.06 USD
 
 2014-03-03 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          4.687 RGAGX {76.82 USD}
-  Assets:US:Vanguard:Cash                         -360.06 USD               
+  Assets:US:Vanguard:Cash                         -360.06 USD
 
 2014-03-14 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                          600.00 USD
@@ -3035,19 +3034,19 @@ option "operating_currency" "USD"
 
 2014-03-17 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          2.889 VBMPX {166.12 USD}
-  Assets:US:Vanguard:Cash                         -479.92 USD                
+  Assets:US:Vanguard:Cash                         -479.92 USD
 
 2014-03-17 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          9.183 RGAGX {78.40 USD}
-  Assets:US:Vanguard:Cash                         -719.95 USD               
+  Assets:US:Vanguard:Cash                         -719.95 USD
 
 2014-03-17 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          1.445 VBMPX {166.12 USD}
-  Assets:US:Vanguard:Cash                         -240.04 USD                
+  Assets:US:Vanguard:Cash                         -240.04 USD
 
 2014-03-17 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          4.592 RGAGX {78.40 USD}
-  Assets:US:Vanguard:Cash                         -360.01 USD               
+  Assets:US:Vanguard:Cash                         -360.01 USD
 
 2014-03-28 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                          600.00 USD
@@ -3055,19 +3054,19 @@ option "operating_currency" "USD"
 
 2014-03-31 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          2.913 VBMPX {164.78 USD}
-  Assets:US:Vanguard:Cash                         -480.00 USD                
+  Assets:US:Vanguard:Cash                         -480.00 USD
 
 2014-03-31 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          9.345 RGAGX {77.05 USD}
-  Assets:US:Vanguard:Cash                         -720.03 USD               
+  Assets:US:Vanguard:Cash                         -720.03 USD
 
 2014-03-31 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          1.456 VBMPX {164.78 USD}
-  Assets:US:Vanguard:Cash                         -239.92 USD                
+  Assets:US:Vanguard:Cash                         -239.92 USD
 
 2014-03-31 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          4.672 RGAGX {77.05 USD}
-  Assets:US:Vanguard:Cash                         -359.98 USD               
+  Assets:US:Vanguard:Cash                         -359.98 USD
 
 2014-04-11 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                          600.00 USD
@@ -3075,19 +3074,19 @@ option "operating_currency" "USD"
 
 2014-04-14 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          2.887 VBMPX {166.29 USD}
-  Assets:US:Vanguard:Cash                         -480.08 USD                
+  Assets:US:Vanguard:Cash                         -480.08 USD
 
 2014-04-14 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          9.258 RGAGX {77.78 USD}
-  Assets:US:Vanguard:Cash                         -720.09 USD               
+  Assets:US:Vanguard:Cash                         -720.09 USD
 
 2014-04-14 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          1.443 VBMPX {166.29 USD}
-  Assets:US:Vanguard:Cash                         -239.96 USD                
+  Assets:US:Vanguard:Cash                         -239.96 USD
 
 2014-04-14 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          4.628 RGAGX {77.78 USD}
-  Assets:US:Vanguard:Cash                         -359.97 USD               
+  Assets:US:Vanguard:Cash                         -359.97 USD
 
 2014-04-25 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                          600.00 USD
@@ -3095,19 +3094,19 @@ option "operating_currency" "USD"
 
 2014-04-28 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          2.870 VBMPX {167.27 USD}
-  Assets:US:Vanguard:Cash                         -480.06 USD                
+  Assets:US:Vanguard:Cash                         -480.06 USD
 
 2014-04-28 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          9.164 RGAGX {78.57 USD}
-  Assets:US:Vanguard:Cash                         -720.02 USD               
+  Assets:US:Vanguard:Cash                         -720.02 USD
 
 2014-04-28 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          1.435 VBMPX {167.27 USD}
-  Assets:US:Vanguard:Cash                         -240.03 USD                
+  Assets:US:Vanguard:Cash                         -240.03 USD
 
 2014-04-28 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          4.581 RGAGX {78.57 USD}
-  Assets:US:Vanguard:Cash                         -359.93 USD               
+  Assets:US:Vanguard:Cash                         -359.93 USD
 
 2014-05-09 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                          600.00 USD
@@ -3115,19 +3114,19 @@ option "operating_currency" "USD"
 
 2014-05-12 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          2.874 VBMPX {166.99 USD}
-  Assets:US:Vanguard:Cash                         -479.93 USD                
+  Assets:US:Vanguard:Cash                         -479.93 USD
 
 2014-05-12 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          9.268 RGAGX {77.68 USD}
-  Assets:US:Vanguard:Cash                         -719.94 USD               
+  Assets:US:Vanguard:Cash                         -719.94 USD
 
 2014-05-12 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          1.437 VBMPX {166.99 USD}
-  Assets:US:Vanguard:Cash                         -239.96 USD                
+  Assets:US:Vanguard:Cash                         -239.96 USD
 
 2014-05-12 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          4.635 RGAGX {77.68 USD}
-  Assets:US:Vanguard:Cash                         -360.05 USD               
+  Assets:US:Vanguard:Cash                         -360.05 USD
 
 2014-05-23 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                          600.00 USD
@@ -3135,19 +3134,19 @@ option "operating_currency" "USD"
 
 2014-05-26 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          2.873 VBMPX {167.11 USD}
-  Assets:US:Vanguard:Cash                         -480.11 USD                
+  Assets:US:Vanguard:Cash                         -480.11 USD
 
 2014-05-26 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          9.189 RGAGX {78.36 USD}
-  Assets:US:Vanguard:Cash                         -720.05 USD               
+  Assets:US:Vanguard:Cash                         -720.05 USD
 
 2014-05-26 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          1.436 VBMPX {167.11 USD}
-  Assets:US:Vanguard:Cash                         -239.97 USD                
+  Assets:US:Vanguard:Cash                         -239.97 USD
 
 2014-05-26 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          4.593 RGAGX {78.36 USD}
-  Assets:US:Vanguard:Cash                         -359.91 USD               
+  Assets:US:Vanguard:Cash                         -359.91 USD
 
 2014-06-06 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                          600.00 USD
@@ -3155,19 +3154,19 @@ option "operating_currency" "USD"
 
 2014-06-09 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          2.857 VBMPX {168.02 USD}
-  Assets:US:Vanguard:Cash                         -480.03 USD                
+  Assets:US:Vanguard:Cash                         -480.03 USD
 
 2014-06-09 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          9.312 RGAGX {77.32 USD}
-  Assets:US:Vanguard:Cash                         -720.00 USD               
+  Assets:US:Vanguard:Cash                         -720.00 USD
 
 2014-06-09 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          1.428 VBMPX {168.02 USD}
-  Assets:US:Vanguard:Cash                         -239.93 USD                
+  Assets:US:Vanguard:Cash                         -239.93 USD
 
 2014-06-09 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          4.656 RGAGX {77.32 USD}
-  Assets:US:Vanguard:Cash                         -360.00 USD               
+  Assets:US:Vanguard:Cash                         -360.00 USD
 
 2014-06-20 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                          600.00 USD
@@ -3175,19 +3174,19 @@ option "operating_currency" "USD"
 
 2014-06-23 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          2.885 VBMPX {166.36 USD}
-  Assets:US:Vanguard:Cash                         -479.95 USD                
+  Assets:US:Vanguard:Cash                         -479.95 USD
 
 2014-06-23 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          9.101 RGAGX {79.12 USD}
-  Assets:US:Vanguard:Cash                         -720.07 USD               
+  Assets:US:Vanguard:Cash                         -720.07 USD
 
 2014-06-23 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          1.443 VBMPX {166.36 USD}
-  Assets:US:Vanguard:Cash                         -240.06 USD                
+  Assets:US:Vanguard:Cash                         -240.06 USD
 
 2014-06-23 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          4.550 RGAGX {79.12 USD}
-  Assets:US:Vanguard:Cash                         -360.00 USD               
+  Assets:US:Vanguard:Cash                         -360.00 USD
 
 2014-07-04 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                          600.00 USD
@@ -3195,19 +3194,19 @@ option "operating_currency" "USD"
 
 2014-07-07 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          2.848 VBMPX {168.53 USD}
-  Assets:US:Vanguard:Cash                         -479.97 USD                
+  Assets:US:Vanguard:Cash                         -479.97 USD
 
 2014-07-07 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          9.057 RGAGX {79.50 USD}
-  Assets:US:Vanguard:Cash                         -720.03 USD               
+  Assets:US:Vanguard:Cash                         -720.03 USD
 
 2014-07-07 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          1.424 VBMPX {168.53 USD}
-  Assets:US:Vanguard:Cash                         -239.99 USD                
+  Assets:US:Vanguard:Cash                         -239.99 USD
 
 2014-07-07 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          4.528 RGAGX {79.50 USD}
-  Assets:US:Vanguard:Cash                         -359.98 USD               
+  Assets:US:Vanguard:Cash                         -359.98 USD
 
 2014-07-18 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                          350.00 USD
@@ -3215,19 +3214,19 @@ option "operating_currency" "USD"
 
 2014-07-21 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          1.689 VBMPX {165.79 USD}
-  Assets:US:Vanguard:Cash                         -280.02 USD                
+  Assets:US:Vanguard:Cash                         -280.02 USD
 
 2014-07-21 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          5.303 RGAGX {79.20 USD}
-  Assets:US:Vanguard:Cash                         -420.00 USD               
+  Assets:US:Vanguard:Cash                         -420.00 USD
 
 2014-07-21 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          0.844 VBMPX {165.79 USD}
-  Assets:US:Vanguard:Cash                         -139.93 USD                
+  Assets:US:Vanguard:Cash                         -139.93 USD
 
 2014-07-21 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          2.652 RGAGX {79.20 USD}
-  Assets:US:Vanguard:Cash                         -210.04 USD               
+  Assets:US:Vanguard:Cash                         -210.04 USD
 
 2015-01-02 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                          600.00 USD
@@ -3235,19 +3234,19 @@ option "operating_currency" "USD"
 
 2015-01-05 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          2.862 VBMPX {167.69 USD}
-  Assets:US:Vanguard:Cash                         -479.93 USD                
+  Assets:US:Vanguard:Cash                         -479.93 USD
 
 2015-01-05 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          8.489 RGAGX {84.82 USD}
-  Assets:US:Vanguard:Cash                         -720.04 USD               
+  Assets:US:Vanguard:Cash                         -720.04 USD
 
 2015-01-05 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          1.431 VBMPX {167.69 USD}
-  Assets:US:Vanguard:Cash                         -239.96 USD                
+  Assets:US:Vanguard:Cash                         -239.96 USD
 
 2015-01-05 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          4.245 RGAGX {84.82 USD}
-  Assets:US:Vanguard:Cash                         -360.06 USD               
+  Assets:US:Vanguard:Cash                         -360.06 USD
 
 2015-01-16 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                          600.00 USD
@@ -3255,19 +3254,19 @@ option "operating_currency" "USD"
 
 2015-01-19 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          2.853 VBMPX {168.24 USD}
-  Assets:US:Vanguard:Cash                         -479.99 USD                
+  Assets:US:Vanguard:Cash                         -479.99 USD
 
 2015-01-19 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          8.370 RGAGX {86.02 USD}
-  Assets:US:Vanguard:Cash                         -719.99 USD               
+  Assets:US:Vanguard:Cash                         -719.99 USD
 
 2015-01-19 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          1.427 VBMPX {168.24 USD}
-  Assets:US:Vanguard:Cash                         -240.08 USD                
+  Assets:US:Vanguard:Cash                         -240.08 USD
 
 2015-01-19 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          4.185 RGAGX {86.02 USD}
-  Assets:US:Vanguard:Cash                         -359.99 USD               
+  Assets:US:Vanguard:Cash                         -359.99 USD
 
 2015-01-30 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                          600.00 USD
@@ -3275,19 +3274,19 @@ option "operating_currency" "USD"
 
 2015-02-02 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          2.851 VBMPX {168.37 USD}
-  Assets:US:Vanguard:Cash                         -480.02 USD                
+  Assets:US:Vanguard:Cash                         -480.02 USD
 
 2015-02-02 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          8.302 RGAGX {86.73 USD}
-  Assets:US:Vanguard:Cash                         -720.03 USD               
+  Assets:US:Vanguard:Cash                         -720.03 USD
 
 2015-02-02 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          1.425 VBMPX {168.37 USD}
-  Assets:US:Vanguard:Cash                         -239.93 USD                
+  Assets:US:Vanguard:Cash                         -239.93 USD
 
 2015-02-02 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          4.150 RGAGX {86.73 USD}
-  Assets:US:Vanguard:Cash                         -359.93 USD               
+  Assets:US:Vanguard:Cash                         -359.93 USD
 
 2015-02-13 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                          600.00 USD
@@ -3295,19 +3294,19 @@ option "operating_currency" "USD"
 
 2015-02-16 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          2.855 VBMPX {168.14 USD}
-  Assets:US:Vanguard:Cash                         -480.04 USD                
+  Assets:US:Vanguard:Cash                         -480.04 USD
 
 2015-02-16 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          8.131 RGAGX {88.56 USD}
-  Assets:US:Vanguard:Cash                         -720.08 USD               
+  Assets:US:Vanguard:Cash                         -720.08 USD
 
 2015-02-16 * "Investing 40% of cash in VBMPX"
   Assets:US:Vanguard:VBMPX                          1.427 VBMPX {168.14 USD}
-  Assets:US:Vanguard:Cash                         -239.94 USD                
+  Assets:US:Vanguard:Cash                         -239.94 USD
 
 2015-02-16 * "Investing 60% of cash in RGAGX"
   Assets:US:Vanguard:RGAGX                          4.065 RGAGX {88.56 USD}
-  Assets:US:Vanguard:Cash                         -360.00 USD               
+  Assets:US:Vanguard:Cash                         -360.00 USD
 
 
 
@@ -3318,1088 +3317,1088 @@ option "operating_currency" "USD"
 2013-01-01 open Income:US:Hoogle:Vacation                    VACHR
 2013-01-01 open Assets:US:Hoogle:Vacation                    VACHR
 2013-01-01 open Expenses:Vacation                               VACHR
-2013-01-01 open Expenses:Health:Life:GroupTermLife              
-2013-01-01 open Expenses:Health:Medical:Insurance               
-2013-01-01 open Expenses:Health:Dental:Insurance                
-2013-01-01 open Expenses:Health:Vision:Insurance                
+2013-01-01 open Expenses:Health:Life:GroupTermLife
+2013-01-01 open Expenses:Health:Medical:Insurance
+2013-01-01 open Expenses:Health:Dental:Insurance
+2013-01-01 open Expenses:Health:Vision:Insurance
 
 2013-01-01 event "employer" "Hoogle, 1600 Amphibious Parkway, River View, CA"
 
 2013-01-03 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         1350.60 USD   
-  Assets:US:Vanguard:Cash                         1200.00 USD   
+  Assets:US:BofA:Checking                         1350.60 USD
+  Assets:US:Vanguard:Cash                         1200.00 USD
   Assets:US:Federal:PreTax401k                   -1200.00 IRAUSD
   Expenses:Taxes:Y2013:US:Federal:PreTax401k      1200.00 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2013:US:State                    365.08 USD   
-  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2013:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2013:US:State                    365.08 USD
+  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2013:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2013-01-17 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         1350.60 USD   
-  Assets:US:Vanguard:Cash                         1200.00 USD   
+  Assets:US:BofA:Checking                         1350.60 USD
+  Assets:US:Vanguard:Cash                         1200.00 USD
   Assets:US:Federal:PreTax401k                   -1200.00 IRAUSD
   Expenses:Taxes:Y2013:US:Federal:PreTax401k      1200.00 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2013:US:State                    365.08 USD   
-  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2013:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2013:US:State                    365.08 USD
+  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2013:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2013-01-31 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         1350.60 USD   
-  Assets:US:Vanguard:Cash                         1200.00 USD   
+  Assets:US:BofA:Checking                         1350.60 USD
+  Assets:US:Vanguard:Cash                         1200.00 USD
   Assets:US:Federal:PreTax401k                   -1200.00 IRAUSD
   Expenses:Taxes:Y2013:US:Federal:PreTax401k      1200.00 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2013:US:State                    365.08 USD   
-  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2013:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2013:US:State                    365.08 USD
+  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2013:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2013-02-14 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         1350.60 USD   
-  Assets:US:Vanguard:Cash                         1200.00 USD   
+  Assets:US:BofA:Checking                         1350.60 USD
+  Assets:US:Vanguard:Cash                         1200.00 USD
   Assets:US:Federal:PreTax401k                   -1200.00 IRAUSD
   Expenses:Taxes:Y2013:US:Federal:PreTax401k      1200.00 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2013:US:State                    365.08 USD   
-  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2013:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2013:US:State                    365.08 USD
+  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2013:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2013-02-28 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         1350.60 USD   
-  Assets:US:Vanguard:Cash                         1200.00 USD   
+  Assets:US:BofA:Checking                         1350.60 USD
+  Assets:US:Vanguard:Cash                         1200.00 USD
   Assets:US:Federal:PreTax401k                   -1200.00 IRAUSD
   Expenses:Taxes:Y2013:US:Federal:PreTax401k      1200.00 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2013:US:State                    365.08 USD   
-  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2013:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2013:US:State                    365.08 USD
+  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2013:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2013-03-14 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         1350.60 USD   
-  Assets:US:Vanguard:Cash                         1200.00 USD   
+  Assets:US:BofA:Checking                         1350.60 USD
+  Assets:US:Vanguard:Cash                         1200.00 USD
   Assets:US:Federal:PreTax401k                   -1200.00 IRAUSD
   Expenses:Taxes:Y2013:US:Federal:PreTax401k      1200.00 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2013:US:State                    365.08 USD   
-  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2013:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2013:US:State                    365.08 USD
+  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2013:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2013-03-28 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         1350.60 USD   
-  Assets:US:Vanguard:Cash                         1200.00 USD   
+  Assets:US:BofA:Checking                         1350.60 USD
+  Assets:US:Vanguard:Cash                         1200.00 USD
   Assets:US:Federal:PreTax401k                   -1200.00 IRAUSD
   Expenses:Taxes:Y2013:US:Federal:PreTax401k      1200.00 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2013:US:State                    365.08 USD   
-  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2013:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2013:US:State                    365.08 USD
+  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2013:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2013-04-11 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         1350.60 USD   
-  Assets:US:Vanguard:Cash                         1200.00 USD   
+  Assets:US:BofA:Checking                         1350.60 USD
+  Assets:US:Vanguard:Cash                         1200.00 USD
   Assets:US:Federal:PreTax401k                   -1200.00 IRAUSD
   Expenses:Taxes:Y2013:US:Federal:PreTax401k      1200.00 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2013:US:State                    365.08 USD   
-  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2013:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2013:US:State                    365.08 USD
+  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2013:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2013-04-25 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         1350.60 USD   
-  Assets:US:Vanguard:Cash                         1200.00 USD   
+  Assets:US:BofA:Checking                         1350.60 USD
+  Assets:US:Vanguard:Cash                         1200.00 USD
   Assets:US:Federal:PreTax401k                   -1200.00 IRAUSD
   Expenses:Taxes:Y2013:US:Federal:PreTax401k      1200.00 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2013:US:State                    365.08 USD   
-  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2013:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2013:US:State                    365.08 USD
+  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2013:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2013-05-09 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         1350.60 USD   
-  Assets:US:Vanguard:Cash                         1200.00 USD   
+  Assets:US:BofA:Checking                         1350.60 USD
+  Assets:US:Vanguard:Cash                         1200.00 USD
   Assets:US:Federal:PreTax401k                   -1200.00 IRAUSD
   Expenses:Taxes:Y2013:US:Federal:PreTax401k      1200.00 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2013:US:State                    365.08 USD   
-  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2013:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2013:US:State                    365.08 USD
+  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2013:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2013-05-23 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         1350.60 USD   
-  Assets:US:Vanguard:Cash                         1200.00 USD   
+  Assets:US:BofA:Checking                         1350.60 USD
+  Assets:US:Vanguard:Cash                         1200.00 USD
   Assets:US:Federal:PreTax401k                   -1200.00 IRAUSD
   Expenses:Taxes:Y2013:US:Federal:PreTax401k      1200.00 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2013:US:State                    365.08 USD   
-  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2013:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2013:US:State                    365.08 USD
+  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2013:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2013-06-06 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         1350.60 USD   
-  Assets:US:Vanguard:Cash                         1200.00 USD   
+  Assets:US:BofA:Checking                         1350.60 USD
+  Assets:US:Vanguard:Cash                         1200.00 USD
   Assets:US:Federal:PreTax401k                   -1200.00 IRAUSD
   Expenses:Taxes:Y2013:US:Federal:PreTax401k      1200.00 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2013:US:State                    365.08 USD   
-  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2013:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2013:US:State                    365.08 USD
+  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2013:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2013-06-20 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         1350.60 USD   
-  Assets:US:Vanguard:Cash                         1200.00 USD   
+  Assets:US:BofA:Checking                         1350.60 USD
+  Assets:US:Vanguard:Cash                         1200.00 USD
   Assets:US:Federal:PreTax401k                   -1200.00 IRAUSD
   Expenses:Taxes:Y2013:US:Federal:PreTax401k      1200.00 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2013:US:State                    365.08 USD   
-  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2013:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2013:US:State                    365.08 USD
+  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2013:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2013-07-04 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         1350.60 USD   
-  Assets:US:Vanguard:Cash                         1200.00 USD   
+  Assets:US:BofA:Checking                         1350.60 USD
+  Assets:US:Vanguard:Cash                         1200.00 USD
   Assets:US:Federal:PreTax401k                   -1200.00 IRAUSD
   Expenses:Taxes:Y2013:US:Federal:PreTax401k      1200.00 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2013:US:State                    365.08 USD   
-  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2013:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2013:US:State                    365.08 USD
+  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2013:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2013-07-18 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         1850.60 USD   
-  Assets:US:Vanguard:Cash                          700.00 USD   
+  Assets:US:BofA:Checking                         1850.60 USD
+  Assets:US:Vanguard:Cash                          700.00 USD
   Assets:US:Federal:PreTax401k                    -700.00 IRAUSD
   Expenses:Taxes:Y2013:US:Federal:PreTax401k       700.00 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2013:US:State                    365.08 USD   
-  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2013:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2013:US:State                    365.08 USD
+  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2013:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2013-08-01 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         2550.60 USD   
+  Assets:US:BofA:Checking                         2550.60 USD
   Assets:US:Federal:PreTax401k                          0 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2013:US:State                    365.08 USD   
-  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2013:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2013:US:State                    365.08 USD
+  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2013:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2013-08-15 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         2550.60 USD   
+  Assets:US:BofA:Checking                         2550.60 USD
   Assets:US:Federal:PreTax401k                          0 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2013:US:State                    365.08 USD   
-  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2013:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2013:US:State                    365.08 USD
+  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2013:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2013-08-29 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         2550.60 USD   
+  Assets:US:BofA:Checking                         2550.60 USD
   Assets:US:Federal:PreTax401k                          0 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2013:US:State                    365.08 USD   
-  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2013:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2013:US:State                    365.08 USD
+  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2013:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2013-09-12 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         2550.60 USD   
+  Assets:US:BofA:Checking                         2550.60 USD
   Assets:US:Federal:PreTax401k                          0 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2013:US:State                    365.08 USD   
-  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2013:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2013:US:State                    365.08 USD
+  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2013:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2013-09-26 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         2550.60 USD   
+  Assets:US:BofA:Checking                         2550.60 USD
   Assets:US:Federal:PreTax401k                          0 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2013:US:State                    365.08 USD   
-  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2013:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2013:US:State                    365.08 USD
+  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2013:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2013-10-10 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         2550.60 USD   
+  Assets:US:BofA:Checking                         2550.60 USD
   Assets:US:Federal:PreTax401k                          0 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2013:US:State                    365.08 USD   
-  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2013:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2013:US:State                    365.08 USD
+  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2013:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2013-10-24 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         2550.60 USD   
+  Assets:US:BofA:Checking                         2550.60 USD
   Assets:US:Federal:PreTax401k                          0 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2013:US:State                    365.08 USD   
-  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2013:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2013:US:State                    365.08 USD
+  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2013:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2013-11-07 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         2550.60 USD   
+  Assets:US:BofA:Checking                         2550.60 USD
   Assets:US:Federal:PreTax401k                          0 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2013:US:State                    365.08 USD   
-  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2013:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2013:US:State                    365.08 USD
+  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2013:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2013-11-21 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         2550.60 USD   
+  Assets:US:BofA:Checking                         2550.60 USD
   Assets:US:Federal:PreTax401k                          0 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2013:US:State                    365.08 USD   
-  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2013:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2013:US:State                    365.08 USD
+  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2013:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2013:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2013-12-05 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         2589.06 USD   
+  Assets:US:BofA:Checking                         2589.06 USD
   Assets:US:Federal:PreTax401k                          0 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2013:US:State                    365.08 USD   
-  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2013:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2013:US:SocSec                   243.08 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2013:US:State                    365.08 USD
+  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2013:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2013:US:SocSec                   243.08 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2013-12-19 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         2832.14 USD   
+  Assets:US:BofA:Checking                         2832.14 USD
   Assets:US:Federal:PreTax401k                          0 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2013:US:State                    365.08 USD   
-  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2013:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2013:US:SocSec                        0 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2013:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2013:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2013:US:State                    365.08 USD
+  Expenses:Taxes:Y2013:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2013:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2013:US:SocSec                        0 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2014-01-02 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         1350.60 USD   
-  Assets:US:Vanguard:Cash                         1200.00 USD   
+  Assets:US:BofA:Checking                         1350.60 USD
+  Assets:US:Vanguard:Cash                         1200.00 USD
   Assets:US:Federal:PreTax401k                   -1200.00 IRAUSD
   Expenses:Taxes:Y2014:US:Federal:PreTax401k      1200.00 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2014:US:State                    365.08 USD   
-  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2014:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2014:US:State                    365.08 USD
+  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2014:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2014-01-16 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         1350.60 USD   
-  Assets:US:Vanguard:Cash                         1200.00 USD   
+  Assets:US:BofA:Checking                         1350.60 USD
+  Assets:US:Vanguard:Cash                         1200.00 USD
   Assets:US:Federal:PreTax401k                   -1200.00 IRAUSD
   Expenses:Taxes:Y2014:US:Federal:PreTax401k      1200.00 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2014:US:State                    365.08 USD   
-  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2014:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2014:US:State                    365.08 USD
+  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2014:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2014-01-30 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         1350.60 USD   
-  Assets:US:Vanguard:Cash                         1200.00 USD   
+  Assets:US:BofA:Checking                         1350.60 USD
+  Assets:US:Vanguard:Cash                         1200.00 USD
   Assets:US:Federal:PreTax401k                   -1200.00 IRAUSD
   Expenses:Taxes:Y2014:US:Federal:PreTax401k      1200.00 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2014:US:State                    365.08 USD   
-  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2014:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2014:US:State                    365.08 USD
+  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2014:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2014-02-13 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         1350.60 USD   
-  Assets:US:Vanguard:Cash                         1200.00 USD   
+  Assets:US:BofA:Checking                         1350.60 USD
+  Assets:US:Vanguard:Cash                         1200.00 USD
   Assets:US:Federal:PreTax401k                   -1200.00 IRAUSD
   Expenses:Taxes:Y2014:US:Federal:PreTax401k      1200.00 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2014:US:State                    365.08 USD   
-  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2014:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2014:US:State                    365.08 USD
+  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2014:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2014-02-27 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         1350.60 USD   
-  Assets:US:Vanguard:Cash                         1200.00 USD   
+  Assets:US:BofA:Checking                         1350.60 USD
+  Assets:US:Vanguard:Cash                         1200.00 USD
   Assets:US:Federal:PreTax401k                   -1200.00 IRAUSD
   Expenses:Taxes:Y2014:US:Federal:PreTax401k      1200.00 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2014:US:State                    365.08 USD   
-  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2014:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2014:US:State                    365.08 USD
+  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2014:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2014-03-13 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         1350.60 USD   
-  Assets:US:Vanguard:Cash                         1200.00 USD   
+  Assets:US:BofA:Checking                         1350.60 USD
+  Assets:US:Vanguard:Cash                         1200.00 USD
   Assets:US:Federal:PreTax401k                   -1200.00 IRAUSD
   Expenses:Taxes:Y2014:US:Federal:PreTax401k      1200.00 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2014:US:State                    365.08 USD   
-  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2014:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2014:US:State                    365.08 USD
+  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2014:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2014-03-27 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         1350.60 USD   
-  Assets:US:Vanguard:Cash                         1200.00 USD   
+  Assets:US:BofA:Checking                         1350.60 USD
+  Assets:US:Vanguard:Cash                         1200.00 USD
   Assets:US:Federal:PreTax401k                   -1200.00 IRAUSD
   Expenses:Taxes:Y2014:US:Federal:PreTax401k      1200.00 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2014:US:State                    365.08 USD   
-  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2014:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2014:US:State                    365.08 USD
+  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2014:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2014-04-10 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         1350.60 USD   
-  Assets:US:Vanguard:Cash                         1200.00 USD   
+  Assets:US:BofA:Checking                         1350.60 USD
+  Assets:US:Vanguard:Cash                         1200.00 USD
   Assets:US:Federal:PreTax401k                   -1200.00 IRAUSD
   Expenses:Taxes:Y2014:US:Federal:PreTax401k      1200.00 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2014:US:State                    365.08 USD   
-  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2014:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2014:US:State                    365.08 USD
+  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2014:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2014-04-24 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         1350.60 USD   
-  Assets:US:Vanguard:Cash                         1200.00 USD   
+  Assets:US:BofA:Checking                         1350.60 USD
+  Assets:US:Vanguard:Cash                         1200.00 USD
   Assets:US:Federal:PreTax401k                   -1200.00 IRAUSD
   Expenses:Taxes:Y2014:US:Federal:PreTax401k      1200.00 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2014:US:State                    365.08 USD   
-  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2014:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2014:US:State                    365.08 USD
+  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2014:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2014-05-08 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         1350.60 USD   
-  Assets:US:Vanguard:Cash                         1200.00 USD   
+  Assets:US:BofA:Checking                         1350.60 USD
+  Assets:US:Vanguard:Cash                         1200.00 USD
   Assets:US:Federal:PreTax401k                   -1200.00 IRAUSD
   Expenses:Taxes:Y2014:US:Federal:PreTax401k      1200.00 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2014:US:State                    365.08 USD   
-  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2014:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2014:US:State                    365.08 USD
+  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2014:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2014-05-22 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         1350.60 USD   
-  Assets:US:Vanguard:Cash                         1200.00 USD   
+  Assets:US:BofA:Checking                         1350.60 USD
+  Assets:US:Vanguard:Cash                         1200.00 USD
   Assets:US:Federal:PreTax401k                   -1200.00 IRAUSD
   Expenses:Taxes:Y2014:US:Federal:PreTax401k      1200.00 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2014:US:State                    365.08 USD   
-  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2014:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2014:US:State                    365.08 USD
+  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2014:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2014-06-05 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         1350.60 USD   
-  Assets:US:Vanguard:Cash                         1200.00 USD   
+  Assets:US:BofA:Checking                         1350.60 USD
+  Assets:US:Vanguard:Cash                         1200.00 USD
   Assets:US:Federal:PreTax401k                   -1200.00 IRAUSD
   Expenses:Taxes:Y2014:US:Federal:PreTax401k      1200.00 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2014:US:State                    365.08 USD   
-  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2014:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2014:US:State                    365.08 USD
+  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2014:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2014-06-19 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         1350.60 USD   
-  Assets:US:Vanguard:Cash                         1200.00 USD   
+  Assets:US:BofA:Checking                         1350.60 USD
+  Assets:US:Vanguard:Cash                         1200.00 USD
   Assets:US:Federal:PreTax401k                   -1200.00 IRAUSD
   Expenses:Taxes:Y2014:US:Federal:PreTax401k      1200.00 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2014:US:State                    365.08 USD   
-  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2014:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2014:US:State                    365.08 USD
+  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2014:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2014-07-03 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         1350.60 USD   
-  Assets:US:Vanguard:Cash                         1200.00 USD   
+  Assets:US:BofA:Checking                         1350.60 USD
+  Assets:US:Vanguard:Cash                         1200.00 USD
   Assets:US:Federal:PreTax401k                   -1200.00 IRAUSD
   Expenses:Taxes:Y2014:US:Federal:PreTax401k      1200.00 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2014:US:State                    365.08 USD   
-  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2014:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2014:US:State                    365.08 USD
+  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2014:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2014-07-17 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         1850.60 USD   
-  Assets:US:Vanguard:Cash                          700.00 USD   
+  Assets:US:BofA:Checking                         1850.60 USD
+  Assets:US:Vanguard:Cash                          700.00 USD
   Assets:US:Federal:PreTax401k                    -700.00 IRAUSD
   Expenses:Taxes:Y2014:US:Federal:PreTax401k       700.00 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2014:US:State                    365.08 USD   
-  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2014:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2014:US:State                    365.08 USD
+  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2014:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2014-07-31 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         2550.60 USD   
+  Assets:US:BofA:Checking                         2550.60 USD
   Assets:US:Federal:PreTax401k                          0 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2014:US:State                    365.08 USD   
-  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2014:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2014:US:State                    365.08 USD
+  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2014:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2014-08-14 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         2550.60 USD   
+  Assets:US:BofA:Checking                         2550.60 USD
   Assets:US:Federal:PreTax401k                          0 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2014:US:State                    365.08 USD   
-  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2014:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2014:US:State                    365.08 USD
+  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2014:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2014-08-28 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         2550.60 USD   
+  Assets:US:BofA:Checking                         2550.60 USD
   Assets:US:Federal:PreTax401k                          0 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2014:US:State                    365.08 USD   
-  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2014:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2014:US:State                    365.08 USD
+  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2014:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2014-09-11 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         2550.60 USD   
+  Assets:US:BofA:Checking                         2550.60 USD
   Assets:US:Federal:PreTax401k                          0 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2014:US:State                    365.08 USD   
-  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2014:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2014:US:State                    365.08 USD
+  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2014:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2014-09-25 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         2550.60 USD   
+  Assets:US:BofA:Checking                         2550.60 USD
   Assets:US:Federal:PreTax401k                          0 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2014:US:State                    365.08 USD   
-  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2014:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2014:US:State                    365.08 USD
+  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2014:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2014-10-09 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         2550.60 USD   
+  Assets:US:BofA:Checking                         2550.60 USD
   Assets:US:Federal:PreTax401k                          0 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2014:US:State                    365.08 USD   
-  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2014:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2014:US:State                    365.08 USD
+  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2014:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2014-10-23 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         2550.60 USD   
+  Assets:US:BofA:Checking                         2550.60 USD
   Assets:US:Federal:PreTax401k                          0 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2014:US:State                    365.08 USD   
-  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2014:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2014:US:State                    365.08 USD
+  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2014:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2014-11-06 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         2550.60 USD   
+  Assets:US:BofA:Checking                         2550.60 USD
   Assets:US:Federal:PreTax401k                          0 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2014:US:State                    365.08 USD   
-  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2014:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2014:US:State                    365.08 USD
+  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2014:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2014-11-20 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         2550.60 USD   
+  Assets:US:BofA:Checking                         2550.60 USD
   Assets:US:Federal:PreTax401k                          0 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2014:US:State                    365.08 USD   
-  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2014:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2014:US:State                    365.08 USD
+  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2014:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2014:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2014-12-04 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         2589.06 USD   
+  Assets:US:BofA:Checking                         2589.06 USD
   Assets:US:Federal:PreTax401k                          0 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2014:US:State                    365.08 USD   
-  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2014:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2014:US:SocSec                   243.08 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2014:US:State                    365.08 USD
+  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2014:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2014:US:SocSec                   243.08 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2014-12-18 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         2832.14 USD   
+  Assets:US:BofA:Checking                         2832.14 USD
   Assets:US:Federal:PreTax401k                          0 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2014:US:State                    365.08 USD   
-  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2014:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2014:US:SocSec                        0 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2014:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2014:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2014:US:State                    365.08 USD
+  Expenses:Taxes:Y2014:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2014:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2014:US:SocSec                        0 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2015-01-01 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         1350.60 USD   
-  Assets:US:Vanguard:Cash                         1200.00 USD   
+  Assets:US:BofA:Checking                         1350.60 USD
+  Assets:US:Vanguard:Cash                         1200.00 USD
   Assets:US:Federal:PreTax401k                   -1200.00 IRAUSD
   Expenses:Taxes:Y2015:US:Federal:PreTax401k      1200.00 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2015:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2015:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2015:US:State                    365.08 USD   
-  Expenses:Taxes:Y2015:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2015:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2015:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2015:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2015:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2015:US:State                    365.08 USD
+  Expenses:Taxes:Y2015:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2015:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2015:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2015-01-15 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         1350.60 USD   
-  Assets:US:Vanguard:Cash                         1200.00 USD   
+  Assets:US:BofA:Checking                         1350.60 USD
+  Assets:US:Vanguard:Cash                         1200.00 USD
   Assets:US:Federal:PreTax401k                   -1200.00 IRAUSD
   Expenses:Taxes:Y2015:US:Federal:PreTax401k      1200.00 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2015:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2015:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2015:US:State                    365.08 USD   
-  Expenses:Taxes:Y2015:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2015:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2015:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2015:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2015:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2015:US:State                    365.08 USD
+  Expenses:Taxes:Y2015:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2015:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2015:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2015-01-29 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         1350.60 USD   
-  Assets:US:Vanguard:Cash                         1200.00 USD   
+  Assets:US:BofA:Checking                         1350.60 USD
+  Assets:US:Vanguard:Cash                         1200.00 USD
   Assets:US:Federal:PreTax401k                   -1200.00 IRAUSD
   Expenses:Taxes:Y2015:US:Federal:PreTax401k      1200.00 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2015:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2015:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2015:US:State                    365.08 USD   
-  Expenses:Taxes:Y2015:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2015:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2015:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2015:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2015:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2015:US:State                    365.08 USD
+  Expenses:Taxes:Y2015:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2015:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2015:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 2015-02-12 * "Hoogle" | "Payroll"
-  Assets:US:BofA:Checking                         1350.60 USD   
-  Assets:US:Vanguard:Cash                         1200.00 USD   
+  Assets:US:BofA:Checking                         1350.60 USD
+  Assets:US:Vanguard:Cash                         1200.00 USD
   Assets:US:Federal:PreTax401k                   -1200.00 IRAUSD
   Expenses:Taxes:Y2015:US:Federal:PreTax401k      1200.00 IRAUSD
-  Income:US:Hoogle:Salary                        -4615.38 USD   
-  Income:US:Hoogle:GroupTermLife                   -24.32 USD   
-  Expenses:Health:Life:GroupTermLife                24.32 USD   
-  Expenses:Health:Dental:Insurance                   2.90 USD   
-  Expenses:Health:Medical:Insurance                 27.38 USD   
-  Expenses:Health:Vision:Insurance                  42.30 USD   
-  Expenses:Taxes:Y2015:US:Medicare                 106.62 USD   
-  Expenses:Taxes:Y2015:US:Federal                 1062.92 USD   
-  Expenses:Taxes:Y2015:US:State                    365.08 USD   
-  Expenses:Taxes:Y2015:US:CityNYC                  174.92 USD   
-  Expenses:Taxes:Y2015:US:SDI                        1.12 USD   
-  Expenses:Taxes:Y2015:US:SocSec                   281.54 USD   
-  Assets:US:Hoogle:Vacation                             5 VACHR 
-  Income:US:Hoogle:Vacation                            -5 VACHR 
+  Income:US:Hoogle:Salary                        -4615.38 USD
+  Income:US:Hoogle:GroupTermLife                   -24.32 USD
+  Expenses:Health:Life:GroupTermLife                24.32 USD
+  Expenses:Health:Dental:Insurance                   2.90 USD
+  Expenses:Health:Medical:Insurance                 27.38 USD
+  Expenses:Health:Vision:Insurance                  42.30 USD
+  Expenses:Taxes:Y2015:US:Medicare                 106.62 USD
+  Expenses:Taxes:Y2015:US:Federal                 1062.92 USD
+  Expenses:Taxes:Y2015:US:State                    365.08 USD
+  Expenses:Taxes:Y2015:US:CityNYC                  174.92 USD
+  Expenses:Taxes:Y2015:US:SDI                        1.12 USD
+  Expenses:Taxes:Y2015:US:SocSec                   281.54 USD
+  Assets:US:Hoogle:Vacation                             5 VACHR
+  Income:US:Hoogle:Vacation                            -5 VACHR
 
 
 
@@ -4479,17 +4478,17 @@ option "operating_currency" "USD"
 
 * Expenses
 
-1980-05-12 open Expenses:Food:Groceries                         
-1980-05-12 open Expenses:Food:Restaurant                        
-1980-05-12 open Expenses:Food:Coffee                            
-1980-05-12 open Expenses:Food:Alcohol                           
-1980-05-12 open Expenses:Transport:Tram                         
-1980-05-12 open Expenses:Home:Rent                              
-1980-05-12 open Expenses:Home:Electricity                       
-1980-05-12 open Expenses:Home:Internet                          
-1980-05-12 open Expenses:Home:Phone                             
-1980-05-12 open Expenses:Financial:Fees                         
-1980-05-12 open Expenses:Financial:Commissions                  
+1980-05-12 open Expenses:Food:Groceries
+1980-05-12 open Expenses:Food:Restaurant
+1980-05-12 open Expenses:Food:Coffee
+1980-05-12 open Expenses:Food:Alcohol
+1980-05-12 open Expenses:Transport:Tram
+1980-05-12 open Expenses:Home:Rent
+1980-05-12 open Expenses:Home:Electricity
+1980-05-12 open Expenses:Home:Internet
+1980-05-12 open Expenses:Home:Phone
+1980-05-12 open Expenses:Financial:Fees
+1980-05-12 open Expenses:Financial:Commissions
 
 
 
@@ -5165,4 +5164,3 @@ option "operating_currency" "USD"
 
 
 * Cash
-
