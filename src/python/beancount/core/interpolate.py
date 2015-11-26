@@ -52,7 +52,6 @@ BalanceError = collections.namedtuple('BalanceError', 'source message entry')
 
 
 def get_posting_weight(posting):
-
     """Get the amount that will need to be balanced from a posting of a transaction.
 
     This is a *key* element of the semantics of transactions in this software. A
@@ -70,7 +69,23 @@ def get_posting_weight(posting):
     Returns:
       An amount, required to balance this posting.
     """
-    return posting.position.get_weight(posting.price)
+    # It the object has a cost, use that to balance this posting.
+    if posting.cost is not None:
+        amount = amount_mult(posting.cost, posting.units.number)
+
+    else:
+        # If there is a price, use that to balance this posting.
+        price = posting.price
+        if price is not None:
+            assert posting.units.currency != price.currency, (
+                "Invalid currency for price: {} in {}".format(posting, price))
+            amount = amount_mult(price, posting.units.number)
+
+        # Otherwise, just use the units.
+        else:
+            amount = posting.units
+
+    return amount
 
 
 def has_nontrivial_balance(posting):
@@ -81,7 +96,7 @@ def has_nontrivial_balance(posting):
     Returns:
       A boolean.
     """
-    return posting.position.cost or posting.price
+    return posting.cost or posting.price
 
 
 def compute_residual(postings):
@@ -167,13 +182,10 @@ def infer_tolerances(postings, options_map, use_cost=None):
         # Skip the precision on automatically inferred postings.
         if posting.meta and AUTOMATIC_META in posting.meta:
             continue
-        pos = posting.position
-        if not isinstance(pos, Position):
-            continue
 
         # Compute bounds on the number.
-        currency = pos.units.currency
-        expo = pos.units.number.as_tuple().exponent
+        currency = posting.units.currency
+        expo = posting.units.number.as_tuple().exponent
         if expo < 0:
             # Note: the exponent is a negative value.
             tolerance = ONE.scaleb(expo) * inferred_tolerance_multiplier
@@ -184,7 +196,7 @@ def infer_tolerances(postings, options_map, use_cost=None):
                 continue
 
             # Compute bounds on the smallest digit of the number implied as cost.
-            cost = pos.cost
+            cost = posting.cost
             if cost is not None:
                 cost_currency = cost.currency
                 cost_tolerance = min(tolerance * cost.number, MAXIMUM_TOLERANCE)
@@ -222,7 +234,8 @@ def get_residual_postings(residual, account_rounding):
     """
     meta = {AUTOMATIC_META: True,
             AUTOMATIC_RESIDUAL: True}
-    return [Posting(account_rounding, -position, None, None, meta.copy())
+    return [Posting(account_rounding, -position.units, position.cost, None, None,
+                    meta.copy())
             for position in residual.get_positions()]
 
 
@@ -358,11 +371,11 @@ def get_incomplete_postings(entry, options_map):
                 BalanceError(entry.meta,
                              "Useless auto-posting: {}".format(residual), entry))
             for currency in currencies:
-                position = Position.from_amounts(Amount(ZERO, currency))
+                units = Amount(ZERO, currency)
                 meta = copy.copy(old_posting.meta) if old_posting.meta else {}
                 meta[AUTOMATIC_META] = True
                 new_postings.append(
-                    Posting(old_posting.account, position,
+                    Posting(old_posting.account, units, None,
                             None, old_posting.flag, old_posting.meta))
                 has_inserted = True
         else:
@@ -394,7 +407,7 @@ def get_incomplete_postings(entry, options_map):
                 meta = copy.copy(old_posting.meta) if old_posting.meta else {}
                 meta[AUTOMATIC_META] = True
                 new_postings.append(
-                    Posting(old_posting.account, pos,
+                    Posting(old_posting.account, pos.units, pos.cost,
                             None, old_posting.flag, meta))
                 has_inserted = True
 
@@ -484,7 +497,7 @@ def compute_entries_balance(entries, prefix=None, date=None):
         if isinstance(entry, Transaction):
             for posting in entry.postings:
                 if prefix is None or posting.account.startswith(prefix):
-                    total_balance.add_position(posting.position)
+                    total_balance.add_position(posting)
     return total_balance
 
 
@@ -520,13 +533,13 @@ def compute_entry_context(entries, context_entry):
                            for account in context_accounts):
                     continue
                 balance = context_before[posting.account]
-                balance.add_position(posting.position)
+                balance.add_position(posting)
 
     # Compute the after context for the entry.
     context_after = copy.deepcopy(context_before)
     if isinstance(context_entry, Transaction):
         for posting in entry.postings:
             balance = context_after[posting.account]
-            balance.add_position(posting.position)
+            balance.add_position(posting)
 
     return context_before, context_after

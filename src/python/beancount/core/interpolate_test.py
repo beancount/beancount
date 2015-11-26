@@ -331,7 +331,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
         """)
         self.assertFalse(errors)
         self.assertEqual(2, len(entry.postings))
-        self.assertEqual(entry.postings[1].position, position.from_string('50 USD'))
+        self.assertEqual(position.get_position(entry.postings[1]), position.from_string('50 USD'))
 
     def test_balance_incomplete_postings__fill2(self):
         entry, errors = self.get_incomplete_entry("""
@@ -344,8 +344,8 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
         self.assertEqual(4, len(entry.postings))
         self.assertEqual(entry.postings[2].account, 'Expenses:Restaurant')
         self.assertEqual(entry.postings[3].account, 'Expenses:Restaurant')
-        self.assertEqual(entry.postings[2].position, position.from_string('50 USD'))
-        self.assertEqual(entry.postings[3].position, position.from_string('50 CAD'))
+        self.assertEqual(position.get_position(entry.postings[2]), position.from_string('50 USD'))
+        self.assertEqual(position.get_position(entry.postings[3]), position.from_string('50 CAD'))
 
     def test_balance_incomplete_postings__cost(self):
         entry, errors = self.get_incomplete_entry("""
@@ -356,7 +356,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
         self.assertFalse(errors)
         self.assertEqual(2, len(entry.postings))
         self.assertEqual(entry.postings[1].account, 'Assets:Cash')
-        self.assertEqual(entry.postings[1].position, position.from_string('-432.30 USD'))
+        self.assertEqual(position.get_position(entry.postings[1]), position.from_string('-432.30 USD'))
 
     def test_balance_incomplete_postings__insert_rounding(self):
         entry, errors = self.get_incomplete_entry("""
@@ -369,7 +369,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
         self.assertFalse(errors)
         self.assertEqual(3, len(entry.postings))
         self.assertEqual(entry.postings[2].account, 'Equity:RoundingError')
-        self.assertEqual(entry.postings[2].position, position.from_string('-0.00135 USD'))
+        self.assertEqual(position.get_position(entry.postings[2]), position.from_string('-0.00135 USD'))
 
     def test_balance_incomplete_postings__quantum(self):
         entry, errors = self.get_incomplete_entry("""
@@ -380,7 +380,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
             Assets:Cash
         """)
         self.assertFalse(errors)
-        self.assertEqual(D('-53.82'), entry.postings[1].position.units.number)
+        self.assertEqual(D('-53.82'), entry.postings[1].units.number)
 
         entry, errors = self.get_incomplete_entry("""
           option "default_tolerance" "USD:0.001"
@@ -390,7 +390,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
             Assets:Cash
         """)
         self.assertFalse(errors)
-        self.assertEqual(D('-53.821'), entry.postings[1].position.units.number)
+        self.assertEqual(D('-53.821'), entry.postings[1].units.number)
 
     def test_balance_incomplete_postings__rounding_and_quantum(self):
         entry, errors = self.get_incomplete_entry("""
@@ -403,9 +403,9 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
         """)
         self.assertFalse(errors)
         self.assertEqual(3, len(entry.postings))
-        self.assertEqual(D('-53.82'), entry.postings[1].position.units.number)
+        self.assertEqual(D('-53.82'), entry.postings[1].units.number)
         self.assertEqual('Equity:RoundingError', entry.postings[2].account)
-        self.assertEqual(D('-0.00135'), entry.postings[2].position.units.number)
+        self.assertEqual(D('-0.00135'), entry.postings[2].units.number)
 
         entry, errors = self.get_incomplete_entry("""
           option "account_rounding" "RoundingError"
@@ -417,9 +417,9 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
         """)
         self.assertFalse(errors)
         self.assertEqual(3, len(entry.postings))
-        self.assertEqual(D('-227.2100'), entry.postings[1].position.units.number)
+        self.assertEqual(D('-227.2100'), entry.postings[1].units.number)
         self.assertEqual('Equity:RoundingError', entry.postings[2].account)
-        self.assertEqual(D('0.0033'), entry.postings[2].position.units.number)
+        self.assertEqual(D('0.0033'), entry.postings[2].units.number)
 
     def test_balance_incomplete_postings__rounding_with_error(self):
         # Here we want to verify that auto-inserting rounding postings does not

@@ -111,6 +111,17 @@ CURRENCY_ORDER = {
 NCURRENCIES = len(CURRENCY_ORDER)
 
 
+def get_position(posting):
+    """Build a Position instance from a Posting instance.
+
+    Args:
+      posting: An instance of Posting.
+    Returns:
+      An instance of Position.
+    """
+    return Position(posting.units, posting.cost)
+
+
 class Position:
     """A 'Position' is a pair of units and optional cost.
     This is used to track inventories.
