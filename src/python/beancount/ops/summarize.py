@@ -537,8 +537,7 @@ def create_entries_from_balances(balances, date, source_account, direction,
       direction: If 'direction' is True, the new entries transfer TO the
         balances account from the source account; otherwise the new entries
         transfer FROM the balances into the source account.
-      meta: An instance of data.AttrDict to use to indicate the metadata for
-        the transactions.
+      meta: A dict to use as metadata for the transactions.
       flag: A string, the flag to use for the transactinos.
       narration_template: A format string for creating the narration. It is
         formatted with 'account' and 'date' replacement variables.

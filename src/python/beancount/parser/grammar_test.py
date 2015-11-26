@@ -405,9 +405,9 @@ class TestLineNumbers(unittest.TestCase):
             TestLineNumbers.test_line_numbers.__wrapped__)
         first_line += 1
 
-        self.assertEqual(2, entries[0].meta.lineno - first_line)
-        self.assertEqual(6, entries[1].meta.lineno - first_line)
-        self.assertEqual(8, entries[2].meta.lineno - first_line)
+        self.assertEqual(2, entries[0].meta["lineno"] - first_line)
+        self.assertEqual(6, entries[1].meta["lineno"] - first_line)
+        self.assertEqual(8, entries[2].meta["lineno"] - first_line)
 
 
 class TestParserOptions(unittest.TestCase):

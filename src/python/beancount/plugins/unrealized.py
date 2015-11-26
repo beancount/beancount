@@ -131,7 +131,7 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
                      "(price: {h.price_number:.4f} {h.cost_currency} as of {h.price_date}, "
                      "average cost: {h.cost_number:.4f} {h.cost_currency})").format(
                          gain_loss_str, h=holding)
-        entry = data.Transaction(data.new_metadata(meta.filename, lineno=1000 + index),
+        entry = data.Transaction(data.new_metadata(meta["filename"], lineno=1000 + index),
                                  latest_date, flags.FLAG_UNREALIZED,
                                  None, narration, None, None, [])
 
@@ -168,7 +168,7 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
     new_open_entries = []
     for account_ in sorted(new_accounts):
         if account_ not in open_entries:
-            meta = data.new_metadata(meta.filename, index)
+            meta = data.new_metadata(meta["filename"], index)
             open_entry = data.Open(meta, latest_date, account_, None, None)
             new_open_entries.append(open_entry)
 

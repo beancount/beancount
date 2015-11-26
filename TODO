@@ -1372,6 +1372,26 @@ http://furius.ca/beancount/doc/proposal-inter
     cost.
 
 
+  - Remove AttrDict... we can do away with a regular dict:
+
+      grep -srn  'meta\.'  /home/blais/p/beancount/src/python/beancount | grep -E -v 'meta\.(get|copy|items|keys|values)'
+
+    See issue #79.
+
+
+
+  - An important option exists around the behavior of balance checks: Should
+    balance checks bring their balance to the balance amount? In other words,
+    should a balance check imply an automatic, on-demand Pad behavior on
+    failure? This has an impact on following balance checks further in time. The
+    current behavior is not to pad a failure, so if there are multiple balance
+    checks, a single mistake before them would generate a number of errors. An
+    equally valid behavior would be to trigger only a single error, isolating
+    the periods between balance checks. Both semantics have advantages. You
+    should provide an option to ustomize this behavior, the user should be able
+    to choose. option "pad_failing_balances".
+
+
   - Reconcile all usage of account regexps to beancount.core.account.ACCOUNT_RE
     throughout the code  (grep --include='*.py'  -srn A-Z    ~/p/beancount/src/python/beancount).
 
@@ -4060,6 +4080,15 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
     it is. I'm sure we can make it scrape in parallel using multiprocessing and
     a work queue (this should be a fun little project and would make baking to
     an archive a lot faster in many cases).
+
+
+* Import
+** GnuCash
+
+  - Write a converter of GnuCash XML files into Beancount.
+
+  - Contact xentac@ for an example GnuCash input file with 2-3 years of data.
+    Willing to share (see email).
 
 
 * Export

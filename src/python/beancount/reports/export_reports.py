@@ -260,6 +260,39 @@ def render_ofx_date(dtime):
                               int(dtime.microsecond / 1000))
 
 
+def get_symbol(sources, prefer='google'):
+    """Filter a source specification to some corresponding ticker.
+
+    Args:
+      source: A comma-separated list of sources as a string, such as
+        "google/NASDAQ:AAPL,yahoo/AAPL".
+    Returns:
+      The symbol string.
+    Raises:
+      ValueError: If the sources does not contain a ticker for the
+        google source.
+    """
+
+    # If the ticker is a list of <source>/<symbol>, extract the symbol
+    # from it.
+    symbol_items = []
+    for source in map(str.strip, sources.split(',')):
+        match = re.match('([a-zA-Z][a-zA-Z0-9._]+)/(.*)', source)
+        if match:
+            source, symbol = match.groups()
+        else:
+            source, symbol = None, source
+        symbol_items.append((source, symbol))
+    if not symbol_items:
+        raise ValueError(
+            'Invalid source "{}" does not contain a ticker'.format(sources))
+    symbol_map = dict(symbol_items)
+    symbol = symbol_map.get(prefer, None)
+    if symbol is None:
+        # If not found, return the first symbol.
+        return symbol_items[0][1]
+
+
 class ExportPortfolioReport(report.TableReport):
     """Holdings lists that can be exported to external portfolio management software."""
 
@@ -383,7 +416,6 @@ class ExportPortfolioReport(report.TableReport):
                             help=("Group the holdings by account. This may help if your "
                                   "portfolio fails to import and you have many holdings."))
 
-
     EXPORT_FORMAT = ("{atype}  "
                      "{0.number:10.2f} {0.symbol:16}  "
                      "{cost_number:10.2f} {0.cost_currency:16}  "
@@ -460,7 +492,7 @@ class ExportPortfolioReport(report.TableReport):
             fitid = index + 1
             dttrade = render_ofx_date(trade_date)
             memo = export.memo
-            uniqueid = export.symbol
+            uniqueid = get_symbol(export.symbol)
             units = export.number
             unitprice = export.cost_number
             fee = ZERO
@@ -468,7 +500,7 @@ class ExportPortfolioReport(report.TableReport):
             buytype = 'BUY'
 
             invtranlist_io.write(self.TRANSACTION.format(**locals()))
-            commodities.add((export.symbol, export.mutual_fund))
+            commodities.add((get_symbol(export.symbol), export.mutual_fund))
 
         invtranlist = invtranlist_io.getvalue()
 

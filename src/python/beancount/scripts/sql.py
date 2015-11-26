@@ -84,7 +84,7 @@ def output_transactions(connection, entries):
                 continue
             connection.execute("""
               insert into entry values (?, ?, ?, ?, ?);
-            """, (eid, entry.date, 'txn', entry.meta.filename, entry.meta.lineno))
+            """, (eid, entry.date, 'txn', entry.meta["filename"], entry.meta["lineno"]))
 
             connection.execute("""
               insert into transactions_detail values (?, ?, ?, ?, ?, ?);
@@ -157,7 +157,7 @@ class DirectiveWriter:
                 connection.execute("""
                   INSERT INTO entry VALUES (?, ?, ?, ?, ?);
                 """, (eid, entry.date, self.name,
-                      entry.meta.filename, entry.meta.lineno))
+                      entry.meta["filename"], entry.meta["lineno"]))
 
                 # Store detail data.
                 detail_data = self.get_detail(entry)

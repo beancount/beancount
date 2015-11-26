@@ -62,6 +62,27 @@ Note: This file contains only changes in the 'default' branch.
       'position.CostSpec' for incomplete entries.
 
 
+2015-11-22
+
+  - Removed beancount.core.data.AttrDict and replace it by a regular dict. This
+    removes some annoyances when pickling and copying metadata. Metadata is now
+    represented by a plain old dict. (Fixes issue #79.)
+
+
+2015-11-09
+
+  - Implemented a simple pickle-date on beancount.loader.load_file(), which will
+    reload the parsed & processed contents of a top-level file if a cache file
+    is present and more recent than the file itself, or update the contents of
+    the cache after loading if not. (This works a bit like .pyc byte-compilation
+    in Python or .elc in Emacs LISP.) This makes the loading of large files
+    multiple times ~15x faster, which is a big deal since Beancount has become a
+    little bit slow (I need to spend time optimizing at some point).
+
+    This feature is a bit experimental, so for now it only gets turned on if the
+    BEANCOUNT_LOAD_CACHE environment variable is set.
+
+
 2015-10-04
 
   - Implemented --output=<filename> option for bean-query tool.

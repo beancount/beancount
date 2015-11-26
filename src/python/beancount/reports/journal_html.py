@@ -170,7 +170,7 @@ def html_entries_table_with_balance(oss, txn_postings, formatter, render_posting
             <td class="balance num">{}</td>
           <tr>
         '''.format(row.rowtype, row.extra_class,
-                   '{}:{}'.format(entry.meta.filename, entry.meta.lineno),
+                   '{}:{}'.format(entry.meta["filename"], entry.meta["lineno"]),
                    formatter.render_context(entry), entry.date,
                    row.flag, description,
                    row.amount_str, row.balance_str))
@@ -253,7 +253,7 @@ def html_entries_table(oss, txn_postings, formatter, render_postings=True):
             <td class="description" colspan="5">{}</td>
           <tr>
         '''.format(row.rowtype, row.extra_class,
-                   '{}:{}'.format(entry.meta.filename, entry.meta.lineno),
+                   '{}:{}'.format(entry.meta["filename"], entry.meta["lineno"]),
                    formatter.render_context(entry), entry.date,
                    row.flag, description))
 
