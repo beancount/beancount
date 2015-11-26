@@ -1397,36 +1397,29 @@ def generate_commodity_entries(date_birth):
 
         2009-05-01 commodity RGAGX
           name: "American Funds The Growth Fund of America Class R-6"
-          quote: USD
           export: "MUTF:RGAGX"
 
         1995-09-18 commodity VBMPX
           name: "Vanguard Total Bond Market Index Fund Institutional Plus Shares"
-          quote: USD
           export: "MUTF:VBMPX"
 
         2004-01-20 commodity ITOT
           name: "iShares Core S&P Total U.S. Stock Market ETF"
-          quote: USD
           export: "NYSEARCA:ITOT"
 
         2007-07-20 commodity VEA
           name: "Vanguard FTSE Developed Markets ETF"
-          quote: USD
           export: "NYSEARCA:VEA"
 
         2004-01-26 commodity VHT
           name: "Vanguard Health Care ETF"
-          quote: USD
           export: "NYSEARCA:VHT"
 
         2004-11-01 commodity GLD
           name: "SPDR Gold Trust (ETF)"
-          quote: USD
           export: "NYSEARCA:GLD"
 
         1900-01-01 commodity VMMXX
-          quote: USD
           export: "MUTF:VMMXX (USD:MONEY)"
 
     """, **locals())
@@ -1462,20 +1455,6 @@ def contextualize_file(contents, employer):
         }
     new_contents = replace(contents, replacements)
     return new_contents, replacements
-
-
-def apply_adhoc_fixes(contents):
-    """Apply fixes for short-comings in rendered output.
-
-    Args:
-      contents: A string, the contents to output.
-    Returns:
-      A string, the fixed contents.
-    """
-    # For now, render some special metadata fields as currency, not string.
-    # Eventually we should be able to distinguish these two at runtime using a
-    # tagged string type.
-    return re.sub('quote: "([A-Z0-9]+)"', r'quote: \1', contents)
 
 
 def write_example_file(date_birth, date_begin, date_end, reformat, file):
@@ -1697,9 +1676,6 @@ def write_example_file(date_birth, date_begin, date_end, reformat, file):
     contents, replacements = contextualize_file(output.getvalue(), employer_name)
     if reformat:
         contents = format.align_beancount(contents)
-
-    logging.info("Applying ad-doc fixes to file")
-    contents = apply_adhoc_fixes(contents)
 
     logging.info("Writing contents")
     file.write(contents)
