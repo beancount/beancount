@@ -65,33 +65,24 @@ def classify_holdings_for_export(holdings_list, commodities_map):
           holdings to be converted or ignored.
     """
     # Get the map of commodities to tickers and export meta tags.
-    tickers = getters.get_values_meta(commodities_map, 'ticker')
     exports = getters.get_values_meta(commodities_map, FIELD)
 
     # Classify the holdings based on their commodities' ticker metadata field.
     action_holdings = []
     for holding in holdings_list:
-        export = exports.get(holding.currency, None)
-        ticker = tickers.get(holding.currency, None)
-        if isinstance(export, str) and export:
+        # Get export field and remove (MONEY:...) specifications.
+        export = re.sub(r'\(.*\)', '', exports.get(holding.currency, None) or '').strip()
+        if export:
             if export.upper() == "CASH":
                 action_holdings.append(('CASH', holding))
             elif export.upper() == "IGNORE":
                 action_holdings.append(('IGNORE', holding))
-            elif export.upper() == "MONEY":
-                # Hmm this is an interesting case... an actual holding is in
-                # units of our money-market standing currency. We could disallow
-                # this, but we can also just export it. Let's export it with the
-                # ticker value or commodity if present.
-                action_holdings.append((ticker if ticker else holding.currency, holding))
             else:
                 action_holdings.append((export, holding))
-        elif ticker:
-            action_holdings.append((ticker, holding))
         else:
             logging.warn(("Exporting holding using default commodity name '{}'; this "
                           "can potentially break the OFX import. Consider providing "
-                          "'ticker' or 'export' metadata for your commodities.").format(
+                          "'export' metadata for your commodities.").format(
                               holding.currency))
             action_holdings.append((holding.currency, holding))
 

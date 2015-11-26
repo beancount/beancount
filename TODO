@@ -4,9 +4,6 @@ beancount: TODO
 
   - Remove from export_reports the dependency on 'quote' and 'ticker'.
 
-    * Make export: "MONEY" -> export: "MUTF:VMMXX (MONEY:CAD)"
-    * Remove the usage of "quote:"
-    * Add an fix all unit tests.
     * Ensure that all the examples still work, with only the "export" field.
 
 
