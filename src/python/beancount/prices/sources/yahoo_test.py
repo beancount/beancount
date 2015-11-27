@@ -20,7 +20,8 @@ class YahooFinancePriceFetcher(unittest.TestCase):
         self.url_object = mock.MagicMock()
         self.url_object.read = mock.MagicMock()
         self.url_object.getcode = mock.MagicMock(return_value=200)
-        request.urlopen = mock.MagicMock(return_value=self.url_object)
+        mock.patch('urllib.request.urlopen', return_value=self.url_object).start()
+        self.addCleanup(mock.patch.stopall)
 
     def test_get_latest_price(self):
         # Test all four possible URL fetches.
