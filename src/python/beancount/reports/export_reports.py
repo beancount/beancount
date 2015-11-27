@@ -17,6 +17,7 @@ from decimal import Decimal
 from beancount.core.number import D
 from beancount.core.number import ZERO
 from beancount.core import getters
+from beancount.core import amount
 from beancount.ops import prices
 from beancount.ops import holdings
 from beancount.reports import report
@@ -101,10 +102,15 @@ def get_money_instruments(commodities_map):
     instruments = {}
     for currency, entry in commodities_map.items():
         export = entry.meta.get(FIELD, '')
-        match = re.search(r'\(MONEY:(.*)\)', export)
-        if match:
-            instruments[match.group(1)] = (re.sub(r'\(.*\)', '', export).strip() or
-                                           currency)
+        paren_match = re.search(r'\((.*)\)', export)
+        if paren_match:
+            match = re.match('MONEY:({})'.format(amount.CURRENCY_RE), paren_match.group(1))
+            if match:
+                instruments[match.group(1)] = (
+                    re.sub(r'\(.*\)', '', export).strip() or currency)
+            else:
+                logging.error("Invalid money specification: %s", export)
+
     return instruments
 
 
@@ -199,7 +205,6 @@ def export_holdings(entries, options_map, promiscuous, aggregate_by_commodity=Fa
     for cost_currency, holdings_list in cash_holdings_map.items():
         book_value = sum(holding.book_value for holding in holdings_list)
         market_value = sum(holding.market_value for holding in holdings_list)
-        ##print("X {:16} {:12.2f} {:12.2f}".format(cost_currency, book_value, market_value))
 
         if cost_currency in money_instruments:
             # The holding is already in terms of one of the money instruments.

@@ -1420,7 +1420,7 @@ def generate_commodity_entries(date_birth):
           export: "NYSEARCA:GLD"
 
         1900-01-01 commodity VMMXX
-          export: "MUTF:VMMXX (USD:MONEY)"
+          export: "MUTF:VMMXX (MONEY:USD)"
 
     """, **locals())
 
