@@ -58,6 +58,19 @@ By default, inverted rates will be rounded similarly to how other Price
 directives were rounding those numbers.
 
 
+Swap Inverted
+-------------
+
+If you prefer to have the output Price entries with swapped currencies instead
+of inverting the rate itself, you can use the --swap-inverted option. In the
+previous example for the price of CAD, it would output this:
+
+  2015-10-28 price USD   1.32759 CAD
+
+This works since the Beancount price database computes and interpolates the
+reciprocals automatically for all pairs of commodities in its database.
+
+
 Prices Need from a Beancount File
 ---------------------------------
 

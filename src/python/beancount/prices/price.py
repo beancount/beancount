@@ -25,6 +25,7 @@ from concurrent import futures
 
 from dateutil.parser import parse as parse_datetime
 
+from beancount.core.number import ONE
 import beancount.prices
 from beancount import loader
 from beancount.core import data
@@ -126,14 +127,16 @@ def reset_cache():
     _cache = None
 
 
-def fetch_price(dprice):
+def fetch_price(dprice, swap_inverted=False):
     """Fetch a price for the DatePrice job.
 
     Args:
       dprice: A DatedPrice instances.
-      source_map: A mapping of source string to a source module object.
+      swap_inverted: A boolean, true if we should invert currencies instead of
+        rate for an inverted price source.
     Returns:
       A Price entry corresponding to the output of the jobs processed.
+
     """
     for psource in dprice.sources:
         source = psource.module.Source()
@@ -151,7 +154,10 @@ def fetch_price(dprice):
 
     # Invert the rate if requested.
     if psource.invert:
-        price = 1/price
+        if swap_inverted:
+            base, quote = quote, base
+        else:
+            price = ONE/price
 
     assert base is not None
     fileloc = data.new_metadata('<{}>'.format(type(psource.module).__name__), 0)
@@ -238,6 +244,12 @@ def process_args():
     parser.add_argument('-a', '--all', action='store_true', help=(
         "A shorthand for --inactive, --undeclared, --clobber."))
 
+    parser.add_argument('-s', '--swap-inverted', action='store_true', help=(
+        "For inverted sources, swap currencies instead of inverting the rate. "
+        "For example, if fetching the rate for CAD from 'USD:google/^CURRENCY:USDCAD' "
+        "results in 1.25, by default we would output \"price CAD  0.8000 USD\". "
+        "Using this option we would instead output \" price USD   1.2500 CAD\"."))
+
     parser.add_argument('-n', '--dry-run', action='store_true', help=(
         "Don't actually fetch the prices, just print the list of the ones to be fetched."))
 
@@ -318,7 +330,8 @@ def main():
 
     # Fetch all the required prices, processing all the jobs.
     executor = futures.ThreadPoolExecutor(max_workers=3)
-    price_entries = sorted(filter(None, executor.map(fetch_price, jobs)))
+    price_entries = sorted(filter(None, executor.map(
+        functools.partial(fetch_price, swap_inverted=args.swap_inverted), jobs)))
 
     # Avoid clobber, remove redundant entries.
     if not args.clobber:

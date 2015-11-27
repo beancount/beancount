@@ -23,39 +23,9 @@ beancount: TODO
     providing a frequency string (does rrule have one?) and let bean-price do
     this natively. This will work the API.
 
-  - Implement --swap-inverted:
-
-    # parser.add_argument('-s', '--swap-inverted', action='store_true', help=(
-    #     "For inverted sources, swap currencies instead of inverting the rate. "
-    #     "For example, if fetching the rate for CAD from 'USD:google/^CURRENCY:USDCAD' "
-    #     "results in 1.25, by default we would output \"price CAD  0.8000 USD\". "
-    #     "Using this option we would instead output \" price USD   1.2500 CAD\"."))
-
-    """
-      If a source price to be inverted is specified from a Commodity directive and
-      thus we are given the base and quote commodity names, the output directive may
-      simply swap the base & quote currencies and output the forward amount. For
-      example, if the input file contains this:
-
-        1867-01-01 commodity CAD
-          quote: USD
-          price: "google/^CURRENCY:USDCAD"
-
-      The corresponding output directive would be this:
-
-        2015-10-28 price USD   1.32759 CAD
-
-      This is done since the Beancount price database computes and interpolates the
-      reciprocals automatically for all pairs of commodities in its database. You can
-      disable this behavior with the --always-invert option.
-    """
-
-    - You need to add a unit test for this inverted case, make sure just
-      swapping the currencies results in the correct output.
-
-    - You have to deal with the case whereby two currencies provide incompatible
-      conversions of each other. This would potentially result in colliding
-      entries in the price database. Not sure how to deal with those yet.
+  - You have to deal with the case whereby two currencies provide incompatible
+    conversions of each other. This would potentially result in colliding
+    entries in the price database. Not sure how to deal with those yet.
 
 
 * Event

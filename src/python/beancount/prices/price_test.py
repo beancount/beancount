@@ -247,12 +247,18 @@ class TestInverted(cmptest.TestCase):
 
     def test_fetch_price__normal(self):
         entry = price.fetch_price(self.dprice._replace(sources=[
-            find_prices.PriceSource(google, 'CURRENCY:USDJPY', False)]))
+            find_prices.PriceSource(google, 'CURRENCY:USDJPY', False)]), False)
         self.assertEqual(('JPY', 'USD'), (entry.currency, entry.amount.currency))
         self.assertEqual(D('125.00'), entry.amount.number)
 
     def test_fetch_price__inverted(self):
         entry = price.fetch_price(self.dprice._replace(sources=[
-            find_prices.PriceSource(google, 'CURRENCY:USDJPY', True)]))
+            find_prices.PriceSource(google, 'CURRENCY:USDJPY', True)]), False)
         self.assertEqual(('JPY', 'USD'), (entry.currency, entry.amount.currency))
         self.assertEqual(D('0.008'), entry.amount.number)
+
+    def test_fetch_price__swapped(self):
+        entry = price.fetch_price(self.dprice._replace(sources=[
+            find_prices.PriceSource(google, 'CURRENCY:USDJPY', True)]), True)
+        self.assertEqual(('USD', 'JPY'), (entry.currency, entry.amount.currency))
+        self.assertEqual(D('125.00'), entry.amount.number)
