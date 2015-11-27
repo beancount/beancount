@@ -54,22 +54,9 @@ output be this from the above directive:
 
   2015-10-28 price CAD  0.753244601119 USD
 
-If a source price to be inverted is specified from a Commodity directive and
-thus we are given the base and quote commodity names, the output directive may
-simply swap the base & quote currencies and output the forward amount. For
-example, if the input file contains this:
+By default, inverted rates will be rounded similarly to how other Price
+directives were rounding those numbers.
 
-  1867-01-01 commodity CAD
-    quote: USD
-    price: "google/^CURRENCY:USDCAD"
-
-The corresponding output directive would be this:
-
-  2015-10-28 price USD   1.32759 CAD
-
-This is done since the Beancount price database computes and interpolates the
-reciprocals automatically for all pairs of commodities in its database. You can
-disable this behavior with the --always-invert option.
 
 Prices Need from a Beancount File
 ---------------------------------

@@ -1,35 +1,61 @@
 -*- mode: org -*-
 beancount: TODO
-* Price Script
-
-  - Implement --swap-inverted:
-
-    - You need to add a unit test for the inverted case, make sure just swapping the
-      currencies results in the correct output. Plus test --always-invert.
-
-    * Infer the rendering precision for inverted currencies from only the list
-      of previous prices. Run a DisplayContext on those and do appropriate
-      rounding automatically. This would make sense.
-
-    * You have to deal with the case whereby two currencies provide incompatible
-      conversions of each other. This would potentially result in colliding
-      entries in the price database. Not sure how to deal with those yet.
-
-
+* Price Script (before merge)
 
   - BUG: Why does bean-price not fetch INR/USD from my books? It should, there's
     a balance. Not sure what's going on.
 
-
-
   - Complete the doc:
     https://docs.google.com/document/d/1EZCP8VX3cOuyp2CKECfsq0LAfaXcHTVr7-EKIsRJBa8/edit
+
+
+
+
+* Price Script
+
+  - Infer the rendering precision for inverted currencies from only the list of
+    previous prices. Run a DisplayContext on those and do similar
+    quantization/rounding automatically. This would make a lot of sense,
+    especially when inversion generates a very large number of digits.
 
   - Write a script that will iterate and fetch all the missing dates on Friday,
     or last DOM for the required portfolio during the entire duration, or allow
     providing a frequency string (does rrule have one?) and let bean-price do
-    this natively.
+    this natively. This will work the API.
 
+  - Implement --swap-inverted:
+
+    # parser.add_argument('-s', '--swap-inverted', action='store_true', help=(
+    #     "For inverted sources, swap currencies instead of inverting the rate. "
+    #     "For example, if fetching the rate for CAD from 'USD:google/^CURRENCY:USDCAD' "
+    #     "results in 1.25, by default we would output \"price CAD  0.8000 USD\". "
+    #     "Using this option we would instead output \" price USD   1.2500 CAD\"."))
+
+    """
+      If a source price to be inverted is specified from a Commodity directive and
+      thus we are given the base and quote commodity names, the output directive may
+      simply swap the base & quote currencies and output the forward amount. For
+      example, if the input file contains this:
+
+        1867-01-01 commodity CAD
+          quote: USD
+          price: "google/^CURRENCY:USDCAD"
+
+      The corresponding output directive would be this:
+
+        2015-10-28 price USD   1.32759 CAD
+
+      This is done since the Beancount price database computes and interpolates the
+      reciprocals automatically for all pairs of commodities in its database. You can
+      disable this behavior with the --always-invert option.
+    """
+
+    - You need to add a unit test for this inverted case, make sure just
+      swapping the currencies results in the correct output.
+
+    - You have to deal with the case whereby two currencies provide incompatible
+      conversions of each other. This would potentially result in colliding
+      entries in the price database. Not sure how to deal with those yet.
 
 
 * Event

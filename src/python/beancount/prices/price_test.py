@@ -14,10 +14,12 @@ from urllib import error
 
 from beancount.prices import price
 from beancount.prices import find_prices
+from beancount.prices import source
 from beancount.prices.sources import google
 from beancount.core.number import D, Decimal
 from beancount.utils import test_utils
 from beancount.parser import cmptest
+from beancount.parser import printer
 from beancount import loader
 
 
@@ -62,7 +64,6 @@ class TestSetupCache(unittest.TestCase):
 
 
 class TestCache(unittest.TestCase):
-
 
     def test_fetch_cached_price__disabled(self):
         # Latest.
@@ -235,15 +236,23 @@ class TestClobber(cmptest.TestCase):
         """, new_price_entries)
 
 
+class TestInverted(cmptest.TestCase):
 
-# FIXME: TODO - Behavior to be implemented and tested.
-"""
-    parser.add_argument('-s', '--swap-inverted', action='store_true', help=(
-        "For inverted sources, swap currencies instead of inverting the rate. "
-        "For example, if fetching the rate for CAD from 'USD:google/^CURRENCY:USDCAD' "
-        "results in 1.25, by default we would output \"price CAD  0.8000 USD\". "
-        "Using this option we would instead output \" price USD   1.2500 CAD\"."))
-"""
+    def setUp(self):
+        fetch_cached = mock.patch('beancount.prices.price.fetch_cached_price').start()
+        fetch_cached.return_value = source.SourcePrice(
+            D('125.00'), datetime.datetime(2015, 11, 22, 16, 0, 0), 'JPY')
+        self.dprice = find_prices.DatedPrice('JPY', 'USD', datetime.date(2015, 11, 22), None)
+        self.addCleanup(mock.patch.stopall)
 
+    def test_fetch_price__normal(self):
+        entry = price.fetch_price(self.dprice._replace(sources=[
+            find_prices.PriceSource(google, 'CURRENCY:USDJPY', False)]))
+        self.assertEqual(('JPY', 'USD'), (entry.currency, entry.amount.currency))
+        self.assertEqual(D('125.00'), entry.amount.number)
 
-__incomplete__ = True
+    def test_fetch_price__inverted(self):
+        entry = price.fetch_price(self.dprice._replace(sources=[
+            find_prices.PriceSource(google, 'CURRENCY:USDJPY', True)]))
+        self.assertEqual(('JPY', 'USD'), (entry.currency, entry.amount.currency))
+        self.assertEqual(D('0.008'), entry.amount.number)

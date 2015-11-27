@@ -133,7 +133,7 @@ def fetch_price(dprice):
       dprice: A DatedPrice instances.
       source_map: A mapping of source string to a source module object.
     Returns:
-      A list of Price entries corresponding to the outputs of the jobs processed.
+      A Price entry corresponding to the output of the jobs processed.
     """
     for psource in dprice.sources:
         source = psource.module.Source()
@@ -145,15 +145,18 @@ def fetch_price(dprice):
             logging.error("Could not fetch for job: %s", dprice)
         return None
 
-    # Invert the currencies if the rate if the rate is inverted.
-    base, quote = dprice.base, dprice.quote or srcprice.quote_currency
+    base = dprice.base
+    quote = dprice.quote or srcprice.quote_currency
+    price = srcprice.price
+
+    # Invert the rate if requested.
     if psource.invert:
-        base, quote = quote, base
+        price = 1/price
 
     assert base is not None
     fileloc = data.new_metadata('<{}>'.format(type(psource.module).__name__), 0)
     return data.Price(fileloc, srcprice.time.date(), base,
-                      amount.Amount(srcprice.price, quote or UNKNOWN_CURRENCY))
+                      amount.Amount(price, quote or UNKNOWN_CURRENCY))
 
 
 def filter_redundant_prices(price_entries, existing_entries, diffs=False):
@@ -220,12 +223,6 @@ def process_args():
     parse_date = lambda s: parse_datetime(s).date()
     parser.add_argument('-d', '--date', action='store', type=parse_date, help=(
         "Specify the date for which to fetch the prices."))
-
-    parser.add_argument('-s', '--swap-inverted', action='store_true', help=(
-        "For inverted sources, swap currencies instead of inverting the rate. "
-        "For example, if fetching the rate for CAD from 'USD:google/^CURRENCY:USDCAD' "
-        "results in 1.25, by default we would output \"price CAD  0.8000 USD\". "
-        "Using this option we would instead output \" price USD   1.2500 CAD\"."))
 
     parser.add_argument('-i', '--inactive', action='store_true', help=(
         "Select all commodities from input files, not just the ones active on the date"))
