@@ -1334,11 +1334,10 @@ http://furius.ca/beancount/doc/proposal-inter
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
-  - Remove AttrDict... we can do away with a regular dict:
-
-      grep -srn  'meta\.'  /home/blais/p/beancount/src/python/beancount | grep -E -v 'meta\.(get|copy|items|keys|values)'
-
-    See issue #79.
+  - Try this, quickly: Create a function that can be used to pull metadata
+    fields from Commodity directives, to be used in a GROUP BY statement. That's
+    the quick-and-dirty way to get started with portfolio aggregations, and I
+    think it extends.
 
 
 
