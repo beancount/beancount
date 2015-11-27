@@ -1,12 +1,5 @@
 -*- mode: org -*-
 beancount: TODO
-* Export Simplification
-
-  - Remove from export_reports the dependency on 'quote' and 'ticker'.
-
-    * Ensure that all the examples still work, with only the "export" field.
-
-
 * Event
 
   - Should we validate that the query is legit before we even run it? I think
