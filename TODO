@@ -2,8 +2,6 @@
 beancount: TODO
 * Price Script (before merge)
 
-  - Implement better logging of filters
-
   - BUG: Why does bean-price not fetch INR/USD from my books? It should, there's
     a balance. Not sure what's going on.
 
