@@ -2,16 +2,17 @@
 beancount: TODO
 * Price Script (before merge)
 
+  - Implement better logging of filters
+
+  - Run the price fetcher on the provided example file and make sure it works.
+
   - BUG: Why does bean-price not fetch INR/USD from my books? It should, there's
     a balance. Not sure what's going on.
 
-  - Complete the doc:
-    https://docs.google.com/document/d/1EZCP8VX3cOuyp2CKECfsq0LAfaXcHTVr7-EKIsRJBa8/edit
-
-
-
 
 * Price Script
+
+  - Implement delayed rate fetcher from OANDA for rates.
 
   - Infer the rendering precision for inverted currencies from only the list of
     previous prices. Run a DisplayContext on those and do similar

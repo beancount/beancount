@@ -43,13 +43,10 @@ class TestParseSource(unittest.TestCase):
 
     def test_source_valid(self):
         psource = find_prices.parse_single_source('google/NASDAQ:AAPL')
-        self.assertEqual(find_prices.PriceSource(google, 'NASDAQ:AAPL', False),
-                         psource)
+        self.assertEqual(PS(google, 'NASDAQ:AAPL', False), psource)
 
         psource = find_prices.parse_single_source('beancount.prices.sources.yahoo/AAPL')
-        self.assertEqual(
-            find_prices.PriceSource(yahoo, 'AAPL', False),
-            psource)
+        self.assertEqual(PS(yahoo, 'AAPL', False), psource)
 
 
 class TestParseSourceMap(unittest.TestCase):
@@ -102,7 +99,6 @@ class TestParseSourceMap(unittest.TestCase):
 
 
 class TestFromFile(unittest.TestCase):
-
 
     @loader.load_doc()
     def setUp(self, entries, _, __):
@@ -211,3 +207,101 @@ class TestFromFile(unittest.TestCase):
         currencies = find_prices.find_balance_currencies(self.entries,
                                                          datetime.date(2015, 2, 1))
         self.assertEqual(set(), currencies)
+
+
+class TestFilters(unittest.TestCase):
+
+    @loader.load_doc()
+    def test_get_price_jobs__date(self, entries, _, __):
+        """
+        2000-01-10 open Assets:US:Invest:QQQ
+        2000-01-10 open Assets:US:Invest:VEA
+        2000-01-10 open Assets:US:Invest:Margin
+
+        2014-01-01 commodity QQQ
+          price: "USD:google/NASDAQ:QQQ"
+
+        2014-01-01 commodity VEA
+          price: "USD:google/NASDAQ:VEA"
+
+        2014-02-06 *
+          Assets:US:Invest:QQQ             100 QQQ {86.23 USD}
+          Assets:US:Invest:VEA             200 VEA {43.22 USD}
+          Assets:US:Invest:Margin
+
+        2014-08-07 *
+          Assets:US:Invest:QQQ            -100 QQQ {86.23 USD} @ 91.23 USD
+          Assets:US:Invest:Margin
+
+        2015-01-15 *
+          Assets:US:Invest:QQQ              10 QQQ {92.32 USD}
+          Assets:US:Invest:VEA            -200 VEA {43.22 USD} @ 41.01 USD
+          Assets:US:Invest:Margin
+        """
+        jobs = find_prices.get_price_jobs_at_date(entries, datetime.date(2014, 1, 1),
+                                                  False, False)
+        self.assertEqual(set(), {(job.base, job.quote) for job in jobs})
+
+        jobs = find_prices.get_price_jobs_at_date(entries, datetime.date(2014, 6, 1),
+                                                  False, False)
+        self.assertEqual({('QQQ', 'USD'), ('VEA', 'USD')},
+                         {(job.base, job.quote) for job in jobs})
+
+        jobs = find_prices.get_price_jobs_at_date(entries, datetime.date(2014, 10, 1),
+                                                  False, False)
+        self.assertEqual({('VEA', 'USD')},
+                         {(job.base, job.quote) for job in jobs})
+
+        jobs = find_prices.get_price_jobs_at_date(entries, None, False, False)
+        self.assertEqual({('QQQ', 'USD')}, {(job.base, job.quote) for job in jobs})
+
+    @loader.load_doc()
+    def test_get_price_jobs__inactive(self, entries, _, __):
+        """
+        2000-01-10 open Assets:US:Invest:QQQ
+        2000-01-10 open Assets:US:Invest:VEA
+        2000-01-10 open Assets:US:Invest:Margin
+
+        2014-01-01 commodity QQQ
+          price: "USD:google/NASDAQ:QQQ"
+
+        2014-01-01 commodity VEA
+          price: "USD:google/NASDAQ:VEA"
+
+        2014-02-06 *
+          Assets:US:Invest:QQQ             100 QQQ {86.23 USD}
+          Assets:US:Invest:VEA             200 VEA {43.22 USD}
+          Assets:US:Invest:Margin
+
+        2014-08-07 *
+          Assets:US:Invest:QQQ            -100 QQQ {86.23 USD} @ 91.23 USD
+          Assets:US:Invest:Margin
+        """
+        jobs = find_prices.get_price_jobs_at_date(entries, None, False, False)
+        self.assertEqual({('VEA', 'USD')}, {(job.base, job.quote) for job in jobs})
+
+        jobs = find_prices.get_price_jobs_at_date(entries, None, True, False)
+        self.assertEqual({('VEA', 'USD'), ('QQQ', 'USD')},
+                         {(job.base, job.quote) for job in jobs})
+
+    @loader.load_doc()
+    def test_get_price_jobs__undeclared(self, entries, _, __):
+        """
+        2000-01-10 open Assets:US:Invest:QQQ
+        2000-01-10 open Assets:US:Invest:VEA
+        2000-01-10 open Assets:US:Invest:Margin
+
+        2014-01-01 commodity QQQ
+          price: "USD:google/NASDAQ:QQQ"
+
+        2014-02-06 *
+          Assets:US:Invest:QQQ             100 QQQ {86.23 USD}
+          Assets:US:Invest:VEA             200 VEA {43.22 USD}
+          Assets:US:Invest:Margin
+        """
+        jobs = find_prices.get_price_jobs_at_date(entries, None, False, False)
+        self.assertEqual({('QQQ', 'USD')}, {(job.base, job.quote) for job in jobs})
+
+        jobs = find_prices.get_price_jobs_at_date(entries, None, False, True)
+        self.assertEqual({('QQQ', 'USD'), ('VEA', 'USD')},
+                         {(job.base, job.quote) for job in jobs})

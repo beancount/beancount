@@ -9,7 +9,7 @@ The list of fetching jobs to carry out is derived automatically from the input
 file (see section below for full details). It is also possible to provide a list
 of specific price fetching jobs to run, e.g.,
 
-  bean-price -e google/TSE:XUS yahoo/AAPL mysources.morningstar/MUTF:RBF1005
+  bean-price -e google/TSE:XUS yahoo/AAPL mysources.morningstar/RBF1005
 
 The general format of each of these "source strings" is
 
@@ -71,8 +71,8 @@ This works since the Beancount price database computes and interpolates the
 reciprocals automatically for all pairs of commodities in its database.
 
 
-Prices Need from a Beancount File
----------------------------------
+Prices Needed for a Beancount File
+----------------------------------
 
 You can also provide a filename to extract the list of tickers to fetch from a
 Beancount input file, e.g.:
@@ -87,8 +87,8 @@ Baancount input file:
 - Prices for holdings held at a particular date which were price converted from
   some other commodity in the past (i.e., for currencies).
 
-- The list of all Commodity directives present in the file. For each of thoe
-  holdings, the corresponding Commodity directive is cconsulted and its "ticker"
+- The list of all Commodity directives present in the file. For each of those
+  holdings, the corresponding Commodity directive is consulted and its "ticker"
   metadata field is used to specify where to attempt to fetch prices. You should
   have directives like this in your input file:
 
@@ -120,8 +120,7 @@ list of fetches it would otherwise attempt).
 Caching
 -------
 
-Prices are automatically cached at a resolution of one hour, on the hour. You
-can disable the cache with an option:
+Prices are automatically cached. You can disable the cache with an option:
 
   bean-price --no-cache
 

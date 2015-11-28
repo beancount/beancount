@@ -11,6 +11,7 @@ import sys
 from beancount.core import data
 from beancount.core import amount
 from beancount.ops import summarize
+from beancount.prices.sources import yahoo
 
 
 # A dated price source description.
@@ -352,22 +353,23 @@ def get_price_jobs_at_date(entries, date=None, inactive=False, undeclared=False)
     # appear.
     declared_triples = find_currencies_declared(entries, date)
     currency_map = {(base, quote): psources
-                  for base, quote, psources in declared_triples}
+                    for base, quote, psources in declared_triples}
 
     # Compute the initial list of currencies to consider.
     if undeclared:
-        # USe the full set of possible currencies.
+        # Use the full set of possible currencies.
         cur_at_cost = find_currencies_at_cost(entries)
         cur_converted = find_currencies_converted(entries, date)
         cur_priced = find_currencies_priced(entries, date)
         currencies = cur_at_cost | cur_converted | cur_priced
-        log_currency_list("Currency at cost  ", cur_at_cost)
-        log_currency_list("Currency converted", cur_converted)
-        log_currency_list("Currency priced   ", cur_priced)
+        log_currency_list("Currency at cost   ", cur_at_cost)
+        log_currency_list("Currency converted ", cur_converted)
+        log_currency_list("Currency priced    ", cur_priced)
+        log_currency_list("Currency undeclared", currencies)
     else:
         # Use the currencies from the Commodity directives.
         currencies = set(currency_map.keys())
-        log_currency_list("Currency declared ", currencies)
+        log_currency_list("Currency declared  ", currencies)
 
     # By default, restrict to only the currencies with non-zero balances at the
     # given date.
@@ -376,12 +378,17 @@ def get_price_jobs_at_date(entries, date=None, inactive=False, undeclared=False)
         log_currency_list("Balance currencies", balance_currencies)
         currencies = currencies & balance_currencies
 
+    log_currency_list("Currency job", currencies)
+
     # Build up the list of jobs to fetch prices for.
     jobs = []
     for base_quote in currencies:
         psources = currency_map.get(base_quote, None)
-        if not psources:
-            continue
         base, quote = base_quote
+
+        # If there are no sources, create a default one.
+        if not psources:
+            psources = [PriceSource(yahoo, base, False)]
+
         jobs.append(DatedPrice(base, quote, date, psources))
     return sorted(jobs)
