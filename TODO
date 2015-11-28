@@ -3,7 +3,6 @@ beancount: TODO
 * Price Script (before merge)
 
   - Implement better logging of filters
-  - Also improve output of --dry-run, less spaces
 
   - Run the price fetcher on the provided example file and make sure it works.
 

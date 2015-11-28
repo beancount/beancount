@@ -48,10 +48,11 @@ def format_dated_price_str(dprice):
                                 '1/' if psource.invert else '',
                                 psource.symbol)
               for psource in dprice.sources]
-    base_quote = '{} / {}'.format(dprice.base, dprice.quote)
-    return '{:>32} @ {:10} [ {} ]'.format(base_quote,
-                                        dprice.date or 'latest',
-                                        ','.join(psstrs))
+    base_quote = '{}/{}'.format(dprice.base, dprice.quote)
+    return '{:<32} @ {:10} [ {} ]'.format(
+        base_quote,
+        dprice.date.isoformat() if dprice.date else 'latest',
+        ','.join(psstrs))
 
 
 def parse_source_map(source_map_spec):
