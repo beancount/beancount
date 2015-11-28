@@ -148,7 +148,10 @@ class Source(source.Source):
                                    ('b0a0d2', 2),
                                    ('p0d2', 1)]:
             url = 'http://finance.yahoo.com/d/quotes.csv?s={}&f=c4{}'.format(ticker, fields)
-            data = net_utils.retrying_urlopen(url).read().decode('utf-8').strip()
+            response = net_utils.retrying_urlopen(url)
+            if response is None:
+                return None
+            data = response.read().decode('utf-8').strip()
             if data and not re.match('N/A', data):
                 break
         else:
@@ -195,10 +198,12 @@ class Source(source.Source):
         }.items()))
         url = 'http://ichart.yahoo.com/table.csv?{}'.format(params)
         try:
-            data = net_utils.retrying_urlopen(url).read()
+            response = net_utils.retrying_urlopen(url)
         except error.HTTPError:
             return None
-        data = data.decode('utf-8').strip()
+        if response is None:
+            return None
+        data = response.read().decode('utf-8').strip()
 
         lines = data.splitlines()
         assert len(lines) >= 2, "Too few lines in returned data: {}".format(len(lines))

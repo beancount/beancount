@@ -90,7 +90,7 @@ def fetch_cached_price(source, symbol, date):
         # The cache is enabled and we are asked to provide an old price. Assume
         # it doesn't change and return the cached value if at all available.
         md5 = hashlib.md5()
-        md5.update(str((source.__file__, symbol, date)).encode('utf-8'))
+        md5.update(str((type(source).__module__, symbol, date)).encode('utf-8'))
         key = md5.hexdigest()
         try:
             _, result = _cache[key]

@@ -2,6 +2,7 @@
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import urllib.error
 import logging
 from urllib import request
 
@@ -19,9 +20,12 @@ def retrying_urlopen(url, timeout=5, max_retry=5):
     """
     for _ in range(max_retry):
         logging.debug("Reading %s", url)
-        response = request.urlopen(url, timeout=timeout)
-        if response:
-            break
+        try:
+            response = request.urlopen(url, timeout=timeout)
+            if response:
+                break
+        except urllib.error.URLError as exc:
+            return None
     if response and response.getcode() != 200:
         return None
     return response

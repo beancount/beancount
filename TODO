@@ -4,8 +4,6 @@ beancount: TODO
 
   - Implement better logging of filters
 
-  - Run the price fetcher on the provided example file and make sure it works.
-
   - BUG: Why does bean-price not fetch INR/USD from my books? It should, there's
     a balance. Not sure what's going on.
 

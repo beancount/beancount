@@ -122,8 +122,8 @@ def parse_single_source(source):
     if not match:
         raise ValueError('Invalid source name: "{}"'.format(source))
     short_module_name, invert, symbol = match.groups()
-    full_module_name = import_source(short_module_name)
-    return PriceSource(full_module_name, symbol, bool(invert))
+    module = import_source(short_module_name)
+    return PriceSource(module, symbol, bool(invert))
 
 
 # The Python package where the default sources are found.
@@ -379,8 +379,6 @@ def get_price_jobs_at_date(entries, date=None, inactive=False, undeclared=False)
         log_currency_list("Balance currencies", balance_currencies)
         currencies = currencies & balance_currencies
 
-    log_currency_list("Currency job", currencies)
-
     # Build up the list of jobs to fetch prices for.
     jobs = []
     for base_quote in currencies:
@@ -389,6 +387,7 @@ def get_price_jobs_at_date(entries, date=None, inactive=False, undeclared=False)
 
         # If there are no sources, create a default one.
         if not psources:
+            continue ## FIXME: remove
             psources = [PriceSource(yahoo, base, False)]
 
         jobs.append(DatedPrice(base, quote, date, psources))

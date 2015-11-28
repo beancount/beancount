@@ -68,7 +68,10 @@ class Source(source.Source):
             parse.urlencode(sorted(params_dict.items())))
 
         # Fetch the data.
-        data = net_utils.retrying_urlopen(url).read().decode('utf-8')
+        response = net_utils.retrying_urlopen(url)
+        if response is None:
+            return None
+        data = response.read().decode('utf-8')
         data = parse.unquote(data).strip()
 
         # Process the meta-data.
@@ -120,7 +123,10 @@ class Source(source.Source):
         }.items()))
         url = 'http://www.google.com/finance/historical?{}'.format(params)
         try:
-            data = net_utils.retrying_urlopen(url).read()
+            response = net_utils.retrying_urlopen(url)
+            if response is None:
+                return None
+            data = response.read()
         except error.HTTPError:
             # When the instrument is incorrect, you will get a 404.
             return None
