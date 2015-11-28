@@ -1,11 +1,5 @@
 -*- mode: org -*-
 beancount: TODO
-* Price Script (before merge)
-
-  - BUG: Why does bean-price not fetch INR/USD from my books? It should, there's
-    a balance. Not sure what's going on.
-
-
 * Price Script
 
   - Implement delayed rate fetcher from OANDA for rates.
