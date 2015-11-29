@@ -17,10 +17,15 @@ from decimal import Decimal
 from beancount.core.number import D
 from beancount.core.number import ZERO
 from beancount.core import getters
+from beancount.core import amount
 from beancount.ops import prices
 from beancount.ops import holdings
 from beancount.reports import report
 from beancount.reports import holdings_reports
+
+
+# The name of the metadata field used by this report.
+FIELD = 'export'
 
 
 # An entry to be exported.
@@ -61,33 +66,24 @@ def classify_holdings_for_export(holdings_list, commodities_map):
           holdings to be converted or ignored.
     """
     # Get the map of commodities to tickers and export meta tags.
-    tickers = getters.get_values_meta(commodities_map, 'ticker')
-    exports = getters.get_values_meta(commodities_map, 'export')
+    exports = getters.get_values_meta(commodities_map, FIELD)
 
     # Classify the holdings based on their commodities' ticker metadata field.
     action_holdings = []
     for holding in holdings_list:
-        export = exports.get(holding.currency, None)
-        ticker = tickers.get(holding.currency, None)
-        if isinstance(export, str) and export:
+        # Get export field and remove (MONEY:...) specifications.
+        export = re.sub(r'\(.*\)', '', exports.get(holding.currency, None) or '').strip()
+        if export:
             if export.upper() == "CASH":
                 action_holdings.append(('CASH', holding))
             elif export.upper() == "IGNORE":
                 action_holdings.append(('IGNORE', holding))
-            elif export.upper() == "MONEY":
-                # Hmm this is an interesting case... an actual holding is in
-                # units of our money-market standing currency. We could disallow
-                # this, but we can also just export it. Let's export it with the
-                # ticker value or commodity if present.
-                action_holdings.append((ticker if ticker else holding.currency, holding))
             else:
                 action_holdings.append((export, holding))
-        elif ticker:
-            action_holdings.append((ticker, holding))
         else:
             logging.warn(("Exporting holding using default commodity name '{}'; this "
                           "can potentially break the OFX import. Consider providing "
-                          "'ticker' or 'export' metadata for your commodities.").format(
+                          "'export' metadata for your commodities.").format(
                               holding.currency))
             action_holdings.append((holding.currency, holding))
 
@@ -103,9 +99,19 @@ def get_money_instruments(commodities_map):
       A dict of quote currency to the ticker symbol that stands for it,
       e.g. {'USD': 'VMMXX'}.
     """
-    return {entry.meta.get('quote', None): entry.meta.get('ticker', currency)
-            for currency, entry in commodities_map.items()
-            if entry.meta.get('export', None) == 'MONEY'}
+    instruments = {}
+    for currency, entry in commodities_map.items():
+        export = entry.meta.get(FIELD, '')
+        paren_match = re.search(r'\((.*)\)', export)
+        if paren_match:
+            match = re.match('MONEY:({})'.format(amount.CURRENCY_RE), paren_match.group(1))
+            if match:
+                instruments[match.group(1)] = (
+                    re.sub(r'\(.*\)', '', export).strip() or currency)
+            else:
+                logging.error("Invalid money specification: %s", export)
+
+    return instruments
 
 
 def export_holdings(entries, options_map, promiscuous, aggregate_by_commodity=False):
@@ -199,7 +205,6 @@ def export_holdings(entries, options_map, promiscuous, aggregate_by_commodity=Fa
     for cost_currency, holdings_list in cash_holdings_map.items():
         book_value = sum(holding.book_value for holding in holdings_list)
         market_value = sum(holding.market_value for holding in holdings_list)
-        ##print("X {:16} {:12.2f} {:12.2f}".format(cost_currency, book_value, market_value))
 
         if cost_currency in money_instruments:
             # The holding is already in terms of one of the money instruments.
@@ -287,10 +292,8 @@ def get_symbol(sources, prefer='google'):
         raise ValueError(
             'Invalid source "{}" does not contain a ticker'.format(sources))
     symbol_map = dict(symbol_items)
-    symbol = symbol_map.get(prefer, None)
-    if symbol is None:
-        # If not found, return the first symbol.
-        return symbol_items[0][1]
+    # If not found, return the first symbol in the list of items.
+    return symbol_map.get(prefer, symbol_items[0][1])
 
 
 class ExportPortfolioReport(report.TableReport):
