@@ -715,6 +715,13 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Posting object, with no parent entry.
         """
+        if isinstance(position, Position):
+            units = position.units
+            cost = position.cost
+        else:
+            units = position
+            cost = None
+
         # Prices may not be negative.
         if not __allow_negative_prices__:
             if price and isinstance(price.number, Decimal) and price.number < ZERO:
@@ -731,13 +738,13 @@ class Builder(lexer.LexBuilder):
         # If the price is specified for the entire amount, compute the effective
         # price here and forget about that detail of the input syntax.
         if istotal:
-            if position.units.number == ZERO:
+            if units.number == ZERO:
                 number = ZERO
             else:
                 if __allow_negative_prices__:
-                    number = price.number/position.units.number
+                    number = price.number/units.number
                 else:
-                    number = price.number/abs(position.units.number)
+                    number = price.number/abs(units.number)
             price = Amount(number, price.currency)
 
         # Note: Allow zero prices because we need them for round-trips for
@@ -748,7 +755,7 @@ class Builder(lexer.LexBuilder):
         #         ParserError(meta, "Price is zero: {}".format(price), None))
 
         meta = new_metadata(filename, lineno)
-        return Posting(account, position, price, chr(flag) if flag else None, meta)
+        return Posting(account, units, cost, price, chr(flag) if flag else None, meta)
 
     def txn_field_new(self, _):
         """Create a new TxnFields instance.

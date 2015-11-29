@@ -39,11 +39,7 @@ int yy_firstline;
 /* Build a grammar error from the exception context. */
 void build_grammar_error_from_exception(void)
 {
-    /* TRACE_ERROR("Grammar Builder Exception"); */
-
-#if 0
-    PyErr_Print();
-#endif
+    TRACE_ERROR("Grammar Builder Exception");
 
     /* Get the exception context. */
     PyObject* ptype;

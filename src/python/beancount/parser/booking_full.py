@@ -82,7 +82,7 @@ def book(entries, options_map):
             # Update running balances using the interpolated values.
             for posting in postings:
                 balance = balances[posting.account]
-                balance.add_position(posting.position)
+                balance.add_position(posting)
 
     #logging.info("Interpolation Stats: %s", stats)
 

@@ -392,7 +392,7 @@ class Inventory(list):
         Return True if this position was booked against and reduced another.
 
         Args:
-          position: The position to add to this inventory.
+          position: The Posting or Position to add to this inventory.
         Returns:
           A pair of (position, booking) where 'position' is the position that
           that was modified, and where 'booking' is a Booking enum that hints at

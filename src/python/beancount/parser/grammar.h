@@ -102,7 +102,7 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 130 "src/python/beancount/parser/grammar.y" 
+#line 126 "src/python/beancount/parser/grammar.y" 
 
     char character;
     const char* string;
