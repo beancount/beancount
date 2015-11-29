@@ -200,7 +200,7 @@ def execute_query(query, entries, options_map):
     context.options_map = options_map
     context.account_types = options.get_account_types(options_map)
     context.open_close_map = getters.get_account_open_close(entries)
-    context.commodity_map = getters.get_commodity_map(entries, options_map)
+    context.commodity_map = getters.get_commodity_map(entries)
     context.price_map = prices.build_price_map(entries)
 
     # Dispatch between the non-aggregated queries and aggregated queries.

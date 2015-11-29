@@ -46,7 +46,7 @@ class TestCommodityClassifications(unittest.TestCase):
         @functools.wraps(fun)
         def wrapped(self, entries, unused_errors, options_map):
             holdings_list, _ = holdings_reports.get_assets_holdings(entries, options_map)
-            commodities_map = getters.get_commodity_map(entries, options_map)
+            commodities_map = getters.get_commodity_map(entries)
             action_holdings = export_reports.classify_holdings_for_export(holdings_list,
                                                                           commodities_map)
             return fun(self, action_holdings)
@@ -156,7 +156,7 @@ class TestCommodityClassifications(unittest.TestCase):
         1900-01-01 commodity IGI806
           export: "(MONEY:CAD)"
         """
-        commodities_map = getters.get_commodity_map(entries, options_map)
+        commodities_map = getters.get_commodity_map(entries)
         self.assertEqual({'USD': 'MUTF:VMMXX',
                           'CAD': 'IGI806'},
                          export_reports.get_money_instruments(commodities_map))

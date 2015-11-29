@@ -180,7 +180,7 @@ def get_commodities_at_date(entries, options_map, date=None):
                         for holding in holdings_list}
 
     # Add in the associated ticker symbols.
-    commodities_map = getters.get_commodity_map(entries, options_map)
+    commodities_map = getters.get_commodity_map(entries)
     commodities_symbols_list = []
     for currency, cost_currency in sorted(commodities_list):
         try:

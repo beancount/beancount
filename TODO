@@ -1334,8 +1334,6 @@ http://furius.ca/beancount/doc/proposal-inter
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
-  - Remove get_commodity_map() options_map argument.
-
   - Add get_price() function to query_env.
 
 

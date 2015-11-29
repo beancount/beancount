@@ -165,7 +165,7 @@ class TickerReport(report.TableReport):
     names = ['tickers', 'symbols']
 
     def generate_table(self, entries, errors, options_map):
-        commodity_map = getters.get_commodity_map(entries, options_map)
+        commodity_map = getters.get_commodity_map(entries)
         ticker_info = getters.get_values_meta(commodity_map, 'name', 'ticker', 'quote')
 
         price_rows = [
