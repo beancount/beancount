@@ -1370,13 +1370,21 @@ http://furius.ca/beancount/doc/proposal-inter
   - Idea for one of those constraint plugins: Create a plugin whereby you
     declare some currencies and assert that any units in them are always held at
     cost.
+  - Add get_price() function to query_env.
 
 
-  - Remove AttrDict... we can do away with a regular dict:
+  - SQL: "IS" and "IS NOT" is not implemented.
 
-      grep -srn  'meta\.'  /home/blais/p/beancount/src/python/beancount | grep -E -v 'meta\.(get|copy|items|keys|values)'
 
-    See issue #79.
+  - Idea: The "HELP" command of the SQL shell should be made analogous to the
+    schema inspection facilities of other SQL shells instead of being dedicated
+    HELP commands.
+
+
+  - Try this, quickly: Create a function that can be used to pull metadata
+    fields from Commodity directives, to be used in a GROUP BY statement. That's
+    the quick-and-dirty way to get started with portfolio aggregations, and I
+    think it extends.
 
 
 
@@ -4089,6 +4097,25 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 
   - Contact xentac@ for an example GnuCash input file with 2-3 years of data.
     Willing to share (see email).
+
+
+* Price Script
+
+  - Implement delayed rate fetcher from OANDA for rates.
+
+  - Infer the rendering precision for inverted currencies from only the list of
+    previous prices. Run a DisplayContext on those and do similar
+    quantization/rounding automatically. This would make a lot of sense,
+    especially when inversion generates a very large number of digits.
+
+  - Write a script that will iterate and fetch all the missing dates on Friday,
+    or last DOM for the required portfolio during the entire duration, or allow
+    providing a frequency string (does rrule have one?) and let bean-price do
+    this natively. This will work the API.
+
+  - You have to deal with the case whereby two currencies provide incompatible
+    conversions of each other. This would potentially result in colliding
+    entries in the price database. Not sure how to deal with those yet.
 
 
 * Export
