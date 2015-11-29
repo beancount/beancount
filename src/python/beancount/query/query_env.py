@@ -184,6 +184,18 @@ class CloseDate(query_compile.EvalFunction):
         close_entry, close_entry = context.open_close_map[args[0]]
         return close_entry.date if close_entry else None
 
+class OpenMeta(query_compile.EvalFunction):
+    "Get the metadata dict of the open directive of the account."
+    __intypes__ = [str]
+
+    def __init__(self, operands):
+        super().__init__(operands, dict)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        open_entry, _ = context.open_close_map[args[0]]
+        return open_entry.meta
+
 class AccountSortKey(query_compile.EvalFunction):
     "Get a string to sort accounts in order taking into account the types."
     __intypes__ = [str]
@@ -195,6 +207,18 @@ class AccountSortKey(query_compile.EvalFunction):
         args = self.eval_args(context)
         index, name = account_types.get_account_sort_key(context.account_types, args[0])
         return '{}-{}'.format(index, name)
+
+class CommodityMeta(query_compile.EvalFunction):
+    "Get the metadata dict of the commodity directive of the currency."
+    __intypes__ = [str]
+
+    def __init__(self, operands):
+        super().__init__(operands, dict)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        commodity_entry = context.commodity_map[args[0]]
+        return commodity_entry.meta
 
 
 # Operation on inventories, positions and amounts.
@@ -334,6 +358,22 @@ class Currency(query_compile.EvalFunction):
         args = self.eval_args(context)
         return args[0].currency
 
+class GetItemStr(query_compile.EvalFunction):
+    "Get the string value of a dict. The value is always converted to a string."
+    __intypes__ = [dict, str]
+
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        value = args[0].get(args[1])
+        if value is None:
+            value = ''
+        elif not isinstance(value, str):
+            value = str(value)
+        return value
+
 
 SIMPLE_FUNCTIONS = {
     'str'                                 : Str,
@@ -344,6 +384,8 @@ SIMPLE_FUNCTIONS = {
     'grep'                                : Grep,
     'open_date'                           : OpenDate,
     'close_date'                          : CloseDate,
+    'open_meta'                           : OpenMeta,
+    'commodity_meta'                      : CommodityMeta,
     'account_sortkey'                     : AccountSortKey,
     ('units', position.Position)          : UnitsPosition,
     ('units', inventory.Inventory)        : UnitsInventory,
@@ -360,6 +402,7 @@ SIMPLE_FUNCTIONS = {
     ('convert', inventory.Inventory, str) : ConvertInventory,
     'number'                              : Number,
     'currency'                            : Currency,
+    'getitem'                             : GetItemStr,
     }
 
 
