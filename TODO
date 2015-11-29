@@ -1,24 +1,5 @@
 -*- mode: org -*-
 beancount: TODO
-* Price Script
-
-  - Implement delayed rate fetcher from OANDA for rates.
-
-  - Infer the rendering precision for inverted currencies from only the list of
-    previous prices. Run a DisplayContext on those and do similar
-    quantization/rounding automatically. This would make a lot of sense,
-    especially when inversion generates a very large number of digits.
-
-  - Write a script that will iterate and fetch all the missing dates on Friday,
-    or last DOM for the required portfolio during the entire duration, or allow
-    providing a frequency string (does rrule have one?) and let bean-price do
-    this natively. This will work the API.
-
-  - You have to deal with the case whereby two currencies provide incompatible
-    conversions of each other. This would potentially result in colliding
-    entries in the price database. Not sure how to deal with those yet.
-
-
 * Event
 
   - Should we validate that the query is legit before we even run it? I think
@@ -4062,6 +4043,25 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 
   - Contact xentac@ for an example GnuCash input file with 2-3 years of data.
     Willing to share (see email).
+
+
+* Price Script
+
+  - Implement delayed rate fetcher from OANDA for rates.
+
+  - Infer the rendering precision for inverted currencies from only the list of
+    previous prices. Run a DisplayContext on those and do similar
+    quantization/rounding automatically. This would make a lot of sense,
+    especially when inversion generates a very large number of digits.
+
+  - Write a script that will iterate and fetch all the missing dates on Friday,
+    or last DOM for the required portfolio during the entire duration, or allow
+    providing a frequency string (does rrule have one?) and let bean-price do
+    this natively. This will work the API.
+
+  - You have to deal with the case whereby two currencies provide incompatible
+    conversions of each other. This would potentially result in colliding
+    entries in the price database. Not sure how to deal with those yet.
 
 
 * Export

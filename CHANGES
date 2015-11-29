@@ -4,6 +4,27 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-11-28
+
+  - Implemented a script used to fetch prices online and output them in
+    Beancount input format. This script is able not only to take an explicit
+    list of prices to get, but also able to read a Beancount input file and
+    figure out the list of commodities held at a particular point in time and
+    fetch only those prices. A "price" metadata field on a Commodity directive
+    is used to specify how and where to get prices from. It comes with support
+    for Google Finance and Yahoo! Finance price sources and the syntax supports
+    custom-written Python modules so you can write your own price fetching
+    extensions, that integrate with the price fetching tool.
+
+    The new code is located under "src/python/beancount/prices" and this new
+    tool is documented in http://furius.ca/beancount/doc/prices.
+
+    (Note: This is brand new code, probably imperfect, but I tried to keep this
+    simple yet complex enough to be practical. I've been using a variant of it
+    for a while, I'm going to merge this now and use it myself, and I hope it
+    works for others.)
+
+
 2015-11-26
 
   - I redesigned the portfolio export process in order to (a) simplify it

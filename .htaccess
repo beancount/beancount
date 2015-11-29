@@ -157,9 +157,9 @@ RedirectMatch /doc/proposal-funds$        https://docs.google.com/document/d/1nf
 RedirectMatch /doc/fund$	    	  /beancount/doc/proposal-funds
 RedirectMatch /doc/fund-accounting$    	  /beancount/doc/proposal-funds
 
-RedirectMatch /doc/prices        	  https://docs.google.com/document/d/1EZCP8VX3cOuyp2CKECfsq0LAfaXcHTVr7-EKIsRJBa8/
-RedirectMatch /doc/price        	  /beancount/doc/prices
-RedirectMatch /doc/fetch-prices        	  /beancount/doc/prices
-RedirectMatch /doc/fetch-price        	  /beancount/doc/prices
+RedirectMatch /doc/prices$        	  https://docs.google.com/document/d/1thYRAMell_QT1Da1F_laprSs6BlROZjyK_h3V8qHW9c/
+RedirectMatch /doc/price$        	  /beancount/doc/prices
+RedirectMatch /doc/fetch-prices$       	  /beancount/doc/prices
+RedirectMatch /doc/fetch-price$        	  /beancount/doc/prices
 
 RedirectMatch /doc/bug-negative-prices 	  https://groups.google.com/forum/#!topic/beancount/2Y7EWFUA3OA
