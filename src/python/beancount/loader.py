@@ -12,6 +12,7 @@ import itertools
 import os
 import pickle
 import warnings
+import time
 from os import path
 
 from beancount.utils import misc_utils
@@ -45,6 +46,7 @@ DEPRECATED_MODULES = {
 
 # Filename pattern for the pickle-cache.
 PICKLE_CACHE_FILENAME = '.{filename}.picklecache'
+PICKLE_CACHE_THRESHOLD = 1.0  # Secs.
 
 
 def load_file(filename, log_timings=None, log_errors=None, extra_validations=None,
@@ -77,7 +79,7 @@ def load_file(filename, log_timings=None, log_errors=None, extra_validations=Non
 load = load_file
 
 
-def pickle_cache_function(pattern, function):
+def pickle_cache_function(pattern, time_threshold, function):
     """Decorate a function to make it loads its result from a pickle cache.
 
     This only considers the first argument as a variant and assumes it's a
@@ -87,9 +89,13 @@ def pickle_cache_function(pattern, function):
     Args:
       pattern: A string, the filename pattern for the pickled cache file.
         A {filename} in it gets replaced by the input filename.
+      time_threshold: A float, the number of seconds below which we don't bother
+        caching.
+      function: A function object to decorate for caching.
     Returns:
       A decorated function which will pull its result from a cache file if
       it is available.
+
     """
     @functools.wraps(function)
     def wrapped(filename, *args, **kw):
@@ -99,26 +105,39 @@ def pickle_cache_function(pattern, function):
             pattern.format(filename=path.basename(filename)))
 
         # Attempt to read the result from the cache.
-        if (path.exists(cache_filename) and
-            path.getmtime(filename) < path.getmtime(cache_filename)):
+        exists = path.exists(cache_filename)
+        if exists and path.getmtime(filename) < path.getmtime(cache_filename):
             with open(cache_filename, 'rb') as file:
                 result = pickle.load(file)
         else:
-            # We failed; recompute the value and overwrite the cache file.
+            # We failed; recompute the value.
+            if exists:
+                os.remove(exists)
+
+            t1 = time.time()
             result = function(filename, *args, **kw)
-            try:
-                with open(cache_filename, 'wb') as file:
-                    pickle.dump(result, file)
-            except Exception:
-                logging.warning("Could not write to picklecache file {}".format(
-                    cache_filename))
+            t2 = time.time()
+
+            # Overwrite the cache file if the time it takes to compute it
+            # justifies it.
+            if t2 - t1 > time_threshold:
+                try:
+                    with open(cache_filename, 'wb') as file:
+                        pickle.dump(result, file)
+                except Exception:
+                    logging.warning("Could not write to picklecache file {}".format(
+                        cache_filename))
+
         return result
     return wrapped
 
 
-# If the environment variable is set, use the pickle-cache.
-if os.getenv('BEANCOUNT_LOAD_CACHE'):
-    load_file = pickle_cache_function(PICKLE_CACHE_FILENAME, load_file)
+# Unless an environment variable disables it, use the pickle load cache
+# automatically.
+if os.getenv('BEANCOUNT_DISABLE_LOAD_CACHE') is None:
+    load_file = pickle_cache_function(PICKLE_CACHE_FILENAME,
+                                      PICKLE_CACHE_THRESHOLD,
+                                      load_file)
 
 
 def load_string(string, log_timings=None, log_errors=None, extra_validations=None,

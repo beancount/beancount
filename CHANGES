@@ -4,6 +4,18 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-11-29
+
+  - Made the pickle load cache enabled by default. This means you can now remove
+    the BEANCOUNT_LOAD_CACHE environment variable. The load cache will be
+    written out automatically, but only if it takes more than the time threshold
+    (1 sec) to load a Beancount file. If it takes less than this time, no cache
+    is written. (This saves the creation of these pesky crumbs for files it
+    doesn't matter for.) If you would like to always disable the load cache, set
+    the environment variable BEANCOUNT_DISABLE_LOAD_CACHE. I don't recommend
+    it--this works well and for large files makes loading much, much faster.
+
+
 2015-11-28
 
   - Implemented a script used to fetch prices online and output them in
