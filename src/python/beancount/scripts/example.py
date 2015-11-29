@@ -310,7 +310,7 @@ def postings_for(entries, accounts, before=False):
         if before:
             yield txn_posting, balances
         posting = txn_posting.posting
-        balances[posting.account].add_position(posting.position)
+        balances[posting.account].add_position(posting)
         if not before:
             yield txn_posting, balances
 
@@ -335,7 +335,7 @@ def iter_dates_with_balance(date_begin, date_end, entries, accounts):
     for date in date_iter(date_begin, date_end):
         while txn_posting and txn_posting.txn.date == date:
             posting = txn_posting.posting
-            balances[posting.account].add_position(posting.position)
+            balances[posting.account].add_position(posting)
             txn_posting = next(merged_txn_postings, None)
         yield date, balances
 
@@ -608,7 +608,7 @@ def generate_retirement_employer_match(entries, account_invest, account_income):
     """, date=entries[0].date, account_income=account_income)
 
     for txn_posting, balances in postings_for(entries, [account_invest]):
-        amount = txn_posting.posting.position.units.number * match_frac
+        amount = txn_posting.posting.units.number * match_frac
         amount_neg = -amount
         date = txn_posting.txn.date + ONE_DAY
         new_entries.extend(parse("""
@@ -822,9 +822,9 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
                     new_entries.append(buy)
 
                     account_stock = ':'.join([account, stock])
-                    balances[account_cash].add_position(buy.postings[0].position)
-                    balances[account_stock].add_position(buy.postings[1].position)
-                    stocks_inventory.add_position(buy.postings[1].position)
+                    balances[account_cash].add_position(buy.postings[0])
+                    balances[account_stock].add_position(buy.postings[1])
+                    stocks_inventory.add_position(buy.postings[1])
 
                 # Don't sell on days you buy.
                 continue
@@ -864,8 +864,8 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
             """, **locals())[0]
             new_entries.append(sell)
 
-            balances[account_cash].add_position(sell.postings[1].position)
-            stocks_inventory.add_position(sell.postings[0].position)
+            balances[account_cash].add_position(sell.postings[1])
+            stocks_inventory.add_position(sell.postings[0])
             continue
 
     return open_entries + new_entries

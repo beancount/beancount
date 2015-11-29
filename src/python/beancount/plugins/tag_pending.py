@@ -64,7 +64,7 @@ def tag_pending_transactions(entries, tag_name='PENDING'):
             for entry in link_entries:
                 for posting in entry.postings:
                     if posting.account in common_accounts:
-                        common_balance.add_position(posting.position)
+                        common_balance.add_position(posting)
 
             # Mark entries as pending if a residual balance is found.
             if not common_balance.is_empty():

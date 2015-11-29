@@ -256,15 +256,14 @@ def render_posting(posting, number_format):
     # Note: there's probably no need to redo the work of rendering here... see
     # if you can't just simply replace this by Position.to_string().
 
-    position = posting.position
-    units = position.units
+    units = posting.units
     strings = [
         posting.flag if posting.flag else ' ',
         '{:32}'.format(posting.account),
         number_format.format(units.number, units.currency)
         ]
 
-    cost = position.cost
+    cost = posting.cost
     if cost:
         strings.append('{{{}}}'.format(number_format.format(cost.number,
                                                             cost.currency).strip()))

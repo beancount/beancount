@@ -219,7 +219,7 @@ def execute_query(query, entries, options_map):
                     if c_where is None or c_where(context):
                         # Compute the balance.
                         if balance is not None:
-                            balance.add_position(posting.position)
+                            balance.add_position(posting)
 
                         # Evaluate all the values.
                         values = [c_expr(context) for c_expr in c_target_exprs]
@@ -264,7 +264,7 @@ def execute_query(query, entries, options_map):
                     if c_where is None or c_where(context):
                         # Compute the balance.
                         if balance is not None:
-                            balance.add_position(posting.position)
+                            balance.add_position(posting)
 
                         # Compute the non-aggregate expressions.
                         row_key = tuple(c_expr(context)

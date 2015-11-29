@@ -961,61 +961,61 @@ class AccountColumn(query_compile.EvalColumn):
 
 class NumberColumn(query_compile.EvalColumn):
     "The number of units of the posting."
-    __equivalent__ = 'posting.position.units.number'
+    __equivalent__ = 'posting.units.number'
     __intypes__ = [data.Posting]
 
     def __init__(self):
         super().__init__(Decimal)
 
     def __call__(self, context):
-        return context.posting.position.units.number
+        return context.posting.units.number
 
 class CurrencyColumn(query_compile.EvalColumn):
     "The currency of the posting."
-    __equivalent__ = 'posting.position.units.currency'
+    __equivalent__ = 'posting.units.currency'
     __intypes__ = [data.Posting]
 
     def __init__(self):
         super().__init__(str)
 
     def __call__(self, context):
-        return context.posting.position.units.currency
+        return context.posting.units.currency
 
 class CostNumberColumn(query_compile.EvalColumn):
     "The number of cost units of the posting."
-    __equivalent__ = 'posting.position.cost.number'
+    __equivalent__ = 'posting.cost.number'
     __intypes__ = [data.Posting]
 
     def __init__(self):
         super().__init__(Decimal)
 
     def __call__(self, context):
-        pos = context.posting.position
-        cost = pos.cost
+        cost = context.posting.cost
         return cost.number if cost else ZERO
 
 class CostCurrencyColumn(query_compile.EvalColumn):
     "The cost currency of the posting."
-    __equivalent__ = 'posting.position.cost.currency'
+    __equivalent__ = 'posting.cost.currency'
     __intypes__ = [data.Posting]
 
     def __init__(self):
         super().__init__(str)
 
     def __call__(self, context):
-        cost = context.posting.position.cost
+        cost = context.posting.cost
         return cost.currency if cost else ''
 
 class PositionColumn(query_compile.EvalColumn):
     "The position for the posting. These can be summed into inventories."
-    __equivalent__ = 'posting.position'
+    __equivalent__ = 'posting'
     __intypes__ = [data.Posting]
 
     def __init__(self):
         super().__init__(position.Position)
 
     def __call__(self, context):
-        return context.posting.position
+        posting = context.posting
+        return position.Position(posting.units, posting.cost)
 
 class PriceColumn(query_compile.EvalColumn):
     "The price attached to the posting."
