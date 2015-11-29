@@ -8,7 +8,9 @@ import copy
 from beancount.core.number import D
 from beancount.core.number import ONE
 from beancount.core.number import ZERO
+from beancount.core.number import MISSING
 from beancount.core.amount import Amount
+from beancount.core.amount import amount_mult
 from beancount.core.inventory import Inventory
 from beancount.core import inventory
 from beancount.core.position import Position
@@ -182,10 +184,13 @@ def infer_tolerances(postings, options_map, use_cost=None):
         # Skip the precision on automatically inferred postings.
         if posting.meta and AUTOMATIC_META in posting.meta:
             continue
+        units = posting.units
+        if units is MISSING or units is None:
+            continue
 
         # Compute bounds on the number.
-        currency = posting.units.currency
-        expo = posting.units.number.as_tuple().exponent
+        currency = units.currency
+        expo = units.number.as_tuple().exponent
         if expo < 0:
             # Note: the exponent is a negative value.
             tolerance = ONE.scaleb(expo) * inferred_tolerance_multiplier
@@ -324,12 +329,12 @@ def get_incomplete_postings(entry, options_map):
     has_nonzero_amount = False
     has_regular_postings = False
     for i, posting in enumerate(postings):
-        pos = posting.position
-        if not isinstance(pos, Position):
+        units = posting.units
+        if units is MISSING or units is None:
             # This posting will have to get auto-completed.
             auto_postings_indices.append(i)
         else:
-            currencies.add(pos.units.currency)
+            currencies.add(units.currency)
 
             # Compute the amount to balance and update the inventory.
             weight = get_posting_weight(posting)
@@ -383,11 +388,12 @@ def get_incomplete_postings(entry, options_map):
             # each position.
             for pos in residual_positions:
                 pos = -pos
+                units = pos.units
 
                 # Applying rounding to the default tolerance, if there is one.
                 tolerance = inventory.get_tolerance(tolerances,
                                                     default_tolerances,
-                                                    pos.units.currency)
+                                                    units.currency)
                 if tolerance:
                     quantum = (tolerance * 2).normalize()
 
@@ -401,8 +407,8 @@ def get_incomplete_postings(entry, options_map):
                     # quantized exponent is always equal to that of the
                     # right-hand operand.
                     if is_tolerance_user_specified(quantum):
-                        pos.set_units(Amount(pos.units.number.quantize(quantum),
-                                             pos.units.currency))
+                        pos.set_units(Amount(units.number.quantize(quantum),
+                                             units.currency))
 
                 meta = copy.copy(old_posting.meta) if old_posting.meta else {}
                 meta[AUTOMATIC_META] = True

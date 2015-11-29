@@ -1000,7 +1000,7 @@ class TestParseLots(unittest.TestCase):
         """
         self.assertEqual(0, len(errors))
         self.assertTrue(parser.is_entry_incomplete(entries[0]))
-        pos = entries[0].postings[0]
+        posting = entries[0].postings[0]
         self.assertEqual(A('20 AAPL'), posting.units)
         self.assertEqual(CostSpec(D('45.23'), MISSING, 'USD', None, None, False),
                          posting.cost)

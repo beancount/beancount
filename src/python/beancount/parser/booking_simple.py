@@ -85,10 +85,10 @@ def convert_lot_specs_to_lots(entries):
 
         new_postings = []
         for posting in entry.postings:
-            pos = posting.position
-            if isinstance(pos, Position):
-                currency = pos.units.currency
-                cost_spec = pos.cost
+            units = posting.units
+            if isinstance(units, Amount):
+                cost_spec = posting.cost
+                currency = units.currency
                 if cost_spec is not None:
                     number_per, number_total, cost_currency, date, label, merge = cost_spec
 
@@ -97,11 +97,11 @@ def convert_lot_specs_to_lots(entries):
                         if number_total is not None:
                             # Compute the per-unit cost if there is some total cost
                             # component involved.
-                            units = pos.units.number
+                            units_num = units.number
                             cost_total = number_total
                             if number_per is not MISSING:
-                                cost_total += number_per * units
-                            unit_cost = cost_total / abs(units)
+                                cost_total += number_per * units_num
+                            unit_cost = cost_total / abs(units_num)
                         else:
                             unit_cost = number_per
                         cost = Cost(unit_cost, cost_currency, date, label)
@@ -113,10 +113,10 @@ def convert_lot_specs_to_lots(entries):
                     # of zero as the only special case (for conversion entries), but
                     # never for costs.
                     if cost is not None:
-                        if pos.units.number == ZERO:
+                        if units.number == ZERO:
                             errors.append(
                                 SimpleBookingError(
-                                    entry.meta, 'Amount is zero: "{}"'.format(pos), None))
+                                    entry.meta, 'Amount is zero: "{}"'.format(units), None))
 
                         if cost.number is not None and cost.number < ZERO:
                             errors.append(
@@ -124,8 +124,8 @@ def convert_lot_specs_to_lots(entries):
                                                    'Cost is negative: "{}"'.format(cost),
                                                    None))
 
-                    units = Amount(pos.units.number, currency)
-                    posting = posting._replace(position=Position(units, cost))
+                    units = Amount(units.number, currency)
+                    posting = posting._replace(units=units, cost=cost)
 
             new_postings.append(posting)
         new_entries.append(entry._replace(postings=new_postings))

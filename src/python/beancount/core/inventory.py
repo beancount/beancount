@@ -398,7 +398,7 @@ class Inventory(list):
           that was modified, and where 'booking' is a Booking enum that hints at
           how the lot was booked to this inventory.
         """
-        assert isinstance(position, Position), (
+        assert hasattr(position, 'units') and hasattr(position, 'cost'), (
             "Invalid type for position: {}".format(position))
         assert isinstance(position.cost, (type(None), Cost)), (
             "Invalid type for cost: {}".format(position.cost))

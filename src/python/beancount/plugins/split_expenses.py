@@ -40,6 +40,7 @@ from beancount.core import amount
 from beancount.core import data
 from beancount.core import getters
 from beancount.core import interpolate
+from beancount.core import position
 from beancount.parser import options
 from beancount.query import query
 from beancount.query import query_render
@@ -79,7 +80,7 @@ def split_expenses(entries, options_map, config):
                     not is_individual_account(posting.account)):
 
                     # Split this posting into multiple postings.
-                    split_position = copy.copy(posting.position)
+                    split_position = position.Position(posting.units, posting.cost)
                     split_position.set_units(
                         amount.Amount(split_position.units.number / len(members),
                                       split_position.units.currency))
@@ -101,7 +102,8 @@ def split_expenses(entries, options_map, config):
                         new_postings.append(
                             posting._replace(meta=meta,
                                              account=subaccount,
-                                             position=split_position))
+                                             units=split_position.units,
+                                             cost=split_position.cost))
                 else:
                     new_postings.append(posting)
 

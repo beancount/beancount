@@ -10,6 +10,8 @@ import sys
 import textwrap
 
 from beancount.core.number import Decimal
+from beancount.core.number import MISSING
+from beancount.core import position
 from beancount.core import amount
 from beancount.core import data
 from beancount.core import interpolate
@@ -214,8 +216,9 @@ class EntryPrinter:
 
         # Render a string with the amount and cost and optional price, if
         # present. Also render a string with the weight.
-        if posting.position:
-            position_str = posting.position.to_string(self.dformat)
+        if isinstance(posting.units, amount.Amount):
+            pos = position.Position(posting.units, posting.cost)
+            position_str = pos.to_string(self.dformat)
             # Note: we render weights at maximum precision, for debugging.
             weight_str = str(interpolate.get_posting_weight(posting))
         else:

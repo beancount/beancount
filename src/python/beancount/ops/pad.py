@@ -76,7 +76,7 @@ def pad(entries, options_map):
             if isinstance(entry, data.TxnPosting):
                 # This is a transaction; update the running balance for this
                 # account.
-                pad_balance.add_position(entry.posting.position)
+                pad_balance.add_position(entry.posting)
 
             elif isinstance(entry, data.Pad):
                 if entry.account == account_:
@@ -133,10 +133,13 @@ def pad(entries, options_map):
                             None, narration, None, None, [])
 
                         new_entry.postings.append(
-                            data.Posting(active_pad.account, diff_position,
+                            data.Posting(active_pad.account,
+                                         diff_position.units, diff_position.cost,
                                          None, None, None))
+                        neg_diff_position = -diff_position
                         new_entry.postings.append(
-                            data.Posting(active_pad.source_account, -diff_position,
+                            data.Posting(active_pad.source_account,
+                                         neg_diff_position.units, neg_diff_position.cost,
                                          None, None, None))
 
                         # Save it for later insertion after the active pad.

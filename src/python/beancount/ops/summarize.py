@@ -493,8 +493,10 @@ def conversions(entries, conversion_account, conversion_currency, date=None):
         # in the entire system and this is necessary; see documentation on
         # Conversions.)
         price = amount.Amount(ZERO, conversion_currency)
+        neg_pos = -position
         conversion_entry.postings.append(
-            data.Posting(conversion_account, -position, price, None, None))
+            data.Posting(conversion_account, neg_pos.units, neg_pos.cost,
+                         price, None, None))
 
     # Make a copy of the list of entries and insert the new transaction into it.
     new_entries = list(entries)
@@ -561,10 +563,11 @@ def create_entries_from_balances(balances, date, source_account, direction,
             meta, date, flag, None, narration, None, None, postings)
 
         for position in account_balance.get_positions():
-            postings.append(data.Posting(account, position, None, None, None))
-            cost_position = position.at_cost()
-            postings.append(
-                data.Posting(source_account, -cost_position, None, None, None))
+            postings.append(data.Posting(account, position.units, position.cost,
+                                         None, None, None))
+            cost_pos = -position.at_cost()
+            postings.append(data.Posting(source_account, cost_pos.units, cost_pos.cost,
+                                         None, None, None))
 
         new_entries.append(new_entry)
 
@@ -601,7 +604,7 @@ def balance_by_account(entries, date=None):
                 # zero is if all the entries are being summed together, no
                 # entries are filtered, at least for a particular account's
                 # postings.
-                account_balance.add_position(posting.position)
+                account_balance.add_position(posting)
     else:
         index = len(entries)
 

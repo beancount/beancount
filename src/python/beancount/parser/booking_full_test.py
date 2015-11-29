@@ -380,8 +380,8 @@ class TestReplaceCurrenciesInGroup(unittest.TestCase):
         self.assertFalse(errors)
         posting_groups = booking_full.replace_currencies(entry.postings, groups)
         check_groups = {
-            currency: [(posting.position.units.currency,
-                        posting.position.cost.currency if posting.position.cost else None,
+            currency: [(posting.units.currency,
+                        posting.cost.currency if posting.cost else None,
                         posting.price.currency if posting.price else None)
                        for posting in postings]
             for currency, postings in posting_groups.items()}
@@ -856,4 +856,4 @@ class TestFullBooking(cmptest.TestCase):
             Assets:Bank:Investing           5 HOOL {501 USD}
             Equity:Opening-Balances     -2505 USD
         """
-        self.assertEqual(D('-2505'), entries[-1].postings[-1].position.units.number)
+        self.assertEqual(D('-2505'), entries[-1].postings[-1].units.number)
