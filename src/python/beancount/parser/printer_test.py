@@ -170,6 +170,7 @@ class TestEntryPrinter(cmptest.TestCase):
         2014-06-08 open Assets:Account1
         2014-06-08 open Assets:Account2  USD
         2014-06-08 open Assets:Account3  USD,CAD,EUR
+        2014-06-08 open Assets:Account4  HOOL   "NONE"
         """
         self.assertRoundTrip(entries, errors)
 
