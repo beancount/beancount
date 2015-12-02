@@ -4,6 +4,14 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-12-02
+
+  - Fixed issue #84: The sorting of entries from multiple files was incorrectly
+    placed, due to recent changes merged from the booking branch.
+
+  - Fixed a bug deleting the load cache (was using an invalid filename).
+
+
 2015-11-29
 
   - Made the pickle load cache enabled by default. This means you can now remove
