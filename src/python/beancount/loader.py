@@ -112,7 +112,7 @@ def pickle_cache_function(pattern, time_threshold, function):
         else:
             # We failed; recompute the value.
             if exists:
-                os.remove(exists)
+                os.remove(cache_filename)
 
             t1 = time.time()
             result = function(filename, *args, **kw)
