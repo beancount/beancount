@@ -4,6 +4,11 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-12-03
+
+  - Added ROOT(account, num) account manipulation function to the shell.
+
+
 2015-12-02
 
   - Fixed issue #84: The sorting of entries from multiple files was incorrectly
