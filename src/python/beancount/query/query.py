@@ -20,10 +20,11 @@ def run_query(entries, options_map, query, *format_args, numberify=False):
       format_args: A tuple of arguments to be formatted in the query. This is
         just provided as a convenience.
       numberify: If true, numberify the results before returning them.
+    Returns:
+      A pair of result types and result rows.
     Raises:
       ParseError: If the statement cannot be parsed.
       CompilationError: If the statement cannot be compiled.
-
     """
     env_targets = query_env.TargetsEnvironment()
     env_entries = query_env.FilterEntriesEnvironment()
