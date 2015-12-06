@@ -262,8 +262,12 @@ class EntryPrinter:
         self.write_metadata(entry.meta, oss)
 
     def Open(self, entry, oss):
-        oss.write('{e.date} open {e.account:47} {currencies}'.format(
-            e=entry, currencies=','.join(entry.currencies or [])).rstrip())
+        oss.write('{e.date} open {e.account:47} {currencies} {booking}'.format(
+            e=entry,
+            currencies=','.join(entry.currencies or []),
+            booking=('"{}"'.format(entry.booking)
+                     if entry.booking is not None
+                     else '')).rstrip())
         oss.write('\n')
         self.write_metadata(entry.meta, oss)
 

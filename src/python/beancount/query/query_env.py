@@ -125,6 +125,17 @@ class Weekday(query_compile.EvalFunction):
 
 # Operations on accounts.
 
+class Root(query_compile.EvalFunction):
+    "Get the root name(s) of the account."
+    __intypes__ = [str, int]
+
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        return account.root(args[1], args[0])
+
 class Parent(query_compile.EvalFunction):
     "Get the parent name of the account."
     __intypes__ = [str]
@@ -379,6 +390,7 @@ SIMPLE_FUNCTIONS = {
     'str'                                 : Str,
     'length'                              : Length,
     'maxwidth'                            : MaxWidth,
+    'root'                                : Root,
     'parent'                              : Parent,
     'leaf'                                : Leaf,
     'grep'                                : Grep,
