@@ -194,25 +194,25 @@ class Builder(lexer.LexBuilder):
         if entries:
             self.entries = entries
 
-    def build_grammar_error(self, filename, lineno, message,
+    def build_grammar_error(self, filename, lineno, exc_value,
                             exc_type=None, exc_traceback=None):
         """Build a grammar error and appends it to the list of pending errors.
 
         Args:
           filename: The current filename
           lineno: The current line number
-          message: The message of the error, or the exc_value exception value.
+          excvalue: The exception value, or a str, the message of the error.
           exc_type: An exception type, if an exception occurred.
           exc_traceback: A traceback object.
         """
-        if not isinstance(message, str):
-            message = str(message)
         if exc_type is not None:
-            strings = traceback.format_exception_only(exc_type, message)
+            assert not isinstance(exc_value, str)
+            strings = traceback.format_exception_only(exc_type, exc_value)
             tblist = traceback.extract_tb(exc_traceback)
             filename, lineno, _, __ = tblist[0]
             message = '{} ({}:{})'.format(strings[0], filename, lineno)
-
+        else:
+            message = str(exc_value)
         meta = new_metadata(filename, lineno)
         self.errors.append(
             ParserSyntaxError(meta, message, None))
