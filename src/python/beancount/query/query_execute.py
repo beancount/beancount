@@ -124,6 +124,9 @@ class RowContext:
     # A dict of account name strings to (open, close) entries for those accounts.
     open_close_map = None
 
+    # A dict of currency name strings to the corresponding Commodity entry.
+    commodity_map = None
+
     # A price dict as computed by build_price_map()
     price_map = None
 
@@ -154,8 +157,9 @@ def execute_query(query, entries, options_map):
           'result_types'.
     """
     # Filter the entries using the WHERE clause.
-    if query.c_from is not None:
-        entries = filter_entries(query.c_from, entries, options_map)
+    filt_entries = (filter_entries(query.c_from, entries, options_map)
+                    if query.c_from is not None else
+                    entries)
 
     # Figure out the result types that describe what we return.
     result_types = [(target.name, target.c_expr.dtype)
@@ -196,6 +200,7 @@ def execute_query(query, entries, options_map):
     context.options_map = options_map
     context.account_types = options.get_account_types(options_map)
     context.open_close_map = getters.get_account_open_close(entries)
+    context.commodity_map = getters.get_commodity_map(entries)
     context.price_map = prices.build_price_map(entries)
 
     # Dispatch between the non-aggregated queries and aggregated queries.
@@ -210,7 +215,7 @@ def execute_query(query, entries, options_map):
                           for c_target in query.c_targets]
 
         # Iterate over all the postings once and produce schwartzian rows.
-        for entry in entries:
+        for entry in filt_entries:
             if isinstance(entry, data.Transaction):
                 context.entry = entry
                 for posting in entry.postings:
@@ -255,7 +260,7 @@ def execute_query(query, entries, options_map):
 
         # Iterate over all the postings to evaluate the aggregates.
         agg_store = {}
-        for entry in entries:
+        for entry in filt_entries:
             if isinstance(entry, data.Transaction):
                 context.entry = entry
                 for posting in entry.postings:

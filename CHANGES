@@ -4,6 +4,382 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-12-03
+
+  - Added ROOT(account, num) account manipulation function to the shell.
+
+
+2015-12-02
+
+  - Fixed issue #84: The sorting of entries from multiple files was incorrectly
+    placed, due to recent changes merged from the booking branch.
+
+  - Fixed a bug deleting the load cache (was using an invalid filename).
+
+
+2015-11-29
+
+  - Made the pickle load cache enabled by default. This means you can now remove
+    the BEANCOUNT_LOAD_CACHE environment variable. The load cache will be
+    written out automatically, but only if it takes more than the time threshold
+    (1 sec) to load a Beancount file. If it takes less than this time, no cache
+    is written. (This saves the creation of these pesky crumbs for files it
+    doesn't matter for.) If you would like to always disable the load cache, set
+    the environment variable BEANCOUNT_DISABLE_LOAD_CACHE. I don't recommend
+    it--this works well and for large files makes loading much, much faster.
+
+
+2015-11-28
+
+  - Implemented a script used to fetch prices online and output them in
+    Beancount input format. This script is able not only to take an explicit
+    list of prices to get, but also able to read a Beancount input file and
+    figure out the list of commodities held at a particular point in time and
+    fetch only those prices. A "price" metadata field on a Commodity directive
+    is used to specify how and where to get prices from. It comes with support
+    for Google Finance and Yahoo! Finance price sources and the syntax supports
+    custom-written Python modules so you can write your own price fetching
+    extensions, that integrate with the price fetching tool.
+
+    The new code is located under "src/python/beancount/prices" and this new
+    tool is documented in http://furius.ca/beancount/doc/prices.
+
+    (Note: This is brand new code, probably imperfect, but I tried to keep this
+    simple yet complex enough to be practical. I've been using a variant of it
+    for a while, I'm going to merge this now and use it myself, and I hope it
+    works for others.)
+
+
+2015-11-26
+
+  - I redesigned the portfolio export process in order to (a) simplify it
+    greatly (the process was a bit confusing, between the use of three metadat
+    fields: "ticker", "export" and "quote"), and (b) to separate it entirely
+    from the upcoming price fetching script metadata.
+
+    The new outcome is very similiar, however, except it uses only a SINGLE
+    metadata field: "export", and the documentation has been rewritten to
+    reflect this:
+    https://docs.google.com/document/d/1mNyE_ONuyEkF_I2l6V_AoAU5HJgI654AOBhHsnNPPqw/edit#
+
+    If you have an existing file, here's what you need to do to it:
+
+    * Remove all the 'quote' metadata. You won't need it.
+    * If you have 'ticker' metadata: convert those to 'export'.
+    * If you have 'export' metadata: keep it.
+    * If you had an 'export' metadata with a "MONEY" spec, move that into the
+      'export' field after the symbol to export to.
+
+    The example has been ported, so you can refer to that as well.
+
+    I think the new process is much simpler to understand and the documentation
+    shorter and easier to read. It should be a trivial exercise to convert one's
+    input file to the newer format.
+
+
+2015-11-22
+
+  - Removed beancount.core.data.AttrDict and replace it by a regular dict. This
+    removes some annoyances when pickling and copying metadata. Metadata is now
+    represented by a plain old dict. (Fixes issue #79.)
+
+
+2015-11-09
+
+  - Implemented a simple pickle-date on beancount.loader.load_file(), which will
+    reload the parsed & processed contents of a top-level file if a cache file
+    is present and more recent than the file itself, or update the contents of
+    the cache after loading if not. (This works a bit like .pyc byte-compilation
+    in Python or .elc in Emacs LISP.) This makes the loading of large files
+    multiple times ~15x faster, which is a big deal since Beancount has become a
+    little bit slow (I need to spend time optimizing at some point).
+
+    This feature is a bit experimental, so for now it only gets turned on if the
+    BEANCOUNT_LOAD_CACHE environment variable is set.
+
+
+2015-10-04
+
+  - Implemented --output=<filename> option for bean-query tool.
+
+
+2015-10-02
+
+  - Implemented an experimental new Query directive whose purpose is to define
+    pre-canned SQL queries in the Beancount file itself and to then build tools
+    to automate the generation of reports of those queries.
+
+    For the moment being, I'm just playing with this to convince myself that
+    this can be powerful and generic enough to provide more generally. I've
+    found myself running specific queries on speific files, e.g., during trips
+    and I'd like to automate those to some extend, perhaps replace the script
+    code that lives in beancount.plugins.split_expenses with this.
+
+    Anyhow, this is not supported but if you understand this and really want to
+    turn it on, set this option in your input file:
+
+      option "experimental_query_directive" "TRUE"
+
+    The directives aren't used anywhere yet, and you'll have to read source code
+    to figure out what they look like.
+
+
+  - Implemented a "reload" command in the shell. Typing "reload" will refresh
+    the data from the latest file contents.
+
+
+2015-09-29
+
+  - Tightened the screws on the Amount() constructor a bit and made changes ini
+    order to allow it to accept a sentinel value for MISSING values from the
+    parser. Changes to beancount.core.amount.Amount are:
+
+    1. A string for the number is not accepted anymore, that is, Amount(str,
+       str) is not supported anymore. Amount() now unconditionally requires a
+       Decimal instance, so you must use Amount(Decimal, str). In any case, this
+       constrcutros was likely abused only by me in the tests. I'd rather have
+       a tighter, less permissive constructor.
+
+    2. The convenience constructor beancount.core.amount.from_string() is now
+       officially aliased as beancount.core.amount.A, so you can "from
+       beancount.core.amount import A". I now commit to using this constructor
+       and converted all the tests to use it. This is great for writing tests.
+       Amount really is a fundamental piece that deserves a very short alias
+       like this.
+
+    In summary, how to create Amount instances:
+
+    * If you use explicit values, use Amount(Decimal, str), e.g.,
+      Amount(D('100.00'), 'USD'), Amount(number, currency)
+
+    * If you need a convenience constructor, use A(str), e.g.,
+      A('100.00 USD'), A('32,000 KRW')
+
+
+2015-09-29
+
+  - Added a new column 'description' to the SQL client in order to produce more
+    compact reports.
+
+    Oftentimes the payee is left to an empty value and journals
+    have a lot of wasted whitespace. Concatenating the payee and the narration
+    in a single field goes a long way towards producing reports that aren't
+    nearly as wide. I could have added a CONCAT() function but this is so common
+    and convenient that a dedicated 'description' alias is justified. You can
+    use it in posting context ("SELECT description ..." or "SELECT ... WHERE
+    description ~ '...'") or transaction context ("SELECT ... FROM description ~
+    '...'")..
+
+
+2015-09-27
+
+  - Implemented a plugin that can book price conversions using a particular
+    booking method, in this case, FIFO. This idea stemmed from a suggestion I
+    made on the mailing-list a few weeks ago, which was to process a particular
+    account's price conversions to insert cost basis specifications and in doing
+    so to book reducing postings to FIFO order automatically. This could all be
+    done via a plugin, so I did it. (See tag {c395de691449} on the mailing-list
+    for more context.)
+
+    You can find it under "beancount.plugins.book_conversions". You use it like
+    this: first you load the plugin:
+
+      plugin "beancount.plugins.book_conversions" "Assets:Bitcoin,Income:Bitcoin"
+
+    The configuration requires you provide two accounts:
+
+    1. An assets account to process, whereby all price conversions (in any currency)
+       occurring in that account will have their cost basis automatically inserted,
+       and,
+
+    2. An Income account that is inserted on reducing transactions to absorb the
+       profit or loss of the sale.
+
+    Then you book your transactions as simple price conversions, without worrying
+    about cost basis, for example, this input:
+
+      2015-09-04 *
+        Assets:Bank           -750.00 USD
+        Assets:Bitcoin       3.000000 BTC @ 250.00 USD
+
+      2015-09-05 *
+        Assets:Bank           -780.00 USD
+        Assets:Bitcoin       3.000000 BTC @ 260.00 USD
+
+      2015-09-20 *
+        Assets:Bitcoin       -2.000000 BTC @ 300.00 USD
+        Expenses:Something
+
+      2015-09-21 *
+        Assets:Bitcoin       -2.000000 BTC @ 310.00 USD
+        Expenses:Something
+
+      2015-09-22 *
+        Assets:Bitcoin       -2.000000 BTC @ 330.00 USD
+        Expenses:Something
+
+    Would get translated by the plugin into the equivalent of this:
+
+      2015-09-04 *
+        Assets:Bitcoin  3.000000 BTC {250.00 USD} @ 250.00 USD
+          trades: "trade-ff4c3e592147,trade-6b9c8689ed50"
+        Assets:Bank      -750.00 USD
+
+      2015-09-05 *
+        Assets:Bitcoin  3.000000 BTC {260.00 USD} @ 260.00 USD
+          trades: "trade-91e2245de593,trade-d622a89c614d"
+        Assets:Bank      -780.00 USD
+
+      2015-09-20 *
+        Assets:Bitcoin          -2.000000 BTC {250.00 USD} @ 300.00 USD
+          trades: "trade-ff4c3e592147"
+        Income:Bitcoin      -100.00000000 USD
+        Expenses:Something   600.00000000 USD
+
+      2015-09-21 *
+        Assets:Bitcoin          -1.000000 BTC {250.00 USD} @ 310.00 USD
+          trades: "trade-6b9c8689ed50"
+        Assets:Bitcoin          -1.000000 BTC {260.00 USD} @ 310.00 USD
+          trades: "trade-91e2245de593"
+        Income:Bitcoin      -110.00000000 USD
+        Expenses:Something   620.00000000 USD
+
+      2015-09-22 *
+        Assets:Bitcoin          -2.000000 BTC {260.00 USD} @ 330.00 USD
+          trades: "trade-d622a89c614d"
+        Income:Bitcoin      -140.00000000 USD
+        Expenses:Something   660.00000000 USD
+
+    Note that the price annotations are kept as in the input file. The plugin only
+    inserts the cost basis and splits postings where required.
+
+    Secondly, a unique trade identifier is allocated for each matching pair of
+    postings that were booked and is added to the metadata of those postings.
+    Its value is a comma-separated list. This metadata is useful because it
+    allows you to load the entries and from it, to build a list of trades to
+    produce a suitable report for reporting.
+
+    So the plugin also contains code to do this. You can invoke it as a main
+    program, like this:
+
+      python3 -m beancount.plugins.book_conversions <filename.beancount>
+
+    On the file above, it should generate the following output, which I believe is
+    the report you're really after for reporting purposes:
+
+       Units  Currency  Cost Currency    Buy Date  Buy Price   Sell Date  Sell Price     P/L
+    --------  --------  -------------  ----------  ---------  ----------  ----------  ------
+    2.000000       BTC            USD  2015-09-04     250.00  2015-09-20      300.00  100.00
+    1.000000       BTC            USD  2015-09-04     250.00  2015-09-21      310.00   60.00
+    1.000000       BTC            USD  2015-09-05     260.00  2015-09-21      310.00   50.00
+    2.000000       BTC            USD  2015-09-05     260.00  2015-09-22      330.00  140.00
+    --------  --------  -------------  ----------  ---------  ----------  ----------  ------
+
+    Use the '--format=csv' option if you want to produce output suitable for
+    including in a spreadsheet. If you need to customize the output further, see the
+    source code (file:book_conversions.py). It is not possible to generate this list
+    of trades using the SQL client yet, to change the output columns you would have
+    to create a standalone script; you can copy just the main() function in the
+    plugin if you need to do that and import the rest. (Note: The function that
+    extracts the list of matches provides both the posting and its parent
+    Transaction object, so you can output data from the transaction if you want,
+    e.g. the narration of the selling transaction.)
+
+
+2015-09-14
+
+  - Merged more changes to beancount.el (Emacs support) by Stefan Monnier:
+    * Use syntax-tables for comments and strings.
+    * Make ido use optional in Emacs config.
+    * Quote filenames on command lines
+    Thank you Stefan!
+
+
+2015-09-12
+
+  - Added to beancount.plugins.split_expenses a new script that is able to
+    generate the typical kinds of reports you would need to provide to
+    participants in a shared project or travel on their specific expenses and
+    contributions, as well as a breakdown of their expenses per category
+    (expenses account) and final balances for each participants. Invoke it like
+    this:
+
+      python3 -m beancount.plugins.split_expenses <filename>
+
+    The script lives in the same file as the split_expenses plugin, because it
+    is tightly related to it. It presumes the input file will process through
+    this plugin. Try to run it on the example files under
+    beancount/examples/sharing.
+
+  - Added a new file "examples/sharing/duxbury2015.beancount" which contains a
+    new example of sharing expenses on a trip between three people.
+
+  - Starter cleanup of beancount.el contributed by Stefan Monnier. More changes
+    to come, this is basically a no-op patch. It just moves code around and
+    makes other such cosmetic changes to silence some compiler warnings, prepare
+    for subsequent changes, better follow coding conventions etc. Detail:
+
+    * beancount.el: Add some standard file headers, license, and
+      sectioning comments.  Sprinkle a few FIXMEs while I'm here.
+      (beancount-font-lock-defaults): Rename from beancount-font-lock-keywords,
+      since this corresponds to font-lock-keywords and not to
+      font-lock-defaults.
+      (beancount-directive-names, beancount-font-lock-keywords,
+      beancount-accounts):  Move variables before their first use (to silence
+      the compiler).
+      (beancount-mode-map): Use a proper defvar instead of define-minor-mode's
+      half-broken :keymap.
+      (beancount-mode): Merge the make-local-variables into their corresponding
+      `set'.
+      (beancount-accounts): Move make-variable-buffer-local to top-level since
+      it's a global operation.
+      (beancount): Declare this group, already used in define-minor-mode.
+      (beancount-hash-keys): Mark unused arg `v' with an underscore.
+      (beancount-transaction-set-flag): Don't use replace-string (designed for
+      interactive use) from Elisp.
+      (beancount-for-line-in-region): Use copy-marker and eobp.
+      (beancount-align-numbers): Break lines to avoid hiding arguments.
+      (compilation-read-command): Declare variable to silence byte-compiler.
+
+
+2015-09-06
+
+  - Filter out platform-specific comments from the code generated by GNU Bison,
+    in order to avoid unnecessary diffs when I switch between Linux and Mac OS X.
+
+
+2015-09-05
+
+  - Changed the semantics of the account_rounding account, so that it matches
+    that of the other account options, that is, they all specify a sub-account
+    of the Equity account. So if you had
+
+      option "account_rounding" "Equity:RoundingError"
+
+    in your input file, change this to:
+
+      option "account_rounding" "RoundingError"
+
+    To ease the transition, the parser now checks if the first component is one
+    of the five categories and if so, issues a warning and removes the prefix.
+
+    (One side-effect of this change is that the rounding error account may only
+    be an Equity account, but I'm hoping this won't be a problem for anyone.)
+
+
+2015-08-31
+
+  - The column "weight" was broken; fixed by yagebu@.
+
+
+2015-08-30
+
+  - Fixed a very minor bug in split_expenses plugin whereby the generated
+    postings did not contain the __automatic__ metadata field, and in some
+    particular situations, their automatically calculated values would end up
+    being used for inferring the tolerances.
+
+
 2015-08-15
 
   - Changed the semantics of the parsing stage, in a fairly profound way.

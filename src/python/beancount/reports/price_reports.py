@@ -3,6 +3,7 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import datetime
+import re
 
 from beancount.reports import report
 from beancount.reports import table
@@ -10,6 +11,7 @@ from beancount.reports import gviz
 from beancount.parser import printer
 from beancount.core import data
 from beancount.core import amount
+from beancount.core import account
 from beancount.core import getters
 from beancount.ops import prices
 from beancount.ops import lifetimes
@@ -68,16 +70,21 @@ class CommodityPricesReport(report.TableReport):
     def add_args(cls, parser):
         parser.add_argument('-c', '--commodity', '--currency',
                             action='store', default=None,
-                            help="The commodity to display.")
+                            help="The commodity pair to display.")
 
     def get_date_rates(self, entries):
         if not self.args.commodity:
-            self.parser.error("Commodity must be specified")
+            self.parser.error("Commodity pair must be specified (in BASE/QUOTE format)")
+        if not re.match('{ccy}/{ccy}$'.format(ccy=amount.CURRENCY_RE),
+                        self.args.commodity):
+            self.parser.error(('Invalid commodity pair "{}"; '
+                               'must be in BASE/QUOTE format').format(self.args.commodity))
         price_map = prices.build_price_map(entries)
         try:
             date_rates = prices.get_all_prices(price_map, self.args.commodity)
         except KeyError:
-            raise KeyError("Invalid commodity: {}".format(self.args.commodity))
+            self.parser.error(
+                "Commodity not present in database: {}".format(self.args.commodity))
         return date_rates
 
     def generate_table(self, entries, errors, options_map):
@@ -158,7 +165,7 @@ class TickerReport(report.TableReport):
     names = ['tickers', 'symbols']
 
     def generate_table(self, entries, errors, options_map):
-        commodity_map = getters.get_commodity_map(entries, options_map)
+        commodity_map = getters.get_commodity_map(entries)
         ticker_info = getters.get_values_meta(commodity_map, 'name', 'ticker', 'quote')
 
         price_rows = [

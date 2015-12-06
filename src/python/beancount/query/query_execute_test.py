@@ -830,7 +830,7 @@ class TestExecuteFlatten(QueryBase):
       2010-02-23 *
         Assets:Something       5.00 USD
         Assets:Something       2.00 CAD
-        Assets:Something       4 GOOG {531.20 USD}
+        Assets:Something       4 HOOL {531.20 USD}
         Equity:Rest
 
     """
@@ -851,5 +851,5 @@ class TestExecuteFlatten(QueryBase):
                 ],
             [
                 ('Assets:Something',
-                 inventory.from_string("5.00 USD, 2.00 CAD, 4 GOOG {531.20 USD}")),
+                 inventory.from_string("5.00 USD, 2.00 CAD, 4 HOOL {531.20 USD}")),
                 ])

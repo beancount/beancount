@@ -22,6 +22,7 @@ from beancount.core.data import Close
 from beancount.core.data import Commodity
 from beancount.core.data import Pad
 from beancount.core.data import Event
+from beancount.core.data import Query
 from beancount.core.data import Price
 from beancount.core.data import Note
 from beancount.core.data import Document
@@ -193,25 +194,25 @@ class Builder(lexer.LexBuilder):
         if entries:
             self.entries = entries
 
-    def build_grammar_error(self, filename, lineno, message,
+    def build_grammar_error(self, filename, lineno, exc_value,
                             exc_type=None, exc_traceback=None):
         """Build a grammar error and appends it to the list of pending errors.
 
         Args:
           filename: The current filename
           lineno: The current line number
-          message: The message of the error, or the exc_value exception value.
+          excvalue: The exception value, or a str, the message of the error.
           exc_type: An exception type, if an exception occurred.
           exc_traceback: A traceback object.
         """
-        if not isinstance(message, str):
-            message = str(message)
         if exc_type is not None:
-            strings = traceback.format_exception_only(exc_type, message)
+            assert not isinstance(exc_value, str)
+            strings = traceback.format_exception_only(exc_type, exc_value)
             tblist = traceback.extract_tb(exc_traceback)
             filename, lineno, _, __ = tblist[0]
             message = '{} ({}:{})'.format(strings[0], filename, lineno)
-
+        else:
+            message = str(exc_value)
         meta = new_metadata(filename, lineno)
         self.errors.append(
             ParserSyntaxError(meta, message, None))
@@ -301,6 +302,23 @@ class Builder(lexer.LexBuilder):
                 self.options[key] = value
 
             else:
+                # Fix up account_rounding to be a subaccount if the user specified a
+                # full account name. This is intended to ease transition in the
+                # change of semantics that occurred on 2015-09-05, whereby the value
+                # of this option became defined as a subaccount of Equity instead of
+                # a full account name. See Issue #67.
+                # This should eventually be deprecated, say, in a year (after Sep 2016).
+                if key == 'account_rounding':
+                    root = account.root(1, value)
+                    if root in (self.options['name_{}'.format(name)]
+                                for name in ['assets', 'liabilities', 'equity',
+                                             'income', 'expenses']):
+                        self.errors.append(
+                            ParserError(self.get_lexer_location(),
+                                        "'account_rounding' option should now refer to "
+                                        "a subaccount.", None))
+                        value = account.sans_root(value)
+
                 # Set the value.
                 self.options[key] = value
 
@@ -308,6 +326,7 @@ class Builder(lexer.LexBuilder):
             if key.startswith('name_'):
                 # Update the set of valid account types.
                 self.account_regexp = valid_account_regexp(self.options)
+
 
     def include(self, filename, lineno, include_filename):
         """Process an include directive.
@@ -595,6 +614,29 @@ class Builder(lexer.LexBuilder):
         meta = new_metadata(filename, lineno, kvlist)
         return Event(meta, date, event_type, description)
 
+    def query(self, filename, lineno, date, query_name, query_string, kvlist):
+        """Process a document directive.
+
+        Args:
+          filename: the current filename.
+          lineno: the current line number.
+          date: a datetime object.
+          query_name: a str, the name of the query.
+          query_string: a str, the SQL query itself.
+          kvlist: a list of KeyValue instances.
+        Returns:
+          A new Query object.
+        """
+        meta = new_metadata(filename, lineno, kvlist)
+        if not self.options['experiment_query_directive']:
+            self.errors.append(
+                ParserError(meta, (
+                    "Query directive is not supported. "
+                    "You have to enable 'experiment_query_directive' to enable it."), None))
+            return None
+        else:
+            return Query(meta, date, query_name, query_string)
+
     def price(self, filename, lineno, date, currency, amount, kvlist):
         """Process a price directive.
 
@@ -656,7 +698,7 @@ class Builder(lexer.LexBuilder):
           account: A string, the account the document relates to.
           document_filename: A str, the name of the document file.
         Returns:
-          A new Document object.
+          A new KeyValue object.
         """
         return KeyValue(key, value)
 
@@ -776,7 +818,7 @@ class Builder(lexer.LexBuilder):
 
         Args:
           txn_fields: The current TxnFields accumulator.
-          meta: An AttrDict metadata for errors generated in this routine.
+          meta: A metadata dict for errors generated in this routine.
         Returns:
           A pair of (payee, narration) strings or None objects, or None, if
           there was an error.

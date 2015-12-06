@@ -1,14 +1,16 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import datetime
 import re
 
+from beancount.core.amount import A
 from beancount.core import inventory
 from beancount.core import data
-from beancount.core import amount
 from beancount.core import realization
 from beancount.ops import pad
 from beancount.ops import balance
 from beancount.parser import cmptest
+from beancount.parser import printer
 from beancount import loader
 
 
@@ -352,14 +354,14 @@ class TestPadding(cmptest.TestCase):
                 self.assertFalse(position_.is_negative_at_cost())
             balances.append((type(txn_posting), pad_balance.get_units('USD')))
 
-        self.assertEqual(balances, [(data.Open, amount.from_string('0.00 USD')),
-                                    (data.Pad, amount.from_string('0.00 USD')),
-                                    (data.TxnPosting, amount.from_string('95.00 USD')),
-                                    (data.TxnPosting, amount.from_string('105.00 USD')),
-                                    (data.Balance, amount.from_string('105.00 USD')),
-                                    (data.TxnPosting, amount.from_string('125.00 USD')),
-                                    (data.TxnPosting, amount.from_string('145.00 USD')),
-                                    (data.Balance, amount.from_string('145.00 USD'))])
+        self.assertEqual(balances, [(data.Open, A('0.00 USD')),
+                                    (data.Pad, A('0.00 USD')),
+                                    (data.TxnPosting, A('95.00 USD')),
+                                    (data.TxnPosting, A('105.00 USD')),
+                                    (data.Balance, A('105.00 USD')),
+                                    (data.TxnPosting, A('125.00 USD')),
+                                    (data.TxnPosting, A('145.00 USD')),
+                                    (data.Balance, A('145.00 USD'))])
 
     # Note: You could try padding A into B and B into A to see if it works.
 
@@ -432,3 +434,72 @@ class TestPadding(cmptest.TestCase):
         """
         self.assertEqual(1, len(errors))
         self.assertTrue(re.search('Unused Pad entry', errors[0].message))
+
+    @loader.load_doc(expect_errors=True)
+    def test_pad_zero_padding_issue78a(self, entries, errors, __):
+        """
+        1970-01-01 open Assets:Cash
+        1970-01-01 open Expenses:Food
+
+        2015-09-15 pad Assets:Cash Expenses:Food
+
+        2015-09-16 balance Assets:Cash 0 HKD
+
+        ;; The error should be reported here, not on the previous balance check.
+        2015-11-02 balance Assets:Cash 1000 HKD
+        """
+        self.assertEqual(2, len(errors))
+
+        self.assertRegexpMatches(errors[0].message, "Unused")
+        self.assertEqual(datetime.date(2015, 9, 15), errors[0].entry.date)
+
+        self.assertRegexpMatches(errors[1].message, "Balance failed")
+        self.assertEqual(datetime.date(2015, 11, 2), errors[1].entry.date)
+
+    @loader.load_doc(expect_errors=True)
+    def test_pad_zero_padding_issue78a_original(self, entries, errors, __):
+        """
+        1970-01-01 open Assets:Cash
+        1970-01-01 open Expenses:Food
+
+        ;; Inserted this before the pad, because it was in the original example.
+        2015-09-15 balance Assets:Cash 0 HKD
+
+        2015-09-15 pad Assets:Cash Expenses:Food
+
+        2015-09-16 balance Assets:Cash 0 HKD
+
+        ;; The error should be reported here, not on the previous balance check.
+        2015-11-02 balance Assets:Cash 1000 HKD
+        """
+        self.assertEqual(2, len(errors))
+
+        self.assertRegexpMatches(errors[0].message, "Unused")
+        self.assertEqual(datetime.date(2015, 9, 15), errors[0].entry.date)
+
+        self.assertRegexpMatches(errors[1].message, "Balance failed")
+        self.assertEqual(datetime.date(2015, 11, 2), errors[1].entry.date)
+
+    @loader.load_doc(expect_errors=True)
+    def test_pad_zero_padding_issue78b(self, entries, errors, __):
+        """
+        1970-01-01 open Assets:Cash
+        1970-01-01 open Expenses:Food
+
+        ;; Balance should fail here.
+        2015-09-15 balance Assets:Cash 1 HKD
+
+        ;; This will not end up being marked as unused because it will fill in a transaction
+        ;; for the missing amount, even though there was a matching balance check earlier. A
+        ;; failing balance check does not automatically bring the balance to its value.
+        2015-09-15 pad Assets:Cash Expenses:Food
+
+        2015-09-16 balance Assets:Cash 1 HKD
+        """
+        self.assertTrue(any(isinstance(entry, data.Transaction)
+                            for entry in entries))
+
+        self.assertEqual(1, len(errors))
+
+        self.assertRegexpMatches(errors[0].message, "Balance failed")
+        self.assertEqual(datetime.date(2015, 9, 15), errors[0].entry.date)

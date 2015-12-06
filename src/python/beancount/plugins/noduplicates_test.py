@@ -67,11 +67,11 @@ class TestValidateDuplicates(cmptest.TestCase):
         2014-01-01 open Assets:Investments:Cash
 
         2014-06-24 * "Go negative from zero"
-          Assets:Investments:Stock    1 GOOG {500 USD}
+          Assets:Investments:Stock    1 HOOL {500 USD}
           Assets:Investments:Cash  -500 USD
 
         2014-06-24 * "Go negative from zero"
-          Assets:Investments:Stock    1 GOOG {500 USD}
+          Assets:Investments:Stock    1 HOOL {500 USD}
           Assets:Investments:Cash  -500 USD
         """
         self.checkDuplicates(entries, options_map)
@@ -104,8 +104,8 @@ class TestValidateDuplicates(cmptest.TestCase):
     @loader.load_doc()
     def test_validate_no_duplicates__price(self, entries, errors, options_map):
         """
-        2000-01-01 price GOOG 500 USD
-        2000-01-01 price GOOG 500 USD
+        2000-01-01 price HOOL 500 USD
+        2000-01-01 price HOOL 500 USD
         """
         self.assertEqual([], errors)
         _, valid_errors = noduplicates.validate_no_duplicates(entries, options_map)

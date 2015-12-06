@@ -19,12 +19,12 @@ class TestLedgerUtilityFunctions(cmptest.TestCase):
     def test_quote_currency(self):
         test = """
           2014-10-01 * "Buy some stock with local funds"
-            Assets:CA:Investment:GOOG          5 GOOG1 {500.00 USD}
+            Assets:CA:Investment:HOOL          5 HOOL1 {500.00 USD}
             Expenses:Commissions            9.95 USD
         """
         expected = """
           2014-10-01 * "Buy some stock with local funds"
-            Assets:CA:Investment:GOOG          5 "GOOG1" {500.00 USD}
+            Assets:CA:Investment:HOOL          5 "HOOL1" {500.00 USD}
             Expenses:Commissions            9.95 USD
         """
         self.assertEqual(expected, convert_reports.quote_currency(test))
@@ -35,12 +35,12 @@ class TestLedgerUtilityFunctionsOnPostings(cmptest.TestCase):
     @loader.load_doc()
     def setUp(self, entries, _, __):
         """
-          2000-01-01 open Assets:CA:Investment:GOOG
+          2000-01-01 open Assets:CA:Investment:HOOL
           2000-01-01 open Expenses:Commissions
           2000-01-01 open Assets:CA:Investment:Cash
 
           2014-10-01 * "Buy some stock with local funds"
-            Assets:CA:Investment:GOOG          5 GOOG {500.00 USD}
+            Assets:CA:Investment:HOOL          5 HOOL {500.00 USD}
             Expenses:Commissions            9.95 USD
             Assets:CA:Investment:Cash   -2509.95 USD
 
@@ -50,7 +50,7 @@ class TestLedgerUtilityFunctionsOnPostings(cmptest.TestCase):
             Assets:CA:Investment:Cash   -2826.84 CAD @ 0.8879 USD
 
           2014-10-03 * "Buy some stock with foreign currency funds"
-            Assets:CA:Investment:GOOG          5 GOOG {520.0 USD}
+            Assets:CA:Investment:HOOL          5 HOOL {520.0 USD}
             Expenses:Commissions            9.95 USD
             Assets:CA:Investment:Cash   -2939.46 CAD @ 0.8879 USD
         """
@@ -82,7 +82,7 @@ class TestLedgerUtilityFunctionsOnPostings(cmptest.TestCase):
             Assets:CA:Investment:Cash        2,609.946534 USD
 
           2014-10-03 * "Buy some stock with foreign currency funds"
-            Assets:CA:Investment:GOOG            5 GOOG {520.0 USD}
+            Assets:CA:Investment:HOOL            5 HOOL {520.0 USD}
             Expenses:Commissions                 9.95 USD
             Assets:CA:Investment:Cash       -2,609.946534 USD
 
@@ -138,7 +138,7 @@ class TestLedgerConversion(test_utils.TestCase):
           2013-01-01 open Expenses:Restaurant
           2013-01-01 open Assets:Cash         USD,CAD
 
-          2014-02-15 price GOOG 500.00 USD
+          2014-02-15 price HOOL 500.00 USD
 
           2014-03-02 * "Something"
             Expenses:Restaurant   50.02 USD
@@ -155,7 +155,7 @@ class TestLedgerConversion(test_utils.TestCase):
           account Assets:Cash
             assert commodity == "USD" | commodity == "CAD"
 
-          P 2014/02/15 00:00:00 GOOG                   500.00 USD
+          P 2014/02/15 00:00:00 HOOL                   500.00 USD
 
           2014/03/02 * Something
             Expenses:Restaurant                                                     50.02 USD
@@ -168,12 +168,12 @@ class TestLedgerConversion(test_utils.TestCase):
         """
           plugin "beancount.plugins.implicit_prices"
 
-          2014-01-01 open Assets:CA:Investment:GOOG
+          2014-01-01 open Assets:CA:Investment:HOOL
           2014-01-01 open Expenses:Commissions
           2014-01-01 open Assets:CA:Investment:Cash
 
           2014-11-02 * "Buy some stock with foreign currency funds"
-            Assets:CA:Investment:GOOG          5 GOOG {520.0 USD}
+            Assets:CA:Investment:HOOL          5 HOOL {520.0 USD}
             Expenses:Commissions            9.95 USD
             Assets:CA:Investment:Cash   -2939.46 CAD @ 0.8879 USD
         """
@@ -182,19 +182,19 @@ class TestLedgerConversion(test_utils.TestCase):
         self.assertEqual(0, result)
         self.assertLines("""
 
-          account Assets:CA:Investment:GOOG
+          account Assets:CA:Investment:HOOL
 
           account Expenses:Commissions
 
           account Assets:CA:Investment:Cash
 
           2014/11/02 * Buy some stock with foreign currency funds
-            Assets:CA:Investment:GOOG           5 GOOG {520.0 USD} @ 520.0 USD
+            Assets:CA:Investment:HOOL           5 HOOL {520.0 USD} @ 520.0 USD
             Expenses:Commissions             9.95 USD
             Assets:CA:Investment:Cash    -2939.46 CAD @ 0.8879 USD
             Equity:Rounding             -0.003466 USD
 
-          P 2014/11/02 00:00:00 GOOG    520.0 USD
+          P 2014/11/02 00:00:00 HOOL    520.0 USD
 
           P 2014/11/02 00:00:00 CAD    0.8879 USD
 

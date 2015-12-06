@@ -5,7 +5,7 @@ INPUT = $(HOME)/q/office/accounting/blais.beancount
 DOWNLOADS = $(HOME)/u/Downloads
 
 GREP="grep --include="*.py" -srnE"
-SRC=src/python/beancount
+SRC=src/python
 
 all: compile
 
@@ -21,12 +21,19 @@ clean:
 
 
 # Targets to generate and compile the C parser.
-CROOT = $(SRC)/parser
+CROOT = $(SRC)/beancount/parser
 LEX = flex
 YACC = bison --report=itemset --verbose
+FILTERYACC = sed -e 's@/\*[ \t]yacc\.c:.*\*/@@'
+TMP=/tmp
+
+xy:
+	cat $(CROOT)/grammar.c | $(FILTERYACC) | less
 
 $(CROOT)/grammar.c $(CROOT)/grammar.h: $(CROOT)/grammar.y
 	$(YACC) -o $(CROOT)/grammar.c $<
+	(cat $(CROOT)/grammar.c | $(FILTERYACC) > $(TMP)/grammar.c ; mv $(TMP)/grammar.c $(CROOT)/grammar.c )
+	(cat $(CROOT)/grammar.h | $(FILTERYACC) > $(TMP)/grammar.h ; mv $(TMP)/grammar.h $(CROOT)/grammar.h )
 
 $(CROOT)/lexer.c $(CROOT)/lexer.h: $(CROOT)/lexer.l $(CROOT)/grammar.h
 	$(LEX) --outfile=$(CROOT)/lexer.c --header-file=$(CROOT)/lexer.h $<
@@ -108,24 +115,10 @@ build/beancount_tests.pdf: build/beancount.deps
 # We are considering a separation of the basic data structure and the basic operations.
 # This provides the detail of the relationships between these sets of fils.
 build/beancount-core.pdf: build/beancount-core.deps
-	sfood -ii $(SRC)/core/*.py | sfood-graph | $(GRAPHER) -Tps | ps2pdf - $@
+	sfood -ii $(SRC)/beancount/core/*.py | sfood-graph | $(GRAPHER) -Tps | ps2pdf - $@
 
 showdeps-core: build/beancount-core.pdf
 	evince $<
-
-
-# Figure out dependencies of the code that needs to move out to form ledgerhub.
-LEDGERHUB_FILES = 				\
-	sources					\
-	imports					\
-	ops/dups.py				\
-	ops/compress.py				\
-	scripts/import_driver.py		\
-	scripts/prices.py			\
-	scripts/remove_crdb.py
-
-build/ledgerhub.pdf:
-	(cd $(SRC) && sfood -i $(LEDGERHUB_FILES)) | sfood-graph | $(GRAPHER) -Tps | ps2pdf - $@
 
 
 # Run in the debugger.
@@ -191,6 +184,9 @@ missing-tests:
 fixmes:
 	egrep -srn '\b(FIXME|TODO\()' $(SRC) || true
 
+filter-terms:
+	egrep --exclude-dir='.hg' --exclude-dir='__pycache__' -srn 'GOOGL?' $(PWD) | grep -v GOOGLE_APIS || true
+
 multi-imports:
 	egrep -srn '^(from.*)?import.*,' $(SRC) || true
 
@@ -227,8 +223,9 @@ pyflakes:
 pylint lint: pylint-pass
 
 
+
 # Check everything.
-status check: pylint pyflakes missing-tests dep-constraints multi-imports tests-quiet
+status check: pylint pyflakes filter-terms missing-tests dep-constraints multi-imports tests-quiet
 # fixmes: For later.
 
 

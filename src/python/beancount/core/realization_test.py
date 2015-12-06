@@ -9,11 +9,11 @@ import re
 import unittest
 
 from beancount.core.number import D
+from beancount.core.amount import A
 from beancount.core.realization import RealAccount
 from beancount.core import realization
 from beancount.core import data
 from beancount.core import inventory
-from beancount.core import amount
 from beancount.core import account_types
 from beancount.utils import test_utils
 from beancount import loader
@@ -59,17 +59,17 @@ class TestRealAccount(unittest.TestCase):
 
     def test_equality(self):
         ra1 = RealAccount('Assets:US:Bank:Checking')
-        ra1.balance.add_amount(amount.Amount('100', 'USD'))
+        ra1.balance.add_amount(A('100 USD'))
         ra1.txn_postings.extend(['a', 'b'])
 
         ra2 = RealAccount('Assets:US:Bank:Checking')
-        ra2.balance.add_amount(amount.Amount('100', 'USD'))
+        ra2.balance.add_amount(A('100 USD'))
         ra2.txn_postings.extend(['a', 'b'])
 
         self.assertEqual(ra1, ra2)
 
         saved_balance = ra2.balance
-        ra2.balance.add_amount(amount.Amount('0.01', 'USD'))
+        ra2.balance.add_amount(A('0.01 USD'))
         self.assertNotEqual(ra1, ra2)
         ra2.balance = saved_balance
 
@@ -317,7 +317,7 @@ class TestRealization(unittest.TestCase):
         ra0_movie = realization.get(real_account, 'Expenses:Movie')
         self.assertEqual('Expenses:Movie', ra0_movie.account)
         expected_balance = inventory.Inventory()
-        expected_balance.add_amount(amount.Amount('20', 'CAD'))
+        expected_balance.add_amount(A('20 CAD'))
         self.assertEqual(expected_balance, ra0_movie.balance)
 
 
@@ -466,16 +466,16 @@ class TestRealOther(test_utils.TestCase):
         # Check that value comparison uses our balance comparison properly.
         map1 = {'Assets:US:Bank:Checking': inventory.Inventory()}
         map2 = {'Assets:US:Bank:Checking': inventory.Inventory()}
-        map2['Assets:US:Bank:Checking'].add_amount(amount.Amount('0.01', 'USD'))
+        map2['Assets:US:Bank:Checking'].add_amount(A('0.01 USD'))
         self.assertNotEqual(map1, map2)
 
         # Now check this with accounts.
         root1 = RealAccount('')
         ra1 = realization.get_or_create(root1, 'Assets:US:Bank:Checking')
-        ra1.balance.add_amount(amount.Amount('0.01', 'USD'))
+        ra1.balance.add_amount(A('0.01 USD'))
         root2 = RealAccount('')
         ra2 = realization.get_or_create(root2, 'Assets:US:Bank:Checking')
-        ra2.balance.add_amount(amount.Amount('0.01', 'USD'))
+        ra2.balance.add_amount(A('0.01 USD'))
         self.assertEqual(ra1, ra2)
 
         root3 = copy.deepcopy(root2)
@@ -485,7 +485,7 @@ class TestRealOther(test_utils.TestCase):
 
         root3 = copy.deepcopy(root2)
         ra3 = realization.get(root3, 'Assets:US:Bank:Checking')
-        ra3.balance.add_amount(amount.Amount('0.01', 'CAD'))
+        ra3.balance.add_amount(A('0.01 CAD'))
         self.assertNotEqual(root1, root3)
 
         root3 = copy.deepcopy(root2)
@@ -703,7 +703,7 @@ class TestComputeBalance(unittest.TestCase):
           Assets:Bank:Savings   222.74 USD
           Assets:Bank:Savings   17.23 CAD
           Assets:Investing      10000 EUR
-          Assets:Investing      32 GOOG {45.203 USD}
+          Assets:Investing      32 HOOL {45.203 USD}
           Assets:Other          1000 EUR @ 1.78 GBP
           Assets:Other          1000 EUR @@ 1780 GBP
         """
@@ -711,9 +711,9 @@ class TestComputeBalance(unittest.TestCase):
         computed_balance = realization.compute_postings_balance(postings)
 
         expected_balance = inventory.Inventory()
-        expected_balance.add_amount(amount.Amount('333.97', 'USD'))
-        expected_balance.add_amount(amount.Amount('17.23', 'CAD'))
-        expected_balance.add_amount(amount.Amount('32', 'GOOG'),
-                                    amount.Amount('45.203', 'USD'))
-        expected_balance.add_amount(amount.Amount('12000', 'EUR'))
+        expected_balance.add_amount(A('333.97 USD'))
+        expected_balance.add_amount(A('17.23 CAD'))
+        expected_balance.add_amount(A('32 HOOL'),
+                                    A('45.203 USD'))
+        expected_balance.add_amount(A('12000 EUR'))
         self.assertEqual(expected_balance, computed_balance)

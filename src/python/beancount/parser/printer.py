@@ -26,8 +26,8 @@ def align_position_strings(strings):
     This is perhaps best explained with an example. The following positions will
     be aligned around the column marked with '^':
 
-              45 GOOG {504.30 USD}
-               4 GOOG {504.30 USD, 2014-11-11}
+              45 HOOL {504.30 USD}
+               4 HOOL {504.30 USD, 2014-11-11}
             9.95 USD
        -22473.32 CAD @ 1.10 USD
                  ^
@@ -117,7 +117,7 @@ class EntryPrinter:
         """Write metadata to the file object, excluding filename and line number.
 
         Args:
-          meta: An instance of AttrDict that contains the metadata for this directive.
+          meta: A dict that contains the metadata for this directive.
           oss: A file object to write to.
         """
         if meta is None:
@@ -259,8 +259,12 @@ class EntryPrinter:
         self.write_metadata(entry.meta, oss)
 
     def Open(self, entry, oss):
-        oss.write('{e.date} open {e.account:47} {currencies}'.format(
-            e=entry, currencies=','.join(entry.currencies or [])).rstrip())
+        oss.write('{e.date} open {e.account:47} {currencies} {booking}'.format(
+            e=entry,
+            currencies=','.join(entry.currencies or []),
+            booking=('"{}"'.format(entry.booking)
+                     if entry.booking is not None
+                     else '')).rstrip())
         oss.write('\n')
         self.write_metadata(entry.meta, oss)
 
@@ -279,6 +283,10 @@ class EntryPrinter:
 
     def Event(self, entry, oss):
         oss.write('{e.date} event "{e.type}" "{e.description}"\n'.format(e=entry))
+        self.write_metadata(entry.meta, oss)
+
+    def Query(self, entry, oss):
+        oss.write('{e.date} query "{e.name}" "{e.query_string}"\n'.format(e=entry))
         self.write_metadata(entry.meta, oss)
 
 
@@ -345,12 +353,12 @@ def render_source(meta):
     Emacs and align and rendered nicely.
 
     Args:
-      meta: an instance of AttrDict.
+      meta: A dict with the metadata.
     Returns:
       A string, rendered to be interpretable as a message location for Emacs or
       other editors.
     """
-    return '{}:{:8}'.format(meta.filename, '{}:'.format(meta.lineno))
+    return '{}:{:8}'.format(meta['filename'], '{}:'.format(meta['lineno']))
 
 
 def format_error(error):

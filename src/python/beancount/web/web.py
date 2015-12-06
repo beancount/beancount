@@ -334,7 +334,7 @@ def source():
         contents.write("Source hidden.")
     else:
         contents.write('<div id="source">')
-        for i, line in enumerate(app.meta.splitlines()):
+        for i, line in enumerate(app.source.splitlines()):
             lineno = i+1
             contents.write(
                 '<pre id="{}">{}  {}</pre>\n'.format(
@@ -387,7 +387,8 @@ def context_(ehash=None):
         oss.write("<pre>\n")
         for entry in matching_entries:
             oss.write(context.render_entry_context(
-                app.entries, app.options, dcontext, entry.meta.filename, entry.meta.lineno))
+                app.entries, app.options, dcontext,
+                entry.meta["filename"], entry.meta["lineno"]))
         oss.write("</pre>\n")
 
     return render_global(
@@ -781,6 +782,7 @@ def event(event=None):
         contents=render_report(misc_reports.EventsReport, app.entries,
                                ['--expr', event]))
 
+
 @viewapp.route('/event', name='event_index')
 def event_index():
     "Render the latest values of all events and an index."
@@ -972,7 +974,7 @@ def auto_reload_input_file(callback):
 
             # Save the source for later, to render.
             with open(filename, encoding='utf8') as f:
-                app.meta = f.read()
+                app.source = f.read()
 
             # Parse the beancount file.
             entries, errors, options_map = loader.load_file(filename)

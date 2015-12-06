@@ -4,8 +4,8 @@ import io
 import unittest
 
 from beancount.core.number import D
+from beancount.core.amount import A
 from beancount.core import realization
-from beancount.core import amount
 from beancount.core import position
 from beancount.core import data
 from beancount.reports import journal_text
@@ -17,8 +17,8 @@ class TestAmountColumnSizer(unittest.TestCase):
     def test_sizer(self):
         sizer = journal_text.AmountColumnSizer('balance')
         sizer.update(D('10'), 'USD')
-        sizer.update(D('200'), 'GOOG')
-        sizer.update(D('3000.01'), 'GOOGL')
+        sizer.update(D('200'), 'HOOL')
+        sizer.update(D('3000.01'), 'HOOLB')
         self.assertEqual(4, sizer.get_number_width())
         self.assertEqual('{0:>10.4f} {1:<5}', sizer.get_format(4))
         self.assertEqual('{balance:<16}', sizer.get_generic_format(4))
@@ -48,7 +48,7 @@ class TestJournalRenderPosting(unittest.TestCase):
         str_posting = journal_text.render_posting(
             data.Posting('Assets:Something',
                          position.from_string('10 VHT'),
-                         amount.from_string('45.32 USD'), None, None),
+                         A('45.32 USD'), None, None),
             self.number_format)
         self.assertEqual('  Assets:Something                 10 VHT @ 45.32 USD',
                          str_posting)
@@ -57,7 +57,7 @@ class TestJournalRenderPosting(unittest.TestCase):
         str_posting = journal_text.render_posting(
             data.Posting('Assets:Something',
                          position.from_string('10 VHT {45.32 USD}'),
-                         amount.from_string('47.00 USD'), None, None),
+                         A('47.00 USD'), None, None),
             self.number_format)
         self.assertEqual(
             '  Assets:Something                 10 VHT {45.32 USD} @ 47.00 USD',

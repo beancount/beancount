@@ -34,7 +34,7 @@ def render_entry_context(entries, options_map, dcontext, filename, lineno):
         raise SystemExit("No entry could be found before {}:{}".format(filename, lineno))
     meta = closest_entry.meta
     print("Hash:{}".format(compare.hash_entry(closest_entry)), file=oss)
-    print("Location: {}:{}".format(meta.filename, meta.lineno), file=oss)
+    print("Location: {}:{}".format(meta["filename"], meta["lineno"]), file=oss)
 
     # Get the entry's accounts and accumulate the balances of these accounts up
     # to the entry.

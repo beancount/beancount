@@ -15,6 +15,7 @@ from beancount.core.position import Position
 from beancount.core.data import Transaction
 from beancount.core.data import Posting
 from beancount.core import getters
+from beancount.core import account
 
 
 # The default tolerances value to use for legacy tolerances.
@@ -47,8 +48,8 @@ def get_posting_weight(posting):
 
       Assets:Account  5234.50 USD                             ->  5234.50 USD
       Assets:Account  3877.41 EUR @ 1.35 USD                  ->  5234.50 USD
-      Assets:Account       10 GOOG {523.45 USD}               ->  5234.50 USD
-      Assets:Account       10 GOOG {523.45 USD} @ 545.60 CAD  ->  5234.50 USD
+      Assets:Account       10 HOOL {523.45 USD}               ->  5234.50 USD
+      Assets:Account       10 HOOL {523.45 USD} @ 545.60 CAD  ->  5234.50 USD
 
     Args:
       posting: A Posting instance.
@@ -430,8 +431,9 @@ def balance_incomplete_postings(entry, options_map):
     # If we need to accumulate rounding error to accumulate the residual, add
     # suitable postings here.
     if not residual.is_empty():
-        account_rounding = options_map["account_rounding"]
-        if account_rounding:
+        rounding_subaccount = options_map["account_rounding"]
+        if rounding_subaccount:
+            account_rounding = account.join(options_map['name_equity'], rounding_subaccount)
             rounding_postings = get_residual_postings(residual, account_rounding)
             postings.extend(rounding_postings)
 

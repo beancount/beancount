@@ -14,3 +14,4 @@ lib/python/_beancount.cpython-33m.so
 .noseids
 examples/generated/*
 src/python/beancount/parser/grammar.output
+*.picklecache

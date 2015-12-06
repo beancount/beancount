@@ -1,5 +1,11 @@
 -*- mode: org -*-
 beancount: TODO
+* Event
+
+  - Should we validate that the query is legit before we even run it? I think
+    so. Compile after parsing.
+
+
 * Booking
 
   ,--------------------------------------------------------------------------------
@@ -719,6 +725,12 @@ http://furius.ca/beancount/doc/proposal-query
 
 * Standalone Tools
 
+  - Build a function and command-line tool that can injest either a table of
+    results or a CSV file and infer that an entire column is of numbers and
+    pairs of numbers and can accordingly split the column into multiple columns
+    and put the currency in the header so you can import that up to a
+    spreadsheet.
+
   - Build an 'statement' tool that will render a treeified balance sheet in two
     columns! Limit it to use the beginning of a line, and hard-code to use the
     five known categories (optionally changeable). It's okay if the tool is a
@@ -871,8 +883,8 @@ http://furius.ca/beancount/doc/proposal-inventory
 
   - PROBLEM: You need be able to provide the cost with both and addition and a
     reduction, e.g.
-       -2 GOOG {* 650 USD} ;; Should be possible even if current avg cost if 600 USD
-        2 GOOG {* 650 USD} ;; Means "add at this cost and then convert to avg
+       -2 HOOL {* 650 USD} ;; Should be possible even if current avg cost if 600 USD
+        2 HOOL {* 650 USD} ;; Means "add at this cost and then convert to avg
     cost"
 
     This is nice! The "*" now always means "after applying this operation,
@@ -1322,6 +1334,76 @@ http://furius.ca/beancount/doc/proposal-inter
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - Add get_price() function to query_env.
+
+
+  - SQL: "IS" and "IS NOT" is not implemented.
+
+
+  - Idea: The "HELP" command of the SQL shell should be made analogous to the
+    schema inspection facilities of other SQL shells instead of being dedicated
+    HELP commands.
+
+
+  - Try this, quickly: Create a function that can be used to pull metadata
+    fields from Commodity directives, to be used in a GROUP BY statement. That's
+    the quick-and-dirty way to get started with portfolio aggregations, and I
+    think it extends.
+
+
+
+  - An important option exists around the behavior of balance checks: Should
+    balance checks bring their balance to the balance amount? In other words,
+    should a balance check imply an automatic, on-demand Pad behavior on
+    failure? This has an impact on following balance checks further in time. The
+    current behavior is not to pad a failure, so if there are multiple balance
+    checks, a single mistake before them would generate a number of errors. An
+    equally valid behavior would be to trigger only a single error, isolating
+    the periods between balance checks. Both semantics have advantages. You
+    should provide an option to ustomize this behavior, the user should be able
+    to choose. option "pad_failing_balances".
+
+
+  - Reconcile all usage of account regexps to beancount.core.account.ACCOUNT_RE
+    throughout the code  (grep --include='*.py'  -srn A-Z    ~/p/beancount/src/python/beancount).
+
+
+  - What happens if you specify the same plugin twice, with different
+    configuration strings?
+
+
+  - Provide a way to save and easily render a query, from the input file. e.g.
+
+      2015-09-23 query "cash" 'SELECT CONVERT(SUM(position), "USD") WHERE account ~ "Cash"'"
+
+    Typing "cash" in the shell should run this query.
+
+    Also, there should be an option to bean-query (or less likely, a dedicated
+    command) to generate all the queries defined in an input file.
+
+
+  - web: Don't render the transaction detail anymore; instead, the full context
+    should come up in a tooltip that is computed on-demand. Rendering the basic
+    table should not have to render all the detail upfront, that is always
+    overkill.
+
+  - Highlight (e.g., in the color red) the postings to accounts that are in
+    contra value, e.g. a positive Income, or a negative Expenses posting.
+
+
+
+  - query: Provide a column for the "other accounts" of a selected posting's
+    transactions, so you can select that.
+
+
+
+  - Great idea: Make the printer able to (1) output "incomplete" entries and (2)
+    print out the entries in the order of (filename, line-no) in which they were
+    parsed, to produce a file that is as close as possible to output. (bw3443
+    asked for this in order to make modifications to his input and push that
+    back out to a file, this could be useful.)
+
+
   - AWESOME IDEA: Write a script that, given an input file with various sets of
     transactions, will find sections with most similar transactions in a
     destination file (the main file) and automatically insert those transactions
@@ -1366,6 +1448,10 @@ http://furius.ca/beancount/doc/proposal-inter
     fields and making sure tools are available to perform the same aggregations
     using bean-query and views using bean-web.
 
+
+  - Make the Pad directive accept #tags and propagate those to the generated
+    transactions:
+    https://bitbucket.org/blais/beancount/issues/70/add-tag-to-the-pad-directive-and-propagate
 
 
   - bean-doctor context should accept a LINK, not just a line number from
@@ -2099,7 +2185,7 @@ http://furius.ca/beancount/doc/proposal-inter
       with multiple matching lots of the same cost with just differing dates, which
       would only be required if the posting constrains it to. One can imagine
       relaxing the matching rules between a posting and inventory further to allow
-      one to just specify "-40 GOOG" above, without a cost, and if unambiguous, to
+      one to just specify "-40 HOOL" above, without a cost, and if unambiguous, to
       allow it to just select the only lot that is available."
 
     Idea: Generalize lot-date to just a "lot" string. Doesn't have to be a date
@@ -2112,14 +2198,14 @@ http://furius.ca/beancount/doc/proposal-inter
 
        (augment)
        2014-06-17 *
-          Assets:US:Investing:GOOG    10 GOOG {523.45 USD / i-want-more}
+          Assets:US:Investing:HOOL    10 HOOL {523.45 USD / i-want-more}
 
        (reducing) All of the following should be allowed:
-          Assets:US:Investing:GOOG    -7 GOOG ; possibly ambiguous
-          Assets:US:Investing:GOOG    -7 GOOG [] ; possibly ambiguous
-          Assets:US:Investing:GOOG    -7 GOOG [523.45 USD]
-          Assets:US:Investing:GOOG    -7 GOOG [2014-06-17]
-          Assets:US:Investing:GOOG    -7 GOOG [i-want-more]
+          Assets:US:Investing:HOOL    -7 HOOL ; possibly ambiguous
+          Assets:US:Investing:HOOL    -7 HOOL [] ; possibly ambiguous
+          Assets:US:Investing:HOOL    -7 HOOL [523.45 USD]
+          Assets:US:Investing:HOOL    -7 HOOL [2014-06-17]
+          Assets:US:Investing:HOOL    -7 HOOL [i-want-more]
 
     By enforcing a distinct syntax, the user is telling us that this leg is
     expected to reduce an existing position. This information is useful, in
@@ -2277,35 +2363,10 @@ http://furius.ca/beancount/doc/proposal-inter
     the lot. This would enable the following:
 
         2013-07-22 * "Bought some US investment in a CAD account"
-          Assets:Investment:GOOG           50 GOOG {700 USD} @ 1.01 USD   ;; 35350 CAD
+          Assets:Investment:HOOL           50 HOOL {700 USD} @ 1.01 USD   ;; 35350 CAD
           Assets:Investment:Cash          -35359.95 CAD
           Expenses:Commissions                 9.95 CAD
 
-  - (IDEA) In order to create suitable stock split entries that would look like
-    this:
-
-      2013-04-01 * "split 4:1"
-        Assets:CA:ITrade:AAPL             -40 AAPL {{5483.09 USD}}
-        Assets:CA:ITrade:AAPL             160 AAPL {{5483.09 USD}}
-
-    You could easily add support for a directive that looks like this:
-
-      2013-04-01 split Assets:CA:ITrade:AAPL  4:1  AAPL
-
-    This would allow the user to do some processing specific to stock splits by
-    processing the explicit stock split entries.
-
-  - Include this in the user examples, + stock splits:
-
-       2013-04-01 * "name change"
-
-         Assets:CA:ITrade:AAPL             -40 AAPL {{5483.09 USD}}
-         Assets:CA:ITrade:NEWAAPL             40 NEWAAPL {{5483.09 USD}}
-
-       2013-04-01 * "spinoff"
-         Assets:CA:ITrade:KRFT             -100 KRFT {{20000 USD}}
-         Assets:CA:ITrade:KRFT              100 KRFT {{17000 USD}}
-         Assets:CA:ITrade:FOO                20 FOO  {{ 3000 USD}}
 
   - Remove the parsing of "CHECK" at some point, that was just there for
     compatibility.
@@ -2388,11 +2449,11 @@ http://furius.ca/beancount/doc/proposal-inter
   - Create a new directive for balance that checks for the complete balance.
     Ideas for syntax:
 
-      2014-06-20 balance      Assets:Some:Account    10 GOOG, 640.40 USD   FULL
-      2014-06-20 balance      Assets:Some:Account    [10 GOOG, 640.40 USD]
-      2014-06-20 balance      Assets:Some:Account    <10 GOOG, 640.40 USD>
-      2014-06-20 balance*     Assets:Some:Account    10 GOOG, 640.40 USD
-      2014-06-20 full_balance Assets:Some:Account    10 GOOG, 640.40 USD
+      2014-06-20 balance      Assets:Some:Account    10 HOOL, 640.40 USD   FULL
+      2014-06-20 balance      Assets:Some:Account    [10 HOOL, 640.40 USD]
+      2014-06-20 balance      Assets:Some:Account    <10 HOOL, 640.40 USD>
+      2014-06-20 balance*     Assets:Some:Account    10 HOOL, 640.40 USD
+      2014-06-20 full_balance Assets:Some:Account    10 HOOL, 640.40 USD
 
     Maybe we should define a general syntax for input'ing an Inventory object,
     that could be read at parsing time.
@@ -2606,11 +2667,11 @@ http://furius.ca/beancount/doc/proposal-inter
     the cost, so that technically you could check that there are a specific number
 
   2013-03-01 * buy
-    Assets:Checking        10 GOOG # 700 USD
+    Assets:Checking        10 HOOL # 700 USD
     Assets:Investment     -7000 USD
 
   2013-03-15 * sell
-    Assets:Checking       -10 GOOG # 700 USD @ 800 USD
+    Assets:Checking       -10 HOOL # 700 USD @ 800 USD
     Income:RealizedPnL    -1000 USD
     Assets:Investment      8000 USD
 
@@ -3148,11 +3209,11 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 
   - Consider making the lot syntax like this:
 
-       -4 {GOOG @ 790.83 USD}
+       -4 {HOOL @ 790.83 USD}
 
     instead of:
 
-       -4 GOOG {790.83 USD}
+       -4 HOOL {790.83 USD}
 
     It's actually a lot more accurate to what's going on...
 
@@ -3370,6 +3431,57 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 
 
 * Plugins
+** Stock Splits
+
+  - Find a way to automatically create multiple currencies to account for stock
+    splits. The user should not have to do this themselves:
+
+      "One choice you have is whether you want to keep the same symbol pre and post
+      split. If you keep the same symbol the price database will show a drop in
+      price over time. If not, choose a new symbol for the post split period. So far
+      in my own file I use the same symbol but I think eventually I'd like to find a
+      way to differentiate them automatically and have a multiplier in the price
+      database, because doing it manually is not nice. In any case both methods
+      work."
+
+    Perhaps a directive could be created to declare them that would
+    automatically insert converting transactions, but that makes it difficult to
+    deal with weird cases, like oddly unequal splits (e.g. Google A/C), or cases
+    with spinoffs, as below. Perhaps the splitting transaction should be
+    inserted automatically, but that the split directive would just create a new
+    currency name, internally.
+
+    A currency would then be referred to by a pair of (name, date), and that
+    would resolve to a internal currency name.
+
+
+  - (IDEA) In order to create suitable stock split entries that would look like
+    this:
+
+      2013-04-01 * "split 4:1"
+        Assets:CA:ITrade:AAPL             -40 AAPL {{5483.09 USD}}
+        Assets:CA:ITrade:AAPL             160 AAPL {{5483.09 USD}}
+
+    You could easily add support for a directive that looks like this:
+
+      2013-04-01 split Assets:CA:ITrade:AAPL  4:1  AAPL
+
+    This would allow the user to do some processing specific to stock splits by
+    processing the explicit stock split entries.
+
+
+  - Include this in the user examples, + stock splits:
+
+       2013-04-01 * "name change"
+
+         Assets:CA:ITrade:AAPL             -40 AAPL {{5483.09 USD}}
+         Assets:CA:ITrade:NEWAAPL             40 NEWAAPL {{5483.09 USD}}
+
+       2013-04-01 * "spinoff"
+         Assets:CA:ITrade:KRFT             -100 KRFT {{20000 USD}}
+         Assets:CA:ITrade:KRFT              100 KRFT {{17000 USD}}
+         Assets:CA:ITrade:FOO                20 FOO  {{ 3000 USD}}
+
 ** Wash Sales
 
   - (script) Write a script to check whether an account's trades are subject to
@@ -3940,6 +4052,34 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
     it is. I'm sure we can make it scrape in parallel using multiprocessing and
     a work queue (this should be a fun little project and would make baking to
     an archive a lot faster in many cases).
+
+
+* Import
+** GnuCash
+
+  - Write a converter of GnuCash XML files into Beancount.
+
+  - Contact xentac@ for an example GnuCash input file with 2-3 years of data.
+    Willing to share (see email).
+
+
+* Price Script
+
+  - Implement delayed rate fetcher from OANDA for rates.
+
+  - Infer the rendering precision for inverted currencies from only the list of
+    previous prices. Run a DisplayContext on those and do similar
+    quantization/rounding automatically. This would make a lot of sense,
+    especially when inversion generates a very large number of digits.
+
+  - Write a script that will iterate and fetch all the missing dates on Friday,
+    or last DOM for the required portfolio during the entire duration, or allow
+    providing a frequency string (does rrule have one?) and let bean-price do
+    this natively. This will work the API.
+
+  - You have to deal with the case whereby two currencies provide incompatible
+    conversions of each other. This would potentially result in colliding
+    entries in the price database. Not sure how to deal with those yet.
 
 
 * Export

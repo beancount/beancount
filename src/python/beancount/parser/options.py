@@ -235,7 +235,7 @@ PUBLIC_OPTION_GROUPS = [
       This is unset and this feature is disabled by default; setting this value to
       an account name will automatically enable the addition of postings on all
       transactions that have a residual amount.
-    """, [Opt("account_rounding", None, "Equity:Rounding")]),
+    """, [Opt("account_rounding", None, "Rounding")]),
 
     OptGroup("""
       The imaginary currency used to convert all units for conversions at a
@@ -346,6 +346,10 @@ PUBLIC_OPTION_GROUPS = [
       their associated unit strings. This allows you to import the numbers in a
       spreadsheet (e.g, "101.00 USD" does not get parsed by a spreadsheet
       import, but "101.00" does).
+
+      If you need to enter a list of operating currencies, you may input this
+      option multiple times, that is, you repeat the entire directive once for
+      each desired operating currency.
     """, [Opt("operating_currency", [], "USD")]),
 
     OptGroup("""
@@ -403,6 +407,16 @@ PUBLIC_OPTION_GROUPS = [
       WARNING: This feature may go away at any time. It is an exploration to see
       if it is truly useful. We may be able to do without.
     """, [Opt("experiment_explicit_tolerances", False, True)]),
+
+    OptGroup("""
+      Enable an EXPERIMENTAL feature that supports a new "name query" directive,
+      whose purpsoe is to define useful queries for the context of the
+      particular given Beancount input file. We can play with this feature for a
+      while to figure out if it is sufficiently powerful and generic to include
+      unconditionally.
+
+      WARNING: This feature may go away at any time.
+    """, [Opt("experiment_query_directive", False, True)]),
 
     ]
 

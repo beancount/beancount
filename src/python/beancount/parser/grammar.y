@@ -171,6 +171,7 @@ const char* getTokenName(int token);
 %token PRICE               /* 'price' keyword */
 %token NOTE                /* 'note' keyword */
 %token DOCUMENT            /* 'document' keyword */
+%token QUERY               /* 'query' keyword */
 %token PUSHTAG             /* 'pushtag' keyword */
 %token POPTAG              /* 'poptag' keyword */
 %token OPTION              /* 'option' keyword */
@@ -214,6 +215,7 @@ const char* getTokenName(int token);
 %type <pyobj> lot_spec_total_legacy
 %type <pyobj> price
 %type <pyobj> event
+%type <pyobj> query
 %type <pyobj> note
 %type <pyobj> document
 %type <pyobj> entry
@@ -241,7 +243,7 @@ const char* getTokenName(int token);
 %start file
 
 /* We have some number of expected shift/reduce conflicts at 'eol'. */
-%expect 12
+%expect 13
 
 
 /*--------------------------------------------------------------------------------*/
@@ -665,6 +667,12 @@ event : DATE EVENT STRING STRING eol key_value_list
                  $$, "event", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
       }
 
+query : DATE QUERY STRING STRING eol key_value_list
+         {
+             BUILDY(DECREF4($1, $3, $4, $6),
+                    $$, "query", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
+         }
+
 note : DATE NOTE ACCOUNT STRING eol key_value_list
       {
           BUILDY(DECREF4($1, $3, $4, $6),
@@ -684,11 +692,12 @@ entry : transaction
       | open
       | close
       | pad
-      | event
-      | note
       | document
+      | note
+      | event
       | price
       | commodity
+      | query
       {
           $$ = $1;
       }
@@ -801,6 +810,7 @@ const char* getTokenName(int token)
         case CLOSE     : return "CLOSE";
         case PAD       : return "PAD";
         case EVENT     : return "EVENT";
+        case QUERY     : return "QUERY";
         case PRICE     : return "PRICE";
         case NOTE      : return "NOTE";
         case DOCUMENT  : return "DOCUMENT";

@@ -217,6 +217,7 @@ class DecimalRenderer(ColumnRenderer):
     def width(self):
         return self.total_width
 
+    # FIXME: 'key' is being ignored here. It shouldn't. This is likely problematic.
     def format(self, number, key=None):
         if self.total_width == 0:
             return ''

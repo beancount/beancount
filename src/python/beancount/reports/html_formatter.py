@@ -126,7 +126,7 @@ class HTMLFormatter:
         """Render a reference to the source file.
 
         Args:
-          meta: An AttrDict object.
+          meta: A metadata dict object.
         Returns:
           A string of HTML to be spliced inside an HTML template.
         """

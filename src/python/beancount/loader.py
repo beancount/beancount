@@ -6,10 +6,13 @@ import functools
 import textwrap
 import importlib
 import collections
+import logging
 import io
 import itertools
 import os
+import pickle
 import warnings
+import time
 from os import path
 
 from beancount.utils import misc_utils
@@ -41,6 +44,11 @@ DEPRECATED_MODULES = {
     }
 
 
+# Filename pattern for the pickle-cache.
+PICKLE_CACHE_FILENAME = '.{filename}.picklecache'
+PICKLE_CACHE_THRESHOLD = 1.0  # Secs.
+
+
 def load_file(filename, log_timings=None, log_errors=None, extra_validations=None,
               encoding=None):
     """Open a Beancount input file, parse it, run transformations and validate.
@@ -60,7 +68,6 @@ def load_file(filename, log_timings=None, log_errors=None, extra_validations=Non
         errors: A list of error objects generated while parsing and validating
           the file.
         options_map: A dict of the options parsed from the file.
-
     """
     if not path.isabs(filename):
         filename = path.normpath(path.join(os.getcwd(), filename))
@@ -72,8 +79,70 @@ def load_file(filename, log_timings=None, log_errors=None, extra_validations=Non
 load = load_file
 
 
+def pickle_cache_function(pattern, time_threshold, function):
+    """Decorate a function to make it loads its result from a pickle cache.
+
+    This only considers the first argument as a variant and assumes it's a
+    filename. It's essentially a special case for an on-disk memoizer. If
+    the file is more recent than the cache, the function is recomputed.
+
+    Args:
+      pattern: A string, the filename pattern for the pickled cache file.
+        A {filename} in it gets replaced by the input filename.
+      time_threshold: A float, the number of seconds below which we don't bother
+        caching.
+      function: A function object to decorate for caching.
+    Returns:
+      A decorated function which will pull its result from a cache file if
+      it is available.
+
+    """
+    @functools.wraps(function)
+    def wrapped(filename, *args, **kw):
+        abs_filename = path.abspath(filename)
+        cache_filename = path.join(
+            path.dirname(abs_filename),
+            pattern.format(filename=path.basename(filename)))
+
+        # Attempt to read the result from the cache.
+        exists = path.exists(cache_filename)
+        if exists and path.getmtime(filename) < path.getmtime(cache_filename):
+            with open(cache_filename, 'rb') as file:
+                result = pickle.load(file)
+        else:
+            # We failed; recompute the value.
+            if exists:
+                os.remove(cache_filename)
+
+            t1 = time.time()
+            result = function(filename, *args, **kw)
+            t2 = time.time()
+
+            # Overwrite the cache file if the time it takes to compute it
+            # justifies it.
+            if t2 - t1 > time_threshold:
+                try:
+                    with open(cache_filename, 'wb') as file:
+                        pickle.dump(result, file)
+                except Exception:
+                    logging.warning("Could not write to picklecache file {}".format(
+                        cache_filename))
+
+        return result
+    return wrapped
+
+
+# Unless an environment variable disables it, use the pickle load cache
+# automatically.
+if os.getenv('BEANCOUNT_DISABLE_LOAD_CACHE') is None:
+    load_file = pickle_cache_function(PICKLE_CACHE_FILENAME,
+                                      PICKLE_CACHE_THRESHOLD,
+                                      load_file)
+
+
 def load_string(string, log_timings=None, log_errors=None, extra_validations=None,
                 dedent=False, encoding=None):
+
     """Open a Beancount input string, parse it, run transformations and validate.
 
     Args:
@@ -244,6 +313,9 @@ def _load(sources, log_timings, log_errors, extra_validations, encoding):
     # Parse all the files recursively.
     entries, parse_errors, options_map = _parse_recursive(sources, log_timings, encoding)
 
+    # Ensure that the entries are sorted before running any processes on them.
+    entries.sort(key=data.entry_sortkey)
+
     # Run interpolation on incomplete entries.
     entries, balance_errors = booking.book(entries, options_map)
     parse_errors.extend(balance_errors)
@@ -288,9 +360,6 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
     """
     # A list of errors to extend (make a copy to avoid modifying the input).
     errors = list(parse_errors)
-
-    # Ensure that the entries are sorted before running the plugins.
-    entries.sort(key=data.entry_sortkey)
 
     # Process the plugins.
     if options_map['plugin_processing_mode'] == 'raw':
@@ -386,6 +455,10 @@ def load_doc(expect_errors=False):
                 elif expect_errors is True and not errors:
                     self.fail("Expected errors, none found:")
 
+            # Note: Even if we expected no errors, we call this function with an
+            # empty 'errors' list. This is so that the interface does not change
+            # based on the arguments to the decorator, which would be somewhat
+            # ugly and which would require explanation.
             return fun(self, entries, errors, options_map)
 
         wrapper.__input__ = wrapper.__doc__

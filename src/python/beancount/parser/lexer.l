@@ -214,6 +214,7 @@ close		{ return CLOSE; }
 commodity	{ return COMMODITY; }
 pad		{ return PAD; }
 event		{ return EVENT; }
+query		{ return QUERY; }
 price		{ return PRICE; }
 note		{ return NOTE; }
 document	{ return DOCUMENT; }
@@ -309,7 +310,7 @@ FALSE		{
 
     /* All other characters. */
     [^\\\"]+        {
-        if ( yyleng > strbuf_end - strbuf_ptr ) {
+        if ( yyleng > (yy_size_t)(strbuf_end - strbuf_ptr) ) {
             strbuf_realloc(yyleng);
         }
         size_t i;
@@ -484,7 +485,7 @@ int yy_skip_line()
 int strtonl(const char* buf, size_t nchars)
 {
     int result = 0;
-    int i;
+    size_t i;
     for ( i = 0; i < nchars; ++i ) {
         result *= 10;
         result += (buf[i] - '0');

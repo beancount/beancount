@@ -125,6 +125,17 @@ class Weekday(query_compile.EvalFunction):
 
 # Operations on accounts.
 
+class Root(query_compile.EvalFunction):
+    "Get the root name(s) of the account."
+    __intypes__ = [str, int]
+
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        return account.root(args[1], args[0])
+
 class Parent(query_compile.EvalFunction):
     "Get the parent name of the account."
     __intypes__ = [str]
@@ -135,6 +146,30 @@ class Parent(query_compile.EvalFunction):
     def __call__(self, context):
         args = self.eval_args(context)
         return account.parent(args[0])
+
+class Leaf(query_compile.EvalFunction):
+    "Get the name of the leaf subaccount."
+    __intypes__ = [str]
+
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        return account.leaf(args[0])
+
+class Grep(query_compile.EvalFunction):
+    "Match a group against a string and return only the matched portion."
+    __intypes__ = [str, str]
+
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        match = re.search(args[0], args[1])
+        if match:
+            return match.group(0)
 
 class OpenDate(query_compile.EvalFunction):
     "Get the date of the open directive of the account."
@@ -160,6 +195,18 @@ class CloseDate(query_compile.EvalFunction):
         close_entry, close_entry = context.open_close_map[args[0]]
         return close_entry.date if close_entry else None
 
+class OpenMeta(query_compile.EvalFunction):
+    "Get the metadata dict of the open directive of the account."
+    __intypes__ = [str]
+
+    def __init__(self, operands):
+        super().__init__(operands, dict)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        open_entry, _ = context.open_close_map[args[0]]
+        return open_entry.meta
+
 class AccountSortKey(query_compile.EvalFunction):
     "Get a string to sort accounts in order taking into account the types."
     __intypes__ = [str]
@@ -171,6 +218,18 @@ class AccountSortKey(query_compile.EvalFunction):
         args = self.eval_args(context)
         index, name = account_types.get_account_sort_key(context.account_types, args[0])
         return '{}-{}'.format(index, name)
+
+class CommodityMeta(query_compile.EvalFunction):
+    "Get the metadata dict of the commodity directive of the currency."
+    __intypes__ = [str]
+
+    def __init__(self, operands):
+        super().__init__(operands, dict)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        commodity_entry = context.commodity_map[args[0]]
+        return commodity_entry.meta
 
 
 # Operation on inventories, positions and amounts.
@@ -241,9 +300,12 @@ class ConvertAmount(query_compile.EvalFunction):
 
     def __call__(self, context):
         args = self.eval_args(context)
-        return (prices.convert_amount(context.price_map, args[1], args[0])
-                if args[1] is None else
-                None)
+        amount_, currency = args
+        converted = prices.convert_amount(context.price_map, currency, amount_)
+        if converted is None:
+            logging.warn('Could not convert Amount "{}" to USD'.format(amount_))
+            converted = amount_
+        return converted
 
 class ConvertPosition(query_compile.EvalFunction):
     "Coerce an amount to a particular currency."
@@ -255,8 +317,12 @@ class ConvertPosition(query_compile.EvalFunction):
     def __call__(self, context):
         args = self.eval_args(context)
         position_, currency = args
-        return prices.convert_amount(context.price_map,
-                                     currency, position_.get_cost())
+        amount_ = position_.get_cost()
+        converted = prices.convert_amount(context.price_map, currency, amount_)
+        if converted is None:
+            logging.warn('Could not convert Position "{}" to USD'.format(amount_))
+            converted = amount_
+        return converted
 
 class ConvertInventory(query_compile.EvalFunction):
     "Coerce an inventory to a particular currency."
@@ -270,11 +336,13 @@ class ConvertInventory(query_compile.EvalFunction):
         inventory_, currency = args
         converted_inventory = inventory.Inventory()
         for position_ in inventory_:
+            amount_ = position_.get_cost()
             converted_amount = prices.convert_amount(context.price_map,
-                                                     currency, position_.get_cost())
+                                                     currency, amount_)
             if converted_amount is None:
-                # Note: Not sure if I should issue a warning here.
-                logging.warn("Skipping position: {}".format(position_))
+                logging.warn('Could not convert Inventory position "{}" to USD'.format(
+                    amount_))
+                converted_inventory.add_amount(amount_)
             else:
                 converted_inventory.add_amount(converted_amount)
         return converted_inventory
@@ -302,14 +370,35 @@ class Currency(query_compile.EvalFunction):
         args = self.eval_args(context)
         return args[0].currency
 
+class GetItemStr(query_compile.EvalFunction):
+    "Get the string value of a dict. The value is always converted to a string."
+    __intypes__ = [dict, str]
+
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        value = args[0].get(args[1])
+        if value is None:
+            value = ''
+        elif not isinstance(value, str):
+            value = str(value)
+        return value
+
 
 SIMPLE_FUNCTIONS = {
     'str'                                 : Str,
     'length'                              : Length,
     'maxwidth'                            : MaxWidth,
+    'root'                                : Root,
     'parent'                              : Parent,
+    'leaf'                                : Leaf,
+    'grep'                                : Grep,
     'open_date'                           : OpenDate,
     'close_date'                          : CloseDate,
+    'open_meta'                           : OpenMeta,
+    'commodity_meta'                      : CommodityMeta,
     'account_sortkey'                     : AccountSortKey,
     ('units', position.Position)          : UnitsPosition,
     ('units', inventory.Inventory)        : UnitsInventory,
@@ -326,6 +415,7 @@ SIMPLE_FUNCTIONS = {
     ('convert', inventory.Inventory, str) : ConvertInventory,
     'number'                              : Number,
     'currency'                            : Currency,
+    'getitem'                             : GetItemStr,
     }
 
 
@@ -533,25 +623,25 @@ class TypeEntryColumn(query_compile.EvalColumn):
 
 class FilenameEntryColumn(query_compile.EvalColumn):
     "The filename where the directive was parsed from or created."
-    __equivalent__ = 'entry.meta.filename'
+    __equivalent__ = 'entry.meta["filename"]'
     __intypes__ = [data.Transaction]
 
     def __init__(self):
         super().__init__(str)
 
     def __call__(self, entry):
-        return entry.meta.filename
+        return entry.meta["filename"]
 
 class LineNoEntryColumn(query_compile.EvalColumn):
     "The line number from the file the directive was parsed from."
-    __equivalent__ = 'entry.meta.lineno'
+    __equivalent__ = 'entry.meta["lineno"]'
     __intypes__ = [data.Transaction]
 
     def __init__(self):
         super().__init__(int)
 
     def __call__(self, entry):
-        return entry.meta.lineno
+        return entry.meta["lineno"]
 
 class DateEntryColumn(query_compile.EvalColumn):
     "The date of the directive."
@@ -636,6 +726,21 @@ class NarrationEntryColumn(query_compile.EvalColumn):
                 if isinstance(entry, Transaction)
                 else None)
 
+# This is convenient, because many times the payee is empty and using a
+# combination produces more compact listings.
+class DescriptionEntryColumn(query_compile.EvalColumn):
+    "A combination of the payee + narration of the transaction, if present."
+    __intypes__ = [data.Transaction]
+
+    def __init__(self):
+        super().__init__(str)
+
+    def __call__(self, entry):
+        return (' | '.join(filter(None, [entry.payee, entry.narration]))
+                if isinstance(entry, Transaction)
+                else None)
+
+
 # A globally available empty set to fill in for None's.
 EMPTY_SET = frozenset()
 
@@ -693,19 +798,20 @@ class FilterEntriesEnvironment(query_compile.CompilationEnvironment):
     """
     context_name = 'FROM clause'
     columns = {
-        'id'        : IdEntryColumn,
-        'type'      : TypeEntryColumn,
-        'filename'  : FilenameEntryColumn,
-        'lineno'    : LineNoEntryColumn,
-        'date'      : DateEntryColumn,
-        'year'      : YearEntryColumn,
-        'month'     : MonthEntryColumn,
-        'day'       : DayEntryColumn,
-        'flag'      : FlagEntryColumn,
-        'payee'     : PayeeEntryColumn,
-        'narration' : NarrationEntryColumn,
-        'tags'      : TagsEntryColumn,
-        'links'     : LinksEntryColumn,
+        'id'          : IdEntryColumn,
+        'type'        : TypeEntryColumn,
+        'filename'    : FilenameEntryColumn,
+        'lineno'      : LineNoEntryColumn,
+        'date'        : DateEntryColumn,
+        'year'        : YearEntryColumn,
+        'month'       : MonthEntryColumn,
+        'day'         : DayEntryColumn,
+        'flag'        : FlagEntryColumn,
+        'payee'       : PayeeEntryColumn,
+        'narration'   : NarrationEntryColumn,
+        'description' : DescriptionEntryColumn,
+        'tags'        : TagsEntryColumn,
+        'links'       : LinksEntryColumn,
         }
     functions = copy.copy(SIMPLE_FUNCTIONS)
     functions.update(ENTRY_FUNCTIONS)
@@ -737,25 +843,25 @@ class TypeColumn(query_compile.EvalColumn):
 
 class FilenameColumn(query_compile.EvalColumn):
     "The filename where the posting was parsed from or created."
-    __equivalent__ = 'entry.meta.filename'
+    __equivalent__ = 'entry.meta["filename"]'
     __intypes__ = [data.Posting]
 
     def __init__(self):
         super().__init__(str)
 
     def __call__(self, context):
-        return context.entry.meta.filename
+        return context.entry.meta["filename"]
 
 class LineNoColumn(query_compile.EvalColumn):
     "The line number from the file the posting was parsed from."
-    __equivalent__ = 'entry.meta.lineno'
+    __equivalent__ = 'entry.meta["lineno"]'
     __intypes__ = [data.Posting]
 
     def __init__(self):
         super().__init__(int)
 
     def __call__(self, context):
-        return context.entry.meta.lineno
+        return context.entry.meta["lineno"]
 
 class FileLocationColumn(query_compile.EvalColumn):
     """The filename:lineno where the posting was parsed from or created.
@@ -770,8 +876,8 @@ class FileLocationColumn(query_compile.EvalColumn):
         super().__init__(str)
 
     def __call__(self, context):
-        return '{}:{:d}:'.format(context.posting.meta.filename,
-                                 context.posting.meta.lineno)
+        return '{}:{:d}:'.format(context.posting.meta["filename"],
+                                 context.posting.meta["lineno"])
 
 class DateColumn(query_compile.EvalColumn):
     "The date of the parent transaction for this posting."
@@ -849,6 +955,21 @@ class NarrationColumn(query_compile.EvalColumn):
 
     def __call__(self, context):
         return context.entry.narration
+
+# This is convenient, because many times the payee is empty and using a
+# combination produces more compact listings.
+class DescriptionColumn(query_compile.EvalColumn):
+    "A combination of the payee + narration for the transaction of this posting."
+    __intypes__ = [data.Posting]
+
+    def __init__(self):
+        super().__init__(str)
+
+    def __call__(self, context):
+        entry = context.entry
+        return (' | '.join(filter(None, [entry.payee, entry.narration]))
+                if isinstance(entry, Transaction)
+                else None)
 
 class TagsColumn(query_compile.EvalColumn):
     "The set of tags of the parent transaction for this posting."
@@ -970,7 +1091,7 @@ class WeightColumn(query_compile.EvalColumn):
         super().__init__(amount.Amount)
 
     def __call__(self, context):
-        return interpolate.get_balance_amount(context)
+        return interpolate.get_posting_weight(context.posting)
 
 class BalanceColumn(query_compile.EvalColumn):
     "The balance for the posting. These can be summed into inventories."
@@ -1000,6 +1121,7 @@ class FilterPostingsEnvironment(query_compile.CompilationEnvironment):
         'flag'          : FlagColumn,
         'payee'         : PayeeColumn,
         'narration'     : NarrationColumn,
+        'description'   : DescriptionColumn,
         'tags'          : TagsColumn,
         'links'         : LinksColumn,
         'posting_flag'  : PostingFlagColumn,

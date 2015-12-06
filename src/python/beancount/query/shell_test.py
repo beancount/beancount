@@ -1,6 +1,7 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import re
+import sys
 import unittest
 from os import path
 
@@ -26,8 +27,11 @@ class TestUseCases(unittest.TestCase):
 
     def runshell(function):
         def test_function(self):
+            def loadfun():
+                return entries, errors, options_map
             with test_utils.capture('stdout') as stdout:
-                shell_obj = shell.BQLShell(False, entries, errors, options_map)
+                shell_obj = shell.BQLShell(False, loadfun, sys.stdout)
+                shell_obj.on_Reload()
                 shell_obj.onecmd(function.__doc__)
             return function(self, stdout.getvalue())
         test_function.__name__ = function.__name__
@@ -46,9 +50,9 @@ class TestUseCases(unittest.TestCase):
         SELECT DISTINCT account, open_date(account)
         ORDER BY account_sortkey(account);
         """
-        self.assertTrue(re.search('Assets:US:BofA:Checking *2013-01-01', output))
-        self.assertTrue(re.search('Equity:Opening-Balances *1980-05-12', output))
-        self.assertTrue(re.search('Expenses:Financial:Commissions *1980-05-12', output))
+        self.assertRegexpMatches(output, 'Assets:US:BofA:Checking *2013-01-01')
+        self.assertRegexpMatches(output, 'Equity:Opening-Balances *1980-05-12')
+        self.assertRegexpMatches(output, 'Expenses:Financial:Commissions *1980-05-12')
 
     @runshell
     def test_commodities(self, output):
@@ -84,14 +88,14 @@ class TestUseCases(unittest.TestCase):
         """
         BALANCES AT cost;
         """
-        self.assertTrue(re.search('Liabilities:AccountsPayable *-2094.10 USD', output))
+        self.assertRegexpMatches(output, r'Liabilities:US:Chase:Slate *-\d+\.\d+ USD')
 
     @runshell
     def test_balances_with_where(self, output):
         """
         JOURNAL 'Vanguard:Cash';
         """
-        self.assertTrue(re.search('Hoogle Payroll', output))
+        self.assertRegexpMatches(output, 'Hoogle Payroll')
 
     @runshell
     def test_balance_sheet(self, output):
@@ -99,7 +103,7 @@ class TestUseCases(unittest.TestCase):
         BALANCES AT cost
         FROM OPEN ON 2014-01-01 CLOSE ON 2015-01-01 CLEAR;
         """
-        self.assertTrue(re.search('Assets:US:ETrade:Cash *834.92 USD', output))
+        self.assertRegexpMatches(output, 'Assets:US:ETrade:Cash * \d+\.\d+ USD')
 
     @runshell
     def test_income_statement(self, output):
@@ -110,8 +114,8 @@ class TestUseCases(unittest.TestCase):
         GROUP BY account, account_sortkey(account)
         ORDER BY account_sortkey(account);
         """
-        self.assertTrue(re.search(
-            'Expenses:Taxes:Y2014:US:Federal:PreTax401k *17500.00 IRAUSD', output))
+        self.assertRegexpMatches(
+            output, 'Expenses:Taxes:Y2014:US:Federal:PreTax401k *17500.00 IRAUSD')
 
     @runshell
     def test_journal(self, output):
@@ -119,10 +123,10 @@ class TestUseCases(unittest.TestCase):
         JOURNAL 'Assets:US:BofA:Checking'
         FROM OPEN ON 2014-07-01 CLOSE ON 2014-10-01;
         """
-        self.assertTrue(re.search(
-            "2014-06-30 S *Opening balance for 'Assets:US:BofA:Checking'", output))
-        self.assertTrue(re.search(
-            "Transfering accumulated savings to other account", output))
+        self.assertRegexpMatches(
+            output, "2014-06-30 S *Opening balance for 'Assets:US:BofA:Checking'")
+        self.assertRegexpMatches(
+            output, "Transfering accumulated savings to other account")
 
     @runshell
     def test_conversions(self, output):
@@ -131,7 +135,7 @@ class TestUseCases(unittest.TestCase):
         FROM OPEN ON 2014-07-01 CLOSE ON 2014-10-01
         WHERE flag = 'C'
         """
-        self.assertTrue(re.search("2014-09-30 *Conversion for", output))
+        self.assertRegexpMatches(output, "2014-09-30 *Conversion for")
 
     @runshell
     def test_documents(self, output):

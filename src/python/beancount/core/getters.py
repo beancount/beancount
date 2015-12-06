@@ -96,7 +96,7 @@ class GetAccounts:
 
     # Associate all the possible directives with their respective handlers.
     Open = Close = Balance = Note = Document = _one
-    Commodity = Event = Price = _zero
+    Commodity = Event = Query = Price = _zero
 
 
 # Global instance to share.
@@ -288,12 +288,11 @@ def get_account_open_close(entries):
     return open_close_map
 
 
-def get_commodity_map(entries, options_map, create_missing=True):
+def get_commodity_map(entries, create_missing=True):
     """Create map of commodity names to Commodity entries.
 
     Args:
       entries: A list of directive instances.
-      options_map: A dict of options as parsed by the parser.
       create_missing: A boolean, true if you want to automatically generate
         missing commodity directives if not present in the output map.
     Returns:

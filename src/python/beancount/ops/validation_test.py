@@ -204,8 +204,8 @@ class TestValidateCurrencyConstraints(cmptest.TestCase):
     def test_validate_currency_constraints(self, entries, _, options_map):
         """
         2014-01-01 open  Assets:Account1    USD
-        2014-01-01 open  Assets:Account2    GOOG
-        2014-01-01 open  Assets:Account3    USD,GOOG
+        2014-01-01 open  Assets:Account2    HOOL
+        2014-01-01 open  Assets:Account3    USD,HOOL
 
         2014-01-02 * "Entries without cost"
           Assets:Account1             1 USD
@@ -216,7 +216,7 @@ class TestValidateCurrencyConstraints(cmptest.TestCase):
           Equity:Opening-Balances    -1 CAD
 
         2014-01-04 * "Entries with cost"
-          Assets:Account2             1 GOOG {500 USD}
+          Assets:Account2             1 HOOL {500 USD}
           Equity:Opening-Balances  -500 USD
 
         2014-01-05 * "Entries with cost" #expected
@@ -225,7 +225,7 @@ class TestValidateCurrencyConstraints(cmptest.TestCase):
 
         2014-01-02 * "Multiple currencies"
           Assets:Account3             1 USD
-          Assets:Account3             1 GOOG {500 USD}
+          Assets:Account3             1 HOOL {500 USD}
           Equity:Opening-Balances  -501 USD
 
         2014-01-05 * "Multiple currencies" #expected
@@ -270,7 +270,7 @@ class TestValidateDataTypes(cmptest.TestCase):
     def test_validate_data_types(self, entries, errors, options_map):
         """
         2014-06-24 * "Narration"
-          Assets:Investments:Stock    1 GOOG {500 USD}
+          Assets:Investments:Stock    1 HOOL {500 USD}
           Assets:Investments:Cash  -500 USD
         """
         # Just a basic test that runs the sanitation code (that should already

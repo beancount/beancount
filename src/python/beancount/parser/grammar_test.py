@@ -12,6 +12,7 @@ from unittest import mock
 
 from beancount.core.number import D
 from beancount.core.number import ZERO
+from beancount.core.amount import A
 from beancount.parser import parser
 from beancount.parser import lexer
 from beancount.core import data
@@ -160,6 +161,22 @@ class TestParserEntryTypes(unittest.TestCase):
           2013-05-18 event "location" "New York, USA"
         """
         check_list(self, entries, [data.Event])
+
+    @parser.parse_doc()
+    def test_entry_query(self, entries, _, __):
+        """
+          option "experiment_query_directive" "TRUE"
+          2013-05-18 query "cash" "SELECT SUM(position) WHERE currency = 'USD'"
+        """
+        check_list(self, entries, [data.Query])
+
+    @parser.parse_doc(expect_errors=True)
+    def test_entry_query__not_enabled(self, entries, errors, __):
+        """
+          2013-05-18 query "cash" "SELECT SUM(position) WHERE currency = 'USD'"
+        """
+        self.assertRegexpMatches(errors[0].message, "Query directive is not supported")
+        self.assertEqual([], entries)
 
     @parser.parse_doc()
     def test_entry_note(self, entries, _, __):
@@ -386,9 +403,9 @@ class TestLineNumbers(unittest.TestCase):
             TestLineNumbers.test_line_numbers.__wrapped__)
         first_line += 1
 
-        self.assertEqual(2, entries[0].meta.lineno - first_line)
-        self.assertEqual(6, entries[1].meta.lineno - first_line)
-        self.assertEqual(8, entries[2].meta.lineno - first_line)
+        self.assertEqual(2, entries[0].meta["lineno"] - first_line)
+        self.assertEqual(6, entries[1].meta["lineno"] - first_line)
+        self.assertEqual(8, entries[2].meta["lineno"] - first_line)
 
 
 class TestParserOptions(unittest.TestCase):
@@ -558,6 +575,15 @@ class TestMiscOptions(unittest.TestCase):
         self.assertEqual(1, len(errors))
         self.assertTrue(re.match("Error for option", errors[0].message))
         self.assertEqual("default", options_map['plugin_processing_mode'])
+
+    @parser.parse_doc(expect_errors=True)
+    def test_account_rounding_old_fixup(self, _, errors, options_map):
+        """
+        option "account_rounding" "Equity:RoundingError"
+        """
+        self.assertEqual(1, len(errors))
+        self.assertRegexpMatches(errors[0].message, "should now refer to.*subaccount")
+        self.assertEqual(options_map['account_rounding'], 'RoundingError')
 
 
 class TestToleranceOptions(unittest.TestCase):
@@ -750,7 +776,7 @@ class TestTransactions(unittest.TestCase):
     def test_zero_units(self, entries, errors, _):
         """
           2014-04-20 * "Zero number of units"
-            Assets:Investment         0 GOOG {500.00 USD}
+            Assets:Investment         0 HOOL {500.00 USD}
             Assets:Cash               0 USD
         """
         check_list(self, entries, [data.Transaction])
@@ -761,7 +787,7 @@ class TestTransactions(unittest.TestCase):
     def test_zero_costs(self, entries, errors, _):
         """
           2014-04-20 * "Like a conversion entry"
-            Assets:Investment         10 GOOG {0 USD}
+            Assets:Investment         10 HOOL {0 USD}
             Assets:Cash                0 USD
         """
         check_list(self, entries, [data.Transaction])
@@ -1109,7 +1135,7 @@ class TestTotalsAndSigns(unittest.TestCase):
             Assets:Investments:Cash  -2000.00 USD
         """
         posting = entries[0].postings[0]
-        self.assertEqual(amount.from_string('200 USD'), posting.price)
+        self.assertEqual(A('200 USD'), posting.price)
         self.assertEqual(None, posting.position.lot.compound_cost)
 
     @parser.parse_doc()
@@ -1120,7 +1146,7 @@ class TestTotalsAndSigns(unittest.TestCase):
             Assets:Investments:Cash  20000.00 USD
         """
         posting = entries[0].postings[0]
-        self.assertEqual(amount.from_string('200 USD'), posting.price)
+        self.assertEqual(A('200 USD'), posting.price)
         self.assertEqual(None, posting.position.lot.compound_cost)
 
     @parser.parse_doc(expect_errors=True)
@@ -1172,7 +1198,7 @@ class TestAllowNegativePrices(unittest.TestCase):
             Assets:Investments:Cash  2000.00 USD
         """
         posting = entries[0].postings[0]
-        self.assertEqual(amount.from_string('-200 USD'), posting.price)
+        self.assertEqual(A('-200 USD'), posting.price)
         self.assertEqual(None, posting.position.lot.compound_cost)
 
     @parser.parse_doc()
@@ -1183,7 +1209,7 @@ class TestAllowNegativePrices(unittest.TestCase):
             Assets:Investments:Cash   20000.00 USD
         """
         posting = entries[0].postings[0]
-        self.assertEqual(amount.from_string('-200 USD'), posting.price)
+        self.assertEqual(A('-200 USD'), posting.price)
         self.assertEqual(None, posting.position.lot.compound_cost)
 
     @parser.parse_doc()
@@ -1194,7 +1220,7 @@ class TestAllowNegativePrices(unittest.TestCase):
             Assets:Investments:Cash  -20000.00 USD
         """
         posting = entries[0].postings[0]
-        self.assertEqual(amount.from_string('-200 USD'), posting.price)
+        self.assertEqual(A('-200 USD'), posting.price)
         self.assertEqual(None, posting.position.lot.compound_cost)
 
 
@@ -1208,7 +1234,7 @@ class TestBalance(unittest.TestCase):
             Assets:Investments:Cash  -20000 USD
         """
         posting = entries[0].postings[0]
-        self.assertEqual(amount.from_string('200 USD'), posting.price)
+        self.assertEqual(A('200 USD'), posting.price)
         self.assertEqual(None, posting.position.lot.compound_cost)
 
     @parser.parse_doc()
@@ -1379,7 +1405,7 @@ class TestMetaData(unittest.TestCase):
           2013-03-01 document Assets:Investments "/path/to/something.pdf"
             test1: "Something"
 
-          2013-03-01 price  GOOG  500 USD
+          2013-03-01 price  HOOL  500 USD
             test1: "Something"
         """
         self.assertEqual(9, len(entries))
@@ -1391,7 +1417,7 @@ class TestMetaData(unittest.TestCase):
             string: "Something"
             account: Assets:Investments:Cash
             date: 2012-01-01
-            currency: GOOG
+            currency: HOOL
             tag: #trip-florida
             number: 345.67
             amount: 345.67 USD
@@ -1407,13 +1433,26 @@ class TestMetaData(unittest.TestCase):
             'string': 'Something',
             'account': 'Assets:Investments:Cash',
             'date': datetime.date(2012, 1, 1),
-            'currency': 'GOOG',
+            'currency': 'HOOL',
             'tag': 'trip-florida',
             'number': D('345.67'),
-            'amount': amount.from_string('345.67 USD'),
+            'amount': A('345.67 USD'),
             'boolt': True,
             'boolf': False,
             }, entries[0].meta)
+
+    @parser.parse_doc()
+    def test_metadata_key_syntax(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            nameoncard: "Jim"
+            nameOnCard: "Joe"
+            name-on-card: "Bob"
+            name_on_card: "John"
+        """
+        self.assertEqual(1, len(entries))
+        self.assertLessEqual(set('nameoncard nameOnCard name-on-card name_on_card'.split()),
+                             set(entries[0].meta.keys()))
 
 
 class TestArithmetic(unittest.TestCase):

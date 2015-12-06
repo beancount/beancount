@@ -7,7 +7,7 @@ association list of positions, where each position is defined as
 
 where
 
-  'currency': the commodity under consideration, USD, CAD, or stock units such as GOOG,
+  'currency': the commodity under consideration, USD, CAD, or stock units such as HOOL,
     MSFT;
 
   'cost': the amount (as a pair of (number, currency)) that the position is held under,
@@ -200,8 +200,16 @@ class Inventory(list):
     # Methods to access portions of an inventory.
     #
 
+    def currencies(self):
+        """Return the list of unit currencies held in this inventory.
+
+        Returns:
+          A list of currency strings.
+        """
+        return set(position.lot.currency for position in self)
+
     def currency_pairs(self):
-        """Return the commodities held in this inventory.
+        """Return the commodity pairs held in this inventory.
 
         Returns:
           A list of currency strings.
@@ -265,13 +273,13 @@ class Inventory(list):
 
         For example, an inventory that contains these lots:
 
-           2 GOOGL
-           3 GOOG {300.00 USD}
-           4 GOOG {310.00 USD / 2014-10-28}
+           2 HOOLB
+           3 HOOL {300.00 USD}
+           4 HOOL {310.00 USD / 2014-10-28}
 
         will provide:
 
-           2 GOOGL
+           2 HOOLB
            2140 USD
 
         Returns:

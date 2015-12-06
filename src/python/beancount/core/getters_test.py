@@ -160,7 +160,7 @@ class TestGetters(unittest.TestCase):
 
     def test_get_commodities_map(self):
         entries, _, options_map = loader.load_string(TEST_INPUT)
-        commodity_map = getters.get_commodity_map(entries, options_map)
+        commodity_map = getters.get_commodity_map(entries)
         self.assertEqual({'HOOL', 'PIPA', 'USD'}, commodity_map.keys())
         self.assertTrue(all(isinstance(value, data.Commodity)
                             for value in commodity_map.values()))
@@ -171,7 +171,7 @@ class TestGetters(unittest.TestCase):
 
     def test_get_values_meta__single(self):
         entries, _, options_map = loader.load_string(TEST_INPUT)
-        commodity_map = getters.get_commodity_map(entries, options_map)
+        commodity_map = getters.get_commodity_map(entries)
         values = getters.get_values_meta(commodity_map, 'name', default='BLA')
         self.assertEqual({'USD': 'BLA',
                           'PIPA': 'Pied Piper',
@@ -180,7 +180,7 @@ class TestGetters(unittest.TestCase):
 
     def test_get_values_meta__multi(self):
         entries, _, options_map = loader.load_string(TEST_INPUT)
-        commodity_map = getters.get_commodity_map(entries, options_map)
+        commodity_map = getters.get_commodity_map(entries)
         values = getters.get_values_meta(commodity_map, 'name', 'ticker')
         self.assertEqual({'HOOL': ('Hooli Corp.', 'NYSE:HOOLI'),
                           'PIPA': ('Pied Piper', None),

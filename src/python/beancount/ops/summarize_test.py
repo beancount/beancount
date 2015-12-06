@@ -502,7 +502,7 @@ INPUT_OPEN = """
 
 ;; These should be preserved after summarization.
 2010-01-01 open  Assets:US:Chase:Checking
-2010-01-01 open  Assets:US:Investing:GOOG
+2010-01-01 open  Assets:US:Investing:HOOL
 2010-01-01 open  Assets:CA:BMO:Checking
 2010-01-01 open  Liabilities:US:Chase:CreditCard
 2010-01-01 open  Income:US:Employer:Salary
@@ -559,7 +559,7 @@ INPUT_BEFORE = """
   Expenses:Internet              80.02 USD
 
 2010-12-05 * "Unit held at cost"
-  Assets:US:Investing:GOOG        5 GOOG {510.00 USD}
+  Assets:US:Investing:HOOL        5 HOOL {510.00 USD}
   Assets:US:Chase:Checking    -2550 USD
 
 2010-12-05 * "Conversion"
@@ -661,8 +661,8 @@ class TestTransferBalances(cmptest.TestCase):
         self.assertIncludesEntries(self.entries, xfer_entries)
         self.assertIncludesEntries("""
 
-        2010-12-31 T "Transfer balance for 'Assets:US:Investing:GOOG' (Transfer balance)"
-          Assets:US:Investing:GOOG                                               -5 GOOG     {510.00 USD}                  ;   -2550.00 USD
+        2010-12-31 T "Transfer balance for 'Assets:US:Investing:HOOL' (Transfer balance)"
+          Assets:US:Investing:HOOL                                               -5 HOOL     {510.00 USD}                  ;   -2550.00 USD
           Equity:Transfer                                                       2550.00 USD                                   ;    2550.00 USD
 
         """, xfer_entries)
@@ -767,8 +767,8 @@ class TestSummarize(cmptest.TestCase):
           Assets:US:Chase:Checking                                              2459.98 USD
           Equity:Opening-Balances                                              -2459.98 USD
 
-        2010-12-31 S "Opening balance for 'Assets:US:Investing:GOOG' (Summarization)"
-          Assets:US:Investing:GOOG                                                5 GOOG     {510.00 USD}                  ;    2550.00 USD
+        2010-12-31 S "Opening balance for 'Assets:US:Investing:HOOL' (Summarization)"
+          Assets:US:Investing:HOOL                                                5 HOOL     {510.00 USD}                  ;    2550.00 USD
           Equity:Opening-Balances                                              -2550.00 USD                                   ;   -2550.00 USD
 
         2010-12-31 S "Opening balance for 'Expenses:Flights' (Summarization)"
@@ -1047,7 +1047,7 @@ class TestEntriesFromBalance(cmptest.TestCase):
     def setUp(self):
         self.balances = collections.defaultdict(inventory.Inventory)
         self.balances['Assets:US:Investment'] = (
-            inventory.from_string('10 GOOG {500.00 USD}'))
+            inventory.from_string('10 HOOL {500.00 USD}'))
         self.balances['Assets:US:Bank:Checking'] = inventory.from_string('1823.23 USD')
 
     def test_create_entries_from_balances__simple(self):
@@ -1061,7 +1061,7 @@ class TestEntriesFromBalance(cmptest.TestCase):
             Equity:Opening-Balances                                               -1823.23 USD
 
           2014-01-01 ! "Narration for Assets:US:Investment at 2014-01-01"
-            Assets:US:Investment                                                   10 GOOG     {500.00 USD}
+            Assets:US:Investment                                                   10 HOOL     {500.00 USD}
             Equity:Opening-Balances                                               -5000.00 USD
         """, entries)
 
@@ -1076,7 +1076,7 @@ class TestEntriesFromBalance(cmptest.TestCase):
             Equity:Opening-Balances                                                1823.23 USD
 
           2014-01-01 * "Narration for Assets:US:Investment at 2014-01-01"
-            Assets:US:Investment                                                  -10 GOOG     {500.00 USD}
+            Assets:US:Investment                                                  -10 HOOL     {500.00 USD}
             Equity:Opening-Balances                                                5000.00 USD
         """, entries)
 
