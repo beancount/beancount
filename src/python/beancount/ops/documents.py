@@ -122,7 +122,7 @@ def find_documents(directory, input_filename, accounts_only=None, strict=False):
 
             # If a restricting set of accounts was specified, skip document
             # directives found in accounts with no corresponding account name.
-            if accounts_only and not account_name in accounts_only:
+            if accounts_only is not None and not account_name in accounts_only:
                 if strict:
                     if any(account_name.startswith(account) for account in accounts_only):
                         errors.append(DocumentError(

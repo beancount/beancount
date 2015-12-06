@@ -112,7 +112,7 @@ def pickle_cache_function(pattern, time_threshold, function):
         else:
             # We failed; recompute the value.
             if exists:
-                os.remove(exists)
+                os.remove(cache_filename)
 
             t1 = time.time()
             result = function(filename, *args, **kw)
@@ -313,6 +313,9 @@ def _load(sources, log_timings, log_errors, extra_validations, encoding):
     # Parse all the files recursively.
     entries, parse_errors, options_map = _parse_recursive(sources, log_timings, encoding)
 
+    # Ensure that the entries are sorted before running any processes on them.
+    entries.sort(key=data.entry_sortkey)
+
     # Run interpolation on incomplete entries.
     entries, balance_errors = booking.book(entries, options_map)
     parse_errors.extend(balance_errors)
@@ -357,9 +360,6 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
     """
     # A list of errors to extend (make a copy to avoid modifying the input).
     errors = list(parse_errors)
-
-    # Ensure that the entries are sorted before running the plugins.
-    entries.sort(key=data.entry_sortkey)
 
     # Process the plugins.
     if options_map['plugin_processing_mode'] == 'raw':
