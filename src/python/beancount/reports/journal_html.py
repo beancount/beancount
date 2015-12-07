@@ -151,6 +151,7 @@ def html_entries_table_with_balance(oss, txn_postings, formatter, render_posting
          <th class="cost">Cost</th>
          <th class="change">Change</th>
          <th class="balance">Balance</th>
+        </tr>
       </thead>
     ''')
 
@@ -169,7 +170,7 @@ def html_entries_table_with_balance(oss, txn_postings, formatter, render_posting
             <td class="description" colspan="4">{}</td>
             <td class="change num">{}</td>
             <td class="balance num">{}</td>
-          <tr>
+          </tr>
         '''.format(row.rowtype, row.extra_class,
                    '{}:{}'.format(entry.meta["filename"], entry.meta["lineno"]),
                    formatter.render_context(entry), entry.date,
@@ -195,7 +196,7 @@ def html_entries_table_with_balance(oss, txn_postings, formatter, render_posting
                     <td class="cost num">{}</td>
                     <td class="change num"></td>
                     <td class="balance num"></td>
-                  <tr>
+                  </tr>
                 '''.format(' '.join(classes),
                            posting.flag or '',
                            formatter.render_account(posting.account),
@@ -236,6 +237,7 @@ def html_entries_table(oss, txn_postings, formatter, render_postings=True):
          <th class="cost">Cost</th>
          <th class="price">Price</th>
          <th class="balance">Balance</th>
+        </tr>
       </thead>
     ''')
 
@@ -252,7 +254,7 @@ def html_entries_table(oss, txn_postings, formatter, render_postings=True):
             <td class="datecell"><a href="{}">{}</a></td>
             <td class="flag">{}</td>
             <td class="description" colspan="5">{}</td>
-          <tr>
+          </tr>
         '''.format(row.rowtype, row.extra_class,
                    '{}:{}'.format(entry.meta["filename"], entry.meta["lineno"]),
                    formatter.render_context(entry), entry.date,
@@ -274,7 +276,7 @@ def html_entries_table(oss, txn_postings, formatter, render_postings=True):
                     <td class="cost num">{}</td>
                     <td class="price num">{}</td>
                     <td class="balance num">{}</td>
-                  <tr>
+                  </tr>
                 '''.format(' '.join(classes),
                            posting.flag or '',
                            formatter.render_account(posting.account),

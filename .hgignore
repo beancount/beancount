@@ -15,3 +15,4 @@ lib/python/_beancount.cpython-33m.so
 examples/generated/*
 src/python/beancount/parser/grammar.output
 *.picklecache
+*.DS_Store
