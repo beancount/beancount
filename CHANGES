@@ -4,6 +4,20 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-12-07
+
+  - Fixed a bug in the load cache, whereby the load cache would not update
+    itself on an included file. In order to do this, first I made the loader
+    always return the full correct set of unique filenames processed in a load
+    call, and then I used this to check the latest modified time.
+
+  - I also used this to fix a related bug in the bean-web watcher: If an
+    included file was being modified, bean-web would not reload itself
+    automatically. redstreet0 sent a pull request to highlight the problem
+    (thanks!):
+    https://bitbucket.org/blais/beancount/pull-requests/6/feature-include-files-refresh/diff
+
+
 2015-12-03
 
   - Added ROOT(account, num) account manipulation function to the shell.
