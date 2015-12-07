@@ -162,6 +162,11 @@ PRIVATE_OPTION_GROUPS = [
       time it gets to the top-level loader.load_*() function that invoked it.
       The filenames are absolute. Relative include filenames are resolved against
       the file that contains the include directives.
+
+      This is used in the parser, but also, the loader sets this list to the
+      full list of parsed absolute filenames in the options map. This is how you
+      can find out the entire list of files involved in a Beancount load
+      procedure.
     """, [Opt("include", [], "some-other-file.beancount")]),
 
     OptGroup("""
