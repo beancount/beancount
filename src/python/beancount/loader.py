@@ -116,11 +116,7 @@ def pickle_cache_function(pattern, time_threshold, function):
             # Check that the latest timestamp has not been written after the
             # cache file.
             entries, errors, options_map = result
-            filenames = options_map['include']
-            max_mtime = (max(path.getmtime(filename) for filename in filenames)
-                         if filenames
-                         else 0)
-            if max_mtime < path.getmtime(cache_filename):
+            if not needs_refresh(options_map, path.getmtime(cache_filename)):
                 # All timestamps are legit; cache hit.
                 return result
 
@@ -153,6 +149,26 @@ if os.getenv('BEANCOUNT_DISABLE_LOAD_CACHE') is None:
     load_file = pickle_cache_function(PICKLE_CACHE_FILENAME,
                                       PICKLE_CACHE_THRESHOLD,
                                       load_file)
+
+
+def needs_refresh(options_map, sentinel_mtime):
+    """Predicate that returns true if at least one of the input files may have changed.
+
+    Args:
+      options_map: An options dict as per the parser.
+      mtime: A modified time, to check if it covers the include files in the options_map.
+    Returns:
+      A boolean, true if the input is obsoleted by changes in the input files.
+    """
+    if options_map is None or sentinel_mtime is None:
+        return True
+    filenames = options_map['include']
+    if not filenames:
+        return True
+    max_mtime = max(map(path.getmtime, filenames))
+    if max_mtime > sentinel_mtime:
+        return True
+    return False
 
 
 def load_string(string, log_timings=None, log_errors=None, extra_validations=None,

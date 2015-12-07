@@ -922,9 +922,8 @@ def auto_reload_input_file(callback):
     def wrapper(*posargs, **kwargs):
         filename = app.args.filename
         mtime = path.getmtime(filename)
-        if mtime > app.last_mtime:
-            app.last_mtime = mtime
 
+        if loader.needs_refresh(app.options, app.last_mtime):
             logging.info('Reloading...')
 
             # Save the source for later, to render.
@@ -933,6 +932,11 @@ def auto_reload_input_file(callback):
 
             # Parse the beancount file.
             entries, errors, options_map = loader.load_file(filename)
+
+            # Recompute the last seen time.
+            app.last_mtime = (max(map(path.getmtime, options_map['include']))
+                              if options_map.get('include', None)
+                              else 0)
 
             # Print out the list of errors.
             if errors:
@@ -1011,6 +1015,7 @@ def run_app(args, quiet=None):
 
     # Initialize to a small value in order to insure a reload on the first page.
     app.last_mtime = 0
+    app.options = None
 
     # Load templates.
     with open(path.join(path.dirname(__file__), 'web.html')) as f:

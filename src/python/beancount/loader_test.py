@@ -6,6 +6,7 @@ import tempfile
 import textwrap
 import re
 import os
+import time
 from unittest import mock
 from os import path
 
@@ -291,6 +292,9 @@ class TestLoadIncludes(unittest.TestCase):
 
 class TestLoadCache(unittest.TestCase):
 
+    # Delay before touch that guarantees a difference in file time.
+    delay_secs = 0.1
+
     def setUp(self):
         self.num_calls = 0
         self.load_file = loader.pickle_cache_function(loader.PICKLE_CACHE_FILENAME,
@@ -331,6 +335,7 @@ class TestLoadCache(unittest.TestCase):
             self.assertEqual(1, self.num_calls)
 
             # Touch the top-level file and ensure it's a cache miss.
+            time.sleep(self.delay_secs)
             with open(top_filename, 'a'):
                 os.utime(top_filename)
             entries, errors, options_map = self.load_file(top_filename)
@@ -341,6 +346,7 @@ class TestLoadCache(unittest.TestCase):
             self.assertEqual(2, self.num_calls)
 
             # Touch the top-level file and ensure it's a cache miss.
+            time.sleep(self.delay_secs)
             with open(other_filename, 'a'):
                 os.utime(other_filename)
             entries, errors, options_map = self.load_file(top_filename)
