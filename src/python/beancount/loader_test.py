@@ -125,10 +125,23 @@ class TestLoadDoc(unittest.TestCase):
 
 class TestLoadIncludes(unittest.TestCase):
 
+    def test_load_file_no_includes(self):
+        with test_utils.tempdir() as tmp:
+            test_utils.create_temporary_files(tmp, {
+                'apples.beancount': """
+                  2014-01-01 open Assets:Apples
+                """})
+            entries, errors, options_map = loader.load_file(
+                path.join(tmp, 'apples.beancount'))
+            self.assertEqual(0, len(errors))
+            self.assertEqual(['apples.beancount'],
+                             list(map(path.basename, options_map['include'])))
+
     def test_load_file_nonexist(self):
         entries, errors, options_map = loader.load_file('/bull/bla/root.beancount')
         self.assertEqual(1, len(errors))
         self.assertTrue(re.search('does not exist', errors[0].message))
+        self.assertEqual([], list(map(path.basename, options_map['include'])))
 
     def test_load_file_with_nonexist_include(self):
         with test_utils.tempdir() as tmp:
@@ -140,6 +153,8 @@ class TestLoadIncludes(unittest.TestCase):
                 path.join(tmp, 'root.beancount'))
             self.assertEqual(1, len(errors))
             self.assertTrue(re.search('does not exist', errors[0].message))
+        self.assertEqual(['root.beancount'],
+                         list(map(path.basename, options_map['include'])))
 
     def test_load_file_with_absolute_include(self):
         with test_utils.tempdir() as tmp:
@@ -155,6 +170,8 @@ class TestLoadIncludes(unittest.TestCase):
                 path.join(tmp, 'apples.beancount'))
         self.assertFalse(errors)
         self.assertEqual(2, len(entries))
+        self.assertEqual(['apples.beancount', 'oranges.beancount'],
+                         list(map(path.basename, options_map['include'])))
 
     def test_load_file_with_relative_include(self):
         with test_utils.tempdir() as tmp:
@@ -170,6 +187,8 @@ class TestLoadIncludes(unittest.TestCase):
                 path.join(tmp, 'apples.beancount'))
         self.assertFalse(errors)
         self.assertEqual(2, len(entries))
+        self.assertEqual(['apples.beancount', 'oranges.beancount'],
+                         list(map(path.basename, options_map['include'])))
 
     def test_load_file_with_multiple_includes(self):
         # Including recursive includes and mixed and absolute.
@@ -194,6 +213,9 @@ class TestLoadIncludes(unittest.TestCase):
                 path.join(tmp, 'apples.beancount'))
         self.assertFalse(errors)
         self.assertEqual(4, len(entries))
+        self.assertEqual(['apples.beancount', 'oranges.beancount',
+                          'patates.beancount', 'tomates.beancount'],
+                         list(map(path.basename, options_map['include'])))
 
     def test_load_file_with_duplicate_includes(self):
         with test_utils.tempdir() as tmp:
@@ -217,6 +239,8 @@ class TestLoadIncludes(unittest.TestCase):
                 path.join(tmp, 'apples.beancount'))
         self.assertTrue(errors)
         self.assertEqual(3, len(entries))
+        self.assertEqual(['apples.beancount', 'oranges.beancount', 'tomates.beancount'],
+                         list(map(path.basename, options_map['include'])))
 
     def test_load_string_with_relative_include(self):
         with test_utils.tempdir() as tmp:
@@ -237,6 +261,8 @@ class TestLoadIncludes(unittest.TestCase):
                 os.chdir(cwd)
         self.assertFalse(errors)
         self.assertEqual(2, len(entries))
+        self.assertEqual(['apples.beancount', 'oranges.beancount'],
+                         list(map(path.basename, options_map['include'])))
 
     def test_load_file_return_include_filenames(self):
         # Also check that they are normalized paths.
@@ -261,6 +287,64 @@ class TestLoadIncludes(unittest.TestCase):
                             for filename in options_map['include']))
         self.assertEqual(['apples.beancount', 'bananas.beancount', 'oranges.beancount'],
                          list(map(path.basename, options_map['include'])))
+
+
+class TestLoadCache(unittest.TestCase):
+
+    def setUp(self):
+        self.num_calls = 0
+        self.load_file = loader.pickle_cache_function(loader.PICKLE_CACHE_FILENAME,
+                                                      0,  # No time threshold.
+                                                      self._load_file)
+
+    def _load_file(self, *args, **kw):
+        self.num_calls += 1
+        return loader._uncached_load_file(*args, **kw)
+
+    def test_load_cache(self):
+        # Create an initial set of files and load file, thus creating a cache.
+        with test_utils.tempdir() as tmp:
+            test_utils.create_temporary_files(tmp, {
+                'apples.beancount': """
+                  include "oranges.beancount"
+                  2014-01-01 open Assets:Apples
+                """,
+                'oranges.beancount': """
+                  include "bananas.beancount"
+                  2014-01-02 open Assets:Oranges
+                """,
+                'bananas.beancount': """
+                  2014-01-02 open Assets:Bananas
+                """})
+            top_filename = path.join(tmp, 'apples.beancount')
+            other_filename = path.join(tmp, 'bananas.beancount')
+            entries, errors, options_map = self.load_file(top_filename)
+            self.assertFalse(errors)
+            self.assertEqual(3, len(entries))
+            self.assertEqual(1, self.num_calls)
+
+            # Make sure the cache was created.
+            self.assertTrue(path.exists(path.join(tmp, '.apples.beancount.picklecache')))
+
+            # Load the root file again, make sure the cache is being hit.
+            entries, errors, options_map = self.load_file(top_filename)
+            self.assertEqual(1, self.num_calls)
+
+            # Touch the top-level file and ensure it's a cache miss.
+            with open(top_filename, 'a'):
+                os.utime(top_filename)
+            entries, errors, options_map = self.load_file(top_filename)
+            self.assertEqual(2, self.num_calls)
+
+            # Load the root file again, make sure the cache is being hit.
+            entries, errors, options_map = self.load_file(top_filename)
+            self.assertEqual(2, self.num_calls)
+
+            # Touch the top-level file and ensure it's a cache miss.
+            with open(other_filename, 'a'):
+                os.utime(other_filename)
+            entries, errors, options_map = self.load_file(top_filename)
+            self.assertEqual(3, self.num_calls)
 
 
 class TestEncoding(unittest.TestCase):

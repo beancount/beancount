@@ -80,11 +80,14 @@ load = load_file
 
 
 def pickle_cache_function(pattern, time_threshold, function):
-    """Decorate a function to make it loads its result from a pickle cache.
+    """Decorate a loader function to make it loads its result from a pickle cache.
 
-    This only considers the first argument as a variant and assumes it's a
-    filename. It's essentially a special case for an on-disk memoizer. If
-    the file is more recent than the cache, the function is recomputed.
+    This considers the first argument as a top-level filename and assumes the
+    function to be cached returns an (entries, errors, options_map) triple. We
+    use the 'include' option value in order to check whether any of the included
+    files has changed. It's essentially a special case for an on-disk memoizer.
+    If any of the included files are more recent than the cache, the function is
+    recomputed and the cache refreshed.
 
     Args:
       pattern: A string, the filename pattern for the pickled cache file.
@@ -97,35 +100,47 @@ def pickle_cache_function(pattern, time_threshold, function):
       it is available.
     """
     @functools.wraps(function)
-    def wrapped(filename, *args, **kw):
-        abs_filename = path.abspath(filename)
+    def wrapped(toplevel_filename, *args, **kw):
+        abs_filename = path.abspath(toplevel_filename)
         cache_filename = path.join(
             path.dirname(abs_filename),
-            pattern.format(filename=path.basename(filename)))
+            pattern.format(filename=path.basename(toplevel_filename)))
 
-        # Attempt to read the result from the cache.
+        # Read the cache if it exists in order to get the list of files whose
+        # timestamps to check.
         exists = path.exists(cache_filename)
-        if exists and path.getmtime(filename) < path.getmtime(cache_filename):
+        if exists:
             with open(cache_filename, 'rb') as file:
                 result = pickle.load(file)
-        else:
-            # We failed; recompute the value.
-            if exists:
-                os.remove(cache_filename)
 
-            t1 = time.time()
-            result = function(filename, *args, **kw)
-            t2 = time.time()
+            # Check that the latest timestamp has not been written after the
+            # cache file.
+            entries, errors, options_map = result
+            filenames = options_map['include']
+            max_mtime = (max(path.getmtime(filename) for filename in filenames)
+                         if filenames
+                         else 0)
+            if max_mtime < path.getmtime(cache_filename):
+                # All timestamps are legit; cache hit.
+                return result
 
-            # Overwrite the cache file if the time it takes to compute it
-            # justifies it.
-            if t2 - t1 > time_threshold:
-                try:
-                    with open(cache_filename, 'wb') as file:
-                        pickle.dump(result, file)
-                except Exception:
-                    logging.warning("Could not write to picklecache file {}".format(
-                        cache_filename))
+        # We failed; recompute the value.
+        if exists:
+            os.remove(cache_filename)
+
+        t1 = time.time()
+        result = function(toplevel_filename, *args, **kw)
+        t2 = time.time()
+
+        # Overwrite the cache file if the time it takes to compute it
+        # justifies it.
+        if t2 - t1 > time_threshold:
+            try:
+                with open(cache_filename, 'wb') as file:
+                    pickle.dump(result, file)
+            except Exception:
+                logging.warning("Could not write to picklecache file {}".format(
+                    cache_filename))
 
         return result
     return wrapped
@@ -133,6 +148,7 @@ def pickle_cache_function(pattern, time_threshold, function):
 
 # Unless an environment variable disables it, use the pickle load cache
 # automatically.
+_uncached_load_file = load_file
 if os.getenv('BEANCOUNT_DISABLE_LOAD_CACHE') is None:
     load_file = pickle_cache_function(PICKLE_CACHE_FILENAME,
                                       PICKLE_CACHE_THRESHOLD,
@@ -215,8 +231,6 @@ def _parse_recursive(sources, log_timings, encoding=None):
                                   'Duplicate filename parsed: "{}"'.format(filename),
                                   None))
                     continue
-                else:
-                    filenames_seen.add(filename)
 
                 # Check for a file that does not exist.
                 if not path.exists(filename):
@@ -226,6 +240,7 @@ def _parse_recursive(sources, log_timings, encoding=None):
                     continue
 
                 # Parse a file from disk directly.
+                filenames_seen.add(filename)
                 with misc_utils.log_time('beancount.parser.parser.parse_file',
                                          log_timings, indent=2):
                     (src_entries,
