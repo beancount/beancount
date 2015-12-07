@@ -95,7 +95,6 @@ def pickle_cache_function(pattern, time_threshold, function):
     Returns:
       A decorated function which will pull its result from a cache file if
       it is available.
-
     """
     @functools.wraps(function)
     def wrapped(filename, *args, **kw):
@@ -271,11 +270,12 @@ def _parse_recursive(sources, log_timings, encoding=None):
                 # Add the include filenames to be processed later.
                 source_stack.append((include_filename, True))
 
-    # Note: We could easily save the set of parsed filenames in options_map
-    # here, if useful. Let's refrain for now, until we need it.
-
+    # Make sure we have at least a dict of valid options.
     if options_map is None:
         options_map = options.OPTIONS_DEFAULTS.copy()
+
+    # Save the set of parsed filenames in options_map.
+    options_map['include'] = sorted(filenames_seen)
 
     return entries, parse_errors, options_map
 

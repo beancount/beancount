@@ -238,6 +238,30 @@ class TestLoadIncludes(unittest.TestCase):
         self.assertFalse(errors)
         self.assertEqual(2, len(entries))
 
+    def test_load_file_return_include_filenames(self):
+        # Also check that they are normalized paths.
+        with test_utils.tempdir() as tmp:
+            test_utils.create_temporary_files(tmp, {
+                'apples.beancount': """
+                  include "oranges.beancount"
+                  2014-01-01 open Assets:Apples
+                """,
+                'oranges.beancount': """
+                  include "bananas.beancount"
+                  2014-01-02 open Assets:Oranges
+                """,
+                'bananas.beancount': """
+                  2014-01-02 open Assets:Bananas
+                """})
+            entries, errors, options_map = loader.load_file(
+                path.join(tmp, 'apples.beancount'))
+        self.assertFalse(errors)
+        self.assertEqual(3, len(entries))
+        self.assertTrue(all(path.isabs(filename)
+                            for filename in options_map['include']))
+        self.assertEqual(['apples.beancount', 'bananas.beancount', 'oranges.beancount'],
+                         list(map(path.basename, options_map['include'])))
+
 
 class TestEncoding(unittest.TestCase):
 
