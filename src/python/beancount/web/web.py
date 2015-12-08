@@ -129,7 +129,7 @@ class HTMLFormatter(html_formatter.HTMLFormatter):
 
     def render_source(self, source):
         """See base class."""
-        return '{}#{}'.format(app.get_url('source'), source.lineno)
+        return '{}#{}'.format(app.get_url('source'), source['lineno'])
 
 
 def render_report(report_class, entries, args=None,
