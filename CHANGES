@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-12-09
+
+  - Fixed installation snafu: forgot to add the beancount.prices and bean-price
+    install to the setup.py file.
+
+
 2015-12-07
 
   - Fixed a bug in the load cache, whereby the load cache would not update
