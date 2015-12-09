@@ -119,6 +119,7 @@ setup(
                 'beancount.reports',
                 'beancount.scripts',
                 'beancount.prices',
+                'beancount.prices.sources',
                 'beancount.web',
                 'beancount.docs',
                 'beancount.utils'],
