@@ -4,6 +4,17 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-12-10
+
+  - Renamed beancount.reports.context.render_entry_context() to
+    render_file_context() and implemented render_entry_context() to accept an
+    entry directly instead of a (filename, line-no), so that bug reporters can
+    insert some print statements. I also removed the dcontext instance required
+    to be passed, since all the callers were fetching it from options_map. This
+    should make it easier for those sending bug reports to insert quick calls to
+    render the context around a particular entry or file location.
+
+
 2015-12-09
 
   - Fixed installation snafu: forgot to add the beancount.prices and bean-price

@@ -381,11 +381,10 @@ def context_(ehash=None):
         printer.print_entries(matching_entries, dcontext, file=oss)
 
     else:
-        dcontext = app.options['dcontext']
         oss.write("<pre>\n")
         for entry in matching_entries:
-            oss.write(context.render_entry_context(
-                app.entries, app.options, dcontext,
+            oss.write(context.render_file_context(
+                app.entries, app.options,
                 entry.meta["filename"], entry.meta["lineno"]))
         oss.write("</pre>\n")
 

@@ -56,9 +56,8 @@ class TestContext(test_utils.TestCase):
 
         search_filename = entries[0].meta["filename"]
         search_lineno = entries[-3].meta["lineno"] + 2
-        dcontext = options_map['dcontext']
-        str_context = context.render_entry_context(entries, options_map, dcontext,
-                                                   search_filename, search_lineno)
+        str_context = context.render_file_context(entries, options_map,
+                                                  search_filename, search_lineno)
 
         self.assertLines(textwrap.dedent("""
         Hash:298dca350249afe0378cf8bac2fb12cf
