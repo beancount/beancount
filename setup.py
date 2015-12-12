@@ -75,12 +75,13 @@ install_scripts = [path.join('bin', x) for x in """
 bean-bake
 bean-check
 bean-doctor
-bean-report
-bean-query
-bean-web
 bean-example
 bean-format
+bean-price
+bean-query
+bean-report
 bean-sql
+bean-web
 treeify
 upload-csv-to-google-sheet
 """.split() if x and not x.startswith('#')]
@@ -117,6 +118,8 @@ setup(
                 'beancount.query',
                 'beancount.reports',
                 'beancount.scripts',
+                'beancount.prices',
+                'beancount.prices.sources',
                 'beancount.web',
                 'beancount.docs',
                 'beancount.utils'],

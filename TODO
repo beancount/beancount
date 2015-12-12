@@ -1370,6 +1370,11 @@ http://furius.ca/beancount/doc/proposal-inter
   - Idea for one of those constraint plugins: Create a plugin whereby you
     declare some currencies and assert that any units in them are always held at
     cost.
+  - Idea: Export contents to Spreadsheet equivalent, as a single list of
+    postings, joining transactions by an id column. That should quiet down those
+    who think you can do this with a Spreadsheet to try it out for themselves.
+
+
   - Add get_price() function to query_env.
 
 

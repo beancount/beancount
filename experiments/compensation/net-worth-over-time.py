@@ -123,7 +123,8 @@ def main():
     pyplot.tight_layout()
     pyplot.title("Net Worth")
     pyplot.legend(loc=2)
-    pyplot.yticks([])
+    if args.hide:
+        pyplot.yticks([])
 
     # Output the plot.
     if args.output:

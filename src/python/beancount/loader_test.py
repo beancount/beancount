@@ -13,6 +13,7 @@ from os import path
 from beancount import loader
 from beancount.parser import parser
 from beancount.utils import test_utils
+from beancount.utils import file_utils
 
 
 TEST_INPUT = """
@@ -292,9 +293,6 @@ class TestLoadIncludes(unittest.TestCase):
 
 class TestLoadCache(unittest.TestCase):
 
-    # Delay before touch that guarantees a difference in file time.
-    delay_secs = 0.1
-
     def setUp(self):
         self.num_calls = 0
         self.load_file = loader.pickle_cache_function(loader.PICKLE_CACHE_FILENAME,
@@ -335,9 +333,8 @@ class TestLoadCache(unittest.TestCase):
             self.assertEqual(1, self.num_calls)
 
             # Touch the top-level file and ensure it's a cache miss.
-            time.sleep(self.delay_secs)
-            with open(top_filename, 'a'):
-                os.utime(top_filename)
+            with open(top_filename, 'a') as file:
+                file.write('\n')
             entries, errors, options_map = self.load_file(top_filename)
             self.assertEqual(2, self.num_calls)
 
@@ -346,9 +343,8 @@ class TestLoadCache(unittest.TestCase):
             self.assertEqual(2, self.num_calls)
 
             # Touch the top-level file and ensure it's a cache miss.
-            time.sleep(self.delay_secs)
-            with open(other_filename, 'a'):
-                os.utime(other_filename)
+            with open(top_filename, 'a') as file:
+                file.write('\n')
             entries, errors, options_map = self.load_file(top_filename)
             self.assertEqual(3, self.num_calls)
 
@@ -370,3 +366,46 @@ class TestEncoding(unittest.TestCase):
         """).encode('latin1')
         entries, errors, options_map = loader.load_string(utf8_bytes, encoding='latin1')
         self.assertFalse(errors)
+
+
+class TestOptionsAggregation(unittest.TestCase):
+
+    def test_aggregate_operating_currencies(self):
+        with test_utils.tempdir() as tmp:
+            test_utils.create_temporary_files(tmp, {
+                'apples.beancount': """
+                  include "oranges.beancount"
+                  include "bananas.beancount"
+                  option "operating_currency" "USD"
+                """,
+                'oranges.beancount': """
+                  option "operating_currency" "CAD"
+                """,
+                'bananas.beancount': """
+                  option "operating_currency" "EUR"
+                """})
+            top_filename = path.join(tmp, 'apples.beancount')
+            other_filename = path.join(tmp, 'bananas.beancount')
+            entries, errors, options_map = loader.load_file(top_filename)
+
+            self.assertEqual({'USD', 'EUR', 'CAD'}, set(options_map['operating_currency']))
+
+    def test_aggregate_commodities(self):
+        with test_utils.tempdir() as tmp:
+            test_utils.create_temporary_files(tmp, {
+                'apples.beancount': """
+                  include "oranges.beancount"
+                  include "bananas.beancount"
+                  option "operating_currency" "USD"
+                """,
+                'oranges.beancount': """
+                  2015-12-12 open Assets:CA:Checking  CAD
+                """,
+                'bananas.beancount': """
+                  2015-12-13 open Assets:FR:Checking  EUR
+                """})
+            top_filename = path.join(tmp, 'apples.beancount')
+            other_filename = path.join(tmp, 'bananas.beancount')
+            entries, errors, options_map = loader.load_file(top_filename)
+
+            self.assertEqual({'EUR', 'CAD'}, options_map['commodities'])
