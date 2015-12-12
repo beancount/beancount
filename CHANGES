@@ -9,6 +9,11 @@ Note: This file contains only changes in the 'default' branch.
   - Made bean-web's --incognito mode replace integer numbers, not just
     fractional ones. (See issue #86).
 
+  - Output a warning when cdecimal isn't installed. This may occur on some
+    distribution which break up Python into multiple packages in order to allow
+    the user to avoid depending on a mpdec library install. Arch Linux suffers
+    from this problem.
+
 
 2015-12-11
 
