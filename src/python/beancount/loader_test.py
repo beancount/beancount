@@ -13,6 +13,7 @@ from os import path
 from beancount import loader
 from beancount.parser import parser
 from beancount.utils import test_utils
+from beancount.utils import file_utils
 
 
 TEST_INPUT = """
@@ -292,9 +293,6 @@ class TestLoadIncludes(unittest.TestCase):
 
 class TestLoadCache(unittest.TestCase):
 
-    # Delay before touch that guarantees a difference in file time.
-    delay_secs = 0.1
-
     def setUp(self):
         self.num_calls = 0
         self.load_file = loader.pickle_cache_function(loader.PICKLE_CACHE_FILENAME,
@@ -335,9 +333,7 @@ class TestLoadCache(unittest.TestCase):
             self.assertEqual(1, self.num_calls)
 
             # Touch the top-level file and ensure it's a cache miss.
-            time.sleep(self.delay_secs)
-            with open(top_filename, 'a'):
-                os.utime(top_filename)
+            file_utils.touch_file(top_filename)
             entries, errors, options_map = self.load_file(top_filename)
             self.assertEqual(2, self.num_calls)
 
@@ -346,9 +342,7 @@ class TestLoadCache(unittest.TestCase):
             self.assertEqual(2, self.num_calls)
 
             # Touch the top-level file and ensure it's a cache miss.
-            time.sleep(self.delay_secs)
-            with open(other_filename, 'a'):
-                os.utime(other_filename)
+            file_utils.touch_file(other_filename, top_filename)
             entries, errors, options_map = self.load_file(top_filename)
             self.assertEqual(3, self.num_calls)
 
