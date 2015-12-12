@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-12-12
+
+  - Made bean-web's --incognito mode replace integer numbers, not just
+    fractional ones. (See issue #86).
+
+
 2015-12-11
 
   - In the context page dedicated to rendering the details of an entry, render
