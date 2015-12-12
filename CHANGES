@@ -4,6 +4,14 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-12-11
+
+  - In the context page dedicated to rendering the details of an entry, render
+    an "Open" link on the upper right that can be clicked on in order to invoke
+    a desktop handler that will open a text editor to the containing file and at
+    the right line number.
+
+
 2015-12-10
 
   - Renamed beancount.reports.context.render_entry_context() to
