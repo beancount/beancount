@@ -333,7 +333,8 @@ class TestLoadCache(unittest.TestCase):
             self.assertEqual(1, self.num_calls)
 
             # Touch the top-level file and ensure it's a cache miss.
-            file_utils.touch_file(top_filename)
+            with open(top_filename, 'a') as file:
+                file.write('\n')
             entries, errors, options_map = self.load_file(top_filename)
             self.assertEqual(2, self.num_calls)
 
@@ -342,7 +343,8 @@ class TestLoadCache(unittest.TestCase):
             self.assertEqual(2, self.num_calls)
 
             # Touch the top-level file and ensure it's a cache miss.
-            file_utils.touch_file(other_filename, top_filename)
+            with open(top_filename, 'a') as file:
+                file.write('\n')
             entries, errors, options_map = self.load_file(top_filename)
             self.assertEqual(3, self.num_calls)
 
