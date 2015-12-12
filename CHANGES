@@ -62,6 +62,66 @@ Note: This file contains only changes in the 'default' branch.
       'position.CostSpec' for incomplete entries.
 
 
+2015-12-12
+
+  - Made bean-web's --incognito mode replace integer numbers, not just
+    fractional ones. (See issue #86).
+
+  - Output a warning when cdecimal isn't installed. This may occur on some
+    distribution which break up Python into multiple packages in order to allow
+    the user to avoid depending on a mpdec library install. Arch Linux suffers
+    from this problem.
+
+  - Made some improvements to the loader caching algorithm in order not to rely
+    on the percision of timestamps from the filesystem. Filesystems implement
+    one-second precision which is not sufficient in some case. I now cache both
+    the time and the size of files in order to check for a cache hit, and this
+    paves the way for hashing the contents of files as well eventually.
+
+  - Began implementing aggregation of some of the attributes of options map
+    across include files. Both "operating_currency" and "commodities" will be
+    aggregated correctly. (This was a request for beancount-web.)
+
+
+2015-12-11
+
+  - In the context page dedicated to rendering the details of an entry, render
+    an "Open" link on the upper right that can be clicked on in order to invoke
+    a desktop handler that will open a text editor to the containing file and at
+    the right line number.
+
+
+2015-12-10
+
+  - Renamed beancount.reports.context.render_entry_context() to
+    render_file_context() and implemented render_entry_context() to accept an
+    entry directly instead of a (filename, line-no), so that bug reporters can
+    insert some print statements. I also removed the dcontext instance required
+    to be passed, since all the callers were fetching it from options_map. This
+    should make it easier for those sending bug reports to insert quick calls to
+    render the context around a particular entry or file location.
+
+
+2015-12-09
+
+  - Fixed installation snafu: forgot to add the beancount.prices and bean-price
+    install to the setup.py file.
+
+
+2015-12-07
+
+  - Fixed a bug in the load cache, whereby the load cache would not update
+    itself on an included file. In order to do this, first I made the loader
+    always return the full correct set of unique filenames processed in a load
+    call, and then I used this to check the latest modified time.
+
+  - I also used this to fix a related bug in the bean-web watcher: If an
+    included file was being modified, bean-web would not reload itself
+    automatically. redstreet0 sent a pull request to highlight the problem
+    (thanks!):
+    https://bitbucket.org/blais/beancount/pull-requests/6/feature-include-files-refresh/diff
+
+
 2015-12-03
 
   - Added ROOT(account, num) account manipulation function to the shell.

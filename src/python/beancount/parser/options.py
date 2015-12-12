@@ -147,8 +147,9 @@ def Opt(name, default_value,
 _TYPES = account_types.DEFAULT_ACCOUNT_TYPES
 
 
-# Options that are not to be shown to the user.
-PRIVATE_OPTION_GROUPS = [
+# Options that consist of data output from the parsing process. These cannot be
+# input by the user.
+OUTPUT_OPTION_GROUPS = [
 
     OptGroup("""
       The name of the top-level Beancount input file parsed from which the
@@ -168,6 +169,14 @@ PRIVATE_OPTION_GROUPS = [
       can find out the entire list of files involved in a Beancount load
       procedure.
     """, [Opt("include", [], "some-other-file.beancount")]),
+
+    OptGroup("""
+      A hash of some of the input data. This is used to supplement the
+      timestamps of the input files for the purpose of load caching. We
+      typically hash the sizes of the files or perhaps even some of the
+      contents, or determine any of the inputs have changed beyond the
+      timestamps of the input files. (Internal use only; do not rely on this.)
+    """, [Opt("input_hash", "", "841ee3be9acef165feba2342")]),
 
     OptGroup("""
       An instance of DisplayContext, which is used to format numbers for output
@@ -435,7 +444,7 @@ PUBLIC_OPTION_GROUPS = [
     ]
 
 
-OPTION_GROUPS = PRIVATE_OPTION_GROUPS + PUBLIC_OPTION_GROUPS
+OPTION_GROUPS = OUTPUT_OPTION_GROUPS + PUBLIC_OPTION_GROUPS
 
 # A dict of the option names to their descriptors.
 OPTIONS = {desc.name: desc

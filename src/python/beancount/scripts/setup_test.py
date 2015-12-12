@@ -55,11 +55,22 @@ class TestSetup(test_utils.TestCase):
         """
         rootdir = test_utils.find_repository_root(__file__)
 
+        # Clean previously built "build" output.
+        command = [sys.executable, path.join(rootdir, 'setup.py'), 'clean', '--all']
+        subprocess_env = os.environ.copy()
+        if extra_env:
+            subprocess_env.update(extra_env)
+        pipe = subprocess.Popen(command, shell=False,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                cwd=rootdir,
+                                env=subprocess_env)
+        stdout, stderr = pipe.communicate()
+        self.assertEqual(0, pipe.returncode, stderr)
+
         # Install in a temporary directory.
-        command = [sys.executable,
-                   path.join(rootdir, 'setup.py'),
-                   'install',
-                   '--prefix={}'.format(installdir)]
+        command = [sys.executable, path.join(rootdir, 'setup.py'),
+                   'install', '--prefix={}'.format(installdir)]
         subprocess_env = os.environ.copy()
         if extra_env:
             subprocess_env.update(extra_env)
@@ -81,7 +92,21 @@ class TestSetup(test_utils.TestCase):
         while path.basename(libdir) != 'site-packages':
             libdir = path.join(libdir, os.listdir(libdir)[0])
 
-        # Run some basic commands using the newly installed version.
+        # Run at least with the --help option for all the installed tools.
+        for binname in os.listdir(bindir):
+            # Skip tools with optional dependencies.
+            if not binname.startswith('bean-'):
+                continue
+            command = [path.join(bindir, binname), '--help']
+            pipe = subprocess.Popen(command, shell=False,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    env={'PYTHONPATH': path.join(libdir)},
+                                    cwd=rootdir)
+            stdout, stderr = pipe.communicate()
+            self.assertEqual(0, pipe.returncode, stderr)
+
+        # Run some basic commands using the main tools from newly installed version.
         example_filename = path.join(rootdir, 'examples/example.beancount')
 
         # Run bean-check.

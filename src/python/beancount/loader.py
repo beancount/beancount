@@ -3,6 +3,7 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import functools
+import hashlib
 import textwrap
 import importlib
 import collections
@@ -12,6 +13,7 @@ import itertools
 import os
 import pickle
 import warnings
+import struct
 import time
 from os import path
 
@@ -116,7 +118,7 @@ def pickle_cache_function(pattern, time_threshold, function):
             # Check that the latest timestamp has not been written after the
             # cache file.
             entries, errors, options_map = result
-            if not needs_refresh(options_map, path.getmtime(cache_filename)):
+            if not needs_refresh(options_map):
                 # All timestamps are legit; cache hit.
                 return result
 
@@ -151,7 +153,7 @@ if os.getenv('BEANCOUNT_DISABLE_LOAD_CACHE') is None:
                                       load_file)
 
 
-def needs_refresh(options_map, sentinel_mtime):
+def needs_refresh(options_map):
     """Predicate that returns true if at least one of the input files may have changed.
 
     Args:
@@ -160,15 +162,24 @@ def needs_refresh(options_map, sentinel_mtime):
     Returns:
       A boolean, true if the input is obsoleted by changes in the input files.
     """
-    if options_map is None or sentinel_mtime is None:
+    if options_map is None:
         return True
-    filenames = options_map['include']
-    if not filenames:
-        return True
-    max_mtime = max(map(path.getmtime, filenames))
-    if max_mtime > sentinel_mtime:
-        return True
-    return False
+    input_hash = compute_input_hash(options_map['include'])
+    return input_hash != options_map['input_hash']
+
+
+def compute_input_hash(filenames):
+    """Compute a hash of the input data.
+
+    Args:
+      filenames: A list of input files. Order is not relevant.
+    """
+    md5 = hashlib.md5()
+    for filename in sorted(filenames):
+        md5.update(filename.encode('utf8'))
+        stat = os.stat(filename)
+        md5.update(struct.pack('dd', stat.st_mtime_ns, stat.st_size))
+    return md5.hexdigest()
 
 
 def load_string(string, log_timings=None, log_errors=None, extra_validations=None,
@@ -291,6 +302,8 @@ def _parse_recursive(sources, log_timings, encoding=None):
             # occur.
             if is_top_level:
                 options_map = src_options_map
+            else:
+                aggregate_options_map(options_map, src_options_map)
 
             # Add includes to the list of sources to process.
             for include_filename in src_options_map['include']:
@@ -309,6 +322,24 @@ def _parse_recursive(sources, log_timings, encoding=None):
     options_map['include'] = sorted(filenames_seen)
 
     return entries, parse_errors, options_map
+
+
+def aggregate_options_map(options_map, src_options_map):
+    """Aggregate some of the attributes of options map.
+
+    Args:
+      options_map: The target map in which we want to aggregate attributes.
+        Note: This value is mutated in-place.
+      src_options_map: A source map whose values we'd like to see aggregated.
+    """
+    op_currencies = options_map["operating_currency"]
+    for currency in src_options_map["operating_currency"]:
+        if currency not in op_currencies:
+            op_currencies.append(currency)
+
+    commodities = options_map["commodities"]
+    for currency in src_options_map["commodities"]:
+        commodities.add(currency)
 
 
 def _load(sources, log_timings, log_errors, extra_validations, encoding):
@@ -371,6 +402,9 @@ def _load(sources, log_timings, log_errors, extra_validations, encoding):
             error_io = io.StringIO()
             printer.print_errors(errors, file=error_io)
             log_errors(error_io.getvalue())
+
+    # Compute the input hash.
+    options_map['input_hash'] = compute_input_hash(options_map['include'])
 
     return entries, errors, options_map
 
