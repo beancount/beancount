@@ -302,6 +302,8 @@ def _parse_recursive(sources, log_timings, encoding=None):
             # occur.
             if is_top_level:
                 options_map = src_options_map
+            else:
+                aggregate_options_map(options_map, src_options_map)
 
             # Add includes to the list of sources to process.
             for include_filename in src_options_map['include']:
@@ -320,6 +322,24 @@ def _parse_recursive(sources, log_timings, encoding=None):
     options_map['include'] = sorted(filenames_seen)
 
     return entries, parse_errors, options_map
+
+
+def aggregate_options_map(options_map, src_options_map):
+    """Aggregate some of the attributes of options map.
+
+    Args:
+      options_map: The target map in which we want to aggregate attributes.
+        Note: This value is mutated in-place.
+      src_options_map: A source map whose values we'd like to see aggregated.
+    """
+    op_currencies = options_map["operating_currency"]
+    for currency in src_options_map["operating_currency"]:
+        if currency not in op_currencies:
+            op_currencies.append(currency)
+
+    commodities = options_map["commodities"]
+    for currency in src_options_map["commodities"]:
+        commodities.add(currency)
 
 
 def _load(sources, log_timings, log_errors, extra_validations, encoding):

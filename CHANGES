@@ -14,6 +14,16 @@ Note: This file contains only changes in the 'default' branch.
     the user to avoid depending on a mpdec library install. Arch Linux suffers
     from this problem.
 
+  - Made some improvements to the loader caching algorithm in order not to rely
+    on the percision of timestamps from the filesystem. Filesystems implement
+    one-second precision which is not sufficient in some case. I now cache both
+    the time and the size of files in order to check for a cache hit, and this
+    paves the way for hashing the contents of files as well eventually.
+
+  - Began implementing aggregation of some of the attributes of options map
+    across include files. Both "operating_currency" and "commodities" will be
+    aggregated correctly. (This was a request for beancount-web.)
+
 
 2015-12-11
 
