@@ -63,7 +63,7 @@ def cost_to_str(cost, dformat, detail=True):
     strlist = []
 
     if isinstance(cost, Cost):
-        if cost.number:
+        if cost.number is not None:
             strlist.append(Amount(cost.number, cost.currency).to_string(dformat))
         if detail:
             if cost.date:
