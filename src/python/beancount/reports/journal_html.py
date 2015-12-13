@@ -200,7 +200,7 @@ def html_entries_table_with_balance(oss, txn_postings, formatter, render_posting
                 '''.format(' '.join(classes),
                            posting.flag or '',
                            formatter.render_account(posting.account),
-                           position.Position(posting.units, posting.cost),
+                           position.to_string(posting),
                            posting.price or '',
                            interpolate.get_posting_weight(posting)))
 

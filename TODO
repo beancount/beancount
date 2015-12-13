@@ -1,11 +1,5 @@
 -*- mode: org -*-
 beancount: TODO
-* Remove Position
-
-  - Remove the creation of Position() temporaries for the sole purpose of
-    rendering. Posting should render as well.
-
-
 * Event
 
   - Should we validate that the query is legit before we even run it? I think

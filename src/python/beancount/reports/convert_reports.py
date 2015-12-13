@@ -192,8 +192,7 @@ class LedgerPrinter:
 
         flag_posting = '{:}{:62}'.format(flag, posting.account)
 
-        pos = position.Position(posting.units, posting.cost)
-        pos_str = (pos.to_string(self.dformat, detail=False)
+        pos_str = (position.to_string(posting, self.dformat, detail=False)
                    if isinstance(posting.units, Amount)
                    else '')
 
@@ -295,8 +294,7 @@ class HLedgerPrinter(LedgerPrinter):
 
         flag_posting = '{:}{:62}'.format(flag, posting.account)
 
-        pos = position.Position(posting.units, posting.cost)
-        pos_str = (pos.to_string(self.dformat, detail=False)
+        pos_str = (position.to_string(posting, self.dformat, detail=False)
                    if isinstance(posting.units, Amount)
                    else '')
         if pos_str:

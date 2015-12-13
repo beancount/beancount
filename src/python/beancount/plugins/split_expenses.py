@@ -80,10 +80,8 @@ def split_expenses(entries, options_map, config):
                     not is_individual_account(posting.account)):
 
                     # Split this posting into multiple postings.
-                    split_position = position.Position(posting.units, posting.cost)
-                    split_position.set_units(
-                        amount.Amount(split_position.units.number / len(members),
-                                      split_position.units.currency))
+                    split_units = amount.Amount(posting.units.number / len(members),
+                                                posting.units.currency)
 
                     for member in members:
                         # Mark the account as new if never seen before.
@@ -102,8 +100,8 @@ def split_expenses(entries, options_map, config):
                         new_postings.append(
                             posting._replace(meta=meta,
                                              account=subaccount,
-                                             units=split_position.units,
-                                             cost=split_position.cost))
+                                             units=split_units,
+                                             cost=posting.cost))
                 else:
                     new_postings.append(posting)
 

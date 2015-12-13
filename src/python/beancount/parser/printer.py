@@ -217,8 +217,7 @@ class EntryPrinter:
         # Render a string with the amount and cost and optional price, if
         # present. Also render a string with the weight.
         if isinstance(posting.units, amount.Amount):
-            pos = position.Position(posting.units, posting.cost)
-            position_str = pos.to_string(self.dformat)
+            position_str = position.to_string(posting, self.dformat)
             # Note: we render weights at maximum precision, for debugging.
             weight_str = str(interpolate.get_posting_weight(posting))
         else:

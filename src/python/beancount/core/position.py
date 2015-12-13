@@ -122,6 +122,24 @@ def get_position(posting):
     return Position(posting.units, posting.cost)
 
 
+def to_string(pos, dformat=DEFAULT_FORMATTER, detail=True):
+    """Render the Position or Posting instance to a string.
+
+    Args:
+      pos: An instance of Position or Posting.
+      dformat: An instance of DisplayFormatter.
+      detail: A boolean, true if we should only render the lot details
+       beyond the cost (lot-date, label, etc.). If false, we only render
+       the cost, if present.
+    Returns:
+      A string, the rendered position.
+    """
+    pos_str = pos.units.to_string(dformat)
+    if pos.cost is not None:
+        pos_str = '{} {{{}}}'.format(pos_str, cost_to_str(pos.cost, dformat, detail))
+    return pos_str
+
+
 class Position:
     """A 'Position' is a pair of units and optional cost.
     This is used to track inventories.
@@ -152,20 +170,9 @@ class Position:
         return hash((self.units, self.cost))
 
     def to_string(self, dformat=DEFAULT_FORMATTER, detail=True):
-        """Render the position to a string.
-
-        Args:
-          dformat: An instance of DisplayFormatter.
-          detail: A boolean, true if we should only render the lot details
-           beyond the cost (lot-date, label, etc.). If false, we only render
-           the cost, if present.
-        Returns:
-          A string, the rendered position.
+        """Render the position to a string.See to_string() for details.
         """
-        pos_str = self.units.to_string(dformat)
-        if self.cost is not None:
-            pos_str = '{} {{{}}}'.format(pos_str, cost_to_str(self.cost, dformat, detail))
-        return pos_str
+        return to_string(self, dformat, detail)
 
     def __str__(self):
         """Return a string representation of the position.
