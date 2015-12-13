@@ -82,6 +82,8 @@ Note: This file contains only changes in the 'default' branch.
     across include files. Both "operating_currency" and "commodities" will be
     aggregated correctly. (This was a request for beancount-web.)
 
+  - Fixed flaky test that failed only in homecooked install of Python 3.5.1.
+
 
 2015-12-11
 

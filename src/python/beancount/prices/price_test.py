@@ -5,6 +5,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import textwrap
 import datetime
 import unittest
+import shutil
 import tempfile
 import os
 from os import path
@@ -81,7 +82,8 @@ class TestCache(unittest.TestCase):
             self.assertTrue(source.get_historical_price.called)
 
     def test_fetch_cached_price__latest(self):
-        tmpfile = path.join(tempfile.gettempdir(), 'prices.cache')
+        tmpdir = tempfile.mkdtemp()
+        tmpfile = path.join(tmpdir, 'prices.cache')
         try:
             price.setup_cache(tmpfile, False)
 
@@ -114,12 +116,13 @@ class TestCache(unittest.TestCase):
                 self.assertEqual(1, len(price._cache))
                 self.assertEqual(71, result)
         finally:
-            if path.exists(tmpfile):
-                os.remove(tmpfile)
+            if path.exists(tmpdir):
+                shutil.rmtree(tmpdir)
             price.reset_cache()
 
     def test_fetch_cached_price__historical(self):
-        tmpfile = path.join(tempfile.gettempdir(), 'prices.cache')
+        tmpdir = tempfile.mkdtemp()
+        tmpfile = path.join(tmpdir, 'prices.cache')
         try:
             price.setup_cache(tmpfile, False)
 
@@ -142,8 +145,8 @@ class TestCache(unittest.TestCase):
             self.assertEqual(1, len(price._cache))
             self.assertEqual(42, result)
         finally:
-            if path.exists(tmpfile):
-                os.remove(tmpfile)
+            if path.exists(tmpdir):
+                shutil.rmtree(tmpdir)
             price.reset_cache()
 
 
