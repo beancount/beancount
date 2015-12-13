@@ -2,15 +2,11 @@
 beancount: TODO
 * Remove Position
 
-  - Complete removing the .position attribute to Posting.
-  - Complete removing the _replace(position=) to Posting.
-  - Write a script to check that the number of parameters to Posting()
-    everywhere is correct.
   - Remove the creation of Position() temporaries for the sole purpose of
     rendering. Posting should render as well.
   - Remove instances of Position temporaries for the sole purpose of calling
     .get_weight().
-  - Make the grammar not even generate the position.
+  - Make the grammar not even generate the position object.
   - Merge b.c.xposition into b.c.position.
 
 
