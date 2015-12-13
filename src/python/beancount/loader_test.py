@@ -295,13 +295,16 @@ class TestLoadCache(unittest.TestCase):
 
     def setUp(self):
         self.num_calls = 0
-        self.load_file = loader.pickle_cache_function(loader.PICKLE_CACHE_FILENAME,
-                                                      0,  # No time threshold.
-                                                      self._load_file)
+        mock.patch('beancount.loader._load_file',
+                   loader.pickle_cache_function(loader.PICKLE_CACHE_FILENAME,
+                                                0,  # No time threshold.
+                                                self._load_file)).start()
+    def tearDown(self):
+        mock.patch.stopall()
 
-    def _load_file(self, *args, **kw):
+    def _load_file(self, filename, *args, **kw):
         self.num_calls += 1
-        return loader._uncached_load_file(*args, **kw)
+        return loader._load([(filename, True)], *args, **kw)
 
     def test_load_cache(self):
         # Create an initial set of files and load file, thus creating a cache.
@@ -320,7 +323,7 @@ class TestLoadCache(unittest.TestCase):
                 """})
             top_filename = path.join(tmp, 'apples.beancount')
             other_filename = path.join(tmp, 'bananas.beancount')
-            entries, errors, options_map = self.load_file(top_filename)
+            entries, errors, options_map = loader.load_file(top_filename)
             self.assertFalse(errors)
             self.assertEqual(3, len(entries))
             self.assertEqual(1, self.num_calls)
@@ -329,23 +332,23 @@ class TestLoadCache(unittest.TestCase):
             self.assertTrue(path.exists(path.join(tmp, '.apples.beancount.picklecache')))
 
             # Load the root file again, make sure the cache is being hit.
-            entries, errors, options_map = self.load_file(top_filename)
+            entries, errors, options_map = loader.load_file(top_filename)
             self.assertEqual(1, self.num_calls)
 
             # Touch the top-level file and ensure it's a cache miss.
             with open(top_filename, 'a') as file:
                 file.write('\n')
-            entries, errors, options_map = self.load_file(top_filename)
+            entries, errors, options_map = loader.load_file(top_filename)
             self.assertEqual(2, self.num_calls)
 
             # Load the root file again, make sure the cache is being hit.
-            entries, errors, options_map = self.load_file(top_filename)
+            entries, errors, options_map = loader.load_file(top_filename)
             self.assertEqual(2, self.num_calls)
 
             # Touch the top-level file and ensure it's a cache miss.
             with open(top_filename, 'a') as file:
                 file.write('\n')
-            entries, errors, options_map = self.load_file(top_filename)
+            entries, errors, options_map = loader.load_file(top_filename)
             self.assertEqual(3, self.num_calls)
 
 

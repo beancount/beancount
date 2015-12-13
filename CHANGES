@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-12-13
+
+  - Fixed a minor bug with the loader cache whereby errors weren't getting
+    emitted on a cache hit (Issue #92).
+
+
 2015-12-12
 
   - Made bean-web's --incognito mode replace integer numbers, not just
