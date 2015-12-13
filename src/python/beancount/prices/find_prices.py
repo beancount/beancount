@@ -228,9 +228,10 @@ def find_currencies_at_cost(entries):
         if not isinstance(entry, data.Transaction):
             continue
         for posting in entry.postings:
-            lot = posting.position.lot
-            if lot.cost:
-                currencies.add((lot.currency, lot.cost.currency))
+            pos = posting.position
+            cost = pos.cost
+            if cost is not None and cost.number is not None:
+                currencies.add((pos.units.currency, cost.currency))
     return currencies
 
 
@@ -254,11 +255,11 @@ def find_currencies_converted(entries, date=None):
         if date and entry.date >= date:
             break
         for posting in entry.postings:
-            lot = posting.position.lot
+            pos = posting.position
             price = posting.price
-            if lot.cost is not None or price is None:
+            if pos.cost is not None or price is None:
                 continue
-            currencies.add((lot.currency, price.currency))
+            currencies.add((pos.units.currency, price.currency))
     return currencies
 
 
@@ -304,13 +305,12 @@ def find_balance_currencies(entries, date=None):
     balances, _ = summarize.balance_by_account(entries, date)
     for _, balance in balances.items():
         for pos in balance:
-            lot = pos.lot
-            if lot.cost is not None:
+            if pos.cost is not None:
                 # Add currencies held at cost.
-                currencies.add((lot.currency, lot.cost.currency))
+                currencies.add((pos.units.currency, pos.cost.currency))
             else:
                 # Add regular currencies.
-                currencies_on_books.add(lot.currency)
+                currencies_on_books.add(pos.units.currency)
 
     # Create currency pairs from the currencies which are on account balances.
     # In order to figure out the the quote currencies, we use the list of price

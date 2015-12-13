@@ -84,6 +84,8 @@ Note: This file contains only changes in the 'default' branch.
 
   - Fixed flaky test that failed only in homecooked install of Python 3.5.1.
 
+  - Fixed a minor bug that would not print out costs with zero amounts.
+
 
 2015-12-11
 
