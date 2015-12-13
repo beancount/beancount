@@ -219,21 +219,14 @@ class TestPosition(unittest.TestCase):
         pos = Position(A("10 USD"), None)
         self.assertEqual(A('10 USD'), pos.units)
         self.assertEqual(A('10 USD'), pos.get_cost())
-        self.assertEqual(A('10 USD'), pos.get_weight())
-        self.assertEqual(A('16 AUD'), pos.get_weight(A('1.6 AUD')))
 
         pos = Position(A("10 USD"), Cost(D('1.5'), 'AUD', None, None))
         self.assertEqual(A('10 USD'), pos.units)
         self.assertEqual(A('15 AUD'), pos.get_cost())
-        self.assertEqual(A('15 AUD'), pos.get_weight())
-        self.assertEqual(A('15 AUD'), pos.get_weight(A('1.6 AUD')))
 
         cost_pos = pos.at_cost()
         self.assertEqual(A('15 AUD'), cost_pos.units)
         self.assertEqual(A('15 AUD'), cost_pos.get_cost())
-        self.assertEqual(A('15 AUD'), cost_pos.get_weight())
-        with self.assertRaises(AssertionError):
-            self.assertEqual(A('15 AUD'), cost_pos.get_weight(A('1.6 AUD')))
 
     def test_add(self):
         pos = Position(A("28372 USD"), Cost(D('10'), 'AUD', None, None))

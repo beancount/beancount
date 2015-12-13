@@ -263,28 +263,6 @@ class Position:
         else:
             return amount_mult(cost, self.units.number)
 
-    def get_weight(self, price=None):
-        """Compute the weight of the position, with the given price.
-
-        Returns:
-          An instance of Amount.
-        """
-        # It the self has a cost, use that to balance this posting.
-        if self.cost is not None:
-            amount = amount_mult(self.cost, self.units.number)
-
-        # If there is a price, use that to balance this posting.
-        elif price is not None:
-            assert self.units.currency != price.currency, (
-                "Invalid currency for price: {} in {}".format(self, price))
-            amount = amount_mult(price, self.units.number)
-
-        # Otherwise, just use the units.
-        else:
-            amount = self.units
-
-        return amount
-
     def at_cost(self):
         """Return a Position representing the cost of this position. See get_cost().
 

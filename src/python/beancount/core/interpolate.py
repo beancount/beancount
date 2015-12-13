@@ -418,7 +418,7 @@ def get_incomplete_postings(entry, options_map):
                 has_inserted = True
 
                 # Update the residuals inventory.
-                weight = pos.get_weight(None)
+                weight = pos.get_cost()
                 residual.add_amount(weight)
 
         postings[index:index+1] = new_postings
