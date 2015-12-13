@@ -228,7 +228,7 @@ def find_currencies_at_cost(entries):
         if not isinstance(entry, data.Transaction):
             continue
         for posting in entry.postings:
-            if posting.cost:
+            if posting.cost is not None and posting.cost.number is not None:
                 currencies.add((posting.units.currency, posting.cost.currency))
     return currencies
 
