@@ -471,19 +471,6 @@ class Builder(lexer.LexBuilder):
         """
         return CostSpec(ZERO, cost.number, cost.currency, date, None, False)
 
-    def position(self, filename, lineno, amount, cost_spec):
-        """Process a position grammar rule.
-
-        Args:
-          filename: The current filename.
-          lineno: The current line number.
-          amount: An instance of Amount for the position.
-          cost_spec: An instance of CostSpec.
-        Returns:
-          A new instance of Position.
-        """
-        return Position(amount, cost_spec)
-
     def handle_list(self, object_list, new_object):
         """Handle a recursive list grammar rule, generically.
 
@@ -700,7 +687,7 @@ class Builder(lexer.LexBuilder):
         """
         return KeyValue(key, value)
 
-    def posting(self, filename, lineno, account, position, price, istotal, flag):
+    def posting(self, filename, lineno, account, units, cost, price, istotal, flag):
         """Process a posting grammar rule.
 
         Args:
@@ -715,13 +702,6 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Posting object, with no parent entry.
         """
-        if isinstance(position, Position):
-            units = position.units
-            cost = position.cost
-        else:
-            units = position
-            cost = None
-
         # Prices may not be negative.
         if not __allow_negative_prices__:
             if price and isinstance(price.number, Decimal) and price.number < ZERO:

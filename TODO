@@ -5,8 +5,6 @@ beancount: TODO
   - Remove the creation of Position() temporaries for the sole purpose of
     rendering. Posting should render as well.
 
-  - Make the grammar not even generate the position object.
-
 
 * Event
 
