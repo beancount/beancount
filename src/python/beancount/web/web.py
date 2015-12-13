@@ -387,17 +387,17 @@ def context_(ehash=None):
     else:
         entry = matching_entries[0]
 
+        # Render the context.
+        oss.write("<pre>\n")
+        oss.write(context.render_entry_context(app.entries, app.options, entry))
+        oss.write("</pre>\n")
+
         # Render the filelinks.
         if FILELINK_PROTOCOL:
             meta = entry.meta
             uri = FILELINK_PROTOCOL.format(filename=meta.get('filename'),
                                            lineno=meta.get('lineno'))
             oss.write('<div class="filelink"><a href="{}">{}</a></div>'.format(uri, 'Open'))
-
-        # Render the context.
-        oss.write("<pre>\n")
-        oss.write(context.render_entry_context(app.entries, app.options, entry))
-        oss.write("</pre>\n")
 
     return render_global(
         pagetitle="Context: {}".format(ehash),

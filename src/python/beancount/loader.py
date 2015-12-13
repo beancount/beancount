@@ -165,7 +165,7 @@ def needs_refresh(options_map):
     if options_map is None:
         return True
     input_hash = compute_input_hash(options_map['include'])
-    return input_hash != options_map['input_hash']
+    return 'input_hash' not in options_map or input_hash != options_map['input_hash']
 
 
 def compute_input_hash(filenames):
