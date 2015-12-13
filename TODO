@@ -7,8 +7,6 @@ beancount: TODO
 
   - Make the grammar not even generate the position object.
 
-  - Merge b.c.xposition into b.c.position.
-
 
 * Event
 
