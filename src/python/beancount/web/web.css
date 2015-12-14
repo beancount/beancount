@@ -381,11 +381,8 @@ div#overlay {
     border-radius: 10px;
 }
 
-/* div#overlay { */
-/*     -webkit-animation: fadeaway 2s; */
-/* } */
 
-/* @-webkit-keyframes fadeaway { */
-/*       0% { opacity: 1;  } */
-/*     100% { opacity: 0;  } */
-/* } */
+/* Entry context */
+
+div.filelink {
+}

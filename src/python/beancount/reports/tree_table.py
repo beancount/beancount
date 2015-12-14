@@ -65,7 +65,7 @@ def tree_table(oss, real_account, formatter, header=None, classes=None):
 
     if header:
         write('<thead>')
-        write('</tr>')
+        write('<tr>')
         header_iter = iter(header)
         write('<th class="first">{}</th>'.format(next(header_iter)))
         for column in header_iter:

@@ -4,6 +4,170 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-12-13
+
+  - Fixed a minor bug with the loader cache whereby errors weren't getting
+    emitted on a cache hit (Issue #92).
+
+
+2015-12-12
+
+  - Made bean-web's --incognito mode replace integer numbers, not just
+    fractional ones. (See issue #86).
+
+  - Output a warning when cdecimal isn't installed. This may occur on some
+    distribution which break up Python into multiple packages in order to allow
+    the user to avoid depending on a mpdec library install. Arch Linux suffers
+    from this problem.
+
+  - Made some improvements to the loader caching algorithm in order not to rely
+    on the percision of timestamps from the filesystem. Filesystems implement
+    one-second precision which is not sufficient in some case. I now cache both
+    the time and the size of files in order to check for a cache hit, and this
+    paves the way for hashing the contents of files as well eventually.
+
+  - Began implementing aggregation of some of the attributes of options map
+    across include files. Both "operating_currency" and "commodities" will be
+    aggregated correctly. (This was a request for beancount-web.)
+
+  - Fixed flaky test that failed only in homecooked install of Python 3.5.1.
+
+  - Fixed a minor bug that would not print out costs with zero amounts.
+
+
+2015-12-11
+
+  - In the context page dedicated to rendering the details of an entry, render
+    an "Open" link on the upper right that can be clicked on in order to invoke
+    a desktop handler that will open a text editor to the containing file and at
+    the right line number.
+
+
+2015-12-10
+
+  - Renamed beancount.reports.context.render_entry_context() to
+    render_file_context() and implemented render_entry_context() to accept an
+    entry directly instead of a (filename, line-no), so that bug reporters can
+    insert some print statements. I also removed the dcontext instance required
+    to be passed, since all the callers were fetching it from options_map. This
+    should make it easier for those sending bug reports to insert quick calls to
+    render the context around a particular entry or file location.
+
+
+2015-12-09
+
+  - Fixed installation snafu: forgot to add the beancount.prices and bean-price
+    install to the setup.py file.
+
+
+2015-12-07
+
+  - Fixed a bug in the load cache, whereby the load cache would not update
+    itself on an included file. In order to do this, first I made the loader
+    always return the full correct set of unique filenames processed in a load
+    call, and then I used this to check the latest modified time.
+
+  - I also used this to fix a related bug in the bean-web watcher: If an
+    included file was being modified, bean-web would not reload itself
+    automatically. redstreet0 sent a pull request to highlight the problem
+    (thanks!):
+    https://bitbucket.org/blais/beancount/pull-requests/6/feature-include-files-refresh/diff
+
+
+2015-12-03
+
+  - Added ROOT(account, num) account manipulation function to the shell.
+
+
+2015-12-02
+
+  - Fixed issue #84: The sorting of entries from multiple files was incorrectly
+    placed, due to recent changes merged from the booking branch.
+
+  - Fixed a bug deleting the load cache (was using an invalid filename).
+
+
+2015-11-29
+
+  - Made the pickle load cache enabled by default. This means you can now remove
+    the BEANCOUNT_LOAD_CACHE environment variable. The load cache will be
+    written out automatically, but only if it takes more than the time threshold
+    (1 sec) to load a Beancount file. If it takes less than this time, no cache
+    is written. (This saves the creation of these pesky crumbs for files it
+    doesn't matter for.) If you would like to always disable the load cache, set
+    the environment variable BEANCOUNT_DISABLE_LOAD_CACHE. I don't recommend
+    it--this works well and for large files makes loading much, much faster.
+
+
+2015-11-28
+
+  - Implemented a script used to fetch prices online and output them in
+    Beancount input format. This script is able not only to take an explicit
+    list of prices to get, but also able to read a Beancount input file and
+    figure out the list of commodities held at a particular point in time and
+    fetch only those prices. A "price" metadata field on a Commodity directive
+    is used to specify how and where to get prices from. It comes with support
+    for Google Finance and Yahoo! Finance price sources and the syntax supports
+    custom-written Python modules so you can write your own price fetching
+    extensions, that integrate with the price fetching tool.
+
+    The new code is located under "src/python/beancount/prices" and this new
+    tool is documented in http://furius.ca/beancount/doc/prices.
+
+    (Note: This is brand new code, probably imperfect, but I tried to keep this
+    simple yet complex enough to be practical. I've been using a variant of it
+    for a while, I'm going to merge this now and use it myself, and I hope it
+    works for others.)
+
+
+2015-11-26
+
+  - I redesigned the portfolio export process in order to (a) simplify it
+    greatly (the process was a bit confusing, between the use of three metadat
+    fields: "ticker", "export" and "quote"), and (b) to separate it entirely
+    from the upcoming price fetching script metadata.
+
+    The new outcome is very similiar, however, except it uses only a SINGLE
+    metadata field: "export", and the documentation has been rewritten to
+    reflect this:
+    https://docs.google.com/document/d/1mNyE_ONuyEkF_I2l6V_AoAU5HJgI654AOBhHsnNPPqw/edit#
+
+    If you have an existing file, here's what you need to do to it:
+
+    * Remove all the 'quote' metadata. You won't need it.
+    * If you have 'ticker' metadata: convert those to 'export'.
+    * If you have 'export' metadata: keep it.
+    * If you had an 'export' metadata with a "MONEY" spec, move that into the
+      'export' field after the symbol to export to.
+
+    The example has been ported, so you can refer to that as well.
+
+    I think the new process is much simpler to understand and the documentation
+    shorter and easier to read. It should be a trivial exercise to convert one's
+    input file to the newer format.
+
+
+2015-11-22
+
+  - Removed beancount.core.data.AttrDict and replace it by a regular dict. This
+    removes some annoyances when pickling and copying metadata. Metadata is now
+    represented by a plain old dict. (Fixes issue #79.)
+
+
+2015-11-09
+
+  - Implemented a simple pickle-date on beancount.loader.load_file(), which will
+    reload the parsed & processed contents of a top-level file if a cache file
+    is present and more recent than the file itself, or update the contents of
+    the cache after loading if not. (This works a bit like .pyc byte-compilation
+    in Python or .elc in Emacs LISP.) This makes the loading of large files
+    multiple times ~15x faster, which is a big deal since Beancount has become a
+    little bit slow (I need to spend time optimizing at some point).
+
+    This feature is a bit experimental, so for now it only gets turned on if the
+    BEANCOUNT_LOAD_CACHE environment variable is set.
+
+
 2015-10-04
 
   - Implemented --output=<filename> option for bean-query tool.
