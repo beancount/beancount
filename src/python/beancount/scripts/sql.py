@@ -93,9 +93,8 @@ def output_transactions(connection, entries):
 
             for posting in entry.postings:
                 pid = next(postings_count)
-                position = posting.position
-                units = position.units
-                cost = position.cost
+                units = posting.units
+                cost = posting.cost
                 price = posting.price
                 connection.execute("""
                   INSERT INTO postings VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);

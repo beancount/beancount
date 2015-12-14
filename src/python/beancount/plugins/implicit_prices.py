@@ -44,11 +44,12 @@ def add_implicit_prices(entries, unused_options_map):
         if isinstance(entry, Transaction):
             # Inspect all the postings in the transaction.
             for posting in entry.postings:
-                pos = posting.position
+                units = posting.units
+                cost = posting.cost
 
                 # Check if the position is matching against an existing
                 # position.
-                _, booking = balances[posting.account].add_position(posting.position)
+                _, booking = balances[posting.account].add_position(posting)
 
                 # Add prices when they're explicitly specified on a posting. An
                 # explicitly specified price may occur in a conversion, e.g.
@@ -59,20 +60,20 @@ def add_implicit_prices(entries, unused_options_map):
                 if posting.price is not None:
                     meta = data.new_metadata(entry.meta["filename"], entry.meta["lineno"])
                     price_entry = data.Price(meta, entry.date,
-                                             pos.units.currency,
+                                             units.currency,
                                              posting.price)
 
                 # Add costs, when we're not matching against an existing
                 # position. This happens when we're just specifying the cost,
                 # e.g.
                 #      Assets:Account    100 HOOL {564.20}
-                elif (pos.cost is not None and
+                elif (cost is not None and
                       booking != inventory.Booking.REDUCED):
                     meta = data.new_metadata(entry.meta["filename"], entry.meta["lineno"])
                     price_entry = data.Price(meta, entry.date,
-                                             pos.units.currency,
-                                             amount.Amount(pos.cost.number,
-                                                           pos.cost.currency))
+                                             units.currency,
+                                             amount.Amount(cost.number,
+                                                           cost.currency))
 
                 else:
                     price_entry = None

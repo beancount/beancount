@@ -461,7 +461,7 @@ class TestRealOther(test_utils.TestCase):
             if exp_account:
                 self.assertEqual(exp_account, entpost.account)
             if exp_number:
-                self.assertEqual(D(exp_number), entpost.position.units.number)
+                self.assertEqual(D(exp_number), entpost.units.number)
 
     def test_compare_realizations(self):
         # Check that value comparison uses our balance comparison properly.

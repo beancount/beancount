@@ -100,12 +100,13 @@ def get_holdings_entries(entries, options_map):
                                  None, "", None, None, [])
 
         # Convert the holding to a position.
-        position_ = holdings.holding_to_position(holding)
+        pos = holdings.holding_to_position(holding)
+        entry.postings.append(
+            data.Posting(holding.account, pos.units, pos.cost, None, None, None))
 
+        pos_cost = -pos.at_cost()
         entry.postings.append(
-            data.Posting(holding.account, position_, None, None, None))
-        entry.postings.append(
-            data.Posting(equity_account, -position_.at_cost(), None, None, None))
+            data.Posting(equity_account, pos_cost.units, pos_cost.cost, None, None, None))
 
         holdings_entries.append(entry)
 

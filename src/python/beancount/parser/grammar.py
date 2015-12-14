@@ -471,19 +471,6 @@ class Builder(lexer.LexBuilder):
         """
         return CostSpec(ZERO, cost.number, cost.currency, date, None, False)
 
-    def position(self, filename, lineno, amount, cost_spec):
-        """Process a position grammar rule.
-
-        Args:
-          filename: The current filename.
-          lineno: The current line number.
-          amount: An instance of Amount for the position.
-          cost_spec: An instance of CostSpec.
-        Returns:
-          A new instance of Position.
-        """
-        return Position(amount, cost_spec)
-
     def handle_list(self, object_list, new_object):
         """Handle a recursive list grammar rule, generically.
 
@@ -700,7 +687,7 @@ class Builder(lexer.LexBuilder):
         """
         return KeyValue(key, value)
 
-    def posting(self, filename, lineno, account, position, price, istotal, flag):
+    def posting(self, filename, lineno, account, units, cost, price, istotal, flag):
         """Process a posting grammar rule.
 
         Args:
@@ -731,13 +718,13 @@ class Builder(lexer.LexBuilder):
         # If the price is specified for the entire amount, compute the effective
         # price here and forget about that detail of the input syntax.
         if istotal:
-            if position.units.number == ZERO:
+            if units.number == ZERO:
                 number = ZERO
             else:
                 if __allow_negative_prices__:
-                    number = price.number/position.units.number
+                    number = price.number/units.number
                 else:
-                    number = price.number/abs(position.units.number)
+                    number = price.number/abs(units.number)
             price = Amount(number, price.currency)
 
         # Note: Allow zero prices because we need them for round-trips for
@@ -748,7 +735,7 @@ class Builder(lexer.LexBuilder):
         #         ParserError(meta, "Price is zero: {}".format(price), None))
 
         meta = new_metadata(filename, lineno)
-        return Posting(account, position, price, chr(flag) if flag else None, meta)
+        return Posting(account, units, cost, price, chr(flag) if flag else None, meta)
 
     def txn_field_new(self, _):
         """Create a new TxnFields instance.

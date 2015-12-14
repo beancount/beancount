@@ -117,18 +117,18 @@ def add_ira_contribs(entries, options_map, config):
             orig_entry = entry
             for posting in entry.postings:
                 if (posting.account in account_transforms and
-                    posting.position and
+                    isinstance(posting.units, amount.Amount) and
                     (account_types.get_account_sign(posting.account) *
-                     posting.position.units.number) > 0):
+                     posting.units.number) > 0):
 
                     # Get the new account legs to insert.
                     neg_account, pos_account = account_transforms[posting.account]
-                    assert posting.position.cost is None
+                    assert posting.cost is None
 
                     # Insert income/expense entries for 401k.
                     entry = add_postings(
                         entry,
-                        amount.Amount(abs(posting.position.units.number), currency),
+                        amount.Amount(abs(posting.units.number), currency),
                         neg_account.format(year=entry.date.year),
                         pos_account.format(year=entry.date.year),
                         flag)
@@ -154,8 +154,7 @@ def add_postings(entry, amount_, neg_account, pos_account, flag):
     Returns:
       A new, modified entry.
     """
-    pos = position.Position.from_amounts(amount_)
     return entry._replace(postings=entry.postings + [
-        data.Posting(neg_account, -pos, None, flag, None),
-        data.Posting(pos_account, pos, None, flag, None),
+        data.Posting(neg_account, -amount_, None, None, flag, None),
+        data.Posting(pos_account, amount_, None, None, flag, None),
         ])

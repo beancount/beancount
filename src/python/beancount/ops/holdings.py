@@ -468,7 +468,7 @@ def holding_to_posting(holding):
     price = (amount.Amount(holding.price_number, holding.cost_currency)
              if holding.price_number
              else None)
-    return data.Posting(holding.account, position_, price, None, None)
+    return data.Posting(holding.account, position_.units, position_.cost, price, None, None)
 
 
 def get_pholding_market_value(pholding):
@@ -483,14 +483,14 @@ def get_pholding_market_value(pholding):
       An instance of Amount.
     """
     price = pholding.price
-    pos = pholding.position
+    units = pholding.units
+    cost = pholding.cost
     if price is None:
-        return pos.get_cost()
+        return position.Position(units, cost).get_cost()
     else:
-        assert price.currency != pos.units.currency, (
+        assert price.currency != units.currency, (
             "Invalid currency: '{}'".format(pholding))
-        cost = pos.cost
         if cost:
             assert price.currency == cost.currency, (
                 "Invalid currency vs. cost: '{}'".format(pholding))
-        return amount.Amount(pos.units.number * price.number, price.currency)
+        return amount.Amount(units.number * price.number, price.currency)

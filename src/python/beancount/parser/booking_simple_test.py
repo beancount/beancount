@@ -35,4 +35,4 @@ class TestSimpleBooking(cmptest.TestCase):
         for entry in entries:
             if not isinstance(entry, data.Transaction):
                 continue
-            self.assertEqual(D('-2510'), entry.postings[-1].position.units.number)
+            self.assertEqual(D('-2510'), entry.postings[-1].units.number)

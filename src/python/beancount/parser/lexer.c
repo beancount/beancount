@@ -2845,7 +2845,7 @@ int strtonl(const char* buf, size_t nchars)
 /* Build and accumulate an error on the builder object. */
 void build_lexer_error(const char* string, size_t length)
 {
-    /* TRACE_ERROR("Invalid Token"); */
+    TRACE_ERROR("Invalid Token");
 
     /* Build and accumulate a new error object. {27d1d459c5cd} */
     PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error",
@@ -2859,7 +2859,7 @@ void build_lexer_error(const char* string, size_t length)
 
 void build_lexer_error_from_exception()
 {
-    /* TRACE_ERROR("Lexer Builder Exception"); */
+    TRACE_ERROR("Lexer Builder Exception");
 
     /* Get the exception context. */
     PyObject* ptype = NULL;

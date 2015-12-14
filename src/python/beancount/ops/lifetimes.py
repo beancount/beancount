@@ -46,7 +46,7 @@ def get_commodity_lifetimes(entries):
         for posting in entry.postings:
             balance = balances[posting.account]
             commodities_before = balance.currency_pairs()
-            balance.add_position(posting.position)
+            balance.add_position(posting)
             commodities_after = balance.currency_pairs()
             if commodities_after != commodities_before:
                 commodities_changed = True

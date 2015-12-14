@@ -82,7 +82,7 @@ def book(entries, options_map):
             # Update running balances using the interpolated values.
             for posting in postings:
                 balance = balances[posting.account]
-                balance.add_position(posting.position)
+                balance.add_position(posting)
 
     #logging.info("Interpolation Stats: %s", stats)
 
@@ -160,17 +160,19 @@ def categorize_by_currency(entry, balances):
     auto_postings = []
     unknown = []
     for index, posting in enumerate(entry.postings):
-        pos = posting.position
+        units = posting.units
+        cost = posting.cost
+        price = posting.price
 
         # Extract and override the currencies locally.
-        units_currency = (pos.units.currency
-                          if pos is not MISSING
+        units_currency = (units.currency
+                          if units is not MISSING and units is not None
                           else None)
-        cost_currency = (pos.cost.currency
-                         if pos is not MISSING and pos.cost is not None
+        cost_currency = (cost.currency
+                         if cost is not MISSING and cost is not None
                          else None)
-        price_currency = (posting.price.currency
-                          if posting.price is not None
+        price_currency = (price.currency
+                          if price is not MISSING and price is not None
                           else None)
 
         # First we apply the constraint that cost-currency and price-currency
@@ -183,7 +185,7 @@ def categorize_by_currency(entry, balances):
 
         refer = Refer(index, units_currency, cost_currency, price_currency)
 
-        if pos is MISSING and price_currency is None:
+        if units is MISSING and price_currency is None:
             # Bucket auto-postings separately from unknown.
             auto_postings.append(refer)
         else:
@@ -307,14 +309,12 @@ def replace_currencies(postings, refer_groups):
         new_postings = []
         for refer in sorted(refers, key=lambda r: r.index):
             posting = postings[refer.index]
-            pos = posting.position
-            if pos is MISSING:
-                posting = posting._replace(position=position.Position(
-                    Amount(MISSING, refer.units_currency)))
+            units = posting.units
+            if units is MISSING:
+                posting = posting._replace(units=Amount(MISSING, refer.units_currency))
             else:
                 replace = False
-                units = pos.units
-                cost = pos.cost
+                cost = posting.cost
                 price = posting.price
                 if units.currency is MISSING:
                     units = Amount(units.number, refer.units_currency)
@@ -326,8 +326,7 @@ def replace_currencies(postings, refer_groups):
                     price = Amount(price.number, refer.price_currency)
                     replace = True
                 if replace:
-                    posting = posting._replace(position=position.Position(units, cost),
-                                               price=price)
+                    posting = posting._replace(units=units, cost=cost, price=price)
             new_postings.append(posting)
         new_groups[currency] = new_postings
     return new_groups
@@ -372,17 +371,19 @@ def interpolate_group(postings, balances, currency):
     incomplete = []
     balance = inventory.Inventory()
     for index, posting in enumerate(postings):
-        pos = posting.position
+        units = posting.units
+        cost = posting.cost
+        price = posting.price
 
         # Identify incomplete postings.
         pre_incomplete = len(incomplete)
-        if pos.units.number is MISSING:
+        if units.number is MISSING:
             incomplete.append((MissingType.UNITS, index))
-        if pos.cost and pos.cost.number_per is MISSING:
+        if cost and cost.number_per is MISSING:
             incomplete.append((MissingType.COST_PER, index))
-        if pos.cost and pos.cost.number_total is MISSING:
+        if cost and cost.number_total is MISSING:
             incomplete.append((MissingType.COST_TOTAL, index))
-        if posting.price and posting.price.number is MISSING:
+        if price and price.number is MISSING:
             incomplete.append((MissingType.PRICE, index))
 
     if len(incomplete) == 0:
@@ -422,8 +423,8 @@ def interpolate_group(postings, balances, currency):
             weight_currency = currency
 
         if missing == MissingType.UNITS:
-            pos = incomplete_posting.position
-            cost = pos.cost
+            units = incomplete_posting.units
+            cost = incomplete_posting.cost
             if cost:
                 # Handle the special case where we only have total cost.
                 if cost.number_per == ZERO:
@@ -441,37 +442,39 @@ def interpolate_group(postings, balances, currency):
                     "Internal error; residual currency different than missing currency.")
                 units_number = weight / incomplete_posting.price.number
             else:
-                assert pos.units.currency == weight_currency, (
+                assert units.currency == weight_currency, (
                     "Internal error; residual currency different than missing currency.")
                 units_number = weight
-            new_pos = Position(Amount(units_number, pos.units.currency), cost)
-            new_posting  = incomplete_posting._replace(position=new_pos)
+            new_pos = Position(Amount(units_number, units.currency), cost)
+            new_posting  = incomplete_posting._replace(units=new_pos.units,
+                                                       cost=new_pos.cost)
 
         elif missing == MissingType.COST_PER:
-            pos = incomplete_posting.position
-            assert pos.cost.currency == weight_currency, (
+            units = incomplete_posting.units
+            cost = incomplete_posting.cost
+            assert cost.currency == weight_currency, (
                 "Internal error; residual currency different than missing currency.")
-            units = pos.units
-            cost = pos.cost
             number_per = (weight - (cost.number_total or ZERO)) / units.number
-            new_cost = pos.cost._replace(number_per=number_per)
+            new_cost = cost._replace(number_per=number_per)
             new_pos = Position(units, new_cost)
-            new_posting  = incomplete_posting._replace(position=new_pos)
+            new_posting  = incomplete_posting._replace(units=new_pos.units,
+                                                       cost=new_pos.cost)
 
         elif missing == MissingType.COST_TOTAL:
-            pos = incomplete_posting.position
-            assert pos.cost.currency == weight_currency, (
+            units = incomplete_posting.units
+            cost = incomplete_posting.cost
+            assert cost.currency == weight_currency, (
                 "Internal error; residual currency different than missing currency.")
-            units = pos.units
-            cost = pos.cost
             number_total = (weight - cost.number_per * units.number)
-            new_cost = pos.cost._replace(number_total=number_total)
+            new_cost = cost._replace(number_total=number_total)
             new_pos = Position(units, new_cost)
-            new_posting  = incomplete_posting._replace(position=new_pos)
+            new_posting  = incomplete_posting._replace(units=new_pos.units,
+                                                       cost=new_pos.cost)
 
         elif missing == MissingType.PRICE:
-            pos = incomplete_posting.position
-            if pos.cost is not None:
+            units = incomplete_posting.units
+            cost = incomplete_posting.cost
+            if cost is not None:
                 errors.append(InterpolationError(
                     incomplete_posting.meta,
                     "Cannot infer price for postings with units held at cost", None))
@@ -480,7 +483,6 @@ def interpolate_group(postings, balances, currency):
                 price = incomplete_posting.price
                 assert price.currency == weight_currency, (
                     "Internal error; residual currency different than missing currency.")
-                units = pos.units
                 new_price_number = abs(units.number / weight)
                 new_posting  = incomplete_posting._replace(price=Amount(new_price_number,
                                                                         price.currency))
@@ -490,10 +492,10 @@ def interpolate_group(postings, balances, currency):
 
         if 0:
             # Convert the CostSpec instance into a corresponding Cost.
-            pos = new_posting.position
-            cost = pos.cost
+            units = new_posting.units
+            cost = new_posting.cost
             if cost is not None:
-                units = pos.units.number
+                units = units.number
                 number_per = cost.number_per
                 number_total = cost.number_total
                 if number_total is not None:
@@ -506,8 +508,7 @@ def interpolate_group(postings, balances, currency):
                 else:
                     unit_cost = number_per
                 new_cost = Cost(unit_cost, cost.currency, cost.date, cost.label)
-                new_posting = new_posting._replace(
-                    position=position.Position(pos.units, new_cost))
+                new_posting = new_posting._replace(units=units, cost=new_cost)
 
         # Replace the number in the posting.
         postings = list(postings)

@@ -828,9 +828,9 @@ class TestParseLots(unittest.TestCase):
         """
         self.assertFalse(parser.is_entry_incomplete(entries[0]))
         self.assertFalse(errors)
-        pos = entries[0].postings[0].position
-        self.assertEqual(A('45.23 USD'), pos.units)
-        self.assertEqual(None, pos.cost)
+        posting = entries[0].postings[0]
+        self.assertEqual(A('45.23 USD'), posting.units)
+        self.assertEqual(None, posting.cost)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_cost_empty(self, entries, errors, _):
@@ -841,9 +841,9 @@ class TestParseLots(unittest.TestCase):
         """
         self.assertTrue(parser.is_entry_incomplete(entries[0]))
         self.assertFalse(errors)
-        pos = entries[0].postings[0].position
-        self.assertEqual(A('20 AAPL'), pos.units)
-        self.assertEqual(CostSpec(MISSING, None, MISSING, None, None, False), pos.cost)
+        posting = entries[0].postings[0]
+        self.assertEqual(A('20 AAPL'), posting.units)
+        self.assertEqual(CostSpec(MISSING, None, MISSING, None, None, False), posting.cost)
 
     @parser.parse_doc()
     def test_cost_amount(self, entries, errors, _):
@@ -854,9 +854,9 @@ class TestParseLots(unittest.TestCase):
         """
         self.assertFalse(parser.is_entry_incomplete(entries[0]))
         self.assertFalse(errors)
-        pos = entries[0].postings[0].position
-        self.assertEqual(A('20 AAPL'), pos.units)
-        self.assertEqual(CostSpec(D('45.23'), None, 'USD', None, None, False), pos.cost)
+        posting = entries[0].postings[0]
+        self.assertEqual(A('20 AAPL'), posting.units)
+        self.assertEqual(CostSpec(D('45.23'), None, 'USD', None, None, False), posting.cost)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_cost_date(self, entries, errors, _):
@@ -867,11 +867,11 @@ class TestParseLots(unittest.TestCase):
         """
         self.assertTrue(parser.is_entry_incomplete(entries[0]))
         self.assertFalse(errors)
-        pos = entries[0].postings[0].position
-        self.assertEqual(A('20 AAPL'), pos.units)
+        posting = entries[0].postings[0]
+        self.assertEqual(A('20 AAPL'), posting.units)
         self.assertEqual(
             CostSpec(MISSING, None, MISSING, datetime.date(2014, 12, 26), None, False),
-            pos.cost)
+            posting.cost)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_cost_label(self, entries, errors, _):
@@ -881,10 +881,10 @@ class TestParseLots(unittest.TestCase):
             Assets:Invest:Cash  -20 AAPL
         """
         self.assertTrue(parser.is_entry_incomplete(entries[0]))
-        pos = entries[0].postings[0].position
-        self.assertEqual(A('20 AAPL'), pos.units)
+        posting = entries[0].postings[0]
+        self.assertEqual(A('20 AAPL'), posting.units)
         self.assertEqual(CostSpec(MISSING, None, MISSING, None, "d82d55a0dbe8", False),
-                         pos.cost)
+                         posting.cost)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_cost_merge(self, entries, errors, _):
@@ -894,9 +894,9 @@ class TestParseLots(unittest.TestCase):
             Assets:Invest:Cash  -20 AAPL
         """
         self.assertTrue(parser.is_entry_incomplete(entries[0]))
-        pos = entries[0].postings[0].position
-        self.assertEqual(A('20 AAPL'), pos.units)
-        self.assertEqual(CostSpec(MISSING, None, MISSING, None, None, True), pos.cost)
+        posting = entries[0].postings[0]
+        self.assertEqual(A('20 AAPL'), posting.units)
+        self.assertEqual(CostSpec(MISSING, None, MISSING, None, None, True), posting.cost)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_cost_two_components(self, entries, errors, _):
@@ -975,9 +975,9 @@ class TestParseLots(unittest.TestCase):
             Assets:Invest:AAPL       10 AAPL {45.23 # 9.95 USD}
             Assets:Invest:Cash  -110.36 USD
         """
-        pos = entries[0].postings[0].position
+        posting = entries[0].postings[0]
         self.assertEqual(CostSpec(D('45.23'), D('9.95'), 'USD', None, None, False),
-                         pos.cost)
+                         posting.cost)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_cost_total_cost_only(self, entries, errors, _):
@@ -987,9 +987,9 @@ class TestParseLots(unittest.TestCase):
             Assets:Invest:Cash  -19.90 USD
         """
         self.assertTrue(parser.is_entry_incomplete(entries[0]))
-        pos = entries[0].postings[0].position
+        posting = entries[0].postings[0]
         self.assertEqual(CostSpec(MISSING, D('9.95'), 'USD', None, None, False),
-                         pos.cost)
+                         posting.cost)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_cost_total_empty_total(self, entries, errors, _):
@@ -1000,9 +1000,10 @@ class TestParseLots(unittest.TestCase):
         """
         self.assertEqual(0, len(errors))
         self.assertTrue(parser.is_entry_incomplete(entries[0]))
-        pos = entries[0].postings[0].position
-        self.assertEqual(A('20 AAPL'), pos.units)
-        self.assertEqual(CostSpec(D('45.23'), MISSING, 'USD', None, None, False), pos.cost)
+        posting = entries[0].postings[0]
+        self.assertEqual(A('20 AAPL'), posting.units)
+        self.assertEqual(CostSpec(D('45.23'), MISSING, 'USD', None, None, False),
+                         posting.cost)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_cost_total_just_currency(self, entries, errors, _):
@@ -1024,10 +1025,11 @@ class TestParseLots(unittest.TestCase):
         self.assertEqual(2, len(errors))
         self.assertTrue(re.search("slash", errors[0].message))
         self.assertTrue(re.search("slash", errors[1].message))
-        pos = entries[0].postings[0].position
-        self.assertEqual(A('1.1 AAPL'), pos.units)
+        posting = entries[0].postings[0]
+        self.assertEqual(A('1.1 AAPL'), posting.units)
         self.assertEqual(CostSpec(D('45.23'), None, 'USD',
-                                  datetime.date(2015, 7, 16), 'blabla', False), pos.cost)
+                                  datetime.date(2015, 7, 16), 'blabla', False),
+                         posting.cost)
 
 
 class TestCurrencies(unittest.TestCase):
@@ -1090,9 +1092,9 @@ class TestTotalsAndSigns(unittest.TestCase):
         """
         for entry in entries:
             posting = entry.postings[0]
-            self.assertEqual(ZERO, posting.position.cost.number_per)
-            self.assertEqual(D('2000'), posting.position.cost.number_total)
-            self.assertEqual('USD', posting.position.cost.currency)
+            self.assertEqual(ZERO, posting.cost.number_per)
+            self.assertEqual(D('2000'), posting.cost.number_total)
+            self.assertEqual('USD', posting.cost.currency)
             self.assertEqual(None, posting.price)
 
     @parser.parse_doc(expect_errors=False)
@@ -1123,7 +1125,7 @@ class TestTotalsAndSigns(unittest.TestCase):
         """
         posting = entries[0].postings[0]
         self.assertEqual(amount.from_string('200 USD'), posting.price)
-        self.assertEqual(None, posting.position.cost)
+        self.assertEqual(None, posting.cost)
 
     @parser.parse_doc()
     def test_total_price_negative(self, entries, errors, _):
@@ -1134,7 +1136,7 @@ class TestTotalsAndSigns(unittest.TestCase):
         """
         posting = entries[0].postings[0]
         self.assertEqual(amount.from_string('200 USD'), posting.price)
-        self.assertEqual(None, posting.position.cost)
+        self.assertEqual(None, posting.cost)
 
     @parser.parse_doc(expect_errors=True)
     def test_total_price_inverted(self, entries, errors, _):
@@ -1173,8 +1175,8 @@ class TestAllowNegativePrices(unittest.TestCase):
         self.assertFalse(errors)
         for entry in entries:
             posting = entry.postings[0]
-            self.assertEqual(D('2000'), posting.position.cost.number_total)
-            self.assertEqual('USD', posting.position.cost.currency)
+            self.assertEqual(D('2000'), posting.cost.number_total)
+            self.assertEqual('USD', posting.cost.currency)
             self.assertEqual(None, posting.price)
 
     @parser.parse_doc()
@@ -1186,7 +1188,7 @@ class TestAllowNegativePrices(unittest.TestCase):
         """
         posting = entries[0].postings[0]
         self.assertEqual(amount.from_string('-200 USD'), posting.price)
-        self.assertEqual(None, posting.position.cost)
+        self.assertEqual(None, posting.cost)
 
     @parser.parse_doc()
     def test_total_price_negative(self, entries, errors, _):
@@ -1197,7 +1199,7 @@ class TestAllowNegativePrices(unittest.TestCase):
         """
         posting = entries[0].postings[0]
         self.assertEqual(amount.from_string('-200 USD'), posting.price)
-        self.assertEqual(None, posting.position.cost)
+        self.assertEqual(None, posting.cost)
 
     @parser.parse_doc()
     def test_total_price_inverted(self, entries, errors, _):
@@ -1208,7 +1210,7 @@ class TestAllowNegativePrices(unittest.TestCase):
         """
         posting = entries[0].postings[0]
         self.assertEqual(amount.from_string('-200 USD'), posting.price)
-        self.assertEqual(None, posting.position.cost)
+        self.assertEqual(None, posting.cost)
 
 
 class TestBalance(unittest.TestCase):
@@ -1222,7 +1224,7 @@ class TestBalance(unittest.TestCase):
         """
         posting = entries[0].postings[0]
         self.assertEqual(amount.from_string('200 USD'), posting.price)
-        self.assertEqual(None, posting.position.cost)
+        self.assertEqual(None, posting.cost)
 
     @parser.parse_doc()
     def test_total_cost(self, entries, errors, _):
@@ -1237,9 +1239,9 @@ class TestBalance(unittest.TestCase):
         """
         for entry in entries:
             posting = entry.postings[0]
-            self.assertEqual(ZERO, posting.position.cost.number_per)
-            self.assertEqual(D('2000'), posting.position.cost.number_total)
-            self.assertEqual('USD', posting.position.cost.currency)
+            self.assertEqual(ZERO, posting.cost.number_per)
+            self.assertEqual(D('2000'), posting.cost.number_total)
+            self.assertEqual('USD', posting.cost.currency)
             self.assertEqual(None, posting.price)
 
 
@@ -1456,8 +1458,8 @@ class TestArithmetic(unittest.TestCase):
         """
         self.assertEqual(1, len(entries))
         postings = entries[0].postings
-        self.assertEqual(D('15'), postings[0].position.units.number)
-        self.assertEqual(D('10.6'), postings[1].position.units.number)
+        self.assertEqual(D('15'), postings[0].units.number)
+        self.assertEqual(D('10.6'), postings[1].units.number)
 
     @parser.parse_doc()
     def test_number_expr__subtract(self, entries, errors, _):
@@ -1468,8 +1470,8 @@ class TestArithmetic(unittest.TestCase):
         """
         self.assertEqual(1, len(entries))
         postings = entries[0].postings
-        self.assertEqual(D('9'), postings[0].position.units.number)
-        self.assertEqual(D('4.4'), postings[1].position.units.number)
+        self.assertEqual(D('9'), postings[0].units.number)
+        self.assertEqual(D('4.4'), postings[1].units.number)
 
     @parser.parse_doc()
     def test_number_expr__multiply(self, entries, errors, _):
@@ -1480,8 +1482,8 @@ class TestArithmetic(unittest.TestCase):
         """
         self.assertEqual(1, len(entries))
         postings = entries[0].postings
-        self.assertEqual(D('36'), postings[0].position.units.number)
-        self.assertEqual(D('23.25'), postings[1].position.units.number)
+        self.assertEqual(D('36'), postings[0].units.number)
+        self.assertEqual(D('23.25'), postings[1].units.number)
 
     @parser.parse_doc()
     def test_number_expr__divide(self, entries, errors, _):
@@ -1492,8 +1494,8 @@ class TestArithmetic(unittest.TestCase):
         """
         self.assertEqual(1, len(entries))
         postings = entries[0].postings
-        self.assertEqual(D('4'), postings[0].position.units.number)
-        self.assertEqual(D('2.5'), postings[1].position.units.number)
+        self.assertEqual(D('4'), postings[0].units.number)
+        self.assertEqual(D('2.5'), postings[1].units.number)
 
     @parser.parse_doc()
     def test_number_expr__negative(self, entries, errors, _):
@@ -1505,9 +1507,9 @@ class TestArithmetic(unittest.TestCase):
         """
         self.assertEqual(1, len(entries))
         postings = entries[0].postings
-        self.assertEqual(D('-12'), postings[0].position.units.number)
-        self.assertEqual(D('-7.5'), postings[1].position.units.number)
-        self.assertEqual(D('-7.5'), postings[2].position.units.number)
+        self.assertEqual(D('-12'), postings[0].units.number)
+        self.assertEqual(D('-7.5'), postings[1].units.number)
+        self.assertEqual(D('-7.5'), postings[2].units.number)
 
     @parser.parse_doc()
     def test_number_expr__positive(self, entries, errors, _):
@@ -1518,7 +1520,7 @@ class TestArithmetic(unittest.TestCase):
         """
         self.assertEqual(1, len(entries))
         postings = entries[0].postings
-        self.assertEqual(D('12'), postings[0].position.units.number)
+        self.assertEqual(D('12'), postings[0].units.number)
 
     @parser.parse_doc()
     def test_number_expr__precedence(self, entries, errors, _):
@@ -1532,7 +1534,7 @@ class TestArithmetic(unittest.TestCase):
         self.assertEqual(1, len(entries))
         self.assertListEqual(
             [D('10'), D('14'), D('-10'), D('-4')],
-            [posting.position.units.number for posting in entries[0].postings])
+            [posting.units.number for posting in entries[0].postings])
 
     @parser.parse_doc()
     def test_number_expr__groups(self, entries, errors, _):
@@ -1544,7 +1546,7 @@ class TestArithmetic(unittest.TestCase):
         self.assertEqual(1, len(entries))
         self.assertListEqual(
             [D('-4'), D('-2')],
-            [posting.position.units.number
+            [posting.units.number
              for posting in entries[0].postings])
 
     @parser.parse_doc()
@@ -1558,11 +1560,11 @@ class TestArithmetic(unittest.TestCase):
         """
         self.assertFalse(errors)
         self.assertEqual(2, len(entries))
-        self.assertEqual(D('-12'), entries[0].postings[0].position.units.number)
+        self.assertEqual(D('-12'), entries[0].postings[0].units.number)
         self.assertEqual(D('252.021'),
-                         entries[0].postings[0].position.cost.number_per)
+                         entries[0].postings[0].cost.number_per)
         self.assertEqual(None,
-                         entries[0].postings[0].position.cost.number_total)
+                         entries[0].postings[0].cost.number_total)
         self.assertEqual(D('281.442'), entries[0].postings[0].price.number)
         self.assertEqual(D('3024.252'), entries[1].amount.number)
         self.assertEqual(D('-5684.53'), entries[1].meta['number'])
@@ -1865,18 +1867,6 @@ class TestLexerAndParserErrors(cmptest.TestCase):
         """
         self.check_entries_errors(entries, errors)
 
-    @mock.patch('beancount.parser.grammar.Builder.position', raise_exception)
-    @parser.parse_doc(expect_errors=True)
-    def test_grammar_exceptions__position(self, entries, errors, _):
-        """
-          2000-01-01 open Assets:Before
-          2001-02-02 *
-            Assets:Before   100.00 USD
-            Assets:After   -100.00 USD
-          2010-01-01 close Assets:Before
-        """
-        self.check_entries_errors(entries, errors)
-
     @mock.patch('beancount.parser.grammar.Builder.open', raise_exception)
     @parser.parse_doc(expect_errors=True)
     def test_grammar_exceptions__open(self, entries, errors, _):
@@ -2076,7 +2066,7 @@ class TestIncompleteInputs(cmptest.TestCase):
             Assets:Account1     100.00 USD
             Assets:Account2    -100.00 USD
         """
-        self.assertEqual(A('-100 USD'), entries[-1].postings[-1].position.units)
+        self.assertEqual(A('-100 USD'), entries[-1].postings[-1].units)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_units_missing(self, entries, _, options_map):
@@ -2085,7 +2075,8 @@ class TestIncompleteInputs(cmptest.TestCase):
             Assets:Account1     100.00 USD
             Assets:Account2
         """
-        self.assertEqual(MISSING, entries[-1].postings[-1].position)
+        self.assertEqual(MISSING, entries[-1].postings[-1].units)
+        self.assertEqual(None, entries[-1].postings[-1].cost)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_units_missing_number(self, entries, _, options_map):
@@ -2094,7 +2085,7 @@ class TestIncompleteInputs(cmptest.TestCase):
             Assets:Account1     100.00 USD
             Assets:Account2            USD
         """
-        units = entries[-1].postings[-1].position.units
+        units = entries[-1].postings[-1].units
         self.assertEqual(Amount(MISSING, 'USD'), units)
 
     @parser.parse_doc(allow_incomplete=True)
@@ -2104,7 +2095,7 @@ class TestIncompleteInputs(cmptest.TestCase):
             Assets:Account1     100.00 USD
             Assets:Account2    -100.00
         """
-        units = entries[-1].postings[-1].position.units
+        units = entries[-1].postings[-1].units
         self.assertEqual(Amount(D('-100.00'), MISSING), units)
 
     @parser.parse_doc(allow_incomplete=True)
@@ -2114,9 +2105,9 @@ class TestIncompleteInputs(cmptest.TestCase):
             Assets:Account1     {300.00 USD}
             Assets:Account2    -600.00 USD
         """
-        pos = entries[-1].postings[0].position
-        self.assertEqual(Amount(MISSING, MISSING), pos.units)
-        self.assertEqual(CostSpec(D('300'), None, 'USD', None, None, False), pos.cost)
+        posting = entries[-1].postings[0]
+        self.assertEqual(Amount(MISSING, MISSING), posting.units)
+        self.assertEqual(CostSpec(D('300'), None, 'USD', None, None, False), posting.cost)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_units_missing_number_with_cost(self, entries, _, options_map):
@@ -2125,9 +2116,9 @@ class TestIncompleteInputs(cmptest.TestCase):
             Assets:Account1            HOOL {300.00 USD}
             Assets:Account2    -600.00 USD
         """
-        pos = entries[-1].postings[0].position
-        self.assertEqual(Amount(MISSING, 'HOOL'), pos.units)
-        self.assertEqual(CostSpec(D('300'), None, 'USD', None, None, False), pos.cost)
+        posting = entries[-1].postings[0]
+        self.assertEqual(Amount(MISSING, 'HOOL'), posting.units)
+        self.assertEqual(CostSpec(D('300'), None, 'USD', None, None, False), posting.cost)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_units_missing_currency_with_cost(self, entries, _, options_map):
@@ -2136,9 +2127,9 @@ class TestIncompleteInputs(cmptest.TestCase):
             Assets:Account1      10        {300.00 USD}
             Assets:Account2    -600.00 USD
         """
-        pos = entries[-1].postings[0].position
-        self.assertEqual(Amount(D('10'), MISSING), pos.units)
-        self.assertEqual(CostSpec(D('300'), None, 'USD', None, None, False), pos.cost)
+        posting = entries[-1].postings[0]
+        self.assertEqual(Amount(D('10'), MISSING), posting.units)
+        self.assertEqual(CostSpec(D('300'), None, 'USD', None, None, False), posting.cost)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_units_missing_with_price(self, entries, _, options_map):
@@ -2148,7 +2139,7 @@ class TestIncompleteInputs(cmptest.TestCase):
             Assets:Account1     100.00 USD @
         """
         posting = entries[-1].postings[0]
-        self.assertEqual(Amount(MISSING, MISSING), posting.position.units)
+        self.assertEqual(Amount(MISSING, MISSING), posting.units)
         self.assertEqual(Amount(D('1.2'), 'USD'), posting.price)
 
     @parser.parse_doc(allow_incomplete=True)
@@ -2159,7 +2150,7 @@ class TestIncompleteInputs(cmptest.TestCase):
             Assets:Account1     100.00 USD @
         """
         posting = entries[-1].postings[0]
-        self.assertEqual(Amount(MISSING, 'CAD'), posting.position.units)
+        self.assertEqual(Amount(MISSING, 'CAD'), posting.units)
         self.assertEqual(Amount(D('1.2'), 'USD'), posting.price)
 
     @parser.parse_doc(allow_incomplete=True)
@@ -2170,7 +2161,7 @@ class TestIncompleteInputs(cmptest.TestCase):
             Assets:Account1     100.00 USD @
         """
         posting = entries[-1].postings[0]
-        self.assertEqual(Amount(D('120.00'), MISSING), posting.position.units)
+        self.assertEqual(Amount(D('120.00'), MISSING), posting.units)
         self.assertEqual(Amount(D('1.2'), 'USD'), posting.price)
 
     #
@@ -2185,7 +2176,7 @@ class TestIncompleteInputs(cmptest.TestCase):
             Assets:Account2     120.00 CAD
         """
         posting = entries[-1].postings[0]
-        self.assertEqual(None, posting.position.cost)
+        self.assertEqual(None, posting.cost)
         self.assertEqual(None, posting.price)
 
     @parser.parse_doc(allow_incomplete=True)
@@ -2196,8 +2187,7 @@ class TestIncompleteInputs(cmptest.TestCase):
             Assets:Account2     120.00 CAD
         """
         posting = entries[-1].postings[0]
-        pos = posting.position
-        self.assertEqual(A('100.00 USD'), pos.units)
+        self.assertEqual(A('100.00 USD'), posting.units)
         self.assertIsInstance(posting.price, Amount)
         self.assertEqual(Amount(MISSING, MISSING), posting.price)
 
@@ -2235,8 +2225,8 @@ class TestIncompleteInputs(cmptest.TestCase):
             Assets:Account1     2 HOOL {150 # 5 USD}
             Assets:Account2     120.00 USD
         """
-        pos = entries[-1].postings[0].position
-        self.assertEqual(CostSpec(D('150'), D('5'), 'USD', None, None, False), pos.cost)
+        posting = entries[-1].postings[0]
+        self.assertEqual(CostSpec(D('150'), D('5'), 'USD', None, None, False), posting.cost)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_cost_missing_number_per(self, entries, _, options_map):
@@ -2245,8 +2235,8 @@ class TestIncompleteInputs(cmptest.TestCase):
             Assets:Account1     2 HOOL {# 5 USD}
             Assets:Account2     120.00 USD
         """
-        pos = entries[-1].postings[0].position
-        self.assertEqual(CostSpec(MISSING, D('5'), 'USD', None, None, False), pos.cost)
+        posting = entries[-1].postings[0]
+        self.assertEqual(CostSpec(MISSING, D('5'), 'USD', None, None, False), posting.cost)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_cost_missing_number_total(self, entries, _, options_map):
@@ -2255,8 +2245,8 @@ class TestIncompleteInputs(cmptest.TestCase):
             Assets:Account1     2 HOOL {150 # USD}
             Assets:Account2     120.00 USD
         """
-        pos = entries[-1].postings[0].position
-        self.assertEqual(CostSpec(D('150'), MISSING, 'USD', None, None, False), pos.cost)
+        posting = entries[-1].postings[0]
+        self.assertEqual(CostSpec(D('150'), MISSING, 'USD', None, None, False), posting.cost)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_cost_no_number_total(self, entries, _, options_map):
@@ -2265,8 +2255,8 @@ class TestIncompleteInputs(cmptest.TestCase):
             Assets:Account1     2 HOOL {150 USD}
             Assets:Account2     120.00 USD
         """
-        pos = entries[-1].postings[0].position
-        self.assertEqual(CostSpec(D('150'), None, 'USD', None, None, False), pos.cost)
+        posting = entries[-1].postings[0]
+        self.assertEqual(CostSpec(D('150'), None, 'USD', None, None, False), posting.cost)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_cost_missing_numbers(self, entries, _, options_map):
@@ -2275,8 +2265,8 @@ class TestIncompleteInputs(cmptest.TestCase):
             Assets:Account1     2 HOOL {USD}
             Assets:Account2     120.00 USD
         """
-        pos = entries[-1].postings[0].position
-        self.assertEqual(CostSpec(MISSING, None, 'USD', None, None, False), pos.cost)
+        posting = entries[-1].postings[0]
+        self.assertEqual(CostSpec(MISSING, None, 'USD', None, None, False), posting.cost)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_cost_missing_currency(self, entries, _, options_map):
@@ -2285,8 +2275,8 @@ class TestIncompleteInputs(cmptest.TestCase):
             Assets:Account1     2 HOOL {150}
             Assets:Account2     120.00 USD
         """
-        pos = entries[-1].postings[0].position
-        self.assertEqual(CostSpec(D('150'), None, MISSING, None, None, False), pos.cost)
+        posting = entries[-1].postings[0]
+        self.assertEqual(CostSpec(D('150'), None, MISSING, None, None, False), posting.cost)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_cost_empty(self, entries, _, options_map):
@@ -2295,8 +2285,8 @@ class TestIncompleteInputs(cmptest.TestCase):
             Assets:Account1     2 HOOL {}
             Assets:Account2     120.00 CAD
         """
-        pos = entries[-1].postings[0].position
-        self.assertEqual(CostSpec(MISSING, None, MISSING, None, None, False), pos.cost)
+        posting = entries[-1].postings[0]
+        self.assertEqual(CostSpec(MISSING, None, MISSING, None, None, False), posting.cost)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_cost_empty_with_other(self, entries, _, options_map):
@@ -2305,9 +2295,10 @@ class TestIncompleteInputs(cmptest.TestCase):
             Assets:Account1     2 HOOL {2015-09-21, "blablabla"}
             Assets:Account2     120.00 CAD
         """
-        pos = entries[-1].postings[0].position
+        posting = entries[-1].postings[0]
         self.assertEqual(CostSpec(MISSING, None, MISSING,
-                                  datetime.date(2015, 9, 21), "blablabla", False), pos.cost)
+                                  datetime.date(2015, 9, 21), "blablabla", False),
+                         posting.cost)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_cost_missing_basis(self, entries, _, options_map):
@@ -2316,9 +2307,10 @@ class TestIncompleteInputs(cmptest.TestCase):
             Assets:Account1     2 HOOL {2015-09-21, "blablabla"}
             Assets:Account2     120.00 CAD
         """
-        pos = entries[-1].postings[0].position
+        posting = entries[-1].postings[0]
         self.assertEqual(CostSpec(MISSING, None, MISSING,
-                                  datetime.date(2015, 9, 21), "blablabla", False), pos.cost)
+                                  datetime.date(2015, 9, 21), "blablabla", False),
+                         posting.cost)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_cost_average(self, entries, _, options_map):
@@ -2327,8 +2319,9 @@ class TestIncompleteInputs(cmptest.TestCase):
             Assets:Account1     2 HOOL {*}
             Assets:Account2     120.00 CAD
         """
-        pos = entries[-1].postings[0].position
-        self.assertEqual(CostSpec(MISSING, None, MISSING, None, None, True), pos.cost)
+        posting = entries[-1].postings[0]
+        self.assertEqual(CostSpec(MISSING, None, MISSING, None, None, True),
+                         posting.cost)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_cost_average_missing_basis(self, entries, _, options_map):
@@ -2337,9 +2330,10 @@ class TestIncompleteInputs(cmptest.TestCase):
             Assets:Account1     2 HOOL {*, 2015-09-21, "blablabla"}
             Assets:Account2     120.00 CAD
         """
-        pos = entries[-1].postings[0].position
+        posting = entries[-1].postings[0]
         self.assertEqual(CostSpec(MISSING, None, MISSING,
-                                  datetime.date(2015, 9, 21), "blablabla", True), pos.cost)
+                                  datetime.date(2015, 9, 21), "blablabla", True),
+                         posting.cost)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_cost_average_with_other(self, entries, _, options_map):
@@ -2348,6 +2342,7 @@ class TestIncompleteInputs(cmptest.TestCase):
             Assets:Account1     2 HOOL {*, 100.00 CAD, 2015-09-21, "blablabla"}
             Assets:Account2     120.00 CAD
         """
-        pos = entries[-1].postings[0].position
+        posting = entries[-1].postings[0]
         self.assertEqual(CostSpec(D("100.00"), None, "CAD",
-                                  datetime.date(2015, 9, 21), "blablabla", True), pos.cost)
+                                  datetime.date(2015, 9, 21), "blablabla", True),
+                         posting.cost)

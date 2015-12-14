@@ -30,12 +30,12 @@ transaction postings.
 For instance, all of the units may be missing:
 
   INPUT: Assets:Account
-  posting.position.units = MISSING
+  posting.units = MISSING
 
 Or just the number of the units:
 
   INPUT: Assets:Account                    USD
-  posting.position.units = Amount(MISSING, "USD")
+  posting.units = Amount(MISSING, "USD")
 
 You must always specify the currency.
 
@@ -48,12 +48,12 @@ However, you may indicate that there is a price but have Beancount compute it
 automatically:
 
   INPUT: Assets:Account                 2 MXN @
-  posting.position.price = Amount(MISSING, MISSING)
+  posting.price = Amount(MISSING, MISSING)
 
 Indicating the conversion currency is also possible (and recommended):
 
   INPUT: Assets:Account                 2 MXN @ USD
-  posting.position.price = Amount(MISSING, "USD")
+  posting.price = Amount(MISSING, "USD")
 
 If a cost specification is provided, a "cost" attribute it set but it does not
 refer to a Cost instance (as in complete entries) but rather to a CostSpec
@@ -61,7 +61,7 @@ instance. Some of the fields of a CostSpec may be MISSING if they were not
 specified in the input. For exammple:
 
   INPUT: Assets:Account  1 HOOL {100 # 5 USD}
-  posting.position.cost = CostSpec(Decimal("100"), Decimal("5"), "USD", None, None, False))
+  posting.cost = CostSpec(Decimal("100"), Decimal("5"), "USD", None, None, False))
 
 Note how we never consider the label of date override to be MISSING; this is
 because those inputs are optional: A missing label is simply left unset in the
@@ -71,28 +71,28 @@ that contains the posting.
 You can indicate that there is a total number to be filled in like this:
 
   INPUT: Assets:Account  1 HOOL {100 # USD}
-  posting.position.cost = CostSpec(Decimal("100"), MISSING, "USD", None, None, False))
+  posting.cost = CostSpec(Decimal("100"), MISSING, "USD", None, None, False))
 
 This is in contrast to the total value simple not being used:
 
   INPUT: Assets:Account  1 HOOL {100 USD}
-  posting.position.cost = CostSpec(Decimal("100"), None, "USD", None, None, False))
+  posting.cost = CostSpec(Decimal("100"), None, "USD", None, None, False))
 
 Both per-unit and total numbers may be omitted as well, in which case, only the
 number-per-unit portion of the CostSpec will appear as MISSING:
 
   INPUT: Assets:Account  1 HOOL {USD}
-  posting.position.cost = CostSpec(MISSING, None, "USD", None, None, False))
+  posting.cost = CostSpec(MISSING, None, "USD", None, None, False))
 
 And furthermore, all the cost basis may be missing:
 
   INPUT: Assets:Account  1 HOOL {}
-  posting.position.cost = CostSpec(MISSING, None, MISSING, None, None, False))
+  posting.cost = CostSpec(MISSING, None, MISSING, None, None, False))
 
 If you ask for the lots to be merged, you get this:
 
   INPUT: Assets:Account  1 HOOL {*}
-  posting.position.cost = CostSpec(MISSING, None, MISSING, None, None, True))
+  posting.cost = CostSpec(MISSING, None, MISSING, None, None, True))
 
 The numbers have to be computed by Beancount, so we output this with MISSING
 values.
@@ -101,7 +101,7 @@ Of course, you can provide only the non-basis informations, like just the date
 or label:
 
   INPUT: Assets:Account  1 HOOL {2015-09-21}
-  posting.position.cost = CostSpec(MISSING, None, MISSING, date(2015, 9, 21), None, True)
+  posting.cost = CostSpec(MISSING, None, MISSING, date(2015, 9, 21), None, True)
 
 See the test beancount.parser.grammar_test.TestIncompleteInputs for examples and
 corresponding expected values.
@@ -144,11 +144,9 @@ def is_posting_incomplete(posting):
     Returns:
       A boolean, true if there are some missing portions of any postings found.
     """
-    pos = posting.position
-    if (pos is None or pos is MISSING):
-        return True
-    units = pos.units
-    if (units.number is MISSING or
+    units = posting.units
+    if (units is MISSING or
+        units.number is MISSING or
         units.currency is MISSING):
         return True
     price = posting.price
@@ -156,7 +154,7 @@ def is_posting_incomplete(posting):
         price is not None and (price.number is MISSING or
                                price.currency is MISSING)):
         return True
-    cost = pos.cost
+    cost = posting.cost
     if cost is not None and (cost.number_per is MISSING or
                              cost.number_total is MISSING or
                              cost.currency is MISSING):
