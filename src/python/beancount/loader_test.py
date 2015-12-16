@@ -6,12 +6,14 @@ import tempfile
 import textwrap
 import re
 import os
+import time
 from unittest import mock
 from os import path
 
 from beancount import loader
 from beancount.parser import parser
 from beancount.utils import test_utils
+from beancount.utils import file_utils
 
 
 TEST_INPUT = """
@@ -125,10 +127,23 @@ class TestLoadDoc(unittest.TestCase):
 
 class TestLoadIncludes(unittest.TestCase):
 
+    def test_load_file_no_includes(self):
+        with test_utils.tempdir() as tmp:
+            test_utils.create_temporary_files(tmp, {
+                'apples.beancount': """
+                  2014-01-01 open Assets:Apples
+                """})
+            entries, errors, options_map = loader.load_file(
+                path.join(tmp, 'apples.beancount'))
+            self.assertEqual(0, len(errors))
+            self.assertEqual(['apples.beancount'],
+                             list(map(path.basename, options_map['include'])))
+
     def test_load_file_nonexist(self):
         entries, errors, options_map = loader.load_file('/bull/bla/root.beancount')
         self.assertEqual(1, len(errors))
         self.assertTrue(re.search('does not exist', errors[0].message))
+        self.assertEqual([], list(map(path.basename, options_map['include'])))
 
     def test_load_file_with_nonexist_include(self):
         with test_utils.tempdir() as tmp:
@@ -140,6 +155,8 @@ class TestLoadIncludes(unittest.TestCase):
                 path.join(tmp, 'root.beancount'))
             self.assertEqual(1, len(errors))
             self.assertTrue(re.search('does not exist', errors[0].message))
+        self.assertEqual(['root.beancount'],
+                         list(map(path.basename, options_map['include'])))
 
     def test_load_file_with_absolute_include(self):
         with test_utils.tempdir() as tmp:
@@ -155,6 +172,8 @@ class TestLoadIncludes(unittest.TestCase):
                 path.join(tmp, 'apples.beancount'))
         self.assertFalse(errors)
         self.assertEqual(2, len(entries))
+        self.assertEqual(['apples.beancount', 'oranges.beancount'],
+                         list(map(path.basename, options_map['include'])))
 
     def test_load_file_with_relative_include(self):
         with test_utils.tempdir() as tmp:
@@ -170,6 +189,8 @@ class TestLoadIncludes(unittest.TestCase):
                 path.join(tmp, 'apples.beancount'))
         self.assertFalse(errors)
         self.assertEqual(2, len(entries))
+        self.assertEqual(['apples.beancount', 'oranges.beancount'],
+                         list(map(path.basename, options_map['include'])))
 
     def test_load_file_with_multiple_includes(self):
         # Including recursive includes and mixed and absolute.
@@ -194,6 +215,9 @@ class TestLoadIncludes(unittest.TestCase):
                 path.join(tmp, 'apples.beancount'))
         self.assertFalse(errors)
         self.assertEqual(4, len(entries))
+        self.assertEqual(['apples.beancount', 'oranges.beancount',
+                          'patates.beancount', 'tomates.beancount'],
+                         list(map(path.basename, options_map['include'])))
 
     def test_load_file_with_duplicate_includes(self):
         with test_utils.tempdir() as tmp:
@@ -217,6 +241,8 @@ class TestLoadIncludes(unittest.TestCase):
                 path.join(tmp, 'apples.beancount'))
         self.assertTrue(errors)
         self.assertEqual(3, len(entries))
+        self.assertEqual(['apples.beancount', 'oranges.beancount', 'tomates.beancount'],
+                         list(map(path.basename, options_map['include'])))
 
     def test_load_string_with_relative_include(self):
         with test_utils.tempdir() as tmp:
@@ -237,6 +263,93 @@ class TestLoadIncludes(unittest.TestCase):
                 os.chdir(cwd)
         self.assertFalse(errors)
         self.assertEqual(2, len(entries))
+        self.assertEqual(['apples.beancount', 'oranges.beancount'],
+                         list(map(path.basename, options_map['include'])))
+
+    def test_load_file_return_include_filenames(self):
+        # Also check that they are normalized paths.
+        with test_utils.tempdir() as tmp:
+            test_utils.create_temporary_files(tmp, {
+                'apples.beancount': """
+                  include "oranges.beancount"
+                  2014-01-01 open Assets:Apples
+                """,
+                'oranges.beancount': """
+                  include "bananas.beancount"
+                  2014-01-02 open Assets:Oranges
+                """,
+                'bananas.beancount': """
+                  2014-01-02 open Assets:Bananas
+                """})
+            entries, errors, options_map = loader.load_file(
+                path.join(tmp, 'apples.beancount'))
+        self.assertFalse(errors)
+        self.assertEqual(3, len(entries))
+        self.assertTrue(all(path.isabs(filename)
+                            for filename in options_map['include']))
+        self.assertEqual(['apples.beancount', 'bananas.beancount', 'oranges.beancount'],
+                         list(map(path.basename, options_map['include'])))
+
+
+class TestLoadCache(unittest.TestCase):
+
+    def setUp(self):
+        self.num_calls = 0
+        mock.patch('beancount.loader._load_file',
+                   loader.pickle_cache_function(loader.PICKLE_CACHE_FILENAME,
+                                                0,  # No time threshold.
+                                                self._load_file)).start()
+    def tearDown(self):
+        mock.patch.stopall()
+
+    def _load_file(self, filename, *args, **kw):
+        self.num_calls += 1
+        return loader._load([(filename, True)], *args, **kw)
+
+    def test_load_cache(self):
+        # Create an initial set of files and load file, thus creating a cache.
+        with test_utils.tempdir() as tmp:
+            test_utils.create_temporary_files(tmp, {
+                'apples.beancount': """
+                  include "oranges.beancount"
+                  2014-01-01 open Assets:Apples
+                """,
+                'oranges.beancount': """
+                  include "bananas.beancount"
+                  2014-01-02 open Assets:Oranges
+                """,
+                'bananas.beancount': """
+                  2014-01-02 open Assets:Bananas
+                """})
+            top_filename = path.join(tmp, 'apples.beancount')
+            other_filename = path.join(tmp, 'bananas.beancount')
+            entries, errors, options_map = loader.load_file(top_filename)
+            self.assertFalse(errors)
+            self.assertEqual(3, len(entries))
+            self.assertEqual(1, self.num_calls)
+
+            # Make sure the cache was created.
+            self.assertTrue(path.exists(path.join(tmp, '.apples.beancount.picklecache')))
+
+            # Load the root file again, make sure the cache is being hit.
+            entries, errors, options_map = loader.load_file(top_filename)
+            self.assertEqual(1, self.num_calls)
+
+            # Touch the top-level file and ensure it's a cache miss.
+            with open(top_filename, 'a') as file:
+                file.write('\n')
+            entries, errors, options_map = loader.load_file(top_filename)
+            self.assertEqual(2, self.num_calls)
+
+            # Load the root file again, make sure the cache is being hit.
+            entries, errors, options_map = loader.load_file(top_filename)
+            self.assertEqual(2, self.num_calls)
+
+            # Touch the top-level file and ensure it's a cache miss.
+            with open(top_filename, 'a') as file:
+                file.write('\n')
+            entries, errors, options_map = loader.load_file(top_filename)
+            self.assertEqual(3, self.num_calls)
 
 
 class TestEncoding(unittest.TestCase):
@@ -256,3 +369,46 @@ class TestEncoding(unittest.TestCase):
         """).encode('latin1')
         entries, errors, options_map = loader.load_string(utf8_bytes, encoding='latin1')
         self.assertFalse(errors)
+
+
+class TestOptionsAggregation(unittest.TestCase):
+
+    def test_aggregate_operating_currencies(self):
+        with test_utils.tempdir() as tmp:
+            test_utils.create_temporary_files(tmp, {
+                'apples.beancount': """
+                  include "oranges.beancount"
+                  include "bananas.beancount"
+                  option "operating_currency" "USD"
+                """,
+                'oranges.beancount': """
+                  option "operating_currency" "CAD"
+                """,
+                'bananas.beancount': """
+                  option "operating_currency" "EUR"
+                """})
+            top_filename = path.join(tmp, 'apples.beancount')
+            other_filename = path.join(tmp, 'bananas.beancount')
+            entries, errors, options_map = loader.load_file(top_filename)
+
+            self.assertEqual({'USD', 'EUR', 'CAD'}, set(options_map['operating_currency']))
+
+    def test_aggregate_commodities(self):
+        with test_utils.tempdir() as tmp:
+            test_utils.create_temporary_files(tmp, {
+                'apples.beancount': """
+                  include "oranges.beancount"
+                  include "bananas.beancount"
+                  option "operating_currency" "USD"
+                """,
+                'oranges.beancount': """
+                  2015-12-12 open Assets:CA:Checking  CAD
+                """,
+                'bananas.beancount': """
+                  2015-12-13 open Assets:FR:Checking  EUR
+                """})
+            top_filename = path.join(tmp, 'apples.beancount')
+            other_filename = path.join(tmp, 'bananas.beancount')
+            entries, errors, options_map = loader.load_file(top_filename)
+
+            self.assertEqual({'EUR', 'CAD'}, options_map['commodities'])

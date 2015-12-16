@@ -47,6 +47,10 @@ from beancount.reports import context
 DEFAULT_VIEW_REDIRECT = 'balsheet'
 
 
+# The protocol to use for file links.
+FILELINK_PROTOCOL = 'beancount://{filename}?lineno={lineno}'
+
+
 class HTMLFormatter(html_formatter.HTMLFormatter):
     """A formatter object that can be used to render accounts links.
 
@@ -131,7 +135,7 @@ class HTMLFormatter(html_formatter.HTMLFormatter):
 
     def render_source(self, source):
         """See base class."""
-        return '{}#{}'.format(app.get_url('source'), source.lineno)
+        return '{}#{}'.format(app.get_url('source'), source['lineno'])
 
 
 def render_report(report_class, entries, args=None,
@@ -383,13 +387,19 @@ def context_(ehash=None):
         printer.print_entries(matching_entries, dcontext, file=oss)
 
     else:
-        dcontext = app.options['dcontext']
+        entry = matching_entries[0]
+
+        # Render the context.
         oss.write("<pre>\n")
-        for entry in matching_entries:
-            oss.write(context.render_entry_context(
-                app.entries, app.options, dcontext,
-                entry.meta["filename"], entry.meta["lineno"]))
+        oss.write(context.render_entry_context(app.entries, app.options, entry))
         oss.write("</pre>\n")
+
+        # Render the filelinks.
+        if FILELINK_PROTOCOL:
+            meta = entry.meta
+            uri = FILELINK_PROTOCOL.format(filename=meta.get('filename'),
+                                           lineno=meta.get('lineno'))
+            oss.write('<div class="filelink"><a href="{}">{}</a></div>'.format(uri, 'Open'))
 
     return render_global(
         pagetitle="Context: {}".format(ehash),
@@ -967,9 +977,8 @@ def auto_reload_input_file(callback):
     def wrapper(*posargs, **kwargs):
         filename = app.args.filename
         mtime = path.getmtime(filename)
-        if mtime > app.last_mtime:
-            app.last_mtime = mtime
 
+        if loader.needs_refresh(app.options):
             logging.info('Reloading...')
 
             # Save the source for later, to render.
@@ -1054,8 +1063,7 @@ def run_app(args, quiet=None):
         app.install(url_restrictor)
         app_installs.append(url_restrictor)
 
-    # Initialize to a small value in order to insure a reload on the first page.
-    app.last_mtime = 0
+    app.options = None
 
     # Load templates.
     with open(path.join(path.dirname(__file__), 'web.html')) as f:

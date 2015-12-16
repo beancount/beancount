@@ -3,6 +3,7 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import functools
+import hashlib
 import textwrap
 import importlib
 import collections
@@ -12,6 +13,7 @@ import itertools
 import os
 import pickle
 import warnings
+import struct
 import time
 from os import path
 
@@ -71,7 +73,10 @@ def load_file(filename, log_timings=None, log_errors=None, extra_validations=Non
     """
     if not path.isabs(filename):
         filename = path.normpath(path.join(os.getcwd(), filename))
-    return _load([(filename, True)], log_timings, log_errors, extra_validations, encoding)
+    entries, errors, options_map = _load_file(filename, log_timings,
+                                              extra_validations, encoding)
+    _log_errors(errors, log_errors)
+    return entries, errors, options_map
 
 
 # Alias, for compatibility.
@@ -79,12 +84,31 @@ def load_file(filename, log_timings=None, log_errors=None, extra_validations=Non
 load = load_file
 
 
-def pickle_cache_function(pattern, time_threshold, function):
-    """Decorate a function to make it loads its result from a pickle cache.
+def _log_errors(errors, log_errors):
+    """Log errors, if 'log_errors' is set.
 
-    This only considers the first argument as a variant and assumes it's a
-    filename. It's essentially a special case for an on-disk memoizer. If
-    the file is more recent than the cache, the function is recomputed.
+    Args:
+      log_errors: A file object or function to write errors to,
+        or None, if it should remain quiet.
+    """
+    if log_errors and errors:
+        if hasattr(log_errors, 'write'):
+            printer.print_errors(errors, file=log_errors)
+        else:
+            error_io = io.StringIO()
+            printer.print_errors(errors, file=error_io)
+            log_errors(error_io.getvalue())
+
+
+def pickle_cache_function(pattern, time_threshold, function):
+    """Decorate a loader function to make it loads its result from a pickle cache.
+
+    This considers the first argument as a top-level filename and assumes the
+    function to be cached returns an (entries, errors, options_map) triple. We
+    use the 'include' option value in order to check whether any of the included
+    files has changed. It's essentially a special case for an on-disk memoizer.
+    If any of the included files are more recent than the cache, the function is
+    recomputed and the cache refreshed.
 
     Args:
       pattern: A string, the filename pattern for the pickled cache file.
@@ -95,49 +119,91 @@ def pickle_cache_function(pattern, time_threshold, function):
     Returns:
       A decorated function which will pull its result from a cache file if
       it is available.
-
     """
     @functools.wraps(function)
-    def wrapped(filename, *args, **kw):
-        abs_filename = path.abspath(filename)
+    def wrapped(toplevel_filename, *args, **kw):
+        abs_filename = path.abspath(toplevel_filename)
         cache_filename = path.join(
             path.dirname(abs_filename),
-            pattern.format(filename=path.basename(filename)))
+            pattern.format(filename=path.basename(toplevel_filename)))
 
-        # Attempt to read the result from the cache.
+        # Read the cache if it exists in order to get the list of files whose
+        # timestamps to check.
         exists = path.exists(cache_filename)
-        if exists and path.getmtime(filename) < path.getmtime(cache_filename):
+        if exists:
             with open(cache_filename, 'rb') as file:
                 result = pickle.load(file)
-        else:
-            # We failed; recompute the value.
-            if exists:
-                os.remove(cache_filename)
 
-            t1 = time.time()
-            result = function(filename, *args, **kw)
-            t2 = time.time()
+            # Check that the latest timestamp has not been written after the
+            # cache file.
+            entries, errors, options_map = result
+            if not needs_refresh(options_map):
+                # All timestamps are legit; cache hit.
+                return result
 
-            # Overwrite the cache file if the time it takes to compute it
-            # justifies it.
-            if t2 - t1 > time_threshold:
-                try:
-                    with open(cache_filename, 'wb') as file:
-                        pickle.dump(result, file)
-                except Exception:
-                    logging.warning("Could not write to picklecache file {}".format(
-                        cache_filename))
+        # We failed; recompute the value.
+        if exists:
+            os.remove(cache_filename)
+
+        t1 = time.time()
+        result = function(toplevel_filename, *args, **kw)
+        t2 = time.time()
+
+        # Overwrite the cache file if the time it takes to compute it
+        # justifies it.
+        if t2 - t1 > time_threshold:
+            try:
+                with open(cache_filename, 'wb') as file:
+                    pickle.dump(result, file)
+            except Exception:
+                logging.warning("Could not write to picklecache file {}".format(
+                    cache_filename))
 
         return result
     return wrapped
 
 
+def _load_file(filename, *args, **kw):
+    """Delegate to _load. This gets conditionally advised by caching below."""
+    return _load([(filename, True)], *args, **kw)
+
+
 # Unless an environment variable disables it, use the pickle load cache
 # automatically.
+_uncached_load_file = _load_file
 if os.getenv('BEANCOUNT_DISABLE_LOAD_CACHE') is None:
-    load_file = pickle_cache_function(PICKLE_CACHE_FILENAME,
-                                      PICKLE_CACHE_THRESHOLD,
-                                      load_file)
+    _load_file = pickle_cache_function(PICKLE_CACHE_FILENAME,
+                                       PICKLE_CACHE_THRESHOLD,
+                                       _load_file)
+
+
+def needs_refresh(options_map):
+    """Predicate that returns true if at least one of the input files may have changed.
+
+    Args:
+      options_map: An options dict as per the parser.
+      mtime: A modified time, to check if it covers the include files in the options_map.
+    Returns:
+      A boolean, true if the input is obsoleted by changes in the input files.
+    """
+    if options_map is None:
+        return True
+    input_hash = compute_input_hash(options_map['include'])
+    return 'input_hash' not in options_map or input_hash != options_map['input_hash']
+
+
+def compute_input_hash(filenames):
+    """Compute a hash of the input data.
+
+    Args:
+      filenames: A list of input files. Order is not relevant.
+    """
+    md5 = hashlib.md5()
+    for filename in sorted(filenames):
+        md5.update(filename.encode('utf8'))
+        stat = os.stat(filename)
+        md5.update(struct.pack('dd', stat.st_mtime_ns, stat.st_size))
+    return md5.hexdigest()
 
 
 def load_string(string, log_timings=None, log_errors=None, extra_validations=None,
@@ -164,7 +230,10 @@ def load_string(string, log_timings=None, log_errors=None, extra_validations=Non
     """
     if dedent:
         string = textwrap.dedent(string)
-    return _load([(string, False)], log_timings, log_errors, extra_validations, encoding)
+    entries, errors, options_map =  _load([(string, False)], log_timings,
+                                          extra_validations, encoding)
+    _log_errors(errors, log_errors)
+    return entries, errors, options_map
 
 
 def _parse_recursive(sources, log_timings, encoding=None):
@@ -216,8 +285,6 @@ def _parse_recursive(sources, log_timings, encoding=None):
                                   'Duplicate filename parsed: "{}"'.format(filename),
                                   None))
                     continue
-                else:
-                    filenames_seen.add(filename)
 
                 # Check for a file that does not exist.
                 if not path.exists(filename):
@@ -227,6 +294,7 @@ def _parse_recursive(sources, log_timings, encoding=None):
                     continue
 
                 # Parse a file from disk directly.
+                filenames_seen.add(filename)
                 with misc_utils.log_time('beancount.parser.parser.parse_file',
                                          log_timings, indent=2):
                     (src_entries,
@@ -261,6 +329,8 @@ def _parse_recursive(sources, log_timings, encoding=None):
             # occur.
             if is_top_level:
                 options_map = src_options_map
+            else:
+                aggregate_options_map(options_map, src_options_map)
 
             # Add includes to the list of sources to process.
             for include_filename in src_options_map['include']:
@@ -271,16 +341,35 @@ def _parse_recursive(sources, log_timings, encoding=None):
                 # Add the include filenames to be processed later.
                 source_stack.append((include_filename, True))
 
-    # Note: We could easily save the set of parsed filenames in options_map
-    # here, if useful. Let's refrain for now, until we need it.
-
+    # Make sure we have at least a dict of valid options.
     if options_map is None:
         options_map = options.OPTIONS_DEFAULTS.copy()
+
+    # Save the set of parsed filenames in options_map.
+    options_map['include'] = sorted(filenames_seen)
 
     return entries, parse_errors, options_map
 
 
-def _load(sources, log_timings, log_errors, extra_validations, encoding):
+def aggregate_options_map(options_map, src_options_map):
+    """Aggregate some of the attributes of options map.
+
+    Args:
+      options_map: The target map in which we want to aggregate attributes.
+        Note: This value is mutated in-place.
+      src_options_map: A source map whose values we'd like to see aggregated.
+    """
+    op_currencies = options_map["operating_currency"]
+    for currency in src_options_map["operating_currency"]:
+        if currency not in op_currencies:
+            op_currencies.append(currency)
+
+    commodities = options_map["commodities"]
+    for currency in src_options_map["commodities"]:
+        commodities.add(currency)
+
+
+def _load(sources, log_timings, extra_validations, encoding):
     """Parse Beancount input, run its transformations and validate it.
 
     (This is an internal method.)
@@ -296,8 +385,6 @@ def _load(sources, log_timings, log_errors, extra_validations, encoding):
         You may provide a list of such arguments to be parsed. Filenames must be absolute
         paths.
       log_timings: A file object or function to write timings to,
-        or None, if it should remain quiet.
-      log_errors: A file object or function to write errors to,
         or None, if it should remain quiet.
       extra_validations: A list of extra validation functions to run after loading
         this list of entries.
@@ -333,13 +420,8 @@ def _load(sources, log_timings, log_errors, extra_validations, encoding):
         # haven't been modified by user-provided validation routines, by
         # comparing hashes before and after. Not needed for now.
 
-    if log_errors and errors:
-        if hasattr(log_errors, 'write'):
-            printer.print_errors(errors, file=log_errors)
-        else:
-            error_io = io.StringIO()
-            printer.print_errors(errors, file=error_io)
-            log_errors(error_io.getvalue())
+    # Compute the input hash.
+    options_map['input_hash'] = compute_input_hash(options_map['include'])
 
     return entries, errors, options_map
 

@@ -203,12 +203,10 @@ def do_context(filename, args):
     # Load the input file.
     entries, errors, options_map = loader.load_file(filename)
 
-    dcontext = options_map['dcontext']
-
     # Note: Make sure to use the absolute filename used by the parser to resolve
     # the file.
-    str_context = context.render_entry_context(entries, options_map, dcontext,
-                                               options_map['filename'], lineno)
+    str_context = context.render_file_context(entries, options_map,
+                                              options_map['filename'], lineno)
     sys.stdout.write(str_context)
 
 

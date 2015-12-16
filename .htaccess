@@ -64,6 +64,8 @@ RedirectMatch /doc/pnl$                   /beancount/doc/trading
 RedirectMatch /doc/export$                https://docs.google.com/document/d/1mNyE_ONuyEkF_I2l6V_AoAU5HJgI654AOBhHsnNPPqw/
 RedirectMatch /doc/exporting              /beancount/doc/export
 
+RedirectMatch /doc/export-old$            https://docs.google.com/document/d/1eZIDRmQZxR6cmDyOJf7U3BnCm4PDMah2twxYFfKPJtM/
+
 RedirectMatch /doc/payee                  https://docs.google.com/document/d/17_u_cYxeXVsCV4GmaubK_xsTQl_H9rP87E_vnZHKNb0/
 RedirectMatch /doc/subaccount             /beancount/doc/payee
 
@@ -120,9 +122,14 @@ RedirectMatch /doc/vesting$               https://docs.google.com/document/d/1mH
 RedirectMatch /doc/vest$                  /beancount/doc/vesting
 RedirectMatch /doc/rsu$                   /beancount/doc/vesting
 
-RedirectMatch /doc/contrib$               https://docs.google.com/document/d/1Z37bQ45wDtjTPaMQ_x-f33p1trH9fNosEAUgbQXwp30/
-RedirectMatch /doc/contribution$          /beancount/doc/contrib
-RedirectMatch /doc/contributions$         /beancount/doc/contrib
+RedirectMatch /doc/external$              https://docs.google.com/document/d/1Z37bQ45wDtjTPaMQ_x-f33p1trH9fNosEAUgbQXwp30/
+RedirectMatch /doc/ext$                   /beancount/doc/external
+RedirectMatch /doc/contrib$               /beancount/doc/external
+RedirectMatch /doc/contribution$          /beancount/doc/external
+RedirectMatch /doc/contributions$         /beancount/doc/external
+
+RedirectMatch /doc/contributing$          https://docs.google.com/document/d/1e4Vz3wZB_8-ZcAwIFde8X5CjzKshE4-OXtVVHm4RQ8s/
+RedirectMatch /doc/ca$                    /beancount/doc/contributing
 
 RedirectMatch /doc/proposal-rounding$     https://docs.google.com/document/d/1MY2JMiiXUmcwsOT0CkiK-fCo0ZE7nbr8uTcTL50b6X4/
 RedirectMatch /doc/proposal-residual$     /beancount/doc/proposal-rounding

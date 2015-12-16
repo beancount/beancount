@@ -1334,6 +1334,11 @@ http://furius.ca/beancount/doc/proposal-inter
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - Idea: Export contents to Spreadsheet equivalent, as a single list of
+    postings, joining transactions by an id column. That should quiet down those
+    who think you can do this with a Spreadsheet to try it out for themselves.
+
+
   - Add get_price() function to query_env.
 
 

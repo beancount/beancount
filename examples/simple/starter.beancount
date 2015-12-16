@@ -51,7 +51,7 @@
 
 ** Options
 ;; We begin with the declaration of some global options.
-;; Type bean-web --help-options for the full list of available options.
+;; Run "bean-doctor list_options" for the full list of available options.
 
 option "title" "Starter Kit Beancount Ledger"
 
