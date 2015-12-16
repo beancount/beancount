@@ -1,5 +1,17 @@
 -*- mode: org -*-
 beancount: TODO
+* Legacy
+
+  This can be broken down in three distinct aspects:
+
+  * Supporting the loading of encrypted files.
+
+  * A plugin to merge a second file into the main one.
+
+  * Reporting code to auto-generate a doc with account ids and other secret
+    informations.
+
+
 * Event
 
   - Should we validate that the query is legit before we even run it? I think
