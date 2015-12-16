@@ -266,3 +266,17 @@ def make_failing_importer(*removed_module_names):
         else:
             return builtins.__import__(name, *args, **kwargs)
     return failing_import
+
+
+@contextlib.contextmanager
+def environ(varname, newvalue):
+    """A context manager which pushes varname's value and restores it later.
+
+    Args:
+      varname: A string, the environ variable name.
+      newvalue: A string, the desired value.
+    """
+    oldvalue = os.environ.get(varname)
+    os.environ[varname] = newvalue
+    yield
+    os.environ[varname] = oldvalue

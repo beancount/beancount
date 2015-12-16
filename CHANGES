@@ -4,6 +4,17 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-12-??
+
+  - The loader now supports loading encrypted files transparently. If a filename
+    ends with .gpg or .asc (and contains armored content), the file is run
+    through a gpg subprocess to decrypt it. No temporary files are created. Note
+    that caching for those files is disabled.
+
+    If you're writing a script, you can also call
+    beancount.loaded.load_encrypted_file() directly to avoid the check.
+
+
 2015-12-13
 
   - Fixed a minor bug with the loader cache whereby errors weren't getting
