@@ -4,6 +4,14 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-12-17
+
+  - In prices, removed undocumented support for automatically extracting
+    Commodities with a "quote" metadata field. This had been used in times past
+    and had been brought in as legacy, but now neither the export code nor the prices
+    code use it. Vaccummed away.
+
+
 2015-12-13
 
   - Fixed a minor bug with the loader cache whereby errors weren't getting
