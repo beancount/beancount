@@ -100,3 +100,16 @@ class TestMergeMeta(cmptest.TestCase):
                 "begin": datetime.date(2015, 1, 1),
                 }
             self.assertLess(expected.items(), entries[0].meta.items())
+
+    def test_merge_meta__errors(self):
+        # Note: Use load_file() and a real file to try to tease reentrance bugs.
+        with TmpFile('w') as topfile:
+            topfile.write("""
+              plugin "beancount.plugins.merge_meta" "/path/to/file/that/doesnt/exist"
+
+              2015-02-02 open Assets:Checking
+                begin: 2015-01-01
+            """)
+            topfile.flush()
+            entries, errors, options_map = loader.load_file(topfile.name)
+            self.assertEqual(1, len(errors))

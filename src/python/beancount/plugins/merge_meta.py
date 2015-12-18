@@ -38,8 +38,9 @@ def merge_meta(entries, options_map, config):
       A list of entries, with more metadata attached to them.
     """
     external_filename = config
-    ext_entries, ext_error, ext_options_map = loader.load_file(external_filename)
     new_entries = list(entries)
+
+    ext_entries, ext_errors, ext_options_map = loader.load_file(external_filename)
 
     # Map Open and Close directives.
     oc_map = getters.get_account_open_close(entries)
@@ -66,4 +67,4 @@ def merge_meta(entries, options_map, config):
     # aren't cascaded through. This is something that should be defined better
     # in the plugin interface and perhaps improved upon.
 
-    return new_entries, []
+    return new_entries, ext_errors
