@@ -14,6 +14,11 @@ Note: This file contains only changes in the 'default' branch.
     If you're writing a script, you can also call
     beancount.loaded.load_encrypted_file() directly to avoid the check.
 
+  - Implemented the 'beancount.plugins.merge_meta' plugin that copies metadata
+    from an external file into a regular file. It is essentially a data join on
+    the key of accounts for Open and Close directives, and a join on the key of
+    currency on Commodity directives.
+
 
 2015-12-13
 

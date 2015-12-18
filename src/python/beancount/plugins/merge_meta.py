@@ -27,7 +27,7 @@ from beancount.core import getters
 __plugins__ = ('merge_meta',)
 
 
-def merge_meta(entries, unused_options_map, config):
+def merge_meta(entries, options_map, config):
     """Load a secondary file and merge its metadata in our given set of entries.
 
     Args:
@@ -37,27 +37,33 @@ def merge_meta(entries, unused_options_map, config):
     Returns:
       A list of entries, with more metadata attached to them.
     """
-    ext_entries, ext_error, ext_options_map = loader.load_file(config)
+    external_filename = config
+    ext_entries, ext_error, ext_options_map = loader.load_file(external_filename)
+    new_entries = list(entries)
 
     # Map Open and Close directives.
     oc_map = getters.get_account_open_close(entries)
     ext_oc_map = getters.get_account_open_close(ext_entries)
-
-    new_entries = list(entries)
-
     for account in set(oc_map.keys()) & set(ext_oc_map.keys()):
-        print(account)
         open_entry, close_entry = oc_map[account]
         ext_open_entry, ext_close_entry = ext_oc_map[account]
-
         if open_entry and ext_open_entry:
-            print(open_entry)
-            print(ext_open_entry)
-
+            open_entry.meta.update(ext_open_entry.meta)
         if close_entry and ext_close_entry:
-            print(close_entry)
-            print(ext_close_entry)
+            close_entry.meta.update(ext_close_entry.meta)
 
-    # Note: Include the included file in the list of inputs so that .
+    # Map Commodity directives.
+    comm_map = getters.get_commodity_map(entries, False)
+    ext_comm_map = getters.get_commodity_map(ext_entries, False)
+    for currency in set(comm_map.keys()) & set(ext_comm_map.keys()):
+        comm_entry = comm_map[currency]
+        ext_comm_entry = ext_comm_map[currency]
+        if comm_entry and ext_comm_entry:
+            comm_entry.meta.update(ext_comm_entry.meta)
+
+    # Note: We cannot include the external file in the list of inputs so that a
+    # change of it triggers a cache rebuild because side-effects on options_map
+    # aren't cascaded through. This is something that should be defined better
+    # in the plugin interface and perhaps improved upon.
 
     return new_entries, []
