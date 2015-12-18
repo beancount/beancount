@@ -1344,6 +1344,26 @@ http://furius.ca/beancount/doc/proposal-inter
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  (prices cleanup)
+  - Make the code finding lists of commodities for holdings and price reports
+    use the same code as beancount.prices.find_prices. Also, this should  really
+    just be renamed beancount.prices.find_commodities and perhaps be moved up to
+    beancount.ops.
+
+      src/python/beancount/ops/holdings.py
+      src/python/beancount/reports/price_reports.py
+
+  - Remove the final traces of the "quote" metadata field from holdings:
+
+      /home/blais/p/beancount/src/python/beancount/ops/holdings.py:153:      Commodity directive from its 'quote' metadata field.
+      /home/blais/p/beancount/src/python/beancount/ops/holdings.py:190:            quote_currency = commodity_entry.meta.get('quote', None)
+
+    Nothing else uses this anymore, this needs to go too.
+
+
+
+
+
   - Idea: Export contents to Spreadsheet equivalent, as a single list of
     postings, joining transactions by an id column. That should quiet down those
     who think you can do this with a Spreadsheet to try it out for themselves.
