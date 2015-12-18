@@ -47,132 +47,6 @@ from beancount.parser import options
 from beancount.parser import printer
 
 
-## FIXME: Move these utility functions to the main Beancount codebase, add tests
-## for each.
-
-def read_encrypted_file(filename):
-    """Load and decrypt an encrypted file.
-
-    Args:
-      filename: A string, the path to the encrypted file.
-    Returns:
-      A string, the contents of the file.
-    """
-    pipe = subprocess.Popen(
-        ['gpg', '--batch', '--decrypt', filename],
-        shell=False,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
-    contents, errors = pipe.communicate()
-    return contents.decode('utf-8')
-
-
-def load_encrypted_file(filename, **kwds):
-    """Load a single file; if encrypted, decrypt and load from string.
-    No copy is of the decrypted file is ever made on disk.
-
-    Args:
-      filenames: A string, the names of file to parse and load.
-      **kwds: Extra arguments for loader.load_file() and loader.load_string(),
-        which you can use to specify error reporting arguments.
-    Returns:
-      A tuple as per loader.load_file() and loader.load_string().
-    """
-    if re.match('.*\.(asc|gpg)$', filename):
-        results = loader.load_string(read_encrypted_file(filename), **kwds)
-    else:
-        results = loader.load_file(filename, **kwds)
-    return results
-
-
-def load_merge(filenames, **kwds):
-    """Load up files and merge them and their metadata where possible.
-
-    This routine will load all the given files and merge their metadata where
-    certain types of directives intersect. This routine also supports loading
-    files encrypted with GPG.
-
-    Args:
-      fileanems: A list of strings, the names of files to parse and load.
-      **kwds: Extra arguments for loader.load_file() and loader.load_string(),
-        which you can use to specify error reporting arguments.
-    Returns:
-      A tuple as per loader.load_file() and loader.load_string().
-    """
-    logging.info('Loading: {}'.format(filenames[0]))
-    entries, errors, options_map = load_encrypted_file(filenames[0], **kwds)
-
-    for filename in filenames[1:]:
-        logging.info('Loading: {}'.format(filename))
-        new_entries, new_errors, new_options_map = load_encrypted_file(filename, **kwds)
-
-        # Merge the metadata and contents of indexed entries.
-        entries = update_metadata(entries, new_entries)
-        errors.extend(new_errors)
-
-    return entries, errors, options_map
-
-
-def update_metadata_single(target_entries, source_entries,
-                           key_fun, filter_fun):
-    """Pull metadata from source entries to target for selected entry types.
-
-    Args:
-      target_entries: A list of entries whose metadata we want to augment.
-      source_entries: A list of entries from which to pull additional metadata.
-      key_fun: A callable that extracts a unique key from an entry.
-      filter_fun: A callable that selects an entry for metadata update.
-    Returns:
-      An augmented version of target_entries.
-    """
-    # Compute unique mappings between source and target.
-    source_map = {key_fun(entry): entry
-                  for entry in source_entries
-                  if filter_fun(entry)}
-
-    # Filter the target transaction set.
-    new_entries = []
-    for entry in target_entries:
-        if filter_fun(entry):
-            source_entry = source_map.pop(key_fun(entry), None)
-            if source_entry is not None:
-                # Copy the metadata from source to target.
-                meta = entry.meta.copy()
-                meta.update(source_entry.meta)
-                entry = entry._replace(meta=meta)
-        new_entries.append(entry)
-
-    # Add in the missing entries.
-    for key, entry in source_map.items():
-        new_entries.append(entry)
-
-    return new_entries
-
-
-def update_metadata(target_entries, source_entries):
-    """Pull metadata from source entries to target for similar entry types.
-
-    This function copies the metadata of certain particular types of entries,
-    like Open and Close directives, onto the corresponding directives in a
-    list of target entries. Colliding metadata from source is overwritten
-    onto target.
-
-    Args:
-      target_entries: A list of entries whose metadata we want to augment.
-      source_entries: A list of entries from which to pull additional metadata.
-    Returns:
-      An augmented version of target_entries.
-    """
-    entries = target_entries
-    get_account = lambda entry: entry.account
-    for key_fun, filter_fun in [
-            (get_account, lambda entry: isinstance(entry, data.Open)),
-            (get_account, lambda entry: isinstance(entry, data.Close)),
-    ]:
-        entries = update_metadata_single(entries, source_entries, key_fun, filter_fun)
-    return data.sorted(entries)
-
-
 def group_accounts_by_metadata(entries, field_name):
     """Group the accounts hierarchy by the value of a metadata field on the corresponding
     Open entry of in one of its parent accounts.
@@ -277,13 +151,12 @@ def main():
     import argparse, logging
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
     parser = argparse.ArgumentParser(description=__doc__.strip())
-    parser.add_argument('ledger_filename', help='Beancount ledger filename')
-    parser.add_argument('accounts_filename', help='Encrypted accounts filename')
+    parser.add_argument('filename', help='Beancount ledger filename')
     args = parser.parse_args()
 
     logging.info('Read the data')
-    entries, _, options_map = load_merge([args.ledger_filename, args.accounts_filename],
-                                         log_errors=logging.error)
+    entries, _, options_map = loader.load_file(args.filename,
+                                               log_errors=logging.error)
     acc_types = options.get_account_types(options_map)
 
     logging.info('Group the accounts using groups defined implicitly by metadata')
