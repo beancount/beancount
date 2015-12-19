@@ -1,17 +1,24 @@
 #!/usr/bin/env python3
-"""A script to produce a document that describes all assets.
+"""A script to produce a document that describes assets and account information.
 
 This script produces a document to be attached to a legal will, a document that
 describes the full list of all assets and account names with institutions names
 and addresses, to make the work of gathering and liquidating assets easy. It
 uses various metadata fields to group Beancount accounts together and produce an
-output that shoul be readable by a lay-person. The script supports loading and
-merging encrypted Beancount files.
+output that should be readable by a layperson.
 
-The metadata fields used are as follows:
+FIXME: Complete this or automate it.
 
-institution: A short string, the name of a group of accounts. This should be the
-  name of the institution.
+
+The metadata fields used are:
+
+  On Open directives:
+
+    institution: A short string, the name of a group of accounts. This should be
+      the name of the institution.
+
+
+
 
 The following fields can be attached to any of the accounts grouped in an
 institution:
@@ -47,39 +54,48 @@ from beancount.parser import options
 from beancount.parser import printer
 
 
-def group_accounts_by_metadata(entries, field_name):
-    """Group the accounts hierarchy by the value of a metadata field on the corresponding
-    Open entry of in one of its parent accounts.
-
-    Accounts without a corresponding declaration will end up in the special
-    empty ('') group key.
+def group_accounts_by_metadata(accounts_map, meta_name):
+    """Group accounts by the value of a metadata field on its corresponding Open
+    entry or in one of its parent accounts.
 
     Args:
-      entries: A list of directives.
-      field_name: A string, the name of a metadata key to extract to figure out the
+      accounts_map: A mapping of account name to its Open entry.
+      meta_name: A string, the name of a metadata key to extract to figure out the
         group name.
     Returns:
       A dict of group names (the values of the metadata field) to a list of account
       name strings.
     """
-    open_close_map = getters.get_account_open_close(entries)
     groups = collections.defaultdict(list)
-    for account_ in open_close_map:
+    for account_ in accounts_map:
         # Find the group of this account; the group is defined as the first
         # parent account that has a particular metadata field. If an account is
         # not covered by a parent with the metadata, it defines its own group.
         for parent_account in account.parents(account_):
-            open_entry, close_entry = open_close_map.get(parent_account, (None, None))
-            if (open_entry is not None and
-                open_entry.meta and
-                field_name in open_entry.meta):
-                group = open_entry.meta[field_name]
+            open_entry = accounts_map.get(parent_account, None)
+            if (open_entry and open_entry.meta and meta_name in open_entry.meta):
+                group = open_entry.meta[meta_name]
+                groups[group].append(account_)
                 break
-        else:
-            group = ''
-        groups[group].append(account_)
+    for group in groups.values():
+        group.sort()
     return dict(groups)
 
+
+def find_institutions(entries, options_map):
+    """Gather all the institutions and valid accounts from the list of entries.
+    """
+    acc_types = options.get_account_types(options_map)
+
+    # Filter out accounts that are closed or that are income accounts.
+    open_close_map = getters.get_account_open_close(entries)
+    accounts_map = {acc: open_entry
+                    for acc, (open_entry, close_entry) in open_close_map.items()
+                    if (account_types.is_balance_sheet_account(acc, acc_types) and
+                        close_entry is None)}
+
+    # Group the accounts using groups defined implicitly by metadata.
+    return group_accounts_by_metadata(accounts_map, 'institution')
 
 
 def get_first_meta(entries, field_name):
@@ -96,8 +112,9 @@ def get_first_meta(entries, field_name):
             return entry.meta[field_name]
 
 
+# Report data types.
 Institution = collections.namedtuple('Institution', 'name summary address accounts')
-Account = collections.namedtuple('Account', 'name date number description')
+Account = collections.namedtuple('Account', 'name open_date number description')
 
 
 def print_latex_report(institutions):
@@ -151,40 +168,18 @@ def main():
     import argparse, logging
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
     parser = argparse.ArgumentParser(description=__doc__.strip())
-    parser.add_argument('filename', help='Beancount ledger filename')
+    parser.add_argument('filename', help='Beancount input filename')
     args = parser.parse_args()
 
-    logging.info('Read the data')
     entries, _, options_map = loader.load_file(args.filename,
                                                log_errors=logging.error)
-    acc_types = options.get_account_types(options_map)
 
-    logging.info('Group the accounts using groups defined implicitly by metadata')
-    groups = group_accounts_by_metadata(entries, 'institution')
+    # Find the institutions from the data.
+    groups = find_institutions(entries)
 
-    logging.info("Select only balance sheet accounts that are open")
-    open_close_map = getters.get_account_open_close(entries)
-    open_map = {key: value[0] for key, value in open_close_map.items()}
-    close_map = {key: value[1] for key, value in open_close_map.items()}
-    new_groups = {}
-    for group, account_list in groups.items():
-        filtered_accounts = [
-            account_
-            for account_ in account_list
-            if (not (open_map[account_].meta or {}).get('ignore', False) and
-                close_map[account_] is None and
-                account_types.is_balance_sheet_account(account_, acc_types))]
-        if filtered_accounts:
-            new_groups[group] = filtered_accounts
-    groups = new_groups
-
-    logging.info("Gather and organize the data")
+    # Gather missing fields and create a report object.
     institutions = []
-    for group, child_accounts in sorted(groups.items()):
-        if not group:
-            for child_account in child_accounts:
-                logging.error('Ungrouped Account: {}'.format(child_account))
-            continue
+    for institution, accounts in sorted(groups.items()):
         values = {field: get_first_meta(map(open_map.__getitem__,
                                             sorted(child_accounts)), field)
                   for field in ('summary', 'address')}
