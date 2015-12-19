@@ -100,3 +100,32 @@ class TestWillFunctions(test_utils.TestCase):
         self.assertEqual("Ape", will.get_first_meta(entries, 'animal'))
         self.assertEqual("Banana", will.get_first_meta(entries, 'food'))
         self.assertEqual("Jungle", will.get_first_meta(entries, 'habitat'))
+
+
+class TestWillReport(test_utils.TestCase):
+
+    @loader.load_doc()
+    def test_group_accounts(self, entries, _, options_map):
+        """
+          ;; Absence of meta.
+          2010-01-01 open Assets:US:BofA:Checking
+
+          ;; Metadata on the parent.
+          2010-01-01 open Assets:US:WellsFargo
+            institution: "Wells Fargo Bank."
+          2010-01-01 open Assets:US:WellsFargo:Checking
+
+          ;; Ambiguous metadata.
+          2010-01-01 open Assets:US:Chase
+            institution: "Chase Manhattan Bank."
+          2010-01-01 open Assets:US:Chase:Checking
+            institution: "Chase Manhattan Bank Checking Division"
+
+          ;; Two accounts joined by same institution.
+          2010-01-01 open Assets:US:TDBank:Checking
+            institution: "Toronto Dominion Bank."
+          2010-01-01 open Liabilities:US:TDBank:CreditCard
+            institution: "Toronto Dominion Bank."
+        """
+        report = will.create_report(entries, options_map)
+        pprint.pprint(report)

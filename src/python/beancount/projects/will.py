@@ -6,33 +6,6 @@ describes the full list of all assets and account names with institutions names
 and addresses, to make the work of gathering and liquidating assets easy. It
 uses various metadata fields to group Beancount accounts together and produce an
 output that should be readable by a layperson.
-
-FIXME: Complete this or automate it.
-
-
-The metadata fields used are:
-
-  On Open directives:
-
-    institution: A short string, the name of a group of accounts. This should be
-      the name of the institution.
-
-
-
-
-The following fields can be attached to any of the accounts grouped in an
-institution:
-
-  summary: A long string that describes why these accounts were opened and what
-    they are expected to contain.
-  address: The address of an institution.
-
-For each account, the following fields are rendered if present:
-
-  description: What this account is expected to contain.
-  account: The account number.
-  ignore: True if we should ignore the account.
-
 """
 __author__ = 'Martin Blais <blais@furius.ca>'
 
@@ -50,6 +23,7 @@ from beancount.core import getters
 from beancount.core import account_types
 from beancount.core import data
 from beancount.core import account
+from beancount.core import realization
 from beancount.parser import options
 from beancount.parser import printer
 
@@ -113,8 +87,43 @@ def get_first_meta(entries, field_name):
 
 
 # Report data types.
-Institution = collections.namedtuple('Institution', 'name summary address accounts')
-Account = collections.namedtuple('Account', 'name open_date number description')
+Report = collections.namedtuple('Report', 'title institutions')
+
+InstitutionReport = collections.namedtuple('Institution', 'name fields accounts')
+INSTITUTION_FIELDS = ['address', 'phone', 'website', 'representative']
+
+AccountReport = collections.namedtuple('Account', 'name open_date balance fields')
+ACCOUNT_FIELDS = ['number', 'description']
+
+def create_report(entries, options_map):
+    real_root = realization.realize(entries)
+
+    # Find the institutions from the data.
+    groups = find_institutions(entries, options_map)
+
+    # Gather missing fields and create a report object.
+    oc_map = getters.get_account_open_close(entries)
+    institutions = []
+    for name, accounts in sorted(groups.items()):
+        # Get the institution fields.
+        fields = {field: get_first_meta((oc_map[acc][0] for acc in accounts), field)
+                  for field in INSTITUTION_FIELDS}
+
+        # Create infos for each account in this institution.
+        account_reports = []
+        for accname in accounts:
+            fields = {field: get_first_meta((oc_map[acc][0] for acc in accounts), field)
+                      for field in ACCOUNT_FIELDS}
+            open_date = oc_map[accname][0].date
+            real_node = realization.get(real_root, accname)
+            account_reports.append(AccountReport(
+                accname, open_date, real_node.balance.to_string(), fields))
+
+        # Create the institution report.
+        institution = InstitutionReport(name, fields, account_reports)
+        institutions.append(institution)
+
+    return Report(options_map['title'], institutions)
 
 
 def print_latex_report(institutions):
@@ -174,29 +183,10 @@ def main():
     entries, _, options_map = loader.load_file(args.filename,
                                                log_errors=logging.error)
 
-    # Find the institutions from the data.
-    groups = find_institutions(entries)
-
-    # Gather missing fields and create a report object.
-    institutions = []
-    for institution, accounts in sorted(groups.items()):
-        values = {field: get_first_meta(map(open_map.__getitem__,
-                                            sorted(child_accounts)), field)
-                  for field in ('summary', 'address')}
-        institution = Institution(group, values['summary'], values['address'], [])
-        institutions.append(institution)
-
-        for child_account in sorted(child_accounts):
-            open_entry = open_map[child_account]
-            meta = open_map[child_account].meta or {}
-            institution.accounts.append(
-                Account(child_account,
-                        open_entry.date,
-                        meta.get('number', None),
-                        meta.get('description', None)))
+    report = create_report(entries, options_map)
 
     logging.info("Produce a report")
-    print_latex_report(institutions)
+    print_xml_report(report)
 
 
 if __name__ == '__main__':
