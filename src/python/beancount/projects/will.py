@@ -11,6 +11,7 @@ __author__ = 'Martin Blais <blais@furius.ca>'
 
 import collections
 import logging
+import itertools
 import io
 import re
 import pprint
@@ -40,9 +41,10 @@ def group_accounts_by_metadata(accounts_map, meta_name):
         group name.
     Returns:
       A dict of group names (the values of the metadata field) to a list of account
-      name strings.
+      name strings, and a list of ignored accounts.
     """
     groups = collections.defaultdict(list)
+    ignored_accounts = set()
     for account_ in accounts_map:
         # Find the group of this account; the group is defined as the first
         # parent account that has a particular metadata field. If an account is
@@ -53,13 +55,21 @@ def group_accounts_by_metadata(accounts_map, meta_name):
                 group = open_entry.meta[meta_name]
                 groups[group].append(account_)
                 break
+            else:
+                ignored_accounts.add(account_)
     for group in groups.values():
         group.sort()
-    return dict(groups)
+    return dict(groups), ignored_accounts
 
 
 def find_institutions(entries, options_map):
     """Gather all the institutions and valid accounts from the list of entries.
+
+    Args:
+      entries: A list of entries.
+      options_map: A dict of options, as per the parser.
+    Returns:
+      See group_accounts_by_metadata().
     """
     acc_types = options.get_account_types(options_map)
 
@@ -90,23 +100,25 @@ def get_first_meta(entries, field_name):
 
 # Report data types.
 Report = collections.namedtuple('Report', 'title institutions')
-
 InstitutionReport = collections.namedtuple('Institution', 'name fields accounts')
-
 AccountReport = collections.namedtuple('Account', 'name open_date balance fields')
+
 
 def create_report(entries, options_map):
     real_root = realization.realize(entries)
 
     # Find the institutions from the data.
-    groups = find_institutions(entries, options_map)
+    groups, ignored_accounts = find_institutions(entries, options_map)
 
-    # Gather missing fields and create a report object.
+    # List all the asset accounts which aren't included in the report.
     oc_map = getters.get_account_open_close(entries)
     open_map = {acc: open_entry for acc, (open_entry, _) in oc_map.items()}
+    for acc in sorted(ignored_accounts):
+        logging.info("Ignored account: %s", acc)
+
+    # Gather missing fields and create a report object.
     institutions = []
     for name, accounts in sorted(groups.items()):
-
         # Get the institution fields, which is the union of the fields for all
         # the accounts with the institution fields.
         institution_accounts = [acc for acc in accounts
@@ -224,6 +236,8 @@ def format_xhtml_table(items):
     oss = io.StringIO()
     oss.write('<table class="fields">\n')
     for key, value in items:
+        if re.match('[a-z]+://', value):
+            value = '<a href="{}">{}</a>'.format(value, value)
         oss.write('<tr><td>{}:</td><td>{}</td></tr>'.format(key.capitalize(), value))
     oss.write('</table>\n')
     return oss.getvalue()
