@@ -13,6 +13,7 @@ import collections
 import logging
 import io
 import re
+import pprint
 import subprocess
 import sys
 import textwrap
@@ -91,10 +92,8 @@ def get_first_meta(entries, field_name):
 Report = collections.namedtuple('Report', 'title institutions')
 
 InstitutionReport = collections.namedtuple('Institution', 'name fields accounts')
-INSTITUTION_FIELDS = ['address', 'phone', 'website', 'representative']
 
 AccountReport = collections.namedtuple('Account', 'name open_date balance fields')
-ACCOUNT_FIELDS = ['number', 'description']
 
 def create_report(entries, options_map):
     real_root = realization.realize(entries)
@@ -104,95 +103,130 @@ def create_report(entries, options_map):
 
     # Gather missing fields and create a report object.
     oc_map = getters.get_account_open_close(entries)
+    open_map = {acc: open_entry for acc, (open_entry, _) in oc_map.items()}
     institutions = []
     for name, accounts in sorted(groups.items()):
-        # Get the institution fields.
-        fields = {field: get_first_meta((oc_map[acc][0] for acc in accounts), field)
-                  for field in INSTITUTION_FIELDS}
+
+        # Get the institution fields, which is the union of the fields for all
+        # the accounts with the institution fields.
+        institution_accounts = [acc for acc in accounts
+                                if 'institution' in open_map[acc].meta]
+
+        institution_fields = {}
+        for acc in institution_accounts:
+            for key, value in open_map[acc].meta.items():
+                institution_fields.setdefault(key, value)
+        institution_fields.pop('filename', None)
+        institution_fields.pop('lineno', None)
 
         # Create infos for each account in this institution.
         account_reports = []
-        for accname in accounts:
-            fields = {field: get_first_meta((oc_map[acc][0] for acc in accounts), field)
-                      for field in ACCOUNT_FIELDS}
-            open_date = oc_map[accname][0].date
-            real_node = realization.get(real_root, accname)
+        for acc in accounts:
+            open_entry = open_map[acc]
+            account_fields = open_entry.meta.copy()
+            account_fields.pop('filename', None)
+            account_fields.pop('lineno', None)
+            for field in institution_fields:
+                account_fields.pop(field, None)
+
+            real_node = realization.get(real_root, acc)
             account_reports.append(AccountReport(
-                accname, open_date, real_node.balance.to_string(), fields))
+                acc, open_entry.date, real_node.balance, account_fields))
 
         # Create the institution report.
-        institution = InstitutionReport(name, fields, account_reports)
+        institution = InstitutionReport(name, institution_fields, account_reports)
         institutions.append(institution)
 
     return Report(options_map['title'], institutions)
 
 
+XHTML_TEMPLATE_PRE = '''
+<html>
+  <head>
+    <style type="text/css">
+
+table.accounts {
+  border-collapse: collapse;
+}
+
+table.accounts td {
+  border: thin solid black;
+  padding: 0.1em 0.3em;
+}
+
+    </style>
+  </head>
+  <body>
+'''
+XHTML_TEMPLATE_POST = '''
+  </body>
+</html>
+'''
+
+
 def format_xhtml_report(report):
     oss = io.StringIO()
-
-    iss = io.StringIO()
-    for inst in report.institutions:
-        iss.write('''
-          <div class="institution">
-            <h2>{i.name}</h2>
-          </div>
-        '''.format(i=inst))
+    oss.write(XHTML_TEMPLATE_PRE)
 
     oss.write('''
       <div class="report">
         <h1 class="title">{r.title}</h1>
-        {institutions}
-      </div>
-    '''.format(r=report, institutions=iss.getvalue()))
+    '''.format(r=report))
 
+    for inst in report.institutions:
+        oss.write('''
+          <div class="institution">
+            <h2>{i.name}</h2>
+            {fields}
+        '''.format(i=inst, fields=format_xhtml_table(sorted(inst.fields.items()))))
+
+        # Compute the set of fields to render.
+        unique_fields = {key
+                         for acc in inst.accounts
+                         for key in acc.fields}
+        fieldnames = ['_name', '_open_date'] + sorted(unique_fields) + ['_balance']
+        if inst.accounts:
+            oss.write('''
+              <table class="accounts">
+              <thead>
+              <tr>
+            ''')
+            for fieldname in fieldnames:
+                oss.write('<th>{}</th>'.format(fieldname.strip('_').capitalize()))
+            oss.write('</tr></thead>\n')
+
+            for acc in inst.accounts:
+                fields = acc.fields.copy()
+                fields['_name'] = acc.name
+                fields['_open_date'] = acc.open_date
+                fields['_balance'] = acc.balance.cost().to_string()
+                oss.write('<tr>\n')
+                for field in fieldnames:
+                    oss.write('<td>{}</td>\n'.format(fields.get(field, '')))
+                oss.write('</tr>\n')
+            oss.write('</table>\n')
+
+        oss.write('</div>\n')
+    oss.write('</div>\n')
+
+    oss.write(XHTML_TEMPLATE_POST)
     return oss.getvalue()
 
 
-def print_latex_report(institutions):
-    """Print the readable output to stdout.
+def format_xhtml_table(items):
+    """Render a mapping of values to an HTML table.
 
     Args:
-      institutions: A list of Institutions instances.
+      items: A dict of key/value pairs.
+    Returns:
+      A string of rendered HTML.
     """
-    print(PREAMBLE.lstrip())
-
-    for institution in institutions:
-        print('\\section{%s}' % institution.name)
-
-        if institution.summary:
-            print('{%s}\n\n' % institution.summary)
-        if institution.address:
-            print('Address: {%s}\n\n' % institution.address)
-
-        print('\\begin{itemize}')
-        for account_ in institution.accounts:
-            print('\\item %s' % account_.name)
-        print('\\end{itemize}')
-
-        print()
-
-    print(POSTSCRIPT)
-
-
-PREAMBLE = r"""
-\documentclass[letterpaper,10pt]{article}
-
-\usepackage{fixltx2e}
-\usepackage{cmap}
-\usepackage{ifthen}
-\usepackage[T1]{fontenc}
-\usepackage[utf8]{inputenc}
-
-\usepackage{times}
-\usepackage{fullpage}
-\thispagestyle{empty}
-
-\begin{document}
-"""
-
-POSTSCRIPT = """
-\end{document}
-"""
+    oss = io.StringIO()
+    oss.write('<table class="fields">\n')
+    for key, value in items:
+        oss.write('<tr><td>{}:</td><td>{}</td></tr>'.format(key.capitalize(), value))
+    oss.write('</table>\n')
+    return oss.getvalue()
 
 
 def main():

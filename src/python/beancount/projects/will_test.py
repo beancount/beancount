@@ -109,25 +109,40 @@ class TestWillReport(test_utils.TestCase):
         """
           option "title" "Report Creation Test"
 
-          ;; Absence of meta.
+          ;; Two accounts in the same institution.
+          2010-01-01 open Assets:US:BofA
+            institution: "Bank of America"
+            address: "100 North Tryon Street,  Charlotte, NC 28255"
+            phone: "1.800.933.6262"
+            website: "https://www.bankofamerica.com"
+
           2010-01-01 open Assets:US:BofA:Checking
+            type: "Checking Account"
+            number: "43865450874"
 
-          ;; Metadata on the parent.
-          2010-01-01 open Assets:US:WellsFargo
-            institution: "Wells Fargo Bank."
-          2010-01-01 open Assets:US:WellsFargo:Checking
+          2010-01-01 open Assets:US:BofA:Savings
+            type: "Savings Account"
+            number: "83470650273"
 
-          ;; Ambiguous metadata.
-          2010-01-01 open Assets:US:Chase
-            institution: "Chase Manhattan Bank."
-          2010-01-01 open Assets:US:Chase:Checking
-            institution: "Chase Manhattan Bank Checking Division"
+          ;; An an account with a zero balance.
+          2010-01-01 open Liabilities:US:BofA:CreditCard
+            institution: "Bank of America"
+            number: "3478.4744.2339.0011"
 
-          ;; Two accounts joined by same institution.
-          2010-01-01 open Assets:US:TDBank:Checking
-            institution: "Toronto Dominion Bank."
-          2010-01-01 open Liabilities:US:TDBank:CreditCard
-            institution: "Toronto Dominion Bank."
+          ;; With a non-zeo liabilities account.
+          2010-01-01 open Liabilities:US:Chase:CreditCard
+            institution: "Chase Manhattan Bank"
+            address: "National Bank By Mail, P O Box 36520, Louisville, KY 40233-6520"
+            number: "7654.0754.9375.0489"
+
+          2010-01-01 open Income:Misc
+
+          2014-02-03 *
+            Assets:US:BofA:Checking          3400.00 USD
+            Assets:US:BofA:Savings           1200.00 USD
+            Liabilities:US:Chase:CreditCard  -820.00 USD
+            Income:Misc
+
         """
         report = will.create_report(entries, options_map)
         text = will.format_xhtml_report(report)
