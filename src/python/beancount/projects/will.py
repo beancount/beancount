@@ -11,6 +11,7 @@ __author__ = 'Martin Blais <blais@furius.ca>'
 
 import collections
 import logging
+import io
 import re
 import subprocess
 import sys
@@ -126,6 +127,27 @@ def create_report(entries, options_map):
     return Report(options_map['title'], institutions)
 
 
+def format_xhtml_report(report):
+    oss = io.StringIO()
+
+    iss = io.StringIO()
+    for inst in report.institutions:
+        iss.write('''
+          <div class="institution">
+            <h2>{i.name}</h2>
+          </div>
+        '''.format(i=inst))
+
+    oss.write('''
+      <div class="report">
+        <h1 class="title">{r.title}</h1>
+        {institutions}
+      </div>
+    '''.format(r=report, institutions=iss.getvalue()))
+
+    return oss.getvalue()
+
+
 def print_latex_report(institutions):
     """Print the readable output to stdout.
 
@@ -185,8 +207,8 @@ def main():
 
     report = create_report(entries, options_map)
 
-    logging.info("Produce a report")
-    print_xml_report(report)
+    text = format_xhtml_report(report)
+    sys.stdout.write(text)
 
 
 if __name__ == '__main__':

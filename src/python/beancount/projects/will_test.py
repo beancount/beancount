@@ -105,8 +105,10 @@ class TestWillFunctions(test_utils.TestCase):
 class TestWillReport(test_utils.TestCase):
 
     @loader.load_doc()
-    def test_group_accounts(self, entries, _, options_map):
+    def test_create_report(self, entries, _, options_map):
         """
+          option "title" "Report Creation Test"
+
           ;; Absence of meta.
           2010-01-01 open Assets:US:BofA:Checking
 
@@ -128,4 +130,5 @@ class TestWillReport(test_utils.TestCase):
             institution: "Toronto Dominion Bank."
         """
         report = will.create_report(entries, options_map)
-        pprint.pprint(report)
+        text = will.format_xhtml_report(report)
+        print(text, file=open('/tmp/index.html', 'w'))
