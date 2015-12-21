@@ -54,7 +54,7 @@ class TestWillFunctions(test_utils.TestCase):
         open_close_map = getters.get_account_open_close(entries)
         accounts_map = {acc: open_entry
                         for acc, (open_entry, _) in open_close_map.items()}
-        groups = will.group_accounts_by_metadata(accounts_map, "institution")
+        groups, ignored = will.group_accounts_by_metadata(accounts_map, "institution")
         self.assertEqual({
             'Chase Manhattan Bank Checking Division': ['Assets:US:Chase:Checking'],
             'Chase Manhattan Bank.': ['Assets:US:Chase'],
@@ -63,7 +63,7 @@ class TestWillFunctions(test_utils.TestCase):
             'Wells Fargo Bank.': ['Assets:US:WellsFargo',
                                   'Assets:US:WellsFargo:Checking']},
                          groups)
-
+        self.assertEqual({'Assets:US:BofA:Checking'}, ignored)
 
     @loader.load_doc()
     def test_find_institutions(self, entries, _, options_map):
@@ -78,9 +78,9 @@ class TestWillFunctions(test_utils.TestCase):
           2010-01-01 open Expenses:US:BofA:Fees
             institution: "Bank of America"
         """
-        groups = will.find_institutions(entries, options_map)
+        groups, ignored = will.find_institutions(entries, options_map)
         self.assertEqual({}, groups)
-
+        self.assertEqual(set(), ignored)
 
     @loader.load_doc()
     def test_get_first_meta(self, entries, _, options_map):
@@ -145,5 +145,5 @@ class TestWillReport(test_utils.TestCase):
 
         """
         report = will.create_report(entries, options_map)
-        text = will.format_xhtml_report(report)
+        text = will.format_xhtml_report(report, options_map)
         print(text, file=open('/tmp/index.html', 'w'))
