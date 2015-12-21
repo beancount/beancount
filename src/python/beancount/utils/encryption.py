@@ -48,7 +48,7 @@ def read_encrypted_file(filename):
     Raises:
       OSError: If we could not properly decrypt the file.
     """
-    command = ('gpg', '--batch', '--decrypt', filename)
+    command = ('gpg', '--decrypt', filename)
     pipe = subprocess.Popen(command,
                             shell=False,
                             stdout=subprocess.PIPE,
