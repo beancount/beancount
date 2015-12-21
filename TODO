@@ -1,15 +1,5 @@
 -*- mode: org -*-
 beancount: TODO
-* Legacy
-
-  This can be broken down in three distinct aspects:
-
-  * A plugin to merge a second file into the main one.
-
-  * Reporting code to auto-generate a doc with account ids and other secret
-    informations.
-
-
 * Event
 
   - Should we validate that the query is legit before we even run it? I think
@@ -1342,6 +1332,10 @@ http://furius.ca/beancount/doc/proposal-inter
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+  - Make example file work with the beancount.projects.will script.
+
 
 
   (prices cleanup)

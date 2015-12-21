@@ -6,6 +6,9 @@ describes the full list of all assets and account names with institutions names
 and addresses, to make the work of gathering and liquidating assets easy. It
 uses various metadata fields to group Beancount accounts together and produce an
 output that should be readable by a layperson.
+
+A special field 'institution' is detected to identify root accounts that should
+be included in the document rendered by this script.
 """
 __author__ = 'Martin Blais <blais@furius.ca>'
 
