@@ -55,8 +55,8 @@ def group_accounts_by_metadata(accounts_map, meta_name):
                 group = open_entry.meta[meta_name]
                 groups[group].append(account_)
                 break
-            else:
-                ignored_accounts.add(account_)
+        else:
+            ignored_accounts.add(account_)
     for group in groups.values():
         group.sort()
     return dict(groups), ignored_accounts
@@ -99,9 +99,12 @@ def get_first_meta(entries, field_name):
 
 
 # Report data types.
-Report = collections.namedtuple('Report', 'title institutions')
-InstitutionReport = collections.namedtuple('Institution', 'name fields accounts')
-AccountReport = collections.namedtuple('Account', 'name open_date balance fields')
+Report = collections.namedtuple(
+    'Report', 'title institutions')
+InstitutionReport = collections.namedtuple(
+    'Institution', 'name fields accounts')
+AccountReport = collections.namedtuple(
+    'Account', 'name open_date balance num_postings fields')
 
 
 def create_report(entries, options_map):
@@ -134,8 +137,12 @@ def create_report(entries, options_map):
         # Create infos for each account in this institution.
         account_reports = []
         for acc in accounts:
-            open_entry = open_map[acc]
-            account_fields = open_entry.meta.copy()
+            account_fields = {}
+            for subacc in account.parents(acc):
+                open_entry = open_map[subacc]
+                if 'institution' in open_entry.meta:
+                    break
+                account_fields.update(open_entry.meta)
             account_fields.pop('filename', None)
             account_fields.pop('lineno', None)
             for field in institution_fields:
@@ -143,7 +150,12 @@ def create_report(entries, options_map):
 
             real_node = realization.get(real_root, acc)
             account_reports.append(AccountReport(
-                acc, open_entry.date, real_node.balance, account_fields))
+                acc,
+                open_entry.date,
+                real_node.balance,
+                sum(1 for posting in real_node.txn_postings
+                    if isinstance(posting, data.TxnPosting)),
+                account_fields))
 
         # Create the institution report.
         institution = InstitutionReport(name, institution_fields, account_reports)
@@ -155,15 +167,56 @@ def create_report(entries, options_map):
 XHTML_TEMPLATE_PRE = '''
 <html>
   <head>
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans+Condensed:300'
+          rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro'
+          rel='stylesheet' type='text/css'>
+
     <style type="text/css">
 
+body {
+  font-family: 'Source Sans Pro', sans-serif;
+}
+
+h2 {
+  margin-top: 2em;
+}
+
+table td {
+  white-space: nowrap;
+}
+
+table td.name {
+  width: 30%;
+}
+table td.open_date {
+  width: 5%;
+}
+
+table.accounts thead td {
+  font-weight: bold;
+}
+
+table.accounts td {
+  background: #F0F0F0;
+}
+
 table.accounts {
+  width: 100%;
   border-collapse: collapse;
 }
 
 table.accounts td {
   border: thin solid black;
   padding: 0.1em 0.3em;
+}
+
+td.balance {
+  text-align: right;
+}
+
+table.fields {
+  margin: 1em;
 }
 
     </style>
@@ -176,7 +229,7 @@ XHTML_TEMPLATE_POST = '''
 '''
 
 
-def format_xhtml_report(report):
+def format_xhtml_report(report, options_map):
     oss = io.StringIO()
     oss.write(XHTML_TEMPLATE_PRE)
 
@@ -196,7 +249,7 @@ def format_xhtml_report(report):
         unique_fields = {key
                          for acc in inst.accounts
                          for key in acc.fields}
-        fieldnames = ['_name', '_open_date'] + sorted(unique_fields) + ['_balance']
+        fieldnames = ['name', 'open_date'] + sorted(unique_fields) + ['balance']
         if inst.accounts:
             oss.write('''
               <table class="accounts">
@@ -208,13 +261,22 @@ def format_xhtml_report(report):
             oss.write('</tr></thead>\n')
 
             for acc in inst.accounts:
+                # Skip accounts without postings. This is the case, for
+                # instance, of parent accounts only present in order to group
+                # sub-accounts.
+                if acc.num_postings == 0:
+                    continue
+
                 fields = acc.fields.copy()
-                fields['_name'] = acc.name
-                fields['_open_date'] = acc.open_date
-                fields['_balance'] = acc.balance.cost().to_string()
+                fields['name'] = acc.name
+                fields['open_date'] = acc.open_date
+                dcontext = options_map['dcontext']
+                fields['balance'] = acc.balance.cost().to_string(dcontext.build(),
+                                                                 False)
                 oss.write('<tr>\n')
                 for field in fieldnames:
-                    oss.write('<td>{}</td>\n'.format(fields.get(field, '')))
+                    oss.write('<td class="{}">{}</td>\n'.format(field,
+                                                                fields.get(field, '')))
                 oss.write('</tr>\n')
             oss.write('</table>\n')
 
@@ -225,7 +287,7 @@ def format_xhtml_report(report):
     return oss.getvalue()
 
 
-def format_xhtml_table(items):
+def format_xhtml_table(items, klass='fields'):
     """Render a mapping of values to an HTML table.
 
     Args:
@@ -234,7 +296,7 @@ def format_xhtml_table(items):
       A string of rendered HTML.
     """
     oss = io.StringIO()
-    oss.write('<table class="fields">\n')
+    oss.write('<table class="{}">\n'.format(klass))
     for key, value in items:
         if re.match('[a-z]+://', value):
             value = '<a href="{}">{}</a>'.format(value, value)
@@ -255,7 +317,7 @@ def main():
 
     report = create_report(entries, options_map)
 
-    text = format_xhtml_report(report)
+    text = format_xhtml_report(report, options_map)
     sys.stdout.write(text)
 
 

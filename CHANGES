@@ -20,6 +20,14 @@ Note: This file contains only changes in the 'default' branch.
     currency on Commodity directives.
 
 
+  - Added an option to Inventory.to_string() to avoid rendering parentheses.
+
+  - Added variable and username expansion support for the loader filename.
+
+  - Removed --batch mode for the encryption support; it needs to be potentially
+    interactive.
+
+
 2015-12-17
 
   - In prices, removed undocumented support for automatically extracting
