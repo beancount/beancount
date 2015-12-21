@@ -73,6 +73,7 @@ def load_file(filename, log_timings=None, log_errors=None, extra_validations=Non
           the file.
         options_map: A dict of the options parsed from the file.
     """
+    filename = path.expandvars(path.expanduser(filename))
     if not path.isabs(filename):
         filename = path.normpath(path.join(os.getcwd(), filename))
 
