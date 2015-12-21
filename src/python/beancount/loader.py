@@ -2,19 +2,20 @@
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import collections
 import functools
 import hashlib
-import textwrap
 import importlib
-import collections
-import logging
 import io
 import itertools
+import logging
 import os
 import pickle
-import warnings
 import struct
+import subprocess
+import textwrap
 import time
+import warnings
 from os import path
 
 from beancount.utils import misc_utils
@@ -24,6 +25,7 @@ from beancount.parser import booking
 from beancount.parser import options
 from beancount.parser import printer
 from beancount.ops import validation
+from beancount.utils import encryption
 
 
 LoadError = collections.namedtuple('LoadError', 'source message entry')
@@ -71,17 +73,51 @@ def load_file(filename, log_timings=None, log_errors=None, extra_validations=Non
           the file.
         options_map: A dict of the options parsed from the file.
     """
+    filename = path.expandvars(path.expanduser(filename))
     if not path.isabs(filename):
         filename = path.normpath(path.join(os.getcwd(), filename))
-    entries, errors, options_map = _load_file(filename, log_timings,
-                                              extra_validations, encoding)
-    _log_errors(errors, log_errors)
-    return entries, errors, options_map
+
+    if encryption.is_encrypted_file(filename):
+        # Note: Caching is not supported for encrypted files.
+        return load_encrypted_file(filename,
+                                   log_timings, log_errors,
+                                   extra_validations, False, encoding)
+    else:
+        entries, errors, options_map = _load_file(filename, log_timings,
+                                                  extra_validations, encoding)
+        _log_errors(errors, log_errors)
+        return entries, errors, options_map
 
 
 # Alias, for compatibility.
 # pylint: disable=invalid-name
 load = load_file
+
+
+def load_encrypted_file(filename, log_timings=None, log_errors=None, extra_validations=None,
+                        dedent=False, encoding=None):
+    """Load an encrypted Beancount input file.
+
+    Args:
+      filename: The name of an encrypted file to be parsed.
+      log_timings: See load_string().
+      log_errors: See load_string().
+      extra_validations: See load_string().
+      dedent: See load_string().
+      encoding: See load_string().
+    Returns:
+      A triple of:
+        entries: A date-sorted list of entries from the file.
+        errors: A list of error objects generated while parsing and validating
+          the file.
+        options_map: A dict of the options parsed from the file.
+    """
+    contents = encryption.read_encrypted_file(filename)
+    return load_string(contents,
+                       log_timings=log_timings,
+                       log_errors=log_errors,
+                       extra_validations=extra_validations,
+                       encoding=encoding)
 
 
 def _log_errors(errors, log_errors):

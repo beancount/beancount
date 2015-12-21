@@ -7,6 +7,8 @@ import textwrap
 import re
 import os
 import time
+import subprocess
+import shutil
 from unittest import mock
 from os import path
 

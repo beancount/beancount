@@ -4,6 +4,34 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-12-21
+
+  - Created a new project script that uses specific metadata on Open directives
+    to generate a document of a user's assets, institution names, addresses and
+    contact info, and account types and approximate value. Note: I haven't made
+    the example file include necessary fields to demo or document this yet.
+
+  - The loader now supports loading encrypted files transparently. If a filename
+    ends with .gpg or .asc (and contains armored content), the file is run
+    through a gpg subprocess to decrypt it. No temporary files are created. Note
+    that caching for those files is disabled.
+
+    If you're writing a script, you can also call
+    beancount.loaded.load_encrypted_file() directly to avoid the check.
+
+  - Implemented the 'beancount.plugins.merge_meta' plugin that copies metadata
+    from an external file into a regular file. It is essentially a data join on
+    the key of accounts for Open and Close directives, and a join on the key of
+    currency on Commodity directives.
+
+  - Added an option to Inventory.to_string() to avoid rendering parentheses.
+
+  - Added variable and username expansion support for the loader filename.
+
+  - Removed --batch mode for the encryption support; it needs to be potentially
+    interactive.
+
+
 2015-12-17
 
   - In prices, removed undocumented support for automatically extracting
