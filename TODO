@@ -1334,10 +1334,6 @@ http://furius.ca/beancount/doc/proposal-inter
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
-  - Make example file work with the beancount.projects.will script.
-
-
-
   (prices cleanup)
   - Make the code finding lists of commodities for holdings and price reports
     use the same code as beancount.prices.find_prices. Also, this should  really
