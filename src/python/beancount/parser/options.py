@@ -147,8 +147,9 @@ def Opt(name, default_value,
 _TYPES = account_types.DEFAULT_ACCOUNT_TYPES
 
 
-# Options that are not to be shown to the user.
-PRIVATE_OPTION_GROUPS = [
+# Options that consist of data output from the parsing process. These cannot be
+# input by the user.
+OUTPUT_OPTION_GROUPS = [
 
     OptGroup("""
       The name of the top-level Beancount input file parsed from which the
@@ -162,7 +163,20 @@ PRIVATE_OPTION_GROUPS = [
       time it gets to the top-level loader.load_*() function that invoked it.
       The filenames are absolute. Relative include filenames are resolved against
       the file that contains the include directives.
+
+      This is used in the parser, but also, the loader sets this list to the
+      full list of parsed absolute filenames in the options map. This is how you
+      can find out the entire list of files involved in a Beancount load
+      procedure.
     """, [Opt("include", [], "some-other-file.beancount")]),
+
+    OptGroup("""
+      A hash of some of the input data. This is used to supplement the
+      timestamps of the input files for the purpose of load caching. We
+      typically hash the sizes of the files or perhaps even some of the
+      contents, or determine any of the inputs have changed beyond the
+      timestamps of the input files. (Internal use only; do not rely on this.)
+    """, [Opt("input_hash", "", "841ee3be9acef165feba2342")]),
 
     OptGroup("""
       An instance of DisplayContext, which is used to format numbers for output
@@ -346,6 +360,10 @@ PUBLIC_OPTION_GROUPS = [
       their associated unit strings. This allows you to import the numbers in a
       spreadsheet (e.g, "101.00 USD" does not get parsed by a spreadsheet
       import, but "101.00" does).
+
+      If you need to enter a list of operating currencies, you may input this
+      option multiple times, that is, you repeat the entire directive once for
+      each desired operating currency.
     """, [Opt("operating_currency", [], "USD")]),
 
     OptGroup("""
@@ -417,7 +435,7 @@ PUBLIC_OPTION_GROUPS = [
     ]
 
 
-OPTION_GROUPS = PRIVATE_OPTION_GROUPS + PUBLIC_OPTION_GROUPS
+OPTION_GROUPS = OUTPUT_OPTION_GROUPS + PUBLIC_OPTION_GROUPS
 
 # A dict of the option names to their descriptors.
 OPTIONS = {desc.name: desc

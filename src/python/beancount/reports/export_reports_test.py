@@ -46,7 +46,7 @@ class TestCommodityClassifications(unittest.TestCase):
         @functools.wraps(fun)
         def wrapped(self, entries, unused_errors, options_map):
             holdings_list, _ = holdings_reports.get_assets_holdings(entries, options_map)
-            commodities_map = getters.get_commodity_map(entries, options_map)
+            commodities_map = getters.get_commodity_map(entries)
             action_holdings = export_reports.classify_holdings_for_export(holdings_list,
                                                                           commodities_map)
             return fun(self, action_holdings)
@@ -107,7 +107,7 @@ class TestCommodityClassifications(unittest.TestCase):
         2000-01-01 open Equity:Opening-Balances
 
         2000-01-01 commodity AAPL
-          ticker: "NASDAQ:AAPL"
+          export: "NASDAQ:AAPL"
 
         2015-02-08 *
           Assets:Investing           2 AAPL {410.00 USD}
@@ -138,8 +138,7 @@ class TestCommodityClassifications(unittest.TestCase):
         2000-01-01 open Equity:Opening-Balances
 
         2000-01-01 commodity VMMXX
-          ticker: "MUTF:VMMXX"
-          export: "MONEY"
+          export: "MUTF:VMMXX (MONEY:USD)"
 
         2015-02-08 *
           Assets:Investing           100 VMMXX {1.00 USD}
@@ -152,15 +151,12 @@ class TestCommodityClassifications(unittest.TestCase):
     def test_get_money_instruments(self, entries, errors, options_map):
         """
         1900-01-01 commodity VMMXX
-          quote: USD
-          ticker: "MUTF:VMMXX"
-          export: "MONEY"
+          export: "MUTF:VMMXX (MONEY:USD)"
 
         1900-01-01 commodity IGI806
-          quote: CAD
-          export: "MONEY"
+          export: "(MONEY:CAD)"
         """
-        commodities_map = getters.get_commodity_map(entries, options_map)
+        commodities_map = getters.get_commodity_map(entries)
         self.assertEqual({'USD': 'MUTF:VMMXX',
                           'CAD': 'IGI806'},
                          export_reports.get_money_instruments(commodities_map))
@@ -186,7 +182,7 @@ class TestCommodityExport(unittest.TestCase):
         2000-01-01 open Equity:Opening-Balances
 
         2000-01-01 commodity AAPL
-          ticker: "NASDAQ:AAPL"
+          export: "NASDAQ:AAPL"
 
         2015-02-08 *
           Assets:Investing           2 AAPL {410.00 USD}
@@ -204,7 +200,7 @@ class TestCommodityExport(unittest.TestCase):
         2000-01-01 open Equity:Opening-Balances
 
         2000-01-01 commodity RBF1005
-          ticker: "MUTF_CA:RBF1005"
+          export: "MUTF_CA:RBF1005"
 
         2015-02-08 *
           Assets:Investing           10.2479 RBF1005 {10.00 CAD}
@@ -275,9 +271,7 @@ class TestCommodityExport(unittest.TestCase):
           export: "CASH"
 
         2000-01-01 commodity VMMXX
-          quote: USD
-          ticker: "MUTF:VMMXX"
-          export: "MONEY"
+          export: "MUTF:VMMXX (MONEY:USD)"
 
         2015-02-08 *
           Assets:Investing           2 AAPL {410.00 USD}
@@ -300,9 +294,7 @@ class TestCommodityExport(unittest.TestCase):
           export: "CASH"
 
         2000-01-01 commodity VMMXX
-          quote: USD
-          ticker: "MUTF:VMMXX"
-          export: "MONEY"
+          export: "MUTF:VMMXX (MONEY:USD)"
 
         2015-02-08 *
           Assets:Investing           2 AAPL
@@ -325,9 +317,7 @@ class TestCommodityExport(unittest.TestCase):
           export: "CASH"
 
         2000-01-01 commodity VMMXX
-          quote: USD
-          ticker: "MUTF:VMMXX"
-          export: "MONEY"
+          export: "MUTF:VMMXX (MONEY:USD)"
 
         2015-02-08 *
           Assets:Investing           2000.00 JPY
@@ -348,9 +338,7 @@ class TestCommodityExport(unittest.TestCase):
           export: "IGNORE"
 
         2000-01-01 commodity VMMXX
-          quote: USD
-          ticker: "MUTF:VMMXX"
-          export: "MONEY"
+          export: "MUTF:VMMXX (MONEY:USD)"
 
         2015-02-08 *
           Assets:Investing           2 AAPL {410.00 USD}
@@ -368,7 +356,7 @@ class TestCommodityExport(unittest.TestCase):
         2000-01-01 open Equity:Opening-Balances
 
         2000-01-01 commodity AAPL
-          ticker: "NASDAQ:AAPL"
+          export: "NASDAQ:AAPL"
 
         2015-02-08 *
           Assets:Investing           2 AAPL {410.00 USD}

@@ -638,11 +638,20 @@ def generate_retirement_investments(entries, account, commodities_items, price_m
     account_cash = join(account, 'Cash')
     date_origin = entries[0].date
     open_entries.extend(parse("""
+
+      {date_origin} open {account} CCY
+        institution: "Retirement_Institution"
+        address: "Retirement_Address"
+        phone: "Retirement_Phone"
+
       {date_origin} open {account_cash} CCY
+        number: "882882"
+
     """, **locals()))
     for currency, _ in commodities_items:
         open_entries.extend(parse("""
           {date_origin} open {account}:{currency} {currency}
+            number: "882882"
         """, **locals()))
 
     new_entries = []
@@ -693,7 +702,14 @@ def generate_banking(date_begin, date_end, amount_initial):
     amount_initial_neg = -amount_initial
     return parse("""
 
+      {date_begin} open Assets:CC:Bank1
+        institution: "Bank1_Institution"
+        address: "Bank1_Address"
+        phone: "Bank1_Phone"
+
       {date_begin} open Assets:CC:Bank1:Checking    CCY
+        account: "00234-48574897"
+
       ;; {date_begin} open Assets:CC:Bank1:Savings    CCY
 
       {date_begin} * "Opening Balance for checking account"
@@ -1397,38 +1413,36 @@ def generate_commodity_entries(date_birth):
 
         2009-05-01 commodity RGAGX
           name: "American Funds The Growth Fund of America Class R-6"
-          quote: USD
-          ticker: "MUTF:RGAGX"
+          export: "MUTF:RGAGX"
+          price: "USD:google/MUTF:RGAGX"
 
         1995-09-18 commodity VBMPX
           name: "Vanguard Total Bond Market Index Fund Institutional Plus Shares"
-          quote: USD
-          ticker: "MUTF:VBMPX"
+          export: "MUTF:VBMPX"
+          price: "USD:google/MUTF:VBMPX"
 
         2004-01-20 commodity ITOT
           name: "iShares Core S&P Total U.S. Stock Market ETF"
-          quote: USD
-          ticker: "NYSEARCA:ITOT"
+          export: "NYSEARCA:ITOT"
+          price: "USD:google/NYSEARCA:ITOT"
 
         2007-07-20 commodity VEA
           name: "Vanguard FTSE Developed Markets ETF"
-          quote: USD
-          ticker: "NYSEARCA:VEA"
+          export: "NYSEARCA:VEA"
+          price: "USD:google/NYSEARCA:VEA"
 
         2004-01-26 commodity VHT
           name: "Vanguard Health Care ETF"
-          quote: USD
-          ticker: "NYSEARCA:VHT"
+          export: "NYSEARCA:VHT"
+          price: "USD:google/NYSEARCA:VHT"
 
         2004-11-01 commodity GLD
           name: "SPDR Gold Trust (ETF)"
-          quote: USD
-          ticker: "NYSEARCA:GLD"
+          export: "NYSEARCA:GLD"
+          price: "USD:google/NYSEARCA:GLD"
 
         1900-01-01 commodity VMMXX
-          quote: USD
-          ticker: "MUTF:VMMXX"
-          export: "MONEY"
+          export: "MUTF:VMMXX (MONEY:USD)"
 
     """, **locals())
 
@@ -1444,10 +1458,16 @@ def contextualize_file(contents, employer):
     replacements = {
         'CC': 'US',
         'Bank1': 'BofA',
+        'Bank1_Institution': 'Bank of America',
+        'Bank1_Address': '123 America Street, LargeTown, USA',
+        'Bank1_Phone': '+1.012.345.6789',
         'CreditCard1': 'Chase:Slate',
         'CreditCard2': 'Amex:BlueCash',
         'Employer1': employer,
         'Retirement': 'Vanguard',
+        'Retirement_Institution': 'Vanguard Group',
+        'Retirement_Address': "P.O. Box 1110, Valley Forge, PA 19482-1110",
+        'Retirement_Phone': "+1.800.523.1188",
         'Investment': 'ETrade',
 
         # Commodities
@@ -1463,20 +1483,6 @@ def contextualize_file(contents, employer):
         }
     new_contents = replace(contents, replacements)
     return new_contents, replacements
-
-
-def apply_adhoc_fixes(contents):
-    """Apply fixes for short-comings in rendered output.
-
-    Args:
-      contents: A string, the contents to output.
-    Returns:
-      A string, the fixed contents.
-    """
-    # For now, render some special metadata fields as currency, not string.
-    # Eventually we should be able to distinguish these two at runtime using a
-    # tagged string type.
-    return re.sub('quote: "([A-Z0-9]+)"', r'quote: \1', contents)
 
 
 def write_example_file(date_birth, date_begin, date_end, reformat, file):
@@ -1698,9 +1704,6 @@ def write_example_file(date_birth, date_begin, date_end, reformat, file):
     contents, replacements = contextualize_file(output.getvalue(), employer_name)
     if reformat:
         contents = format.align_beancount(contents)
-
-    logging.info("Applying ad-doc fixes to file")
-    contents = apply_adhoc_fixes(contents)
 
     logging.info("Writing contents")
     file.write(contents)

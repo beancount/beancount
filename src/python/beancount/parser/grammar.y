@@ -692,9 +692,9 @@ entry : transaction
       | open
       | close
       | pad
-      | event
-      | note
       | document
+      | note
+      | event
       | price
       | commodity
       | query
