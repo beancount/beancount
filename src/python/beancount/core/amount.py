@@ -63,18 +63,19 @@ class Amount(_Amount):
 
     __slots__ = ()  # Prevent the creation of new attributes.
 
-    def __new__(cls, number, currency):
     valid_types_number = (Decimal, type, type(None))
     valid_types_currency = (str, type, type(None))
+
+    def __new__(cls, number, currency):
         """Constructor from a number and currency.
 
         Args:
           number: A string or Decimal instance. Will get converted automatically.
           currency: A string, the currency symbol to use.
         """
-        assert isinstance(number, self.valid_types_number)
-        assert isinstance(currency, self.valid_types_currency)
-        return _Amount.__new__(cls, _D(number), currency)
+        assert isinstance(number, Amount.valid_types_number)
+        assert isinstance(currency, Amount.valid_types_currency)
+        return _Amount.__new__(cls, number, currency)
 
     def to_string(self, dformat=DEFAULT_FORMATTER):
         """Convert an Amount instance to a printable string.

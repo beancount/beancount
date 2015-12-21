@@ -22,7 +22,7 @@ class TestAmount(unittest.TestCase):
         self.assertIs(amount.currency, Dummy)
 
     def test_mutation(self):
-        amount1 = Amount(Decimal('100'), 'USD')
+        amount1 = Amount(D('100'), 'USD')
 
         # Test how changing existing attributes should fail.
         with self.assertRaises(AttributeError) as ctx:
