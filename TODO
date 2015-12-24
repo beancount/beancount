@@ -1,5 +1,10 @@
 -*- mode: org -*-
 beancount: TODO
+* Pushmeta
+
+  - Rename the directives to setmeta & clearmeta. pushmeta & popmeta are misleading.
+
+
 * Event
 
   - Should we validate that the query is legit before we even run it? I think

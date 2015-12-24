@@ -4,6 +4,15 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-12-24
+
+  - Implemented metadata stack and "pushmeta" and "popmeta" directives mirroring
+    "pushtag" and "poptag". These new directives work similarly, but setting
+    metadata fields instead of tags themselves. The parser maintains a stack of
+    values for each metadata field. Values explicitly set on the Transactions
+    themselves are not overridden by the meta stack.
+
+
 2015-12-21
 
   - Created a new project script that uses specific metadata on Open directives

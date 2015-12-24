@@ -154,6 +154,7 @@ int strtonl(const char* buf, size_t nchars);
 \+		{ return PLUS; }
 \-		{ return MINUS; }
 \/		{ return SLASH; }
+\:		{ return COLON; }
 \(		{ return LPAREN; }
 \)		{ return RPAREN; }
 
@@ -220,6 +221,8 @@ note		{ return NOTE; }
 document	{ return DOCUMENT; }
 pushtag	        { return PUSHTAG; }
 poptag		{ return POPTAG; }
+pushmeta	{ return PUSHMETA; }
+popmeta		{ return POPMETA; }
 option		{ return OPTION; }
 plugin		{ return PLUGIN; }
 include		{ return INCLUDE; }
@@ -341,6 +344,7 @@ FALSE		{
  /* Key */
 [a-z][a-zA-Z0-9\-_]+: 		{
     BUILD_LEX("KEY", "s#", yytext, yyleng-1);
+    unput(':');
     return KEY;
 }
 
