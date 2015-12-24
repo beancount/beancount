@@ -31,8 +31,7 @@ def validate_commodity_directives(entries, options_map):
 
     meta = data.new_metadata('<check_commodity>', 0)
 
-    commodity_map = getters.get_commodity_map(entries, options_map,
-                                              create_missing=False)
+    commodity_map = getters.get_commodity_map(entries, create_missing=False)
     for currency in commodities_used:
         commodity_entry = commodity_map.get(currency, None)
         if commodity_entry is None:
