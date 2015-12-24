@@ -381,10 +381,6 @@ class TestPushPopMeta(unittest.TestCase):
         self.assertTrue('location' in entries[1].meta)
         self.assertEqual("Paris, France", entries[1].meta['location'])
 
-        # self.assertRegexpMatches(errors[0].message,
-        #                          "Unbalanced metadata key 'location'; "
-        #                          "leftover metadata 'Lausanne, Switzerland'")
-
     @parser.parse_doc(expect_errors=True)
     def test_pushmeta_invalid_pop(self, entries, errors, _):
         """
