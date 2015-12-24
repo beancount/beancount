@@ -357,23 +357,33 @@ class TestPushPopMeta(unittest.TestCase):
         self.assertTrue('location' in entries[0].meta)
         self.assertEqual("Paris, France", entries[0].meta['location'])
 
-    @parser.parse_doc(expect_errors=True)
+    @parser.parse_doc()
     def test_pushmeta_override(self, entries, errors, _):
         """
           pushmeta location: "Lausanne, Switzerland"
+
+          2015-06-01 * "Something"
+            Assets:Something   1 USD
+            Assets:Something  -1 USD
+
           pushmeta location: "Paris, France"
 
-          2015-06-07 * "Something"
+          2015-06-02 * "Something"
             Assets:Something   1 USD
             Assets:Something  -1 USD
 
           popmeta location:
+          popmeta location:
         """
         self.assertTrue('location' in entries[0].meta)
-        self.assertEqual("Paris, France", entries[0].meta['location'])
-        self.assertEqual(1, len(errors))
-        self.assertRegexpMatches(errors[0].message,
-                                 "Overriding value for metadata key")
+        self.assertEqual("Lausanne, Switzerland", entries[0].meta['location'])
+
+        self.assertTrue('location' in entries[1].meta)
+        self.assertEqual("Paris, France", entries[1].meta['location'])
+
+        # self.assertRegexpMatches(errors[0].message,
+        #                          "Unbalanced metadata key 'location'; "
+        #                          "leftover metadata 'Lausanne, Switzerland'")
 
     @parser.parse_doc(expect_errors=True)
     def test_pushmeta_invalid_pop(self, entries, errors, _):
@@ -391,7 +401,7 @@ class TestPushPopMeta(unittest.TestCase):
         """
         self.assertEqual(1, len(errors))
         self.assertRegexpMatches(errors[0].message,
-                                 "Unbalanced pushed metadata key")
+                                 "Unbalanced metadata key")
 
 
 class TestMultipleLines(unittest.TestCase):

@@ -113,7 +113,7 @@ class Builder(lexer.LexBuilder):
         self.tags = []
 
         # A dict of the current active metadata fields (not a stack).
-        self.meta = {}
+        self.meta = collections.defaultdict(list)
 
         # The result from running the parser, a list of entries.
         self.entries = []
@@ -147,11 +147,13 @@ class Builder(lexer.LexBuilder):
             self.errors.append(
                 ParserError(meta, "Unbalanced pushed tag: '{}'".format(tag), None))
 
-        # If the user left some metadata unpoped, issue an error.
-        for key, value in self.meta.items():
+        # If the user left some metadata unpopped, issue an error.
+        for key, value_list in self.meta.items():
             meta = new_metadata(self.options['filename'], 0)
             self.errors.append(
-                ParserError(meta, "Unbalanced pushed metadata key: '{}'".format(key), None))
+                ParserError(meta, (
+                    "Unbalanced metadata key '{}'; leftover metadata '{}'").format(
+                        key, ', '.join(value_list)), None))
 
         return (self.get_entries(), self.errors, self.get_options())
 
@@ -255,12 +257,7 @@ class Builder(lexer.LexBuilder):
         Args:
           key_value: A KeyValue instance, to be added to the dict of metadata.
         """
-        if key in self.meta:
-            meta = new_metadata(self.options['filename'], 0)
-            self.errors.append(
-                ParserError(meta, "Overriding value for metadata key: '{}'".format(key),
-                            None))
-        self.meta[key] = value
+        self.meta[key].append(value)
 
     def popmeta(self, key):
         """Removed a key off the current set of stacks.
@@ -269,8 +266,13 @@ class Builder(lexer.LexBuilder):
           key: A string, a key to be removed from the meta dict.
         """
         try:
-            del self.meta[key]
-        except KeyError:
+            if key not in self.meta:
+                raise IndexError
+            value_list = self.meta[key]
+            value = value_list.pop(-1)
+            if not value_list:
+                self.meta.pop(key)
+        except IndexError:
             meta = new_metadata(self.options['filename'], 0)
             self.errors.append(
                 ParserError(meta,
@@ -939,7 +941,8 @@ class Builder(lexer.LexBuilder):
 
         # Initialize the metadata fields from the set of active values.
         if self.meta:
-            meta.update(self.meta)
+            for key, value_list in self.meta.items():
+                meta[key] = value_list[-1]
 
         # Add on explicitly defined values.
         if explicit_meta:
