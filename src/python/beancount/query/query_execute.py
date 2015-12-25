@@ -359,7 +359,8 @@ def flatten_results(result_types, result_rows):
     if not indexes:
         return (result_types, result_rows)
 
-    ResultRow = type(result_rows[0])  # pylint: disable=invalid-name
+    # pylint: disable=invalid-name
+    ResultRow = type(result_rows[0])
 
     # We have to make at least some conversions.
     num_columns = len(result_types)

@@ -12,6 +12,9 @@ Note: This file contains only changes in the 'default' branch.
   - Added some utilities for parsing strings for writing tests that use the
     local variables present in the caller (a bit of magic).
 
+  - Improved date parsing from command-line options for some scripts; imported
+    from branch 'text_statements'.
+
 
 2015-12-24
 
