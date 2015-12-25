@@ -15,6 +15,9 @@ beancount: TODO
 
     * It should be possible to provide the schema separately, in the SQL.
 
+    * The new rendering code should use the DisplayContext. This would close the
+      "display_context" branch.
+
 
 * Pushmeta
 
