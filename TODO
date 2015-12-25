@@ -1,5 +1,21 @@
 -*- mode: org -*-
 beancount: TODO
+* SQL Shell
+
+  - Rewrite the shell code from scratch to be independent of Beancount:
+
+    * Compilation should generate a Python AST and that should get compiled by
+      the Python compiler and executed directly.
+
+    * Data sources should be abstracted away to provide rows of any type. This
+      should include support for dotted notation. The main data source type
+      should be "beancount.postings" as in
+
+        "from beancount.postings:/path/to/filename"
+
+    * It should be possible to provide the schema separately, in the SQL.
+
+
 * Pushmeta
 
   - Rename the directives to setmeta & clearmeta. pushmeta & popmeta are misleading.
