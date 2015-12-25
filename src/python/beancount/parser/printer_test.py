@@ -26,7 +26,7 @@ class TestPrinter(unittest.TestCase):
         source_str = printer.render_source(META)
         self.assertTrue(isinstance(source_str, str))
         self.assertTrue(re.search('12345', source_str))
-        self.assertTrue(re.search(META.filename, source_str))
+        self.assertTrue(re.search(META['filename'], source_str))
 
     def test_format_and_print_error(self):
         entry = data.Open(META, date(2014, 1, 15), 'Assets:Bank:Checking', [], None)
@@ -170,6 +170,7 @@ class TestEntryPrinter(cmptest.TestCase):
         2014-06-08 open Assets:Account1
         2014-06-08 open Assets:Account2  USD
         2014-06-08 open Assets:Account3  USD,CAD,EUR
+        2014-06-08 open Assets:Account4  HOOL   "NONE"
         """
         self.assertRoundTrip(entries, errors)
 

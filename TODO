@@ -1351,6 +1351,61 @@ http://furius.ca/beancount/doc/proposal-inter
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  (prices cleanup)
+  - Make the code finding lists of commodities for holdings and price reports
+    use the same code as beancount.prices.find_prices. Also, this should  really
+    just be renamed beancount.prices.find_commodities and perhaps be moved up to
+    beancount.ops.
+
+      src/python/beancount/ops/holdings.py
+      src/python/beancount/reports/price_reports.py
+
+  - Remove the final traces of the "quote" metadata field from holdings:
+
+      /home/blais/p/beancount/src/python/beancount/ops/holdings.py:153:      Commodity directive from its 'quote' metadata field.
+      /home/blais/p/beancount/src/python/beancount/ops/holdings.py:190:            quote_currency = commodity_entry.meta.get('quote', None)
+
+    Nothing else uses this anymore, this needs to go too.
+
+
+
+
+
+  - Idea: Export contents to Spreadsheet equivalent, as a single list of
+    postings, joining transactions by an id column. That should quiet down those
+    who think you can do this with a Spreadsheet to try it out for themselves.
+
+
+  - Add get_price() function to query_env.
+
+
+  - SQL: "IS" and "IS NOT" is not implemented.
+
+
+  - Idea: The "HELP" command of the SQL shell should be made analogous to the
+    schema inspection facilities of other SQL shells instead of being dedicated
+    HELP commands.
+
+
+  - Try this, quickly: Create a function that can be used to pull metadata
+    fields from Commodity directives, to be used in a GROUP BY statement. That's
+    the quick-and-dirty way to get started with portfolio aggregations, and I
+    think it extends.
+
+
+
+  - An important option exists around the behavior of balance checks: Should
+    balance checks bring their balance to the balance amount? In other words,
+    should a balance check imply an automatic, on-demand Pad behavior on
+    failure? This has an impact on following balance checks further in time. The
+    current behavior is not to pad a failure, so if there are multiple balance
+    checks, a single mistake before them would generate a number of errors. An
+    equally valid behavior would be to trigger only a single error, isolating
+    the periods between balance checks. Both semantics have advantages. You
+    should provide an option to ustomize this behavior, the user should be able
+    to choose. option "pad_failing_balances".
+
+
   - Reconcile all usage of account regexps to beancount.core.account.ACCOUNT_RE
     throughout the code  (grep --include='*.py'  -srn A-Z    ~/p/beancount/src/python/beancount).
 
@@ -4039,6 +4094,34 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
     it is. I'm sure we can make it scrape in parallel using multiprocessing and
     a work queue (this should be a fun little project and would make baking to
     an archive a lot faster in many cases).
+
+
+* Import
+** GnuCash
+
+  - Write a converter of GnuCash XML files into Beancount.
+
+  - Contact xentac@ for an example GnuCash input file with 2-3 years of data.
+    Willing to share (see email).
+
+
+* Price Script
+
+  - Implement delayed rate fetcher from OANDA for rates.
+
+  - Infer the rendering precision for inverted currencies from only the list of
+    previous prices. Run a DisplayContext on those and do similar
+    quantization/rounding automatically. This would make a lot of sense,
+    especially when inversion generates a very large number of digits.
+
+  - Write a script that will iterate and fetch all the missing dates on Friday,
+    or last DOM for the required portfolio during the entire duration, or allow
+    providing a frequency string (does rrule have one?) and let bean-price do
+    this natively. This will work the API.
+
+  - You have to deal with the case whereby two currencies provide incompatible
+    conversions of each other. This would potentially result in colliding
+    entries in the price database. Not sure how to deal with those yet.
 
 
 * Export

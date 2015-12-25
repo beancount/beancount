@@ -54,7 +54,7 @@ def add_implicit_prices(entries, unused_options_map):
                 # underlying instrument, e.g.
                 #      Assets:Account    100 HOOL {564.20} @ {581.97} USD
                 if posting.price is not None:
-                    meta = data.new_metadata(entry.meta.filename, entry.meta.lineno)
+                    meta = data.new_metadata(entry.meta["filename"], entry.meta["lineno"])
                     price_entry = data.Price(meta, entry.date,
                                              posting.position.lot.currency,
                                              posting.price)
@@ -65,7 +65,7 @@ def add_implicit_prices(entries, unused_options_map):
                 #      Assets:Account    100 HOOL {564.20}
                 elif (posting.position.lot.cost is not None and
                       booking != inventory.Booking.REDUCED):
-                    meta = data.new_metadata(entry.meta.filename, entry.meta.lineno)
+                    meta = data.new_metadata(entry.meta["filename"], entry.meta["lineno"])
                     price_entry = data.Price(meta, entry.date,
                                              posting.position.lot.currency,
                                              posting.position.lot.cost)

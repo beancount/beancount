@@ -46,6 +46,9 @@ class TestWeb(unittest.TestCase):
     def test_scrape_basic_view(self):
         self.scrape('simple/basic.beancount', extra_args=['--view', 'year/2013'])
 
+    def test_scrape_in_incognito(self):
+        self.scrape('simple/basic.beancount', extra_args=['--incognito'])
+
     def test_scrape_starterkit(self):
         self.scrape('simple/starter.beancount')
 

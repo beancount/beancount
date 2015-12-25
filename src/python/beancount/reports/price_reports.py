@@ -159,13 +159,14 @@ class PriceDBReport(report.Report):
             file.write('\n')
 
 
+# Note: This should use the same routines as in beancount.prices.find_prices.
 class TickerReport(report.TableReport):
     """Print a parseable mapping of (base, quote, ticker, name) for all commodities."""
 
     names = ['tickers', 'symbols']
 
     def generate_table(self, entries, errors, options_map):
-        commodity_map = getters.get_commodity_map(entries, options_map)
+        commodity_map = getters.get_commodity_map(entries)
         ticker_info = getters.get_values_meta(commodity_map, 'name', 'ticker', 'quote')
 
         price_rows = [

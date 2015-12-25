@@ -1,0 +1,12 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Beancount File Opener
+Comment=Edit Beancount files in a text editor
+Exec=/path/to/beancount/experiments/open-links/open-in-beancount %U
+Terminal=false
+Type=Application
+Icon=/usr/src/vim/runtime/vim48x48.xpm
+Categories=Application;Utility;TextEditor;
+MimeType=text/plain;x-scheme-handler/beancount;
+StartupNotify=true
+StartupWMClass=EMACS

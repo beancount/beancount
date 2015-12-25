@@ -233,6 +233,7 @@ from beancount.core import getters
 from beancount.core import flags
 from beancount.ops import prices
 from beancount.utils import misc_utils
+from beancount.utils import date_utils
 
 
 # A snapshot of a particular set of accounts at a point in time. The balances
@@ -883,7 +884,6 @@ def dump_return_accounts(racc, file):
 
 
 def main():
-    parse_date = lambda s: parse_datetime(s).date()
     parser = argparse.ArgumentParser()
 
     parser.add_argument('filename', help='Ledger filename')
@@ -908,12 +908,14 @@ def main():
     parser.add_argument('-v', '--verbose', action='store_true',
                         help="Output detailed processing information. Useful for debugging")
 
-    parser.add_argument('--date-begin', '--begin-date', action='store', type=parse_date,
+    parser.add_argument('--date-begin', '--begin-date',
+                        action='store', type=date_utils.parse_date_liberally,
                         default=None,
                         help=("Beginning date of the period to compute returns over "
                               "(default is the first related directive)"))
 
-    parser.add_argument('--date-end', '--end-date', action='store', type=parse_date,
+    parser.add_argument('--date-end', '--end-date',
+                        action='store', type=date_utils.parse_date_liberally,
                         default=None,
                         help=("End date of the period to compute returns over "
                               "(default is the last related directive)"))
