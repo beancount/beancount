@@ -4,6 +4,18 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2015-12-25
+
+  - Closed multiple obsolete branches: parse_test_utils, display_context,
+    performance, datatypes.
+
+  - Added some utilities for parsing strings for writing tests that use the
+    local variables present in the caller (a bit of magic).
+
+  - Improved date parsing from command-line options for some scripts; imported
+    from branch 'text_statements'.
+
+
 2015-12-24
 
   - Implemented metadata stack and "pushmeta" and "popmeta" directives mirroring
