@@ -119,6 +119,10 @@ class TestFromFile(unittest.TestCase):
           name: "iShares S&P 500 Index Fund (CAD Hedged)"
           quote: CAD
 
+        2010-01-01 commodity AMTKPTS
+          quote: USD
+          price: ""
+
         2015-02-06 *
           Assets:Cash                     1505.00 USD
           Assets:External                -1000.00 GBP @ 1.5050 USD
@@ -162,7 +166,7 @@ class TestFromFile(unittest.TestCase):
     def test_find_currencies_declared(self):
         currencies = find_prices.find_currencies_declared(self.entries, None)
         currencies2 = [(base, quote) for base, quote, _ in currencies]
-        self.assertEqual([('QQQ', 'USD'), ('XSP', 'CAD')], currencies2)
+        self.assertEqual([('QQQ', 'USD')], currencies2)
 
     def test_find_currencies_converted(self):
         currencies = find_prices.find_currencies_converted(self.entries, None)

@@ -131,6 +131,7 @@ def get_final_holdings(entries, included_account_types=None, price_map=None, dat
     return holdings
 
 
+# Note: This should use the same routines as in beancount.prices.find_prices.
 def get_commodities_at_date(entries, options_map, date=None):
     """Return a list of commodities present at a particular date.
 

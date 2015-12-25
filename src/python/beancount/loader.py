@@ -2,19 +2,20 @@
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import collections
 import functools
 import hashlib
-import textwrap
 import importlib
-import collections
-import logging
 import io
 import itertools
+import logging
 import os
 import pickle
-import warnings
 import struct
+import subprocess
+import textwrap
 import time
+import warnings
 from os import path
 
 from beancount.utils import misc_utils
@@ -24,6 +25,7 @@ from beancount.parser import booking
 from beancount.parser import options
 from beancount.parser import printer
 from beancount.ops import validation
+from beancount.utils import encryption
 
 
 LoadError = collections.namedtuple('LoadError', 'source message entry')
@@ -71,14 +73,67 @@ def load_file(filename, log_timings=None, log_errors=None, extra_validations=Non
           the file.
         options_map: A dict of the options parsed from the file.
     """
+    filename = path.expandvars(path.expanduser(filename))
     if not path.isabs(filename):
         filename = path.normpath(path.join(os.getcwd(), filename))
-    return _load([(filename, True)], log_timings, log_errors, extra_validations, encoding)
+
+    if encryption.is_encrypted_file(filename):
+        # Note: Caching is not supported for encrypted files.
+        return load_encrypted_file(filename,
+                                   log_timings, log_errors,
+                                   extra_validations, False, encoding)
+    else:
+        entries, errors, options_map = _load_file(filename, log_timings,
+                                                  extra_validations, encoding)
+        _log_errors(errors, log_errors)
+        return entries, errors, options_map
 
 
 # Alias, for compatibility.
 # pylint: disable=invalid-name
 load = load_file
+
+
+def load_encrypted_file(filename, log_timings=None, log_errors=None, extra_validations=None,
+                        dedent=False, encoding=None):
+    """Load an encrypted Beancount input file.
+
+    Args:
+      filename: The name of an encrypted file to be parsed.
+      log_timings: See load_string().
+      log_errors: See load_string().
+      extra_validations: See load_string().
+      dedent: See load_string().
+      encoding: See load_string().
+    Returns:
+      A triple of:
+        entries: A date-sorted list of entries from the file.
+        errors: A list of error objects generated while parsing and validating
+          the file.
+        options_map: A dict of the options parsed from the file.
+    """
+    contents = encryption.read_encrypted_file(filename)
+    return load_string(contents,
+                       log_timings=log_timings,
+                       log_errors=log_errors,
+                       extra_validations=extra_validations,
+                       encoding=encoding)
+
+
+def _log_errors(errors, log_errors):
+    """Log errors, if 'log_errors' is set.
+
+    Args:
+      log_errors: A file object or function to write errors to,
+        or None, if it should remain quiet.
+    """
+    if log_errors and errors:
+        if hasattr(log_errors, 'write'):
+            printer.print_errors(errors, file=log_errors)
+        else:
+            error_io = io.StringIO()
+            printer.print_errors(errors, file=error_io)
+            log_errors(error_io.getvalue())
 
 
 def pickle_cache_function(pattern, time_threshold, function):
@@ -144,13 +199,18 @@ def pickle_cache_function(pattern, time_threshold, function):
     return wrapped
 
 
+def _load_file(filename, *args, **kw):
+    """Delegate to _load. This gets conditionally advised by caching below."""
+    return _load([(filename, True)], *args, **kw)
+
+
 # Unless an environment variable disables it, use the pickle load cache
 # automatically.
-_uncached_load_file = load_file
+_uncached_load_file = _load_file
 if os.getenv('BEANCOUNT_DISABLE_LOAD_CACHE') is None:
-    load_file = pickle_cache_function(PICKLE_CACHE_FILENAME,
-                                      PICKLE_CACHE_THRESHOLD,
-                                      load_file)
+    _load_file = pickle_cache_function(PICKLE_CACHE_FILENAME,
+                                       PICKLE_CACHE_THRESHOLD,
+                                       _load_file)
 
 
 def needs_refresh(options_map):
@@ -206,7 +266,10 @@ def load_string(string, log_timings=None, log_errors=None, extra_validations=Non
     """
     if dedent:
         string = textwrap.dedent(string)
-    return _load([(string, False)], log_timings, log_errors, extra_validations, encoding)
+    entries, errors, options_map =  _load([(string, False)], log_timings,
+                                          extra_validations, encoding)
+    _log_errors(errors, log_errors)
+    return entries, errors, options_map
 
 
 def _parse_recursive(sources, log_timings, encoding=None):
@@ -342,7 +405,7 @@ def aggregate_options_map(options_map, src_options_map):
         commodities.add(currency)
 
 
-def _load(sources, log_timings, log_errors, extra_validations, encoding):
+def _load(sources, log_timings, extra_validations, encoding):
     """Parse Beancount input, run its transformations and validate it.
 
     (This is an internal method.)
@@ -358,8 +421,6 @@ def _load(sources, log_timings, log_errors, extra_validations, encoding):
         You may provide a list of such arguments to be parsed. Filenames must be absolute
         paths.
       log_timings: A file object or function to write timings to,
-        or None, if it should remain quiet.
-      log_errors: A file object or function to write errors to,
         or None, if it should remain quiet.
       extra_validations: A list of extra validation functions to run after loading
         this list of entries.
@@ -394,14 +455,6 @@ def _load(sources, log_timings, log_errors, extra_validations, encoding):
         # Note: We could go hardcode here and further verify that the entries
         # haven't been modified by user-provided validation routines, by
         # comparing hashes before and after. Not needed for now.
-
-    if log_errors and errors:
-        if hasattr(log_errors, 'write'):
-            printer.print_errors(errors, file=log_errors)
-        else:
-            error_io = io.StringIO()
-            printer.print_errors(errors, file=error_io)
-            log_errors(error_io.getvalue())
 
     # Compute the input hash.
     options_map['input_hash'] = compute_input_hash(options_map['include'])

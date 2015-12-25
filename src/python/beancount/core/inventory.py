@@ -86,15 +86,17 @@ class Inventory(list):
             for position in positions:
                 self.add_position(position)
 
-    def to_string(self, dformat=DEFAULT_FORMATTER):
+    def to_string(self, dformat=DEFAULT_FORMATTER, parens=True):
         """Convert an Inventory instance to a printable string.
 
         Args:
           dformat: An instance of DisplayFormatter.
+          parents: A boolean, true if we should surround the results by parentheses.
         Returns:
           A formatted string of the quantized amount and symbol.
         """
-        return '({})'.format(
+        fmt = '({})' if parens else '{}'
+        return fmt.format(
             ', '.join(pos.to_string(dformat) for pos in sorted(self)))
 
     def __str__(self):

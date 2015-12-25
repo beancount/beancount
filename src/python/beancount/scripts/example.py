@@ -638,11 +638,20 @@ def generate_retirement_investments(entries, account, commodities_items, price_m
     account_cash = join(account, 'Cash')
     date_origin = entries[0].date
     open_entries.extend(parse("""
+
+      {date_origin} open {account} CCY
+        institution: "Retirement_Institution"
+        address: "Retirement_Address"
+        phone: "Retirement_Phone"
+
       {date_origin} open {account_cash} CCY
+        number: "882882"
+
     """, **locals()))
     for currency, _ in commodities_items:
         open_entries.extend(parse("""
           {date_origin} open {account}:{currency} {currency}
+            number: "882882"
         """, **locals()))
 
     new_entries = []
@@ -693,7 +702,14 @@ def generate_banking(date_begin, date_end, amount_initial):
     amount_initial_neg = -amount_initial
     return parse("""
 
+      {date_begin} open Assets:CC:Bank1
+        institution: "Bank1_Institution"
+        address: "Bank1_Address"
+        phone: "Bank1_Phone"
+
       {date_begin} open Assets:CC:Bank1:Checking    CCY
+        account: "00234-48574897"
+
       ;; {date_begin} open Assets:CC:Bank1:Savings    CCY
 
       {date_begin} * "Opening Balance for checking account"
@@ -1442,10 +1458,16 @@ def contextualize_file(contents, employer):
     replacements = {
         'CC': 'US',
         'Bank1': 'BofA',
+        'Bank1_Institution': 'Bank of America',
+        'Bank1_Address': '123 America Street, LargeTown, USA',
+        'Bank1_Phone': '+1.012.345.6789',
         'CreditCard1': 'Chase:Slate',
         'CreditCard2': 'Amex:BlueCash',
         'Employer1': employer,
         'Retirement': 'Vanguard',
+        'Retirement_Institution': 'Vanguard Group',
+        'Retirement_Address': "P.O. Box 1110, Valley Forge, PA 19482-1110",
+        'Retirement_Phone': "+1.800.523.1188",
         'Investment': 'ETrade',
 
         # Commodities

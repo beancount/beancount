@@ -184,7 +184,11 @@ def find_currencies_declared(entries, date=None):
         # for various currencies. Each of these quote currencies generates a
         # pair in the output.
         source_str = entry.meta.get('price', None)
-        if source_str:
+        if source_str is not None:
+            if source_str == "":
+                logging.debug("Skipping ignored currency (with empty price): %s",
+                              entry.currency)
+                continue
             try:
                 source_map = parse_source_map(source_str)
             except ValueError:
@@ -194,19 +198,10 @@ def find_currencies_declared(entries, date=None):
                 for quote, psources in source_map.items():
                     currencies.append((entry.currency, quote, psources))
         else:
-            # If to "price" metadata is found, we inspect the "quote" metadata
-            # field, which can be used to say which currency the currency is
-            # quoted in.
-            quote =  entry.meta.get('quote', None)
-            if quote is not None:
-                currencies.append((entry.currency, quote, None))
-            else:
-                # Finally, otherwise we simply ignore the declaration. That is,
-                # a Commodity directive without any "price" nor "quote" metadata
-                # would not register as a declared currency. Note: I'm not
-                # entirely sure that this is the best approach yet, but going
-                # with this behavior for now [blais/2015-11-22].
-                logging.debug("Ignoring currency with no metadata: %s", entry.currency)
+            # Otherwise we simply ignore the declaration. That is, a Commodity
+            # directive without any "price" metadata would not register as a
+            # declared currency.
+            logging.debug("Ignoring currency with no metadata: %s", entry.currency)
 
     return currencies
 

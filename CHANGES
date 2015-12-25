@@ -127,6 +127,57 @@ Note: This file contains only changes in the 'default' branch.
     this at your own risk; this is probably not ready for public use.
 
 
+2015-12-24
+
+  - Implemented metadata stack and "pushmeta" and "popmeta" directives mirroring
+    "pushtag" and "poptag". These new directives work similarly, but setting
+    metadata fields instead of tags themselves. The parser maintains a stack of
+    values for each metadata field. Values explicitly set on the Transactions
+    themselves are not overridden by the meta stack.
+
+
+2015-12-21
+
+  - Created a new project script that uses specific metadata on Open directives
+    to generate a document of a user's assets, institution names, addresses and
+    contact info, and account types and approximate value. Note: I haven't made
+    the example file include necessary fields to demo or document this yet.
+
+  - The loader now supports loading encrypted files transparently. If a filename
+    ends with .gpg or .asc (and contains armored content), the file is run
+    through a gpg subprocess to decrypt it. No temporary files are created. Note
+    that caching for those files is disabled.
+
+    If you're writing a script, you can also call
+    beancount.loaded.load_encrypted_file() directly to avoid the check.
+
+  - Implemented the 'beancount.plugins.merge_meta' plugin that copies metadata
+    from an external file into a regular file. It is essentially a data join on
+    the key of accounts for Open and Close directives, and a join on the key of
+    currency on Commodity directives.
+
+  - Added an option to Inventory.to_string() to avoid rendering parentheses.
+
+  - Added variable and username expansion support for the loader filename.
+
+  - Removed --batch mode for the encryption support; it needs to be potentially
+    interactive.
+
+
+2015-12-17
+
+  - In prices, removed undocumented support for automatically extracting
+    Commodities with a "quote" metadata field. This had been used in times past
+    and had been brought in as legacy, but now neither the export code nor the prices
+    code use it. Vaccummed away.
+
+
+2015-12-13
+
+  - Fixed a minor bug with the loader cache whereby errors weren't getting
+    emitted on a cache hit (Issue #92).
+
+
 2015-12-12
 
   - Made bean-web's --incognito mode replace integer numbers, not just
