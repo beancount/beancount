@@ -45,13 +45,16 @@ def align_beancount(contents):
     norm_match_pairs = normalize_indent_whitespace(match_pairs)
 
     # Compute the maximum widths.
-    max_prefix_width = max(len(prefix)
-                           for prefix, number, _ in match_pairs
-                           if number is not None)
+    filtered_pairs = [(prefix, number)
+                      for prefix, number, _ in match_pairs
+                      if number is not None]
 
-    max_num_width = max(len(number)
-                        for _, number, _ in match_pairs
-                        if number is not None)
+    if filtered_pairs:
+        max_prefix_width = max(len(prefix) for prefix, _ in filtered_pairs)
+        max_num_width = max(len(number) for _, number in filtered_pairs)
+    else:
+        max_prefix_width = 0
+        max_num_width = 0
 
     # Create a format that will admit the maximum width of all prefixes equally.
     line_format = '{{:<{prefix_width}}}  {{:>{num_width}}} {{}}'.format(

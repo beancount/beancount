@@ -203,12 +203,10 @@ def do_context(filename, args):
     # Load the input file.
     entries, errors, options_map = loader.load_file(filename)
 
-    dcontext = options_map['dcontext']
-
     # Note: Make sure to use the absolute filename used by the parser to resolve
     # the file.
-    str_context = context.render_entry_context(entries, options_map, dcontext,
-                                               options_map['filename'], lineno)
+    str_context = context.render_file_context(entries, options_map,
+                                              options_map['filename'], lineno)
     sys.stdout.write(str_context)
 
 
@@ -240,10 +238,12 @@ def do_linked(filename, args):
     entries, errors, options_map = loader.load_file(filename)
 
     # Find the closest entry.
-    closest_entry = data.find_closest(entries, filename, lineno)
+    closest_entry = data.find_closest(entries, options_map['filename'], lineno)
 
     # Find its links.
     links = closest_entry.links
+    if closest_entry is None:
+        raise SystemExit("No entry could be found before {}:{}".format(filename, lineno))
     if not links:
         return
 
