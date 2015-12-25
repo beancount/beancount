@@ -112,6 +112,9 @@ class Builder(lexer.LexBuilder):
         # A stack of the current active tags.
         self.tags = []
 
+        # A dict of the current active metadata fields (not a stack).
+        self.meta = collections.defaultdict(list)
+
         # The result from running the parser, a list of entries.
         self.entries = []
 
@@ -142,7 +145,15 @@ class Builder(lexer.LexBuilder):
         for tag in self.tags:
             meta = new_metadata(self.options['filename'], 0)
             self.errors.append(
-                ParserError(meta, "Unbalanced tag: '{}'".format(tag), None))
+                ParserError(meta, "Unbalanced pushed tag: '{}'".format(tag), None))
+
+        # If the user left some metadata unpopped, issue an error.
+        for key, value_list in self.meta.items():
+            meta = new_metadata(self.options['filename'], 0)
+            self.errors.append(
+                ParserError(meta, (
+                    "Unbalanced metadata key '{}'; leftover metadata '{}'").format(
+                        key, ', '.join(value_list)), None))
 
         return (self.get_entries(), self.errors, self.get_options())
 
@@ -194,25 +205,25 @@ class Builder(lexer.LexBuilder):
         if entries:
             self.entries = entries
 
-    def build_grammar_error(self, filename, lineno, message,
+    def build_grammar_error(self, filename, lineno, exc_value,
                             exc_type=None, exc_traceback=None):
         """Build a grammar error and appends it to the list of pending errors.
 
         Args:
           filename: The current filename
           lineno: The current line number
-          message: The message of the error, or the exc_value exception value.
+          excvalue: The exception value, or a str, the message of the error.
           exc_type: An exception type, if an exception occurred.
           exc_traceback: A traceback object.
         """
-        if not isinstance(message, str):
-            message = str(message)
         if exc_type is not None:
-            strings = traceback.format_exception_only(exc_type, message)
+            assert not isinstance(exc_value, str)
+            strings = traceback.format_exception_only(exc_type, exc_value)
             tblist = traceback.extract_tb(exc_traceback)
             filename, lineno, _, __ = tblist[0]
             message = '{} ({}:{})'.format(strings[0], filename, lineno)
-
+        else:
+            message = str(exc_value)
         meta = new_metadata(filename, lineno)
         self.errors.append(
             ParserSyntaxError(meta, message, None))
@@ -239,6 +250,34 @@ class Builder(lexer.LexBuilder):
             meta = new_metadata(self.options['filename'], 0)
             self.errors.append(
                 ParserError(meta, "Attempting to pop absent tag: '{}'".format(tag), None))
+
+    def pushmeta(self, key, value):
+        """Set a metadata field on the current key-value pairs to be added to transactions.
+
+        Args:
+          key_value: A KeyValue instance, to be added to the dict of metadata.
+        """
+        self.meta[key].append(value)
+
+    def popmeta(self, key):
+        """Removed a key off the current set of stacks.
+
+        Args:
+          key: A string, a key to be removed from the meta dict.
+        """
+        try:
+            if key not in self.meta:
+                raise IndexError
+            value_list = self.meta[key]
+            value = value_list.pop(-1)
+            if not value_list:
+                self.meta.pop(key)
+        except IndexError:
+            meta = new_metadata(self.options['filename'], 0)
+            self.errors.append(
+                ParserError(meta,
+                            "Attempting to pop absent metadata key: '{}'".format(key),
+                            None))
 
     def option(self, filename, lineno, key, value):
         """Process an option directive.
@@ -818,7 +857,7 @@ class Builder(lexer.LexBuilder):
 
         Args:
           txn_fields: The current TxnFields accumulator.
-          meta: An AttrDict metadata for errors generated in this routine.
+          meta: A metadata dict for errors generated in this routine.
         Returns:
           A pair of (payee, narration) strings or None objects, or None, if
           there was an error.
@@ -868,7 +907,8 @@ class Builder(lexer.LexBuilder):
         """
         meta = new_metadata(filename, lineno)
 
-        # Separate postings and key-valus.
+        # Separate postings and key-values.
+        explicit_meta = {}
         postings = []
         if posting_or_kv_list:
             last_posting = None
@@ -878,8 +918,8 @@ class Builder(lexer.LexBuilder):
                     last_posting = posting_or_kv
                 else:
                     if last_posting is None:
-                        value = meta.setdefault(posting_or_kv.key,
-                                                posting_or_kv.value)
+                        value = explicit_meta.setdefault(posting_or_kv.key,
+                                                         posting_or_kv.value)
                         if value is not posting_or_kv.value:
                             self.errors.append(ParserError(
                                 meta, "Duplicate metadata field on entry: {}".format(
@@ -896,6 +936,17 @@ class Builder(lexer.LexBuilder):
                             self.errors.append(ParserError(
                                 meta, "Duplicate posting metadata field: {}".format(
                                     posting_or_kv), None))
+
+
+
+        # Initialize the metadata fields from the set of active values.
+        if self.meta:
+            for key, value_list in self.meta.items():
+                meta[key] = value_list[-1]
+
+        # Add on explicitly defined values.
+        if explicit_meta:
+            meta.update(explicit_meta)
 
         # Unpack the transaction fields.
         payee_narration = self.unpack_txn_strings(txn_fields, meta)

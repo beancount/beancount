@@ -5,7 +5,7 @@ INPUT = $(HOME)/q/office/accounting/blais.beancount
 DOWNLOADS = $(HOME)/u/Downloads
 
 GREP="grep --include="*.py" -srnE"
-SRC=src/python/beancount
+SRC=src/python
 
 all: compile
 
@@ -21,7 +21,7 @@ clean:
 
 
 # Targets to generate and compile the C parser.
-CROOT = $(SRC)/parser
+CROOT = $(SRC)/beancount/parser
 LEX = flex
 YACC = bison --report=itemset --verbose
 FILTERYACC = sed -e 's@/\*[ \t]yacc\.c:.*\*/@@'
@@ -115,24 +115,10 @@ build/beancount_tests.pdf: build/beancount.deps
 # We are considering a separation of the basic data structure and the basic operations.
 # This provides the detail of the relationships between these sets of fils.
 build/beancount-core.pdf: build/beancount-core.deps
-	sfood -ii $(SRC)/core/*.py | sfood-graph | $(GRAPHER) -Tps | ps2pdf - $@
+	sfood -ii $(SRC)/beancount/core/*.py | sfood-graph | $(GRAPHER) -Tps | ps2pdf - $@
 
 showdeps-core: build/beancount-core.pdf
 	evince $<
-
-
-# Figure out dependencies of the code that needs to move out to form ledgerhub.
-LEDGERHUB_FILES = 				\
-	sources					\
-	imports					\
-	ops/dups.py				\
-	ops/compress.py				\
-	scripts/import_driver.py		\
-	scripts/prices.py			\
-	scripts/remove_crdb.py
-
-build/ledgerhub.pdf:
-	(cd $(SRC) && sfood -i $(LEDGERHUB_FILES)) | sfood-graph | $(GRAPHER) -Tps | ps2pdf - $@
 
 
 # Run in the debugger.

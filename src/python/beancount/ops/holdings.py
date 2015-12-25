@@ -131,6 +131,7 @@ def get_final_holdings(entries, included_account_types=None, price_map=None, dat
     return holdings
 
 
+# Note: This should use the same routines as in beancount.prices.find_prices.
 def get_commodities_at_date(entries, options_map, date=None):
     """Return a list of commodities present at a particular date.
 
@@ -162,12 +163,11 @@ def get_commodities_at_date(entries, options_map, date=None):
     Returns:
       A list of (currency, cost-currency, quote-currency, ticker) tuples, where
         currency: The Beancount base currency to fetch a price for.
-        cost-currency: The Beancount quote / cost-currency for currency.
-        quote-currency: The currency declared as quote currency (extracted from
-          the metadata of Commodity directives).
+        cost-currency: The cost-currency of the holdings found at the given date.
+        quote-currency: The currency formally declared as quote currency in the
+          metadata of Commodity directives.
         ticker: The ticker symbol to use for fetching the price (extracted from
           the metadata of Commodity directives).
-
     """
     # Remove all the entries after the given date, if requested.
     if date is not None:
@@ -181,7 +181,7 @@ def get_commodities_at_date(entries, options_map, date=None):
                         for holding in holdings_list}
 
     # Add in the associated ticker symbols.
-    commodities_map = getters.get_commodity_map(entries, options_map)
+    commodities_map = getters.get_commodity_map(entries)
     commodities_symbols_list = []
     for currency, cost_currency in sorted(commodities_list):
         try:

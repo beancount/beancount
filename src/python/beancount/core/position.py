@@ -144,10 +144,11 @@ class Position:
         # Render the cost (and other lot parameters, lot-date, label, etc.).
         if detail:
             if isinstance(lot, Lot):
-                if lot.cost or lot.lot_date:
+                has_cost = lot.cost is not None and lot.cost.number is not None
+                if has_cost or lot.lot_date:
                     cost_str_list = []
                     cost_str_list.append('{')
-                    if lot.cost:
+                    if has_cost:
                         cost_str_list.append(
                             Amount(lot.cost.number, lot.cost.currency).to_string(dformat))
                     if lot.lot_date:

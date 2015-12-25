@@ -48,6 +48,17 @@ __plugins__ = ('split_expenses',)
 
 
 def split_expenses(entries, options_map, config):
+    """Split postings according to expenses (see module docstring for details).
+
+    Args:
+      entries: A list of directives. We're interested only in the Transaction instances.
+      unused_options_map: A parser options dict.
+      config: The plugin configuration string.
+    Returns:
+      A list of entries, with potentially more accounts and potentially more
+      postings with smaller amounts.
+    """
+
     # Validate and sanitize configuration.
     if isinstance(config, str):
         members = config.split()

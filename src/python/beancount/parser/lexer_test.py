@@ -102,6 +102,7 @@ class TestLexer(unittest.TestCase):
             ('LINK', 10, '^sometag123', 'sometag123'),
             ('EOL', 11, '\n', None),
             ('KEY', 11, 'somekey:', 'somekey'),
+            ('COLON', 11, ':', None),
             ('EOL', 12, '\n', None),
             ('EOL', 12, '\x00', None)
             ], tokens)
@@ -357,6 +358,23 @@ class TestLexer(unittest.TestCase):
         tokens = list(lexer.lex_iter_string(string, builder))
         self.assertTrue(tokens[0], 'LEX_ERROR')
         self.assertTrue(tokens[1], 'EOL')
+
+    @lex_tokens
+    def test_popmeta(self, tokens, errors):
+        '''
+        popmeta location:
+        '''
+        # Note that this test contains an _actual_ newline, not an escape one as
+        # in the previous test. This should allow us to parse multiline strings.
+        self.assertEqual([
+            ('EOL', 2, '\n', None),
+            ('POPMETA', 2, 'popmeta', None),
+            ('KEY', 2, 'location:', 'location'),
+            ('COLON', 2, ':', None),
+            ('EOL', 3, '\n', None),
+            ('EOL', 3, '\x00', None),
+        ], tokens)
+        self.assertFalse(errors)
 
 
 class TestIgnoredLines(unittest.TestCase):
