@@ -16,6 +16,15 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import decimal
 import re
 
+# However, some packaging systems insist on breaking up Python into multiple
+# packages in order to manage the dependency to the mpdec library, and make that
+# optional. This is the case for Arch Linux. At least run a check for this.
+import types
+import warnings
+if not isinstance(decimal.Decimal().sqrt, types.BuiltinFunctionType):
+    warnings.warn("Fast C decimal implementation appears to be missing; "
+                  "Consider installing cdecimal")
+
 # pylint: disable=invalid-name
 Decimal = decimal.Decimal
 

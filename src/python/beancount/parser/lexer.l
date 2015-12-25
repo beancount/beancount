@@ -154,6 +154,7 @@ int strtonl(const char* buf, size_t nchars);
 \+		{ return PLUS; }
 \-		{ return MINUS; }
 \/		{ return SLASH; }
+\:		{ return COLON; }
 \(		{ return LPAREN; }
 \)		{ return RPAREN; }
 
@@ -220,6 +221,8 @@ note		{ return NOTE; }
 document	{ return DOCUMENT; }
 pushtag	        { return PUSHTAG; }
 poptag		{ return POPTAG; }
+pushmeta	{ return PUSHMETA; }
+popmeta		{ return POPMETA; }
 option		{ return OPTION; }
 plugin		{ return PLUGIN; }
 include		{ return INCLUDE; }
@@ -310,7 +313,7 @@ FALSE		{
 
     /* All other characters. */
     [^\\\"]+        {
-        if ( yyleng > strbuf_end - strbuf_ptr ) {
+        if ( yyleng > (yy_size_t)(strbuf_end - strbuf_ptr) ) {
             strbuf_realloc(yyleng);
         }
         size_t i;
@@ -341,6 +344,7 @@ FALSE		{
  /* Key */
 [a-z][a-zA-Z0-9\-_]+: 		{
     BUILD_LEX("KEY", "s#", yytext, yyleng-1);
+    unput(':');
     return KEY;
 }
 
@@ -485,7 +489,7 @@ int yy_skip_line()
 int strtonl(const char* buf, size_t nchars)
 {
     int result = 0;
-    int i;
+    size_t i;
     for ( i = 0; i < nchars; ++i ) {
         result *= 10;
         result += (buf[i] - '0');

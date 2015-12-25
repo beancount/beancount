@@ -82,6 +82,12 @@ class TestTestUtils(unittest.TestCase):
         test_utils.search_words('i walrus is'.split(),
                                 'i am the walrus is not chicago')
 
+    def test_environ_contextmanager(self):
+        with test_utils.environ('PATH', '/unlikely-to-be-your-path'):
+            self.assertEqual('/unlikely-to-be-your-path', os.getenv('PATH'))
+        self.assertNotEqual('/unlikely-to-be-your-path', os.getenv('PATH'))
+
+
 class TestTestCase(test_utils.TestCase):
 
     def test_assertLines(self):

@@ -5,6 +5,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import builtins
 import datetime
 from collections import namedtuple
+from os import path
 import sys
 
 # Note: this file is mirrorred into ledgerhub. Relative imports only.
@@ -34,11 +35,10 @@ def new_directive(clsname, fields):
 # within the program. They are all treated as immutable.
 #
 # Common Attributes (prepended to declared list):
-#   meta: An instance of AttrDict, a dict of strings to objects, potentially
-#     attached to each of the directive types. The values may be strings,
-#     account names, tags, dates, numbers, amounts and currencies. There are two
-#     special attributes which are always present on all directives: 'filename'
-#     and 'lineno'.
+#   meta: A dict of strings to objects, potentially attached to each of the
+#     directive types. The values may be strings, account names, tags, dates,
+#     numbers, amounts and currencies. There are two special attributes which
+#     are always present on all directives: 'filename' and 'lineno'.
 #   date: A datetime.date instance; all directives have an associated date. Note:
 #     Beancount does not consider time, only dates. The line where the directive
 #     shows up in the file is used as a secondary sort key beyond the date.
@@ -245,49 +245,6 @@ ALL_DIRECTIVES = (
 )
 
 
-# The location in a source file where the directive was read from. These are
-# attached to all the directives above.
-#
-# Attributes:
-#   filename: A string, the name of the input that the directive was read from.
-#     If the directive was synthesized by a plugin, this should be the plugin
-#     name instead.
-#   lineno: An integer, the line number where the directive was found. For
-#     automatically created directives, this may be None.
-#
-# A dict class that allows access via attributes. This allows us to move from
-# the previous Source namedtuple object to generalized metadata.
-#
-class AttrDict(dict):
-    """A dict with attribute access.
-    """
-    __getattr__ = dict.__getitem__
-    __setattr__ = dict.__setitem__
-
-    def _replace(self, **kwds):
-        """A method similar to collections.namedtuple's _replace.
-
-        Args:
-          **kwds: A dict of key/value pairs to be replaced. All keys must be strings.
-        Returns:
-          A new instance (a copy) of AttrDict with the fields from kwds replaced.
-        """
-        copy = self.copy()
-        for key, value in kwds.items():
-            copy.__setattr__(key, value)
-        return copy
-
-    def copy(self):
-        """Builds a shallow copy of this AttrDict instance.
-
-        Returns:
-          A new instance (a copy) of AttrDict with the same contents.
-        """
-        return AttrDict(self.items())
-
-    __copy__ = copy
-
-
 def new_metadata(filename, lineno, kvlist=None):
     """Create a new metadata container from the filename and line number.
 
@@ -296,11 +253,10 @@ def new_metadata(filename, lineno, kvlist=None):
       lineno: An integer, the line number where the directive has been created.
       kvlist: An optional container of key-values.
     Returns:
-      An instance of AttrDict.
+      A metadata dict.
     """
-    meta = AttrDict()
-    meta['filename'] = filename
-    meta['lineno'] = lineno
+    meta = {'filename': filename,
+            'lineno': lineno}
     if kvlist:
         meta.update(kvlist)
     return meta
@@ -412,7 +368,7 @@ def sanity_check_types(entry):
       AssertionError: If there is anything that is unexpected, raises an exception.
     """
     assert isinstance(entry, ALL_DIRECTIVES), "Invalid directive type"
-    assert isinstance(entry.meta, AttrDict), "Invalid type for meta"
+    assert isinstance(entry.meta, dict), "Invalid type for meta"
     assert 'filename' in entry.meta, "Missing filename in metadata"
     assert 'lineno' in entry.meta, "Missing line number in metadata"
     assert isinstance(entry.date, datetime.date), "Invalid date type"
@@ -494,7 +450,7 @@ def entry_sortkey(entry):
       A tuple of (date, integer, integer), that forms the sort key for the
       entry.
     """
-    return (entry.date, SORT_ORDER.get(type(entry), 0), entry.meta.lineno)
+    return (entry.date, SORT_ORDER.get(type(entry), 0), entry.meta["lineno"])
 
 
 def sorted(entries):
@@ -521,7 +477,7 @@ def posting_sortkey(entry):
     """
     if isinstance(entry, TxnPosting):
         entry = entry.txn
-    return (entry.date, SORT_ORDER.get(type(entry), 0), entry.meta.lineno)
+    return (entry.date, SORT_ORDER.get(type(entry), 0), entry.meta["lineno"])
 
 
 def has_entry_account_component(entry, component):
@@ -545,7 +501,9 @@ def find_closest(entries, filename, lineno):
 
     Args:
       entries: A list of directives.
-      filename: A string, the name of the ledger file to look for.
+      filename: A string, the name of the ledger file to look for. Be careful
+        to provide the very same filename, and note that the parser stores the
+        absolute path of the filename here.
       lineno: An integer, the line number closest after the directive we're
         looking for. This may be the exact/first line of the directive.
     Returns:
@@ -556,8 +514,8 @@ def find_closest(entries, filename, lineno):
     closest_entry = None
     for entry in entries:
         emeta = entry.meta
-        if emeta.filename == filename and emeta.lineno > 0:
-            diffline = lineno - emeta.lineno
+        if emeta["filename"] == filename and emeta["lineno"] > 0:
+            diffline = lineno - emeta["lineno"]
             if diffline >= 0 and diffline < min_diffline:
                 min_diffline = diffline
                 closest_entry = entry

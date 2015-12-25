@@ -159,8 +159,12 @@ class TestParserEntryTypes(unittest.TestCase):
     def test_entry_event(self, entries, _, __):
         """
           2013-05-18 event "location" "New York, USA"
+
+          ;; Test empty event.
+          2013-05-18 event "location" ""
         """
-        check_list(self, entries, [data.Event])
+        check_list(self, entries, [data.Event, data.Event])
+        self.assertEqual("", entries[-1].description)
 
     @parser.parse_doc()
     def test_entry_query(self, entries, _, __):
@@ -301,7 +305,7 @@ class TestUglyBugs(unittest.TestCase):
         self.assertEqual([], errors)
 
 
-class TestTagStack(unittest.TestCase):
+class TestPushPopTag(unittest.TestCase):
 
     @parser.parse_doc(expect_errors=True)
     def test_tag_left_unclosed(self, entries, errors, _):
@@ -309,7 +313,7 @@ class TestTagStack(unittest.TestCase):
           pushtag #trip-to-nowhere
         """
         self.assertEqual(1, len(errors))
-        self.assertTrue(re.search('Unbalanced tag', errors[0].message))
+        self.assertRegexpMatches(errors[0].message, 'Unbalanced pushed tag')
 
     @parser.parse_doc(expect_errors=True)
     def test_pop_invalid_tag(self, entries, errors, _):
@@ -318,6 +322,82 @@ class TestTagStack(unittest.TestCase):
         """
         self.assertTrue(errors)
         self.assertTrue(re.search('absent tag', errors[0].message))
+
+
+class TestPushPopMeta(unittest.TestCase):
+
+    @parser.parse_doc()
+    def test_pushmeta_normal(self, entries, errors, _):
+        """
+          pushmeta location: "Lausanne, Switzerland"
+
+          2015-06-07 * "Something"
+            Assets:Something   1 USD
+            Assets:Something  -1 USD
+
+          popmeta location:
+        """
+        self.assertFalse(errors)
+        self.assertTrue('location' in entries[0].meta)
+        self.assertEqual("Lausanne, Switzerland", entries[0].meta['location'])
+
+    @parser.parse_doc()
+    def test_pushmeta_shadow(self, entries, errors, _):
+        """
+          pushmeta location: "Lausanne, Switzerland"
+
+          2015-06-07 * "Something"
+            location: "Paris, France"
+            Assets:Something   1 USD
+            Assets:Something  -1 USD
+
+          popmeta location:
+        """
+        self.assertFalse(errors)
+        self.assertTrue('location' in entries[0].meta)
+        self.assertEqual("Paris, France", entries[0].meta['location'])
+
+    @parser.parse_doc()
+    def test_pushmeta_override(self, entries, errors, _):
+        """
+          pushmeta location: "Lausanne, Switzerland"
+
+          2015-06-01 * "Something"
+            Assets:Something   1 USD
+            Assets:Something  -1 USD
+
+          pushmeta location: "Paris, France"
+
+          2015-06-02 * "Something"
+            Assets:Something   1 USD
+            Assets:Something  -1 USD
+
+          popmeta location:
+          popmeta location:
+        """
+        self.assertTrue('location' in entries[0].meta)
+        self.assertEqual("Lausanne, Switzerland", entries[0].meta['location'])
+
+        self.assertTrue('location' in entries[1].meta)
+        self.assertEqual("Paris, France", entries[1].meta['location'])
+
+    @parser.parse_doc(expect_errors=True)
+    def test_pushmeta_invalid_pop(self, entries, errors, _):
+        """
+          popmeta location:
+        """
+        self.assertEqual(1, len(errors))
+        self.assertRegexpMatches(errors[0].message,
+                                 "Attempting to pop absent metadata key")
+
+    @parser.parse_doc(expect_errors=True)
+    def test_pushmeta_forgotten(self, entries, errors, _):
+        """
+          pushmeta location: "Lausanne, Switzerland"
+        """
+        self.assertEqual(1, len(errors))
+        self.assertRegexpMatches(errors[0].message,
+                                 "Unbalanced metadata key")
 
 
 class TestMultipleLines(unittest.TestCase):
@@ -403,9 +483,9 @@ class TestLineNumbers(unittest.TestCase):
             TestLineNumbers.test_line_numbers.__wrapped__)
         first_line += 1
 
-        self.assertEqual(2, entries[0].meta.lineno - first_line)
-        self.assertEqual(6, entries[1].meta.lineno - first_line)
-        self.assertEqual(8, entries[2].meta.lineno - first_line)
+        self.assertEqual(2, entries[0].meta["lineno"] - first_line)
+        self.assertEqual(6, entries[1].meta["lineno"] - first_line)
+        self.assertEqual(8, entries[2].meta["lineno"] - first_line)
 
 
 class TestParserOptions(unittest.TestCase):

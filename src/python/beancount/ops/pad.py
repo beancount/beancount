@@ -58,9 +58,6 @@ def pad(entries, options_map):
         # Last encountered / currency active pad entry.
         active_pad = None
 
-        # A set of currencies already padded so far in this account.
-        padded_lots = set()
-
         # Gather all the postings for the account and its children.
         postings = []
         is_child = account.parent_matcher(account_)
@@ -68,6 +65,9 @@ def pad(entries, options_map):
             if is_child(item_account):
                 postings.extend(item_postings)
         postings.sort(key=data.posting_sortkey)
+
+        # A set of currencies already padded so far in this account.
+        padded_lots = set()
 
         pad_balance = inventory.Inventory()
         for entry in postings:
@@ -148,8 +148,8 @@ def pad(entries, options_map):
                             raise ValueError(
                                 "Position held at cost goes negative: {}".format(position_))
 
-                        # Mark this lot as padded. Further checks should not pad this lot.
-                        padded_lots.add(check_amount.currency)
+                # Mark this lot as padded. Further checks should not pad this lot.
+                padded_lots.add(check_amount.currency)
 
     # Insert the newly created entries right after the pad entries that created them.
     padded_entries = []
@@ -157,10 +157,10 @@ def pad(entries, options_map):
         padded_entries.append(entry)
         if isinstance(entry, data.Pad):
             entry_list = new_entries[id(entry)]
-            padded_entries.extend(entry_list)
-
-            # Generate errors on unused pad entries.
-            if not entry_list:
+            if entry_list:
+                padded_entries.extend(entry_list)
+            else:
+                # Generate errors on unused pad entries.
                 pad_errors.append(
                     PadError(entry.meta, "Unused Pad entry", entry))
 

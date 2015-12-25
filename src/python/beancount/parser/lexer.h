@@ -411,7 +411,7 @@ extern int yylex \
 #undef YY_DECL
 #endif
 
-#line 377 "src/python/beancount/parser/lexer.l"
+#line 381 "src/python/beancount/parser/lexer.l"
 
 
 #line 418 "src/python/beancount/parser/lexer.h"
