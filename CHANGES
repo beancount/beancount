@@ -4,6 +4,13 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-01-03
+
+  - Moved beancount.web.scrape.scrape() to beancount.web.web.scrape_webapp() to
+    isolate beancount.web.scrape from dependencies, so that other projects may
+    reuse it.
+
+
 2015-12-25
 
   - Closed multiple obsolete branches: parse_test_utils, display_context,
