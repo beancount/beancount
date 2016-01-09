@@ -12,6 +12,7 @@ from beancount.core import inventory
 from beancount.parser import parser
 from beancount.parser import printer
 from beancount.parser import booking_full
+from beancount.parser import booking_simple
 from beancount.parser import cmptest
 from beancount import loader
 
@@ -470,14 +471,23 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
 
     maxDiff = 8192
 
-    def check(self, entry, interpolated,
-              expected=None, re_errors=None, balances=None, debug=False):
+    # 'expected' is a mapping of currency to tuples of
+    #   interpolated: A boolean, asserting the return value of interpolate_group().
+    #   string: A string, to be parsed to obtain the resulting Posting instances.
+    #   errors: A list of error strings to check against the interpolation for that group.
+    def check(self, entry, expected, balances=None, debug=False):
         groups, errors = booking_full.categorize_by_currency(entry, {})
         self.assertFalse(errors)
         posting_groups = booking_full.replace_currencies(entry.postings, groups)
         if balances is None:
             balances = inventory.Inventory()
         for currency, postings in posting_groups.items():
+            try:
+                exp_interpolated, exp_string, exp_errors = expected[currency]
+            except KeyError:
+                self.fail("Currency {} is unexpected".format(currency))
+
+            # Run the interpolation for that group.
             new_postings, errors, interpolated = booking_full.interpolate_group(postings,
                                                                                 balances,
                                                                                 currency)
@@ -491,18 +501,21 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
                     print(e)
                 print()
 
-            # Check the expected number of errors appears.
-            self.assertEqual(len(re_errors) if re_errors else 0, len(errors))
-            if re_errors:
-                for re_error in re_errors:
-                    self.assertTrue(any(re.match(re_error, error.message)
+            # Check the expectation on interpolation.
+            self.assertEqual(exp_interpolated, interpolated)
+
+            # Check the expected number of errors.
+            self.assertEqual(len(exp_errors) if exp_errors else 0, len(errors))
+            if exp_errors:
+                for exp_error in exp_errors:
+                    self.assertTrue(any(re.match(exp_error, error.message)
                                         for error in errors))
 
             # Check the expected postings.
-            if expected:
-                string = expected[currency]
-                exp_entries, exp_errors, _ = parser.parse_string(string, dedent=True)
-                self.assertFalse(exp_errors, "Internal error in test")
+            if exp_string is not None:
+                exp_entries, err1, _ = parser.parse_string(exp_string, dedent=True)
+                exp_entries, err2 = booking_simple.convert_lot_specs_to_lots(exp_entries)
+                self.assertFalse(err1 or err2, "Internal error in test")
                 self.assertEqual(1, len(exp_entries),
                                  "Internal error, expected one entry")
                 exp_postings = normalize_postings(exp_entries[0].postings)
@@ -517,7 +530,7 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
           Assets:Account   100.00 USD
           Assets:Other    -100.00 USD
         """
-        self.check(entries[0], False)
+        self.check(entries[0], {'USD': (False, None, None)})
 
     @parser.parse_doc(allow_incomplete=True)
     def test_incomplete_impossible_twomiss_diff_units(self, entries, _, options_map):
@@ -526,8 +539,8 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
           Assets:Account          USD
           Assets:Other            USD
         """
-        self.check(entries[0], False,
-                   re_errors=["Too many missing numbers for currency group"])
+        self.check(entries[0], {
+            'USD': (False, None, ["Too many missing numbers for currency group"])})
 
     @parser.parse_doc(allow_incomplete=True)
     def test_incomplete_impossible_twomiss_diff_cost_and_units(self, entries, _, options_map):
@@ -536,8 +549,8 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
           Assets:Account   2 GOOG {USD}
           Assets:Other            USD
         """
-        self.check(entries[0], False,
-                   re_errors=["Too many missing numbers for currency group"])
+        self.check(entries[0],{
+            'USD': (False, None, ["Too many missing numbers for currency group"])})
 
     @parser.parse_doc(allow_incomplete=True)
     def test_incomplete_impossible_miss_same_posting(self, entries, _, options_map):
@@ -546,8 +559,8 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
           Assets:Account   GOOG {USD}
           Assets:Other      -100.00 USD
         """
-        self.check(entries[0], False,
-                   re_errors=["Too many missing numbers for currency group"])
+        self.check(entries[0], {
+            'USD': (False, None, ["Too many missing numbers for currency group"])})
 
     @parser.parse_doc(allow_incomplete=True)
     def test_incomplete_units(self, entries, _, options_map):
@@ -576,44 +589,44 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
           Assets:Account          CAD @ 1.25 USD
           Assets:Other    -100.00 USD
         """
-        self.check(entries[0], False,
-                   expected={'USD': """
-        2015-10-02 *
-          Assets:Account   100.00 USD
-          Assets:Other    -100.00 USD
-                   """})
-        self.check(entries[1], False,
-                   expected={'USD': """
-        2015-10-02 *
-          Assets:Account       10 GOOG {100.00 # 9.95 USD}
-          Assets:Other   -1009.95 USD
-                   """})
-        self.check(entries[2], False,
-                   expected={'USD': """
-        2015-10-02 *
-          Assets:Account       10 GOOG {100.00 USD}
-          Assets:Other   -1000.00 USD
-                   """})
-        self.check(entries[3], False,
-                   expected={'USD': """
-        2015-10-02 *
-          Assets:Account       10 GOOG {100.00 USD} @ 110.00 USD
-          Assets:Other   -1000.00 USD
-                   """})
+        self.check(entries[0], {
+            'USD': (True, """
+              2015-10-02 *
+                Assets:Account   100.00 USD
+                Assets:Other    -100.00 USD
+            """, None)})
+
+        self.check(entries[1], {
+            'USD': (True, """
+              2015-10-02 *
+                Assets:Account       10 GOOG {100.00 # 9.95 USD}
+                Assets:Other   -1009.95 USD
+            """, None)})
+
+        self.check(entries[2], {
+            'USD': (True, """
+              2015-10-02 *
+                Assets:Account       10 GOOG {100.00 USD}
+                Assets:Other   -1000.00 USD
+            """, None)})
+
+        self.check(entries[3], {
+            'USD': (True, """
+              2015-10-02 *
+                Assets:Account       10 GOOG {100.00 USD} @ 110.00 USD
+                Assets:Other   -1000.00 USD
+            """, None)})
+
         # Check impossible case.
-        self.check(entries[4], False,
-                   re_errors=["Cannot infer per-unit cost only from total"],
-                   expected={'USD': """
-        2015-10-02 *
-          Assets:Account          GOOG {0 # 1009.95 USD}
-          Assets:Other   -1009.95 USD
-                   """})
-        self.check(entries[5], False,
-                   expected={'USD': """
-        2015-10-02 *
-          Assets:Account    80.00 CAD @ 1.25 USD
-          Assets:Other    -100.00 USD
-                   """})
+        self.check(entries[4], {
+            'USD': (True, None, ["Cannot infer per-unit cost only from total"])})
+
+        self.check(entries[5], {
+            'USD': (True, """
+              2015-10-02 *
+                Assets:Account    80.00 CAD @ 1.25 USD
+                Assets:Other    -100.00 USD
+            """, None)})
 
     @parser.parse_doc(allow_incomplete=True)
     def test_incomplete_cost_both(self, entries, _, options_map):
@@ -630,24 +643,24 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
           Assets:Account       10 GOOG {USD, "blah"}
           Assets:Other   -1009.95 USD
         """
-        self.check(entries[0], False,
-                   expected={'USD': """
-        2015-10-02 *
-          Assets:Account       10 GOOG {100.995 USD}
-          Assets:Other   -1009.95 USD
-                   """})
-        self.check(entries[1], False,
-                   expected={'USD': """
-        2015-10-02 *
-          Assets:Account       10 GOOG {100.995 USD} @ 110.00 USD
-          Assets:Other   -1009.95 USD
-                   """})
-        self.check(entries[2], False,
-                   expected={'USD': """
-        2015-10-02 *
-                   Assets:Account       10 GOOG {100.995 USD, "blah"}
-          Assets:Other   -1009.95 USD
-                   """})
+        self.check(entries[0], {
+            'USD': (True, """
+              2015-10-02 *
+                Assets:Account       10 GOOG {100.995 USD}
+                Assets:Other   -1009.95 USD
+            """, None)})
+        self.check(entries[1], {
+            'USD': (True, """
+              2015-10-02 *
+                Assets:Account       10 GOOG {100.995 USD} @ 110.00 USD
+                Assets:Other   -1009.95 USD
+            """, None)})
+        self.check(entries[2], {
+            'USD': (True, """
+              2015-10-02 *
+                Assets:Account       10 GOOG {100.995 USD, "blah"}
+                Assets:Other   -1009.95 USD
+            """, None)})
 
     @parser.parse_doc(allow_incomplete=True)
     def test_incomplete_cost_per(self, entries, _, options_map):
@@ -660,18 +673,18 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
           Assets:Account       10 GOOG {# 9.95 USD} @ 110.00 USD
           Assets:Other   -1009.95 USD
         """
-        self.check(entries[0], False,
-                   expected={'USD': """
-        2015-10-02 *
-          Assets:Account       10 GOOG {100.00 # 9.95 USD}
-          Assets:Other   -1009.95 USD
-                   """})
-        self.check(entries[1], False,
-                   expected={'USD': """
-        2015-10-02 *
-          Assets:Account       10 GOOG {100.00 # 9.95 USD} @ 110.00 USD
-          Assets:Other   -1009.95 USD
-                   """})
+        self.check(entries[0], {
+            'USD': (True, """
+              2015-10-02 *
+                Assets:Account       10 GOOG {100.00 # 9.95 USD}
+                Assets:Other   -1009.95 USD
+            """, None)})
+        self.check(entries[1], {
+            'USD': (True, """
+              2015-10-02 *
+                Assets:Account       10 GOOG {100.00 # 9.95 USD} @ 110.00 USD
+                Assets:Other   -1009.95 USD
+            """, None)})
 
     @parser.parse_doc(allow_incomplete=True)
     def test_incomplete_cost_total(self, entries, _, options_map):
@@ -684,18 +697,18 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
           Assets:Account       10 GOOG {100.00 # USD} @ 110.00 USD
           Assets:Other   -1009.95 USD
         """
-        self.check(entries[0], False,
-                   expected={'USD': """
-        2015-10-02 *
-          Assets:Account       10 GOOG {100.00 # 9.95 USD}
-          Assets:Other   -1009.95 USD
-                   """})
-        self.check(entries[1], False,
-                   expected={'USD': """
-        2015-10-02 *
-          Assets:Account       10 GOOG {100.00 # 9.95 USD} @ 110.00 USD
-          Assets:Other   -1009.95 USD
-                   """})
+        self.check(entries[0], {
+            'USD': (True, """
+              2015-10-02 *
+                Assets:Account       10 GOOG {100.00 # 9.95 USD}
+                Assets:Other   -1009.95 USD
+            """, None)})
+        self.check(entries[1], {
+            'USD': (True, """
+              2015-10-02 *
+                Assets:Account       10 GOOG {100.00 # 9.95 USD} @ 110.00 USD
+                Assets:Other   -1009.95 USD
+            """, None)})
 
     @parser.parse_doc(allow_incomplete=True)
     def test_incomplete_price(self, entries, _, options_map):
@@ -708,14 +721,15 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
           Assets:Account       10 GOOG {100.00 # 9.95 USD} @ USD
           Assets:Other   -1009.95 USD
         """
-        self.check(entries[0], False,
-                   expected={'USD': """
-        2015-10-02 *
-          Assets:Account  120.00 CAD @ 1.2 USD
-          Assets:Other   -100.00 USD
-                   """})
-        self.check(entries[1], False,
-                   re_errors=["Cannot infer price for postings with units held at cost"])
+        self.check(entries[0], {
+            'USD': (True, """
+              2015-10-02 *
+                Assets:Account  120.00 CAD @ 1.2 USD
+                Assets:Other   -100.00 USD
+            """, None)})
+        self.check(entries[1], {
+            'USD': (True, None,
+                    ["Cannot infer price for postings with units held at cost"])})
 
     @parser.parse_doc(allow_incomplete=True)
     def test_multiple_groups(self, entries, _, options_map):
@@ -735,18 +749,18 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
             Assets:Account5            USD
         """
         for entry in entries:
-            self.check(entries[0], False, expected={
-                'CAD': """
-              2010-05-28 *
-                Assets:Account1     100.00 CAD
-                Assets:Account2     -80.00 CAD
-                Assets:Account3     -20.00 CAD
-                """,
-                'USD': """
-              2010-05-28 *
-                Assets:Account4     200.00 USD
-                Assets:Account5    -200.00 USD
-                """})
+            self.check(entries[0], {
+                'CAD': (True, """
+                  2010-05-28 *
+                    Assets:Account1     100.00 CAD
+                    Assets:Account2     -80.00 CAD
+                    Assets:Account3     -20.00 CAD
+                """, None),
+                'USD': (True, """
+                  2010-05-28 *
+                    Assets:Account4     200.00 USD
+                    Assets:Account5    -200.00 USD
+                """, None)})
 
 
 

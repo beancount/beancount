@@ -76,11 +76,18 @@ def book(entries, options_map):
             posting_groups = replace_currencies(entry.postings, refer_groups)
 
             # Resolve each group of postings.
-            ## FIXME: TODO
-            postings = entry.postings
+            repl_postings = []
+            for currency, postings in posting_groups.items():
+                new_postings, errors, interpolated = interpolate_group(postings,
+                                                                       balances,
+                                                                       currency)
+                repl_postings.extend(new_postings)
+
+            # Replace postings by interpolated ones.
+            entry.postings[:] = repl_postings
 
             # Update running balances using the interpolated values.
-            for posting in postings:
+            for posting in repl_postings:
                 balance = balances[posting.account]
                 balance.add_position(posting)
 
@@ -490,12 +497,12 @@ def interpolate_group(postings, balances, currency):
         else:
             assert False, "Internal error; Invalid missing type."
 
-        if 0:
+        if 1:
             # Convert the CostSpec instance into a corresponding Cost.
             units = new_posting.units
             cost = new_posting.cost
             if cost is not None:
-                units = units.number
+                units_number = units.number
                 number_per = cost.number_per
                 number_total = cost.number_total
                 if number_total is not None:
@@ -503,8 +510,8 @@ def interpolate_group(postings, balances, currency):
                     # component involved.
                     cost_total = number_total
                     if number_per is not MISSING:
-                        cost_total += number_per * units
-                    unit_cost = cost_total / abs(units)
+                        cost_total += number_per * units_number
+                    unit_cost = cost_total / abs(units_number)
                 else:
                     unit_cost = number_per
                 new_cost = Cost(unit_cost, cost.currency, cost.date, cost.label)
