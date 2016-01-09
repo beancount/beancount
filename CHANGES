@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-01-09
+
+  - Fixed a bug (issue #94) in the load cache that wouldn't handle files
+    disappearing after having been moved.
+
+
 2016-01-03
 
   - Moved beancount.web.scrape.scrape() to beancount.web.web.scrape_webapp() to
