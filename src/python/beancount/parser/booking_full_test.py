@@ -3,6 +3,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import textwrap
 import unittest
 import pprint
+import re
 
 from beancount.core.number import D
 from beancount.core.inventory import from_string as I
@@ -469,7 +470,8 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
 
     maxDiff = 8192
 
-    def check(self, entry, interpolated, expected=None, num_errors=0, balances=None):
+    def check(self, entry, interpolated,
+              expected=None, re_errors=None, balances=None, debug=False):
         groups, errors = booking_full.categorize_by_currency(entry, {})
         self.assertFalse(errors)
         posting_groups = booking_full.replace_currencies(entry.postings, groups)
@@ -480,10 +482,8 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
                                                                                 balances,
                                                                                 currency)
 
-            # Check the expected number of errors.
-            self.assertEqual(num_errors, len(errors))
-
-            if 0:
+            # Print out infos for troubleshooting.
+            if debug:
                 print()
                 for p in new_postings:
                     print(p)
@@ -491,15 +491,22 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
                     print(e)
                 print()
 
+            # Check the expected number of errors appears.
+            self.assertEqual(len(re_errors) if re_errors else 0, len(errors))
+            if re_errors:
+                for re_error in re_errors:
+                    self.assertTrue(any(re.match(re_error, error.message)
+                                        for error in errors))
+
             # Check the expected postings.
             if expected:
-                for currency, string in expected.items():
-                    exp_entries, exp_errors, _ = parser.parse_string(string, dedent=True)
-                    self.assertFalse(exp_errors, "Internal error in test")
-                    self.assertEqual(1, len(exp_entries),
-                                     "Internal error, expected one entry")
-                    exp_postings = normalize_postings(exp_entries[0].postings)
-                    self.assertEqual(exp_postings, normalize_postings(new_postings))
+                string = expected[currency]
+                exp_entries, exp_errors, _ = parser.parse_string(string, dedent=True)
+                self.assertFalse(exp_errors, "Internal error in test")
+                self.assertEqual(1, len(exp_entries),
+                                 "Internal error, expected one entry")
+                exp_postings = normalize_postings(exp_entries[0].postings)
+                self.assertEqual(exp_postings, normalize_postings(new_postings))
 
         return errors
 
@@ -519,7 +526,8 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
           Assets:Account          USD
           Assets:Other            USD
         """
-        self.check(entries[0], False, num_errors=1)
+        self.check(entries[0], False,
+                   re_errors=["Too many missing numbers for currency group"])
 
     @parser.parse_doc(allow_incomplete=True)
     def test_incomplete_impossible_twomiss_diff_cost_and_units(self, entries, _, options_map):
@@ -528,7 +536,8 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
           Assets:Account   2 GOOG {USD}
           Assets:Other            USD
         """
-        self.check(entries[0], False, num_errors=1)
+        self.check(entries[0], False,
+                   re_errors=["Too many missing numbers for currency group"])
 
     @parser.parse_doc(allow_incomplete=True)
     def test_incomplete_impossible_miss_same_posting(self, entries, _, options_map):
@@ -537,7 +546,8 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
           Assets:Account   GOOG {USD}
           Assets:Other      -100.00 USD
         """
-        self.check(entries[0], False, num_errors=1)
+        self.check(entries[0], False,
+                   re_errors=["Too many missing numbers for currency group"])
 
     @parser.parse_doc(allow_incomplete=True)
     def test_incomplete_units(self, entries, _, options_map):
@@ -591,7 +601,8 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
           Assets:Other   -1000.00 USD
                    """})
         # Check impossible case.
-        self.check(entries[4], False, num_errors=1,
+        self.check(entries[4], False,
+                   re_errors=["Cannot infer per-unit cost only from total"],
                    expected={'USD': """
         2015-10-02 *
           Assets:Account          GOOG {0 # 1009.95 USD}
@@ -703,7 +714,8 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
           Assets:Account  120.00 CAD @ 1.2 USD
           Assets:Other   -100.00 USD
                    """})
-        self.check(entries[1], False, num_errors=1)
+        self.check(entries[1], False,
+                   re_errors=["Cannot infer price for postings with units held at cost"])
 
     @parser.parse_doc(allow_incomplete=True)
     def test_multiple_groups(self, entries, _, options_map):
@@ -714,34 +726,34 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
             Assets:Account3            CAD
             Assets:Account4     200.00 USD
             Assets:Account5            USD
+
+          2010-05-28 *
+            Assets:Account1     100.00 CAD
+            Assets:Account2     -80.00 CAD
+            Assets:Account3     -20.00 CAD
+            Assets:Account4     200.00 USD
+            Assets:Account5            USD
         """
-        # self.check(entries[0], False,
-        #            expected={'USD': """
-        #   2010-05-28 *
-        #     Assets:Account4     200.00 USD
-        #     Assets:Account5    -200.00 USD
-        #            """})
+        for entry in entries:
+            self.check(entries[0], False, expected={
+                'CAD': """
+              2010-05-28 *
+                Assets:Account1     100.00 CAD
+                Assets:Account2     -80.00 CAD
+                Assets:Account3     -20.00 CAD
+                """,
+                'USD': """
+              2010-05-28 *
+                Assets:Account4     200.00 USD
+                Assets:Account5    -200.00 USD
+                """})
 
-
-# You need to test with mulitple groups as well.
-# FIXME: When the other amounts balance, this should be doable.
-"""
-  2010-05-28 *
-    Assets:Account1     100.00 CAD
-    Assets:Account2     -80.00 CAD
-    Assets:Account3     -20.00 CAD
-    Assets:Account4     200.00 USD
-    Assets:Account5
-"""
 
 
 
 # You should be able to support inference of prices as per the sellgains plugin.
 # Or should we instead have the sellgains plugin automatically insert the prices itself?
-# (I like that better)
-
-
-
+# (I like that better).
 
 
 # FIXME: When the other amounts balance, this should be doable.
