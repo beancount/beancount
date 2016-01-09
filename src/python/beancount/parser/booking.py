@@ -31,14 +31,19 @@ def book(incomplete_entries, options_map):
         'FULL': booking_full.book,
     }
     method_name = options_map['booking_method']
+    booking_errors = []
     try:
         booking_fun = booking_methods[method_name]
     except KeyError:
-        raise KeyError("Unsupported booking method: {}".format(method_name))
+        meta = data.new_metadata(options_map['filename'], 1)
+        booking_fun = booking_simple.book
+        booking_errors.append(
+            BookingError(meta, ("Unsupported booking method: {}; "
+                                "falling back on SIMPLE method".format(method_name)), None))
 
     entries, interpolation_errors = booking_fun(incomplete_entries, options_map)
     validation_errors = validate_inventory_booking(entries, options_map)
-    return entries, (interpolation_errors + validation_errors)
+    return entries, (booking_errors + interpolation_errors + validation_errors)
 
 
 def validate_inventory_booking(entries, unused_options_map):
