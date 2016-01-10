@@ -29,27 +29,6 @@ from beancount.core import interpolate
 FullBookingError = collections.namedtuple('FullBookingError', 'source message entry')
 
 
-class BookingStats:
-
-    def __init__(self):
-        self.num_transactions = 0
-        self.num_postings = 0
-        self.num_interp_amount = 0
-        self.num_interp_units = 0
-        self.num_lots = 0
-        self.num_lots_atcost = 0
-        self.num_interp_price = 0
-
-    def __str__(self):
-        return '; '.join(["transactions: {s.num_transactions}",
-                          "postings: {s.num_postings}",
-                          "interp_amount: {s.num_interp_amount}",
-                          "interp_units: {s.num_interp_units}",
-                          "lots: {s.num_lots}",
-                          "lots_atcost: {s.num_lots_atcost}",
-                          "interp_price: {s.num_interp_price}"]).format(s=self)
-
-
 def book(entries, options_map):
     """Interpolate missing data from the entries using the full historical algorithm.
 
@@ -63,7 +42,6 @@ def book(entries, options_map):
         errors: New errors produced during interpolation.
     """
     balances = collections.defaultdict(inventory.Inventory)
-    stats = BookingStats()
     errors = []
     for entry in entries:
         if isinstance(entry, Transaction):
@@ -90,8 +68,6 @@ def book(entries, options_map):
             for posting in repl_postings:
                 balance = balances[posting.account]
                 balance.add_position(posting)
-
-    #logging.info("Interpolation Stats: %s", stats)
 
     return entries, errors
 
@@ -525,7 +501,33 @@ def interpolate_group(postings, balances, currency):
 
 
 
+
+
+
 #------------------------------------------------------------------------------------------------------------------------
+
+class BookingStats:
+
+    def __init__(self):
+        self.num_transactions = 0
+        self.num_postings = 0
+        self.num_interp_amount = 0
+        self.num_interp_units = 0
+        self.num_lots = 0
+        self.num_lots_atcost = 0
+        self.num_interp_price = 0
+
+    def __str__(self):
+        return '; '.join(["transactions: {s.num_transactions}",
+                          "postings: {s.num_postings}",
+                          "interp_amount: {s.num_interp_amount}",
+                          "interp_units: {s.num_interp_units}",
+                          "lots: {s.num_lots}",
+                          "lots_atcost: {s.num_lots_atcost}",
+                          "interp_price: {s.num_interp_price}"]).format(s=self)
+
+
+
 """Implementation notes:
 
 Between book and interpolation:
@@ -554,11 +556,9 @@ We would like to be able to infer those cases. So maybe we can
 Separate the augmenting legs from the reducing legs. Reducing legs may allow
 less DOF because they have to match against the inventory.
 
-"""
 
 
 
-"""
 
     varieties:
 

@@ -4,6 +4,7 @@ import textwrap
 import unittest
 import pprint
 import re
+import io
 
 from beancount.core.number import D
 from beancount.core.inventory import from_string as I
@@ -52,34 +53,34 @@ class TestAllInterpolationCombinations(cmptest.TestCase):
         ]:
             for string in _gen_missing_combinations(template.format(pos_template), args):
                 entries, errors, _ = parser.parse_string(string)
-                printer.print_errors(errors)
+                self.assertFalse(errors)
 
-    # def test_all_interpolation_combinations(self):
-    #     template = textwrap.dedent("""
-    #       2015-10-02 *
-    #         Assets:Account  {}
-    #         Assets:Other
-    #     """)
-    #     for pos_template, args in [
-    #             ('{:7} {:3}',
-    #              ['100.00', 'USD']),
-    #             ('{:7} {:3} @ {:7} {:3}',
-    #              ['100.00', 'USD', '1.20', 'CAD']),
-    #             ('{:2} {:4} {{{:7} {:3}}}',
-    #              ['10', 'HOOL', '100.00', 'USD']),
-    #             ('{:2} {:4} {{{:7} # {:7} {:3}}}',
-    #              ['10', 'HOOL', '100.00', '9.95', 'USD']),
-    #             ('{:2} {:4} {{{:7} # {:7} {:3}}} @ {:7} {:3}',
-    #              ['10', 'HOOL', '100.00', '9.95', 'USD', '120.00', 'USD']),
-    #     ]:
-    #         for string in _gen_missing_combinations(template.format(pos_template), args):
-    #             print(string)
-    #             entries, errors, _ = parser.parse_string(string)
-    #             print(len(entries))
-    #             printer.print_errors(errors)
-    #             print()
-    #             print()
-    #             print()
+    def test_all_interpolation_combinations(self):
+        template = textwrap.dedent("""
+          2015-10-02 *
+            Assets:Account  {}
+            Assets:Other
+        """)
+        for pos_template, args in [
+                ('{:7} {:3}',
+                 ['100.00', 'USD']),
+                ('{:7} {:3} @ {:7} {:3}',
+                 ['100.00', 'USD', '1.20', 'CAD']),
+                ('{:2} {:4} {{{:7} {:3}}}',
+                 ['10', 'HOOL', '100.00', 'USD']),
+                ('{:2} {:4} {{{:7} # {:7} USD}}',
+                 ['10', 'HOOL', '100.00', '9.95']),
+                ('{:2} {:4} {{{:7} # {:7} USD}} @ {:7} {:3}',
+                 ['10', 'HOOL', '100.00', '9.95', '120.00', 'USD']),
+        ]:
+            for string in _gen_missing_combinations(template.format(pos_template), args):
+                entries, errors, _ = parser.parse_string(string)
+                for error in errors:
+                    oss = io.StringIO()
+                    printer.print_error(error, oss)
+                    oss.write("In transaction:\n")
+                    oss.write(string)
+                    self.fail(oss.getvalue())
 
 
 def indexes(groups):
@@ -763,6 +764,10 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
                 """, None)})
 
 
+
+
+
+#--------------------------------------------------------------------------------
 
 
 # You should be able to support inference of prices as per the sellgains plugin.
