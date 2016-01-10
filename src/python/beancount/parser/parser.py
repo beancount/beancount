@@ -285,3 +285,42 @@ def parse_doc(expect_errors=False, allow_incomplete=False):
         return wrapper
 
     return decorator
+
+
+def parse_many(string, level=0):
+    """Parse a string with a snippet of Beancount input and replace vars from caller.
+
+    Args:
+      string: A string with some Beancount input.
+      level: The number of extra stacks to ignore.
+    Returns:
+      A list of entries.
+    Raises:
+      AssertionError: If there are any errors.
+    """
+    # Get the locals in the stack for the callers and produce the final text.
+    frame = inspect.stack()[level+1]
+    varkwds = frame[0].f_locals
+    input_string = textwrap.dedent(string.format(**varkwds))
+
+    # Parse entries and check there are no errors.
+    entries, errors, __ = parse_string(input_string)
+    assert not errors
+
+    return entries
+
+
+def parse_one(string):
+    """Parse a string with single Beancount directive and replace vars from caller.
+
+    Args:
+      string: A string with some Beancount input.
+      level: The number of extra stacks to ignore.
+    Returns:
+      A list of entries.
+    Raises:
+      AssertionError: If there are any errors.
+    """
+    entries = parse_many(string, level=1)
+    assert len(entries) == 1
+    return entries[0]

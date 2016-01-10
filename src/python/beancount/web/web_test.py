@@ -4,7 +4,7 @@ import unittest
 import urllib.parse
 from os import path
 
-from beancount.web import scrape
+from beancount.web import web
 from beancount.utils import test_utils
 
 
@@ -27,11 +27,11 @@ class TestWeb(unittest.TestCase):
     def scrape(self, filename, **extra):
         abs_filename = path.join(test_utils.find_repository_root(__file__),
                                  'examples', filename)
-        scrape.scrape(abs_filename,
-                      self.check_page_okay,
-                      test_utils.get_test_port(),
-                      self.ignore_regexp,
-                      **extra)
+        web.scrape_webapp(abs_filename,
+                          self.check_page_okay,
+                          test_utils.get_test_port(),
+                          self.ignore_regexp,
+                          **extra)
 
     @test_utils.docfile
     def test_scrape_empty_file(self, filename):

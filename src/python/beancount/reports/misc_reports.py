@@ -8,8 +8,6 @@ import io
 import textwrap
 import functools
 
-import dateutil.parser
-
 from beancount.reports import report
 from beancount.reports import table
 from beancount.reports import tree_table
@@ -20,6 +18,7 @@ from beancount.core import realization
 from beancount.core import getters
 from beancount.core import account_types
 from beancount.utils import misc_utils
+from beancount.utils import date_utils
 
 
 class NoopReport(report.Report):
@@ -150,7 +149,7 @@ class ActivityReport(report.HTMLReport,
     def add_args(cls, parser):
         parser.add_argument('-d', '--cutoff',
                             action='store', default=None,
-                            type=lambda arg_str: dateutil.parser.parse(arg_str).date(),
+                            type=date_utils.parse_date_liberally,
                             help="Cutoff date where we ignore whatever comes after.")
 
     def render_real_text(self, real_root, options_map, file):

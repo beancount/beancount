@@ -1370,6 +1370,12 @@ http://furius.ca/beancount/doc/proposal-inter
   - Idea for one of those constraint plugins: Create a plugin whereby you
     declare some currencies and assert that any units in them are always held at
     cost.
+
+
+  - Create a plugin that filters out postings with a particular per-posting
+    flag, and that checks that they are balanced by themselves.
+
+
   (prices cleanup)
   - Make the code finding lists of commodities for holdings and price reports
     use the same code as beancount.prices.find_prices. Also, this should  really

@@ -24,7 +24,6 @@ import sys
 import textwrap
 
 from dateutil import rrule
-from dateutil.parser import parse as parse_datetime
 
 from beancount.core.number import D
 from beancount.core.number import ZERO
@@ -43,6 +42,7 @@ from beancount.ops import prices
 from beancount.scripts import format
 from beancount.core import getters
 from beancount.utils import misc_utils
+from beancount.utils import date_utils
 from beancount import loader
 
 
@@ -1716,21 +1716,23 @@ def write_example_file(date_birth, date_begin, date_end, reformat, file):
 
 
 def main():
-    parse_date = lambda s: parse_datetime(s).date()
     today = datetime.date.today()
 
     argparser = argparse.ArgumentParser(description=__doc__.strip())
 
     default_years = 2
-    argparser.add_argument('--date-begin', '--begin-date', action='store', type=parse_date,
+    argparser.add_argument('--date-begin', '--begin-date',
+                           action='store', type=date_utils.parse_date_liberally,
                            default=datetime.date(today.year - default_years, 1, 1),
                            help="Beginning date")
 
-    argparser.add_argument('--date-end', '--end-date', action='store', type=parse_date,
+    argparser.add_argument('--date-end', '--end-date',
+                           action='store', type=date_utils.parse_date_liberally,
                            default=today,
                            help="End date.")
 
-    argparser.add_argument('--date-birth', '--birth-date', action='store', type=parse_date,
+    argparser.add_argument('--date-birth', '--birth-date',
+                           action='store', type=date_utils.parse_date_liberally,
                            default=datetime.date(1980, 5, 12),
                            help="Date of birth of our fictional character.")
 

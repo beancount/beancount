@@ -127,6 +127,31 @@ Note: This file contains only changes in the 'default' branch.
     this at your own risk; this is probably not ready for public use.
 
 
+2016-01-09
+
+  - Fixed a bug (issue #94) in the load cache that wouldn't handle files
+    disappearing after having been moved.
+
+
+2016-01-03
+
+  - Moved beancount.web.scrape.scrape() to beancount.web.web.scrape_webapp() to
+    isolate beancount.web.scrape from dependencies, so that other projects may
+    reuse it.
+
+
+2015-12-25
+
+  - Closed multiple obsolete branches: parse_test_utils, display_context,
+    performance, datatypes.
+
+  - Added some utilities for parsing strings for writing tests that use the
+    local variables present in the caller (a bit of magic).
+
+  - Improved date parsing from command-line options for some scripts; imported
+    from branch 'text_statements'.
+
+
 2015-12-24
 
   - Implemented metadata stack and "pushmeta" and "popmeta" directives mirroring

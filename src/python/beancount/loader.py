@@ -237,6 +237,8 @@ def compute_input_hash(filenames):
     md5 = hashlib.md5()
     for filename in sorted(filenames):
         md5.update(filename.encode('utf8'))
+        if not path.exists(filename):
+            continue
         stat = os.stat(filename)
         md5.update(struct.pack('dd', stat.st_mtime_ns, stat.st_size))
     return md5.hexdigest()
