@@ -5,6 +5,7 @@ This is meant to be used as an error diagnostic tool.
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import sys
+import types
 
 
 def list_dependencies(file=sys.stderr):
@@ -35,6 +36,7 @@ def check_dependencies():
     return [
         # Check for a complete installation of Python itself.
         check_python(),
+        check_cdecimal(),
 
         # Modules we really do need installed.
         check_import('dateutil'),
@@ -58,6 +60,38 @@ def check_python():
     return ('python3',
             '.'.join(map(str, sys.version_info[:3])),
             sys.version_info[:2] >= (3, 3))
+
+
+def is_fast_decimal(decimal_module):
+    "Return true if a fast C decimal implementattion is installed."
+    return isinstance(decimal_module.Decimal().sqrt, types.BuiltinFunctionType)
+
+
+def check_cdecimal():
+    """Check that Python 3.3 or above is installed.
+
+    Returns:
+      A triple of (package-name, version-number, sufficient) as per
+      check_dependencies().
+    """
+    # Note: this code mirrors and should be kept in-sync with that at the top of
+    # beancount.core.number.
+
+    # Try the built-in installation.
+    import decimal
+    if is_fast_decimal(decimal):
+        return ('cdecimal', '{} (built-in)'.format(decimal.__version__), True)
+
+    # Try an explicitly installed version.
+    try:
+        import cdecimal
+        if is_fast_decimal(cdecimal):
+            return ('cdecimal', getattr(cdecimal, '__version__', 'OKAY'), True)
+    except ImportError:
+        pass
+
+    # Not found.
+    return ('cdecimal', None, False)
 
 
 def check_import(package_name, min_version=None, module_name=None):

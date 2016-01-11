@@ -2,9 +2,9 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import unittest
 import re
-from decimal import Decimal
 
 from beancount.core import display_context
+from beancount.core.number import Decimal
 from beancount.core.display_context import Precision
 from beancount.core.display_context import Align
 
