@@ -1524,6 +1524,7 @@ http://furius.ca/beancount/doc/proposal-inter
     is so incredibly common, provide a simple helper in b.c.data to do this.
     filter_transactions() for example, and change all the code everywhere to use
     it.
+    (Note: This has begun, I created the function.)
 
 
 

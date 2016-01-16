@@ -150,6 +150,13 @@ class TestData(unittest.TestCase):
                          [entry.meta["lineno"]
                           for entry in map(data.get_entry, sorted_txn_postings)])
 
+    def test_filter_txns(self):
+        entries = self.create_sort_data()
+        txns = list(data.filter_txns(entries))
+        self.assertEqual(4, len(txns))
+        self.assertTrue(all(isinstance(txn, data.Transaction)
+                            for txn in txns))
+
     def test_has_entry_account_component(self):
         entry = data.Transaction(data.new_metadata(".", 0), datetime.date.today(), FLAG,
                                  None, "Something", None, None, [])

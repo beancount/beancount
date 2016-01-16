@@ -4,6 +4,18 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-01-16
+
+  - Created the beancount.plugins.coherent_cost plugin which checks that one's
+    currencies are either always used with cost, or never at all. This is by far
+    the most typical situation whereby a currency is always held at cost, or
+    never (and perhaps converted at price or not).
+
+  - Created a function to filter just the transactions, which is such an
+    incredibly common operation I should have done this a while ago. I should
+    convert all code to use it.
+
+
 2016-01-09
 
   - Fixed a bug (issue #94) in the load cache that wouldn't handle files

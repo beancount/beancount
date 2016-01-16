@@ -480,6 +480,22 @@ def posting_sortkey(entry):
     return (entry.date, SORT_ORDER.get(type(entry), 0), entry.meta["lineno"])
 
 
+def filter_txns(entries):
+    """A generator that yields only the Transaction instances.
+
+    This is such an incredibly common operation that it deserves a terse
+    filtering mechanism.
+
+    Args:
+      entries: A list of directives.
+    Yields:
+      A sorted list of only the Transaction directives.
+    """
+    for entry in entries:
+        if isinstance(entry, Transaction):
+            yield entry
+
+
 def has_entry_account_component(entry, component):
     """Return true if one of the entry's postings has an account component.
 
