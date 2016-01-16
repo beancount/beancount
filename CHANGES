@@ -4,6 +4,15 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-01-16
+
+  - Added a feature to the "beancount.plugins.ira_contribs" plugin to allow the
+    further restriction that the trigger posting must include a particular flag
+    in order for the insertion to occur. This is to be used in account that have
+    sales, whereby just looking at the sign of the posting isn't enough to
+    decide that an insertion must be made.
+
+
 2016-01-10
 
   - Addressed issue #96, supporting an explicitly installed C decimal version
