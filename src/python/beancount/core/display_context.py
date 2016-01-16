@@ -59,7 +59,6 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
 import io
-from decimal import Decimal
 
 # pylint: disable=invalid-name
 try:
@@ -68,6 +67,7 @@ try:
 except ImportError:
     Enum = object
 
+from beancount.core.number import Decimal
 from beancount.core import distribution
 
 

@@ -1334,6 +1334,10 @@ http://furius.ca/beancount/doc/proposal-inter
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - Add support for triple-quoted strings, which may alleviate problems we're
+    seen with syntax highlighting (idea from aumayr@).
+
+
   - Create a plugin that filters out postings with a particular per-posting
     flag, and that checks that they are balanced by themselves.
 
