@@ -722,6 +722,34 @@ http://furius.ca/beancount/doc/proposal-query
 
     I'm not sure where OPEN CLOSE and CLEAR all fit though.
 
+  - The table provider should support two kinds of fields: single and repeated.
+    Repeated fields include Position, but also Tags. By default, rendering
+    should put the entire contents in one cell/line, all only when using
+    BROADCAST or FLATTEN should multiple lines be created. Maybe the Inventory
+    datatype could be removed and instead be provided as a repeated field of
+    Position instances.
+
+  - The ad-hoc alignment of numbers present in the query_render.DecimalRenderer
+    code should be removed, and all rendering should occur via DisplayContext.
+
+  - Numberification should probably occur with a flag of some sort, or perhaps a
+    shell variable. Not sure.
+
+  - A better representation of a query should be produced, perhaps in a
+    protobuf, with cross-reference capability and the ability to create a
+    processing tree for each row.
+
+  - Dot syntax should definitely be supported. This is how we'll get rid of the
+    FROM clause.
+
+  - Keep in mind that the booking branch might break a lot of user queries.
+
+  - "SELECT *" should really render _all_ the possible fields, not just a
+    sensible subset. This has been annoying me a lot.
+
+  - The compiler should output Python code to evaluate and process the results,
+    instead of interpreting the tree of operations.
+
 
 * Standalone Tools
 
