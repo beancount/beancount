@@ -39,8 +39,9 @@ def validate_coherent_cost(entries, unused_options_map):
     for currency in set(with_cost) & set(without_cost):
         errors.append(
             CoherentCostError(
-                without_cost[currency],
+                without_cost[currency].meta,
                 "Currency '{}' is used both with and without cost".format(currency),
                 with_cost[currency]))
+        # Note: We really ought to include both of the first transactions here.
 
     return entries, errors
