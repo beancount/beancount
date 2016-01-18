@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-01-18
+
+  - Committed the Query directive to non-experimental status, for
+    beancount-web's usage.
+
+
 2016-01-16
 
   - Created the beancount.plugins.coherent_cost plugin which checks that one's

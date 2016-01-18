@@ -422,16 +422,6 @@ PUBLIC_OPTION_GROUPS = [
       if it is truly useful. We may be able to do without.
     """, [Opt("experiment_explicit_tolerances", False, True)]),
 
-    OptGroup("""
-      Enable an EXPERIMENTAL feature that supports a new "name query" directive,
-      whose purpsoe is to define useful queries for the context of the
-      particular given Beancount input file. We can play with this feature for a
-      while to figure out if it is sufficiently powerful and generic to include
-      unconditionally.
-
-      WARNING: This feature may go away at any time.
-    """, [Opt("experiment_query_directive", False, True)]),
-
     ]
 
 
