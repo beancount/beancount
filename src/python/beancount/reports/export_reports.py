@@ -452,7 +452,8 @@ class ExportPortfolioReport(report.TableReport):
         sys.stderr.write('\n')
 
     def render_csv(self, entries, unused_errors, options_map, file):
-        exported, converted, holdings_ignored = export_holdings(entries, options_map, False)
+        exported, converted, holdings_ignored = export_holdings(
+            entries, options_map, False, self.args.aggregate_by_commodity)
         writer = csv.writer(file)
         writer.writerow(ExportEntry._fields[:-1])
         for index, export in enumerate(itertools.chain(exported, converted)):
