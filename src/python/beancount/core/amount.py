@@ -14,6 +14,7 @@ import re
 # Import object to format numbers at specific precisions.
 from beancount.core.display_context import DEFAULT_FORMATTER
 from beancount.core.number import ZERO
+from beancount.core.number import MISSING
 from beancount.core.number import Decimal
 from beancount.core import number
 

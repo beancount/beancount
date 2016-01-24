@@ -45,6 +45,7 @@ import collections
 import re
 
 from beancount.core.number import ZERO
+from beancount.core.number import same_sign
 from beancount.core.amount import Amount
 from beancount.core.position import Cost
 from beancount.core.position import Position
@@ -174,6 +175,23 @@ class Inventory(list):
             sign = position.units.number >= 0
             prev_sign = signs_map.setdefault(position.units.currency, sign)
             if sign != prev_sign:
+                return True
+        return False
+
+    def is_reduced_by(self, ramount):
+        """Return true if the amount could reduce this inventory.
+
+        Args:
+          ramount: An instance of Amount.
+        Returns:
+          A boolean.
+        """
+        if ramount.number == ZERO:
+            return False
+        for position in self:
+            units = position.units
+            if (ramount.currency == units.currency and
+                not same_sign(ramount.number, units.number)):
                 return True
         return False
 
@@ -363,10 +381,10 @@ class Inventory(list):
 
                 # Check if reducing.
                 booking = (Booking.REDUCED
-                           if (pos.units.number * units.number) < ZERO else
+                           if not same_sign(pos.units.number, units.number) else
                            Booking.AUGMENTED)
 
-                # Compute the new number ofunits.
+                # Compute the new number of units.
                 number = pos.units.number + units.number
                 if number == ZERO:
                     # If empty, delete the position.

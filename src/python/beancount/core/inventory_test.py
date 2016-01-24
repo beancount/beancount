@@ -196,6 +196,17 @@ class TestInventory(unittest.TestCase):
         inv = I('-2 HOOL {250 USD}, -1 HOOL {251 USD}')
         self.assertFalse(inv.is_mixed())
 
+    def test_is_reduced_by(self):
+        inv = I('100 HOOL {250 USD}, 101 HOOL {251 USD}')
+        self.assertFalse(inv.is_reduced_by(A('2 HOOL')))
+        self.assertFalse(inv.is_reduced_by(A('0 HOOL')))
+        self.assertTrue(inv.is_reduced_by(A('-2 HOOL')))
+
+        inv = I('100 HOOL {250 USD}, -101 HOOL {251 USD}')
+        self.assertTrue(inv.is_reduced_by(A('2 HOOL')))
+        self.assertFalse(inv.is_reduced_by(A('0 HOOL')))
+        self.assertTrue(inv.is_reduced_by(A('-2 HOOL')))
+
     def test_op_neg(self):
         inv = Inventory()
         inv.add_amount(A('10 USD'))

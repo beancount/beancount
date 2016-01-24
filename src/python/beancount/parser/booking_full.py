@@ -56,6 +56,11 @@ def book(entries, options_map):
             # Resolve each group of postings.
             repl_postings = []
             for currency, postings in posting_groups.items():
+                # Perform booking reductions.
+                ### FIXME: Bring this in after unit-testing.
+                ### book_reductions(postings, balances)
+
+                # Interpolate missing numbers.
                 new_postings, errors, interpolated = interpolate_group(postings,
                                                                        balances,
                                                                        currency)
@@ -315,7 +320,69 @@ def replace_currencies(postings, refer_groups):
     return new_groups
 
 
+def book_reductions(postings, balances):
+    """Book inventory reductions against the ante balances.
+
+    Args:
+      postings: A list of postings.
+      balances: A dict of account name to inventory contents.
+    Returns:
+      A pair of
+        new_postings: A list of postings, with reductions resolved against their
+          inventory balances.
+        modified_balances: A dict of the update balances. This can be used to
+          update the state of the global balances (which is left untouched).
+    """
+    empty = inventory.Inventory()
+    new_postings = []
+    for posting in postings:
+
+        units = posting.units
+        costspec = posting.cost
+        if costspec is not None and balance.is_reduced_by(units):
+            cost_number = compute_cost_number(costspec, units.number)
+            if cost_number is not MISSING:
+
+                try:
+                    balance = balances[posting.account]
+                except KeyError:
+                    balance = empty
+
+                # FIXME: We need to create and invoke some sort of partial
+                # matching from CostSpec here.
+                posting = posting._replace(cost=position.Cost(cost_number,
+                                                              costspec.currency,
+                                                              costspec.date,
+                                                              costspec.label))
+
+        # FIXME: Do we need to update the balances here in the case it's not a
+        # reduction?
+        new_postings.append(posting)
+
+    return new_postings, {}
+
+
+def compute_cost_number(costspec, units_number):
+    number_per = costspec.number_per
+    number_total = costspec.number_total
+    if MISSING in (number_per, number_total):
+        return MISSING
+    if number_total is not None:
+        # Compute the per-unit cost if there is some total cost
+        # component involved.
+        cost_total = number_total
+        if number_per is not None:
+            cost_total += number_per * units_number
+        unit_cost = cost_total / abs(units_number)
+    else:
+        unit_cost = number_per
+    return unit_cost
+
+
+
+
 class MissingType(Enum):
+
     """The type of missing number."""
     UNITS      = 1
     COST_PER   = 2
@@ -528,37 +595,83 @@ class BookingStats:
 
 
 
-"""Implementation notes:
+"""Problem description:
 
-Between book and interpolation:
+Interpolation and booking feed on each other, that is, numbers filled in from
+interpolation might affect the booking process, and numbers derived from the
+booking process may help carry out interpolation that would otherwise be
+under-defined. Here's an example of interpolation helping the booking process:
 
-- You can't perform interpolation first, because the booked cost basis will
-  provide necessary amounts to fill in for interpolation.
-
-- You can perform booking first, though there may be cases where interppolation
-  would yield a number that could disambiguate booking. For example, consider
-  this case:
-
-    With an inventory of 100.00 USD and 101.00 USD shares.
+Assume the ante-inventory of Assets:Investments contains two lots of shares of
+HOOL, one at 100.00 USD and the other at 101.00 USD and apply this transaction:
 
     2015-09-30 *
       Assets:Investments   -10 HOOL {USD}
       Assets:Cash               1000 USD
+      Income:Gains              -200 USD
 
-  If you performed interpolation beforehand you could back out a cost of 100.00 USD
-  and then the cost booking would be unambiguous.
+Interpolation is unambiguously able to back out a cost of 100 USD / HOOL, which
+would then result in an unambiguous booking result.
 
-We would like to be able to infer those cases. So maybe we can
-- Perform a simple, partial interpolation, where possible.
-- Do the booking
-- Perform the remaining, full interpolation (with a resolution required).
+On the other hand, consider this transaction:
 
-Separate the augmenting legs from the reducing legs. Reducing legs may allow
-less DOF because they have to match against the inventory.
+    2015-09-30 *
+      Assets:Investments    -10 HOOL {USD}
+      Assets:Cash               1000 USD
+      Income:Gains
+
+Now the interpolation cannot succeed. If the Assets:Investments accoujnt is
+configured to use the FIFO method, the 10 oldest shares would be selected for
+the cost, and we could then interpolate the capital gains correctly.
+
+First observation: The second case is much more frequent than the first, and the
+first is easily resolved manually by requiring a particular cost be specified.
+Moreover, in many cases there isn't just a single lot of shares to be reduced
+from and figuring out the correct set of shares given a target cost is an
+underspecified problem.
+
+Second observation: Booking can only be achieved for inventory reductions, not
+for augmentations. Therefore, we should carry out booking on inventory
+reductions and fail early if reduction is undefined there, and leave inventory
+augmentations with missing numbers undefined, so that interpolation can fill
+them in at a later stage.
+
+Note that one case we'd like to but may not be able to handle is of a reduction
+with interpolated price, like this:
+
+    2015-09-30 *
+      Assets:Investments        -10 HOOL {100.00 # USD}
+      Expenses:Commission      9.95 USD
+      Assets:Cash            990.05 USD
+
+Therefore we choose to
+
+1) Carry out booking first, on inventory reductions only, and leave inventory
+   augmentations as they are, possibly undefined. The 'cost' attributed of
+   booked postings are converted from CostSpec to Cost. Augmented postings with
+   missing amounts are left as CostSpec instances in order to allow for
+   interpolation of total vs. per-unit amount.
+
+2) Compute interpolations on the resulting postings. Undefined costs for
+   inventory augmentations may be filled in by interpolations at this stage (if
+   possible).
+
+3) Finally, convert the interpolated CostSpec instances to Cost instances.
+
+Improving on this algorithm would require running a loop over the booking and
+interpolation steps until all numbers are resolved or no more inference can
+occur. We may consider that for later, as an experimental feature. My hunch is
+that there are so few cases for which this would be useful that we won't bother
+improving on the algorithm above.
+
+"""
+
+# TODO: Conversion from CostSpec to Cost
+# Make interpolation work off of Cost instances, not just CostSpec.
 
 
 
-
+"""
 
     varieties:
 

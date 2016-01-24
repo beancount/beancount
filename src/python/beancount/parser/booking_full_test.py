@@ -1,5 +1,6 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import datetime
 import textwrap
 import unittest
 import pprint
@@ -7,9 +8,11 @@ import re
 import io
 
 from beancount.core.number import D
+from beancount.core.number import MISSING
 from beancount.core.inventory import from_string as I
 from beancount.utils.misc_utils import dictmap
 from beancount.core import inventory
+from beancount.core import position
 from beancount.parser import parser
 from beancount.parser import printer
 from beancount.parser import booking_full
@@ -477,11 +480,11 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
     #   string: A string, to be parsed to obtain the resulting Posting instances.
     #   errors: A list of error strings to check against the interpolation for that group.
     def check(self, entry, expected, balances=None, debug=False):
-        groups, errors = booking_full.categorize_by_currency(entry, {})
+        if balances is None:
+            balances = {}
+        groups, errors = booking_full.categorize_by_currency(entry, balances)
         self.assertFalse(errors)
         posting_groups = booking_full.replace_currencies(entry.postings, groups)
-        if balances is None:
-            balances = inventory.Inventory()
         for currency, postings in posting_groups.items():
             try:
                 exp_interpolated, exp_string, exp_errors = expected[currency]
@@ -547,7 +550,7 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
     def test_incomplete_impossible_twomiss_diff_cost_and_units(self, entries, _, options_map):
         """
         2015-10-02 *
-          Assets:Account   2 GOOG {USD}
+          Assets:Account   2 HOOL {USD}
           Assets:Other            USD
         """
         self.check(entries[0],{
@@ -557,7 +560,7 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
     def test_incomplete_impossible_miss_same_posting(self, entries, _, options_map):
         """
         2015-10-02 *
-          Assets:Account   GOOG {USD}
+          Assets:Account   HOOL {USD}
           Assets:Other      -100.00 USD
         """
         self.check(entries[0], {
@@ -571,19 +574,19 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
           Assets:Other    -100.00 USD
 
         2015-10-02 *
-          Assets:Account          GOOG {100.00 # 9.95 USD}
+          Assets:Account          HOOL {100.00 # 9.95 USD}
           Assets:Other   -1009.95 USD
 
         2015-10-02 *
-          Assets:Account          GOOG {100.00 USD}
+          Assets:Account          HOOL {100.00 USD}
           Assets:Other   -1000.00 USD
 
         2015-10-02 *
-          Assets:Account          GOOG {100.00 USD} @ 110.00 USD
+          Assets:Account          HOOL {100.00 USD} @ 110.00 USD
           Assets:Other   -1000.00 USD
 
         2015-10-02 *
-          Assets:Account          GOOG {0 # 1009.95 USD}
+          Assets:Account          HOOL {0 # 1009.95 USD}
           Assets:Other   -1009.95 USD
 
         2015-10-02 *
@@ -600,21 +603,21 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
         self.check(entries[1], {
             'USD': (True, """
               2015-10-02 *
-                Assets:Account       10 GOOG {100.00 # 9.95 USD}
+                Assets:Account       10 HOOL {100.00 # 9.95 USD}
                 Assets:Other   -1009.95 USD
             """, None)})
 
         self.check(entries[2], {
             'USD': (True, """
               2015-10-02 *
-                Assets:Account       10 GOOG {100.00 USD}
+                Assets:Account       10 HOOL {100.00 USD}
                 Assets:Other   -1000.00 USD
             """, None)})
 
         self.check(entries[3], {
             'USD': (True, """
               2015-10-02 *
-                Assets:Account       10 GOOG {100.00 USD} @ 110.00 USD
+                Assets:Account       10 HOOL {100.00 USD} @ 110.00 USD
                 Assets:Other   -1000.00 USD
             """, None)})
 
@@ -633,33 +636,33 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
     def test_incomplete_cost_both(self, entries, _, options_map):
         """
         2015-10-02 *
-          Assets:Account       10 GOOG {USD}
+          Assets:Account       10 HOOL {USD}
           Assets:Other   -1009.95 USD
 
         2015-10-02 *
-          Assets:Account       10 GOOG {USD} @ 110.00 USD
+          Assets:Account       10 HOOL {USD} @ 110.00 USD
           Assets:Other   -1009.95 USD
 
         2015-10-02 *
-          Assets:Account       10 GOOG {USD, "blah"}
+          Assets:Account       10 HOOL {USD, "blah"}
           Assets:Other   -1009.95 USD
         """
         self.check(entries[0], {
             'USD': (True, """
               2015-10-02 *
-                Assets:Account       10 GOOG {100.995 USD}
+                Assets:Account       10 HOOL {100.995 USD}
                 Assets:Other   -1009.95 USD
             """, None)})
         self.check(entries[1], {
             'USD': (True, """
               2015-10-02 *
-                Assets:Account       10 GOOG {100.995 USD} @ 110.00 USD
+                Assets:Account       10 HOOL {100.995 USD} @ 110.00 USD
                 Assets:Other   -1009.95 USD
             """, None)})
         self.check(entries[2], {
             'USD': (True, """
               2015-10-02 *
-                Assets:Account       10 GOOG {100.995 USD, "blah"}
+                Assets:Account       10 HOOL {100.995 USD, "blah"}
                 Assets:Other   -1009.95 USD
             """, None)})
 
@@ -667,23 +670,23 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
     def test_incomplete_cost_per(self, entries, _, options_map):
         """
         2015-10-02 *
-          Assets:Account       10 GOOG {# 9.95 USD}
+          Assets:Account       10 HOOL {# 9.95 USD}
           Assets:Other   -1009.95 USD
 
         2015-10-02 *
-          Assets:Account       10 GOOG {# 9.95 USD} @ 110.00 USD
+          Assets:Account       10 HOOL {# 9.95 USD} @ 110.00 USD
           Assets:Other   -1009.95 USD
         """
         self.check(entries[0], {
             'USD': (True, """
               2015-10-02 *
-                Assets:Account       10 GOOG {100.00 # 9.95 USD}
+                Assets:Account       10 HOOL {100.00 # 9.95 USD}
                 Assets:Other   -1009.95 USD
             """, None)})
         self.check(entries[1], {
             'USD': (True, """
               2015-10-02 *
-                Assets:Account       10 GOOG {100.00 # 9.95 USD} @ 110.00 USD
+                Assets:Account       10 HOOL {100.00 # 9.95 USD} @ 110.00 USD
                 Assets:Other   -1009.95 USD
             """, None)})
 
@@ -691,23 +694,23 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
     def test_incomplete_cost_total(self, entries, _, options_map):
         """
         2015-10-02 *
-          Assets:Account       10 GOOG {100.00 # USD}
+          Assets:Account       10 HOOL {100.00 # USD}
           Assets:Other   -1009.95 USD
 
         2015-10-02 *
-          Assets:Account       10 GOOG {100.00 # USD} @ 110.00 USD
+          Assets:Account       10 HOOL {100.00 # USD} @ 110.00 USD
           Assets:Other   -1009.95 USD
         """
         self.check(entries[0], {
             'USD': (True, """
               2015-10-02 *
-                Assets:Account       10 GOOG {100.00 # 9.95 USD}
+                Assets:Account       10 HOOL {100.00 # 9.95 USD}
                 Assets:Other   -1009.95 USD
             """, None)})
         self.check(entries[1], {
             'USD': (True, """
               2015-10-02 *
-                Assets:Account       10 GOOG {100.00 # 9.95 USD} @ 110.00 USD
+                Assets:Account       10 HOOL {100.00 # 9.95 USD} @ 110.00 USD
                 Assets:Other   -1009.95 USD
             """, None)})
 
@@ -719,7 +722,7 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
           Assets:Other   -100.00 USD
 
         2015-10-02 *
-          Assets:Account       10 GOOG {100.00 # 9.95 USD} @ USD
+          Assets:Account       10 HOOL {100.00 # 9.95 USD} @ USD
           Assets:Other   -1009.95 USD
         """
         self.check(entries[0], {
@@ -763,17 +766,85 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
                     Assets:Account5    -200.00 USD
                 """, None)})
 
+    @parser.parse_doc(allow_incomplete=True)
+    def test_incomplete_underdefined(self, entries, _, options_map):
+        """
+        2015-10-02 *
+          Assets:Account        -10 HOOL {USD} @ 120.00 USD
+          Assets:Other      1000.00 USD
+          Income:PnL
+        """
+        # Interpolation and booking both required... impossible.
+        self.check(entries[0], {
+            'USD': (False, None, ["Too many missing numbers for currency group"])
+        })
+
+
+class TestBooking(unittest.TestCase):
+    "Tests the booking of inventory reductions."
+
+    maxDiff = 8192
+
+    def book(self, entry, balances=None, exp_costs=None, debug=False):
+        if balances is None:
+            balances = {}
+        groups, errors = booking_full.categorize_by_currency(entry, balances)
+        self.assertFalse(errors)
+        posting_groups = booking_full.replace_currencies(entry.postings, groups)
+        for currency, postings in posting_groups.items():
+            new_postings, new_balances = booking_full.book_reductions(postings, balances)
+            if debug:
+                for posting in new_postings:
+                    print(posting)
+                print(new_balances)
+
+            # Check the expected costs.
+            if exp_costs is not None:
+                for posting, exp_cost in zip(new_postings, exp_costs):
+                    self.assertEqual(posting.cost, exp_cost)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_augmentation_noop(self, entries, _, options_map):
+        """
+        2015-10-01 *
+          Assets:Account          2 HOOL {100.00 USD}
+          Assets:Other     -1000.00 USD
+
+        2015-10-02 *
+          Assets:Account          2 HOOL {USD}
+          Assets:Other     -1000.00 USD
+        """
+        # Check that these augmenting legs aren't being touched.
+        for balances in {}, {'Assets:Account': inventory.from_string('10 HOOL {99.00 USD}')}:
+            self.book(entries[0], balances, [
+                position.CostSpec(D('100.00'), None, 'USD', None, None, False),
+                None])
+            self.book(entries[1], balances, [
+                position.CostSpec(MISSING, None, 'USD', None, None, False),
+                None])
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_reduction(self, entries, _, options_map):
+        """
+        2015-10-01 *
+          Assets:Account         -2 HOOL {100.00 USD}
+          Assets:Other      1000.00 USD
+        """
+        balances = {'Assets:Account':
+                    inventory.from_string('5 HOOL {100.00 USD, 2015-01-01}')}
+        self.book(entries[0], balances, [
+            position.Cost(D('100.00'), 'USD', datetime.date(2015, 1, 1), None),
+            None], debug=1)
+
 
 
 
 
 #--------------------------------------------------------------------------------
 
-
 # You should be able to support inference of prices as per the sellgains plugin.
 # Or should we instead have the sellgains plugin automatically insert the prices itself?
 # (I like that better).
-
 
 # FIXME: When the other amounts balance, this should be doable.
 # In this example, the first three postings in CAD balance each other.
@@ -868,10 +939,8 @@ class Whatever:
 
     # FIXME: Come up with cases where we're able to infer an AUGMENTING leg
 
-    # FIXME: Come up wiht a case that would be ambiguous if not for the fact
+    # FIXME: Come up with a case that would be ambiguous if not for the fact
     # that one of the currencies already balances.
-
-
 
 
 class TestFullBooking(cmptest.TestCase):
