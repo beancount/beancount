@@ -652,14 +652,7 @@ class Builder(lexer.LexBuilder):
           A new Query object.
         """
         meta = new_metadata(filename, lineno, kvlist)
-        if not self.options['experiment_query_directive']:
-            self.errors.append(
-                ParserError(meta, (
-                    "Query directive is not supported. "
-                    "You have to enable 'experiment_query_directive' to enable it."), None))
-            return None
-        else:
-            return Query(meta, date, query_name, query_string)
+        return Query(meta, date, query_name, query_string)
 
     def price(self, filename, lineno, date, currency, amount, kvlist):
         """Process a price directive.

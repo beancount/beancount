@@ -11,13 +11,10 @@ __author__ = "Martin Blais <blais@furius.ca>"
 # Note: this file is mirrorred into ledgerhub. Relative imports only.
 import re
 
-# Note: Python 3.3 guarantees a fast "C" decimal implementation. No need to
-# install cdecimal anymore.
-from decimal import Decimal
-
 # Import object to format numbers at specific precisions.
 from beancount.core.display_context import DEFAULT_FORMATTER
 from beancount.core.number import ZERO
+from beancount.core.number import Decimal
 from beancount.core import number
 
 

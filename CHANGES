@@ -127,6 +127,61 @@ Note: This file contains only changes in the 'default' branch.
     this at your own risk; this is probably not ready for public use.
 
 
+2016-01-18
+
+  - Committed the Query directive to non-experimental status, for
+    beancount-web's usage.
+
+
+2016-01-16
+
+  - Created the beancount.plugins.coherent_cost plugin which checks that one's
+    currencies are either always used with cost, or never at all. This is by far
+    the most typical situation whereby a currency is always held at cost, or
+    never (and perhaps converted at price or not).
+
+  - Created a function to filter just the transactions, which is such an
+    incredibly common operation I should have done this a while ago. I should
+    convert all code to use it.
+
+
+2016-01-16
+
+  - Added a feature to the "beancount.plugins.ira_contribs" plugin to allow the
+    further restriction that the trigger posting must include a particular flag
+    in order for the insertion to occur. This is to be used in account that have
+    sales, whereby just looking at the sign of the posting isn't enough to
+    decide that an insertion must be made.
+
+
+2016-01-10
+
+  - Addressed issue #96, supporting an explicitly installed C decimal version
+    when the Python3 installation does not include one. From
+    beancount.core.number:
+
+      Note: Python 3.3 is supposed to guarantee a fast "C" decimal implementation,
+      as it comes with its source code. However, in practice, many distributions,
+      including the popular Ubuntu distro, simply don't compile it. Other distros
+      (e.g., Arch Linux) insist on breaking up Python into multiple packages in
+      order to manage the dependency to the mpdec library, and make that
+      installation optional. Moreover, there seems to have been changes in the
+      dispatching of pure-Python and fast C decimal implementations in Python-3.5's
+      source code itself. The result is that despite Python-3.3 or above being
+      installed, a fast C decimal implementation may or may not be present. Thus, we
+      must detect it here. I believe this subtle problem should go away with
+      Python-3.5 and above.
+
+      What do we do? We import the default 'decimal' module, and if it's the pure
+      Python implementation, we attempt to import an explicitly installed
+      'cdecimal', which you can install with
+
+        pip3 install m3-cdecimal
+
+    Also added a check for this in checkdeps. Hopefully this resolves the issue
+    once and for all.
+
+
 2016-01-09
 
   - Fixed a bug (issue #94) in the load cache that wouldn't handle files
