@@ -61,7 +61,7 @@ def touch_file(filename, *otherfiles):
                         for minfile in (filename,) + otherfiles)
     delay_secs = 0.05
     while True:
-        with open(filename, 'a') as file:
+        with open(filename, 'a'):
             os.utime(filename)
         time.sleep(delay_secs)
         new_stat = os.stat(filename)

@@ -5,7 +5,6 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import datetime
 import types
 import unittest
-import pprint
 
 from beancount.prices import find_prices
 from beancount.prices.sources import google
@@ -26,7 +25,7 @@ class TestImportSource(unittest.TestCase):
 
     def test_import_source_invalid(self):
         with self.assertRaises(ImportError):
-            module = find_prices.import_source('non.existing.module')
+            find_prices.import_source('non.existing.module')
 
 
 class TestParseSource(unittest.TestCase):

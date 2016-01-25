@@ -14,14 +14,9 @@ __author__ = 'Martin Blais <blais@furius.ca>'
 
 import collections
 import logging
-import itertools
 import io
 import re
-import pprint
-import subprocess
 import sys
-import textwrap
-from os import path
 
 from beancount import loader
 from beancount.core import realization
@@ -29,9 +24,7 @@ from beancount.core import getters
 from beancount.core import account_types
 from beancount.core import data
 from beancount.core import account
-from beancount.core import realization
 from beancount.parser import options
-from beancount.parser import printer
 
 
 def group_accounts_by_metadata(accounts_map, meta_name):

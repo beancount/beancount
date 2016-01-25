@@ -10,7 +10,7 @@ class TestScriptExample(test_utils.TestCase):
 
     def test_generate(self):
         # Basic test that calls out the generator.
-        with test_utils.capture() as stdout:
+        with test_utils.capture('stdout', 'stderr') as (stdout, _):
             result = test_utils.run_with_args(example.main, [])
         self.assertEqual(0, result, str(result))
         file_contents = stdout.getvalue()

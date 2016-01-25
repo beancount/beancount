@@ -78,7 +78,7 @@ def csv_tuple_reader(fileobj, **kw):
     for row in ireader:
         try:
             yield Tuple(*row)
-        except TypeError as exc:
+        except TypeError:
             # If there's an error, it's usually from a line that has a 'END OF
             # LINE' marker at the end, or some comment line.
             assert len(row) in (0, 1)

@@ -194,7 +194,7 @@ class TestTestUtils(unittest.TestCase):
 
     def test_parse_one(self):
         with self.assertRaises(AssertionError):
-            entries = parser.parse_one("""
+            parser.parse_one("""
               2014-12-15 * 2014-12-15
             """)
 

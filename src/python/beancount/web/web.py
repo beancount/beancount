@@ -932,7 +932,6 @@ def auto_reload_input_file(callback):
     last page was loaded."""
     def wrapper(*posargs, **kwargs):
         filename = app.args.filename
-        mtime = path.getmtime(filename)
 
         if loader.needs_refresh(app.options):
             logging.info('Reloading...')

@@ -11,7 +11,6 @@ from beancount.reports import gviz
 from beancount.parser import printer
 from beancount.core import data
 from beancount.core import amount
-from beancount.core import account
 from beancount.core import getters
 from beancount.ops import prices
 from beancount.ops import lifetimes

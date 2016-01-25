@@ -2,7 +2,6 @@
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import textwrap
 import datetime
 import unittest
 import shutil
@@ -10,17 +9,14 @@ import tempfile
 import os
 from os import path
 from unittest import mock
-from urllib import request
-from urllib import error
 
 from beancount.prices import price
 from beancount.prices import find_prices
 from beancount.prices import source
 from beancount.prices.sources import google
-from beancount.core.number import D, Decimal
+from beancount.core.number import D
 from beancount.utils import test_utils
 from beancount.parser import cmptest
-from beancount.parser import printer
 from beancount import loader
 
 
@@ -28,7 +24,7 @@ class TestSetupCache(unittest.TestCase):
 
     def test_clear_cache_unset(self):
         with mock.patch('os.remove') as mock_remove:
-            with tempfile.TemporaryDirectory() as tmpdir:
+            with tempfile.TemporaryDirectory():
                 price.setup_cache(None, True)
         self.assertEqual(0, mock_remove.call_count)
 
@@ -68,17 +64,17 @@ class TestCache(unittest.TestCase):
 
     def test_fetch_cached_price__disabled(self):
         # Latest.
-        with mock.patch('beancount.prices.price._cache', None) as cache:
+        with mock.patch('beancount.prices.price._cache', None):
             self.assertIsNone(price._cache)
             source = mock.MagicMock()
-            result = price.fetch_cached_price(source, 'HOOL', None)
+            price.fetch_cached_price(source, 'HOOL', None)
             self.assertTrue(source.get_latest_price.called)
 
         # Historical.
-        with mock.patch('beancount.prices.price._cache', None) as cache:
+        with mock.patch('beancount.prices.price._cache', None):
             self.assertIsNone(price._cache)
             source = mock.MagicMock()
-            result = price.fetch_cached_price(source, 'HOOL', datetime.date.today())
+            price.fetch_cached_price(source, 'HOOL', datetime.date.today())
             self.assertTrue(source.get_historical_price.called)
 
     def test_fetch_cached_price__latest(self):
@@ -153,7 +149,7 @@ class TestCache(unittest.TestCase):
 class TestProcessArguments(unittest.TestCase):
 
     def test_filename_not_exists(self):
-        with test_utils.capture('stderr') as stderr:
+        with test_utils.capture('stderr'):
             with self.assertRaises(SystemExit):
                 args, jobs, _ = test_utils.run_with_args(
                     price.process_args, ['--no-cache', '/some/file.beancount'])
@@ -164,20 +160,20 @@ class TestProcessArguments(unittest.TestCase):
         2015-01-01 open Assets:Invest
         2015-01-01 open USD ;; Error
         """
-        with test_utils.capture('stderr') as stderr:
+        with test_utils.capture('stderr'):
             args, jobs, _ = test_utils.run_with_args(
                 price.process_args, ['--no-cache', filename])
             self.assertEqual([], jobs)
 
     def test_filename_exists(self):
         with tempfile.NamedTemporaryFile('w') as tmpfile:
-            with test_utils.capture('stderr') as stderr:
+            with test_utils.capture('stderr'):
                 args, jobs, _ = test_utils.run_with_args(
                     price.process_args, ['--no-cache', tmpfile.name])
                 self.assertEqual([], jobs)  # Empty file.
 
     def test_expressions(self):
-        with test_utils.capture('stderr') as stderr:
+        with test_utils.capture('stderr'):
             args, jobs, _ = test_utils.run_with_args(
                 price.process_args, ['--no-cache', '-e', 'USD:google/NASDAQ:AAPL'])
             self.assertEqual(

@@ -41,7 +41,7 @@ class TestGoogleFinanceSource(unittest.TestCase):
             389,555.89
             390,556.33
         """).encode('utf-8')
-        srcprice = self.fetcher.get_latest_price('NASD:GOOG')
+        srcprice = self.fetcher.get_latest_price('NASD:HOOL')
         self.assertTrue(isinstance(srcprice.price, Decimal))
         self.assertEqual(D('556.33'), srcprice.price)
         self.assertEqual(srcprice.time, datetime.datetime(2014, 6, 6, 16, 0, 0))
@@ -68,14 +68,13 @@ class TestGoogleFinanceSource(unittest.TestCase):
         """).encode('utf-8')
         request_date = datetime.date(2014, 5, 7)
         expected_datetime = datetime.datetime(2014, 5, 6)
-        srcprice = self.fetcher.get_historical_price('NASD:GOOG', request_date)
+        srcprice = self.fetcher.get_historical_price('NASD:HOOL', request_date)
         self.assertTrue(isinstance(srcprice.price, Decimal))
         self.assertEqual(D('515.14'), srcprice.price)
         self.assertEqual(expected_datetime, srcprice.time)
 
     def test_get_historical_price__invalid(self):
         self.url_object.read.side_effect = error.HTTPError('url', 'code', '404', {}, None)
-        expected_date = datetime.date(2014, 5, 6)
         srcprice = self.fetcher.get_historical_price('CURRENCY:INVALID',
                                                      datetime.date(2014, 5, 7))
         self.assertIsNone(srcprice)

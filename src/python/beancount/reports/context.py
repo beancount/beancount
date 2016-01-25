@@ -25,8 +25,6 @@ def render_file_context(entries, options_map, filename, lineno):
       is applied. You can just print that, it is in form that is intended to be
       consumed by the user.
     """
-    oss = io.StringIO()
-
     # Find the closest entry.
     closest_entry = data.find_closest(entries, filename, lineno)
     if closest_entry is None:

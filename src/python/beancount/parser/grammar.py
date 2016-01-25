@@ -269,7 +269,7 @@ class Builder(lexer.LexBuilder):
             if key not in self.meta:
                 raise IndexError
             value_list = self.meta[key]
-            value = value_list.pop(-1)
+            value_list.pop(-1)
             if not value_list:
                 self.meta.pop(key)
         except IndexError:

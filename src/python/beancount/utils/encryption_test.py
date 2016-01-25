@@ -1,7 +1,5 @@
 __author__ = 'Martin Blais <blais@furius.ca>'
 
-import contextlib
-import io
 import os
 import unittest
 import subprocess

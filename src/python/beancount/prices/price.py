@@ -2,23 +2,15 @@
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import csv
-import collections
 import datetime
-import io
 import functools
 import threading
 from os import path
 import shelve
 import tempfile
-import re
 import hashlib
 import os
 import sys
-from urllib import parse
-from urllib import request
-import urllib.parse
-import hashlib
 import argparse
 import logging
 from concurrent import futures
@@ -30,10 +22,7 @@ import beancount.prices
 from beancount import loader
 from beancount.core import data
 from beancount.core import amount
-from beancount.ops import holdings
 from beancount.parser import printer
-from beancount.utils import net_utils
-from beancount.utils import memo
 from beancount.prices import find_prices
 
 

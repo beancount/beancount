@@ -3,7 +3,6 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
-import itertools
 import logging
 import re
 import sys

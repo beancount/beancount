@@ -26,7 +26,7 @@ class TestCheckExamples(test_utils.TestCase):
 
     def test_example_files(self):
         for filename in find_example_files():
-            with test_utils.capture('stdout') as stdout:
+            with test_utils.capture('stdout', 'stderr') as (stdout, _):
                 result = test_utils.run_with_args(check.main, [filename])
             self.assertEqual(0, result)
             self.assertLines("", stdout.getvalue())

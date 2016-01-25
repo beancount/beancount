@@ -26,6 +26,6 @@ class TestScriptQuery(test_utils.TestCase):
           Assets:Account1     -1000 USD
           Assets:Account3       800 EUR @ 1.25 USD
         """
-        with test_utils.capture() as stdout:
+        with test_utils.capture('stdout', 'stderr') as (stdout, _):
             test_utils.run_with_args(query.main, [filename, "SELECT 1;"])
         self.assertTrue(stdout.getvalue())

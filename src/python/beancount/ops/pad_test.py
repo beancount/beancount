@@ -10,7 +10,6 @@ from beancount.core import realization
 from beancount.ops import pad
 from beancount.ops import balance
 from beancount.parser import cmptest
-from beancount.parser import printer
 from beancount import loader
 
 

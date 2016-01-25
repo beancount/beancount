@@ -68,7 +68,7 @@ class TestScriptDoctor(test_utils.TestCase):
           Expenses:Restaurant   50.02 USD
           Assets:Cash
         """
-        with test_utils.capture():
+        with test_utils.capture('stdout', 'stderr'):
             test_utils.run_with_args(doctor.main, ['roundtrip', filename])
 
     def test_list_options(self):

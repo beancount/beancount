@@ -20,8 +20,11 @@ RULES = [
     ('DISALLOW', 'beancount/core/(?!interpolate)', 'beancount/core/interpolate'),
     ('ALLOW',    'beancount/parser', 'beancount/(core|parser)'),
     ('ALLOW',    'beancount/ops', 'beancount/(core|utils|ops)'),
+    ('ALLOW',    'beancount/ops/summarize', 'beancount/parser/options'),
     ('ALLOW',    'beancount/ops/.*_test', 'beancount/parser'),
     ('ALLOW',    'beancount/plugins', 'beancount/(core|parser|ops|plugins)'),
+    ('ALLOW',    'beancount/plugins/book_conversions', 'beancount/(loader|reports)'),
+    ('ALLOW',    'beancount/plugins/merge_meta', 'beancount/(loader)'),
     ('ALLOW',    'beancount/reports', 'beancount/(core|utils|ops|parser|reports)'),
     ('ALLOW',    'beancount/query', 'beancount/(core|utils|ops|parser|query)'),
     ('ALLOW',    'beancount/scripts', 'beancount/(core|utils|parser|web|ops|loader$|reports|query|scripts)'),
@@ -30,6 +33,7 @@ RULES = [
     ('ALLOW',    'beancount/projects/.*_test', 'beancount/(projects)'),
     ('ALLOW',    'beancount/docs/.*_test', 'beancount/docs'),
     ('ALLOW',    'beancount/docs', 'beancount/(docs|parser|utils)'),
+    ('ALLOW',    'beancount/prices', 'beancount/(core|ops|prices|loader|parser|utils)'),
     ]
 
 

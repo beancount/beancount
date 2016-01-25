@@ -125,9 +125,7 @@ http://finance.yahoo.com/webservice/v1/symbols/allcurrencies/quote
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import datetime
-import logging
 import re
-from urllib import request
 from urllib import parse
 from urllib import error
 

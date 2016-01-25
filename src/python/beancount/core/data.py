@@ -5,7 +5,6 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import builtins
 import datetime
 from collections import namedtuple
-from os import path
 import sys
 
 # Note: this file is mirrorred into ledgerhub. Relative imports only.

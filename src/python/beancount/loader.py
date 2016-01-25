@@ -12,7 +12,6 @@ import logging
 import os
 import pickle
 import struct
-import subprocess
 import textwrap
 import time
 import warnings
