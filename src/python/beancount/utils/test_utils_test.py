@@ -119,3 +119,26 @@ class TestTestCase(test_utils.TestCase):
                3165efbc-c775-4503-be13-06b7167697a9
             """):
                 print('78d58502a15e')
+
+
+class TestSkipIfRaises(unittest.TestCase):
+
+    def test_decorator(self):
+        @test_utils.skipIfRaises(ValueError)
+        def decorator_no_skip():
+            pass
+        decorator_no_skip()
+
+        @test_utils.skipIfRaises(ValueError)
+        def decorator_skip():
+            raise ValueError
+        with self.assertRaises(unittest.SkipTest):
+            decorator_skip()
+
+    def test_contextmanager(self):
+        with test_utils.skipIfRaises(ValueError):
+            pass
+
+        with self.assertRaises(unittest.SkipTest):
+            with test_utils.skipIfRaises(ValueError):
+                raise ValueError
