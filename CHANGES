@@ -4,6 +4,16 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-01-25
+
+  - Moved many of the utility code from ledgerhub.utils to beancount.utils. This
+    is beginning the process of migrating and rewriting LedgerHub and
+    integrating it into the Beancount source code.
+
+  - Moved the 'remove_crdb' utility script from LedgerHub into
+    beancount/experiments/imports.
+
+
 2016-01-18
 
   - Committed the Query directive to non-experimental status, for
