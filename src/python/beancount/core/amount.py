@@ -67,8 +67,8 @@ class Amount:
           number: A string or Decimal instance. Will get converted automatically.
           currency: A string, the currency symbol to use.
         """
-        assert isinstance(number, self.valid_types_number)
-        assert isinstance(currency, self.valid_types_currency)
+        assert isinstance(number, self.valid_types_number), repr(number)
+        assert isinstance(currency, self.valid_types_currency), repr(currency)
         self.number = number
         self.currency = currency
 
