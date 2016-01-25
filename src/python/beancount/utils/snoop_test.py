@@ -30,6 +30,10 @@ class TestSnoop(unittest.TestCase):
         else:
             self.assertFalse(True)
 
+    def test_snoop_attribute(self):
+        match = snoop.snooper(re.match("a(b+)a", "abbba"))
+        self.assertEqual('bbb', snoop.snooper.group(1))
+
     def test_snoopify(self):
         original_match = re.match
         re.match = snoop.snoopify(re.match)
