@@ -433,7 +433,7 @@ class Builder(lexer.LexBuilder):
         """Process a lot_spec grammar rule.
 
         Args:
-          lot_comp_list: A list of CompoundAmountAmount, a datetime.date, or
+          lot_comp_list: A list of CompoundAmount, a datetime.date, or
             label ID strings.
         Returns:
           A lot-info tuple of CompoundAmount, lot date and label string. Any of these
