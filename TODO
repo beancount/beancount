@@ -1334,6 +1334,10 @@ http://furius.ca/beancount/doc/proposal-inter
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - Install proto3 and try to represent all the data using it; measure
+    performance.
+
+
   - Reconcile all usage of account regexps to beancount.core.account.ACCOUNT_RE
     throughout the code  (grep --include='*.py'  -srn A-Z    ~/p/beancount/src/python/beancount).
 
@@ -4346,6 +4350,7 @@ Improve this bit:
   (documentation)
   - Write a worked and detailed example of generating automated transactions in
     the Plugins document.
+
 ** Contributor agreement
 
   * See note at the bottom of: https://github.com/fourier/ztree
@@ -4363,6 +4368,9 @@ Improve this bit:
       As soon as the paperwork is done one can contribute to ztree with bigger pull
       requests. Note what pull requests without paperwork done will not be accepted,
       so please notify the maintainer if everything is in place.
+
+  - Great example (from Camlistore project link):
+    https://cla.developers.google.com/about/google-individual
 
 
 * Name ideas
