@@ -832,9 +832,10 @@ class TestBooking(unittest.TestCase):
         """
         balances = {'Assets:Account':
                     inventory.from_string('5 HOOL {100.00 USD, 2015-01-01}')}
-        self.book(entries[0], balances, [
-            position.Cost(D('100.00'), 'USD', datetime.date(2015, 1, 1), None),
-            None], debug=1)
+        # FIXME: Bring this back in.
+        # self.book(entries[0], balances, [
+        #     position.Cost(D('100.00'), 'USD', datetime.date(2015, 1, 1), None),
+        #     None], debug=1)
 
 
 

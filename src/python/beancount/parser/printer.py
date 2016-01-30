@@ -221,7 +221,7 @@ class EntryPrinter:
         if isinstance(posting.units, amount.Amount):
             position_str = position.to_string(posting, self.dformat)
             # Note: we render weights at maximum precision, for debugging.
-            if isinstance(posting.cost, position.Cost):
+            if posting.cost is None or isinstance(posting.cost, position.Cost):
                 weight_str = str(interpolate.get_posting_weight(posting))
         else:
             position_str = ''

@@ -186,11 +186,11 @@ class TestTestUtils(unittest.TestCase):
             Equity:Blah
         """)
         self.assertEqual(1, len(entries))
-        self.assertEqual(number, entries[0].postings[0].position.number)
+        self.assertEqual(number, entries[0].postings[0].units.number)
 
     def test_parse_one(self):
         with self.assertRaises(AssertionError):
-            entries = parser.parse_one("""
+            parser.parse_one("""
               2014-12-15 * 2014-12-15
             """)
 

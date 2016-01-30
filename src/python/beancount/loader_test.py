@@ -6,16 +6,12 @@ import tempfile
 import textwrap
 import re
 import os
-import time
-import subprocess
-import shutil
 from unittest import mock
 from os import path
 
 from beancount import loader
 from beancount.parser import parser
 from beancount.utils import test_utils
-from beancount.utils import file_utils
 
 
 TEST_INPUT = """
@@ -324,7 +320,6 @@ class TestLoadCache(unittest.TestCase):
                   2014-01-02 open Assets:Bananas
                 """})
             top_filename = path.join(tmp, 'apples.beancount')
-            other_filename = path.join(tmp, 'bananas.beancount')
             entries, errors, options_map = loader.load_file(top_filename)
             self.assertFalse(errors)
             self.assertEqual(3, len(entries))
@@ -424,7 +419,6 @@ class TestOptionsAggregation(unittest.TestCase):
                   option "operating_currency" "EUR"
                 """})
             top_filename = path.join(tmp, 'apples.beancount')
-            other_filename = path.join(tmp, 'bananas.beancount')
             entries, errors, options_map = loader.load_file(top_filename)
 
             self.assertEqual({'USD', 'EUR', 'CAD'}, set(options_map['operating_currency']))
@@ -444,7 +438,6 @@ class TestOptionsAggregation(unittest.TestCase):
                   2015-12-13 open Assets:FR:Checking  EUR
                 """})
             top_filename = path.join(tmp, 'apples.beancount')
-            other_filename = path.join(tmp, 'bananas.beancount')
             entries, errors, options_map = loader.load_file(top_filename)
 
             self.assertEqual({'EUR', 'CAD'}, options_map['commodities'])

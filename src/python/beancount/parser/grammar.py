@@ -271,7 +271,7 @@ class Builder(lexer.LexBuilder):
             if key not in self.meta:
                 raise IndexError
             value_list = self.meta[key]
-            value = value_list.pop(-1)
+            value_list.pop(-1)
             if not value_list:
                 self.meta.pop(key)
         except IndexError:
@@ -436,7 +436,7 @@ class Builder(lexer.LexBuilder):
         """Process a cost_spec grammar rule.
 
         Args:
-          cost_comp_list: A list of CompoundAmountAmount, a datetime.date, or
+          cost_comp_list: A list of CompoundAmount, a datetime.date, or
             label ID strings.
         Returns:
           A cost-info tuple of CompoundAmount, lot date and label string. Any of these

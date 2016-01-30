@@ -18,7 +18,7 @@ class TestScriptCheck(test_utils.TestCase):
           Expenses:Restaurant   50.02 USD
           Assets:Cash
         """
-        with test_utils.capture() as stdout:
+        with test_utils.capture('stdout', 'stderr') as (stdout, _):
             result = test_utils.run_with_args(check.main, [filename])
         self.assertEqual(0, result)
         self.assertLines("", stdout.getvalue())

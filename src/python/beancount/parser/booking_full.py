@@ -339,7 +339,10 @@ def book_reductions(postings, balances):
 
         units = posting.units
         costspec = posting.cost
-        if costspec is not None and balance.is_reduced_by(units):
+        balance = balances.get(posting.account, None)
+        if (costspec is not None and
+            balance is not None and
+            balance.is_reduced_by(units)):
             cost_number = compute_cost_number(costspec, units.number)
             if cost_number is not MISSING:
 

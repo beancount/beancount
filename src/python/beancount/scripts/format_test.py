@@ -89,7 +89,7 @@ class TestScriptFormat(test_utils.TestCase):
         """
           2015-07-16 open Assets:BoA:checking USD
         """
-        with test_utils.capture() as stdout:
+        with test_utils.capture():
             result = test_utils.run_with_args(format.main, [filename])
         self.assertEqual(0, result)
         self.assertEqual("""

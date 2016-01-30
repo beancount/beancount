@@ -207,8 +207,6 @@ import copy
 import re
 import logging
 
-from dateutil.parser import parse as parse_datetime
-
 from beancount.core.number import ZERO
 from beancount import loader
 from beancount.parser import printer

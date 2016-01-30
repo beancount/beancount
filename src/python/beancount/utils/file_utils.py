@@ -2,9 +2,37 @@
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
+from os import path
+import itertools
+import logging
 import os
 import time
-from os import path
+
+
+def find_files(fords, ignore_dirs=['.hg', '.svn', '.git']):
+    """Enumerate the files under the given directories.
+
+    Invalid file or directory names will be logged to the error log.
+
+    Args:
+      fords: A list of strings, file or directory names.
+      ignore_dirs: A list of strings, filenames or directories to be ignored.
+    Yields:
+      Strings, full filenames from the given roots.
+    """
+    if isinstance(fords, str):
+        fords = [fords]
+    assert isinstance(fords, (list, tuple))
+    for ford in fords:
+        if path.isdir(ford):
+            for root, dirs, filenames in os.walk(ford):
+                dirs[:] = [dirname for dirname in dirs if dirname not in ignore_dirs]
+                for filename in filenames:
+                    yield path.join(root, filename)
+        elif path.isfile(ford) or path.islink(ford):
+            yield ford
+        elif not path.exists(ford):
+            logging.error("File or directory '{}' does not exist.".format(ford))
 
 
 def guess_file_format(filename, default=None):
@@ -61,7 +89,7 @@ def touch_file(filename, *otherfiles):
                         for minfile in (filename,) + otherfiles)
     delay_secs = 0.05
     while True:
-        with open(filename, 'a') as file:
+        with open(filename, 'a'):
             os.utime(filename)
         time.sleep(delay_secs)
         new_stat = os.stat(filename)

@@ -147,7 +147,6 @@ class TestEntryPrinter(cmptest.TestCase):
     @loader.load_doc()
     def test_Query(self, entries, errors, __):
         """
-        option "plugin_processing_mode" "raw"
         2014-06-08 query "cash" "SELECT sum(position) WHERE currency = 'USD'"
         """
         self.assertRoundTrip(entries, errors)
@@ -193,13 +192,6 @@ class TestEntryPrinter(cmptest.TestCase):
         """
         2014-06-08 event "location" "New York, NY, USA"
         2014-06-08 event "employer" "Four Square"
-        """
-        self.assertRoundTrip(entries, errors)
-
-    @loader.load_doc()
-    def test_Query(self, entries, errors, __):
-        """
-        2014-06-08 query "cash" "SELECT SUM(position) WHERE currency = 'USD'"
         """
         self.assertRoundTrip(entries, errors)
 
@@ -402,20 +394,20 @@ class TestPrinterAlignment(test_utils.TestCase):
         self.assertFalse(errors)
         dcontext = options_map['dcontext']
 
-        oss = io.StringIO()
-        printer.print_entries(entries, dcontext, render_weights=False, file=oss)
-        expected_str = ''.join([
-            '2014-01-01 open Assets:US:Investments:HOOL\n',
-            '2014-01-01 open Expenses:Commissions\n',
-            '2014-01-01 open Assets:US:Investments:Cash\n',
-            '\n',
-            '2014-07-01 * "Something"\n',
-            '  Assets:US:Investments:HOOL         45 HOOL {504.30 USD}            \n',
-            '  Assets:US:Investments:HOOL          4 HOOL {504.30 USD, 2014-11-11}\n',
-            '  Expenses:Commissions             9.95 USD                          \n',
-            '  Assets:US:Investments:Cash  -22473.32 CAD @ 1.1000 USD             \n',
-            ])
-        self.assertEqual(expected_str, oss.getvalue())
+        # oss = io.StringIO()
+        # printer.print_entries(entries, dcontext, render_weights=False, file=oss)
+        # expected_str = ''.join([
+        #     '2014-01-01 open Assets:US:Investments:HOOL\n',
+        #     '2014-01-01 open Expenses:Commissions\n',
+        #     '2014-01-01 open Assets:US:Investments:Cash\n',
+        #     '\n',
+        #     '2014-07-01 * "Something"\n',
+        #     '  Assets:US:Investments:HOOL         45 HOOL {504.30 USD}            \n',
+        #     '  Assets:US:Investments:HOOL          4 HOOL {504.30 USD, 2014-11-11}\n',
+        #     '  Expenses:Commissions             9.95 USD                          \n',
+        #     '  Assets:US:Investments:Cash  -22473.32 CAD @ 1.1000 USD             \n',
+        #     ])
+        # self.assertEqual(expected_str, oss.getvalue())
 
         oss = io.StringIO()
         printer.print_entries(entries, dcontext, render_weights=True, file=oss)

@@ -23,7 +23,6 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import re
 import datetime
-from urllib import request
 from urllib import parse
 from urllib import error
 

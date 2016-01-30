@@ -2,7 +2,6 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 from os import path
 import re
-import argparse
 import urllib.request
 import urllib.parse
 import logging
