@@ -38,11 +38,11 @@ class TestFileUtilsFind(test_utils.TestTempdirMixin, test_utils.TestCase):
 
     def test_find_files(self):
         def walk(fords):
-            return clean(self.tempdir, file_utils.find_files(fords))
+            return sorted(clean(self.tempdir, file_utils.find_files(fords)))
 
-        self.assertEqual(['alice/bottle.txt',
-                          'rabbit/suit/glasses.txt',
-                          'caterpillar/who-are-you.txt'],
+        self.assertEqual(sorted(['alice/bottle.txt',
+                                 'rabbit/suit/glasses.txt',
+                                 'caterpillar/who-are-you.txt']),
                          walk([self.tempdir]))
 
         self.assertEqual(['alice/bottle.txt'],
