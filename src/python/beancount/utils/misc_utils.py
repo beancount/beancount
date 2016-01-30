@@ -86,6 +86,9 @@ def groupby(keyfun, elements):
     Returns:
       A dict of key to list of sequences.
     """
+    # Note: We could allow a custom aggregation function. Another option is
+    # provide another method to reduce the list values of a dict, but that can
+    # be accomplished using a dict comprehension.
     grouped = defaultdict(list)
     for element in elements:
         grouped[keyfun(element)].append(element)
