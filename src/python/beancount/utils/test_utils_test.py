@@ -135,6 +135,13 @@ class TestSkipIfRaises(unittest.TestCase):
         with self.assertRaises(unittest.SkipTest):
             decorator_skip()
 
+    def test_decorator_many(self):
+        @test_utils.skipIfRaises(ValueError, IndexError)
+        def decorator_skip():
+            raise ValueError
+        with self.assertRaises(unittest.SkipTest):
+            decorator_skip()
+
     def test_contextmanager(self):
         with test_utils.skipIfRaises(ValueError):
             pass

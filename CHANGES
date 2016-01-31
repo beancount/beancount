@@ -19,6 +19,9 @@ Note: This file contains only changes in the 'default' branch.
   - Moved ledgerhub.identify.filetype to beancount.utils.file_type and its
     associated test and test files.
 
+  - Small improvement to beancount.utils.test_utils.skipIfRaises() to accept
+    multiple exceptions.
+
 
 2016-01-25
 

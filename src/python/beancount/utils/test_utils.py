@@ -284,7 +284,7 @@ class TestCase(unittest.TestCase):
 
 
 @contextlib.contextmanager
-def skipIfRaises(exc_types):
+def skipIfRaises(*exc_types):
     """A context manager (or decorator) that skips a test if an exception is raised.
 
     Args:
