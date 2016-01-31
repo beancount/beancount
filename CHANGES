@@ -9,6 +9,10 @@ Note: This file contains only changes in the 'default' branch.
   - Added python-magic as an optional depdendency, in order to support imports
     code. Updated http://furius.ca/beancount/doc/install
 
+  - Renamed beancount.scripts.checkdeps to beancount.scripts.deps (annoyed with
+    name too similar to beancount.scripts.check and I trip over it all the
+    time).
+
 
 2016-01-25
 

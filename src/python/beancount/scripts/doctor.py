@@ -13,9 +13,9 @@ import argparse
 import logging
 from os import path
 
-# Note: Because of the presence of checkdeps, we have to operate under the
-# assumption that not all third-party dependencies are installed. Import what
-# you need as late as possible.
+# Note: Because of the presence of beancount.scripts.deps, we have to operate
+# under the assumption that not all third-party dependencies are installed.
+# Import what you need as late as possible.
 from beancount.utils import misc_utils
 
 
@@ -172,18 +172,19 @@ def get_commands():
     return commands
 
 
-def do_checkdeps(*unused_args):
+def do_deps(*unused_args):
     """Report on the runtime dependencies.
 
     Args:
       unused_args: Ignored.
     """
-    from beancount.scripts import checkdeps
-    checkdeps.list_dependencies(sys.stdout)
+    from beancount.scripts import deps
+    deps.list_dependencies(sys.stdout)
     print('')
     print('Use "pip3 install <package>" to install new packages.')
 
-do_deps = do_checkdeps
+# Alias old name.
+do_checkdeps = do_deps
 
 
 def do_context(filename, args):
