@@ -13,6 +13,9 @@ Note: This file contains only changes in the 'default' branch.
     name too similar to beancount.scripts.check and I trip over it all the
     time).
 
+  - Moved ledgerhub.core.compress to beancount.ops.compress and its associated
+    test.
+
 
 2016-01-25
 
