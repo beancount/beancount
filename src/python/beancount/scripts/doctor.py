@@ -183,6 +183,8 @@ def do_checkdeps(*unused_args):
     print('')
     print('Use "pip3 install <package>" to install new packages.')
 
+do_deps = do_checkdeps
+
 
 def do_context(filename, args):
     """Describe the context that a particular transaction is applied to.

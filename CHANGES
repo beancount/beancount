@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-01-31
+
+  - Added python-magic as an optional depdendency, in order to support imports
+    code. Updated http://furius.ca/beancount/doc/install
+
+
 2016-01-25
 
   - Moved many of the utility code from ledgerhub.utils to beancount.utils. This

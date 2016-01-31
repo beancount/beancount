@@ -44,9 +44,13 @@ def check_dependencies():
         check_import('ply', module_name='ply.yacc', min_version='3.4'),
         check_import('lxml', module_name='lxml.etree', min_version='3'),
 
-        # Test are only required because of google-api-python-client.
+        # Optionally required to upload data to Google Drive.
         check_import('apiclient'),
         check_import('oauth2client'),
+        check_import('httplib2'),
+
+        # Optionally required to support imports (identify, extract, file) code.
+        check_python_magic(),
         ]
 
 
@@ -92,6 +96,28 @@ def check_cdecimal():
 
     # Not found.
     return ('cdecimal', None, False)
+
+
+def check_python_magic():
+    """Check that a recent-enough version of python-magic is installed.
+
+    python-magic is an interface to libmagic, which is used by the 'file' tool
+    and UNIX to identify file types. Note that there are two Python wrappers
+    which provide the 'magic' import: python-magic and filemagic. The former is
+    what we need, which appears to be more recently maintained.
+
+    Returns:
+      A triple of (package-name, version-number, sufficient) as per
+      check_dependencies().
+
+    """
+    try:
+        import magic
+        # Check that python-magic and not filemagic is installed.
+        if hasattr(magic, 'from_file'):
+            return ('python-magic', 'OK', True)
+    except ImportError:
+        return ('python-magic', None, False)
 
 
 def check_import(package_name, min_version=None, module_name=None):
