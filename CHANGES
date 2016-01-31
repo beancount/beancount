@@ -16,6 +16,9 @@ Note: This file contains only changes in the 'default' branch.
   - Moved ledgerhub.core.compress to beancount.ops.compress and its associated
     test.
 
+  - Moved ledgerhub.identify.filetype to beancount.utils.file_type and its
+    associated test and test files.
+
 
 2016-01-25
 
