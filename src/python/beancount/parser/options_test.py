@@ -80,7 +80,7 @@ class TestAccountTypeOptions(unittest.TestCase):
         self.assertEqual(0, len(entries))
         self.assertEqual(2, len(errors))
         for error in errors:
-            self.assertRegexpMatches(error.message, "Invalid account name")
+            self.assertRegex(error.message, "Invalid account name")
 
     @parser.parse_doc(expect_errors=True)
     def test_custom_account_names__fail_invalid_order(self, entries, errors, options_map):
@@ -91,7 +91,7 @@ class TestAccountTypeOptions(unittest.TestCase):
         """
         self.assertEqual(0, len(entries))
         self.assertEqual(1, len(errors))
-        self.assertRegexpMatches(errors[0].message, "Invalid account name")
+        self.assertRegex(errors[0].message, "Invalid account name")
 
 
 class TestValidateOptions(unittest.TestCase):

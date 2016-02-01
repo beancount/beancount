@@ -53,9 +53,9 @@ class TestRealAccount(unittest.TestCase):
 
         ra0 = create_simple_account()
         ra0_str = str(ra0)
-        self.assertTrue(re.search('Assets', ra0_str))
-        self.assertTrue(re.search('Bank', ra0_str))
-        self.assertTrue(re.search('Checking', ra0_str))
+        self.assertRegex(ra0_str, 'Assets')
+        self.assertRegex(ra0_str, 'Bank')
+        self.assertRegex(ra0_str, 'Checking')
 
     def test_equality(self):
         ra1 = RealAccount('Assets:US:Bank:Checking')

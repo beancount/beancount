@@ -25,8 +25,8 @@ class TestPrinter(unittest.TestCase):
     def test_render_source(self):
         source_str = printer.render_source(META)
         self.assertTrue(isinstance(source_str, str))
-        self.assertTrue(re.search('12345', source_str))
-        self.assertTrue(re.search(META['filename'], source_str))
+        self.assertRegex(source_str, '12345')
+        self.assertRegex(source_str, META['filename'])
 
     def test_format_and_print_error(self):
         entry = data.Open(META, date(2014, 1, 15), 'Assets:Bank:Checking', [], None)

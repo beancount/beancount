@@ -35,8 +35,8 @@ class TestMiscUtils(unittest.TestCase):
         with test_utils.capture() as stdout:
             with misc_utils.log_time('test-op', sys.stdout.write):
                 time.sleep(0.1)
-        self.assertTrue(re.search("Operation", stdout.getvalue()))
-        self.assertTrue(re.search("Time", stdout.getvalue()))
+        self.assertRegex(stdout.getvalue(), "Operation")
+        self.assertRegex(stdout.getvalue(), "Time")
 
     def test_box(self):
         with test_utils.capture() as stdout:

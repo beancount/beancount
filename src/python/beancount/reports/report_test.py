@@ -173,5 +173,5 @@ class TestReportFunctions(unittest.TestCase):
     def test_get_html_template(self):
         template = report.get_html_template()
         self.assertTrue(template)
-        self.assertTrue(re.search('{title}', template))
-        self.assertTrue(re.search('{body}', template))
+        self.assertRegex(template, '{title}')
+        self.assertRegex(template, '{body}')

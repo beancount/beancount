@@ -36,7 +36,7 @@ class TestBookingErrors(cmptest.TestCase):
         """
         booked_entries, booking_errors = booking.book(entries, options_map)
         self.assertEqual(1, len(booking_errors))
-        self.assertTrue(re.search('Amount is zero', booking_errors[0].message))
+        self.assertRegex(booking_errors[0].message, 'Amount is zero')
 
     @parser.parse_doc()
     def test_cost_zero(self, entries, errors, options_map):
@@ -57,7 +57,7 @@ class TestBookingErrors(cmptest.TestCase):
         """
         booked_entries, booking_errors = booking.book(entries, options_map)
         self.assertEqual(1, len(booking_errors))
-        self.assertRegexpMatches(booking_errors[0].message, 'Cost is negative')
+        self.assertRegex(booking_errors[0].message, 'Cost is negative')
 
 
 
