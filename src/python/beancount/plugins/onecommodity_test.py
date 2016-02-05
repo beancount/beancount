@@ -26,7 +26,7 @@ class TestOneCommodity(unittest.TestCase):
 
         """
         self.assertEqual(1, len(errors))
-        self.assertTrue(re.search('Expenses:Restaurant', errors[0].message))
+        self.assertRegex(errors[0].message, 'Expenses:Restaurant')
 
 
     @loader.load_doc(expect_errors=True)
@@ -45,4 +45,4 @@ class TestOneCommodity(unittest.TestCase):
 
         """
         self.assertEqual(1, len(errors))
-        self.assertTrue(re.search('Expenses:Restaurant', errors[0].message))
+        self.assertRegex(errors[0].message, 'Expenses:Restaurant')

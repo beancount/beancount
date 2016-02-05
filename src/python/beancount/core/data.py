@@ -7,7 +7,6 @@ import datetime
 from collections import namedtuple
 import sys
 
-# Note: this file is mirrorred into ledgerhub. Relative imports only.
 from beancount.core.amount import Amount
 from beancount.core.number import Decimal
 from beancount.core.number import D
@@ -15,6 +14,7 @@ from beancount.core.position import Position
 from beancount.core.position import Cost
 from beancount.core.position import CostSpec
 from beancount.core.account import has_component
+from beancount.utils.bisect_key import bisect_left_with_key
 
 
 def new_directive(clsname, fields):
@@ -537,3 +537,21 @@ def find_closest(entries, filename, lineno):
                 min_diffline = diffline
                 closest_entry = entry
     return closest_entry
+
+
+def iter_entry_dates(entries, date_begin, date_end):
+    """Iterate over the entries in a date window.
+
+    Args:
+      entries: A date-sorted list of dated directives.
+      date_begin: A datetime.date instance, the first date to include.
+      date_end: A datetime.date instance, one day beyond the last date.
+    Yields:
+      Instances of the dated directives, between the dates, and in the order in
+      which they appear.
+    """
+    getdate = lambda entry: entry.date
+    index_begin = bisect_left_with_key(entries, date_begin, key=getdate)
+    index_end = bisect_left_with_key(entries, date_end, key=getdate)
+    for index in range(index_begin, index_end):
+        yield entries[index]

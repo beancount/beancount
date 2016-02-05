@@ -54,7 +54,7 @@ class TestDisplayContext(DisplayContextBaseTest):
         dcontext.update(Decimal('1.234'))
         dcontext.update(Decimal('1.23'), 'USD')
         dcontext.update(Decimal('7'), 'HOOL')
-        self.assertTrue(re.search('sign=', str(dcontext)))
+        self.assertRegex(str(dcontext), 'sign=')
 
 
 class TestDisplayContextNatural(DisplayContextBaseTest):

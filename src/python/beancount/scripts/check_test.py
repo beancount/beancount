@@ -38,5 +38,5 @@ class TestScriptCheck(test_utils.TestCase):
         with test_utils.capture('stderr') as stderr:
             result = test_utils.run_with_args(check.main, [filename])
         self.assertEqual(1, result)
-        self.assertTrue(re.search("Balance failed", stderr.getvalue()))
-        self.assertTrue(re.search("Assets:Cash", stderr.getvalue()))
+        self.assertRegex(stderr.getvalue(), "Balance failed")
+        self.assertRegex(stderr.getvalue(), "Assets:Cash")

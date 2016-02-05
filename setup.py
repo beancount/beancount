@@ -130,6 +130,7 @@ setup(
                           '*.css',
                           'third_party/*.js'],
         'beancount.reports': ['*.html'],
+        'beancount.utils.file_type': ['*'],
         },
 
     scripts=install_scripts,

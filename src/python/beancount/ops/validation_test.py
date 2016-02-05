@@ -321,11 +321,11 @@ class TestValidate(cmptest.TestCase):
         validation_errors = validation.validate(entries, options_map)
 
         self.assertEqual(2, len(errors))
-        self.assertRegexpMatches(errors[0].message, 'Reducing position results')
-        self.assertRegexpMatches(errors[1].message, 'Invalid currency')
+        self.assertRegex(errors[0].message, 'Reducing position results')
+        self.assertRegex(errors[1].message, 'Invalid currency')
 
         self.assertEqual(1, len(validation_errors))
-        self.assertRegexpMatches(validation_errors[0].message, 'Invalid currency')
+        self.assertRegex(validation_errors[0].message, 'Invalid currency')
 
 
 class TestValidateTolerances(cmptest.TestCase):

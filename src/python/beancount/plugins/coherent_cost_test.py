@@ -32,5 +32,5 @@ class TestValidateUnusedAccounts(cmptest.TestCase):
         """
         _, errors = coherent_cost.validate_coherent_cost(entries, options_map)
         self.assertEqual(1, len(errors))
-        self.assertRegexpMatches(errors[0].message, r'\bHOOL\b')
+        self.assertRegex(errors[0].message, r'\bHOOL\b')
         self.assertEqual(datetime.date(2014, 2, 1), errors[0].entry.date)

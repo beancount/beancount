@@ -56,12 +56,12 @@ class TestTestUtils(unittest.TestCase):
 
             # Check the contents of apples (with replacement of root).
             apples_content = open(apples).read()
-            self.assertTrue(re.search('open Assets:Apples', apples_content))
-            self.assertFalse(re.search('{root}', apples_content))
+            self.assertRegex(apples_content, 'open Assets:Apples')
+            self.assertNotRegex(apples_content, '{root}')
 
             # Check the contents of oranges.
             oranges_content = open(oranges).read()
-            self.assertTrue(re.search('open Assets:Oranges', oranges_content))
+            self.assertRegex(oranges_content, 'open Assets:Oranges')
 
     def test_capture(self):
         text = "b9baaa0c-0f0a-47db-bffc-a00c6f4ac1db"
@@ -130,6 +130,13 @@ class TestSkipIfRaises(unittest.TestCase):
         decorator_no_skip()
 
         @test_utils.skipIfRaises(ValueError)
+        def decorator_skip():
+            raise ValueError
+        with self.assertRaises(unittest.SkipTest):
+            decorator_skip()
+
+    def test_decorator_many(self):
+        @test_utils.skipIfRaises(ValueError, IndexError)
         def decorator_skip():
             raise ValueError
         with self.assertRaises(unittest.SkipTest):

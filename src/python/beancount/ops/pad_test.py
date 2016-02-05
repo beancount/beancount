@@ -428,8 +428,7 @@ class TestPadding(cmptest.TestCase):
           2013-10-01 balance Assets:Investments   12 MSFT
         """
         self.assertEqual([pad.PadError], list(map(type, errors)))
-        self.assertTrue(re.search('Attempt to pad an entry with cost for',
-                                  errors[0].message))
+        self.assertRegex(errors[0].message, 'Attempt to pad an entry with cost for')
 
     @loader.load_doc()
     def test_pad_parent(self, entries, errors, __):
@@ -468,7 +467,7 @@ class TestPadding(cmptest.TestCase):
 
         """
         self.assertEqual(1, len(errors))
-        self.assertTrue(re.search('Unused Pad entry', errors[0].message))
+        self.assertRegex(errors[0].message, 'Unused Pad entry')
 
     @loader.load_doc(expect_errors=True)
     def test_pad_zero_padding_issue78a(self, entries, errors, __):
@@ -485,10 +484,10 @@ class TestPadding(cmptest.TestCase):
         """
         self.assertEqual(2, len(errors))
 
-        self.assertRegexpMatches(errors[0].message, "Unused")
+        self.assertRegex(errors[0].message, "Unused")
         self.assertEqual(datetime.date(2015, 9, 15), errors[0].entry.date)
 
-        self.assertRegexpMatches(errors[1].message, "Balance failed")
+        self.assertRegex(errors[1].message, "Balance failed")
         self.assertEqual(datetime.date(2015, 11, 2), errors[1].entry.date)
 
     @loader.load_doc(expect_errors=True)
@@ -509,10 +508,10 @@ class TestPadding(cmptest.TestCase):
         """
         self.assertEqual(2, len(errors))
 
-        self.assertRegexpMatches(errors[0].message, "Unused")
+        self.assertRegex(errors[0].message, "Unused")
         self.assertEqual(datetime.date(2015, 9, 15), errors[0].entry.date)
 
-        self.assertRegexpMatches(errors[1].message, "Balance failed")
+        self.assertRegex(errors[1].message, "Balance failed")
         self.assertEqual(datetime.date(2015, 11, 2), errors[1].entry.date)
 
     @loader.load_doc(expect_errors=True)
@@ -536,5 +535,5 @@ class TestPadding(cmptest.TestCase):
 
         self.assertEqual(1, len(errors))
 
-        self.assertRegexpMatches(errors[0].message, "Balance failed")
+        self.assertRegex(errors[0].message, "Balance failed")
         self.assertEqual(datetime.date(2015, 9, 15), errors[0].entry.date)

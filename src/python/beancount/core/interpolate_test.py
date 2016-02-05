@@ -437,7 +437,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
             Assets:Cash:Checking                -5000.00 USD
         """, dedent=True)
         self.assertEqual(1, len(errors))
-        self.assertTrue(re.search('does not balance', errors[0].message))
+        self.assertRegex(errors[0].message, 'does not balance')
 
 
 class TestComputeBalance(unittest.TestCase):
@@ -687,8 +687,7 @@ class TestInferTolerances(cmptest.TestCase):
         entries, errors, options_map = loader.load_string(input_string)
         self.assertFalse(options_map["infer_tolerance_from_cost"])
         self.assertEqual(1, len(errors))
-        self.assertTrue(re.match('Transaction does not balance:.*0.20000 USD',
-                                 errors[0].message))
+        self.assertRegex(errors[0].message, 'Transaction does not balance:.*0.20000 USD')
 
         entries, errors, options_map = loader.load_string(input_option + input_string)
         self.assertTrue(options_map["infer_tolerance_from_cost"])

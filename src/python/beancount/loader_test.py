@@ -78,7 +78,7 @@ class TestLoader(unittest.TestCase):
         entries, errors, options_map = loader.load_file('/some/bullshit/filename.beancount')
         self.assertEqual([], entries)
         self.assertTrue(errors)
-        self.assertTrue(re.search('does not exist', errors[0].message))
+        self.assertRegex(errors[0].message, 'does not exist')
 
     @mock.patch.dict(loader.DEPRECATED_MODULES,
                      {"beancount.ops.auto_accounts": "beancount.plugins.auto_accounts"},
@@ -140,7 +140,7 @@ class TestLoadIncludes(unittest.TestCase):
     def test_load_file_nonexist(self):
         entries, errors, options_map = loader.load_file('/bull/bla/root.beancount')
         self.assertEqual(1, len(errors))
-        self.assertTrue(re.search('does not exist', errors[0].message))
+        self.assertRegex(errors[0].message, 'does not exist')
         self.assertEqual([], list(map(path.basename, options_map['include'])))
 
     def test_load_file_with_nonexist_include(self):
@@ -152,7 +152,7 @@ class TestLoadIncludes(unittest.TestCase):
             entries, errors, options_map = loader.load_file(
                 path.join(tmp, 'root.beancount'))
             self.assertEqual(1, len(errors))
-            self.assertTrue(re.search('does not exist', errors[0].message))
+            self.assertRegex(errors[0].message, 'does not exist')
         self.assertEqual(['root.beancount'],
                          list(map(path.basename, options_map['include'])))
 

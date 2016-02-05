@@ -167,7 +167,7 @@ class TestUnicodeErrors(unittest.TestCase):
         latin1_bytes = self.test_latin1_string.encode('latin1')
         entries, errors, _ = parser.parse_string(latin1_bytes, encoding='garbage')
         self.assertEqual(1, len(errors))
-        self.assertRegexpMatches(errors[0].message, "unknown encoding")
+        self.assertRegex(errors[0].message, "unknown encoding")
         self.assertFalse(entries)
 
 

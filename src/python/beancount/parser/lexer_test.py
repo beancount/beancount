@@ -214,8 +214,7 @@ class TestLexer(unittest.TestCase):
             ('EOL', 2, '\x00', None),
         ], tokens)
         self.assertTrue(errors)
-        self.assertTrue(re.search('out of range', errors[0].message) or
-                        re.search('month must be', errors[0].message))
+        self.assertRegex(errors[0].message, '(out of range|month must be)')
 
     @lex_tokens
     def test_date_followed_by_number(self, tokens, errors):
@@ -239,7 +238,7 @@ class TestLexer(unittest.TestCase):
             ('EOL', 2, '\x00', None),
         ], tokens)
         self.assertTrue(errors)
-        self.assertTrue(re.search('Invalid token', errors[0].message))
+        self.assertRegex(errors[0].message, 'Invalid token')
 
     @lex_tokens
     def test_invalid_directive(self, tokens, errors):
@@ -256,7 +255,7 @@ class TestLexer(unittest.TestCase):
             ('EOL', 2, '\x00', None),
             ], tokens)
         self.assertTrue(errors)
-        self.assertTrue(re.search(r'\bcheck\b', errors[0].message))
+        self.assertRegex(errors[0].message, r'\bcheck\b')
 
     def test_string_too_long_warning(self):
         # This tests the maximum string length implemented in Python, which is used
@@ -282,7 +281,7 @@ class TestLexer(unittest.TestCase):
         builder.long_string_maxlines_default = 8
         list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
         self.assertLessEqual(1, len(builder.errors))
-        self.assertRegexpMatches(builder.errors[0].message, 'String too long')
+        self.assertRegex(builder.errors[0].message, 'String too long')
 
     def test_very_long_string(self):
         # This tests lexing with a string of 256k.
@@ -493,7 +492,7 @@ class TestLexerErrors(unittest.TestCase):
         self.assertEqual([('LEX_ERROR', 1, '"', None),
                           ('EOL', 1, '\x00', None)], tokens)
         self.assertEqual(1, len(builder.errors))
-        self.assertRegexpMatches(builder.errors[0].message, "None result from lexer")
+        self.assertRegex(builder.errors[0].message, "None result from lexer")
 
     @lex_tokens
     def test_lexer_exception_DATE(self, tokens, errors):

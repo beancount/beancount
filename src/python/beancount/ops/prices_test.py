@@ -99,7 +99,7 @@ class TestPriceMap(unittest.TestCase):
             prices._lookup_price_and_inverse(price_map, ('EUR', 'USD'))
             self.fail("Exception not raised")
         except KeyError as exc:
-            self.assertTrue(re.search("('EUR', 'USD')", str(exc)))
+            self.assertRegex(str(exc), "('EUR', 'USD')")
 
     @loader.load_doc()
     def test_get_all_prices(self, entries, _, __):

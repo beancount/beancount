@@ -357,5 +357,5 @@ class TestBalancePrecision(unittest.TestCase):
           2015-05-10 balance Assets:Bank:Checking   23.03 ~ 0.01 USD
         """
         self.assertEqual(2, len(errors))
-        self.assertTrue(re.search('23.022', errors[0].message))
-        self.assertTrue(re.search('23.026', errors[1].message))
+        self.assertRegex(errors[0].message, '23.022')
+        self.assertRegex(errors[1].message, '23.026')

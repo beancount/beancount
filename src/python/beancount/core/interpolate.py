@@ -221,6 +221,7 @@ def infer_tolerances(postings, options_map, use_cost=None):
 
 
 # Meta-data field appended to automatically inserted postings.
+# (Note: A better name might have been '__interpolated__'.)
 AUTOMATIC_META = '__automatic__'
 
 # Meta-data field appended to postings inserted to absorb rounding error.

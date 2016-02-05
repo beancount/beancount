@@ -96,7 +96,7 @@ class TestJournalRender(unittest.TestCase):
         html = oss.getvalue()
         self.assertTrue(result is None)
         self.assertTrue(isinstance(html, str))
-        self.assertTrue(re.search('<table', html))
+        self.assertRegex(html, '<table')
 
     def test_html_entries_table(self):
         oss = io.StringIO()
@@ -106,9 +106,9 @@ class TestJournalRender(unittest.TestCase):
         html = oss.getvalue()
         self.assertTrue(result is None)
         self.assertTrue(isinstance(html, str))
-        self.assertTrue(re.search('<table', html))
+        self.assertRegex(html, '<table')
 
     def test_render_links(self):
         html = journal_html.render_links({'132333b32eab', '6e3ac126f337'})
-        self.assertTrue(re.search('132333b32eab', html))
-        self.assertTrue(re.search('6e3ac126f337', html))
+        self.assertRegex(html, '132333b32eab')
+        self.assertRegex(html, '6e3ac126f337')

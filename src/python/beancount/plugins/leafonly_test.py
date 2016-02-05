@@ -27,7 +27,7 @@ class TestLeafOnly(unittest.TestCase):
 
         """
         self.assertEqual(1, len(errors))
-        self.assertTrue(re.search('Expenses:Food', errors[0].message))
+        self.assertRegex(errors[0].message, 'Expenses:Food')
 
     @loader.load_doc(expect_errors=True)
     def test_leaf_only2(self, _, errors, __):
@@ -48,4 +48,4 @@ class TestLeafOnly(unittest.TestCase):
         # Open directive. The problem is that 'open_entry' is None.
         self.assertEqual(2, len(errors))
         for error in errors:
-            self.assertTrue(re.search('Expenses:Food', error.message))
+            self.assertRegex(error.message, 'Expenses:Food')

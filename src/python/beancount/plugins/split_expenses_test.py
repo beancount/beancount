@@ -117,10 +117,10 @@ class TestSplitReports(unittest.TestCase):
         with test_utils.capture() as stdout:
             test_utils.run_with_args(split_expenses.main, args + [filename])
         output = stdout.getvalue()
-        self.assertRegexpMatches(output, "Participant")
-        self.assertRegexpMatches(output, "Expenses:Food:Restaurant")
-        self.assertRegexpMatches(output, "description")
-        self.assertRegexpMatches(output, "balance")
+        self.assertRegex(output, "Participant")
+        self.assertRegex(output, "Expenses:Food:Restaurant")
+        self.assertRegex(output, "description")
+        self.assertRegex(output, "balance")
 
     def test_split_reports(self):
         self.run_split_reports([])

@@ -306,7 +306,7 @@ class TestPushPopTag(unittest.TestCase):
           pushtag #trip-to-nowhere
         """
         self.assertEqual(1, len(errors))
-        self.assertRegexpMatches(errors[0].message, 'Unbalanced pushed tag')
+        self.assertRegex(errors[0].message, 'Unbalanced pushed tag')
 
     @parser.parse_doc(expect_errors=True)
     def test_pop_invalid_tag(self, entries, errors, _):
@@ -314,7 +314,7 @@ class TestPushPopTag(unittest.TestCase):
           poptag #trip-to-nowhere
         """
         self.assertTrue(errors)
-        self.assertTrue(re.search('absent tag', errors[0].message))
+        self.assertRegex(errors[0].message, 'absent tag')
 
 
 class TestPushPopMeta(unittest.TestCase):
@@ -380,7 +380,7 @@ class TestPushPopMeta(unittest.TestCase):
           popmeta location:
         """
         self.assertEqual(1, len(errors))
-        self.assertRegexpMatches(errors[0].message,
+        self.assertRegex(errors[0].message,
                                  "Attempting to pop absent metadata key")
 
     @parser.parse_doc(expect_errors=True)
@@ -389,7 +389,7 @@ class TestPushPopMeta(unittest.TestCase):
           pushmeta location: "Lausanne, Switzerland"
         """
         self.assertEqual(1, len(errors))
-        self.assertRegexpMatches(errors[0].message,
+        self.assertRegex(errors[0].message,
                                  "Unbalanced metadata key")
 
 
@@ -444,7 +444,7 @@ class TestSyntaxErrors(unittest.TestCase):
         # Make sure at least one error is reported.
         self.assertEqual(1, len(errors))
         self.assertIsInstance(errors[0], lexer.LexerError)
-        self.assertRegexpMatches(errors[0].message, 'Invalid token')
+        self.assertRegex(errors[0].message, 'Invalid token')
 
     @parser.parse_doc()
     def test_no_final_newline(self, entries, errors, _):
@@ -646,7 +646,7 @@ class TestMiscOptions(unittest.TestCase):
         option "plugin_processing_mode" "invalid"
         """
         self.assertEqual(1, len(errors))
-        self.assertTrue(re.match("Error for option", errors[0].message))
+        self.assertRegex(errors[0].message, "Error for option")
         self.assertEqual("default", options_map['plugin_processing_mode'])
 
     @parser.parse_doc(expect_errors=True)
@@ -655,7 +655,7 @@ class TestMiscOptions(unittest.TestCase):
         option "account_rounding" "Equity:RoundingError"
         """
         self.assertEqual(1, len(errors))
-        self.assertRegexpMatches(errors[0].message, "should now refer to.*subaccount")
+        self.assertRegex(errors[0].message, "should now refer to.*subaccount")
         self.assertEqual(options_map['account_rounding'], 'RoundingError')
 
 
@@ -676,7 +676,7 @@ class TestToleranceOptions(unittest.TestCase):
           option "tolerance" "0.05"
         """
         self.assertEqual(D("0.05"), options_map['tolerance'])
-        self.assertRegexpMatches(errors[0].message, "has been deprecated")
+        self.assertRegex(errors[0].message, "has been deprecated")
 
     @parser.parse_doc()
     def test_default_tolerance(self, _, __, options_map):
@@ -699,7 +699,7 @@ class TestDeprecatedOptions(unittest.TestCase):
           option "plugin" "beancount.plugins.module_name"
         """
         self.assertEqual(1, len(errors))
-        self.assertTrue(re.search('option is deprecated', errors[0].message))
+        self.assertRegex(errors[0].message, 'option is deprecated')
 
     @parser.parse_doc(expect_errors=True)
     def test_deprecated_tolerance(self, _, errors, __):
@@ -707,7 +707,7 @@ class TestDeprecatedOptions(unittest.TestCase):
           option "tolerance" "0.00005"
         """
         self.assertEqual(1, len(errors))
-        self.assertTrue(re.search('option has been deprecated', errors[0].message))
+        self.assertRegex(errors[0].message, 'option has been deprecated')
 
 
 class TestParserLinks(unittest.TestCase):
@@ -1004,7 +1004,7 @@ class TestParseLots(unittest.TestCase):
             Assets:Invest:Cash  -45.23 USD
         """
         self.assertEqual(1, len(errors))
-        self.assertTrue(re.search("Duplicate cost", errors[0].message))
+        self.assertRegex(errors[0].message, "Duplicate cost")
 
     @parser.parse_doc(expect_errors=True)
     def test_cost_repeated_date(self, entries, errors, _):
@@ -1014,7 +1014,7 @@ class TestParseLots(unittest.TestCase):
             Assets:Invest:Cash   -1 AAPL
         """
         self.assertEqual(1, len(errors))
-        self.assertTrue(re.search("Duplicate date", errors[0].message))
+        self.assertRegex(errors[0].message, "Duplicate date")
 
     @parser.parse_doc(expect_errors=True)
     def test_cost_repeated_label(self, entries, errors, _):
@@ -1094,8 +1094,8 @@ class TestParseLots(unittest.TestCase):
             Assets:Invest:Cash   -45.23 USD
         """
         self.assertEqual(2, len(errors))
-        self.assertTrue(re.search("slash", errors[0].message))
-        self.assertTrue(re.search("slash", errors[1].message))
+        self.assertRegex(errors[0].message, "slash")
+        self.assertRegex(errors[1].message, "slash")
         posting = entries[0].postings[0]
         self.assertEqual(A('1.1 AAPL'), posting.units)
         self.assertEqual(CostSpec(D('45.23'), None, 'USD',
@@ -1185,7 +1185,7 @@ class TestTotalsAndSigns(unittest.TestCase):
             Assets:Investments:MSFT      -10 MSFT @ -200.00 USD
             Assets:Investments:Cash  2000.00 USD
         """
-        self.assertTrue(re.search('Negative.*allowed', errors[0].message))
+        self.assertRegex(errors[0].message, 'Negative.*allowed')
 
     @parser.parse_doc()
     def test_total_price_positive(self, entries, errors, _):
@@ -1216,7 +1216,7 @@ class TestTotalsAndSigns(unittest.TestCase):
             Assets:Investments:MSFT         10 MSFT @@ -2000.00 USD
             Assets:Investments:Cash   20000.00 USD
         """
-        self.assertTrue(re.search('Negative.*allowed', errors[0].message))
+        self.assertRegex(errors[0].message, 'Negative.*allowed')
 
 
 class TestAllowNegativePrices(unittest.TestCase):
@@ -1708,7 +1708,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
         """
         self.assertEqual(0, len(entries))
         self.assertEqual(1, len(errors))
-        self.assertRegexpMatches(errors[0].message, r"syntax error, unexpected RPAREN")
+        self.assertRegex(errors[0].message, r"syntax error, unexpected RPAREN")
 
     @parser.parse_doc(expect_errors=True)
     def test_lexer_invalid_token__recovery(self, entries, errors, _):
@@ -1720,7 +1720,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
           2000-01-02 open Assets:Something
         """, entries)
         self.assertEqual(1, len(errors))
-        self.assertRegexpMatches(errors[0].message, r"syntax error, unexpected RPAREN")
+        self.assertRegex(errors[0].message, r"syntax error, unexpected RPAREN")
 
     @parser.parse_doc(expect_errors=True)
     def test_lexer_exception(self, entries, errors, _):
@@ -1729,7 +1729,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
         """
         self.assertEqual(0, len(entries))
         self.assertEqual(1, len(errors))
-        self.assertRegexpMatches(errors[0].message, 'month must be in 1..12')
+        self.assertRegex(errors[0].message, 'month must be in 1..12')
 
     @parser.parse_doc(expect_errors=True)
     def test_lexer_exception__recovery(self, entries, errors, _):
@@ -1742,7 +1742,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
         """, entries)
         self.assertEqual(1, len(entries))
         self.assertEqual(1, len(errors))
-        self.assertRegexpMatches(errors[0].message, 'month must be in 1..12')
+        self.assertRegex(errors[0].message, 'month must be in 1..12')
 
     def test_lexer_errors_in_postings(self):
         txn_strings = textwrap.dedent("""
@@ -1791,7 +1791,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
             """, entries)
             self.assertEqual(1, len(entries))
             self.assertEqual(1, len(errors))
-            self.assertRegexpMatches(errors[0].message,
+            self.assertRegex(errors[0].message,
                                      '(Invalid token|unexpected RPAREN)')
 
     @parser.parse_doc(expect_errors=True)
@@ -1801,7 +1801,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
         """
         self.assertEqual(0, len(entries))
         self.assertEqual(1, len(errors))
-        self.assertRegexpMatches(errors[0].message, r"syntax error")
+        self.assertRegex(errors[0].message, r"syntax error")
 
     @parser.parse_doc(expect_errors=True)
     def test_grammar_syntax_error__recovery(self, entries, errors, _):
@@ -1811,7 +1811,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
           2000-01-03 open Assets:After
         """
         self.assertEqual(1, len(errors))
-        self.assertRegexpMatches(errors[0].message, r"syntax error")
+        self.assertRegex(errors[0].message, r"syntax error")
         self.assertEqualEntries("""
           2000-01-01 open Assets:Before
           2000-01-03 open Assets:After
@@ -1824,7 +1824,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
           2000-01-02 open Assets:Something
         """
         self.assertEqual(1, len(errors))
-        self.assertRegexpMatches(errors[0].message, r"syntax error")
+        self.assertRegex(errors[0].message, r"syntax error")
         self.assertEqual(1, len(entries))
         self.assertEqualEntries("""
           2000-01-02 open Assets:Something
@@ -1841,7 +1841,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
         """
         self.assertEqual(2, len(errors))
         for error in errors:
-            self.assertRegexpMatches(error.message, r"syntax error")
+            self.assertRegex(error.message, r"syntax error")
         self.assertEqual(3, len(entries))
         self.assertEqualEntries("""
           2000-01-01 open Assets:Before
@@ -1851,7 +1851,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
 
     def check_entries_errors(self, entries, errors):
         self.assertEqual(1, len(errors))
-        self.assertRegexpMatches(errors[0].message, 'Patched exception')
+        self.assertRegex(errors[0].message, 'Patched exception')
         self.assertEqual(2, len(entries))
 
     @mock.patch('beancount.parser.grammar.Builder.pushtag', raise_exception)

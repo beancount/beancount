@@ -1,0 +1,33 @@
+<?xml version='1.0' encoding='ISO-8859-1'?>
+
+<rip>
+   <album>
+      <title>Spirit of Eden</title>
+      <artist>Talk Talk</artist>
+      <reldate>1997-09</reldate>
+      <catalogs>
+         <catalog name="musicbrainz">f9bd145d-7b0e-4440-b572-c21501c9fb74</catalog>
+         <catalog name="amazon">B000005RS5</catalog>
+      </catalogs>
+      <disc no="1">
+         <song no="1">
+            <title>The Rainbow</title>
+         </song>
+         <song no="2">
+            <title>Eden</title>
+         </song>
+         <song no="3">
+            <title>Desire</title>
+         </song>
+         <song no="4">
+            <title>Inheritance</title>
+         </song>
+         <song no="5">
+            <title>I Believe in You</title>
+         </song>
+         <song no="6">
+            <title>Wealth</title>
+         </song>
+      </disc>
+   </album>
+</rip>

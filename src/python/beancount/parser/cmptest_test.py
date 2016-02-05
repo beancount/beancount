@@ -23,7 +23,7 @@ class TestCompareTestFunctions(unittest.TestCase):
                 Expenses:Food:Grocery
 
             """)
-        self.assertRegexpMatches(str(assctxt.exception), "may not use interpolation")
+        self.assertRegex(str(assctxt.exception), "may not use interpolation")
 
 
 class TestTestCase(cmptest.TestCase):
