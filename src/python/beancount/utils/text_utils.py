@@ -2,10 +2,8 @@
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import datetime
 import tempfile
 import re
-from collections import defaultdict
 
 
 def replace_number(match):

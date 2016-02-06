@@ -3,29 +3,13 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import re
 import textwrap
 
-from beancount.core.number import D
 from beancount.parser import parser
 from beancount.parser import cmptest
 from beancount.parser import booking
+from beancount.parser import booking_simple
 
 
-class TestSimpleBooking(cmptest.TestCase):
-
-    def test_simple_interpolation(self):
-        entries, _, options_map = parser.parse_string("""
-          2013-05-01 open Assets:Bank:Investing
-          2013-05-01 open Equity:Opening-Balances
-
-          2013-05-02 *
-            Assets:Bank:Investing                 5 HOOL {501 USD}
-            Equity:Opening-Balances
-        """)
-        interpolated_entries, errors = booking.simple_interpolation(entries, options_map)
-        self.assertFalse(errors)
-        self.assertEqual(D('-2505'), interpolated_entries[-1].postings[-1].position.number)
-
-
-class TestBookingErrors(cmptest.TestCase):
+class TestInvalidAmountsErrors(cmptest.TestCase):
 
     @parser.parse_doc()
     def test_zero_amount(self, entries, errors, options_map):
@@ -60,11 +44,7 @@ class TestBookingErrors(cmptest.TestCase):
         self.assertRegex(booking_errors[0].message, 'Cost is negative')
 
 
-
-
-
-
-class TestValidateInventoryBooking(cmptest.TestCase):
+class TestBookingValidation(cmptest.TestCase):
 
     def setUp(self):
         self.input_str = textwrap.dedent("""
@@ -94,9 +74,13 @@ class TestValidateInventoryBooking(cmptest.TestCase):
 
         """)
 
+    def convert_and_validate(self, entries, options_map):
+        entries, _ = booking_simple.convert_lot_specs_to_lots(entries)
+        return booking.validate_inventory_booking(entries, options_map)
+
     def do_validate_inventory_booking(self, input_str):
         entries, errors, options_map = parser.parse_string(input_str)
-        validation_errors = booking.validate_inventory_booking(entries, options_map)
+        validation_errors = self.convert_and_validate(entries, options_map)
         self.assertEqual([], list(map(type, validation_errors)))
 
     def test_validate_inventory_booking(self):
@@ -116,7 +100,7 @@ class TestValidateInventoryBooking(cmptest.TestCase):
             Assets:Bank:Investing                -1 HOOL {501 USD}
             Equity:Opening-Balances             501 USD
         """
-        validation_errors = booking.validate_inventory_booking(entries, options_map)
+        validation_errors = self.convert_and_validate(entries, options_map)
         self.assertEqual([], list(map(type, validation_errors)))
 
     @parser.parse_doc()
@@ -130,7 +114,7 @@ class TestValidateInventoryBooking(cmptest.TestCase):
             Assets:Bank:Investing                -1 HOOL {502 USD}
             Equity:Opening-Balances           -2003 USD
         """
-        validation_errors = booking.validate_inventory_booking(entries, options_map)
+        validation_errors = self.convert_and_validate(entries, options_map)
         self.assertEqual([booking.BookingError], list(map(type, validation_errors)))
 
     @parser.parse_doc()
@@ -148,7 +132,7 @@ class TestValidateInventoryBooking(cmptest.TestCase):
             Assets:Bank:Investing                -1 HOOL {502 USD}
             Equity:Opening-Balances             502 USD
         """
-        validation_errors = booking.validate_inventory_booking(entries, options_map)
+        validation_errors = self.convert_and_validate(entries, options_map)
         self.assertEqual([booking.BookingError], list(map(type, validation_errors)))
 
     @parser.parse_doc()
@@ -167,5 +151,5 @@ class TestValidateInventoryBooking(cmptest.TestCase):
             Assets:Bank:Investing                -6 HOOL {502 USD}
             Equity:Opening-Balances            3012 USD
         """
-        validation_errors = booking.validate_inventory_booking(entries, options_map)
+        validation_errors = self.convert_and_validate(entries, options_map)
         self.assertEqual([booking.BookingError], list(map(type, validation_errors)))

@@ -6,6 +6,130 @@ Note: This file contains only changes in the 'default' branch.
 
 2016-02-06
 
+  - IMPORTANT API CHANGES FOLLOW:
+
+    I made some important changes to the following classes:
+
+      beancount.core.position.Position
+      beancount.core.inventory.Inventory
+      beancount.core.data.Posting
+
+    "Position" objects have been restructured to reflect the structure implied
+    by the syntax. Instead of a .number (Decimal) and .lot (Lot) objects, a
+    Position now has a .units (Amount) and .cost (Cost) objects.
+
+    The "Lot" class has been removed; it has been replaced by a "Cost" class
+    with .number (Decimal), .currency (string), .date (datetime.date), .label
+    (string) attributes.
+
+    The "Inventory" class is a  list of "Position" objects, and as such it has
+    received corresponding adjustments and minor changes.
+
+    "Posting" objects do not contain a .position attribute anymore. Instead, the
+    data structure has been flattened to contain .units and .cost objects
+    directly. As a result, a Posting acts a bit like a subclass of a Position
+    rather than using composition to contain one.
+
+    During the parsing phase, a "Posting" object's .cost attribute does not
+    point to a "Cost" instance, but rather to a "CostSpec" instance, which
+    reflects the unresolved and partially incomplete lot specification from the
+    input syntax that needs to get resolved to a particular lot during the new
+    booking process.
+
+    Here's a pictorial representation of changes. Before we had:
+
+     Assets:Checking    -40    QQQ       {66.32 USD, 2015-12-14} @ 70.32 USD
+     `---account---'  `number' `--------------lot--------------' `--price--'
+                               `currency'`---cost--' `--date--'
+
+        posting                     (Posting)
+            .account                (str)
+            .position               (Position)
+                .number             (Decimal)
+                .lot                (Lot)
+                    .currency       (str)
+                    .cost           (Amount)
+                        .number     (Decimal)
+                        .currency   (str)
+                    .lot_date       (datetime.date)
+            .price                  (Amount)
+                .number             (Decimal)
+                .currency           (str)
+
+
+    After the changes we have something that looks more like the input:
+
+     Assets:Checking  -40 QQQ   {66.32 USD,   2015-12-14, "0d6f0"} @ 70.32 USD
+     `---account---' `-units-' `------------cost-----------------' `--price--'
+                                number currency date       label
+
+        posting             (Posting)
+            .account        (str)
+            .units          (Amount)
+                .number     (Decimal)
+                .currency   (str)
+            .cost           (Cost, CostSpec, or None)
+                .number     (Decimal)
+                .currency   (str)
+                .date       (datetime.date, or None)
+                .label      (str, or None)
+            .price          (Amount, or None)
+                .number     (Decimal)
+                .currency   (str)
+
+    And field-by-field conversions:
+
+        posting.account                    -> posting.account
+        posting.position.number            -> posting.units.number
+        posting.position.lot.currency      -> posting.units.currency
+        posting.position.lot.cost.number   -> posting.cost.number
+        posting.position.lot.cost.currency -> posting.cost.currency
+        posting.position.lot.lot_date      -> posting.cost.date
+        (none)                             -> posting.cost.label
+        posting.price.number               -> posting.price.number
+        posting.price.currency             -> posting.price.currency
+
+    Notes:
+
+    * These changes are mostly driven by the need for the parser to output
+      incomplete cost specifications. The booking of lots against existing
+      inventory is isolated in a beancount.parser.booking and before booking we
+      need to be able to represent missing values from the input syntax, since
+      the booking process is able to interpolate and fill in these missing
+      values. It was required to make important changes to the data structures
+      for this reason. The parser outputs 'posting.cost' with an instance of a
+      new "CostSpec" class, not "Cost". After booking, all the postings's costs
+      are replaced by instances of "Cost" and "CostSpec" is gone.
+
+    * This representation is much closer to the syntax. It's also flatter and
+      simpler. The original representation's design was driven by an old idea
+      that the lots were to be used as the key in Inventory mappings, but as it
+      turns out, operations on lots are just as well implemented with an
+      association list and performance isn't a problem. Moreover, lots with a
+      cost are never merged using such a mapping, only reduced against, so this
+      was an unnecessary distraction.
+
+    * If you were creating Position objects in plugins or other code, please
+      look at the new interface and make necessary changes to your code. You can
+      create new Position objects from a pair of Amount and Cost objects.
+
+
+  - beancount.core.position.lot_currency_pair() has been converted to
+    beancount.core.position.Position.currency_pair().
+
+  - Renamed beancount.core.position.Position.cost() to
+    beancount.core.position.Position.at_cost() due to the conflict resulting
+    from the Position class changes.
+
+  - There is a new option "booking_method" which should be set to the value
+    "SIMPLE" to maintain the current booking algorithm (it's the default if left
+    unset), but which can be set to "FULL" to enable the yet-unreleased, new
+    experimental booking method. Do this at your own risk; this is not ready for
+    public use, not effectively working yet.
+
+
+2016-02-05
+
   - Fixed bug with query parser: a single dot (.) would be matched as a number.
     It should require at least some digits.
 

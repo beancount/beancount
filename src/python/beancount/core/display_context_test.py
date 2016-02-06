@@ -1,7 +1,6 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import unittest
-import re
 
 from beancount.core import display_context
 from beancount.core.number import Decimal

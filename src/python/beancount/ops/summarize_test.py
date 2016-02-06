@@ -856,7 +856,7 @@ class TestConversions(cmptest.TestCase):
         self.assertEqualEntries(self.entries, conversion_entries)
 
         converted_balance = interpolate.compute_entries_balance(conversion_entries,
-                                                             date=date)
+                                                                date=date)
         self.assertTrue(converted_balance.cost().is_empty())
 
     def test_conversions__not_needed(self):

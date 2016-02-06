@@ -1,10 +1,6 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import unittest
-
 from beancount import loader
-from beancount.parser import parser
-from beancount.parser import printer
 from beancount.parser import cmptest
 from beancount.core import data
 from beancount.ops import compress

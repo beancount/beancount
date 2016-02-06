@@ -14,7 +14,7 @@ import collections
 from beancount.core.data import Transaction
 from beancount.core.data import Posting
 from beancount.core.data import Decimal
-from beancount.core.position import Position
+from beancount.core.amount import Amount
 from beancount.core import data
 
 
@@ -85,9 +85,13 @@ def merge(entries, prototype_txn):
     for entry in data.filter_txns(entries):
         for posting in entry.postings:
             # We strip the number off the posting to act as an aggregation key.
-            lot = posting.position.lot
-            key = Posting(posting.account, lot, posting.price, posting.flag, None)
-            postings_map[key] += posting.position.number
+            key = Posting(posting.account,
+                          Amount(None, posting.units.currency),
+                          posting.cost,
+                          posting.price,
+                          posting.flag,
+                          None)
+            postings_map[key] += posting.units.number
 
     # Create a new transaction with the aggregated postings.
     new_entry = Transaction(prototype_txn.meta,
@@ -100,14 +104,13 @@ def merge(entries, prototype_txn):
     # Sort for at least some stability of output.
     sorted_items = sorted(postings_map.items(),
                           key=lambda item: (item[0].account,
-                                            item[0].position.currency,
+                                            item[0].units.currency,
                                             item[1]))
 
     # Issue the merged postings.
     for posting, number in sorted_items:
-        lot = posting.position
-        position = Position(lot, number)
+        units = Amount(number, posting.units.currency)
         new_entry.postings.append(
-            Posting(posting.account, position, posting.price, posting.flag, posting.meta))
+            Posting(posting.account, units, posting.cost, posting.price, posting.flag, posting.meta))
 
     return new_entry

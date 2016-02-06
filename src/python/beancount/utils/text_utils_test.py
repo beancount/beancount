@@ -3,7 +3,6 @@ Tests for text_utils.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import datetime
 import tempfile
 import unittest
 

@@ -517,28 +517,31 @@ class TestHoldings(unittest.TestCase):
         self.assertTrue(isinstance(posting, data.Posting))
 
         expected_position = position.from_string('100 MSFT {54.34 USD}')
-        self.assertEqual(expected_position, posting.position)
+        self.assertEqual(expected_position, position.Position(posting.units, posting.cost))
 
         expected_price = A('60.00 USD')
         self.assertEqual(expected_price, posting.price)
 
     def test_get_pholding_market_value(self):
         posting = data.Posting('Account',
-                               position.from_string('100 MSFT {54.34 USD}'),
+                               A('100 MSFT'),
+                               position.Cost(D('54.34'), 'USD', None, None),
                                A('60.00 USD'),
                                None, None)
         self.assertEqual(A('6000.00 USD'),
                          holdings.get_pholding_market_value(posting))
 
         posting = data.Posting('Account',
-                               position.from_string('100 MSFT {54.34 USD}'),
+                               A('100 MSFT'),
+                               position.Cost(D('54.34'), 'USD', None, None),
                                None,
                                None, None)
         self.assertEqual(A('5434.00 USD'),
                          holdings.get_pholding_market_value(posting))
 
         posting = data.Posting('Account',
-                               position.from_string('1000.00 USD'),
+                               A('1000.00 USD'),
+                               None,
                                None,
                                None, None)
         self.assertEqual(A('1000.00 USD'),
@@ -546,14 +549,16 @@ class TestHoldings(unittest.TestCase):
 
         with self.assertRaises(AssertionError):
             posting = data.Posting('Account',
-                                   position.from_string('1000.00 USD'),
+                                   A('1000.00 USD'),
+                                   None,
                                    A('60.00 USD'),
                                    None, None)
             holdings.get_pholding_market_value(posting)
 
         with self.assertRaises(AssertionError):
             posting = data.Posting('Account',
-                                   position.from_string('1000.00 USD {1.25 CAD}'),
+                                   A('1000.00 USD'),
+                                   position.Cost(D('1.25'), 'CAD', None, None),
                                    A('60.00 USD'),
                                    None, None)
             holdings.get_pholding_market_value(posting)

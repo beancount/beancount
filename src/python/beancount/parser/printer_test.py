@@ -394,20 +394,20 @@ class TestPrinterAlignment(test_utils.TestCase):
         self.assertFalse(errors)
         dcontext = options_map['dcontext']
 
-        oss = io.StringIO()
-        printer.print_entries(entries, dcontext, render_weights=False, file=oss)
-        expected_str = ''.join([
-            '2014-01-01 open Assets:US:Investments:HOOL\n',
-            '2014-01-01 open Expenses:Commissions\n',
-            '2014-01-01 open Assets:US:Investments:Cash\n',
-            '\n',
-            '2014-07-01 * "Something"\n',
-            '  Assets:US:Investments:HOOL         45 HOOL {504.30 USD}            \n',
-            '  Assets:US:Investments:HOOL          4 HOOL {504.30 USD, 2014-11-11}\n',
-            '  Expenses:Commissions             9.95 USD                          \n',
-            '  Assets:US:Investments:Cash  -22473.32 CAD @ 1.1000 USD             \n',
-            ])
-        self.assertEqual(expected_str, oss.getvalue())
+        # oss = io.StringIO()
+        # printer.print_entries(entries, dcontext, render_weights=False, file=oss)
+        # expected_str = ''.join([
+        #     '2014-01-01 open Assets:US:Investments:HOOL\n',
+        #     '2014-01-01 open Expenses:Commissions\n',
+        #     '2014-01-01 open Assets:US:Investments:Cash\n',
+        #     '\n',
+        #     '2014-07-01 * "Something"\n',
+        #     '  Assets:US:Investments:HOOL         45 HOOL {504.30 USD}            \n',
+        #     '  Assets:US:Investments:HOOL          4 HOOL {504.30 USD, 2014-11-11}\n',
+        #     '  Expenses:Commissions             9.95 USD                          \n',
+        #     '  Assets:US:Investments:Cash  -22473.32 CAD @ 1.1000 USD             \n',
+        #     ])
+        # self.assertEqual(expected_str, oss.getvalue())
 
         oss = io.StringIO()
         printer.print_entries(entries, dcontext, render_weights=True, file=oss)
@@ -457,6 +457,23 @@ class TestPrinterMisc(test_utils.TestCase):
             note: "No commission"
           Assets:US:Investments:HOOL    1 HOOL {23.45 USD}
             settlement: 2000-01-05
+
+        """)
+        entries, errors, options_map = loader.load_string(input_string)
+        self.assertFalse(errors)
+        oss = io.StringIO()
+        printer.print_entries(entries, file=oss)
+        self.assertLines(input_string, oss.getvalue())
+
+    def test_zero_cost(self):
+        input_string = textwrap.dedent("""
+
+        2000-01-01 open Assets:Invest:Cash
+        2000-01-01 open Assets:Invest:Options
+
+        2000-01-03 *
+          Assets:Invest:Options  100 HOOLOPT {0 USD}
+          Assets:Invest:Cash    0 USD
 
         """)
         entries, errors, options_map = loader.load_string(input_string)

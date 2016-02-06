@@ -47,3 +47,16 @@ class TestToDecimal(unittest.TestCase):
         self.assertEqual(D('130'), number.round_to(D('135.12987'), D('10')))
         self.assertEqual(D('-130'), number.round_to(D('-135.12345'), D('10')))
         self.assertEqual(D('-130'), number.round_to(D('-135.12987'), D('10')))
+
+    def test_same_sign(self):
+        self.assertTrue(number.same_sign(D('135.12345'), D('234.20')))
+        self.assertFalse(number.same_sign(D('135.12345'), D('-234.20')))
+        self.assertFalse(number.same_sign(D('-135.12345'), D('234.20')))
+        self.assertTrue(number.same_sign(D('-135.12345'), D('-234.20')))
+
+        self.assertTrue(number.same_sign(D('135.12345'), ZERO))
+        self.assertTrue(number.same_sign(ZERO, D('135.12345')))
+        self.assertTrue(number.same_sign(ZERO, ZERO))
+
+        self.assertFalse(number.same_sign(D('-135.12345'), ZERO))
+        self.assertFalse(number.same_sign(ZERO, D('-135.12345')))

@@ -11,10 +11,11 @@ from os import path
 from datetime import date
 
 from beancount.core.number import ZERO
+from beancount.core.number import MISSING
+from beancount.core.number import Decimal
 from beancount.core.amount import Amount
 from beancount.core import display_context
-from beancount.core.position import LotSpec
-from beancount.core.position import Position
+from beancount.core.position import CostSpec
 from beancount.core.data import Transaction
 from beancount.core.data import Balance
 from beancount.core.data import Open
@@ -400,7 +401,8 @@ class Builder(lexer.LexBuilder):
         """
         # Update the mapping that stores the parsed precisions.
         # Note: This is relatively slow, adds about 70ms because of number.as_tuple().
-        self.dcupdate(number, currency)
+        if isinstance(number, Decimal) and currency:
+            self.dcupdate(number, currency)
         return Amount(number, currency)
 
     def compound_amount(self, number_per, number_total, currency):
@@ -412,43 +414,43 @@ class Builder(lexer.LexBuilder):
           currency: a currency object (a str, really, see CURRENCY above)
         Returns:
           A triple of (Decimal, Decimal, currency string) to be processed further when
-          creating a Lot instance.
+          creating the final per-unit cost number.
         """
         # Update the mapping that stores the parsed precisions.
         # Note: This is relatively slow, adds about 70ms because of number.as_tuple().
-        if number_per is not None:
+        if isinstance(number_per, Decimal):
             self.dcupdate(number_per, currency)
-        if number_total is not None:
+        if isinstance(number_total, Decimal):
             self.dcupdate(number_total, currency)
 
         # Note that we are not able to reduce the value to a number per-share
         # here because we only get the number of units in the full lot spec.
         return CompoundAmount(number_per, number_total, currency)
 
-    def lot_merge(self, _):
+    def cost_merge(self, _):
         """Create a 'merge cost' token."""
         return MERGE_COST
 
-    def lot_spec(self, lot_comp_list):
-        """Process a lot_spec grammar rule.
+    def cost_spec(self, cost_comp_list):
+        """Process a cost_spec grammar rule.
 
         Args:
-          lot_comp_list: A list of CompoundAmount, a datetime.date, or
+          cost_comp_list: A list of CompoundAmount, a datetime.date, or
             label ID strings.
         Returns:
-          A lot-info tuple of CompoundAmount, lot date and label string. Any of these
-          may be None.
+          A cost-info tuple of CompoundAmount, lot date and label string. Any of these
+          may be set to a sentinel indicating "unset".
         """
-        if lot_comp_list is None:
-            return LotSpec(None, None, None, None, None)
-        assert isinstance(lot_comp_list, list), (
-            "Internal error in parser: {}".format(lot_comp_list))
+        if not cost_comp_list:
+            return CostSpec(MISSING, None, MISSING, None, None, False)
+        assert isinstance(cost_comp_list, list), (
+            "Internal error in parser: {}".format(cost_comp_list))
 
         compound_cost = None
-        lot_date = None
+        date_ = None
         label = None
         merge = None
-        for comp in lot_comp_list:
+        for comp in cost_comp_list:
             if isinstance(comp, CompoundAmount):
                 if compound_cost is None:
                     compound_cost = comp
@@ -458,8 +460,8 @@ class Builder(lexer.LexBuilder):
                                     "Duplicate cost: '{}'.".format(comp), None))
 
             elif isinstance(comp, date):
-                if lot_date is None:
-                    lot_date = comp
+                if date_ is None:
+                    date_ = comp
                 else:
                     self.errors.append(
                         ParserError(self.get_lexer_location(),
@@ -483,47 +485,29 @@ class Builder(lexer.LexBuilder):
                         ParserError(self.get_lexer_location(),
                                     "Duplicate label: '{}'.".format(comp), None))
 
-        if label is not None:
-            self.errors.append(
-                ParserError(self.get_lexer_location(),
-                            "Labels not supported yet: '{}'.".format(label), None))
+        # If there was a cost_comp_list, thus a "{...}" cost basis spec, you must
+        # indicate that by creating a CompoundAmount(), always.
 
-        if merge is not None:
-            self.errors.append(
-                ParserError(self.get_lexer_location(),
-                            "Merge-cost not supported yet.", None))
+        if compound_cost is None:
+            number_per, number_total, currency = MISSING, None, MISSING
+        else:
+            number_per, number_total, currency = compound_cost
 
-        return LotSpec(None, compound_cost, lot_date, label, merge)
+        if merge is None:
+            merge = False
 
-    def lot_spec_total_legacy(self, cost, lot_date):
+        return CostSpec(number_per, number_total, currency, date_, label, merge)
+
+    def cost_spec_total_legacy(self, cost, date):
         """Process a deprecated legacy 'total cost' specification.
 
         Args:
           cost: An instance of Amount, the total cost.
-          lot_date: A datetime.date instance, the lot date for the lot.
+          date: A datetime.date instance, the lot date for the lot.
         Returns:
-          Same as lot_spec().
+          Same as cost_spec().
         """
-        compound_cost = CompoundAmount(ZERO, cost.number, cost.currency)
-        return LotSpec(None, compound_cost, lot_date, None, None)
-
-    def position(self, filename, lineno, amount, lot_spec):
-        """Process a position grammar rule.
-
-        Args:
-          filename: The current filename.
-          lineno: The current line number.
-          amount: An instance of Amount for the position.
-          lot_spec: An instance of LotSpec.
-        Returns:
-          A new instance of Position.
-        """
-        if lot_spec is None:
-            lot_spec = LotSpec(None, None, None, None, None)
-        # FIXME: Remove this assert for performance reasons.
-        assert isinstance(lot_spec, LotSpec), (
-            "Invalid type for Position.lot: %s (%s)".format(type(lot_spec), lot_spec))
-        return Position(lot_spec._replace(currency=amount.currency), amount.number)
+        return CostSpec(ZERO, cost.number, cost.currency, date, None, False)
 
     def handle_list(self, object_list, new_object):
         """Handle a recursive list grammar rule, generically.
@@ -734,7 +718,7 @@ class Builder(lexer.LexBuilder):
         """
         return KeyValue(key, value)
 
-    def posting(self, filename, lineno, account, position, price, istotal, flag):
+    def posting(self, filename, lineno, account, units, cost, price, istotal, flag):
         """Process a posting grammar rule.
 
         Args:
@@ -751,7 +735,7 @@ class Builder(lexer.LexBuilder):
         """
         # Prices may not be negative.
         if not __allow_negative_prices__:
-            if price and price.number is not None and price.number < ZERO:
+            if price and isinstance(price.number, Decimal) and price.number < ZERO:
                 meta = new_metadata(filename, lineno)
                 self.errors.append(
                     ParserError(meta, (
@@ -760,18 +744,18 @@ class Builder(lexer.LexBuilder):
                         "for workaround)"
                     ).format(price), None))
                 # Fix it and continue.
-                price.number = abs(price.number)
+                price = Amount(abs(price.number), price.currency)
 
         # If the price is specified for the entire amount, compute the effective
         # price here and forget about that detail of the input syntax.
         if istotal:
-            if position.number == ZERO:
+            if units.number == ZERO:
                 number = ZERO
             else:
                 if __allow_negative_prices__:
-                    number = price.number/position.number
+                    number = price.number/units.number
                 else:
-                    number = price.number/abs(position.number)
+                    number = price.number/abs(units.number)
             price = Amount(number, price.currency)
 
         # Note: Allow zero prices because we need them for round-trips for
@@ -782,7 +766,7 @@ class Builder(lexer.LexBuilder):
         #         ParserError(meta, "Price is zero: {}".format(price), None))
 
         meta = new_metadata(filename, lineno)
-        return Posting(account, position, price, chr(flag) if flag else None, meta)
+        return Posting(account, units, cost, price, chr(flag) if flag else None, meta)
 
     def txn_field_new(self, _):
         """Create a new TxnFields instance.

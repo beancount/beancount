@@ -1,6 +1,5 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import re
 from os import path
 
 from beancount.utils import test_utils

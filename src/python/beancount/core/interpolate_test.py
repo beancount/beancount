@@ -1,6 +1,5 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import re
 import textwrap
 import unittest
 
@@ -13,7 +12,7 @@ from beancount.core import data
 from beancount.core import inventory
 from beancount.core import position
 from beancount.parser import parser
-from beancount.parser import booking
+from beancount.parser import booking_simple
 from beancount.parser import cmptest
 from beancount import loader
 
@@ -298,15 +297,18 @@ class TestBalance(cmptest.TestCase):
 class TestBalanceIncompletePostings(cmptest.TestCase):
 
     def get_incomplete_entry(self, string):
-        """Parse an incomplete entry and convert its LotSpec representation to a Lot.
+        """Parse a single incomplete entry and convert its CostSpec to a Cost.
 
         Args:
           string: The input string to parse.
         Returns:
           A pair of (entry, list of errors).
         """
-        entries, _, options_map = parser.parse_string(string, dedent=True)
-        entries_with_lots, errors = booking.convert_lot_specs_to_lots(entries, options_map)
+        entries, errors, options_map = parser.parse_string(string, dedent=True)
+        self.assertFalse(errors)
+        self.assertEqual(1, len(entries))
+        (entries_with_lots, errors) = booking_simple.convert_lot_specs_to_lots(entries)
+        self.assertEqual(1, len(entries))
         entry = entries_with_lots[0]
         errors = interpolate.balance_incomplete_postings(entry, options_map)
         return entry, errors
@@ -328,7 +330,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
         """)
         self.assertFalse(errors)
         self.assertEqual(2, len(entry.postings))
-        self.assertEqual(entry.postings[1].position, position.from_string('50 USD'))
+        self.assertEqual(position.get_position(entry.postings[1]), position.from_string('50 USD'))
 
     def test_balance_incomplete_postings__fill2(self):
         entry, errors = self.get_incomplete_entry("""
@@ -341,8 +343,8 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
         self.assertEqual(4, len(entry.postings))
         self.assertEqual(entry.postings[2].account, 'Expenses:Restaurant')
         self.assertEqual(entry.postings[3].account, 'Expenses:Restaurant')
-        self.assertEqual(entry.postings[2].position, position.from_string('50 USD'))
-        self.assertEqual(entry.postings[3].position, position.from_string('50 CAD'))
+        self.assertEqual(position.get_position(entry.postings[2]), position.from_string('50 USD'))
+        self.assertEqual(position.get_position(entry.postings[3]), position.from_string('50 CAD'))
 
     def test_balance_incomplete_postings__cost(self):
         entry, errors = self.get_incomplete_entry("""
@@ -353,7 +355,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
         self.assertFalse(errors)
         self.assertEqual(2, len(entry.postings))
         self.assertEqual(entry.postings[1].account, 'Assets:Cash')
-        self.assertEqual(entry.postings[1].position, position.from_string('-432.30 USD'))
+        self.assertEqual(position.get_position(entry.postings[1]), position.from_string('-432.30 USD'))
 
     def test_balance_incomplete_postings__insert_rounding(self):
         entry, errors = self.get_incomplete_entry("""
@@ -366,7 +368,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
         self.assertFalse(errors)
         self.assertEqual(3, len(entry.postings))
         self.assertEqual(entry.postings[2].account, 'Equity:RoundingError')
-        self.assertEqual(entry.postings[2].position, position.from_string('-0.00135 USD'))
+        self.assertEqual(position.get_position(entry.postings[2]), position.from_string('-0.00135 USD'))
 
     def test_balance_incomplete_postings__quantum(self):
         entry, errors = self.get_incomplete_entry("""
@@ -377,7 +379,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
             Assets:Cash
         """)
         self.assertFalse(errors)
-        self.assertEqual(D('-53.82'), entry.postings[1].position.number)
+        self.assertEqual(D('-53.82'), entry.postings[1].units.number)
 
         entry, errors = self.get_incomplete_entry("""
           option "default_tolerance" "USD:0.001"
@@ -387,7 +389,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
             Assets:Cash
         """)
         self.assertFalse(errors)
-        self.assertEqual(D('-53.821'), entry.postings[1].position.number)
+        self.assertEqual(D('-53.821'), entry.postings[1].units.number)
 
     def test_balance_incomplete_postings__rounding_and_quantum(self):
         entry, errors = self.get_incomplete_entry("""
@@ -400,9 +402,9 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
         """)
         self.assertFalse(errors)
         self.assertEqual(3, len(entry.postings))
-        self.assertEqual(D('-53.82'), entry.postings[1].position.number)
+        self.assertEqual(D('-53.82'), entry.postings[1].units.number)
         self.assertEqual('Equity:RoundingError', entry.postings[2].account)
-        self.assertEqual(D('-0.00135'), entry.postings[2].position.number)
+        self.assertEqual(D('-0.00135'), entry.postings[2].units.number)
 
         entry, errors = self.get_incomplete_entry("""
           option "account_rounding" "RoundingError"
@@ -414,9 +416,9 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
         """)
         self.assertFalse(errors)
         self.assertEqual(3, len(entry.postings))
-        self.assertEqual(D('-227.2100'), entry.postings[1].position.number)
+        self.assertEqual(D('-227.2100'), entry.postings[1].units.number)
         self.assertEqual('Equity:RoundingError', entry.postings[2].account)
-        self.assertEqual(D('0.0033'), entry.postings[2].position.number)
+        self.assertEqual(D('0.0033'), entry.postings[2].units.number)
 
     def test_balance_incomplete_postings__rounding_with_error(self):
         # Here we want to verify that auto-inserting rounding postings does not
@@ -486,7 +488,9 @@ class TestComputeBalance(unittest.TestCase):
         computed_balance = interpolate.compute_entries_balance(entries)
         expected_balance = inventory.Inventory()
         expected_balance.add_amount(A('-400 USD'))
-        expected_balance.add_amount(A('10 HOOL'), A('40 USD'))
+        expected_balance.add_amount(A('10 HOOL'),
+                                    position.Cost(D('40'), 'USD', None, None))
+
         self.assertEqual(expected_balance, computed_balance)
 
     @loader.load_doc()

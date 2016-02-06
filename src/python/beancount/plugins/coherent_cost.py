@@ -30,10 +30,8 @@ def validate_coherent_cost(entries, unused_options_map):
     without_cost = {}
     for entry in data.filter_txns(entries):
         for posting in entry.postings:
-            pos = posting.position
-
-            target_set = without_cost if pos.lot.cost is None else with_cost
-            currency = pos.lot.currency
+            target_set = without_cost if posting.cost is None else with_cost
+            currency = posting.units.currency
             target_set.setdefault(currency, entry)
 
     for currency in set(with_cost) & set(without_cost):

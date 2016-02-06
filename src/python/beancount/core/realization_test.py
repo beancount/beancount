@@ -5,7 +5,6 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import copy
 import datetime
 import operator
-import re
 import unittest
 
 from beancount.core.number import D
@@ -14,6 +13,7 @@ from beancount.core.realization import RealAccount
 from beancount.core import realization
 from beancount.core import data
 from beancount.core import inventory
+from beancount.core import position
 from beancount.core import account_types
 from beancount.utils import test_utils
 from beancount import loader
@@ -460,7 +460,7 @@ class TestRealOther(test_utils.TestCase):
             if exp_account:
                 self.assertEqual(exp_account, entpost.account)
             if exp_number:
-                self.assertEqual(D(exp_number), entpost.position.number)
+                self.assertEqual(D(exp_number), entpost.units.number)
 
     def test_compare_realizations(self):
         # Check that value comparison uses our balance comparison properly.
@@ -714,6 +714,6 @@ class TestComputeBalance(unittest.TestCase):
         expected_balance.add_amount(A('333.97 USD'))
         expected_balance.add_amount(A('17.23 CAD'))
         expected_balance.add_amount(A('32 HOOL'),
-                                    A('45.203 USD'))
+                                    position.Cost(D('45.203'), 'USD', None, None))
         expected_balance.add_amount(A('12000 EUR'))
         self.assertEqual(expected_balance, computed_balance)

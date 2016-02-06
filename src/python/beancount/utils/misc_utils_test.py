@@ -5,7 +5,6 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import unittest
 from unittest import mock
-import re
 import time
 import textwrap
 import sys

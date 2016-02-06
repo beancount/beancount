@@ -4,7 +4,6 @@ import logging
 import unittest
 import tempfile
 import textwrap
-import re
 import os
 from unittest import mock
 from os import path

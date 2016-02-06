@@ -1,7 +1,6 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import unittest
-import re
 
 from beancount.reports import html_formatter
 from beancount.core import data

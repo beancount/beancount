@@ -112,3 +112,15 @@ def round_to(number, increment):
       A Decimal, the rounded number.
     """
     return int((number / increment)) * increment
+
+
+def same_sign(number1, number2):
+    """Return true if both numbers have the same sign.
+
+    Args:
+      number1: An instance of Decimal.
+      number2: An instance of Decimal.
+    Returns:
+      A boolean.
+    """
+    return (number1 >= 0) == (number2 >= 0)

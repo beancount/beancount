@@ -428,8 +428,8 @@ def iterate_with_balance(txn_postings):
                     # Compute the change due to this transaction and update the
                     # total balance at the same time.
                     for date_posting in date_postings:
-                        change.add_position(date_posting.position)
-                        running_balance.add_position(date_posting.position)
+                        change.add_position(date_posting)
+                        running_balance.add_position(date_posting)
                 yield date_entry, date_postings, change, running_balance
 
             date_entries.clear()
@@ -454,8 +454,8 @@ def iterate_with_balance(txn_postings):
         change = inventory.Inventory()
         if date_postings:
             for date_posting in date_postings:
-                change.add_position(date_posting.position)
-                running_balance.add_position(date_posting.position)
+                change.add_position(date_posting)
+                running_balance.add_position(date_posting)
         yield date_entry, date_postings, change, running_balance
     date_entries.clear()
 
@@ -638,7 +638,7 @@ def dump_balances(real_account, at_cost=False, fullnames=False, file=None):
                 rinv = real_account.balance.cost()
             else:
                 rinv = real_account.balance.units()
-            amounts = [position.get_units() for position in rinv.get_positions()]
+            amounts = [position.units for position in rinv.get_positions()]
             positions = ['{0.number:12,.2f} {0.currency}'.format(amount_)
                          for amount_ in sorted(amounts, key=amount.amount_sortkey)]
         else:
@@ -671,7 +671,7 @@ def compute_postings_balance(txn_postings):
     final_balance = inventory.Inventory()
     for txn_posting in txn_postings:
         if isinstance(txn_posting, Posting):
-            final_balance.add_position(txn_posting.position)
+            final_balance.add_position(txn_posting)
         elif isinstance(txn_posting, TxnPosting):
-            final_balance.add_position(txn_posting.posting.position)
+            final_balance.add_position(txn_posting.posting)
     return final_balance

@@ -10,8 +10,8 @@ import sys
 from beancount.core.amount import Amount
 from beancount.core.number import Decimal
 from beancount.core.number import D
-from beancount.core.position import Position
-from beancount.core.position import Lot
+from beancount.core.position import Cost
+from beancount.core.position import CostSpec
 from beancount.core.account import has_component
 from beancount.utils.bisect_key import bisect_left_with_key
 
@@ -274,9 +274,9 @@ def new_metadata(filename, lineno, kvlist=None):
 #     and Posting, it allows us to easily resolve the lists of Postings to their
 #     transactions for rendering.
 #   account: A string, the account that is modified by this posting.
-#   position: An instance of Position (see position.py), the amount and lot that
-#     is to be posted to this leg's account.
-#   price: An instance of Amount, the price at which the position took place, or
+#   units: An Amount, the units of the position.
+#   cost: A Cost or CostSpec instances, the units of the position.
+#   price: An Amount, the price at which the position took place, or
 #     None, where not relevant. Providing a price member to a posting
 #     automatically adds a price in the prices database at the date of the
 #     transaction.
@@ -287,7 +287,7 @@ def new_metadata(filename, lineno, kvlist=None):
 #   metadata: A dict of strings to values, the metadata that was attached
 #     specifically to that posting, or None, if not provided. In practice, most
 #     of the instances will be unlikely to have metadata.
-Posting = namedtuple('Posting', 'account position price flag meta')
+Posting = namedtuple('Posting', 'account units cost price flag meta')
 
 
 # A pair of a Posting and its parent Transaction. This is inserted as
@@ -315,12 +315,12 @@ def create_simple_posting(entry, account, number, currency):
     if isinstance(account, str):
         pass
     if number is None:
-        position = None
+        units = None
     else:
         if not isinstance(number, Decimal):
             number = D(number)
-        position = Position(Lot(currency, None, None), number)
-    posting = Posting(account, position, None, None, None)
+        units = Amount(number, currency)
+    posting = Posting(account, units, None, None, None, None)
     if entry is not None:
         entry.postings.append(posting)
     return posting
@@ -348,9 +348,9 @@ def create_simple_posting_with_cost(entry, account,
         number = D(number)
     if cost_number and not isinstance(cost_number, Decimal):
         cost_number = D(cost_number)
-    cost = Amount(cost_number, cost_currency)
-    position = Position(Lot(currency, cost, None), number)
-    posting = Posting(account, position, None, None, None)
+    units = Amount(number, currency)
+    cost = Cost(cost_number, cost_currency, None, None)
+    posting = Posting(account, units, cost, None, None, None)
     if entry is not None:
         entry.postings.append(posting)
     return posting
@@ -381,7 +381,8 @@ def sanity_check_types(entry):
         for posting in entry.postings:
             assert isinstance(posting, Posting), "Invalid posting type"
             assert isinstance(posting.account, str), "Invalid account type"
-            assert isinstance(posting.position, (Position, NoneType)), "Invalid pos type"
+            assert isinstance(posting.units, (Amount, NoneType)), "Invalid units type"
+            assert isinstance(posting.cost, (Cost, CostSpec, NoneType)), "Invalid cost type"
             assert isinstance(posting.price, (Amount, NoneType)), "Invalid price type"
             assert isinstance(posting.flag, (str, NoneType)), "Invalid flag type"
 
@@ -397,7 +398,7 @@ def posting_has_conversion(posting):
     Return:
       A boolean, true if this posting has a price conversion.
     """
-    return (posting.position.lot.cost is None and
+    return (posting.cost is None and
             posting.price is not None)
 
 

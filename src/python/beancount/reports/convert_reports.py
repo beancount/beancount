@@ -8,6 +8,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import re
 import io
 
+from beancount.core.amount import Amount
 from beancount.core import data
 from beancount.core import position
 from beancount.core import amount
@@ -54,7 +55,7 @@ def postings_by_type(entry):
     postings_at_price = []
     postings_simple = []
     for posting in entry.postings:
-        if posting.position.lot.cost:
+        if posting.cost:
             accumlator = postings_at_cost
         elif posting.price:
             accumlator = postings_at_price
@@ -106,11 +107,9 @@ def split_currency_conversions(entry):
         replacement_postings = []
         for posting_orig in postings_at_price:
             weight = interpolate.get_posting_weight(posting_orig)
-            simple_position = position.Position(position.Lot(weight.currency, None, None),
-                                                weight.number)
-            posting_pos = data.Posting(posting_orig.account, simple_position,
+            posting_pos = data.Posting(posting_orig.account, weight, None,
                                        None, None, None)
-            posting_neg = data.Posting(posting_orig.account, -simple_position,
+            posting_neg = data.Posting(posting_orig.account, -weight, None,
                                        None, None, None)
 
             currency_entry = entry._replace(
@@ -193,8 +192,8 @@ class LedgerPrinter:
 
         flag_posting = '{:}{:62}'.format(flag, posting.account)
 
-        pos_str = (posting.position.to_string(self.dformat, detail=False)
-                   if posting.position
+        pos_str = (position.to_string(posting, self.dformat, detail=False)
+                   if isinstance(posting.units, Amount)
                    else '')
 
         if posting.price is not None:
@@ -206,9 +205,11 @@ class LedgerPrinter:
              postings_at_price,
              postings_at_cost) = postings_by_type(entry)
 
-            if postings_at_price and postings_at_cost and posting.position.lot.cost:
+            cost = posting.cost
+            if postings_at_price and postings_at_cost and cost:
                 price_str = '@ {}'.format(
-                    posting.position.lot.cost.to_string(self.dformat))
+                    amount.Amount(cost.number,
+                                  cost.currency).to_string(self.dformat))
             else:
                 price_str = ''
 
@@ -293,8 +294,8 @@ class HLedgerPrinter(LedgerPrinter):
 
         flag_posting = '{:}{:62}'.format(flag, posting.account)
 
-        pos_str = (posting.position.to_string(self.dformat, detail=False)
-                   if posting.position
+        pos_str = (position.to_string(posting, self.dformat, detail=False)
+                   if isinstance(posting.units, Amount)
                    else '')
         if pos_str:
             # Convert the cost as a price entry, that's what HLedger appears to want.

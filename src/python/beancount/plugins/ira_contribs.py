@@ -84,10 +84,10 @@ to mark these postings with.
 
 __author__ = 'Martin Blais <blais@furius.ca>'
 
+from beancount.core.number import MISSING
 from beancount.core import data
 from beancount.core import account_types
 from beancount.core import amount
-from beancount.core import position
 from beancount.parser import printer
 
 
@@ -142,15 +142,15 @@ def add_ira_contribs(entries, options_map, config):
         if isinstance(entry, data.Transaction):
             orig_entry = entry
             for posting in entry.postings:
-                pos = posting.position
-                if (pos and
+                if (posting.units is not MISSING and
                     (posting.account in account_transforms) and
-                    (account_types.get_account_sign(posting.account) * pos.number > 0)):
+                    (account_types.get_account_sign(posting.account) *
+                     posting.units.number > 0)):
 
                     # Get the new account legs to insert.
                     required_flag, (neg_account,
                                     pos_account) = account_transforms[posting.account]
-                    assert posting.position.lot.cost is None
+                    assert posting.cost is None
 
                     # Check required flag if present.
                     if (required_flag is None or
@@ -158,7 +158,7 @@ def add_ira_contribs(entries, options_map, config):
                         # Insert income/expense entries for 401k.
                         entry = add_postings(
                             entry,
-                            amount.Amount(abs(posting.position.number), currency),
+                            amount.Amount(abs(posting.units.number), currency),
                             neg_account.format(year=entry.date.year),
                             pos_account.format(year=entry.date.year),
                             insert_flag)
@@ -184,11 +184,7 @@ def add_postings(entry, amount_, neg_account, pos_account, flag):
     Returns:
       A new, modified entry.
     """
-    pos = position.Position(
-        position.Lot(amount_.currency, None, None),
-        amount_.number)
-
     return entry._replace(postings=entry.postings + [
-        data.Posting(neg_account, pos.get_negative(), None, flag, None),
-        data.Posting(pos_account, pos, None, flag, None),
+        data.Posting(neg_account, -amount_, None, None, flag, None),
+        data.Posting(pos_account, amount_, None, None, flag, None),
         ])

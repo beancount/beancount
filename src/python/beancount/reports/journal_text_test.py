@@ -29,35 +29,37 @@ class TestJournalRenderPosting(unittest.TestCase):
     number_format = '{} {}'
 
     def test_render_posting_no_cost(self):
+        pos = position.from_string('100 USD')
         str_posting = journal_text.render_posting(
-            data.Posting('Assets:Something',
-                         position.from_string('100 USD'), None, None, None),
+            data.Posting('Assets:Something', pos.units, pos.cost, None,
+                         None, None),
             self.number_format)
         self.assertEqual('  Assets:Something                 100 USD',
                          str_posting)
 
     def test_render_posting_cost(self):
+        pos = position.from_string('10 VHT {45.32 USD}')
         str_posting = journal_text.render_posting(
-            data.Posting('Assets:Something',
-                         position.from_string('10 VHT {45.32 USD}'), None, None, None),
+            data.Posting('Assets:Something', pos.units, pos.cost, None,
+                         None, None),
             self.number_format)
         self.assertEqual('  Assets:Something                 10 VHT {45.32 USD}',
                          str_posting)
 
     def test_render_posting_price(self):
+        pos = position.from_string('10 VHT')
         str_posting = journal_text.render_posting(
-            data.Posting('Assets:Something',
-                         position.from_string('10 VHT'),
-                         A('45.32 USD'), None, None),
+            data.Posting('Assets:Something', pos.units, pos.cost, A('45.32 USD'),
+                         None, None),
             self.number_format)
         self.assertEqual('  Assets:Something                 10 VHT @ 45.32 USD',
                          str_posting)
 
     def test_render_posting_cost_price(self):
+        pos = position.from_string('10 VHT {45.32 USD}')
         str_posting = journal_text.render_posting(
-            data.Posting('Assets:Something',
-                         position.from_string('10 VHT {45.32 USD}'),
-                         A('47.00 USD'), None, None),
+            data.Posting('Assets:Something', pos.units, pos.cost, A('47.00 USD'),
+                         None, None),
             self.number_format)
         self.assertEqual(
             '  Assets:Something                 10 VHT {45.32 USD} @ 47.00 USD',

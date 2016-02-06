@@ -258,12 +258,12 @@ def validate_currency_constraints(entries, options_map):
                 continue
 
             # Perform the check.
-            if posting.position.lot.currency not in valid_currencies:
+            if posting.units.currency not in valid_currencies:
                 errors.append(
                     ValidationError(
                         entry.meta,
                         "Invalid currency {} for account '{}'".format(
-                            posting.position.lot.currency, posting.account),
+                            posting.units.currency, posting.account),
                         entry))
 
     return errors

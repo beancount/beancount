@@ -2,7 +2,6 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import unittest
 import datetime
-import re
 
 from beancount.core.number import D
 from beancount.core.amount import A
