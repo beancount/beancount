@@ -1,4 +1,73 @@
 """Full (new) booking implementation.
+
+Problem description:
+
+Interpolation and booking feed on each other, that is, numbers filled in from
+interpolation might affect the booking process, and numbers derived from the
+booking process may help carry out interpolation that would otherwise be
+under-defined. Here's an example of interpolation helping the booking process:
+
+Assume the ante-inventory of Assets:Investments contains two lots of shares of
+HOOL, one at 100.00 USD and the other at 101.00 USD and apply this transaction:
+
+    2015-09-30 *
+      Assets:Investments   -10 HOOL {USD}
+      Assets:Cash               1000 USD
+      Income:Gains              -200 USD
+
+Interpolation is unambiguously able to back out a cost of 100 USD / HOOL, which
+would then result in an unambiguous booking result.
+
+On the other hand, consider this transaction:
+
+    2015-09-30 *
+      Assets:Investments    -10 HOOL {USD}
+      Assets:Cash               1000 USD
+      Income:Gains
+
+Now the interpolation cannot succeed. If the Assets:Investments accoujnt is
+configured to use the FIFO method, the 10 oldest shares would be selected for
+the cost, and we could then interpolate the capital gains correctly.
+
+First observation: The second case is much more frequent than the first, and the
+first is easily resolved manually by requiring a particular cost be specified.
+Moreover, in many cases there isn't just a single lot of shares to be reduced
+from and figuring out the correct set of shares given a target cost is an
+underspecified problem.
+
+Second observation: Booking can only be achieved for inventory reductions, not
+for augmentations. Therefore, we should carry out booking on inventory
+reductions and fail early if reduction is undefined there, and leave inventory
+augmentations with missing numbers undefined, so that interpolation can fill
+them in at a later stage.
+
+Note that one case we'd like to but may not be able to handle is of a reduction
+with interpolated price, like this:
+
+    2015-09-30 *
+      Assets:Investments        -10 HOOL {100.00 # USD}
+      Expenses:Commission      9.95 USD
+      Assets:Cash            990.05 USD
+
+Therefore we choose to
+
+1) Carry out booking first, on inventory reductions only, and leave inventory
+   augmentations as they are, possibly undefined. The 'cost' attributed of
+   booked postings are converted from CostSpec to Cost. Augmented postings with
+   missing amounts are left as CostSpec instances in order to allow for
+   interpolation of total vs. per-unit amount.
+
+2) Compute interpolations on the resulting postings. Undefined costs for
+   inventory augmentations may be filled in by interpolations at this stage (if
+   possible).
+
+3) Finally, convert the interpolated CostSpec instances to Cost instances.
+
+Improving on this algorithm would require running a loop over the booking and
+interpolation steps until all numbers are resolved or no more inference can
+occur. We may consider that for later, as an experimental feature. My hunch is
+that there are so few cases for which this would be useful that we won't bother
+improving on the algorithm above.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
@@ -568,179 +637,3 @@ def interpolate_group(postings, balances, currency):
         postings[index] = new_posting
 
         return postings, errors, True
-
-
-
-
-
-
-#------------------------------------------------------------------------------------------------------------------------
-
-class BookingStats:
-
-    def __init__(self):
-        self.num_transactions = 0
-        self.num_postings = 0
-        self.num_interp_amount = 0
-        self.num_interp_units = 0
-        self.num_lots = 0
-        self.num_lots_atcost = 0
-        self.num_interp_price = 0
-
-    def __str__(self):
-        return '; '.join(["transactions: {s.num_transactions}",
-                          "postings: {s.num_postings}",
-                          "interp_amount: {s.num_interp_amount}",
-                          "interp_units: {s.num_interp_units}",
-                          "lots: {s.num_lots}",
-                          "lots_atcost: {s.num_lots_atcost}",
-                          "interp_price: {s.num_interp_price}"]).format(s=self)
-
-
-
-"""Problem description:
-
-Interpolation and booking feed on each other, that is, numbers filled in from
-interpolation might affect the booking process, and numbers derived from the
-booking process may help carry out interpolation that would otherwise be
-under-defined. Here's an example of interpolation helping the booking process:
-
-Assume the ante-inventory of Assets:Investments contains two lots of shares of
-HOOL, one at 100.00 USD and the other at 101.00 USD and apply this transaction:
-
-    2015-09-30 *
-      Assets:Investments   -10 HOOL {USD}
-      Assets:Cash               1000 USD
-      Income:Gains              -200 USD
-
-Interpolation is unambiguously able to back out a cost of 100 USD / HOOL, which
-would then result in an unambiguous booking result.
-
-On the other hand, consider this transaction:
-
-    2015-09-30 *
-      Assets:Investments    -10 HOOL {USD}
-      Assets:Cash               1000 USD
-      Income:Gains
-
-Now the interpolation cannot succeed. If the Assets:Investments accoujnt is
-configured to use the FIFO method, the 10 oldest shares would be selected for
-the cost, and we could then interpolate the capital gains correctly.
-
-First observation: The second case is much more frequent than the first, and the
-first is easily resolved manually by requiring a particular cost be specified.
-Moreover, in many cases there isn't just a single lot of shares to be reduced
-from and figuring out the correct set of shares given a target cost is an
-underspecified problem.
-
-Second observation: Booking can only be achieved for inventory reductions, not
-for augmentations. Therefore, we should carry out booking on inventory
-reductions and fail early if reduction is undefined there, and leave inventory
-augmentations with missing numbers undefined, so that interpolation can fill
-them in at a later stage.
-
-Note that one case we'd like to but may not be able to handle is of a reduction
-with interpolated price, like this:
-
-    2015-09-30 *
-      Assets:Investments        -10 HOOL {100.00 # USD}
-      Expenses:Commission      9.95 USD
-      Assets:Cash            990.05 USD
-
-Therefore we choose to
-
-1) Carry out booking first, on inventory reductions only, and leave inventory
-   augmentations as they are, possibly undefined. The 'cost' attributed of
-   booked postings are converted from CostSpec to Cost. Augmented postings with
-   missing amounts are left as CostSpec instances in order to allow for
-   interpolation of total vs. per-unit amount.
-
-2) Compute interpolations on the resulting postings. Undefined costs for
-   inventory augmentations may be filled in by interpolations at this stage (if
-   possible).
-
-3) Finally, convert the interpolated CostSpec instances to Cost instances.
-
-Improving on this algorithm would require running a loop over the booking and
-interpolation steps until all numbers are resolved or no more inference can
-occur. We may consider that for later, as an experimental feature. My hunch is
-that there are so few cases for which this would be useful that we won't bother
-improving on the algorithm above.
-
-"""
-
-# TODO: Conversion from CostSpec to Cost
-# Make interpolation work off of Cost instances, not just CostSpec.
-
-
-
-"""
-
-    varieties:
-
-      1. No cost, no price, with currency, e.g.
-           Assets:Something       213.45 USD
-         or
-           Assets:Something              USD
-         This is obvious, it buckets into the units currency, i.e., USD.
-
-      2. No cost, no price, no currency, e.g.
-           Assets:Something
-         This is an auto-posting. One of these should be replicated for every
-         currency present in the transaction.
-
-
-    Postings with a price define their currency:
-
-      3. No cost with price:
-           Assets:Something       1000 JPY @ 120.0000 USD
-         or
-           Assets:Something       1000 JPY @          USD
-         We use the price currency, e.g. USD
-
-      4. No cost and no price currency:
-           Assets:Something       1000 JPY @
-         In this case, we must consult the other postings. We look
-
-
-    Then, we have postings with costs, which also come in two varieties:
-
-      5. With an explicit cost currency, e.g.
-           Assets:Something       100 HOOL {12.23 USD}
-         Or with missing amounts, e.g.,
-           Assets:Something       100 HOOL {USD}
-         This clearly goes into the USD bucket.
-
-      6. With no explicit cost currency, e.g.,
-           Assets:Something       100 HOOL {2014-09-30}
-           Assets:Something       100 HOOL {"1b24b1151261"}
-           Assets:Something       100 HOOL {}
-         These are uncategorized.
-
-         In order to resolve these postings to a specific currency bucket, we
-         implement two heuristics:
-
-         a) If all the other legs are of a single currency and there are no
-            other uncategorized legs, this posting must also book against those;
-            use that currency.
-
-         b) Otherwise, look at the accumulated ante-inventory; if there is a
-            single currency for it, the posting must be in that currency.
-
-         Finally, if we aren't able to resolve the currency of that posting
-         using (a) or (b), fail interpolation/booking and skip the transaction.
-
-    With that algorithm, we should be able to automatically resolve stock splits
-    that look like this, as long as the ante-inventory contains only lots in
-    USD:
-
-      2015-09-30 * "Split"
-        Assets:Investments:AAPL       -40 AAPL {}
-        Assets:Investments:AAPL        80 AAPL {}
-
-    Finally, note that postings with both a cost and a price must have a
-    currency that matches, as constrained by the parser. If only the price or
-    the cost is specified, we used that currency. Both a price and a cost may
-    not be missing--that would leave two DOF to fill in.
-
-"""

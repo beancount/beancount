@@ -838,41 +838,11 @@ class TestBooking(unittest.TestCase):
         #     None], debug=1)
 
 
+# FIXME: Continue here.
+__incomplete__ = True
 
 
-
-#--------------------------------------------------------------------------------
-
-# You should be able to support inference of prices as per the sellgains plugin.
-# Or should we instead have the sellgains plugin automatically insert the prices itself?
-# (I like that better).
-
-# FIXME: When the other amounts balance, this should be doable.
-# In this example, the first three postings in CAD balance each other.
-# the 4th posting is USD and not completely balanced, and the last is
-# unknown. We should look at the two groups of CAD and USD postings,
-# realize that the first group is already balanced and that the second
-# isn't, and automatically select the USD group.
-"""
-  2010-05-28 *
-    Assets:Account1     100.00 CAD
-    Assets:Account2     -80.00 CAD
-    Assets:Account3     -20.00 CAD
-    Assets:Account4      20.00 USD
-    Assets:Account4    -100.00 CAD @
-"""
-
-
-# FIXME: If there is only a single other group, we should be able infer the
-# price is for CAD here. Currently this raises an error.
-"""
-  2010-05-28 *
-    Assets:Account1     100.00 USD @ 1.2
-    Assets:Account2     120.00 CAD
-"""
-
-
-class Whatever:
+class TestFullBooking1(cmptest.TestCase):
 
     @parser.parse_doc()
     def __test_categorize_by_currency__ambiguous_cost_no_choice(self, ientries, _, options_map):
@@ -938,13 +908,7 @@ class Whatever:
                                                '1 HOOL {100 CAD}')})
 
 
-    # FIXME: Come up with cases where we're able to infer an AUGMENTING leg
-
-    # FIXME: Come up with a case that would be ambiguous if not for the fact
-    # that one of the currencies already balances.
-
-
-class TestFullBooking(cmptest.TestCase):
+class TestFullBooking2(cmptest.TestCase):
 
     @loader.load_doc()
     def __test_full_booking(self, entries, _, options_map):

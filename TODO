@@ -93,6 +93,121 @@ beancount: TODO
       posting.price.currency
 
 
+** Notes from Booking Full
+
+  - Testing:
+
+    * FIXME: Come up with cases where we're able to infer an AUGMENTING leg
+
+    * FIXME: Come up with a case that would be ambiguous if not for the fact
+      that one of the currencies already balances.
+
+
+    # You should be able to support inference of prices as per the sellgains plugin.
+    # Or should we instead have the sellgains plugin automatically insert the prices itself?
+    # (I like that better).
+
+    # FIXME: When the other amounts balance, this should be doable.
+    # In this example, the first three postings in CAD balance each other.
+    # the 4th posting is USD and not completely balanced, and the last is
+    # unknown. We should look at the two groups of CAD and USD postings,
+    # realize that the first group is already balanced and that the second
+    # isn't, and automatically select the USD group.
+    """
+      2010-05-28 *
+        Assets:Account1     100.00 CAD
+        Assets:Account2     -80.00 CAD
+        Assets:Account3     -20.00 CAD
+        Assets:Account4      20.00 USD
+        Assets:Account4    -100.00 CAD @
+    """
+
+
+    # FIXME: If there is only a single other group, we should be able infer the
+    # price is for CAD here. Currently this raises an error.
+    """
+      2010-05-28 *
+        Assets:Account1     100.00 USD @ 1.2
+        Assets:Account2     120.00 CAD
+    """
+
+
+  - TODO: Conversion from CostSpec to Cost
+
+  - Make interpolation work off of Cost instances, not just CostSpec.
+
+
+  - Notes:
+
+    varieties:
+
+      1. No cost, no price, with currency, e.g.
+           Assets:Something       213.45 USD
+         or
+           Assets:Something              USD
+         This is obvious, it buckets into the units currency, i.e., USD.
+
+      2. No cost, no price, no currency, e.g.
+           Assets:Something
+         This is an auto-posting. One of these should be replicated for every
+         currency present in the transaction.
+
+
+    Postings with a price define their currency:
+
+      3. No cost with price:
+           Assets:Something       1000 JPY @ 120.0000 USD
+         or
+           Assets:Something       1000 JPY @          USD
+         We use the price currency, e.g. USD
+
+      4. No cost and no price currency:
+           Assets:Something       1000 JPY @
+         In this case, we must consult the other postings. We look
+
+
+    Then, we have postings with costs, which also come in two varieties:
+
+      5. With an explicit cost currency, e.g.
+           Assets:Something       100 HOOL {12.23 USD}
+         Or with missing amounts, e.g.,
+           Assets:Something       100 HOOL {USD}
+         This clearly goes into the USD bucket.
+
+      6. With no explicit cost currency, e.g.,
+           Assets:Something       100 HOOL {2014-09-30}
+           Assets:Something       100 HOOL {"1b24b1151261"}
+           Assets:Something       100 HOOL {}
+         These are uncategorized.
+
+         In order to resolve these postings to a specific currency bucket, we
+         implement two heuristics:
+
+         a) If all the other legs are of a single currency and there are no
+            other uncategorized legs, this posting must also book against those;
+            use that currency.
+
+         b) Otherwise, look at the accumulated ante-inventory; if there is a
+            single currency for it, the posting must be in that currency.
+
+         Finally, if we aren't able to resolve the currency of that posting
+         using (a) or (b), fail interpolation/booking and skip the transaction.
+
+    With that algorithm, we should be able to automatically resolve stock splits
+    that look like this, as long as the ante-inventory contains only lots in
+    USD:
+
+      2015-09-30 * "Split"
+        Assets:Investments:AAPL       -40 AAPL {}
+        Assets:Investments:AAPL        80 AAPL {}
+
+    Finally, note that postings with both a cost and a price must have a
+    currency that matches, as constrained by the parser. If only the price or
+    the cost is specified, we used that currency. Both a price and a cost may
+    not be missing--that would leave two DOF to fill in.
+
+
+
 * Requirements for Shipping 2.0
 * File Cleanup
 
