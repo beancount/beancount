@@ -318,7 +318,7 @@ def find_balance_currencies(entries, date=None):
 
 
 def log_currency_list(message, currencies):
-    """Lot a list of currencies to debug output.
+    """Log a list of currencies to debug output.
 
     Args:
       message: A message string to prepend.

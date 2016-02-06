@@ -60,7 +60,7 @@ Note: This file contains only changes in the 'default' branch.
     After the changes we have something that looks more like the input:
 
      Assets:Checking  -40 QQQ   {66.32 USD,   2015-12-14, "0d6f0"} @ 70.32 USD
-     `---account---' `-units-' `------------cost--------------'      `--price--'
+     `---account---' `-units-' `------------cost-----------------' `--price--'
                                 number currency date       label
 
         posting             (Posting)
@@ -68,12 +68,12 @@ Note: This file contains only changes in the 'default' branch.
             .units          (Amount)
                 .number     (Decimal)
                 .currency   (str)
-            .cost           (Amount)
+            .cost           (Cost, CostSpec, or None)
                 .number     (Decimal)
                 .currency   (str)
-                .date       (datetime.date)
-                .label      (str)
-            .price          (Amount)
+                .date       (datetime.date, or None)
+                .label      (str, or None)
+            .price          (Amount, or None)
                 .number     (Decimal)
                 .currency   (str)
 
