@@ -4,6 +4,15 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-02-06
+
+  - Fixed bug with query parser: a single dot (.) would be matched as a number.
+    It should require at least some digits.
+
+  - Fixed bug whereby a missing cost number would be rendered as "0"; if needs
+    be a null value.
+
+
 2016-01-31
 
   - Added python-magic as an optional depdendency, in order to support imports

@@ -457,7 +457,8 @@ class Sum(query_compile.EvalAggregator):
 
     def update(self, store, context):
         value = self.eval_args(context)[0]
-        store[self.handle] += value
+        if value is not None:
+            store[self.handle] += value
 
     def __call__(self, context):
         return context.store[self.handle]
@@ -1047,7 +1048,7 @@ class CostNumberColumn(query_compile.EvalColumn):
 
     def __call__(self, context):
         cost = context.posting.position.lot.cost
-        return cost.number if cost else ZERO
+        return cost.number if cost else None
 
 class CostCurrencyColumn(query_compile.EvalColumn):
     "The cost currency of the posting."
