@@ -246,7 +246,7 @@ class Lexer:
 
     # Numbers.
     def t_DECIMAL(self, token):
-        r"[-+]?[0-9]*\.[0-9]*"
+        r"[-+]?([0-9]+\.[0-9]*|[0-9]*\.[0-9]+)"
         token.value = D(token.value)
         return token
 
