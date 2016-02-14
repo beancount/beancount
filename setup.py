@@ -18,45 +18,24 @@ if sys.version_info[:2] < (3,3):
 
 # Import setup().
 setup_extra_kwargs = {}
-from distutils.core import setup, Extension
-
-# Unused support for setuptools. Setuptools is seriously broken:
-#
-# * Using setuptools v15, build_ext --in-place puts the compiled Extension
-#   library under src/python. It needs to be under src/python/beancount/parser.
-#
-# * Using setuptools v18, it puts the library in the right place but invoking
-#   it not from pip3 or easy_install makes it complain about install_requires
-#   not being supported.
-#
-# Setuptools is broken. The only reason I was trying to use it was to support
-# automatically installed dependencies. But it's so broken I'm giving up.
-# Here's how to install dependencies:
-#
-#    pip3 install python-dateutil bottle ply lxml
-#
-# You do this once.
-# Removed code follows.
-#
-## try:
-##     # Use distutils if requested (this is use in testing).
-##     if 'BEANCOUNT_DISABLE_SETUPTOOLS' in os.environ:
-##         raise ImportError("Setuptools disabled explicitly")
-##
-##     # Try to use setuptools first, if it is installed, because it supports
-##     # automatic installation of dependencies.
-##     from setuptools import setup, Extension
-##     if setuptools.__version__ < '18':
-##
-##     setup_extra_kwargs.update(
-##         install_requires = ['python-dateutil', 'bottle', 'ply', 'lxml']
-##         )
-## except ImportError:
-##     # If setuptools is not installed, fallback on the stdlib. This works too, it
-##     # just won't install the dependencies automatically.
-##     warnings.warn("Setuptools not installed; falling back on distutils. "
-##                   "You will have to install dependencies explicitly.")
-##     from distutils.core import setup, Extension
+if 'BEANCOUNT_DISABLE_SETUPTOOLS' in os.environ:
+    # Note: this is used for testing only.
+    from distutils.core import setup, Extension
+else:
+    try:
+        from setuptools import setup, Extension
+        setup_extra_kwargs.update(install_requires = [
+            'python-dateutil',
+            'bottle',
+            'ply',
+            'lxml',
+            'python-magic',
+            'google-api-python-client',
+        ])
+    except ImportError:
+        warnings.warn("Setuptools not installed; falling back on distutils. "
+                      "You will have to install dependencies explicitly.")
+        from distutils.core import setup, Extension
 
 
 # Make sure we can import hashsrc in order to create a binary with a checksum of
@@ -136,7 +115,7 @@ setup(
     scripts=install_scripts,
 
     ext_modules=[
-        Extension("beancount/parser/_parser",
+        Extension("beancount.parser._parser",
                   sources=[
                       "src/python/beancount/parser/lexer.c",
                       "src/python/beancount/parser/grammar.c",
