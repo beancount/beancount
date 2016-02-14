@@ -4,6 +4,16 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-02-14
+
+  - Baked a 2.0b4 release for a more recent PyPI availability.
+
+  - Fixed issue #72 - Thanks to Gary Peck for figuring out what was wrong with
+    setuptools - and now you should be able to install via pip3 again, which
+    will pull all the dependencies automatically. If setuptools isn't installed,
+    this should degrade peacefully to distutil.
+
+
 2016-02-06
 
   - IMPORTANT API CHANGES FOLLOW:
