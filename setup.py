@@ -32,6 +32,30 @@ else:
             'python-magic',
             'google-api-python-client',
         ])
+
+        # A note about setuptools: It's profoundly BROKEN.
+        #
+        # - The header files are needed in order to distribution a working
+        #   source distribution.
+        # - Listing the header files under the extension "sources" fails to
+        #   build; distutils cannot make out the file type.
+        # - Listing them as "headers" makes them ignored; extra options to
+        #   Extension() appear to be ignored silently.
+        # - Listing them under setup()'s "headers" makes it recognize them, but
+        #   they do not get included.
+        # - Listing them with "include_dirs" of the Extension fails as well.
+        #
+        # The only way I managed to get this working is by working around and
+        # including them as "packaged data" (see {63fc8d84d30a} below). That
+        # includes the header files in the sdist, and a source distribution can
+        # be installed using pip3 (and be built locally). However, the header
+        # files end up being installed next to the pure Python files in the
+        # output. This is the sorry situation we're living in, but it works.
+        #
+        # If you think I'm a lunatic, fix it and make sure you can make this
+        # command succeed:
+        #   nosetests3 -s .../src/python/beancount/scripts/setup_test.py
+        #
     except ImportError:
         warnings.warn("Setuptools not installed; falling back on distutils. "
                       "You will have to install dependencies explicitly.")
@@ -110,10 +134,7 @@ setup(
                           'third_party/*.js'],
         'beancount.reports': ['*.html'],
         'beancount.utils.file_type': ['*'],
-
-        # Note: There seems to be no other way to get the header files included
-        # in the sdist but this workaround.
-        'beancount.parser': ['*.h'],
+        'beancount.parser': ['*.h'], # See note for {63fc8d84d30a} above.
         },
 
     scripts=install_scripts,
@@ -128,13 +149,6 @@ setup(
                   define_macros=[('PARSER_SOURCE_HASH',
                                   '"{}"'.format(hash_parser_source_files()))]),
     ],
-
-    # This fails with setuptools: The headers aren't included in the resulting sdist.
-    # headers=[
-    #     "src/python/beancount/parser/lexer.h",
-    #     "src/python/beancount/parser/grammar.h",
-    #     "src/python/beancount/parser/parser.h",
-    # ],
 
     # Add optional arguments that only work with some variants of setup().
     **setup_extra_kwargs
