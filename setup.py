@@ -70,7 +70,7 @@ upload-csv-to-google-sheet
 # Please read: http://furius.ca/beancount/doc/install about version numbers.
 setup(
     name="beancount",
-    version='2.0b5',
+    version='2.0b6',
     description="Command-line Double-Entry Accounting",
 
     long_description=
@@ -110,6 +110,10 @@ setup(
                           'third_party/*.js'],
         'beancount.reports': ['*.html'],
         'beancount.utils.file_type': ['*'],
+
+        # Note: There seems to be no other way to get the header files included
+        # in the sdist but this workaround.
+        'beancount.parser': ['*.h'],
         },
 
     scripts=install_scripts,
@@ -121,16 +125,16 @@ setup(
                       "src/python/beancount/parser/grammar.c",
                       "src/python/beancount/parser/parser.c",
                   ],
-                  headers=[
-                      "src/python/beancount/parser/lexer.h",
-                      "src/python/beancount/parser/lexer.l",
-                      "src/python/beancount/parser/grammar.h",
-                      "src/python/beancount/parser/grammar.y",
-                      "src/python/beancount/parser/parser.h",
-                  ],
                   define_macros=[('PARSER_SOURCE_HASH',
                                   '"{}"'.format(hash_parser_source_files()))]),
     ],
+
+    # This fails with setuptools: The headers aren't included in the resulting sdist.
+    # headers=[
+    #     "src/python/beancount/parser/lexer.h",
+    #     "src/python/beancount/parser/grammar.h",
+    #     "src/python/beancount/parser/parser.h",
+    # ],
 
     # Add optional arguments that only work with some variants of setup().
     **setup_extra_kwargs

@@ -6,6 +6,10 @@ Note: This file contains only changes in the 'default' branch.
 
 2016-02-14
 
+  - Baked a 2.0b5 and 2.0b6 releases in a further attempt to get the included
+    files to be included by setuptools and for pip3 to be able to make a local
+    build. setuptools is horrible.
+
   - Baked a 2.0b4 release for a more recent PyPI availability.
 
   - Fixed issue #72 - Thanks to Gary Peck for figuring out what was wrong with
