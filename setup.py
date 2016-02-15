@@ -119,7 +119,14 @@ setup(
                   sources=[
                       "src/python/beancount/parser/lexer.c",
                       "src/python/beancount/parser/grammar.c",
-                      "src/python/beancount/parser/parser.c"
+                      "src/python/beancount/parser/parser.c",
+                  ],
+                  headers=[
+                      "src/python/beancount/parser/lexer.h",
+                      "src/python/beancount/parser/lexer.l",
+                      "src/python/beancount/parser/grammar.h",
+                      "src/python/beancount/parser/grammar.y",
+                      "src/python/beancount/parser/parser.h",
                   ],
                   define_macros=[('PARSER_SOURCE_HASH',
                                   '"{}"'.format(hash_parser_source_files()))]),
