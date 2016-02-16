@@ -128,6 +128,12 @@ class TestMiscUtils(unittest.TestCase):
         self.assertEqual({'a_b': 'a_b', 'ab': 'a b'},
                          misc_utils.compute_unique_clean_ids(['a b', 'a_b']))
 
+    def test_idify(self):
+        self.assertEqual('A_great_movie_for_us.mp4',
+                         misc_utils.idify(' A great movie (for us) .mp4 '))
+        self.assertEqual('A____B.pdf',
+                         misc_utils.idify('A____B_._pdf'))
+
     def test_map_namedtuple_attributes(self):
         # pylint: disable=invalid-name
         Test = namedtuple('Test', 'a b c d')

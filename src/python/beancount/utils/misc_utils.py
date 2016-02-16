@@ -246,6 +246,21 @@ def compute_unique_clean_ids(strings):
     return idmap
 
 
+def idify(string):
+    """Replace characters objectionable for a filename with underscores.
+
+    Args:
+      string: Any string.
+    Returns:
+      The input string, with offending characters replaced.
+    """
+    for from_, to in [(r'[ \(\)]+', '_'),
+                      (r'_*\._*', '.')]:
+        string = re.sub(from_, to, string)
+    string = string.strip('_')
+    return string
+
+
 def dictmap(mdict, keyfun=None, valfun=None):
     """Map a dictionary's value.
 
