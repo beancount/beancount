@@ -4,6 +4,11 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-02-15
+
+  - Handle an incomplete pickle file by ignoring it and regenerating it silently.
+
+
 2016-02-14
 
   - Baked a 2.0b5 and 2.0b6 releases in a further attempt to get the included

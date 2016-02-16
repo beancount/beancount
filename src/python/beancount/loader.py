@@ -166,15 +166,20 @@ def pickle_cache_function(pattern, time_threshold, function):
         # timestamps to check.
         exists = path.exists(cache_filename)
         if exists:
-            with open(cache_filename, 'rb') as file:
-                result = pickle.load(file)
+            try:
+                with open(cache_filename, 'rb') as file:
+                    result = pickle.load(file)
 
-            # Check that the latest timestamp has not been written after the
-            # cache file.
-            entries, errors, options_map = result
-            if not needs_refresh(options_map):
-                # All timestamps are legit; cache hit.
-                return result
+                # Check that the latest timestamp has not been written after the
+                # cache file.
+                entries, errors, options_map = result
+                if not needs_refresh(options_map):
+                    # All timestamps are legit; cache hit.
+                    return result
+
+            except EOFError:
+                # The cache file is corrupted; ignore it and recompute.
+                pass
 
         # We failed; recompute the value.
         if exists:
