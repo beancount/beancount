@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-02-19
+
+  - Now accepting '=' in currency symbol in order to accommodate currencies in
+    Yahoo, which look like this "CNYUSD=X".
+
+
 2016-02-15
 
   - Handle an incomplete pickle file by ignoring it and regenerating it silently.
