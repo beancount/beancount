@@ -44,6 +44,9 @@ class TestParseSource(unittest.TestCase):
         psource = find_prices.parse_single_source('google/NASDAQ:AAPL')
         self.assertEqual(PS(google, 'NASDAQ:AAPL', False), psource)
 
+        psource = find_prices.parse_single_source('yahoo/CNYUSD=X')
+        self.assertEqual(PS(yahoo, 'CNYUSD=X', False), psource)
+
         psource = find_prices.parse_single_source('beancount.prices.sources.yahoo/AAPL')
         self.assertEqual(PS(yahoo, 'AAPL', False), psource)
 
