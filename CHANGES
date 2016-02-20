@@ -4,6 +4,11 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-02-20
+
+  - Match a price source over the entire source string.
+
+
 2016-02-19
 
   - Now accepting '=' in currency symbol in order to accommodate currencies in
