@@ -67,7 +67,7 @@ else:
         # - Listing them with "include_dirs" of the Extension fails as well.
         #
         # The only way I managed to get this working is by working around and
-        # including them as "packaged data" (see {63fc8d84d30a} below). That
+        # including them as "package_data" (see {63fc8d84d30a} below). That
         # includes the header files in the sdist, and a source distribution can
         # be installed using pip3 (and be built locally). However, the header
         # files end up being installed next to the pure Python files in the
