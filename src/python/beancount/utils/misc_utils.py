@@ -479,6 +479,25 @@ def sorted_uniquify(iterable, keyfunc=None, last=False):
                 prev_key = key
 
 
+def is_sorted(iterable, key=lambda x: x, cmp=lambda x, y: x <= y):
+    """Return true if the sequence is sorted.
+
+    Args:
+      iterable: An iterable sequence.
+      key: A function to extract the quantity by which to sort.
+      cmp: A function that compares two elements of a sequence.
+    Returns:
+      A boolean, true if the sequence is sorted.
+    """
+    it = map(key, iterable)
+    prev = next(it)
+    for element in it:
+        if not cmp(prev, element):
+            return False
+        prev = element
+    return True
+
+
 class LineFileProxy:
     """A file object that will delegate writing full lines to another logging function.
     This may be used for writing data to a logging level without having to worry about

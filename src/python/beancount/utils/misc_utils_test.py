@@ -9,6 +9,7 @@ import time
 import textwrap
 import sys
 from collections import namedtuple
+import operator
 
 from beancount.utils import misc_utils
 from beancount.utils import test_utils
@@ -193,6 +194,12 @@ class TestMiscUtils(unittest.TestCase):
         one = One(*args)
         two = Two(*args)
         self.assertFalse(one == two)
+
+    def test_is_sorted(self):
+        self.assertTrue(misc_utils.is_sorted([1, 3, 4, 5, 5, 6, 8]))
+        self.assertFalse(misc_utils.is_sorted([1, 3, 4, 5, 5, 6, 8], cmp=operator.lt))
+        self.assertFalse(misc_utils.is_sorted([3, 2, 6, 7]))
+        self.assertTrue(misc_utils.is_sorted([7, 6, 3, 1], cmp=operator.gt))
 
 
 class TestUniquify(unittest.TestCase):

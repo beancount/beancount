@@ -6,6 +6,9 @@ Note: This file contains only changes in the 'default' branch.
 
 2016-02-20
 
+  - Create an beancount.utils.misc_utils.is_sorted() utility function to be used
+    in the new importer code.
+
   - Match a price source over the entire source string.
 
 
