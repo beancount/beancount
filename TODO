@@ -7,6 +7,8 @@ beancount: TODO
   - Move beancount.scripts.query to beancount.query.query.
   - Move beancount.scripts.report to beancount.reports.report (and more what needs to be moved).
 
+  - Complete unit tests on beancount.ingest.compat.
+
   - Create a good, working example file.
     * The old file is available under examples/ingest
     * Complete import example file.
