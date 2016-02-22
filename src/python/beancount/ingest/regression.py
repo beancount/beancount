@@ -21,6 +21,7 @@ import unittest
 from os import path
 
 from beancount.ingest.importer import ImporterProtocol
+from beancount.ingest.importers import compat
 from beancount.parser import printer
 from beancount.utils import test_utils
 from beancount.ingest import extract
@@ -96,21 +97,20 @@ class ImportFileTestCase(unittest.TestCase):
         # Import the date.
         file = cache.FileMemo(filename)
         date = self.importer.file_date(file)
+        if date is None:
+            self.fail("No date produced from {}".format(file.name))
 
         expect_filename = '{}.file_date'.format(file.name)
         if path.exists(expect_filename) and path.getsize(expect_filename) > 0:
-            if date is None:
-                self.fail("No date produced from {}".format(file.name))
             expect_date_str = open(expect_filename, encoding='utf-8').read().strip()
             expect_date = datetime.datetime.strptime(expect_date_str, '%Y-%m-%d').date()
             self.assertEqual(expect_date, date)
         else:
-            if date is not None:
-                # Write out the expected file for review.
-                with open(expect_filename, 'w', encoding='utf-8') as outfile:
-                    print(date.strftime('%Y-%m-%d'), file=outfile)
-                self.skipTest("Expected file not present; generating '{}'".format(
-                    expect_filename))
+            # Write out the expected file for review.
+            with open(expect_filename, 'w', encoding='utf-8') as outfile:
+                print(date.strftime('%Y-%m-%d'), file=outfile)
+            self.skipTest("Expected file not present; generating '{}'".format(
+                expect_filename))
 
     @test_utils.skipIfRaises(ToolNotInstalled)
     def test_expect_file_name(self, filename, msg):
@@ -128,10 +128,10 @@ class ImportFileTestCase(unittest.TestCase):
         # Import the date.
         file = cache.FileMemo(filename)
         generated_basename = self.importer.file_name(file)
-
-        # Check that we're getting a non-null relative simple filename.
         if generated_basename is None:
             self.fail("No filename produced from {}".format(filename))
+
+        # Check that we're getting a non-null relative simple filename.
         self.assertFalse(path.isabs(generated_basename), generated_basename)
         self.assertNotRegex(generated_basename, os.sep)
 
@@ -192,7 +192,9 @@ def compare_sample_files(importer, directory=None):
             # there may be concrete inheritance and we want to run a test
             # against that method when that's the case, even if defined in a
             # base class.
-            if getattr(importer, name).__func__ is not getattr(ImporterProtocol, name):
+            func = getattr(importer, name).__func__
+            if not (func is getattr(ImporterProtocol, name) or
+                    func is getattr(compat.Importer, name)):
                 method = getattr(ImportFileTestCase(importer),
                                  'test_expect_{}'.format(name))
                 yield (method, filename, name)
