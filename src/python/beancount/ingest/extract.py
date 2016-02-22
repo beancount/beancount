@@ -5,15 +5,9 @@ downloaded files, and for each of those files, extract transactions from it.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
-from os import path
-from pprint import pformat
-import argparse
 import itertools
-import logging
-import runpy
 import sys
 import textwrap
-import logging
 
 from beancount.core import data
 from beancount.parser import printer

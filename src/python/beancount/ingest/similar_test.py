@@ -1,15 +1,11 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import datetime
-import pprint
-import unittest
-import pprint
 
 from beancount.core.number import D
 from beancount.core import data
 from beancount.parser import cmptest
 from beancount.parser import parser
-from beancount.parser import printer
 from beancount import loader
 
 from beancount.ingest import similar

@@ -6,16 +6,9 @@ be associated with.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
-from os import path
-import argparse
-import contextlib
 import logging
 import os
-import pprint
-import re
-import runpy
 import sys
-import textwrap
 
 from beancount.utils import file_utils
 from beancount.ingest import scripts_utils

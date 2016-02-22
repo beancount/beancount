@@ -2,7 +2,6 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import os
 import argparse
-import unittest
 from os import path
 
 from beancount.utils import test_utils

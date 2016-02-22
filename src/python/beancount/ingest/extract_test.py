@@ -1,7 +1,6 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 from os import path
-import re
 import unittest
 import datetime
 import io
@@ -11,9 +10,7 @@ from unittest import mock
 
 from beancount.utils import test_utils
 from beancount.utils import misc_utils
-from beancount.core import data
 from beancount.parser import parser
-from beancount.parser import printer
 from beancount import loader
 from beancount.ingest import extract
 from beancount.ingest import importer

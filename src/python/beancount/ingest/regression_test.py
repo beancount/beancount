@@ -2,7 +2,6 @@
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import re
 import os
 import datetime
 import unittest
@@ -11,14 +10,10 @@ import sys
 from unittest import mock
 from os import path
 
-import dateutil.parser
-
 from beancount.utils import test_utils
 from beancount.parser import parser
 from beancount.ingest import importer
 from beancount.ingest import regression
-from beancount.ingest import extract
-from beancount.ingest import cache
 
 
 class _DummyImporter(importer.ImporterProtocol):

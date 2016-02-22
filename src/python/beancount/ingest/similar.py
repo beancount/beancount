@@ -13,8 +13,6 @@ from beancount.core.number import ONE
 from beancount.core import data
 from beancount.core import amount
 from beancount.core import interpolate
-from beancount.utils import misc_utils
-from beancount.utils import date_utils
 
 
 def find_similar_entries(entries, source_entries, comparator=None, window_days=2):

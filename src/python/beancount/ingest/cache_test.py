@@ -5,7 +5,6 @@ import shutil
 import unittest
 from unittest import mock
 
-from beancount.utils import file_type
 from beancount.ingest import cache
 
 

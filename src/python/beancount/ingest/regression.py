@@ -13,13 +13,11 @@ regression tests for your importers. Use it like this in your own importer code:
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import datetime
-import functools
 import io
 import os
 import re
 import sys
 import unittest
-import logging
 from os import path
 
 from beancount.ingest.importer import ImporterProtocol
@@ -183,7 +181,7 @@ def compare_sample_files(importer, directory=None):
         directory = sys.modules[type(importer).__module__].__file__
     if path.isfile(directory):
         directory = path.dirname(directory)
-    class_dict = importer.__class__.__dict__
+
     for filename in find_input_files(directory):
         # For each of the methods to be tested, check if there is an actual
         # implementation and if so, run a comparison with an expected file.

@@ -7,12 +7,9 @@ corresponding to the filing directory.
 __author__ = "Martin Blais <blais@furius.ca>"
 
 from os import path
-import argparse
 import datetime
 import logging
 import os
-import re
-import runpy
 import shutil
 import sys
 

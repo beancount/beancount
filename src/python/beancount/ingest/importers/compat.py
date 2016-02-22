@@ -8,10 +8,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import logging
 import re
-from os import path
 
-from beancount.core import flags
-from beancount.utils import file_type
 from beancount.ingest import cache
 from beancount.ingest import importer
 

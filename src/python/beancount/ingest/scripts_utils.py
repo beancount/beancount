@@ -3,15 +3,12 @@ __author__ = "Martin Blais <blais@furius.ca>"
 from os import path
 import re
 import os
-import shutil
 import unittest
-import subprocess
 import argparse
 import runpy
 
 from beancount.utils import test_utils
 from beancount.ingest import importer
-from beancount.ingest import extract
 from beancount.ingest import cache
 
 

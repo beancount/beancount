@@ -2,9 +2,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import datetime
 import unittest
-from os import path
 
-from beancount.ingest import importer
 from beancount.ingest import cache
 from beancount.ingest.importers import compat
 
@@ -40,19 +38,19 @@ class TestImporter(unittest.TestCase):
 
     def test_constructor(self):
         # Check with a valid config.
-        gold = _GoldImporter(self.config, content_regexps='.*')
+        _GoldImporter(self.config, content_regexps='.*')
 
         # Check with some missing elements.
         config_missing = self.config.copy()
         del config_missing['asset_cash']
         with self.assertRaises(ValueError):
-            gold = _GoldImporter(config_missing, content_regexps='.*')
+            _GoldImporter(config_missing, content_regexps='.*')
 
         # Check with some invalid/extra elements.
         config_extra = self.config.copy()
         config_extra['asset_interest'] = 'Income:Dividends'
         with self.assertRaises(ValueError):
-            gold = _GoldImporter(config_extra, content_regexps='.*')
+            _GoldImporter(config_extra, content_regexps='.*')
 
     def test_get_config(self):
         self.assertEqual(self.config, self.gold.get_config())
