@@ -106,6 +106,9 @@ bean-query
 bean-report
 bean-sql
 bean-web
+bean-identify
+bean-extract
+bean-file
 treeify
 upload-csv-to-google-sheet
 """.split() if x and not x.startswith('#')]
@@ -146,6 +149,8 @@ setup(
                 'beancount.prices.sources',
                 'beancount.web',
                 'beancount.docs',
+                'beancount.ingest',
+                'beancount.ingest.importers',
                 'beancount.utils'],
 
     package_data = {
