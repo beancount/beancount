@@ -9,7 +9,6 @@ import datetime
 import collections
 import re
 
-# Note: this file is mirrorred into ledgerhub. Relative imports only.
 from beancount.core.number import ZERO
 from beancount.core.number import Decimal
 from beancount.core.number import NUMBER_RE
