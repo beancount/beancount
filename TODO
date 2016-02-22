@@ -1,5 +1,155 @@
 -*- mode: org -*-
 beancount: TODO
+* Ingest (LedgerHub)
+** Merging into Beancount
+
+  (This is in order to be consistent with the placement of scripts file for major subpackages.)
+  - Move beancount.scripts.query to beancount.query.query.
+  - Move beancount.scripts.report to beancount.reports.report (and more what needs to be moved).
+
+  - Add exception handlers for ALL importer callbacks.
+
+  - Make sure that when an exptest fails it includes the filename of the test
+    somewhere in there; it's annoying when it's not present there.
+
+  - Remove all scripts except those three, I never use anything else:
+
+       ledgerhub-extract  -> bean-extract
+       ledgerhub-file     -> bean-file
+       ledgerhub-identify -> bean-identify
+
+  - Create mixins for default account name and regexp matching on contents.
+
+  - Create a good, working example file.
+    * Complete import example file.
+    * Add tests for import.
+
+  - When we import, if a file was not detected, don't spit out an org text line.
+    Still doesn't work. Needs to be cleaned up.
+
+** Cleanups & Verifications
+
+  - The code that auto-files statements needs to detect and de-dup files which
+    have the same contents, because it is likely some files will be downloaded
+    twice, it happens a lot.
+
+  - When payee == narration, remove one of the two. This should be a generic and
+    simple enough check to apply.
+
+  - There should be check that the accounts output by the extraction are all
+    valid Beancount/Ledger account names.
+
+  - Duplicate entries should cover all directive types (for balances).
+
+  - Before we start importing, validate that the importer modules all implement
+    the appropriate methods. This will help thirdparty implementors.
+
+** Directories Validation
+
+  - Validation of directories (aka bean-doctor directories) should be
+    automatically invoked by bean-file, and that would make sense.
+
+** Caching
+
+  - Implement on-disk caching for conversions.
+
+** Auto-Categorization
+
+  - Implement some hook to provide your own auto-categorization.
+  - Provide some module that will attempt to categorize automatically, that can
+    be inserted into the auto-categorization hook.
+
+  - Write a generic import routine that will try to heuristically match
+    partially completed transactions from an existing Ledger. Use some NLP or
+    somesuch matching algorithm.
+
+    Given some incomplete transactions, complete them heuristically based on
+    previous contents of the ledger. This should make import a lot easier. This
+    should be generic and work across all importers, a single function call.
+
+** Auto-Insert
+
+  - It would be super awesome if you could automate away the insertion of new
+    transactions in the input file, following the previous transactions...
+    we can find a heuristic to do this. That would be _really_ cool.
+
+  - Implement automatic finding and insertion of new transactions.
+
+** Payee Normalization
+
+  - We will want to somehow "normalize" and merge payee names, because some of
+    that differ very little are obvious for the same business... this would be
+    useful. What kinds of tools will we need for that?
+
+    Clean Import: The new importers should be able to strip the non-payee parts
+    of the payee name, e.g. NEW YO, SAN FR, etc. Maybe we could let the user
+    provide a filter function to sanitize the names of the payees, or maybe more
+    generally just a filter on the entries before printing them out. This way
+    you could provide your very own custom filter function that cleans up
+    anything you don't like.
+
+** Importers
+*** Other
+
+  Here's what I have in mind for the future of this project:
+
+  - Move out all the non-generic importers. The reason for doing this is that I
+    want to have a separate repository Python packages that contain (a) the
+    importer code, (b) unit testing code, and - this is the main reason -  (c)
+    lots of examples of actual downloaded files to be converted with expected
+    outputs, as part of the unit tests. Obviously I cannot share these statements.
+    I doubt anyone really uses the other importers anyhow. I would
+
+    1) Keep the OFX, QIF importers.
+    2) Build a very good, very configurable CSV importer (for Europeans).
+    3) Build a single, configurable generic version of the PDF importers that allows
+       you to do filing based off of a single regexp.
+    4) Add an example of writing a custom importer (because you will want to write
+       your own for all the other file formats).
+
+  Then at least all my importers would be tested, and that would make my life a
+  little bit easier when I have to change the importers. I would provide common
+  testing utils so you can do this too for your own as well.
+
+
+*** OFX
+
+      ledgerhub.ingest.importers.ofx                     -> Move this into ledgerhub.ingest.importers.ofx/
+
+  - This will require a new dependency on 'bs4'; not in Beancount so far.
+    But reasonable IMO.
+
+  - Add a check at the end of the OFX bank import. Missing right now.
+
+  - The OFX importer needs to unescape &amp; and other odd chars, I think
+    there's a bug currently, I've seen a few here and there.
+
+  - OFX importer should warn when not all the sections have importers for it
+    (RBC OFX has many sections and one of the sections I needed - credit line -
+    was missing in my importer config, so I discovered this). If we do this,
+    this means that we may want to provide a "no-op" importer in order to
+    silence that warning in case that's what's desired.
+
+*** CSV Importer
+
+  - Now that we have easy testing capability, create a really nice generic CSV
+    importer that should be shipped as part of LedgerHub.
+
+  - Create a good, default, configurable importer for CSV files.
+
+  - Write a CSV file sniffer that automatically infer which columns should match
+    which fields. Try to make this smart, e.g., if some column "mostly"
+    increases, it would be the balance column. This should be for fun (I don't
+    need it).
+
+*** QIF
+
+      ledgerhub.ingest.importers.qif                     -> Move this into ledgerhub.ingest.importers.qif, or convert.
+
+*** GnuCash
+
+  - Write an importer from GnuCash's format, for people wanting to make the
+    transition or even just to try it out.
 * Misc
 
   - Update install documentation with installation instructions using pip3.
