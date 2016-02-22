@@ -6,6 +6,9 @@ Note: This file contains only changes in the 'default' branch.
 
 2016-02-22
 
+  - Fixed issue #98: There was a bug when fetching historical data from a Yahoo
+    price source was failing, it wasn't handled correctly.
+
   - Merged LedgerHub back into beancount under a new "beancount.ingest" package.
     The new protocol for importers can be read at:
     /home/blais/p/repos/beancount1/src/python/beancount/ingest/importer.py
