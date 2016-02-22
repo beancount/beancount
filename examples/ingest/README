@@ -1,0 +1,26 @@
+Run the examples in this directory with the commands below.
+
+Note: Only importing.import is working right now. All the other .import files
+under this hierarchy are just intended as examples (without corresponding data
+for demo).
+
+
+
+Extracting the match text of a download:
+
+  ledgerhub-match-text Downloads/ofx.qfx
+
+
+Identifying the downloaded files:
+
+  ledgerhub-identify importing.import Downloads/ofx.qfx
+
+
+Extracting data from the download files:
+
+  ledgerhub-extract --ledger=importing.beancount importing.import Downloads/ofx.qfx
+
+
+Filing away the downloaded files:
+
+  ledgerhub-file --overwrite importing.import Downloads/ofx.qfx Documents

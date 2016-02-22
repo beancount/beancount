@@ -1,0 +1,72 @@
+#!/usr/bin/env python3
+"""Importer configuration for Joe Smith.
+"""
+from ledgerhub.importers.generic import fileonly, ofx
+from ledgerhub.importers.hsbc import hsbc_pdf
+from ledgerhub.importers.timewarner import timewarner
+from ledgerhub.scripts.run import main
+
+CONFIG = [
+
+    #
+    # HSBC
+    #
+
+    (('FileType: application/x-ofx',
+      r'Contents:.*<\?OFX OFXHEADER="200" VERSION="200" SECURITY="NONE" OLDFILEUID="NONE" NEWFILEUID="NONE"\?>',
+      r'Contents:.*<ACCTID>1234567812345678'),
+     ofx.Importer({
+         'FILE'  : 'Liabilities:US:HSBC:HSBC-MasterCardPlatinum',
+         'asset' : 'Liabilities:US:HSBC:HSBC-MasterCardPlatinum',
+         'acctid': '1234567812345678',
+     })),
+
+    (('FileType: application/pdf', 'Contents:.*HSBC Bank USA', 'Contents:.*1234567812'),
+     fileonly.Importer({
+         'FILE' : 'Assets:US:HSBC:Checking',
+     })),
+
+    (('FileType: application/pdf', 'Contents:.*HSBC ADVANCE ONLINE SAV', 'Contents:.*Account Number 1234567812'),
+     fileonly.Importer({
+         'FILE' : 'Assets:US:HSBC:Savings',
+     })),
+
+    (('FileType: application/pdf', r'Contents:.*Platinum MasterCard', r'Contents:.*1234-5678-1234-5678'),
+     hsbc_pdf.Importer({
+         'FILE'  : 'Liabilities:US:HSBC:HSBC-MasterCardPlatinum',
+     })),
+
+
+    #
+    # American Express
+    #
+
+    # Supports both MS Money or QuickBooks format (prefer MS Money though).
+    (('FileType: application/(x-ofx|vnd.intu.qbo)',
+      r'Contents:.*<ACCTID>1234567812345678'),
+     ofx.Importer({
+         'FILE'  : 'Liabilities:US:Amex:BlueCash',
+         'asset' : 'Liabilities:US:Amex:BlueCash',
+         'acctid': '1234567812345678',
+     })),
+
+    # PDF statements
+    (('FileType: application/pdf',
+      r'Contents:.*Blue Cash Rewards',
+      r'Contents:.*JOE SMITH Account Ending 5-12345'),
+     fileonly.Importer({
+         'FILE'  : 'Liabilities:US:Amex:BlueCash',
+     })),
+
+    #
+    # Time-Warner Internet
+    #
+    (('FileType: application/pdf', r'Contents: .*TIME WARNER CABLE'),
+     timewarner.Importer({
+         'FILE'          : 'Expenses:Communications:Internet:TimeWarner',
+     })),
+
+]
+
+
+main(CONFIG, __file__.replace('.import', '.beancount'))

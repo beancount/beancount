@@ -7,6 +7,11 @@ beancount: TODO
   - Move beancount.scripts.query to beancount.query.query.
   - Move beancount.scripts.report to beancount.reports.report (and more what needs to be moved).
 
+  - Create a good, working example file.
+    * The old file is available under examples/ingest
+    * Complete import example file.
+    * Add tests for import.
+
   - Add exception handlers for ALL importer callbacks.
 
   - Make sure that when an exptest fails it includes the filename of the test
@@ -19,10 +24,6 @@ beancount: TODO
        ledgerhub-identify -> bean-identify
 
   - Create mixins for default account name and regexp matching on contents.
-
-  - Create a good, working example file.
-    * Complete import example file.
-    * Add tests for import.
 
   - When we import, if a file was not detected, don't spit out an org text line.
     Still doesn't work. Needs to be cleaned up.
