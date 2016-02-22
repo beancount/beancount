@@ -8,10 +8,8 @@ currency:
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
-# Note: this file is mirrorred into ledgerhub. Relative imports only.
 import re
 
-# Import object to format numbers at specific precisions.
 from beancount.core.display_context import DEFAULT_FORMATTER
 from beancount.core.number import ZERO
 from beancount.core.number import Decimal

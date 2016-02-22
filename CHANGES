@@ -4,6 +4,27 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-02-22
+
+  - Merged LedgerHub back into beancount under a new "beancount.ingest" package.
+    The new protocol for importers can be read at:
+    /home/blais/p/repos/beancount1/src/python/beancount/ingest/importer.py
+
+    There are three new scripts:
+
+      bean-identify
+      bean-extract
+      bean-file
+
+    These correspond one-to-one to their ledgerhub variants.
+
+    There is a bit more work to be done to complete this - see the top of the
+    TODO file in the "ingest" branch if you're interested - and I'll write
+    documentation on this once all the work is completed.
+
+    LedgerHub is now officially dead.
+
+
 2016-02-20
 
   - Create an beancount.utils.misc_utils.is_sorted() utility function to be used
