@@ -251,11 +251,33 @@ def do_linked(filename, args):
         return
 
     # Find all linked entries.
-    linked_entries = [entry
-                      for entry in entries
-                      if (isinstance(entry, data.Transaction) and
-                          entry.links and
-                          entry.links & links)]
+    #
+    # Note that there is an option hjere: You can either just look at the links
+    # on the closest entry, or you can include the links of the linked
+    # transactions as well. Whichever one you want depends on how you use your
+    # links. Best would be to query the user (in Emacs) when there are many
+    # links present.
+    if False:
+        linked_entries = [entry
+                          for entry in entries
+                          if (isinstance(entry, data.Transaction) and
+                              entry.links and
+                              entry.links & links)]
+    else:
+        links = set(links)
+        linked_entries = []
+        while True:
+            num_linked = len(linked_entries)
+            linked_entries = [entry
+                              for entry in entries
+                              if (isinstance(entry, data.Transaction) and
+                                  entry.links and
+                                  entry.links & links)]
+            if len(linked_entries) == num_linked:
+                break
+            for entry in linked_entries:
+                if entry.links is not None:
+                    links.update(entry.links)
 
     # Render linked entries (in date order) as errors (for Emacs).
     errors = [RenderError(entry.meta, '', entry)
