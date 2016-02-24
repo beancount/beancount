@@ -4,6 +4,15 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-02-24
+
+  - Changed the bean-doctor "linked" command to fetch the set of links from the
+    entire set of entries.
+
+  - Added ABS() function to the shell, in order to dig around for transactions
+    with a particular amount.
+
+
 2016-02-22
 
   - Fixed issue #98: There was a bug when fetching historical data from a Yahoo
