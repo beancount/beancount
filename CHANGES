@@ -4,6 +4,14 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-02-27
+
+  - Fixed rendering bug in bean-web whereby empty cells would receive a 0.00
+    amount.
+
+  - Improved rendering of the account name in the name of the compat importer.
+
+
 2016-02-24
 
   - Changed the bean-doctor "linked" command to fetch the set of links from the
