@@ -12,6 +12,7 @@ import logging
 import os
 import shutil
 import sys
+import re
 
 from beancount.core import account
 from beancount.utils import misc_utils
