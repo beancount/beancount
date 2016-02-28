@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-02-28
+
+  - Merged fix by yagebu for bug found in b.ops.summarize() that would not yield
+    a list of ordered transactions.
+
+
 2016-02-27
 
   - Fixed rendering bug in bean-web whereby empty cells would receive a 0.00
