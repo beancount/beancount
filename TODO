@@ -5,7 +5,7 @@ beancount: TODO
 
   (This is in order to be consistent with the placement of scripts file for major subpackages.)
   - Move beancount.scripts.query to beancount.query.query.
-  - Move beancount.scripts.report to beancount.reports.report (and more what needs to be moved).
+  - Move beancount.scripts.report to beancount.reports.report (and move what needs to be moved).
 
   - Complete unit tests on beancount.ingest.compat.
 
@@ -18,12 +18,6 @@ beancount: TODO
 
   - Make sure that when an exptest fails it includes the filename of the test
     somewhere in there; it's annoying when it's not present there.
-
-  - Remove all scripts except those three, I never use anything else:
-
-       ledgerhub-extract  -> bean-extract
-       ledgerhub-file     -> bean-file
-       ledgerhub-identify -> bean-identify
 
   - Create mixins for default account name and regexp matching on contents.
 
@@ -39,8 +33,8 @@ beancount: TODO
   - When payee == narration, remove one of the two. This should be a generic and
     simple enough check to apply.
 
-  - There should be check that the accounts output by the extraction are all
-    valid Beancount/Ledger account names.
+  - There should be an automatic check that the accounts output by the
+    extraction are all valid Beancount/Ledger account names.
 
   - Duplicate entries should cover all directive types (for balances).
 
