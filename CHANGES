@@ -6,6 +6,9 @@ Note: This file contains only changes in the 'default' branch.
 
 2016-02-28
 
+  - Moved beancount.scripts.query to beancount.query.shell in order to be
+    consistent with the way other libraries are invoked.
+
   - Merged fix by yagebu for bug found in b.ops.summarize() that would not yield
     a list of ordered transactions.
 
