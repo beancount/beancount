@@ -4,6 +4,47 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-02-27
+
+  - Fixed rendering bug in bean-web whereby empty cells would receive a 0.00
+    amount.
+
+  - Improved rendering of the account name in the name of the compat importer.
+
+
+2016-02-24
+
+  - Changed the bean-doctor "linked" command to fetch the set of links from the
+    entire set of entries.
+
+  - Added ABS() function to the shell, in order to dig around for transactions
+    with a particular amount.
+
+
+2016-02-22
+
+  - Fixed issue #98: There was a bug when fetching historical data from a Yahoo
+    price source was failing, it wasn't handled correctly.
+
+  - Merged LedgerHub back into beancount under a new "beancount.ingest" package.
+    The new protocol for importers can be read at:
+    /home/blais/p/repos/beancount1/src/python/beancount/ingest/importer.py
+
+    There are three new scripts:
+
+      bean-identify
+      bean-extract
+      bean-file
+
+    These correspond one-to-one to their ledgerhub variants.
+
+    There is a bit more work to be done to complete this - see the top of the
+    TODO file in the "ingest" branch if you're interested - and I'll write
+    documentation on this once all the work is completed.
+
+    LedgerHub is now officially dead.
+
+
 2016-02-20
 
   - Create an beancount.utils.misc_utils.is_sorted() utility function to be used

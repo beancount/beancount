@@ -110,6 +110,8 @@ class SimilarityComparator:
             diff = abs((number1 / number2)
                        if number2 != ZERO
                        else (number2 / number1))
+            if diff == ZERO:
+                return False
             if diff < ONE:
                 diff = ONE/diff
             if (diff - ONE) < self.EPSILON:

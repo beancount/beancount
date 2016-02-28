@@ -155,6 +155,8 @@ beancount: TODO
     transition or even just to try it out.
 * Misc
 
+  - Need a unit test to reproduce the fix in this commit.
+
   - Update install documentation with installation instructions using pip3.
   - (Look for examples using C code that require headers, they must have a
     better solution than mine.)

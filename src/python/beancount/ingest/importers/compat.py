@@ -69,7 +69,7 @@ class Importer(importer.ImporterProtocol):
 
     def name(self):
         """Include the filing account in the name."""
-        return '{}: {}'.format(super().name(), self.file_account(None))
+        return '{}: "{}"'.format(super().name(), self.file_account(None))
 
     def get_config(self):
         """Return the user config, after converting account names to

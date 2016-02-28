@@ -4,6 +4,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import io
 
+from beancount.core.number import ZERO
 from beancount.core import account_types
 from beancount.core import data
 from beancount.core import inventory
@@ -169,7 +170,9 @@ def table_of_balances(real_root, operating_currencies, formatter, classes=None):
         # FIXME: This little algorithm is inefficient; rewrite it.
         for currency in operating_currencies:
             units = ccy_dict[currency].get_units(currency)
-            cells.append(formatter.render_number(units.number, units.currency))
+            cells.append(formatter.render_number(units.number, units.currency)
+                         if units.number != ZERO
+                         else '')
 
         # Render all the rest of the inventory in the last cell.
         if None in ccy_dict:

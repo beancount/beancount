@@ -66,11 +66,10 @@ def load_file(filename, log_timings=None, log_errors=None, extra_validations=Non
         this list of entries.
       encoding: A string or None, the encoding to decode the input filename with.
     Returns:
-      A triple of:
-        entries: A date-sorted list of entries from the file.
-        errors: A list of error objects generated while parsing and validating
-          the file.
-        options_map: A dict of the options parsed from the file.
+      A triple of (entries, errors, option_map) where "entries" is a date-sorted
+      list of entries from the file, "errors" a list of error objects generated
+      while parsing and validating the file, and "options_map", a dict of the
+      options parsed from the file.
     """
     filename = path.expandvars(path.expanduser(filename))
     if not path.isabs(filename):
@@ -105,11 +104,10 @@ def load_encrypted_file(filename, log_timings=None, log_errors=None, extra_valid
       dedent: See load_string().
       encoding: See load_string().
     Returns:
-      A triple of:
-        entries: A date-sorted list of entries from the file.
-        errors: A list of error objects generated while parsing and validating
-          the file.
-        options_map: A dict of the options parsed from the file.
+      A triple of (entries, errors, option_map) where "entries" is a date-sorted
+      list of entries from the file, "errors" a list of error objects generated
+      while parsing and validating the file, and "options_map", a dict of the
+      options parsed from the file.
     """
     contents = encryption.read_encrypted_file(filename)
     return load_string(contents,
@@ -264,11 +262,10 @@ def load_string(string, log_timings=None, log_errors=None, extra_validations=Non
       dedent: A boolean, if set, remove the whitespace in front of the lines.
       encoding: A string or None, the encoding to decode the input filename with.
     Returns:
-      A triple of:
-        entries: A date-sorted list of entries from the file.
-        errors: A list of error objects generated while parsing and validating
-          the file.
-        options_map: A dict of the options parsed from the file.
+      A triple of (entries, errors, option_map) where "entries" is a date-sorted
+      list of entries from the string, "errors" a list of error objects
+      generated while parsing and validating the string, and "options_map", a
+      dict of the options parsed from the string.
     """
     if dedent:
         string = textwrap.dedent(string)

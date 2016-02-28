@@ -29,6 +29,17 @@ from beancount.query import query_compile
 
 # Non-agreggating functions. These functionals maintain no state.
 
+class Abs(query_compile.EvalFunction):
+    "Compute the length of the argument. This works on sequences."
+    __intypes__ = [Decimal]
+
+    def __init__(self, operands):
+        super().__init__(operands, Decimal)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        return abs(args[0])
+
 class Length(query_compile.EvalFunction):
     "Compute the length of the argument. This works on sequences."
     __intypes__ = [(list, set, str)]
@@ -386,8 +397,9 @@ class GetItemStr(query_compile.EvalFunction):
 
 
 SIMPLE_FUNCTIONS = {
-    'str'                                 : Str,
+    'abs'                                 : Abs,
     'length'                              : Length,
+    'str'                                 : Str,
     'maxwidth'                            : MaxWidth,
     'root'                                : Root,
     'parent'                              : Parent,
