@@ -8,7 +8,7 @@ import io
 
 from beancount.core.number import D
 from beancount.core import realization
-from beancount.reports import report
+from beancount.reports import base
 from beancount.reports import table
 from beancount.parser import options
 from beancount import loader
@@ -18,19 +18,19 @@ def iter_reports(report_classes):
     """Iterate over and instantiate all report classes.
 
     Args:
-      A list of subclasses of report.Report.
+      A list of subclasses of base.Base.
     Yields:
       Pairs of (report instance, supported output format).
     """
     for report_class in report_classes:
-        assert issubclass(report_class, report.Report), report_class
+        assert issubclass(report_class, base.Report), report_class
         argv = getattr(report_class, 'test_args', [])
         report_ = report_class.from_args(argv)
         for format_ in report_class.get_supported_formats():
             yield (report_, format_)
 
 
-class ExampleReport(report.Report):
+class ExampleReport(base.Report):
 
     names = ['example']
     default_format = 'text'
@@ -61,7 +61,7 @@ class TestReport(unittest.TestCase):
 
     def test_from_args(self):
         report_ = self.ReportClass.from_args([])
-        self.assertTrue(isinstance(report_, report.Report))
+        self.assertTrue(isinstance(report_, base.Report))
 
     def test_add_args(self):
         parser = argparse.ArgumentParser()
@@ -90,7 +90,7 @@ class TestReport(unittest.TestCase):
         self.assertEqual('something CAD', output)
 
 
-class ExampleTableReport(report.TableReport):
+class ExampleTableReport(base.TableReport):
 
     names = ['example']
 
@@ -143,7 +143,7 @@ class TestRealizationMeta(unittest.TestCase):
 
     def test_realization_metaclass(self):
 
-        class MyReport(report.Report, metaclass=report.RealizationMeta):
+        class MyReport(base.Report, metaclass=base.RealizationMeta):
 
             default_format = 'html'
 
@@ -166,12 +166,12 @@ class TestRealizationMeta(unittest.TestCase):
 class TestReportFunctions(unittest.TestCase):
 
     def test_get_all_report(self):
-        all_reports = report.get_all_reports()
-        self.assertTrue(all(issubclass(report_, report.Report)
+        all_reports = base.get_all_reports()
+        self.assertTrue(all(issubclass(report_, base.Report)
                             for report_ in all_reports))
 
     def test_get_html_template(self):
-        template = report.get_html_template()
+        template = base.get_html_template()
         self.assertTrue(template)
         self.assertRegex(template, '{title}')
         self.assertRegex(template, '{body}')

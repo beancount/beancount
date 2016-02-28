@@ -6,6 +6,11 @@ Note: This file contains only changes in the 'default' branch.
 
 2016-02-28
 
+  - Moved beancount.scripts.report to beancount.report.report in order to be
+    consistent with the way other libraries are invoked. I had to move
+    beancount.report.report out of the way (to beancount.report.base) to make
+    space for it.
+
   - Moved beancount.scripts.query to beancount.query.shell in order to be
     consistent with the way other libraries are invoked.
 

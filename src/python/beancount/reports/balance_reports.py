@@ -4,13 +4,13 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import re
 
-from beancount.reports import report
+from beancount.reports import base
 from beancount.reports import tree_table
 from beancount.core import realization
 
 
-class BalancesReport(report.HTMLReport,
-                     metaclass=report.RealizationMeta):
+class BalancesReport(base.HTMLReport,
+                     metaclass=base.RealizationMeta):
     """Print out the trial balance of accounts matching an expression."""
 
     names = ['balances', 'bal', 'trial']
@@ -50,8 +50,8 @@ class BalancesReport(report.HTMLReport,
         file.write(text)
 
 
-class BalanceSheetReport(report.HTMLReport,
-                         metaclass=report.RealizationMeta):
+class BalanceSheetReport(base.HTMLReport,
+                         metaclass=base.RealizationMeta):
     """Print out a balance sheet."""
 
     names = ['balsheet']
@@ -98,8 +98,8 @@ class BalanceSheetReport(report.HTMLReport,
             """.format(**locals()))
 
 
-class IncomeStatementReport(report.HTMLReport,
-                            metaclass=report.RealizationMeta):
+class IncomeStatementReport(base.HTMLReport,
+                            metaclass=base.RealizationMeta):
     """Print out an income statement."""
 
     names = ['income']
