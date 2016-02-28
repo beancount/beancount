@@ -237,10 +237,40 @@ Price = new_directive('Price', 'currency amount')
 #   filename: The absolute filename of the document file.
 Document = new_directive('Document', 'account filename')
 
+# A custom directive. This directive can be used to implement new experimental
+# dated features in the Beancount file. This is meant as an intermediate measure
+# to be used when you would need to implement a new directive in a plugin. These
+# directives will be parsed liberally... any list of tokens are supported. All
+# that is required is some unique name for them that acts as a "type". These
+# directives are included in the stream and a plugin should be able to gather
+# them.
+#
+# Attributes:
+#   meta: See above.
+#   date: The date at which this query should be run. All directives following
+#     this date will be ignored automatically. This is essentially equivalent to
+#     the CLOSE modifier in the shell syntax.
+#   dir_type: A string that represents the type of the directive.
+#   values: A list of values of various simple types supported by the grammar.
+#     (Note that this list is not enforced to be consistent for all directives
+#     of hte same type by the parser.)
+Custom = new_directive('Custom', 'type values')
+
 
 # A list of all the valid directive types.
 ALL_DIRECTIVES = (
-    Open, Close, Commodity, Pad, Balance, Transaction, Note, Event, Query, Price, Document
+    Open,
+    Close,
+    Commodity,
+    Pad,
+    Balance,
+    Transaction,
+    Note,
+    Event,
+    Query,
+    Price,
+    Document,
+    Custom
 )
 
 

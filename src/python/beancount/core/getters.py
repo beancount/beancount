@@ -96,7 +96,7 @@ class GetAccounts:
 
     # Associate all the possible directives with their respective handlers.
     Open = Close = Balance = Note = Document = _one
-    Commodity = Event = Query = Price = _zero
+    Commodity = Event = Query = Price = Custom = _zero
 
 
 # Global instance to share.

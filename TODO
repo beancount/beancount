@@ -3,10 +3,6 @@ beancount: TODO
 * Ingest (LedgerHub)
 ** Merging into Beancount
 
-  (This is in order to be consistent with the placement of scripts file for major subpackages.)
-  - Move beancount.scripts.query to beancount.query.query.
-  - Move beancount.scripts.report to beancount.reports.report (and move what needs to be moved).
-
   - Complete unit tests on beancount.ingest.compat.
 
   - Create a good, working example file.

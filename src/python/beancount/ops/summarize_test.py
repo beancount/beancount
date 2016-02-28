@@ -17,6 +17,7 @@ from beancount.ops import summarize
 from beancount.parser import printer
 from beancount.parser import options
 from beancount.parser import cmptest
+from beancount.utils import misc_utils
 from beancount import loader
 
 
@@ -816,6 +817,27 @@ class TestSummarize(cmptest.TestCase):
                              for entry in after_transactions))
         self.assertFalse(any(entry.date < summarize_date
                              for entry in after_transactions))
+
+    @loader.load_doc()
+    def test_summarize__ordering_non_transactions(self, entries, _, __):
+        """
+          2016-01-15 price HOOL    123.45 USD
+
+          2016-02-01 open Assets:Invest:Cash
+          2016-02-01 open Assets:Invest:HOOL
+
+          2016-02-16 *
+            Assets:Invest:HOOL    10 HOOL {143.45 USD}
+            Assets:Invest:Cash
+
+          2016-04-01 *
+            Assets:Invest:HOOL      2 HOOL {156.32 USD}
+            Assets:Invest:Cash
+        """
+        summarize_date = datetime.date(2016, 3, 1)
+        summarized_entries, index = summarize.summarize(entries, summarize_date,
+                                                        self.OPENING_ACCOUNT)
+        self.assertTrue(misc_utils.is_sorted(summarized_entries, lambda entry: entry.date))
 
 
 class TestConversions(cmptest.TestCase):

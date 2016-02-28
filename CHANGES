@@ -4,6 +4,42 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-02-28
+
+  - Moved beancount.scripts.report to beancount.report.report in order to be
+    consistent with the way other libraries are invoked. I had to move
+    beancount.report.report out of the way (to beancount.report.base) to make
+    space for it.
+
+  - Moved beancount.scripts.query to beancount.query.shell in order to be
+    consistent with the way other libraries are invoked.
+
+  - Merged fix by yagebu for bug found in b.ops.summarize() that would not yield
+    a list of ordered transactions.
+
+  - Introduced a new "Custom" directive type. You can enter directives like
+    this:
+
+      2016-02-28 custom "budget" ....
+
+    where "..." can be a mixed list of
+
+    * string
+    * date
+    * boolean
+    * number
+    * amount (number + currency)
+
+    The first element is a string, which is intended to be used as the runtime
+    type of the directive. This can be used to prototype new features in plugins
+    or otherwise.
+
+    Right now, no consistency is enforced on the datatypes declared for
+    directives with the same type name. Also, there is currently no way for a
+    plugin to declare what a valid set of tokens may be (but I may do this later
+    on to simplify error reporting for plugin implementors).
+
+
 2016-02-27
 
   - Fixed rendering bug in bean-web whereby empty cells would receive a 0.00

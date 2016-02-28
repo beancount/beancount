@@ -2,7 +2,7 @@
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
-from beancount.reports import report
+from beancount.reports import base
 from beancount.reports import journal_html
 from beancount.reports import journal_text
 from beancount.core import data
@@ -10,8 +10,8 @@ from beancount.core import realization
 from beancount.utils import misc_utils
 
 
-class JournalReport(report.HTMLReport,
-                    metaclass=report.RealizationMeta):
+class JournalReport(base.HTMLReport,
+                    metaclass=base.RealizationMeta):
     """Print out an account register/journal."""
 
     names = ['journal', 'register', 'account']
@@ -61,7 +61,7 @@ class JournalReport(report.HTMLReport,
         if self.args.account:
             real_account = realization.get(real_root, self.args.account)
             if real_account is None:
-                raise report.ReportError(
+                raise base.ReportError(
                     "Invalid account name: {}".format(self.args.account))
         else:
             real_account = real_root
@@ -81,7 +81,7 @@ class JournalReport(report.HTMLReport,
                                             self.args.verbosity,
                                             output_format)
         except ValueError as exc:
-            raise report.ReportError(exc)
+            raise base.ReportError(exc)
 
     def render_real_text(self, real_root, options_map, file):
         self._render_text_formats(real_root, options_map, file, journal_text.FORMAT_TEXT)
@@ -96,7 +96,7 @@ class JournalReport(report.HTMLReport,
                                                      render_postings)
 
 
-class ConversionsReport(report.HTMLReport):
+class ConversionsReport(base.HTMLReport):
     """Print out a report of all conversions."""
 
     names = ['conversions']
@@ -114,7 +114,7 @@ class ConversionsReport(report.HTMLReport):
         # conversion_balance = interpolate.compute_entries_balance(conversion_entries)
 
 
-class DocumentsReport(report.HTMLReport):
+class DocumentsReport(base.HTMLReport):
     """Print out a report of documents."""
 
     names = ['documents']
