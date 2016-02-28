@@ -3,7 +3,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 from os import path
 
 from beancount.utils import test_utils
-from beancount.scripts import report
+from beancount.reports import report
 
 
 class TestHelpReports(test_utils.TestCase):

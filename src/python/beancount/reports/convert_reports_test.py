@@ -7,7 +7,7 @@ import subprocess
 
 from beancount.core import data
 from beancount.utils import test_utils
-from beancount.scripts import report
+from beancount.reports import report
 from beancount.scripts import example
 from beancount.parser import cmptest
 from beancount.reports import convert_reports
