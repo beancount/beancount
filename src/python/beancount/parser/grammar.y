@@ -169,6 +169,7 @@ const char* getTokenName(int token);
 %token NOTE                /* 'note' keyword */
 %token DOCUMENT            /* 'document' keyword */
 %token QUERY               /* 'query' keyword */
+%token CUSTOM              /* 'custom' keyword */
 %token PUSHTAG             /* 'pushtag' keyword */
 %token POPTAG              /* 'poptag' keyword */
 %token PUSHMETA            /* 'pushmeta' keyword */
@@ -232,6 +233,9 @@ const char* getTokenName(int token);
 %type <pyobj> include
 %type <pyobj> plugin
 %type <pyobj> file
+%type <pyobj> custom
+%type <pyobj> custom_value
+%type <pyobj> custom_value_list
 
 /* Operator precedence.
  * This is pulled straight out of the textbook example:
@@ -245,7 +249,7 @@ const char* getTokenName(int token);
 %start file
 
 /* We have some number of expected shift/reduce conflicts at 'eol'. */
-%expect 17
+%expect 20
 
 
 /*--------------------------------------------------------------------------------*/
@@ -408,9 +412,9 @@ key_value : KEY COLON key_value_value
           }
 
 key_value_line : INDENT key_value eol
-                   {
-                       $$ = $2;
-                   }
+               {
+                   $$ = $2;
+               }
 
 key_value_value : STRING
                 | ACCOUNT
@@ -709,6 +713,34 @@ document : DATE DOCUMENT ACCOUNT filename eol key_value_list
                     $$, "document", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
          }
 
+
+custom_value : STRING
+             | DATE
+             | BOOL
+             | amount
+             | number_expr
+             {
+                 $$ = $1;
+             }
+
+custom_value_list : empty
+                  {
+                      Py_INCREF(Py_None);
+                      $$ = Py_None;
+                  }
+                  | custom_value_list custom_value
+                  {
+                      BUILDY(DECREF2($1, $2),
+                             $$, "handle_list", "OO", $1, $2);
+                  }
+
+custom : DATE CUSTOM STRING custom_value_list eol key_value_list
+       {
+           BUILDY(DECREF4($1, $3, $4, $6),
+                  $$, "custom", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
+       }
+
+
 entry : transaction
       | balance
       | open
@@ -720,6 +752,7 @@ entry : transaction
       | price
       | commodity
       | query
+      | custom
       {
           $$ = $1;
       }
@@ -836,6 +869,7 @@ const char* getTokenName(int token)
         case PAD       : return "PAD";
         case EVENT     : return "EVENT";
         case QUERY     : return "QUERY";
+        case CUSTOM    : return "CUSTOM";
         case PRICE     : return "PRICE";
         case NOTE      : return "NOTE";
         case DOCUMENT  : return "DOCUMENT";

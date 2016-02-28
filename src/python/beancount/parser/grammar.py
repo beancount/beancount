@@ -27,6 +27,7 @@ from beancount.core.data import Query
 from beancount.core.data import Price
 from beancount.core.data import Note
 from beancount.core.data import Document
+from beancount.core.data import Custom
 from beancount.core.data import new_metadata
 from beancount.core.data import Posting
 from beancount.core.data import BOOKING_METHODS
@@ -703,6 +704,22 @@ class Builder(lexer.LexBuilder):
             document_filename = path.abspath(path.join(path.dirname(filename),
                                                        document_filename))
         return Document(meta, date, account, document_filename)
+
+    def custom(self, filename, lineno, date, dir_type, custom_values, kvlist):
+        """Process a custom directive.
+
+        Args:
+          filename: the current filename.
+          lineno: the current line number.
+          date: a datetime object.
+          dir_type: A string, a type for the custom directive being parsed.
+          custom_values: A list of the various tokens seen on the same line.
+          kvlist: a list of KeyValue instances.
+        Returns:
+          A new Custom object.
+        """
+        meta = new_metadata(filename, lineno, kvlist)
+        return Custom(meta, date, dir_type, custom_values)
 
     def key_value(self, key, value):
         """Process a document directive.

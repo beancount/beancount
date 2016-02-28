@@ -189,6 +189,20 @@ class TestParserEntryTypes(unittest.TestCase):
         """
         check_list(self, entries, [data.Price])
 
+    @parser.parse_doc()
+    def test_entry_custom(self, entries, _, __):
+        """
+          2013-05-18 custom "budget" "weekly < 1000.00 USD" 2016-02-28 TRUE 43.03 USD 23
+        """
+        check_list(self, entries, [data.Custom])
+        txns = [entry for entry in entries if isinstance(entry, data.Custom)]
+        self.assertEqual(['weekly < 1000.00 USD',
+                          datetime.date(2016, 2, 28),
+                          True,
+                          amount.from_string('43.03 USD'),
+                          D('23')],
+                         txns[0].values)
+
 
 class TestParserComplete(unittest.TestCase):
     """Tests of completion of balance."""

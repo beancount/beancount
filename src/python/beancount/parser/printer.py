@@ -292,6 +292,21 @@ class EntryPrinter:
         oss.write('{e.date} query "{e.name}" "{e.query_string}"\n'.format(e=entry))
         self.write_metadata(entry.meta, oss)
 
+    def Custom(self, entry, oss):
+        custom_values = []
+        for value in entry.values:
+            if isinstance(value, str):
+                value = '"{}"'.format(value)
+            elif isinstance(value, datetime.date):
+                value = value.isoformat()
+            elif isinstance(value, bool):
+                value = 'TRUE' if value else 'FALSE'
+            elif isinstance(value, amount.Amount):
+                value = value.to_string()
+            custom_values.append(value)
+        oss.write('{e.date} custom "{e.type}" {}\n'.format(" ".join(custom_values), e=entry))
+        self.write_metadata(entry.meta, oss)
+
 
 def format_entry(entry, dcontext=None, render_weights=False):
     """Format an entry into a string in the same input syntax the parser accepts.
