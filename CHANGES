@@ -4,6 +4,11 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-03-05
+
+  - Improved handling of corrupted or out-of-date pickle cache file.
+
+
 2016-02-28
 
   - Moved beancount.scripts.report to beancount.report.report in order to be
