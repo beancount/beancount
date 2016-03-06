@@ -54,13 +54,14 @@ class ImportFileTestCase(unittest.TestCase):
         """Import a test file compare its contents against an expected output.
 
         If an expected file (as <filename>.extract) is not present, we issue a
-        warning. Missing expected files can be written out by setting the
-        environment variable LEDGERHUB_CREATE_TESTS before running the tests.
+        warning. Missing expected files can be written out by removing them
+        before running the tests.
 
         Args:
           filename: A string, the name of the file to import using self.importer.
         Raises:
           AssertionError: If the contents differ from the expected file.
+
         """
         # Import the file.
         entries, duplicate_entries = extract.extract_from_file(filename, self.importer,
@@ -86,8 +87,8 @@ class ImportFileTestCase(unittest.TestCase):
         """Import a test file compare its contents against an expected output.
 
         If an expected file (as <filename>.file_date) is not present, we issue a
-        warning. Missing expected files can be written out by setting the
-        environment variable LEDGERHUB_CREATE_TESTS before running the tests.
+        warning. Missing expected files can be written out by removing them
+        before running the tests.
 
         Args:
           filename: A string, the name of the file to import using self.importer.
@@ -117,8 +118,8 @@ class ImportFileTestCase(unittest.TestCase):
         """Import a test file compare its contents against an expected output.
 
         If an expected file (as <filename>.file_name) is not present, we issue a
-        warning. Missing expected files can be written out by setting the
-        environment variable LEDGERHUB_CREATE_TESTS before running the tests.
+        warning. Missing expected files can be written out by removing them
+        before running the tests.
 
         Args:
           filename: A string, the name of the file to import using self.importer.
