@@ -8,6 +8,8 @@ Note: This file contains only changes in the 'default' branch.
 
   - Improved handling of corrupted or out-of-date pickle cache file.
 
+  - Fixed a test that would only fail in a timzone != EST.
+
 
 2016-02-28
 
