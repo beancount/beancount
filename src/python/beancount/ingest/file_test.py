@@ -21,6 +21,15 @@ class TestScriptFile(scripts_utils.TestScriptsBase, test_utils.TestCase):
         self.documents = path.join(self.tempdir, 'Documents')
         os.mkdir(self.documents)
 
+    @mock.patch.object(file, 'file')
+    def test_file_main__default_output_dir(self, file_mock):
+        with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
+            test_utils.run_with_args(file.main, [
+                '--dry-run',
+                path.join(self.tempdir, 'test.import'),
+                self.tempdir])
+        self.assertEqual(self.tempdir, file_mock.call_args[0][2])
+
     def test_file_main__output_dir_does_not_exist(self):
         with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
             with self.assertRaises(SystemExit):

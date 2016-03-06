@@ -4,6 +4,23 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-03-06
+
+  - Fixed issue #83: Renamed 'default_tolerance' option to
+    'inferred_tolerance_default'.
+
+
+2016-03-05
+
+  - Improved handling of corrupted or out-of-date pickle cache file.
+
+  - Fixed a test that would only fail in a timzone != EST.
+
+  - Made bean-file use the configuration filename's directory as the default
+    output dir instead of requiring an option. The behavior of providing a
+    reasonable default makes most sense.
+
+
 2016-02-28
 
   - Moved beancount.scripts.report to beancount.report.report in order to be

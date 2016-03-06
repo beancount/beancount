@@ -5,12 +5,22 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import textwrap
 import datetime
 import unittest
+import time
 from unittest import mock
 from urllib import request
 from urllib import error
 
 from beancount.prices.sources import google
 from beancount.core.number import D, Decimal
+
+
+class _TestTimezone(datetime.tzinfo):
+    def utcoffset(self, dt):
+        return datetime.timedelta(hours=-4) + self.dst(dt)
+    def dst(self, dt):
+        return datetime.timedelta(0)
+    def tzname(self,dt):
+         return "Test"
 
 
 class TestGoogleFinanceSource(unittest.TestCase):
@@ -44,7 +54,12 @@ class TestGoogleFinanceSource(unittest.TestCase):
         srcprice = self.fetcher.get_latest_price('NASD:HOOL')
         self.assertTrue(isinstance(srcprice.price, Decimal))
         self.assertEqual(D('556.33'), srcprice.price)
-        self.assertEqual(srcprice.time, datetime.datetime(2014, 6, 6, 16, 0, 0))
+
+        # Adjust time to compare with EST time, where I wrote this test.
+        tzdelta_local = datetime.timedelta(seconds=time.timezone)
+        tzdelta_est = datetime.timedelta(seconds=-5*60*60)
+        adjtime = srcprice.time + tzdelta_local + tzdelta_est
+        self.assertEqual(adjtime, datetime.datetime(2014, 6, 6, 16, 0, 0))
 
     def test_get_latest_price__invalid(self):
         self.url_object.read.return_value = textwrap.dedent("""\

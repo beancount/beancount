@@ -305,9 +305,15 @@ class Builder(lexer.LexBuilder):
 
             # Issue a warning if the option is deprecated.
             if option_descriptor.deprecated:
+                assert isinstance(option_descriptor.deprecated, str), "Internal error."
                 meta = new_metadata(filename, lineno)
                 self.errors.append(
                     DeprecatedError(meta, option_descriptor.deprecated, None))
+
+            # Rename the option if it has an alias.
+            if option_descriptor.alias:
+                key = option_descriptor.alias
+                option_descriptor = options.OPTIONS[key]
 
             # Convert the value, if necessary.
             if option_descriptor.converter:
