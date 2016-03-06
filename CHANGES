@@ -10,6 +10,10 @@ Note: This file contains only changes in the 'default' branch.
 
   - Fixed a test that would only fail in a timzone != EST.
 
+  - Made bean-file use the configuration filename's directory as the default
+    output dir instead of requiring an option. The behavior of providing a
+    reasonable default makes most sense.
+
 
 2016-02-28
 

@@ -202,7 +202,7 @@ def main():
         "mirrorring the chart of accounts")
 
     parser.add_argument('-o', '--output', '--output-dir', '--destination',
-                        dest='output_dir', action='store', required=True,
+                        dest='output_dir', action='store',
                         help="The root of the documents tree to move the files to.")
 
     parser.add_argument('-n', '--dry-run', action='store_true',
@@ -215,8 +215,13 @@ def main():
 
     args, config, downloads_directories = scripts_utils.parse_arguments(parser)
 
+    # If the output directory is not specified, move the files at the root of
+    # the configuration file. (Providing this default seems better than using a
+    # required option.)
+    if args.output_dir is None:
+        args.output_dir = path.dirname(args.config)
+
     # Make sure the output directory exists.
-    assert args.output_dir, "Internal error."
     if not path.exists(args.output_dir):
         parser.error("Output directory does not exist.")
 
