@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-03-06
+
+  - Fixed issue #83: Renamed 'default_tolerance' option to
+    'inferred_tolerance_default'.
+
+
 2016-03-05
 
   - Improved handling of corrupted or out-of-date pickle cache file.

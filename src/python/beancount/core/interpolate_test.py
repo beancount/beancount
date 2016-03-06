@@ -22,7 +22,7 @@ ERRORS_ON_RESIDUAL = False
 
 
 # A default options map just to provide the tolerances.
-OPTIONS_MAP = {'default_tolerance': {},
+OPTIONS_MAP = {'inferred_tolerance_default': {},
                'inferred_tolerance_multiplier': D('0.5'),
                'use_legacy_fixed_tolerances': False,
                'account_rounding': None,
@@ -372,7 +372,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
 
     def test_balance_incomplete_postings__quantum(self):
         entry, errors = self.get_incomplete_entry("""
-          option "default_tolerance" "USD:0.01"
+          option "inferred_tolerance_default" "USD:0.01"
 
           2013-02-23 * "Something"
             Assets:Invest     1.245 RGAGX {43.23 USD}
@@ -382,7 +382,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
         self.assertEqual(D('-53.82'), entry.postings[1].units.number)
 
         entry, errors = self.get_incomplete_entry("""
-          option "default_tolerance" "USD:0.001"
+          option "inferred_tolerance_default" "USD:0.001"
 
           2013-02-23 * "Something"
             Assets:Invest     1.245 RGAGX {43.23 USD}
@@ -394,7 +394,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
     def test_balance_incomplete_postings__rounding_and_quantum(self):
         entry, errors = self.get_incomplete_entry("""
           option "account_rounding" "RoundingError"
-          option "default_tolerance" "USD:0.01"
+          option "inferred_tolerance_default" "USD:0.01"
 
           2013-02-23 * "Something"
             Assets:Invest     1.245 RGAGX {43.23 USD}
@@ -408,7 +408,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
 
         entry, errors = self.get_incomplete_entry("""
           option "account_rounding" "RoundingError"
-          option "default_tolerance" "USD:0.01"
+          option "inferred_tolerance_default" "USD:0.01"
 
           2014-05-06 * "Buy mutual fund"
             Assets:Investments:RGXGX       4.27 RGAGX {53.21 USD}
@@ -885,7 +885,7 @@ class TestInferTolerances(cmptest.TestCase):
         """
         plugin "beancount.plugins.split_expenses" "Martin Caroline Sheila"
 
-        option "default_tolerance" "USD:0.005"
+        option "inferred_tolerance_default" "USD:0.005"
 
         1970-01-01 open Expenses:Food
         1970-01-01 open Assets:Caroline

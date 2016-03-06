@@ -95,7 +95,7 @@ def validate_sell_gains(entries, options_map):
                          acc_types.equity,
                          acc_types.expenses])
 
-    default_tolerances = options_map['default_tolerance']
+    default_tolerances = options_map['inferred_tolerance_default']
 
     for entry in entries:
         if not isinstance(entry, data.Transaction):

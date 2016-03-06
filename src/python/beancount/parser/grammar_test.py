@@ -682,7 +682,7 @@ class TestToleranceOptions(unittest.TestCase):
         self.assertEqual(D('0.015'),
                          options_map['tolerance'])
         self.assertEqual({},
-                         options_map['default_tolerance'])
+                         options_map['inferred_tolerance_default'])
 
     @parser.parse_doc(expect_errors=True)
     def test_tolerance__deprecated(self, _, errors, options_map):
@@ -693,19 +693,28 @@ class TestToleranceOptions(unittest.TestCase):
         self.assertRegex(errors[0].message, "has been deprecated")
 
     @parser.parse_doc()
-    def test_default_tolerance(self, _, __, options_map):
+    def test_inferred_tolerance_default(self, _, __, options_map):
         """
-          option "default_tolerance" "*:0"
-          option "default_tolerance" "USD:0.05"
-          option "default_tolerance" "JPY:0.5"
+          option "inferred_tolerance_default" "*:0"
+          option "inferred_tolerance_default" "USD:0.05"
+          option "inferred_tolerance_default" "JPY:0.5"
         """
         self.assertEqual({"*": D("0"),
                           "USD": D("0.05"),
                           "JPY": D("0.5")},
-                         options_map['default_tolerance'])
+                         options_map['inferred_tolerance_default'])
 
 
 class TestDeprecatedOptions(unittest.TestCase):
+
+    @parser.parse_doc(expect_errors=True)
+    def test_renamed_options(self, _, errors, options_map):
+        """
+          option "default_tolerance" "*:0.0042"
+        """
+        self.assertEqual(1, len(errors))
+        self.assertRegex(errors[0].message, 'option has been renamed')
+        self.assertEqual({'*': D('0.0042')}, options_map["inferred_tolerance_default"])
 
     @parser.parse_doc(expect_errors=True)
     def test_deprecated_plugin(self, _, errors, __):

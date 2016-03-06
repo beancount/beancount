@@ -323,7 +323,7 @@ def get_incomplete_postings(entry, options_map):
         default_tolerances = LEGACY_DEFAULT_TOLERANCES
     else:
         tolerances = infer_tolerances(postings, options_map)
-        default_tolerances = options_map['default_tolerance']
+        default_tolerances = options_map['inferred_tolerance_default']
 
     # Process all the postings.
     has_nonzero_amount = False
