@@ -128,6 +128,13 @@ class TestScriptExtractFromFile(test_utils.TestCase):
                           if extract.DUPLICATE_META in entry.meta]
         self.assertEqual(dup_entries, marked_entries)
 
+    def test_extract_from_file__raises_exception(self):
+        imp = mock.MagicMock()
+        imp.identify = mock.MagicMock(return_value=True)
+        imp.extract = mock.MagicMock(side_effect=ValueError("Unexpected error!"))
+        new_entries, dup_entries = extract.extract_from_file('blabla.ofx', imp, [])
+        self.assertEqual(0, len(new_entries))
+
 
 class TestPrintExtractedEntries(scripts_utils.TestScriptsBase, unittest.TestCase):
 

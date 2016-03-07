@@ -8,6 +8,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import itertools
 import sys
 import textwrap
+import logging
 
 from beancount.core import data
 from beancount.parser import printer
@@ -44,7 +45,12 @@ def extract_from_file(filename, importer, existing_entries=None, min_date=None):
     """
     # Extract the entries.
     file = cache.FileMemo(filename)
-    new_entries = importer.extract(file)
+    try:
+        new_entries = importer.extract(file)
+    except Exception as exc:
+        logging.error("Importer %s.extract() raised an unexpected error: %s",
+                      importer.name(), exc)
+        new_entries = None
     if not new_entries:
         return [], []
 

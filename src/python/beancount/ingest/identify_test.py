@@ -21,7 +21,6 @@ class _TestImporter(ImporterProtocol):
         return file.name == self.filename
 
 
-
 class TestScriptIdentifyFunctions(test_utils.TestTempdirMixin, unittest.TestCase):
 
     def test_find_imports(self):
@@ -56,6 +55,15 @@ class TestScriptIdentifyFunctions(test_utils.TestTempdirMixin, unittest.TestCase
 
         imports = list(identify.find_imports([imp], self.tempdir))
         self.assertEqual([(file1, [imp])], imports)
+
+    def test_find_imports__raises_exception(self):
+        file1 = path.join(self.tempdir, 'file1.test')
+        with open(file1, 'w') as f:
+            pass
+        imp = mock.MagicMock()
+        imp.identify = mock.MagicMock(side_effect=ValueError("Unexpected error!"))
+        imports = list(identify.find_imports([imp], self.tempdir))
+        self.assertEqual([(file1, [])], imports)
 
 
 class TestScriptIdentify(scripts_utils.TestScriptsBase):

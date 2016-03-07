@@ -72,8 +72,14 @@ def file(importer_config,
         file = cache.FileMemo(filename)
 
         # Get the account corresponding to the file.
-        file_accounts = set(importer.file_account(file)
-                            for importer in importers)
+        file_accounts = set()
+        for importer in importers:
+            try:
+                file_accounts.add(importer.file_account(file))
+            except Exception as exc:
+                logging.error("Importer %s.file_account() raised an unexpected error: %s",
+                              importer.name(), exc)
+
         file_accounts.discard(None)
         if not file_accounts:
             logging.error("No account provided by importers: {}".format(
@@ -100,7 +106,12 @@ def file(importer_config,
         # module may be able to extract the date from the filename, from the
         # contents of the file itself (e.g. scraping some text from the PDF
         # contents, or grabbing the last line of a CSV file).
-        date = importer.file_date(file)
+        try:
+            date = importer.file_date(file)
+        except Exception as exc:
+            logging.error("Importer %s.file_date() raised an unexpected error: %s",
+                          importer.name(), exc)
+            date = None
         date_source = 'mtime'
         if date is None:
             # Fallback on the last modified time of the file.
@@ -109,7 +120,12 @@ def file(importer_config,
 
         # Apply filename renaming, if implemented.
         # Otherwise clean up the filename.
-        clean_filename = importer.file_name(file)
+        try:
+            clean_filename = importer.file_name(file)
+        except Exception as exc:
+            logging.error("Importer %s.file_name() raised an unexpected error: %s",
+                          importer.name(), exc)
+            clean_filename = None
         if clean_filename is None:
             clean_filename = file.name
         elif re.match('\d\d\d\d-\d\d-\d\d', clean_filename):

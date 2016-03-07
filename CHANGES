@@ -9,6 +9,9 @@ Note: This file contains only changes in the 'default' branch.
   - Fixed issue #83: Renamed 'default_tolerance' option to
     'inferred_tolerance_default'.
 
+  - Added exception handlers for all importer callbacks. Badly written importers
+    should never completely throw off the tools.
+
 
 2016-03-05
 

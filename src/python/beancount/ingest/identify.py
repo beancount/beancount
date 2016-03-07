@@ -51,9 +51,15 @@ def find_imports(importer_config, files_or_directories, logfile=None):
         # For each of the sources the user has declared, identify which
         # match the text.
         file = cache.FileMemo(filename)
-        matching_importers = [importer
-                              for importer in importer_config
-                              if importer.identify(file)]
+        matching_importers = []
+        for importer in importer_config:
+            try:
+                matched = importer.identify(file)
+                if matched:
+                    matching_importers.append(importer)
+            except Exception as exc:
+                logging.error("Importer %s.identify() raised an unexpected error: %s",
+                              importer.name(), exc)
 
         yield (filename, matching_importers)
 
