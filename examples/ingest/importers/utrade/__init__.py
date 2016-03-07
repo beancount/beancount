@@ -3,6 +3,7 @@
 __author__ = 'Martin Blais <blais@furius.ca>'
 
 from beancount.ingest import importer
+from beancount.ingest import regression
 
 
 class Importer(importer.ImporterProtocol):
@@ -11,4 +12,5 @@ class Importer(importer.ImporterProtocol):
 
 
 def test():
-    pass
+    importer = Importer()
+    yield from regression.compare_sample_files(importer, __file__)
