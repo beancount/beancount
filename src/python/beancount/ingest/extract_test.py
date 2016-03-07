@@ -329,3 +329,12 @@ class TestScriptExtract(test_utils.TestTempdirMixin, unittest.TestCase):
         self.assertRegex(output, r'; +Expenses:Alcohol +32.23 USD')
         self.assertRegex(output, r'Expenses:Books +87.30 USD')
         self.assertRegex(output, r'Expenses:Clothing +87.30 USD')
+
+    def test_extract_examples(self):
+        config_filename = path.join(test_utils.find_repository_root(__file__),
+                                    'examples', 'ingest', 'example.import')
+        with test_utils.capture('stdout', 'stderr') as (_, stderr):
+            result = test_utils.run_with_args(extract.main, [
+                config_filename, path.join(self.tempdir, 'Downloads')])
+        self.assertEqual(0, result)
+        self.assertEqual("", stderr.getvalue())

@@ -85,3 +85,4 @@ def main():
     parser = scripts_utils.create_arguments_parser("Identify files for import")
     _, config, downloads_directories = scripts_utils.parse_arguments(parser)
     identify(config, downloads_directories)
+    return 0

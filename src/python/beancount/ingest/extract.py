@@ -166,3 +166,4 @@ def main():
     extract(config, downloads_directories, sys.stdout,
             entries=entries,
             mindate=None)
+    return 0

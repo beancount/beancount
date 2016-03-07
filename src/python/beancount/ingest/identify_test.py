@@ -89,3 +89,12 @@ class TestScriptIdentify(scripts_utils.TestScriptsBase):
 
 
             $"""), output))
+
+    def test_identify_examples(self):
+        config_filename = path.join(test_utils.find_repository_root(__file__),
+                                    'examples', 'ingest', 'example.import')
+        with test_utils.capture('stdout', 'stderr') as (_, stderr):
+            result = test_utils.run_with_args(identify.main, [
+                config_filename, path.join(self.tempdir, 'Downloads')])
+        self.assertEqual(0, result)
+        self.assertEqual("", stderr.getvalue())

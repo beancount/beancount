@@ -269,3 +269,4 @@ def main():
          overwrite=args.overwrite,
          idify=True,
          logfile=sys.stdout)
+    return 0
