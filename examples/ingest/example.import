@@ -1,0 +1,15 @@
+#!/usr/bin/env python3
+"""Example import configuration."""
+
+# Insert our custom importers path here.
+import sys
+from os import path
+sys.path.insert(0, path.join(path.dirname(__file__)))
+
+from importers import utrade
+
+
+# Setting this variable provides a list of importer instances.
+CONFIG = [
+    utrade.Importer()
+]
