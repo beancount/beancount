@@ -3,11 +3,6 @@ beancount: TODO
 * Ingest (LedgerHub)
 ** Merging into Beancount
 
-  - Refactor the insides of file() to test them better.
-  - Write 3x unit tests for exceptions being raised from file_*()
-
-
-
   - Complete unit tests on beancount.ingest.compat.
 
   - Create a good, working example file.
