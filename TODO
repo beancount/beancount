@@ -18,6 +18,9 @@ beancount: TODO
   - When we import, if a file was not detected, don't spit out an org text line.
     Still doesn't work. Needs to be cleaned up.
 
+  - (!) The org-mode prefix line should be configurable from the .import script;
+    make it empty by default and let the user override it.
+
 ** Cleanups & Verifications
 
   - The code that auto-files statements needs to detect and de-dup files which
