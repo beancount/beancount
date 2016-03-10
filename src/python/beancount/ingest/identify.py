@@ -7,8 +7,8 @@ be associated with.
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import logging
-import os
 import sys
+from os import path
 
 from beancount.utils import file_utils
 from beancount.ingest import scripts_utils
@@ -42,7 +42,7 @@ def find_imports(importer_config, files_or_directories, logfile=None):
             logfile.write('**** {}\n'.format(filename))
 
         # Skip files that are simply too large.
-        size = os.path.getsize(filename)
+        size = path.getsize(filename)
         if size > FILE_TOO_LARGE_THRESHOLD:
             logging.warning("File too large: '{}' ({} bytes); skipping.".format(
                 filename, size))

@@ -60,7 +60,7 @@ def parse_arguments(parser, argv=None):
         if not path.exists(filename):
             parser.error("File does not exist: '{}'".format(filename))
 
-    return args, config, args.files_or_directories
+    return args, config, list(map(path.abspath, args.files_or_directories))
 
 
 class _TestFileImporter(importer.ImporterProtocol):

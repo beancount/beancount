@@ -84,7 +84,7 @@ def file_one_file(filename, importers, destination, idify=False, logfile=None):
     if date is None:
         # Fallback on the last modified time of the file.
         date = mtime_date
-        date_source = 'extracted'
+        date_source = 'contents'
 
     # Apply filename renaming, if implemented.
     # Otherwise clean up the filename.
@@ -257,11 +257,11 @@ def main():
     # the configuration file. (Providing this default seems better than using a
     # required option.)
     if args.output_dir is None:
-        args.output_dir = path.dirname(args.config)
+        args.output_dir = path.dirname(path.abspath(args.config))
 
     # Make sure the output directory exists.
     if not path.exists(args.output_dir):
-        parser.error("Output directory does not exist.")
+        parser.error('Output directory "{}" does not exist.'.format(args.output_dir))
 
     file(config, downloads_directories, args.output_dir,
          dry_run=args.dry_run,
