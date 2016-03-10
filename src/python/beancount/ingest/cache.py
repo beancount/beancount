@@ -45,6 +45,10 @@ class FileMemo:
             result = self._cache[converter_func] = converter_func(self.name)
         return result
 
+    def head(self):
+        """An alias for reading just the first bytes of a file."""
+        return self.head(head)
+
     def contents(self):
         """An alias for reading the entire contents of the file."""
         return self.convert(contents)
