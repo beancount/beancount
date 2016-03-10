@@ -21,6 +21,13 @@ beancount: TODO
 
   - Create mixins for default account name and regexp matching on contents.
 
+  - Printing transactions should use the maximum precision between display
+    context and natural. Create a new DisplayContext style, on top of COMMON and
+    MAX, call it something else. Should be max of context and natural.
+
+  - Rename beancount.core.amount.amount_*() to beancount.core.amount.*()
+
+
 ** Importers
 *** OFX
 

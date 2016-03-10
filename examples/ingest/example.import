@@ -11,5 +11,10 @@ from importers import utrade
 
 # Setting this variable provides a list of importer instances.
 CONFIG = [
-    utrade.Importer()
+    utrade.Importer("USD",
+                    "Assets:US:UTrade",
+                    "Assets:US:UTrade:Cash",
+                    "Income:US:UTrade:Dividend",
+                    "Expenses:Financial:Fees",
+                    "Assets:US:BofA:Checking"),
 ]
