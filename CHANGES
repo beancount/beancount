@@ -6,6 +6,9 @@ Note: This file contains only changes in the 'default' branch.
 
 2016-03-12
 
+  - Made the beancount.plugins.auto_accounts plugin insert entries that will
+    sort stably.
+
   - Sync up the print report code with the print command code, fixing a bug with
     precision not being rendered correctly by the print report.
 
