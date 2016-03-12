@@ -6,6 +6,11 @@ Note: This file contains only changes in the 'default' branch.
 
 2016-03-12
 
+  - Made the beancount.report.balance_reports text reports rendered using the
+    precision from the DisplayContext, and realization.dump_balances() require a
+    formatter argument. More probaby needs to be done on issue #108 to close it,
+    but that's a good start.
+
   - Made the beancount.plugins.auto_accounts plugin insert entries that will
     sort stably.
 

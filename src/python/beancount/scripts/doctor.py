@@ -17,6 +17,7 @@ from os import path
 # under the assumption that not all third-party dependencies are installed.
 # Import what you need as late as possible.
 from beancount.utils import misc_utils
+from beancount.core import display_context
 
 
 def do_lex(filename, unused_args):
@@ -286,7 +287,9 @@ def do_linked(filename, args):
 
     # Print out balances.
     real_root = realization.realize(linked_entries)
-    realization.dump_balances(real_root, file=sys.stdout)
+    dformat = options_map['dcontext'].build(alignment=display_context.Align.DOT,
+                                            reserved=2)
+    realization.dump_balances(real_root, dformat, file=sys.stdout)
 
     # Print out net income change.
     acctypes = options.get_account_types(options_map)

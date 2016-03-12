@@ -15,6 +15,7 @@ from beancount.core import data
 from beancount.core import inventory
 from beancount.core import position
 from beancount.core import account_types
+from beancount.core import display_context
 from beancount.utils import test_utils
 from beancount import loader
 
@@ -624,7 +625,7 @@ class TestRealOther(test_utils.TestCase):
                 for first_line, cont_line, _1 in lines])
 
     @loader.load_doc()
-    def test_dump_balances(self, entries, _, __):
+    def test_dump_balances(self, entries, _, options_map):
         """
         2012-01-01 open Expenses:Restaurant
         2012-01-01 open Liabilities:US:CreditCard
@@ -640,6 +641,8 @@ class TestRealOther(test_utils.TestCase):
 
         """
         real_account = realization.realize(entries)
+        dformat = options_map['dcontext'].build(alignment=display_context.Align.DOT,
+                                                reserved=2)
         self.assertLines("""
             |-- Expenses
             |   `-- Restaurant          -123.45 CAD
@@ -649,7 +652,7 @@ class TestRealOther(test_utils.TestCase):
                 |   `-- CreditCard       123.45 CAD
                 `-- US
                     `-- CreditCard       123.45 USD
-        """, realization.dump_balances(real_account))
+        """, realization.dump_balances(real_account, dformat))
 
 
 class TestRealMisc(unittest.TestCase):
