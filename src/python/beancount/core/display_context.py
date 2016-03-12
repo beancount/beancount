@@ -174,11 +174,18 @@ class DisplayContext:
     """A builder object used to construct a DisplayContext from a series of numbers.
 
     Attributes:
-      ccontext: A dict of currency string to CurrencyContext instance.
+      ccontexts: A dict of currency string to CurrencyContext instance.
+      commas: A bool, true if we should render commas. This just gets propagated
+        onwards as the default value of to build with.
     """
     def __init__(self):
         self.ccontexts = collections.defaultdict(_CurrencyContext)
         self.ccontexts['__default__'] = _CurrencyContext()
+        self.commas = False
+
+    def set_commas(self, commas):
+        """Set the default value for rendering commas."""
+        self.commas = commas
 
     def __str__(self):
         oss = io.StringIO()
@@ -222,6 +229,8 @@ class DisplayContext:
               reserved=0):
         if reserved != 0:
             raise NotImplementedError("Reserved digits aren't supported yet.")
+        if commas is None:
+            commas = self.commas
         if alignment == Align.NATURAL:
             build_method = self._build_natural
         elif alignment == Align.RIGHT:
