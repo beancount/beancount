@@ -6,6 +6,8 @@ Note: This file contains only changes in the 'default' branch.
 
 2016-03-12
 
+  - Fixed #104: bean-format would fail on numbers with commas in them.
+
   - Fixed #106: The "render_commas" option wasn't being honored. I have no idea
     how things came to be this way, but I fixed it. When rendering numbers,
     inserting commas for thousands (e.g., "1,000" vs. "1000") is now controlled
