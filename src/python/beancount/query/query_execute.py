@@ -12,6 +12,7 @@ from beancount.core import data
 from beancount.core import position
 from beancount.core import inventory
 from beancount.core import getters
+from beancount.core import display_context
 from beancount.parser import printer
 from beancount.parser import options
 from beancount.ops import summarize
@@ -75,7 +76,12 @@ def execute_print(c_print, entries, options_map, file):
     if c_print and c_print.c_from is not None:
         entries = filter_entries(c_print.c_from, entries, options_map)
 
-    printer.print_entries(entries, file=file)
+    # Create a context that renders all numbers with their natural precision,
+    # but honors the commas option.
+    dcontext = display_context.DisplayContext()
+    dcontext.set_commas(options_map['dcontext'].commas)
+
+    printer.print_entries(entries, dcontext, file=file)
 
 
 class Allocator:

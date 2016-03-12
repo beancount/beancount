@@ -157,6 +157,10 @@ class Builder(lexer.LexBuilder):
                     "Unbalanced metadata key '{}'; leftover metadata '{}'").format(
                         key, ', '.join(value_list)), None))
 
+        # Weave the commas option in the DisplayContext itself, so it propagages
+        # everywhere it is used automatically.
+        self.dcontext.set_commas(self.options['render_commas'])
+
         return (self.get_entries(), self.errors, self.get_options())
 
     def get_entries(self):

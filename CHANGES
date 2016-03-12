@@ -4,6 +4,23 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-03-12
+
+  - Fixed #106: The "render_commas" option wasn't being honored. I have no idea
+    how things came to be this way, but I fixed it. When rendering numbers,
+    inserting commas for thousands (e.g., "1,000" vs. "1000") is now controlled
+    by the "render_commas" option, and the default is not to render them
+    (FALSE). Note:  This should affect the web interface, the reports, and the
+    PRINT command, but so far NOT the output of the SQL query reports. The
+    reason for this is historical: the query rendering code does not make use of
+    the DisplayContext; it needs to be converted to do that. See
+    https://bitbucket.org/blais/beancount/issues/105/
+    https://bitbucket.org/blais/beancount/issues/106/
+    https://bitbucket.org/blais/beancount/issues/107/ and
+    https://groups.google.com/d/msg/beancount/frfN1zc6TEc/d5OjuDnREgAJ for a
+    discussion.
+
+
 2016-03-06
 
   - Fixed issue #83: Renamed 'default_tolerance' option to
