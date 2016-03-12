@@ -609,11 +609,12 @@ PREFIX_LEAF_1 = '`-- '
 PREFIX_LEAF_C = '    '
 
 
-def dump_balances(real_account, at_cost=False, fullnames=False, file=None):
+def dump_balances(real_account, dformat, at_cost=False, fullnames=False, file=None):
     """Dump a realization tree with balances.
 
     Args:
       real_account: An instance of RealAccount.
+      dformat: An instance of DisplayFormatter to format the numbers with.
       at_cost: A boolean, if true, render the values at cost.
       fullnames: A boolean, if true, don't render a tree of accounts and
         render the full account names.
@@ -622,7 +623,6 @@ def dump_balances(real_account, at_cost=False, fullnames=False, file=None):
     Returns:
       A string, the rendered tree, or nothing, if 'file' was provided.
     """
-
     if fullnames:
         # Compute the maximum account name length;
         maxlen = max(len(real_child.account)
@@ -639,7 +639,7 @@ def dump_balances(real_account, at_cost=False, fullnames=False, file=None):
             else:
                 rinv = real_account.balance.units()
             amounts = [position.units for position in rinv.get_positions()]
-            positions = ['{0.number:12,.2f} {0.currency}'.format(amount_)
+            positions = [amount_.to_string(dformat)
                          for amount_ in sorted(amounts, key=amount.amount_sortkey)]
         else:
             positions = ['']

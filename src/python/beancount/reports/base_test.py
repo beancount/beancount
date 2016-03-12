@@ -8,6 +8,7 @@ import io
 
 from beancount.core.number import D
 from beancount.core import realization
+from beancount.core import display_context
 from beancount.reports import base
 from beancount.reports import table
 from beancount.parser import options
@@ -148,7 +149,10 @@ class TestRealizationMeta(unittest.TestCase):
             default_format = 'html'
 
             def render_real_text(self, real_account, options_map, file):
-                realization.dump_balances(real_account, file=file)
+                dformat = options_map['dcontext'].build(
+                    alignment=display_context.Align.DOT,
+                    reserved=2)
+                realization.dump_balances(real_account, dformat, file=file)
 
             def render_real_html(self, real_account, options_map, file):
                 self.render_real_text(real_account, options_map, file)

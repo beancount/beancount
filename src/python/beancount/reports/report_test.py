@@ -75,9 +75,9 @@ class TestScriptPositions(test_utils.TestCase):
             test_utils.run_with_args(report.main, [filename, 'trial'])
         output = stdout.getvalue()
         self.assertLines("""
-            Assets:Cash               -50.02 USD
+            Assets:Cash          -50.02 USD
             Equity
-            Expenses:Restaurant        50.02 USD
+            Expenses:Restaurant   50.02 USD
             Income
             Liabilities
         """, output)

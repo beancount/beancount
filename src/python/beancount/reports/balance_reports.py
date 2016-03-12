@@ -7,6 +7,7 @@ import re
 from beancount.reports import base
 from beancount.reports import tree_table
 from beancount.core import realization
+from beancount.core import display_context
 
 
 class BalancesReport(base.HTMLReport,
@@ -32,7 +33,9 @@ class BalancesReport(base.HTMLReport,
                 real_root,
                 lambda real_account: regexp.search(real_account.account))
         if real_root:
-            realization.dump_balances(real_root,
+            dformat = options_map['dcontext'].build(alignment=display_context.Align.DOT,
+                                                    reserved=2)
+            realization.dump_balances(real_root, dformat,
                                       self.args.at_cost, True, file=file)
 
     def render_real_htmldiv(self, real_root, options_map, file):

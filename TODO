@@ -295,6 +295,12 @@ beancount: TODO
 
 ** Establish Display Precision
 
+  - Implement the maximum number of digits by accumulating the largest possible
+    sum of all the absolute values seen in the file. This should be a good basis
+    for compute the maximum width possibly required to render with Align.RIGHT.
+    There is currently a bug whereby that's not being computed correctly, the
+    current algorithm is insufficient for accumulated balances.
+
   - Create a page in the web view that lists the various precision - by
     example - inferred in the global DisplayContext.
 
