@@ -6,6 +6,9 @@ Note: This file contains only changes in the 'default' branch.
 
 2016-03-12
 
+  - Sync up the print report code with the print command code, fixing a bug with
+    precision not being rendered correctly by the print report.
+
   - Fixed #104: bean-format would fail on numbers with commas in them.
 
   - Fixed #106: The "render_commas" option wasn't being honored. I have no idea

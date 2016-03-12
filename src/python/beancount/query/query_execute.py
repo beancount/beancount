@@ -76,11 +76,11 @@ def execute_print(c_print, entries, options_map, file):
     if c_print and c_print.c_from is not None:
         entries = filter_entries(c_print.c_from, entries, options_map)
 
-    # Create a context that renders all numbers with their natural precision,
-    # but honors the commas option.
+    # Create a context that renders all numbers with their natural
+    # precision, but honors the commas option. This is kept in sync with
+    # {2c694afe3140} to avoid a dependency.
     dcontext = display_context.DisplayContext()
     dcontext.set_commas(options_map['dcontext'].commas)
-
     printer.print_entries(entries, dcontext, file=file)
 
 
