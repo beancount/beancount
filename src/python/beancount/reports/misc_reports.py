@@ -13,6 +13,7 @@ from beancount.reports import table
 from beancount.reports import tree_table
 from beancount.parser import printer
 from beancount.parser import options
+from beancount.core import display_context
 from beancount.core import data
 from beancount.core import realization
 from beancount.core import getters
@@ -67,7 +68,11 @@ class PrintReport(base.Report):
     default_format = 'beancount'
 
     def render_beancount(self, entries, errors, options_map, file):
-        dcontext = options_map['dcontext']
+        # Create a context that renders all numbers with their natural
+        # precision, but honors the commas option. This is kept in sync with
+        # {2c694afe3140} to avoid a dependency.
+        dcontext = display_context.DisplayContext()
+        dcontext.set_commas(options_map['dcontext'].commas)
         printer.print_entries(entries, dcontext, file=file)
 
 

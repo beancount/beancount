@@ -33,7 +33,7 @@ def align_beancount(contents):
     # of the stripped prefix and the number.
     match_pairs = []
     for index, line in enumerate(contents.splitlines()):
-        match = re.match(r'([^";]*?)\s+([-+]?\s*\d+(?:\.\d*)?)\s+([A-Z0-9]+\b.*)', line)
+        match = re.match(r'([^";]*?)\s+([-+]?\s*[\d,]+(?:\.\d*)?)\s+([A-Z0-9]+\b.*)', line)
         if match:
             prefix, number, rest = match.groups()
             match_pairs.append((prefix, number, rest))
