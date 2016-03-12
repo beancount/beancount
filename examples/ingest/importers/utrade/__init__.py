@@ -44,7 +44,7 @@ class Importer(importer.ImporterProtocol):
                 re.match("DATE,TYPE,REF", file.head()))
 
     def file_account(self, _):
-        return self.account
+        return self.account_root
 
     def file_date(self, file):
         # Extract the statement date from the filename.
