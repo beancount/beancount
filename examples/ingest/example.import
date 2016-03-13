@@ -2,16 +2,14 @@
 """Example import configuration."""
 
 # Insert our custom importers path here.
+# (In practice you might just change your PYTHONPATH environment.)
 import sys
 from os import path
 sys.path.insert(0, path.join(path.dirname(__file__)))
 
 from importers import utrade
 from beancount.ingest import extract
-
-
-# Override output formatting of extract.
-extract.HEADER = ';; -*- mode: org; mode: beancount; coding: utf-8; -*-\n'
+from beancount.ingest.importers import ofx
 
 
 # Setting this variable provides a list of importer instances.
@@ -23,4 +21,12 @@ CONFIG = [
                     "Income:US:UTrade:{}:Gains",
                     "Expenses:Financial:Fees",
                     "Assets:US:BofA:Checking"),
+
+    ofx.Importer("379700001111222",
+                 "Liabilities:US:CreditCard",
+                 "bofa"),
 ]
+
+
+# Override the header on extracted text (if desired).
+extract.HEADER = ';; -*- mode: org; mode: beancount; coding: utf-8; -*-\n'

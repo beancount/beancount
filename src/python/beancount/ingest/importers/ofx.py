@@ -58,7 +58,7 @@ class Importer(importer.ImporterProtocol):
             return False
 
         # Match the account id.
-        return any(self.acctid_regexp.match(acctid)
+        return any(re.match(self.acctid_regexp, acctid)
                    for acctid in find_acctids(file.contents()))
 
     def file_account(self, _):
