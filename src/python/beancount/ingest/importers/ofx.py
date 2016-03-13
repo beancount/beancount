@@ -21,6 +21,7 @@ import datetime
 import itertools
 import re
 from xml.sax import saxutils
+from os import path
 
 import bs4
 
@@ -67,7 +68,8 @@ class Importer(importer.ImporterProtocol):
 
     def file_name(self, file):
         """Return the optional renamed account filename."""
-        return '{}.{}'.format(self.basename, path.basename(file.name))
+        if self.basename:
+            return self.basename + path.splitext(file.name)[1]
 
     def file_date(self, file):
         """Return the optional renamed account filename."""
