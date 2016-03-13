@@ -1,6 +1,16 @@
 Run the examples in this directory with the commands below:
 
-  bean-identify example.import Downloads
-  bean-extract  example.import Downloads
-  bean-file -n  example.import Downloads -o documents
-  bean-file     example.import Downloads -o documents
+Identify the input files under the Downloads directory:
+
+  bean-identify example.import Downloads/
+
+Extract transactions from the files in Download/:
+
+  bean-extract -e example.beancount example.import Downloads/
+
+File the files from Download/ under document/:
+
+  bean-file example.import Downloads/ -o documents/
+
+You can test out the last command without moving the files using the
+-n/--dry-run option.
