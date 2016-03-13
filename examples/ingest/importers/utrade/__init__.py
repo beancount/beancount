@@ -6,12 +6,14 @@ import csv
 import datetime
 import re
 import pprint
+import logging
 from os import path
 
 from dateutil.parser import parse
 
 from beancount.core.number import D
 from beancount.core.number import ZERO
+from beancount.core.number import MISSING
 from beancount.core import data
 from beancount.core import account
 from beancount.core import amount
@@ -28,12 +30,14 @@ class Importer(importer.ImporterProtocol):
                  account_root,
                  account_cash,
                  account_dividends,
+                 account_gains,
                  account_fees,
                  account_external):
         self.currency = currency
         self.account_root = account_root
         self.account_cash = account_cash
         self.account_dividends = account_dividends
+        self.account_gains = account_gains
         self.account_fees = account_fees
         self.account_external = account_external
 
@@ -42,6 +46,9 @@ class Importer(importer.ImporterProtocol):
         # fields combination we're looking for.
         return (re.match(r"UTrade\d\d\d\d\d\d\d\d\.csv", path.basename(file.name)) and
                 re.match("DATE,TYPE,REF", file.head()))
+
+    def file_name(self, file):
+        return 'utrade.{}'.format(path.basename(file.name))
 
     def file_account(self, _):
         return self.account_root
@@ -68,29 +75,68 @@ class Importer(importer.ImporterProtocol):
                 assert fees.number == ZERO
                 txn = data.Transaction(meta, date, self.FLAG, None, desc, None, {link}, [
                     data.Posting(self.account_cash, units, None, None, None, None),
-                    data.Posting(self.account_external, other, None, None, None, None),
+                    data.Posting(self.account_external, -other, None, None, None, None),
                     ])
 
             elif rtype == 'DIV':
                 assert fees.number == ZERO
+
+                # Extract the instrument name from its description.
+                match = re.search(r'~([A-Z]+)$', row['DESCRIPTION'])
+                if not match:
+                    logging.error("Missing instrument name in '%s'", row['DESCRIPTION'])
+                    continue
+                instrument = match.group(1)
+                account_dividends = self.account_dividends.format(instrument)
+
                 txn = data.Transaction(meta, date, self.FLAG, None, desc, None, {link}, [
                     data.Posting(self.account_cash, units, None, None, None, None),
-                    data.Posting(self.account_dividends, other, None, None, None, None),
+                    data.Posting(account_dividends, -other, None, None, None, None),
                     ])
 
-            elif rtype == 'BUY':
-                txn = data.Transaction(meta, date, self.FLAG, None, desc, None, {link}, [
-                    data.Posting(self.account_cash, -units, None, None, None, None),
-                    data.Posting(self.account_fees, fees, None, None, None, None),
-                    # FIXME: Continue here.
-                    ])
+            elif rtype in ('BUY', 'SELL'):
 
-            elif rtype == 'SELL':
-                txn = data.Transaction(meta, date, self.FLAG, None, desc, None, {link}, [
-                    data.Posting(self.account_cash, units, None, None, None, None),
-                    data.Posting(self.account_fees, fees, None, None, None, None),
-                    # FIXME: Continue here.
-                    ])
+                # Extract the instrument name, number of units, and price from
+                # the description. That's just what we're provided with (this is
+                # actually realistic of some data from some institutions, you
+                # have to figure out a way in your parser).
+                match = re.search(r'\+([A-Z]+)\b +([0-9.]+)\b +@([0-9.]+)',
+                                  row['DESCRIPTION'])
+                if not match:
+                    logging.error("Missing purchase infos in '%s'", row['DESCRIPTION'])
+                    continue
+                instrument = match.group(1)
+                account_inst = account.join(self.account_root, instrument)
+                units_inst = amount.Amount(D(match.group(2)), instrument)
+                rate = D(match.group(3))
+
+                if rtype == 'BUY':
+                    cost = position.Cost(rate, self.currency, None, None)
+                    txn = data.Transaction(meta, date, self.FLAG, None, desc, None, {link}, [
+                        data.Posting(self.account_cash, units, None, None, None, None),
+                        data.Posting(self.account_fees, fees, None, None, None, None),
+                        data.Posting(account_inst, units_inst, cost, None, None, None),
+                        ])
+
+                elif rtype == 'SELL':
+                    # Extract the lot. In practice this information not be there
+                    # and you will have to identify the lots manually by editing
+                    # the resulting output. You can leave the cost.number slot
+                    # set to None if you like.
+                    match = re.search(r'\(LOT ([0-9.]+)\)', row['DESCRIPTION'])
+                    if not match:
+                        logging.error("Missing cost basis in '%s'", row['DESCRIPTION'])
+                        continue
+                    cost_number = D(match.group(1))
+                    cost = position.Cost(cost_number, self.currency, None, None)
+                    price = amount.Amount(rate, self.currency)
+                    account_gains = self.account_gains.format(instrument)
+                    txn = data.Transaction(meta, date, self.FLAG, None, desc, None, {link}, [
+                        data.Posting(self.account_cash, units, None, None, None, None),
+                        data.Posting(self.account_fees, fees, None, None, None, None),
+                        data.Posting(account_inst, units_inst, cost, price, None, None),
+                        data.Posting(account_gains, None, None, None, None, None),
+                        ])
 
             else:
                 logging.error("Unknown row type: %s; skipping", rtype)
@@ -101,7 +147,8 @@ class Importer(importer.ImporterProtocol):
         # Insert a final balance check.
         if index:
             entries.append(
-                data.Balance(meta, date, self.account_cash,
+                data.Balance(meta, date + datetime.timedelta(days=1),
+                             self.account_cash,
                              amount.Amount(D(row['BALANCE']), self.currency),
                              None, None))
 

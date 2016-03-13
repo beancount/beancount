@@ -14,7 +14,8 @@ CONFIG = [
     utrade.Importer("USD",
                     "Assets:US:UTrade",
                     "Assets:US:UTrade:Cash",
-                    "Income:US:UTrade:Dividend",
+                    "Income:US:UTrade:{}:Dividend",
+                    "Income:US:UTrade:{}:Gains",
                     "Expenses:Financial:Fees",
                     "Assets:US:BofA:Checking"),
 ]

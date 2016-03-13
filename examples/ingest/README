@@ -1,5 +1,6 @@
 Run the examples in this directory with the commands below:
 
-  bean-identify example.import Downloads/
-  bean-extract  example.import Downloads/
-  bean-file     example.import Downloads/
+  bean-identify example.import Downloads
+  bean-extract  example.import Downloads
+  bean-file -n  example.import Downloads -o documents
+  bean-file     example.import Downloads -o documents

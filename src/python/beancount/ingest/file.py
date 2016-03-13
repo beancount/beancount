@@ -90,6 +90,14 @@ def file_one_file(filename, importers, destination, idify=False, logfile=None):
     # Otherwise clean up the filename.
     try:
         clean_filename = importer.file_name(file)
+
+        # Warn the importer implementor if a name is returned and it's an
+        # absolute filename.
+        if clean_filename and (path.isabs(clean_filename) or os.sep in clean_filename):
+            logging.error(("The importer '%s' file_name() method should return a relative "
+                           "filename; the filename '%s' is absolute or contains path "
+                           "separators"),
+                          importer.name(), clean_filename)
     except Exception as exc:
         logging.error("Importer %s.file_name() raised an unexpected error: %s",
                       importer.name(), exc)
@@ -97,7 +105,7 @@ def file_one_file(filename, importers, destination, idify=False, logfile=None):
     if clean_filename is None:
         clean_filename = file.name
     elif re.match('\d\d\d\d-\d\d-\d\d', clean_filename):
-        logging.error("The importer's file_name() method should not date the "
+        logging.error("The importer '%s' file_name() method should not date the "
                       "returned filename.")
 
     # We need a simple filename; remove the directory part if there is one.

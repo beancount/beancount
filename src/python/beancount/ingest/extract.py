@@ -150,7 +150,7 @@ def extract(importer_config,
 def main():
     parser = scripts_utils.create_arguments_parser("Extract transactions from downloads")
 
-    parser.add_argument('-e', '--existing', '--previous', metavar='BEANCOUNT_FILE',
+    parser.add_argument('-e', '-f', '--existing', '--previous', metavar='BEANCOUNT_FILE',
                         default=None,
                         help=('Beancount file or existing entries for de-duplication '
                               '(optional)'))

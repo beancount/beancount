@@ -63,6 +63,9 @@ def main():
     parser.add_argument('-e', '--end', action='store', type=parse_time,
                         help="Enddate")
 
+    parser.add_argument('--seed', action='store', type=int,
+                        help="The unique seed")
+
     args = parser.parse_args()
 
     if args.end is None:
@@ -70,6 +73,9 @@ def main():
 
     if args.start is None:
         args.start = args.end - datetime.timedelta(days=24*30)
+
+    if args.seed:
+        random.seed(args.seed)
 
     start = args.start.date()
     end = args.end.date()
@@ -129,6 +135,8 @@ def main():
             shares = (D(random.uniform(0.3, 0.7)) * pos.units.number).quantize(ZERO)
             price = (pos.cost.number * D(random.normalvariate(1.0, 0.1))).quantize(PENNY)
             number = price * shares
+            desc = "SOLD +{} {} @{} (LOT {})".format(pos.units.currency,
+                                                     shares, price, pos.cost.number)
 
             fees = D('7.95')
             number -= fees
