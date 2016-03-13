@@ -15,6 +15,11 @@ from beancount.ingest import scripts_utils
 from beancount.ingest import cache
 
 
+# The format for the seciton titles in the extracted output.
+# You may override this value from your .import script.
+SECTION = '**** {}'
+
+
 # A file size beyond which we will simply ignore the file. This is used to skip
 # large files that are commonly co-present in a Downloads directory.
 FILE_TOO_LARGE_THRESHOLD = 8*1024*1024
@@ -39,7 +44,8 @@ def find_imports(importer_config, files_or_directories, logfile=None):
     # Iterate over all files found; accumulate the entries by identification.
     for filename in file_utils.find_files(files_or_directories):
         if logfile is not None:
-            logfile.write('**** {}\n'.format(filename))
+            logfile.write(SECTION.format(filename))
+            logfile.write('\n')
 
         # Skip files that are simply too large.
         size = path.getsize(filename)

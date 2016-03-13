@@ -19,9 +19,12 @@ from beancount.ingest import cache
 from beancount import loader
 
 
-HEADER = '; -*- mode: org; mode: beancount; coding: utf-8; -*-\n'
+# The format for the header in the extracted output.
+# You may override this value from your .import script.
+HEADER = ';; -*- mode: beancount -*-\n'
 
 
+# Name of metadata field to be set to indicate that the entry is a likely duplicate.
 DUPLICATE_META = '__duplicate__'
 
 

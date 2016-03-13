@@ -7,6 +7,11 @@ from os import path
 sys.path.insert(0, path.join(path.dirname(__file__)))
 
 from importers import utrade
+from beancount.ingest import extract
+
+
+# Override output formatting of extract.
+extract.HEADER = ';; -*- mode: org; mode: beancount; coding: utf-8; -*-\n'
 
 
 # Setting this variable provides a list of importer instances.

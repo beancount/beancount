@@ -13,9 +13,6 @@ beancount: TODO
   - When we import, if a file was not detected, don't spit out an org text line.
     Still doesn't work. Needs to be cleaned up.
 
-  - (!) The org-mode prefix line should be configurable from the .import script;
-    make it empty by default and let the user override it.
-
   - Create mixins for default account name and regexp matching on contents.
 
   - Printing transactions should use the maximum precision between display
