@@ -128,6 +128,13 @@ class TestScriptExtractFromFile(test_utils.TestCase):
                           if extract.DUPLICATE_META in entry.meta]
         self.assertEqual(dup_entries, marked_entries)
 
+    def test_extract_from_file__raises_exception(self):
+        imp = mock.MagicMock()
+        imp.identify = mock.MagicMock(return_value=True)
+        imp.extract = mock.MagicMock(side_effect=ValueError("Unexpected error!"))
+        new_entries, dup_entries = extract.extract_from_file('blabla.ofx', imp, [])
+        self.assertEqual(0, len(new_entries))
+
 
 class TestPrintExtractedEntries(scripts_utils.TestScriptsBase, unittest.TestCase):
 
@@ -160,8 +167,6 @@ class TestPrintExtractedEntries(scripts_utils.TestScriptsBase, unittest.TestCase
         extract.print_extracted_entries(importer, entries, oss)
 
         self.assertEqual(textwrap.dedent("""\
-
-        ;; beancount.ingest.extract_test.ExtractTestImporter
 
         ; 2016-02-01 * "A"
         ;   Assets:Account1   11.11 USD
@@ -263,13 +268,11 @@ class TestScriptExtract(test_utils.TestTempdirMixin, unittest.TestCase):
         output = stdout.getvalue()
 
         self.assertRegex(output, r'/checking.dl')
-        self.assertRegex(output, r'_LoaderImporter')
         self.assertRegex(output, r'Assets:Cash +300.00 USD')
         self.assertRegex(output, r'Expenses:Electricity +48.34 USD')
         self.assertRegex(output, r'Expenses:Internet +48.34 USD')
 
         self.assertRegex(output, r'/credit.dl')
-        self.assertRegex(output, r'_LoaderImporter')
         self.assertRegex(output, r'Expenses:Alcohol +32.23 USD')
         self.assertRegex(output, r'Expenses:Books +87.30 USD')
         self.assertRegex(output, r'Expenses:Clothing +87.30 USD')
@@ -312,13 +315,42 @@ class TestScriptExtract(test_utils.TestTempdirMixin, unittest.TestCase):
         output = stdout.getvalue()
 
         self.assertRegex(output, r'/checking.dl')
-        self.assertRegex(output, r'_LoaderImporter')
         self.assertRegex(output, r'; +Assets:Cash +300.00 USD')
         self.assertRegex(output, r'Expenses:Electricity +48.34 USD')
         self.assertRegex(output, r'Expenses:Internet +48.34 USD')
 
         self.assertRegex(output, r'/credit.dl')
-        self.assertRegex(output, r'_LoaderImporter')
         self.assertRegex(output, r'; +Expenses:Alcohol +32.23 USD')
         self.assertRegex(output, r'Expenses:Books +87.30 USD')
         self.assertRegex(output, r'Expenses:Clothing +87.30 USD')
+
+    def test_extract_no_files(self):
+        emptydir = path.join(self.tempdir, 'Empty')
+        os.makedirs(emptydir)
+        with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
+            test_utils.run_with_args(extract.main, [self.config_filename, emptydir])
+        output = stdout.getvalue()
+        self.assertRegex(output, r';; -\*- mode: org; mode: beancount; coding: utf-8; -\*-')
+
+    def test_extract_examples(self):
+        example_dir = path.join(
+            test_utils.find_repository_root(__file__), 'examples', 'ingest')
+        config_filename = path.join(example_dir, 'example.import')
+        with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
+            result = test_utils.run_with_args(extract.main, [
+                '--existing={}'.format(path.join(example_dir, 'example.beancount')),
+                config_filename, path.join(example_dir, 'Downloads')])
+        self.assertEqual(0, result)
+        self.assertEqual("", stderr.getvalue())
+
+        output = stdout.getvalue()
+
+        self.assertRegex(output, r';; -\*- mode: org; mode: beancount; coding: utf-8; -\*-')
+
+        self.assertRegex(output, 'Downloads/UTrade20160215.csv')
+        self.assertRegex(output, 'ORDINARY DIVIDEND~CSKO')
+        self.assertRegex(output, 'Income:US:UTrade:CSKO:Gains')
+        self.assertRegex(output, '2016-02-08 balance Assets:US:UTrade:Cash .*4665.89 USD')
+
+        self.assertRegex(output, 'Downloads/acmebank.ofx')
+        self.assertRegex(output, r'2013-12-16 \* "LES CAFES 400 LAFAYENEW YORK /')

@@ -45,6 +45,14 @@ class FileMemo:
             result = self._cache[converter_func] = converter_func(self.name)
         return result
 
+    def mimetype(self):
+        """Computes the MIME type of the file."""
+        return self.convert(mimetype)
+
+    def head(self, num_bytes=8192):
+        """An alias for reading just the first bytes of a file."""
+        return self.convert(head(num_bytes))
+
     def contents(self):
         """An alias for reading the entire contents of the file."""
         return self.convert(contents)
@@ -57,6 +65,20 @@ def mimetype(filename):
       A converter function.
     """
     return file_type.guess_file_type(filename)
+
+
+def head(num_bytes=8192):
+    """A converter that just reads the first bytes of a file.
+
+    Args:
+      num_bytes: The number of bytes to read.
+    Returns:
+      A converter function.
+    """
+    def head_reader(filename):
+        with open(filename) as file:
+            return file.read(num_bytes)
+    return head_reader
 
 
 def contents(filename):
@@ -79,17 +101,3 @@ def contents(filename):
 
     with open(filename, encoding=encoding, errors=errors) as file:
         return file.read()
-
-
-def head(num_bytes=8192):
-    """A converter that just reads the first bytes of a file.
-
-    Args:
-      num_bytes: The number of bytes to read.
-    Returns:
-      A converter function.
-    """
-    def head_reader(filename):
-        with open(filename) as file:
-            return file.read(num_bytes)
-    return head_reader

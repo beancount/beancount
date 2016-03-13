@@ -8,6 +8,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import itertools
 import sys
 import textwrap
+import logging
 
 from beancount.core import data
 from beancount.parser import printer
@@ -18,9 +19,12 @@ from beancount.ingest import cache
 from beancount import loader
 
 
-HEADER = '; -*- mode: org; mode: beancount; coding: utf-8; -*-\n'
+# The format for the header in the extracted output.
+# You may override this value from your .import script.
+HEADER = ';; -*- mode: beancount -*-\n'
 
 
+# Name of metadata field to be set to indicate that the entry is a likely duplicate.
 DUPLICATE_META = '__duplicate__'
 
 
@@ -44,7 +48,12 @@ def extract_from_file(filename, importer, existing_entries=None, min_date=None):
     """
     # Extract the entries.
     file = cache.FileMemo(filename)
-    new_entries = importer.extract(file)
+    try:
+        new_entries = importer.extract(file)
+    except Exception as exc:
+        logging.error("Importer %s.extract() raised an unexpected error: %s",
+                      importer.name(), exc)
+        new_entries = None
     if not new_entries:
         return [], []
 
@@ -80,18 +89,16 @@ def extract_from_file(filename, importer, existing_entries=None, min_date=None):
     return new_entries, duplicate_entries
 
 
-def print_extracted_entries(importer, entries, output):
+def print_extracted_entries(importer, entries, file):
     """Print the entries for the given importer.
 
     Args:
       importer: An importer object that matched the file.
       entries: A list of extracted entries.
-      output: A file object to write to.
+      file: A file object to write to.
     """
     # Print the filename and which modules matched.
-    pr = lambda *args: print(*args, file=output)
-    pr('')
-    pr(';; {}'.format(importer.name()))
+    pr = lambda *args: print(*args, file=file)
     pr('')
 
     # Print out the entries.
@@ -105,6 +112,8 @@ def print_extracted_entries(importer, entries, output):
         else:
             entry_string = printer.format_entry(entry)
         pr(entry_string)
+
+    pr('')
 
 
 def extract(importer_config,
@@ -127,7 +136,8 @@ def extract(importer_config,
       mindate:
     """
     output.write(HEADER)
-    for filename, importers in identify.find_imports(importer_config, files_or_directories,
+    for filename, importers in identify.find_imports(importer_config,
+                                                     files_or_directories,
                                                      output):
         for importer in importers:
             # Import and process the file.
@@ -144,7 +154,7 @@ def extract(importer_config,
 def main():
     parser = scripts_utils.create_arguments_parser("Extract transactions from downloads")
 
-    parser.add_argument('-e', '--existing', '--previous', metavar='BEANCOUNT_FILE',
+    parser.add_argument('-e', '-f', '--existing', '--previous', metavar='BEANCOUNT_FILE',
                         default=None,
                         help=('Beancount file or existing entries for de-duplication '
                               '(optional)'))
@@ -160,3 +170,4 @@ def main():
     extract(config, downloads_directories, sys.stdout,
             entries=entries,
             mindate=None)
+    return 0

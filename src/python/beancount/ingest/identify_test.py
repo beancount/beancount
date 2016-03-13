@@ -21,7 +21,6 @@ class _TestImporter(ImporterProtocol):
         return file.name == self.filename
 
 
-
 class TestScriptIdentifyFunctions(test_utils.TestTempdirMixin, unittest.TestCase):
 
     def test_find_imports(self):
@@ -57,6 +56,15 @@ class TestScriptIdentifyFunctions(test_utils.TestTempdirMixin, unittest.TestCase
         imports = list(identify.find_imports([imp], self.tempdir))
         self.assertEqual([(file1, [imp])], imports)
 
+    def test_find_imports__raises_exception(self):
+        file1 = path.join(self.tempdir, 'file1.test')
+        with open(file1, 'w') as f:
+            pass
+        imp = mock.MagicMock()
+        imp.identify = mock.MagicMock(side_effect=ValueError("Unexpected error!"))
+        imports = list(identify.find_imports([imp], self.tempdir))
+        self.assertEqual([(file1, [])], imports)
+
 
 class TestScriptIdentify(scripts_utils.TestScriptsBase):
 
@@ -65,19 +73,36 @@ class TestScriptIdentify(scripts_utils.TestScriptsBase):
             test_utils.run_with_args(identify.main,
                                      [path.join(self.tempdir, 'test.import'),
                                       path.join(self.tempdir, 'Downloads')])
+        regexp = textwrap.dedent("""\
+            \*\*\*\* .*/Downloads/ofxdownload.ofx
+            Importer: +mybank-checking-ofx
+            Account: +Assets:Checking
+
+            \*\*\*\* .*/Downloads/Subdir/bank.csv
+            Importer: +mybank-credit-csv
+            Account: +Liabilities:CreditCard
+
+            \*\*\*\* .*/Downloads/Subdir/readme.txt
+
+            """).strip()
+        output = stdout.getvalue().strip()
+        self.assertTrue(re.match(regexp, output))
+
+    def test_identify_examples(self):
+        example_dir = path.join(
+            test_utils.find_repository_root(__file__), 'examples', 'ingest')
+        config_filename = path.join(example_dir, 'example.import')
+        with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
+            result = test_utils.run_with_args(identify.main, [
+                config_filename, path.join(example_dir, 'Downloads')])
+        self.assertEqual(0, result)
+        self.assertEqual("", stderr.getvalue())
         output = stdout.getvalue()
-        self.assertTrue(re.match(textwrap.dedent("""\
-            .*/Downloads/ofxdownload.ofx
 
-              mybank-checking-ofx
+        self.assertRegex(output, 'Downloads/UTrade20160215.csv')
+        self.assertRegex(output, 'Importer:.*importers.utrade.Importer')
+        self.assertRegex(output, 'Account:.*Assets:US:UTrade')
 
-
-            .*/Downloads/Subdir/bank.csv
-
-              mybank-credit-csv
-
-
-            .*/Downloads/Subdir/readme.txt
-
-
-            $"""), output))
+        self.assertRegex(output, 'Downloads/acmebank.ofx')
+        self.assertRegex(output, 'Importer:.*beancount.ingest.importers.ofx.Importer')
+        self.assertRegex(output, 'Account:.*Liabilities:US:CreditCard')

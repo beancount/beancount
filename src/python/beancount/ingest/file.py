@@ -21,6 +21,120 @@ from beancount.ingest import scripts_utils
 from beancount.ingest import cache
 
 
+def file_one_file(filename, importers, destination, idify=False, logfile=None):
+    """File a single filename with its matched importers.
+
+    Args:
+      filename: A string, the name of the downloaded file to be processed.
+      importers: A list of importer instances that handle this file.
+      destination: A string, the root destination directory where the files are
+        to be filed. The files are organized there under a hierarchy mirrorring
+        that of the chart of accounts.
+      idify: A flag, if true, remove whitespace and funky characters in the destination
+        filename.
+      logfile: A file object to write log entries to, or None, in which case no log is
+        written out.
+    Returns:
+      The full new destination filename on success, and None if there was an error.
+    """
+    # Create an object to cache all the conversions between the importers
+    # and phases and what-not.
+    file = cache.FileMemo(filename)
+
+    # Get the account corresponding to the file.
+    file_accounts = set()
+    for importer in importers:
+        try:
+            file_accounts.add(importer.file_account(file))
+        except Exception as exc:
+            logging.error("Importer %s.file_account() raised an unexpected error: %s",
+                          importer.name(), exc)
+
+    file_accounts.discard(None)
+    if not file_accounts:
+        logging.error("No account provided by importers: {}".format(
+            ", ".join(imp.name() for imp in importers)))
+        return None
+
+    if len(file_accounts) > 1:
+        logging.error("Ambiguous accounts from many importers: {}".format(
+            ', '.join(file_accounts)))
+        return None
+    file_account = file_accounts.pop()
+
+    # Given multiple importers, select the first one that was yielded to
+    # obtain the date and process the filename.
+    importer = importers[0]
+
+    # Compute the date from the last modified time.
+    mtime = path.getmtime(filename)
+    mtime_date = datetime.datetime.fromtimestamp(mtime).date()
+
+    # Try to get the file's date by calling a module support function. The
+    # module may be able to extract the date from the filename, from the
+    # contents of the file itself (e.g. scraping some text from the PDF
+    # contents, or grabbing the last line of a CSV file).
+    try:
+        date = importer.file_date(file)
+    except Exception as exc:
+        logging.error("Importer %s.file_date() raised an unexpected error: %s",
+                      importer.name(), exc)
+        date = None
+    if date is None:
+        # Fallback on the last modified time of the file.
+        date = mtime_date
+        date_source = 'mtime'
+    else:
+        date_source = 'contents'
+
+    # Apply filename renaming, if implemented.
+    # Otherwise clean up the filename.
+    try:
+        clean_filename = importer.file_name(file)
+
+        # Warn the importer implementor if a name is returned and it's an
+        # absolute filename.
+        if clean_filename and (path.isabs(clean_filename) or os.sep in clean_filename):
+            logging.error(("The importer '%s' file_name() method should return a relative "
+                           "filename; the filename '%s' is absolute or contains path "
+                           "separators"),
+                          importer.name(), clean_filename)
+    except Exception as exc:
+        logging.error("Importer %s.file_name() raised an unexpected error: %s",
+                      importer.name(), exc)
+        clean_filename = None
+    if clean_filename is None:
+        clean_filename = file.name
+    elif re.match('\d\d\d\d-\d\d-\d\d', clean_filename):
+        logging.error("The importer '%s' file_name() method should not date the "
+                      "returned filename.")
+
+    # We need a simple filename; remove the directory part if there is one.
+    clean_basename = path.basename(clean_filename)
+
+    # Remove whitespace if requested.
+    if idify:
+        clean_basename = misc_utils.idify(clean_basename)
+
+    # Prepend the date prefix.
+    new_filename = '{0:%Y-%m-%d}.{1}'.format(date, clean_basename)
+
+    # Prepend destination directory.
+    new_fullname = path.normpath(path.join(destination,
+                                           file_account.replace(account.sep, os.sep),
+                                           new_filename))
+
+    # Print the filename and which modules matched.
+    if logfile is not None:
+        logfile.write('Importer:    {}\n'.format(importer.name() if importer else '-'))
+        logfile.write('Account:     {}\n'.format(file_account))
+        logfile.write('Date:        {} (from {})\n'.format(date, date_source))
+        logfile.write('Destination: {}\n'.format(new_fullname))
+        logfile.write('\n')
+
+    return new_fullname
+
+
 def file(importer_config,
          files_or_directories,
          destination,
@@ -41,7 +155,7 @@ def file(importer_config,
     files.
 
     Args:
-      importer_config: a list of importer instances that define the config.
+      importer_config: A list of importer instances that define the config.
       files_or_directories: a list of files of directories to walk recursively and
         hunt for files to import.
       destination: A string, the root destination directory where the files are
@@ -67,80 +181,10 @@ def file(importer_config,
         if not importers:
             continue
 
-        # Create an object to cache all the conversions between the importers
-        # and phases and what-not.
-        file = cache.FileMemo(filename)
-
-        # Get the account corresponding to the file.
-        file_accounts = set(importer.file_account(file)
-                            for importer in importers)
-        file_accounts.discard(None)
-        if not file_accounts:
-            logging.error("No account provided by importers: {}".format(
-                ", ".join(imp.name() for imp in importers)))
+        # Process a single file.
+        new_fullname = file_one_file(filename, importers, destination, idify, logfile)
+        if new_fullname is None:
             continue
-
-        if len(file_accounts) > 1:
-            logging.error("Ambiguous accounts from many importers: {}".format(
-                ', '.join(file_accounts)))
-            continue
-
-
-        file_account = file_accounts.pop()
-
-        # Given multiple importers, select the first one that was yielded to
-        # obtain the date and process the filename.
-        importer = importers[0]
-
-        # Compute the date from the last modified time.
-        mtime = path.getmtime(filename)
-        mtime_date = datetime.datetime.fromtimestamp(mtime).date()
-
-        # Try to get the file's date by calling a module support function. The
-        # module may be able to extract the date from the filename, from the
-        # contents of the file itself (e.g. scraping some text from the PDF
-        # contents, or grabbing the last line of a CSV file).
-        date = importer.file_date(file)
-        date_source = 'mtime'
-        if date is None:
-            # Fallback on the last modified time of the file.
-            date = mtime_date
-            date_source = 'extracted'
-
-        # Apply filename renaming, if implemented.
-        # Otherwise clean up the filename.
-        clean_filename = importer.file_name(file)
-        if clean_filename is None:
-            clean_filename = file.name
-        elif re.match('\d\d\d\d-\d\d-\d\d', clean_filename):
-            logging.error("The importer's file_name() method should not date the "
-                          "returned filename.")
-
-        # We need a simple filename; remove the directory part if there is one.
-        clean_basename = path.basename(clean_filename)
-
-        # Remove whitespace if requested.
-        if idify:
-            clean_basename = misc_utils.idify(clean_basename)
-
-        # Prepend the date prefix.
-        new_filename = '{0:%Y-%m-%d}.{1}'.format(date, clean_basename)
-
-        # Prepend destination directory.
-        new_fullname = path.normpath(path.join(destination,
-                                               file_account.replace(account.sep, os.sep),
-                                               new_filename))
-
-        # Print the filename and which modules matched.
-        if logfile is not None:
-            logfile.write('=== {}\n'.format(filename))
-            if importers:
-                logfile.write('\n')
-            logfile.write('  Importer:    {}\n'.format(importer.name() if importer else '-'))
-            logfile.write('  Account:     {}\n'.format(file_account))
-            logfile.write('  Date:        {} (from {})\n'.format(mtime_date, date_source))
-            logfile.write('  Destination: {}\n'.format(new_fullname))
-            logfile.write('\n')
 
         # Check if the destination directory exists.
         new_dirname = path.dirname(new_fullname)
@@ -219,11 +263,11 @@ def main():
     # the configuration file. (Providing this default seems better than using a
     # required option.)
     if args.output_dir is None:
-        args.output_dir = path.dirname(args.config)
+        args.output_dir = path.dirname(path.abspath(args.config))
 
     # Make sure the output directory exists.
     if not path.exists(args.output_dir):
-        parser.error("Output directory does not exist.")
+        parser.error('Output directory "{}" does not exist.'.format(args.output_dir))
 
     file(config, downloads_directories, args.output_dir,
          dry_run=args.dry_run,
@@ -231,3 +275,4 @@ def main():
          overwrite=args.overwrite,
          idify=True,
          logfile=sys.stdout)
+    return 0

@@ -225,6 +225,58 @@ class TestScriptFile(scripts_utils.TestScriptsBase, test_utils.TestCase):
         self.assertEqual(0, error_mock.call_count)
         self.assertEqual(0, move_mock.call_count)
 
+    @mock.patch.object(logging, 'error')
+    def test_file__file_account_raises_exception(self, error_mock):
+        imp = mock.MagicMock()
+        imp.identify = mock.MagicMock(return_value=True)
+        exc = ValueError("Unexpected error!")
+        imp.file_account = mock.MagicMock(side_effect=exc)
+        imp.name = mock.MagicMock(return_value="SomeImporter")
+        file.file_one_file(path.join(self.downloads, 'ofxdownload.ofx'), [imp],
+                           self.documents)
+
+        self.assertEqual(2, error_mock.call_count)
+
+        args = error_mock.mock_calls[0][1]
+        self.assertRegex(args[0], 'raised an unexpected error')
+        self.assertEqual(args[1], 'SomeImporter')
+        self.assertEqual(args[2], exc)
+
+        args = error_mock.mock_calls[1][1]
+        self.assertRegex(args[0], 'No account provided by importers')
+
+    @mock.patch.object(logging, 'error')
+    def test_file__file_date_raises_exception(self, error_mock):
+        imp = mock.MagicMock()
+        imp.identify = mock.MagicMock(return_value=True)
+        exc = ValueError("Unexpected error!")
+        imp.file_date = mock.MagicMock(side_effect=exc)
+        imp.file_name = mock.MagicMock(side_effect='ofxdownload.ofx')
+        imp.name = mock.MagicMock(return_value="SomeImporter")
+        file.file_one_file(path.join(self.downloads, 'ofxdownload.ofx'), [imp],
+                           self.documents)
+        self.assertEqual(1, error_mock.call_count)
+        args = error_mock.mock_calls[0][1]
+        self.assertRegex(args[0], 'raised an unexpected error')
+        self.assertEqual(args[1], 'SomeImporter')
+        self.assertEqual(args[2], exc)
+
+    @mock.patch.object(logging, 'error')
+    def test_file__file_name_raises_exception(self, error_mock):
+        imp = mock.MagicMock()
+        imp.identify = mock.MagicMock(return_value=True)
+        exc = ValueError("Unexpected error!")
+        imp.file_date = mock.MagicMock(return_value=None)
+        imp.file_name = mock.MagicMock(side_effect=exc)
+        imp.name = mock.MagicMock(return_value="SomeImporter")
+        file.file_one_file(path.join(self.downloads, 'ofxdownload.ofx'), [imp],
+                           self.documents)
+        self.assertEqual(1, error_mock.call_count)
+        args = error_mock.mock_calls[0][1]
+        self.assertRegex(args[0], 'raised an unexpected error')
+        self.assertEqual(args[1], 'SomeImporter')
+        self.assertEqual(args[2], exc)
+
     def test_file(self):
         with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
             test_utils.run_with_args(file.main, [
@@ -238,3 +290,23 @@ class TestScriptFile(scripts_utils.TestScriptsBase, test_utils.TestCase):
         moved_files = list(file_utils.find_files([self.documents]))
         for regexp in expected_res:
             self.assertTrue(any(re.match(regexp, filename) for filename in moved_files))
+
+    def test_file_examples(self):
+        config_filename = path.join(test_utils.find_repository_root(__file__),
+                                    'examples', 'ingest', 'example.import')
+        with test_utils.capture('stdout', 'stderr') as (_, stderr):
+            result = test_utils.run_with_args(file.main, [
+                config_filename,
+                path.join(self.tempdir, 'Downloads'),
+                '--output={}'.format(self.tempdir)])
+        self.assertEqual(0, result)
+        self.assertEqual("", stderr.getvalue())
+
+        filed_files = []
+        for root, dirs, files in os.walk(self.tempdir):
+            filed_files.extend(files)
+        self.assertEqual(4, len(filed_files))
+        self.assertEqual(set(filed_files), set(['test.import',
+                                                'ofxdownload.ofx',
+                                                'bank.csv',
+                                                'readme.txt']))

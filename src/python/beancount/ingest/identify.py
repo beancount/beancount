@@ -1,18 +1,23 @@
 """Identify script.
 
 Read an import script and a list of downloaded filenames or directories of
-downloaded files, and for each of those files, identify which importer it should
+2downloaded files, and for each of those files, identify which importer it should
 be associated with.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import logging
-import os
 import sys
+from os import path
 
 from beancount.utils import file_utils
 from beancount.ingest import scripts_utils
 from beancount.ingest import cache
+
+
+# The format for the seciton titles in the extracted output.
+# You may override this value from your .import script.
+SECTION = '**** {}'
 
 
 # A file size beyond which we will simply ignore the file. This is used to skip
@@ -39,10 +44,11 @@ def find_imports(importer_config, files_or_directories, logfile=None):
     # Iterate over all files found; accumulate the entries by identification.
     for filename in file_utils.find_files(files_or_directories):
         if logfile is not None:
-            logfile.write('**** {}\n'.format(filename))
+            logfile.write(SECTION.format(filename))
+            logfile.write('\n')
 
         # Skip files that are simply too large.
-        size = os.path.getsize(filename)
+        size = path.getsize(filename)
         if size > FILE_TOO_LARGE_THRESHOLD:
             logging.warning("File too large: '{}' ({} bytes); skipping.".format(
                 filename, size))
@@ -51,14 +57,17 @@ def find_imports(importer_config, files_or_directories, logfile=None):
         # For each of the sources the user has declared, identify which
         # match the text.
         file = cache.FileMemo(filename)
-        matching_importers = [importer
-                              for importer in importer_config
-                              if importer.identify(file)]
+        matching_importers = []
+        for importer in importer_config:
+            try:
+                matched = importer.identify(file)
+                if matched:
+                    matching_importers.append(importer)
+            except Exception as exc:
+                logging.error("Importer %s.identify() raised an unexpected error: %s",
+                              importer.name(), exc)
 
         yield (filename, matching_importers)
-
-        if logfile is not None:
-            logfile.write('\n\n')
 
 
 def identify(importer_config, files_or_directories):
@@ -68,14 +77,18 @@ def identify(importer_config, files_or_directories):
       importer_config: A list of importer instances.
       files_or_directories: A list of strings, files or directories.
     """
+    logfile = sys.stdout
     for filename, importers in find_imports(importer_config, files_or_directories,
-                                            logfile=sys.stdout):
+                                            logfile=logfile):
+        file = cache.FileMemo(filename)
         for importer in importers:
-            print('')
-            print('  {}'.format(importer.name()))
+            logfile.write('Importer:    {}\n'.format(importer.name() if importer else '-'))
+            logfile.write('Account:     {}\n'.format(importer.file_account(file)))
+            logfile.write('\n')
 
 
 def main():
     parser = scripts_utils.create_arguments_parser("Identify files for import")
     _, config, downloads_directories = scripts_utils.parse_arguments(parser)
     identify(config, downloads_directories)
+    return 0

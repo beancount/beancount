@@ -87,7 +87,7 @@ class ImporterProtocol:
 
         This is used to make tidy filenames for filed/stored document files. The
         default implementation just returns the same filename. Note that a
-        simple relative filename must be returned, not an absolute filename.
+        simple RELATIVE filename must be returned, not an absolute filename.
 
         Args:
           file: A cache.FileMemo instance.

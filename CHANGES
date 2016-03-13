@@ -4,6 +4,42 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-03-13
+
+  - Merged more changes from the 'ingest' branch which furthers the work of
+    integrating the LedgerHub code into Beancount (almost done now).
+
+    * Added mimetype() and head() methods to the file cache object passed to the
+      extractors, as a convenience instead of having clients call the cached
+      convert() method.
+
+    * Added paranoid exception handlers to all the methods called on the
+      importer classes.
+
+    * Added tests for the examples provided in "examples/ingest".
+
+    * Refactor some of the code of beancount.ingest.file.
+
+    * Fixed bugs with ensuring the filenames are absolute names.
+
+    * Cleaned up the output of the commands.
+
+    * Made the header and section strings configurable from the import
+      configuration.
+
+    * Cleaned up the OFX importer from LedgerHub, added unit tests for it, and
+      added it to the beancount.ingest.importers directory. In addition, added
+      it to the example configuration for ingest under
+      beancount/examples/ingest.
+
+    * Added a dependency on the beautifulsoup4 package (bs4) in order to parse
+      XML files.
+
+  - Added a beancount.core.amount.add() function to add two amounts.
+
+  - Made the directive printer be more lenient to support incomplete postings.
+
+
 2016-03-12
 
   - Converted the amount.amount_*() functions to amount.*(). It's just simpler
@@ -41,6 +77,9 @@ Note: This file contains only changes in the 'default' branch.
 
   - Fixed issue #83: Renamed 'default_tolerance' option to
     'inferred_tolerance_default'.
+
+  - Added exception handlers for all importer callbacks. Badly written importers
+    should never completely throw off the tools.
 
 
 2016-03-05
