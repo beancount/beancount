@@ -51,6 +51,7 @@ def check_dependencies():
 
         # Optionally required to support imports (identify, extract, file) code.
         check_python_magic(),
+        check_import('beautifulsoup4', module_name='bs4', min_version='4'),
         ]
 
 
