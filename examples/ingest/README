@@ -12,5 +12,9 @@ File the files from Download/ under document/:
 
   bean-file example.import Downloads/ -o documents/
 
-You can test out the last command without moving the files using the
--n/--dry-run option.
+You can run the last command without moving the files using the -n/--dry-run
+option.
+
+To test the custom importer, use the following command:
+
+  nosetests3 --all-modules -v importers/utrade

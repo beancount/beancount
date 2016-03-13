@@ -156,5 +156,12 @@ class Importer(importer.ImporterProtocol):
 
 
 def test():
-    importer = Importer()
+    # Create an importer instance for running the regression tests.
+    importer = Importer("USD",
+                        "Assets:US:UTrade",
+                        "Assets:US:UTrade:Cash",
+                        "Income:US:UTrade:{}:Dividend",
+                        "Income:US:UTrade:{}:Gains",
+                        "Expenses:Financial:Fees",
+                        "Assets:US:BofA:Checking")
     yield from regression.compare_sample_files(importer, __file__)
