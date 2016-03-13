@@ -118,7 +118,7 @@ def validate_sell_gains(entries, options_map):
             if posting.cost is not None:
                 assert posting.price
                 price = posting.price
-                total_price.add_amount(amount.amount_mult(price, -posting.units.number))
+                total_price.add_amount(amount.mul(price, -posting.units.number))
             else:
                 # Otherwise, use the weight and ignore postings to Income accounts.
                 atype = account_types.get_account_type(posting.account)

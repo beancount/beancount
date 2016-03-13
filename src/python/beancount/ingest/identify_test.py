@@ -75,18 +75,18 @@ class TestScriptIdentify(scripts_utils.TestScriptsBase):
                                       path.join(self.tempdir, 'Downloads')])
         regexp = textwrap.dedent("""\
             \*\*\*\* .*/Downloads/ofxdownload.ofx
-
-              mybank-checking-ofx
+            Importer: +mybank-checking-ofx
+            Account: +Assets:Checking
 
             \*\*\*\* .*/Downloads/Subdir/bank.csv
-
-              mybank-credit-csv
+            Importer: +mybank-credit-csv
+            Account: +Liabilities:CreditCard
 
             \*\*\*\* .*/Downloads/Subdir/readme.txt
 
             """).strip()
         output = stdout.getvalue().strip()
-        self.assertTrue(re.match(regexp, output.strip()))
+        self.assertTrue(re.match(regexp, output))
 
     def test_identify_examples(self):
         config_filename = path.join(test_utils.find_repository_root(__file__),

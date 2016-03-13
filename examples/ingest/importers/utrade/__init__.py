@@ -69,7 +69,7 @@ class Importer(importer.ImporterProtocol):
             desc = "({0[TYPE]}) {0[DESCRIPTION]}".format(row)
             units = amount.Amount(D(row['AMOUNT']), self.currency)
             fees = amount.Amount(D(row['FEES']), self.currency)
-            other = amount.amount_add(units, fees)
+            other = amount.add(units, fees)
 
             if rtype == 'XFER':
                 assert fees.number == ZERO

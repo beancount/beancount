@@ -168,8 +168,6 @@ class TestPrintExtractedEntries(scripts_utils.TestScriptsBase, unittest.TestCase
 
         self.assertEqual(textwrap.dedent("""\
 
-        ;; beancount.ingest.extract_test.ExtractTestImporter
-
         ; 2016-02-01 * "A"
         ;   Assets:Account1   11.11 USD
         ;   Assets:Account2  -11.11 USD
@@ -270,13 +268,11 @@ class TestScriptExtract(test_utils.TestTempdirMixin, unittest.TestCase):
         output = stdout.getvalue()
 
         self.assertRegex(output, r'/checking.dl')
-        self.assertRegex(output, r'_LoaderImporter')
         self.assertRegex(output, r'Assets:Cash +300.00 USD')
         self.assertRegex(output, r'Expenses:Electricity +48.34 USD')
         self.assertRegex(output, r'Expenses:Internet +48.34 USD')
 
         self.assertRegex(output, r'/credit.dl')
-        self.assertRegex(output, r'_LoaderImporter')
         self.assertRegex(output, r'Expenses:Alcohol +32.23 USD')
         self.assertRegex(output, r'Expenses:Books +87.30 USD')
         self.assertRegex(output, r'Expenses:Clothing +87.30 USD')
@@ -319,13 +315,11 @@ class TestScriptExtract(test_utils.TestTempdirMixin, unittest.TestCase):
         output = stdout.getvalue()
 
         self.assertRegex(output, r'/checking.dl')
-        self.assertRegex(output, r'_LoaderImporter')
         self.assertRegex(output, r'; +Assets:Cash +300.00 USD')
         self.assertRegex(output, r'Expenses:Electricity +48.34 USD')
         self.assertRegex(output, r'Expenses:Internet +48.34 USD')
 
         self.assertRegex(output, r'/credit.dl')
-        self.assertRegex(output, r'_LoaderImporter')
         self.assertRegex(output, r'; +Expenses:Alcohol +32.23 USD')
         self.assertRegex(output, r'Expenses:Books +87.30 USD')
         self.assertRegex(output, r'Expenses:Clothing +87.30 USD')
