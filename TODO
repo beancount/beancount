@@ -3,9 +3,6 @@ beancount: TODO
 * Ingest (LedgerHub)
 ** Merging into Beancount
 
-  - Complete a good, working example file.
-    Use the generator script to do this; write the fake importer.
-
   - Finish writing the new doc, it's almost there.
 
   - Complete unit tests on beancount.ingest.compat.

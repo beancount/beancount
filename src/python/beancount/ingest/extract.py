@@ -97,8 +97,6 @@ def print_extracted_entries(importer, entries, output):
     # Print the filename and which modules matched.
     pr = lambda *args: print(*args, file=output)
     pr('')
-    pr(';; {}'.format(importer.name()))
-    pr('')
 
     # Print out the entries.
     for entry in entries:
@@ -111,6 +109,8 @@ def print_extracted_entries(importer, entries, output):
         else:
             entry_string = printer.format_entry(entry)
         pr(entry_string)
+
+    pr('')
 
 
 def extract(importer_config,

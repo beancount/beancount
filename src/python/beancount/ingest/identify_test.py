@@ -73,22 +73,20 @@ class TestScriptIdentify(scripts_utils.TestScriptsBase):
             test_utils.run_with_args(identify.main,
                                      [path.join(self.tempdir, 'test.import'),
                                       path.join(self.tempdir, 'Downloads')])
-        output = stdout.getvalue()
-        self.assertTrue(re.match(textwrap.dedent("""\
-            .*/Downloads/ofxdownload.ofx
+        regexp = textwrap.dedent("""\
+            \*\*\*\* .*/Downloads/ofxdownload.ofx
 
               mybank-checking-ofx
 
-
-            .*/Downloads/Subdir/bank.csv
+            \*\*\*\* .*/Downloads/Subdir/bank.csv
 
               mybank-credit-csv
 
+            \*\*\*\* .*/Downloads/Subdir/readme.txt
 
-            .*/Downloads/Subdir/readme.txt
-
-
-            $"""), output))
+            """).strip()
+        output = stdout.getvalue().strip()
+        self.assertTrue(re.match(regexp, output.strip()))
 
     def test_identify_examples(self):
         config_filename = path.join(test_utils.find_repository_root(__file__),

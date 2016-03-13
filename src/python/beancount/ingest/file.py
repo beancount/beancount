@@ -80,10 +80,11 @@ def file_one_file(filename, importers, destination, idify=False, logfile=None):
         logging.error("Importer %s.file_date() raised an unexpected error: %s",
                       importer.name(), exc)
         date = None
-    date_source = 'mtime'
     if date is None:
         # Fallback on the last modified time of the file.
         date = mtime_date
+        date_source = 'mtime'
+    else:
         date_source = 'contents'
 
     # Apply filename renaming, if implemented.
@@ -125,13 +126,10 @@ def file_one_file(filename, importers, destination, idify=False, logfile=None):
 
     # Print the filename and which modules matched.
     if logfile is not None:
-        logfile.write('=== {}\n'.format(filename))
-        if importers:
-            logfile.write('\n')
-        logfile.write('  Importer:    {}\n'.format(importer.name() if importer else '-'))
-        logfile.write('  Account:     {}\n'.format(file_account))
-        logfile.write('  Date:        {} (from {})\n'.format(mtime_date, date_source))
-        logfile.write('  Destination: {}\n'.format(new_fullname))
+        logfile.write('Importer:    {}\n'.format(importer.name() if importer else '-'))
+        logfile.write('Account:     {}\n'.format(file_account))
+        logfile.write('Date:        {} (from {})\n'.format(date, date_source))
+        logfile.write('Destination: {}\n'.format(new_fullname))
         logfile.write('\n')
 
     return new_fullname

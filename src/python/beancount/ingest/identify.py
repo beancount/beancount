@@ -1,7 +1,7 @@
 """Identify script.
 
 Read an import script and a list of downloaded filenames or directories of
-downloaded files, and for each of those files, identify which importer it should
+2downloaded files, and for each of those files, identify which importer it should
 be associated with.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
@@ -63,9 +63,6 @@ def find_imports(importer_config, files_or_directories, logfile=None):
 
         yield (filename, matching_importers)
 
-        if logfile is not None:
-            logfile.write('\n\n')
-
 
 def identify(importer_config, files_or_directories):
     """Run the identification loop.
@@ -74,11 +71,14 @@ def identify(importer_config, files_or_directories):
       importer_config: A list of importer instances.
       files_or_directories: A list of strings, files or directories.
     """
+    logfile = sys.stdout
     for filename, importers in find_imports(importer_config, files_or_directories,
-                                            logfile=sys.stdout):
+                                            logfile=logfile):
+        file = cache.FileMemo(filename)
         for importer in importers:
-            print('')
-            print('  {}'.format(importer.name()))
+            logfile.write('Importer:    {}\n'.format(importer.name() if importer else '-'))
+            logfile.write('Account:     {}\n'.format(importer.file_account(file)))
+            logfile.write('\n')
 
 
 def main():
