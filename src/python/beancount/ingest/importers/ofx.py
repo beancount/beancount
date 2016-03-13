@@ -72,66 +72,26 @@ class Importer(importer.ImporterProtocol):
         return find_date(file.contents())
 
     def extract(self, file):
-        # Parse the XML file.
-        soup = bs4.BeautifulSoup(file.contents(), 'lxml')
-
+        """Extract a list of partially complete transactions from the file."""
         new_entries = []
 
-        #     # For each statement.
-        #     txn_counter = itertools.count()
-        #     for stmtrs in soup.find_all(re.compile('.*stmtrs$')):
-        #         # For each currency.
-        #         for currency_node in stmtrs.find_all('curdef'):
-        #             currency = currency_node.contents[0].strip()
-        #
-        #             # Extract account information; skip if this is not the one we are
-        #             # asked to import.
-        #             acctid = ofx_file_account(stmtrs)
-        #             if not re.search('{}$'.format(acctid), config['acctid']):
-        #                 continue
-        #
-        #             # Process all regular or credit-card transaction lists.
-        #             for tranlist in stmtrs.find_all(re.compile('(|bank|cc)tranlist')):
-        #
-        #                 # Process the transactions from that list.
-        #                 for stmttrn in tranlist.find_all('stmttrn'):
-        #
+        # Create Transaction directives.
+        counter = itertools.count()
+        soup = bs4.BeautifulSoup(file.contents(), 'lxml')
+        for acctid, transactions in find_statement_transactions(soup):
+            for stmttrn in transactions:
+                entry = build_transaction(node, flag, account, currency)
+                entry.meta['filename'] = file.name
+                entry.meta['lineno'] = next(counter)
+                new_entries.append(entry)
 
-
-        #                     # Build the transaction.
-        #                     date = parse_ofx_time(soup_get(stmttrn, 'dtposted')).date()
-        #                     fileloc = data.new_metadata(file.name, next(txn_counter))
-        #                     payee = None
-        #
-        #                     name = soup_get(stmttrn, 'name', saxutils.unescape)
-        #                     memo = soup_get(stmttrn, 'memo', saxutils.unescape)
-        #                     if memo == name:
-        #                         memo = None
-        #
-        #                     trntype = None
-        #                     if stmtrs.name != 'ccstmtrs':
-        #                         t = soup_get(stmttrn, 'trntype', saxutils.unescape)
-        #                         if t not in ('DEBIT', 'CREDIT'):
-        #                             trntype = t
-        #
-        #                     # Get field values and remove fields that aren't useful.
-        #                     narration = ' / '.join(filter(None, [name, memo, trntype]))
-        #                     entry = data.Transaction(fileloc, date, self.FLAG, payee, narration, None, None, [])
-        #
-        #                     # Create a posting for it.
-        #                     units = amount.Amount(soup_get(stmttrn, 'trnamt', D), currency)
-        #                     entry.postings.append(
-        #                         data.Posting(account_asset, units, None, None, None, None))
-        #
-        #                     new_entries.append(entry)
-
-
+        # Create a Balance directive.
         #     # Extract balance.
         #     first_currency = find_currency(soup)
         #     ledgerbal = soup.find('ledgerbal')
         #     if ledgerbal:
-        #         balamt = soup_get(ledgerbal, 'balamt', D)
-        #         dtasof = soup_get(ledgerbal, 'dtasof', parse_ofx_time).date()
+        #         balamt = find_child(ledgerbal, 'balamt', D)
+        #         dtasof = find_child(ledgerbal, 'dtasof', parse_ofx_time).date()
         #         fileloc = data.new_metadata(file.name, next(txn_counter))
         #         balance_entry = data.Balance(fileloc, dtasof, account_asset,
         #                                      amount.Amount(balamt, first_currency),
@@ -195,64 +155,87 @@ def find_currency(soup):
                 return currency
 
 
-
-
-
-
 def find_statement_transactions(soup):
     """Find the statement transaction sections in the file.
 
     Args:
       soup: A BeautifulSoup root node.
-    Returns:
-      FIXME: TODO
+    Yields:
+      A pair of an account id string and a list of transaction nodes (<STMTTRN>
+      BeautifulSoup tags).
     """
-    #     # For each statement.
-    #     txn_counter = itertools.count()
-    #     for stmtrs in soup.find_all(re.compile('.*stmtrs$')):
-    #         # For each currency.
-    #         for currency_node in stmtrs.find_all('curdef'):
-    #             currency = currency_node.contents[0].strip()
-    #
-    #             # Extract account information; skip if this is not the one we are
-    #             # asked to import.
-    #             acctid = ofx_file_account(stmtrs)
-    #             if not re.search('{}$'.format(acctid), config['acctid']):
-    #                 continue
-    #
-    #             # Process all regular or credit-card transaction lists.
-    #             for tranlist in stmtrs.find_all(re.compile('(|bank|cc)tranlist')):
-    #
-    #                 # Process the transactions from that list.
-    #                 for stmttrn in tranlist.find_all('stmttrn'):
-    #
+    # Process STMTTRNRS and CCSTMTTRNRS tags.
+    for stmtrs in soup.find_all(re.compile('.*stmtrs$')):
+        # For each CURDEF tag.
+        for currency_node in stmtrs.find_all('curdef'):
+            currency = currency_node.contents[0].strip()
+
+            # Extract ACCTID account information.
+            acctid_node = stmtrs.find('acctid')
+            acctid = next(acctid_node.children).strip()
+
+            # Process transaction lists (regular or credit-card).
+            for tranlist in stmtrs.find_all(re.compile('(|bank|cc)tranlist')):
+                yield acctid, tranlist.find_all('stmttrn')
 
 
-# FIXME: Merge this into the outer loop.
+def find_child(node, name, conversion=None):
+    """Find a child under the given node and return its value.
 
-# def ofx_file_account(node):
-#     "Given a BeautifulSoup node, get the corresponding account id."
-#     acctid = node.find('acctid')
-#     return next(acctid.children).strip()
-#     # # There's some garbage in here sometimes; clean it up.
-#     # return acctid.text.split('\n')[0]
+    Args:
+      node: A <STMTTRN> bs4.element.Tag.
+      name: A string, the name of the child node.
+      conversion: A callable object used to convert the value to a new data type.
+    Returns:
+      A string, or None.
+    """
+    child = node.find(name)
+    if not child:
+        return None
+    value = child.contents[0].strip()
+    if conversion:
+        value = conversion(value)
+    return value
 
 
+def build_transaction(stmttrn, flag, account, currency):
+    """Build a single transaction.
 
+    Args:
+      stmttrn: A <STMTTRN> bs4.element.Tag.
+      flag: A single-character string.
+      account: An account string, the account to insert.
+      currency: A currency string.
+    Returns:
+      A Transaction instance.
+    """
+    # Find the date.
+    date = parse_ofx_time(find_child(stmttrn, 'dtposted')).date()
 
-# def souptodict(node):
-#     """Convert all of the child nodes from BeautifulSoup node into a dict.
-#     This assumes the direct children are uniquely named, but this is often the
-#     case."""
-#     return {child.name: child.contents[0].strip()
-#             for child in node.contents
-#             if isinstance(child, bs4.element.Tag)}
-#
-# def soup_get(node, name, conversion=None):
-#     "Find a child anywhere below node and return its value or None."
-#     child = node.find(name)
-#     if child:
-#         value = child.contents[0].strip()
-#         if conversion:
-#             value = conversion(value)
-#         return value
+    # There's no distinct payee.
+    payee = None
+
+    # Construct a description that represents all the text content in the node.
+    name = find_child(stmttrn, 'name', saxutils.unescape)
+    memo = find_child(stmttrn, 'memo', saxutils.unescape)
+
+    # Remove memos duplicated from the name.
+    if memo == name:
+        memo = None
+
+    # Add the transaction type to the description, unless it's not useful.
+    trntype = find_child(stmttrn, 'trntype', saxutils.unescape)
+    if trntype in ('DEBIT', 'CREDIT'):
+        trntype = None
+
+    narration = ' / '.join(filter(None, [name, memo, trntype]))
+
+    # Create a single posting for it; the user will have to manually categorize
+    # the other side.
+    number = find_child(stmttrn, 'trnamt', D)
+    units = amount.Amount(number, currency)
+    posting = data.Posting(account, units, None, None, None, None)
+
+    # Build the transaction with a single leg.
+    fileloc = data.new_metadata('<build_transaction>', 0)
+    return data.Transaction(fileloc, date, flag, payee, narration, None, None, [posting])
