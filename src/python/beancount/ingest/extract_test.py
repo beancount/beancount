@@ -332,3 +332,11 @@ class TestScriptExtract(test_utils.TestTempdirMixin, unittest.TestCase):
                 config_filename, path.join(self.tempdir, 'Downloads')])
         self.assertEqual(0, result)
         self.assertEqual("", stderr.getvalue())
+
+    def test_extract_no_files(self):
+        emptydir = path.join(self.tempdir, 'Empty')
+        os.makedirs(emptydir)
+        with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
+            test_utils.run_with_args(extract.main, [self.config_filename, emptydir])
+        output = stdout.getvalue()
+        self.assertFalse(output)

@@ -135,9 +135,14 @@ def extract(importer_config,
       entries:
       mindate:
     """
+    found_imports = list(identify.find_imports(importer_config,
+                                               files_or_directories,
+                                               output))
+    if not found_imports:
+        return
+
     output.write(HEADER)
-    for filename, importers in identify.find_imports(importer_config, files_or_directories,
-                                                     output):
+    for filename, importers in found_imports:
         for importer in importers:
             # Import and process the file.
             new_entries, duplicate_entries = extract_from_file(filename,
