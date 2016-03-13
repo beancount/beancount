@@ -10,7 +10,7 @@ from beancount.core.number import ONE
 from beancount.core.number import ZERO
 from beancount.core.number import MISSING
 from beancount.core.amount import Amount
-from beancount.core.amount import amount_mult
+from beancount.core.amount import mul as amount_mul
 from beancount.core.inventory import Inventory
 from beancount.core import inventory
 from beancount.core.data import Transaction
@@ -72,7 +72,7 @@ def get_posting_weight(posting):
     """
     # It the object has a cost, use that to balance this posting.
     if posting.cost is not None:
-        amount = amount_mult(posting.cost, posting.units.number)
+        amount = amount_mul(posting.cost, posting.units.number)
 
     else:
         # If there is a price, use that to balance this posting.
@@ -80,7 +80,7 @@ def get_posting_weight(posting):
         if price is not None:
             assert posting.units.currency != price.currency, (
                 "Invalid currency for price: {} in {}".format(posting, price))
-            amount = amount_mult(price, posting.units.number)
+            amount = amount_mul(price, posting.units.number)
 
         # Otherwise, just use the units.
         else:

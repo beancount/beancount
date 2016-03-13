@@ -57,42 +57,6 @@ beancount: TODO
     actually used.
 
 
-** API Revamp / Simplification
-
-  - FIXME: I'm _really_ tempted to remove the Lot and just have:
-
-      posting.units -> Amount
-      posting.cost -> Cost (or None), or CostSpec
-      posting.price -> Amount (or None)
-
-    Instead of:
-
-      posting.position.units -> Amount
-      posting.position.lot -> Lot
-      posting.position.lot.cost -> Cost (or None)
-      posting.price -> Amount (or None)
-
-    In that schema, Position and Posting are similar and related:
-
-      Position -> (units, cost)
-      Posting -> (account, units, cost, price)
-
-    You could say Posting inherits from Position.
-
-    To be considered... this would change the API a lot, but it would also
-    simplify it and flatten it into something much closer to the input syntax
-    for the user.
-
-      posting.units.number
-      posting.units.currency
-      posting.cost.number
-      posting.cost.currency
-      posting.cost.date
-      posting.cost.label
-      posting.price.number
-      posting.price.currency
-
-
 ** Notes from Booking Full
 
   - Testing:

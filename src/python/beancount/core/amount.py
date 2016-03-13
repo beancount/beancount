@@ -40,7 +40,6 @@ _D = number.D
 #`-----------------------------------------------------------------------------'
 
 
-
 # A regular expression to match the name of a currency.
 # Note: This is kept in sync with "beancount/parser/lexer.l".
 CURRENCY_RE = '[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]'
@@ -164,7 +163,7 @@ def amount_sortkey(amount):
     """
     return (amount.currency, amount.number)
 
-def amount_mult(amount, number):
+def mul(amount, number):
     """Multiply the given amount by a number.
 
     Args:
@@ -179,7 +178,7 @@ def amount_mult(amount, number):
         "Number is not a Decimal instance: {}".format(amount.number))
     return Amount(amount.number * number, amount.currency)
 
-def amount_div(amount, number):
+def div(amount, number):
     """Divide the given amount by a number.
 
     Args:
@@ -194,7 +193,7 @@ def amount_div(amount, number):
         "Number is not a Decimal instance: {}".format(amount.number))
     return Amount(amount.number / number, amount.currency)
 
-def amount_sub(amount1, amount2):
+def sub(amount1, amount2):
     """Subtract the given amounts with the same currency.
 
     Args:
@@ -217,3 +216,11 @@ def amount_sub(amount1, amount2):
 
 A = from_string = Amount.from_string  # pylint: disable=invalid-name
 NULL_AMOUNT = Amount(ZERO, '')
+
+
+#,-----------------------------------------------------------------------------.
+# Support for deprecated API.
+amount_sub = sub
+amount_mul = mul
+amount_div = div
+#`-----------------------------------------------------------------------------'

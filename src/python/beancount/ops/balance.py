@@ -126,7 +126,7 @@ def check(entries, options_map):
             balance_amount = subtree_balance.get_units(expected_amount.currency)
 
             # Check if the amount is within bounds of the expected amount.
-            diff_amount = amount.amount_sub(balance_amount, expected_amount)
+            diff_amount = amount.sub(balance_amount, expected_amount)
 
             # Use the specified tolerance or automatically infer it.
             tolerance = get_tolerance(entry, options_map)

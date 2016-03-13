@@ -115,17 +115,17 @@ class TestAmount(unittest.TestCase):
     def test_mult(self):
         amount_ = Amount(D('100'), 'CAD')
         self.assertEqual(Amount(D('102.1'), 'CAD'),
-                         amount.amount_mult(amount_, D('1.021')))
+                         amount.mul(amount_, D('1.021')))
 
     def test_div(self):
         amount_ = Amount(D('100'), 'CAD')
         self.assertEqual(Amount(D('20'), 'CAD'),
-                         amount.amount_div(amount_, D('5')))
+                         amount.div(amount_, D('5')))
 
     def test_sub(self):
         self.assertEqual(Amount(D('82.98'), 'CAD'),
-                         amount.amount_sub(Amount(D('100'), 'CAD'),
+                         amount.sub(Amount(D('100'), 'CAD'),
                                            Amount(D('17.02'), 'CAD')))
         with self.assertRaises(ValueError):
-            amount.amount_sub(Amount(D('100'), 'USD'),
+            amount.sub(Amount(D('100'), 'USD'),
                               Amount(D('17.02'), 'CAD'))

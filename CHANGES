@@ -6,6 +6,9 @@ Note: This file contains only changes in the 'default' branch.
 
 2016-03-12
 
+  - Converted the amount.amount_*() functions to amount.*(). It's just simpler
+    and nicer.
+
   - Made the beancount.report.balance_reports text reports rendered using the
     precision from the DisplayContext, and realization.dump_balances() require a
     formatter argument. More probaby needs to be done on issue #108 to close it,
