@@ -39,6 +39,10 @@ Note: This file contains only changes in the 'default' branch.
 
   - Made the directive printer be more lenient to support incomplete postings.
 
+  - Moved the "src/clojure" and "src/golang" directories to the experiments/
+    directory; they really are experiments. Should have done this a long time
+    ago.
+
 
 2016-03-12
 
