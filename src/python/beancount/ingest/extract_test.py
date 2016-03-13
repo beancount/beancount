@@ -324,19 +324,33 @@ class TestScriptExtract(test_utils.TestTempdirMixin, unittest.TestCase):
         self.assertRegex(output, r'Expenses:Books +87.30 USD')
         self.assertRegex(output, r'Expenses:Clothing +87.30 USD')
 
-    def test_extract_examples(self):
-        config_filename = path.join(test_utils.find_repository_root(__file__),
-                                    'examples', 'ingest', 'example.import')
-        with test_utils.capture('stdout', 'stderr') as (_, stderr):
-            result = test_utils.run_with_args(extract.main, [
-                config_filename, path.join(self.tempdir, 'Downloads')])
-        self.assertEqual(0, result)
-        self.assertEqual("", stderr.getvalue())
-
     def test_extract_no_files(self):
         emptydir = path.join(self.tempdir, 'Empty')
         os.makedirs(emptydir)
         with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
             test_utils.run_with_args(extract.main, [self.config_filename, emptydir])
         output = stdout.getvalue()
-        self.assertFalse(output)
+        self.assertRegex(output, r';; -\*- mode: org; mode: beancount; coding: utf-8; -\*-')
+
+    def test_extract_examples(self):
+        example_dir = path.join(
+            test_utils.find_repository_root(__file__), 'examples', 'ingest')
+        config_filename = path.join(example_dir, 'example.import')
+        with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
+            result = test_utils.run_with_args(extract.main, [
+                '--existing={}'.format(path.join(example_dir, 'example.beancount')),
+                config_filename, path.join(example_dir, 'Downloads')])
+        self.assertEqual(0, result)
+        self.assertEqual("", stderr.getvalue())
+
+        output = stdout.getvalue()
+
+        self.assertRegex(output, r';; -\*- mode: org; mode: beancount; coding: utf-8; -\*-')
+
+        self.assertRegex(output, 'Downloads/UTrade20160215.csv')
+        self.assertRegex(output, 'ORDINARY DIVIDEND~CSKO')
+        self.assertRegex(output, 'Income:US:UTrade:CSKO:Gains')
+        self.assertRegex(output, '2016-02-08 balance Assets:US:UTrade:Cash .*4665.89 USD')
+
+        self.assertRegex(output, 'Downloads/acmebank.ofx')
+        self.assertRegex(output, r'2013-12-16 \* "LES CAFES 400 LAFAYENEW YORK /')

@@ -89,10 +89,20 @@ class TestScriptIdentify(scripts_utils.TestScriptsBase):
         self.assertTrue(re.match(regexp, output))
 
     def test_identify_examples(self):
-        config_filename = path.join(test_utils.find_repository_root(__file__),
-                                    'examples', 'ingest', 'example.import')
-        with test_utils.capture('stdout', 'stderr') as (_, stderr):
+        example_dir = path.join(
+            test_utils.find_repository_root(__file__), 'examples', 'ingest')
+        config_filename = path.join(example_dir, 'example.import')
+        with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
             result = test_utils.run_with_args(identify.main, [
-                config_filename, path.join(self.tempdir, 'Downloads')])
+                config_filename, path.join(example_dir, 'Downloads')])
         self.assertEqual(0, result)
         self.assertEqual("", stderr.getvalue())
+        output = stdout.getvalue()
+
+        self.assertRegex(output, 'Downloads/UTrade20160215.csv')
+        self.assertRegex(output, 'Importer:.*importers.utrade.Importer')
+        self.assertRegex(output, 'Account:.*Assets:US:UTrade')
+
+        self.assertRegex(output, 'Downloads/acmebank.ofx')
+        self.assertRegex(output, 'Importer:.*beancount.ingest.importers.ofx.Importer')
+        self.assertRegex(output, 'Account:.*Liabilities:US:CreditCard')

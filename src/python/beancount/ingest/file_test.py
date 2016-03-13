@@ -301,3 +301,12 @@ class TestScriptFile(scripts_utils.TestScriptsBase, test_utils.TestCase):
                 '--output={}'.format(self.tempdir)])
         self.assertEqual(0, result)
         self.assertEqual("", stderr.getvalue())
+
+        filed_files = []
+        for root, dirs, files in os.walk(self.tempdir):
+            filed_files.extend(files)
+        self.assertEqual(4, len(filed_files))
+        self.assertEqual(set(filed_files), set(['test.import',
+                                                'ofxdownload.ofx',
+                                                'bank.csv',
+                                                'readme.txt']))

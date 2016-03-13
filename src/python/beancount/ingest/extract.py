@@ -89,16 +89,16 @@ def extract_from_file(filename, importer, existing_entries=None, min_date=None):
     return new_entries, duplicate_entries
 
 
-def print_extracted_entries(importer, entries, output):
+def print_extracted_entries(importer, entries, file):
     """Print the entries for the given importer.
 
     Args:
       importer: An importer object that matched the file.
       entries: A list of extracted entries.
-      output: A file object to write to.
+      file: A file object to write to.
     """
     # Print the filename and which modules matched.
-    pr = lambda *args: print(*args, file=output)
+    pr = lambda *args: print(*args, file=file)
     pr('')
 
     # Print out the entries.
@@ -135,14 +135,10 @@ def extract(importer_config,
       entries:
       mindate:
     """
-    found_imports = list(identify.find_imports(importer_config,
-                                               files_or_directories,
-                                               output))
-    if not found_imports:
-        return
-
     output.write(HEADER)
-    for filename, importers in found_imports:
+    for filename, importers in identify.find_imports(importer_config,
+                                                     files_or_directories,
+                                                     output):
         for importer in importers:
             # Import and process the file.
             new_entries, duplicate_entries = extract_from_file(filename,
