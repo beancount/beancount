@@ -448,6 +448,6 @@ class TestOFXImporter(cmptest.TestCase):
           2013-11-26 * "UNION MARKET -  HOUSNEW YORK / 47155       GROCERY STORE"
             Liabilities:CreditCard  -18.76 USD
 
-          2014-01-12 balance Liabilities:CreditCard            -2356.38 USD
+          2014-01-13 balance Liabilities:CreditCard            -2356.38 USD
 
         """, entries)
