@@ -120,6 +120,7 @@ def extract(importer_config,
             files_or_directories,
             output,
             entries=None,
+            options_map=None,
             mindate=None):
     """Given an importer configuration, search for files that can be imported in the
     list of files or directories, run the signature checks on them, and if it
@@ -132,8 +133,10 @@ def extract(importer_config,
       importer_config: A list of (regexps, importer) pairs, the configuration.
       files_or_directories: A list of strings, filenames or directories to be processed.
       output: A file object, to be written to.
-      entries:
-      mindate:
+      entries: A list of directives loaded from the existing file for the newly
+        extracted entries to be merged in.
+      options_map: The options parsed from existing file.
+      mindate: Optional minimum date to output transactions for.
     """
     output.write(HEADER)
     for filename, importers in identify.find_imports(importer_config,
@@ -163,11 +166,12 @@ def main():
 
     # Load the ledger, if one is specified.
     if args.existing:
-        entries, _, _ = loader.load_file(args.existing)
+        entries, _, options_map = loader.load_file(args.existing)
     else:
         entries = None
+        options_map = None
 
     extract(config, downloads_directories, sys.stdout,
-            entries=entries,
+            entries=entries, options_map=options_map,
             mindate=None)
     return 0
