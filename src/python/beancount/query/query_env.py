@@ -205,6 +205,34 @@ class CloseDate(query_compile.EvalFunction):
         close_entry, close_entry = context.open_close_map[args[0]]
         return close_entry.date if close_entry else None
 
+class Meta(query_compile.EvalFunction):
+    "Get some metadata key of the Posting."
+    __intypes__ = [str]
+
+    def __init__(self, operands):
+        super().__init__(operands, object)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        meta = context.posting.meta
+        if meta is None:
+            return None
+        return meta.get(args[0], None)
+
+class EntryMeta(query_compile.EvalFunction):
+    "Get some metadata key of the parent directive (Transaction)."
+    __intypes__ = [str]
+
+    def __init__(self, operands):
+        super().__init__(operands, object)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        meta = context.entry.meta
+        if meta is None:
+            return None
+        return meta.get(args[0], None)
+
 class OpenMeta(query_compile.EvalFunction):
     "Get the metadata dict of the open directive of the account."
     __intypes__ = [str]
@@ -407,6 +435,8 @@ SIMPLE_FUNCTIONS = {
     'grep'                                : Grep,
     'open_date'                           : OpenDate,
     'close_date'                          : CloseDate,
+    'meta'                                : Meta,
+    'entry_meta'                          : EntryMeta,
     'open_meta'                           : OpenMeta,
     'commodity_meta'                      : CommodityMeta,
     'account_sortkey'                     : AccountSortKey,

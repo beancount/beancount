@@ -11,7 +11,6 @@ beancount: TODO
 
     * Complete unit tests on beancount.ingest.compat.
 
-
 ** CSV Importer
 
   - Create a good, default, configurable importer for CSV files.
@@ -23,6 +22,10 @@ beancount: TODO
 
 
 ** Future Features
+
+   - In identify, mark as ambiguous if two handlers match.
+
+   - Run directories check on each run of file? Disable with an option.
 
   - Make sure that when an exptest fails it includes the filename of the test
     somewhere in there; it's annoying when it's not present there.

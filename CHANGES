@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-03-14
+
+  - Added META() and ENTRY_META() functions to the SQL shell to answer a
+    question on the mailing-list (from richieuk63 at gmail dot com).
+
+
 2016-03-13
 
   - Merged more changes from the 'ingest' branch which furthers the work of

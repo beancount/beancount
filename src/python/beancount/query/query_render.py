@@ -64,6 +64,28 @@ class ColumnRenderer:
         raise NotImplementedError
 
 
+class ObjectRenderer(ColumnRenderer):
+    """A renderer for a generic object type."""
+    dtype = object
+
+    def __init__(self, dcontext):
+        super().__init__(dcontext)
+        self.maxlen = 0
+
+    def update(self, string):
+        if string is not None:
+            self.maxlen = len(str(string))
+
+    def prepare(self):
+        pass
+
+    def width(self):
+        return self.maxlen
+
+    def format(self, string):
+        return '' if string is None else str(string)
+
+
 class StringRenderer(ColumnRenderer):
     """A renderer for left-aligned strings."""
     dtype = str
@@ -530,7 +552,8 @@ def render_text(result_types, result_rows, dcontext, file, boxed=False, spaced=F
 
 # A mapping of data-type -> (render-function, alignment)
 RENDERERS = {renderer_cls.dtype: renderer_cls
-             for renderer_cls in [StringRenderer,
+             for renderer_cls in [ObjectRenderer,
+                                  StringRenderer,
                                   StringSetRenderer,
                                   IntegerRenderer,
                                   DecimalRenderer,
