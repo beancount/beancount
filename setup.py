@@ -43,6 +43,9 @@ else:
             # This library is needed to identify the type of a file for import.
             'python-magic',
 
+            # This library is needed to parse XML files (for the OFX examples).
+            'beautifulsoup4',
+
             # This library is needed to identify the character set of a file for
             # import, in order to read its contents and match expressions
             # against it.
@@ -118,16 +121,21 @@ upload-csv-to-google-sheet
 # Please read: http://furius.ca/beancount/doc/install about version numbers.
 setup(
     name="beancount",
-    version='2.0b7',
+    version='2.0b8',
     description="Command-line Double-Entry Accounting",
 
     long_description=
     """
-      A double-entry accounting system that uses a simple text file format
-      as input. A few Python scripts are used to parse the contents of the
-      file, for example, to serve the contents as a locally running web
-      server. Scripts are provided to convert from various input files into
-      Beancount's input format.
+      A double-entry accounting system that uses text files as input.
+
+      Beancount defines a simple data format or "language" that lets you define
+      financial transaction records in a text file, load them in memory and
+      generate and export a variety of reports, such as balance sheets or income
+      statements. It also provides a client with an SQL-like query language to
+      filter and aggregate financial data, and a web interface which renders
+      those reports to HTML. Finally, it provides the scaffolding required to
+      automate the conversion of external data into one's input file in
+      Beancount syntax.
     """,
 
     license="GPL",

@@ -107,6 +107,7 @@ def extract(soup, filename, acctid_regexp, account, flag):
         # Create a Balance directive.
         if balance:
             date, number = balance
+            date += datetime.timedelta(days=1)
             meta = data.new_metadata(filename, next(counter))
             balance_entry = data.Balance(meta, date, account,
                                          amount.Amount(number, currency),
