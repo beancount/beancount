@@ -126,11 +126,16 @@ setup(
 
     long_description=
     """
-      A double-entry accounting system that uses a simple text file format
-      as input. A few Python scripts are used to parse the contents of the
-      file, for example, to serve the contents as a locally running web
-      server. Scripts are provided to convert from various input files into
-      Beancount's input format.
+      A double-entry accounting system that uses text files as input.
+
+      Beancount defines a simple data format or "language" that lets you define
+      financial transaction records in a text file, load them in memory and
+      generate and export a variety of reports, such as balance sheets or income
+      statements. It also provides a client with an SQL-like query language to
+      filter and aggregate financial data, and a web interface which renders
+      those reports to HTML. Finally, it provides the scaffolding required to
+      automate the conversion of external data into one's input file in
+      Beancount syntax.
     """,
 
     license="GPL",
