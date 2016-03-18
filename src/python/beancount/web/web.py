@@ -285,7 +285,7 @@ def toc():
         viewboxes.append(
             ('year', 'By Year',
              [(view_url('year', year=year), 'Year {}'.format(year))
-              for year in reversed(list(getters.get_active_years(app.entries)))]))
+              for year in reversed(app.active_years)]))
 
         # By tag views.
         viewboxes.append(('tag', 'Tags',
@@ -479,6 +479,8 @@ Mn = bottle_utils.AttrMapper(lambda month: month_request(request.view.year+1, mo
 def month_request(year, month):
     """Render a URL to a particular month of the context's request.
     """
+    if year < app.active_years[0] or year > app.active_years[-1]:
+        return ''
     month = list(calendar.month_abbr).index(month)
     month = "{:0>2d}".format(month)
     return app.router.build('month', year=year, month=month,
@@ -513,7 +515,6 @@ def render_view(*args, **kw):
             '<li><a href="{}">Monthly</a></li>'.format(M.Jan))
     elif request.view.monthly is views.MonthNavigation.FULL:
         annual = app.router.build('year', path=DEFAULT_VIEW_REDIRECT, year=request.view.year)
-        print('annual', annual)
         oss.write(APP_NAVIGATION_MONTHLY_FULL.render(M=M, Mp=Mp, Mn=Mn, V=V, annual=annual))
     kw['navigation'] = oss.getvalue()
     kw['overlay'] = render_overlay(' '.join(overlays))
@@ -1019,7 +1020,10 @@ def auto_reload_input_file(callback):
             app.account_types = options.get_account_types(options_map)
 
             # Pre-compute the price database.
-            app.price_map = prices.build_price_map(app.entries)
+            app.price_map = prices.build_price_map(entries)
+
+            # Pre-compute the list of active years.
+            app.active_years = list(getters.get_active_years(entries))
 
             # Reset the view cache.
             app.views.clear()

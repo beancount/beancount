@@ -61,8 +61,11 @@ class JournalReport(base.HTMLReport,
         if self.args.account:
             real_account = realization.get(real_root, self.args.account)
             if real_account is None:
-                raise base.ReportError(
-                    "Invalid account name: {}".format(self.args.account))
+                # If the account isn't found, return an empty list of postings.
+                # Note that this used to return the following error.
+                # raise base.ReportError(
+                #     "Invalid account name: {}".format(self.args.account))
+                return []
         else:
             real_account = real_root
 
