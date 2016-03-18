@@ -471,23 +471,17 @@ def doc(filename=None):
 
 viewapp = bottle.Bottle()
 V = bottle_utils.AttrMapper(lambda *args, **kw: request.app.get_url(*args, **kw))
+M = bottle_utils.AttrMapper(lambda month: month_request(request.view.year, month))
+Mp = bottle_utils.AttrMapper(lambda month: month_request(request.view.year-1, month))
+Mn = bottle_utils.AttrMapper(lambda month: month_request(request.view.year+1, month))
 
 
-M = bottle_utils.AttrMapper(lambda month: month_request(month))
-
-def month_request(month):
-    """Render a link to a particular month of the context's request.
-
-    Note: This reads the global value of 'request'.
-
-    Args:
-      month: A string, the month in question.
-    Returns:
-      A URL string.
+def month_request(year, month):
+    """Render a URL to a particular month of the context's request.
     """
     month = list(calendar.month_abbr).index(month)
     month = "{:0>2d}".format(month)
-    return app.router.build('month', year=request.view.year, month=month,
+    return app.router.build('month', year=year, month=month,
             path=request.path[1:])
 
 
@@ -516,9 +510,11 @@ def render_view(*args, **kw):
     oss.write(APP_NAVIGATION.render(A=A, V=V, view_title=request.view.title))
     if request.view.monthly is views.MonthNavigation.COMPACT:
         overlays.append(
-            '<li><a href="{}" id="nav-months-in">Months</a></li>'.format(M.Jan))
+            '<li><a href="{}">Monthly</a></li>'.format(M.Jan))
     elif request.view.monthly is views.MonthNavigation.FULL:
-        oss.write(APP_NAVIGATION_MONTHLY_FULL.render(M=M))
+        annual = app.router.build('year', path=DEFAULT_VIEW_REDIRECT, year=request.view.year)
+        print('annual', annual)
+        oss.write(APP_NAVIGATION_MONTHLY_FULL.render(M=M, Mp=Mp, Mn=Mn, V=V, annual=annual))
     kw['navigation'] = oss.getvalue()
     kw['overlay'] = render_overlay(' '.join(overlays))
 
@@ -542,6 +538,9 @@ APP_NAVIGATION = bottle.SimpleTemplate("""
 
 APP_NAVIGATION_MONTHLY_FULL = bottle.SimpleTemplate("""
 <ul>
+  <li><a href="{{annual}}">Annual</a></li>
+  [
+  <li><a href="{{Mp.Dec}}">Prev December</a></li> &laquo;
   <li><a href="{{M.Jan}}">January</a></li>
   <li><a href="{{M.Feb}}">February</a></li>
   <li><a href="{{M.Mar}}">March</a></li>
@@ -553,7 +552,9 @@ APP_NAVIGATION_MONTHLY_FULL = bottle.SimpleTemplate("""
   <li><a href="{{M.Sep}}">September</a></li>
   <li><a href="{{M.Oct}}">October</a></li>
   <li><a href="{{M.Nov}}">November</a></li>
-  <li><a href="{{M.Dec}}">December</a></li>
+  <li><a href="{{M.Dec}}">December</a></li> &raquo;
+  <li><a href="{{Mn.Jan}}">Next January</a></li>
+  ]
 </ul>
 """)
 
