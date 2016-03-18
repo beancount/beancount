@@ -206,8 +206,8 @@ app = bottle.Bottle()
 A = bottle_utils.AttrMapper(app.router.build)
 
 
-def render_overlay():
-    """Render an overlay with the current errors.
+def render_overlay(contents):
+    """Render an overlay of the navigation with the current errors.
 
     This is used to bring up new errors on any page when they occur.
 
@@ -217,9 +217,9 @@ def render_overlay():
     return '''
       <div class="navigation" id="nav-right">
         <ul>
-          <li><a href="{}">Errors</a></li>
+          {}
         </ul>
-      </div>'''.format(app.router.build('errors'))
+      </div>'''.format(contents)
 
     # It would be nice to have a fancy overlay here, that automatically appears
     # after parsing if there are errors and that automatically smoothly fades
@@ -242,9 +242,12 @@ def render_global(*args, **kw):
     kw['view_title'] = ''
     kw['navigation'] = GLOBAL_NAVIGATION
     kw['scripts'] = kw.get('scripts', '')
-    kw['overlay'] = (render_overlay()
-                     if request.params.pop('render_overlay', True)
-                     else '')
+
+    kw['overlay'] = (
+        render_overlay('<li><a href="{}">Errors</a></li>'.format(
+            app.router.build('errors')))
+        if request.params.pop('render_overlay', True)
+        else '')
     return template.render(*args, **kw)
 
 
@@ -468,13 +471,25 @@ def doc(filename=None):
 
 viewapp = bottle.Bottle()
 V = bottle_utils.AttrMapper(lambda *args, **kw: request.app.get_url(*args, **kw))
+
+
 M = bottle_utils.AttrMapper(lambda month: month_request(month))
 
 def month_request(month):
+    """Render a link to a particular month of the context's request.
+
+    Note: This reads the global value of 'request'.
+
+    Args:
+      month: A string, the month in question.
+    Returns:
+      A URL string.
+    """
     month = list(calendar.month_abbr).index(month)
     month = "{:0>2d}".format(month)
     return app.router.build('month', year=request.view.year, month=month,
             path=request.path[1:])
+
 
 def render_view(*args, **kw):
     """Render the title and contents in our standard template for a view page.
@@ -490,19 +505,30 @@ def render_view(*args, **kw):
     kw['V'] = V # View mapper
     kw['title'] = app.options['title']
     kw['view_title'] = ' - ' + request.view.title
-    if request.view.monthly:
-        kw['navigation'] = APP_NAVIGATION_MONTHLY.render(A=A, V=V, M=M, view_title=request.view.title)
-    else:
-        kw['navigation'] = APP_NAVIGATION.render(A=A, V=V, view_title=request.view.title)
+
+    overlays = []
+    if request.params.pop('render_overlay', False):
+        overlays.append(
+            '<li><a href="{}">Errors</a></li>'.format(app.router.build('errors')))
+
+    # Render navigation, with monthly navigation option.
+    oss = io.StringIO()
+    oss.write(APP_NAVIGATION.render(A=A, V=V, view_title=request.view.title))
+    if request.view.monthly is views.MonthNavigation.COMPACT:
+        overlays.append(
+            '<li><a href="{}" id="nav-months-in">Months</a></li>'.format(M.Jan))
+    elif request.view.monthly is views.MonthNavigation.FULL:
+        oss.write(APP_NAVIGATION_MONTHLY_FULL.render(M=M))
+    kw['navigation'] = oss.getvalue()
+    kw['overlay'] = render_overlay(' '.join(overlays))
 
     kw['scripts'] = kw.get('scripts', '')
-    kw['overlay'] = (render_overlay()
-                     if request.params.pop('render_overlay', False)
-                     else '')
+
     return template.render(*args, **kw)
 
+
 APP_NAVIGATION = bottle.SimpleTemplate("""
-<ul>
+<ul id="nav-main">
   <li><a href="{{A.toc}}">Table of Contents</a></li>
   <li><span class="ledger-name">{{view_title}}:</span></li>
   <li><a href="{{V.balsheet}}">Balance Sheet</a></li>
@@ -514,17 +540,7 @@ APP_NAVIGATION = bottle.SimpleTemplate("""
 </ul>
 """)
 
-APP_NAVIGATION_MONTHLY = bottle.SimpleTemplate("""
-<ul>
-  <li><a href="{{A.toc}}">Table of Contents</a></li>
-  <li><span class="ledger-name">{{view_title}}:</span></li>
-  <li><a href="{{V.balsheet}}">Balance Sheet</a></li>
-  <li><a href="{{V.income}}">Income Statement</a></li>
-  <li><a href="{{V.holdings}}">Equity/Holdings</a></li>
-  <li><a href="{{V.trial}}">Trial Balance</a></li>
-  <li><a href="{{V.journal_all}}">General Journal</a></li>
-  <li><a href="{{V.index}}">Index</a></li>
-</ul>
+APP_NAVIGATION_MONTHLY_FULL = bottle.SimpleTemplate("""
 <ul>
   <li><a href="{{M.Jan}}">January</a></li>
   <li><a href="{{M.Feb}}">February</a></li>

@@ -3,7 +3,6 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import datetime
-import calendar
 import logging
 
 from beancount.core import data
@@ -11,6 +10,21 @@ from beancount.ops import summarize
 from beancount.core import realization
 from beancount.parser import options
 from beancount.utils import misc_utils
+from beancount.utils import date_utils
+
+
+# pylint: disable=invalid-name
+try:
+    import enum
+    Enum = enum.Enum
+except ImportError:
+    Enum = object
+
+
+class MonthNavigation(Enum):
+    NONE    = 0  # No monthly navigation.
+    COMPACT = 1  # Compact combobox outgoing to monthly navigation.
+    FULL    = 2  # Full rendering with single-click to each month.
 
 
 class View:
@@ -45,8 +59,8 @@ class View:
         self.opening_real_accounts = None
         self.closing_real_accounts = None
 
-        #Flag to render monthly navigation
-        self.monthly = False
+        # Monthly navigation style.
+        self.monthly = MonthNavigation.NONE
 
         # Realize now, we don't need to do this lazily because we create these
         # view objects on-demand and cache them.
@@ -131,7 +145,7 @@ class AllView(View):
 
 
 class YearView(View):
-    """A view of the entries for just a single year."""
+    """A view of the entries for a single year."""
 
     def __init__(self, entries, options_map, title, year, first_month=1):
         """Create a view clamped to one year.
@@ -151,7 +165,8 @@ class YearView(View):
         if not (1 <= first_month <= 12):
             raise ValueError("Invalid month: {}".format(first_month))
         View.__init__(self, entries, options_map, title)
-        self.monthly = True #Flag to render monthly navigation
+
+        self.monthly = MonthNavigation.COMPACT
 
     def apply_filter(self, entries, options_map):
         # Clamp to the desired period.
@@ -163,8 +178,9 @@ class YearView(View):
                                                           options_map)
         return entries, index
 
+
 class MonthView(View):
-    """A view of the entries for just a single month."""
+    """A view of the entries for a single month."""
 
     def __init__(self, entries, options_map, title, year, month):
         """Create a view clamped to one month.
@@ -179,25 +195,20 @@ class MonthView(View):
         self.year = year
         self.month = month
         View.__init__(self, entries, options_map, title)
-        self.monthly = True #Flag to render monthly navigation
+
+        self.monthly = MonthNavigation.FULL
 
     def apply_filter(self, entries, options_map):
         # Clamp to the desired period.
         begin_date = datetime.date(self.year, self.month, 1)
-
-        if self.month == 12:
-            end_month = 1
-            end_year = self.year + 1
-        else:
-            end_month = self.month + 1
-            end_year = self.year
-        end_date = datetime.date(end_year, end_month, begin_date.day)
+        end_date = date_utils.next_month(begin_date)
 
         with misc_utils.log_time('clamp', logging.info):
             entries, index = summarize.clamp_opt(entries,
                                                           begin_date, end_date,
                                                           options_map)
         return entries, index
+
 
 class TagView(View):
     """A view that includes only entries some specific tags."""
