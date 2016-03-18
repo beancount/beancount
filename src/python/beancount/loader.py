@@ -2,19 +2,19 @@
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import collections
 import functools
 import hashlib
-import textwrap
 import importlib
-import collections
-import logging
 import io
 import itertools
+import logging
 import os
 import pickle
-import warnings
 import struct
+import textwrap
 import time
+import warnings
 from os import path
 
 from beancount.utils import misc_utils
@@ -24,6 +24,7 @@ from beancount.parser import booking
 from beancount.parser import options
 from beancount.parser import printer
 from beancount.ops import validation
+from beancount.utils import encryption
 
 
 LoadError = collections.namedtuple('LoadError', 'source message entry')
@@ -65,23 +66,55 @@ def load_file(filename, log_timings=None, log_errors=None, extra_validations=Non
         this list of entries.
       encoding: A string or None, the encoding to decode the input filename with.
     Returns:
-      A triple of:
-        entries: A date-sorted list of entries from the file.
-        errors: A list of error objects generated while parsing and validating
-          the file.
-        options_map: A dict of the options parsed from the file.
+      A triple of (entries, errors, option_map) where "entries" is a date-sorted
+      list of entries from the file, "errors" a list of error objects generated
+      while parsing and validating the file, and "options_map", a dict of the
+      options parsed from the file.
     """
+    filename = path.expandvars(path.expanduser(filename))
     if not path.isabs(filename):
         filename = path.normpath(path.join(os.getcwd(), filename))
-    entries, errors, options_map = _load_file(filename, log_timings,
-                                              extra_validations, encoding)
-    _log_errors(errors, log_errors)
-    return entries, errors, options_map
+
+    if encryption.is_encrypted_file(filename):
+        # Note: Caching is not supported for encrypted files.
+        return load_encrypted_file(filename,
+                                   log_timings, log_errors,
+                                   extra_validations, False, encoding)
+    else:
+        entries, errors, options_map = _load_file(filename, log_timings,
+                                                  extra_validations, encoding)
+        _log_errors(errors, log_errors)
+        return entries, errors, options_map
 
 
 # Alias, for compatibility.
 # pylint: disable=invalid-name
 load = load_file
+
+
+def load_encrypted_file(filename, log_timings=None, log_errors=None, extra_validations=None,
+                        dedent=False, encoding=None):
+    """Load an encrypted Beancount input file.
+
+    Args:
+      filename: The name of an encrypted file to be parsed.
+      log_timings: See load_string().
+      log_errors: See load_string().
+      extra_validations: See load_string().
+      dedent: See load_string().
+      encoding: See load_string().
+    Returns:
+      A triple of (entries, errors, option_map) where "entries" is a date-sorted
+      list of entries from the file, "errors" a list of error objects generated
+      while parsing and validating the file, and "options_map", a dict of the
+      options parsed from the file.
+    """
+    contents = encryption.read_encrypted_file(filename)
+    return load_string(contents,
+                       log_timings=log_timings,
+                       log_errors=log_errors,
+                       extra_validations=extra_validations,
+                       encoding=encoding)
 
 
 def _log_errors(errors, log_errors):
@@ -132,14 +165,26 @@ def pickle_cache_function(pattern, time_threshold, function):
         exists = path.exists(cache_filename)
         if exists:
             with open(cache_filename, 'rb') as file:
-                result = pickle.load(file)
+                try:
+                    result = pickle.load(file)
 
-            # Check that the latest timestamp has not been written after the
-            # cache file.
-            entries, errors, options_map = result
-            if not needs_refresh(options_map):
-                # All timestamps are legit; cache hit.
-                return result
+                except Exception as exc:
+                    # Note: Not a big fan of doing this, but here we handle all
+                    # possible exceptions because unpickling of an old or
+                    # corrupted pickle file manifests as a variety of different
+                    # exception types.
+
+                    # The cache file is corrupted; ignore it and recompute.
+                    logging.error("Cache file is corrupted: %s; recomputing.", exc)
+                    result = None
+
+                else:
+                    # Check that the latest timestamp has not been written after the
+                    # cache file.
+                    entries, errors, options_map = result
+                    if not needs_refresh(options_map):
+                        # All timestamps are legit; cache hit.
+                        return result
 
         # We failed; recompute the value.
         if exists:
@@ -201,6 +246,8 @@ def compute_input_hash(filenames):
     md5 = hashlib.md5()
     for filename in sorted(filenames):
         md5.update(filename.encode('utf8'))
+        if not path.exists(filename):
+            continue
         stat = os.stat(filename)
         md5.update(struct.pack('dd', stat.st_mtime_ns, stat.st_size))
     return md5.hexdigest()
@@ -222,11 +269,10 @@ def load_string(string, log_timings=None, log_errors=None, extra_validations=Non
       dedent: A boolean, if set, remove the whitespace in front of the lines.
       encoding: A string or None, the encoding to decode the input filename with.
     Returns:
-      A triple of:
-        entries: A date-sorted list of entries from the file.
-        errors: A list of error objects generated while parsing and validating
-          the file.
-        options_map: A dict of the options parsed from the file.
+      A triple of (entries, errors, option_map) where "entries" is a date-sorted
+      list of entries from the string, "errors" a list of error objects
+      generated while parsing and validating the string, and "options_map", a
+      dict of the options parsed from the string.
     """
     if dedent:
         string = textwrap.dedent(string)

@@ -12,6 +12,7 @@ from beancount.core import data
 from beancount.core import position
 from beancount.core import inventory
 from beancount.core import getters
+from beancount.core import display_context
 from beancount.parser import printer
 from beancount.parser import options
 from beancount.ops import summarize
@@ -75,7 +76,12 @@ def execute_print(c_print, entries, options_map, file):
     if c_print and c_print.c_from is not None:
         entries = filter_entries(c_print.c_from, entries, options_map)
 
-    printer.print_entries(entries, file=file)
+    # Create a context that renders all numbers with their natural
+    # precision, but honors the commas option. This is kept in sync with
+    # {2c694afe3140} to avoid a dependency.
+    dcontext = display_context.DisplayContext()
+    dcontext.set_commas(options_map['dcontext'].commas)
+    printer.print_entries(entries, dcontext, file=file)
 
 
 class Allocator:
@@ -223,7 +229,7 @@ def execute_query(query, entries, options_map):
                     if c_where is None or c_where(context):
                         # Compute the balance.
                         if balance is not None:
-                            balance.add_position(posting.position)
+                            balance.add_position(posting)
 
                         # Evaluate all the values.
                         values = [c_expr(context) for c_expr in c_target_exprs]
@@ -268,7 +274,7 @@ def execute_query(query, entries, options_map):
                     if c_where is None or c_where(context):
                         # Compute the balance.
                         if balance is not None:
-                            balance.add_position(posting.position)
+                            balance.add_position(posting)
 
                         # Compute the non-aggregate expressions.
                         row_key = tuple(c_expr(context)
@@ -359,7 +365,8 @@ def flatten_results(result_types, result_rows):
     if not indexes:
         return (result_types, result_rows)
 
-    ResultRow = type(result_rows[0])  # pylint: disable=invalid-name
+    # pylint: disable=invalid-name
+    ResultRow = type(result_rows[0])
 
     # We have to make at least some conversions.
     num_columns = len(result_types)

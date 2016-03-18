@@ -31,9 +31,9 @@ def auto_insert_open(entries, unused_options_map):
 
     new_entries = []
     accounts_first, _ = getters.get_accounts_use_map(entries)
-    for account, date_first_used in accounts_first.items():
+    for index, (account, date_first_used) in enumerate(sorted(accounts_first.items())):
         if account not in opened_accounts:
-            meta = data.new_metadata('<auto_accounts>', 0)
+            meta = data.new_metadata('<auto_accounts>', index)
             new_entries.append(data.Open(meta, date_first_used, account,
                                          None, None))
 

@@ -9,14 +9,72 @@ import copy
 import random
 from datetime import date
 
-from beancount.core.number import ZERO
-from beancount.core.number import D
-from beancount.core.amount import A
-from beancount.core.position import Lot
+from beancount.core import position
+from beancount.core.position import Cost
 from beancount.core.position import Position
 from beancount.core.position import from_string
 from beancount.core.position import from_amounts
-from beancount.core.position import lot_currency_pair
+
+from beancount.core.number import ZERO
+from beancount.core.number import D
+from beancount.core.amount import A
+from beancount.core.amount import Amount
+from beancount.core import display_context
+
+
+class TestCost(unittest.TestCase):
+
+    dformat = display_context.DisplayContext().build()
+
+    def test_cost_to_str__detail(self):
+        cost = position.Cost(D('101.23'), 'USD', datetime.date(2015, 9, 6), "f4412439c31b")
+        self.assertEqual('101.23 USD, 2015-09-06, "f4412439c31b"',
+                         position.cost_to_str(cost, self.dformat))
+
+        cost = position.Cost(D('101.23'), 'USD', datetime.date(2015, 9, 6), None)
+        self.assertEqual('101.23 USD, 2015-09-06',
+                         position.cost_to_str(cost, self.dformat))
+
+        cost = position.Cost(D('101.23'), 'USD', None, None)
+        self.assertEqual('101.23 USD',
+                         position.cost_to_str(cost, self.dformat))
+
+        cost = position.Cost(D('101.23'), 'USD', None, "f4412439c31b")
+        self.assertEqual('101.23 USD, "f4412439c31b"',
+                         position.cost_to_str(cost, self.dformat))
+
+        cost = position.Cost(None, None, None, "f4412439c31b")
+        self.assertEqual('"f4412439c31b"',
+                         position.cost_to_str(cost, self.dformat))
+
+        cost = position.Cost(None, 'USD', None, "f4412439c31b")
+        self.assertEqual('"f4412439c31b"',
+                         position.cost_to_str(cost, self.dformat))
+
+    def test_cost_to_str__simple(self):
+        cost = position.Cost(D('101.23'), 'USD', datetime.date(2015, 9, 6), "f4412439c31b")
+        self.assertEqual('101.23 USD',
+                         position.cost_to_str(cost, self.dformat, False))
+
+        cost = position.Cost(D('101.23'), 'USD', datetime.date(2015, 9, 6), None)
+        self.assertEqual('101.23 USD',
+                         position.cost_to_str(cost, self.dformat, False))
+
+        cost = position.Cost(D('101.23'), 'USD', None, None)
+        self.assertEqual('101.23 USD',
+                         position.cost_to_str(cost, self.dformat, False))
+
+        cost = position.Cost(D('101.23'), 'USD', None, "f4412439c31b")
+        self.assertEqual('101.23 USD',
+                         position.cost_to_str(cost, self.dformat, False))
+
+        cost = position.Cost(None, None, None, "f4412439c31b")
+        self.assertEqual('',
+                         position.cost_to_str(cost, self.dformat, False))
+
+        cost = position.Cost(None, 'USD', None, "f4412439c31b")
+        self.assertEqual('',
+                         position.cost_to_str(cost, self.dformat, False))
 
 
 class TestPosition(unittest.TestCase):
@@ -27,44 +85,41 @@ class TestPosition(unittest.TestCase):
 
     def test_from_string__simple(self):
         pos = from_string('10 USD')
-        self.assertEqual(Position(Lot("USD", None, None), D('10')), pos)
+        self.assertEqual(Position(A("10 USD")), pos)
 
     def test_from_string__with_spaces(self):
         pos = from_string(' - 111.2934  CAD ')
-        self.assertEqual(Position(Lot("CAD", None, None), D('-111.2934')), pos)
+        self.assertEqual(Position(A("-111.2934 CAD")), pos)
 
     def test_from_string__with_cost(self):
         pos = from_string('2.2 HOOL {532.43 USD}')
-        cost = A('532.43 USD')
-        self.assertEqual(Position(Lot("HOOL", cost, None), D('2.2')), pos)
+        cost = Cost(D('532.43'), 'USD', None, None)
+        self.assertEqual(Position(A("2.2 HOOL"), cost), pos)
 
     def test_from_string__with_cost_and_date(self):
         pos = from_string('2.2 HOOL {532.43 USD, 2014-06-15}')
-        cost = A('532.43 USD')
-        lot_date = datetime.date(2014, 6, 15)
-        self.assertEqual(Position(Lot("HOOL", cost, lot_date), D('2.2')), pos)
+        cost = Cost(D('532.43'), 'USD', datetime.date(2014, 6, 15), None)
+        self.assertEqual(Position(A("2.2 HOOL"), cost), pos)
 
     def test_from_string__with_label(self):
         pos = from_string('2.2 HOOL {"78c3f7f1315b"}')
-        self.assertEqual(Position(Lot("HOOL", None, None), D('2.2')), pos)
+        self.assertEqual(
+            Position(A("2.2 HOOL"), Cost(None, None, None, "78c3f7f1315b")), pos)
 
     def test_from_string__with_compound_cost(self):
         pos = from_string('1.1 HOOL {500.00 # 11.00 USD}')
         self.assertEqual(
-            Position(
-                Lot("HOOL", A('510.00 USD'), None),
-                D('1.1')),
+            Position(A("1.1 HOOL"), Cost(D('510.00'), 'USD', None, None)),
             pos)
 
-    def test_from_string__with_merge_cost_spec(self):
-        pos = from_string('1.1 HOOL {*}')
-        self.assertEqual(Position(Lot("HOOL", None, None), D('1.1')), pos)
+    # Not supported in string constructor.
+    # def test_from_string__with_merge_cost_spec(self):
+    #     pos = from_string('1.1 HOOL {*}')
 
     def test_from_string__with_everything(self):
-        pos = from_string('20 HOOL {*, 532.43 # 20.00 USD, "e4dc1a361022", 2014-06-15}')
-        cost = A('533.43 USD')
-        lot_date = datetime.date(2014, 6, 15)
-        self.assertEqual(Position(Lot("HOOL", cost, lot_date), D('20')), pos)
+        pos = from_string('20 HOOL {532.43 # 20.00 USD, "e4dc1a361022", 2014-06-15}')
+        cost = Cost(D('533.43'), 'USD', datetime.date(2014, 6, 15), "e4dc1a361022")
+        self.assertEqual(Position(A("20 HOOL"), cost), pos)
 
     def test_from_string__missing_currency(self):
         with self.assertRaises(ValueError):
@@ -84,42 +139,48 @@ class TestPosition(unittest.TestCase):
 
     def test_from_amounts(self):
         pos = from_amounts(A('10.00 USD'))
-        self.assertEqual(Position(Lot("USD", None, None), D('10')), pos)
+        self.assertEqual(Position(A("10 USD")), pos)
 
         pos = from_amounts(A('10 HOOL'),
                            A('510.00 USD'))
         self.assertEqual(
-            Position(Lot("HOOL", A('510 USD'), None), D('10')), pos)
+            Position(A("10 HOOL"), Cost(D('510'), 'USD', None, None)), pos)
 
     def test_constructors(self):
-        Position(Lot('USD', None, None), D('123.45'))
-        Position(Lot('USD', A('74.00 CAD'), None), D('123.45'))
-        Position(Lot('USD', A('74.00 CAD'), date(2013, 2, 3)), D('123.45'))
-        with self.assertRaises(Exception):
-            Position(None, D('123.45'))
-        Position(Lot('USD', None, None), None)
+        Position(A('123.45 USD'), None)
+        Position(A('123.45 USD'), Cost('74.00', 'CAD', None, None))
+        Position(A('123.45 USD'), Cost('74.00', 'CAD', date(2013, 2, 3), None))
+        Position(Amount(D('123.45'), None), None)
+        Position(Amount(None, 'USD'), None)
 
     def test_compare_zero_to_none(self):
-        pos1 = Position(Lot("CAD", None, None), ZERO)
+        pos1 = Position(Amount(ZERO, "CAD"), None)
         pos_none = None
         self.assertEqual(pos1, pos_none)
         self.assertEqual(pos_none, pos1)
 
-        pos2 = Position(Lot("USD", None, None), ZERO)
+        pos2 = Position(Amount(ZERO, "USD"), None)
         self.assertNotEqual(pos1, pos2)
 
     def test_neg(self):
-        pos = Position(Lot("CAD", None, None), D('7'))
+        pos = Position(A("7 CAD"), None)
         npos = -pos
-        self.assertEqual(D('-7'), npos.number)
-        self.assertEqual(pos.lot, npos.lot)
+        self.assertEqual(D('-7'), npos.units.number)
+        self.assertEqual('CAD', npos.units.currency)
+        self.assertEqual(pos.cost, npos.cost)
+
+    def test_mul(self):
+        pos = position.from_string("2 HOOL {100.00 USD}")
+        pos2 = pos * D('3')
+        self.assertEqual(position.from_string("6 HOOL {100.00 USD}"),
+                         pos2)
 
     def test_eq_and_sortkey(self):
-        pos1 = Position(Lot("USD", None, None), D('200'))
-        pos2 = Position(Lot("USD", None, None), D('201'))
-        pos3 = Position(Lot("CAD", None, None), D('100'))
-        pos4 = Position(Lot("CAD", None, None), D('101'))
-        pos5 = Position(Lot("ZZZ", None, None), D('50'))
+        pos1 = Position(A("200 USD"), None)
+        pos2 = Position(A("201 USD"), None)
+        pos3 = Position(A("100 CAD"), None)
+        pos4 = Position(A("101 CAD"), None)
+        pos5 = Position(A("50 ZZZ"), None)
         positions = [pos5, pos4, pos3, pos2, pos1]
         positions.sort()
 
@@ -135,10 +196,10 @@ class TestPosition(unittest.TestCase):
         self.assertTrue(positions[4] is pos5)
 
     def test_eq_and_sortkey__bycost(self):
-        pos1 = Position(Lot("USD", None, None), D('1'))
-        pos2 = Position(Lot("USD", A('10 USD'), None), D('1'))
-        pos3 = Position(Lot("USD", A('11 USD'), None), D('1'))
-        pos4 = Position(Lot("USD", A('12 USD'), None), D('1'))
+        pos1 = Position(A("1 USD"), None)
+        pos2 = Position(A("1 USD"), Cost(D('10'), 'USD', None, None))
+        pos3 = Position(A("1 USD"), Cost(D('11'), 'USD', None, None))
+        pos4 = Position(A("1 USD"), Cost(D('12'), 'USD', None, None))
 
         positions = [pos3, pos2, pos1, pos4]
         self.assertEqual([pos1, pos2, pos3, pos4], sorted(positions))
@@ -149,50 +210,45 @@ class TestPosition(unittest.TestCase):
 
     def test_copy(self):
         # Ensure that the lot instances are shared.
-        pos1 = Position(Lot("USD", None, None), D('200'))
+        pos1 = Position(A("200 USD"), None)
         pos2 = copy.copy(pos1)
-        self.assertTrue(pos1.lot is pos2.lot)
+        self.assertEqual(pos1.units, pos2.units)
+        self.assertEqual(pos1.cost, pos2.cost)
 
     def test_quantities(self):
-        pos = Position(Lot("USD", None, None), D('10'))
-        self.assertEqual(A('10 USD'), pos.get_units())
+        pos = Position(A("10 USD"), None)
+        self.assertEqual(A('10 USD'), pos.units)
         self.assertEqual(A('10 USD'), pos.get_cost())
-        self.assertEqual(A('10 USD'), pos.get_weight())
-        self.assertEqual(A('16 AUD'), pos.get_weight(A('1.6 AUD')))
 
-        pos = Position(Lot("USD", A('1.5 AUD'), None), D('10'))
-        self.assertEqual(A('10 USD'), pos.get_units())
+        pos = Position(A("10 USD"), Cost(D('1.5'), 'AUD', None, None))
+        self.assertEqual(A('10 USD'), pos.units)
         self.assertEqual(A('15 AUD'), pos.get_cost())
-        self.assertEqual(A('15 AUD'), pos.get_weight())
-        self.assertEqual(A('15 AUD'), pos.get_weight(A('1.6 AUD')))
 
-        cost_pos = pos.cost()
-        self.assertEqual(A('15 AUD'), cost_pos.get_units())
+        cost_pos = pos.at_cost()
+        self.assertEqual(A('15 AUD'), cost_pos.units)
         self.assertEqual(A('15 AUD'), cost_pos.get_cost())
-        self.assertEqual(A('15 AUD'), cost_pos.get_weight())
-        with self.assertRaises(AssertionError):
-            self.assertEqual(A('15 AUD'), cost_pos.get_weight(A('1.6 AUD')))
 
     def test_add(self):
-        pos = Position(Lot("USD", A('10 AUD'), None), D('28372'))
+        pos = Position(A("28372 USD"), Cost(D('10'), 'AUD', None, None))
         pos.add(D('337'))
-        self.assertEqual(A('28709 USD'), pos.get_units())
+        self.assertEqual(A('28709 USD'), pos.units)
         self.assertEqual(A('287090 AUD'), pos.get_cost())
 
     def test_negative(self):
-        pos = Position(Lot("USD", A('10 AUD'), None), D('28372'))
+        pos = Position(A("28372 USD"), Cost(D('10'), 'AUD', None, None))
         negpos = pos.get_negative()
-        self.assertEqual(A('-28372 USD'), negpos.get_units())
+        self.assertEqual(A('-28372 USD'), negpos.units)
         self.assertEqual(A('-283720 AUD'), negpos.get_cost())
 
     def test_is_negative_at_cost(self):
-        pos1 = Position(Lot("USD", A('10 AUD'), None), D('1'))
-        pos2 = Position(Lot("USD", A('10 AUD'), None), D('-1'))
+        pos1 = Position(A("1 USD"), Cost('10', 'AUD', None, None))
+        pos2 = Position(A("-1 USD"), Cost('10', 'AUD', None, None))
         self.assertFalse(pos1.is_negative_at_cost())
         self.assertTrue(pos2.is_negative_at_cost())
 
-    def test_lot_currency_pair(self):
+    def test_currency_pair(self):
         self.assertEqual(("USD", None),
-                         lot_currency_pair(Lot("USD", None, None)))
+                         Position(A('100 USD'), None).currency_pair())
         self.assertEqual(("AAPL", "USD"),
-                         lot_currency_pair(Lot("AAPL", A('43.23 USD'), None)))
+                         Position(A('100 AAPL'),
+                                  Cost('43.23', 'USD', None, None)).currency_pair())

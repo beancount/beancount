@@ -130,11 +130,11 @@ def bake_to_directory(webargs, output_dir, quiet=False):
     # Skip the context pages, too slow.
     # Skip the component pages... too many.
     # Skip served documents.
-    processed_urls, skipped_urls = scrape.scrape(webargs.filename,
-                                                 callback,
-                                                 webargs.port,
-                                                 '/(context|view/component|.*/doc)/',
-                                                 quiet)
+    processed_urls, skipped_urls = web.scrape_webapp(webargs.filename,
+                                                     callback,
+                                                     webargs.port,
+                                                     '/(context|view/component|.*/doc)/',
+                                                     quiet)
 
 
 def archive(command_template, directory, archive, quiet=False):

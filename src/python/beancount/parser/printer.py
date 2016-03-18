@@ -10,6 +10,7 @@ import sys
 import textwrap
 
 from beancount.core.number import Decimal
+from beancount.core import position
 from beancount.core import amount
 from beancount.core import data
 from beancount.core import interpolate
@@ -187,7 +188,8 @@ class EntryPrinter:
                 if posting.meta:
                     self.write_metadata(posting.meta, oss, '    ')
         else:
-            fmt = "  {{:{0}}}  {{:{1}}}\n".format(width_account, width_position).format
+            fmt_str = "  {{:{0}}}  {{:{1}}}\n".format(width_account, width_position)
+            fmt = fmt_str.format
             for posting, account, position_str in zip(entry.postings,
                                                       strs_account,
                                                       strs_position):
@@ -214,13 +216,15 @@ class EntryPrinter:
 
         # Render a string with the amount and cost and optional price, if
         # present. Also render a string with the weight.
-        if posting.position:
-            position_str = posting.position.to_string(self.dformat)
+        weight_str = ''
+        if isinstance(posting.units, amount.Amount):
+            position_str = position.to_string(posting, self.dformat)
             # Note: we render weights at maximum precision, for debugging.
-            weight_str = str(interpolate.get_posting_weight(posting))
+            if posting.cost is None or (isinstance(posting.cost, position.Cost) and
+                                        isinstance(posting.cost.number, Decimal)):
+                weight_str = str(interpolate.get_posting_weight(posting))
         else:
             position_str = ''
-            weight_str = ''
 
         if posting.price is not None:
             position_str += ' @ {}'.format(posting.price.to_string(self.dformat_max))
@@ -287,6 +291,21 @@ class EntryPrinter:
 
     def Query(self, entry, oss):
         oss.write('{e.date} query "{e.name}" "{e.query_string}"\n'.format(e=entry))
+        self.write_metadata(entry.meta, oss)
+
+    def Custom(self, entry, oss):
+        custom_values = []
+        for value in entry.values:
+            if isinstance(value, str):
+                value = '"{}"'.format(value)
+            elif isinstance(value, datetime.date):
+                value = value.isoformat()
+            elif isinstance(value, bool):
+                value = 'TRUE' if value else 'FALSE'
+            elif isinstance(value, amount.Amount):
+                value = value.to_string()
+            custom_values.append(value)
+        oss.write('{e.date} custom "{e.type}" {}\n'.format(" ".join(custom_values), e=entry))
         self.write_metadata(entry.meta, oss)
 
 

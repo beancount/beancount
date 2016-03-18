@@ -63,8 +63,8 @@ def options_validate_tolerance(value):
     return D(value)
 
 
-def options_validate_default_tolerance(value):
-    """Validate the default_tolerance option.
+def options_validate_tolerance_map(value):
+    """Validate an option with a map of currency/tolerance pairs in a string.
 
     Args:
       value: A string, the value provided as option.
@@ -117,9 +117,12 @@ OptGroup = collections.namedtuple('OptGroup',
 #  deprecated: A string, a message set if the option is deprecated. This is
 #    used to issue suitable warnings when options aren't honored or about
 #    not to be anymore.
+#  alias: A string or None; if set, this option automatically gets
+#    translated to this alias. This is present to support renaming of
+#    option names.
 OptDesc = collections.namedtuple(
     'OptDesc',
-    'name default_value example_value converter deprecated')
+    'name default_value example_value converter deprecated alias')
 
 UNSET = object()
 
@@ -127,7 +130,8 @@ UNSET = object()
 def Opt(name, default_value,
         example_value=UNSET,
         converter=None,
-        deprecated=False):
+        deprecated=False,
+        alias=None):
     """Alternative constructor for OptDesc, with default values.
 
     Args:
@@ -136,12 +140,13 @@ def Opt(name, default_value,
       example_value: See OptDesc.
       converter: See OptDesc.
       deprecated: See OptDesc.
+      alias: See OptDesc.
     Returns:
       An instance of OptDesc.
     """
     if example_value is UNSET:
         example_value = default_value
-    return OptDesc(name, default_value, example_value, converter, deprecated)
+    return OptDesc(name, default_value, example_value, converter, deprecated, alias)
 
 
 _TYPES = account_types.DEFAULT_ACCOUNT_TYPES
@@ -261,7 +266,7 @@ PUBLIC_OPTION_GROUPS = [
     OptGroup("""
       Mappings of currency to the tolerance used when it cannot be inferred
       automatically. The tolerance at hand is the one used for verifying (1)
-      that transactions balance, (2) that explicit balance checks from 'balance'
+      that transactions balance, (2) explicit balance checks from 'balance'
       directives balance, and (3) in the precision used for padding (from the
       'pad' directive).
 
@@ -269,26 +274,34 @@ PUBLIC_OPTION_GROUPS = [
         <currency>:<tolerance>
       for example, 'USD:0.005'.
 
-      By default, the default tolerance used for currencies without an explicit
-      value is zero (which means infinite precision). As a special case, this
-      default value, that is, the default value used for all currencies without
-      an explicit default can be overridden using the '*' currency, like this:
-      '*:0.5'. Used by itself, this last example sets the default tolerance as
-      '0.5' for all currencies.
+      By default, the tolerance used for currencies without an inferred value is
+      zero (which means infinite precision). As a special case, this value, that
+      is, the fallabck value used for all currencies without an explicit default
+      can be overridden using the '*' currency, like this:  '*:0.5'. Used by
+      itself, this last example sets the fallabck tolerance as '0.5' for all
+      currencies.
+
+      (Note: The new value of this option is "inferred_tolerance_default"; it
+      renames the option which used to be called "default_tolerance". The latter
+      name was confusing.)
 
       For detailed documentation about how precision is handled, see this doc:
       http://furius.ca/beancount/doc/tolerances
-    """, [Opt("default_tolerance", {}, "CHF:0.01",
-              converter=options_validate_default_tolerance)]),
+    """, [Opt("inferred_tolerance_default", {}, "CHF:0.01",
+              converter=options_validate_tolerance_map),
+          Opt("default_tolerance", {}, "CHF:0.01",
+              converter=options_validate_tolerance_map,
+              deprecated="This option has been renamed to 'inferred_tolerance_default'",
+              alias="inferred_tolerance_default")]),
 
     OptGroup("""
       A multiplier for inferred tolerance values.
 
       When the tolerance values aren't specified explicitly via the
-      'default_tolerance' option, the tolerance is inferred from the numbers in
-      the input file. For example, if a transaction has posting with a value
-      like '32.424 CAD', the tolerance for CAD will be inferred to be 0.001
-      times some multiplier. This is the muliplier value.
+      'inferred_tolerance_default' option, the tolerance is inferred from the
+      numbers in the input file. For example, if a transaction has posting with
+      a value like '32.424 CAD', the tolerance for CAD will be inferred to be
+      0.001 times some multiplier. This is the muliplier value.
 
       We normally assume that the institution we're reproducing this posting
       from applies rounding, and so the default value for the multiplier is
@@ -423,14 +436,13 @@ PUBLIC_OPTION_GROUPS = [
     """, [Opt("experiment_explicit_tolerances", False, True)]),
 
     OptGroup("""
-      Enable an EXPERIMENTAL feature that supports a new "name query" directive,
-      whose purpsoe is to define useful queries for the context of the
-      particular given Beancount input file. We can play with this feature for a
-      while to figure out if it is sufficiently powerful and generic to include
-      unconditionally.
-
-      WARNING: This feature may go away at any time.
-    """, [Opt("experiment_query_directive", False, True)]),
+      The booking method to apply, for interpolation and for matching lot
+      specifications to the available lots in an inventory at the moment of the
+      transaction. Values may be 'SIMPLE' for the original method used in
+      Beancount, or 'FULL' for the newer method that does fuzzy matching against
+      the inventory and allows multiple amounts to be interpolated (see
+      http://furius.ca/beancount/doc/proposal-booking for details).
+    """, [Opt("booking_method", "SIMPLE", "SIMPLE")]),
 
     ]
 

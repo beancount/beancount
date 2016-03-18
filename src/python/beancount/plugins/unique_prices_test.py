@@ -1,7 +1,5 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import re
-
 from beancount.parser import cmptest
 from beancount.plugins import implicit_prices
 from beancount.plugins import unique_prices
@@ -19,7 +17,7 @@ class TestValidateAmbiguousPrices(cmptest.TestCase):
         self.assertEqual([], errors)
         _, valid_errors = unique_prices.validate_unique_prices(entries, options_map)
         self.assertEqual([unique_prices.UniquePricesError], list(map(type, valid_errors)))
-        self.assertTrue(re.search('Disagreeing price', valid_errors[0].message))
+        self.assertRegex(valid_errors[0].message, 'Disagreeing price')
 
     @loader.load_doc()
     def test_validate_unique_prices__same(self, entries, errors, options_map):
@@ -48,4 +46,4 @@ class TestValidateAmbiguousPrices(cmptest.TestCase):
         self.assertEqual([], errors)
         _, valid_errors = unique_prices.validate_unique_prices(new_entries, options_map)
         self.assertEqual([unique_prices.UniquePricesError], list(map(type, valid_errors)))
-        self.assertTrue(re.search('Disagreeing price ent', valid_errors[0].message))
+        self.assertRegex(valid_errors[0].message, 'Disagreeing price ent')

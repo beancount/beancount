@@ -428,8 +428,8 @@ def iterate_with_balance(txn_postings):
                     # Compute the change due to this transaction and update the
                     # total balance at the same time.
                     for date_posting in date_postings:
-                        change.add_position(date_posting.position)
-                        running_balance.add_position(date_posting.position)
+                        change.add_position(date_posting)
+                        running_balance.add_position(date_posting)
                 yield date_entry, date_postings, change, running_balance
 
             date_entries.clear()
@@ -454,8 +454,8 @@ def iterate_with_balance(txn_postings):
         change = inventory.Inventory()
         if date_postings:
             for date_posting in date_postings:
-                change.add_position(date_posting.position)
-                running_balance.add_position(date_posting.position)
+                change.add_position(date_posting)
+                running_balance.add_position(date_posting)
         yield date_entry, date_postings, change, running_balance
     date_entries.clear()
 
@@ -609,11 +609,12 @@ PREFIX_LEAF_1 = '`-- '
 PREFIX_LEAF_C = '    '
 
 
-def dump_balances(real_account, at_cost=False, fullnames=False, file=None):
+def dump_balances(real_account, dformat, at_cost=False, fullnames=False, file=None):
     """Dump a realization tree with balances.
 
     Args:
       real_account: An instance of RealAccount.
+      dformat: An instance of DisplayFormatter to format the numbers with.
       at_cost: A boolean, if true, render the values at cost.
       fullnames: A boolean, if true, don't render a tree of accounts and
         render the full account names.
@@ -622,7 +623,6 @@ def dump_balances(real_account, at_cost=False, fullnames=False, file=None):
     Returns:
       A string, the rendered tree, or nothing, if 'file' was provided.
     """
-
     if fullnames:
         # Compute the maximum account name length;
         maxlen = max(len(real_child.account)
@@ -638,8 +638,8 @@ def dump_balances(real_account, at_cost=False, fullnames=False, file=None):
                 rinv = real_account.balance.cost()
             else:
                 rinv = real_account.balance.units()
-            amounts = [position.get_units() for position in rinv.get_positions()]
-            positions = ['{0.number:12,.2f} {0.currency}'.format(amount_)
+            amounts = [position.units for position in rinv.get_positions()]
+            positions = [amount_.to_string(dformat)
                          for amount_ in sorted(amounts, key=amount.amount_sortkey)]
         else:
             positions = ['']
@@ -671,7 +671,7 @@ def compute_postings_balance(txn_postings):
     final_balance = inventory.Inventory()
     for txn_posting in txn_postings:
         if isinstance(txn_posting, Posting):
-            final_balance.add_position(txn_posting.position)
+            final_balance.add_position(txn_posting)
         elif isinstance(txn_posting, TxnPosting):
-            final_balance.add_position(txn_posting.posting.position)
+            final_balance.add_position(txn_posting.posting)
     return final_balance

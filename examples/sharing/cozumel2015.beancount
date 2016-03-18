@@ -10,7 +10,7 @@ plugin "beancount.plugins.auto_accounts"
 option "operating_currency" "USD"
 option "operating_currency" "MXN"
 
-option "default_tolerance" "MXN:0.5"
+option "inferred_tolerance_default" "MXN:0.5"
 
 
 ;; External accounts for Martin.

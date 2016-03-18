@@ -33,6 +33,7 @@ from beancount.parser import options
 from beancount.parser import printer
 from beancount import loader
 from beancount.web import views
+from beancount.web import scrape
 from beancount.reports import html_formatter
 from beancount.reports import balance_reports
 from beancount.reports import journal_html
@@ -976,7 +977,6 @@ def auto_reload_input_file(callback):
     last page was loaded."""
     def wrapper(*posargs, **kwargs):
         filename = app.args.filename
-        mtime = path.getmtime(filename)
 
         if loader.needs_refresh(app.options):
             logging.info('Reloading...')
@@ -1161,6 +1161,52 @@ def main():
     args = argparser.parse_args()
 
     run_app(args)
+
+
+def scrape_webapp(filename, callback, port, ignore_regexp, quiet=True, extra_args=None):
+    """Run a web server on a Beancount file and scrape it.
+
+    This is the main entry point of this module.
+
+    Args:
+      filename: A string, the name of the file to parse.
+      callback: A callback function to invoke on each page to validate it.
+        The function is called with the response and the url as arguments.
+        This function should trigger an error on failure (via an exception).
+      port: An integer, a free port to use for serving the pages.
+      ignore_regexp: A regular expression string, the urls to ignore.
+      quiet: True if we shouldn't log the web server pages.
+      extra_args: Extra arguments to bean-web that we want to start the
+        server with.
+    Returns:
+      A set of all the processed URLs and a set of all the skipped URLs.
+    """
+    url_format = 'http://localhost:{}{{}}'.format(port)
+
+    # Create a set of valid arguments to run the app.
+    argparser = argparse.ArgumentParser()
+    group = add_web_arguments(argparser)
+    group.set_defaults(filename=filename,
+                       port=port,
+                       quiet=quiet)
+
+    all_args = [filename]
+    if extra_args:
+        all_args.extend(extra_args)
+    args = argparser.parse_args(args=all_args)
+
+    thread = thread_server_start(args)
+
+    # Skips:
+    # - Docs cannot be read for external files.
+    #
+    # - Components views... well there are just too many, makes the tests
+    #   impossibly slow. Just keep the A's so some are covered.
+    url_lists = scrape.scrape_urls(url_format, callback, ignore_regexp)
+
+    thread_server_shutdown(thread)
+
+    return url_lists
 
 
 def thread_server_start(web_args, **kwargs):

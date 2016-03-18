@@ -20,7 +20,7 @@ from beancount.core import getters
 from beancount.core import amount
 from beancount.ops import prices
 from beancount.ops import holdings
-from beancount.reports import report
+from beancount.reports import base
 from beancount.reports import holdings_reports
 
 
@@ -296,7 +296,7 @@ def get_symbol(sources, prefer='google'):
     return symbol_map.get(prefer, symbol_items[0][1])
 
 
-class ExportPortfolioReport(report.TableReport):
+class ExportPortfolioReport(base.TableReport):
     """Holdings lists that can be exported to external portfolio management software."""
 
     names = ['export_holdings', 'export_portfolio', 'pfexport', 'exportpf']
@@ -452,7 +452,8 @@ class ExportPortfolioReport(report.TableReport):
         sys.stderr.write('\n')
 
     def render_csv(self, entries, unused_errors, options_map, file):
-        exported, converted, holdings_ignored = export_holdings(entries, options_map, False)
+        exported, converted, holdings_ignored = export_holdings(
+            entries, options_map, False, self.args.aggregate_by_commodity)
         writer = csv.writer(file)
         writer.writerow(ExportEntry._fields[:-1])
         for index, export in enumerate(itertools.chain(exported, converted)):

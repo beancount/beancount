@@ -16,8 +16,9 @@ class TestTutorial(test_utils.TestCase):
         example_beancount = path.join(rootdir, 'examples', 'example.beancount')
         temp_output_dir = tempfile.mkdtemp()
         try:
-            result = test_utils.run_with_args(tutorial.main,
-                                              [example_beancount, temp_output_dir])
+            with test_utils.capture('stdout', 'stderr'):
+                result = test_utils.run_with_args(tutorial.main,
+                                                  [example_beancount, temp_output_dir])
             self.assertEqual(0, result)
             output_files = os.listdir(temp_output_dir)
             self.assertLess(20, len(output_files))

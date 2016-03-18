@@ -1,7 +1,6 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import datetime
-import re
 import logging
 import textwrap
 import sys
@@ -759,8 +758,8 @@ class TestReturnsExampleScript(test_utils.TestCase):
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         output, errors = pipe.communicate()
         self.assertEqual(0, pipe.returncode)
-        self.assertTrue(re.search(b'Total returns', output))
-        self.assertTrue(re.search(b'Averaged annual returns', output))
+        self.assertRegex(output, b'Total returns')
+        self.assertRegex(output, b'Averaged annual returns')
 
     def test_returns_example_script(self):
         # We want to ensure the example script doesn't break unexpectedly, so
@@ -775,7 +774,7 @@ class TestReturnsExampleScript(test_utils.TestCase):
         output, errors = pipe.communicate()
         self.assertEqual(0, pipe.returncode)
         self.assertFalse(errors)
-        self.assertTrue(re.search(b'Returns for', output))
+        self.assertRegex(output, b'Returns for')
 
 
 class TestReturnsWithUnrealized(test_utils.TestCase):

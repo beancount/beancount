@@ -1,5 +1,102 @@
 -*- mode: org -*-
 beancount: TODO
+* Ingest (LedgerHub)
+** Merging into Beancount
+
+  - Finish writing the new doc, it's almost there.
+
+  - Create mixins for default account name and regexp matching on contents and
+    replace aspects of compat with those. You don't need backwards
+    compatibility, just a regexp matcher.
+
+    * Complete unit tests on beancount.ingest.compat.
+
+** CSV Importer
+
+  - Create a good, default, configurable importer for CSV files.
+
+  - Write a CSV file sniffer that automatically infer which columns should match
+    which fields. Try to make this smart, e.g., if some column "mostly"
+    increases, it would be the balance column. This should be for fun (I don't
+    need it).
+
+
+** Future Features
+
+   - In identify, mark as ambiguous if two handlers match.
+
+   - Run directories check on each run of file? Disable with an option.
+
+  - Make sure that when an exptest fails it includes the filename of the test
+    somewhere in there; it's annoying when it's not present there.
+
+  - Printing transactions should use the maximum precision between display
+    context and natural. Create a new DisplayContext style, on top of "COMMON"
+    and "MAXIMUM", call it something else, perhaps "COMPLETE". Should be max of
+    context and natural.
+
+  - Implement on-disk caching for conversions. This is important--it's quite
+    frustrating to wait a few times too many. Do this now.
+
+  - The code that auto-files statements needs to detect and de-dup files which
+    have the same contents, because it is likely some files will be downloaded
+    twice, it happens a lot.
+
+  - When payee == narration, remove one of the two. This should be a generic and
+    simple enough check to apply. This is a common occurrence.
+
+  - There should be an automatic check that the accounts output by the
+    extraction are all valid Beancount/Ledger account names.
+
+  - Duplicate entries should cover all directive types (for balances).
+
+  - Validation of directories (aka bean-doctor directories) should be
+    automatically invoked by bean-file, and that would make sense.
+
+  - Implement some hook to provide your own auto-categorization.
+  - Provide some module that will attempt to categorize automatically, that can
+    be inserted into this auto-categorization hook.
+
+  - It would be super awesome if you could automate away the insertion of new
+    transactions in the input file, following the previous transactions...
+    we can find a heuristic to do this. That would be _really_ cool.
+
+  - We will want to somehow "normalize" and merge payee names, because some of
+    that differ very little are obvious for the same business... this would be
+    useful. What kinds of tools will we need for that?
+
+    Clean Import: The new importers should be able to strip the non-payee parts
+    of the payee name, e.g. NEW YO, SAN FR, etc. Maybe we could let the user
+    provide a filter function to sanitize the names of the payees, or maybe more
+    generally just a filter on the entries before printing them out. This way
+    you could provide your very own custom filter function that cleans up
+    anything you don't like.
+
+  - Importer should warn when not all the sections within have importers for it
+    (R. OFX has many sections and one of the sections I needed - credit line -
+    was missing in my importer config, so I discovered this). If we do this,
+    this means that we may want to provide a "no-op" importer in order to
+    silence that warning in case that's what's desired.
+
+  - Write a generic import routine that will try to heuristically match
+    partially completed transactions from an existing Ledger. Use some NLP or
+    somesuch matching algorithm.
+
+    Given some incomplete transactions, complete them heuristically based on
+    previous contents of the ledger. This should make import a lot easier. This
+    should be generic and work across all importers, a single function call.
+
+
+* Misc
+
+  - Need a unit test to reproduce the fix in this commit.
+
+  - Update install documentation with installation instructions using pip3.
+  - (Look for examples using C code that require headers, they must have a
+    better solution than mine.)
+
+
+
 * Event
 
   - Should we validate that the query is legit before we even run it? I think
@@ -8,40 +105,24 @@ beancount: TODO
 
 * Booking
 
-  ,--------------------------------------------------------------------------------
-    Quandry: booking has to be moved from a validation-only stage, because the
-    looser interpolation will allow algorithms to select the lots, which in turn
-    decides which cost basis is used to balance the transaction. This is
-    unfortunate, because it was nice to separate this stage entirely.
+  - Port beangrind & ledgerhub to avoid using lots as well.
 
-    At the same time, post-parsing transaction generation (e.g., by plugins) is
-    allowed... which means that we need to be able to book _after_ parsing,
-    after running the plugins.
+  - Complete testing incomplete output with CostSpec:
 
-    This implies that we need to support some sort of incomplete, intermediate
-    state for postings.
+    - This causes a problem because a tag is parsed in '#9.95':
+      10 AAPL {45.23#9.95 USD}
 
-    Balancing incomplete postings now also has to occur in a second stage, not
-    at parsing time (balance_incomplete_postings()), at least _some_ of the
-    time, because the interpolation _may_ depend on the automatic lot
-    selection.
+    - Make sure parsing {3.00 # USD} does not produce the smae CostSpec as {3.00 USD}.
 
-    This creates some interesting and difficult changes.
-  `--------------------------------------------------------------------------------
+    - Remove OLD comments from parser.py and update the description to use the
+      xposition class.
 
-
-  - Parsing will now always return incomplete entries, and all the tests have to
-    be adapted to reflect this new fact.
-
-    * Remove booking hacks everywhere; only the loader should perform booking.
-
-    * Remove the beancount.ops.documents plugin, or perhaps make the loader
-      operate in a raw mode, e.g. not running any plugins.
+  - Remove the beancount.ops.documents plugin, or perhaps make the loader
+    operate in a raw mode, e.g. not running any plugins.
 
     egrep --include='*.py' -srn 'parse_(string|file)' /home/blais/p/beancount/src/python/beancount
 
-
-  - Write test for beancount.parser.booking.
+  - Write test for beancount.parser.booking_full.
 
   - Merge beancount.core.interpolate into booking.
   - Merge beancount.ops.validation.validate_inventory_booking() into booking.
@@ -55,9 +136,137 @@ beancount: TODO
   - (Annoyance) All functions that return an (entries, errors, options_map)
     triple really should return (entries, options_map, errors), in this order.
 
+  - Improve the ability to detect a user-specific tolerance in
+    is_tolerance_user_specified(). This heuristic is not great, find some better
+    way.
+
   - Create a b.c.data.transactions_only() function to this common type of
     filtering and grep/replace everywhere. This is just too common not to create
     a utility.
+
+  - Unref the constants in finalizer for module, here: {48414425cf78}.
+
+  - Write a test to ensure that an auto-posting with no effect results in no
+    new posting getting inserted.
+
+  - Replace Holding by the new, flattened Position, it's a _lot_ more like it.
+    Makes a lot of sense now. Move the price_date to .meta, I don't think it's
+    actually used.
+
+
+** Notes from Booking Full
+
+  - Testing:
+
+    * FIXME: Come up with cases where we're able to infer an AUGMENTING leg
+
+    * FIXME: Come up with a case that would be ambiguous if not for the fact
+      that one of the currencies already balances.
+
+
+    # You should be able to support inference of prices as per the sellgains plugin.
+    # Or should we instead have the sellgains plugin automatically insert the prices itself?
+    # (I like that better).
+
+    # FIXME: When the other amounts balance, this should be doable.
+    # In this example, the first three postings in CAD balance each other.
+    # the 4th posting is USD and not completely balanced, and the last is
+    # unknown. We should look at the two groups of CAD and USD postings,
+    # realize that the first group is already balanced and that the second
+    # isn't, and automatically select the USD group.
+    """
+      2010-05-28 *
+        Assets:Account1     100.00 CAD
+        Assets:Account2     -80.00 CAD
+        Assets:Account3     -20.00 CAD
+        Assets:Account4      20.00 USD
+        Assets:Account4    -100.00 CAD @
+    """
+
+
+    # FIXME: If there is only a single other group, we should be able infer the
+    # price is for CAD here. Currently this raises an error.
+    """
+      2010-05-28 *
+        Assets:Account1     100.00 USD @ 1.2
+        Assets:Account2     120.00 CAD
+    """
+
+
+  - TODO: Conversion from CostSpec to Cost
+
+  - Make interpolation work off of Cost instances, not just CostSpec.
+
+
+  - Notes:
+
+    varieties:
+
+      1. No cost, no price, with currency, e.g.
+           Assets:Something       213.45 USD
+         or
+           Assets:Something              USD
+         This is obvious, it buckets into the units currency, i.e., USD.
+
+      2. No cost, no price, no currency, e.g.
+           Assets:Something
+         This is an auto-posting. One of these should be replicated for every
+         currency present in the transaction.
+
+
+    Postings with a price define their currency:
+
+      3. No cost with price:
+           Assets:Something       1000 JPY @ 120.0000 USD
+         or
+           Assets:Something       1000 JPY @          USD
+         We use the price currency, e.g. USD
+
+      4. No cost and no price currency:
+           Assets:Something       1000 JPY @
+         In this case, we must consult the other postings. We look
+
+
+    Then, we have postings with costs, which also come in two varieties:
+
+      5. With an explicit cost currency, e.g.
+           Assets:Something       100 HOOL {12.23 USD}
+         Or with missing amounts, e.g.,
+           Assets:Something       100 HOOL {USD}
+         This clearly goes into the USD bucket.
+
+      6. With no explicit cost currency, e.g.,
+           Assets:Something       100 HOOL {2014-09-30}
+           Assets:Something       100 HOOL {"1b24b1151261"}
+           Assets:Something       100 HOOL {}
+         These are uncategorized.
+
+         In order to resolve these postings to a specific currency bucket, we
+         implement two heuristics:
+
+         a) If all the other legs are of a single currency and there are no
+            other uncategorized legs, this posting must also book against those;
+            use that currency.
+
+         b) Otherwise, look at the accumulated ante-inventory; if there is a
+            single currency for it, the posting must be in that currency.
+
+         Finally, if we aren't able to resolve the currency of that posting
+         using (a) or (b), fail interpolation/booking and skip the transaction.
+
+    With that algorithm, we should be able to automatically resolve stock splits
+    that look like this, as long as the ante-inventory contains only lots in
+    USD:
+
+      2015-09-30 * "Split"
+        Assets:Investments:AAPL       -40 AAPL {}
+        Assets:Investments:AAPL        80 AAPL {}
+
+    Finally, note that postings with both a cost and a price must have a
+    currency that matches, as constrained by the parser. If only the price or
+    the cost is specified, we used that currency. Both a price and a cost may
+    not be missing--that would leave two DOF to fill in.
+
 
 
 * Requirements for Shipping 2.0
@@ -146,6 +355,12 @@ beancount: TODO
 
 
 ** Establish Display Precision
+
+  - Implement the maximum number of digits by accumulating the largest possible
+    sum of all the absolute values seen in the file. This should be a good basis
+    for compute the maximum width possibly required to render with Align.RIGHT.
+    There is currently a bug whereby that's not being computed correctly, the
+    current algorithm is insufficient for accumulated balances.
 
   - Create a page in the web view that lists the various precision - by
     example - inferred in the global DisplayContext.
@@ -721,6 +936,34 @@ http://furius.ca/beancount/doc/proposal-query
             ALL(...)
 
     I'm not sure where OPEN CLOSE and CLEAR all fit though.
+
+  - The table provider should support two kinds of fields: single and repeated.
+    Repeated fields include Position, but also Tags. By default, rendering
+    should put the entire contents in one cell/line, all only when using
+    BROADCAST or FLATTEN should multiple lines be created. Maybe the Inventory
+    datatype could be removed and instead be provided as a repeated field of
+    Position instances.
+
+  - The ad-hoc alignment of numbers present in the query_render.DecimalRenderer
+    code should be removed, and all rendering should occur via DisplayContext.
+
+  - Numberification should probably occur with a flag of some sort, or perhaps a
+    shell variable. Not sure.
+
+  - A better representation of a query should be produced, perhaps in a
+    protobuf, with cross-reference capability and the ability to create a
+    processing tree for each row.
+
+  - Dot syntax should definitely be supported. This is how we'll get rid of the
+    FROM clause.
+
+  - Keep in mind that the booking branch might break a lot of user queries.
+
+  - "SELECT *" should really render _all_ the possible fields, not just a
+    sensible subset. This has been annoying me a lot.
+
+  - The compiler should output Python code to evaluate and process the results,
+    instead of interpreting the tree of operations.
 
 
 * Standalone Tools
@@ -1334,6 +1577,39 @@ http://furius.ca/beancount/doc/proposal-inter
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - Idea for one of those constraint plugins: Create a plugin whereby you
+    declare some currencies and assert that any units in them are always held at
+    cost.
+
+
+  - Add support for triple-quoted strings, which may alleviate problems we're
+    seen with syntax highlighting (idea from aumayr@).
+
+
+  - Create a plugin that filters out postings with a particular per-posting
+    flag, and that checks that they are balanced by themselves.
+
+
+  (prices cleanup)
+  - Make the code finding lists of commodities for holdings and price reports
+    use the same code as beancount.prices.find_prices. Also, this should  really
+    just be renamed beancount.prices.find_commodities and perhaps be moved up to
+    beancount.ops.
+
+      src/python/beancount/ops/holdings.py
+      src/python/beancount/reports/price_reports.py
+
+  - Remove the final traces of the "quote" metadata field from holdings:
+
+      /home/blais/p/beancount/src/python/beancount/ops/holdings.py:153:      Commodity directive from its 'quote' metadata field.
+      /home/blais/p/beancount/src/python/beancount/ops/holdings.py:190:            quote_currency = commodity_entry.meta.get('quote', None)
+
+    Nothing else uses this anymore, this needs to go too.
+
+
+
+
+
   - Idea: Export contents to Spreadsheet equivalent, as a single list of
     postings, joining transactions by an id column. That should quiet down those
     who think you can do this with a Spreadsheet to try it out for themselves.
@@ -1500,6 +1776,7 @@ http://furius.ca/beancount/doc/proposal-inter
     is so incredibly common, provide a simple helper in b.c.data to do this.
     filter_transactions() for example, and change all the code everywhere to use
     it.
+    (Note: This has begun, I created the function.)
 
 
 

@@ -24,7 +24,6 @@ import sys
 import textwrap
 
 from dateutil import rrule
-from dateutil.parser import parse as parse_datetime
 
 from beancount.core.number import D
 from beancount.core.number import ZERO
@@ -43,6 +42,7 @@ from beancount.ops import prices
 from beancount.scripts import format
 from beancount.core import getters
 from beancount.utils import misc_utils
+from beancount.utils import date_utils
 from beancount import loader
 
 
@@ -310,7 +310,7 @@ def postings_for(entries, accounts, before=False):
         if before:
             yield txn_posting, balances
         posting = txn_posting.posting
-        balances[posting.account].add_position(posting.position)
+        balances[posting.account].add_position(posting)
         if not before:
             yield txn_posting, balances
 
@@ -335,7 +335,7 @@ def iter_dates_with_balance(date_begin, date_end, entries, accounts):
     for date in date_iter(date_begin, date_end):
         while txn_posting and txn_posting.txn.date == date:
             posting = txn_posting.posting
-            balances[posting.account].add_position(posting.position)
+            balances[posting.account].add_position(posting)
             txn_posting = next(merged_txn_postings, None)
         yield date, balances
 
@@ -608,7 +608,7 @@ def generate_retirement_employer_match(entries, account_invest, account_income):
     """, date=entries[0].date, account_income=account_income)
 
     for txn_posting, balances in postings_for(entries, [account_invest]):
-        amount = txn_posting.posting.position.number * match_frac
+        amount = txn_posting.posting.units.number * match_frac
         amount_neg = -amount
         date = txn_posting.txn.date + ONE_DAY
         new_entries.extend(parse("""
@@ -638,11 +638,20 @@ def generate_retirement_investments(entries, account, commodities_items, price_m
     account_cash = join(account, 'Cash')
     date_origin = entries[0].date
     open_entries.extend(parse("""
+
+      {date_origin} open {account} CCY
+        institution: "Retirement_Institution"
+        address: "Retirement_Address"
+        phone: "Retirement_Phone"
+
       {date_origin} open {account_cash} CCY
+        number: "882882"
+
     """, **locals()))
     for currency, _ in commodities_items:
         open_entries.extend(parse("""
           {date_origin} open {account}:{currency} {currency}
+            number: "882882"
         """, **locals()))
 
     new_entries = []
@@ -693,7 +702,14 @@ def generate_banking(date_begin, date_end, amount_initial):
     amount_initial_neg = -amount_initial
     return parse("""
 
+      {date_begin} open Assets:CC:Bank1
+        institution: "Bank1_Institution"
+        address: "Bank1_Address"
+        phone: "Bank1_Phone"
+
       {date_begin} open Assets:CC:Bank1:Checking    CCY
+        account: "00234-48574897"
+
       ;; {date_begin} open Assets:CC:Bank1:Savings    CCY
 
       {date_begin} * "Opening Balance for checking account"
@@ -822,9 +838,9 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
                     new_entries.append(buy)
 
                     account_stock = ':'.join([account, stock])
-                    balances[account_cash].add_position(buy.postings[0].position)
-                    balances[account_stock].add_position(buy.postings[1].position)
-                    stocks_inventory.add_position(buy.postings[1].position)
+                    balances[account_cash].add_position(buy.postings[0])
+                    balances[account_stock].add_position(buy.postings[1])
+                    stocks_inventory.add_position(buy.postings[1])
 
                 # Don't sell on days you buy.
                 continue
@@ -834,11 +850,11 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
             # Choose the lot with the highest gain or highest loss.
             gains = []
             for position in stocks_inventory.get_positions():
-                base_quote = (position.lot.currency, position.lot.cost.currency)
+                base_quote = (position.units.currency, position.cost.currency)
                 _, price = prices.get_price(price_map, base_quote, date)
-                if price == position.lot.cost.number:
+                if price == position.cost.number:
                     continue # Skip lots without movement.
-                market_value = position.number * price
+                market_value = position.units.number * price
                 book_value = position.get_cost().number
                 gain = market_value - book_value
                 gains.append((gain, market_value, price, position))
@@ -852,7 +868,7 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
             #logging.info('Selling {} for {}'.format(sell_position, market_value))
 
             sell_position = -sell_position
-            stock = sell_position.lot.currency
+            stock = sell_position.units.currency
             amount_cash = market_value - commission
             amount_gain = -gain
             sell = parse("""
@@ -864,8 +880,8 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
             """, **locals())[0]
             new_entries.append(sell)
 
-            balances[account_cash].add_position(sell.postings[1].position)
-            stocks_inventory.add_position(sell.postings[0].position)
+            balances[account_cash].add_position(sell.postings[1])
+            stocks_inventory.add_position(sell.postings[0])
             continue
 
     return open_entries + new_entries
@@ -1103,7 +1119,7 @@ def check_non_negative(entries, account, currency):
         balance = balances[account]
         date = txn_posting.txn.date
         if date != previous_date:
-            assert all(pos.number >= ZERO for pos in balance.get_positions()), (
+            assert all(pos.units.number >= ZERO for pos in balance.get_positions()), (
                 "Negative balance: {} at: {}".format(balance, txn_posting.txn.date))
         previous_date = date
 
@@ -1442,10 +1458,16 @@ def contextualize_file(contents, employer):
     replacements = {
         'CC': 'US',
         'Bank1': 'BofA',
+        'Bank1_Institution': 'Bank of America',
+        'Bank1_Address': '123 America Street, LargeTown, USA',
+        'Bank1_Phone': '+1.012.345.6789',
         'CreditCard1': 'Chase:Slate',
         'CreditCard2': 'Amex:BlueCash',
         'Employer1': employer,
         'Retirement': 'Vanguard',
+        'Retirement_Institution': 'Vanguard Group',
+        'Retirement_Address': "P.O. Box 1110, Valley Forge, PA 19482-1110",
+        'Retirement_Phone': "+1.800.523.1188",
         'Investment': 'ETrade',
 
         # Commodities
@@ -1694,21 +1716,23 @@ def write_example_file(date_birth, date_begin, date_end, reformat, file):
 
 
 def main():
-    parse_date = lambda s: parse_datetime(s).date()
     today = datetime.date.today()
 
     argparser = argparse.ArgumentParser(description=__doc__.strip())
 
     default_years = 2
-    argparser.add_argument('--date-begin', '--begin-date', action='store', type=parse_date,
+    argparser.add_argument('--date-begin', '--begin-date',
+                           action='store', type=date_utils.parse_date_liberally,
                            default=datetime.date(today.year - default_years, 1, 1),
                            help="Beginning date")
 
-    argparser.add_argument('--date-end', '--end-date', action='store', type=parse_date,
+    argparser.add_argument('--date-end', '--end-date',
+                           action='store', type=date_utils.parse_date_liberally,
                            default=today,
                            help="End date.")
 
-    argparser.add_argument('--date-birth', '--birth-date', action='store', type=parse_date,
+    argparser.add_argument('--date-birth', '--birth-date',
+                           action='store', type=date_utils.parse_date_liberally,
                            default=datetime.date(1980, 5, 12),
                            help="Date of birth of our fictional character.")
 

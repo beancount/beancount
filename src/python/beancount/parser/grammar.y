@@ -39,11 +39,7 @@ int yy_firstline;
 /* Build a grammar error from the exception context. */
 void build_grammar_error_from_exception(void)
 {
-    /* TRACE_ERROR("Grammar Builder Exception"); */
-
-#if 0
-    PyErr_Print();
-#endif
+    TRACE_ERROR("Grammar Builder Exception");
 
     /* Get the exception context. */
     PyObject* ptype;
@@ -156,6 +152,7 @@ const char* getTokenName(int token);
 %token <string> HASH       /* # */
 %token <string> ASTERISK   /* * */
 %token <string> SLASH      /* / */
+%token <string> COLON      /* : */
 %token <string> PLUS       /* + */
 %token <string> MINUS      /* - */
 %token <string> LPAREN     /* ( */
@@ -172,8 +169,11 @@ const char* getTokenName(int token);
 %token NOTE                /* 'note' keyword */
 %token DOCUMENT            /* 'document' keyword */
 %token QUERY               /* 'query' keyword */
+%token CUSTOM              /* 'custom' keyword */
 %token PUSHTAG             /* 'pushtag' keyword */
 %token POPTAG              /* 'poptag' keyword */
+%token PUSHMETA            /* 'pushmeta' keyword */
+%token POPMETA             /* 'popmeta' keyword */
 %token OPTION              /* 'option' keyword */
 %token INCLUDE             /* 'include' keyword */
 %token PLUGIN              /* 'plugin' keyword */
@@ -193,6 +193,7 @@ const char* getTokenName(int token);
 %type <pyobj> transaction
 %type <pyobj> posting
 %type <pyobj> key_value
+%type <pyobj> key_value_line
 %type <pyobj> key_value_list
 %type <pyobj> key_value_value
 %type <pyobj> posting_or_kv_list
@@ -207,12 +208,12 @@ const char* getTokenName(int token);
 %type <pyobj> incomplete_amount
 %type <pyobj> compound_amount
 %type <pyobj> maybe_number
+%type <pyobj> maybe_currency
 %type <pyobj> price_annotation
-%type <pyobj> position
-%type <pyobj> lot_comp
-%type <pyobj> lot_comp_list
-%type <pyobj> lot_spec
-%type <pyobj> lot_spec_total_legacy
+%type <pyobj> cost_comp
+%type <pyobj> cost_comp_list
+%type <pyobj> cost_spec
+%type <pyobj> cost_spec_total_legacy
 %type <pyobj> price
 %type <pyobj> event
 %type <pyobj> query
@@ -227,9 +228,14 @@ const char* getTokenName(int token);
 %type <pyobj> option
 %type <pyobj> pushtag
 %type <pyobj> poptag
+%type <pyobj> pushmeta
+%type <pyobj> popmeta
 %type <pyobj> include
 %type <pyobj> plugin
 %type <pyobj> file
+%type <pyobj> custom
+%type <pyobj> custom_value
+%type <pyobj> custom_value_list
 
 /* Operator precedence.
  * This is pulled straight out of the textbook example:
@@ -243,7 +249,7 @@ const char* getTokenName(int token);
 %start file
 
 /* We have some number of expected shift/reduce conflicts at 'eol'. */
-%expect 13
+%expect 20
 
 
 /*--------------------------------------------------------------------------------*/
@@ -377,38 +383,38 @@ price_annotation : incomplete_amount
                  {
                      $$ = $1;
                  }
-                 | empty
-                 {
-                     BUILDY(,
-                            $$, "amount", "OO", Py_None, Py_None);
-                 }
 
-posting : INDENT optflag ACCOUNT position eol
+posting : INDENT optflag ACCOUNT incomplete_amount cost_spec eol
         {
-            BUILDY(DECREF2($3, $4),
-                   $$, "posting", "siOOOOb", FILE_LINE_ARGS, $3, $4, Py_None, Py_False, $2);
+            BUILDY(DECREF3($3, $4, $5),
+                   $$, "posting", "siOOOOOb", FILE_LINE_ARGS, $3, $4, $5, Py_None, Py_False, $2);
         }
-        | INDENT optflag ACCOUNT position AT price_annotation eol
+        | INDENT optflag ACCOUNT incomplete_amount cost_spec AT price_annotation eol
         {
-            BUILDY(DECREF3($3, $4, $6),
-                   $$, "posting", "siOOOOb", FILE_LINE_ARGS, $3, $4, $6, Py_False, $2);
+            BUILDY(DECREF4($3, $4, $5, $7),
+                   $$, "posting", "siOOOOOb", FILE_LINE_ARGS, $3, $4, $5, $7, Py_False, $2);
         }
-        | INDENT optflag ACCOUNT position ATAT price_annotation eol
+        | INDENT optflag ACCOUNT incomplete_amount cost_spec ATAT price_annotation eol
         {
-            BUILDY(DECREF3($3, $4, $6),
-                   $$, "posting", "siOOOOb", FILE_LINE_ARGS, $3, $4, $6, Py_True, $2);
+            BUILDY(DECREF4($3, $4, $5, $7),
+                   $$, "posting", "siOOOOOb", FILE_LINE_ARGS, $3, $4, $5, $7, Py_True, $2);
         }
         | INDENT optflag ACCOUNT eol
         {
             BUILDY(DECREF1($3),
-                   $$, "posting", "siOOOOb", FILE_LINE_ARGS, $3, Py_None, Py_None, Py_False, $2);
+                   $$, "posting", "siOOOOOb", FILE_LINE_ARGS, $3, missing_obj, Py_None, Py_None, Py_False, $2);
         }
 
-key_value : INDENT KEY key_value_value eol
+key_value : KEY COLON key_value_value
           {
               BUILDY(DECREF2($2, $3),
                      $$, "key_value", "OO", $2, $3);
           }
+
+key_value_line : INDENT key_value eol
+               {
+                   $$ = $2;
+               }
 
 key_value_value : STRING
                 | ACCOUNT
@@ -432,7 +438,7 @@ posting_or_kv_list : empty
                        Py_INCREF(Py_None);
                        $$ = Py_None;
                    }
-                   | posting_or_kv_list key_value
+                   | posting_or_kv_list key_value_line
                    {
                        BUILDY(DECREF2($1, $2),
                               $$, "handle_list", "OO", $1, $2);
@@ -448,7 +454,7 @@ key_value_list : empty
                    Py_INCREF(Py_None);
                    $$ = Py_None;
                }
-               | key_value_list key_value
+               | key_value_list key_value_line
                {
                    BUILDY(DECREF2($1, $2),
                           $$, "handle_list", "OO", $1, $2);
@@ -481,6 +487,21 @@ poptag : POPTAG TAG eol
            BUILDY(DECREF1($2),
                   $$, "poptag", "O", $2);
        }
+
+pushmeta : PUSHMETA key_value eol
+         {
+             /* Note: key_value is a tuple, Py_BuildValue() won't wrap it up
+              * within a tuple, so expand in the method (it receives two
+              * objects). See https://docs.python.org/3.4/c-api/arg.html. */
+             BUILDY(DECREF1($2),
+                    $$, "pushmeta", "O", $2);
+         }
+
+popmeta : POPMETA KEY COLON eol
+        {
+            BUILDY(DECREF1($2),
+                   $$, "popmeta", "O", $2);
+        }
 
 open : DATE OPEN ACCOUNT currency_list opt_booking eol key_value_list
      {
@@ -546,15 +567,30 @@ amount_tolerance : number_expr CURRENCY
 
 maybe_number : empty
              {
-                 Py_INCREF(Py_None);
-                 $$ = Py_None;
+                 Py_INCREF(missing_obj);
+                 $$ = missing_obj;
              }
              | number_expr
              {
                  $$ = $1;
              }
 
+maybe_currency : empty
+             {
+                 Py_INCREF(missing_obj);
+                 $$ = missing_obj;
+             }
+             | CURRENCY
+             {
+                 $$ = $1;
+             }
+
 compound_amount : maybe_number CURRENCY
+                {
+                    BUILDY(DECREF2($1, $2),
+                           $$, "compound_amount", "OOO", $1, Py_None, $2);
+                }
+                | number_expr maybe_currency
                 {
                     BUILDY(DECREF2($1, $2),
                            $$, "compound_amount", "OOO", $1, Py_None, $2);
@@ -566,93 +602,83 @@ compound_amount : maybe_number CURRENCY
                     ;
                 }
 
-incomplete_amount : maybe_number CURRENCY
+incomplete_amount : maybe_number maybe_currency
                   {
                       BUILDY(DECREF2($1, $2),
                              $$, "amount", "OO", $1, $2);
                  }
 
-position : incomplete_amount
-         {
-             BUILDY(DECREF1($1),
-                    $$, "position", "siOO", FILE_LINE_ARGS, $1, Py_None);
-         }
-         | incomplete_amount lot_spec
-         {
-             BUILDY(DECREF2($1, $2),
-                    $$, "position", "siOO", FILE_LINE_ARGS, $1, $2);
-         }
-
-lot_spec : LCURL lot_comp_list RCURL
-         {
-             BUILDY(DECREF1($2),
-                    $$, "lot_spec", "O", $2);
-         }
-         | lot_spec_total_legacy
-         {
-             $$ = $1;
-         }
+cost_spec : LCURL cost_comp_list RCURL
+          {
+              BUILDY(DECREF1($2),
+                     $$, "cost_spec", "O", $2);
+          }
+          | cost_spec_total_legacy
+          {
+              $$ = $1;
+          }
+          | empty
+          {
+              Py_INCREF(Py_None);
+              $$ = Py_None;
+          }
 
 /* This is deprecated, but kept for legacy until the booking branch is complete. */
-lot_spec_total_legacy : LCURLCURL amount RCURLCURL
-                      {
-                          BUILDY(DECREF1($2),
-                                 $$, "lot_spec_total_legacy", "OO", $2, Py_None);
-                      }
-                      | LCURLCURL amount SLASH DATE RCURLCURL
-                      {
-                          BUILDY(DECREF2($2, $4),
-                                 $$, "lot_spec_total_legacy", "OO", $2, $4);
-                      }
+cost_spec_total_legacy : LCURLCURL amount RCURLCURL
+                       {
+                           BUILDY(DECREF1($2),
+                                  $$, "cost_spec_total_legacy", "OO", $2, Py_None);
+                       }
+                       | LCURLCURL amount SLASH DATE RCURLCURL
+                       {
+                           BUILDY(DECREF2($2, $4),
+                                  $$, "cost_spec_total_legacy", "OO", $2, $4);
+                       }
 
-lot_comp_list : empty
-              {
-                  Py_INCREF(Py_None);
-                  $$ = Py_None;
-              }
-              | lot_comp
-              {
-                  BUILDY(DECREF1($1),
-                         $$, "handle_list", "OO", Py_None, $1);
-              }
-              | lot_comp_list COMMA lot_comp
-              {
-                  BUILDY(DECREF2($1, $3),
-                         $$, "handle_list", "OO", $1, $3);
-              }
-              | lot_comp_list SLASH lot_comp
-              {
-                  /*
-                   * FIXME: Add this warning once the new booking method is the main method.
-                   * In the meantime, we allow it interchangeably. Also see {a6127ff32048}.
-                   */
-                  /* PyObject* rv = PyObject_CallMethod( */
-                  /*     builder, "build_grammar_error", "sis", */
-                  /*     yy_filename, yylineno + yy_firstline, */
-                  /*     "Usage of slash (/) as cost separator is deprecated; use a comma instead"); */
-                  /* Py_DECREF(rv); */
+cost_comp_list : empty
+               {
+                   /* We indicate that there was a cost if there */
+                   $$ = PyList_New(0);
+               }
+               | cost_comp
+               {
+                   BUILDY(DECREF1($1),
+                          $$, "handle_list", "OO", Py_None, $1);
+               }
+               | cost_comp_list COMMA cost_comp
+               {
+                   BUILDY(DECREF2($1, $3),
+                          $$, "handle_list", "OO", $1, $3);
+               }
+               | cost_comp_list SLASH cost_comp
+               {
+                   PyObject* rv = PyObject_CallMethod(
+                       builder, "build_grammar_error", "sis",
+                       yy_filename, yylineno + yy_firstline,
+                       "Usage of slash (/) as cost separator is deprecated; use a comma instead");
+                   Py_DECREF(rv);
 
-                  BUILDY(DECREF2($1, $3),
-                         $$, "handle_list", "OO", $1, $3);
-              }
+                   BUILDY(DECREF2($1, $3),
+                          $$, "handle_list", "OO", $1, $3);
+               }
 
-lot_comp : compound_amount
-         {
-             $$ = $1;
-         }
-         | DATE
-         {
-             $$ = $1;
-         }
-         | STRING
-         {
-             $$ = $1;
-         }
-         | ASTERISK
-         {
-             BUILDY(,
-                    $$, "lot_merge", "O", Py_None);
-         }
+cost_comp : compound_amount
+          {
+              $$ = $1;
+          }
+          | DATE
+          {
+              $$ = $1;
+          }
+          | STRING
+          {
+              $$ = $1;
+          }
+          | ASTERISK
+          {
+              BUILDY(,
+                     $$, "cost_merge", "O", Py_None);
+          }
 
 
 price : DATE PRICE CURRENCY amount eol key_value_list
@@ -687,6 +713,34 @@ document : DATE DOCUMENT ACCOUNT filename eol key_value_list
                     $$, "document", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
          }
 
+
+custom_value : STRING
+             | DATE
+             | BOOL
+             | amount
+             | number_expr
+             {
+                 $$ = $1;
+             }
+
+custom_value_list : empty
+                  {
+                      Py_INCREF(Py_None);
+                      $$ = Py_None;
+                  }
+                  | custom_value_list custom_value
+                  {
+                      BUILDY(DECREF2($1, $2),
+                             $$, "handle_list", "OO", $1, $2);
+                  }
+
+custom : DATE CUSTOM STRING custom_value_list eol key_value_list
+       {
+           BUILDY(DECREF4($1, $3, $4, $6),
+                  $$, "custom", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
+       }
+
+
 entry : transaction
       | balance
       | open
@@ -698,6 +752,7 @@ entry : transaction
       | price
       | commodity
       | query
+      | custom
       {
           $$ = $1;
       }
@@ -729,6 +784,8 @@ directive : SKIPPED
           | empty_line
           | pushtag
           | poptag
+          | pushmeta
+          | popmeta
           | option
           | include
           | plugin
@@ -801,6 +858,7 @@ const char* getTokenName(int token)
         case MINUS     : return "MINUS";
         case ASTERISK  : return "ASTERISK";
         case SLASH     : return "SLASH";
+        case COLON     : return "COLON";
         case LPAREN    : return "LPAREN";
         case RPAREN    : return "RPAREN";
         case FLAG      : return "FLAG";
@@ -811,11 +869,14 @@ const char* getTokenName(int token)
         case PAD       : return "PAD";
         case EVENT     : return "EVENT";
         case QUERY     : return "QUERY";
+        case CUSTOM    : return "CUSTOM";
         case PRICE     : return "PRICE";
         case NOTE      : return "NOTE";
         case DOCUMENT  : return "DOCUMENT";
         case PUSHTAG   : return "PUSHTAG";
         case POPTAG    : return "POPTAG";
+        case PUSHMETA  : return "PUSHMETA";
+        case POPMETA   : return "POPMETA";
         case OPTION    : return "OPTION";
         case DATE      : return "DATE";
         case ACCOUNT   : return "ACCOUNT";
@@ -826,5 +887,5 @@ const char* getTokenName(int token)
         case LINK      : return "LINK";
         case KEY       : return "KEY";
     }
-    return 0;
+    return "INVALID_TOKEN";
 }

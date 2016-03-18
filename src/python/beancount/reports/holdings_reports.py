@@ -15,7 +15,7 @@ from beancount.ops import prices
 from beancount.ops import holdings
 from beancount.ops import summarize
 from beancount.reports import table
-from beancount.reports import report
+from beancount.reports import base
 
 
 def get_assets_holdings(entries, options_map, currency=None):
@@ -100,12 +100,13 @@ def get_holdings_entries(entries, options_map):
                                  None, "", None, None, [])
 
         # Convert the holding to a position.
-        position_ = holdings.holding_to_position(holding)
+        pos = holdings.holding_to_position(holding)
+        entry.postings.append(
+            data.Posting(holding.account, pos.units, pos.cost, None, None, None))
 
+        pos_cost = -pos.at_cost()
         entry.postings.append(
-            data.Posting(holding.account, position_, None, None, None))
-        entry.postings.append(
-            data.Posting(equity_account, -position_.cost(), None, None, None))
+            data.Posting(equity_account, pos_cost.units, pos_cost.cost, None, None, None))
 
         holdings_entries.append(entry)
 
@@ -208,7 +209,7 @@ def load_from_csv(fileobj):
         yield holdings.Holding(**value_dict)
 
 
-class HoldingsReport(report.TableReport):
+class HoldingsReport(base.TableReport):
     """The full list of holdings for Asset and Liabilities accounts."""
 
     names = ['holdings']
@@ -264,7 +265,7 @@ class HoldingsReport(report.TableReport):
         printer.print_entries(holdings_entries, dcontext, file=file)
 
 
-class CashReport(report.TableReport):
+class CashReport(base.TableReport):
     """The list of cash holdings (defined as currency = cost-currency)."""
 
     names = ['cash']
@@ -313,7 +314,7 @@ class CashReport(report.TableReport):
         return table.create_table(holdings_list, FIELD_SPEC)
 
 
-class NetWorthReport(report.TableReport):
+class NetWorthReport(base.TableReport):
     """Generate a table of total net worth for each operating currency."""
 
     names = ['networth', 'equity']

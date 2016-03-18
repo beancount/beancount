@@ -1,25 +1,33 @@
 """Automatically adding IRA contributions postings.
 
 This plugin looks for increasing postings on specified accounts ('+' sign for
-Assets and Expenses accounts, '-' sign for the others) and when it finds some,
-inserts a pair of postings on that transaction of the corresponding amounts in a
-different currency. The currency is intended to be an imaginary currency used to
-track the number of dollars contributed to a retirement account over time.
+Assets and Expenses accounts, '-' sign for the others), or postings with a
+particular flag on them and when it finds some, inserts a pair of postings on
+that transaction of the corresponding amounts in a different currency. The
+currency is intended to be an imaginary currency used to track the number of
+dollars contributed to a retirement account over time.
 
 For example, a possible configuration could be:
 
-  plugin "beancount.plugins.iracontribs" "{
+  plugin "beancount.plugins.ira_contribs" "{
       'currency': 'IRAUSD',
       'flag': 'M',
       'accounts': {
+
           'Income:US:Acme:Match401k': (
               'Assets:US:Federal:Match401k',
               'Expenses:Taxes:TY{year}:US:Federal:Match401k'),
-          'Assets:US:Fidelity:PreTax401k:Cash': (
+
+          ('C', 'Assets:US:Fidelity:PreTax401k:Cash'): (
               'Assets:US:Federal:PreTax401k',
               'Expenses:Taxes:TY{year}:US:Federal:PreTax401k'),
        }
   }"
+
+Note: In this example, the configuration that triggers on the
+"Income:US:Acme:Match401k" account does not require a flag for those accounts;
+the configuration for the "Assets:US:Fidelity:PreTax401k:Cash" account requires
+postings to have a "C" flag to trigger an insertion.
 
 Given a transaction like the following, which would be typical for a salary
 entry where the employer is automatically diverting some of the pre-tax money to
@@ -71,14 +79,15 @@ inserted like this:
 Note that the special dict keys 'currency' and 'flag' are used to
 specify which currency to use for the inserted postings, and if set, which flag
 to mark these postings with.
+
 """
 
 __author__ = 'Martin Blais <blais@furius.ca>'
 
+from beancount.core.number import MISSING
 from beancount.core import data
 from beancount.core import account_types
 from beancount.core import amount
-from beancount.core import position
 from beancount.parser import printer
 
 
@@ -107,31 +116,52 @@ def add_ira_contribs(entries, options_map, config):
     if not isinstance(config_obj, dict):
         raise RuntimeError("Invalid plugin configuration: should be a single dict.")
 
+    # Currency of the inserted postings.
     currency = config_obj.pop('currency', 'UNKNOWN')
-    flag = config_obj.pop('flag', None)
-    account_transforms = config_obj.pop('accounts', {})
+
+    # Flag to attach to the inserted postings.
+    insert_flag = config_obj.pop('flag', None)
+
+    # A dict of account names that trigger the insertion of postings to pairs of
+    # inserted accounts when triggered.
+    accounts = config_obj.pop('accounts', {})
+
+    # Convert the key in the accounts configuration for matching.
+    account_transforms = {}
+    for key, config in accounts.items():
+        if isinstance(key, str):
+            flag = None
+            account = key
+        else:
+            assert isinstance(key, tuple)
+            flag, account = key
+        account_transforms[account] = (flag, config)
 
     new_entries = []
     for entry in entries:
         if isinstance(entry, data.Transaction):
             orig_entry = entry
             for posting in entry.postings:
-                if (posting.account in account_transforms and
-                    posting.position and
+                if (posting.units is not MISSING and
+                    (posting.account in account_transforms) and
                     (account_types.get_account_sign(posting.account) *
-                     posting.position.number) > 0):
+                     posting.units.number > 0)):
 
                     # Get the new account legs to insert.
-                    neg_account, pos_account = account_transforms[posting.account]
-                    assert posting.position.lot.cost is None
+                    required_flag, (neg_account,
+                                    pos_account) = account_transforms[posting.account]
+                    assert posting.cost is None
 
-                    # Insert income/expense entries for 401k.
-                    entry = add_postings(
-                        entry,
-                        amount.Amount(abs(posting.position.number), currency),
-                        neg_account.format(year=entry.date.year),
-                        pos_account.format(year=entry.date.year),
-                        flag)
+                    # Check required flag if present.
+                    if (required_flag is None or
+                        (required_flag and required_flag == posting.flag)):
+                        # Insert income/expense entries for 401k.
+                        entry = add_postings(
+                            entry,
+                            amount.Amount(abs(posting.units.number), currency),
+                            neg_account.format(year=entry.date.year),
+                            pos_account.format(year=entry.date.year),
+                            insert_flag)
 
             if DEBUG and orig_entry is not entry:
                 printer.print_entry(orig_entry)
@@ -154,11 +184,7 @@ def add_postings(entry, amount_, neg_account, pos_account, flag):
     Returns:
       A new, modified entry.
     """
-    pos = position.Position(
-        position.Lot(amount_.currency, None, None),
-        amount_.number)
-
     return entry._replace(postings=entry.postings + [
-        data.Posting(neg_account, pos.get_negative(), None, flag, None),
-        data.Posting(pos_account, pos, None, flag, None),
+        data.Posting(neg_account, -amount_, None, None, flag, None),
+        data.Posting(pos_account, amount_, None, None, flag, None),
         ])

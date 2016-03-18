@@ -321,11 +321,11 @@ class TestValidate(cmptest.TestCase):
         validation_errors = validation.validate(entries, options_map)
 
         self.assertEqual(2, len(errors))
-        self.assertRegexpMatches(errors[0].message, 'Reducing position results')
-        self.assertRegexpMatches(errors[1].message, 'Invalid currency')
+        self.assertRegex(errors[0].message, 'Reducing position results')
+        self.assertRegex(errors[1].message, 'Invalid currency')
 
         self.assertEqual(1, len(validation_errors))
-        self.assertRegexpMatches(validation_errors[0].message, 'Invalid currency')
+        self.assertRegex(validation_errors[0].message, 'Invalid currency')
 
 
 class TestValidateTolerances(cmptest.TestCase):
@@ -353,7 +353,7 @@ class TestValidateTolerances(cmptest.TestCase):
     def test_tolerance_implicit_fractional_global(self, entries, errors, options_map):
         """
         plugin "beancount.plugins.auto_accounts"
-        option "default_tolerance" "*:0.005"
+        option "inferred_tolerance_default" "*:0.005"
 
         1997-03-06 * "Buy"
           Assets:Insurance:HYPOT       7.9599 HYPOT {125.63 CAD}
@@ -365,7 +365,7 @@ class TestValidateTolerances(cmptest.TestCase):
     def test_tolerance_implicit_fractional_specific(self, entries, errors, options_map):
         """
         plugin "beancount.plugins.auto_accounts"
-        option "default_tolerance" "CAD:0.005"
+        option "inferred_tolerance_default" "CAD:0.005"
 
         1997-03-06 * "Buy"
           Assets:Insurance:HYPOT       7.9599 HYPOT {125.63 CAD}
@@ -393,7 +393,7 @@ class TestValidateTolerances(cmptest.TestCase):
     # def test_tolerance_implicit_from_converted_cost(self, entries, errors, options_map):
     #     """
     #     plugin "beancount.plugins.auto_accounts"
-    #     option "default_tolerance" "USD:0.0001"
+    #     option "inferred_tolerance_default" "USD:0.0001"
     #
     #     ;; Note: Residual is 0.074453 USD here, but should work because of inferred
     #     ;; tolerance on (0.001 x 148.93) / 2 = 0.07447707 > 0.074465 residual.

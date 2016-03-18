@@ -38,13 +38,14 @@ def validate_one_commodity(entries, unused_options_map):
     for entry in entries:
         if isinstance(entry, data.Transaction):
             for posting in entry.postings:
-                lot = posting.position.lot
-                units_map[posting.account].add(lot.currency)
+                units = posting.units
+                units_map[posting.account].add(units.currency)
                 if len(units_map[posting.account]) > 1:
                     units_source_map[posting.account] = entry
 
-                if lot.cost:
-                    cost_map[posting.account].add(lot.cost.currency)
+                cost = posting.cost
+                if cost:
+                    cost_map[posting.account].add(cost.currency)
                     if len(cost_map[posting.account]) > 1:
                         units_source_map[posting.account] = entry
 

@@ -5,16 +5,15 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import builtins
 import datetime
 from collections import namedtuple
-from os import path
 import sys
 
-# Note: this file is mirrorred into ledgerhub. Relative imports only.
 from beancount.core.amount import Amount
 from beancount.core.number import Decimal
 from beancount.core.number import D
-from beancount.core.position import Position
-from beancount.core.position import Lot
+from beancount.core.position import Cost
+from beancount.core.position import CostSpec
 from beancount.core.account import has_component
+from beancount.utils.bisect_key import bisect_left_with_key
 
 
 def new_directive(clsname, fields):
@@ -238,10 +237,40 @@ Price = new_directive('Price', 'currency amount')
 #   filename: The absolute filename of the document file.
 Document = new_directive('Document', 'account filename')
 
+# A custom directive. This directive can be used to implement new experimental
+# dated features in the Beancount file. This is meant as an intermediate measure
+# to be used when you would need to implement a new directive in a plugin. These
+# directives will be parsed liberally... any list of tokens are supported. All
+# that is required is some unique name for them that acts as a "type". These
+# directives are included in the stream and a plugin should be able to gather
+# them.
+#
+# Attributes:
+#   meta: See above.
+#   date: The date at which this query should be run. All directives following
+#     this date will be ignored automatically. This is essentially equivalent to
+#     the CLOSE modifier in the shell syntax.
+#   dir_type: A string that represents the type of the directive.
+#   values: A list of values of various simple types supported by the grammar.
+#     (Note that this list is not enforced to be consistent for all directives
+#     of hte same type by the parser.)
+Custom = new_directive('Custom', 'type values')
+
 
 # A list of all the valid directive types.
 ALL_DIRECTIVES = (
-    Open, Close, Commodity, Pad, Balance, Transaction, Note, Event, Query, Price, Document
+    Open,
+    Close,
+    Commodity,
+    Pad,
+    Balance,
+    Transaction,
+    Note,
+    Event,
+    Query,
+    Price,
+    Document,
+    Custom
 )
 
 
@@ -275,9 +304,9 @@ def new_metadata(filename, lineno, kvlist=None):
 #     and Posting, it allows us to easily resolve the lists of Postings to their
 #     transactions for rendering.
 #   account: A string, the account that is modified by this posting.
-#   position: An instance of Position (see position.py), the amount and lot that
-#     is to be posted to this leg's account.
-#   price: An instance of Amount, the price at which the position took place, or
+#   units: An Amount, the units of the position.
+#   cost: A Cost or CostSpec instances, the units of the position.
+#   price: An Amount, the price at which the position took place, or
 #     None, where not relevant. Providing a price member to a posting
 #     automatically adds a price in the prices database at the date of the
 #     transaction.
@@ -288,7 +317,7 @@ def new_metadata(filename, lineno, kvlist=None):
 #   metadata: A dict of strings to values, the metadata that was attached
 #     specifically to that posting, or None, if not provided. In practice, most
 #     of the instances will be unlikely to have metadata.
-Posting = namedtuple('Posting', 'account position price flag meta')
+Posting = namedtuple('Posting', 'account units cost price flag meta')
 
 
 # A pair of a Posting and its parent Transaction. This is inserted as
@@ -316,12 +345,12 @@ def create_simple_posting(entry, account, number, currency):
     if isinstance(account, str):
         pass
     if number is None:
-        position = None
+        units = None
     else:
         if not isinstance(number, Decimal):
             number = D(number)
-        position = Position(Lot(currency, None, None), number)
-    posting = Posting(account, position, None, None, None)
+        units = Amount(number, currency)
+    posting = Posting(account, units, None, None, None, None)
     if entry is not None:
         entry.postings.append(posting)
     return posting
@@ -349,9 +378,9 @@ def create_simple_posting_with_cost(entry, account,
         number = D(number)
     if cost_number and not isinstance(cost_number, Decimal):
         cost_number = D(cost_number)
-    cost = Amount(cost_number, cost_currency)
-    position = Position(Lot(currency, cost, None), number)
-    posting = Posting(account, position, None, None, None)
+    units = Amount(number, currency)
+    cost = Cost(cost_number, cost_currency, None, None)
+    posting = Posting(account, units, cost, None, None, None)
     if entry is not None:
         entry.postings.append(posting)
     return posting
@@ -382,7 +411,8 @@ def sanity_check_types(entry):
         for posting in entry.postings:
             assert isinstance(posting, Posting), "Invalid posting type"
             assert isinstance(posting.account, str), "Invalid account type"
-            assert isinstance(posting.position, (Position, NoneType)), "Invalid pos type"
+            assert isinstance(posting.units, (Amount, NoneType)), "Invalid units type"
+            assert isinstance(posting.cost, (Cost, CostSpec, NoneType)), "Invalid cost type"
             assert isinstance(posting.price, (Amount, NoneType)), "Invalid price type"
             assert isinstance(posting.flag, (str, NoneType)), "Invalid flag type"
 
@@ -398,7 +428,7 @@ def posting_has_conversion(posting):
     Return:
       A boolean, true if this posting has a price conversion.
     """
-    return (posting.position.lot.cost is None and
+    return (posting.cost is None and
             posting.price is not None)
 
 
@@ -480,6 +510,22 @@ def posting_sortkey(entry):
     return (entry.date, SORT_ORDER.get(type(entry), 0), entry.meta["lineno"])
 
 
+def filter_txns(entries):
+    """A generator that yields only the Transaction instances.
+
+    This is such an incredibly common operation that it deserves a terse
+    filtering mechanism.
+
+    Args:
+      entries: A list of directives.
+    Yields:
+      A sorted list of only the Transaction directives.
+    """
+    for entry in entries:
+        if isinstance(entry, Transaction):
+            yield entry
+
+
 def has_entry_account_component(entry, component):
     """Return true if one of the entry's postings has an account component.
 
@@ -520,3 +566,21 @@ def find_closest(entries, filename, lineno):
                 min_diffline = diffline
                 closest_entry = entry
     return closest_entry
+
+
+def iter_entry_dates(entries, date_begin, date_end):
+    """Iterate over the entries in a date window.
+
+    Args:
+      entries: A date-sorted list of dated directives.
+      date_begin: A datetime.date instance, the first date to include.
+      date_end: A datetime.date instance, one day beyond the last date.
+    Yields:
+      Instances of the dated directives, between the dates, and in the order in
+      which they appear.
+    """
+    getdate = lambda entry: entry.date
+    index_begin = bisect_left_with_key(entries, date_begin, key=getdate)
+    index_end = bisect_left_with_key(entries, date_end, key=getdate)
+    for index in range(index_begin, index_end):
+        yield entries[index]

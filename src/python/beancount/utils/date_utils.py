@@ -2,7 +2,25 @@
 """
 __author__ = 'Martin Blais <blais@furius.ca>'
 
+import datetime
+
 import dateutil.parser
+
+
+def iter_dates(start_date, end_date):
+    """Yield all the dates between 'start_date' and 'end_date'.
+
+    Args:
+      start_date: An instance of datetime.date.
+      end_date: An instance of datetime.date.
+    Yields:
+      Instances of datetime.date.
+    """
+    oneday = datetime.timedelta(days=1)
+    date = start_date
+    while date < end_date:
+        yield date
+        date += oneday
 
 
 def parse_date_liberally(string):

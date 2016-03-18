@@ -2,39 +2,27 @@
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import csv
-import collections
 import datetime
-import io
 import functools
 import threading
 from os import path
 import shelve
 import tempfile
-import re
 import hashlib
 import os
 import sys
-from urllib import parse
-from urllib import request
-import urllib.parse
-import hashlib
 import argparse
 import logging
 from concurrent import futures
-
-from dateutil.parser import parse as parse_datetime
 
 from beancount.core.number import ONE
 import beancount.prices
 from beancount import loader
 from beancount.core import data
 from beancount.core import amount
-from beancount.ops import holdings
 from beancount.parser import printer
-from beancount.utils import net_utils
-from beancount.utils import memo
 from beancount.prices import find_prices
+from beancount.utils import date_utils
 
 
 # Stand-in currency name for unknown currencies.
@@ -226,8 +214,8 @@ def process_args():
     parser.add_argument('-v', '--verbose', action='count', help=(
         "Print out progress log. Specify twice for debugging info."))
 
-    parse_date = lambda s: parse_datetime(s).date()
-    parser.add_argument('-d', '--date', action='store', type=parse_date, help=(
+    parser.add_argument('-d', '--date', action='store',
+                        type=date_utils.parse_date_liberally, help=(
         "Specify the date for which to fetch the prices."))
 
     parser.add_argument('-i', '--inactive', action='store_true', help=(

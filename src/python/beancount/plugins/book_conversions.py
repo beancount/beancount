@@ -115,25 +115,29 @@ def is_matching(posting, account):
       A boolean, true if this posting is one that we should be adding a cost to.
     """
     return (posting.account == account and
-            posting.position.lot.cost is None and
+            posting.cost is None and
             posting.price is not None)
 
 
-def augment_inventory(pending_lots, posting, eindex):
+def augment_inventory(pending_lots, posting, entry, eindex):
     """Add the lots from the given posting to the running inventory.
 
     Args:
       pending_lots: A list of pending ([number], Posting, Transaction) to be matched.
         The number is modified in-place, destructively.
       posting: The posting whose position is to be added.
+      entry: The parent transaction.
       eindex: The index of the parent transaction housing this posting.
     Returns:
       A new posting with cost basis inserted to be added to a transformed transaction.
     """
-    lot = posting.position.lot._replace(cost=copy.copy(posting.price))
-    number = posting.position.number
-    pos = position.Position(lot, number)
-    new_posting = posting._replace(position=pos)
+    number = posting.units.number
+    new_posting = posting._replace(
+        units=copy.copy(posting.units),
+        cost=position.Cost(posting.price.number,
+                           posting.price.currency,
+                           None, # FIXME: You should enter the date here.
+                           None))
     pending_lots.append(([number], new_posting, eindex))
     return new_posting
 
@@ -159,16 +163,17 @@ def reduce_inventory(pending_lots, posting, eindex):
     pnl = ZERO
     errors = []
 
-    match_number = -posting.position.number
-    match_currency = posting.position.lot.currency
+    match_number = -posting.units.number
+    match_currency = posting.units.currency
     cost_currency = posting.price.currency
     while match_number != ZERO:
 
         # Find the first lot with matching currency.
         for fnumber, fposting, findex in pending_lots:
-            fposition = fposting.position
-            if (fposition.lot.currency == match_currency and
-                fposition.lot.cost and fposition.lot.cost.currency == cost_currency):
+            funits = fposting.units
+            fcost = fposting.cost
+            if (funits.currency == match_currency and
+                fcost and fcost.currency == cost_currency):
                 assert fnumber[0] > ZERO, "Internal error, zero lot"
                 break
         else:
@@ -179,20 +184,20 @@ def reduce_inventory(pending_lots, posting, eindex):
 
         # Reduce the pending lots.
         number = min(match_number, fnumber[0])
-        cost = fposition.lot.cost
+        cost = fcost
         match_number -= number
         fnumber[0] -= number
         if fnumber[0] == ZERO:
             pending_lots.pop(0)
 
         # Add a corresponding posting.
-        pos = position.Position(posting.position.lot._replace(cost=copy.copy(cost)),
-                                -number)
-        rposting = posting._replace(position=pos)
+        rposting = posting._replace(
+            units=amount.Amount(-number, posting.units.currency),
+            cost=copy.copy(cost))
         new_postings.append(rposting)
 
         # Update the P/L.
-        pnl += number * (posting.price.number - pos.lot.cost.number)
+        pnl += number * (posting.price.number - cost.number)
 
         # Add to the list of matches.
         matches.append(((findex, fposting),
@@ -276,7 +281,7 @@ def book_price_conversions(entries, assets_account, income_account):
             augmenting, reducing, other = [], [], []
             for pindex, posting in enumerate(entry.postings):
                 if is_matching(posting, assets_account):
-                    out = augmenting if posting.position.number >= ZERO else reducing
+                    out = augmenting if posting.units.number >= ZERO else reducing
                 else:
                     out = other
                 out.append(posting)
@@ -288,7 +293,7 @@ def book_price_conversions(entries, assets_account, income_account):
 
             # Convert all the augmenting postings to cost basis.
             for posting in augmenting:
-                new_postings.append(augment_inventory(pending_lots, posting, eindex))
+                new_postings.append(augment_inventory(pending_lots, posting, entry, eindex))
 
             # Then process reducing postings.
             if reducing:
@@ -310,9 +315,7 @@ def book_price_conversions(entries, assets_account, income_account):
                         meta = data.new_metadata('<book_conversions>', 0)
                         new_postings.append(
                             data.Posting(income_account,
-                                         position.Position(
-                                             position.Lot(pos.lot.currency, None, None),
-                                             -pos.number),
+                                         -pos.units, None,
                                          None, None, meta))
 
             # Third, add back all the other unrelated legs in.
@@ -433,13 +436,13 @@ def main():
               'P/L']
     body = []
     for aug, red in trades:
-        units = -red.posting.position.number
+        units = -red.posting.units.number
         buy_price = aug.posting.price.number
         sell_price = red.posting.price.number
         pnl = (units * (sell_price - buy_price)).quantize(buy_price)
         body.append([
-            -red.posting.position.number,
-            red.posting.position.lot.currency,
+            -red.posting.units.number,
+            red.posting.units.currency,
             red.posting.price.currency,
             aug.txn.date.isoformat(), buy_price,
             red.txn.date.isoformat(), sell_price,

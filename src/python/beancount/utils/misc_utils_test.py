@@ -5,11 +5,11 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import unittest
 from unittest import mock
-import re
 import time
 import textwrap
 import sys
 from collections import namedtuple
+import operator
 
 from beancount.utils import misc_utils
 from beancount.utils import test_utils
@@ -35,8 +35,8 @@ class TestMiscUtils(unittest.TestCase):
         with test_utils.capture() as stdout:
             with misc_utils.log_time('test-op', sys.stdout.write):
                 time.sleep(0.1)
-        self.assertTrue(re.search("Operation", stdout.getvalue()))
-        self.assertTrue(re.search("Time", stdout.getvalue()))
+        self.assertRegex(stdout.getvalue(), "Operation")
+        self.assertRegex(stdout.getvalue(), "Time")
 
     def test_box(self):
         with test_utils.capture() as stdout:
@@ -129,6 +129,12 @@ class TestMiscUtils(unittest.TestCase):
         self.assertEqual({'a_b': 'a_b', 'ab': 'a b'},
                          misc_utils.compute_unique_clean_ids(['a b', 'a_b']))
 
+    def test_idify(self):
+        self.assertEqual('A_great_movie_for_us.mp4',
+                         misc_utils.idify(' A great movie (for us) .mp4 '))
+        self.assertEqual('A____B.pdf',
+                         misc_utils.idify('A____B_._pdf'))
+
     def test_map_namedtuple_attributes(self):
         # pylint: disable=invalid-name
         Test = namedtuple('Test', 'a b c d')
@@ -188,6 +194,12 @@ class TestMiscUtils(unittest.TestCase):
         one = One(*args)
         two = Two(*args)
         self.assertFalse(one == two)
+
+    def test_is_sorted(self):
+        self.assertTrue(misc_utils.is_sorted([1, 3, 4, 5, 5, 6, 8]))
+        self.assertFalse(misc_utils.is_sorted([1, 3, 4, 5, 5, 6, 8], cmp=operator.lt))
+        self.assertFalse(misc_utils.is_sorted([3, 2, 6, 7]))
+        self.assertTrue(misc_utils.is_sorted([7, 6, 3, 1], cmp=operator.gt))
 
 
 class TestUniquify(unittest.TestCase):

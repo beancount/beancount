@@ -96,7 +96,7 @@ class GetAccounts:
 
     # Associate all the possible directives with their respective handlers.
     Open = Close = Balance = Note = Document = _one
-    Commodity = Event = Query = Price = _zero
+    Commodity = Event = Query = Price = Custom = _zero
 
 
 # Global instance to share.
@@ -310,11 +310,11 @@ def get_commodity_map(entries, create_missing=True):
             for posting in entry.postings:
 
                 # Main currency.
-                lot = posting.position.lot
-                commodities_map.setdefault(lot.currency, None)
+                units = posting.units
+                commodities_map.setdefault(units.currency, None)
 
                 # Currency in cost.
-                cost = lot.cost
+                cost = posting.cost
                 if cost:
                     commodities_map.setdefault(cost.currency, None)
 

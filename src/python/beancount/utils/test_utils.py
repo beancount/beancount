@@ -8,12 +8,14 @@ import unittest
 import io
 import re
 import tempfile
+import logging
 import sys
 import contextlib
 import functools
 import shutil
 import itertools
 import os
+import subprocess
 from os import path
 
 
@@ -77,12 +79,32 @@ def run_with_args(function, args):
       The return value of the function run.
     """
     saved_argv = sys.argv
+    saved_handlers = logging.root.handlers
     try:
         module = sys.modules[function.__module__]
         sys.argv = [module.__file__] + args
+        logging.root.handlers = []
         return function()
     finally:
         sys.argv = saved_argv
+        logging.root.handlers = saved_handlers
+
+
+def call_command(command):
+    """Run the script with a subprocess.
+
+    Args:
+      script_args: A list of strings, the arguments to the subprocess,
+        including the script name.
+    Returns:
+      A triplet of (return code integer, stdout ext, stderr text).
+    """
+    assert isinstance(command, list), command
+    p = subprocess.Popen(command,
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE)
+    stdout, stderr = p.communicate()
+    return p.returncode, stdout.decode(), stderr.decode()
 
 
 @contextlib.contextmanager
@@ -210,6 +232,20 @@ def search_words(words, line):
     return re.search('.*'.join(r'\b{}\b'.format(word) for word in words), line)
 
 
+class TestTempdirMixin:
+
+    def setUp(self):
+        super().setUp()
+        # Create a temporary directory.
+        self.prefix = self.__class__.__name__
+        self.tempdir = tempfile.mkdtemp(prefix='{}.'.format(self.prefix))
+
+    def tearDown(self):
+        super().tearDown()
+        # Clean up the temporary directory.
+        shutil.rmtree(self.tempdir)
+
+
 class TestCase(unittest.TestCase):
 
     def assertLines(self, text1, text2, message=None):
@@ -247,6 +283,23 @@ class TestCase(unittest.TestCase):
         self.assertLines(textwrap.dedent(expected_text), oss.getvalue())
 
 
+@contextlib.contextmanager
+def skipIfRaises(*exc_types):
+    """A context manager (or decorator) that skips a test if an exception is raised.
+
+    Args:
+      exc_type
+    Yields:
+      Nothing, for you to execute the function code.
+    Raises:
+      SkipTest: if the test raised the expected exception.
+    """
+    try:
+        yield
+    except exc_types as exception:
+        raise unittest.SkipTest(exception)
+
+
 def make_failing_importer(*removed_module_names):
     """Make an importer that raise an ImportError for some modules.
 
@@ -266,3 +319,17 @@ def make_failing_importer(*removed_module_names):
         else:
             return builtins.__import__(name, *args, **kwargs)
     return failing_import
+
+
+@contextlib.contextmanager
+def environ(varname, newvalue):
+    """A context manager which pushes varname's value and restores it later.
+
+    Args:
+      varname: A string, the environ variable name.
+      newvalue: A string, the desired value.
+    """
+    oldvalue = os.environ.get(varname)
+    os.environ[varname] = newvalue
+    yield
+    os.environ[varname] = oldvalue

@@ -258,12 +258,12 @@ def validate_currency_constraints(entries, options_map):
                 continue
 
             # Perform the check.
-            if posting.position.lot.currency not in valid_currencies:
+            if posting.units.currency not in valid_currencies:
                 errors.append(
                     ValidationError(
                         entry.meta,
                         "Invalid currency {} for account '{}'".format(
-                            posting.position.lot.currency, posting.account),
+                            posting.units.currency, posting.account),
                         entry))
 
     return errors
@@ -327,7 +327,7 @@ def validate_check_transaction_balances(entries, options_map):
     # Note: this is a bit slow; we could limit our checks to the original
     # transactions by using the hash function in the loader.
     errors = []
-    default_tolerances = options_map['default_tolerance']
+    default_tolerances = options_map['inferred_tolerance_default']
     for entry in entries:
         if isinstance(entry, Transaction):
             # IMPORTANT: This validation is _crucial_ and cannot be skipped.

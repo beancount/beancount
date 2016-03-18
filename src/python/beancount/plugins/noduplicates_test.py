@@ -1,7 +1,5 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import re
-
 from beancount.core import compare
 from beancount.parser import cmptest
 from beancount.plugins import noduplicates
@@ -13,7 +11,7 @@ class TestValidateDuplicates(cmptest.TestCase):
     def checkDuplicates(self, entries, options_map):
         _, valid_errors = noduplicates.validate_no_duplicates(entries, options_map)
         self.assertEqual([compare.CompareError], list(map(type, valid_errors)))
-        self.assertTrue(re.search('Duplicate entry', valid_errors[0].message))
+        self.assertRegex(valid_errors[0].message, 'Duplicate entry')
 
     # Note: validation already checks for dups in open/close.
     @loader.load_doc(expect_errors=True)

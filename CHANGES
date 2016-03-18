@@ -4,6 +4,507 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-03-14
+
+  - Added META() and ENTRY_META() functions to the SQL shell to answer a
+    question on the mailing-list (from richieuk63 at gmail dot com).
+
+  - Fixed a bug with the OFX importer whereby the Balance directive should be
+    generated to a day following the date provided in the LEDGERBAL directive.
+
+  - Added forgotten dependency on "beautifulsoup4" in setup.py.
+
+
+2016-03-13
+
+  - Merged more changes from the 'ingest' branch which furthers the work of
+    integrating the LedgerHub code into Beancount (almost done now).
+
+    * Added mimetype() and head() methods to the file cache object passed to the
+      extractors, as a convenience instead of having clients call the cached
+      convert() method.
+
+    * Added paranoid exception handlers to all the methods called on the
+      importer classes.
+
+    * Added tests for the examples provided in "examples/ingest".
+
+    * Refactor some of the code of beancount.ingest.file.
+
+    * Fixed bugs with ensuring the filenames are absolute names.
+
+    * Cleaned up the output of the commands.
+
+    * Made the header and section strings configurable from the import
+      configuration.
+
+    * Cleaned up the OFX importer from LedgerHub, added unit tests for it, and
+      added it to the beancount.ingest.importers directory. In addition, added
+      it to the example configuration for ingest under
+      beancount/examples/ingest.
+
+    * Added a dependency on the beautifulsoup4 package (bs4) in order to parse
+      XML files.
+
+  - Added a beancount.core.amount.add() function to add two amounts.
+
+  - Made the directive printer be more lenient to support incomplete postings.
+
+  - Moved the "src/clojure" and "src/golang" directories to the experiments/
+    directory; they really are experiments. Should have done this a long time
+    ago.
+
+
+2016-03-12
+
+  - Converted the amount.amount_*() functions to amount.*(). It's just simpler
+    and nicer.
+
+  - Made the beancount.report.balance_reports text reports rendered using the
+    precision from the DisplayContext, and realization.dump_balances() require a
+    formatter argument. More probaby needs to be done on issue #108 to close it,
+    but that's a good start.
+
+  - Made the beancount.plugins.auto_accounts plugin insert entries that will
+    sort stably.
+
+  - Sync up the print report code with the print command code, fixing a bug with
+    precision not being rendered correctly by the print report.
+
+  - Fixed #104: bean-format would fail on numbers with commas in them.
+
+  - Fixed #106: The "render_commas" option wasn't being honored. I have no idea
+    how things came to be this way, but I fixed it. When rendering numbers,
+    inserting commas for thousands (e.g., "1,000" vs. "1000") is now controlled
+    by the "render_commas" option, and the default is not to render them
+    (FALSE). Note:  This should affect the web interface, the reports, and the
+    PRINT command, but so far NOT the output of the SQL query reports. The
+    reason for this is historical: the query rendering code does not make use of
+    the DisplayContext; it needs to be converted to do that. See
+    https://bitbucket.org/blais/beancount/issues/105/
+    https://bitbucket.org/blais/beancount/issues/106/
+    https://bitbucket.org/blais/beancount/issues/107/ and
+    https://groups.google.com/d/msg/beancount/frfN1zc6TEc/d5OjuDnREgAJ for a
+    discussion.
+
+
+2016-03-06
+
+  - Fixed issue #83: Renamed 'default_tolerance' option to
+    'inferred_tolerance_default'.
+
+  - Added exception handlers for all importer callbacks. Badly written importers
+    should never completely throw off the tools.
+
+
+2016-03-05
+
+  - Improved handling of corrupted or out-of-date pickle cache file.
+
+  - Fixed a test that would only fail in a timzone != EST.
+
+  - Made bean-file use the configuration filename's directory as the default
+    output dir instead of requiring an option. The behavior of providing a
+    reasonable default makes most sense.
+
+
+2016-02-28
+
+  - Moved beancount.scripts.report to beancount.report.report in order to be
+    consistent with the way other libraries are invoked. I had to move
+    beancount.report.report out of the way (to beancount.report.base) to make
+    space for it.
+
+  - Moved beancount.scripts.query to beancount.query.shell in order to be
+    consistent with the way other libraries are invoked.
+
+  - Merged fix by yagebu for bug found in b.ops.summarize() that would not yield
+    a list of ordered transactions.
+
+  - Introduced a new "Custom" directive type. You can enter directives like
+    this:
+
+      2016-02-28 custom "budget" ....
+
+    where "..." can be a mixed list of
+
+    * string
+    * date
+    * boolean
+    * number
+    * amount (number + currency)
+
+    The first element is a string, which is intended to be used as the runtime
+    type of the directive. This can be used to prototype new features in plugins
+    or otherwise.
+
+    Right now, no consistency is enforced on the datatypes declared for
+    directives with the same type name. Also, there is currently no way for a
+    plugin to declare what a valid set of tokens may be (but I may do this later
+    on to simplify error reporting for plugin implementors).
+
+
+2016-02-27
+
+  - Fixed rendering bug in bean-web whereby empty cells would receive a 0.00
+    amount.
+
+  - Improved rendering of the account name in the name of the compat importer.
+
+
+2016-02-24
+
+  - Changed the bean-doctor "linked" command to fetch the set of links from the
+    entire set of entries.
+
+  - Added ABS() function to the shell, in order to dig around for transactions
+    with a particular amount.
+
+
+2016-02-22
+
+  - Fixed issue #98: There was a bug when fetching historical data from a Yahoo
+    price source was failing, it wasn't handled correctly.
+
+  - Merged LedgerHub back into beancount under a new "beancount.ingest" package.
+    The new protocol for importers can be read at:
+    /home/blais/p/repos/beancount1/src/python/beancount/ingest/importer.py
+
+    There are three new scripts:
+
+      bean-identify
+      bean-extract
+      bean-file
+
+    These correspond one-to-one to their ledgerhub variants.
+
+    There is a bit more work to be done to complete this - see the top of the
+    TODO file in the "ingest" branch if you're interested - and I'll write
+    documentation on this once all the work is completed.
+
+    LedgerHub is now officially dead.
+
+
+2016-02-20
+
+  - Create an beancount.utils.misc_utils.is_sorted() utility function to be used
+    in the new importer code.
+
+  - Match a price source over the entire source string.
+
+
+2016-02-19
+
+  - Now accepting '=' in currency symbol in order to accommodate currencies in
+    Yahoo, which look like this "CNYUSD=X".
+
+
+2016-02-15
+
+  - Handle an incomplete pickle file by ignoring it and regenerating it silently.
+
+
+2016-02-14
+
+  - Baked a 2.0b5 and 2.0b6 releases in a further attempt to get the included
+    files to be included by setuptools and for pip3 to be able to make a local
+    build. setuptools is horrible.
+
+  - Baked a 2.0b4 release for a more recent PyPI availability.
+
+  - Fixed issue #72 - Thanks to Gary Peck for figuring out what was wrong with
+    setuptools - and now you should be able to install via pip3 again, which
+    will pull all the dependencies automatically. If setuptools isn't installed,
+    this should degrade peacefully to distutil.
+
+
+2016-02-06
+
+  - IMPORTANT API CHANGES FOLLOW:
+
+    I made some important changes to the following classes:
+
+      beancount.core.position.Position
+      beancount.core.inventory.Inventory
+      beancount.core.data.Posting
+
+    "Position" objects have been restructured to reflect the structure implied
+    by the syntax. Instead of a .number (Decimal) and .lot (Lot) objects, a
+    Position now has a .units (Amount) and .cost (Cost) objects.
+
+    The "Lot" class has been removed; it has been replaced by a "Cost" class
+    with .number (Decimal), .currency (string), .date (datetime.date), .label
+    (string) attributes.
+
+    The "Inventory" class is a  list of "Position" objects, and as such it has
+    received corresponding adjustments and minor changes.
+
+    "Posting" objects do not contain a .position attribute anymore. Instead, the
+    data structure has been flattened to contain .units and .cost objects
+    directly. As a result, a Posting acts a bit like a subclass of a Position
+    rather than using composition to contain one.
+
+    During the parsing phase, a "Posting" object's .cost attribute does not
+    point to a "Cost" instance, but rather to a "CostSpec" instance, which
+    reflects the unresolved and partially incomplete lot specification from the
+    input syntax that needs to get resolved to a particular lot during the new
+    booking process.
+
+    Here's a pictorial representation of changes. Before we had:
+
+     Assets:Checking    -40    QQQ       {66.32 USD, 2015-12-14} @ 70.32 USD
+     `---account---'  `number' `--------------lot--------------' `--price--'
+                               `currency'`---cost--' `--date--'
+
+        posting                     (Posting)
+            .account                (str)
+            .position               (Position)
+                .number             (Decimal)
+                .lot                (Lot)
+                    .currency       (str)
+                    .cost           (Amount)
+                        .number     (Decimal)
+                        .currency   (str)
+                    .lot_date       (datetime.date)
+            .price                  (Amount)
+                .number             (Decimal)
+                .currency           (str)
+
+
+    After the changes we have something that looks more like the input:
+
+     Assets:Checking  -40 QQQ   {66.32 USD,   2015-12-14, "0d6f0"} @ 70.32 USD
+     `---account---' `-units-' `------------cost-----------------' `--price--'
+                                number currency date       label
+
+        posting             (Posting)
+            .account        (str)
+            .units          (Amount)
+                .number     (Decimal)
+                .currency   (str)
+            .cost           (Cost, CostSpec, or None)
+                .number     (Decimal)
+                .currency   (str)
+                .date       (datetime.date, or None)
+                .label      (str, or None)
+            .price          (Amount, or None)
+                .number     (Decimal)
+                .currency   (str)
+
+    And field-by-field conversions:
+
+        posting.account                    -> posting.account
+        posting.position.number            -> posting.units.number
+        posting.position.lot.currency      -> posting.units.currency
+        posting.position.lot.cost.number   -> posting.cost.number
+        posting.position.lot.cost.currency -> posting.cost.currency
+        posting.position.lot.lot_date      -> posting.cost.date
+        (none)                             -> posting.cost.label
+        posting.price.number               -> posting.price.number
+        posting.price.currency             -> posting.price.currency
+
+    Notes:
+
+    * These changes are mostly driven by the need for the parser to output
+      incomplete cost specifications. The booking of lots against existing
+      inventory is isolated in a beancount.parser.booking and before booking we
+      need to be able to represent missing values from the input syntax, since
+      the booking process is able to interpolate and fill in these missing
+      values. It was required to make important changes to the data structures
+      for this reason. The parser outputs 'posting.cost' with an instance of a
+      new "CostSpec" class, not "Cost". After booking, all the postings's costs
+      are replaced by instances of "Cost" and "CostSpec" is gone.
+
+    * This representation is much closer to the syntax. It's also flatter and
+      simpler. The original representation's design was driven by an old idea
+      that the lots were to be used as the key in Inventory mappings, but as it
+      turns out, operations on lots are just as well implemented with an
+      association list and performance isn't a problem. Moreover, lots with a
+      cost are never merged using such a mapping, only reduced against, so this
+      was an unnecessary distraction.
+
+    * If you were creating Position objects in plugins or other code, please
+      look at the new interface and make necessary changes to your code. You can
+      create new Position objects from a pair of Amount and Cost objects.
+
+
+  - beancount.core.position.lot_currency_pair() has been converted to
+    beancount.core.position.Position.currency_pair().
+
+  - Renamed beancount.core.position.Position.cost() to
+    beancount.core.position.Position.at_cost() due to the conflict resulting
+    from the Position class changes.
+
+  - There is a new option "booking_method" which should be set to the value
+    "SIMPLE" to maintain the current booking algorithm (it's the default if left
+    unset), but which can be set to "FULL" to enable the yet-unreleased, new
+    experimental booking method. Do this at your own risk; this is not ready for
+    public use, not effectively working yet.
+
+
+2016-02-05
+
+  - Fixed bug with query parser: a single dot (.) would be matched as a number.
+    It should require at least some digits.
+
+  - Fixed bug whereby a missing cost number would be rendered as "0"; if needs
+    be a null value.
+
+
+2016-01-31
+
+  - Added python-magic as an optional depdendency, in order to support imports
+    code. Updated http://furius.ca/beancount/doc/install
+
+  - Renamed beancount.scripts.checkdeps to beancount.scripts.deps (annoyed with
+    name too similar to beancount.scripts.check and I trip over it all the
+    time).
+
+  - Moved ledgerhub.core.compress to beancount.ops.compress and its associated
+    test.
+
+  - Moved ledgerhub.identify.filetype to beancount.utils.file_type and its
+    associated test and test files.
+
+  - Small improvement to beancount.utils.test_utils.skipIfRaises() to accept
+    multiple exceptions.
+
+
+2016-01-25
+
+  - Moved many of the utility code from ledgerhub.utils to beancount.utils. This
+    is beginning the process of migrating and rewriting LedgerHub and
+    integrating it into the Beancount source code.
+
+  - Moved the 'remove_crdb' utility script from LedgerHub into
+    beancount/experiments/imports.
+
+
+2016-01-18
+
+  - Committed the Query directive to non-experimental status, for
+    beancount-web's usage.
+
+
+2016-01-16
+
+  - Created the beancount.plugins.coherent_cost plugin which checks that one's
+    currencies are either always used with cost, or never at all. This is by far
+    the most typical situation whereby a currency is always held at cost, or
+    never (and perhaps converted at price or not).
+
+  - Created a function to filter just the transactions, which is such an
+    incredibly common operation I should have done this a while ago. I should
+    convert all code to use it.
+
+
+2016-01-16
+
+  - Added a feature to the "beancount.plugins.ira_contribs" plugin to allow the
+    further restriction that the trigger posting must include a particular flag
+    in order for the insertion to occur. This is to be used in account that have
+    sales, whereby just looking at the sign of the posting isn't enough to
+    decide that an insertion must be made.
+
+
+2016-01-10
+
+  - Addressed issue #96, supporting an explicitly installed C decimal version
+    when the Python3 installation does not include one. From
+    beancount.core.number:
+
+      Note: Python 3.3 is supposed to guarantee a fast "C" decimal implementation,
+      as it comes with its source code. However, in practice, many distributions,
+      including the popular Ubuntu distro, simply don't compile it. Other distros
+      (e.g., Arch Linux) insist on breaking up Python into multiple packages in
+      order to manage the dependency to the mpdec library, and make that
+      installation optional. Moreover, there seems to have been changes in the
+      dispatching of pure-Python and fast C decimal implementations in Python-3.5's
+      source code itself. The result is that despite Python-3.3 or above being
+      installed, a fast C decimal implementation may or may not be present. Thus, we
+      must detect it here. I believe this subtle problem should go away with
+      Python-3.5 and above.
+
+      What do we do? We import the default 'decimal' module, and if it's the pure
+      Python implementation, we attempt to import an explicitly installed
+      'cdecimal', which you can install with
+
+        pip3 install m3-cdecimal
+
+    Also added a check for this in checkdeps. Hopefully this resolves the issue
+    once and for all.
+
+
+2016-01-09
+
+  - Fixed a bug (issue #94) in the load cache that wouldn't handle files
+    disappearing after having been moved.
+
+
+2016-01-03
+
+  - Moved beancount.web.scrape.scrape() to beancount.web.web.scrape_webapp() to
+    isolate beancount.web.scrape from dependencies, so that other projects may
+    reuse it.
+
+
+2015-12-25
+
+  - Closed multiple obsolete branches: parse_test_utils, display_context,
+    performance, datatypes.
+
+  - Added some utilities for parsing strings for writing tests that use the
+    local variables present in the caller (a bit of magic).
+
+  - Improved date parsing from command-line options for some scripts; imported
+    from branch 'text_statements'.
+
+
+2015-12-24
+
+  - Implemented metadata stack and "pushmeta" and "popmeta" directives mirroring
+    "pushtag" and "poptag". These new directives work similarly, but setting
+    metadata fields instead of tags themselves. The parser maintains a stack of
+    values for each metadata field. Values explicitly set on the Transactions
+    themselves are not overridden by the meta stack.
+
+
+2015-12-21
+
+  - Created a new project script that uses specific metadata on Open directives
+    to generate a document of a user's assets, institution names, addresses and
+    contact info, and account types and approximate value. Note: I haven't made
+    the example file include necessary fields to demo or document this yet.
+
+  - The loader now supports loading encrypted files transparently. If a filename
+    ends with .gpg or .asc (and contains armored content), the file is run
+    through a gpg subprocess to decrypt it. No temporary files are created. Note
+    that caching for those files is disabled.
+
+    If you're writing a script, you can also call
+    beancount.loaded.load_encrypted_file() directly to avoid the check.
+
+  - Implemented the 'beancount.plugins.merge_meta' plugin that copies metadata
+    from an external file into a regular file. It is essentially a data join on
+    the key of accounts for Open and Close directives, and a join on the key of
+    currency on Commodity directives.
+
+  - Added an option to Inventory.to_string() to avoid rendering parentheses.
+
+  - Added variable and username expansion support for the loader filename.
+
+  - Removed --batch mode for the encryption support; it needs to be potentially
+    interactive.
+
+
+2015-12-17
+
+  - In prices, removed undocumented support for automatically extracting
+    Commodities with a "quote" metadata field. This had been used in times past
+    and had been brought in as legacy, but now neither the export code nor the prices
+    code use it. Vaccummed away.
+
+
 2015-12-13
 
   - Fixed a minor bug with the loader cache whereby errors weren't getting

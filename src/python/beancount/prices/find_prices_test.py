@@ -5,7 +5,6 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import datetime
 import types
 import unittest
-import pprint
 
 from beancount.prices import find_prices
 from beancount.prices.sources import google
@@ -26,7 +25,7 @@ class TestImportSource(unittest.TestCase):
 
     def test_import_source_invalid(self):
         with self.assertRaises(ImportError):
-            module = find_prices.import_source('non.existing.module')
+            find_prices.import_source('non.existing.module')
 
 
 class TestParseSource(unittest.TestCase):
@@ -44,6 +43,13 @@ class TestParseSource(unittest.TestCase):
     def test_source_valid(self):
         psource = find_prices.parse_single_source('google/NASDAQ:AAPL')
         self.assertEqual(PS(google, 'NASDAQ:AAPL', False), psource)
+
+        psource = find_prices.parse_single_source('yahoo/CNYUSD=X')
+        self.assertEqual(PS(yahoo, 'CNYUSD=X', False), psource)
+
+        # Make sure that an invalid name at the tail doesn't succeed.
+        with self.assertRaises(ValueError):
+            psource = find_prices.parse_single_source('yahoo/CNYUSD&X')
 
         psource = find_prices.parse_single_source('beancount.prices.sources.yahoo/AAPL')
         self.assertEqual(PS(yahoo, 'AAPL', False), psource)
@@ -119,6 +125,10 @@ class TestFromFile(unittest.TestCase):
           name: "iShares S&P 500 Index Fund (CAD Hedged)"
           quote: CAD
 
+        2010-01-01 commodity AMTKPTS
+          quote: USD
+          price: ""
+
         2015-02-06 *
           Assets:Cash                     1505.00 USD
           Assets:External                -1000.00 GBP @ 1.5050 USD
@@ -162,7 +172,7 @@ class TestFromFile(unittest.TestCase):
     def test_find_currencies_declared(self):
         currencies = find_prices.find_currencies_declared(self.entries, None)
         currencies2 = [(base, quote) for base, quote, _ in currencies]
-        self.assertEqual([('QQQ', 'USD'), ('XSP', 'CAD')], currencies2)
+        self.assertEqual([('QQQ', 'USD')], currencies2)
 
     def test_find_currencies_converted(self):
         currencies = find_prices.find_currencies_converted(self.entries, None)
