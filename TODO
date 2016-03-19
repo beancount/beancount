@@ -5,16 +5,15 @@ beancount: TODO
 
   - Finish writing the new doc, it's almost there.
 
-  - Provide the previous ledger as input to extract(), some people may want to
-    do per-account matching.
-
   - Create mixins for default account name and regexp matching on contents and
     replace aspects of compat with those. You don't need backwards
     compatibility, just a regexp matcher.
 
     * Create a ConfigImporterMixin + test
-    * Create a RegexpImporterMixin + test
     * Remove beancount.ingest.imporeters.compat + test.
+
+  - Provide the previous ledger as input to extract(), some people may want to
+    do per-account matching.
 
 
 ** PDF Importer
