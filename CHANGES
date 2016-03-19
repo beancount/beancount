@@ -4,6 +4,13 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-03-18
+
+  - Merged 'web_months' branch modified from changes originally submitted by
+    Dave Stephens, which implements a monthly view. You enter the monthly view
+    from the annual view.
+
+
 2016-03-14
 
   - Added META() and ENTRY_META() functions to the SQL shell to answer a
