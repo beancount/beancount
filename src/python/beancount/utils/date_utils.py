@@ -48,3 +48,20 @@ def render_ofx_date(dtime):
     """
     return '{}.{:03d}'.format(dtime.strftime('%Y%m%d%H%M%S'),
                               int(dtime.microsecond / 1000))
+
+
+def next_month(date):
+    """Compute the date at the beginning of the following month from the given date.
+
+    Args:
+      date: A datetime.date instance.
+    Returns:
+      A datetime.date instance, the first day of the month following 'date'.
+    """
+    # Compute the date at the beginning of the following month.
+    year = date.year
+    month = date.month + 1
+    if date.month == 12:
+        year += 1
+        month = 1
+    return datetime.date(year, month, 1)

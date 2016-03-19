@@ -1,5 +1,12 @@
 -*- mode: org -*-
 beancount: TODO
+* Web Months
+
+  - We need to deal with the tests taking too long in this branch. There needs
+    to be some testing - we cannot ignore all the monthly views - but it's just
+    way too long and some of the scraping tests still break somehow.
+
+
 * Ingest (LedgerHub)
 ** Merging into Beancount
 
