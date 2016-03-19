@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-03-19
+
+  - Centralized the <3.4 and >=3.4 support for Enum class into
+    beancount.utils.misc_utils.Enum.
+
+
 2016-03-18
 
   - Merged 'web_months' branch modified from changes originally submitted by

@@ -1577,6 +1577,12 @@ http://furius.ca/beancount/doc/proposal-inter
 
   - Remove negative number warning and __ setting
 
+  - In number and amount, there are deprecated sections.
+
+  - Remove deprecated options, those replaced.
+
+  - Remove Enum from misc_utils and commit to 3.5 and above.
+
 
 * Current / Misc / To Be Classified
 

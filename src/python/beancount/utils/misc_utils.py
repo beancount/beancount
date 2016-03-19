@@ -12,6 +12,16 @@ import contextlib
 from collections import defaultdict
 
 
+# Provide an Enum that will work across all of Python 3.x. Enum was introduced
+# at Python 3.4 only. This will eventually be deprecated.
+# pylint: disable=invalid-name
+try:
+    import enum
+    Enum = enum.Enum
+except ImportError:
+    Enum = object
+
+
 @contextlib.contextmanager
 def log_time(operation_name, log_timings, indent=0):
     """A context manager that times the block and logs it to info level.

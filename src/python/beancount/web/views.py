@@ -13,15 +13,7 @@ from beancount.utils import misc_utils
 from beancount.utils import date_utils
 
 
-# pylint: disable=invalid-name
-try:
-    import enum
-    Enum = enum.Enum
-except ImportError:
-    Enum = object
-
-
-class MonthNavigation(Enum):
+class MonthNavigation(misc_utils.Enum):
     NONE    = 0  # No monthly navigation.
     COMPACT = 1  # Compact combobox outgoing to monthly navigation.
     FULL    = 2  # Full rendering with single-click to each month.

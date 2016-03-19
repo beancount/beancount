@@ -62,24 +62,18 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import collections
 import io
 
-# pylint: disable=invalid-name
-try:
-    import enum
-    Enum = enum.Enum
-except ImportError:
-    Enum = object
-
 from beancount.core.number import Decimal
 from beancount.core import distribution
+from beancount.utils import misc_utils
 
 
-class Precision(Enum):
+class Precision(misc_utils.Enum):
     """The type of precision required."""
     MOST_COMMON = 1
     MAXIMUM = 2
 
 
-class Align(Enum):
+class Align(misc_utils.Enum):
     """Alignment style for numbers."""
     NATURAL = 1
     DOT = 2

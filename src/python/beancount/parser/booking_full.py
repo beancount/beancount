@@ -73,13 +73,6 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
 
-# pylint: disable=invalid-name
-try:
-    import enum
-    Enum = enum.Enum
-except ImportError:
-    Enum = object
-
 from beancount.core.number import MISSING
 from beancount.core.number import ZERO
 from beancount.core.data import Transaction
@@ -89,7 +82,7 @@ from beancount.core.position import Cost
 from beancount.core import position
 from beancount.core import inventory
 from beancount.core import interpolate
-
+from beancount.utils import misc_utils
 
 
 FullBookingError = collections.namedtuple('FullBookingError', 'source message entry')
@@ -450,8 +443,7 @@ def compute_cost_number(costspec, units_number):
 
 
 
-class MissingType(Enum):
-
+class MissingType(misc_utils.Enum):
     """The type of missing number."""
     UNITS      = 1
     COST_PER   = 2
