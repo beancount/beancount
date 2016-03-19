@@ -19,18 +19,20 @@ from beancount.ingest import importer
 class RegexpImporterMixin:
     """A mixin class which allows identification on a text representation.
 
-    Mix this into the implementatio of a importer.ImporterProtocol.
+    Mix this into the implementation of a importer.ImporterProtocol.
     """
 
     def __init__(self, regexps=None):
-        """Create a regexp identifying mixin.
+        """Provide regular expressions for identifying a file.
 
         Args:
           regexps: A list of regular expression strings.
         Raises:
           re.error: If some of the regular expressions are invalid.
         """
+        super().__init__(config)
         assert isinstance(regexps, (list, type(None)))
+
         self.regexps = [(regexp, re.compile(regexp, re.DOTALL))
                         for regexp in regexps]
 
