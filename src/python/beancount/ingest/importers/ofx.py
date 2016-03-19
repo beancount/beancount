@@ -30,12 +30,22 @@ from beancount.core import amount
 from beancount.core import data
 from beancount.core import position
 from beancount.ingest import importer
+from beancount.utils import misc_utils
+
+
+class BalanceType(misc_utils.Enum):
+    """Type of Balance directive to be inserted."""
+    NONE     = 0  # Don't insert a Balance directive.
+    DECLARED = 1  # Insert a Balance directive at the declared date.
+    LAST     = 2  # Insert a Balance directive at the date following the last
+                  # extracted transaction.
 
 
 class Importer(importer.ImporterProtocol):
     """An importer for Open Financial Exchange files."""
 
-    def __init__(self, acctid_regexp, account, basename=None):
+    def __init__(self, acctid_regexp, account, basename=None,
+                 balance_type=BalanceType.DECLARED):
         """Create a new importer posting to the given account.
 
         Args:
@@ -43,10 +53,12 @@ class Importer(importer.ImporterProtocol):
             amounts parsed.
           acctid_regexp: A regexp, to match against the <ACCTID> tag of the OFX file.
           basename: An optional string, the name of the new files.
+          balance_type: An enum of type BalanceType.
         """
         self.acctid_regexp = acctid_regexp
         self.account = account
         self.basename = basename
+        self.balance_type = balance_type
 
     def name(self):
         """Include the filing account in the name."""
@@ -78,10 +90,11 @@ class Importer(importer.ImporterProtocol):
     def extract(self, file):
         """Extract a list of partially complete transactions from the file."""
         soup = bs4.BeautifulSoup(file.contents(), 'lxml')
-        return extract(soup, file.name, self.acctid_regexp, self.account, self.FLAG)
+        return extract(soup, file.name, self.acctid_regexp, self.account, self.FLAG,
+                       self.balance_type)
 
 
-def extract(soup, filename, acctid_regexp, account, flag):
+def extract(soup, filename, acctid_regexp, account, flag, balance_type):
     """Extract transactions from an OFX file.
 
     Args:
@@ -89,6 +102,7 @@ def extract(soup, filename, acctid_regexp, account, flag):
       acctid_regexp: A regular expression string matching the account we're interested in.
       account: An account string onto which to post the amounts found in the file.
       flag: A single-character string.
+      balance_type: An enum of type BalanceType.
     Returns:
       A sorted list of entries.
     """
@@ -99,15 +113,24 @@ def extract(soup, filename, acctid_regexp, account, flag):
             continue
 
         # Create Transaction directives.
+        stmt_entries = []
         for stmttrn in transactions:
             entry = build_transaction(stmttrn, flag, account, currency)
             entry = entry._replace(meta=data.new_metadata(filename, next(counter)))
-            new_entries.append(entry)
+            stmt_entries.append(entry)
+        stmt_entries = data.sorted(stmt_entries)
+        new_entries.extend(stmt_entries)
 
         # Create a Balance directive.
-        if balance:
+        if balance and balance_type is not BalanceType.NONE:
             date, number = balance
+            if balance_type is BalanceType.LAST and stmt_entries:
+                date = stmt_entries[-1].date
+
+            # The Balance assertion occurs at the beginning of the date, so move
+            # it to the following day.
             date += datetime.timedelta(days=1)
+
             meta = data.new_metadata(filename, next(counter))
             balance_entry = data.Balance(meta, date, account,
                                          amount.Amount(number, currency),

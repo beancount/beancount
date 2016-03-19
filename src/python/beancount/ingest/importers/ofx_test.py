@@ -301,8 +301,9 @@ class TestOFXImporter(cmptest.TestCase):
             Liabilities:CreditCard  -13.93 EUR
         """, [entry])
 
-    def test_extract(self):
-        contents = clean_xml("""
+
+    def _extract_with_balance(self):
+        ofx_contents = clean_xml("""
           <OFX>
            <SIGNONMSGSRSV1>
             <SONRS>
@@ -434,10 +435,9 @@ class TestOFXImporter(cmptest.TestCase):
            </CREDITCARDMSGSRSV1>
           </OFX>
         """)
-        soup = bs4.BeautifulSoup(contents, 'lxml')
-        entries = ofx.extract(soup, 'test.ofx',
-                              '379700001111222', 'Liabilities:CreditCard', '*')
-        self.assertEqualEntries("""
+        soup = bs4.BeautifulSoup(ofx_contents, 'lxml')
+
+        entries, _, __ = parser.parse_string("""
 
           2013-11-24 * "PRUNE               NEW YORK / 7101466     RESTAURANT"
             Liabilities:CreditCard  -143.94 USD
@@ -448,6 +448,26 @@ class TestOFXImporter(cmptest.TestCase):
           2013-11-26 * "UNION MARKET -  HOUSNEW YORK / 47155       GROCERY STORE"
             Liabilities:CreditCard  -18.76 USD
 
-          2014-01-13 balance Liabilities:CreditCard            -2356.38 USD
+        """)
 
-        """, entries)
+        return soup, entries
+
+    def test_extract_with_balance_declared(self):
+        soup, exp_entries = self._extract_with_balance()
+        entries = ofx.extract(soup, 'test.ofx',
+                              '379700001111222', 'Liabilities:CreditCard', '*',
+                              ofx.BalanceType.DECLARED)
+        balance_entries, _, __ = parser.parse_string("""
+          2014-01-13 balance Liabilities:CreditCard            -2356.38 USD
+        """)
+        self.assertEqualEntries(exp_entries + balance_entries, entries)
+
+    def test_extract_with_balance_last(self):
+        soup, exp_entries = self._extract_with_balance()
+        entries = ofx.extract(soup, 'test.ofx',
+                              '379700001111222', 'Liabilities:CreditCard', '*',
+                              ofx.BalanceType.LAST)
+        balance_entries, _, __ = parser.parse_string("""
+          2013-11-27 balance Liabilities:CreditCard            -2356.38 USD
+        """)
+        self.assertEqualEntries(exp_entries + balance_entries, entries)

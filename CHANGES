@@ -9,6 +9,11 @@ Note: This file contains only changes in the 'default' branch.
   - Centralized the <3.4 and >=3.4 support for Enum class into
     beancount.utils.misc_utils.Enum.
 
+  - Added an option to the OFX importer to let the instantiator decides whether
+    a balance directive should not be inserted (NONE), should be inserted at the
+    declared date of a <ledgerbal> tag (DECLARED), or right after the last entry
+    imported from the file (LAST).
+
 
 2016-03-18
 
