@@ -9,7 +9,8 @@ from beancount.ingest import cache
 from beancount.utils import test_utils
 
 
-class SimpleTestImporter(regexp.RegexpImporterMixin, importer.ImporterProtocol):
+class SimpleTestImporter(regexp.RegexpImporterMixin,
+                         importer.ImporterProtocol):
     pass
 
 

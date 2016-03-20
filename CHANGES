@@ -4,6 +4,13 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-03-20
+
+  - Implemented beancount.ingest.importers.regexp and
+    beancount.ingest.importers.config mixin classes to help support
+    functionality which used to be available in LedgerHub.
+
+
 2016-03-19
 
   - Centralized the <3.4 and >=3.4 support for Enum class into

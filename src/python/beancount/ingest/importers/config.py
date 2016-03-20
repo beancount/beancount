@@ -34,7 +34,7 @@ class ConfigImporterMixin:
           config: A dict of configuration accounts, that must match the values
             declared in the class' REQUIRED_CONFIG.
         """
-        super().__init__(config)
+        super().__init__()
 
         # Check that the required configuration values are present.
         assert isinstance(config, dict), "Configuration must be a dict type"
@@ -63,7 +63,7 @@ class ConfigImporterMixin:
             success = False
 
         for option in (provided_options - required_options):
-            logging.error("Unknown value in user configuration for importer %s: %s"
+            logging.error("Unknown value in user configuration for importer %s: %s",
                           self.name(), option)
             success = False
 
@@ -72,4 +72,4 @@ class ConfigImporterMixin:
         return success
 
     def file_account(self, _):
-        return self.get_filing_account()
+        return self.config['FILE']

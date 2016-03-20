@@ -9,7 +9,6 @@ beancount: TODO
     replace aspects of compat with those. You don't need backwards
     compatibility, just a regexp matcher.
 
-    * Create a ConfigImporterMixin + test
     * Remove beancount.ingest.imporeters.compat + test.
 
   - Provide the previous ledger as input to extract(), some people may want to
