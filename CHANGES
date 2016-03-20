@@ -4,6 +4,27 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-03-20
+
+  - Implemented beancount.ingest.importers.regexp and
+    beancount.ingest.importers.config mixin classes to help support
+    functionality which used to be available in LedgerHub.
+
+  - Removed the temporary beancount.ingest.importers.compat
+    backwards-compatibility helper for LedgerHub. Not needed.
+
+
+2016-03-19
+
+  - Centralized the <3.4 and >=3.4 support for Enum class into
+    beancount.utils.misc_utils.Enum.
+
+  - Added an option to the OFX importer to let the instantiator decides whether
+    a balance directive should not be inserted (NONE), should be inserted at the
+    declared date of a <ledgerbal> tag (DECLARED), or right after the last entry
+    imported from the file (LAST).
+
+
 2016-03-18
 
   - Merged 'web_months' branch modified from changes originally submitted by

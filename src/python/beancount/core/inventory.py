@@ -51,16 +51,10 @@ from beancount.core.position import Cost
 from beancount.core.position import Position
 from beancount.core.position import from_string as position_from_string
 from beancount.core.display_context import DEFAULT_FORMATTER
-
-# pylint: disable=invalid-name
-try:
-    import enum
-    Enum = enum.Enum
-except ImportError:
-    Enum = object
+from beancount.utils import misc_utils
 
 
-class Booking(Enum):
+class Booking(misc_utils.Enum):
     """Result of booking a new lot to an existing inventory."""
     CREATED = 1   # A new lot was created.
     REDUCED = 2   # An existing lot was reduced.
