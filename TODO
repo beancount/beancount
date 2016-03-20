@@ -105,6 +105,9 @@ beancount: TODO
   - (Look for examples using C code that require headers, they must have a
     better solution than mine.)
 
+  - (Performance) Great idea for performance: Implement the cache for each file
+    separately. I could split my big file and only the bits which get edited
+    would have to be recomputed.
 
 
 * Event
