@@ -352,5 +352,5 @@ class TestScriptExtract(test_utils.TestTempdirMixin, unittest.TestCase):
         self.assertRegex(output, 'Income:US:UTrade:CSKO:Gains')
         self.assertRegex(output, '2016-02-08 balance Assets:US:UTrade:Cash .*4665.89 USD')
 
-        self.assertRegex(output, 'Downloads/acmebank.ofx')
+        self.assertRegex(output, 'Downloads/ofxdownload.ofx')
         self.assertRegex(output, r'2013-12-16 \* "LES CAFES 400 LAFAYENEW YORK /')

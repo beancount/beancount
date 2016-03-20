@@ -103,6 +103,6 @@ class TestScriptIdentify(scripts_utils.TestScriptsBase):
         self.assertRegex(output, 'Importer:.*importers.utrade.Importer')
         self.assertRegex(output, 'Account:.*Assets:US:UTrade')
 
-        self.assertRegex(output, 'Downloads/acmebank.ofx')
+        self.assertRegex(output, 'Downloads/ofxdownload.ofx')
         self.assertRegex(output, 'Importer:.*beancount.ingest.importers.ofx.Importer')
         self.assertRegex(output, 'Account:.*Liabilities:US:CreditCard')
