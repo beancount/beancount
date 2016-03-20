@@ -5,19 +5,11 @@ beancount: TODO
 
   - Finish writing the new doc, it's almost there.
 
-  - Create mixins for default account name and regexp matching on contents and
-    replace aspects of compat with those. You don't need backwards
-    compatibility, just a regexp matcher.
-
-    * Remove beancount.ingest.imporeters.compat + test.
-
-  - Provide the previous ledger as input to extract(), some people may want to
-    do per-account matching.
-
 
 ** PDF Importer
 
   - Create an example of filing a PDF file using PDFminer2.
+
 
 ** CSV Importer
 
@@ -93,6 +85,13 @@ beancount: TODO
     Given some incomplete transactions, complete them heuristically based on
     previous contents of the ledger. This should make import a lot easier. This
     should be generic and work across all importers, a single function call.
+
+  - Provide the previous ledger as input to extract(), some people may want to
+    do per-account matching. See Filippo's request on this, whereby he wants to
+    use the previous ledger's list of accounts to configure his importers. I
+    suggested he load the previous file explicitly (taking advantage of the
+    cache) in his configuration for now, but this is something I may want to
+    revisit in the future.
 
 
 * Misc

@@ -30,7 +30,7 @@ class RegexpImporterMixin:
         Raises:
           re.error: If some of the regular expressions are invalid.
         """
-        super().__init__(config)
+        super().__init__()
         assert isinstance(regexps, (list, type(None)))
 
         self.regexps = [(regexp, re.compile(regexp, re.DOTALL))

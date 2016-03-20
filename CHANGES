@@ -10,6 +10,9 @@ Note: This file contains only changes in the 'default' branch.
     beancount.ingest.importers.config mixin classes to help support
     functionality which used to be available in LedgerHub.
 
+  - Removed the temporary beancount.ingest.importers.compat
+    backwards-compatibility helper for LedgerHub. Not needed.
+
 
 2016-03-19
 

@@ -21,7 +21,6 @@ import unittest
 from os import path
 
 from beancount.ingest.importer import ImporterProtocol
-from beancount.ingest.importers import compat
 from beancount.parser import printer
 from beancount.utils import test_utils
 from beancount.ingest import extract
@@ -163,7 +162,7 @@ def find_input_files(directory):
             yield path.join(sroot, filename)
 
 
-def compare_sample_files(importer, directory=None):
+def compare_sample_files(importer, directory=None, ignore_cls=None):
     """Compare the sample files under a directory.
 
     Args:
@@ -171,10 +170,15 @@ def compare_sample_files(importer, directory=None):
       directory: A string, the directory to scour for sample files or a filename
           in that directory. If a directory is not provided, the directory of
           the file from which the importer class is defined is used.
+      ignore_cls: An optional base class of the importer whose methods should
+        not trigger the addition of a test. For example, if you are deriving
+        from a base class which is already well-tested, you may not want to have
+        a regression test case generated for those methods. This was used to
+        ignore methods provided from a common backwards compatibility support
+        class.
     Yields:
       Generated tests as per nose's requirements (a callable and arguments for
       it).
-
     """
     # If the directory is not specified, use the directory where the importer
     # class was defined.
@@ -189,13 +193,12 @@ def compare_sample_files(importer, directory=None):
         for name in ['extract',
                      'file_date',
                      'file_name']:
-            # Note: We have to compare against the protocol method name because
-            # there may be concrete inheritance and we want to run a test
-            # against that method when that's the case, even if defined in a
-            # base class.
+            # Check if the method has been overrriden from the protocol
+            # interface. If so, even if it's provided by concretely inherited
+            # method, we want to require a test against that method.
             func = getattr(importer, name).__func__
-            if not (func is getattr(ImporterProtocol, name) or
-                    func is getattr(compat.Importer, name)):
+            if (func is not getattr(ImporterProtocol, name) and
+                (ignore_cls is None or (func is not getattr(ignore_cls, name)))):
                 method = getattr(ImportFileTestCase(importer),
                                  'test_expect_{}'.format(name))
                 yield (method, filename, name)
