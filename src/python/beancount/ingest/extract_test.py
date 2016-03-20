@@ -335,7 +335,7 @@ class TestScriptExtract(test_utils.TestTempdirMixin, unittest.TestCase):
     def test_extract_examples(self):
         example_dir = path.join(
             test_utils.find_repository_root(__file__), 'examples', 'ingest')
-        config_filename = path.join(example_dir, 'example.import')
+        config_filename = path.join(example_dir, 'office', 'example.import')
         with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
             result = test_utils.run_with_args(extract.main, [
                 '--existing={}'.format(path.join(example_dir, 'example.beancount')),
