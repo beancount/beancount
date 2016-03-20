@@ -2,22 +2,145 @@
 ;; Example Beancount input file for the purpose of showing how to integrate
 ;; import scripts.
 
-
 ** General Expenses
 
-2014-04-01 open Equity:Opening-Balances
+2000-04-01 open Equity:Opening-Balances
 
-2014-04-14 open Expenses:Financial:Fees
+2000-01-01 open Expenses:Books
+2000-01-01 open Expenses:Communications:Phone
+2000-01-01 open Expenses:Food:Grocery
+2000-01-01 open Expenses:Food:Pharmacy
+2000-01-01 open Expenses:Food:Restaurant
+2000-01-01 open Expenses:Fun:Movie
+2000-01-01 open Expenses:Fun:Music
+2000-01-01 open Expenses:Financial:Fees
 
 
 
 ** BofA Checking Account
 
-2014-05-23 open Assets:US:BofA:Checking
+2013-10-01 open Assets:US:BofA:Checking
+
+
+** BofA Credit Card Account
+
+2013-10-01 open Liabilities:US:CreditCard
+
+2013-10-01 pad Liabilities:US:CreditCard Equity:Opening-Balances
+
+2013-10-26 * "DUANE READE #14354 0NEW YORK / 99999993299 8002892273"
+  Liabilities:US:CreditCard  -18.92 USD
+  Expenses:Food:Pharmacy
+
+2013-10-30 * "WHOLEFDS HOU 10236 02124201320 / 042902720262124201320"
+  Liabilities:US:CreditCard  -16.59 USD
+  Expenses:Food:Grocery
+
+2013-11-02 * "BARNES & NOBLE 2675 NEW YORK / 00001102    BOOK STORE"
+  Liabilities:US:CreditCard  -30.49 USD
+  Expenses:Books
+
+2013-11-04 * "UNION MARKET -  HOUSNEW YORK / 44692       GROCERY STORE"
+  Liabilities:US:CreditCard  -10.77 USD
+  Expenses:Food:Grocery
+
+2013-11-05 * "CULL AND PISTOL     NEW YORK / 85133313309 212-255-5672"
+  Liabilities:US:CreditCard  -18.45 USD
+  Expenses:Food:Restaurant
+
+2013-11-06 * "CAFETASIA - #2 88430NEW YORK / 4195        RESTAURANT"
+  Liabilities:US:CreditCard  -16.75 USD
+  Expenses:Food:Restaurant
+
+2013-11-08 * "EATALY NY           NEW YORK / 84988943312 212-229-2560"
+  Liabilities:US:CreditCard  -102.1 USD
+  Expenses:Food:Restaurant
+
+2013-11-09 * "WHOLEFDS HOU 10236 02124201320 / 042802720252124201320"
+  Liabilities:US:CreditCard  -10.72 USD
+  Expenses:Food:Grocery
+
+2013-11-09 * "UNION MARKET -  HOUSNEW YORK / 108039      GROCERY STORE"
+  Liabilities:US:CreditCard  -8.98 USD
+  Expenses:Food:Grocery
+
+2013-11-10 * "DUANE READE #14354 0NEW YORK / 99999993314 8002892273"
+  Liabilities:US:CreditCard  -14.68 USD
+  Expenses:Food:Pharmacy
+
+2013-11-10 * "WHOLEFDS HOU 10236 02124201320 / 042902720282124201320"
+  Liabilities:US:CreditCard  -15.9 USD
+  Expenses:Food:Grocery
+
+2013-11-11 * "AMAZON.COM          AMZN.COM/BI / YFTFUBNN1O6 MERCHANDISE"
+  Liabilities:US:CreditCard  -172.02 USD
+  Expenses:Books
+
+2013-11-11 * "CAFE MOGADOR 0048   NEW YORK / 960990      212-677-2226"
+  Liabilities:US:CreditCard  -30.09 USD
+  Expenses:Food:Restaurant
+
+2013-11-11 * "UNION MARKET -  HOUSNEW YORK / 108634      GROCERY STORE"
+  Liabilities:US:CreditCard  -15.46 USD
+  Expenses:Food:Grocery
+
+2013-11-12 * "LOBSTER JOINT 542929NEW YORK / 000224167   6468961200"
+  Liabilities:US:CreditCard  -21.51 USD
+  Expenses:Food:Restaurant
+
+2013-11-14 * "UNION MARKET -  HOUSNEW YORK / 12189       GROCERY STORE"
+  Liabilities:US:CreditCard  -22.55 USD
+  Expenses:Food:Grocery
+
+2013-11-21 * "JEFFREY'S 0252      NEW YORK / 0000000681  646-429-8383"
+  Liabilities:US:CreditCard  -29 USD
+  Expenses:Food:Restaurant
+
+2013-11-22 * "WHOLEFDS HOU 10236 02124201320 / 042102720272124201320"
+  Liabilities:US:CreditCard  -13.93 USD
+  Expenses:Food:Grocery
+
+2013-11-23 * "AMAZON.COM          AMZN.COM/BI / V7P27IJ69JX MERCHANDISE"
+  Liabilities:US:CreditCard  -54.99 USD
+  Expenses:Books
+
+2013-11-24 * "PRUNE               NEW YORK / 7101466     RESTAURANT"
+  Liabilities:US:CreditCard  -143.94 USD
+  Expenses:Food:Restaurant
+
+2013-11-25 * "TAKAHACHI RESTAURANTNEW YORK / 000451990   RESTAURANT"
+  Liabilities:US:CreditCard  -28.05 USD
+  Expenses:Food:Restaurant
+
+2013-11-26 * "UNION MARKET -  HOUSNEW YORK / 47155       GROCERY STORE"
+  Liabilities:US:CreditCard  -18.76 USD
+  Expenses:Food:Grocery
+
+2013-11-29 * "WHOLEFDS HOU 10236 02124201320 / 042802720282124201320"
+  Liabilities:US:CreditCard  -23.18 USD
+  Expenses:Food:Grocery
+
+2013-11-29 * "T-MOBILE RECURNG PMTT-MOBILE / 1070888371 828422957        98006"
+  Liabilities:US:CreditCard  -61.98 USD
+  Expenses:Communications:Phone
+
+2013-12-01 * "SPOTIFY USA         28770130901 / 2600720879  WWW.SPOTIFY.COM"
+  Liabilities:US:CreditCard  -9.99 USD
+  Expenses:Fun:Music
+
+2013-12-02 * "GOAT TOWN 1200000549NEW YORK / 071000163   2126873641"
+  Liabilities:US:CreditCard  -61.71 USD
+  Expenses:Food:Restaurant
+
+2013-12-02 * "AMC VILLAGE 7 #2110 NEW YORK / 12010365699 212-982-2116"
+  Liabilities:US:CreditCard  -17.75 USD
+  Expenses:Fun:Movie
+
+2013-12-04 balance Liabilities:US:CreditCard                       -2093.01 USD
 
 
 
-** UTrade Account
+** UTrade Investment Account
 
 2014-04-01 open Assets:US:UTrade:Cash
 
@@ -360,6 +483,7 @@
   Income:US:UTrade:CSKO:Dividend  -9.01 USD
 
 2015-12-04 balance Assets:US:UTrade:Cash                           4531.02 USD
+
 
 
 ;; NEW TRANSACTIONS NEED BE INSERTED HERE.
