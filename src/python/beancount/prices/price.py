@@ -30,7 +30,7 @@ UNKNOWN_CURRENCY = '?'
 
 
 # A cache for the prices.
-_cache = None
+_CACHE = None
 
 # Expiration for latest prices in the cache.
 DEFAULT_EXPIRATION = datetime.timedelta(seconds=30*60)  # 30 mins.
@@ -56,7 +56,7 @@ def fetch_cached_price(source, symbol, date):
       A SourcePrice instance.
     """
     time_now = now()
-    if _cache is None:
+    if _CACHE is None:
         # The cache is disabled; just call and return.
         result = (source.get_latest_price(symbol)
                   if date is None else
@@ -68,12 +68,12 @@ def fetch_cached_price(source, symbol, date):
         md5.update(str((type(source).__module__, symbol)).encode('utf-8'))
         key = md5.hexdigest()
         try:
-            time_created, result = _cache[key]
-            if (time_now - time_created) > _cache.expiration:
+            time_created, result = _CACHE[key]
+            if (time_now - time_created) > _CACHE.expiration:
                 raise KeyError
         except KeyError:
             result = source.get_latest_price(symbol)
-            _cache[key] = (time_now, result)
+            _CACHE[key] = (time_now, result)
     else:
         # The cache is enabled and we are asked to provide an old price. Assume
         # it doesn't change and return the cached value if at all available.
@@ -81,10 +81,10 @@ def fetch_cached_price(source, symbol, date):
         md5.update(str((type(source).__module__, symbol, date)).encode('utf-8'))
         key = md5.hexdigest()
         try:
-            _, result = _cache[key]
+            _, result = _CACHE[key]
         except KeyError:
             result = source.get_historical_price(symbol, date)
-            _cache[key] = (None, result)
+            _CACHE[key] = (None, result)
     return result
 
 
@@ -103,16 +103,16 @@ def setup_cache(cache_filename, clear_cache):
         logging.info('Using price cache at "{}" (with indefinite expiration)'.format(
             cache_filename))
 
-        global _cache
-        _cache = shelve.open(cache_filename)
-        _cache.expiration = DEFAULT_EXPIRATION
-        _cache.lock = threading.Lock()  # Note: 'shelve' is not thread-safe by itself.
+        global _CACHE
+        _CACHE = shelve.open(cache_filename)
+        _CACHE.expiration = DEFAULT_EXPIRATION
+        _CACHE.lock = threading.Lock()  # Note: 'shelve' is not thread-safe by itself.
 
 
 def reset_cache():
     """Reset the cache to its uninitialized state."""
-    global _cache
-    _cache = None
+    global _CACHE
+    _CACHE = None
 
 
 def fetch_price(dprice, swap_inverted=False):

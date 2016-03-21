@@ -98,6 +98,7 @@ def print_extracted_entries(importer, entries, file):
       file: A file object to write to.
     """
     # Print the filename and which modules matched.
+    # pylint: disable=invalid-name
     pr = lambda *args: print(*args, file=file)
     pr('')
 

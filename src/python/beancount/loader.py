@@ -276,8 +276,8 @@ def load_string(string, log_timings=None, log_errors=None, extra_validations=Non
     """
     if dedent:
         string = textwrap.dedent(string)
-    entries, errors, options_map =  _load([(string, False)], log_timings,
-                                          extra_validations, encoding)
+    entries, errors, options_map = _load([(string, False)], log_timings,
+                                         extra_validations, encoding)
     _log_errors(errors, log_errors)
     return entries, errors, options_map
 

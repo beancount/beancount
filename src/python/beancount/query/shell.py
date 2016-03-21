@@ -182,7 +182,8 @@ class DispatchingShell(cmd.Cmd):
                     value = self.vars[varname]
                     print('{}: {}'.format(varname, value), file=self.outfile)
                 except KeyError:
-                    print("Variable '{}' does not exist.".format(varname), file=self.outfile)
+                    print("Variable '{}' does not exist.".format(varname),
+                          file=self.outfile)
             elif len(components) == 2:
                 value = components[1]
                 try:
@@ -190,7 +191,8 @@ class DispatchingShell(cmd.Cmd):
                     self.vars[varname] = converted_value
                     print('{}: {}'.format(varname, converted_value), file=self.outfile)
                 except KeyError:
-                    print("Variable '{}' does not exist.".format(varname), file=self.outfile)
+                    print("Variable '{}' does not exist.".format(varname),
+                          file=self.outfile)
             else:
                 print("Invalid number of arguments.", file=self.outfile)
 
@@ -394,7 +396,8 @@ class BQLShell(DispatchingShell):
             # FIXME: Implement output to other formats; use 'formats' to dispatch.
             output_format = self.vars['format']
             if output_format != 'text':
-                print("Unsupported output format '{}'.".format(output_format), file=self.outfile)
+                print("Unsupported output format '{}'.".format(output_format),
+                      file=self.outfile)
 
             if self.outfile is sys.stdout:
                 with self.get_pager() as file:
@@ -444,6 +447,7 @@ class BQLShell(DispatchingShell):
         """
         Compile and print a compiled statement for debugging.
         """
+        # pylint: disable=invalid-name
         pr = lambda *args: print(*args, file=self.outfile)
         pr("Parsed statement:")
         pr("  {}".format(explain.statement))

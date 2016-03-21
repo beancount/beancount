@@ -75,7 +75,7 @@ def csv_tuple_reader(fileobj, **kw):
     reader = csv.reader(fileobj, **kw)
     ireader = iter(reader)
     fieldnames = csv_clean_header(next(ireader))
-    Tuple = collections.namedtuple('Row', fieldnames)
+    Tuple = collections.namedtuple('Row', fieldnames) # pylint: disable=invalid-name
     for row in ireader:
         try:
             yield Tuple(*row)

@@ -46,7 +46,7 @@ class TestDups(cmptest.TestCase):
               Expenses:Taxi         1.09 USD
               Assets:Other
         """
-        new_entries, _ ,__ = loader.load_string("""
+        new_entries, _, __ = loader.load_string("""
             plugin "beancount.plugins.auto_accounts"
 
             2016-01-06 *

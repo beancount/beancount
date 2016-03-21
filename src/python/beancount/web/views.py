@@ -14,9 +14,9 @@ from beancount.utils import date_utils
 
 
 class MonthNavigation(misc_utils.Enum):
-    NONE    = 0  # No monthly navigation.
-    COMPACT = 1  # Compact combobox outgoing to monthly navigation.
-    FULL    = 2  # Full rendering with single-click to each month.
+    NONE = 0    # No monthly navigation.
+    COMPACT = 1 # Compact combobox outgoing to monthly navigation.
+    FULL = 2    # Full rendering with single-click to each month.
 
 
 class View:

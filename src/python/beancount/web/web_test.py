@@ -14,7 +14,11 @@ class TestWeb(unittest.TestCase):
     #
     # Components views... well there are just too many, makes the tests
     # impossibly slow. Just keep the A's so some are covered for testing.
-    ignore_regexp = r'^(/context/|/view/component/[^A]|/view/year/\d+/month/[^1][^0]|.*/doc/)'
+    ignore_regexp = r'^({})'.format('|'.join([
+        '/context/',
+        '/view/component/[^A]',
+        '/view/year/\d+/month/[^1][^0]',
+        '.*/doc/']))
 
     def check_page_okay(self, url, response, _, __, ___):
         self.assertIn(response.status, (200, 202),

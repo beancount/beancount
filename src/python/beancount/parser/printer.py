@@ -305,7 +305,8 @@ class EntryPrinter:
             elif isinstance(value, amount.Amount):
                 value = value.to_string()
             custom_values.append(value)
-        oss.write('{e.date} custom "{e.type}" {}\n'.format(" ".join(custom_values), e=entry))
+        oss.write('{e.date} custom "{e.type}" {}\n'.format(" ".join(custom_values),
+                                                           e=entry))
         self.write_metadata(entry.meta, oss)
 
 

@@ -200,7 +200,7 @@ def file(importer_config,
             has_errors = True
             continue
 
-        jobs.append( (filename, new_fullname) )
+        jobs.append((filename, new_fullname))
 
     # If there are any errors, just don't do anything at all. This is a nicer
     # behaviour than moving just *some* files.

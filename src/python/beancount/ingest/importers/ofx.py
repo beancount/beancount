@@ -34,10 +34,10 @@ from beancount.utils import misc_utils
 
 class BalanceType(misc_utils.Enum):
     """Type of Balance directive to be inserted."""
-    NONE     = 0  # Don't insert a Balance directive.
-    DECLARED = 1  # Insert a Balance directive at the declared date.
-    LAST     = 2  # Insert a Balance directive at the date following the last
-                  # extracted transaction.
+    NONE = 0     # Don't insert a Balance directive.
+    DECLARED = 1 # Insert a Balance directive at the declared date.
+    LAST = 2     # Insert a Balance directive at the date following the last
+                 # extracted transaction.
 
 
 class Importer(importer.ImporterProtocol):

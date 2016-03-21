@@ -205,21 +205,21 @@ check-author:
 
 # Run the linter on all source code.
 #LINT_PASS=line-too-long,bad-whitespace,bad-continuation,bad-indentation
-LINT_PASS=line-too-long,bad-whitespace,bad-indentation,unused-import,invalid-name,reimported
+LINT_PASS=line-too-long,bad-whitespace,bad-indentation,unused-import,invalid-name,reimported,max-line-length
 LINT_FAIL=bad-continuation
 
 
 pylint-pass:
-	pylint --rcfile=$(PWD)/etc/pylintrc --disable=all --enable=$(LINT_PASS) $(SRC)
+	pylint --rcfile=$(PWD)/etc/pylintrc --disable=all --enable=$(LINT_PASS) $(SRC)/beancount
 
 pylint-fail:
-	pylint --rcfile=$(PWD)/etc/pylintrc --disable=all --enable=$(LINT_FAIL) $(SRC)
+	pylint --rcfile=$(PWD)/etc/pylintrc --disable=all --enable=$(LINT_FAIL) $(SRC)/beancount
 
 pylint-all:
-	pylint --rcfile=$(PWD)/etc/pylintrc $(SRC)
+	pylint --rcfile=$(PWD)/etc/pylintrc $(SRC)/beancount
 
 pyflakes:
-	pyflakes $(SRC)
+	pyflakes $(SRC)/beancount
 
 # Run all currently configured linter checks.
 pylint lint: pylint-pass

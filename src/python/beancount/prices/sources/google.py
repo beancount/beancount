@@ -77,10 +77,10 @@ class Source(source.Source):
         metadata = {}
         lines = data.splitlines()
         for index, line in enumerate(lines):
-            mo = re.match('([A-Z_+]+)=(.*)$', line)
-            if not mo:
+            match = re.match('([A-Z_+]+)=(.*)$', line)
+            if not match:
                 break
-            metadata[mo.group(1)] = mo.group(2)
+            metadata[match.group(1)] = match.group(2)
         else:
             # No data was found.
             return None
@@ -92,9 +92,9 @@ class Source(source.Source):
                 continue
             time_str, price_str = line.split(',')
 
-            mo = re.match('a(\d+)', time_str)
-            if mo:
-                time_marker = datetime.datetime.fromtimestamp(int(mo.group(1)))
+            match = re.match('a(\d+)', time_str)
+            if match:
+                time_marker = datetime.datetime.fromtimestamp(int(match.group(1)))
                 time = time_marker
             else:
                 seconds = int(time_str) * interval

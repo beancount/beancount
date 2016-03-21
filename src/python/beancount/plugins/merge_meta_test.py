@@ -7,6 +7,7 @@ from beancount import loader
 from beancount.parser import cmptest
 
 
+# pylint: disable=invalid-name
 TmpFile = tempfile.NamedTemporaryFile
 
 
