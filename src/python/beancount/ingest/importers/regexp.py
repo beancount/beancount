@@ -9,11 +9,7 @@ regular expressions.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import logging
 import re
-
-from beancount.ingest import cache
-from beancount.ingest import importer
 
 
 class RegexpImporterMixin:
