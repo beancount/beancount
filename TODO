@@ -3,10 +3,10 @@ beancount: TODO
 * Ingest (LedgerHub)
 ** Merging into Beancount
 
-  - Finish writing the new doc, it's almost there.
+  - Add a unit test to check that clobbering existing files is prevented.
 
-  - If a file clobbers and existing one, mutate the name of the destination
-    file; right now they clobber on top of each other, that's a bug.
+  - Two downloaded files with the same destination names clobber each other;
+    this is a BUG, mutate the name of the destination file.
 
 
 ** PDF Importer

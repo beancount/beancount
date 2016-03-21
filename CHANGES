@@ -13,6 +13,10 @@ Note: This file contains only changes in the 'default' branch.
   - Removed the temporary beancount.ingest.importers.compat
     backwards-compatibility helper for LedgerHub. Not needed.
 
+  - Completed the documentation for the new import framework "beancount.ingest".
+    The document is here:
+    http://furius.ca/beancount/doc/ingest
+
 
 2016-03-19
 

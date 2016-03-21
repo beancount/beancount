@@ -14,7 +14,7 @@ Extract transactions from the files in Download/:
   bean-extract -e example.beancount example.import ../Downloads/
 
 
-File the files from Download/ under document/ (you can run the last command
+File the files from Download/ under documents/ (you can run the last command
 without moving the files using the -n/--dry-run option):
 
   bean-file example.import ../Downloads/ -o documents/
