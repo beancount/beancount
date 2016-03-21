@@ -2,10 +2,12 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 from os import path
 from unittest import mock
+import copy
 import re
 import os
 import logging
 import datetime
+import shutil
 
 from beancount.utils import test_utils
 from beancount.utils import file_utils
@@ -212,6 +214,41 @@ class TestScriptFile(scripts_utils.TestScriptsBase, test_utils.TestCase):
         file.file([imp], path.join(self.downloads, 'ofxdownload.ofx'), self.documents,
                   overwrite=True)
         self.assertEqual(1, move_mock.call_count)
+        self.assertEqual(0, error_mock.call_count)
+
+    @mock.patch.object(logging, 'error')
+    @mock.patch.object(file, 'move_xdev_file')
+    def test_file__collision_in_renamed_files(self, move_mock, error_mock):
+        destination = path.join(self.documents, 'Assets', 'Account1')
+        os.makedirs(destination)
+
+        # Make two different files with the same contents.
+        file1 = path.join(self.downloads, 'ofxdownload.ofx')
+        file2 = path.join(self.downloads, 'ofxdownload2.ofx')
+        shutil.copyfile(file1, file2)
+
+        # The importer matches both files, and attempts to move them to the same
+        # destination filename; an error should be generated.
+        date = datetime.date(2015, 1, 2)
+        imp = mock.MagicMock()
+        imp.identify = mock.MagicMock(return_value=True)
+        imp.file_account = mock.MagicMock(return_value='Assets:Account1')
+        imp.file_date = mock.MagicMock(return_value=date)
+        imp.file_name = mock.MagicMock(return_value='mybank')
+        file.file([imp], [file1, file2], self.documents)
+        self.assertEqual(0, move_mock.call_count)
+        self.assertEqual(1, error_mock.call_count)
+        self.assertTrue(all(re.match('Collision in destination filenames', call[1][0])
+                            for call in error_mock.mock_calls))
+
+        move_mock.reset_mock()
+        error_mock.reset_mock()
+
+        # Test the case where the importer generates two distinct filenames via
+        # file_name() while we're at it.
+        imp.file_name = mock.MagicMock(side_effect=['bank1', 'bank2'])
+        file.file([imp], [file1, file2], self.documents)
+        self.assertEqual(2, move_mock.call_count)
         self.assertEqual(0, error_mock.call_count)
 
     @mock.patch.object(logging, 'error')

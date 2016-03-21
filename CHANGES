@@ -4,6 +4,13 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-03-21
+
+  - Fixed bug in beancount.ingest.file whereby two files being filed to the same
+    destination filename would clobber each other; with this fix, instead, an
+    error will be generated.
+
+
 2016-03-20
 
   - Implemented beancount.ingest.importers.regexp and

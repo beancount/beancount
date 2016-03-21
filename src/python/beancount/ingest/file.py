@@ -7,6 +7,7 @@ corresponding to the filing directory.
 __author__ = "Martin Blais <blais@furius.ca>"
 
 from os import path
+import collections
 import datetime
 import logging
 import os
@@ -201,6 +202,17 @@ def file(importer_config,
             continue
 
         jobs.append((filename, new_fullname))
+
+    # Check if any two imported files would be colliding in their destination
+    # name, before we move anything.
+    destmap = collections.defaultdict(list)
+    for src, dest in jobs:
+        destmap[dest].append(src)
+    for dest, sources in destmap.items():
+        if len(sources) != 1:
+            logging.error("Collision in destination filenames '{}': from {}.".format(
+                dest, ", ".join(["'{}'".format(source) for source in sources])))
+            has_errors = True
 
     # If there are any errors, just don't do anything at all. This is a nicer
     # behaviour than moving just *some* files.
