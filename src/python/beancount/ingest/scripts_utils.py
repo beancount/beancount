@@ -144,6 +144,6 @@ class TestScriptsBase(test_utils.TestTempdirMixin, unittest.TestCase):
         super().setUp()
         for filename, contents in self.FILES.items():
             absname = path.join(self.tempdir, filename)
-            os.makedirs(path.dirname(absname), exist_ok= True)
+            os.makedirs(path.dirname(absname), exist_ok=True)
             with open(absname, 'w') as file:
                 file.write(contents)

@@ -2340,7 +2340,8 @@ class TestIncompleteInputs(cmptest.TestCase):
             Assets:Account2     120.00 USD
         """
         posting = entries[-1].postings[0]
-        self.assertEqual(CostSpec(D('150'), MISSING, 'USD', None, None, False), posting.cost)
+        self.assertEqual(CostSpec(D('150'), MISSING, 'USD', None, None, False),
+                         posting.cost)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_cost_no_number_total(self, entries, _, options_map):

@@ -185,6 +185,7 @@ def do_deps(*unused_args):
     print('Use "pip3 install <package>" to install new packages.')
 
 # Alias old name.
+# pylint: disable=invalid-name
 do_checkdeps = do_deps
 
 

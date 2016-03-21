@@ -12,6 +12,7 @@ be included in the document rendered by this script.
 """
 __author__ = 'Martin Blais <blais@furius.ca>'
 
+import argparse
 import collections
 import logging
 import io
@@ -302,7 +303,6 @@ def format_xhtml_table(items, klass='fields'):
 
 
 def main():
-    import argparse, logging
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
     parser = argparse.ArgumentParser(description=__doc__.strip())
     parser.add_argument('filename', help='Beancount input filename')

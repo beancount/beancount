@@ -24,7 +24,7 @@ try:
     if not hasattr(magic, 'from_file'):
         warnings.warn("You have installed 'filemagic' instead of 'python-magic'; "
                       "disabling.")
-        magic = None
+        magic = None # pylint: disable=invalid-name
 except ImportError:
     magic = None
 

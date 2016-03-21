@@ -107,7 +107,7 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
         for entry in entries:
             groups, errors = booking_full.categorize_by_currency(entry, {})
             self.assertFalse(errors)
-            self.assertEqual({'USD': {0,1}}, indexes(groups))
+            self.assertEqual({'USD': {0, 1}}, indexes(groups))
 
     @parser.parse_doc(allow_incomplete=True)
     def test_categorize__units__ambiguous(self, entries, _, options_map):
@@ -124,12 +124,12 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
         """
         groups, errors = booking_full.categorize_by_currency(entries[0], {})
         self.assertFalse(errors)
-        self.assertEqual({'USD': {0,1}}, indexes(groups))
+        self.assertEqual({'USD': {0, 1}}, indexes(groups))
 
         groups, errors = booking_full.categorize_by_currency(
             entries[1], {'Assets:Account': I('1.00 USD')})
         self.assertFalse(errors)
-        self.assertEqual({'USD': {0,1}}, indexes(groups))
+        self.assertEqual({'USD': {0, 1}}, indexes(groups))
         groups, errors = booking_full.categorize_by_currency(
             entries[1], {})
         self.assertTrue(errors)
@@ -149,17 +149,17 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
         """
         groups, errors = booking_full.categorize_by_currency(entries[0], {})
         self.assertFalse(errors)
-        self.assertEqual({'CAD': {0,1}}, indexes(groups))
+        self.assertEqual({'CAD': {0, 1}}, indexes(groups))
 
         groups, errors = booking_full.categorize_by_currency(
             entries[1], {'Assets:Account': I('1.00 USD')})
         self.assertFalse(errors)
-        self.assertEqual({'CAD': {0,1}}, indexes(groups))
+        self.assertEqual({'CAD': {0, 1}}, indexes(groups))
         groups, errors = booking_full.categorize_by_currency(
             entries[1], {})
         self.assertTrue(errors)
         self.assertRegexpMatches(errors[0].message, 'Could not resolve units currency')
-        self.assertEqual({'CAD': {0,1}}, indexes(groups))
+        self.assertEqual({'CAD': {0, 1}}, indexes(groups))
 
     @parser.parse_doc(allow_incomplete=True)
     def test_categorize__units_price__ambiguous(self, entries, _, options_map):
@@ -185,16 +185,16 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
         """
         groups, errors = booking_full.categorize_by_currency(entries[0], {})
         self.assertFalse(errors)
-        self.assertEqual({'CAD': {0,1}}, indexes(groups))
+        self.assertEqual({'CAD': {0, 1}}, indexes(groups))
 
         groups, errors = booking_full.categorize_by_currency(
             entries[1], {'Assets:Account': I('1.00 USD')})
         self.assertFalse(errors)
-        self.assertEqual({'CAD': {0,1}}, indexes(groups))
+        self.assertEqual({'CAD': {0, 1}}, indexes(groups))
         groups, errors = booking_full.categorize_by_currency(entries[1], {})
         self.assertTrue(errors)
         self.assertRegexpMatches(errors[0].message, 'Could not resolve units currency')
-        self.assertEqual({'CAD': {0,1}}, indexes(groups))
+        self.assertEqual({'CAD': {0, 1}}, indexes(groups))
 
         for i in 2, 3:
             groups, errors = booking_full.categorize_by_currency(entries[i], {})
@@ -215,16 +215,16 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
         """
         groups, errors = booking_full.categorize_by_currency(entries[0], {})
         self.assertFalse(errors)
-        self.assertEqual({'USD': {0,1}}, indexes(groups))
+        self.assertEqual({'USD': {0, 1}}, indexes(groups))
 
         groups, errors = booking_full.categorize_by_currency(
             entries[1], {'Assets:Account': I('1 HOOL {1.00 USD}')})
         self.assertFalse(errors)
-        self.assertEqual({'USD': {0,1}}, indexes(groups))
+        self.assertEqual({'USD': {0, 1}}, indexes(groups))
         groups, errors = booking_full.categorize_by_currency(entries[1], {})
         self.assertTrue(errors)
         self.assertRegexpMatches(errors[0].message, 'Could not resolve units currency')
-        self.assertEqual({'USD': {0,1}}, indexes(groups))
+        self.assertEqual({'USD': {0, 1}}, indexes(groups))
 
     @parser.parse_doc(allow_incomplete=True)
     def test_categorize__units_cost__ambiguous(self, entries, _, options_map):
@@ -250,22 +250,22 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
         """
         groups, errors = booking_full.categorize_by_currency(entries[0], {})
         self.assertFalse(errors)
-        self.assertEqual({'USD': {0,1}}, indexes(groups))
+        self.assertEqual({'USD': {0, 1}}, indexes(groups))
 
         groups, errors = booking_full.categorize_by_currency(
             entries[1], {'Assets:Account': I('1 HOOL {1.00 USD}')})
         self.assertFalse(errors)
-        self.assertEqual({'USD': {0,1}}, indexes(groups))
+        self.assertEqual({'USD': {0, 1}}, indexes(groups))
         groups, errors = booking_full.categorize_by_currency(entries[1], {})
         self.assertTrue(errors)
         self.assertRegexpMatches(errors[0].message, 'Could not resolve units currency')
-        self.assertEqual({'USD': {0,1}}, indexes(groups))
+        self.assertEqual({'USD': {0, 1}}, indexes(groups))
 
         for i in 2, 3:
             groups, errors = booking_full.categorize_by_currency(
                 entries[i], {'Assets:Account': I('1 HOOL {1.00 USD}')})
             self.assertFalse(errors)
-            self.assertEqual({'USD': {0,1}}, indexes(groups))
+            self.assertEqual({'USD': {0, 1}}, indexes(groups))
             groups, errors = booking_full.categorize_by_currency(
                 entries[i], {})
             self.assertEqual(1, len(errors))
@@ -302,13 +302,13 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
         for i in 0, 2, 4:
             groups, errors = booking_full.categorize_by_currency(entries[i], {})
             self.assertFalse(errors)
-            self.assertEqual({'USD': {0,1}}, indexes(groups))
+            self.assertEqual({'USD': {0, 1}}, indexes(groups))
 
         for i in 1, 3, 5:
             groups, errors = booking_full.categorize_by_currency(entries[i], {})
             self.assertEqual(1, len(errors))
             self.assertRegexpMatches(errors[0].message, 'Could not resolve units currency')
-            self.assertEqual({'USD': {0,1}}, indexes(groups))
+            self.assertEqual({'USD': {0, 1}}, indexes(groups))
 
     @parser.parse_doc(allow_incomplete=True)
     def test_categorize__units_cost_price__ambiguous(self, entries, _, options_map):
@@ -333,18 +333,18 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
         """
         groups, errors = booking_full.categorize_by_currency(entries[0], {})
         self.assertFalse(errors)
-        self.assertEqual({'USD': {0,1}}, indexes(groups))
+        self.assertEqual({'USD': {0, 1}}, indexes(groups))
 
         groups, errors = booking_full.categorize_by_currency(entries[1], {})
         self.assertTrue(errors)
         self.assertRegexpMatches(errors[0].message, 'Could not resolve units currency')
-        self.assertEqual({'USD': {0,1}}, indexes(groups))
+        self.assertEqual({'USD': {0, 1}}, indexes(groups))
 
         for i in 2, 3:
             groups, errors = booking_full.categorize_by_currency(
                 entries[i], {'Assets:Account': I('1 HOOL {1.00 USD}')})
             self.assertFalse(errors)
-            self.assertEqual({'USD': {0,1}}, indexes(groups))
+            self.assertEqual({'USD': {0, 1}}, indexes(groups))
             groups, errors = booking_full.categorize_by_currency(
                 entries[i], {})
             self.assertTrue(errors)
@@ -361,7 +361,7 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
         """
         groups, errors = booking_full.categorize_by_currency(entries[0], {})
         self.assertFalse(errors)
-        self.assertEqual({'USD': {0,2}, 'CAD': {1,2}}, indexes(groups))
+        self.assertEqual({'USD': {0, 2}, 'CAD': {1, 2}}, indexes(groups))
 
     @parser.parse_doc(allow_incomplete=True)
     def test_categorize__redundant_auto_postings(self, entries, _, options_map):
@@ -497,10 +497,10 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
             # Print out infos for troubleshooting.
             if debug:
                 print()
-                for p in new_postings:
-                    print(p)
-                for e in errors:
-                    print(e)
+                for posting in new_postings:
+                    print(posting)
+                for error in errors:
+                    print(error)
                 print()
 
             # Check the expectation on interpolation.
@@ -545,13 +545,14 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
             'USD': (False, None, ["Too many missing numbers for currency group"])})
 
     @parser.parse_doc(allow_incomplete=True)
-    def test_incomplete_impossible_twomiss_diff_cost_and_units(self, entries, _, options_map):
+    def test_incomplete_impossible_twomiss_diff_cost_and_units(self,
+                                                               entries, _, options_map):
         """
         2015-10-02 *
           Assets:Account   2 HOOL {USD}
           Assets:Other            USD
         """
-        self.check(entries[0],{
+        self.check(entries[0], {
             'USD': (False, None, ["Too many missing numbers for currency group"])})
 
     @parser.parse_doc(allow_incomplete=True)
@@ -813,7 +814,8 @@ class TestBooking(unittest.TestCase):
           Assets:Other     -1000.00 USD
         """
         # Check that these augmenting legs aren't being touched.
-        for balances in {}, {'Assets:Account': inventory.from_string('10 HOOL {99.00 USD}')}:
+        for balances in {}, {'Assets:Account':
+                             inventory.from_string('10 HOOL {99.00 USD}')}:
             self.book(entries[0], balances, [
                 position.CostSpec(D('100.00'), None, 'USD', None, None, False),
                 None])
@@ -843,7 +845,8 @@ __incomplete__ = True
 class TestFullBooking1(cmptest.TestCase):
 
     @parser.parse_doc()
-    def __test_categorize_by_currency__ambiguous_cost_no_choice(self, ientries, _, options_map):
+    def __test_categorize_by_currency__ambiguous_cost_no_choice(self,
+                                                                ientries, _, options_map):
         """
         ;; Pick the USD lot, because that's all there is in the inventory
         2015-01-01 *
@@ -856,7 +859,8 @@ class TestFullBooking1(cmptest.TestCase):
         self.assertFalse(free)
 
     @parser.parse_doc()
-    def __test_categorize_by_currency__ambiguous_cost_choose_lot(self, ientries, _, options_map):
+    def __test_categorize_by_currency__ambiguous_cost_choose_lot(self,
+                                                                 ientries, _, options_map):
         """
         ;; This should know to pick the USD leg because that's the only currency
         2015-01-01 *
@@ -868,7 +872,8 @@ class TestFullBooking1(cmptest.TestCase):
                                             '1 HOOL {100 CAD}')})
 
     @parser.parse_doc()
-    def __test_categorize_by_currency__ambiguous_cost_choose_ccy(self, ientries, _, options_map):
+    def __test_categorize_by_currency__ambiguous_cost_choose_ccy(self,
+                                                                 ientries, _, options_map):
         """
         ;; Pick the USD lot, because that's all there is in the inventory
         2015-01-01 *
@@ -880,7 +885,8 @@ class TestFullBooking1(cmptest.TestCase):
             ientries[0].postings, {'USD': I('1 HOOL {100 USD}')})
 
     @parser.parse_doc()
-    def __test_categorize_by_currency__ambiguous_cost_with_bal(self, ientries, _, options_map):
+    def __test_categorize_by_currency__ambiguous_cost_with_bal(self,
+                                                               ientries, _, options_map):
         """
         ;; This should know to pick the USD leg because that's the only that doesn't already
         ;; balance from the other postings.

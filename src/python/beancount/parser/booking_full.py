@@ -302,7 +302,7 @@ def categorize_by_currency(entry, balances):
     # if we used the cost or price to bucket the currency but the units currency
     # was missing.
     for currency, refers in groups.items():
-        for ri, refer in enumerate(refers):
+        for rindex, refer in enumerate(refers):
             if refer.units_currency is MISSING:
                 posting = entry.postings[refer.index]
                 balance = balances.get(posting.account, None)
@@ -310,7 +310,7 @@ def categorize_by_currency(entry, balances):
                     continue
                 balance_currencies = balance.currencies()
                 if len(balance_currencies) == 1:
-                    refers[ri] = refer._replace(units_currency=balance_currencies.pop())
+                    refers[rindex] = refer._replace(units_currency=balance_currencies.pop())
 
     # Deal with auto-postings.
     if len(auto_postings) > 1:
@@ -445,10 +445,10 @@ def compute_cost_number(costspec, units_number):
 
 class MissingType(misc_utils.Enum):
     """The type of missing number."""
-    UNITS      = 1
-    COST_PER   = 2
+    UNITS = 1
+    COST_PER = 2
     COST_TOTAL = 3
-    PRICE      = 4
+    PRICE = 4
 
 
 # An error raised if we are not able to interpolate.
@@ -555,8 +555,8 @@ def interpolate_group(postings, balances, currency):
                     "Internal error; residual currency different than missing currency.")
                 units_number = weight
             new_pos = Position(Amount(units_number, units.currency), cost)
-            new_posting  = incomplete_posting._replace(units=new_pos.units,
-                                                       cost=new_pos.cost)
+            new_posting = incomplete_posting._replace(units=new_pos.units,
+                                                      cost=new_pos.cost)
 
         elif missing == MissingType.COST_PER:
             units = incomplete_posting.units
@@ -566,8 +566,8 @@ def interpolate_group(postings, balances, currency):
             number_per = (weight - (cost.number_total or ZERO)) / units.number
             new_cost = cost._replace(number_per=number_per)
             new_pos = Position(units, new_cost)
-            new_posting  = incomplete_posting._replace(units=new_pos.units,
-                                                       cost=new_pos.cost)
+            new_posting = incomplete_posting._replace(units=new_pos.units,
+                                                      cost=new_pos.cost)
 
         elif missing == MissingType.COST_TOTAL:
             units = incomplete_posting.units
@@ -577,8 +577,8 @@ def interpolate_group(postings, balances, currency):
             number_total = (weight - cost.number_per * units.number)
             new_cost = cost._replace(number_total=number_total)
             new_pos = Position(units, new_cost)
-            new_posting  = incomplete_posting._replace(units=new_pos.units,
-                                                       cost=new_pos.cost)
+            new_posting = incomplete_posting._replace(units=new_pos.units,
+                                                      cost=new_pos.cost)
 
         elif missing == MissingType.PRICE:
             units = incomplete_posting.units
@@ -593,8 +593,8 @@ def interpolate_group(postings, balances, currency):
                 assert price.currency == weight_currency, (
                     "Internal error; residual currency different than missing currency.")
                 new_price_number = abs(units.number / weight)
-                new_posting  = incomplete_posting._replace(price=Amount(new_price_number,
-                                                                        price.currency))
+                new_posting = incomplete_posting._replace(price=Amount(new_price_number,
+                                                                       price.currency))
 
         else:
             assert False, "Internal error; Invalid missing type."

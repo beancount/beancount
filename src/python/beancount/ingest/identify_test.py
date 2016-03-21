@@ -32,7 +32,7 @@ class TestScriptIdentifyFunctions(test_utils.TestTempdirMixin, unittest.TestCase
 
         imp1a = _TestImporter(file1)
         imp1b = _TestImporter(file1)
-        imp2  = _TestImporter(file2)
+        imp2 = _TestImporter(file2)
 
         config = [imp1a, imp1b, imp2]
         imports = list(identify.find_imports(config, self.tempdir))
@@ -45,10 +45,10 @@ class TestScriptIdentifyFunctions(test_utils.TestTempdirMixin, unittest.TestCase
     def test_find_imports__file_too_large(self):
         file1 = path.join(self.tempdir, 'file1.test')
         file2 = path.join(self.tempdir, 'file2.test')
-        with open(file1, 'w') as f:
-            f.write('*' * 16)
-        with open(file2, 'w') as f:
-            f.write('*' * 256)
+        with open(file1, 'w') as file:
+            file.write('*' * 16)
+        with open(file2, 'w') as file:
+            file.write('*' * 256)
 
         imp = mock.MagicMock()
         imp.identify = mock.MagicMock(return_value=True)

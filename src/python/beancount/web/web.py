@@ -514,7 +514,9 @@ def render_view(*args, **kw):
         overlays.append(
             '<li><a href="{}">Monthly</a></li>'.format(M.Jan))
     elif request.view.monthly is views.MonthNavigation.FULL:
-        annual = app.router.build('year', path=DEFAULT_VIEW_REDIRECT, year=request.view.year)
+        annual = app.router.build('year',
+                                  path=DEFAULT_VIEW_REDIRECT,
+                                  year=request.view.year)
         oss.write(APP_NAVIGATION_MONTHLY_FULL.render(M=M, Mp=Mp, Mn=Mn, V=V, annual=annual))
     kw['navigation'] = oss.getvalue()
     kw['overlay'] = render_overlay(' '.join(overlays))
@@ -951,12 +953,13 @@ def get_all_view(app):
 def all(path=None):
     return get_all_view(app)
 
-@app.route(r'/view/year/<year:re:\d\d\d\d>/month/<month:re:\d\d>/<path:re:.*>', name='month')
+@app.route(r'/view/year/<year:re:\d\d\d\d>/month/<month:re:\d\d>/<path:re:.*>',
+           name='month')
 @handle_view(5)
 def month(year=None, month=None, path=None):
     year = int(year)
     month = int(month)
-    date = datetime.date(year,month,1)
+    date = datetime.date(year, month, 1)
     text = date.strftime('%B %Y')
     return views.MonthView(app.entries, app.options, text, year, month)
 

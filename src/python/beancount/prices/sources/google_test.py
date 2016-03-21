@@ -19,8 +19,8 @@ class _TestTimezone(datetime.tzinfo):
         return datetime.timedelta(hours=-4) + self.dst(dt)
     def dst(self, dt):
         return datetime.timedelta(0)
-    def tzname(self,dt):
-         return "Test"
+    def tzname(self, dt):
+        return "Test"
 
 
 class TestGoogleFinanceSource(unittest.TestCase):
