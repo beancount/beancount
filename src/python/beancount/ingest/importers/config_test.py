@@ -1,9 +1,7 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import datetime
 import unittest
 
-from beancount.ingest import cache
 from beancount.ingest import importer
 from beancount.ingest.importers import config
 

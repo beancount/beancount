@@ -28,7 +28,6 @@ import bs4
 from beancount.core.number import D
 from beancount.core import amount
 from beancount.core import data
-from beancount.core import position
 from beancount.ingest import importer
 from beancount.utils import misc_utils
 

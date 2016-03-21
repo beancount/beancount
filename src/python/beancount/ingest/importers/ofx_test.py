@@ -1,16 +1,13 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import datetime
-import unittest
 import re
-from xml.sax import saxutils
 
 import bs4
 
 from beancount.core.number import D
 from beancount.ingest.importers import ofx
 from beancount.parser import parser
-from beancount.parser import printer
 from beancount.parser import cmptest
 
 
@@ -228,12 +225,14 @@ class TestOFXImporter(cmptest.TestCase):
         self.assertEqual(2, len(txns))
 
         self.assertEqual('379700001111222', txns[0][0])
-        self.assertIsInstance(txns[0][1][0], bs4.element.Tag)
-        self.assertEqual(2, len(txns[0][1]))
+        self.assertIsInstance(txns[0][2][0], bs4.element.Tag)
+        self.assertEqual(4, len(txns[0]))
+        self.assertEqual(2, len(txns[0][2]))
 
-        self.assertIsInstance(txns[1][1][0], bs4.element.Tag)
+        self.assertIsInstance(txns[1][2][0], bs4.element.Tag)
         self.assertEqual('456700001111222', txns[1][0])
-        self.assertEqual(1, len(txns[1][1]))
+        self.assertEqual(4, len(txns[1]))
+        self.assertEqual(1, len(txns[1][2]))
 
     def test_find_child(self):
         contents = clean_xml("""
@@ -275,7 +274,7 @@ class TestOFXImporter(cmptest.TestCase):
         self.assertEqual(D('-13.93'),
                          ofx.find_child(node, 'trnamt', D))
 
-    def test_find_statement_transactions(self):
+    def test_build_transaction(self):
         contents = clean_xml("""
           <STMTTRN>
            <TRNTYPE>DEBIT

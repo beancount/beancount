@@ -209,7 +209,8 @@ class TestScriptFile(scripts_utils.TestScriptsBase, test_utils.TestCase):
         move_mock.reset_mock()
         error_mock.reset_mock()
 
-        file.file([imp], path.join(self.downloads, 'ofxdownload.ofx'), self.documents, overwrite=True)
+        file.file([imp], path.join(self.downloads, 'ofxdownload.ofx'), self.documents,
+                  overwrite=True)
         self.assertEqual(1, move_mock.call_count)
         self.assertEqual(0, error_mock.call_count)
 

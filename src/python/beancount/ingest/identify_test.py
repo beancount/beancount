@@ -58,7 +58,7 @@ class TestScriptIdentifyFunctions(test_utils.TestTempdirMixin, unittest.TestCase
 
     def test_find_imports__raises_exception(self):
         file1 = path.join(self.tempdir, 'file1.test')
-        with open(file1, 'w') as f:
+        with open(file1, 'w'):
             pass
         imp = mock.MagicMock()
         imp.identify = mock.MagicMock(side_effect=ValueError("Unexpected error!"))
