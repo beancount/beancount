@@ -4,6 +4,18 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-03-21
+
+  - Fixed bug in beancount.ingest.file whereby two files being filed to the same
+    destination filename would clobber each other; with this fix, instead, an
+    error will be generated.
+
+  - Create an example of an importer just filing a PDF file using the external
+    tool PDFminer2. If the tool isn't installed, nothing should "break" (but the
+    importer won't really do its job). The tests should be skipped
+    automatically, and the importing will just ignore the PDF file to be filed.
+
+
 2016-03-20
 
   - Implemented beancount.ingest.importers.regexp and
