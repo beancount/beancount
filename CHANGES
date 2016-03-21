@@ -10,6 +10,11 @@ Note: This file contains only changes in the 'default' branch.
     destination filename would clobber each other; with this fix, instead, an
     error will be generated.
 
+  - Create an example of an importer just filing a PDF file using the external
+    tool PDFminer2. If the tool isn't installed, nothing should "break" (but the
+    importer won't really do its job). The tests should be skipped
+    automatically, and the importing will just ignore the PDF file to be filed.
+
 
 2016-03-20
 

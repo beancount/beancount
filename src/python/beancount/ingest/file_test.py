@@ -2,7 +2,6 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 from os import path
 from unittest import mock
-import copy
 import re
 import os
 import logging

@@ -55,7 +55,8 @@ class Importer(importer.ImporterProtocol):
 
     def file_date(self, file):
         # Extract the statement date from the filename.
-        return datetime.datetime.strptime(path.basename(file.name), 'UTrade%Y%m%d.csv').date()
+        return datetime.datetime.strptime(path.basename(file.name),
+                                          'UTrade%Y%m%d.csv').date()
 
     def extract(self, file):
         # Open the CSV file and create directives.
@@ -112,7 +113,8 @@ class Importer(importer.ImporterProtocol):
 
                 if rtype == 'BUY':
                     cost = position.Cost(rate, self.currency, None, None)
-                    txn = data.Transaction(meta, date, self.FLAG, None, desc, None, {link}, [
+                    txn = data.Transaction(
+                        meta, date, self.FLAG, None, desc, None, {link}, [
                         data.Posting(self.account_cash, units, None, None, None, None),
                         data.Posting(self.account_fees, fees, None, None, None, None),
                         data.Posting(account_inst, units_inst, cost, None, None, None),
@@ -131,7 +133,8 @@ class Importer(importer.ImporterProtocol):
                     cost = position.Cost(cost_number, self.currency, None, None)
                     price = amount.Amount(rate, self.currency)
                     account_gains = self.account_gains.format(instrument)
-                    txn = data.Transaction(meta, date, self.FLAG, None, desc, None, {link}, [
+                    txn = data.Transaction(
+                        meta, date, self.FLAG, None, desc, None, {link}, [
                         data.Posting(self.account_cash, units, None, None, None, None),
                         data.Posting(self.account_fees, fees, None, None, None, None),
                         data.Posting(account_inst, units_inst, cost, price, None, None),

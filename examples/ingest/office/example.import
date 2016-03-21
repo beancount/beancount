@@ -8,6 +8,8 @@ from os import path
 sys.path.insert(0, path.join(path.dirname(__file__)))
 
 from importers import utrade
+from importers import acme_pdf
+
 from beancount.ingest import extract
 from beancount.ingest.importers import ofx
 
@@ -25,6 +27,8 @@ CONFIG = [
     ofx.Importer("379700001111222",
                  "Liabilities:US:CreditCard",
                  "bofa"),
+
+    acme_pdf.Importer("Assets:US:AcmeBank"),
 ]
 
 

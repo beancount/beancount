@@ -1,17 +1,12 @@
 -*- mode: org -*-
 beancount: TODO
 * Ingest (LedgerHub)
-** PDF Importer
-
-  - Create an example of filing a PDF file using PDFminer2.
-
-
 ** CSV Importer
 
-  - Create a good, default, configurable importer for CSV files.
+  - Create a good, default, useful, configurable importer for CSV files.
 
-  - Write a CSV file sniffer that automatically infer which columns should match
-    which fields. Try to make this smart, e.g., if some column "mostly"
+  - Write a CSV file sniffer that automatically infers which columns should
+    match which fields. Try to make this smart, e.g., if some column "mostly"
     increases, it would be the balance column. This should be for fun (I don't
     need it).
 
