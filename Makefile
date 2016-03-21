@@ -123,6 +123,11 @@ debug:
 	gdb --args /usr/local/bin/python3 /home/blais/p/beancount/bin/bean-sandbox $(INPUT)
 
 
+# Bake a release.
+release:
+	python3 setup.py sdist register
+
+
 # Run the unittests.
 vtest vtests verbose-test verbose-tests:
 	nosetests -v -s $(SRC)
