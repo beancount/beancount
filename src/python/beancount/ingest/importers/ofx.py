@@ -84,7 +84,7 @@ class Importer(importer.ImporterProtocol):
 
     def file_date(self, file):
         """Return the optional renamed account filename."""
-        return find_date(file.contents())
+        return find_max_date(file.contents())
 
     def extract(self, file):
         """Extract a list of partially complete transactions from the file."""
@@ -167,7 +167,7 @@ def find_acctids(contents):
         yield match.group(1)
 
 
-def find_date(contents):
+def find_max_date(contents):
     """Extract the report date from the file."""
     soup = bs4.BeautifulSoup(contents, 'lxml')
     dates = []

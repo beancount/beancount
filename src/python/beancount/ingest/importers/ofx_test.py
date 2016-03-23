@@ -40,7 +40,7 @@ class TestOFXImporter(cmptest.TestCase):
         self.assertEqual(['379700001111222'],
                          list(ofx.find_acctids(contents)))
 
-    def test_find_date(self):
+    def test_find_max_date(self):
         contents = clean_xml("""
           <OFX>
             <CREDITCARDMSGSRSV1>
@@ -73,7 +73,7 @@ class TestOFXImporter(cmptest.TestCase):
             </CREDITCARDMSGSRSV1>
           </OFX>
         """)
-        date = ofx.find_date(contents)
+        date = ofx.find_max_date(contents)
         self.assertEqual(datetime.date(2014, 1, 12), date)
 
     def test_find_currency(self):
@@ -523,7 +523,6 @@ class TestOFXImporter(cmptest.TestCase):
         entries = ofx.extract(soup, 'test.ofx',
                               '379700001111222', 'Liabilities:CreditCard', '*',
                               ofx.BalanceType.DECLARED)
-        from beancount.parser import printer
         balance_entries, _, __ = parser.parse_string("""
           2014-01-02 balance Liabilities:CreditCard   100.00 USD
           2014-01-03 balance Liabilities:CreditCard   200.00 USD

@@ -4,6 +4,14 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-03-22
+
+  - Support multiple accounts in same ofx file. See
+    https://bitbucket.org/blais/beancount/pull-requests/10/. I applied this
+    one-liner: issue a balance for each statement, use the maximum date for the
+    file_date() method, and added unit tests for this.
+
+
 2016-03-21
 
   - Fixed bug in beancount.ingest.file whereby two files being filed to the same
