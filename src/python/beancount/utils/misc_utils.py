@@ -208,6 +208,7 @@ def replace_namedtuple_values(ntuple, predicate, mapper, memo=None):
         return
     memo.add(id_ntuple)
 
+    # pylint: disable=unidiomatic-typecheck
     if not (type(ntuple) is not tuple and isinstance(ntuple, tuple)):
         return ntuple
     replacements = {}
