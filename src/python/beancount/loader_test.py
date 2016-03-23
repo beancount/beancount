@@ -104,6 +104,7 @@ class TestLoadDoc(unittest.TestCase):
         test_function = loader.load_doc(test_function)
         test_function(self)
 
+    # pylint: disable=empty-docstring
     @loader.load_doc()
     def test_load_doc_empty(self, entries, errors, options_map):
         """

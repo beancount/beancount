@@ -231,12 +231,14 @@ class TestParserComplete(unittest.TestCase):
 class TestUglyBugs(unittest.TestCase):
     """Test all kinds of stupid sh*t that will inevitably occur in practice."""
 
+    # pylint: disable=empty-docstring
     @parser.parse_doc()
     def test_empty_1(self, entries, errors, _):
         ""
         check_list(self, entries, [])
         check_list(self, errors, [])
 
+    # pylint: disable=empty-docstring
     @parser.parse_doc()
     def test_empty_2(self, entries, errors, _):
         """
@@ -283,6 +285,7 @@ class TestUglyBugs(unittest.TestCase):
         check_list(self, entries, [data.Transaction])
         check_list(self, errors, [])
 
+    # pylint: disable=empty-docstring
     @parser.parse_doc()
     def test_indent_eof(self, entries, errors, _):
         "\t"
@@ -675,6 +678,7 @@ class TestMiscOptions(unittest.TestCase):
 
 class TestToleranceOptions(unittest.TestCase):
 
+    # pylint: disable=empty-docstring
     @parser.parse_doc()
     def test_tolerance_defaults(self, _, __, options_map):
         """

@@ -33,6 +33,7 @@ class TestReportFunctions(unittest.TestCase):
 
 class TestScriptQuery(test_utils.TestCase):
 
+    # pylint: disable=empty-docstring
     @test_utils.docfile
     def test_list_accounts_empty(self, filename):
         ""
@@ -92,6 +93,7 @@ class TestScriptPositions(test_utils.TestCase):
             Liabilities
         """, output)
 
+    # pylint: disable=empty-docstring
     @test_utils.docfile
     def test_print_trial_empty(self, filename):
         ""
@@ -140,6 +142,7 @@ class TestScriptPositions(test_utils.TestCase):
             Expenses:Restaurant  2013-01-01
         """, stdout.getvalue())
 
+    # pylint: disable=empty-docstring
     @test_utils.docfile
     def test_list_accounts_empty(self, filename):
         ""
