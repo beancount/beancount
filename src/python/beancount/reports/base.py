@@ -6,8 +6,6 @@ supports some subset of formats.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import functools
-import operator
 import argparse
 import io
 import re
@@ -245,30 +243,6 @@ class RealizationMeta(type):
         self.render_real_htmldiv(real_root, options_map, oss)
         file.write(template.format(body=oss.getvalue(),
                                    title=''))
-
-
-def get_all_reports():
-    """Return all report classes.
-
-    Returns:
-      A list of all available report classes.
-    """
-    from beancount.reports import balance_reports
-    from beancount.reports import journal_reports
-    from beancount.reports import holdings_reports
-    from beancount.reports import export_reports
-    from beancount.reports import price_reports
-    from beancount.reports import misc_reports
-    from beancount.reports import convert_reports
-    return functools.reduce(operator.add,
-                            map(lambda module: module.__reports__,
-                                [balance_reports,
-                                 journal_reports,
-                                 holdings_reports,
-                                 export_reports,
-                                 price_reports,
-                                 misc_reports,
-                                 convert_reports]))
 
 
 def get_html_template():

@@ -149,7 +149,6 @@ def table_of_balances(real_root, operating_currencies, formatter, classes=None):
             row_classes.append('totals')
         else:
             # Check if this account has had activity; if not, skip rendering it.
-            # pylint: disable=bad-continuation
             if (real_account.account not in active_set and
                 not account_types.is_root_account(real_account.account)):
                 continue

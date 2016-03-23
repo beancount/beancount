@@ -286,8 +286,6 @@ class HLedgerReport(base.Report):
 class HLedgerPrinter(LedgerPrinter):
     "Multi-method for printing directives in HLedger format."
 
-    # pylint: disable=invalid-name
-
     def Posting(self, posting, entry, oss):
         flag = '{} '.format(posting.flag) if posting.flag else ''
         assert posting.account is not None

@@ -43,9 +43,6 @@ def new_directive(clsname, fields):
 #     shows up in the file is used as a secondary sort key beyond the date.
 
 
-# pylint: disable=invalid-name
-
-
 # An "open account" directive.
 #
 # Attributes:

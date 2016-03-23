@@ -145,10 +145,10 @@ class TestMiscUtils(unittest.TestCase):
 
     def test_staticvar(self):
         @misc_utils.staticvar('a', 42)
-        def foo():
-            return foo.a
-        self.assertEqual(42, foo())
-        self.assertEqual(42, foo.a)
+        def sv():
+            return sv.a
+        self.assertEqual(42, sv())
+        self.assertEqual(42, sv.a)
 
     def test_first_paragraph(self):
         docstring = textwrap.dedent("""\

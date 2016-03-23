@@ -1,9 +1,11 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 from os import path
+import unittest
 
 from beancount.utils import test_utils
 from beancount.reports import report
+from beancount.reports import base
 
 
 class TestHelpReports(test_utils.TestCase):
@@ -19,6 +21,14 @@ class TestHelpReports(test_utils.TestCase):
     def test_get_list_report_string__invalid_report(self):
         help_string = report.get_list_report_string('blablabla')
         self.assertEqual(None, help_string)
+
+
+class TestReportFunctions(unittest.TestCase):
+
+    def test_get_all_report(self):
+        all_reports = report.get_all_reports()
+        self.assertTrue(all(issubclass(report_, base.Report)
+                            for report_ in all_reports))
 
 
 class TestScriptQuery(test_utils.TestCase):

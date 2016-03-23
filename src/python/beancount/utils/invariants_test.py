@@ -6,8 +6,10 @@ from beancount.utils import invariants
 
 class Dummy:
     """Just a dummy class as a target to instrument."""
+
     counter = 0
-    def foo(self):
+
+    def do_something(self):
         pass
 
 class TestInvariants(unittest.TestCase):
@@ -21,5 +23,5 @@ class TestInvariants(unittest.TestCase):
 
     def test_invariants_on_dummy(self):
         dummy = Dummy()
-        dummy.foo()
+        dummy.do_something()
         self.assertEqual(2, dummy.counter)

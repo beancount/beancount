@@ -169,11 +169,6 @@ class TestRealizationMeta(unittest.TestCase):
 
 class TestReportFunctions(unittest.TestCase):
 
-    def test_get_all_report(self):
-        all_reports = base.get_all_reports()
-        self.assertTrue(all(issubclass(report_, base.Report)
-                            for report_ in all_reports))
-
     def test_get_html_template(self):
         template = base.get_html_template()
         self.assertTrue(template)

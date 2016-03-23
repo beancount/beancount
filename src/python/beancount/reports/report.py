@@ -4,6 +4,8 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import argparse
 import io
+import functools
+import operator
 import logging
 import re
 import sys
@@ -12,10 +14,33 @@ import textwrap
 from beancount import loader
 from beancount.ops import validation
 from beancount.reports import base
-from beancount.reports import misc_reports
 from beancount.reports import table
+from beancount.reports import misc_reports
+from beancount.reports import balance_reports
+from beancount.reports import journal_reports
+from beancount.reports import holdings_reports
+from beancount.reports import export_reports
+from beancount.reports import price_reports
+from beancount.reports import convert_reports
 from beancount.utils import file_utils
 from beancount.utils import misc_utils
+
+
+def get_all_reports():
+    """Return all report classes.
+
+    Returns:
+      A list of all available report classes.
+    """
+    return functools.reduce(operator.add,
+                            map(lambda module: module.__reports__,
+                                [balance_reports,
+                                 journal_reports,
+                                 holdings_reports,
+                                 export_reports,
+                                 price_reports,
+                                 misc_reports,
+                                 convert_reports]))
 
 
 def get_list_report_string(only_report=None):
@@ -30,7 +55,7 @@ def get_list_report_string(only_report=None):
     """
     oss = io.StringIO()
     num_reports = 0
-    for report_class in base.get_all_reports():
+    for report_class in get_all_reports():
         # Filter the name
         if only_report and only_report not in report_class.names:
             continue
@@ -86,7 +111,7 @@ class ListFormatsAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         # Get all the report types and formats.
         matrix = []
-        for report_class in base.get_all_reports():
+        for report_class in get_all_reports():
             formats = report_class.get_supported_formats()
             matrix.append((report_class.names[0], formats))
 
@@ -152,7 +177,7 @@ def main():
     subparsers = parser.add_subparsers(title='report',
                                        help='Name/specification of the desired report.')
 
-    for report_class in base.get_all_reports():
+    for report_class in get_all_reports():
         name, aliases = report_class.names[0], report_class.names[1:]
 
         oss = io.StringIO()
