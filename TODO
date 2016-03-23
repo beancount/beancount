@@ -3359,6 +3359,19 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 * Parser
 ** Errors
 
+  - Parsing an indented string results in some output... for example, this code
+    spits out a single Balance entry (the last one):
+
+        balance_entries, _, __ = parser.parse_string("""
+          2014-01-02 balance Liabilities:CreditCard   100.00 USD
+          2014-01-03 balance Liabilities:CreditCard   200.00 USD
+        """)
+
+    It should not. It should output nothing, because these entries are indented.
+    I don't understand why it does. This is a parser bug which needs to be
+    traced and debugged. This has come up in writing tests here and there,
+    forgetting to insert dedent=True.
+
   - We need to gather errors in a single place and report them like the others;
     right now I'm catching them in sum_to_date() and writing using the logging
     module; but they really should be trickled up with the rest.

@@ -170,9 +170,12 @@ def find_acctids(contents):
 def find_date(contents):
     """Extract the report date from the file."""
     soup = bs4.BeautifulSoup(contents, 'lxml')
-    ledgerbal = soup.find('ledgerbal')
-    dtasof = ledgerbal.find('dtasof')
-    return parse_ofx_time(dtasof.contents[0]).date()
+    dates = []
+    for ledgerbal in soup.find_all('ledgerbal'):
+        dtasof = ledgerbal.find('dtasof')
+        dates.append(parse_ofx_time(dtasof.contents[0]).date())
+    if dates:
+        return max(dates)
 
 
 def find_currency(soup):
@@ -215,7 +218,7 @@ def find_statement_transactions(soup):
 
             # Get the LEDGERBAL node. There appears to be a single one for all
             # transaction lists.
-            ledgerbal = soup.find('ledgerbal')
+            ledgerbal = stmtrs.find('ledgerbal')
             balance = None
             if ledgerbal:
                 dtasof = find_child(ledgerbal, 'dtasof', parse_ofx_time).date()

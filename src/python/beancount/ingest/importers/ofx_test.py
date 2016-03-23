@@ -470,3 +470,62 @@ class TestOFXImporter(cmptest.TestCase):
           2013-11-27 balance Liabilities:CreditCard            -2356.38 USD
         """)
         self.assertEqualEntries(exp_entries + balance_entries, entries)
+
+
+    def test_two_distinct_balances(self):
+        ofx_contents = clean_xml("""
+          <OFX>
+           <SIGNONMSGSRSV1>
+           </SIGNONMSGSRSV1>
+           <CREDITCARDMSGSRSV1>
+            <STMTTRNRS>
+             <TRNUID>0
+              <STMTRS>
+               <CURDEF>USD
+                <ACCTFROM>
+                 <ACCTID>379700001111222
+                 </ACCTID>
+                </ACCTFROM>
+                <BANKTRANLIST>
+                </BANKTRANLIST>
+                <LEDGERBAL>
+                 <BALAMT>100.00
+                  <DTASOF>20140101000000.000[-7:MST]</DTASOF>
+                 </BALAMT>
+                </LEDGERBAL>
+               </CURDEF>
+              </STMTRS>
+             </TRNUID>
+            </STMTTRNRS>
+            <CCSTMTTRNRS>
+             <TRNUID>0
+              <CCSTMTRS>
+               <CURDEF>USD
+                <CCACCTFROM>
+                 <ACCTID>379700001111222
+                 </ACCTID>
+                </CCACCTFROM>
+                <BANKTRANLIST>
+                </BANKTRANLIST>
+                <LEDGERBAL>
+                 <BALAMT>200.00
+                  <DTASOF>20140102000000.000[-7:MST]</DTASOF>
+                 </BALAMT>
+                </LEDGERBAL>
+               </CURDEF>
+              </CCSTMTRS>
+             </TRNUID>
+            </CCSTMTTRNRS>
+           </CREDITCARDMSGSRSV1>
+          </OFX>
+        """)
+        soup = bs4.BeautifulSoup(ofx_contents, 'lxml')
+        entries = ofx.extract(soup, 'test.ofx',
+                              '379700001111222', 'Liabilities:CreditCard', '*',
+                              ofx.BalanceType.DECLARED)
+        from beancount.parser import printer
+        balance_entries, _, __ = parser.parse_string("""
+          2014-01-02 balance Liabilities:CreditCard   100.00 USD
+          2014-01-03 balance Liabilities:CreditCard   200.00 USD
+        """, dedent=True)
+        self.assertEqualEntries(balance_entries, entries)
