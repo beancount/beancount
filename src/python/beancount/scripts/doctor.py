@@ -254,12 +254,13 @@ def do_linked(filename, args):
 
     # Find all linked entries.
     #
-    # Note that there is an option hjere: You can either just look at the links
+    # Note that there is an option here: You can either just look at the links
     # on the closest entry, or you can include the links of the linked
     # transactions as well. Whichever one you want depends on how you use your
     # links. Best would be to query the user (in Emacs) when there are many
     # links present.
-    if False:
+    follow_links = True
+    if not follow_links:
         linked_entries = [entry
                           for entry in entries
                           if (isinstance(entry, data.Transaction) and

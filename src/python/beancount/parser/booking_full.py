@@ -599,25 +599,24 @@ def interpolate_group(postings, balances, currency):
         else:
             assert False, "Internal error; Invalid missing type."
 
-        if 1:
-            # Convert the CostSpec instance into a corresponding Cost.
-            units = new_posting.units
-            cost = new_posting.cost
-            if cost is not None:
-                units_number = units.number
-                number_per = cost.number_per
-                number_total = cost.number_total
-                if number_total is not None:
-                    # Compute the per-unit cost if there is some total cost
-                    # component involved.
-                    cost_total = number_total
-                    if number_per is not MISSING:
-                        cost_total += number_per * units_number
-                    unit_cost = cost_total / abs(units_number)
-                else:
-                    unit_cost = number_per
-                new_cost = Cost(unit_cost, cost.currency, cost.date, cost.label)
-                new_posting = new_posting._replace(units=units, cost=new_cost)
+        # Convert the CostSpec instance into a corresponding Cost.
+        units = new_posting.units
+        cost = new_posting.cost
+        if cost is not None:
+            units_number = units.number
+            number_per = cost.number_per
+            number_total = cost.number_total
+            if number_total is not None:
+                # Compute the per-unit cost if there is some total cost
+                # component involved.
+                cost_total = number_total
+                if number_per is not MISSING:
+                    cost_total += number_per * units_number
+                unit_cost = cost_total / abs(units_number)
+            else:
+                unit_cost = number_per
+            new_cost = Cost(unit_cost, cost.currency, cost.date, cost.label)
+            new_posting = new_posting._replace(units=units, cost=new_cost)
 
         # Replace the number in the posting.
         postings = list(postings)

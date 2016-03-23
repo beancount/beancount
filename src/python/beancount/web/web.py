@@ -470,7 +470,7 @@ def doc(filename=None):
 # View application pages.
 
 viewapp = bottle.Bottle()
-V = bottle_utils.AttrMapper(lambda *args, **kw: request.app.get_url(*args, **kw))
+V = bottle_utils.AttrMapper(request.app.get_url)
 M = bottle_utils.AttrMapper(lambda month: month_request(request.view.year, month))
 Mp = bottle_utils.AttrMapper(lambda month: month_request(request.view.year-1, month))
 Mn = bottle_utils.AttrMapper(lambda month: month_request(request.view.year+1, month))

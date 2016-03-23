@@ -76,6 +76,7 @@ class Inventory(list):
         Args:
           positions: A list of Position instances.
         """
+        list.__init__(self)
         if positions:
             assert isinstance(positions, list), positions
             for position in positions:

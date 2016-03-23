@@ -88,7 +88,7 @@ class TestRealAccount(unittest.TestCase):
         self.assertTrue(isinstance(ra0['Assets'], RealAccount))
         self.assertTrue(isinstance(ra0['Assets']['US'], RealAccount))
         with self.assertRaises(KeyError):
-            ra0['Liabilities']
+            _ = ra0['Liabilities']
 
     def test_setitem_constraints(self):
         ra0 = RealAccount('')

@@ -186,6 +186,7 @@ def save_query(title, participant, entries, options_map, sql_query, *format_args
     # Output the CSV files.
     if args.output_csv:
         logging.error("CSV rendering is not supported yet.")
+        # pylint: disable=using-constant-test
         if False:
             filename_csv = path.join(args.output_text, filebase + '.csv')
             with open(filename_csv, 'w') as file:

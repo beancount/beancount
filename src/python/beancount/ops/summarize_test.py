@@ -1060,7 +1060,7 @@ class TestEntriesFromBalance(cmptest.TestCase):
 
     def test_create_entries_from_balances__empty(self):
         balances = collections.defaultdict(inventory.Inventory)
-        balances['Assets:US:Bank:Empty']
+        _ = balances['Assets:US:Bank:Empty']
         entries = summarize.create_entries_from_balances(balances, datetime.date.today(),
                                                          self.SOURCE_ACCOUNT, True,
                                                          self.META, '!', 'narration')
