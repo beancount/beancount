@@ -112,6 +112,8 @@ class Allocator:
 class RowContext:
     """A dumb container for information used by a row expression."""
 
+    # pylint: disable=too-many-instance-attributes
+
     # The current posting being evaluated.
     posting = None
 

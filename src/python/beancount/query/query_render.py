@@ -185,6 +185,7 @@ class IntegerRenderer(ColumnRenderer):
         return self.fmt.format(number)
 
 
+# pylint: disable=too-many-instance-attributes
 class DecimalRenderer(ColumnRenderer):
     """A renderer for decimal numbers."""
     dtype = Decimal

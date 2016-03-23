@@ -470,7 +470,10 @@ def doc(filename=None):
 # View application pages.
 
 viewapp = bottle.Bottle()
-V = bottle_utils.AttrMapper(request.app.get_url)
+
+# (We disable this error because access to request.app needs to be delayed.)
+# pylint: disable=unnecessary-lambda
+V = bottle_utils.AttrMapper(lambda *args, **kw: request.app.get_url(*args, **kw))
 M = bottle_utils.AttrMapper(lambda month: month_request(request.view.year, month))
 Mp = bottle_utils.AttrMapper(lambda month: month_request(request.view.year-1, month))
 Mn = bottle_utils.AttrMapper(lambda month: month_request(request.view.year+1, month))

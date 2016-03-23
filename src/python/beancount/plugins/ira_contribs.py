@@ -84,8 +84,6 @@ to mark these postings with.
 
 __author__ = 'Martin Blais <blais@furius.ca>'
 
-import ast
-
 from beancount.core.number import MISSING
 from beancount.core import data
 from beancount.core import account_types
@@ -114,7 +112,8 @@ def add_ira_contribs(entries, options_map, config):
       A tuple of entries and errors.
     """
     # Parse and extract configuration values.
-    config_obj = ast.literal_eval(config, {}, {})
+    # FIXME: Use ast.literal_eval() here; you need to convert this code and the getters.
+    config_obj = eval(config, {}, {})
     if not isinstance(config_obj, dict):
         raise RuntimeError("Invalid plugin configuration: should be a single dict.")
 

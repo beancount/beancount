@@ -23,6 +23,8 @@ class View:
     """A container for filtering a subset of entries and realizing that for
     display."""
 
+    # pylint: disable=too-many-instance-attributes
+
     def __init__(self, all_entries, options_map, title):
         """Build a View instance.
 

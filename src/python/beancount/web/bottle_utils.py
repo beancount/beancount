@@ -30,7 +30,7 @@ class AttrMapper:
 # Silence pyflakes errors.
 # pylint: disable=invalid-name
 itertools = None
-_raise = None
+_raise = lambda *args: None
 
 def internal_redirect(app, path_depth):
     """A version of bottle's mountpoint_wrapper() that we call explicitly.

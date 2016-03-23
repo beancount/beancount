@@ -68,7 +68,7 @@ class TestReport(unittest.TestCase):
         parser = argparse.ArgumentParser()
         self.ReportClass.add_args(parser)
         args = parser.parse_args([])
-        self.assertTrue('CAD', args.currency)
+        self.assertEqual('CAD', args.currency)
 
     def test_supported_formats(self):
         report_ = self.ReportClass.from_args([])

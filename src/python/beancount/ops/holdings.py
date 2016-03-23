@@ -357,7 +357,7 @@ def convert_to_currency(price_map, target_currency, holdings_list):
             if rate is not None:
                 new_holding = misc_utils.map_namedtuple_attributes(
                     convert_fields,
-                    lambda number: number if number is None else number * rate,
+                    lambda number, r=rate: number if number is None else number * r,
                     holding)
                 # Ensure we set the new cost currency after conversion.
                 new_holding = new_holding._replace(cost_currency=target_currency)
