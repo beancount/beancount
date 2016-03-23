@@ -9,6 +9,7 @@ currency:
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import re
+import warnings
 
 from beancount.core.display_context import DEFAULT_FORMATTER
 from beancount.core.number import ZERO
@@ -19,8 +20,6 @@ from beancount.core import number
 #,-----------------------------------------------------------------------------.
 # Temporary forwarding of number functions to the number module.
 # IMPORTANT/FIXME: This will get removed after August 2015.
-import warnings
-
 ONE = number.ONE
 HALF = number.HALF
 decimal = number.decimal  # pylint: disable=invalid-name

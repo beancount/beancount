@@ -8,7 +8,7 @@ import os
 import time
 
 
-def find_files(fords, ignore_dirs=['.hg', '.svn', '.git']):
+def find_files(fords, ignore_dirs=('.hg', '.svn', '.git')):
     """Enumerate the files under the given directories, stably.
 
     Invalid file or directory names will be logged to the error log.
