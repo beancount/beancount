@@ -196,8 +196,8 @@ class RealizationMeta(type):
 
     # Note: I'm not a big fan of metaclass magic, but this use case is squarely
     # relevant for it, so I'm using it.
-    def __new__(cls, name, bases, namespace):
-        new_type = super(RealizationMeta, cls).__new__(cls, name, bases, namespace)
+    def __new__(mcs, name, bases, namespace):
+        new_type = super(RealizationMeta, mcs).__new__(mcs, name, bases, namespace)
 
         # Go through the methods of the new type and look for render_real() methods.
         new_methods = {}
@@ -226,11 +226,11 @@ class RealizationMeta(type):
 
         # Auto-generate other methods if necessary.
         if hasattr(new_type, 'render_real_htmldiv'):
-            setattr(new_type, 'render_real_html', cls.render_real_html)
+            setattr(new_type, 'render_real_html', mcs.render_real_html)
 
         return new_type
 
-    def render_real_html(self, real_root, options_map, file):
+    def render_real_html(cls, real_root, options_map, file):
         """Wrap an htmldiv into our standard HTML template.
 
         Args:
@@ -240,7 +240,7 @@ class RealizationMeta(type):
         """
         template = get_html_template()
         oss = io.StringIO()
-        self.render_real_htmldiv(real_root, options_map, oss)
+        cls.render_real_htmldiv(real_root, options_map, oss)
         file.write(template.format(body=oss.getvalue(),
                                    title=''))
 
