@@ -57,7 +57,9 @@ msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}"
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
 # multiple time. See also the "--disable" option for examples.
-enable=
+
+enable=all
+
 
 # Disable the message, report, category or checker with the given id(s). You
 # can either give multiple identifiers separated by comma (,) or put this
@@ -68,7 +70,68 @@ enable=
 # --enable=similarities". If you want to run only the classes checker, but have
 # no Warning level messages displayed, use"--disable=all --enable=classes
 # --disable=W"
-disable=I
+
+disable=locally-disabled,
+  suppressed-message,
+  missing-docstring,
+  empty-docstring,
+  unidiomatic-typecheck,
+  bad-mcs-method-argument,
+  bad-mcs-classmethod-argument,
+  too-many-lines,
+  multiple-statements,
+  superfluous-parens,
+  bad-continuation,
+  wrong-import-order,
+  ungrouped-imports,
+  wrong-import-position,
+  no-self-argument,
+  no-member,
+  not-callable,
+  assignment-from-no-return,
+  no-value-for-parameter,
+  too-many-function-args,
+  unsubscriptable-object,
+  too-many-nested-blocks,
+  no-self-use,
+  redefined-variable-type,
+  duplicate-code,
+  too-many-instance-attributes,
+  too-few-public-methods,
+  too-many-public-methods,
+  too-many-branches,
+  too-many-arguments,
+  too-many-locals,
+  too-many-statements,
+  unreachable,
+  dangerous-default-value,
+  pointless-statement,
+  unnecessary-pass,
+  unnecessary-lambda,
+  eval-used,
+  using-constant-test,
+  attribute-defined-outside-init,
+  protected-access,
+  arguments-differ,
+  abstract-method,
+  super-init-not-called,
+  fixme,
+  global-variable-undefined,
+  global-statement,
+  unused-variable,
+  unused-argument,
+  redefined-outer-name,
+  redefined-builtin,
+  undefined-loop-variable,
+  cell-var-from-loop,
+  broad-except,
+  logging-format-interpolation,
+  unused-format-string-argument,
+  anomalous-backslash-in-string,
+  redundant-unittest-assert,
+  deprecated-method
+
+
 
 
 [VARIABLES]

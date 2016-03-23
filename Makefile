@@ -204,27 +204,16 @@ check-author:
 	find src/python/beancount -type f -name '*.py' ! -exec grep -q '__author__' {} \; -print
 
 # Run the linter on all source code.
-#LINT_PASS=line-too-long,bad-whitespace,bad-continuation,bad-indentation
-LINT_PASS=line-too-long,bad-whitespace,bad-indentation,unused-import,invalid-name,reimported
-LINT_FAIL=bad-continuation
+# To list all messages, call: "pylint --list-msgs"
+LINT_SRCS =					\
+  $(SRC)/beancount				\
+  examples/ingest/office/importers		\
 
-LINT_SRCS = $(SRC)/beancount examples/ingest/office/importers
-
-pylint-pass:
-	pylint --rcfile=$(PWD)/etc/pylintrc --disable=all --enable=$(LINT_PASS) $(LINT_SRCS)
-
-pylint-fail:
-	pylint --rcfile=$(PWD)/etc/pylintrc --disable=all --enable=$(LINT_FAIL) $(LINT_SRCS)
-
-pylint-all:
+pylint lint:
 	pylint --rcfile=$(PWD)/etc/pylintrc $(LINT_SRCS)
 
 pyflakes:
 	pyflakes $(LINT_SRCS)
-
-# Run all currently configured linter checks.
-pylint lint: pylint-pass
-
 
 
 # Check everything.
