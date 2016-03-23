@@ -81,10 +81,10 @@ def classify_holdings_for_export(holdings_list, commodities_map):
             else:
                 action_holdings.append((export, holding))
         else:
-            logging.warn(("Exporting holding using default commodity name '{}'; this "
-                          "can potentially break the OFX import. Consider providing "
-                          "'export' metadata for your commodities.").format(
-                              holding.currency))
+            logging.warning(("Exporting holding using default commodity name '{}'; this "
+                             "can potentially break the OFX import. Consider providing "
+                             "'export' metadata for your commodities.").format(
+                                 holding.currency))
             action_holdings.append((holding.currency, holding))
 
     return action_holdings

@@ -340,7 +340,7 @@ class ConvertAmount(query_compile.EvalFunction):
         amount_, currency = args
         converted = prices.convert_amount(context.price_map, currency, amount_)
         if converted is None:
-            logging.warn('Could not convert Amount "{}" to USD'.format(amount_))
+            logging.warning('Could not convert Amount "{}" to USD'.format(amount_))
             converted = amount_
         return converted
 
@@ -357,7 +357,7 @@ class ConvertPosition(query_compile.EvalFunction):
         amount_ = position_.get_cost()
         converted = prices.convert_amount(context.price_map, currency, amount_)
         if converted is None:
-            logging.warn('Could not convert Position "{}" to USD'.format(amount_))
+            logging.warning('Could not convert Position "{}" to USD'.format(amount_))
             converted = amount_
         return converted
 
@@ -377,8 +377,8 @@ class ConvertInventory(query_compile.EvalFunction):
             converted_amount = prices.convert_amount(context.price_map,
                                                      currency, amount_)
             if converted_amount is None:
-                logging.warn('Could not convert Inventory position "{}" to USD'.format(
-                    amount_))
+                logging.warning(
+                    'Could not convert Inventory position "{}" to USD'.format(amount_))
                 converted_inventory.add_amount(amount_)
             else:
                 converted_inventory.add_amount(converted_amount)

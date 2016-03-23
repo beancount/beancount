@@ -128,8 +128,7 @@ disable=locally-disabled,
   logging-format-interpolation,
   unused-format-string-argument,
   anomalous-backslash-in-string,
-  redundant-unittest-assert,
-  deprecated-method
+  redundant-unittest-assert
 
 
 
