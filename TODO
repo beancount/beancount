@@ -96,6 +96,33 @@ beancount: TODO
     separately. I could split my big file and only the bits which get edited
     would have to be recomputed.
 
+  - Write a plugin that will pair up (link) matching transactions posting to a common
+    account; this could be used to properly pair up the transactions to
+    Liabilities:AccountsPayable, which would be very useful.
+
+  - Make onecommodity plugin skip accounts with multiple declared commodities.
+    It should apply only to accounts which have no declared commodities.
+
+** Make Commodity directives required
+
+  "Zhuoyun Wei made a comment on a doc today that account names are required to be
+  declared by default while commodities don't.
+  However, at this point they both have dedicated directives to declare them.
+  Commodity directives are so far only used to hang metadata off of them.
+  He suggests that Commodity directives should be required to be present by
+  default.
+
+  I really like the idea:
+  - It would make the behavior similar as that of accounts
+  - It would be more pedantic by default
+  - Instead of a check_commodity plugin I could provide an auto_commodity plugin
+    similar to auto_accounts, so you could use that in order to not bother.
+  - The stream of transactions would assured to always contain a Commodity
+    directive if one appears, like for accounts.
+
+  I think I'm pretty sure I'm going to do this, it really feels like a cleanup of
+  sorts."
+
 
 * Event
 
