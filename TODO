@@ -86,6 +86,12 @@ beancount: TODO
 
 * Misc
 
+  - Add options to disable the cache in bean-check so that using -v would be
+    useful when you're trying to assess performance. I try this often enough I
+    want options for it.
+
+  - Replace eval() by ast.eval_literal().
+
   - Need a unit test to reproduce the fix in this commit.
 
   - Update install documentation with installation instructions using pip3.
@@ -102,6 +108,11 @@ beancount: TODO
 
   - Make onecommodity plugin skip accounts with multiple declared commodities.
     It should apply only to accounts which have no declared commodities.
+    Then turn it on in my own file.
+
+  - Move the fix_payees plugin to beancount itself, use the configuration to set
+    it up.
+
 
 ** Make Commodity directives required
 
