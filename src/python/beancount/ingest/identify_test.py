@@ -96,8 +96,9 @@ class TestScriptIdentify(scripts_utils.TestScriptsBase):
             result = test_utils.run_with_args(identify.main, [
                 config_filename, path.join(example_dir, 'Downloads')])
         self.assertEqual(0, result)
-        self.assertEqual("", stderr.getvalue())
         output = stdout.getvalue()
+        errors = stderr.getvalue()
+        self.assertTrue(not errors or re.search('ERROR.*pdf2txt.py', errors))
 
         self.assertRegex(output, 'Downloads/UTrade20160215.csv')
         self.assertRegex(output, 'Importer:.*importers.utrade.Importer')
