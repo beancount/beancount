@@ -68,18 +68,25 @@ def render_entry_context(entries, options_map, entry):
 
     # Create a format line for printing the contents of account balances.
     max_account_width = max(map(len, accounts)) if accounts else 1
-    position_line = '; {{:1}} {{:{width}}}  {{:>49}}'.format(width=max_account_width)
+    position_line = '{{:1}} {{:{width}}}  {{:>49}}'.format(width=max_account_width)
 
     # Print the context before.
     print(file=oss)
+    print("------------ Balances before transaction", file=oss)
+    print(file=oss)
     before_hashes = set()
     for account in accounts:
-        for position in balance_before[account].get_positions():
+        positions = balance_before[account].get_positions()
+        for position in positions:
             before_hashes.add((account, hash(position)))
             print(position_line.format('', account, str(position)), file=oss)
+        if not positions:
+            print(position_line.format('', account, ''), file=oss)
         print(file=oss)
 
     # Print the entry itself.
+    print(file=oss)
+    print("------------ Transaction", file=oss)
     print(file=oss)
     dcontext = options_map['dcontext']
     printer.print_entry(entry, dcontext, render_weights=True, file=oss)
@@ -90,21 +97,24 @@ def render_entry_context(entries, options_map, entry):
         if not residual.is_empty():
             print(file=oss)
             # Note: We render the residual at maximum precision, for debugging.
-            print(';;; Residual: {}'.format(str(residual)), file=oss)
+            print('Residual: {}'.format(str(residual)), file=oss)
 
+        # Dump the tolerances used.
         tolerances = interpolate.infer_tolerances(entry.postings, options_map)
         if tolerances:
             print(file=oss)
-            print(';;; Tolerances: {}'.format(
+            print('Tolerances: {}'.format(
                 ', '.join('{}={}'.format(key, value)
                           for key, value in sorted(tolerances.items()))), file=oss)
 
     # Print the context after.
     print(file=oss)
+    print("------------ Balances after transaction", file=oss)
+    print(file=oss)
     for account in accounts:
         for position in balance_after[account].get_positions():
             changed = (account, hash(position)) not in before_hashes
-            print(position_line.format('!' if changed else '', account, str(position)),
+            print(position_line.format('*' if changed else '', account, str(position)),
                   file=oss)
         print(file=oss)
 

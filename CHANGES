@@ -9,6 +9,9 @@ Note: This file contains only changes in the 'default' branch.
   - Added an optional date argument to convert, so you can provide the requested
     date in a SQL query, as in "CONVERT(sum(position), "CAD", 2015-06-01)".
 
+  - Improved the rendering of the context, removed the weird comments it used to
+    render with, render an account name if the inventory is empty.
+
 
 2016-03-22
 
