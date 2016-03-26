@@ -12,6 +12,8 @@ Note: This file contains only changes in the 'default' branch.
   - Improved the rendering of the context, removed the weird comments it used to
     render with, render an account name if the inventory is empty.
 
+  - Ignore .DS_Store files from the file finder in ingest.
+
 
 2016-03-22
 

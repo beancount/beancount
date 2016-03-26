@@ -10,8 +10,29 @@ beancount: TODO
     increases, it would be the balance column. This should be for fun (I don't
     need it).
 
+  - Use new CSV downloads to build the importer; start using it.
+
+
+** Performance on Mac
+
+  - Trying to bean-extract from LC on Mac takes FOREVER. Debug this thing
+    damnit.
+
+  - Implement on-disk cache now.
+
+  - Implement logging of time take by each importer (verbose switch). In
+    find_imports(). Do nice logging.
+
+  - Fix ugly importer names from my configuration.
+  - Uniformize all directory names from my configuration.
+
 
 ** Future Features
+
+  - Implement formatting that's "minimum most-common" and use it on the
+    importer's output, it would really improve the output of it, which is
+    currently literal, e.g., it just prints what's from the file, at that
+    precision. I hate correcting those manually.
 
   - In identify, mark as ambiguous if two handlers match.
 
@@ -116,6 +137,20 @@ beancount: TODO
 
   - Move the fix_payees plugin to beancount itself, use the configuration to set
     it up.
+
+  - There's a bug in the MIN() function, it fails, try this:
+      select min(balance) from open on 2015-01-01 close  on 2016-01-01  where account = ...
+
+  - Another problem with queries is that sales cause very large unrealistic
+    changes because each posting affects its account separately. Look at this
+    query, for example, where we are trying to obtain the maximum balance during
+    the year:
+
+      select date, description, convert(balance, 'CAD', date)  from open on 2015-01-01
+      close  on 2016-01-01  where parent(account) = .../'rrsp'
+
+    We need to find a way to report the balance only after all the postings of a
+    particular transaction are applied. I'm not sure how to handle this well yet.
 
 
 ** Make Commodity directives required
