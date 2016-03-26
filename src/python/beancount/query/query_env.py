@@ -381,7 +381,7 @@ class ConvertPositionWithDate(query_compile.EvalFunction):
 
     def __call__(self, context):
         args = self.eval_args(context)
-        position_, currency = args
+        position_, currency, date = args
         return convert_position(context.price_map, position_, currency, date)
 
 def convert_position(price_map, position_, currency, date):
