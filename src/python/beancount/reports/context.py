@@ -92,20 +92,25 @@ def render_entry_context(entries, options_map, entry):
     printer.print_entry(entry, dcontext, render_weights=True, file=oss)
 
     if isinstance(entry, data.Transaction):
+        print(file=oss)
+
         # Print residuals.
         residual = interpolate.compute_residual(entry.postings)
         if not residual.is_empty():
-            print(file=oss)
             # Note: We render the residual at maximum precision, for debugging.
-            print('Residual: {}'.format(str(residual)), file=oss)
+            print('Residual: {}'.format(residual), file=oss)
 
         # Dump the tolerances used.
         tolerances = interpolate.infer_tolerances(entry.postings, options_map)
         if tolerances:
-            print(file=oss)
             print('Tolerances: {}'.format(
                 ', '.join('{}={}'.format(key, value)
                           for key, value in sorted(tolerances.items()))), file=oss)
+
+        # Compute the total cost basis.
+        cost_basis = interpolate.compute_cost_basis(entry.postings)
+        if not cost_basis.is_empty():
+            print('Basis: {}'.format(cost_basis), file=oss)
 
     # Print the context after.
     print(file=oss)
