@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-03-26
+
+  - Added an optional date argument to convert, so you can provide the requested
+    date in a SQL query, as in "CONVERT(sum(position), "CAD", 2015-06-01)".
+
+
 2016-03-22
 
   - Support multiple accounts in same ofx file. See
