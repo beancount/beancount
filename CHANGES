@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-03-27
+
+  - Added a PRICE() function to extract entries from the price database. You can
+    now query for "SELECT PRICE('USD', 'CAD', date)", for example.
+
+
 2016-03-26
 
   - Added an optional date argument to convert, so you can provide the requested

@@ -432,6 +432,35 @@ def convert_inventory(price_map, inventory_, currency, date):
     return converted_inventory
 
 
+class Price(query_compile.EvalFunction):
+    "Fetch a price for something at a particular date"
+    __intypes__ = [str, str]
+
+    def __init__(self, operands):
+        super().__init__(operands, Decimal)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        base, quote = args
+        pair = (base.upper(), quote.upper())
+        _, price = prices.get_price(context.price_map, pair, None)
+        return price
+
+class PriceWithDate(query_compile.EvalFunction):
+    "Fetch a price for something at a particular date"
+    __intypes__ = [str, str, datetime.date]
+
+    def __init__(self, operands):
+        super().__init__(operands, Decimal)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        base, quote, date = args
+        pair = (base.upper(), quote.upper())
+        _, price = prices.get_price(context.price_map, pair, date)
+        return price
+
+
 class Number(query_compile.EvalFunction):
     "Extract the number from an Amount."
     __intypes__ = [amount.Amount]
@@ -471,6 +500,8 @@ class GetItemStr(query_compile.EvalFunction):
         return value
 
 
+# FIXME: Why do I need to specify the arguments here? They are already derived
+# from the functions. Just fetch them from instead. Make the compiler better.
 SIMPLE_FUNCTIONS = {
     'abs'                                                : Abs,
     'length'                                             : Length,
@@ -503,6 +534,8 @@ SIMPLE_FUNCTIONS = {
     ('convert', position.Position, str, datetime.date)   : ConvertPositionWithDate,
     ('convert', inventory.Inventory, str)                : ConvertInventory,
     ('convert', inventory.Inventory, str, datetime.date) : ConvertInventoryWithDate,
+    ('price', str, str)                                  : Price,
+    ('price', str, str, datetime.date)                   : PriceWithDate,
     'number'                                             : Number,
     'currency'                                           : Currency,
     'getitem'                                            : GetItemStr,
