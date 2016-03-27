@@ -9,6 +9,8 @@ Note: This file contains only changes in the 'default' branch.
   - Added a PRICE() function to extract entries from the price database. You can
     now query for "SELECT PRICE('USD', 'CAD', date)", for example.
 
+  - Added a boolean renderer for the SQL shell.
+
 
 2016-03-26
 
