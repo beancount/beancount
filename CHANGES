@@ -11,6 +11,8 @@ Note: This file contains only changes in the 'default' branch.
 
   - Added a boolean renderer for the SQL shell.
 
+  - Added support for arithmetic operations to the bean-query SQL shell.
+
 
 2016-03-26
 

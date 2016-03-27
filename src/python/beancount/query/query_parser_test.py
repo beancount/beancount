@@ -247,6 +247,30 @@ class TestSelectExpression(QueryParserTestBase):
                                                    qp.Column('e')]), None)]),
             "SELECT min(a, b, c, d, e);")
 
+    def test_expr_mul(self):
+        self.assertParse(
+            qSelect([qp.Target(qp.Mul(qp.Column('a'), qp.Column('b')), None)]),
+            "SELECT a * b;")
+
+    def test_expr_div(self):
+        self.assertParse(
+            qSelect([qp.Target(qp.Div(qp.Column('a'), qp.Column('b')), None)]),
+            r"SELECT a / b;")
+
+    def test_expr_add(self):
+        expected = qSelect([qp.Target(qp.Add(qp.Column('a'), qp.Column('b')), None)])
+        self.assertParse(expected, "SELECT a + b;")
+        self.assertParse(expected, "SELECT a+b;")
+        expected = qSelect([qp.Target(qp.Add(qp.Constant(2), qp.Constant(3)), None)])
+        self.assertParse(expected, "SELECT 2+3;")
+
+    def test_expr_sub(self):
+        expected = qSelect([qp.Target(qp.Sub(qp.Column('a'), qp.Column('b')), None)])
+        self.assertParse(expected, "SELECT a - b;")
+        self.assertParse(expected, "SELECT a-b;")
+        expected = qSelect([qp.Target(qp.Sub(qp.Constant(2), qp.Constant(3)), None)])
+        self.assertParse(expected, "SELECT 2-3;")
+
 
 class TestSelectPrecedence(QueryParserTestBase):
 
@@ -271,6 +295,23 @@ class TestSelectPrecedence(QueryParserTestBase):
                     where_clause=qp.And(
                         qp.Not(qp.Column('a')), qp.Column('b'))),
             "SELECT * WHERE not a AND b;")
+
+    def test_expr_function__and_plus_minus(self):
+        self.assertParse(
+            qSelect(qp.Wildcard(),
+                    where_clause=qp.And(
+                        qp.Add(qp.Column('a'), qp.Column('b')),
+                        qp.Sub(qp.Column('c'), qp.Column('d')))),
+            "SELECT * WHERE a + b AND c - d;")
+
+    def test_expr_function__mul_div_plus_minus(self):
+        self.assertParse(
+            qSelect(qp.Wildcard(),
+                    where_clause=qp.Sub(qp.Add(qp.Mul(qp.Column(name='a'), qp.Column(name='b')),
+                                               qp.Div(qp.Column(name='c'), qp.Column(name='d'))),
+                                        qp.Constant(value=3))),
+            "SELECT * WHERE a * b + c / d - 3;")
+
 
 class TestSelectFromBase(QueryParserTestBase):
 

@@ -169,6 +169,22 @@ class TestCompileDataTypes(unittest.TestCase):
         c_or = qc.EvalOr(qc.EvalConstant(17), qc.EvalConstant(18))
         self.assertEqual(bool, c_or.dtype)
 
+    def test_compile_EvalMul(self):
+        c_plus = qc.EvalMul(qc.EvalConstant(17), qc.EvalConstant(18))
+        self.assertEqual(Decimal, c_plus.dtype)
+
+    def test_compile_EvalDiv(self):
+        c_plus = qc.EvalDiv(qc.EvalConstant(17), qc.EvalConstant(18))
+        self.assertEqual(Decimal, c_plus.dtype)
+
+    def test_compile_EvalAdd(self):
+        c_plus = qc.EvalAdd(qc.EvalConstant(17), qc.EvalConstant(18))
+        self.assertEqual(Decimal, c_plus.dtype)
+
+    def test_compile_EvalSub(self):
+        c_plus = qc.EvalSub(qc.EvalConstant(17), qc.EvalConstant(18))
+        self.assertEqual(Decimal, c_plus.dtype)
+
 
 class TestCompileMisc(unittest.TestCase):
 

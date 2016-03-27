@@ -111,6 +111,11 @@ beancount: TODO
     example. Then add a PRICE(ccy, ccycost, date) function to pull the price at
     any date.
 
+    * Test negative numbers
+    * Rename WILDCARD token to STAR
+    * Test operators without spaces
+
+
   - Add options to disable the cache in bean-check so that using -v would be
     useful when you're trying to assess performance. I try this often enough I
     want options for it.

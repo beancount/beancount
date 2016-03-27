@@ -176,6 +176,11 @@ class Match(BinaryOp): pass
 # Membership operators.
 class Contains(BinaryOp): pass
 
+# Arithmetic operators.
+class Mul(BinaryOp): pass
+class Div(BinaryOp): pass
+class Add(BinaryOp): pass
+class Sub(BinaryOp): pass
 
 
 class ParseError(Exception):
@@ -201,8 +206,9 @@ class Lexer:
     # List of valid tokens from the lexer.
     tokens = [
         'ID', 'INTEGER', 'DECIMAL', 'STRING', 'DATE',
-        'WILDCARD', 'COMMA', 'SEMI', 'LPAREN', 'RPAREN', 'TILDE',
+        'COMMA', 'SEMI', 'LPAREN', 'RPAREN', 'TILDE',
         'EQ', 'NE', 'GT', 'GTE', 'LT', 'LTE',
+        'WILDCARD', 'SLASH', 'PLUS', 'MINUS',
     ] + list(keywords)
 
     # An identifier, for a column or a dimension or whatever.
@@ -231,7 +237,6 @@ class Lexer:
 
     # Constant tokens.
     # pylint: disable=bad-whitespace
-    t_WILDCARD = r"\*"
     t_COMMA    = r","
     t_SEMI     = r";"
     t_LPAREN   = r"\("
@@ -243,15 +248,19 @@ class Lexer:
     t_LTE      = r"<="
     t_LT       = r"<"
     t_TILDE    = r"~"
+    t_WILDCARD = r"\*"
+    t_SLASH    = r"/"
+    t_PLUS     = r"\+"
+    t_MINUS    = r"-"
 
     # Numbers.
     def t_DECIMAL(self, token):
-        r"[-+]?([0-9]+\.[0-9]*|[0-9]*\.[0-9]+)"
+        r"-?([0-9]+\.[0-9]*|[0-9]*\.[0-9]+)"
         token.value = D(token.value)
         return token
 
     def t_INTEGER(self, token):
-        r"[-+]?[0-9]+"
+        r"-?[0-9]+"
         token.value = int(token.value)
         return token
 
@@ -281,7 +290,7 @@ class SelectParser(Lexer):
 
     def tokenize(self, line):
         self.ply_lexer.input(line)
-        while 1:
+        while True:
             tok = self.ply_lexer.token()
             if not tok:
                 break
@@ -469,6 +478,8 @@ class SelectParser(Lexer):
         ('left', 'OR'),
         ('left', 'AND'),
         ('left', 'NOT'),
+        ('left', 'PLUS', 'MINUS'),
+        ('left', 'WILDCARD', 'SLASH'),
         ('left', 'EQ', 'NE', 'GT', 'GTE', 'LT', 'LTE', 'TILDE'),
         ]
 
@@ -527,6 +538,22 @@ class SelectParser(Lexer):
     def p_expression_constant(self, p):
         "expression : constant"
         p[0] = p[1]
+
+    def p_expression_mul(self, p):
+        "expression : expression WILDCARD expression"
+        p[0] = Mul(p[1], p[3])
+
+    def p_expression_div(self, p):
+        "expression : expression SLASH expression"
+        p[0] = Div(p[1], p[3])
+
+    def p_expression_add(self, p):
+        "expression : expression PLUS expression"
+        p[0] = Add(p[1], p[3])
+
+    def p_expression_sub(self, p):
+        "expression : expression MINUS expression"
+        p[0] = Sub(p[1], p[3])
 
     def p_expression_function(self, p):
         "expression : ID LPAREN expression_list_opt RPAREN"
