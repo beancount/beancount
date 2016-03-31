@@ -132,6 +132,17 @@ class Weekday(query_compile.EvalFunction):
         args = self.eval_args(context)
         return args[0].strftime('%a')
 
+class Today(query_compile.EvalFunction):
+    "Today's date"
+    __intypes__ = []
+
+    def __init__(self, operands):
+        super().__init__(operands, datetime.date)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        return datetime.date.today()
+
 
 # Operations on accounts.
 
@@ -528,6 +539,7 @@ SIMPLE_FUNCTIONS = {
     'ymonth'                                             : YearMonth,
     'day'                                                : Day,
     'weekday'                                            : Weekday,
+    'today'                                              : Today,
     ('convert', amount.Amount, str)                      : ConvertAmount,
     ('convert', amount.Amount, str, datetime.date)       : ConvertAmountWithDate,
     ('convert', position.Position, str)                  : ConvertPosition,

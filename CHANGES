@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-03-31
+
+  - Added TODAY() function to extract today's date. Not sure how useful it'll
+    be.
+
+
 2016-03-27
 
   - Added a PRICE() function to extract entries from the price database. You can
