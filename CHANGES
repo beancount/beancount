@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-04-03
+
+  - Fixed a bug in "bean-doctor context" which wouldn't report the full set of
+    accounts when an account's before-balance would be empty.
+
+
 2016-03-31
 
   - Added TODAY() function to extract today's date. Not sure how useful it'll
