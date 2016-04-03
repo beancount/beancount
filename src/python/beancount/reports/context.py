@@ -56,7 +56,11 @@ def render_entry_context(entries, options_map, entry):
 
     # Get the list of accounts sorted by the order in which they appear in the
     # closest entry.
-    accounts = getters.get_entry_accounts(entry)
+    order = {}
+    if isinstance(entry, data.Transaction):
+        order = {posting.account: index
+                 for index, posting in enumerate(entry.postings)}
+    accounts = sorted(getters.get_entry_accounts(entry), key=order.get)
 
     # Accumulate the balances of these accounts up to the entry.
     balance_before, balance_after = interpolate.compute_entry_context(entries,
