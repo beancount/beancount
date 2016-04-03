@@ -107,6 +107,13 @@ beancount: TODO
 
 * Misc
 
+  - Add a list of posted balances by account to "bean-doctor context".  "linked"
+    always links all the transactions, so it's not good enough. Just add this by
+    default to the context command.
+
+  - I really need a --no-cache option across the programs. When developing a
+    plugin, it would be so much more convenient.
+
   - Support arithmetic operations as targets, so you could SELECT 2+2, for
     example. Then add a PRICE(ccy, ccycost, date) function to pull the price at
     any date.
