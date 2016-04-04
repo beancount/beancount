@@ -9,6 +9,11 @@ Note: This file contains only changes in the 'default' branch.
   - Fixed a bug in "bean-doctor context" which wouldn't report the full set of
     accounts when an account's before-balance would be empty.
 
+  - Fixed a bug in "bean-doctor linked" whereby the balances wouldn't get
+    printed out if there was no link. Print the balances before and after; in
+    fact, maybe this command should be renamed to "balances" and have an option
+    to support links.
+
 
 2016-03-31
 
