@@ -112,7 +112,8 @@ beancount: TODO
     default to the context command.
 
   - I really need a --no-cache option across the programs. When developing a
-    plugin, it would be so much more convenient.
+    plugin, it would be so much more convenient. The naming for these options
+    should be similar to that which is used on bean-price.
 
   - Support arithmetic operations as targets, so you could SELECT 2+2, for
     example. Then add a PRICE(ccy, ccycost, date) function to pull the price at
