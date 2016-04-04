@@ -8,7 +8,9 @@ import os
 import time
 
 
-def find_files(fords, ignore_dirs=('.hg', '.svn', '.git')):
+def find_files(fords,
+               ignore_dirs=('.hg', '.svn', '.git'),
+               ignore_files=('.DS_Store',)):
     """Enumerate the files under the given directories, stably.
 
     Invalid file or directory names will be logged to the error log.
@@ -27,6 +29,8 @@ def find_files(fords, ignore_dirs=('.hg', '.svn', '.git')):
             for root, dirs, filenames in os.walk(ford):
                 dirs[:] = sorted(dirname for dirname in dirs if dirname not in ignore_dirs)
                 for filename in sorted(filenames):
+                    if filename in ignore_files:
+                        continue
                     yield path.join(root, filename)
         elif path.isfile(ford) or path.islink(ford):
             yield ford

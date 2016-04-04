@@ -113,6 +113,8 @@ def add_ira_contribs(entries, options_map, config):
     """
     # Parse and extract configuration values.
     # FIXME: Use ast.literal_eval() here; you need to convert this code and the getters.
+    # FIXME: Also, don't raise a RuntimeError, return an error object; review
+    # this for all the plugins.
     config_obj = eval(config, {}, {})
     if not isinstance(config_obj, dict):
         raise RuntimeError("Invalid plugin configuration: should be a single dict.")

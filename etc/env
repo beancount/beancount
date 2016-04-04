@@ -5,4 +5,4 @@
 USERPATH=$USERPATH:$PROJDIR/bin
 PYTHONPATH=$PYTHONPATH:$PROJDIR/src/python
 
-T=$PROJDIR/examples/example.beancount
+E=$PROJDIR/examples/example.beancount

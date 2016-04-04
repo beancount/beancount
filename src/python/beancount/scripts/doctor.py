@@ -250,37 +250,37 @@ def do_linked(filename, args):
     if closest_entry is None:
         raise SystemExit("No entry could be found before {}:{}".format(filename, lineno))
     if not links:
-        return
-
-    # Find all linked entries.
-    #
-    # Note that there is an option here: You can either just look at the links
-    # on the closest entry, or you can include the links of the linked
-    # transactions as well. Whichever one you want depends on how you use your
-    # links. Best would be to query the user (in Emacs) when there are many
-    # links present.
-    follow_links = True
-    if not follow_links:
-        linked_entries = [entry
-                          for entry in entries
-                          if (isinstance(entry, data.Transaction) and
-                              entry.links and
-                              entry.links & links)]
+        linked_entries = [closest_entry]
     else:
-        links = set(links)
-        linked_entries = []
-        while True:
-            num_linked = len(linked_entries)
+        # Find all linked entries.
+        #
+        # Note that there is an option here: You can either just look at the links
+        # on the closest entry, or you can include the links of the linked
+        # transactions as well. Whichever one you want depends on how you use your
+        # links. Best would be to query the user (in Emacs) when there are many
+        # links present.
+        follow_links = True
+        if not follow_links:
             linked_entries = [entry
                               for entry in entries
                               if (isinstance(entry, data.Transaction) and
                                   entry.links and
                                   entry.links & links)]
-            if len(linked_entries) == num_linked:
-                break
-            for entry in linked_entries:
-                if entry.links is not None:
-                    links.update(entry.links)
+        else:
+            links = set(links)
+            linked_entries = []
+            while True:
+                num_linked = len(linked_entries)
+                linked_entries = [entry
+                                  for entry in entries
+                                  if (isinstance(entry, data.Transaction) and
+                                      entry.links and
+                                      entry.links & links)]
+                if len(linked_entries) == num_linked:
+                    break
+                for entry in linked_entries:
+                    if entry.links is not None:
+                        links.update(entry.links)
 
     # Render linked entries (in date order) as errors (for Emacs).
     errors = [RenderError(entry.meta, '', entry)

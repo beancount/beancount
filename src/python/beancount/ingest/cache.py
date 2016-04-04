@@ -7,6 +7,7 @@ text, can be expensive.
 __author__ = 'Martin Blais <blais@furius.ca>'
 
 import chardet
+import logging
 
 from beancount.utils import file_type
 
@@ -42,6 +43,8 @@ class FileMemo:
         try:
             result = self._cache[converter_func]
         except KeyError:
+            # FIXME: Implement timing of conversions here. Store it for
+            # reporting later.
             result = self._cache[converter_func] = converter_func(self.name)
         return result
 
