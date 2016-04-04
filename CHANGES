@@ -9,6 +9,8 @@ Note: This file contains only changes in the 'default' branch.
   - Added a test to make sure that building a source dist includes the header
     files and C implementation files.
 
+  - Fixed bug with UNITS() function when applied to a Position object.
+
 
 2016-04-03
 

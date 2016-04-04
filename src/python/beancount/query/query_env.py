@@ -292,7 +292,7 @@ class UnitsPosition(query_compile.EvalFunction):
 
     def __call__(self, context):
         args = self.eval_args(context)
-        return args[0].get_units()
+        return args[0].units
 
 class UnitsInventory(query_compile.EvalFunction):
     "Get the number of units of an inventory (stripping cost)."
