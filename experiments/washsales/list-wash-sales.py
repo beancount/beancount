@@ -124,9 +124,9 @@ def main():
     # Convert into a table of data, full detail of very single log.
     Q = D('0.01')
     lots = []
-    total_loss = ZERO
-    total_gain = ZERO
-    total_adj = ZERO
+    total_loss = collections.defaultdict(D)
+    total_gain = collections.defaultdict(D)
+    total_adj = collections.defaultdict(D)
     for sale in sales:
         sale_no = sale.txn.meta['mssb']
         ref = sale.txn.meta['ref']
@@ -138,11 +138,11 @@ def main():
         pnl = (totprice - totcost - commission).quantize(Q)
         is_wash = sale.posting.meta.get('wash', False)
         if totprice > totcost:
-            total_gain += pnl
+            total_gain[units.currency] += pnl
         else:
-            total_loss += pnl
+            total_loss[units.currency] += pnl
         if is_wash:
-            total_adj += pnl
+            total_adj[units.currency] += pnl
             code = 'W'
             adj = -pnl
         else:
@@ -173,11 +173,21 @@ def main():
     tab_agg = table.create_table(sorted(agglots, key=lambda lot: (lot.ref, lot.no)))
 
     # Write out a summary of P/L.
-    summary_fields = [(0, 'P/L Type'), (1, 'Amount')]
-    summary = [('Gain', total_gain),
-               ('Loss', total_loss),
-               ('Total', total_gain + total_loss),
-               ('Adj/Washed', total_adj)]
+    summary_fields = list(enumerate(['Currency', 'Gain', 'Loss', 'Net', 'Adj/Wash']))
+    summary = []
+    gain = ZERO
+    loss = ZERO
+    adj = ZERO
+    for currency in sorted(total_adj.keys()):
+        gain += total_gain[currency]
+        loss += total_loss[currency]
+        adj += total_adj[currency]
+        summary.append((currency,
+                        total_gain[currency],
+                        total_loss[currency],
+                        total_gain[currency] + total_loss[currency],
+                        total_adj[currency]))
+    summary.append(('*', gain, loss, gain + loss, adj))
     tab_summary = table.create_table(summary, summary_fields)
 
     # Render to the console.
