@@ -11,7 +11,8 @@ from urllib import request
 from urllib import error
 
 from beancount.prices.sources import google
-from beancount.core.number import D, Decimal
+from beancount.core.number import D
+from beancount.core.number import Decimal
 
 
 class _TestTimezone(datetime.tzinfo):
