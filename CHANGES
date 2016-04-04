@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-04-04
+
+  - Added a test to make sure that building a source dist includes the header
+    files and C implementation files.
+
+
 2016-03-22
 
   - Support multiple accounts in same ofx file. See
