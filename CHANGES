@@ -9,6 +9,12 @@ Note: This file contains only changes in the 'default' branch.
   - Added a test to make sure that building a source dist includes the header
     files and C implementation files.
 
+  - Sort Document directives after Transactions when they occur on the same day.
+    The reason for this is that statements typically include transactions on
+    that final day, and we'd like for them to occur at the right place in the
+    journals. See originating thread:
+    https://groups.google.com/d/msg/beancount/3ItOYS9DJx4/VyTJB3ssBQAJ
+
 
 2016-04-03
 
