@@ -65,10 +65,11 @@ def main():
                         help="End date; if not set, at the end of star'ts year")
 
     parser.add_argument('-o', '--output', action='store',
-                        default=os.getcwd(),
                         help="Output directory for the CSV files")
 
     args = parser.parse_args()
+
+    calculate_commission = False
 
     # Setup date interval.
     if args.start is None:
@@ -101,23 +102,24 @@ def main():
                     logging.error("Missing price on %s", posting)
                 txn_sales.append(data.TxnPosting(txn, posting))
 
-        # Find total commission.
-        for posting in txn.postings:
-            if re.search('Commission', posting.account):
-                commission = posting.units.number
-                break
-        else:
-            commission = ZERO
+        if calculate_commission:
+            # Find total commission.
+            for posting in txn.postings:
+                if re.search('Commission', posting.account):
+                    commission = posting.units.number
+                    break
+            else:
+                commission = ZERO
 
-        # Compute total number of units.
-        tot_units = sum(sale.posting.units.number
-                        for sale in txn_sales)
+            # Compute total number of units.
+            tot_units = sum(sale.posting.units.number
+                            for sale in txn_sales)
 
-        # Assign a proportion of the commission to each of the sales by
-        # inserting it into its posting metadata. This will be processed below.
-        for sale in txn_sales:
-            fraction = sale.posting.units.number / tot_units
-            sale.posting.meta['commission'] = fraction * commission
+            # Assign a proportion of the commission to each of the sales by
+            # inserting it into its posting metadata. This will be processed below.
+            for sale in txn_sales:
+                fraction = sale.posting.units.number / tot_units
+                sale.posting.meta['commission'] = fraction * commission
 
         sales.extend(txn_sales)
 
@@ -134,7 +136,18 @@ def main():
         units = sale.posting.units
         totcost = (-units.number * sale.posting.cost.number).quantize(Q)
         totprice = (-units.number * sale.posting.price.number).quantize(Q)
-        commission = sale.posting.meta['commission'].quantize(Q)
+
+        commission_meta = sale.posting.meta.get('commission', None)
+        if commission_meta is None:
+            commission = ZERO
+        else:
+            if calculate_commission:
+                commission = commission_meta
+            else:
+                # Fetch the commission that was inserted by the commissions plugin.
+                commission = commission_meta[0].units.number
+        commission = commission.quantize(Q)
+
         pnl = (totprice - totcost - commission).quantize(Q)
         is_wash = sale.posting.meta.get('wash', False)
         if totprice > totcost:
@@ -206,10 +219,11 @@ def main():
     table.render_table(tab_summary, sys.stdout, 'txt')
 
     # Write out CSV files.
-    with open(path.join(args.output, 'wash-sales-detail.csv'), 'w') as file:
-        table.render_table(tab_detail, file, 'csv')
-    with open(path.join(args.output, 'wash-sales-aggregate.csv'), 'w') as file:
-        table.render_table(tab_agg, file, 'csv')
+    if args.output:
+        with open(path.join(args.output, 'wash-sales-detail.csv'), 'w') as file:
+            table.render_table(tab_detail, file, 'csv')
+        with open(path.join(args.output, 'wash-sales-aggregate.csv'), 'w') as file:
+            table.render_table(tab_agg, file, 'csv')
 
 
 if __name__ == '__main__':
