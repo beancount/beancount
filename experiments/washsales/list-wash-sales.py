@@ -3,11 +3,6 @@
 
 With this script I'm able to make the numbers reported by MS on the 1099 match
 mine, except for rounding error.
-
-TODO:
-
-* Move the allocation of commissions from this script to a plugin.
-
 """
 __author__ = 'Martin Blais <blais@furius.ca>'
 

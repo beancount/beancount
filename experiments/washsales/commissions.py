@@ -29,8 +29,8 @@ account to be debited, the P/L account to be debited from, and the P/L account
 where to move the commissions income to. For example:
 
   plugin "office.commissions" "
-    Expenses:Financial:Commissions 
-    Income:US:Invest:.*:PnL 
+    Expenses:Financial:Commissions
+    Income:US:Invest:.*:PnL
     Income:US:Invest:Commissions"
 
 
@@ -40,6 +40,7 @@ a 'commission' metadata. This can be used for reporting on individual lots
 without the commissions. See the list-wash-sales script in experiments, which
 uses this.
 """
+__author__ = 'Martin Blais <blais@furius.ca>'
 
 import collections
 import re
@@ -47,7 +48,6 @@ import re
 from beancount.core import data
 from beancount.core import amount
 from beancount.core import inventory
-from beancount.parser import printer
 
 
 __plugins__ = ('remove_commissions',)
@@ -59,7 +59,7 @@ Error = collections.namedtuple('Error', 'source message entry')
 def parse_config(config):
     """Parse the configuration accounts & regular expressions.
 
-    Args: 
+    Args:
       config: A configuration string, as per the plugin option.
     Returns:
       A list of commission_regexp, income_regexp, outgoing_account strings.
@@ -83,7 +83,7 @@ def remove_commissions(entries, unused_options_map, config):
     except ValueError:
         return [], [
             Error(None, "Invalid configuration for {} plugin".format(__file__), None)]
-    
+
     new_entries = []
     for entry in entries:
         # Match the transaction.
@@ -92,7 +92,7 @@ def remove_commissions(entries, unused_options_map, config):
                 for posting in entry.postings) and
             any(commission_regexp.match(posting.account)
                 for posting in entry.postings)):
-            
+
             # Find the commissions amounts.
             commissions = inventory.Inventory()
             for posting in entry.postings:
