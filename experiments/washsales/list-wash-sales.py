@@ -28,6 +28,23 @@ from beancount import loader
 LotSale = collections.namedtuple(
     'LotSale', 'no ref date inst units cost price totcost totprice comm proc pnl wash adj')
 
+fieldspec = [
+    ('no', 'No'),
+    ('ref', 'Reference'),
+    ('date', 'Date of Sale'),
+    ('inst', 'Instrument'),
+    ('units', 'Shares'),
+    ('cost', 'Share Cost'),
+    ('price', 'Selling Price'),
+    ('totcost', 'Cost Basis'),
+    ('totprice', 'Market Value'),
+    ('comm', 'Commission'),
+    ('proc', 'Proceeds'),
+    ('pnl', 'Gain'),
+    ('wash', 'Washed?'),
+    ('adj', 'Adjustment'),
+]
+
 
 def aggregate_sales(sublots):
     """Agreggate a list of LotSale instances."""
@@ -171,14 +188,15 @@ def main():
                       code,
                       adj)
         lots.append(lot)
-    tab_detail = table.create_table(lots)
+    tab_detail = table.create_table(lots, fieldspec)
 
     # Aggregate by transaction in order to be able to cross-check against the
     # 1099 forms.
     agglots = [aggregate_sales(lots)
                for _, lots in misc_utils.groupby(
                        lambda lot: (lot.no, lot.ref), lots).items()]
-    tab_agg = table.create_table(sorted(agglots, key=lambda lot: (lot.ref, lot.no)))
+    tab_agg = table.create_table(sorted(agglots, key=lambda lot: (lot.ref, lot.no)),
+                                 fieldspec)
 
     # Write out a summary of P/L.
     summary_fields = list(enumerate(['Currency', 'Gain', 'Loss', 'Net', 'Adj/Wash']))
@@ -204,7 +222,7 @@ def main():
     table.render_table(tab_detail, sys.stdout, 'txt')
     print()
 
-    print('Aggregated by trade & reference number')
+    print('Aggregated by trade & Reference Number (to Match 1099/Form8459')
     print('=' * 48)
     table.render_table(tab_agg, sys.stdout, 'txt')
     print()
@@ -219,6 +237,8 @@ def main():
             table.render_table(tab_detail, file, 'csv')
         with open(path.join(args.output, 'wash-sales-aggregate.csv'), 'w') as file:
             table.render_table(tab_agg, file, 'csv')
+        with open(path.join(args.output, 'wash-sales-summary.csv'), 'w') as file:
+            table.render_table(tab_summary, file, 'csv')
 
 
 if __name__ == '__main__':
