@@ -62,6 +62,11 @@ class Booking(misc_utils.Enum):
     IGNORED = 4   # No change was applied.
 
 
+# Global value of the 'experiment_carry_date_and_book_cost' option. This is set
+# by the parser. This is a kludge.
+CARRY_DATE_AND_BOOK_COST = False
+
+
 class Inventory(list):
     """An Inventory is a set of positions.
 
@@ -372,25 +377,36 @@ class Inventory(list):
 
         # Find the position.
         for index, pos in enumerate(self):
-            if (pos.units.currency == units.currency and
-                pos.cost == cost):
+            if pos.units.currency == units.currency:
 
-                # Check if reducing.
-                booking = (Booking.REDUCED
-                           if not same_sign(pos.units.number, units.number) else
-                           Booking.AUGMENTED)
+                match = False
+                if CARRY_DATE_AND_BOOK_COST:
+                    if ((pos.cost is None and cost is None) or
+                        (pos.cost and
+                         cost and
+                         pos.cost.number == cost.number and
+                         pos.cost.currency == cost.currency)):
+                        match = True
+                elif pos.cost == cost:
+                    match = True
 
-                # Compute the new number of units.
-                number = pos.units.number + units.number
-                if number == ZERO:
-                    # If empty, delete the position.
-                    del self[index]
-                    pos = None
-                else:
-                    # Otherwise update it.
-                    pos = Position(Amount(number, units.currency), cost)
-                    self[index] = pos
-                break
+                if match:
+                    # Check if reducing.
+                    booking = (Booking.REDUCED
+                               if not same_sign(pos.units.number, units.number) else
+                               Booking.AUGMENTED)
+
+                    # Compute the new number of units.
+                    number = pos.units.number + units.number
+                    if number == ZERO:
+                        # If empty, delete the position.
+                        del self[index]
+                        pos = None
+                    else:
+                        # Otherwise update it.
+                        pos = Position(Amount(number, units.currency), cost)
+                        self[index] = pos
+                    break
         else:
             # If not found, create a new one.
             if units.number == ZERO:

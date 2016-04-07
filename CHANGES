@@ -4,6 +4,34 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-04-07
+
+  - In order to carry out some important tax work, I've added an experimental
+    option to kludge in a feature that will be available by default when the
+    'booking' branch and proposal is complete: the automatic association of
+    dates on augmenting postings. For example, when you buy some instrument and
+    hold it at cost, that lot will always carry its transaction's date, unless
+    you had specified a particular date in the input syntax. (With this, I can
+    produce lists of stocks with their acquisition date and infer short or long
+    term capital gains.)
+
+    This also meant that I needed to change the method used to reduce an
+    inventory to match only on the cost amount instead of on all detail of the
+    cost spec provided in the input. This means that if you truly used the date
+    to disambiguate between two lots at the same cost (this should be
+    exceedingly rare), using this option, the behavior is undefined.
+
+    By default, nothing changes. If you want to turn on this behavior, you need
+    to set the new option like this:
+
+      option "experiment_carry_date_and_book_cost" "TRUE"
+
+    In the long term, with the "FULL" booking method (from the 'booking'
+    branch), this behavior will always be the default. Also note that the
+    implementation of this feature is somewhat kludgy in that it sets global
+    state. This will go away.
+
+
 2016-04-04
 
   - Added a test to make sure that building a source dist includes the header
