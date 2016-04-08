@@ -76,7 +76,7 @@ def validate_inventory_booking(entries, unused_options_map):
                 # without allowing booking to a negative position, and if an error
                 # is encountered, catch it and return it.
                 running_balance = balances[posting.account]
-                position_, _ = running_balance.add_position(posting)
+                running_balance.add_position(posting)
 
                 # Skip this check if the booking method is set to ignore it.
                 if booking_methods.get(posting.account, None) == 'NONE':
@@ -89,7 +89,7 @@ def validate_inventory_booking(entries, unused_options_map):
                         BookingError(
                             entry.meta,
                             ("Reducing position results in inventory with positive "
-                             "and negative lots: {}").format(position_),
+                             "and negative lots: {}").format(running_balance),
                             entry))
 
         elif isinstance(entry, data.Open):
