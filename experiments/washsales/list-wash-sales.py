@@ -18,6 +18,7 @@ from os import path
 from beancount.core.number import D
 from beancount.core.number import ZERO
 from beancount.core import data
+from beancount.core import inventory
 from beancount.parser import printer
 from beancount.reports import table
 from beancount.utils import misc_utils
@@ -26,12 +27,16 @@ from beancount import loader
 
 
 LotSale = collections.namedtuple(
-    'LotSale', 'no ref date inst units cost price totcost totprice comm proc pnl wash adj')
+    'LotSale', ('no ref date_buy date_sell days_held term inst units cost price '
+                'totcost totprice comm proc pnl wash adj'))
 
 fieldspec = [
     ('no', 'No'),
     ('ref', 'Reference'),
-    ('date', 'Date of Sale'),
+    ('date_buy', 'Acquisition Date'),
+    ('date_sell', 'Sale Date'),
+    ('days_held', 'Days Held'),
+    ('term', 'Tax Term'),
     ('inst', 'Instrument'),
     ('units', 'Shares'),
     ('cost', 'Share Cost'),
@@ -53,7 +58,34 @@ def aggregate_sales(sublots):
     else:
         agglot = sublots[0]
         for lot in sublots[1:]:
+
+            if (isinstance(agglot.date_buy, datetime.date) and
+                agglot.date_buy == lot.date_buy):
+                date_buy = lot.date_buy
+            else:
+                date_buy = 'VARIOUS'
+
+            if (isinstance(agglot.date_sell, datetime.date) and
+                agglot.date_sell == lot.date_sell):
+                date_sell = lot.date_sell
+            else:
+                date_sell = 'VARIOUS'
+
+            if agglot.days_held == lot.days_held:
+                days_held = lot.days_held
+            else:
+                days_held = 'VARIOUS'
+
+            if agglot.term == lot.term:
+                term = lot.term
+            else:
+                term = 'VARIOUS'
+
             agglot = agglot._replace(
+                date_buy=date_buy,
+                date_sell=date_sell,
+                days_held=days_held,
+                term=term,
                 units=agglot.units + lot.units,
                 totcost=agglot.totcost + lot.totcost,
                 totprice=agglot.totprice + lot.totprice,
@@ -95,30 +127,47 @@ def main():
 
     entries, errors, options_map = loader.load_file(args.filename)
 
-    # Find transactions with postings matching the account.
-    txns = [txn for txn in entries
-            if (isinstance(txn, data.Transaction) and
-                args.start <= txn.date < args.end and
-                any(re.match(args.account, posting.account)
-                    for posting in txn.postings))]
-
     # Expand each of the sales legs.
+    balances = collections.defaultdict(inventory.Inventory)
     sales = []
-    for txn in txns:
-        if 'ref' not in txn.meta:
+    for txn in data.filter_txns(entries):
+        # If we got to the end of the period, bail out.
+        if txn.date >= args.end:
+            break
+
+        # Accumulate the balances before the start date.
+        if txn.date < args.start:
+            for posting in txn.postings:
+                if re.match(args.account, posting.account):
+                    balance = balances[posting.account]
+                    balance.add_position(posting)
             continue
+
+        # Fallthrough: we're not in the period. Process the matching postings.
 
         # Find reducing postings (i.e., for each lot).
         txn_sales = []
         for posting in txn.postings:
-            if (re.match(args.account, posting.account) and
-                posting.cost and
-                posting.units.number < ZERO):
-                if not posting.price:
-                    logging.error("Missing price on %s", posting)
-                txn_sales.append(data.TxnPosting(txn, posting))
+            if re.match(args.account, posting.account):
+                balance = balances[posting.account]
+                reduced_position, booking = balance.add_position(posting)
+                # Set the cost on the posting from the reduced position.
+                # FIXME: Eventually that'll happen automatically during the full
+                # booking stage.
+                if booking == inventory.Booking.REDUCED:
+                    posting = posting._replace(cost=reduced_position.cost)
 
-        if calculate_commission:
+                # If the postings don't have a reference number, ignore them.
+                if 'ref' not in txn.meta:
+                    continue
+
+                if (posting.cost and
+                    posting.units.number < ZERO):
+                    if not posting.price:
+                        logging.error("Missing price on %s", posting)
+                    txn_sales.append(data.TxnPosting(txn, posting))
+
+        if txn_sales and calculate_commission:
             # Find total commission.
             for posting in txn.postings:
                 if re.search('Commission', posting.account):
@@ -129,11 +178,11 @@ def main():
 
             # Compute total number of units.
             tot_units = sum(sale.posting.units.number
-                            for sale in txn_sales)
+                            for sale, _ in txn_sales)
 
             # Assign a proportion of the commission to each of the sales by
             # inserting it into its posting metadata. This will be processed below.
-            for sale in txn_sales:
+            for sale, _ in txn_sales:
                 fraction = sale.posting.units.number / tot_units
                 sale.posting.meta['commission'] = fraction * commission
 
@@ -177,9 +226,15 @@ def main():
         else:
             code = ''
             adj = ''
+
+        days_held = (sale.txn.date - sale.posting.cost.date).days
+        term = 'LONG' if days_held >= 365 else 'SHORT'
         lot = LotSale(sale_no,
                       ref,
+                      sale.posting.cost.date,
                       sale.txn.date,
+                      days_held,
+                      term,
                       units.currency,
                       -units.number.quantize(Q),
                       sale.posting.cost.number.quantize(Q),

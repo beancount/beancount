@@ -3,6 +3,12 @@ beancount: TODO
 * Big Tasks
 ** Booking Branch
 
+  - Remove the horrible CARRY_DATE_AND_BOOK_COST kludge; do this by finishing
+    the 'booking' branch and making the lots conform exactly to those present in
+    the invntory balance, so that the inventory booking can proceed by comparing
+    the entire cost object precisely...
+
+
 ** Dealing with Split & Merge (Settlement Dates)
 
 ** Export
@@ -153,6 +159,9 @@ beancount: TODO
 
 
 * Misc
+
+  - IMPORTANT: We need to test the return values of the Inventory.add_amount()
+    method! Review and do this now.
 
   - Make document directive accept links, so that explicit documents could be
     associated with specific transactions.

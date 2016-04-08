@@ -377,7 +377,7 @@ class TestInventory(unittest.TestCase):
 
         position_, _ = inv.add_amount(A('-12 HOOL'),
                                       Cost(D('700'), 'USD', None, None))
-        self.assertTrue(position_.is_negative_at_cost())
+        self.assertTrue(inv[0].is_negative_at_cost())
 
         # Testing the strict case where everything matches, a cost and a lot-date.
         inv = Inventory()
@@ -389,29 +389,38 @@ class TestInventory(unittest.TestCase):
 
         position_, _ = inv.add_amount(A('-12 HOOL'), Cost(D('700'), 'USD',
                                                           date(2000, 1, 1), None))
-        self.assertTrue(position_.is_negative_at_cost())
+        self.assertTrue(inv[0].is_negative_at_cost())
 
     def test_add_amount__allow_negative(self):
-
-        def check_allow_negative(inv):
-            position_, _ = inv.add_amount(A('-11 USD'))
-            self.assertFalse(position_.is_negative_at_cost())
-            position_, _ = inv.add_amount(A('-11 USD'), Cost(D('1.10'), 'CAD', None, None))
-            self.assertTrue(position_.is_negative_at_cost())
-            position_, _ = inv.add_amount(A('-11 USD'),
-                                          Cost(None, None, date(2012, 1, 1), None))
-            self.assertTrue(position_.is_negative_at_cost())
-            inv.add_amount(A('-11 USD'), Cost(D('1.10'), 'CAD', None, None))
-            inv.add_amount(A('-11 USD'), Cost(None, None, date(2012, 1, 1), None))
-
-        # Test adding to a position that does not exist.
         inv = Inventory()
-        check_allow_negative(inv)
+
+        # Test adding positions of different types.
+        position_, _ = inv.add_amount(A('-11 USD'))
+        self.assertIsNone(position_)
+        position_, _ = inv.add_amount(A('-11 USD'),
+                                      Cost(D('1.10'), 'CAD', None, None))
+        self.assertIsNone(position_)
+        position_, _ = inv.add_amount(A('-11 USD'),
+                                      Cost(D('1.10'), 'CAD', date(2012, 1, 1), None))
+        self.assertIsNone(position_)
+
+        # Check for reductions.
+        self.assertTrue(inv[1].is_negative_at_cost())
+        self.assertTrue(inv[2].is_negative_at_cost())
+        inv.add_amount(A('-11 USD'), Cost(D('1.10'), 'CAD', None, None))
+        inv.add_amount(A('-11 USD'), Cost(D('1.10'), 'CAD', date(2012, 1, 1), None))
+        self.assertEqual(3, len(inv))
 
         # Test adding to a position that does exist.
-        inv = I(
-            '10 USD, 10 USD {1.10 CAD}, 10 USD {1.10 CAD, 2012-01-01}')
-        check_allow_negative(inv)
+        inv = I('10 USD, 10 USD {1.10 CAD}, 10 USD {1.10 CAD, 2012-01-01}')
+        position_, _ = inv.add_amount(A('-11 USD'))
+        self.assertEqual(position_, position.from_string('10 USD'))
+        position_, _ = inv.add_amount(A('-11 USD'),
+                                      Cost(D('1.10'), 'CAD', None, None))
+        self.assertEqual(position_, position.from_string('10 USD {1.10 CAD}'))
+        position_, _ = inv.add_amount(A('-11 USD'),
+                                      Cost(D('1.10'), 'CAD', date(2012, 1, 1), None))
+        self.assertEqual(position_, position.from_string('10 USD {1.10 CAD, 2012-01-01}'))
 
     def test_add_position(self):
         inv = Inventory()

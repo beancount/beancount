@@ -31,6 +31,20 @@ Note: This file contains only changes in the 'default' branch.
     implementation of this feature is somewhat kludgy in that it sets global
     state. This will go away.
 
+  - Made some important internal changes to beancount.core.inventory.Inventory,
+    changes which are only triggered when the
+    "experiment_carry_date_and_book_cost" option is set: augmenting a position
+    requires an exact match on the lot (and this almost never happens because
+    the cost carries the date from its transaction) but for reducing a lot, only
+    the cost number and currency has to match. This will be removed when the
+    'booking' branch will be merged.
+
+    This behavior is not triggered in the normal case, and you should observe no
+    change in behavior. However, the return value of Inventory.add_amount() has
+    changed: it used to be inconsistent, it now returns the PREVIOUS position
+    that was modified, before it got modified. I had to change some of the few
+    places which use this return value in order to fix this inconsistency.
+
 
 2016-04-04
 
