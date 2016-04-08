@@ -1010,3 +1010,19 @@ class Builder(lexer.LexBuilder):
         # Create the transaction.
         return Transaction(meta, date, chr(flag),
                            payee, narration, tags, links, postings)
+
+
+def apply_side_effects(options_map):
+    """Apply side-effects from a parsed set of options.
+
+    This is used by the loader to apply global side-effects kludges.
+
+    Args:
+      options_map: An options dict.
+    """
+    # Set global state for the cost date carry and cost booking.
+    #
+    # FIXME: This is a kludge that should go away when the 'booking'
+    # branch is completed. It will become the default with the FULL
+    # booking method.
+    inventory.CARRY_DATE_AND_BOOK_COST = options_map["experiment_carry_date_and_book_cost"]
