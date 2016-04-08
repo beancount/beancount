@@ -146,10 +146,10 @@ def pad(entries, options_map):
                         new_entries[id(active_pad)].append(new_entry)
 
                         # Fixup the running balance.
-                        pos, _ = pad_balance.add_position(diff_position)
-                        if pos is not None and pos.is_negative_at_cost():
-                            raise ValueError(
-                                "Position held at cost goes negative: {}".format(pos))
+                        pad_balance.add_position(diff_position)
+                        if pad_balance.is_mixed():
+                            raise ValueError("Inventory balance is mixed after padding with"
+                                             " {}: {}".format(diff_position, pad_balance))
 
                 # Mark this lot as padded. Further checks should not pad this lot.
                 padded_lots.add(check_amount.currency)

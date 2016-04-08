@@ -31,6 +31,7 @@ from beancount.core.data import Custom
 from beancount.core.data import new_metadata
 from beancount.core.data import Posting
 from beancount.core.data import BOOKING_METHODS
+from beancount.core import inventory
 
 from beancount.parser import lexer
 from beancount.parser import options
@@ -378,6 +379,12 @@ class Builder(lexer.LexBuilder):
                 # Update the set of valid account types.
                 self.account_regexp = valid_account_regexp(self.options)
 
+            # Set global state for the cost date carry and cost booking.
+            if key == "experiment_carry_date_and_book_cost":
+                # FIXME: This is a kludge that should go away when the 'booking'
+                # branch is completed. It will become the default with the FULL
+                # booking method.
+                inventory.CARRY_DATE_AND_BOOK_COST = value
 
     def include(self, filename, lineno, include_filename):
         """Process an include directive.
@@ -941,7 +948,20 @@ class Builder(lexer.LexBuilder):
                                 meta, "Duplicate posting metadata field: {}".format(
                                     posting_or_kv), None))
 
-
+        if inventory.CARRY_DATE_AND_BOOK_COST:
+            # If a date hasn't been provided on augmenting postings - for now,
+            # defined as positive - carry the date of the transaction over.
+            new_postings = []
+            for posting in postings:
+                if (posting.cost and
+                    posting.cost.date is None and
+                    posting.units and
+                    posting.units is not MISSING and
+                    posting.units.number > ZERO):
+                    # Copy the transaction date to this posting's CostSpec.
+                    posting = posting._replace(cost=posting.cost._replace(date=date))
+                new_postings.append(posting)
+            postings = new_postings
 
         # Initialize the metadata fields from the set of active values.
         if self.meta:
@@ -990,3 +1010,19 @@ class Builder(lexer.LexBuilder):
         # Create the transaction.
         return Transaction(meta, date, chr(flag),
                            payee, narration, tags, links, postings)
+
+
+def apply_side_effects(options_map):
+    """Apply side-effects from a parsed set of options.
+
+    This is used by the loader to apply global side-effects kludges.
+
+    Args:
+      options_map: An options dict.
+    """
+    # Set global state for the cost date carry and cost booking.
+    #
+    # FIXME: This is a kludge that should go away when the 'booking'
+    # branch is completed. It will become the default with the FULL
+    # booking method.
+    inventory.CARRY_DATE_AND_BOOK_COST = options_map["experiment_carry_date_and_book_cost"]
