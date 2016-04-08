@@ -100,12 +100,8 @@ def aggregate_sales(sublots):
 def main():
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
     parser = argparse.ArgumentParser(description=__doc__.strip())
-    parser.add_argument('report', choices=['detail', 'aggregate', 'summary'],
-                        help='Type of report')
-    parser.add_argument('filename',
-                        help='Beancount input file')
-    parser.add_argument('account',
-                        help='Account name')
+    parser.add_argument('filename', help='Beancount input file')
+    parser.add_argument('account', help='Account name')
 
     parser.add_argument('--start', type=date_utils.parse_date_liberally,
                         help="Start date")
@@ -113,7 +109,7 @@ def main():
                         help="End date; if not set, at the end of star'ts year")
 
     parser.add_argument('-o', '--output', action='store',
-                        help="Output filename for the CSV file")
+                        help="Output directory for the CSV files")
 
     args = parser.parse_args()
 
@@ -275,33 +271,29 @@ def main():
     summary.append(('*', gain, loss, gain + loss, adj))
     tab_summary = table.create_table(summary, summary_fields)
 
-    if args.report == 'detail':
-        # Render to the console.
-        print('Detail of all lots')
-        print('=' * 48)
-        table.render_table(tab_detail, sys.stdout, 'txt')
-        print()
-        if args.output:
-            with open(args.output, 'w') as file:
-                table.render_table(tab_detail, file, 'csv')
+    # Render to the console.
+    print('Detail of all lots')
+    print('=' * 48)
+    table.render_table(tab_detail, sys.stdout, 'txt')
+    print()
 
-    elif args.report == 'aggregate':
-        print('Aggregated by trade & Reference Number (to Match 1099/Form8459')
-        print('=' * 48)
-        table.render_table(tab_agg, sys.stdout, 'txt')
-        print()
-        if args.output:
-            with open(args.output, 'w') as file:
-                table.render_table(tab_agg, file, 'csv')
+    print('Aggregated by trade & Reference Number (to Match 1099/Form8459')
+    print('=' * 48)
+    table.render_table(tab_agg, sys.stdout, 'txt')
+    print()
 
-    elif args.report == 'summary':
-        print('Summary')
-        print('=' * 48)
-        table.render_table(tab_summary, sys.stdout, 'txt')
-        print()
-        if args.output:
-            with open(args.output, 'w') as file:
-                table.render_table(tab_summary, file, 'csv')
+    print('Summary')
+    print('=' * 48)
+    table.render_table(tab_summary, sys.stdout, 'txt')
+
+    # Write out CSV files.
+    if args.output:
+        with open(path.join(args.output, 'wash-sales-detail.csv'), 'w') as file:
+            table.render_table(tab_detail, file, 'csv')
+        with open(path.join(args.output, 'wash-sales-aggregate.csv'), 'w') as file:
+            table.render_table(tab_agg, file, 'csv')
+        with open(path.join(args.output, 'wash-sales-summary.csv'), 'w') as file:
+            table.render_table(tab_summary, file, 'csv')
 
 
 if __name__ == '__main__':

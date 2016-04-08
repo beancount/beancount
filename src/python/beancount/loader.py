@@ -23,7 +23,6 @@ from beancount.parser import parser
 from beancount.parser import booking
 from beancount.parser import options
 from beancount.parser import printer
-from beancount.parser import grammar
 from beancount.ops import validation
 from beancount.utils import encryption
 
@@ -85,11 +84,6 @@ def load_file(filename, log_timings=None, log_errors=None, extra_validations=Non
         entries, errors, options_map = _load_file(filename, log_timings,
                                                   extra_validations, encoding)
         _log_errors(errors, log_errors)
-
-        # Apply the global kludges when the contents were pulled from the cache.
-        # FIXME: Remove this with the booking branch.
-        grammar.apply_side_effects(options_map)
-
         return entries, errors, options_map
 
 
