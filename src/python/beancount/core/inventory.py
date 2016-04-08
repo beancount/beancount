@@ -403,9 +403,10 @@ class Inventory(list):
                     # In order to augment, the full cost has to match, with all
                     # details.
                     booking = None
-                    if (pos.cost == cost and
-                        same_sign(pos.units.number, units.number)):
-                        booking = Booking.AUGMENTED
+                    if pos.cost == cost:
+                        booking = (Booking.AUGMENTED
+                                   if same_sign(pos.units.number, units.number)
+                                   else Booking.REDUCED)
 
                     # In order to reduce, only the cost has to match.
                     elif (pos.cost and cost and
