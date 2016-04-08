@@ -1,52 +1,5 @@
 -*- mode: org -*-
 beancount: TODO
-* Big Tasks
-** Booking Branch
-
-** Dealing with Split & Merge (Settlement Dates)
-
-** Export
-
-** Documents
-
-  - Intro document
-  - Cookbook: Taxes
-  - Cookbook: Health-Care
-  - Property sale example.
-
-
-** Complete Precision Work
-
-  - Create new rendering type for max(MAXIMUM, MOST_COMMON) for
-    DisplayFormatter.
-
-  - Review all reports code for proper use of DisplayContext.
-
-  - Remove Holding object everywhere and replace it by Posting.
-
-
-** Move Core Code to Plugins
-
-  - Moving the document option which seeks document files from directives to a
-    plugin.
-
-
-** Shell Work
-
-  - Implement output to CSV
-  - Implement unit tests
-  - Implement v2 syntax & abstract away from Beancount
-  - Implement PIVOT reports
-
-  - Implement a virtual table in SQLite3
-
-
-** Cleanup Work
-
-  - (Annoyance) All functions that return an (entries, errors, options_map)
-    triple really should return (entries, options_map, errors), in this order.
-
-
 * Ingest (LedgerHub)
 ** CSV Importer
 
@@ -154,12 +107,6 @@ beancount: TODO
 
 * Misc
 
-  - Make document directive accept links, so that explicit documents could be
-    associated with specific transactions.
-
-  - SQL: When not specified, ORDER BY should be set to be the same as GROUP BY.
-    This is a sensible choice.
-
   - Add a list of posted balances by account to "bean-doctor context".  "linked"
     always links all the transactions, so it's not good enough. Just add this by
     default to the context command.
@@ -241,6 +188,8 @@ beancount: TODO
 
 
 * Booking
+
+  - Port beangrind & ledgerhub to avoid using lots as well.
 
   - Complete testing incomplete output with CostSpec:
 
