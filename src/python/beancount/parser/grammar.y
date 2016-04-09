@@ -715,12 +715,38 @@ document : DATE DOCUMENT ACCOUNT filename eol key_value_list
 
 
 custom_value : STRING
+             {
+                 BUILDY(DECREF1($1),
+                        $$, "custom_value", "OO", $1, Py_None);
+             }
              | DATE
+             {
+                 BUILDY(DECREF1($1),
+                        $$, "custom_value", "OO", $1, Py_None);
+             }
              | BOOL
+             {
+                 BUILDY(DECREF1($1),
+                        $$, "custom_value", "OO", $1, Py_None);
+             }
              | amount
+             {
+                 BUILDY(DECREF1($1),
+                        $$, "custom_value", "OO", $1, Py_None);
+             }
              | number_expr
              {
-                 $$ = $1;
+                 BUILDY(DECREF1($1),
+                        $$, "custom_value", "OO", $1, Py_None);
+             }
+             | ACCOUNT
+             {
+                 /* Obtain beancount.core.account.TYPE */
+                 PyObject* module = PyImport_ImportModule("beancount.core.account");
+                 PyObject* dtype = PyObject_GetAttrString(module, "TYPE");
+                 Py_DECREF(module);
+                 BUILDY(DECREF2($1, dtype),
+                        $$, "custom_value", "OO", $1, dtype);
              }
 
 custom_value_list : empty

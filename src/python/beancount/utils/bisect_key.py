@@ -1,5 +1,4 @@
-"""
-A version of bisect that accepts a custom key function, like the sorting ones do.
+"""A version of bisect that accepts a custom key function, like the sorting ones do.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 

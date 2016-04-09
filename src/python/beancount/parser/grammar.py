@@ -731,6 +731,19 @@ class Builder(lexer.LexBuilder):
         meta = new_metadata(filename, lineno, kvlist)
         return Custom(meta, date, dir_type, custom_values)
 
+    def custom_value(self, value, dtype=None):
+        """Create a custom value object, along with its type.
+
+        Args:
+          value: One of the accepted custom values.
+        Returns:
+          A pair of (value, dtype) where 'dtype' is the datatype is that of the
+          value.
+        """
+        if dtype is None:
+            dtype = type(value)
+        return (value, dtype)
+
     def key_value(self, key, value):
         """Process a document directive.
 

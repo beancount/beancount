@@ -246,9 +246,9 @@ def do_linked(filename, args):
     closest_entry = data.find_closest(entries, options_map['filename'], lineno)
 
     # Find its links.
-    links = closest_entry.links
     if closest_entry is None:
         raise SystemExit("No entry could be found before {}:{}".format(filename, lineno))
+    links = closest_entry.links if isinstance(closest_entry, data.Transaction) else None
     if not links:
         linked_entries = [closest_entry]
     else:
