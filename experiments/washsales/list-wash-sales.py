@@ -286,7 +286,7 @@ def main():
                 table.render_table(tab_detail, file, 'csv')
 
     elif args.report == 'aggregate':
-        print('Aggregated by trade & Reference Number (to Match 1099/Form8459')
+        print('Aggregated by trade & Reference Number (to Match 1099/Form8459)')
         print('=' * 48)
         table.render_table(tab_agg, sys.stdout, 'txt')
         print()
