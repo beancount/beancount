@@ -6,6 +6,19 @@ Note: This file contains only changes in the 'default' branch.
 
 2016-04-10
 
+  - Create a new 'beancount.plugins.fix_payees' plugin that allows the user to
+    provide a set of rules to rewrite and clean up the names of the payees from
+    the Beancount file.
+
+    While it would be ideal to do this at import time, in practice there are a
+    lot of downloaded files' "memo" fields which get set as the payee
+    automatically. These "memos" aren't very clean and readable strings: they
+    sometimes contain numbers, partial city names, and other junk. In order to
+    produce clean reports where one might want to aggregate by payee, it's
+    useful to rewrite the payees to make them nice and clean. You can use this
+    plugin to do that.
+
+
   - Made the Custom directive accept ACCOUNT tokens. You can now do something
     like this:
 
