@@ -48,8 +48,11 @@ from beancount.core import data
 __plugins__ = ('fix_payees',)
 
 
+FixPayeesError = collections.namedtuple('FixPayeesError', 'source message entry')
 
-FixPayeeError = collections.namedtuple('FixPayeesError', 'source message entry')
+
+# Set this to true to dump debug outpout.
+debug = False
 
 
 def fix_payees(entries, options_map, config):
@@ -63,9 +66,21 @@ def fix_payees(entries, options_map, config):
     Returns:
       A tuple of entries and errors.
     """
+    errors = []
+    if config.strip():
+        try:
+            expr = ast.literal_eval(config)
+        except SyntaxError:
+            meta = data.new_metadata(options_map['filename'], 0)
+            errors.append(FixPayeesError(meta,
+                                         "Syntax error in config: {}".format(config),
+                                         None))
+            return entries, errors
+    else:
+            return entries, errors
+
     # Pre-compile the regular expressions for performance.
     rules = []
-    errors = []
     for rule in ast.literal_eval(config):
         clauses = iter(rule)
         new_payee = next(clauses)
@@ -73,6 +88,7 @@ def fix_payees(entries, options_map, config):
         for clause in clauses:
             match = re.match('([AD]):(.*)', clause)
             if not match:
+                meta = data.new_metadata(options_map['filename'], 0)
                 errors.append(FixPayeesError(meta,
                                              "Invalid clause: {}".format(clause),
                                              None))
@@ -81,7 +97,6 @@ def fix_payees(entries, options_map, config):
             regexps.append((command, re.compile(regexp, re.I).search))
         new_rule = [new_payee] + regexps
         rules.append(tuple(new_rule))
-
 
     # Run the rules over the transaction objects.
     new_entries = []
@@ -108,7 +123,7 @@ def fix_payees(entries, options_map, config):
                     replaced_entries[new_payee].append(entry)
         new_entries.append(entry)
 
-    if True:
+    if debug:
         # Print debugging info.
         for payee, repl_entries in sorted(replaced_entries.items(),
                                           key=lambda x: len(x[1]),
