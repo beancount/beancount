@@ -86,6 +86,30 @@ class ObjectRenderer(ColumnRenderer):
         return '' if string is None else str(string)
 
 
+class BoolRenderer(ColumnRenderer):
+    """A renderer for left-aligned strings."""
+    dtype = bool
+
+    def __init__(self, dcontext):
+        super().__init__(dcontext)
+        self.maxlen = 0
+        self.seen_true = False
+
+    def update(self, value):
+        if value:
+            self.seen_true = True
+
+    def prepare(self):
+        self.maxlen = 5 if self.seen_true else 4
+        self.fmt = '{{:<{}.{}}}'.format(self.maxlen, self.maxlen)
+
+    def width(self):
+        return self.maxlen
+
+    def format(self, value):
+        return self.fmt.format('TRUE' if value else 'FALSE')
+
+
 class StringRenderer(ColumnRenderer):
     """A renderer for left-aligned strings."""
     dtype = str
@@ -554,6 +578,7 @@ def render_text(result_types, result_rows, dcontext, file, boxed=False, spaced=F
 # A mapping of data-type -> (render-function, alignment)
 RENDERERS = {renderer_cls.dtype: renderer_cls
              for renderer_cls in [ObjectRenderer,
+                                  BoolRenderer,
                                   StringRenderer,
                                   StringSetRenderer,
                                   IntegerRenderer,

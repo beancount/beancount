@@ -36,10 +36,14 @@ from beancount.ingest import regression
 
 def is_pdfminer_installed():
     """Return true if the external PDFMiner2 tool installed."""
-    returncode = subprocess.call(['pdf2txt.py', '-h'],
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE)
-    return returncode == 0
+    try:
+        returncode = subprocess.call(['pdf2txt.py', '-h'],
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE)
+    except FileNotFoundError:
+        return False
+    else:
+        return returncode == 0
 
 
 def pdf_to_text(filename):

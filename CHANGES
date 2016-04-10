@@ -4,6 +4,74 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-04-10
+
+  - Made the Custom directive accept ACCOUNT tokens. You can now do something
+    like this:
+
+      2014-06-20 custom "budget" Assets:Account2 "balance < 200.00 USD"
+
+    Prior to this, the account name had to be represented as a string. (Users of
+    the burgeoning Custom directive not like this very much.)
+
+    Note that account names and regular strings are both output from the parser
+    as 'str' objects, so in order to make this possible, I had to change the
+    representation of the values to a pair of (value, dtype). Account names have
+    a 'dtype' of beancount.core.account.TYPE. (Eventually I will probably want
+    to make account strings represented with their own custom datatypes, but
+    that will require a fair amount of work on the codebase; this substitute is
+    fine for now, as there are no other places where such a disambiguation is
+    necessary.)
+
+
+2016-04-04
+
+  - Added a test to make sure that building a source dist includes the header
+    files and C implementation files.
+
+  - Sort Document directives after Transactions when they occur on the same day.
+    The reason for this is that statements typically include transactions on
+    that final day, and we'd like for them to occur at the right place in the
+    journals. See originating thread:
+    https://groups.google.com/d/msg/beancount/3ItOYS9DJx4/VyTJB3ssBQAJ
+
+
+2016-04-03
+
+  - Fixed a bug in "bean-doctor context" which wouldn't report the full set of
+    accounts when an account's before-balance would be empty.
+
+  - Fixed a bug in "bean-doctor linked" whereby the balances wouldn't get
+    printed out if there was no link. Print the balances before and after; in
+    fact, maybe this command should be renamed to "balances" and have an option
+    to support links.
+
+
+2016-03-31
+
+  - Added TODAY() function to extract today's date. Not sure how useful it'll
+    be.
+
+
+2016-03-27
+
+  - Added a PRICE() function to extract entries from the price database. You can
+    now query for "SELECT PRICE('USD', 'CAD', date)", for example.
+
+  - Added a boolean renderer for the SQL shell.
+
+
+2016-03-26
+
+  - Added an optional date argument to convert, so you can provide the requested
+    date in a SQL query, as in "CONVERT(sum(position), "CAD", 2015-06-01)".
+
+  - Improved the rendering of the context, removed the weird comments it used to
+    render with, render an account name if the inventory is empty.
+
+  - Ignore .DS_Store files from the file finder in ingest.
+
+
 2016-03-22
 
   - Support multiple accounts in same ofx file. See

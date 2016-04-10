@@ -462,8 +462,17 @@ def get_entry(posting_or_entry):
         return posting_or_entry
 
 
-# Sort with the checks at the BEGINNING of the day.
-SORT_ORDER = {Open: -2, Balance: -1, Close: 1}
+# Sorting order of directives on the same day, by type:
+# - Open entries should always be first.
+# - Balance entries should appear before Transactions, because
+#   they are defined to apply at the beginning of the day.
+# - All other directives come next (including Transactions).
+# - Document directives should appear after Transactions because
+#   they can be inserted on the statement date, which may include
+#   transactions on that date.
+# - Close directives should always appear last.
+# This is the rationale for this sorting order.
+SORT_ORDER = {Open: -2, Balance: -1, Document: 1, Close: 2}
 
 
 def entry_sortkey(entry):

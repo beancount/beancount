@@ -5,6 +5,7 @@ import unittest
 import datetime
 import io
 import os
+import re
 import textwrap
 from unittest import mock
 
@@ -341,7 +342,8 @@ class TestScriptExtract(test_utils.TestTempdirMixin, unittest.TestCase):
                 '--existing={}'.format(path.join(example_dir, 'example.beancount')),
                 config_filename, path.join(example_dir, 'Downloads')])
         self.assertEqual(0, result)
-        self.assertEqual("", stderr.getvalue())
+        errors = stderr.getvalue()
+        self.assertTrue(not errors or re.search('ERROR.*pdf2txt.py', errors))
 
         output = stdout.getvalue()
 

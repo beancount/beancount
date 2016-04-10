@@ -164,7 +164,7 @@ def execute_query(query, entries, options_map):
         result_rows: A list of ResultRow tuples of length and types described by
           'result_types'.
     """
-    # Filter the entries using the WHERE clause.
+    # Filter the entries using the FROM clause.
     filt_entries = (filter_entries(query.c_from, entries, options_map)
                     if query.c_from is not None else
                     entries)

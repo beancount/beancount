@@ -89,6 +89,25 @@ def get_posting_weight(posting):
     return amount
 
 
+def compute_cost_basis(postings):
+    """Compute the sum of the cost basis from all the given postings.
+
+    This only includes legs which have a cost on them.
+
+    Args:
+      postings: A list of Posting instances.
+    Returns:
+      An Inventory instance.
+    """
+    cost_basis = Inventory()
+    for posting in postings:
+        if posting.cost is None:
+            continue
+        amount = amount_mul(posting.cost, posting.units.number)
+        cost_basis.add_amount(amount)
+    return cost_basis
+
+
 def has_nontrivial_balance(posting):
     """Return True if a Posting has a balance amount that would have to be calculated.
 

@@ -135,6 +135,9 @@ vtest vtests verbose-test verbose-tests:
 qtest qtests quiet-test quiet-tests test tests:
 	nosetests $(SRC)
 
+test-failed:
+	nosetests --failed $(SRC)
+
 nakedtests:
 	PATH=/bin:/usr/bin PYTHONPATH= /usr/local/bin/nosetests -x $(SRC)
 
