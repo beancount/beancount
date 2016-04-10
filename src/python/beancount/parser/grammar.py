@@ -52,12 +52,20 @@ DeprecatedError = collections.namedtuple('DeprecatedError', 'source message entr
 
 
 
-# Temporary holder for key-value pairs.
+# Key-value pairs. This is used to hold meta-data attachments temporarily.
 #
 # Attributes:
 #  key: A string, the name of the key.
 #  value: Any object.
 KeyValue = collections.namedtuple('KeyValue', 'key value')
+
+# Value-type pairs. This is used to represent custom values where the concrete
+# datatypes aren't matching those which are found in the parser.
+#
+# Attributes:
+#  value: Any object.
+#  dtype: The datatype of the object.
+ValueType = collections.namedtuple('ValueType', 'value dtype')
 
 # Convenience holding class for amounts with per-share and total value.
 #
@@ -742,7 +750,7 @@ class Builder(lexer.LexBuilder):
         """
         if dtype is None:
             dtype = type(value)
-        return (value, dtype)
+        return ValueType(value, dtype)
 
     def key_value(self, key, value):
         """Process a document directive.
