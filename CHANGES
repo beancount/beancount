@@ -4,6 +4,26 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-04-10
+
+  - Made the Custom directive accept ACCOUNT tokens. You can now do something
+    like this:
+
+      2014-06-20 custom "budget" Assets:Account2 "balance < 200.00 USD"
+
+    Prior to this, the account name had to be represented as a string. (Users of
+    the burgeoning Custom directive not like this very much.)
+
+    Note that account names and regular strings are both output from the parser
+    as 'str' objects, so in order to make this possible, I had to change the
+    representation of the values to a pair of (value, dtype). Account names have
+    a 'dtype' of beancount.core.account.TYPE. (Eventually I will probably want
+    to make account strings represented with their own custom datatypes, but
+    that will require a fair amount of work on the codebase; this substitute is
+    fine for now, as there are no other places where such a disambiguation is
+    necessary.)
+
+
 2016-04-04
 
   - Added a test to make sure that building a source dist includes the header
