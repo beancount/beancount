@@ -70,7 +70,7 @@ def fetch_candles(params, date=None):
         search_time = datetime.datetime(date.year, date.month, date.day, 0, 0, 0,
                                         tzinfo=tz.tzutc())
     else:
-        search_time = datetime.datetime.now().astimezone(tz.tzutc())
+        search_time = datetime.datetime.now(tz.tzlocal()).astimezone(tz.tzutc())
 
         # FIXME: Read the docs and deal with the timezones correctly,
         # translating found times back to the local datetime.

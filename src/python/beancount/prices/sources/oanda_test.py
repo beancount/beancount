@@ -72,6 +72,7 @@ class TestOANDASource(unittest.TestCase):
             }
         """).encode('utf-8')
         srcprice = self.fetcher.get_latest_price('USD_CAD')
+        self.assertIsNotNone(srcprice)
         self.assertTrue(isinstance(srcprice.price, Decimal))
         expected = source.SourcePrice(D('1.308475'),
                                       datetime.datetime(2016, 4, 4, 21, 19, 17,
