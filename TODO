@@ -1278,6 +1278,42 @@ http://furius.ca/beancount/doc/proposal-query
 
 
 
+* Computing Asset Returns
+
+  Another important task I've been trying to do is to process my investment
+  history in order to compute the actual, precise returns, including all fees
+  and taking into actual my particular cash transfers. Most brokers will provide
+  either the generic returns of a particular instrument regardless of your
+  exposure over time, or the difference between the current time and some past
+  time for your entire portfolio. Neither of these is sufficient to evaluate
+  your portfolio returns. I want to compute the returns of each instrument
+  separately, entirely from the Beancount input file, and then combining those
+  returns histories to compute portfolio returns.
+
+  In order to do this right, the structure of each investment has to follow some
+  sort of pattern so that for each instrument we can identify external flows of
+  money, internal flows, and "value accounts" which contain the commodities
+  whose price fluctuates. I had a pretty good shot at this in the 'returns'
+  branch, which has been merged, and have found some shortcomings, so I wrote
+  the 'returns2' branch, but it is yet incomplete and I have to restart working
+  on this at some point.
+
+  - I need to add detailed debugging information in order to troubleshoot the
+    cases where it does not work well. There are several corner cases and I've
+    been having a difficult time identifying exactly why it fails for some
+    commodities. Time to write some nice debugging output, this will be useful
+    later, and for others, and for others to share when asking questions if they
+    face similar difficulties.
+
+  - In order to compute this properly, I will need to pull prices at various
+    points in time. I want to automate the process of figuring out the dates at
+    which prices are needed, i.e., when the prices in Beancount at too far from
+    the evaluation dates, and perhaps automate the fetching of all necessary prices.
+
+  - Bring in all the generic functions from experiments/returns/returns.py into
+    core beancount. Bring in returns as a plugin.
+
+
 * Standalone Tools
 
   In order to produce many of the reports, I've had many ideas of composable
@@ -1375,6 +1411,13 @@ http://furius.ca/beancount/doc/proposal-query
   our first implementation should simply add the feature as optional and keep
   the conversion entries insertion behavior, we want to introduce this better
   alternative mechanism gradually.
+
+  - Implement the Trading Accounts method, it should work entirely
+    automatically. You'll have to insert a new option for specifying the root of
+    the trading accounts. This is a better solution than my current
+    reporting-dependent auto-insertion of a special conversion transaction. With
+    the "trading accounts" solution, any subset of transactions will naturally
+    balance to zero because each transaction is coerced to balance to zero.
 
   - Write a document to explain how conversion entries work.
 
@@ -2856,14 +2899,6 @@ http://furius.ca/beancount/doc/proposal-query
     '!' flag. "Show me all that's unverified right now."
 
 
-* Computing Asset Returns
-
-TODO desc
-
-
-  - Bring in all the generic functions from experiments/returns/returns.py into
-    core beancount. Bring in returns as a plugin.
-
 * Performance
 
   - (validation/performance) Optimize the performance of validations and bring
@@ -3023,17 +3058,6 @@ TODO desc
 
 
 
-* Inter-Account Booking
-http://furius.ca/beancount/doc/proposal-inter
-
-  - Idea: option to search a lot from any account, not just the current account,
-    and cause an automatic lot transfer. Must match shares in the current
-    account, but the lot with the corresponding cost could come from any
-    account.
-
-  - Create new proposal doc: Inter account transfer
-
-
 * Better Errors & Errors as Directives
 
   - Enhance error reporting! Make all errors possibly hold on to a list of
@@ -3071,14 +3095,14 @@ http://furius.ca/beancount/doc/proposal-inter
     the string.
 
 
-* Pertaining to Old Reports
-
-
 * Include Directive
 
   - Support an include directive that is a URL, in order to fetch lists of
     prices updated remotely, or via crontab. This way the dashboard does not
     have to include code that fetches prices.
+
+  - Idea: an include directive should have a "prefix" option, to add a prefix to
+    all accounts from the included file.
 
 
 * Payees & Subaccounts
@@ -3288,15 +3312,6 @@ http://furius.ca/beancount/doc/proposal-inter
     language too, this should all be a single file format.
 
 * Filtering
-** Beancount reorg
-
-  - Remove subaccounts for TMobile and employer once we have filtering working
-    out nicely. Same with RedSquare electricity. Same with Employer subaccounts
-    for taxes.
-
-      Payees are just like tags!
-
-
 ** Views
 
   - Replace all views by filtering queries... the root page should still have
@@ -3577,18 +3592,6 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 
   - Auto-detect and warn on likely duplicate transactions within the file.
 
-** Conversions
-
-  - TODO: Try it out in Ledger, see how they deal with it.
-
-  - Make the conversions entry use a price of zero, to maintain the invariants
-    for sanity checks, something like this:
-
-       YYYY-MM-DD * "Annul conversions at end of period"
-         Equity:Conversions        -56383 CAD @ 0 CONV
-         Equity:Conversions        +67000 USD @ 0 CONV
-
-
 ** Open/Close
 
   - You must issue an error if you close an account that's got a non-zero
@@ -3774,10 +3777,6 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
   - You should support a payee with no description! This generates a parser
     error right now.
 
-  - Allow '$' as currency symbol, don't translate to anything, it can just
-    stand on its own as a unique kind of currency, it doesn't matter, no
-    changes anywhere. Also add the Euro, GBP and yen symbols.
-
   - The syntax should support multiline strings naturally...
 
   - For Links vs. Tags: dont impose an order, parse as tags_or_links.
@@ -3789,13 +3788,6 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
     Convert at parsing time.
 
 
-*** Includes
-
-  - With the new format... support includes, it makes a lot more sense to do
-    that now! People want this too.
-
-  - Idea: an include directive should have a "prefix" option, to add a prefix to
-    all accounts from the included file.
 
 *** Sensible Syntax for Lots
 
