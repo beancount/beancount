@@ -790,6 +790,14 @@ http://furius.ca/beancount/doc/proposal-query
     revisit in the future.
 
 
+** GnuCash
+
+  - Write a converter of GnuCash XML files into Beancount.
+
+  - Contact xentac@ for an example GnuCash input file with 2-3 years of data.
+    Willing to share (see email).
+
+
 * Make Commodity Directives Required
 
   Zhuoyun Wei made a comment on a doc that account names are required to be
@@ -1153,6 +1161,9 @@ http://furius.ca/beancount/doc/proposal-query
       Declined: [<class 'decimal.ConversionSyntax'>]
     and always provide the input string so we can debug WTF happened.
 
+  - Continue adding more of the pylint tests and make them pass. The codebase is
+    almost at a point where it has all the tests from the default configuration.
+
 ** Deprecation
 
   Just some old things that are marked as not supported anymore; finally remove
@@ -1183,6 +1194,38 @@ http://furius.ca/beancount/doc/proposal-query
 
 
 
+
+
+** Revise Dependency Graph
+
+  As I'm moving to a system with more plugins and less code in the core, and
+  with the intermediate reports stage instead of just the web interface, it's
+  becoming clearer where some files need to move.
+
+  - Make various attempts to simplify depgraph, we want to ship with a really
+    lean dependency graph.
+
+  - ops & plugins should not depend on parser...
+
+      * Move beancount.parser.options to beancount.core.options
+      * Move beancount.parser.printer outside parser, ideally, or just factor the
+        dependencies separately.
+
+  - If you want to be consistent with the script names, rename
+    beancount.reports to beancount.report. This way, bean-* matches a single
+    package name. Just saying.
+
+  - Emerge a principle for where the following files should separate, or merge
+    the two modules:
+
+      beancount.ops.*
+      beancount.plugins.*
+
+  - beancount.core.realization: Look at deps for beancount.core.realization and
+    move it upstream where it makes sense, maybe ops.
+
+  - beancount.core.getters: Should this move to ops as well? Check the
+    dependency tree, see if it makes sense.
 
 
 * Portfolio Management
@@ -1429,7 +1472,7 @@ http://furius.ca/beancount/doc/proposal-query
     This should be implementable via a plugin.
     The resulting Conversions entry should be empty...
 
-  - Make conversions report sum up to zero by adding a similar conversions
+  - Make the conversions report sum up to zero by adding a similar conversion
     entry as for the balance sheet.
 
 
@@ -1440,6 +1483,37 @@ http://furius.ca/beancount/doc/proposal-query
   - Create one by fudging the date and storing a regular Balance directive. This
     is an easy task.
     https://bitbucket.org/blais/beancount/issues/118/create-a-balance_end-directive
+
+
+* Improve the Include Directive
+
+  - Support an include directive that is a URL, in order to fetch lists of
+    prices updated remotely, or via crontab. This way the dashboard does not
+    have to include code that fetches prices.
+
+  - Idea: an include directive should have a "prefix" option, to add a prefix to
+    all accounts from the included file.
+
+
+* Improvements to Price Fetching
+
+  - Infer the rendering precision for inverted currencies from only the list of
+    previous prices. Run a DisplayContext on those and do similar
+    quantization/rounding automatically. This would make a lot of sense,
+    especially when inversion generates a very large number of digits.
+
+  - Write a script that will iterate and fetch all the missing dates on Friday,
+    or last DOM for the required portfolio during the entire duration, or allow
+    providing a frequency string (does rrule have one?) and let bean-price do
+    this natively. This will work the API.
+
+  - You have to deal with the case whereby two currencies provide incompatible
+    conversions of each other. This would potentially result in colliding
+    entries in the price database. Not sure how to deal with those yet.
+
+** OANDA
+
+  - Finish the implementation of my delayed rate fetcher from OANDA.
 
 
 * Priorities ------------------------------------------------------------------------------------------------------------------------
@@ -3063,8 +3137,6 @@ http://furius.ca/beancount/doc/proposal-query
   - Enhance error reporting! Make all errors possibly hold on to a list of
     entries, not just one. Many, many errors will benefit from this.
 
-
-
   - The creation of exceptions should be made easier: each error class should
     inherit from a base class that is able to accept an optional list of
     entries, that would automatically render the fileloc of each of those
@@ -3076,8 +3148,6 @@ http://furius.ca/beancount/doc/proposal-query
     As part of this, we should also somehow produce a list of all possible
     errors with a lavish description.
 
-
-
   - (architecture) Seriously consider merging entries and errors; errors are
     just a special type of entry, and they have dates, and they get rendered in
     journals. This could make a lot of sense.
@@ -3087,22 +3157,11 @@ http://furius.ca/beancount/doc/proposal-query
     the various rendering routines in different ways?!?  I love this. One less
     thing to return. Hmmm ponder it seriously.
 
-
   - Refine 'source' attribute on all directives: For .source, instead of '<...>'
     for the filename, we should use a scheme:..., like file://..., and
     plugin:beancount.... . This makes a lot more sense. The lineno still needs
     to be separate, we need that for sorting and prefer not to have it part of
     the string.
-
-
-* Include Directive
-
-  - Support an include directive that is a URL, in order to fetch lists of
-    prices updated remotely, or via crontab. This way the dashboard does not
-    have to include code that fetches prices.
-
-  - Idea: an include directive should have a "prefix" option, to add a prefix to
-    all accounts from the included file.
 
 
 * Payees & Subaccounts
@@ -3134,50 +3193,24 @@ http://furius.ca/beancount/doc/proposal-query
     order to play with the notion of payee-as-subacccount often discussed.
 
 
-* Internal: Review Dependency Graph
+** Payee Elision / Auto-Account Leaf Name
 
-  As I'm moving to a system with more plugins and less code in the core, and
-  with the intermediate reports stage instead of just the web interface, it's
-  becoming clearer where some files need to move.
+  - About the discrepancy between the concept of "Payee" and a superfluous lead
+    account, e.g. Internet:TimeWarner, which typically contains only
+    transactions from that payee: maybe we can elide the account name if it
+    contains only a single payee, or perhaps a warning may be issued? I don't
+    know.
 
-  - Make various attempts to simplify depgraph, we want to ship with a really
-    lean dependency graph.
+    Basically, it would be nice to be able to have multiple payees in the same
+    category over time (e.g. Electricity, Internet) but to be able to separate
+    them somehow, without having to put the payee into the name. This is a
+    little fuzzy, and I'm not sure how to do it, because the imported payee
+    names are often not very clear and often truncated as well.
 
-  - ops & plugins should not depend on parser...
-
-      * Move beancount.parser.options to beancount.core.options
-      * Move beancount.parser.printer outside parser, ideally, or just factor the
-        dependencies separately.
-
-  - If you want to be consistent with the script names, rename
-    beancount.reports to beancount.report. This way, bean-* matches a single
-    package name. Just saying.
-
-    Also, in the same vein, move beancount.scripts.query to
-    beancount.scripts.query, either that or move the starter script for
-    bean-web to beancount.scripts. One or the other. I prefer the former.
-
-  - Emerge a principle for where the following files should separate, or merge
-    the two modules:
-
-      beancount.ops.*
-      beancount.plugins.*
-
-  - beancount.core.realization: Look at deps for beancount.core.realization and
-    move it upstream where it makes sense, maybe ops.
-
-  - beancount.core.getters: Should this move to ops as well? Check the
-    dependency tree, see if it makes sense.
-
-
-* Code Quality
-
-  - Configure more pylint tests and make them pass. We're using a small subset
-    at the moment.
-
-  - Require Python 3.4 and introduce Enum's where relevant.
-
-  - Install flake8, PyChecker, pep8 after pylint passes, run all of them.
+      Have you ever thought that Payees often end up functioning like an extra
+    subaccount? I've come to realize that for Payees that only ever touch a
+    single account, the line is really fuzzy there. I've been entertaining the
+    idea of automatically creating subaccounts for payees like that.
 
 
 * Core
@@ -3626,27 +3659,6 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 
   - Add a "reason" field for @location, and display as trips, with
     some sort of meaning to them. Ok, this contradicts the previous idea.
-
-
-
-** Payee Elision / Auto-Account Leaf Name
-
-  - About the discrepancy between the concept of "Payee" and a superfluous lead
-    account, e.g. Internet:TimeWarner, which typically contains only
-    transactions from that payee: maybe we can elide the account name if it
-    contains only a single payee, or perhaps a warning may be issued? I don't
-    know.
-
-    Basically, it would be nice to be able to have multiple payees in the same
-    category over time (e.g. Electricity, Internet) but to be able to separate
-    them somehow, without having to put the payee into the name. This is a
-    little fuzzy, and I'm not sure how to do it, because the imported payee
-    names are often not very clear and often truncated as well.
-
-      Have you ever thought that Payees often end up functioning like an extra
-    subaccount? I've come to realize that for Payees that only ever touch a
-    single account, the line is really fuzzy there. I've been entertaining the
-    idea of automatically creating subaccounts for payees like that.
 
 
 
@@ -4295,25 +4307,6 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 
 
 
-* Tools
-** Emacs Support
-
-  - Idea: Implement another command like C-c x but that prints out all the
-    linked transactions. Like context, print out balances from before & after,
-    but also print out the combined changes to all the accounts in the linked
-    transactions.
-
-  - Idea: Implement movement commands that move the cursor to the previous/next
-    linked transaction.
-
-  - Set the comment-syntax; currently it thinks it's '# '
-
-    Note: This is now present
-
-  - In the new mode, we need to recreate a function that will mark a posting as
-    valid (replace '!' by '*').
-
-
 * Reports
 ** Warnings
 
@@ -4639,34 +4632,6 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
     it is. I'm sure we can make it scrape in parallel using multiprocessing and
     a work queue (this should be a fun little project and would make baking to
     an archive a lot faster in many cases).
-
-
-* Import
-** GnuCash
-
-  - Write a converter of GnuCash XML files into Beancount.
-
-  - Contact xentac@ for an example GnuCash input file with 2-3 years of data.
-    Willing to share (see email).
-
-
-* Price Script
-
-  - Implement delayed rate fetcher from OANDA for rates.
-
-  - Infer the rendering precision for inverted currencies from only the list of
-    previous prices. Run a DisplayContext on those and do similar
-    quantization/rounding automatically. This would make a lot of sense,
-    especially when inversion generates a very large number of digits.
-
-  - Write a script that will iterate and fetch all the missing dates on Friday,
-    or last DOM for the required portfolio during the entire duration, or allow
-    providing a frequency string (does rrule have one?) and let bean-price do
-    this natively. This will work the API.
-
-  - You have to deal with the case whereby two currencies provide incompatible
-    conversions of each other. This would potentially result in colliding
-    entries in the price database. Not sure how to deal with those yet.
 
 
 * Export
@@ -5012,13 +4977,3 @@ Improve this bit:
       As soon as the paperwork is done one can contribute to ztree with bigger pull
       requests. Note what pull requests without paperwork done will not be accepted,
       so please notify the maintainer if everything is in place.
-
-
-* Name ideas
-
-  - beangrind (new import system)
-  - beanroast (new import)a
-  - beangreen
-  - beanfilter
-  - beancocoa
-  - beantamp
