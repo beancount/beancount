@@ -462,7 +462,7 @@ def _load(sources, log_timings, extra_validations, encoding):
                                            extra_validations)
         errors.extend(valid_errors)
 
-        # Note: We could go hardcode here and further verify that the entries
+        # Note: We could go hardcore here and further verify that the entries
         # haven't been modified by user-provided validation routines, by
         # comparing hashes before and after. Not needed for now.
 
