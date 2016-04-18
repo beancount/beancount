@@ -91,21 +91,17 @@ beancount: TODO
   - Make sure this doc is linked from somewhere:
     http://furius.ca/beancount/doc/proposal-rounding
 
+  - Create an index page of all the possible reports, from the web page.
+
+  - Write more on saving, "Climbing the Capital Mountain."
+
+  - Summarize Ledger's --limit --real --virtual --equity, etc. options.
 
 ** Misc Documentation Tasks
 
   - Write a script to automatically convert and upload the docs for the shell
     functions and what-not into a Google Docs that we can open with a web
     browser. Write a script to spit it out in a nice format and upload.
-
-  - Document the @@ and {{}} syntaxes (see Matthew Harris email), especially as
-    they relate to price.
-
-  - As an aside, I see that the grammar supports @@ and {{}} syntaxes, but they
-    don't appear to be documented in the language manual.
-
-      Oh I hadn't noticed... I will document those, thank you for reporting this
-      oversight.
 
   - In the comparison doc: describe how Beancount has asset types
 
@@ -259,16 +255,6 @@ beancount: TODO
   reasons: plugins did not exist at the time). I'd like to do that in order to
   simplify the Beancount core itself.
 
-  - (old notes) I recently teased out that many of the basic functions can be
-    implemented as individual stages of transformations on the list of
-    directives. This started out as a way to add plugins by adding a custom
-    transformation stage, but now I see that if I can make the parser able to
-    consume generic syntax that might allow extensions, and to allow these
-    plugins to specify new directive types for extensions, I might be able to
-    shove a *lot* of the existing functionality into nice isolated plugin
-    modules. Even functionality as basic as Balance checks. I'm not going to to
-    do this in the first release, but I want to set the stage for it.
-
 ** Document Directives
 
   Document directives should be moved to their own plugin and numerous
@@ -353,6 +339,57 @@ beancount: TODO
     because we skip them because we only restrict to accounts which have had an
     open declaration... this is probably not what we want, in order to maximize
     the number of documents captured by this. {fa96aa05361d}
+
+** Balance Directives
+
+  - Balance checks could also be a plugin.
+
+** Open/Close Directives
+
+  - I think if you relax the assumptions about having Open and Close directives
+    for all accounts, those could even be moved to a plugin. Without this
+    'open_close' plugin, accounts would just get auto-created and no error
+    output if they weren't. With the plugin, we would have current strict
+    behavior. This means that non-plugin code that requires the full set of
+    accounts from a list of entries would not be able to rely anymore on the
+    presence of open entries, and so would the validation.
+
+** Pad Directives
+
+  - Put all the Pad code into a single file as a plugin, same with Open Close,
+    and Balance. Maybe we can organize those codes to be all localized in single
+    files, and for many of these features, they can be implemented in
+    self-contained plugins with all their codes together! openclose.py, pad.py,
+    balance.py, etc. I think even 'event' directives can become those. And maybe
+    a good way to disambiguate between ops adn plugins is just this... maybe ops
+    is non-plugins, e.g. prices, summarize, etc.
+
+  - Pad could be a plugin, definitely.
+
+** Dynamic Directives / Configurable
+
+  - (old notes) I recently teased out that many of the basic functions can be
+    implemented as individual stages of transformations on the list of
+    directives. This started out as a way to add plugins by adding a custom
+    transformation stage, but now I see that if I can make the parser able to
+    consume generic syntax that might allow extensions, and to allow these
+    plugins to specify new directive types for extensions, I might be able to
+    shove a *lot* of the existing functionality into nice isolated plugin
+    modules. Even functionality as basic as Balance checks. I'm not going to to
+    do this in the first release, but I want to set the stage for it.
+
+  - Make the plugins able to register types with the parser... this should
+    allow the parser to call back on the plugins to create the appropriate
+    types... this means true extensibility throughout! This is a fantastic
+    idea... do this after v2 ship.  Maybe they get parsed as a special "Unknown"
+    directive that accepts a grab-bag of strings and tags and accounts and
+    amounts and they get replaced by the plugins; whatever Unknown trickles
+    through would generate a warning in the errors.
+
+  - It should be possible to make the parser accept unknown directives that
+    accept an arbitrary list of accounts and string parameters, like this:
+
+      2014-06-01 unknown Assets:US:CreditCard "Something"
 
 * Shell and Query Language
 
@@ -1039,6 +1076,15 @@ http://furius.ca/beancount/doc/proposal-query
          Assets:CA:RRSP:NB550           28.646 NB550 {18.2348 CAD}
          Income:CA:RRSP:Dividends
 
+  - You can implement the sign check for positions held-at-cost only when there
+    are other of that same commodity held at cost in the inventory in the
+    opposite sign. This should allow holding short positions yet still retain
+    the benefit of the check for data entry errors. It also removes what for
+    most people will appear as a limitation from the docs (although with
+    experience you would realize that it is not much of a limitation at atll).
+
+  - Add tests for holding short positions.
+  - Add tests for holding long and short positions in different commodities.
 
 ** Old Notes
 
@@ -1300,9 +1346,6 @@ http://furius.ca/beancount/doc/proposal-query
       Declined: [<class 'decimal.ConversionSyntax'>]
     and always provide the input string so we can debug WTF happened.
 
-  - Continue adding more of the pylint tests and make them pass. The codebase is
-    almost at a point where it has all the tests from the default configuration.
-
   - Reconcile all usage of account regexps to beancount.core.account.ACCOUNT_RE
     throughout the code  (grep --include='*.py'  -srn A-Z    ~/p/beancount/src/python/beancount).
 
@@ -1336,13 +1379,43 @@ http://furius.ca/beancount/doc/proposal-query
     described in options? I think we could safely plop that at the very
     beginning of the entries list in the parser.
 
+  - Document args of C functions in the same way as Python's, perhaps using the
+    new Python3 syntax definition thingamajig (I forget the name, there's a PEP).
+
+** More Testing
+
+  - Continue adding more of the pylint tests and make them pass. The codebase is
+    almost at a point where it has all the tests from the default configuration.
+
+  - You need to unit-test for multiline notes... do they work as expected?
+
+  - Try to run the tests using 'watchr', 'sniffer', 'autonose' or other such tool.
+
+  - Create special make target to run tests on my own large Ledger.
+    This should bean-check, bean-roundtrip, bean-bake / scrape.
+
+** Total Price Syntax Work
+
+  - Document the @@ and {{}} syntaxes (see Matthew Harris email), especially as
+    they relate to price.
+
+  - You need to create a unit test for @@ price conversions.
+
+  - As an aside, I see that the grammar supports @@ and {{}} syntaxes, but they
+    don't appear to be documented in the language manual.
+
+      Oh I hadn't noticed... I will document those, thank you for reporting this
+      oversight.
+
+  - When using @@ the signs should match; warn if they don't.
+
 ** Deprecation
 
   Just some old things that are marked as not supported anymore; finally remove
   them all at once.
 
   - Remove the "use_legacy_fixed_tolerances" option.
-  - Remove support for legacy, PIPE, Not needed.
+  - Remove legacy support for PIPE character in syntax, update cheatsheet.
   - Remove negative number warning and __ setting
   - In 'beancount.core.number' and 'beancount.core.amount', there are deprecated
     sections; remove them.
@@ -1471,10 +1544,40 @@ http://furius.ca/beancount/doc/proposal-query
     should provide an option to ustomize this behavior, the user should be able
     to choose. option "pad_failing_balances".
 
-** Python Experiments
+** Tagged Strings
+
+  - Make tags and payees output "tagged strings", with their own data types. You
+    can derive from str. These new objects should behave exactly like 'str' but
+    carry over their type. This would be in force for tags, account names, and
+    currencies.
+
+    You need to write some careful testing to figure out what happens on
+    concatenation, etc. with these types.
+
+  - If you do this, you can make the Custom directive not output pairs of
+    objects for its 'values' attribuet; instead, you'd use the data type of the
+    str object itself.
+
+* Python Types & Namedtuple
+
+  I've been using namedtuple types a lot so far, in order to represent immutable
+  records. These aren't perfect, however, they could stand to be improved. I
+  discovered I could subclass them and customize their behavior. I think I
+  should do this and review the type mechanism I'm using.
+
+  - COOL! I can subclass the namedtuples!  Do this to make printing the
+    postings and entries much easier.
+
+      class Posting(_Posting):
+          def __str__(self):
+              return _Posting.__str__(self._replace(entry=None))
+
+  - Also derive from namedtuple to provide a stable hash function instead of
+    code in beancount.core.compare.
 
   - Try creating a "Record" class to replace namedtuple using a class decorator
     and properties.
+
 * Portfolio Management
 
   I'm somewhat automating the process of managing my own portfolio using
@@ -1524,6 +1627,11 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Compute pre-tax and post-tax net worth reports, based on a "tax" account
     metadata field and some reasonable assumptions.
+
+  - Fetch the CSV holdings of each Holding and compute the full list of stocks I
+    own from these ETFs in dollar value. Sort by larger to smaller. Also compute
+    the industry with that. You need to write Vanguard download (harder, need to
+    scrape), and iShares download (easier, CSV).
 
 ** Removal of Holding Object
 
@@ -1605,6 +1713,11 @@ http://furius.ca/beancount/doc/proposal-query
   - Bring in all the generic functions from experiments/returns/returns.py into
     core beancount. Bring in returns as a plugin.
 
+  - Prices: Write a script to output the timeline of prices/rates missing &
+    required in order to compute all the returns correctly. Then use it to drive
+    fetching a historical table of monthly or perhaps weekly exchange rates for
+    USD/CAD, USD/AUD, EUR/USD since the beginning of my file. Make this script
+    reusable.
 
 * Standalone Tools
 
@@ -1724,6 +1837,12 @@ http://furius.ca/beancount/doc/proposal-query
   - Make the conversions report sum up to zero by adding a similar conversion
     entry as for the balance sheet.
 
+  - This is an older idea, which is related but which becomes obsolete if we
+    implement the Trading Accounts method: In order to zero out the "trial
+    balance" report perfectly, you could insert a conversion entry at the end of
+    it, in the same way that I do for the balance sheet. There is no reason that
+    this is any different; this should be done the same as for the balance
+    sheet.
 
 * Add an "End Balance" Directive
 
@@ -1831,6 +1950,9 @@ http://furius.ca/beancount/doc/proposal-query
   - Add options to disable the cache in bean-check so that using -v would be
     useful when you're trying to assess performance. I try this often enough I
     want options for it.
+
+  - Use the same option on all tools for showing the timings, --verbose timings,
+    maybe add it from the loader module.
 
   - (Performance) Great idea for performance: Implement the cache for each file
     separately. I could split my big file and only the bits which get edited
@@ -1945,6 +2067,9 @@ http://furius.ca/beancount/doc/proposal-query
 
 ** Review the Design of Tags & Links
 
+  - Consider removing the "links" attribute altogether and making that simply
+    just a tag. Do we really, truly need to distinguish between tags and links?
+
   - Try removing the 'tags' attribute of transactions by moving it to metadata
     fields and making sure tools are available to perform the same aggregations
     using bean-query and views using bean-web.
@@ -2008,11 +2133,14 @@ http://furius.ca/beancount/doc/proposal-query
 
   - (pedantic) Create a new plugin-of-plugins which enables all the possible
     constraining other plugins in order to make Beancount as tight as possible
-    by default.
+    by default. Making the hardcore validation into a plugin might be a good way
+    to provide a strict mode. You could build a "beancount.plugins.pedantic"
+    plugin-of-plugins.
 
   - (auto) Create a new plugin-of-plugins which enables all the auto-declaration
     plugins in order to make crafting little test files as convenient as
-    possible. I do this all the time, I need this actually.
+    possible. I do this all the time, I need this actually. You could build a
+    "beancount.plugins.auto" plugin-of-plugins.
 
 ** Total Balance
 
@@ -2095,21 +2223,25 @@ http://furius.ca/beancount/doc/proposal-query
     instead of rendering a journal. Offer the option to list in reverse to. This
     should be invokable from the SQL shell.
 
-** Misc (Uncategorized) - This section ought to go at the end of this doc in the future
-
+  - Register (with filter) should have "print" mode that also includes
+    file:lineno so that we can make Emacs "jump" between the transactions in
+    the order they appear.
+
+** Reports: Rendering Journals
 
   - Journals should render in either order.
 
-
-
-  - Use the same option on all tools for showing the timings, --verbose timings,
-    maybe add it from the loader module.
-
-
-
   - Add an option for spacing in the revamped reports.
 
+** Reports: Rendering Tables
 
+  - For table rendering, move the actual formatting at rendering time. CSV files
+    should have fractional values for percentages, txt and html should have %
+    values. I need to figure out a good solution for this. Maybe the thing to do
+    is to move the field selection at rendering stage, or at least to have it at
+    both.
+
+** Padding lots held-at-cost
 
   - (pad) Review the possibility of padding units held at cost:
 
@@ -2118,7 +2250,7 @@ http://furius.ca/beancount/doc/proposal-query
       cost, because Beancount has no way to know what the cost basis of those
       commodities should be."
 
-
+** Parser improvements
 
   - When an error occurs while parsing a directive/transaction, add the ability
     to let the parser skip until the next directive and ignore the parsed
@@ -2127,98 +2259,23 @@ http://furius.ca/beancount/doc/proposal-query
     completed. Not sure. This would be a more elegant way to deal with some
     errors.
 
+** Unrealized gains
 
-
-  - You can implement the sign check for positions held-at-cost only when there
-    are other of that same commodity held at cost in the inventory in the
-    opposite sign. This should allow holding short positions yet still retain
-    the benefit of the check for data entry errors.
-
-    It also removes what for most people will appear as a limitation from the
-    docs (although with experience you would realize that it is not much of a
-    limitation at atll).
-
-
+  - Unrealized gains should not be added if the gain is zero.
 
   - There's a fundamental question about which date to be used for pricing
     entries. This really would depend on the view. If this is a period view, the
     date of the last entry is most appropriate. If it is any other kind of view,
     the latest price is best. All the reports should be adjusted for this.
 
-
-
-  - Register (with filter) should have "print" mode that also includes
-    file:lineno so that we can make Emacs "jump" between the transactions in
-    the order they appear.
-
-
-
-  - Idea: Add an option for triggering strict validation?
-
-      option "processing" "strict" ; Plugins including the hardcore validation are run.
-
-    Somehow making the hardcore validation into a plugin might be a good way to
-    provide a strict mode.  Also, you could build a beancount.plugins.builtins
-    module that defines the list of default plugins that gets run instead of
-    having a list in the loader. This way the user could easily invoke it at
-    any point in time.
-
-
-
-  - (reports revamp) Write a generic test that simply enumerates all the
-    reports and invokes them with their default values. This should extend
-    automatically when new reports are created.
-
-
-  - (trial balance) In order to zero out the trial balance perfectly, you could
-    insert a conversion entry at the end of it, in the same way that I do for
-    the balance sheet. There is no reason that this is any different; this
-    should be done the same.
-
-
+** New Report: Events
 
   - Build a 'events' report that will print out the current value of all events.
 
   - Create a new report type: "days" that counts the days of any event in the
     filtered log.
 
-
-
-  - You need to create a unit test for @@ price conversions.
-
-  - You need to unit-test for multiline notes... do they work as expected?
-
-
-
-  - Document args of C functions in the same way as Python's, perhaps using the
-    new Python3 syntax definition thingamajig (I forget the name, there's a PEP).
-
-
-
-  - Fetch the CSV holdings of each Holding and compute the full list of stocks I
-    own from these ETFs in dollar value. Sort by larger to smaller. Also compute
-    the industry with that. You need to write Vanguard download (harder, need to
-    scrape), and iShares download (easier, CSV).
-
-
-
-  - Directive abstraction: Add directives should be able to enumerate they
-    accounts. Maybe add a get_accounts() method to the base namedtuple or create
-    a mixin. Remove getters.get_accounts() and getters.get_entry_accounts() if
-    you have this, lots of code goes away, probably a good idea.
-
-  - Try to run the tests using 'watchr', 'sniffer', 'autonose' or other such tool.
-
-
-
-  - Look at Intuit's service for financial hub for financial data. Look for a
-    developer account.
-
-  - Do a presentation at meetup... Yodlee is in NY, might make sense.
-
-
-  - New plugin: clean_payees, that processes the payee strings and cleans them
-    up for display. How well can we do?
+** New Plugin: Multi-Pad
 
   - New plugin type: a kind of spreaded Pad directive, that creates multiple
     pads at regular intervals. This is to deal with smooth cash distributions or
@@ -2227,113 +2284,8 @@ http://furius.ca/beancount/doc/proposal-query
     evenly. 'evenpad', 'multipad', 'distribution'? This should most definitely
     be a plugin.
 
-  - I think if you relax the assumptions about having open and close accounts,
-    those could even be moved to a plugin. Without this 'open_close' plugin,
-    accounts would just get auto-created and no error output if they weren't.
-    With the plugin, we would have current strict behavior. This means that
-    non-plugin code that requires the full set of accounts from a list of
-    entries would not be able to rely anymore on the presence of open entries,
-    and so would the validation.
-
-  - Put all the Pad into a single file as a plugin, same with Open Close, and
-    Balance. Maybe we can organize those codes to be all localized in single
-    files, and for many of these features, they can be implemented in
-    self-contained plugins with all their codes together! openclose.py, pad.py,
-    balance.py, etc. I think even 'event' directives can become those. And maybe
-    a good way to disambiguate between ops adn plugins is just this... maybe ops
-    is non-plugins, e.g. prices, summarize, etc.
-
-  - Make the plugins able to register types with the parser... this should
-    allow the parser to call back on the plugins to create the appropriate
-    types... this means true extensibility throughout! This is a fantastic
-    idea... do this after v2 ship.  Maybe they get parsed as a special "Unknown"
-    directive that accepts a grab-bag of strings and tags and accounts and
-    amounts and they get replaced by the plugins; whatever Unknown trickles
-    through would generate a warning in the errors.
-
-  - Setting the filename on options_map might help in making document
-    processing also as a plugin.
-
-
-
-
-  (review types)
-  - COOL! I can subclass the namedtuples!  Do this to make printing the
-    postings and entries much easier.
-
-      class Posting(_Posting):
-          def __str__(self):
-              return _Posting.__str__(self._replace(entry=None))
-
-  - Also derive from namedtuple to provide a stable hash function instead of
-    code in beancount.core.compare.
-
-
-
-
-  - Prices: Write a script to output the timeline of required prices/rates in
-    the database. Then use it to drive fetching a historical table of monthly or
-    perhaps weekly exchange rates for USD/CAD, USD/AUD, EUR/USD since the
-    beginning of my file. Make this script reusable.
-
-
-  - Create an index page for all the possible reports, from the web page
-
-  - plugin: Consider creating a plugin that would auto-create accounts not seen yet,
-    for the purpose of making demos. Definitely must do.
-
-  - parser: Make tags and payees "tagged strings", with their own data types.
-    You can derive from str.
-
-  - Rename "events" to "register"?  This makes a lot of sense.
-
-  - Write doc about stages of life, "climbing the mountain."
-
-  - Make the web application accept colons in URLs, and make the reports use
-    them too, so that their names are the very same as those on the
-    command-line.
-
-  - Unrealized gains should not be added if the gain is zero.
-
-  - In the 'print' report, add a comment at the end of each posting line with
-    the balancing amount! This is an important debugging tool! Make this happen.
-
-  - Make implicitly derived price directives generated by a transformation, as
-    an explicit price directive.
-
-  - (avg cost) To implement this, move all balancing to a stage after the
-    parsing stage. Balancing the entries should be running right after parsing
-    and will need to do a partial realization for the affected accounts only,
-    for the postings with average cost. But in any case, all the balancing
-    should move to a stage right after parsing and should not be an optional
-    stage.
-
-  - Remove legacy support for PIPE character in syntax, update cheatsheet.
-
-  - For table rendering, move the actually formatting at rendering time. CSV
-    files should have fractional values for percentages, txt and html should
-    have % values.  I need to figure out a good solution for this.
-    Maybe the thing to do is to move the field selection at rendering stage, or
-    at least to have it at both.
-
-  - Create special make target to run tests on my own large Ledger.
-    This should bean-check, bean-roundtrip, bean-bake / scrape.
-
-  - Hmmm... compare does not actually allow two identical entries in a file.
-    Solve that, using a differentiator, such as the fileloc or file no, or
-    something. Maybe while reading we should insert a version number in
-    duplicate entries automatially? Not sure.
-
-    Another solution would be to warn on duplicate entries!  Maybe we just
-    don't allow these. It really wouldn't be much of a big deal. And this would
-    be easy to implement as part of our load checks. They're more often than
-    not errors.
-
-
-  - Summarize Ledger's --limit --real --virtual --equity, etc. options.
-
-  - Write a plugin to compute total tax/income
-
+** Misc (Uncategorized) - This section ought to go at the end of this doc in the future
+
 
   - The balance sheet "close" problem - how do we specify closing at a
     particular point in time - can be solved by providing parameters to the
@@ -2358,16 +2310,6 @@ http://furius.ca/beancount/doc/proposal-query
     the web app. This will be simpler and cleaner!
 
 
-
-  (plugins)
-    - Pad could be a plugin, definitely.
-
-    - Balance checks could also be a plugin.
-
-    - It should be possible to make the parser accept unknown directives that
-      accept an arbitrary list of accounts and string parameters, like this:
-
-        2014-06-01 unknown Assets:US:CreditCard "Something"
 
 
 
@@ -3755,8 +3697,6 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 
   - Problematic transactions (!) should spit something of color on stdout, they
     should not be forgotten so easily.
-
-  - When using @@ the signs should match; warn if they don't
 
   - Bug: Invalid account names should only be reported once.
 
