@@ -4,6 +4,15 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-04-17
+
+  - Fixed an important bug in beancount.ingest whereby instances of
+    b.i.cache.FileMemo weren't being shared as widely as they could have been.
+    FileMemo instances now have to be created via b.i.cache.get_file() and
+    FileMemo is now a hidden class _FileMemo. See this discussion for more details:
+    https://groups.google.com/d/msg/beancount/b-ZqYqag7AU/N-AaGSZOAwAJ
+
+
 2016-04-10
 
   - Create a new 'beancount.plugins.fix_payees' plugin that allows the user to

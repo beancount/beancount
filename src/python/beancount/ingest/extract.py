@@ -47,7 +47,7 @@ def extract_from_file(filename, importer, existing_entries=None, min_date=None):
       identified as possible duplicates.
     """
     # Extract the entries.
-    file = cache.FileMemo(filename)
+    file = cache.get_file(filename)
     try:
         new_entries = importer.extract(file)
     except Exception as exc:

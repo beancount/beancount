@@ -95,7 +95,7 @@ class ImportFileTestCase(unittest.TestCase):
           AssertionError: If the contents differ from the expected file.
         """
         # Import the date.
-        file = cache.FileMemo(filename)
+        file = cache.get_file(filename)
         date = self.importer.file_date(file)
         if date is None:
             self.fail("No date produced from {}".format(file.name))
@@ -126,7 +126,7 @@ class ImportFileTestCase(unittest.TestCase):
           AssertionError: If the contents differ from the expected file.
         """
         # Import the date.
-        file = cache.FileMemo(filename)
+        file = cache.get_file(filename)
         generated_basename = self.importer.file_name(file)
         if generated_basename is None:
             self.fail("No filename produced from {}".format(filename))
