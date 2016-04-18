@@ -1958,6 +1958,20 @@ http://furius.ca/beancount/doc/proposal-query
     separately. I could split my big file and only the bits which get edited
     would have to be recomputed.
 
+  - You will have to provide optional arguments to the load_file() function for
+    fava to pass the caching strategy onwards based on its own command-line
+    options. It would have to expose those (if it wants to).
+
+  - IDEA: On first thought, a Beancount input file "option" directly couldn't
+    work because the point of the cache is to avoid invoking the parser and all
+    their plugins in the first place, but really, I could make that a special
+    directive and short-circuit the parser to stop right after it sees it, e.g.
+    you'd place something like this in your input file: cache ".picklecache"
+    When the parser hits that it would (1) check the cache, (2a) if valid, stop
+    parsing and load it, or (2b) continue parsing and ignore the cache. That's
+    just a bit of a wacky idea, but it would have the advantage of not creating
+    unexpected files, i.e., caching would be an explicit request from the user.
+    I'll think about all that.
 
 ** arithmetic_ops
 
