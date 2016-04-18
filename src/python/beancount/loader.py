@@ -49,7 +49,9 @@ DEPRECATED_MODULES = {
 
 # Filename pattern for the pickle-cache.
 PICKLE_CACHE_FILENAME = '.{filename}.picklecache'
-PICKLE_CACHE_THRESHOLD = 1.0  # Secs.
+
+# The threshold below which we don't bother creating a cache file, in seconds.
+PICKLE_CACHE_THRESHOLD = 1.0
 
 
 def load_file(filename, log_timings=None, log_errors=None, extra_validations=None,
@@ -145,7 +147,7 @@ def pickle_cache_function(pattern, time_threshold, function):
 
     Args:
       pattern: A string, the filename pattern for the pickled cache file.
-        A {filename} in it gets replaced by the input filename.
+        A {filename} in it gets replaced by the basename of the input filename.
       time_threshold: A float, the number of seconds below which we don't bother
         caching.
       function: A function object to decorate for caching.
@@ -213,17 +215,9 @@ def pickle_cache_function(pattern, time_threshold, function):
 
 
 def _load_file(filename, *args, **kw):
-    """Delegate to _load. This gets conditionally advised by caching below."""
+    """Delegate to _load. Note: This gets conditionally advised by caching below."""
     return _load([(filename, True)], *args, **kw)
-
-
-# Unless an environment variable disables it, use the pickle load cache
-# automatically.
 _uncached_load_file = _load_file
-if os.getenv('BEANCOUNT_DISABLE_LOAD_CACHE') is None:
-    _load_file = pickle_cache_function(PICKLE_CACHE_FILENAME,
-                                       PICKLE_CACHE_THRESHOLD,
-                                       _load_file)
 
 
 def needs_refresh(options_map):
@@ -598,3 +592,18 @@ def load_doc(expect_errors=False):
         return wrapper
 
     return decorator
+
+
+def initialize():
+    """Initialize the loader."""
+
+    # Unless an environment variable disables it, use the pickle load cache
+    # automatically.
+    global _load_file
+    if os.getenv('BEANCOUNT_DISABLE_LOAD_CACHE') is None:
+        _load_file = pickle_cache_function(
+            os.getenv('BEANCOUNT_LOAD_CACHE_FILENAME') or PICKLE_CACHE_FILENAME,
+            PICKLE_CACHE_THRESHOLD,
+            _uncached_load_file)
+
+initialize()

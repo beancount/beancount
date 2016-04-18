@@ -6,6 +6,14 @@ Note: This file contains only changes in the 'default' branch.
 
 2016-04-17
 
+  - Added support for the BEANCOUNT_LOAD_CACHE_FILENAME environment variable,
+    which can be set in order to overridde the location of the pickle cache.
+    This variable may contain the string "{filename}", and if it is present the
+    basename of the beancount file will be spliced in. This can be useful if,
+    for example, you are reading your Beancount input file from a read-only
+    filesystem and still want to use the cache by specifying an alternative
+    filename.
+
   - Fixed a bug when reading from a read-only filesystem, the loader cache would
     fail to be removed and raise an exception.
 

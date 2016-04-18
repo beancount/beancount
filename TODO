@@ -2287,6 +2287,11 @@ http://furius.ca/beancount/doc/proposal-query
 ** Misc (Uncategorized) - This section ought to go at the end of this doc in the future
 
 
+  - All usage of environment variables should be automatically extracted and
+    documented somewhere.
+
+
+
   - bean-ledger: Write a script to convert to Ledger syntax. This should be
     easy!
 
