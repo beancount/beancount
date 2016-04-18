@@ -167,7 +167,6 @@ def pickle_cache_function(pattern, time_threshold, function):
             with open(cache_filename, 'rb') as file:
                 try:
                     result = pickle.load(file)
-
                 except Exception as exc:
                     # Note: Not a big fan of doing this, but here we handle all
                     # possible exceptions because unpickling of an old or
@@ -188,7 +187,12 @@ def pickle_cache_function(pattern, time_threshold, function):
 
         # We failed; recompute the value.
         if exists:
-            os.remove(cache_filename)
+            try:
+                os.remove(cache_filename)
+            except OSError as exc:
+                # Warn for errors on read-only filesystems.
+                logging.warning("Could not remove picklecache file %s: %s",
+                                cache_filename, exc)
 
         t1 = time.time()
         result = function(toplevel_filename, *args, **kw)
@@ -200,9 +204,9 @@ def pickle_cache_function(pattern, time_threshold, function):
             try:
                 with open(cache_filename, 'wb') as file:
                     pickle.dump(result, file)
-            except Exception:
-                logging.warning("Could not write to picklecache file {}".format(
-                    cache_filename))
+            except Exception as exc:
+                logging.warning("Could not write to picklecache file %s: %s",
+                                cache_filename, exc)
 
         return result
     return wrapped

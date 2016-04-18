@@ -6,6 +6,9 @@ Note: This file contains only changes in the 'default' branch.
 
 2016-04-17
 
+  - Fixed a bug when reading from a read-only filesystem, the loader cache would
+    fail to be removed and raise an exception.
+
   - Fixed an important bug in beancount.ingest whereby instances of
     b.i.cache.FileMemo weren't being shared as widely as they could have been.
     FileMemo instances now have to be created via b.i.cache.get_file() and

@@ -382,6 +382,21 @@ class TestLoadCache(unittest.TestCase):
             entries, errors, options_map = loader.load_file(top_filename)
             self.assertEqual(2, self.num_calls)
 
+    @mock.patch('os.remove', side_effect=OSError)
+    @mock.patch('logging.warning')
+    def test_load_cache_read_only_fs(self, remove_mock, warn_mock):
+        # Create an initial set of files and load file, thus creating a cache.
+        with test_utils.tempdir() as tmp:
+            test_utils.create_temporary_files(tmp, {
+                'apples.beancount': """
+                  2014-01-01 open Assets:Apples
+                """})
+            filename = path.join(tmp, 'apples.beancount')
+            entries, errors, options_map = loader.load_file(filename)
+            with open(filename, 'w'): pass
+            entries, errors, options_map = loader.load_file(filename)
+            self.assertEqual(1, len(warn_mock.mock_calls))
+
 
 class TestEncoding(unittest.TestCase):
 

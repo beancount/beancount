@@ -2287,34 +2287,6 @@ http://furius.ca/beancount/doc/proposal-query
 ** Misc (Uncategorized) - This section ought to go at the end of this doc in the future
 
 
-  - The balance sheet "close" problem - how do we specify closing at a
-    particular point in time - can be solved by providing parameters to the
-    report, e.g.
-
-       balsheet:2014-01-01:2015-01-01
-       income:2014-01-01:2015-01-01
-
-    Of course, this needs conveniences. The period, if there is only a SINGLE
-    ONE, should be interpreted as "from the beginning of this period to the
-    ending of it (one over)". Otherwise, the meaning is the beginning of both.
-    Here are other illustrative examples:
-
-       balsheet  -> from BEGINNING OF TIME to NOW
-       balsheet:2014  -> from 2014-01-01 to 2015-01-01  (most common)
-       balsheet:2014-05  -> from 2014-05-01 to 2015-06-01
-       balsheet:2014:2015-08  -> from 2014-01-01 to 2015-08-01
-
-    The same goes for income.
-    The nice thing is that I think we can now move the closing of entries
-    within the report generation itself, instead of being at the top-level of
-    the web app. This will be simpler and cleaner!
-
-
-
-
-
-
-  (scripts)
   - bean-ledger: Write a script to convert to Ledger syntax. This should be
     easy!
 
@@ -2326,7 +2298,7 @@ http://furius.ca/beancount/doc/proposal-query
 
     Add an option to anonimify account names and perhaps some amounts as well.
 
-  - bean-format or bean-align: Write a script to autoamtically align a region's
+  - bean-format or bean-align: Write a script to automatically align a region's
     transactions, or an entire file.
 
   - bean-query accounts: make a report that prints out just the chart of
