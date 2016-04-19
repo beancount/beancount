@@ -4,6 +4,14 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-04-18
+
+  - In bean-doctor context, all the accounts should appear in the
+    post-transaction balances, even if their balance is empty. This had been
+    fixed for the pre-transaction balances but I stumbled upon a case of
+    post-transaction balances not showing an empty account.
+
+
 2016-04-17
 
   - Added support for the BEANCOUNT_LOAD_CACHE_FILENAME environment variable,

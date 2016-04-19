@@ -117,10 +117,13 @@ def render_entry_context(entries, options_map, entry):
     print("------------ Balances after transaction", file=oss)
     print(file=oss)
     for account in accounts:
-        for position in balance_after[account].get_positions():
+        positions = balance_after[account].get_positions()
+        for position in positions:
             changed = (account, hash(position)) not in before_hashes
             print(position_line.format('*' if changed else '', account, str(position)),
                   file=oss)
+        if not positions:
+            print(position_line.format('', account, ''), file=oss)
         print(file=oss)
 
     return oss.getvalue()
