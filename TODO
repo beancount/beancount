@@ -107,7 +107,8 @@ beancount: TODO
 
   - Comparison w/ Ledger doc: "balance sheet and closing of year"
 
-  - Write a document that explains how to convert between implementations.
+  - Write a document that explains how to convert to and from Ledger and/or
+    HLedger.
 
   - Complete "How Inventories Work?"
   - Complete intro document on double-entry bookkeepingk."
@@ -245,7 +246,15 @@ beancount: TODO
   - Add "display_precision" input file option whereby the user can set the
     precision to be used by each currency.
 
+  - This needs to be handled properly, the last column needs to have correct
+    precision rendering, using the DisplayContext:
 
+      bean-query trans-pricing.beancount 'select account, sum(position),
+      cost(sum(position)), convert(cost(sum(position)), "EUR") group by account'
+              account                sum_position         cost_sum_posi convert_cost_sum_position_c_
+      ----------------------- --------------------------- ------------- ----------------------------------
+      Assets:Investments:Cash -734.10   USD               -734.10   USD -644.2864665613480779357556609 EUR
+      Assets:Investments:HDV    10      HDV {73.41   USD}  734.10   USD  644.2864665613480779357556609 EUR
 
 * Move Much of Core to Plugins
 
@@ -842,6 +851,16 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Use new CSV downloads to build the importer; start using it.
 
+  - The sniffer should support column types:
+
+    * Date
+    * Description
+    * Change
+    * Credit
+    * Debit
+    * Balance
+
+    And should tolerance some cross-checking of the balance against the amounts.
 
 ** Solve Performance Problems on Mac
 
@@ -944,6 +963,11 @@ http://furius.ca/beancount/doc/proposal-query
     cache) in his configuration for now, but this is something I may want to
     revisit in the future.
 
+  - In ingest, use /usr/bin/strings as a last resort if all other PDF converters
+    fail.
+
+  - When we import, if a file was not detected, don't spit out an org text
+    line. Still doesn't work.
 
 ** GnuCash
 
@@ -1085,6 +1109,38 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Add tests for holding short positions.
   - Add tests for holding long and short positions in different commodities.
+
+** Original Idea for this Branch
+
+  - Lot improvement: the lot specification on a reducing posting is only present
+    to disambiguate which of the lots to reduce or match against. Maybe we
+    should provide a different syntax when an expected reduction takes place,
+    this would be allowed:
+
+       (augment)
+       2014-06-17 *
+          Assets:US:Investing:HOOL    10 HOOL {523.45 USD / i-want-more}
+
+       (reducing) All of the following should be allowed:
+          Assets:US:Investing:HOOL    -7 HOOL ; possibly ambiguous
+          Assets:US:Investing:HOOL    -7 HOOL [] ; possibly ambiguous
+          Assets:US:Investing:HOOL    -7 HOOL [523.45 USD]
+          Assets:US:Investing:HOOL    -7 HOOL [2014-06-17]
+          Assets:US:Investing:HOOL    -7 HOOL [i-want-more]
+
+    By enforcing a distinct syntax, the user is telling us that this leg is
+    expected to reduce an existing position. This information is useful, in
+    that it avoids possible mistakes. I like the explicitness of it.
+
+    Sufficient debugging output should be provided from the "print" command to
+    be able to identify which lot is being matched against and why. We need to
+    provide more transparency into this.
+
+  - FIFO or LIFO booking could be "enforced" simply by declaring the expected
+    booking method of an account, and then issuing an error when explicit
+    entries deviate from that method. This is an easy idea... would be very
+    useful. The automatic method would only be used to resolve ambiguity! This
+    is nice.
 
 ** Old Notes
 
@@ -1578,6 +1634,16 @@ http://furius.ca/beancount/doc/proposal-query
   - Try creating a "Record" class to replace namedtuple using a class decorator
     and properties.
 
+** Hashing
+
+  - Make Position into a namedtuple with hashing instead of just an object. See
+    if we can remove its __hash__ method.
+
+  - Also, look at all the objects in b.core.data, and see if you can override
+    the hash function on them automatically in order to ignore the entry in
+    postings, and the listness in entry.postings. It would be nice to be able
+    to hash every directive type.
+
 * Portfolio Management
 
   I'm somewhat automating the process of managing my own portfolio using
@@ -1879,6 +1945,10 @@ http://furius.ca/beancount/doc/proposal-query
     conversions of each other. This would potentially result in colliding
     entries in the price database. Not sure how to deal with those yet.
 
+  - Write a script that will automatically fetch the dates I held various
+    positions at cost for throughout the history and a list of weekly dates to
+    fetch rates for.
+
 ** OANDA
 
   - Finish the implementation of my delayed rate fetcher from OANDA.
@@ -1944,8 +2014,9 @@ http://furius.ca/beancount/doc/proposal-query
   processing time. I'd like to eventually be able to cache as much processed
   data as possible, per file.
 
-  - I really need a --no-cache option across the programs. When developing a
-    plugin, it would be so much more convenient.
+  - I really need a --no-cache and --clear-cache options across all the
+    programs, consistently defined. When developing a plugin, it would be so
+    much more convenient.
 
   - Add options to disable the cache in bean-check so that using -v would be
     useful when you're trying to assess performance. I try this often enough I
@@ -1958,6 +2029,8 @@ http://furius.ca/beancount/doc/proposal-query
     separately. I could split my big file and only the bits which get edited
     would have to be recomputed.
 
+  - All usage of environment variables should be removed by replacing them by
+    the standard command-line options.
 
 ** arithmetic_ops
 
@@ -2044,12 +2117,19 @@ http://furius.ca/beancount/doc/proposal-query
     flag, and that checks that they are balanced by themselves.
 
 
-** Web Interface (bean-web) improvements
+** Web Interface Improvements (bean-web)
+
+  - Make the web interface not render postings anymore by default.
 
   - web: Don't render the transaction detail anymore; instead, the full context
     should come up in a tooltip that is computed on-demand. Rendering the basic
     table should not have to render all the detail upfront, that is always
     overkill.
+
+  - web: Don't render the full Inventory'es; instead, already render at cost and
+    provide their full detail either by clicking on the transaction, which
+    should render the full detail of an inventory (for debugging), or in a
+    tooltip.
 
   - Highlight (e.g., in the color red) the postings to accounts that are in
     contra value, e.g. a positive Income, or a negative Expenses posting.
@@ -2064,6 +2144,18 @@ http://furius.ca/beancount/doc/proposal-query
   - Figure out how to disable googleapis fonts when on a very slow connection.
     I'd like to enable the fonts, but if they cannot be fetched quickly, or
     cached, this should be disabled.
+
+  - Rename /context to /entry
+
+  - (easy) Make b.w.web also 'app.options_map' instead of 'app.options'.
+
+** Improvements to Bake
+
+  - Move beancount.scripts.bake to beancount/web and adjust all the references
+    accordingly.
+
+  - bake: Make bake support curl if wget is not available. It should work with either,
+    to relax dependencies.
 
 ** Review the Design of Tags & Links
 
@@ -2233,6 +2325,23 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Add an option for spacing in the revamped reports.
 
+  - When multiple transactions occur in the same day, it makes sense not to
+    render the balance amount until the last one. Do this. This is important.
+
+** Reports: Rendering Tables of Balances
+
+  - tree rendering: If a parent account has only a single subaccount and the
+    parent account otherwise has no postings in its realization, render the
+    account on a single line instead of two, e.g.
+
+      Expenses                     Expenses
+        Taxes                        Taxes
+          US                           US
+            TY2014                       TY2014
+              State                        State:Company
+                Company                    ...
+              ...
+
 ** Reports: Rendering Tables
 
   - For table rendering, move the actual formatting at rendering time. CSV files
@@ -2240,6 +2349,11 @@ http://furius.ca/beancount/doc/proposal-query
     values. I need to figure out a good solution for this. Maybe the thing to do
     is to move the field selection at rendering stage, or at least to have it at
     both.
+
+** Reports: Accounts
+
+  - bean-report accounts should produce a regular table that can be rendered
+    with CSV or TXT, not a custom output string.
 
 ** Padding lots held-at-cost
 
@@ -2284,103 +2398,28 @@ http://furius.ca/beancount/doc/proposal-query
     evenly. 'evenpad', 'multipad', 'distribution'? This should most definitely
     be a plugin.
 
-** Misc (Uncategorized) - This section ought to go at the end of this doc in the future
-
+** Improvements to Emacs Support
 
-  - All usage of environment variables should be automatically extracted and
-    documented somewhere.
+  - Investigate indent-region and see if it wouldn't make sense to override this
+    in order to invoke beancount-align / beancount-format.
 
+** Query: Negative filtering by default
 
+  - Idea: For "virtual postings", you could mark certain tags to be excluded by
+    default, to be included only explicitly. e.g. #virtual tag would have to be
+    brought in by selecting it via "tag:virtual". Maybe a different prefix would
+    be used to distinguish them, e.g. #virtual and %virtual, or #virtual and
+    -#virtual; something like that.
 
-  - bean-ledger: Write a script to convert to Ledger syntax. This should be
-    easy!
-
-      bean-convert -f FORMAT FILENAME
-
-    * Convert to Ledger
-    * Convert to HLedger
-    * Convert to Penny
-
-    Add an option to anonimify account names and perhaps some amounts as well.
-
-  - bean-format or bean-align: Write a script to automatically align a region's
-    transactions, or an entire file.
-
-  - bean-query accounts: make a report that prints out just the chart of
-    accounts using the list of parser entries, just the open entries,
-    'bean-query accounts'
-
-  - bean-query currency_dates: Write a script that will automatically fetch the
-    dates I held various positions at cost for throughout the history and a list
-    of weekly dates to fetch rates for. LedgerHub could use that to fetch all
-    the prices it needs at reasonable intervals.
-
-
-
-
-
-  - (code) Make Position into a namedtuple with hashing instead of just an
-    object. See if we can remove its __hash__ method.
-
-  - Also, look at all the objects in b.core.data, and see if you can override
-    the hash function on them automatically in order to ignore the entry in
-    postings, and the listness in entry.postings. It would be nice to be able
-    to hash every directive type.
-
-  - Does table.render_table support offsets for rendering regular tuples? It
-    really should.
-
-
-  - Check out bitbucket CGI interface w.r.t. linking to source code, is the
-    newer hg better?  We should be able to link to specific lines in versions.
-
-  - (idea) An interesting constraint would be to add an option not to allow any
-    postings to any account that is not a leaf account.
-
-  - (filter) Idea: For "virtual postings", you could mark certain tags to be
-    excluded by default, to be included only explicitly. e.g. #virtual tag would
-    have to be brought in by selecting it via "tag:virtual". Maybe a different
-    prefix would be used to distinguish them, e.g. #virtual and %virtual,
-    or #virtual and -#virtual; something like that.
-
-  - (filter) Replace bean-holdings by "bean-query holdings", where "holdings"
-    is just another type of report. All the reports from the view pages should
-    be mirrored exactly in the command-line interface.
-
-  - (high priority) Implement a debugging command in bean-doctor, that spits out
-    the entries that were created from the input file, as it is being parsed.
-    This should include auto-posting values, inserted price directives, and
-    attached tags. This would be a powerful tool to help people debug problems
-    with parsing, or not understanding its effects!
-
-
-
-
-  - web: Don't render the full Inventory'es; instead, already render at cost and
-    provide their full detail either by clicking on the transaction, which
-    should render the full detail of an inventory (for debugging), or in a
-    tooltip.
+** Payees vs. Subaccounts
 
   - Write a script that will highlight some "payee vs tags vs subaccount"
     invariants:
     * Highlight payees that are always used with the same accounts
     * Same with tags
 
-  - Write a script to align numbers... it has been too long and it's quite
-    annoying indeed.
-
-  - tree rendering: If a parent account has only a single subaccount and the
-    parent account otherwise has no postings in its realization, render the
-    account on a single line instead of two, e.g.
-
-      Expenses                     Expenses
-        Taxes                        Taxes
-          US                           US
-            TY2014                       TY2014
-              State                        State:Company
-                Company                    ...
-              ...
-
+** Misc (Uncategorized) - This section ought to go at the end of this doc in the future
+
 
   - Plan for integrating rendering and filtering between web/HTML and text
     versions:
@@ -2396,12 +2435,10 @@ http://furius.ca/beancount/doc/proposal-query
       beancount.web.acctree, etc. should move to beancount.reports and have
       HTML and text versions of all these.
 
+
   - Implement --brief option on scripts.holdings, to be able to share, which
     renders only % holdings.
 
-  - journal rendering: When multiple transactions occur in the same day, it
-    may make sense not to render the balance amount until the last one. Test it
-    out.
 
 
   - validation: We should check that entries created by plugins at some
@@ -2410,12 +2447,14 @@ http://furius.ca/beancount/doc/proposal-query
     time this, it it's very small, do this on initialization and that makes it
     easier to write plugins for users and you can do away with entry_replace().)
 
-  - bake: Make bake support curl if wget is not available. It should work with either,
-    to relax dependencies.
 
-  - Price entries should have an extra attribute to disambiguate between
-    implicitly created prices, linking to the original transaction that created
-    them, and explicitly created ones.
+
+  - Price entries should have extra metadata to disambiguate between implicitly
+    created prices, linking to the original transaction that created them, and
+    explicitly created ones.
+
+
+
 
   - A table of price entries should be rendered under the price graph in the
     web interface.
@@ -2423,77 +2462,17 @@ http://furius.ca/beancount/doc/proposal-query
   - Web interface: Instead of rendering inventories with the full contents in
     the journal, render the cost, and place the full inventory in a tooltip!
 
-  - Here's how to improve booking against lots!
-
-      "Dealing with average cost trading or cost basis readjustments (not implemented
-      yet) involves joining together multiple lots and recreating new ones in a way
-      that preserves the total cost in the inventory; with this data structure /
-      model it's quite obvious how to implement them as basic operations on an
-      inventory.
-
-      I really like the simplicity of this and am wondering if we could make it even
-      simpler.
-
-      Automatic booking against an inventory, e.g. adding automatic FIFO or LIFO,
-      would require having the date of each lot always inserted in the key of the
-      inventory items (from the transaction, not from the lot-date field), along with
-      special rules for selecting which lots a posting is allowed to modify,
-      essentially ignoring the lot-date from the inventory if the posting does not
-      specify it. This is partly why I'm considering making the "lot-date" compulsory
-      and adding a "lot identifier" used to disambiguate booking against an inventory
-      with multiple matching lots of the same cost with just differing dates, which
-      would only be required if the posting constrains it to. One can imagine
-      relaxing the matching rules between a posting and inventory further to allow
-      one to just specify "-40 HOOL" above, without a cost, and if unambiguous, to
-      allow it to just select the only lot that is available."
-
-    Idea: Generalize lot-date to just a "lot" string. Doesn't have to be a date
-    at all! It would also make the concept and usage intentions clearer I think.
-
-  - Lot improvement: the lot specification on a reducing posting is only present
-    to disambiguate which of the lots to reduce or match against. Maybe we
-    should provide a different syntax when an expected reduction takes place,
-    this would be allowed:
-
-       (augment)
-       2014-06-17 *
-          Assets:US:Investing:HOOL    10 HOOL {523.45 USD / i-want-more}
-
-       (reducing) All of the following should be allowed:
-          Assets:US:Investing:HOOL    -7 HOOL ; possibly ambiguous
-          Assets:US:Investing:HOOL    -7 HOOL [] ; possibly ambiguous
-          Assets:US:Investing:HOOL    -7 HOOL [523.45 USD]
-          Assets:US:Investing:HOOL    -7 HOOL [2014-06-17]
-          Assets:US:Investing:HOOL    -7 HOOL [i-want-more]
-
-    By enforcing a distinct syntax, the user is telling us that this leg is
-    expected to reduce an existing position. This information is useful, in
-    that it avoids possible mistakes. I like the explicitness of it.
-
-    Sufficient debugging output should be provided from the "print" command to
-    be able to identify which lot is being matched against and why. We need to
-    provide more transparency into this.
-
-  - FIFO or LIFO booking could be "enforced" simply by declaring the expected
-    booking method of an account, and then issuing an error when explicit
-    entries deviate from that method. This is an easy idea... would be very
-    useful. The automatic method would only be used to resolve ambiguity! This
-    is nice.
-
-  - Implement a little plug-ins system that allows a user to insert a TAB in
-    bean-web.
+  - Implement a little plug-ins system that allows a user to insert a new tab in
+    bean-web, to insert some custom display.
 
   - The Trial Balance page could be a good place to put all the accounts on the
     left and have two sets of columns: beginning of period -> end of period.
 
-  - Implement a little plug-ins system that allows a user to insert a new tab in
-    bean-web, with custom display.
 
-  - In ledgerhub, use /usr/bin/strings as a last resort if all other PDF
-    converters fail.
 
-  - When we import, if a file was not detected, don't spit out an org text
-    line. Still doesn't work.
+
+
+
 
   - In order to implement .txt output, you will need to decouple the web
     rendering and the generation of its included data. This will be
@@ -2510,8 +2489,6 @@ http://furius.ca/beancount/doc/proposal-query
 
   - The documents web page should render by-month + date, and by-account + date.
 
-
-  - DO implement output to text NOW for posting on the mailing list.
 
   - Add views for the last 5 days, one day only each day (for D.Clemente)
 
@@ -2915,8 +2892,6 @@ http://furius.ca/beancount/doc/proposal-query
     summaries. Add an optional argument to turn it on/off, but it should be off
     by default.
 
-  - (easy) Make b.w.web also 'app.options_map' instead of 'app.options'.
-
   - (easy) Make _all_ plugins accept a configuration parameter, unconditionally. The
     interface should be this regular.
 
@@ -2924,9 +2899,6 @@ http://furius.ca/beancount/doc/proposal-query
     a lint check that ensures the non-test files are never importing any of othe
     test files.
 
-  (web)
-  - Make the web interface not render postings anymore by default.
-  - Rename /context to /entry
 
   - USEFUL. Issue warnings if the price date is too far from the requested
     market value date. This will help with returns, a lot. You should likely do
@@ -2940,8 +2912,6 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Make bean-web and bean-query use the DisplayContext object in order to
     render all their numbers. Users are noticing, this is annoying.
-
-
 
 
 * Merge TODO file entries here
