@@ -2421,6 +2421,11 @@ http://furius.ca/beancount/doc/proposal-query
 ** Misc (Uncategorized) - This section ought to go at the end of this doc in the future
 
 
+  - Install proto3 and try to represent all the data using it; measure
+    performance.
+
+
+
   - Plan for integrating rendering and filtering between web/HTML and text
     versions:
 
@@ -4838,3 +4843,7 @@ Improve this bit:
       As soon as the paperwork is done one can contribute to ztree with bigger pull
       requests. Note what pull requests without paperwork done will not be accepted,
       so please notify the maintainer if everything is in place.
+
+  - Great example (from Camlistore project link):
+    https://cla.developers.google.com/about/google-individual
+
