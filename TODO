@@ -1377,6 +1377,43 @@ http://furius.ca/beancount/doc/proposal-query
 
 
 
+** More Old Notes
+
+  - IMPORTANT FEATURE: Implement Average Booking for 401k adjustments,
+    with associated tests and syntax in the parser.
+
+    Update for inventory.py:
+
+      def average(self):
+          """Merge all lots of the same currency together at their average cost.
+
+          Returns:
+            A new instance of Inventory, with all the positions of each currency
+            merged together at cost, bringing all these positions at average cost.
+          """
+          logging.warn('FIXME: continue here, this will be needed to report positions')
+          # FIXME: This is ill-defined, the grouping must also take into account the cost currency.
+
+          units_map = defaultdict(Decimal)
+          costs_map = defaultdict(Decimal)
+          for position in self.positions:
+              lot = position.lot
+
+              cost_currency = lot.cost.currency if lot.cost else None
+              key = (lot.currency, cost_currency)
+              units_map[key] += position.number
+              costs_map[key] += position.get_cost().number
+
+          inventory = Inventory()
+          for lotcost_currencies, units in units_map.items():
+              lot_currency, cost_currency = lotcost_currencies
+              cost_number = costs_map[lotcost_currencies]
+              inventory.add(Amount(units, lot_currency),
+                            Amount(cost_number, cost_currency),
+                            allow_negative=True)
+
+          return inventory
+
 ** Link Trades
 
   - Create a plugin that will link together all reducing transactions
@@ -1438,6 +1475,8 @@ http://furius.ca/beancount/doc/proposal-query
   - Document args of C functions in the same way as Python's, perhaps using the
     new Python3 syntax definition thingamajig (I forget the name, there's a PEP).
 
+  - entries_table() really should be called postings_table().
+
 ** More Testing
 
   - Continue adding more of the pylint tests and make them pass. The codebase is
@@ -1470,20 +1509,35 @@ http://furius.ca/beancount/doc/proposal-query
   Just some old things that are marked as not supported anymore; finally remove
   them all at once.
 
+  - Remove the parsing of "CHECK" at some point, that was just there for
+    compatibility.
+
   - Remove the "use_legacy_fixed_tolerances" option.
+
   - Remove legacy support for PIPE character in syntax, update cheatsheet.
+
   - Remove negative number warning and __ setting
+
   - In 'beancount.core.number' and 'beancount.core.amount', there are deprecated
     sections; remove them.
+
   - Remove support for DEPRECATED_MODULES module names.
+
   - Remove deprecated options, 'tolerance'.
+
   - Remove deprecated options, 'plugin' (replaced by a directive).
+
   - Remove support for deprecated variants in all option names.
+
   - Remove Enum from misc_utils and commit to 3.5 and above.
+
   - When the 'booking' branch is complete, remove deprecated support for total
     cost (e.g., {{ ... }}), we won't need it anymore.
 
 ** Parser Cleanup & Improvements
+
+  - You need to validate the account name options (empty, or no :, use regex to
+    constrain).
 
   - Make booking the cost on the same currency as the instrument impossible:
 
@@ -1554,6 +1608,10 @@ http://furius.ca/beancount/doc/proposal-query
     requested dates. We need to find a way to issue a global tolerance for this,
     that indicates to the user to fill in missing prices that are required to
     carry out particular reporting tasks.
+
+  - Price entries should have extra metadata to disambiguate between implicitly
+    created prices, linking to the original transaction that created them, and
+    explicitly created ones.
 
 ** Revise Dependency Graph
 
@@ -1633,6 +1691,11 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Try creating a "Record" class to replace namedtuple using a class decorator
     and properties.
+
+** Typed Data Types
+
+  - Install proto3 and try to represent all the data using it; measure the
+    difference in performance.
 
 ** Hashing
 
@@ -1970,6 +2033,40 @@ http://furius.ca/beancount/doc/proposal-query
     the assets.
 
 
+* Commissions Sans Cost
+
+  How do I take into account the commissions and fees adjustment on the cost
+  basis for a position? You need to be able to accomodate commissions as not
+  being part of the gain.
+
+  BRANCH: 'sanscost'
+
+  - This work depends on the completion of the 'booking' branch.
+
+* Normalized Credit & Debits
+
+  One idea is to allow the user to work in terms of credits and debits, using
+  all (largely) positive signs for all postings.
+
+  - Make this possible in the input, switch the signs in the parser.
+
+  - Also render the numbers with normalized, positive signs only.
+
+  - Make it possible to render the credits and debit numbers separately, putting
+    them in the correct column based on their account type AND sign.
+
+* Rejected Ideas
+
+  - Why aren't we using the price on the first leg of this transaction? This is
+    an interesting variation on the meaning of the price: it could mean either
+    (a) the price of the lot, or (b) the conversion price of the cost of the
+    lot. This would enable the following:
+
+        2013-07-22 * "Bought some US investment in a CAD account"
+          Assets:Investment:HOOL           50 HOOL {700 USD} @ 1.01 CAD   ;; 35350 CAD
+          Assets:Investment:Cash          -35359.95 CAD
+          Expenses:Commissions                 9.95 CAD
+
 * Priorities ------------------------------------------------------------------------------------------------------------------------
 * Grab Bag of Misc Ideas
 
@@ -2119,6 +2216,8 @@ http://furius.ca/beancount/doc/proposal-query
 
 ** Web Interface Improvements (bean-web)
 
+  - (easy) Make b.w.web also 'app.options_map' instead of 'app.options'.
+
   - Make the web interface not render postings anymore by default.
 
   - web: Don't render the transaction detail anymore; instead, the full context
@@ -2145,9 +2244,39 @@ http://furius.ca/beancount/doc/proposal-query
     I'd like to enable the fonts, but if they cannot be fetched quickly, or
     cached, this should be disabled.
 
-  - Rename /context to /entry
+  - Implement a little plug-ins system that allows a user to insert a new tab in
+    bean-web, to insert some custom display.
 
-  - (easy) Make b.w.web also 'app.options_map' instead of 'app.options'.
+  - Instead of rendering inventories with the full contents in the journal,
+    render the cost, and place the full inventory in a tooltip!
+
+  - A table of price entries should be rendered under the price graph in the
+    web interface.
+
+  - The Trial Balance page could be a good place to put all the accounts on the
+    left and have two sets of columns: beginning of period -> end of period.
+
+  - In order to implement .txt output, you will need to decouple the web
+    rendering and the generation of its included data. This will be
+    great--ability to cut-and-paste any page into txt. format=txt, and we could
+    still have the links clickable. Everything else would just be txt. A bit of
+    a crazy idea, but it might work well and be simple. Maybe.
+
+  - Render tags on the HTML page
+
+*** Rendering Documents
+
+  - Serving CSV files from the Documents page should not done be via download,
+    but rather they should rendered directly. Same with text files. As much as
+    possible files should be served directly.
+
+  - The documents web page should render by-month + date, and by-account + date.
+
+*** Update Activity Page
+
+  - Update activity: Remove parent accounts with no child accounts.
+  - Update activity: This exhibits a bug in the table rendering, look for IVV,
+    see TODO(blais) in acctree.py
 
 ** Improvements to Bake
 
@@ -2328,6 +2457,10 @@ http://furius.ca/beancount/doc/proposal-query
   - When multiple transactions occur in the same day, it makes sense not to
     render the balance amount until the last one. Do this. This is important.
 
+  - In rendering balance directives, don't render the amount in the "change"
+    column; that is too confusing for some users, keep the change column for
+    changes.
+
 ** Reports: Rendering Tables of Balances
 
   - tree rendering: If a parent account has only a single subaccount and the
@@ -2372,6 +2505,10 @@ http://furius.ca/beancount/doc/proposal-query
     mechanism, or just storing a flag that gets reset when the directive is
     completed. Not sure. This would be a more elegant way to deal with some
     errors.
+
+  - Bug: A transaction like this fails to parse; allow it:
+      2014-02-22 * "Payee" |
+        ..
 
 ** Unrealized gains
 
@@ -2420,201 +2557,6 @@ http://furius.ca/beancount/doc/proposal-query
 
 ** Misc (Uncategorized) - This section ought to go at the end of this doc in the future
 
-
-  - Install proto3 and try to represent all the data using it; measure
-    performance.
-
-
-
-  - Plan for integrating rendering and filtering between web/HTML and text
-    versions:
-
-    * Filtering: Should be done in a library used in common with the web server
-      and a new tool, bean-query, which provides a command-line interface
-      to trigger filter, e.g. filter by year, filter by tag, etc. The point is
-      that the same code that does the filtering for views should be run from
-      this command-line. The code that creates views perhaps should be moved to
-      begin that library.
-
-    * Rendering: The web reports, such as beacnount.web.journal,
-      beancount.web.acctree, etc. should move to beancount.reports and have
-      HTML and text versions of all these.
-
-
-  - Implement --brief option on scripts.holdings, to be able to share, which
-    renders only % holdings.
-
-
-
-  - validation: We should check that entries created by plugins at some
-    initialization point are pointing to the right parents (or maybe we should
-    relax the need to set the parent and make that routine set it all at once:
-    time this, it it's very small, do this on initialization and that makes it
-    easier to write plugins for users and you can do away with entry_replace().)
-
-
-
-  - Price entries should have extra metadata to disambiguate between implicitly
-    created prices, linking to the original transaction that created them, and
-    explicitly created ones.
-
-
-
-
-  - A table of price entries should be rendered under the price graph in the
-    web interface.
-
-  - Web interface: Instead of rendering inventories with the full contents in
-    the journal, render the cost, and place the full inventory in a tooltip!
-
-  - Implement a little plug-ins system that allows a user to insert a new tab in
-    bean-web, to insert some custom display.
-
-  - The Trial Balance page could be a good place to put all the accounts on the
-    left and have two sets of columns: beginning of period -> end of period.
-
-
-
-
-
-
-
-  - In order to implement .txt output, you will need to decouple the web
-    rendering and the generation of its included data. This will be
-    great--ability to cut-and-paste any page into txt. format=txt, and we could
-    still have the links clickable. Everything else would just be txt. A bit of
-    a crazy idea, but it might work well and be simple. Maybe.
-
-  - Bug: A transaction like this fails to parse; allow it:
-      2014-02-22 * "Payee" |
-        ..
-
-  - Serving CSV files from the Documents page should not be via download, but
-    rather rendered directly.
-
-  - The documents web page should render by-month + date, and by-account + date.
-
-
-  - Add views for the last 5 days, one day only each day (for D.Clemente)
-
-  - Add preliminary support for renaming root accounts, even if that means the
-    option must come first in the file. Move the checks in the parser.
-
-  - In rendering balance directives, don't render the amount in the "change"
-    column; that is too confusing for some users, keep the change column for
-    changes.
-
-
-  - update activity: remove parent accounts with no child accounts.
-  - update activity: this exhibits a bug in the table rendering, look for IVV,
-    see TODO(blais) in acctree.py
-
-  - Begin user documentation in earnest; we really need this soon.
-  - Complete example file with income statement transactions.
-
-  - URGENT - Provide some tooltip or help link from the main page to allow
-    discoverability of what a "view" is.
-
-  - URGENT - the level1/2 views are EmptyView's, you need to implement those!
-
-  - Example files (suggestion from Daniel Clemente):
-
-      > >   I think 2 files can be helpful:
-      > >
-      > >   1) A simple one, a „how to“ file with ~20 transactions, or better, from 1
-      to 3 transactions for feature. To show the normal things like receiving a
-      salary, getting money from ATM, wire transfer, pay the bills, … So that it does
-      not scare people without experience in double accounting.
-      > >   demo.beancount fits this place.
-      > >
-      > >   2) The big one (1 year, you said), to show off that beancount is powerful
-      and is really used for long-term accounting. This one is the „inspirational“
-      one, to make people say „I would like to do that!“.
-
-  - beancount: GREAT IDEA: output a subset of transactions as a spreadsheet. You
-    need to design a textual way to refer to a subset of transactions. Output in
-    either directions, without currencies.
-
-
-  - Create a 3rd-party dependencies building script for Mac OSX users (fxt).
-
-  (Cost Basis)
-  - Cost basis issue: How do I take into account the commissions and fees
-    adjustment on the cost basis for a position?
-  - How do I take into account Wash Sale Adjustments to the cost basis?
-
-  - entries_table() really should be called postings_table().
-
-  - You need to validate the account name options (empty, or no :, use regex to constrain).
-
-  - Move utility functions from bean-prices to a reusable place.
-
-  - Have another script that takes that as input and spits out current positions
-    in the market on a web page; CGI script, should be served on Furius. Update
-    via a Mercurial repo push.
-
-  - Render tags
-
-  - IMPORTANT FEATURE: Text/XLS exports
-
-  - IMPORTANT FEATURE: Flip balances for rendering
-
-  - IMPORTANT FEATURE: Implement Average Booking for Vanguard & RBC Adjustment,
-    with associated tests and syntax in the parser.
-    Update for inventory.py:
-
-      def average(self):
-          """Merge all lots of the same currency together at their average cost.
-
-          Returns:
-            A new instance of Inventory, with all the positions of each currency
-            merged together at cost, bringing all these positions at average cost.
-          """
-          logging.warn('FIXME: continue here, this will be needed to report positions')
-          # FIXME: This is ill-defined, the grouping must also take into account the cost currency.
-
-          units_map = defaultdict(Decimal)
-          costs_map = defaultdict(Decimal)
-          for position in self.positions:
-              lot = position.lot
-
-              cost_currency = lot.cost.currency if lot.cost else None
-              key = (lot.currency, cost_currency)
-              units_map[key] += position.number
-              costs_map[key] += position.get_cost().number
-
-          inventory = Inventory()
-          for lotcost_currencies, units in units_map.items():
-              lot_currency, cost_currency = lotcost_currencies
-              cost_number = costs_map[lotcost_currencies]
-              inventory.add(Amount(units, lot_currency),
-                            Amount(cost_number, cost_currency),
-                            allow_negative=True)
-
-          return inventory
-
-
-  - Render the OFX / QBO files in a <pre> tag, or figure out why the mimetype
-    is incorrect and they don't render properly. Right now the default
-    rendering of the browser is insufficient.
-
-  - (IDEA) Why aren't we using the price on the first leg of this transaction?
-    This is an interesting variation on the meaning of the price: it could mean
-    either (a) the price of the lot, or (b) the conversion price of the cost of
-    the lot. This would enable the following:
-
-        2013-07-22 * "Bought some US investment in a CAD account"
-          Assets:Investment:HOOL           50 HOOL {700 USD} @ 1.01 USD   ;; 35350 CAD
-          Assets:Investment:Cash          -35359.95 CAD
-          Expenses:Commissions                 9.95 CAD
-
-
-  - Remove the parsing of "CHECK" at some point, that was just there for
-    compatibility.
-
-
-
-
 
   - More testing:
 
@@ -4846,4 +4788,3 @@ Improve this bit:
 
   - Great example (from Camlistore project link):
     https://cla.developers.google.com/about/google-individual
-
