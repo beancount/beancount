@@ -32,6 +32,8 @@ beancount: TODO
     The shell's code is already prepared to do this, it just needs to be
     implemented. (Notify redstreet)
 
+  - Implement output to XLS as well.
+
   - Complete the export of holdings to a Google Spreadsheet and completely
     replace my usage of Google Finance for intra-day reporting. Part of this
     work should result in the ability to produce a spreadsheet of various
@@ -195,6 +197,10 @@ beancount: TODO
     single place as well. This is all easy. How to list the available ones
     (bean-doctor should be able to do this from the registry).
 
+
+** Presentation
+
+  - Slide: 4 methods: bean-web, bean-report, bean-query, write script + plugin
 
 * Complete Display Precision Work
 
@@ -418,6 +424,9 @@ beancount: TODO
   - Document finding from files should not create documents that have been
     explicitly specified in the ledger. Avoid duplication! This is an important
     fix to make, that will allow both to co-exist together.
+
+  - Make document directive accept links, so that explicit documents could be
+    associated with specific transactions.
 
 ** Balance Directives
 
@@ -1187,6 +1196,10 @@ http://furius.ca/beancount/doc/proposal-query
     changes for a particular account. This is meant to be a debugging tool for
     booking algorithms. The rendering should be clear and detailed.
 
+  - TEST CASE: When a label is provided on a lot, make sure that the label is
+    unique throughout the entire file, not just on the inventory the lot is
+    being inserted into.
+
 ** Original Idea for this Branch
 
   - Lot improvement: the lot specification on a reducing posting is only present
@@ -1548,6 +1561,9 @@ http://furius.ca/beancount/doc/proposal-query
 
 ** Core Cleanup
 
+  - IMPORTANT: We need to test the return values of the Inventory.add_amount()
+    method! Review and do this now.
+
   - (Annoyance) All functions that return an (entries, errors, options_map)
     triple really should return (entries, options_map, errors), in this order.
 
@@ -1594,11 +1610,28 @@ http://furius.ca/beancount/doc/proposal-query
 
   - entries_table() really should be called postings_table().
 
+  - Review all the code that is an effective switch/case on directive types and
+    add checks for unknown directives. Make sure Commodity is being handled
+    correctly. Grep for isinstance. Add else clause everywhere none was, e.g.
+    https://bitbucket.org/blais/beancount/src/0e3be569f32a80411df8396d42d5e5ac3487a68f/src/python/beancount/core/realization.py?at=default#cl-292
+
+  - Make _all_ plugins accept a configuration parameter, unconditionally. The
+    interface should be this regular. Right now, some of the plugin functions
+    accept configuration, some don't. This is easy and will make things more
+    consistent.
+
 ** Install Cleanup
 
   - Don't install all the _test.py files, make sure they're not installed.
 
 ** More Testing
+
+  - In the parser or in the validation, check that the price currency matches
+    that of the cost currency, if both are specified!
+
+       2011-01-25 * "Transfer of Assets, 3467.90 USD"
+           * Assets:Investments:RothIRA:Vanguard:VTIVX  250.752 VTIVX {18.35 USD} @ 13.83 CAD
+           * Assets:Investments:RothIRA:DodgeCox:DODGX  -30.892 DODGX {148.93 USD} @ 112.26 USD
 
   - Continue adding more of the pylint tests and make them pass. The codebase is
     almost at a point where it has all the tests from the default configuration.
@@ -1632,6 +1665,10 @@ http://furius.ca/beancount/doc/proposal-query
       oversight.
 
   - When using @@ the signs should match; warn if they don't.
+
+  - Make prices required to always be positive, including with @@, and err on
+    negative amounts for prices. This will match Ledger semantics and will
+    remove one degree of freedom that wasn't necessary.
 
 ** Deprecation
 
@@ -1806,6 +1843,39 @@ http://furius.ca/beancount/doc/proposal-query
     objects for its 'values' attribuet; instead, you'd use the data type of the
     str object itself.
 
+** Improve Errors
+
+  - Enhance error reporting! Make all errors possibly hold on to a list of
+    entries, not just one. Many, many errors will benefit from this.
+
+  - The creation of exceptions should be made easier: each error class should
+    inherit from a base class that is able to accept an optional list of
+    entries, that would automatically render the fileloc of each of those
+    entries, and that would use the fileloc of the first entry in order to
+    render the location of the error. If no entries are specified, an OPTIONAL
+    fileloc= parameter should be provided to specify where the error occurs.
+    This will make creating errors a lot easier and nicer.
+
+    As part of this, we should also somehow produce a list of all possible
+    errors with a lavish description.
+
+  - Refine 'source' attribute on all directives: For .source, instead of '<...>'
+    for the filename, we should use a scheme:..., like file://..., and
+    plugin:beancount.... . This makes a lot more sense. The lineno still needs
+    to be separate, we need that for sorting and prefer not to have it part of
+    the string.
+
+** Errors as Directives
+
+  - (architecture) Seriously consider merging entries and errors; errors are
+    just a special type of entry, and they have dates, and they get rendered in
+    journals. This could make a lot of sense.
+
+  - Interesting idea: Maybe instead of returning errors, "errors" could simply
+    become "Error" directives and be inserted into the flow, and picked up by
+    the various rendering routines in different ways?!?  I love this. One less
+    thing to return. Hmmm ponder it seriously.
+
 * Python Types & Namedtuple
 
   I've been using namedtuple types a lot so far, in order to represent immutable
@@ -1896,7 +1966,14 @@ http://furius.ca/beancount/doc/proposal-query
     the industry with that. You need to write Vanguard download (harder, need to
     scrape), and iShares download (easier, CSV).
 
-** Removal of Holding Object
+  - Implement the dashboard on the example file, take the code out of my
+    private code stash and share.
+
+  - Replace the portfolio script by a bean-query command that will use metadata
+    on the commodities (!). This will simplify things a lot and be more
+    flexible. These are really just aggregations of a different kind.
+
+* Removal of Holding Object
 
   At some point in Q4'2015 I overhauled the Posting object to rationalize its
   attributes. The result is a much simpler object, and one which could readily
@@ -1920,7 +1997,7 @@ http://furius.ca/beancount/doc/proposal-query
   - Add the acquisition date of each lot to each Holding, and it should be
     output at that date by print_holdings as well.
 
-*** Old Notes
+** Old Notes
 
   - I think there's a way to simplify holdings: you can probably remove the
     "Holding" type and replace that with a Posting, which really, is much like a
@@ -1994,6 +2071,35 @@ http://furius.ca/beancount/doc/proposal-query
     Automate returns calculation.
 
   - Fix FIXME in beancount.projects.returns, from DClemente issues.
+
+* Net Worth
+
+  A complement to the portfolio management features is the ability to report on
+  the total "net worth" on the balance sheet, over time, and as pre- and post-
+  tax amounts.
+
+  - Make the net-worth-over-time script output post-tax networth as well, using
+    metadata. In other words, the post-tax amount should represent the
+    liquidation value of the portfolio if all tax liabilities had to be incurred
+    (e.g., taking all the money out of tax-deferred retirement accounts). This
+    should use a percentage meta-data field in order to figure out the
+    approximate taxation rate, e.g.,
+
+       2014-01-29 open Assets:US:Vanguard:PreTax401k
+         tax: "pre"
+
+    Allowable values should be:
+
+      "pre"   : For regular tax-deferred accounts, where the entire amount is
+                taxed on distribution.
+      "after" : For after-tax 401k accounts where only the gains are taxed on
+                distribution.
+      "roth"  : For Roth accounts (not taxable on distribution).
+      None    : For taxable accounts.
+
+  - Make the net-worth script into an official project, don't just leave it
+    under experiments. Do this only _after_ the removal of the Holding object,
+    to minimize changes.
 
 * Standalone Tools
 
@@ -2224,6 +2330,9 @@ http://furius.ca/beancount/doc/proposal-query
           Assets:Investment:Cash          -35359.95 CAD
           Expenses:Commissions                 9.95 CAD
 
+  - Add a --auto-everything option to bean-check that automatically inserts a
+    beancount.plugins.auto_accounts directive and more.
+
 * Total Balance
 
   Currently, the Balance directive only asserts the currency of its attached
@@ -2321,6 +2430,32 @@ http://furius.ca/beancount/doc/proposal-query
     and write example cases for each, to be referenced from the document. Solve
     this completely, using metadata and a plugin.
 
+* Sharing Expenses
+** Producing Journals as Tables
+
+  - Figure out some way to report the names of the other accounts of a
+    particular account. For example, render a journal as a detailed expense
+    report, for a set of accounts (e.g., Expenses:*) pulling out amounts in
+    various columns based on other expressions (e.g. Assets:Cash:Caroline).
+
+    This would be an approximation:
+
+      bean-query $L "
+        SELECT date, account, maxwidth(description, 25), convert(position, 'USD')
+        FROM has_account('Caroline')
+        WHERE (NOT account ~ 'Caroline')
+          AND (NOT account ~ 'Rounding')
+          AND account ~ 'Expenses:';"
+
+      However it doesn't work so well. The description isn't good enough.
+      A better approach would be to just provide a special which lists all the
+      other accounts in a single string.
+
+* Text Statements
+
+  - Complete text-statements branch, printing out balanace sheet and income
+    statement to text for bean-report and ELI, complete with --date on those
+    reports.
 * Priorities ------------------------------------------------------------------------------------------------------------------------
 * Grab Bag of Misc Ideas
 
@@ -2428,6 +2563,14 @@ http://furius.ca/beancount/doc/proposal-query
   - Bug: this query fails and should not:
     "select account, sum(position) group by account order by account_sortkey(account)"
 
+  - SQL: When not specified, ORDER BY should be set to be the same as GROUP BY
+    by default. This is a sensible choice.
+
+  - Implement implitict GROUP BY and BALANCES ... WHERE syntax
+
+  - The 'balances' report should also support a WHERE clause as a nice
+    shorthand. I would use that all the time myself if I could.
+
 ** query_env
 
   - There's a bug in the MIN() function, it fails, try this:
@@ -2435,6 +2578,10 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Rename ACCOUNT_SORTKEY(), it's a terrible name. Name this REPORD() for
     "report order".
+
+  - Provide a SUBSTR() or SUB() function for the SQL script. Find out what the
+    SQL standard is and implement that. MAXWIDTH() just isn't too great a name.
+    TRIM() might have been a better name.
 
 ** query_eval
 
@@ -2677,17 +2824,6 @@ http://furius.ca/beancount/doc/proposal-query
     project volteface to complete this, this does not have to be a part of
     Beancount, this should be its own presentation project.
 
-** Transaction Lists which can be Explored with Emacs
-
-  - Add a "lineno" format for transactions that render in "Emacs errors"
-    compatible format, so we can easily jump in time throughout the input file
-    instead of rendering a journal. Offer the option to list in reverse to. This
-    should be invokable from the SQL shell.
-
-  - Register (with filter) should have "print" mode that also includes
-    file:lineno so that we can make Emacs "jump" between the transactions in
-    the order they appear.
-
 ** Reports: Rendering Journals
 
   - Journals should render in either order.
@@ -2734,6 +2870,12 @@ http://furius.ca/beancount/doc/proposal-query
   - bean-report accounts should produce a regular table that can be rendered
     with CSV or TXT, not a custom output string.
 
+** Reports: Cash
+
+  - Create a function to identify whether a Position/Inventory is cash... use
+    this to reproduce/replace the 'cash' report. Use the same rule from
+    bean-report.
+
 ** Padding lots held-at-cost
 
   - (pad) Review the possibility of padding units held at cost:
@@ -2752,9 +2894,21 @@ http://furius.ca/beancount/doc/proposal-query
     completed. Not sure. This would be a more elegant way to deal with some
     errors.
 
-  - Bug: A transaction like this fails to parse; allow it:
+  - BUG: A transaction like this fails to parse; allow it:
       2014-02-22 * "Payee" |
         ..
+
+  - BUG: This input file without currencies does not currently fail! This is due
+    to the parser accepting incomplete input. It should fail!
+
+      2014-01-01 * "Buy Google"
+        Assets:US:Broker:GOOGL      120.00  {1212.5100 USD}
+        Assets:US:Broker:Cash
+
+      2014-04-08 * "GOOGLE INC CL C SPINOFF   ON"
+        Assets:US:Broker:GOOGL     -120.00  {1212.5100 USD}
+        Assets:US:Broker:GOOGL      120.00  {1212.5100 * 0.4992 USD}
+        Assets:US:Broker:GOOG       120.00  {1212.5100 * 0.5008 USD}
 
 ** Unrealized gains
 
@@ -2806,6 +2960,23 @@ http://furius.ca/beancount/doc/proposal-query
   - Investigate indent-region and see if it wouldn't make sense to override this
     in order to invoke beancount-align / beancount-format.
 
+  - Add an Emacs mode command to compute a command at the date of the
+    transaction preceding or at the cursor line (with C-u). Without a C-u
+    prefix, compute the balances at the latest date. The point is that the user
+    shouldn't have to type in the bean-query <filename>, other than perhaps
+    having to type "balances". To work quickly on smaller files.
+
+*** Transaction Lists which can be Explored with Emacs
+
+  - Add a "lineno" format for transactions that render in "Emacs errors"
+    compatible format, so we can easily jump in time throughout the input file
+    instead of rendering a journal. Offer the option to list in reverse to. This
+    should be invokable from the SQL shell.
+
+  - Register (with filter) should have "print" mode that also includes
+    file:lineno so that we can make Emacs "jump" between the transactions in
+    the order they appear.
+
 ** Query: Negative filtering by default
 
   - Idea: For "virtual postings", you could mark certain tags to be excluded by
@@ -2829,6 +3000,15 @@ http://furius.ca/beancount/doc/proposal-query
     from the feature. You could ideally provide a date and a tolerance, and
     somehow issue warnings automatically. The tolerance for price freshness
     should be provided as an option in the input file.
+
+  - Add the capability to issue warnings when the price database is queried for
+    a specific date but the price point is too distant from the requested date.
+
+      "One thing I want to do soon is to issue warnings when the price database is
+      looked up and the price point is too far from the requested date, so that the
+      user could go fill in the missing prices. I'd probably issue price entries with
+      the approximated price (approximated with a distant date) and then feed that
+      into another script that would fetch prices for those directives."
 
 ** Account Hiding Criterion
 
@@ -2865,120 +3045,16 @@ http://furius.ca/beancount/doc/proposal-query
           Equity:Whatever
 
 
+** Trading
+
+  - Produce example transactions for each of the cases provided by Filippo's
+    sample transactions.
+
 ** Misc (Uncategorized) - This section ought to go at the end of this doc in the future
 
-
-
-
-  - IMPORTANT: We need to test the return values of the Inventory.add_amount()
-    method! Review and do this now.
-
-  - Make document directive accept links, so that explicit documents could be
-    associated with specific transactions.
-
-  - SQL: When not specified, ORDER BY should be set to be the same as GROUP BY.
-    This is a sensible choice.
-
-
-
-  - TEST CASE: When a label is provided on a lot, make sure that the label is
-    unique throughout the entire file, not just on the inventory the lot is
-    being inserted into.
-
-
-  - Make the net-worth-over-time script output post-tax networth as well.
-
-
-  - Add an Emacs mode command to compute a command at the date of the
-    transaction preceding or at the cursor line (with C-u). Without a C-u
-    prefix, compute the balances at the latest date. The point is that the user
-    shouldn't have to type in the bean-query <filename>, other than perhaps
-    having to type "balances". To work quickly on smaller files.
-
-
-
-  - Render a journal as a detailed expense report, for a set of accounts
-    (e.g., Expenses:*) pulling out amounts in various columns based on other
-    expressions (e.g. Assets:Cash:Caroline).
-
-
-
-  - Implement the dashboard on the example file, take the code out of my
-    private code stash and share.
-
-
-
-  - Complete text-statements to text for bean-report and ELI, complete with
-    --date on those reports.
-
-
-
-  (query)
-  - Implement implitict GROUP BY and BALANCES ... WHERE syntax
-  - Implement output format options (esp. CSV for spreadsheets).
-
-  (documentation)
-  - Slide: 4 methods: bean-web, bean-report, bean-query, write script + plugin
-
-
-
-  - Add a --auto-everything option to bean-check that automatically inserts a
-    beancount.plugins.auto_accounts directive and more.
-
-  - In the parser or in the validation, check that the price currency matches
-    that of the cost currency, if both are specified!
-
-       2011-01-25 * "Transfer of Assets, 3467.90 USD"
-           * Assets:Investments:RothIRA:Vanguard:VTIVX  250.752 VTIVX {18.35 USD} @ 13.83 CAD
-           * Assets:Investments:RothIRA:DodgeCox:DODGX  -30.892 DODGX {148.93 USD} @ 112.26 USD
-
-
-  - The 'balances' report should also support a WHERE clause as a nice
-    shorthand. I would use that all the time myself if I could.
-
-  - Add a query_env function to output the root type of an account, e.g. 'Assets'.
-
-  - Replace the portfolio script by a bean-query command that will use metadata
-    on the commodities (!). This will simplify things a lot and be more
-    flexible. These are really just aggregations of a different kind.
-
-  - Create a function to identify whether a Position/Inventory is cash... use
-    this to reproduce/replace the 'cash' report. Use the same rule from
-    bean-report.
-
-
-
-  - Review all the code that is an effective switch/case on directive types and
-    add checks for unknown directives. Make sure Commodity is being handled
-    correctly. Grep for isinstance. Add else clause everywhere none was, e.g.
-    https://bitbucket.org/blais/beancount/src/0e3be569f32a80411df8396d42d5e5ac3487a68f/src/python/beancount/core/realization.py?at=default#cl-292
-
-
-  - Make prices required to always be positive, including with @@, and err on
-    negative amounts for prices. This will match Ledger semantics and will
-    remove one degree of freedom that wasn't necessary.
-
-
-
-  - Add the capability to issue warnings when the price database is queried for
-    a specific date but the price point is too distant from the requested date.
-
-      "One thing I want to do soon is to issue warnings when the price database is
-      looked up and the price point is too far from the requested date, so that the
-      user could go fill in the missing prices. I'd probably issue price entries with
-      the approximated price (approximated with a distant date) and then feed that
-      into another script that would fetch prices for those directives."
-
-
-  - (easy) Make _all_ plugins accept a configuration parameter, unconditionally. The
-    interface should be this regular.
-
-
-
-
 * Merge TODO file entries here
 * Merge Email Starred entries
-* Merge all Open issues here
+* Merge all Open Tickets here
 * Performance
 
   - (validation/performance) Optimize the performance of validations and bring
@@ -2994,7 +3070,6 @@ http://furius.ca/beancount/doc/proposal-query
     gets: "Note that if you only pass PyObject * args, PyObject_CallMethodObjArgs() is a
     faster alternative."
     https://docs.python.org/3/c-api/object.html
-
 
   - (performance) Profile the web pages, if account_link() is high, provide an
     explicit cache for each unique view. (We had to remove this when we
@@ -3014,10 +3089,6 @@ http://furius.ca/beancount/doc/proposal-query
     instead of doing it in two steps?
 
   - Optimize the main update() routine that is called in display_context.
-
-
-
-
 
 * Plugins
 
@@ -3136,38 +3207,6 @@ http://furius.ca/beancount/doc/proposal-query
     the realization should automatically occur both at the beginning and end of
     reporting periods.
 
-
-
-* Better Errors & Errors as Directives
-
-  - Enhance error reporting! Make all errors possibly hold on to a list of
-    entries, not just one. Many, many errors will benefit from this.
-
-  - The creation of exceptions should be made easier: each error class should
-    inherit from a base class that is able to accept an optional list of
-    entries, that would automatically render the fileloc of each of those
-    entries, and that would use the fileloc of the first entry in order to
-    render the location of the error. If no entries are specified, an OPTIONAL
-    fileloc= parameter should be provided to specify where the error occurs.
-    This will make creating errors a lot easier and nicer.
-
-    As part of this, we should also somehow produce a list of all possible
-    errors with a lavish description.
-
-  - (architecture) Seriously consider merging entries and errors; errors are
-    just a special type of entry, and they have dates, and they get rendered in
-    journals. This could make a lot of sense.
-
-  - Interesting idea: Maybe instead of returning errors, "errors" could simply
-    become "Error" directives and be inserted into the flow, and picked up by
-    the various rendering routines in different ways?!?  I love this. One less
-    thing to return. Hmmm ponder it seriously.
-
-  - Refine 'source' attribute on all directives: For .source, instead of '<...>'
-    for the filename, we should use a scheme:..., like file://..., and
-    plugin:beancount.... . This makes a lot more sense. The lineno still needs
-    to be separate, we need that for sorting and prefer not to have it part of
-    the string.
 
 
 * Payees & Subaccounts
@@ -4904,7 +4943,8 @@ Improve this bit:
 
   - Great example (from Camlistore project link):
     https://cla.developers.google.com/about/google-individual
-* Format
+
+* Tools: Formatting
 
   - BUG: There is a bug in bean-format; on
     /home/blais/sharing-with-roommate/liabilities-account-solution.beancount, it
