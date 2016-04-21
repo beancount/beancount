@@ -2374,12 +2374,16 @@ http://furius.ca/beancount/doc/proposal-query
     that the string compared to a flag is not a single-character string and
     issue an appropriate error message for it.
 
+  - Bug: this query fails and should not:
+    "select account, sum(position) group by account order by account_sortkey(account)"
+
 ** query_env
 
   - There's a bug in the MIN() function, it fails, try this:
       select min(balance) from open on 2015-01-01 close  on 2016-01-01  where account = ...
 
-
+  - Rename ACCOUNT_SORTKEY(), it's a terrible name. Name this REPORD() for
+    "report order".
 
 ** query_eval
 
@@ -2812,6 +2816,22 @@ http://furius.ca/beancount/doc/proposal-query
 
 ** Misc (Uncategorized) - This section ought to go at the end of this doc in the future
 
+
+  - TEST CASE: When a label is provided on a lot, make sure that the label is
+    unique throughout the entire file, not just on the inventory the lot is
+    being inserted into.
+
+
+  - Make the net-worth-over-time script output post-tax networth as well.
+
+
+  - Add an Emacs mode command to compute a command at the date of the
+    transaction preceding or at the cursor line (with C-u). Without a C-u
+    prefix, compute the balances at the latest date. The point is that the user
+    shouldn't have to type in the bean-query <filename>, other than perhaps
+    having to type "balances". To work quickly on smaller files.
+
+
 
   - Render a journal as a detailed expense report, for a set of accounts
     (e.g., Expenses:*) pulling out amounts in various columns based on other
@@ -4820,3 +4840,10 @@ Improve this bit:
 
   - Great example (from Camlistore project link):
     https://cla.developers.google.com/about/google-individual
+* Format
+
+  - BUG: There is a bug in bean-format; on
+    /home/blais/sharing-with-roommate/liabilities-account-solution.beancount, it
+    fails with an assertion. I highly suspect that it's because of postings like this:
+      Expenses:Electricity             45.34/2 USD
+      Liabilities:Alice                45.34/2 USD
