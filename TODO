@@ -200,7 +200,171 @@ beancount: TODO
 
 ** Presentation
 
+  I'd should build another couple of presentations on Beancount. I'm thinking of
+  making a few videos this time around, something that would be situational and
+  educational.
+
+  - Use impress.js to built a visualization of the DE method
+
+  - Record a video, that's an easy way to explain how this works.
+
+  - IDEA!!!  Use drawings a-la-ThinkBig or whatever it is. This will be the
+    perfect medium for this. Mix it with video. Start writing a detailed script.
+
+  - Script 1: Begin with a USB key in hand. "On this 8 GB USB key, I have all of
+    8 years history of financial transactions in my life. Every single price
+    paid that went recorded into an account it these."
+
+  - Script 2: Motivate by speaking of the results, ask "Wouldn't it be great if
+    a single system could do all of that?" Explain that the task of inputting
+    all the data in a single system is a lot less work than producing all the
+    different reports IF you have a unified system. Beancount!
+
   - Slide: 4 methods: bean-web, bean-report, bean-query, write script + plugin
+
+** Padding Documentation Review
+
+  Some users have found themselves very confused about the intended usage of the
+  Pad directive. Its documentation should be reviewed and improved
+  substantially.
+
+  - Put this in the docs to explain "pad"
+
+     > > Ok, restarted example, let's say you begin
+     > > accounting in dec 2013, you'll have this:
+     > >
+     > >   2010-01-01 open
+     > >   2010-01-01 pad
+     > >   2013-12-04 balance
+     > >   2013-12-08 * ...
+     > >   2013-12-11 * ...
+     > >   2013-12-17 * ...
+     > >
+     > > eventually, moving forward, you'll get to 2014:
+     > >
+     > >   2010-01-01 open
+     > >   2010-01-01 pad
+     > >   2013-12-04 balance
+     > >   2013-12-08 * ...
+     > >   2013-12-11 * ...
+     > >   2013-12-17 * ...
+     > >   2013-12-22 * ...
+     > >   2013-12-29 * ...
+     > >   2014-01-02 * ...
+     > >   2014-12-04 balance
+     > >   2014-12-06 * ...
+     > >
+     > > Allright, now you decide you like this, and you
+     > > want to enter statements before you started.
+     > > You find your paper statement for november, and
+     > > fill in:
+     > >
+     > >   2010-01-01 open
+     > >   2010-01-01 pad
+     > >   ; here you insert
+     > >   2013-11-04 balance
+     > >   2013-11-08 * ...
+     > >   2013-11-18 * ...
+     > >   ...
+     > >   ; this is what was there previously
+     > >   2013-12-04 balance
+     > >   2013-12-08 * ...
+     > >   2013-12-11 * ...
+     > >   2013-12-17 * ...
+     > >   2013-12-22 * ...
+     > >   2013-12-29 * ...
+     > >   2014-01-02 * ...
+     > >   2014-12-04 balance
+     > >   2014-12-06 * ...
+     > >
+     > > Great. Now, notice how the balance for
+     > > 2013-11-04 is probably different than that of
+     > > 2013-12-04. If instead of a pad directive you
+     > > had added a manual adjustment, you'd have to
+     > > change it here. This is the beauty of the pad
+     > > directive: it automatically does it for you.
+     > >
+     > > Now, let's keep going backward in time. You dig
+     > > around your records, you find September's
+     > > statement, but you cannot find the statement
+     > > for October, maybe it's lost, or somewhere
+     > > else. Fine! You insert a pad directive to
+     > > account for those missing transactions:
+     > >
+     > >   2010-01-01 open
+     > >   2010-01-01 pad
+     > >
+     > >   2013-09-04 balance
+     > >   2013-09-05 * ...
+     > >   ... september transactions
+     > >   2013-09-30 * ...
+     > >   2013-10-04 balance
+     > >
+     > >   ; padding for missing October statement,
+     > > where is my statement?
+     > >   2013-10-04 pad
+     > >   2013-11-04 balance
+     > >
+     > >   ... november transactions
+     > >   2013-11-08 * ...
+     > >   2013-11-18 * ...
+     > >   ...
+     > >   2013-12-04 balance
+     > >
+     > >   2013-12-08 * ...
+     > >   2013-12-11 * ...
+     > >   2013-12-17 * ...
+     > >   2013-12-22 * ...
+     > >   2013-12-29 * ...
+     > >   2014-01-02 * ...
+     > >   2014-12-04 balance
+     > >
+     > >   2014-12-06 * ...
+     > >
+     > > This is the full example.
+
+Improve this bit:
+
+    >   But the detailed explanation cannot be found. There's only one phrase: „Think
+    >   of the Equity account as something from the past that you had to give up in
+    >   order to obtain the beginning snapshot of the Assets + Liabilities balance.“
+    >
+    > Great comment. I'll improve this.
+
+ More user comments:
+
+    >   After doing my research, I found about debits and credits, which in Beancount
+    >   you represent with positive numbers and negative numbers respectively. I
+    >   found that having a name for each group of accounts helps me to think of them
+    >   at the same time, e.g. Liabilities+Equity+Income as part of a common thing,
+    >   instead of having to research each of it independently.
+    >   In the documentation you start speaking about numbers, then about signs, then
+    >   about grouping the accounts. Maybe it's better to go top-down and start
+    >   saying that there are two types of account (usually +, usually -) and then
+    >   divide each group further.
+    >
+    > I will change that, thanks for the comment.
+
+** Contributor agreement
+
+  * See note at the bottom of: https://github.com/fourier/ztree
+
+      Since ztree is a part of GNU ELPA, it is copyrighted by the Free Software
+      Foundation, Inc.. Therefore in order to submit nontrivial changes (with total
+      amount of lines > 15), one needs to to grant the right to include your works in
+      GNU Emacs to the FSF.
+
+      For this you need to complete this form, and send it to assign@gnu.org. The FSF
+      will send you the assignment contract that both you and the FSF will sign.
+
+      For more information one can read here to understand why it is needed.
+
+      As soon as the paperwork is done one can contribute to ztree with bigger pull
+      requests. Note what pull requests without paperwork done will not be accepted,
+      so please notify the maintainer if everything is in place.
+
+  - Great example (from Camlistore project link):
+    https://cla.developers.google.com/about/google-individual
 
 * Complete Display Precision Work
 
@@ -428,6 +592,18 @@ beancount: TODO
   - Make document directive accept links, so that explicit documents could be
     associated with specific transactions.
 
+  - Generalize the scope of Document directives so that they don't just point to
+    filenames, but can hold references to arbitrary document ids.
+    * Rename the field from 'filename' to 'document'
+    * Make the verification of that field against a filename option, enabled by
+      a plugin.
+    * Notify bw3443 about this.
+
+  - Do we need a dedicated web page for listing all documents? This page could
+    include documents without a date, could be rendered as a tree-table, with
+    the list of each document in the corresponding account. Maybe that's
+    overkill. DK.
+
 ** Balance Directives
 
   - Balance checks could also be a plugin.
@@ -518,8 +694,6 @@ beancount: TODO
   - Convert the environment functions from classes to just regular function
     objects, taking advantage of Python3's ability to attach datatypes onto the
     arguments and return value. This should clean up the b.q.query_env code a bit.
-
-  - Implement PIVOT reports directly from the shell. These are oft-requested.
 
   - Should we validate that the query is legit before we even run it? I think
     so. Compile immediately after parsing instead of loading the Beancount file
@@ -944,7 +1118,7 @@ http://furius.ca/beancount/doc/proposal-query
 
     And should tolerance some cross-checking of the balance against the amounts.
 
-** Solve Performance Problems on Mac
+** Solve Slowness Problems on Mac
 
   - Trying to bean-extract from LC on Mac takes FOREVER. Debug this thing
     damnit.
@@ -956,7 +1130,6 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Fix ugly importer names from my configuration.
   - Uniformize all directory names from my configuration.
-
 
 ** Auto-Insert
 
@@ -1554,7 +1727,7 @@ http://furius.ca/beancount/doc/proposal-query
       account. Either that, or we will allow you to mark an account has having no
       such constraints at all."
 
-* Cleanup and Deprecation
+* Cleanup, Deprecation, and Performance
 
   These are a number of pending tasks to tidy up the codebase in various ways.
   Some of these are more impactful than others.
@@ -1876,6 +2049,60 @@ http://furius.ca/beancount/doc/proposal-query
     the various rendering routines in different ways?!?  I love this. One less
     thing to return. Hmmm ponder it seriously.
 
+** Performance
+
+  - (validation/performance) Optimize the performance of validations and bring
+    all the HARDCORE_VALIDATIONS in by default.
+
+  - Maybe the builder should have a 'filename' state that only gets changed here
+    and there instead of getting that fileloc argument passed in every time on
+    every rule. Maybe we just always get the fileloc from the parser.c as in
+    NUMBER. I think it might make the parser more efficient too... try it out,
+    do timings, see how much it improves parsing performance.
+
+  - See if you replace BUILD()'s PyObject_CallMethod to this how much faster it
+    gets: "Note that if you only pass PyObject * args, PyObject_CallMethodObjArgs() is a
+    faster alternative."
+    https://docs.python.org/3/c-api/object.html
+
+  - (performance) Profile the web pages, if account_link() is high, provide an
+    explicit cache for each unique view. (We had to remove this when we
+    simplified the function using build_url for adding tests.)
+
+  - (performance) Implement the stable hashing function in C and reinstall the
+    validate_hash test.
+
+  - (performance) Implement inventories in C and reinstall the
+    validate_check_balances test.
+
+  - (performance) Don't pass in the FILE_LINE_ARGS on function calls, these
+    should be part of the context of the parser, should be gettable only on
+    demand.
+
+  - Can I use Py_RETURN_NONE in order to incref and assign, in the lexer,
+    instead of doing it in two steps?
+
+  - Optimize the main update() routine that is called in display_context.
+
+*** Parser Performance
+
+  - Implement "D" in C, it's worth it. This should make a substantial difference.
+
+  - Test using the empty case of list parsing to create the initial empty lists
+    instead of the conditional in Parser.handle_list() and measure, to see if
+    there is a significant difference in parsing performance.
+
+  - Parser performance: try not calling back to builder for simple types that
+    just return their value; measure the difference, it may be worth it, and we
+    wouldn't lose much of flexibility, especially for the lexer types, which are
+    aplenty.
+
+  - Write the builder object in C... it won't change very much anymore, and
+    that's probably simple enough.
+
+  - Check the performance of D(). I suspect improving this routine
+    could have a dramatic effect on performance.
+
 * Python Types & Namedtuple
 
   I've been using namedtuple types a lot so far, in order to represent immutable
@@ -2128,14 +2355,6 @@ http://furius.ca/beancount/doc/proposal-query
   - Build a simple 'colrneg' tool that just highlights numbers as green or red
     depending on if positive or negative.
 
-  - 'csv-pivot': build this: a script that can accept a CSV file and render a
-    CSV pivot table from it. The reason we need support is in order to carry out
-    operations on columns of inventories. Maybe we should impleemnted some sort
-    of swiss-knife tool that is able to parse inventories from columns and
-    perform various operations on them, aggregations, etc. using Beancount's
-    Inventory() class. This could be a powerful tool! Make it possible to parse
-    and create Inventory objects from cells.
-
   - Perhaps should build a version of treeify for internal usage that works on
     HTML columns, off of HTML text. Or BETTER: just a stateful tool that can
     transform an account's name to indent it properly every time you feed it the
@@ -2159,7 +2378,7 @@ http://furius.ca/beancount/doc/proposal-query
 
 
 
-* Support Normalized Signs for Debits & Credits
+* Debits & Credits Normalization
 
   One simple idea that might make at least some people happy is to make it
   possible to input the great majority of numbers as positive numbers. This
@@ -2186,8 +2405,16 @@ http://furius.ca/beancount/doc/proposal-query
   - Do support rendering options to invert the amounts of the minus accounts.
     This is an important feature.
 
+  - The new balance sheets should be able to invert the numbers (and then they
+    should get rendered differently). Basically, every number shown should be
+    either in signed or cr/dr format. We should be able to switch between the
+    two at render time. This should work across all number-rendering routines
+    everywhere--do this centrally.
 
-* Trading Accounts over Conversions
+  - In the balance sheet and income statement, we need to render the amounts
+    inverted (and in a slightly different style).
+
+* Trading Accounts (over Conversions)
 
   Beancount deals with exact balances by inserting a special "conversion"
   entries for the particular subset of transactions under consideration. The
@@ -2295,8 +2522,12 @@ http://furius.ca/beancount/doc/proposal-query
     nature of the assets and how to reach the relevant institutions to liquidate
     the assets.
 
+  - In order to have someone else be able to take care of your business, you
+    should be able to produce a list of the accounts open at the end of the
+    period, with the account ids and balances. This should be printable and
+    storable, for someone else to take care of your things in case you die.
 
-* Commissions Sans Cost
+* Gains Sans Commissions
 
   How do I take into account the commissions and fees adjustment on the cost
   basis for a position? You need to be able to accomodate commissions as not
@@ -2305,6 +2536,10 @@ http://furius.ca/beancount/doc/proposal-query
   BRANCH: 'sanscost'
 
   - This work depends on the completion of the 'booking' branch.
+
+  - Capital gains should not count commissions nor on the buy nor on the
+    sell side. How do we book them like this?  Can we count this somehow
+    automatically? Misc accounts? Not sure.
 
 * Normalized Credit & Debits
 
@@ -2430,6 +2665,20 @@ http://furius.ca/beancount/doc/proposal-query
     and write example cases for each, to be referenced from the document. Solve
     this completely, using metadata and a plugin.
 
+
+  I wrote a script to wash losses for entire lots. This still needs more work:
+  ideally, one should be able to insert an arbitrary cost basis adjustment for
+  each lot. Do this, and integrate with the wash-sales-tracker implemented by
+  bbreslauer.
+
+  - It should be possible to produce input for the wash sales calculation, to
+    then insert metadata or some other set of postings on each lot, and to
+    produce output suitable to be printed and sent to the IRS.
+
+  - There is already a plugin which allows the user to wash away the P/L of
+    entire lots under experiments/washsales. Enhance that to support arbitrary
+    adjustments and move that into 'beancount.plugins'.
+
 * Sharing Expenses
 ** Producing Journals as Tables
 
@@ -2456,15 +2705,95 @@ http://furius.ca/beancount/doc/proposal-query
   - Complete text-statements branch, printing out balanace sheet and income
     statement to text for bean-report and ELI, complete with --date on those
     reports.
-* Priorities ------------------------------------------------------------------------------------------------------------------------
-* Grab Bag of Misc Ideas
+* Book Unrealized Gains Correctly
 
-  This is a grab bag of ideas. When I have a new idea coming to me, I don't have
-  time to think about where to put it, I just come here and jot it down. Every
-  couple of months I clean this mess up and put it in the sections below. Please
-  excuse the mess. Of course, I'll clean it up at some point.
+  - IMPORTANT: Unrealized gains for opened periods should show only gains since
+    the openings. In other words, unrealized gains should be realized
+    marked-to-market at the time of open.
 
-** errors
+  - Unrealized gain when rendering for closed years does not appear.
+    Perhaps we should insert the unrealized gains during close operation.
+
+    Idea: close realized gains along with close(), so that they don't show up for
+    the latest year.
+
+  - Unrealized gains should be modified so that they replace the book value of
+    the positions that they adjust, and can be applied at multiple dates. Then,
+    the realization should automatically occur both at the beginning and end of
+    reporting periods.
+
+** Old Notes
+
+  - Unrealized gains should not be added if the gain is zero.
+
+  - There's a fundamental question about which date to be used for pricing
+    entries. This really would depend on the view. If this is a period view, the
+    date of the last entry is most appropriate. If it is any other kind of view,
+    the latest price is best. All the reports should be adjusted for this.
+
+** Old Notes
+
+  - Unrealized capital gains could be inserted automatically into special
+    sub-accounts, based on the current price and the cost-basis of particular
+    accounts. This could be inserted automatically! e.g.
+
+        DATE check Assets:US:Ameritrade:AAPL       10 AAPL {200 USD}
+
+        DATE price AAPL  210 USD
+
+      Assets:US:Ameritrade:AAPL                    2000 USD
+      Assets:US:Ameritrade:AAPL:Gains               100 USD
+
+    The "Gains" subaccount could be inserted automatically if the price differs
+    from the cost basis... this would be a clever way to represent this! We
+    could even do this by inserting a transaction automatically with an
+    offsetting account... actually this would be the RIGHT way to do this!
+
+      We need an option to designate which subaccount leaf to create all
+      the new transactions for:
+
+        %option account_unrealized  "Unrealized"
+
+        2013-05-23 A "Booking unrealized gains for AAPL"
+          Assets:US:Ameritrade:AAPL:Unrealized              230.45 USD
+          Income:Unrealized                                -230.45 USD
+
+      By doing this, the reporting does not have anything to do... it can choose
+      to report positions at cost or in held units, and whether the gains are
+      included or not entirely depends on whether these transactions have been
+      inserted in or not.
+
+
+* Pivot Reports
+
+  An interesting reporting idea which comes back again and again is the ability
+  to produce a year-on-year or month-by-month summary of income and expenses, as
+  a table. This is essentially a pivot table where the date (year or month) is
+  rendered as the X axis, and accounts used on the X axis. Account balances are
+  aggregated in the cells.
+
+  - Implement PIVOT reports directly from the shell. These are oft-requested.
+
+  - Including RSP contribs, like my big spreadsheet that I crafted manually? Can
+    I do that? That would be awesome!
+
+  - 'csv-pivot': build this: a script that can accept a CSV file and render a
+    CSV pivot table from it. The reason we need support is in order to carry out
+    operations on columns of inventories. Maybe we should impleemnted some sort
+    of swiss-knife tool that is able to parse inventories from columns and
+    perform various operations on them, aggregations, etc. using Beancount's
+    Inventory() class. This could be a powerful tool! Make it possible to parse
+    and create Inventory objects from cells.
+
+* Reporting to Single Currency
+
+  Another oft-requested feature is the ability to boil down all assets to a
+  single target currency, converting to cost, and then to the final currency.
+  The point is to show a single column of value which can be operated on.
+
+
+* To Be Categorized ----------------------------------------------------------------------------------------------------
+** Reporting Plugin Errors
 
   - Build a utility function to parse plugin configs using ast.literal_eval()
     and catch and produce a consistent error message when an invalid Python
@@ -2475,8 +2804,6 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Parse and save the line no for "plugin" directives in order to improve their
     error reporting.
-
-
 
 ** doctor / tools
 
@@ -2492,7 +2819,6 @@ http://furius.ca/beancount/doc/proposal-query
     parsed, to produce a file that is as close as possible to output. (bw3443
     asked for this in order to make modifications to his input and push that
     back out to a file, this could be useful.)
-
 
 ** Caching Improvements
 
@@ -2619,88 +2945,6 @@ http://furius.ca/beancount/doc/proposal-query
     flag, and that checks that they are balanced by themselves.
 
 
-** Web Interface Improvements (bean-web)
-
-  - (easy) Make b.w.web also 'app.options_map' instead of 'app.options'.
-
-  - Make the web interface not render postings anymore by default.
-
-  - web: Don't render the transaction detail anymore; instead, the full context
-    should come up in a tooltip that is computed on-demand. Rendering the basic
-    table should not have to render all the detail upfront, that is always
-    overkill.
-
-  - web: Don't render the full Inventory'es; instead, already render at cost and
-    provide their full detail either by clicking on the transaction, which
-    should render the full detail of an inventory (for debugging), or in a
-    tooltip.
-
-  - Highlight (e.g., in the color red) the postings to accounts that are in
-    contra value, e.g. a positive Income, or a negative Expenses posting.
-    (Maybe this is just something that lives in Fava actually)
-
-  - In the web interface, it would be nice to have a fancy client-side
-    JavaScript overlay here, that automatically appears after parsing if there
-    are errors and that automatically smoothly fades out. All errors should be
-    displayed in an overlay; proper error handling and display for the web
-    interface is not optional, it's important.
-
-  - Figure out how to disable googleapis fonts when on a very slow connection.
-    I'd like to enable the fonts, but if they cannot be fetched quickly, or
-    cached, this should be disabled.
-
-  - Implement a little plug-ins system that allows a user to insert a new tab in
-    bean-web, to insert some custom display.
-
-  - Instead of rendering inventories with the full contents in the journal,
-    render the cost, and place the full inventory in a tooltip!
-
-  - A table of price entries should be rendered under the price graph in the
-    web interface.
-
-  - The Trial Balance page could be a good place to put all the accounts on the
-    left and have two sets of columns: beginning of period -> end of period.
-
-  - In order to implement .txt output, you will need to decouple the web
-    rendering and the generation of its included data. This will be
-    great--ability to cut-and-paste any page into txt. format=txt, and we could
-    still have the links clickable. Everything else would just be txt. A bit of
-    a crazy idea, but it might work well and be simple. Maybe.
-
-  - Render tags on the HTML page
-
-  - Replace gviz charts by some other library that does not require you to be
-    online in order for it to work.
-
-  - Silence BrokenPipeError errors from bottle using wsgiref. You could use
-    CherryPy, which doesn't suffer from that, or just... fix it and silence
-    them.
-
-  - In balance/aggregate reports, render the balances for parent accounts too,
-    in lighter gray.
-
-*** Rendering Documents
-
-  - Serving CSV files from the Documents page should not done be via download,
-    but rather they should rendered directly. Same with text files. As much as
-    possible files should be served directly.
-
-  - The documents web page should render by-month + date, and by-account + date.
-
-*** Update Activity Page
-
-  - Update activity: Remove parent accounts with no child accounts.
-  - Update activity: This exhibits a bug in the table rendering, look for IVV,
-    see TODO(blais) in acctree.py
-
-** Improvements to Bake
-
-  - Move beancount.scripts.bake to beancount/web and adjust all the references
-    accordingly.
-
-  - bake: Make bake support curl if wget is not available. It should work with either,
-    to relax dependencies.
-
 ** Review the Design of Tags & Links
 
   - Consider removing the "links" attribute altogether and making that simply
@@ -2719,64 +2963,6 @@ http://furius.ca/beancount/doc/proposal-query
   - Make the web application use the regexps defined in common in its paths
     instead of inline ad-hoc approximations. There was never any need to do
     that.
-
-** New Plugin: check_closed_empty
-
-  - Create a plugin that automatically inserts a zero balance check right before
-    a Close directive, for all currencies that appeared in that account. This is
-    a pretty basic but important constraint I'd enable at all times on my
-    accounts.
-
-  - Closing an account with a non-zero balance should trigger an error! Right
-    now it does not. This is important.
-
-** New Report: overview-stats
-
-  - Add a simple overview 'stats' report with output like this:
-
-      Files these postings came from:
-        ...
-
-      Unique payees:            2681
-      Unique accounts:           151
-
-      Number of postings:       9026 (4.8 per day)
-      Uncleared postings:        126
-
-      Days since last post:     -206
-      Posts in last 7 days:       30
-      Posts in last 30 days:      52
-      Posts seen this month:       8
-
-** New Plugin: unverified
-
-  - Idea! Allow the selection or reporting of all the postings since their
-    balance check in each account. These postings can be called "unverified"
-    and it should be possible to report just those. Maybe we can restrict
-    further to the list of those without a '*' flag, or maybe just those with a
-    '!' flag. "Show me all that's unverified right now."
-
-    Can this be accomplished with the shell? I suppose a new plugin could be
-    created to flag unverified entries with meta-data and then filter on that.
-    That's probably the best way to do this.
-
-
-** New Plugin: No Zero Amounts
-
-  - Move the check for zero units ("Amount is zero" from the parser) to a
-    plugin, and make this selectively removable.
-** Super-Plugins: Pedantic & Auto
-
-  - (pedantic) Create a new plugin-of-plugins which enables all the possible
-    constraining other plugins in order to make Beancount as tight as possible
-    by default. Making the hardcore validation into a plugin might be a good way
-    to provide a strict mode. You could build a "beancount.plugins.pedantic"
-    plugin-of-plugins.
-
-  - (auto) Create a new plugin-of-plugins which enables all the auto-declaration
-    plugins in order to make crafting little test files as convenient as
-    possible. I do this all the time, I need this actually. You could build a
-    "beancount.plugins.auto" plugin-of-plugins.
 
 ** Implement Table Joins
 
@@ -2823,6 +3009,24 @@ http://furius.ca/beancount/doc/proposal-query
     still allowing the user to switch to "Suggestion" mode if they want to. See
     project volteface to complete this, this does not have to be a part of
     Beancount, this should be its own presentation project.
+
+** Reports: overview-stats
+
+  - Add a simple overview 'stats' report with output like this:
+
+      Files these postings came from:
+        ...
+
+      Unique payees:            2681
+      Unique accounts:           151
+
+      Number of postings:       9026 (4.8 per day)
+      Uncleared postings:        126
+
+      Days since last post:     -206
+      Posts in last 7 days:       30
+      Posts in last 30 days:      52
+      Posts seen this month:       8
 
 ** Reports: Rendering Journals
 
@@ -2876,6 +3080,13 @@ http://furius.ca/beancount/doc/proposal-query
     this to reproduce/replace the 'cash' report. Use the same rule from
     bean-report.
 
+** Report: XML
+
+  - Output to a structured XML format, some people are finding that useful to
+    build other visualizations. In order to test this completely, do a
+    round-trip test.  The code should live in beancount.parser, parallel to the
+    existing code there.
+
 ** Padding lots held-at-cost
 
   - (pad) Review the possibility of padding units held at cost:
@@ -2910,50 +3121,12 @@ http://furius.ca/beancount/doc/proposal-query
         Assets:US:Broker:GOOGL      120.00  {1212.5100 * 0.4992 USD}
         Assets:US:Broker:GOOG       120.00  {1212.5100 * 0.5008 USD}
 
-** Unrealized gains
-
-  - Unrealized gains should not be added if the gain is zero.
-
-  - There's a fundamental question about which date to be used for pricing
-    entries. This really would depend on the view. If this is a period view, the
-    date of the last entry is most appropriate. If it is any other kind of view,
-    the latest price is best. All the reports should be adjusted for this.
-
 ** New Report: Events
 
   - Build a 'events' report that will print out the current value of all events.
 
   - Create a new report type: "days" that counts the days of any event in the
     filtered log.
-
-** New Plugin: Multi-Pad
-
-  - New plugin type: a kind of spreaded Pad directive, that creates multiple
-    pads at regular intervals. This is to deal with smooth cash distributions or
-    work meals assignment. You should be able to specify the frequency and
-    have it automatically insert a number of entries to spread the expense
-    evenly. 'evenpad', 'multipad', 'distribution'? This should most definitely
-    be a plugin.
-
-** New Plugin: Match-Pending
-
-  - Implement beancount.plugins.tag_pending as a general feature of links...
-    this ought to be built-in by default, this is a great idea.
-
-** New Plugin: Close Empty
-
-  - Add a validation check that, when closing an account, its balance is
-    empty/zero. If should automatically insert a zero balance check in all of
-    the currencies this account has seen.
-
-  - This should be a part of the list of pedantic plugins.
-
-** New Plugin: Balance Constraint
-
-  - Idea: You could add a further constraint property to an account name: that
-    the amounts may never be allowed to balance to a particular sign. This
-    could be useful to avoid data entry mistakes. You could even write a doc
-    just focused on all features designed to avoid data entry mistakes.
 
 ** Improvements to Emacs Support
 
@@ -3050,76 +3223,23 @@ http://furius.ca/beancount/doc/proposal-query
   - Produce example transactions for each of the cases provided by Filippo's
     sample transactions.
 
-** Misc (Uncategorized) - This section ought to go at the end of this doc in the future
 
+** Tools: Formatting
+
+  - BUG: There is a bug in bean-format; on
+    /home/blais/sharing-with-roommate/liabilities-account-solution.beancount, it
+    fails with an assertion. I highly suspect that it's because of postings like this:
+      Expenses:Electricity             45.34/2 USD
+      Liabilities:Alice                45.34/2 USD
+
 * Merge TODO file entries here
 * Merge Email Starred entries
 * Merge all Open Tickets here
-* Performance
+* Merge all Google Keep entries as well
+* New Plugins
 
-  - (validation/performance) Optimize the performance of validations and bring
-    all the HARDCORE_VALIDATIONS in by default.
-
-  - Maybe the builder should have a 'filename' state that only gets changed here
-    and there instead of getting that fileloc argument passed in every time on
-    every rule. Maybe we just always get the fileloc from the parser.c as in
-    NUMBER. I think it might make the parser more efficient too... try it out,
-    do timings, see how much it improves parsing performance.
-
-  - See if you replace BUILD()'s PyObject_CallMethod to this how much faster it
-    gets: "Note that if you only pass PyObject * args, PyObject_CallMethodObjArgs() is a
-    faster alternative."
-    https://docs.python.org/3/c-api/object.html
-
-  - (performance) Profile the web pages, if account_link() is high, provide an
-    explicit cache for each unique view. (We had to remove this when we
-    simplified the function using build_url for adding tests.)
-
-  - (performance) Implement the stable hashing function in C and reinstall the
-    validate_hash test.
-
-  - (performance) Implement inventories in C and reinstall the
-    validate_check_balances test.
-
-  - (performance) Don't pass in the FILE_LINE_ARGS on function calls, these
-    should be part of the context of the parser, should be gettable only on
-    demand.
-
-  - Can I use Py_RETURN_NONE in order to incref and assign, in the lexer,
-    instead of doing it in two steps?
-
-  - Optimize the main update() routine that is called in display_context.
-
-* Plugins
-
-  - Create a plugin that allows you to replace the date with some of the
-    metadata fields, e.g. to create alternative date histories.
-
-      "Note that if you _really_ badly wanted alternative history, you could you could
-      easily enter alternative dates as metadata (Beancount will recognize and parse
-      a datetime.date type as a value for metadata) and you coudl write _very_ simple
-      plugin that converts all the transactions to use the alternative date where
-      present in the metadata (or otherwise leave the date as is). You could even
-      define yourself multiple different sets of alternative dates by using different
-      metadata fields... you can go crazy if you like and create multiple versions of
-      history that way. But that would be segregated to a plugin so I'm comfortable
-      with it, do whatever you like in plugins, they're perfect for experimentation."
-
-  - Create a verification plugin that verifies that the balance of an account
-    does not go under some negative threshold below/above zero. This way you
-    could check that account balances are of the expected size. (The plugin
-    should accept transient negative balances within the day though, as those
-    are order-dependent.)
-
-  - Create a verification plugin that checks that there is a single currency in
-    use per account. Check Open directives, also check actual usage.
-
-  - Create a verification plugin that checks that all uses commodities have a
-    corresponding commodity declaration. For those who like it airtight.
-
-  - Put all verification plugins, including nounused and noduplicates under
-    beancount.plugins.constraints.*.
-
+  I've had various ideas for writing new plugins, some make sense, some don't,
+  but in any case, these accumulate here.
 
   - Would it make sense for every plugin to provide a validation function? We
     could then move all the validation routines in their plugin file. I very
@@ -3131,16 +3251,7 @@ http://furius.ca/beancount/doc/proposal-query
     user-provided validation functions.
     'beancount.ops.documents' could benefit from this split.
 
-  - Idea for an additional check: a plugin that computes the weight using the "@
-    price" value on a posting held-at-cost, checked against the rest of postings
-    minus income (gains) accounts.
-
-  - Idea: a plugin that autopads all initial balance assertions! Do it for
-    demos, will be very useful for making demos easier, not having to be so
-    strict.
-
-  - Deal with wash sales... complete doc, call MSSB to figure out if/how they
-    adjust the cost basis of a future stock vesting event.
+** New Plugin: flagged_subset
 
   - Idea: Write two plugins...
 
@@ -3182,34 +3293,163 @@ http://furius.ca/beancount/doc/proposal-query
 
     ". This could be used to simulate balanced virtual postings.
 
-  - Generalize the scope of Document directives so that they don't just point to
-    filenames, but can hold references to arbitrary document ids.
-    * Rename the field from 'filename' to 'document'
-    * Make the verification of that field against a filename option, enabled by
-      a plugin.
-    * Notify bw3443 about this.
+** New Plugin: alt_date
+
+  - Create a plugin that allows you to replace the date with some of the
+    metadata fields, e.g. to create alternative date histories.
+
+      "Note that if you _really_ badly wanted alternative history, you could you could
+      easily enter alternative dates as metadata (Beancount will recognize and parse
+      a datetime.date type as a value for metadata) and you coudl write _very_ simple
+      plugin that converts all the transactions to use the alternative date where
+      present in the metadata (or otherwise leave the date as is). You could even
+      define yourself multiple different sets of alternative dates by using different
+      metadata fields... you can go crazy if you like and create multiple versions of
+      history that way. But that would be segregated to a plugin so I'm comfortable
+      with it, do whatever you like in plugins, they're perfect for experimentation."
+
+** New Plugin: check_closed_empty
+
+  - Create a plugin that automatically inserts a zero balance check right before
+    a Close directive, for all currencies that appeared in that account. This is
+    a pretty basic but important constraint I'd enable at all times on my
+    accounts.
+
+  - Closing an account with a non-zero balance should trigger an error! Right
+    now it does not. This is important.
+
+** New Plugin: unverified
+
+  - Idea! Allow the selection or reporting of all the postings since their
+    balance check in each account. These postings can be called "unverified"
+    and it should be possible to report just those. Maybe we can restrict
+    further to the list of those without a '*' flag, or maybe just those with a
+    '!' flag. "Show me all that's unverified right now."
+
+    Can this be accomplished with the shell? I suppose a new plugin could be
+    created to flag unverified entries with meta-data and then filter on that.
+    That's probably the best way to do this.
 
 
-* Fix Unrealized Gains
+** New Plugin: no_zero_amounts
 
-  - IMPORTANT: Unrealized gains for opened periods should show only gains since
-    the openings. In other words, unrealized gains should be realized
-    marked-to-market at the time of open.
+  - Move the check for zero units ("Amount is zero" from the parser) to a
+    plugin, and make this selectively removable.
 
-  - Unrealized gain when rendering for closed years does not appear.
-    Perhaps we should insert the unrealized gains during close operation.
+** New Plugin: no_unused_pad
 
-    Idea: close realized gains along with close(), so that they don't show up for
-    the latest year.
-
-  - Unrealized gains should be modified so that they replace the book value of
-    the positions that they adjust, and can be applied at multiple dates. Then,
-    the realization should automatically occur both at the beginning and end of
-    reporting periods.
+  - The validation check that pushes an error on unused pad directives should
+    be moved to a plugin, that should be optional. There is rationale for
+    allowing to keep unused pad directives. Don't be so strict, Martin.
 
 
+** New Plugin: init_pad
 
-* Payees & Subaccounts
+  - Idea: a plugin that autopads all initial balance assertions! Do it for
+    demos, will be very useful for making demos easier, not having to be so
+    strict.
+
+  - Write a plugin that automatically inserts a padding directive for accounts
+    with no open directive and with a balance check.
+
+** New Plugin: auto_remove
+
+  - Add a auto-remove-unused part of the auto_accounts plugin,
+    that automatically removes Open directives for unused accounts. This is
+    useful for demos and such.
+
+** New Plugin: monotonic
+
+  - Write a plugin that enables a check that all postings' amounts are of the
+    correctly allowed sign, e.g. Expenses should almost always be a positive
+    amount, Income a negative one, Assets can be both, also Liabilities. If an
+    amount is posted in the contra direction, this should trigger a warning,
+    unless the transaction is flag with a particular character, or some special
+    tag is present.
+
+
+** New Plugin: multi_pad
+
+  - New plugin type: a kind of spreaded Pad directive, that creates multiple
+    pads at regular intervals. This is to deal with smooth cash distributions or
+    work meals assignment. You should be able to specify the frequency and
+    have it automatically insert a number of entries to spread the expense
+    evenly. 'evenpad', 'multipad', 'distribution'? This should most definitely
+    be a plugin.
+
+** New Plugin: match_pending
+
+  - Implement beancount.plugins.tag_pending as a general feature of links...
+    this ought to be built-in by default, this is a great idea.
+
+** New Plugin: close_empty
+
+  - Add a validation check that, when closing an account, its balance is
+    empty/zero. If should automatically insert a zero balance check in all of
+    the currencies this account has seen.
+
+  - This should be a part of the list of pedantic plugins.
+
+** New Plugin: balance_constraint
+
+  - Idea: You could add a further constraint property to an account name: that
+    the amounts may never be allowed to balance to a particular sign. This
+    could be useful to avoid data entry mistakes. You could even write a doc
+    just focused on all features designed to avoid data entry mistakes.
+
+  - Create a verification plugin that verifies that the balance of an account
+    does not go under some negative threshold below/above zero. This way you
+    could check that account balances are of the expected size. (The plugin
+    should accept transient negative balances within the day though, as those
+    are order-dependent.)
+
+** New Plugin: tip_calculator
+
+  - Write another example plugin that splits "Expenses:Restaurant" legs into
+    two two postings: "Expenses:Restaurant x 83%" and "Expenses:Tips x 17%".
+
+** New Plugin: gifi_reporting
+
+  - You could write a script to automatically fill this form:
+    http://www.cra-arc.gc.ca/E/pub/tg/rc4088/rc4088-12e.pdf
+
+      "With Beancount, one thing that would be doable _outside_ of Beancount, as
+    a separate script, is to associate a set of accounts to these GIFI codes and
+    automatically generate the forms."
+
+** Super-Plugins: Pedantic & Auto
+
+  There are two groups of plugins which I use quite often, and would benefit
+  from it being possible to enable all at the same time: "auto everything" and
+  "super pedantic." Ideally the list of actual plugins being run would be
+  expanded in the loader. I think we ought to just make the loader support
+  modules in its __plugins__ attribute, and it would insert them this way in
+  options_map, and run them individually, or maybe use another module attribute,
+  e.g. __plugins_delegate__ or whatever..
+
+  - (pedantic) Create a new plugin-of-plugins which enables all the possible
+    constraining other plugins in order to make Beancount as tight as possible
+    by default. Making the hardcore validation into a plugin might be a good way
+    to provide a strict mode. You could build a "beancount.plugins.pedantic"
+    plugin-of-plugins.
+
+  - (auto) Create a new plugin-of-plugins which enables all the auto-declaration
+    plugins in order to make crafting little test files as convenient as
+    possible. I do this all the time, I need this actually. You could build a
+    "beancount.plugins.auto" plugin-of-plugins.
+
+  - Put all verification plugins, including nounused and noduplicates under
+    beancount.plugins.constraints.*.
+
+* Payees as Subaccounts
+
+  Payees whose transactions always post to the same expense accounts may be
+  viewed as sub-accounts of those accounts, in some sense. I've been toying with
+  the idea of taking advantage of this in various ways. For example, one could
+  break down the balance of an account by payee, or conversely, use the leaf
+  account name as the payee itself (and remove it). I'm not sure if this useful.
+  This would also require some clean payee names. This section contains some
+  ideas about that.
 
   - Idea: Allow sub-account names to include a special character, e.g., '#',
     (only one) that would indicate to the reporting facilities that, by default,
@@ -3237,9 +3477,6 @@ http://furius.ca/beancount/doc/proposal-query
   - Idea: in the query language, provide a special Account:Payee field, in
     order to play with the notion of payee-as-subacccount often discussed.
 
-
-** Payee Elision / Auto-Account Leaf Name
-
   - About the discrepancy between the concept of "Payee" and a superfluous lead
     account, e.g. Internet:TimeWarner, which typically contains only
     transactions from that payee: maybe we can elide the account name if it
@@ -3256,7 +3493,6 @@ http://furius.ca/beancount/doc/proposal-query
     subaccount? I've come to realize that for Payees that only ever touch a
     single account, the line is really fuzzy there. I've been entertaining the
     idea of automatically creating subaccounts for payees like that.
-
 
 * Core
 ** General
@@ -3821,7 +4057,6 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 
     * Make sure the performance does not degrade as a result of doing this.
 
-
 ** Options
 
   - FIXME: We need to parse the options using the same argparse parser....
@@ -3842,8 +4077,6 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
   - Add 1/rate syntax for prices (and anything... really, why not).
     Convert at parsing time.
 
-
-
 *** Sensible Syntax for Lots
 
   - Consider making the lot syntax like this:
@@ -3855,25 +4088,6 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
        -4 HOOL {790.83 USD}
 
     It's actually a lot more accurate to what's going on...
-
-** Performance
-
-  - Implement "D" in C, it's worth it. This should make a substantial difference.
-
-  - Test using the empty case of list parsing to create the initial empty lists
-    instead of the conditional in Parser.handle_list() and measure, to see if
-    there is a significant difference in parsing performance.
-
-  - Parser performance: try not calling back to builder for simple types that
-    just return their value; measure the difference, it may be worth it, and we
-    wouldn't lose much of flexibility, especially for the lexer types, which are
-    aplenty.
-
-  - Write the builder object in C... it won't change very much anymore, and
-    that's probably simple enough.
-
-  - Check the performance of D(). I suspect improving this routine
-    could have a dramatic effect on performance.
 
 ** Testing
 
@@ -4058,30 +4272,6 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
         ticker: "CRA"
         quote: USD
 
-
-** Wash Sales
-
-  I wrote a script to wash losses for entire lots. This still needs more work:
-  ideally, one should be able to insert an arbitrary cost basis adjustment for
-  each lot. Do this, and integrate with the wash-sales-tracker implemented by
-  bbreslauer.
-
-  - It should be possible to produce input for the wash sales calculation, to
-    then insert metadata or some other set of postings on each lot, and to
-    produce output suitable to be printed and sent to the IRS>
-
-  - There is already a plugin which allows the user to wash away the P/L of
-    entire lots under experiments/washsales. Enhance that to support arbitrary
-    adjustments and move that into 'beancount.plugins'.
-
-
-** Strict Unused Pad Directives
-
-  - The validation check that pushes an error on unused pad directives should
-    be moved to a plugin, that should be optional. There is rationale for
-    allowing to keep unused pad directives. Don't be so strict, Martin.
-
-
 ** Capital Gain Without Cost
 
   - Implement the proposal for putting the capital gain in the cost as a plugin
@@ -4092,7 +4282,6 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
     You could automatically look for the right amounts by looking at the signs.
     I think you could automate a lot of it.
 
-
 ** Auto-Link Booking Transactions
 
   - Automatically create a link between transactions that book each other.
@@ -4102,41 +4291,6 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 
     This will be a great debugging tool as well... a very powerful idea that
     can be implemented entirely in a plug-in.
-
-
-** Unrealized Gain
-
-  - Find a way to pass in a plug-specific option via the file.
-
-  - Unrealized capital gains could be inserted automatically into special
-    sub-accounts, based on the current price and the cost-basis of particular
-    accounts. This could be inserted automatically! e.g.
-
-        DATE check Assets:US:Ameritrade:AAPL       10 AAPL {200 USD}
-
-        DATE price AAPL  210 USD
-
-      Assets:US:Ameritrade:AAPL                    2000 USD
-      Assets:US:Ameritrade:AAPL:Gains               100 USD
-
-    The "Gains" subaccount could be inserted automatically if the price differs
-    from the cost basis... this would be a clever way to represent this! We
-    could even do this by inserting a transaction automatically with an
-    offsetting account... actually this would be the RIGHT way to do this!
-
-      We need an option to designate which subaccount leaf to create all
-      the new transactions for:
-
-        %option account_unrealized  "Unrealized"
-
-        2013-05-23 A "Booking unrealized gains for AAPL"
-          Assets:US:Ameritrade:AAPL:Unrealized              230.45 USD
-          Income:Unrealized                                -230.45 USD
-
-      By doing this, the reporting does not have anything to do... it can choose
-      to report positions at cost or in held units, and whether the gains are
-      included or not entirely depends on whether these transactions have been
-      inserted in or not.
 
 
 ** Strict Average Cost Inventory Booking Checker
@@ -4154,13 +4308,6 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
    This is, of cource, to be implemented only after implementing support for
    the average cost inventory booking method.
 
-
-** Tip Calculator
-
-  - Write another example plugin that splits "Expenses:Restaurant" legs into
-    two two postings: "Expenses:Restaurant x 83%" and "Expenses:Tips x 17%".
-
-
 ** Vacation Cap Date
 
   - Make an plugin that computes the precise date at which my vacation will cap
@@ -4174,32 +4321,6 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
   - Look at this syntax for an example of a recurring transaction specification:
     https://www.roaringpenguin.com/products/remind
     (Sumitted by user comment.)
-
-
-** Auto-Remove, Auto-Pad
-
-  - Add a auto-remove-unused part of the auto_accounts plugin,
-    that automatically removes Open directives for unused accounts. This is
-    useful for demos and such.
-
-  - Write a plugin that automatically inserts a padding directive for accounts
-    with no open directive and with a balance check.
-
-
-** Strict Signs Checker
-
-  - Write a plugin that enables a check that all postings' amounts are of the
-    correctly allowed sign, e.g. Expenses should almost always be a positive
-    amount, Income a negative one, Assets can be both, also Liabilities. If an
-    amount is posted in the contra direction, this should trigger a warning,
-    unless the transaction is flag with a particular character, or some special
-    tag is present.
-
-
-** FBAR
-
-  - Automatically compute the maximum account values of foreign accounts for
-    the FBAR filing.
 
 
 ** After-Tax Balance Sheet
@@ -4470,7 +4591,6 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
        ;; Check that the balance of this account on 2013-12-31 is >= 1000 USD
        2013-12-31 goal  Assets:Savings  >= 1000 USD
 
-
 ** Trades
 
   - You should be able to report on all booked trades during a period,
@@ -4491,52 +4611,18 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 
 ** Error reporting
 
-  - We really need to list all the '!' entries somewhere; they should be
-    annoying.
+  - We really need to list all the entries markes '!' somewhere; they should be
+    more annoying to the user.
 
   - In the balance sheet or trial balance, mark accounts that have errors in
     red, or add a little red start next to them.
 
   - Implement basic error reporting page from the list of errors.
 
-** Debits and Credits
-
-  - The new balance sheets should be able to invert the numbers (and then they
-    should get rendered differently). Basically, every number shown should be
-    either in signed or cr/dr format. We should be able to switch between the
-    two at render time. This should work across all number-rendering routines
-    everywhere--do this centrally.
-
-  - In the balance sheet and income statement, we need to render the amounts
-    inverted (and in a slightly different style).
-
 ** Links
-
-  - Serve links on: /link/LINK, this needs to be implemented; render a nice
-    "link" href on the description somehow, use a fancy unicode char (no
-    graphics).
 
   - (web) Render links to the right of descriptions, and the link href link
     should actually render a page of the related linked entries.
-
-** Single-View Server
-
-  - Idea: for condo & baking files into a zip file: allow serving only one
-    ledger realization.
-
-    * One option is to use the same base/root straing as for the web URL:
-
-         http://localhost:8080/byyear/2013/...
-
-      serve_one_ledger(getledger('byyear/2013'), port=8080)
-      --realization='byyear/2013'
-
-    This would serve only that realization, and not others. This way I could
-    bake only this one in a zip file. This would be useful.
-
-** Code Org
-
-  - (web) Move table rendering functions into their own files, smaller files.
 
 ** Aesthetics
 
@@ -4546,7 +4632,6 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
   - Render "as of YYYY-MM-DD" under the title for Balance Sheet, and "from
     YYYY-MM-DD to YYYY-MM-DD" under the title for Income Statement
 
-
   - Answer to favicon.ico request.
 
   - Add an option to render the entries table upwards, not just downwards.
@@ -4554,7 +4639,6 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
   - Use that beautiful new font (Roboto) from Tactile in the new rendering.
     Totally worth it. Use the nice Lucida-like font for numbers, like in
     TurboTax.
-
 
 *** JavaScript / Client-Side Interaction
 
@@ -4576,16 +4660,7 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
     Put the last updated date in the balance sheet or perhaps the trial balance
     page. Should be easy; we don't need a dedicated page for this.
 
-  - Do we need a dedicated page for listing all documents? This page could
-    include documents without a date, could be rendered as a tree-table, with
-    the list of each document in the corresponding account. Maybe that's
-    overkill. DK.
-
   - Shove more information in the Trial Balance page, info about errors, documents, etc.
-
-** Multi-Year
-
-  - A multi-year report is a global report.
 
 ** Source
 
@@ -4594,108 +4669,131 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 
 ** Conversions
 
+
+* Web Interface Improvements (bean-web)
+
+  - (easy) Make b.w.web also 'app.options_map' instead of 'app.options'.
+
+  - Make the web interface not render postings anymore by default.
+
+  - web: Don't render the transaction detail anymore; instead, the full context
+    should come up in a tooltip that is computed on-demand. Rendering the basic
+    table should not have to render all the detail upfront, that is always
+    overkill.
+
+  - web: Don't render the full Inventory'es; instead, already render at cost and
+    provide their full detail either by clicking on the transaction, which
+    should render the full detail of an inventory (for debugging), or in a
+    tooltip.
+
+  - Highlight (e.g., in the color red) the postings to accounts that are in
+    contra value, e.g. a positive Income, or a negative Expenses posting.
+    (Maybe this is just something that lives in Fava actually)
+
+  - In the web interface, it would be nice to have a fancy client-side
+    JavaScript overlay here, that automatically appears after parsing if there
+    are errors and that automatically smoothly fades out. All errors should be
+    displayed in an overlay; proper error handling and display for the web
+    interface is not optional, it's important.
+
+  - Figure out how to disable googleapis fonts when on a very slow connection.
+    I'd like to enable the fonts, but if they cannot be fetched quickly, or
+    cached, this should be disabled.
+
+  - Implement a little plug-ins system that allows a user to insert a new tab in
+    bean-web, to insert some custom display.
+
+  - Instead of rendering inventories with the full contents in the journal,
+    render the cost, and place the full inventory in a tooltip!
+
+  - A table of price entries should be rendered under the price graph in the
+    web interface.
+
+  - The Trial Balance page could be a good place to put all the accounts on the
+    left and have two sets of columns: beginning of period -> end of period.
+
+  - In order to implement .txt output, you will need to decouple the web
+    rendering and the generation of its included data. This will be
+    great--ability to cut-and-paste any page into txt. format=txt, and we could
+    still have the links clickable. Everything else would just be txt. A bit of
+    a crazy idea, but it might work well and be simple. Maybe.
+
+  - Render tags on the HTML page
+
+  - Replace gviz charts by some other library that does not require you to be
+    online in order for it to work.
+
+  - Silence BrokenPipeError errors from bottle using wsgiref. You could use
+    CherryPy, which doesn't suffer from that, or just... fix it and silence
+    them.
+
+  - In balance/aggregate reports, render the balances for parent accounts too,
+    in lighter gray.
+
   - Render the Conversions amount at the bottom of the Conversions page...
 
-** Bake & Scrape
+** Visualizations
+
+  - Move the TreeMaps experimental script for Expenses and Assets subtrees into
+    the bean-web codebase:
+    http://bost.ocks.org/mike/treemap/
+    (Or maybe that would just be left for fava.)
+
+** Rendering Documents
+
+  - Serving CSV files from the Documents page should not done be via download,
+    but rather they should rendered directly. Same with text files. As much as
+    possible files should be served directly.
+
+  - The documents web page should render by-month + date, and by-account + date.
+
+** Update Activity Page
+
+  - Update activity: Remove parent accounts with no child accounts.
+  - Update activity: This exhibits a bug in the table rendering, look for IVV,
+    see TODO(blais) in acctree.py
+
+** Bake Improvements
+
+  - Move beancount.scripts.bake to beancount/web and adjust all the references
+    accordingly.
+
+  - bake: Make bake support curl if wget is not available. It should work with either,
+    to relax dependencies.
 
   - Make the web scraper run in multiple threads... it's quite a bit too slow as
     it is. I'm sure we can make it scrape in parallel using multiprocessing and
     a work queue (this should be a fun little project and would make baking to
     an archive a lot faster in many cases).
 
-
-* Export
-** XML
-
-  - Output to a structured XML format, some people are finding that useful to
-    build other visualizations. In order to test this completely, do a
-    round-trip test.  The code should live in beancount.parser, parallel to the
-    existing code there.
-
-** Ledger
-
-  - Export the compatible subset to Ledger format, so you can compare the
-    reports. This should be done from a tool called "bean-convert".
-
-** Visualizations
-*** TreeMaps
-
-  - You just *have* to generate TreeMaps of the Expenses and Assets subtrees:
-    http://bost.ocks.org/mike/treemap/
-
-* Documentation
-** Challenges
-
-  - Document those below which I'm already able to do, and those which require
-    new features to be able to be done, move them into a separate appendix,
-    with explanations on how to do it.
-
-**** Cash vs. Accrual Accounting
-
-Of course a real accountant would just do this: (accrual based accounting)
-
-2014-05-19 * "Booking tithe”
- Expenses:Tithe     300 USD
- Liabilities:Tithe     -300 USD
-
-2014-05-20 * “Paying tithe”
-  Liabilities:Tithe      300 USD
-  Assets:Checking  -300 USD
-
-But this records the expense on a different day than when you actually paid it.
-That would be a problem if, for example, you live in the US and wanted to claim
-a tax deduction for the tithe, in which case you must claim the deduction for
-the year the tithe was actually paid (cash based accounting).
-
-This is indeed the right solution to this! Accumulate a liability as you go,
-and resolve it with real transactions later on.
-
-This case keeps coming back again and again, of wanting to do accrual
-accounting but wanting to do cash declarations. I think we need to have a long
-and separate discussion about cash vs accrual accounting and for sure we can
-come up with a creative solution that solves this problem.
-
-
-
-**** Can I generate a nice year-on-year summary of income and expenses?
-
-  - Including RSP contribs, like my big spreadsheet that I crafted manually? Can
-    I do that? That would be awesome!
-
-**** Maximum Balance
+* Small Projects & Challenge Ideas
+** Maximum Balance
 
   - Can I compute the maximum value of each account at the end of every year
     (for foreign assets decl.) This would be useful for FBAR / FATCA
     declarations.
 
-**** Complete Return (IRR) on Condo
+  - Automatically compute the maximum account values of foreign accounts for
+    the FBAR filing.
 
-  - Challenge: Can I compute IRR return on my condo accurately?
-    TODO: Add benefits received as an Income, as transactions.
-    You should be able to compute the IRR of any Ledger!
+** Property Lifetime Return
 
-**** Taxation Rate
+  - Challenge: Can I compute IRR return on my condo purchase and sale,
+    accurately accounting for all the little expenses and cash flows along the
+    way? TODO: Add benefits received as an Income, as transactions.
+
+** Taxation Rate
 
   - Challenge: Can I automatically compute my taxation rate for every year?
 
-**** List of Assets
-
-  - Challenge: Can I obtain a list of my assets at any time?
-
-**** Make a report of currency exposure
+** Currency Exposure Report
 
   - For a particular balance sheet, report the total currency exposure of the
     ledger. This should be a very simple report, probably in the form of a pie
     chart.  Maybe this pie chart should be located in the capital report
     (possibly makes sense).
 
-**** Capital Gains
-
-  - Capital gains should not count commissions nor on the buy nor on the
-    sell side. How do we book them like this?  Can we count this somehow
-    automatically? Misc accounts? Not sure.
-
-**** Inflation Adjusted Balance Sheets and Charts
+** Inflation Adjusted Reporting
 
   - It would be AWESOME to look at a balance sheets from the past but
     inflation-adjusted for any date... Answer this question easily:
@@ -4705,249 +4803,14 @@ come up with a creative solution that solves this problem.
   - How would I produce an inflation adjusted version of some charts. Maybe all
     charts should have that option?
 
-**** Statement of Assets (for Will)
-
-  - In order to have someone else be able to take care of your business, you
-    should be able to produce a list of the accounts open at the end of the
-    period, with the account ids and balances. This should be printable and
-    storable, for someone else to take care of your things in case you die.
-
-
-**** Compare common costs using constant TMV
-
   - Look at average meal 10 years ago, average electricity, etc. things that
     should be equal, and correct for the time-value-of-money, compare prices
     today with prices then. Maybe come up with some kind of constant unit that
     I can convert everything to.
 
-**** GIFI Reporting
+* Misc Grab Bag of Ideas
 
-  - You could write a script to automatically fill this form:
-    http://www.cra-arc.gc.ca/E/pub/tg/rc4088/rc4088-12e.pdf
-
-      "With Beancount, one thing that would be doable _outside_ of Beancount, as
-    a separate script, is to associate a set of accounts to these GIFI codes and
-    automatically generate the forms."
-
-
-**** Automatically figure out unneeded cash amount
-
-  - IDEA: Using inference and a reasonable buffer amount, can I automatically
-    figure out how much extra cash from checking can safely be transferred out
-    for investing? i.e. sum up upcoming expenses (rent + cc) and expected
-    salary payments, and calculate it automatically. Not obvious, but why not?
-
-
-** Change List
-
-- Implemented in Python 3, from scratch.
-
-- Internal data structures are more functional, immutable, allowing you to more
-  easily create scripts that use the in-memory data. Overall, the new code is
-  way simpler and much easier to understand because of this. It's actually
-  become dead simple.
-
-- New, simplified, and more consistent (and rigid) syntax will make it possible
-  to add more features in the future, and to have parsers in other languages too
-  (e.g. Go).
-
-- Booking trades with capital gain tracking should now work.
-
-- The new parser is written in C, so it is much much faster, and future changes
-  will be easier
-
-- The new web server fixes annoying rendering issues.
-
-  * Balance sheet amounts can now reported in terms of book values.
-  * Debit accounts can now be rendered with positive numbers (color-coded).
-  * The internal data structure changes are much more general, and allow, for
-    instance, creating a balance sheet at any point in time. In particular, you
-    can have a balance sheet at the beginning and end of an exercise.
-
-- Some internal design flaws were fixed, like checks on filtered ledgers showing
-  up from incorrect periods.
-
-- Various outputs to text, csv, and xls are now supported for easier sharing.
-
-- The input file is monitored by the server, and can be automatically reloaded.
-  This makes it easier to just start the web server, then edit the file to
-  update what you need.
-
-- There is no need to specify a filter period anymore; the interface is able to
-  realize any required periods, and the GUI provides access to most common
-  cross-sections (all, by year, by tag, by payee, transactions with bookings,
-  etc.). You should be able to just specify the GUI.
-
-- Client-side javascript has been added for a neater, more compact rendering of
-  journals.
-
-- New scripts to extract a list of current positions at any time, and global
-  summaries over many years or months.
-
-
-** Presentation Material
-
-  - Use impress.js to built a visualization of the DE method
-
-  - Record a video, that's an easy way to explain how this works.
-
-  - IDEA!!!  Use drawings a-la-ThinkBig or whatever it is. This will be the
-    perfect medium for this. Mix it with video. Start writing a detailed script.
-
-  - Script 1: Begin with a USB key in hand. "On this 8 GB USB key, I have all of
-    8 years history of financial transactions in my life. Every single price
-    paid that went recorded into an account it these."
-
-  - Script 2: Motivate by speaking of the results, ask "Wouldn't it be great if
-    a single system could do all of that?" Explain that the task of inputting
-    all the data in a single system is a lot less work than producing all the
-    different reports IF you have a unified system. Beancount!
-
-
-** Padding documentation from email
-
-  - Put this in the docs to explain "pad"
-
-     > > Ok, restarted example, let's say you begin
-     > > accounting in dec 2013, you'll have this:
-     > >
-     > >   2010-01-01 open
-     > >   2010-01-01 pad
-     > >   2013-12-04 balance
-     > >   2013-12-08 * ...
-     > >   2013-12-11 * ...
-     > >   2013-12-17 * ...
-     > >
-     > > eventually, moving forward, you'll get to 2014:
-     > >
-     > >   2010-01-01 open
-     > >   2010-01-01 pad
-     > >   2013-12-04 balance
-     > >   2013-12-08 * ...
-     > >   2013-12-11 * ...
-     > >   2013-12-17 * ...
-     > >   2013-12-22 * ...
-     > >   2013-12-29 * ...
-     > >   2014-01-02 * ...
-     > >   2014-12-04 balance
-     > >   2014-12-06 * ...
-     > >
-     > > Allright, now you decide you like this, and you
-     > > want to enter statements before you started.
-     > > You find your paper statement for november, and
-     > > fill in:
-     > >
-     > >   2010-01-01 open
-     > >   2010-01-01 pad
-     > >   ; here you insert
-     > >   2013-11-04 balance
-     > >   2013-11-08 * ...
-     > >   2013-11-18 * ...
-     > >   ...
-     > >   ; this is what was there previously
-     > >   2013-12-04 balance
-     > >   2013-12-08 * ...
-     > >   2013-12-11 * ...
-     > >   2013-12-17 * ...
-     > >   2013-12-22 * ...
-     > >   2013-12-29 * ...
-     > >   2014-01-02 * ...
-     > >   2014-12-04 balance
-     > >   2014-12-06 * ...
-     > >
-     > > Great. Now, notice how the balance for
-     > > 2013-11-04 is probably different than that of
-     > > 2013-12-04. If instead of a pad directive you
-     > > had added a manual adjustment, you'd have to
-     > > change it here. This is the beauty of the pad
-     > > directive: it automatically does it for you.
-     > >
-     > > Now, let's keep going backward in time. You dig
-     > > around your records, you find September's
-     > > statement, but you cannot find the statement
-     > > for October, maybe it's lost, or somewhere
-     > > else. Fine! You insert a pad directive to
-     > > account for those missing transactions:
-     > >
-     > >   2010-01-01 open
-     > >   2010-01-01 pad
-     > >
-     > >   2013-09-04 balance
-     > >   2013-09-05 * ...
-     > >   ... september transactions
-     > >   2013-09-30 * ...
-     > >   2013-10-04 balance
-     > >
-     > >   ; padding for missing October statement,
-     > > where is my statement?
-     > >   2013-10-04 pad
-     > >   2013-11-04 balance
-     > >
-     > >   ... november transactions
-     > >   2013-11-08 * ...
-     > >   2013-11-18 * ...
-     > >   ...
-     > >   2013-12-04 balance
-     > >
-     > >   2013-12-08 * ...
-     > >   2013-12-11 * ...
-     > >   2013-12-17 * ...
-     > >   2013-12-22 * ...
-     > >   2013-12-29 * ...
-     > >   2014-01-02 * ...
-     > >   2014-12-04 balance
-     > >
-     > >   2014-12-06 * ...
-     > >
-     > > This is the full example.
-
-Improve this bit:
-
-    >   But the detailed explanation cannot be found. There's only one phrase: „Think
-    >   of the Equity account as something from the past that you had to give up in
-    >   order to obtain the beginning snapshot of the Assets + Liabilities balance.“
-    >
-    > Great comment. I'll improve this.
-
- More user comments:
-
-    >   After doing my research, I found about debits and credits, which in Beancount
-    >   you represent with positive numbers and negative numbers respectively. I
-    >   found that having a name for each group of accounts helps me to think of them
-    >   at the same time, e.g. Liabilities+Equity+Income as part of a common thing,
-    >   instead of having to research each of it independently.
-    >   In the documentation you start speaking about numbers, then about signs, then
-    >   about grouping the accounts. Maybe it's better to go top-down and start
-    >   saying that there are two types of account (usually +, usually -) and then
-    >   divide each group further.
-    >
-    > I will change that, thanks for the comment.
-
-** Contributor agreement
-
-  * See note at the bottom of: https://github.com/fourier/ztree
-
-      Since ztree is a part of GNU ELPA, it is copyrighted by the Free Software
-      Foundation, Inc.. Therefore in order to submit nontrivial changes (with total
-      amount of lines > 15), one needs to to grant the right to include your works in
-      GNU Emacs to the FSF.
-
-      For this you need to complete this form, and send it to assign@gnu.org. The FSF
-      will send you the assignment contract that both you and the FSF will sign.
-
-      For more information one can read here to understand why it is needed.
-
-      As soon as the paperwork is done one can contribute to ztree with bigger pull
-      requests. Note what pull requests without paperwork done will not be accepted,
-      so please notify the maintainer if everything is in place.
-
-  - Great example (from Camlistore project link):
-    https://cla.developers.google.com/about/google-individual
-
-* Tools: Formatting
-
-  - BUG: There is a bug in bean-format; on
-    /home/blais/sharing-with-roommate/liabilities-account-solution.beancount, it
-    fails with an assertion. I highly suspect that it's because of postings like this:
-      Expenses:Electricity             45.34/2 USD
-      Liabilities:Alice                45.34/2 USD
+  Here follows a grab bag of ideas. When I have a new idea coming to me, I don't
+  have time to think about where to put it, I just come here at the end and jot
+  it down. Every couple of years I clean this mess up and put it in the sections
+  above.
