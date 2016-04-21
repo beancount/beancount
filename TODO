@@ -2870,7 +2870,14 @@ http://furius.ca/beancount/doc/proposal-query
 
 
 
+  - IMPORTANT: We need to test the return values of the Inventory.add_amount()
+    method! Review and do this now.
 
+  - Make document directive accept links, so that explicit documents could be
+    associated with specific transactions.
+
+  - SQL: When not specified, ORDER BY should be set to be the same as GROUP BY.
+    This is a sensible choice.
 
 
 
