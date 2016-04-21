@@ -2270,6 +2270,57 @@ http://furius.ca/beancount/doc/proposal-query
     work for everyone.
     beancount/experiments/compensation/net-worth-over-time.py
 
+* Wash Sales
+
+  Right now [2016-04-20], there is an experimental plugin that's there to
+  remove the commissions from the P/L (experiemnts/washsales/commissions.py).
+  This is then used by two custom scripts
+  (experiemnts/washsales/list-wash-sales.py) which uses metadata from the
+  postings marked to be washed by the user, and all the "washing" takes place
+  somewhere in that script, not in Beancount. There is also another script
+  (experiemnts/washsales/list-lots.py) which is used to list the resulting
+  lots.
+
+  - You need to make the washing of the lots a part of regular Beancount, the
+    washing of the lots needs to occur within Beancount, not in
+    the list-wash-sales.
+
+    For example, this transaction:
+
+      2015-05-19 * "Sold some" ^c2fbec103d99
+        ref: 036
+        Assets:US:Broker:HOOL                       -X HOOL {538.6500 USD} @ 552.4460 USD
+        Assets:US:Broker:HOOL                       -X HOOL {577.5400 USD} @ 552.4460 USD
+          wash: TRUE
+        Expenses:Financial:Commissions           0.19 USD
+        Assets:US:Broker:Cash                   XXXX.XX USD
+        Income:US:Broker:HOOL:PnL
+
+    Should be converted to this one automatically:
+
+      2015-05-19 * "Sold some" ^c2fbec103d99
+        ref: 036
+        Assets:US:Broker:HOOL                       -X HOOL {538.6500 USD} @ 552.4460 USD
+        Assets:US:Broker:HOOL                       -X HOOL {577.5400 USD} @ 552.4460 USD
+          wash: TRUE
+        Expenses:Financial:Commissions           0.19 USD
+        Assets:US:Broker:Cash                   XXXX.XX USD
+        Income:US:Broker:HOOL:PnL
+        Income:US:Broker:HOOL:PnL              YYY.YY USD
+        Income:US:Broker:HOOL:Adjustments     -YYY.YY USD
+
+    The list-wash-sales script ought to be a simple gathering of the already
+    washed sales.
+
+  - Listing the lots in a particular account at a particular date should be
+    carried out not with a custom experiments/washsales/list-lots.py script, but
+    rather by writing a simple SQL query. This requires the 'booking' branch to
+    be completed, and the CSV output from bean-query to work as well. Do this.
+
+  - Enumerate the various cases for wash sales, write a nice document for them,
+    and write example cases for each, to be referenced from the document. Solve
+    this completely, using metadata and a plugin.
+
 * Priorities ------------------------------------------------------------------------------------------------------------------------
 * Grab Bag of Misc Ideas
 
@@ -2816,6 +2867,12 @@ http://furius.ca/beancount/doc/proposal-query
 
 ** Misc (Uncategorized) - This section ought to go at the end of this doc in the future
 
+
+
+
+
+
+
 
   - TEST CASE: When a label is provided on a lot, make sure that the label is
     unique throughout the entire file, not just on the inventory the lot is
