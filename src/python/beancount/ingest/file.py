@@ -40,7 +40,7 @@ def file_one_file(filename, importers, destination, idify=False, logfile=None):
     """
     # Create an object to cache all the conversions between the importers
     # and phases and what-not.
-    file = cache.FileMemo(filename)
+    file = cache.get_file(filename)
 
     # Get the account corresponding to the file.
     file_accounts = set()

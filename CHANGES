@@ -4,7 +4,7 @@
 Note: This file contains only changes in the 'default' branch.
 
 
-2016-04-07
+2016-??-??
 
   - In order to carry out some important tax work, I've added an experimental
     option to kludge in a feature that will be available by default when the
@@ -44,6 +44,67 @@ Note: This file contains only changes in the 'default' branch.
     changed: it used to be inconsistent, it now returns the PREVIOUS position
     that was modified, before it got modified. I had to change some of the few
     places which use this return value in order to fix this inconsistency.
+
+
+2016-04-18
+
+  - In bean-doctor context, all the accounts should appear in the
+    post-transaction balances, even if their balance is empty. This had been
+    fixed for the pre-transaction balances but I stumbled upon a case of
+    post-transaction balances not showing an empty account.
+
+
+2016-04-17
+
+  - Added support for the BEANCOUNT_LOAD_CACHE_FILENAME environment variable,
+    which can be set in order to overridde the location of the pickle cache.
+    This variable may contain the string "{filename}", and if it is present the
+    basename of the beancount file will be spliced in. This can be useful if,
+    for example, you are reading your Beancount input file from a read-only
+    filesystem and still want to use the cache by specifying an alternative
+    filename.
+
+  - Fixed a bug when reading from a read-only filesystem, the loader cache would
+    fail to be removed and raise an exception.
+
+  - Fixed an important bug in beancount.ingest whereby instances of
+    b.i.cache.FileMemo weren't being shared as widely as they could have been.
+    FileMemo instances now have to be created via b.i.cache.get_file() and
+    FileMemo is now a hidden class _FileMemo. See this discussion for more details:
+    https://groups.google.com/d/msg/beancount/b-ZqYqag7AU/N-AaGSZOAwAJ
+
+
+2016-04-10
+
+  - Create a new 'beancount.plugins.fix_payees' plugin that allows the user to
+    provide a set of rules to rewrite and clean up the names of the payees from
+    the Beancount file.
+
+    While it would be ideal to do this at import time, in practice there are a
+    lot of downloaded files' "memo" fields which get set as the payee
+    automatically. These "memos" aren't very clean and readable strings: they
+    sometimes contain numbers, partial city names, and other junk. In order to
+    produce clean reports where one might want to aggregate by payee, it's
+    useful to rewrite the payees to make them nice and clean. You can use this
+    plugin to do that.
+
+
+  - Made the Custom directive accept ACCOUNT tokens. You can now do something
+    like this:
+
+      2014-06-20 custom "budget" Assets:Account2 "balance < 200.00 USD"
+
+    Prior to this, the account name had to be represented as a string. (Users of
+    the burgeoning Custom directive not like this very much.)
+
+    Note that account names and regular strings are both output from the parser
+    as 'str' objects, so in order to make this possible, I had to change the
+    representation of the values to a pair of (value, dtype). Account names have
+    a 'dtype' of beancount.core.account.TYPE. (Eventually I will probably want
+    to make account strings represented with their own custom datatypes, but
+    that will require a fair amount of work on the codebase; this substitute is
+    fine for now, as there are no other places where such a disambiguation is
+    necessary.)
 
 
 2016-04-04

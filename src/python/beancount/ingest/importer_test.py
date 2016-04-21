@@ -10,7 +10,7 @@ class TestImporterProtocol(unittest.TestCase):
 
     def test_importer_methods(self):
         # Kind of a dumb test, but for consistency we just test everything.
-        memo = cache.FileMemo('/tmp/test')
+        memo = cache._FileMemo('/tmp/test')
         imp = importer.ImporterProtocol()
         self.assertIsInstance(imp.FLAG, str)
         self.assertFalse(imp.identify(memo))
