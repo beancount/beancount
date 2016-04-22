@@ -13,6 +13,7 @@ from beancount.core.inventory import from_string as I
 from beancount.utils.misc_utils import dictmap
 from beancount.core import inventory
 from beancount.core import position
+from beancount.core import amount
 from beancount.parser import parser
 from beancount.parser import printer
 from beancount.parser import booking_full
@@ -780,145 +781,264 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
         })
 
 
-class TestBooking(unittest.TestCase):
+class TestComputeCostNumber(unittest.TestCase):
+
+    def test_missing_per(self):
+        self.assertEqual(
+            MISSING,
+            booking_full.compute_cost(
+                position.CostSpec(MISSING, D('1'), 'USD', None, None, False),
+                amount.from_string('12 HOOL')))
+
+    def test_missing_total(self):
+        self.assertEqual(
+            MISSING,
+            booking_full.compute_cost(
+                position.CostSpec(D('1'), MISSING, 'USD', None, None, False),
+                amount.from_string('12 HOOL')))
+
+    def test_both_none(self):
+        self.assertEqual(
+            MISSING,
+            booking_full.compute_cost(
+                position.CostSpec(None, None, 'USD', None, None, False),
+                amount.from_string('12 HOOL')))
+
+    def test_total_only(self):
+        self.assertEqual(
+            position.Cost(D('4'), 'USD', None, None),
+            booking_full.compute_cost(
+                position.CostSpec(None, D('48'), 'USD', None, None, False),
+                amount.from_string('12 HOOL')))
+
+    def test_per_only(self):
+        self.assertEqual(
+            position.Cost(D('4'), 'USD', None, None),
+            booking_full.compute_cost(
+                position.CostSpec(D('4'), None, 'USD', None, None, False),
+                amount.from_string('12 HOOL')))
+
+    def test_both(self):
+        self.assertEqual(
+            position.Cost(D('3.5'), 'USD', None, None),
+            booking_full.compute_cost(
+                position.CostSpec(D('3'), D('6'), 'USD', None, None, False),
+                amount.from_string('12 HOOL')))
+
+
+class TestBookReductions(unittest.TestCase):
     "Tests the booking of inventory reductions."
 
     maxDiff = 8192
 
-    def book(self, entry, balances=None, exp_costs=None, debug=False):
-        if balances is None:
-            balances = {}
-        groups, errors = booking_full.categorize_by_currency(entry, balances)
-        self.assertFalse(errors)
-        posting_groups = booking_full.replace_currencies(entry.postings, groups)
-        for currency, postings in posting_groups.items():
-            new_postings, new_balances = booking_full.book_reductions(postings, balances)
-            if debug:
-                for posting in new_postings:
-                    print(posting)
-                print(new_balances)
+    @parser.parse_doc(allow_incomplete=True)
+    def test_augment_empty(self, entries, _, __):
+        """
+        2015-10-01 * "Regular currency, positive"
+          Assets:Account1          1 USD
+          Assets:Other
 
-            # Check the expected costs.
-            if exp_costs is not None:
-                for posting, exp_cost in zip(new_postings, exp_costs):
-                    self.assertEqual(posting.cost, exp_cost)
+        2015-10-01 * "Regular currency, negative"
+          Assets:Account2         -1 USD
+          Assets:Other
+        """
+        for entry in entries:
+            postings, errors = booking_full.book_reductions(entry, {})
+            self.assertFalse(errors)
+            self.assertEqual(len(postings), len(entry.postings))
+            self.assertEqual(None, postings[0].cost)
 
     @parser.parse_doc(allow_incomplete=True)
-    def test_augmentation_noop(self, entries, _, options_map):
+    def test_augment_empty_at_cost(self, entries, _, __):
         """
-        2015-10-01 *
-          Assets:Account          2 HOOL {100.00 USD}
-          Assets:Other     -1000.00 USD
+        2015-10-01 * "At cost, positive"
+          Assets:Account3          1 HOOL {100.00 USD}
+          Assets:Other
 
-        2015-10-02 *
-          Assets:Account          2 HOOL {USD}
-          Assets:Other     -1000.00 USD
+        2015-10-01 * "At cost, negative"
+          Assets:Account4         -1 HOOL {100.00 USD}
+          Assets:Other
         """
-        # Check that these augmenting legs aren't being touched.
-        for balances in {}, {'Assets:Account': inventory.from_string('10 HOOL {99.00 USD}')}:
-            self.book(entries[0], balances, [
-                position.CostSpec(D('100.00'), None, 'USD', None, None, False),
-                None])
-            self.book(entries[1], balances, [
-                position.CostSpec(MISSING, None, 'USD', None, None, False),
-                None])
+        for entry in entries:
+            postings, errors = booking_full.book_reductions(entry, {})
+            self.assertFalse(errors)
+            self.assertEqual(len(postings), len(entry.postings))
+            self.assertEqual(position.Cost(D('100.00'), 'USD', None, None),
+                             postings[0].cost)
 
     @parser.parse_doc(allow_incomplete=True)
-    def test_reduction(self, entries, _, options_map):
+    def test_augment_empty_incomplete_cost(self, entries, _, __):
         """
-        2015-10-01 *
-          Assets:Account         -2 HOOL {100.00 USD}
-          Assets:Other      1000.00 USD
+        2015-10-01 * "At cost, incomplete"
+          Assets:Account3          1 HOOL {USD}
+          Assets:Other
+
+        2015-10-01 * "At cost, no currency"
+          Assets:Account3          1 HOOL {}
+          Assets:Other
         """
-        balances = {'Assets:Account':
-                    inventory.from_string('5 HOOL {100.00 USD, 2015-01-01}')}
-        # FIXME: Bring this back in.
-        # self.book(entries[0], balances, [
-        #     position.Cost(D('100.00'), 'USD', datetime.date(2015, 1, 1), None),
-        #     None], debug=1)
+        for entry in entries:
+            postings, errors = booking_full.book_reductions(entry, {})
+            self.assertEqual(entry.postings[1:], postings)
+            self.assertEqual(1, len(errors))
+            self.assertRegex(errors[0].message, 'Augmenting lot is incomplete')
+
+
+
+
+
+
+
+
+class TestBooking(unittest.TestCase):
+    "Tests the booking & interpolation process."
+
+    maxDiff = 8192
+
+    # def book(self, entry, balances=None, exp_costs=None, debug=False):
+    #     if balances is None:
+    #         balances = {}
+    #     groups, errors = booking_full.categorize_by_currency(entry, balances)
+    #     self.assertFalse(errors)
+    #     posting_groups = booking_full.replace_currencies(entry.postings, groups)
+    #     for currency, postings in posting_groups.items():
+    #         new_postings, new_balances = booking_full.book_reductions(postings, balances)
+    #         if debug:
+    #             for posting in new_postings:
+    #                 print(posting)
+    #             print(new_balances)
+
+    #         # Check the expected costs.
+    #         if exp_costs is not None:
+    #             for posting, exp_cost in zip(new_postings, exp_costs):
+    #                 self.assertEqual(posting.cost, exp_cost)
+
+        # for balances in {}, {'Assets:Account': inventory.from_string('10 HOOL {99.00 USD}')}:
+        #     self.book(entries[0], balances, [
+        #         position.CostSpec(D('100.00'), None, 'USD', None, None, False),
+        #         None])
+        #     self.book(entries[1], balances, [
+        #         position.CostSpec(MISSING, None, 'USD', None, None, False),
+        #         None])
+
+
+
+    # @parser.parse_doc(allow_incomplete=True)
+    # def test_augmentation_noop(self, entries, _, options_map):
+    #     """
+    #     2015-10-01 *
+    #       Assets:Account          2 HOOL {100.00 USD}
+    #       Assets:Other     -1000.00 USD
+
+    #     2015-10-02 *
+    #       Assets:Account          2 HOOL {USD}
+    #       Assets:Other     -1000.00 USD
+    #     """
+    #     # Check that these augmenting legs aren't being touched.
+    #     for balances in {}, {'Assets:Account': inventory.from_string('10 HOOL {99.00 USD}')}:
+    #         self.book(entries[0], balances, [
+    #             position.CostSpec(D('100.00'), None, 'USD', None, None, False),
+    #             None])
+    #         self.book(entries[1], balances, [
+    #             position.CostSpec(MISSING, None, 'USD', None, None, False),
+    #             None])
+
+    # @parser.parse_doc(allow_incomplete=True)
+    # def test_reduction(self, entries, _, options_map):
+    #     """
+    #     2015-10-01 *
+    #       Assets:Account         -2 HOOL {100.00 USD}
+    #       Assets:Other      1000.00 USD
+    #     """
+    #     balances = {'Assets:Account':
+    #                 inventory.from_string('5 HOOL {100.00 USD, 2015-01-01}')}
+    #     # FIXME: Bring this back in.
+    #     # self.book(entries[0], balances, [
+    #     #     position.Cost(D('100.00'), 'USD', datetime.date(2015, 1, 1), None),
+    #     #     None], debug=1)
 
 
 # FIXME: Continue here.
 __incomplete__ = True
 
 
-class TestFullBooking1(cmptest.TestCase):
-
-    @parser.parse_doc()
-    def __test_categorize_by_currency__ambiguous_cost_no_choice(self, ientries, _, options_map):
-        """
-        ;; Pick the USD lot, because that's all there is in the inventory
-        2015-01-01 *
-          Assets:Bank:Investing          -1 HOOL {}
-          Equity:Opening-Balances       101 USD
-        """
-        groups, free = booking_full.categorize_by_currency_by_currency(
-            ientries[0].postings, {'USD': I('1 HOOL {100 USD}')})
-        self.assertEqual({'USD': 2}, dictmap(groups, valfun=len))
-        self.assertFalse(free)
-
-    @parser.parse_doc()
-    def __test_categorize_by_currency__ambiguous_cost_choose_lot(self, ientries, _, options_map):
-        """
-        ;; This should know to pick the USD leg because that's the only currency
-        2015-01-01 *
-          Assets:Bank:Investing          -1 HOOL {}
-          Equity:Opening-Balances       101 USD
-        """
-        groups, free = booking_full.categorize_by_currency_by_currency(
-            ientries[0].postings, {'USD': I('1 HOOL {100 USD}, '
-                                            '1 HOOL {100 CAD}')})
-
-    @parser.parse_doc()
-    def __test_categorize_by_currency__ambiguous_cost_choose_ccy(self, ientries, _, options_map):
-        """
-        ;; Pick the USD lot, because that's all there is in the inventory
-        2015-01-01 *
-          Assets:Bank:Investing          -1 HOOL {}
-          Equity:Opening-Balances       101 USD
-          Equity:Opening-Balances       102 CAD
-        """
-        groups, free = booking_full.categorize_by_currency_by_currency(
-            ientries[0].postings, {'USD': I('1 HOOL {100 USD}')})
-
-    @parser.parse_doc()
-    def __test_categorize_by_currency__ambiguous_cost_no_choice(self, ientries, _, options_map):
-        """
-        ;; Pick the USD lot, because that's all there is in the inventory
-        2015-01-01 *
-          Assets:Bank:Investing          -1 HOOL {}
-          Equity:Opening-Balances       100 USD
-        """
-        groups, free = booking_full.categorize_by_currency_by_currency(
-            ientries[0].postings, {'USD': I('1 HOOL {100 USD}')})
-
-    @parser.parse_doc()
-    def __test_categorize_by_currency__ambiguous_cost_with_bal(self, ientries, _, options_map):
-        """
-        ;; This should know to pick the USD leg because that's the only that doesn't already
-        ;; balance from the other postings.
-        2015-01-01 *
-          Assets:Bank:Investing          -1 HOOL {}
-          Equity:Opening-Balances       101 USD
-          Equity:Opening-Balances      -102 CAD
-          Assets:Cash                   102 CAD
-        """
-        groups, free = booking_full.categorize_by_currency_by_currency(
-            ientries[0].postings, {'USD': I('1 HOOL {100 USD}, '
-                                               '1 HOOL {100 CAD}')})
-
-
-class TestFullBooking2(cmptest.TestCase):
-
-    @loader.load_doc()
-    def __test_full_booking(self, entries, _, options_map):
-        """
-          option "booking_method" "FULL"
-          2013-05-01 open Assets:Bank:Investing
-          2013-05-01 open Equity:Opening-Balances
-
-          2013-05-02 *
-            Assets:Bank:Investing           5 HOOL {501 USD}
-            Equity:Opening-Balances     -2505 USD
-        """
-        self.assertEqual(D('-2505'), entries[-1].postings[-1].units.number)
+# class TestFullBooking1(cmptest.TestCase):
+#
+#     @parser.parse_doc()
+#     def __test_categorize_by_currency__ambiguous_cost_no_choice(self, ientries, _, options_map):
+#         """
+#         ;; Pick the USD lot, because that's all there is in the inventory
+#         2015-01-01 *
+#           Assets:Bank:Investing          -1 HOOL {}
+#           Equity:Opening-Balances       101 USD
+#         """
+#         groups, free = booking_full.categorize_by_currency_by_currency(
+#             ientries[0].postings, {'USD': I('1 HOOL {100 USD}')})
+#         self.assertEqual({'USD': 2}, dictmap(groups, valfun=len))
+#         self.assertFalse(free)
+#
+#     @parser.parse_doc()
+#     def __test_categorize_by_currency__ambiguous_cost_choose_lot(self, ientries, _, options_map):
+#         """
+#         ;; This should know to pick the USD leg because that's the only currency
+#         2015-01-01 *
+#           Assets:Bank:Investing          -1 HOOL {}
+#           Equity:Opening-Balances       101 USD
+#         """
+#         groups, free = booking_full.categorize_by_currency_by_currency(
+#             ientries[0].postings, {'USD': I('1 HOOL {100 USD}, '
+#                                             '1 HOOL {100 CAD}')})
+#
+#     @parser.parse_doc()
+#     def __test_categorize_by_currency__ambiguous_cost_choose_ccy(self, ientries, _, options_map):
+#         """
+#         ;; Pick the USD lot, because that's all there is in the inventory
+#         2015-01-01 *
+#           Assets:Bank:Investing          -1 HOOL {}
+#           Equity:Opening-Balances       101 USD
+#           Equity:Opening-Balances       102 CAD
+#         """
+#         groups, free = booking_full.categorize_by_currency_by_currency(
+#             ientries[0].postings, {'USD': I('1 HOOL {100 USD}')})
+#
+#     @parser.parse_doc()
+#     def __test_categorize_by_currency__ambiguous_cost_no_choice(self, ientries, _, options_map):
+#         """
+#         ;; Pick the USD lot, because that's all there is in the inventory
+#         2015-01-01 *
+#           Assets:Bank:Investing          -1 HOOL {}
+#           Equity:Opening-Balances       100 USD
+#         """
+#         groups, free = booking_full.categorize_by_currency_by_currency(
+#             ientries[0].postings, {'USD': I('1 HOOL {100 USD}')})
+#
+#     @parser.parse_doc()
+#     def __test_categorize_by_currency__ambiguous_cost_with_bal(self, ientries, _, options_map):
+#         """
+#         ;; This should know to pick the USD leg because that's the only that doesn't already
+#         ;; balance from the other postings.
+#         2015-01-01 *
+#           Assets:Bank:Investing          -1 HOOL {}
+#           Equity:Opening-Balances       101 USD
+#           Equity:Opening-Balances      -102 CAD
+#           Assets:Cash                   102 CAD
+#         """
+#         groups, free = booking_full.categorize_by_currency_by_currency(
+#             ientries[0].postings, {'USD': I('1 HOOL {100 USD}, '
+#                                                '1 HOOL {100 CAD}')})
+#
+#
+# class TestFullBooking2(cmptest.TestCase):
+#
+#     @loader.load_doc()
+#     def __test_full_booking(self, entries, _, options_map):
+#         """
+#           option "booking_method" "FULL"
+#           2013-05-01 open Assets:Bank:Investing
+#           2013-05-01 open Equity:Opening-Balances
+#
+#           2013-05-02 *
+#             Assets:Bank:Investing           5 HOOL {501 USD}
+#             Equity:Opening-Balances     -2505 USD
+#         """
+#         self.assertEqual(D('-2505'), entries[-1].postings[-1].units.number)

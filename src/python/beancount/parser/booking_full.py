@@ -72,6 +72,7 @@ improving on the algorithm above.
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
+import copy
 import logging
 import pprint
 
@@ -114,7 +115,6 @@ def book(entries, options_map):
     errors = []
     for entry in entries:
         if isinstance(entry, Transaction):
-
             # Group postings by currency.
             refer_groups, cat_errors = categorize_by_currency(entry, balances)
             if cat_errors:
@@ -122,23 +122,32 @@ def book(entries, options_map):
                 continue
             posting_groups = replace_currencies(entry.postings, refer_groups)
 
-            # Resolve each group of postings.
+            # Resolve reductions to a particular lot in their inventory balance.
             repl_postings = []
             for currency, postings in posting_groups.items():
-                # Perform booking reductions.
-                ### FIXME: Bring this in after unit-testing.
-                ### book_reductions(postings, balances)
 
-                # Interpolate missing numbers.
-                new_postings, errors, interpolated = interpolate_group(postings,
-                                                                       balances,
-                                                                       currency)
-                repl_postings.extend(new_postings)
+                # Perform booking reductions. This results in a potentially new
+                # set of postings, each of which was possibly matched to
+                # multiple lots. 'balances' remains untouched.
+                (booked_postings,
+                 booking_errors) = book_reductions(postings, balances)
+
+                # Interpolate missing numbers from all postings.
+                (inter_postings,
+                 interpolation_errors,
+                 interpolated) = interpolate_group(booked_postings, balances, currency)
+
+                repl_postings.extend(inter_postings)
 
             # Replace postings by interpolated ones.
             entry.postings[:] = repl_postings
 
-            # Update running balances using the interpolated values.
+            # Update the running balances for each account using the final,
+            # booked and interpolated values. Note that we could optimize away
+            # some of this in book_reduction() but we choose not to do so, as a
+            # sanity check that the direct aggregation of the final booked lots
+            # will compute the same result as that during the book_reduction()
+            # process.
             for posting in repl_postings:
                 balance = balances[posting.account]
                 balance.add_position(posting)
@@ -389,52 +398,81 @@ def replace_currencies(postings, refer_groups):
     return new_groups
 
 
-def book_reductions(postings, balances):
-    """Book inventory reductions against the ante balances.
+def book_reductions(entry, balances):
+    """Book inventory reductions against the ante-balances.
+
+    This function accepts a dict of (account, Inventory balance) and for each
+    posting that is a reduction against its inventory, attempts to find a
+    corresponding lot or list of lots to reduce the balance with.
 
     Args:
-      postings: A list of postings.
+      entry: An instance of Transaction. This is only used to refer to when
+        logging errors.
       balances: A dict of account name to inventory contents.
     Returns:
       A pair of
-        new_postings: A list of postings, with reductions resolved against their
-          inventory balances.
-        modified_balances: A dict of the update balances. This can be used to
-          update the state of the global balances (which is left untouched).
+        new_postings: A list of booked postings, with specific lots resolved
+          against the inventory balances. A single reducing posting in the input
+          may result in multiple postings in the output.
+        errors: A list of FullBookingError instances, if there were errors.
+
     """
+    errors = []
+
     empty = inventory.Inventory()
     new_postings = []
-    for posting in postings:
-
+    for posting in entry.postings:
+        # Process a single posting.
         units = posting.units
         costspec = posting.cost
-        balance = balances.get(posting.account, None)
-        if (costspec is not None and
-            balance is not None and
-            balance.is_reduced_by(units)):
-            cost_number = compute_cost_number(costspec, units.number)
-            if cost_number is not MISSING:
+        balance = balances.get(posting.account, None) # No mutation.
 
-                try:
-                    balance = balances[posting.account]
-                except KeyError:
-                    balance = empty
+        # Note: if there is no existing balance, then won't be any lot reduction
+        # because none of the postings will be able to match against any
+        # currencies of the balance.
+        if balance is not None:
+            # Note: We make a copy of the account's balance, so we can modify it
+            # during the matching process.
+            balance = copy.copy(balance)
 
-                # FIXME: We need to create and invoke some sort of partial
-                # matching from CostSpec here.
-                posting = posting._replace(cost=position.Cost(cost_number,
-                                                              costspec.currency,
-                                                              costspec.date,
-                                                              costspec.label))
+        # Check if this is a lot held at cost.
+        if costspec is None:
+            # This posting is not held at cost; we do nothing.
+            pass
+        else:
+            # This posting is held at cost; figure out if it's a reduction or an
+            # augmentation.
+            if (balance is not None and balance.is_reduced_by(units)):
+                # This posting is a reduction.
+                raise NotImplementedError
+            else:
+                # This posting is an augmentatino.
+                cost = compute_cost(costspec, units)
+                if cost is MISSING:
+                    errors.append(
+                        FullBookingError(entry.meta, "Augmenting lot is incomplete", entry))
+                    posting = None
+                else:
+                    posting = posting._replace(cost=cost)
 
         # FIXME: Do we need to update the balances here in the case it's not a
         # reduction?
-        new_postings.append(posting)
+        if posting is not None:
+            new_postings.append(posting)
 
-    return new_postings, {}
+    return new_postings, errors
 
 
-def compute_cost_number(costspec, units_number):
+def compute_cost(costspec, units):
+    """Given a CostSpec, calculate the total cost.
+
+    Args:
+      costspec: A parsed instance of CostSpec.
+      units: An instance of Amount for the units of the position.
+    Returns:
+      If it is not possible to calculate the cost, return MISSING.
+      Otherwise, returns a Decimal instance, the per-unit cost.
+    """
     number_per = costspec.number_per
     number_total = costspec.number_total
     if MISSING in (number_per, number_total):
@@ -443,14 +481,18 @@ def compute_cost_number(costspec, units_number):
         # Compute the per-unit cost if there is some total cost
         # component involved.
         cost_total = number_total
+        units_number = units.number
         if number_per is not None:
             cost_total += number_per * units_number
         unit_cost = cost_total / abs(units_number)
+    elif number_per is None:
+        return MISSING
     else:
         unit_cost = number_per
-    return unit_cost
-
-
+    return position.Cost(unit_cost,
+                         costspec.currency,
+                         costspec.date,
+                         costspec.label)
 
 
 class MissingType(Enum):
