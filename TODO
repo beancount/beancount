@@ -1991,6 +1991,29 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Add an option to the parser to not just ignore unparsed lines, more strict.
 
+  - BUG: A transaction like this fails to parse; allow it:
+      2014-02-22 * "Payee" |
+        ..
+
+  - BUG: This input file without currencies does not currently fail! This is due
+    to the parser accepting incomplete input. It should fail!
+
+      2014-01-01 * "Buy Google"
+        Assets:US:Broker:GOOGL      120.00  {1212.5100 USD}
+        Assets:US:Broker:Cash
+
+      2014-04-08 * "GOOGLE INC CL C SPINOFF   ON"
+        Assets:US:Broker:GOOGL     -120.00  {1212.5100 USD}
+        Assets:US:Broker:GOOGL      120.00  {1212.5100 * 0.4992 USD}
+        Assets:US:Broker:GOOG       120.00  {1212.5100 * 0.5008 USD}
+
+  - When an error occurs while parsing a directive/transaction, add the ability
+    to let the parser skip until the next directive and ignore the parsed
+    transaction because of the error. Maybe this should be an exception
+    mechanism, or just storing a flag that gets reset when the directive is
+    completed. Not sure. This would be a more elegant way to deal with some
+    errors.
+
 ** File Cleanup
 
   - Remove plugins from ops, remove algorithms from core:
@@ -3135,7 +3158,6 @@ http://furius.ca/beancount/doc/proposal-query
     created to flag unverified entries with meta-data and then filter on that.
     That's probably the best way to do this.
 
-
 ** Plugin: no_zero_amounts
 
   - Move the check for zero units ("Amount is zero" from the parser) to a
@@ -3157,6 +3179,24 @@ http://furius.ca/beancount/doc/proposal-query
   - Write a plugin that automatically inserts a padding directive for accounts
     with no open directive and with a balance check.
 
+** Plugin: multi_pad
+
+  - New plugin type: a kind of spreaded Pad directive, that creates multiple
+    pads at regular intervals. This is to deal with smooth cash distributions or
+    work meals assignment. You should be able to specify the frequency and
+    have it automatically insert a number of entries to spread the expense
+    evenly. 'evenpad', 'multipad', 'distribution'? This should most definitely
+    be a plugin.
+
+** Plugin: cost_pad
+
+  - (pad) Review the possibility of padding units held at cost:
+
+      "The reason it fails is that there must have been units of those commodities
+      held at cost before the pad date, and it is an error to pad commodities at
+      cost, because Beancount has no way to know what the cost basis of those
+      commodities should be."
+
 ** Plugin: auto_remove
 
   - Add a auto-remove-unused part of the auto_accounts plugin,
@@ -3172,15 +3212,6 @@ http://furius.ca/beancount/doc/proposal-query
     unless the transaction is flag with a particular character, or some special
     tag is present.
 
-
-** Plugin: multi_pad
-
-  - New plugin type: a kind of spreaded Pad directive, that creates multiple
-    pads at regular intervals. This is to deal with smooth cash distributions or
-    work meals assignment. You should be able to specify the frequency and
-    have it automatically insert a number of entries to spread the expense
-    evenly. 'evenpad', 'multipad', 'distribution'? This should most definitely
-    be a plugin.
 
 ** Plugin: match_pending
 
@@ -3244,6 +3275,24 @@ http://furius.ca/beancount/doc/proposal-query
 
    This is, of cource, to be implemented only after implementing support for
    the average cost inventory booking method.
+
+** Plugin: match_pending
+
+  - Write a plugin that will pair up (link) matching transactions posting to a common
+    account; this could be used to properly pair up the transactions to
+    Liabilities:AccountsPayable, which would be very useful.
+
+** Plugin: at_cost_only
+
+  - Idea for one of those constraint plugins: Create a plugin whereby you
+    declare some currencies and assert that any units in them are always held at
+    cost.
+
+** Plugin: subset_balances
+
+  - Create a plugin that filters out postings with a particular per-posting
+    flag, and that checks that they are balanced by themselves.
+
 
 ** Super-Plugins: Pedantic & Auto
 
@@ -3321,6 +3370,11 @@ http://furius.ca/beancount/doc/proposal-query
     subaccount? I've come to realize that for Payees that only ever touch a
     single account, the line is really fuzzy there. I've been entertaining the
     idea of automatically creating subaccounts for payees like that.
+
+  - Write a script that will highlight some "payee vs tags vs subaccount"
+    invariants:
+    * Highlight payees that are always used with the same accounts
+    * Same with tags
 
 ** Old Notes
 
@@ -3894,6 +3948,124 @@ http://furius.ca/beancount/doc/proposal-query
     especially with the new booking algorithm, this will be useful.
     Create a new report type for this.
 
+** Reports: Overview Stats
+
+  - Add a simple overview 'stats' report with output like this:
+
+      Files these postings came from:
+        ...
+
+      Unique payees:            2681
+      Unique accounts:           151
+
+      Number of postings:       9026 (4.8 per day)
+      Uncleared postings:        126
+
+      Days since last post:     -206
+      Posts in last 7 days:       30
+      Posts in last 30 days:      52
+      Posts seen this month:       8
+
+  - This ought to replace the current stats reports, which are simply too small
+    and specialized.
+
+** Reports: Rendering Journals
+
+  - Journals should render in either order.
+
+  - Add an option for spacing in the revamped reports.
+
+  - When multiple transactions occur in the same day, it makes sense not to
+    render the balance amount until the last one. Do this. This is important.
+
+  - In rendering balance directives, don't render the amount in the "change"
+    column; that is too confusing for some users, keep the change column for
+    changes.
+
+  - (easy) Don't render postings in the HTML interface by default. The detail
+    can be made available via bean-query now, and users can click on /context
+    link in order to get the full transaction detail. Journals should be
+    summaries. Add an optional argument to turn it on/off, but it should be off
+    by default.
+
+** Reports: Rendering Tables of Balances
+
+  - tree rendering: If a parent account has only a single subaccount and the
+    parent account otherwise has no postings in its realization, render the
+    account on a single line instead of two, e.g.
+
+      Expenses                     Expenses
+        Taxes                        Taxes
+          US                           US
+            TY2014                       TY2014
+              State                        State:Company
+                Company                    ...
+              ...
+
+** Reports: Rendering Tables
+
+  - For table rendering, move the actual formatting at rendering time. CSV files
+    should have fractional values for percentages, txt and html should have %
+    values. I need to figure out a good solution for this. Maybe the thing to do
+    is to move the field selection at rendering stage, or at least to have it at
+    both.
+
+** Reports: Accounts
+
+  - bean-report accounts should produce a regular table that can be rendered
+    with CSV or TXT, not a custom output string.
+
+** Reports: Cash
+
+  - Create a function to identify whether a Position/Inventory is cash... use
+    this to reproduce/replace the 'cash' report. Use the same rule from
+    bean-report.
+
+** Report: XML
+
+  - Output to a structured XML format, some people are finding that useful to
+    build other visualizations. In order to test this completely, do a
+    round-trip test.  The code should live in beancount.parser, parallel to the
+    existing code there.
+
+** Report: Events
+
+  - Build a 'events' report that will print out the current value of all events.
+
+  - Create a new report type: "days" that counts the days of any event in the
+    filtered log.
+
+* Price Freshness / Dated Prices
+
+  - Issue warnings if the price date is too far from the requested market value
+    date. This will help with returns, a lot. You should likely do this in the
+    price_map object, in the lookup function, maybe, so that all modules benefit
+    from the feature. You could ideally provide a date and a tolerance, and
+    somehow issue warnings automatically. The tolerance for price freshness
+    should be provided as an option in the input file.
+
+  - Add the capability to issue warnings when the price database is queried for
+    a specific date but the price point is too distant from the requested date.
+
+      "One thing I want to do soon is to issue warnings when the price database is
+      looked up and the price point is too far from the requested date, so that the
+      user could go fill in the missing prices. I'd probably issue price entries with
+      the approximated price (approximated with a distant date) and then feed that
+      into another script that would fetch prices for those directives."
+
+* Review Design of Tags & Links
+
+  - Consider removing the "links" attribute altogether and making that simply
+    just a tag. Do we really, truly need to distinguish between tags and links?
+
+  - Try removing the 'tags' attribute of transactions by moving it to metadata
+    fields and making sure tools are available to perform the same aggregations
+    using bean-query and views using bean-web.
+
+  - Make the Pad directive accept #tags and propagate those to the generated
+    transactions:
+    https://bitbucket.org/blais/beancount/issues/70/add-tag-to-the-pad-directive-and-propagate
+
 * Web Interface Improvements
 
   - (easy) Make b.w.web also 'app.options_map' instead of 'app.options'.
@@ -4128,6 +4300,46 @@ http://furius.ca/beancount/doc/proposal-query
   - Make an plugin that computes the precise date at which my vacation will cap
     (240 VACHR) base on an account.
 
+* Account Hiding Criterion
+
+  - Set the closing criterion for empty accounts, implement in a single place,
+    and review all the code which renders balances to use it.
+
+      "I used to have it so that accounts closed before the beginning of the exercise
+      (in the reports) would not appear. Accounts closed at the end of the period but
+      with some activity within the period would appear (so you can click on them and
+      see their journal). Opened accounts with a zero balance would, too. Closed
+      before begin + no activity = no show."
+
+        2000-01-10 open Assets:Continuing
+        2000-01-10 open Assets:Empty
+        2000-01-10 open Assets:Terminated
+
+        2000-01-10 open Equity:Whatever
+
+        2014-03-10 *
+          Assets:Continuing       110 USD
+          Assets:Terminated       120 USD
+          Assets:Empty            130 USD
+          Equity:Whatever
+
+        2014-03-30 *
+          Assets:Terminated      -120 USD
+          Assets:Empty           -130 USD
+          Equity:Whatever
+
+        2014-05-15 close Assets:Terminated
+
+        2015-01-10 *
+          Assets:Continuing       110 USD
+          Equity:Whatever
+
+  - Whether an account shows up in a particular Ledger (realization) really only
+    should depend on whether the account was open during the period (we now have
+    account open/close dates... let's use them instead of a heuristic!).
+    Create a routine to figure out if an account was open during a specific
+    time period?
+
 * Rejected Ideas
 
   - Why aren't we using the price on the first leg of this transaction? This is
@@ -4171,14 +4383,6 @@ http://furius.ca/beancount/doc/proposal-query
     asked for this in order to make modifications to his input and push that
     back out to a file, this could be useful.)
 
-** match-pending plugin
-
-  - Write a plugin that will pair up (link) matching transactions posting to a common
-    account; this could be used to properly pair up the transactions to
-    Liabilities:AccountsPayable, which would be very useful.
-
-
-
 ** query_parser
 
   - Support arithmetic operations as targets, so you could SELECT 2+2, for
@@ -4220,6 +4424,22 @@ http://furius.ca/beancount/doc/proposal-query
   - The 'balances' report should also support a WHERE clause as a nice
     shorthand. I would use that all the time myself if I could.
 
+*** Implement Table Joins
+
+  - Write the multi-year report and share on the list at
+    https://groups.google.com/d/msg/ledger-cli/XNIK853ExNc/CWxSPa-5INMJ
+
+  - Write a utility script that merges multiple reports with a leftmost column
+    of account names into a single report with multiple columns.
+
+       SELECT account, bal1, bal2 FROM
+         (SELECT account, sum(cost(position)) as bal1
+          FROM CLOSE ON 2014-01-01 CLEAR)
+         JOIN
+         (SELECT account, sum(cost(position)) as bal2
+          FROM CLOSE ON 2015-01-01 CLEAR)
+         ON account;
+
 ** query_env
 
   - There's a bug in the MIN() function, it fails, try this:
@@ -4251,175 +4471,17 @@ http://furius.ca/beancount/doc/proposal-query
     with suitable support for ANY and other membership operatos.
 
 
+** Support Negative filtering by default
+
+  - Idea: For "virtual postings", you could mark certain tags to be excluded by
+    default, to be included only explicitly. e.g. #virtual tag would have to be
+    brought in by selecting it via "tag:virtual". Maybe a different prefix would
+    be used to distinguish them, e.g. #virtual and %virtual, or #virtual and
+    -#virtual; something like that.
+
 ** query_render
 
   - Journal rendering: add terminal colors (easy).
-
-** new-plugin: at_cost_only
-
-  - Idea for one of those constraint plugins: Create a plugin whereby you
-    declare some currencies and assert that any units in them are always held at
-    cost.
-
-
-** new-plugin: subset_balances
-
-  - Create a plugin that filters out postings with a particular per-posting
-    flag, and that checks that they are balanced by themselves.
-
-
-** Review the Design of Tags & Links
-
-  - Consider removing the "links" attribute altogether and making that simply
-    just a tag. Do we really, truly need to distinguish between tags and links?
-
-  - Try removing the 'tags' attribute of transactions by moving it to metadata
-    fields and making sure tools are available to perform the same aggregations
-    using bean-query and views using bean-web.
-
-  - Make the Pad directive accept #tags and propagate those to the generated
-    transactions:
-    https://bitbucket.org/blais/beancount/issues/70/add-tag-to-the-pad-directive-and-propagate
-
-** Puzzling... No idea, cannot remember
-
-  - Make the web application use the regexps defined in common in its paths
-    instead of inline ad-hoc approximations. There was never any need to do
-    that.
-
-** Implement Table Joins
-
-  - Write the multi-year report and share on the list at
-    https://groups.google.com/d/msg/ledger-cli/XNIK853ExNc/CWxSPa-5INMJ
-
-  - Write a utility script that merges multiple reports with a leftmost column
-    of account names into a single report with multiple columns.
-
-       SELECT account, bal1, bal2 FROM
-         (SELECT account, sum(cost(position)) as bal1
-          FROM CLOSE ON 2014-01-01 CLEAR)
-         JOIN
-         (SELECT account, sum(cost(position)) as bal2
-          FROM CLOSE ON 2015-01-01 CLEAR)
-         ON account;
-
-** Reports: overview-stats
-
-  - Add a simple overview 'stats' report with output like this:
-
-      Files these postings came from:
-        ...
-
-      Unique payees:            2681
-      Unique accounts:           151
-
-      Number of postings:       9026 (4.8 per day)
-      Uncleared postings:        126
-
-      Days since last post:     -206
-      Posts in last 7 days:       30
-      Posts in last 30 days:      52
-      Posts seen this month:       8
-
-** Reports: Rendering Journals
-
-  - Journals should render in either order.
-
-  - Add an option for spacing in the revamped reports.
-
-  - When multiple transactions occur in the same day, it makes sense not to
-    render the balance amount until the last one. Do this. This is important.
-
-  - In rendering balance directives, don't render the amount in the "change"
-    column; that is too confusing for some users, keep the change column for
-    changes.
-
-  - (easy) Don't render postings in the HTML interface by default. The detail
-    can be made available via bean-query now, and users can click on /context
-    link in order to get the full transaction detail. Journals should be
-    summaries. Add an optional argument to turn it on/off, but it should be off
-    by default.
-
-** Reports: Rendering Tables of Balances
-
-  - tree rendering: If a parent account has only a single subaccount and the
-    parent account otherwise has no postings in its realization, render the
-    account on a single line instead of two, e.g.
-
-      Expenses                     Expenses
-        Taxes                        Taxes
-          US                           US
-            TY2014                       TY2014
-              State                        State:Company
-                Company                    ...
-              ...
-
-** Reports: Rendering Tables
-
-  - For table rendering, move the actual formatting at rendering time. CSV files
-    should have fractional values for percentages, txt and html should have %
-    values. I need to figure out a good solution for this. Maybe the thing to do
-    is to move the field selection at rendering stage, or at least to have it at
-    both.
-
-** Reports: Accounts
-
-  - bean-report accounts should produce a regular table that can be rendered
-    with CSV or TXT, not a custom output string.
-
-** Reports: Cash
-
-  - Create a function to identify whether a Position/Inventory is cash... use
-    this to reproduce/replace the 'cash' report. Use the same rule from
-    bean-report.
-
-** Report: XML
-
-  - Output to a structured XML format, some people are finding that useful to
-    build other visualizations. In order to test this completely, do a
-    round-trip test.  The code should live in beancount.parser, parallel to the
-    existing code there.
-
-** Padding lots held-at-cost
-
-  - (pad) Review the possibility of padding units held at cost:
-
-      "The reason it fails is that there must have been units of those commodities
-      held at cost before the pad date, and it is an error to pad commodities at
-      cost, because Beancount has no way to know what the cost basis of those
-      commodities should be."
-
-** Parser improvements
-
-  - When an error occurs while parsing a directive/transaction, add the ability
-    to let the parser skip until the next directive and ignore the parsed
-    transaction because of the error. Maybe this should be an exception
-    mechanism, or just storing a flag that gets reset when the directive is
-    completed. Not sure. This would be a more elegant way to deal with some
-    errors.
-
-  - BUG: A transaction like this fails to parse; allow it:
-      2014-02-22 * "Payee" |
-        ..
-
-  - BUG: This input file without currencies does not currently fail! This is due
-    to the parser accepting incomplete input. It should fail!
-
-      2014-01-01 * "Buy Google"
-        Assets:US:Broker:GOOGL      120.00  {1212.5100 USD}
-        Assets:US:Broker:Cash
-
-      2014-04-08 * "GOOGLE INC CL C SPINOFF   ON"
-        Assets:US:Broker:GOOGL     -120.00  {1212.5100 USD}
-        Assets:US:Broker:GOOGL      120.00  {1212.5100 * 0.4992 USD}
-        Assets:US:Broker:GOOG       120.00  {1212.5100 * 0.5008 USD}
-
-** New Report: Events
-
-  - Build a 'events' report that will print out the current value of all events.
-
-  - Create a new report type: "days" that counts the days of any event in the
-    filtered log.
 
 ** Improvements to Emacs Support
 
@@ -4443,80 +4505,11 @@ http://furius.ca/beancount/doc/proposal-query
     file:lineno so that we can make Emacs "jump" between the transactions in
     the order they appear.
 
-** Query: Negative filtering by default
-
-  - Idea: For "virtual postings", you could mark certain tags to be excluded by
-    default, to be included only explicitly. e.g. #virtual tag would have to be
-    brought in by selecting it via "tag:virtual". Maybe a different prefix would
-    be used to distinguish them, e.g. #virtual and %virtual, or #virtual and
-    -#virtual; something like that.
-
-** Payees vs. Subaccounts
-
-  - Write a script that will highlight some "payee vs tags vs subaccount"
-    invariants:
-    * Highlight payees that are always used with the same accounts
-    * Same with tags
-
-** Price Freshness / Dated Prices
-
-  - Issue warnings if the price date is too far from the requested market value
-    date. This will help with returns, a lot. You should likely do this in the
-    price_map object, in the lookup function, maybe, so that all modules benefit
-    from the feature. You could ideally provide a date and a tolerance, and
-    somehow issue warnings automatically. The tolerance for price freshness
-    should be provided as an option in the input file.
-
-  - Add the capability to issue warnings when the price database is queried for
-    a specific date but the price point is too distant from the requested date.
-
-      "One thing I want to do soon is to issue warnings when the price database is
-      looked up and the price point is too far from the requested date, so that the
-      user could go fill in the missing prices. I'd probably issue price entries with
-      the approximated price (approximated with a distant date) and then feed that
-      into another script that would fetch prices for those directives."
-
-** Account Hiding Criterion
-
-  - Set the closing criterion for empty accounts, implement in a single place,
-    and review all the code which renders balances to use it.
-
-      "I used to have it so that accounts closed before the beginning of the exercise
-      (in the reports) would not appear. Accounts closed at the end of the period but
-      with some activity within the period would appear (so you can click on them and
-      see their journal). Opened accounts with a zero balance would, too. Closed
-      before begin + no activity = no show."
-
-        2000-01-10 open Assets:Continuing
-        2000-01-10 open Assets:Empty
-        2000-01-10 open Assets:Terminated
-
-        2000-01-10 open Equity:Whatever
-
-        2014-03-10 *
-          Assets:Continuing       110 USD
-          Assets:Terminated       120 USD
-          Assets:Empty            130 USD
-          Equity:Whatever
-
-        2014-03-30 *
-          Assets:Terminated      -120 USD
-          Assets:Empty           -130 USD
-          Equity:Whatever
-
-        2014-05-15 close Assets:Terminated
-
-        2015-01-10 *
-          Assets:Continuing       110 USD
-          Equity:Whatever
-
-
 ** Trading
 
   - Produce example transactions for each of the cases provided by Filippo's
     sample transactions.
 
-
 ** Tools: Formatting
 
   - BUG: There is a bug in bean-format; on
@@ -4531,12 +4524,6 @@ http://furius.ca/beancount/doc/proposal-query
   have time to think about where to put it, I just come here at the end and jot
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
-
-  - Whether an account shows up in a particular Ledger (realization) really only
-    should depend on whether the account was open during the period (we now have
-    account open/close dates... let's use them instead of a heuristic!).
-    Create a routine to figure out if an account was open during a specific
-    time period?
 
   - Merge TODO file entries here
   - Merge Email Starred entries
