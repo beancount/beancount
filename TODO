@@ -1282,6 +1282,10 @@ http://furius.ca/beancount/doc/proposal-query
   - When we import, if a file was not detected, don't spit out an org text
     line. Still doesn't work.
 
+  - Deal with the problem of matching Google Wallet amounts directly... attempt
+    to match a matching directive in the other account, and insert a link into
+    the imported one.
+
 ** GnuCash
 
   - Write a converter of GnuCash XML files into Beancount.
