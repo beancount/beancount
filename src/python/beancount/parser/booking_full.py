@@ -76,24 +76,19 @@ import copy
 import logging
 import pprint
 
-# FIXME: Remove this and use that from misc_utils.
-# pylint: disable=invalid-name
-try:
-    import enum
-    Enum = enum.Enum
-except ImportError:
-    Enum = object
-
 from beancount.core.number import MISSING
 from beancount.core.number import ZERO
+from beancount.core.number import Decimal
 from beancount.core.data import Transaction
 from beancount.core.amount import Amount
 from beancount.core.position import Position
 from beancount.core.position import Cost
+from beancount.core.position import CostSpec
 from beancount.core import position
 from beancount.core import inventory
 from beancount.core import interpolate
 from beancount.utils import misc_utils
+from beancount.parser import printer
 
 
 FullBookingError = collections.namedtuple('FullBookingError', 'source message entry')
@@ -126,16 +121,46 @@ def book(entries, options_map):
             repl_postings = []
             for currency, postings in posting_groups.items():
 
-                # Perform booking reductions. This results in a potentially new
-                # set of postings, each of which was possibly matched to
-                # multiple lots. 'balances' remains untouched.
+                # Perform booking reductions, that is, match postings which
+                # reduce the ante-inventory of their accounts to an existing
+                # position in the inventory against a possibly incomplete
+                # CostSpec specification, and replace the postings' cost to the
+                # fully-specified (with a date & label) existing Cost instance.
+                # Note that 'balances' remains untouched.
+                #
+                # Also note that 'booked_postings' may include augmenting
+                # postings whose 'cost' attribute has been left to a CostSpec
+                # instance. Therefore, the postings held-at-cost may hold a
+                # mixture of Cost and CostSpec instances. This is necessary to
+                # let the interpolation do its magic on partially incomplete
+                # CostSpec instances below.
                 (booked_postings,
-                 booking_errors) = book_reductions(postings, balances)
+                 booking_errors) = book_reductions(entry, balances)
 
-                # Interpolate missing numbers from all postings.
-                (inter_postings,
-                 interpolation_errors,
-                 interpolated) = interpolate_group(booked_postings, balances, currency)
+                # FIXME: Remove this temporary exception handler. I put this
+                # there to debug what's going on when I run this on my own file.
+                try:
+                    # Interpolate missing numbers from all postings. This
+                    # includes partially incomplete CostSpec instances remaining
+                    # on augmenting postings. After this interpolation, all
+                    # 'inter_postings' consists entirely of postings holding
+                    # instances of Cost.
+                    (inter_postings,
+                     interpolation_errors,
+                     interpolated) = interpolate_group(booked_postings, balances, currency)
+                except AttributeError as exc:
+                    # Print debugging output.
+                    # FIXME: Remove all this, including the exception handler.
+                    printer.print_entry(entry)
+                    (inter_postings,
+                     interpolation_errors,
+                     interpolated) = interpolate_group(booked_postings, balances, currency, debug=1)
+                    # print()
+                    # for p in entry.postings:
+                    #     print(p)
+                    # print()
+                    # for p in booked_postings:
+                    #     print(p)
 
                 repl_postings.extend(inter_postings)
 
@@ -337,7 +362,8 @@ def categorize_by_currency(entry, balances):
         posting = entry.postings[refer.index]
         errors.append(
             CategorizationError(posting.meta,
-                                "You may not have more than one auto-posting", entry))
+                                "You may not have more than one auto-posting per currency",
+                                entry))
         auto_postings = auto_postings[0:1]
     for refer in auto_postings:
         for currency in groups.keys():
@@ -362,6 +388,9 @@ def categorize_by_currency(entry, balances):
 def replace_currencies(postings, refer_groups):
     """Replace resolved currencies in the entry's Postings.
 
+    This essentially applies the findings of categorize_by_currency() to produce
+    new postings with all currencies resolved.
+
     Args:
       postings: A list of Posting instances to replace.
       refer_groups: A dict of currency to list of posting references as per
@@ -369,6 +398,7 @@ def replace_currencies(postings, refer_groups):
     Returns:
       A new mapping of currency to a list of Postings, postings for which the
       currencies have been replaced by their interpolated currency values.
+
     """
     new_groups = {}
     for currency, refers in refer_groups.items():
@@ -405,24 +435,32 @@ def book_reductions(entry, balances):
     posting that is a reduction against its inventory, attempts to find a
     corresponding lot or list of lots to reduce the balance with.
 
+    * For reducing lots, the CostSpec instance of the posting is replaced by a
+      Cost instance.
+
+    * For augmenting lots, the CostSpec instance of the posting is left alone,
+      except for its date, which is inherited from the parent Transaction.
+
     Args:
       entry: An instance of Transaction. This is only used to refer to when
         logging errors.
       balances: A dict of account name to inventory contents.
     Returns:
       A pair of
-        new_postings: A list of booked postings, with specific lots resolved
-          against the inventory balances. A single reducing posting in the input
-          may result in multiple postings in the output.
+        booked_postings: A list of booked postings, with reducing lots resolved
+          against specific position in the corresponding accounts'
+          ante-inventory balances. Note single reducing posting in the input may
+          result in multiple postings in the output. Also note that augmenting
+          postings held-at-cost will still refer to 'cost' instances of
+          CostSpec, left to be interpolated later.
         errors: A list of FullBookingError instances, if there were errors.
-
     """
-    #pr = print
-    pr = lambda *args: None
+    pr = print
+    #pr = lambda *args: None
     errors = []
 
     empty = inventory.Inventory()
-    new_postings = []
+    booked_postings = []
     for posting in entry.postings:
         # Process a single posting.
         units = posting.units
@@ -492,21 +530,39 @@ def book_reductions(entry, balances):
                     units=Amount(units.number, match_position.units.currency),
                     cost=match_position.cost)
             else:
-                # This posting is an augmentatino.
-                cost = compute_cost(costspec, units, entry.date)
-                if cost is MISSING:
-                    errors.append(
-                        FullBookingError(entry.meta, "Augmenting lot is incomplete", entry))
-                    posting = None
-                else:
-                    posting = posting._replace(cost=cost)
+                # This posting is an augmentation.
+                #
+                # Note that we do not convert the CostSpec instances to Cost
+                # instances, because we want to let the subsequent interpolation
+                # process able to interpolate either the cost per-unit or the
+                # total cost, separately.
+
+                # Put in the date of the parent Transaction if there is no
+                # explicit date specified on the spec.
+                if costspec.date is None:
+                    dated_costspec = costspec._replace(date=entry.date)
+                    posting = posting._replace(cost=dated_costspec)
+
+                # FIXME: This was removed in order to avoid the conversion at
+                # this point. Once this works, remove it later.
+                #
+                # # FIXME: Maybe we ought to let the interpolation process
+                # # complete an incomplete augmentation here.
+                # cost = compute_cost(costspec, units, entry.date)
+                # if cost is MISSING:
+                #     errors.append(
+                #         FullBookingError(entry.meta, "Augmenting lot is incomplete", entry))
+                #     posting = None
+                # else:
+                #     posting = posting._replace(cost=cost)
 
         # FIXME: Do we need to update the balances here in the case it's not a
-        # reduction?
+        # reduction? What if we want to reduce off of positions added on other
+        # legs of this transaction itself? See {f89b5b01e568}.
         if posting is not None:
-            new_postings.append(posting)
+            booked_postings.append(posting)
 
-    return new_postings, errors
+    return booked_postings, errors
 
 
 def compute_cost_number(costspec, units):
@@ -587,13 +643,14 @@ class MissingType(misc_utils.Enum):
 InterpolationError = collections.namedtuple('InterpolationError', 'source message entry')
 
 
-def interpolate_group(postings, balances, currency):
+def interpolate_group(postings, balances, currency, debug=False):
     """Interpolate missing numbers in the set of postings.
 
     Args:
       postings: A list of Posting instances.
       balances: A dict of account to its ante-inventory.
       currency: The weight currency of this group, used for reporting errors.
+      debug: A boolean, true if we should print debugging output.
     Returns:
       A tuple of
         postings: A lit of new posting instances.
@@ -612,18 +669,36 @@ def interpolate_group(postings, balances, currency):
     # Figure out which type of amount is missing, by creating a list of
     # incomplete postings and which type of units is missing.
     incomplete = []
+    if debug:
+        print('B', balances)
+        print('C', currency)
     for index, posting in enumerate(postings):
+        if debug:
+            print('P', posting)
         units = posting.units
         cost = posting.cost
         price = posting.price
 
-        # Identify incomplete postings.
+        # Identify incomplete parts of the Posting components.
         if units.number is MISSING:
             incomplete.append((MissingType.UNITS, index))
-        if cost and cost.number_per is MISSING:
-            incomplete.append((MissingType.COST_PER, index))
-        if cost and cost.number_total is MISSING:
-            incomplete.append((MissingType.COST_TOTAL, index))
+
+        if isinstance(cost, CostSpec):
+            if cost and cost.number_per is MISSING:
+                incomplete.append((MissingType.COST_PER, index))
+            if cost and cost.number_total is MISSING:
+                incomplete.append((MissingType.COST_TOTAL, index))
+        else:
+            # Check that a resolved instance of Cost never needs interpolation.
+            #
+            # Note that in theory we could support the interpolation of regular
+            # per-unit costs in these if we wanted to; but because they're all
+            # reducing postings that have been booked earlier, those never need
+            # to be interpolated.
+            if cost is not None:
+                assert isinstance(cost.number, Decimal), (
+                    "Internal error: cost has no number: {}".format(cost))
+
         if price and price.number is MISSING:
             incomplete.append((MissingType.PRICE, index))
 
@@ -686,9 +761,13 @@ def interpolate_group(postings, balances, currency):
                 assert units.currency == weight_currency, (
                     "Internal error; residual currency different than missing currency.")
                 units_number = weight
-            new_pos = Position(Amount(units_number, units.currency), cost)
-            new_posting = incomplete_posting._replace(units=new_pos.units,
-                                                      cost=new_pos.cost)
+
+            if weight != ZERO:
+                new_pos = Position(Amount(units_number, units.currency), cost)
+                new_posting = incomplete_posting._replace(units=new_pos.units,
+                                                          cost=new_pos.cost)
+            else:
+                new_posting = None
 
         elif missing == MissingType.COST_PER:
             units = incomplete_posting.units
@@ -731,27 +810,33 @@ def interpolate_group(postings, balances, currency):
         else:
             assert False, "Internal error; Invalid missing type."
 
-        # Convert the CostSpec instance into a corresponding Cost.
-        units = new_posting.units
-        cost = new_posting.cost
-        if cost is not None:
-            units_number = units.number
-            number_per = cost.number_per
-            number_total = cost.number_total
-            if number_total is not None:
-                # Compute the per-unit cost if there is some total cost
-                # component involved.
-                cost_total = number_total
-                if number_per is not MISSING:
-                    cost_total += number_per * units_number
-                unit_cost = cost_total / abs(units_number)
-            else:
-                unit_cost = number_per
-            new_cost = Cost(unit_cost, cost.currency, cost.date, cost.label)
-            new_posting = new_posting._replace(units=units, cost=new_cost)
+
+        # Convert augmenting postings' costs from CostSpec to corresponding Cost
+        # instances.
+        if new_posting and isinstance(new_posting.cost, position.CostSpec):
+            units = new_posting.units
+            cost = new_posting.cost
+            if cost is not None:
+                units_number = units.number
+                number_per = cost.number_per
+                number_total = cost.number_total
+                if number_total is not None:
+                    # Compute the per-unit cost if there is some total cost
+                    # component involved.
+                    cost_total = number_total
+                    if number_per is not MISSING:
+                        cost_total += number_per * units_number
+                    unit_cost = cost_total / abs(units_number)
+                else:
+                    unit_cost = number_per
+                new_cost = Cost(unit_cost, cost.currency, cost.date, cost.label)
+                new_posting = new_posting._replace(units=units, cost=new_cost)
 
         # Replace the number in the posting.
         postings = list(postings)
-        postings[index] = new_posting
+        if new_posting is not None:
+            postings[index] = new_posting
+        else:
+            del postings[index]
 
-        return postings, errors, True
+    return postings, errors, (new_posting is not None)

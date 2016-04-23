@@ -9,6 +9,7 @@ import io
 
 from beancount.core.number import D
 from beancount.core.number import MISSING
+from beancount.core.position import CostSpec
 from beancount.core.inventory import from_string as I
 from beancount.utils.misc_utils import dictmap
 from beancount.core import inventory
@@ -387,11 +388,13 @@ class TestReplaceCurrenciesInGroup(unittest.TestCase):
         self.assertFalse(errors)
         posting_groups = booking_full.replace_currencies(entry.postings, groups)
         check_groups = {
-            currency: [(posting.units.currency,
+            currency: [(posting.account,
+                        posting.units.currency,
                         posting.cost.currency if posting.cost else None,
                         posting.price.currency if posting.price else None)
                        for posting in postings]
             for currency, postings in posting_groups.items()}
+        print(check_groups)
         self.assertEqual(expected, check_groups)
 
         # Check all the postings are unique instances.
@@ -411,13 +414,23 @@ class TestReplaceCurrenciesInGroup(unittest.TestCase):
           Assets:Account   100.00 USD
           Assets:Account   100.00 CAD
           Assets:Other
+
+        2015-10-02 *
+          Assets:Account   100.00 USD
+          Assets:Account   100.00 CAD
+          Assets:US:Other  USD
+          Assets:CA:Other  CAD
         """
-        self.check({'USD': [('USD', None, None),
-                            ('USD', None, None)]}, entries[0])
-        self.check({'CAD': [('CAD', None, None),
-                            ('CAD', None, None)],
-                    'USD': [('USD', None, None),
-                            ('USD', None, None)]}, entries[1])
+        self.check({'USD': [('Assets:Account', 'USD', None, None),
+                            ('Assets:Other', 'USD', None, None)]}, entries[0])
+        self.check({'CAD': [('Assets:Account', 'CAD', None, None),
+                            ('Assets:Other', 'CAD', None, None)],
+                    'USD': [('Assets:Account', 'USD', None, None),
+                            ('Assets:Other', 'USD', None, None)]}, entries[1])
+        self.check({'CAD': [('Assets:Account', 'CAD', None, None),
+                            ('Assets:CA:Other', 'CAD', None, None)],
+                    'USD': [('Assets:Account', 'USD', None, None),
+                            ('Assets:US:Other', 'USD', None, None)]}, entries[2])
 
     @parser.parse_doc(allow_incomplete=True)
     def test_missing(self, entries, _, options_map):
@@ -493,9 +506,8 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
                 self.fail("Currency {} is unexpected".format(currency))
 
             # Run the interpolation for that group.
-            new_postings, errors, interpolated = booking_full.interpolate_group(postings,
-                                                                                balances,
-                                                                                currency)
+            new_postings, errors, interpolated = booking_full.interpolate_group(
+                postings, balances, currency, debug=debug)
 
             # Print out infos for troubleshooting.
             if debug:
@@ -553,7 +565,7 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
         """
         2015-10-02 *
           Assets:Account   2 HOOL {USD}
-          Assets:Other            USD
+          Assets:Other       USD
         """
         self.check(entries[0], {
             'USD': (False, None, ["Too many missing numbers for currency group"])})
@@ -562,7 +574,7 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
     def test_incomplete_impossible_miss_same_posting(self, entries, _, options_map):
         """
         2015-10-02 *
-          Assets:Account   HOOL {USD}
+          Assets:Account            HOOL {USD}
           Assets:Other      -100.00 USD
         """
         self.check(entries[0], {
@@ -781,6 +793,94 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
             'USD': (False, None, ["Too many missing numbers for currency group"])
         })
 
+    @parser.parse_doc(allow_incomplete=True)
+    def test_incomplete_underdefined2(self, entries, _, options_map):
+        """
+        1997-03-16 * "Transfer"
+          Assets:CA:Life:RRSP:Cash    2000 CAD
+          Assets:CA:Pop:Checking
+          Assets:CA:CRA:PreTaxRSP:Allowed  -2000 RSPCAD
+          Assets:CA:CRA:PreTaxRSP:Unused    2000 RSPCAD
+        """
+        # Interpolation and booking both required... impossible.
+        self.check(entries[0], {
+            'CAD': (True, """
+              1997-03-16 *
+                Assets:CA:Life:RRSP:Cash    2000 CAD
+                Assets:CA:Pop:Checking     -2000 CAD
+            """, None),
+            'RSPCAD': (False, """
+              1997-03-16 *
+                Assets:CA:CRA:PreTaxRSP:Allowed  -2000 RSPCAD
+                Assets:CA:CRA:PreTaxRSP:Unused    2000 RSPCAD
+            """, None)})
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_auto_posting__superfluous_unused(self, entries, errors, _):
+        """
+          2000-01-01 open Assets:Account1
+          2000-01-01 open Assets:Account2
+
+          2016-04-23 * ""
+            Assets:Account1     0.00 USD
+            Assets:Account2
+        """
+        self.check(entries[-1], {
+            'USD': (False, """
+              2016-04-23 * ""
+                Assets:Account1     0.00 USD
+            """, None)})
+        # FIXME: This ought to return a "Superfluous posting" error for Account2 only.
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_auto_posting__superfluous_unneeded(self, entries, errors, _):
+        """
+          2000-01-01 open Assets:Account1
+          2000-01-01 open Assets:Account2
+          2000-01-01 open Assets:Account3
+
+          2016-04-23 * ""
+            Assets:Account1   100.00 USD
+            Assets:Account2  -100.00 USD
+            Assets:Account3
+        """
+        self.check(entries[-1], {
+            'USD': (False, """
+              2016-04-23 * ""
+                Assets:Account1   100.00 USD
+                Assets:Account2  -100.00 USD
+            """, None)})
+        # FIXME: This ought to return a "Superfluous posting" error for Account3 only.
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_auto_posting__superfluous_needed_one_side(self, entries, errors, _):
+        """
+          2000-01-01 open Assets:Account1
+          2000-01-01 open Assets:Account2
+          2000-01-01 open Assets:Account3
+          2000-01-01 open Assets:Account4
+          2000-01-01 open Assets:Account5
+
+          2016-04-23 * ""
+            Assets:Account1   100.00 USD
+            Assets:Account2  -100.00 USD
+            Assets:Account3   100.00 CAD
+            Assets:Account4   -99.00 CAD
+            Assets:Account5
+        """
+        self.check(entries[-1], {
+            'USD': (False, """
+              2016-04-23 * ""
+                Assets:Account1   100.00 USD
+                Assets:Account2  -100.00 USD
+            """, None),
+            'CAD': (True, """
+              2016-04-23 * ""
+                Assets:Account3   100.00 CAD
+                Assets:Account4   -99.00 CAD
+                Assets:Account5    -1.00 CAD
+            """, None)})
+
 
 class TestComputeCostNumber(unittest.TestCase):
 
@@ -846,7 +946,7 @@ class TestComputeCostNumber(unittest.TestCase):
 class TestBookReductions(unittest.TestCase):
     "Tests the booking of inventory reductions."
 
-    maxDiff = 8192
+    maxDiff = 16384
 
     @parser.parse_doc(allow_incomplete=True)
     def test_augment__from_empty__no_cost(self, entries, _, __):
@@ -881,25 +981,35 @@ class TestBookReductions(unittest.TestCase):
             self.assertFalse(errors)
             self.assertEqual(len(postings), len(entry.postings))
             self.assertEqual(
-                position.Cost(D('100.00'), 'USD', datetime.date(2015, 10, 1), None),
+                position.CostSpec(D('100.00'), None, 'USD',
+                                  datetime.date(2015, 10, 1), None, False),
                 postings[0].cost)
 
     @parser.parse_doc(allow_incomplete=True)
-    def test_augment__from_empty__incomplete_cost(self, entries, _, __):
+    def test_augment__from_empty__incomplete_cost__empty(self, entries, _, __):
         """
-        2015-10-01 * "At cost, incomplete"
-          Assets:Account3          1 HOOL {USD}
-          Assets:Other
-
         2015-10-01 * "At cost, no currency"
           Assets:Account3          1 HOOL {}
           Assets:Other
         """
-        for entry in entries:
-            postings, errors = booking_full.book_reductions(entry, {})
-            self.assertEqual(entry.postings[1:], postings)
-            self.assertEqual(1, len(errors))
-            self.assertRegex(errors[0].message, 'Augmenting lot is incomplete')
+        postings, errors = booking_full.book_reductions(entries[0], {})
+        self.assertFalse(errors)
+        self.assertEqual(
+            CostSpec(MISSING, None, MISSING, datetime.date(2015, 10, 1), None, False),
+            postings[0].cost)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_augment__from_empty__incomplete_cost__with_currency(self, entries, _, __):
+        """
+        2015-10-01 * "At cost, incomplete"
+          Assets:Account3          1 HOOL {USD}
+          Assets:Other
+        """
+        postings, errors = booking_full.book_reductions(entries[0], {})
+        self.assertFalse(errors)
+        self.assertEqual(
+            CostSpec(MISSING, None, 'USD', datetime.date(2015, 10, 1), None, False),
+            postings[0].cost)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_augment__no_cost(self, entries, _, __):
@@ -916,6 +1026,11 @@ class TestBookReductions(unittest.TestCase):
             postings, errors = booking_full.book_reductions(entry, {})
             self.assertFalse(errors)
             self.assertEqual(postings, entry.postings)
+
+
+
+
+    # FIXME: Rewrite these tests.
 
     def book_reductions(self, entries):
         balances = collections.defaultdict(inventory.Inventory)
