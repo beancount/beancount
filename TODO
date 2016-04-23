@@ -1199,6 +1199,16 @@ http://furius.ca/beancount/doc/proposal-query
     Maybe use org-mode or other separators as a way to segregate groups of
     transactions.
 
+** Regression Testing Improvements
+
+  - Make example and real importers into properly named modules, not package
+    __init__.py files and move tests to their own _test.py files, as per usual.
+
+  - Improve the regression testing utility function: Allow the _test files to
+    source outside of the same directory, but keep it easy to do so as well.
+    Some people may want to share their importers yet test on real data too.
+    This should be well supported. (For 'beansoup'.)
+
 ** Future Features
 
   - Implement formatting that's "minimum most-common" and use it on the
