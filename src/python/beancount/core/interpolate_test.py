@@ -459,6 +459,37 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
         self.assertEqual(1, len(errors))
         self.assertRegex(errors[0].message, 'does not balance')
 
+    @loader.load_doc(expect_errors=True)
+    def test_balance_incomplete_postings__superfluous_unneeded(self, entries, errors, _):
+        """
+          2000-01-01 open Assets:Account1
+          2000-01-01 open Assets:Account2
+          2000-01-01 open Assets:Account3
+
+          2016-04-23 * ""
+            Assets:Account1   100.00 USD
+            Assets:Account2  -100.00 USD
+            Assets:Account3
+        """
+        # Note: this raises an error because the auto-posting is superfluous.
+        self.assertEqual(1, len(errors))
+        self.assertRegex(errors[0].message, 'Useless auto-posting')
+        self.assertEqual(3, len(entries[-1].postings))
+
+    @loader.load_doc()
+    def test_balance_incomplete_postings__superfluous_unused(self, entries, errors, _):
+        """
+          2000-01-01 open Assets:Account1
+          2000-01-01 open Assets:Account2
+
+          2016-04-23 * ""
+            Assets:Account1     0.00 USD
+            Assets:Account2
+        """
+        # This does not raise an error, but it ought to; do this in the full
+        # booking method since we're deprecating this code.
+        self.assertEqual(1, len(entries[-1].postings))
+
 
 class TestComputeBalance(unittest.TestCase):
 
