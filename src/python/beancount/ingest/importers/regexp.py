@@ -29,7 +29,7 @@ class RegexpImporterMixin:
         super().__init__()
         assert isinstance(regexps, (list, type(None)))
 
-        self.regexps = [(regexp, re.compile(regexp, re.DOTALL))
+        self.regexps = [(regexp, re.compile(regexp, re.DOTALL|re.IGNORECASE|re.MULTILINE))
                         for regexp in regexps]
 
     def get_text(self, file):

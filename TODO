@@ -1211,6 +1211,10 @@ http://furius.ca/beancount/doc/proposal-query
 
 ** Future Features
 
+  - Make beancount.ingest.importers.regexp.RegexpImporterMixin accept a
+    "convert" optional argument that would be called by its get_text() method,
+    and would allow us not to have to derive in order to support non-text files.
+
   - Implement formatting that's "minimum most-common" and use it on the
     importer's output, it would really improve the output of it, which is
     currently literal, e.g., it just prints what's from the file, at that
