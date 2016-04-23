@@ -417,6 +417,8 @@ def book_reductions(entry, balances):
         errors: A list of FullBookingError instances, if there were errors.
 
     """
+    #pr = print
+    pr = lambda *args: None
     errors = []
 
     empty = inventory.Inventory()
@@ -442,9 +444,53 @@ def book_reductions(entry, balances):
         else:
             # This posting is held at cost; figure out if it's a reduction or an
             # augmentation.
+            #
+            # FIXME: Remove the call to is_reduced_by() and do this in the following loop.
             if balance is not None and balance.is_reduced_by(units):
                 # This posting is a reduction.
-                raise NotImplementedError
+
+                # Match the positions.
+                cost_number = compute_cost_number(costspec, units)
+                matches = []
+                pr('----------------------------------------')
+                pr('balance', balance)
+                for position in balance:
+                    pr('position', position)
+                    if (units.currency and
+                        position.units.currency != units.currency):
+                        pr('a')
+                        continue
+                    if (cost_number is not None and
+                        position.cost.number != cost_number):
+                        pr('b')
+                        continue
+                    if (isinstance(costspec.currency, str) and
+                        position.cost.currency != costspec.currency):
+                        pr('c')
+                        continue
+                    if (costspec.date and
+                        position.cost.date != costspec.date):
+                        pr('d')
+                        continue
+                    if (costspec.label and
+                        position.cost.label != costspec.label):
+                        pr('e')
+                        continue
+                    matches.append(position)
+
+                # Check for ambiguous matches.
+                if len(matches) != 1:
+                    # FIXME: Handle this later by calling the booking resolution method.
+                    pr('@@', len(matches))
+                    for posting in matches:
+                        pr('@', posting)
+                    raise ValueError("Ambiguous matches")
+
+                # Replace the posting's units and cost values.
+                match_position = matches[0]
+                posting = posting._replace(
+                    units=Amount(units.number, match_position.units.currency),
+                    cost=match_position.cost)
             else:
                 # This posting is an augmentatino.
                 cost = compute_cost(costspec, units, entry.date)
@@ -461,6 +507,35 @@ def book_reductions(entry, balances):
             new_postings.append(posting)
 
     return new_postings, errors
+
+
+def compute_cost_number(costspec, units):
+    """Given a CostSpec, return the cost number, if possible to compute.
+
+    Args:
+      costspec: A parsed instance of CostSpec.
+      units: An instance of Amount for the units of the position.
+    Returns:
+      If it is not possible to calculate the cost, return None.
+      Otherwise, returns a Decimal instance, the per-unit cost.
+    """
+    number_per = costspec.number_per
+    number_total = costspec.number_total
+    if MISSING in (number_per, number_total):
+        return None
+    if number_total is not None:
+        # Compute the per-unit cost if there is some total cost
+        # component involved.
+        cost_total = number_total
+        units_number = units.number
+        if number_per is not None:
+            cost_total += number_per * units_number
+        unit_cost = cost_total / abs(units_number)
+    elif number_per is None:
+        return None
+    else:
+        unit_cost = number_per
+    return unit_cost
 
 
 def compute_cost(costspec, units, date):

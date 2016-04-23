@@ -1020,6 +1020,135 @@ class TestBookReductions(unittest.TestCase):
                                                '2 HOOL {100.00 USD, 2015-10-01, "lot1"}'),
                          balances['Assets:Account1'])
 
+    @parser.parse_doc(allow_incomplete=True)
+    def test_reduce__no_cost(self, entries, _, __):
+        """
+        2015-10-01 * "Held-at-cost, positive"
+          Assets:Account1          10 USD
+          Assets:Other1           -10 USD
+
+        2015-10-01 * "Held-at-cost, positive, same cost"
+          Assets:Account1         -1 USD
+          Assets:Other2            1 USD
+        """
+        balances = self.book_reductions(entries)
+        self.assertEqual(inventory.from_string('9 USD'),
+                         balances['Assets:Account1'])
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_reduce__same_cost(self, entries, _, __):
+        """
+        2015-10-01 * "Held-at-cost, positive"
+          Assets:Account1          3 HOOL {100.00 USD}
+          Assets:Other       -300.00 USD
+
+        2015-10-02 * "Held-at-cost, positive, same cost"
+          Assets:Account1         -1 HOOL {100.00 USD}
+          Assets:Other        100.00 USD
+        """
+        balances = self.book_reductions(entries)
+        self.assertEqual(inventory.from_string('2 HOOL {100.00 USD, 2015-10-01}'),
+                         balances['Assets:Account1'])
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_reduce__any_spec(self, entries, _, __):
+        """
+        2015-10-01 * "Held-at-cost, positive"
+          Assets:Account1          3 HOOL {100.00 USD}
+          Assets:Other       -300.00 USD
+
+        2015-10-02 * "Held-at-cost, positive, same cost"
+          Assets:Account1         -1 HOOL {}
+          Assets:Other        100.00 USD
+        """
+        balances = self.book_reductions(entries)
+        self.assertEqual(inventory.from_string('2 HOOL {100.00 USD, 2015-10-01}'),
+                         balances['Assets:Account1'])
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_reduce__same_cost__per(self, entries, _, __):
+        """
+        2015-10-01 * "Held-at-cost, positive"
+          Assets:Account1          3 HOOL {100.00 USD}
+          Assets:Other       -300.00 USD
+
+        2015-10-02 * "Held-at-cost, positive, same cost"
+          Assets:Account1         -1 HOOL {100.00}
+          Assets:Other        100.00 USD
+        """
+        balances = self.book_reductions(entries)
+        self.assertEqual(inventory.from_string('2 HOOL {100.00 USD, 2015-10-01}'),
+                         balances['Assets:Account1'])
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_reduce__same_cost__total(self, entries, _, __):
+        """
+        2015-10-01 * "Held-at-cost, positive"
+          Assets:Account1          3 HOOL {100.00 USD}
+          Assets:Other       -300.00 USD
+
+        2015-10-02 * "Held-at-cost, positive, same cost"
+          Assets:Account1         -2 HOOL {# 100.00 USD}
+          Assets:Other        200.00 USD
+        """
+        balances = self.book_reductions(entries)
+        self.assertEqual(inventory.from_string('1 HOOL {100.00 USD, 2015-10-01}'),
+                         balances['Assets:Account1'])
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_reduce__same_currency(self, entries, _, __):
+        """
+        2015-10-01 * "Held-at-cost, positive"
+          Assets:Account1          3 HOOL {100.00 USD}
+          Assets:Other       -300.00 USD
+
+        2015-10-02 * "Held-at-cost, positive, same cost"
+          Assets:Account1         -1 HOOL {USD}
+          Assets:Other        100.00 USD
+        """
+        balances = self.book_reductions(entries)
+        self.assertEqual(inventory.from_string('2 HOOL {100.00 USD, 2015-10-01}'),
+                         balances['Assets:Account1'])
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_reduce__same_date(self, entries, _, __):
+        """
+        2015-10-01 * "Held-at-cost, positive"
+          Assets:Account1          3 HOOL {100.00 USD}
+          Assets:Other       -300.00 USD
+
+        2015-10-02 * "Held-at-cost, positive, same cost"
+          Assets:Account1         -1 HOOL {2015-10-01}
+          Assets:Other        100.00 USD
+        """
+        balances = self.book_reductions(entries)
+        self.assertEqual(inventory.from_string('2 HOOL {100.00 USD, 2015-10-01}'),
+                         balances['Assets:Account1'])
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_reduce__same_label(self, entries, _, __):
+        """
+        2015-10-01 * "Held-at-cost, positive"
+          Assets:Account1          3 HOOL {100.00 USD, "6e425dd7b820"}
+          Assets:Other       -300.00 USD
+
+        2015-10-02 * "Held-at-cost, positive, same cost"
+          Assets:Account1         -1 HOOL {"6e425dd7b820"}
+          Assets:Other        100.00 USD
+        """
+        balances = self.book_reductions(entries)
+        self.assertEqual(
+            inventory.from_string('2 HOOL {100.00 USD, 2015-10-01, "6e425dd7b820"}'),
+            balances['Assets:Account1'])
+
+
+
+
+
+
+
+
+
 
 class TestBooking(unittest.TestCase):
     "Tests the booking & interpolation process."
