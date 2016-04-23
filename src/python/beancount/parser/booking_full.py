@@ -76,6 +76,7 @@ import copy
 import logging
 import pprint
 
+# FIXME: Remove this and use that from misc_utils.
 # pylint: disable=invalid-name
 try:
     import enum
@@ -93,7 +94,6 @@ from beancount.core import amount
 from beancount.core import position
 from beancount.core import inventory
 from beancount.core import interpolate
-
 
 
 FullBookingError = collections.namedtuple('FullBookingError', 'source message entry')
@@ -442,12 +442,12 @@ def book_reductions(entry, balances):
         else:
             # This posting is held at cost; figure out if it's a reduction or an
             # augmentation.
-            if (balance is not None and balance.is_reduced_by(units)):
+            if balance is not None and balance.is_reduced_by(units):
                 # This posting is a reduction.
                 raise NotImplementedError
             else:
                 # This posting is an augmentatino.
-                cost = compute_cost(costspec, units)
+                cost = compute_cost(costspec, units, entry.date)
                 if cost is MISSING:
                     errors.append(
                         FullBookingError(entry.meta, "Augmenting lot is incomplete", entry))
@@ -463,12 +463,14 @@ def book_reductions(entry, balances):
     return new_postings, errors
 
 
-def compute_cost(costspec, units):
+def compute_cost(costspec, units, date):
     """Given a CostSpec, calculate the total cost.
 
     Args:
       costspec: A parsed instance of CostSpec.
       units: An instance of Amount for the units of the position.
+      date: A datetime.date instance, the date on the entry, in case the CostSpec
+        has no date.
     Returns:
       If it is not possible to calculate the cost, return MISSING.
       Otherwise, returns a Decimal instance, the per-unit cost.
@@ -489,9 +491,11 @@ def compute_cost(costspec, units):
         return MISSING
     else:
         unit_cost = number_per
+    if not costspec.currency:
+        return MISSING
     return position.Cost(unit_cost,
                          costspec.currency,
-                         costspec.date,
+                         costspec.date or date,
                          costspec.label)
 
 

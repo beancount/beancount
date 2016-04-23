@@ -1,5 +1,6 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import collections
 import datetime
 import textwrap
 import unittest
@@ -783,47 +784,63 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
 
 class TestComputeCostNumber(unittest.TestCase):
 
+    date = datetime.date(2016, 1, 1)
+
     def test_missing_per(self):
         self.assertEqual(
             MISSING,
             booking_full.compute_cost(
                 position.CostSpec(MISSING, D('1'), 'USD', None, None, False),
-                amount.from_string('12 HOOL')))
+                amount.from_string('12 HOOL'),
+                self.date))
 
     def test_missing_total(self):
         self.assertEqual(
             MISSING,
             booking_full.compute_cost(
                 position.CostSpec(D('1'), MISSING, 'USD', None, None, False),
-                amount.from_string('12 HOOL')))
+                amount.from_string('12 HOOL'),
+                self.date))
 
     def test_both_none(self):
         self.assertEqual(
             MISSING,
             booking_full.compute_cost(
                 position.CostSpec(None, None, 'USD', None, None, False),
-                amount.from_string('12 HOOL')))
+                amount.from_string('12 HOOL'),
+                self.date))
 
     def test_total_only(self):
         self.assertEqual(
-            position.Cost(D('4'), 'USD', None, None),
+            position.Cost(D('4'), 'USD', self.date, None),
             booking_full.compute_cost(
                 position.CostSpec(None, D('48'), 'USD', None, None, False),
-                amount.from_string('12 HOOL')))
+                amount.from_string('12 HOOL'),
+                self.date))
 
     def test_per_only(self):
         self.assertEqual(
-            position.Cost(D('4'), 'USD', None, None),
+            position.Cost(D('4'), 'USD', self.date, None),
             booking_full.compute_cost(
                 position.CostSpec(D('4'), None, 'USD', None, None, False),
-                amount.from_string('12 HOOL')))
+                amount.from_string('12 HOOL'),
+                self.date))
 
     def test_both(self):
         self.assertEqual(
-            position.Cost(D('3.5'), 'USD', None, None),
+            position.Cost(D('3.5'), 'USD', self.date, None),
             booking_full.compute_cost(
-                position.CostSpec(D('3'), D('6'), 'USD', None, None, False),
-                amount.from_string('12 HOOL')))
+                position.CostSpec(D('3'), D('6'), 'USD', self.date, None, False),
+                amount.from_string('12 HOOL'),
+                self.date))
+
+    def test_no_currency(self):
+        self.assertEqual(
+            MISSING,
+            booking_full.compute_cost(
+                position.CostSpec(D('3'), D('6'), None, self.date, None, False),
+                amount.from_string('12 HOOL'),
+                self.date))
 
 
 class TestBookReductions(unittest.TestCase):
@@ -832,7 +849,7 @@ class TestBookReductions(unittest.TestCase):
     maxDiff = 8192
 
     @parser.parse_doc(allow_incomplete=True)
-    def test_augment_empty(self, entries, _, __):
+    def test_augment__from_empty__no_cost(self, entries, _, __):
         """
         2015-10-01 * "Regular currency, positive"
           Assets:Account1          1 USD
@@ -849,7 +866,7 @@ class TestBookReductions(unittest.TestCase):
             self.assertEqual(None, postings[0].cost)
 
     @parser.parse_doc(allow_incomplete=True)
-    def test_augment_empty_at_cost(self, entries, _, __):
+    def test_augment__from_empty__at_cost(self, entries, _, __):
         """
         2015-10-01 * "At cost, positive"
           Assets:Account3          1 HOOL {100.00 USD}
@@ -867,7 +884,7 @@ class TestBookReductions(unittest.TestCase):
                              postings[0].cost)
 
     @parser.parse_doc(allow_incomplete=True)
-    def test_augment_empty_incomplete_cost(self, entries, _, __):
+    def test_augment__from_empty__incomplete_cost(self, entries, _, __):
         """
         2015-10-01 * "At cost, incomplete"
           Assets:Account3          1 HOOL {USD}
@@ -883,11 +900,124 @@ class TestBookReductions(unittest.TestCase):
             self.assertEqual(1, len(errors))
             self.assertRegex(errors[0].message, 'Augmenting lot is incomplete')
 
+    @parser.parse_doc(allow_incomplete=True)
+    def test_augment__no_cost(self, entries, _, __):
+        """
+        2015-10-01 * "Regular currency, positive, from empty"
+          Assets:Account1          1 USD
+          Assets:Other
 
+        2015-10-01 * "Regular currency, positive, not empty"
+          Assets:Account1          2 USD
+          Assets:Other
+        """
+        for entry in entries:
+            postings, errors = booking_full.book_reductions(entry, {})
+            self.assertFalse(errors)
+            self.assertEqual(postings, entry.postings)
 
+    def book_reductions(self, entries):
+        balances = collections.defaultdict(inventory.Inventory)
+        for entry in entries:
+            postings, errors = booking_full.book_reductions(entry, balances)
+            for posting in postings:
+                balances[posting.account].add_position(posting)
+        return balances
 
+    @parser.parse_doc(allow_incomplete=True)
+    def test_augment__at_cost__same(self, entries, _, __):
+        """
+        2015-10-01 * "Held-at-cost, positive"
+          Assets:Account1          1 HOOL {100.00 USD}
+          Assets:Other          -100.00 USD
 
+        2015-10-01 * "Held-at-cost, positive, same cost"
+          Assets:Account1          2 HOOL {100.00 USD}
+          Assets:Other          -200.00 USD
+        """
+        balances = self.book_reductions(entries)
+        self.assertEqual(inventory.from_string('3 HOOL {100.00 USD, 2015-10-01}'),
+                         balances['Assets:Account1'])
 
+    @parser.parse_doc(allow_incomplete=True)
+    def test_augment__at_cost__different_date(self, entries, _, __):
+        """
+        2015-10-01 * "Held-at-cost, positive"
+          Assets:Account1          1 HOOL {100.00 USD}
+          Assets:Other          -100.00 USD
+
+        2015-10-02 * "Held-at-cost, positive, same cost"
+          Assets:Account1          2 HOOL {100.00 USD}
+          Assets:Other          -200.00 USD
+        """
+        balances = self.book_reductions(entries)
+        self.assertEqual(inventory.from_string('1 HOOL {100.00 USD, 2015-10-01}, '
+                                               '2 HOOL {100.00 USD, 2015-10-02}'),
+                         balances['Assets:Account1'])
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_augment__at_cost__different_date__overridden(self, entries, _, __):
+        """
+        2015-10-01 * "Held-at-cost, positive"
+          Assets:Account1          1 HOOL {100.00 USD}
+          Assets:Other          -100.00 USD
+
+        2015-10-01 * "Held-at-cost, positive, same cost"
+          Assets:Account1          2 HOOL {100.00 USD, 2015-10-02}
+          Assets:Other          -200.00 USD
+        """
+        balances = self.book_reductions(entries)
+        self.assertEqual(inventory.from_string('1 HOOL {100.00 USD, 2015-10-01}, '
+                                               '2 HOOL {100.00 USD, 2015-10-02}'),
+                         balances['Assets:Account1'])
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_augment__at_cost__different_cost(self, entries, _, __):
+        """
+        2015-10-01 * "Held-at-cost, positive"
+          Assets:Account1          1 HOOL {100.00 USD}
+          Assets:Other          -100.00 USD
+
+        2015-10-01 * "Held-at-cost, positive, same cost"
+          Assets:Account1          2 HOOL {101.00 USD}
+          Assets:Other          -204.00 USD
+        """
+        balances = self.book_reductions(entries)
+        self.assertEqual(inventory.from_string('1 HOOL {100.00 USD, 2015-10-01}, '
+                                               '2 HOOL {101.00 USD, 2015-10-01}'),
+                         balances['Assets:Account1'])
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_augment__at_cost__different_currency(self, entries, _, __):
+        """
+        2015-10-01 * "Held-at-cost, positive"
+          Assets:Account1          1 HOOL {100.00 USD}
+          Assets:Other          -100.00 USD
+
+        2015-10-01 * "Held-at-cost, positive, same cost"
+          Assets:Account1          2 HOOL {100.00 CAD}
+          Assets:Other          -204.00 USD
+        """
+        balances = self.book_reductions(entries)
+        self.assertEqual(inventory.from_string('1 HOOL {100.00 USD, 2015-10-01}, '
+                                               '2 HOOL {100.00 CAD, 2015-10-01}'),
+                         balances['Assets:Account1'])
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_augment__at_cost__different_label(self, entries, _, __):
+        """
+        2015-10-01 * "Held-at-cost, positive"
+          Assets:Account1          1 HOOL {100.00 USD}
+          Assets:Other          -100.00 USD
+
+        2015-10-01 * "Held-at-cost, positive, same cost"
+          Assets:Account1          2 HOOL {100.00 USD, "lot1"}
+          Assets:Other          -204.00 USD
+        """
+        balances = self.book_reductions(entries)
+        self.assertEqual(inventory.from_string('1 HOOL {100.00 USD, 2015-10-01}, '
+                                               '2 HOOL {100.00 USD, 2015-10-01, "lot1"}'),
+                         balances['Assets:Account1'])
 
 
 class TestBooking(unittest.TestCase):
