@@ -51,16 +51,10 @@ from beancount.core.position import Cost
 from beancount.core.position import Position
 from beancount.core.position import from_string as position_from_string
 from beancount.core.display_context import DEFAULT_FORMATTER
-
-# pylint: disable=invalid-name
-try:
-    import enum
-    Enum = enum.Enum
-except ImportError:
-    Enum = object
+from beancount.utils import misc_utils
 
 
-class Booking(Enum):
+class Booking(misc_utils.Enum):
     """Result of booking a new lot to an existing inventory."""
     CREATED = 1   # A new lot was created.
     REDUCED = 2   # An existing lot was reduced.
@@ -82,6 +76,7 @@ class Inventory(list):
         Args:
           positions: A list of Position instances.
         """
+        list.__init__(self)
         if positions:
             assert isinstance(positions, list), positions
             for position in positions:
@@ -121,7 +116,6 @@ class Inventory(list):
     def __bool__(self):
         # Don't define this, be explicit by using is_empty() instead.
         raise NotImplementedError
-        return bool(self)
 
     def __copy__(self):
         """A shallow copy of this inventory object. All the positions contained
@@ -142,7 +136,7 @@ class Inventory(list):
         """
         return sorted(self) == sorted(other)
 
-    def is_small(self, tolerances, default_tolerances={}):
+    def is_small(self, tolerances, default_tolerances=None):
         """Return true if all the positions in the inventory are small.
 
         Args:
@@ -151,6 +145,8 @@ class Inventory(list):
         Returns:
           A boolean.
         """
+        if default_tolerances is None:
+            default_tolerances = {}
         if isinstance(tolerances, dict):
             for position in self:
                 tolerance = get_tolerance(tolerances, default_tolerances,

@@ -15,7 +15,6 @@ from beancount.core.data import Transaction
 from beancount.core.data import Posting
 from beancount.core.data import Decimal
 from beancount.core.amount import Amount
-from beancount.core.position import Position
 from beancount.core import data
 
 
@@ -112,6 +111,7 @@ def merge(entries, prototype_txn):
     for posting, number in sorted_items:
         units = Amount(number, posting.units.currency)
         new_entry.postings.append(
-            Posting(posting.account, units, posting.cost, posting.price, posting.flag, posting.meta))
+            Posting(posting.account, units, posting.cost, posting.price,
+                    posting.flag, posting.meta))
 
     return new_entry

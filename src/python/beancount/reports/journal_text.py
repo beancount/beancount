@@ -84,7 +84,6 @@ class AmountColumnSizer:
           fields.
         """
         return ('{{0:>{width:d}.{precision:d}f}} {{1:<{currency_width}}}').format(
-            prefix=self.prefix,
             width=1 + self.get_number_width() + 1 + precision,
             precision=precision,
             currency_width=self.max_currency_width)

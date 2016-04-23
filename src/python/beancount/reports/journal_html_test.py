@@ -91,20 +91,18 @@ class TestJournalRender(unittest.TestCase):
     def test_html_entries_table_with_balance(self):
         oss = io.StringIO()
         formatter = html_formatter.HTMLFormatter(display_context.DEFAULT_DISPLAY_CONTEXT)
-        result = journal_html.html_entries_table_with_balance(
+        journal_html.html_entries_table_with_balance(
             oss, self.real_account.txn_postings, formatter, True)
         html = oss.getvalue()
-        self.assertTrue(result is None)
         self.assertTrue(isinstance(html, str))
         self.assertRegex(html, '<table')
 
     def test_html_entries_table(self):
         oss = io.StringIO()
         formatter = html_formatter.HTMLFormatter(display_context.DEFAULT_DISPLAY_CONTEXT)
-        result = journal_html.html_entries_table_with_balance(
+        journal_html.html_entries_table_with_balance(
             oss, self.real_account.txn_postings, formatter, True)
         html = oss.getvalue()
-        self.assertTrue(result is None)
         self.assertTrue(isinstance(html, str))
         self.assertRegex(html, '<table')
 

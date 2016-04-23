@@ -14,7 +14,7 @@ from beancount.core import position
 from beancount.core import amount
 from beancount.core import interpolate
 from beancount.core import display_context
-from beancount.reports import report
+from beancount.reports import base
 
 
 ROUNDING_ACCOUNT = 'Equity:Rounding'
@@ -127,7 +127,7 @@ def split_currency_conversions(entry):
     return converted, new_entries
 
 
-class LedgerReport(report.Report):
+class LedgerReport(base.Report):
     """Print out the entries in a format that can be parsed by Ledger."""
 
     names = ['ledger']
@@ -270,7 +270,7 @@ class LedgerPrinter:
             ';; Query: {e.date:%Y/%m/%d} "{e.name}" "{e.query_string}"\n'.format(e=entry))
 
 
-class HLedgerReport(report.Report):
+class HLedgerReport(base.Report):
     """Print out the entries in a format that can be parsed by HLedger."""
 
     names = ['hledger']
@@ -285,8 +285,6 @@ class HLedgerReport(report.Report):
 
 class HLedgerPrinter(LedgerPrinter):
     "Multi-method for printing directives in HLedger format."
-
-    # pylint: disable=invalid-name
 
     def Posting(self, posting, entry, oss):
         flag = '{} '.format(posting.flag) if posting.flag else ''

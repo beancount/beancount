@@ -1,7 +1,6 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import datetime
-import re
 import logging
 import textwrap
 import sys

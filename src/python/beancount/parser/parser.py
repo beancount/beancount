@@ -125,8 +125,11 @@ from beancount.core.number import MISSING
 from beancount.parser.grammar import ParserError
 from beancount.parser.grammar import ParserSyntaxError
 from beancount.parser.grammar import DeprecatedError
-# pylint: disable=unused-import
-ParserError, ParserSyntaxError, DeprecatedError # pyflakes
+
+
+# disable pyflakes
+# pylint: disable=pointless-statement
+ParserError, ParserSyntaxError, DeprecatedError
 
 
 # When importing the module, always check that the compiled source matched the

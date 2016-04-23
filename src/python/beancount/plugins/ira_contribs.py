@@ -88,7 +88,6 @@ from beancount.core.number import MISSING
 from beancount.core import data
 from beancount.core import account_types
 from beancount.core import amount
-from beancount.core import position
 from beancount.parser import printer
 
 
@@ -113,6 +112,9 @@ def add_ira_contribs(entries, options_map, config):
       A tuple of entries and errors.
     """
     # Parse and extract configuration values.
+    # FIXME: Use ast.literal_eval() here; you need to convert this code and the getters.
+    # FIXME: Also, don't raise a RuntimeError, return an error object; review
+    # this for all the plugins.
     config_obj = eval(config, {}, {})
     if not isinstance(config_obj, dict):
         raise RuntimeError("Invalid plugin configuration: should be a single dict.")

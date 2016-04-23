@@ -8,13 +8,11 @@ currency:
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
-# Note: this file is mirrorred into ledgerhub. Relative imports only.
 import re
+import warnings
 
-# Import object to format numbers at specific precisions.
 from beancount.core.display_context import DEFAULT_FORMATTER
 from beancount.core.number import ZERO
-from beancount.core.number import MISSING
 from beancount.core.number import Decimal
 from beancount.core import number
 
@@ -22,8 +20,6 @@ from beancount.core import number
 #,-----------------------------------------------------------------------------.
 # Temporary forwarding of number functions to the number module.
 # IMPORTANT/FIXME: This will get removed after August 2015.
-import warnings
-
 ONE = number.ONE
 HALF = number.HALF
 decimal = number.decimal  # pylint: disable=invalid-name
@@ -41,7 +37,6 @@ def round_to(number, increment):
 
 _D = number.D
 #`-----------------------------------------------------------------------------'
-
 
 
 # A regular expression to match the name of a currency.
@@ -167,7 +162,7 @@ def amount_sortkey(amount):
     """
     return (amount.currency, amount.number)
 
-def amount_mult(amount, number):
+def mul(amount, number):
     """Multiply the given amount by a number.
 
     Args:
@@ -182,7 +177,7 @@ def amount_mult(amount, number):
         "Number is not a Decimal instance: {}".format(amount.number))
     return Amount(amount.number * number, amount.currency)
 
-def amount_div(amount, number):
+def div(amount, number):
     """Divide the given amount by a number.
 
     Args:
@@ -197,7 +192,27 @@ def amount_div(amount, number):
         "Number is not a Decimal instance: {}".format(amount.number))
     return Amount(amount.number / number, amount.currency)
 
-def amount_sub(amount1, amount2):
+def add(amount1, amount2):
+    """Add the given amounts with the same currency.
+
+    Args:
+      amount1: An instance of Amount.
+      amount2: An instance of Amount.
+    Returns:
+      An instance of Amount, with the difference between the two amount's
+      numbers, in the same currency.
+    """
+    assert isinstance(amount1.number, Decimal), (
+        "Amount1's number is not a Decimal instance: {}".format(amount1.number))
+    assert isinstance(amount2.number, Decimal), (
+        "Amount2's number is not a Decimal instance: {}".format(amount2.number))
+    if amount1.currency != amount2.currency:
+        raise ValueError(
+            "Unmatching currencies for operation on {} and {}".format(
+                amount1, amount2))
+    return Amount(amount1.number + amount2.number, amount1.currency)
+
+def sub(amount1, amount2):
     """Subtract the given amounts with the same currency.
 
     Args:
@@ -220,3 +235,12 @@ def amount_sub(amount1, amount2):
 
 A = from_string = Amount.from_string  # pylint: disable=invalid-name
 NULL_AMOUNT = Amount(ZERO, '')
+
+
+#,-----------------------------------------------------------------------------.
+# Support for deprecated API.
+amount_add = add
+amount_sub = sub
+amount_mul = mul
+amount_div = div
+#`-----------------------------------------------------------------------------'

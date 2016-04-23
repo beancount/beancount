@@ -9,13 +9,12 @@ import datetime
 import collections
 import re
 
-# Note: this file is mirrorred into ledgerhub. Relative imports only.
 from beancount.core.number import ZERO
 from beancount.core.number import Decimal
 from beancount.core.number import NUMBER_RE
 from beancount.core.number import D
 from beancount.core.amount import Amount
-from beancount.core.amount import amount_mult
+from beancount.core.amount import mul as amount_mul
 from beancount.core.amount import CURRENCY_RE
 from beancount.core.display_context import DEFAULT_FORMATTER
 
@@ -268,7 +267,7 @@ class Position:
         if cost is None:
             return self.units
         else:
-            return amount_mult(cost, self.units.number)
+            return amount_mul(cost, self.units.number)
 
     def at_cost(self):
         """Return a Position representing the cost of this position. See get_cost().
@@ -316,7 +315,7 @@ class Position:
         Returns:
           An instance of Inventory.
         """
-        return Position(amount_mult(self.units, scalar), self.cost)
+        return Position(amount_mul(self.units, scalar), self.cost)
 
     def is_negative_at_cost(self):
         """Return true if the position is held at cost and negative.

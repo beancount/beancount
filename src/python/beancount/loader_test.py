@@ -4,7 +4,6 @@ import logging
 import unittest
 import tempfile
 import textwrap
-import re
 import os
 from unittest import mock
 from os import path
@@ -105,6 +104,7 @@ class TestLoadDoc(unittest.TestCase):
         test_function = loader.load_doc(test_function)
         test_function(self)
 
+    # pylint: disable=empty-docstring
     @loader.load_doc()
     def test_load_doc_empty(self, entries, errors, options_map):
         """
@@ -381,6 +381,45 @@ class TestLoadCache(unittest.TestCase):
             # Load the root file again, make sure the cache is being hit.
             entries, errors, options_map = loader.load_file(top_filename)
             self.assertEqual(2, self.num_calls)
+
+    @mock.patch('os.remove', side_effect=OSError)
+    @mock.patch('logging.warning')
+    def test_load_cache_read_only_fs(self, remove_mock, warn_mock):
+        # Create an initial set of files and load file, thus creating a cache.
+        with test_utils.tempdir() as tmp:
+            test_utils.create_temporary_files(tmp, {
+                'apples.beancount': """
+                  2014-01-01 open Assets:Apples
+                """})
+            filename = path.join(tmp, 'apples.beancount')
+            entries, errors, options_map = loader.load_file(filename)
+            with open(filename, 'w'): pass
+            entries, errors, options_map = loader.load_file(filename)
+            self.assertEqual(1, len(warn_mock.mock_calls))
+
+    @mock.patch('beancount.loader.PICKLE_CACHE_THRESHOLD', 0.0)
+    def test_load_cache_override_filename_pattern(self):
+        orig_load_file = loader._load_file
+        prev_env = os.getenv('BEANCOUNT_LOAD_CACHE_FILENAME')
+        os.environ['BEANCOUNT_LOAD_CACHE_FILENAME'] = '__{filename}__'
+        loader.initialize()
+        try:
+            with test_utils.tempdir() as tmp:
+                test_utils.create_temporary_files(tmp, {
+                    'apples.beancount': """
+                      2014-01-01 open Assets:Apples
+                    """})
+                filename = path.join(tmp, 'apples.beancount')
+                entries, errors, options_map = loader.load_file(filename)
+                self.assertEqual({'__apples.beancount__', 'apples.beancount'},
+                                 set(os.listdir(tmp)))
+        finally:
+            # Restore pre-test values.
+            loader._load_file = orig_load_file
+            if prev_env is None:
+                del os.environ['BEANCOUNT_LOAD_CACHE_FILENAME']
+            else:
+                os.environ['BEANCOUNT_LOAD_CACHE_FILENAME'] = prev_env
 
 
 class TestEncoding(unittest.TestCase):

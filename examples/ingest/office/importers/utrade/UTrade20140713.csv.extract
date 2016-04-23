@@ -1,0 +1,63 @@
+
+2014-04-14 * "(BUY) BOUGHT +CSKO 50 @98.35" ^ut14167001
+  Assets:US:UTrade:Cash    -4925.45 USD             
+  Expenses:Financial:Fees      7.95 USD             
+  Assets:US:UTrade:CSKO          50 CSKO {98.35 USD}
+
+2014-05-08 * "(BUY) BOUGHT +HOOL 121 @79.11" ^ut12040838
+  Assets:US:UTrade:Cash    -9580.26 USD             
+  Expenses:Financial:Fees      7.95 USD             
+  Assets:US:UTrade:HOOL         121 HOOL {79.11 USD}
+
+2014-05-11 * "(BUY) BOUGHT +MSFX 104 @64.39" ^ut41579908
+  Assets:US:UTrade:Cash    -6704.51 USD             
+  Expenses:Financial:Fees      7.95 USD             
+  Assets:US:UTrade:MSFX         104 MSFX {64.39 USD}
+
+2014-05-22 * "(DIV) ORDINARY DIVIDEND~HOOL" ^ut54857517
+  Assets:US:UTrade:Cash            28.56 USD
+  Income:US:UTrade:HOOL:Dividend  -28.56 USD
+
+2014-05-23 * "(XFER) CLIENT REQUESTED ELECTRONIC FUNDING" ^ut27634682
+  Assets:US:UTrade:Cash     7148.74 USD
+  Assets:US:BofA:Checking  -7148.74 USD
+
+2014-05-25 * "(DIV) ORDINARY DIVIDEND~CSKO" ^ut31749124
+  Assets:US:UTrade:Cash            9.63 USD
+  Income:US:UTrade:CSKO:Dividend  -9.63 USD
+
+2014-05-28 * "(BUY) BOUGHT +HOOL 92 @52.10" ^ut83788120
+  Assets:US:UTrade:Cash    -4801.15 USD             
+  Expenses:Financial:Fees      7.95 USD             
+  Assets:US:UTrade:HOOL          92 HOOL {52.10 USD}
+
+2014-05-29 * "(DIV) ORDINARY DIVIDEND~HOOL" ^ut97871874
+  Assets:US:UTrade:Cash            7.49 USD
+  Income:US:UTrade:HOOL:Dividend  -7.49 USD
+
+2014-06-05 * "(DIV) ORDINARY DIVIDEND~CSKO" ^ut85665025
+  Assets:US:UTrade:Cash            16.32 USD
+  Income:US:UTrade:CSKO:Dividend  -16.32 USD
+
+2014-06-14 * "(DIV) ORDINARY DIVIDEND~HOOL" ^ut31730597
+  Assets:US:UTrade:Cash            15.60 USD
+  Income:US:UTrade:HOOL:Dividend  -15.60 USD
+
+2014-06-21 * "(BUY) BOUGHT +MSFX 101 @78.00" ^ut22346704
+  Assets:US:UTrade:Cash    -7885.95 USD             
+  Expenses:Financial:Fees      7.95 USD             
+  Assets:US:UTrade:MSFX         101 MSFX {78.00 USD}
+
+2014-06-23 * "(DIV) ORDINARY DIVIDEND~HOOL" ^ut36811051
+  Assets:US:UTrade:Cash            8.70 USD
+  Income:US:UTrade:HOOL:Dividend  -8.70 USD
+
+2014-07-01 * "(DIV) ORDINARY DIVIDEND~MSFX" ^ut30631356
+  Assets:US:UTrade:Cash            9.39 USD
+  Income:US:UTrade:MSFX:Dividend  -9.39 USD
+
+2014-07-12 * "(DIV) ORDINARY DIVIDEND~MSFX" ^ut33403638
+  Assets:US:UTrade:Cash            16.64 USD
+  Income:US:UTrade:MSFX:Dividend  -16.64 USD
+
+2014-07-13 balance Assets:US:UTrade:Cash                           3963.83 USD

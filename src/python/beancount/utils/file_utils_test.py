@@ -3,7 +3,6 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 from os import path
-import io
 import os
 import re
 import unittest

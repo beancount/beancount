@@ -24,7 +24,8 @@ class TestFileType(unittest.TestCase):
         self.check_mime_type('example.xls', 'application/vnd.ms-excel')
 
     def test_ods(self):
-        self.check_mime_type('example.ods', 'application/vnd.oasis.opendocument.spreadsheet')
+        self.check_mime_type('example.ods',
+                             'application/vnd.oasis.opendocument.spreadsheet')
 
     def test_ps(self):
         self.check_mime_type('example.ps', 'application/postscript')

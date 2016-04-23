@@ -443,7 +443,7 @@ class TestInventory(unittest.TestCase):
         inv2.add_amount(A('20 CAD'))
         inv2.add_amount(A('55 HOOL'))
 
-        inv1 + inv2
+        _ = inv1 + inv2
 
 
 class TestDefaultTolerance(unittest.TestCase):

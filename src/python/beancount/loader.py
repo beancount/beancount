@@ -49,7 +49,9 @@ DEPRECATED_MODULES = {
 
 # Filename pattern for the pickle-cache.
 PICKLE_CACHE_FILENAME = '.{filename}.picklecache'
-PICKLE_CACHE_THRESHOLD = 1.0  # Secs.
+
+# The threshold below which we don't bother creating a cache file, in seconds.
+PICKLE_CACHE_THRESHOLD = 1.0
 
 
 def load_file(filename, log_timings=None, log_errors=None, extra_validations=None,
@@ -66,11 +68,10 @@ def load_file(filename, log_timings=None, log_errors=None, extra_validations=Non
         this list of entries.
       encoding: A string or None, the encoding to decode the input filename with.
     Returns:
-      A triple of:
-        entries: A date-sorted list of entries from the file.
-        errors: A list of error objects generated while parsing and validating
-          the file.
-        options_map: A dict of the options parsed from the file.
+      A triple of (entries, errors, option_map) where "entries" is a date-sorted
+      list of entries from the file, "errors" a list of error objects generated
+      while parsing and validating the file, and "options_map", a dict of the
+      options parsed from the file.
     """
     filename = path.expandvars(path.expanduser(filename))
     if not path.isabs(filename):
@@ -105,11 +106,10 @@ def load_encrypted_file(filename, log_timings=None, log_errors=None, extra_valid
       dedent: See load_string().
       encoding: See load_string().
     Returns:
-      A triple of:
-        entries: A date-sorted list of entries from the file.
-        errors: A list of error objects generated while parsing and validating
-          the file.
-        options_map: A dict of the options parsed from the file.
+      A triple of (entries, errors, option_map) where "entries" is a date-sorted
+      list of entries from the file, "errors" a list of error objects generated
+      while parsing and validating the file, and "options_map", a dict of the
+      options parsed from the file.
     """
     contents = encryption.read_encrypted_file(filename)
     return load_string(contents,
@@ -147,7 +147,7 @@ def pickle_cache_function(pattern, time_threshold, function):
 
     Args:
       pattern: A string, the filename pattern for the pickled cache file.
-        A {filename} in it gets replaced by the input filename.
+        A {filename} in it gets replaced by the basename of the input filename.
       time_threshold: A float, the number of seconds below which we don't bother
         caching.
       function: A function object to decorate for caching.
@@ -167,18 +167,34 @@ def pickle_cache_function(pattern, time_threshold, function):
         exists = path.exists(cache_filename)
         if exists:
             with open(cache_filename, 'rb') as file:
-                result = pickle.load(file)
+                try:
+                    result = pickle.load(file)
+                except Exception as exc:
+                    # Note: Not a big fan of doing this, but here we handle all
+                    # possible exceptions because unpickling of an old or
+                    # corrupted pickle file manifests as a variety of different
+                    # exception types.
 
-            # Check that the latest timestamp has not been written after the
-            # cache file.
-            entries, errors, options_map = result
-            if not needs_refresh(options_map):
-                # All timestamps are legit; cache hit.
-                return result
+                    # The cache file is corrupted; ignore it and recompute.
+                    logging.error("Cache file is corrupted: %s; recomputing.", exc)
+                    result = None
+
+                else:
+                    # Check that the latest timestamp has not been written after the
+                    # cache file.
+                    entries, errors, options_map = result
+                    if not needs_refresh(options_map):
+                        # All timestamps are legit; cache hit.
+                        return result
 
         # We failed; recompute the value.
         if exists:
-            os.remove(cache_filename)
+            try:
+                os.remove(cache_filename)
+            except OSError as exc:
+                # Warn for errors on read-only filesystems.
+                logging.warning("Could not remove picklecache file %s: %s",
+                                cache_filename, exc)
 
         t1 = time.time()
         result = function(toplevel_filename, *args, **kw)
@@ -190,26 +206,18 @@ def pickle_cache_function(pattern, time_threshold, function):
             try:
                 with open(cache_filename, 'wb') as file:
                     pickle.dump(result, file)
-            except Exception:
-                logging.warning("Could not write to picklecache file {}".format(
-                    cache_filename))
+            except Exception as exc:
+                logging.warning("Could not write to picklecache file %s: %s",
+                                cache_filename, exc)
 
         return result
     return wrapped
 
 
 def _load_file(filename, *args, **kw):
-    """Delegate to _load. This gets conditionally advised by caching below."""
+    """Delegate to _load. Note: This gets conditionally advised by caching below."""
     return _load([(filename, True)], *args, **kw)
-
-
-# Unless an environment variable disables it, use the pickle load cache
-# automatically.
 _uncached_load_file = _load_file
-if os.getenv('BEANCOUNT_DISABLE_LOAD_CACHE') is None:
-    _load_file = pickle_cache_function(PICKLE_CACHE_FILENAME,
-                                       PICKLE_CACHE_THRESHOLD,
-                                       _load_file)
 
 
 def needs_refresh(options_map):
@@ -259,16 +267,15 @@ def load_string(string, log_timings=None, log_errors=None, extra_validations=Non
       dedent: A boolean, if set, remove the whitespace in front of the lines.
       encoding: A string or None, the encoding to decode the input filename with.
     Returns:
-      A triple of:
-        entries: A date-sorted list of entries from the file.
-        errors: A list of error objects generated while parsing and validating
-          the file.
-        options_map: A dict of the options parsed from the file.
+      A triple of (entries, errors, option_map) where "entries" is a date-sorted
+      list of entries from the string, "errors" a list of error objects
+      generated while parsing and validating the string, and "options_map", a
+      dict of the options parsed from the string.
     """
     if dedent:
         string = textwrap.dedent(string)
-    entries, errors, options_map =  _load([(string, False)], log_timings,
-                                          extra_validations, encoding)
+    entries, errors, options_map = _load([(string, False)], log_timings,
+                                         extra_validations, encoding)
     _log_errors(errors, log_errors)
     return entries, errors, options_map
 
@@ -453,7 +460,7 @@ def _load(sources, log_timings, extra_validations, encoding):
                                            extra_validations)
         errors.extend(valid_errors)
 
-        # Note: We could go hardcode here and further verify that the entries
+        # Note: We could go hardcore here and further verify that the entries
         # haven't been modified by user-provided validation routines, by
         # comparing hashes before and after. Not needed for now.
 
@@ -585,3 +592,18 @@ def load_doc(expect_errors=False):
         return wrapper
 
     return decorator
+
+
+def initialize():
+    """Initialize the loader."""
+
+    # Unless an environment variable disables it, use the pickle load cache
+    # automatically.
+    global _load_file
+    if os.getenv('BEANCOUNT_DISABLE_LOAD_CACHE') is None:
+        _load_file = pickle_cache_function(
+            os.getenv('BEANCOUNT_LOAD_CACHE_FILENAME') or PICKLE_CACHE_FILENAME,
+            PICKLE_CACHE_THRESHOLD,
+            _uncached_load_file)
+
+initialize()

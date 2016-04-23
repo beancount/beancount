@@ -216,6 +216,7 @@ commodity	{ return COMMODITY; }
 pad		{ return PAD; }
 event		{ return EVENT; }
 query		{ return QUERY; }
+custom		{ return CUSTOM; }
 price		{ return PRICE; }
 note		{ return NOTE; }
 document	{ return DOCUMENT; }

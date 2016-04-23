@@ -15,7 +15,7 @@ from beancount.ops import prices
 from beancount.ops import holdings
 from beancount.ops import summarize
 from beancount.reports import table
-from beancount.reports import report
+from beancount.reports import base
 
 
 def get_assets_holdings(entries, options_map, currency=None):
@@ -209,7 +209,7 @@ def load_from_csv(fileobj):
         yield holdings.Holding(**value_dict)
 
 
-class HoldingsReport(report.TableReport):
+class HoldingsReport(base.TableReport):
     """The full list of holdings for Asset and Liabilities accounts."""
 
     names = ['holdings']
@@ -265,7 +265,7 @@ class HoldingsReport(report.TableReport):
         printer.print_entries(holdings_entries, dcontext, file=file)
 
 
-class CashReport(report.TableReport):
+class CashReport(base.TableReport):
     """The list of cash holdings (defined as currency = cost-currency)."""
 
     names = ['cash']
@@ -314,7 +314,7 @@ class CashReport(report.TableReport):
         return table.create_table(holdings_list, FIELD_SPEC)
 
 
-class NetWorthReport(report.TableReport):
+class NetWorthReport(base.TableReport):
     """Generate a table of total net worth for each operating currency."""
 
     names = ['networth', 'equity']

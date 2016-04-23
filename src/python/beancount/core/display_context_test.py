@@ -1,7 +1,6 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import unittest
-import re
 
 from beancount.core import display_context
 from beancount.core.number import Decimal
@@ -86,10 +85,9 @@ class TestDisplayContextNatural(DisplayContextBaseTest):
                                  commas=True)
 
     def test_natural_reserved(self):
-        with self.assertRaises(NotImplementedError):
-            self.assertFormatNumbers(['1.2345', '1.23', '234.26', '38.019'],
-                                     ['1.23', '1.23', '234.26', '38.02'],
-                                     reserved=10)
+        self.assertFormatNumbers(['1.2345', '1.23', '234.26', '38.019'],
+                                 ['1.23', '1.23', '234.26', '38.02'],
+                                 reserved=10)
 
 
 class TestDisplayContextRight(DisplayContextBaseTest):

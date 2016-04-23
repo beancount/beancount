@@ -123,12 +123,20 @@ debug:
 	gdb --args /usr/local/bin/python3 /home/blais/p/beancount/bin/bean-sandbox $(INPUT)
 
 
+# Bake a release.
+release:
+	python3 setup.py sdist register
+
+
 # Run the unittests.
 vtest vtests verbose-test verbose-tests:
 	nosetests -v -s $(SRC)
 
 qtest qtests quiet-test quiet-tests test tests:
 	nosetests $(SRC)
+
+test-failed:
+	nosetests --failed $(SRC)
 
 nakedtests:
 	PATH=/bin:/usr/bin PYTHONPATH= /usr/local/bin/nosetests -x $(SRC)
@@ -199,26 +207,16 @@ check-author:
 	find src/python/beancount -type f -name '*.py' ! -exec grep -q '__author__' {} \; -print
 
 # Run the linter on all source code.
-#LINT_PASS=line-too-long,bad-whitespace,bad-continuation,bad-indentation
-LINT_PASS=line-too-long,bad-whitespace,bad-indentation,unused-import,invalid-name,reimported
-LINT_FAIL=bad-continuation
+# To list all messages, call: "pylint --list-msgs"
+LINT_SRCS =					\
+  $(SRC)/beancount				\
+  examples/ingest/office/importers		\
 
-
-pylint-pass:
-	pylint --rcfile=$(PWD)/etc/pylintrc --disable=all --enable=$(LINT_PASS) $(SRC)
-
-pylint-fail:
-	pylint --rcfile=$(PWD)/etc/pylintrc --disable=all --enable=$(LINT_FAIL) $(SRC)
-
-pylint-all:
-	pylint --rcfile=$(PWD)/etc/pylintrc $(SRC)
+pylint lint:
+	pylint --rcfile=$(PWD)/etc/pylintrc $(LINT_SRCS)
 
 pyflakes:
-	pyflakes $(SRC)
-
-# Run all currently configured linter checks.
-pylint lint: pylint-pass
-
+	pyflakes $(LINT_SRCS)
 
 
 # Check everything.

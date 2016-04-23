@@ -23,6 +23,8 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import re
 import datetime
+import logging
+import socket
 from urllib import parse
 from urllib import error
 
@@ -70,17 +72,21 @@ class Source(source.Source):
         response = net_utils.retrying_urlopen(url)
         if response is None:
             return None
-        data = response.read().decode('utf-8')
+        try:
+            data = response.read().decode('utf-8')
+        except socket.timeout:
+            logging.error("Connection timed out")
+            return None
         data = parse.unquote(data).strip()
 
         # Process the meta-data.
         metadata = {}
         lines = data.splitlines()
         for index, line in enumerate(lines):
-            mo = re.match('([A-Z_+]+)=(.*)$', line)
-            if not mo:
+            match = re.match('([A-Z_+]+)=(.*)$', line)
+            if not match:
                 break
-            metadata[mo.group(1)] = mo.group(2)
+            metadata[match.group(1)] = match.group(2)
         else:
             # No data was found.
             return None
@@ -92,9 +98,9 @@ class Source(source.Source):
                 continue
             time_str, price_str = line.split(',')
 
-            mo = re.match('a(\d+)', time_str)
-            if mo:
-                time_marker = datetime.datetime.fromtimestamp(int(mo.group(1)))
+            match = re.match('a(\d+)', time_str)
+            if match:
+                time_marker = datetime.datetime.fromtimestamp(int(match.group(1)))
                 time = time_marker
             else:
                 seconds = int(time_str) * interval
@@ -126,6 +132,9 @@ class Source(source.Source):
             if response is None:
                 return None
             data = response.read()
+        except socket.timeout:
+            logging.error("Connection timed out")
+            return None
         except error.HTTPError:
             # When the instrument is incorrect, you will get a 404.
             return None

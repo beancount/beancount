@@ -3,14 +3,15 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 from os import path
-import itertools
 import logging
 import os
 import time
 
 
-def find_files(fords, ignore_dirs=['.hg', '.svn', '.git']):
-    """Enumerate the files under the given directories.
+def find_files(fords,
+               ignore_dirs=('.hg', '.svn', '.git'),
+               ignore_files=('.DS_Store',)):
+    """Enumerate the files under the given directories, stably.
 
     Invalid file or directory names will be logged to the error log.
 
@@ -26,8 +27,10 @@ def find_files(fords, ignore_dirs=['.hg', '.svn', '.git']):
     for ford in fords:
         if path.isdir(ford):
             for root, dirs, filenames in os.walk(ford):
-                dirs[:] = [dirname for dirname in dirs if dirname not in ignore_dirs]
-                for filename in filenames:
+                dirs[:] = sorted(dirname for dirname in dirs if dirname not in ignore_dirs)
+                for filename in sorted(filenames):
+                    if filename in ignore_files:
+                        continue
                     yield path.join(root, filename)
         elif path.isfile(ford) or path.islink(ford):
             yield ford

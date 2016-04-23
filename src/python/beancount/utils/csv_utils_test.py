@@ -2,9 +2,6 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import unittest
 import io
-from os import path
-import os
-import re
 
 from beancount.utils import test_utils
 from beancount.utils import csv_utils

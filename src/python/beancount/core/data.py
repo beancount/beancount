@@ -10,7 +10,6 @@ import sys
 from beancount.core.amount import Amount
 from beancount.core.number import Decimal
 from beancount.core.number import D
-from beancount.core.position import Position
 from beancount.core.position import Cost
 from beancount.core.position import CostSpec
 from beancount.core.account import has_component
@@ -42,9 +41,6 @@ def new_directive(clsname, fields):
 #   date: A datetime.date instance; all directives have an associated date. Note:
 #     Beancount does not consider time, only dates. The line where the directive
 #     shows up in the file is used as a secondary sort key beyond the date.
-
-
-# pylint: disable=invalid-name
 
 
 # An "open account" directive.
@@ -238,10 +234,40 @@ Price = new_directive('Price', 'currency amount')
 #   filename: The absolute filename of the document file.
 Document = new_directive('Document', 'account filename')
 
+# A custom directive. This directive can be used to implement new experimental
+# dated features in the Beancount file. This is meant as an intermediate measure
+# to be used when you would need to implement a new directive in a plugin. These
+# directives will be parsed liberally... any list of tokens are supported. All
+# that is required is some unique name for them that acts as a "type". These
+# directives are included in the stream and a plugin should be able to gather
+# them.
+#
+# Attributes:
+#   meta: See above.
+#   date: The date at which this query should be run. All directives following
+#     this date will be ignored automatically. This is essentially equivalent to
+#     the CLOSE modifier in the shell syntax.
+#   dir_type: A string that represents the type of the directive.
+#   values: A list of values of various simple types supported by the grammar.
+#     (Note that this list is not enforced to be consistent for all directives
+#     of hte same type by the parser.)
+Custom = new_directive('Custom', 'type values')
+
 
 # A list of all the valid directive types.
 ALL_DIRECTIVES = (
-    Open, Close, Commodity, Pad, Balance, Transaction, Note, Event, Query, Price, Document
+    Open,
+    Close,
+    Commodity,
+    Pad,
+    Balance,
+    Transaction,
+    Note,
+    Event,
+    Query,
+    Price,
+    Document,
+    Custom
 )
 
 
@@ -436,8 +462,17 @@ def get_entry(posting_or_entry):
         return posting_or_entry
 
 
-# Sort with the checks at the BEGINNING of the day.
-SORT_ORDER = {Open: -2, Balance: -1, Close: 1}
+# Sorting order of directives on the same day, by type:
+# - Open entries should always be first.
+# - Balance entries should appear before Transactions, because
+#   they are defined to apply at the beginning of the day.
+# - All other directives come next (including Transactions).
+# - Document directives should appear after Transactions because
+#   they can be inserted on the statement date, which may include
+#   transactions on that date.
+# - Close directives should always appear last.
+# This is the rationale for this sorting order.
+SORT_ORDER = {Open: -2, Balance: -1, Document: 1, Close: 2}
 
 
 def entry_sortkey(entry):

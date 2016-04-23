@@ -1,6 +1,5 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import re
 import textwrap
 import unittest
 
@@ -23,7 +22,7 @@ ERRORS_ON_RESIDUAL = False
 
 
 # A default options map just to provide the tolerances.
-OPTIONS_MAP = {'default_tolerance': {},
+OPTIONS_MAP = {'inferred_tolerance_default': {},
                'inferred_tolerance_multiplier': D('0.5'),
                'use_legacy_fixed_tolerances': False,
                'account_rounding': None,
@@ -294,6 +293,22 @@ class TestBalance(cmptest.TestCase):
         self.assertEqual(1, len(new_postings))
         self.assertEqual(0, len(errors))
 
+    @loader.load_doc()
+    def test_cost_basis(self, entries, _, __):
+        """
+        2001-01-01 open Assets:Account1
+
+        2014-01-01 *
+          Assets:Account1        20 HOOL {40.00 USD}
+          Assets:Account1        20 HOOL {60.00 USD} @ 70.00 USD
+          Assets:Account1     -2000.00 USD
+          Assets:Account1         3 HOOL {30.00 CAD}
+          Assets:Account1       -90.00 CAD
+        """
+        postings = next(data.filter_txns(entries)).postings
+        self.assertEqual(inventory.from_string('2000.00 USD, 90.00 CAD'),
+                         interpolate.compute_cost_basis(postings))
+
 
 class TestBalanceIncompletePostings(cmptest.TestCase):
 
@@ -331,7 +346,8 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
         """)
         self.assertFalse(errors)
         self.assertEqual(2, len(entry.postings))
-        self.assertEqual(position.get_position(entry.postings[1]), position.from_string('50 USD'))
+        self.assertEqual(position.get_position(entry.postings[1]),
+                         position.from_string('50 USD'))
 
     def test_balance_incomplete_postings__fill2(self):
         entry, errors = self.get_incomplete_entry("""
@@ -344,8 +360,10 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
         self.assertEqual(4, len(entry.postings))
         self.assertEqual(entry.postings[2].account, 'Expenses:Restaurant')
         self.assertEqual(entry.postings[3].account, 'Expenses:Restaurant')
-        self.assertEqual(position.get_position(entry.postings[2]), position.from_string('50 USD'))
-        self.assertEqual(position.get_position(entry.postings[3]), position.from_string('50 CAD'))
+        self.assertEqual(position.get_position(entry.postings[2]),
+                         position.from_string('50 USD'))
+        self.assertEqual(position.get_position(entry.postings[3]),
+                         position.from_string('50 CAD'))
 
     def test_balance_incomplete_postings__cost(self):
         entry, errors = self.get_incomplete_entry("""
@@ -356,7 +374,8 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
         self.assertFalse(errors)
         self.assertEqual(2, len(entry.postings))
         self.assertEqual(entry.postings[1].account, 'Assets:Cash')
-        self.assertEqual(position.get_position(entry.postings[1]), position.from_string('-432.30 USD'))
+        self.assertEqual(position.get_position(entry.postings[1]),
+                         position.from_string('-432.30 USD'))
 
     def test_balance_incomplete_postings__insert_rounding(self):
         entry, errors = self.get_incomplete_entry("""
@@ -369,11 +388,12 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
         self.assertFalse(errors)
         self.assertEqual(3, len(entry.postings))
         self.assertEqual(entry.postings[2].account, 'Equity:RoundingError')
-        self.assertEqual(position.get_position(entry.postings[2]), position.from_string('-0.00135 USD'))
+        self.assertEqual(position.get_position(entry.postings[2]),
+                         position.from_string('-0.00135 USD'))
 
     def test_balance_incomplete_postings__quantum(self):
         entry, errors = self.get_incomplete_entry("""
-          option "default_tolerance" "USD:0.01"
+          option "inferred_tolerance_default" "USD:0.01"
 
           2013-02-23 * "Something"
             Assets:Invest     1.245 RGAGX {43.23 USD}
@@ -383,7 +403,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
         self.assertEqual(D('-53.82'), entry.postings[1].units.number)
 
         entry, errors = self.get_incomplete_entry("""
-          option "default_tolerance" "USD:0.001"
+          option "inferred_tolerance_default" "USD:0.001"
 
           2013-02-23 * "Something"
             Assets:Invest     1.245 RGAGX {43.23 USD}
@@ -395,7 +415,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
     def test_balance_incomplete_postings__rounding_and_quantum(self):
         entry, errors = self.get_incomplete_entry("""
           option "account_rounding" "RoundingError"
-          option "default_tolerance" "USD:0.01"
+          option "inferred_tolerance_default" "USD:0.01"
 
           2013-02-23 * "Something"
             Assets:Invest     1.245 RGAGX {43.23 USD}
@@ -409,7 +429,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
 
         entry, errors = self.get_incomplete_entry("""
           option "account_rounding" "RoundingError"
-          option "default_tolerance" "USD:0.01"
+          option "inferred_tolerance_default" "USD:0.01"
 
           2014-05-06 * "Buy mutual fund"
             Assets:Investments:RGXGX       4.27 RGAGX {53.21 USD}
@@ -886,7 +906,7 @@ class TestInferTolerances(cmptest.TestCase):
         """
         plugin "beancount.plugins.split_expenses" "Martin Caroline Sheila"
 
-        option "default_tolerance" "USD:0.005"
+        option "inferred_tolerance_default" "USD:0.005"
 
         1970-01-01 open Expenses:Food
         1970-01-01 open Assets:Caroline

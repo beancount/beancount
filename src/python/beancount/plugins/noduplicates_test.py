@@ -1,7 +1,5 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import re
-
 from beancount.core import compare
 from beancount.parser import cmptest
 from beancount.plugins import noduplicates

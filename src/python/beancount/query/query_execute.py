@@ -12,6 +12,7 @@ from beancount.core import data
 from beancount.core import position
 from beancount.core import inventory
 from beancount.core import getters
+from beancount.core import display_context
 from beancount.parser import printer
 from beancount.parser import options
 from beancount.ops import summarize
@@ -75,7 +76,12 @@ def execute_print(c_print, entries, options_map, file):
     if c_print and c_print.c_from is not None:
         entries = filter_entries(c_print.c_from, entries, options_map)
 
-    printer.print_entries(entries, file=file)
+    # Create a context that renders all numbers with their natural
+    # precision, but honors the commas option. This is kept in sync with
+    # {2c694afe3140} to avoid a dependency.
+    dcontext = display_context.DisplayContext()
+    dcontext.set_commas(options_map['dcontext'].commas)
+    printer.print_entries(entries, dcontext, file=file)
 
 
 class Allocator:
@@ -105,6 +111,8 @@ class Allocator:
 
 class RowContext:
     """A dumb container for information used by a row expression."""
+
+    # pylint: disable=too-many-instance-attributes
 
     # The current posting being evaluated.
     posting = None
@@ -156,7 +164,7 @@ def execute_query(query, entries, options_map):
         result_rows: A list of ResultRow tuples of length and types described by
           'result_types'.
     """
-    # Filter the entries using the WHERE clause.
+    # Filter the entries using the FROM clause.
     filt_entries = (filter_entries(query.c_from, entries, options_map)
                     if query.c_from is not None else
                     entries)

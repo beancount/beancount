@@ -5,11 +5,11 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import unittest
 from unittest import mock
-import re
 import time
 import textwrap
 import sys
 from collections import namedtuple
+import operator
 
 from beancount.utils import misc_utils
 from beancount.utils import test_utils
@@ -129,6 +129,12 @@ class TestMiscUtils(unittest.TestCase):
         self.assertEqual({'a_b': 'a_b', 'ab': 'a b'},
                          misc_utils.compute_unique_clean_ids(['a b', 'a_b']))
 
+    def test_idify(self):
+        self.assertEqual('A_great_movie_for_us.mp4',
+                         misc_utils.idify(' A great movie (for us) .mp4 '))
+        self.assertEqual('A____B.pdf',
+                         misc_utils.idify('A____B_._pdf'))
+
     def test_map_namedtuple_attributes(self):
         # pylint: disable=invalid-name
         Test = namedtuple('Test', 'a b c d')
@@ -139,10 +145,10 @@ class TestMiscUtils(unittest.TestCase):
 
     def test_staticvar(self):
         @misc_utils.staticvar('a', 42)
-        def foo():
-            return foo.a
-        self.assertEqual(42, foo())
-        self.assertEqual(42, foo.a)
+        def somevar():
+            return somevar.a
+        self.assertEqual(42, somevar())
+        self.assertEqual(42, somevar.a)
 
     def test_first_paragraph(self):
         docstring = textwrap.dedent("""\
@@ -188,6 +194,12 @@ class TestMiscUtils(unittest.TestCase):
         one = One(*args)
         two = Two(*args)
         self.assertFalse(one == two)
+
+    def test_is_sorted(self):
+        self.assertTrue(misc_utils.is_sorted([1, 3, 4, 5, 5, 6, 8]))
+        self.assertFalse(misc_utils.is_sorted([1, 3, 4, 5, 5, 6, 8], cmp=operator.lt))
+        self.assertFalse(misc_utils.is_sorted([3, 2, 6, 7]))
+        self.assertTrue(misc_utils.is_sorted([7, 6, 3, 1], cmp=operator.gt))
 
 
 class TestUniquify(unittest.TestCase):

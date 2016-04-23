@@ -94,7 +94,7 @@ def pad(entries, options_map):
                 # total amount for a particular currency (which itself is
                 # distinct from the cost).
                 balance_amount = pad_balance.get_units(check_amount.currency)
-                diff_amount = amount.amount_sub(balance_amount, check_amount)
+                diff_amount = amount.sub(balance_amount, check_amount)
 
                 # Use the specified tolerance or automatically infer it.
                 tolerance = balance.get_tolerance(entry, options_map)

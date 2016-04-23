@@ -11,6 +11,7 @@ import re
 from unittest import mock
 
 from beancount.core.number import D
+from beancount.core.number import Decimal
 from beancount.core.number import ZERO
 from beancount.core.number import MISSING
 from beancount.core.amount import from_string as A
@@ -189,6 +190,20 @@ class TestParserEntryTypes(unittest.TestCase):
         """
         check_list(self, entries, [data.Price])
 
+    @parser.parse_doc()
+    def test_entry_custom(self, entries, _, __):
+        """
+          2013-05-18 custom "budget" "weekly < 1000.00 USD" 2016-02-28 TRUE 43.03 USD 23
+        """
+        check_list(self, entries, [data.Custom])
+        txns = [entry for entry in entries if isinstance(entry, data.Custom)]
+        self.assertEqual([('weekly < 1000.00 USD', str),
+                          (datetime.date(2016, 2, 28), datetime.date),
+                          (True, bool),
+                          (amount.from_string('43.03 USD'), amount.Amount),
+                          (D('23'), Decimal)],
+                         txns[0].values)
+
 
 class TestParserComplete(unittest.TestCase):
     """Tests of completion of balance."""
@@ -217,12 +232,14 @@ class TestParserComplete(unittest.TestCase):
 class TestUglyBugs(unittest.TestCase):
     """Test all kinds of stupid sh*t that will inevitably occur in practice."""
 
+    # pylint: disable=empty-docstring
     @parser.parse_doc()
     def test_empty_1(self, entries, errors, _):
         ""
         check_list(self, entries, [])
         check_list(self, errors, [])
 
+    # pylint: disable=empty-docstring
     @parser.parse_doc()
     def test_empty_2(self, entries, errors, _):
         """
@@ -269,6 +286,7 @@ class TestUglyBugs(unittest.TestCase):
         check_list(self, entries, [data.Transaction])
         check_list(self, errors, [])
 
+    # pylint: disable=empty-docstring
     @parser.parse_doc()
     def test_indent_eof(self, entries, errors, _):
         "\t"
@@ -661,6 +679,7 @@ class TestMiscOptions(unittest.TestCase):
 
 class TestToleranceOptions(unittest.TestCase):
 
+    # pylint: disable=empty-docstring
     @parser.parse_doc()
     def test_tolerance_defaults(self, _, __, options_map):
         """
@@ -668,7 +687,7 @@ class TestToleranceOptions(unittest.TestCase):
         self.assertEqual(D('0.015'),
                          options_map['tolerance'])
         self.assertEqual({},
-                         options_map['default_tolerance'])
+                         options_map['inferred_tolerance_default'])
 
     @parser.parse_doc(expect_errors=True)
     def test_tolerance__deprecated(self, _, errors, options_map):
@@ -679,19 +698,28 @@ class TestToleranceOptions(unittest.TestCase):
         self.assertRegex(errors[0].message, "has been deprecated")
 
     @parser.parse_doc()
-    def test_default_tolerance(self, _, __, options_map):
+    def test_inferred_tolerance_default(self, _, __, options_map):
         """
-          option "default_tolerance" "*:0"
-          option "default_tolerance" "USD:0.05"
-          option "default_tolerance" "JPY:0.5"
+          option "inferred_tolerance_default" "*:0"
+          option "inferred_tolerance_default" "USD:0.05"
+          option "inferred_tolerance_default" "JPY:0.5"
         """
         self.assertEqual({"*": D("0"),
                           "USD": D("0.05"),
                           "JPY": D("0.5")},
-                         options_map['default_tolerance'])
+                         options_map['inferred_tolerance_default'])
 
 
 class TestDeprecatedOptions(unittest.TestCase):
+
+    @parser.parse_doc(expect_errors=True)
+    def test_renamed_options(self, _, errors, options_map):
+        """
+          option "default_tolerance" "*:0.0042"
+        """
+        self.assertEqual(1, len(errors))
+        self.assertRegex(errors[0].message, 'option has been renamed')
+        self.assertEqual({'*': D('0.0042')}, options_map["inferred_tolerance_default"])
 
     @parser.parse_doc(expect_errors=True)
     def test_deprecated_plugin(self, _, errors, __):
@@ -2317,7 +2345,8 @@ class TestIncompleteInputs(cmptest.TestCase):
             Assets:Account2     120.00 USD
         """
         posting = entries[-1].postings[0]
-        self.assertEqual(CostSpec(D('150'), MISSING, 'USD', None, None, False), posting.cost)
+        self.assertEqual(CostSpec(D('150'), MISSING, 'USD', None, None, False),
+                         posting.cost)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_cost_no_number_total(self, entries, _, options_map):

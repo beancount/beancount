@@ -7,7 +7,6 @@ import unittest
 import io
 import os
 import sys
-import re
 from os import path
 
 from beancount.utils import test_utils

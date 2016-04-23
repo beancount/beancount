@@ -3,7 +3,6 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import unittest
 import datetime
 import random
-import re
 
 from beancount.reports import gviz
 

@@ -3,7 +3,6 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import unittest
-import re
 
 from beancount.utils import pager
 from beancount.utils import test_utils

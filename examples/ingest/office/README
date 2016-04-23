@@ -1,0 +1,25 @@
+This directory contains an example for how to initialize and organize your files
+to automate your import process. See http://furius.ca/beancount/doc/ingest for
+full documentation and discussion of these files. Run the example commands below
+in this directory.
+
+
+Identify the input files under the Downloads directory:
+
+  bean-identify example.import ../Downloads/
+
+
+Extract transactions from the files in Download/:
+
+  bean-extract -e example.beancount example.import ../Downloads/
+
+
+File the files from Download/ under documents/ (you can run the last command
+without moving the files using the -n/--dry-run option):
+
+  bean-file example.import ../Downloads/ -o documents/
+
+
+To run the regression tests of the custom importers, use the following command:
+
+  nosetests3 --all-modules -v importers/

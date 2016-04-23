@@ -52,7 +52,9 @@ Here are all the aspects supported by this module:
   output.
 
   RESERVED: A number of extra integral digits reserved on the left in order to
-  allow rendering novel numbers that haven't yet been seen.
+  allow rendering novel numbers that haven't yet been seen. For example,
+  balances may contains much larger numbers than the numbers seen in input
+  files, and these need to be accommodated when aligning to the right.
 
 """
 __author__ = "Martin Blais <blais@furius.ca>"
@@ -60,24 +62,18 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import collections
 import io
 
-# pylint: disable=invalid-name
-try:
-    import enum
-    Enum = enum.Enum
-except ImportError:
-    Enum = object
-
 from beancount.core.number import Decimal
 from beancount.core import distribution
+from beancount.utils import misc_utils
 
 
-class Precision(Enum):
+class Precision(misc_utils.Enum):
     """The type of precision required."""
     MOST_COMMON = 1
     MAXIMUM = 2
 
 
-class Align(Enum):
+class Align(misc_utils.Enum):
     """Alignment style for numbers."""
     NATURAL = 1
     DOT = 2
@@ -174,11 +170,18 @@ class DisplayContext:
     """A builder object used to construct a DisplayContext from a series of numbers.
 
     Attributes:
-      ccontext: A dict of currency string to CurrencyContext instance.
+      ccontexts: A dict of currency string to CurrencyContext instance.
+      commas: A bool, true if we should render commas. This just gets propagated
+        onwards as the default value of to build with.
     """
     def __init__(self):
         self.ccontexts = collections.defaultdict(_CurrencyContext)
         self.ccontexts['__default__'] = _CurrencyContext()
+        self.commas = False
+
+    def set_commas(self, commas):
+        """Set the default value for rendering commas."""
+        self.commas = commas
 
     def __str__(self):
         oss = io.StringIO()
@@ -220,8 +223,18 @@ class DisplayContext:
               precision=Precision.MOST_COMMON,
               commas=None,
               reserved=0):
-        if reserved != 0:
-            raise NotImplementedError("Reserved digits aren't supported yet.")
+        """Build a formatter for the given display context.
+
+        Args:
+          alignment: The desired alignment.
+          precision: The desired precision.
+          commas: Whether to render commas or not. If 'None', the default value carried
+            by the context will be used.
+          reserved: An integer, the number of extra digits to be allocated in
+            the maximum width calculations.
+        """
+        if commas is None:
+            commas = self.commas
         if alignment == Align.NATURAL:
             build_method = self._build_natural
         elif alignment == Align.RIGHT:
@@ -234,7 +247,7 @@ class DisplayContext:
 
         return DisplayFormatter(self, precision, fmtstrings)
 
-    def _build_natural(self, precision, commas, reserved):
+    def _build_natural(self, precision, commas, unused_reserved):
         comma_str = ',' if commas else ''
         fmtstrings = {}
         for currency, ccontext in self.ccontexts.items():
@@ -262,7 +275,7 @@ class DisplayContext:
                     max_digits += 1  # period
                 max_digits += num_fractional_digits
             max_digits_list.append(max_digits)
-        max_width = max(max_digits_list)
+        max_width = max(max_digits_list) + reserved
 
         # Compute the format strings.
         comma_str = ',' if commas else ''
@@ -303,7 +316,7 @@ class DisplayContext:
         if max_fractional == -1:
             max_fractional = self.DEFAULT_UNINITIALIZED_PRECISION
 
-        max_width = sum([max_sign, max_integer, max_period, max_fractional])
+        max_width = sum([max_sign, max_integer, max_period, max_fractional]) + reserved
 
         # Compute the format strings.
         comma_str = ',' if commas else ''

@@ -10,10 +10,9 @@ from beancount.core.number import ONE
 from beancount.core.number import ZERO
 from beancount.core.number import MISSING
 from beancount.core.amount import Amount
-from beancount.core.amount import amount_mult
+from beancount.core.amount import mul as amount_mul
 from beancount.core.inventory import Inventory
 from beancount.core import inventory
-from beancount.core.position import Position
 from beancount.core.data import Transaction
 from beancount.core.data import Posting
 from beancount.core import getters
@@ -73,7 +72,7 @@ def get_posting_weight(posting):
     """
     # It the object has a cost, use that to balance this posting.
     if posting.cost is not None:
-        amount = amount_mult(posting.cost, posting.units.number)
+        amount = amount_mul(posting.cost, posting.units.number)
 
     else:
         # If there is a price, use that to balance this posting.
@@ -81,13 +80,32 @@ def get_posting_weight(posting):
         if price is not None:
             assert posting.units.currency != price.currency, (
                 "Invalid currency for price: {} in {}".format(posting, price))
-            amount = amount_mult(price, posting.units.number)
+            amount = amount_mul(price, posting.units.number)
 
         # Otherwise, just use the units.
         else:
             amount = posting.units
 
     return amount
+
+
+def compute_cost_basis(postings):
+    """Compute the sum of the cost basis from all the given postings.
+
+    This only includes legs which have a cost on them.
+
+    Args:
+      postings: A list of Posting instances.
+    Returns:
+      An Inventory instance.
+    """
+    cost_basis = Inventory()
+    for posting in postings:
+        if posting.cost is None:
+            continue
+        amount = amount_mul(posting.cost, posting.units.number)
+        cost_basis.add_amount(amount)
+    return cost_basis
 
 
 def has_nontrivial_balance(posting):
@@ -324,7 +342,7 @@ def get_incomplete_postings(entry, options_map):
         default_tolerances = LEGACY_DEFAULT_TOLERANCES
     else:
         tolerances = infer_tolerances(postings, options_map)
-        default_tolerances = options_map['default_tolerance']
+        default_tolerances = options_map['inferred_tolerance_default']
 
     # Process all the postings.
     has_nonzero_amount = False

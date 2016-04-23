@@ -16,7 +16,6 @@ from beancount.core.number import Decimal
 from beancount.core.amount import Amount
 from beancount.core import display_context
 from beancount.core.position import CostSpec
-from beancount.core.position import Position
 from beancount.core.data import Transaction
 from beancount.core.data import Balance
 from beancount.core.data import Open
@@ -28,6 +27,7 @@ from beancount.core.data import Query
 from beancount.core.data import Price
 from beancount.core.data import Note
 from beancount.core.data import Document
+from beancount.core.data import Custom
 from beancount.core.data import new_metadata
 from beancount.core.data import Posting
 from beancount.core.data import BOOKING_METHODS
@@ -52,12 +52,20 @@ DeprecatedError = collections.namedtuple('DeprecatedError', 'source message entr
 
 
 
-# Temporary holder for key-value pairs.
+# Key-value pairs. This is used to hold meta-data attachments temporarily.
 #
 # Attributes:
 #  key: A string, the name of the key.
 #  value: Any object.
 KeyValue = collections.namedtuple('KeyValue', 'key value')
+
+# Value-type pairs. This is used to represent custom values where the concrete
+# datatypes aren't matching those which are found in the parser.
+#
+# Attributes:
+#  value: Any object.
+#  dtype: The datatype of the object.
+ValueType = collections.namedtuple('ValueType', 'value dtype')
 
 # Convenience holding class for amounts with per-share and total value.
 #
@@ -156,6 +164,10 @@ class Builder(lexer.LexBuilder):
                 ParserError(meta, (
                     "Unbalanced metadata key '{}'; leftover metadata '{}'").format(
                         key, ', '.join(value_list)), None))
+
+        # Weave the commas option in the DisplayContext itself, so it propagages
+        # everywhere it is used automatically.
+        self.dcontext.set_commas(self.options['render_commas'])
 
         return (self.get_entries(), self.errors, self.get_options())
 
@@ -305,9 +317,15 @@ class Builder(lexer.LexBuilder):
 
             # Issue a warning if the option is deprecated.
             if option_descriptor.deprecated:
+                assert isinstance(option_descriptor.deprecated, str), "Internal error."
                 meta = new_metadata(filename, lineno)
                 self.errors.append(
                     DeprecatedError(meta, option_descriptor.deprecated, None))
+
+            # Rename the option if it has an alias.
+            if option_descriptor.alias:
+                key = option_descriptor.alias
+                option_descriptor = options.OPTIONS[key]
 
             # Convert the value, if necessary.
             if option_descriptor.converter:
@@ -704,6 +722,35 @@ class Builder(lexer.LexBuilder):
             document_filename = path.abspath(path.join(path.dirname(filename),
                                                        document_filename))
         return Document(meta, date, account, document_filename)
+
+    def custom(self, filename, lineno, date, dir_type, custom_values, kvlist):
+        """Process a custom directive.
+
+        Args:
+          filename: the current filename.
+          lineno: the current line number.
+          date: a datetime object.
+          dir_type: A string, a type for the custom directive being parsed.
+          custom_values: A list of the various tokens seen on the same line.
+          kvlist: a list of KeyValue instances.
+        Returns:
+          A new Custom object.
+        """
+        meta = new_metadata(filename, lineno, kvlist)
+        return Custom(meta, date, dir_type, custom_values)
+
+    def custom_value(self, value, dtype=None):
+        """Create a custom value object, along with its type.
+
+        Args:
+          value: One of the accepted custom values.
+        Returns:
+          A pair of (value, dtype) where 'dtype' is the datatype is that of the
+          value.
+        """
+        if dtype is None:
+            dtype = type(value)
+        return ValueType(value, dtype)
 
     def key_value(self, key, value):
         """Process a document directive.

@@ -64,15 +64,15 @@ class TestCache(unittest.TestCase):
 
     def test_fetch_cached_price__disabled(self):
         # Latest.
-        with mock.patch('beancount.prices.price._cache', None):
-            self.assertIsNone(price._cache)
+        with mock.patch('beancount.prices.price._CACHE', None):
+            self.assertIsNone(price._CACHE)
             source = mock.MagicMock()
             price.fetch_cached_price(source, 'HOOL', None)
             self.assertTrue(source.get_latest_price.called)
 
         # Historical.
-        with mock.patch('beancount.prices.price._cache', None):
-            self.assertIsNone(price._cache)
+        with mock.patch('beancount.prices.price._CACHE', None):
+            self.assertIsNone(price._CACHE)
             source = mock.MagicMock()
             price.fetch_cached_price(source, 'HOOL', datetime.date.today())
             self.assertTrue(source.get_historical_price.called)
@@ -90,7 +90,7 @@ class TestCache(unittest.TestCase):
             # Cache miss.
             result = price.fetch_cached_price(source, 'HOOL', None)
             self.assertTrue(source.get_latest_price.called)
-            self.assertEqual(1, len(price._cache))
+            self.assertEqual(1, len(price._CACHE))
             self.assertEqual(42, result)
 
             source.get_latest_price.reset_mock()
@@ -98,18 +98,18 @@ class TestCache(unittest.TestCase):
             # Cache hit.
             result = price.fetch_cached_price(source, 'HOOL', None)
             self.assertFalse(source.get_latest_price.called)
-            self.assertEqual(1, len(price._cache))
+            self.assertEqual(1, len(price._CACHE))
             self.assertEqual(42, result)
 
             source.get_latest_price.reset_mock()
             source.get_latest_price.return_value = 71
 
             # Cache expired.
-            time_beyond = datetime.datetime.now() + price._cache.expiration * 2
+            time_beyond = datetime.datetime.now() + price._CACHE.expiration * 2
             with mock.patch('beancount.prices.price.now', return_value=time_beyond):
                 result = price.fetch_cached_price(source, 'HOOL', None)
                 self.assertTrue(source.get_latest_price.called)
-                self.assertEqual(1, len(price._cache))
+                self.assertEqual(1, len(price._CACHE))
                 self.assertEqual(71, result)
         finally:
             if path.exists(tmpdir):
@@ -130,7 +130,7 @@ class TestCache(unittest.TestCase):
             day = datetime.date(2006, 1, 2)
             result = price.fetch_cached_price(source, 'HOOL', day)
             self.assertTrue(source.get_historical_price.called)
-            self.assertEqual(1, len(price._cache))
+            self.assertEqual(1, len(price._CACHE))
             self.assertEqual(42, result)
 
             source.get_historical_price.reset_mock()
@@ -138,7 +138,7 @@ class TestCache(unittest.TestCase):
             # Cache hit.
             result = price.fetch_cached_price(source, 'HOOL', day)
             self.assertFalse(source.get_historical_price.called)
-            self.assertEqual(1, len(price._cache))
+            self.assertEqual(1, len(price._CACHE))
             self.assertEqual(42, result)
         finally:
             if path.exists(tmpdir):
@@ -214,7 +214,8 @@ class TestClobber(cmptest.TestCase):
         """, dedent=True)
 
     def test_clobber_nodiffs(self):
-        new_price_entries, _ = price.filter_redundant_prices(self.price_entries, self.entries,
+        new_price_entries, _ = price.filter_redundant_prices(self.price_entries,
+                                                             self.entries,
                                                              diffs=False)
         self.assertEqualEntries("""
           2015-01-27 price HDV                                 76.83 USD
@@ -224,7 +225,8 @@ class TestClobber(cmptest.TestCase):
         """, new_price_entries)
 
     def test_clobber_diffs(self):
-        new_price_entries, _ = price.filter_redundant_prices(self.price_entries, self.entries,
+        new_price_entries, _ = price.filter_redundant_prices(self.price_entries,
+                                                             self.entries,
                                                              diffs=True)
         self.assertEqualEntries("""
           2015-01-27 price HDV                                 76.83 USD
@@ -241,7 +243,8 @@ class TestInverted(cmptest.TestCase):
         fetch_cached = mock.patch('beancount.prices.price.fetch_cached_price').start()
         fetch_cached.return_value = source.SourcePrice(
             D('125.00'), datetime.datetime(2015, 11, 22, 16, 0, 0), 'JPY')
-        self.dprice = find_prices.DatedPrice('JPY', 'USD', datetime.date(2015, 11, 22), None)
+        self.dprice = find_prices.DatedPrice('JPY', 'USD', datetime.date(2015, 11, 22),
+                                             None)
         self.addCleanup(mock.patch.stopall)
 
     def test_fetch_price__normal(self):

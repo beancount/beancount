@@ -46,7 +46,7 @@ if not is_fast_decimal(decimal):
     except ImportError:
         pass
     else:
-        decimal = cdecimal
+        decimal = cdecimal # pylint: disable=invalid-name
 
 if not is_fast_decimal(decimal):
     warnings.warn("Fast C decimal implementation appears to be missing; "

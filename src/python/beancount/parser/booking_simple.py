@@ -6,7 +6,6 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import collections
 
 from beancount.core.data import Transaction
-from beancount.core.position import Position
 from beancount.core.position import Cost
 from beancount.core.amount import Amount
 from beancount.core.number import ZERO
@@ -53,8 +52,9 @@ def book(entries, options_map):
         if __sanity_checks__:
             residual = interpolate.compute_residual(entry.postings)
             tolerances = interpolate.infer_tolerances(entry.postings, options_map)
-            assert residual.is_small(tolerances, options_map['default_tolerance']), (
-                "Invalid residual {}".format(residual))
+            assert residual.is_small(tolerances,
+                                     options_map['inferred_tolerance_default']), (
+                                         "Invalid residual {}".format(residual))
 
     return entries_with_lots, errors
 

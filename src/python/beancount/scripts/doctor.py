@@ -17,6 +17,7 @@ from os import path
 # under the assumption that not all third-party dependencies are installed.
 # Import what you need as late as possible.
 from beancount.utils import misc_utils
+from beancount.core import display_context
 
 
 def do_lex(filename, unused_args):
@@ -184,6 +185,7 @@ def do_deps(*unused_args):
     print('Use "pip3 install <package>" to install new packages.')
 
 # Alias old name.
+# pylint: disable=invalid-name
 do_checkdeps = do_deps
 
 
@@ -244,18 +246,41 @@ def do_linked(filename, args):
     closest_entry = data.find_closest(entries, options_map['filename'], lineno)
 
     # Find its links.
-    links = closest_entry.links
     if closest_entry is None:
         raise SystemExit("No entry could be found before {}:{}".format(filename, lineno))
+    links = closest_entry.links if isinstance(closest_entry, data.Transaction) else None
     if not links:
-        return
-
-    # Find all linked entries.
-    linked_entries = [entry
-                      for entry in entries
-                      if (isinstance(entry, data.Transaction) and
-                          entry.links and
-                          entry.links & links)]
+        linked_entries = [closest_entry]
+    else:
+        # Find all linked entries.
+        #
+        # Note that there is an option here: You can either just look at the links
+        # on the closest entry, or you can include the links of the linked
+        # transactions as well. Whichever one you want depends on how you use your
+        # links. Best would be to query the user (in Emacs) when there are many
+        # links present.
+        follow_links = True
+        if not follow_links:
+            linked_entries = [entry
+                              for entry in entries
+                              if (isinstance(entry, data.Transaction) and
+                                  entry.links and
+                                  entry.links & links)]
+        else:
+            links = set(links)
+            linked_entries = []
+            while True:
+                num_linked = len(linked_entries)
+                linked_entries = [entry
+                                  for entry in entries
+                                  if (isinstance(entry, data.Transaction) and
+                                      entry.links and
+                                      entry.links & links)]
+                if len(linked_entries) == num_linked:
+                    break
+                for entry in linked_entries:
+                    if entry.links is not None:
+                        links.update(entry.links)
 
     # Render linked entries (in date order) as errors (for Emacs).
     errors = [RenderError(entry.meta, '', entry)
@@ -264,7 +289,9 @@ def do_linked(filename, args):
 
     # Print out balances.
     real_root = realization.realize(linked_entries)
-    realization.dump_balances(real_root, file=sys.stdout)
+    dformat = options_map['dcontext'].build(alignment=display_context.Align.DOT,
+                                            reserved=2)
+    realization.dump_balances(real_root, dformat, file=sys.stdout)
 
     # Print out net income change.
     acctypes = options.get_account_types(options_map)

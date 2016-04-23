@@ -10,9 +10,9 @@ import sys
 import textwrap
 
 from beancount.core.number import Decimal
-from beancount.core.number import MISSING
 from beancount.core import position
 from beancount.core import amount
+from beancount.core import account
 from beancount.core import data
 from beancount.core import interpolate
 from beancount.core import display_context
@@ -221,7 +221,8 @@ class EntryPrinter:
         if isinstance(posting.units, amount.Amount):
             position_str = position.to_string(posting, self.dformat)
             # Note: we render weights at maximum precision, for debugging.
-            if posting.cost is None or isinstance(posting.cost, position.Cost):
+            if posting.cost is None or (isinstance(posting.cost, position.Cost) and
+                                        isinstance(posting.cost.number, Decimal)):
                 weight_str = str(interpolate.get_posting_weight(posting))
         else:
             position_str = ''
@@ -291,6 +292,26 @@ class EntryPrinter:
 
     def Query(self, entry, oss):
         oss.write('{e.date} query "{e.name}" "{e.query_string}"\n'.format(e=entry))
+        self.write_metadata(entry.meta, oss)
+
+    def Custom(self, entry, oss):
+        custom_values = []
+        for value, dtype in entry.values:
+            if dtype is account.TYPE:
+                value = '{}'.format(value)
+            elif isinstance(value, str):
+                value = '"{}"'.format(value)
+            elif isinstance(value, Decimal):
+                value = str(value)
+            elif isinstance(value, datetime.date):
+                value = value.isoformat()
+            elif isinstance(value, bool):
+                value = 'TRUE' if value else 'FALSE'
+            elif isinstance(value, amount.Amount):
+                value = value.to_string()
+            custom_values.append(value)
+        oss.write('{e.date} custom "{e.type}" {}\n'.format(" ".join(custom_values),
+                                                           e=entry))
         self.write_metadata(entry.meta, oss)
 
 
