@@ -891,59 +891,52 @@ class TestComputeCostNumber(unittest.TestCase):
 
     def test_missing_per(self):
         self.assertEqual(
-            MISSING,
-            booking_full.compute_cost(
+            None,
+            booking_full.compute_cost_number(
                 position.CostSpec(MISSING, D('1'), 'USD', None, None, False),
-                amount.from_string('12 HOOL'),
-                self.date))
+                amount.from_string('12 HOOL')))
 
     def test_missing_total(self):
         self.assertEqual(
-            MISSING,
-            booking_full.compute_cost(
+            None,
+            booking_full.compute_cost_number(
                 position.CostSpec(D('1'), MISSING, 'USD', None, None, False),
-                amount.from_string('12 HOOL'),
-                self.date))
+                amount.from_string('12 HOOL')))
 
     def test_both_none(self):
         self.assertEqual(
-            MISSING,
-            booking_full.compute_cost(
+            None,
+            booking_full.compute_cost_number(
                 position.CostSpec(None, None, 'USD', None, None, False),
-                amount.from_string('12 HOOL'),
-                self.date))
+                amount.from_string('12 HOOL')))
 
     def test_total_only(self):
         self.assertEqual(
-            position.Cost(D('4'), 'USD', self.date, None),
-            booking_full.compute_cost(
+            D('4'),
+            booking_full.compute_cost_number(
                 position.CostSpec(None, D('48'), 'USD', None, None, False),
-                amount.from_string('12 HOOL'),
-                self.date))
+                amount.from_string('12 HOOL')))
 
     def test_per_only(self):
         self.assertEqual(
-            position.Cost(D('4'), 'USD', self.date, None),
-            booking_full.compute_cost(
+            D('4'),
+            booking_full.compute_cost_number(
                 position.CostSpec(D('4'), None, 'USD', None, None, False),
-                amount.from_string('12 HOOL'),
-                self.date))
+                amount.from_string('12 HOOL')))
 
     def test_both(self):
         self.assertEqual(
-            position.Cost(D('3.5'), 'USD', self.date, None),
-            booking_full.compute_cost(
+            D('3.5'),
+            booking_full.compute_cost_number(
                 position.CostSpec(D('3'), D('6'), 'USD', self.date, None, False),
-                amount.from_string('12 HOOL'),
-                self.date))
+                amount.from_string('12 HOOL')))
 
     def test_no_currency(self):
         self.assertEqual(
-            MISSING,
-            booking_full.compute_cost(
+            D('3.5'),
+            booking_full.compute_cost_number(
                 position.CostSpec(D('3'), D('6'), None, self.date, None, False),
-                amount.from_string('12 HOOL'),
-                self.date))
+                amount.from_string('12 HOOL')))
 
 
 class TestBookReductions(unittest.TestCase):

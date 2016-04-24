@@ -92,7 +92,8 @@ from beancount.utils import misc_utils
 from beancount.parser import printer
 
 
-FullBookingError = collections.namedtuple('FullBookingError', 'source message entry')
+## FIXME: remove
+#FullBookingError = collections.namedtuple('FullBookingError', 'source message entry')
 
 
 def book(entries, options_map):
@@ -423,6 +424,10 @@ def replace_currencies(postings, refer_groups):
     return new_groups
 
 
+# An error raised if we failed to reduce the inventory balance unambiguously.
+ReductionError = collections.namedtuple('ReductionError', 'source message entry')
+
+
 def book_reductions(entry, group_postings, balances):
     """Book inventory reductions against the ante-balances.
 
@@ -505,11 +510,11 @@ def book_reductions(entry, group_postings, balances):
                 # Check for ambiguous matches.
                 if len(matches) != 1:
                     errors.append(
-                        FullBookingError(entry.meta,
-                                         "Ambiguous matches: {}".format(
-                                             ', '.join(str(match_posting)
-                                                       for match_posting in matches)),
-                                         entry))
+                        ReductinoError(entry.meta,
+                                       "Ambiguous matches: {}".format(
+                                           ', '.join(str(match_posting)
+                                                     for match_posting in matches)),
+                                       entry))
                     return [], errors
 
                 # Replace the posting's units and cost values.
@@ -530,19 +535,6 @@ def book_reductions(entry, group_postings, balances):
                 if costspec.date is None:
                     dated_costspec = costspec._replace(date=entry.date)
                     posting = posting._replace(cost=dated_costspec)
-
-                # FIXME: This was removed in order to avoid the conversion at
-                # this point. Once this works, remove it later.
-                #
-                # # FIXME: Maybe we ought to let the interpolation process
-                # # complete an incomplete augmentation here.
-                # cost = compute_cost(costspec, units, entry.date)
-                # if cost is MISSING:
-                #     errors.append(
-                #         FullBookingError(entry.meta, "Augmenting lot is incomplete", entry))
-                #     posting = None
-                # else:
-                #     posting = posting._replace(cost=cost)
 
         # FIXME: Do we need to update the balances here in the case it's not a
         # reduction? What if we want to reduce off of positions added on other
@@ -617,6 +609,38 @@ def compute_cost(costspec, units, date):
                          costspec.date or date,
                          costspec.label)
 
+
+def convert_costspec_to_cost(posting):
+    """Convert an instance of CostSpec to Cost, if present on the posting.
+
+    If the posting has no cost, it itself is just returned.
+
+    Args:
+      posting: An instance of Posting.
+    Returns:
+      An instance of Posting with a possibly replaced 'cost' attribute.
+    """
+    cost = posting.cost
+    if isinstance(cost, position.CostSpec):
+        if cost is not None:
+            units_number = posting.units.number
+            number_per = cost.number_per
+            number_total = cost.number_total
+            if number_total is not None:
+                # Compute the per-unit cost if there is some total cost
+                # component involved.
+                cost_total = number_total
+                if number_per is not MISSING:
+                    cost_total += number_per * units_number
+                unit_cost = cost_total / abs(units_number)
+            else:
+                unit_cost = number_per
+            new_cost = Cost(unit_cost, cost.currency, cost.date, cost.label)
+            posting = posting._replace(units=posting.units, cost=new_cost)
+    return posting
+
+
+# FIXME: Refactor compute_cost_number(), compute_cost() and convert_costspec_to_cost().
 
 
 class MissingType(misc_utils.Enum):
@@ -817,33 +841,3 @@ def interpolate_group(postings, balances, currency):
                for posting in postings)
 
     return postings, errors, (new_posting is not None)
-
-
-def convert_costspec_to_cost(posting):
-    """Convert an instance of CostSpec to Cost, if present on the posting.
-
-    If the posting has no cost, it itself is just returned.
-
-    Args:
-      posting: An instance of Posting.
-    Returns:
-      An instance of Posting with a possibly replaced 'cost' attribute.
-    """
-    cost = posting.cost
-    if isinstance(cost, position.CostSpec):
-        if cost is not None:
-            units_number = posting.units.number
-            number_per = cost.number_per
-            number_total = cost.number_total
-            if number_total is not None:
-                # Compute the per-unit cost if there is some total cost
-                # component involved.
-                cost_total = number_total
-                if number_per is not MISSING:
-                    cost_total += number_per * units_number
-                unit_cost = cost_total / abs(units_number)
-            else:
-                unit_cost = number_per
-            new_cost = Cost(unit_cost, cost.currency, cost.date, cost.label)
-            posting = posting._replace(units=posting.units, cost=new_cost)
-    return posting
