@@ -4,6 +4,13 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-04-23
+
+  - Added beancount.ingest.importers.fileonly, a simplistic importer which can
+    be instantiated to just file away some downloads without extracting anything
+    from them.
+
+
 2016-04-18
 
   - In bean-doctor context, all the accounts should appear in the
