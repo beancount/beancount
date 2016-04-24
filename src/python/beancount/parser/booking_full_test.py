@@ -498,6 +498,7 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
     def check(self, entry, expected, balances=None, debug=False):
         if balances is None:
             balances = {}
+
         groups, errors = booking_full.categorize_by_currency(entry, balances)
         self.assertFalse(errors)
         posting_groups = booking_full.replace_currencies(entry.postings, groups)
@@ -799,7 +800,7 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
     def test_incomplete_underdefined2(self, entries, _, options_map):
         """
         1997-03-16 * "Transfer"
-          Assets:CA:Life:RRSP:Cash    2000 CAD
+          Assets:CA:Life:RRSP:Cash          2000 CAD
           Assets:CA:Pop:Checking
           Assets:CA:CRA:PreTaxRSP:Allowed  -2000 RSPCAD
           Assets:CA:CRA:PreTaxRSP:Unused    2000 RSPCAD
@@ -962,7 +963,7 @@ class TestBookReductions(unittest.TestCase):
           Assets:Other
         """
         for entry in entries:
-            postings, errors = booking_full.book_reductions(entry, {})
+            postings, errors = booking_full.book_reductions(entry, entry.postings, {})
             self.assertFalse(errors)
             self.assertEqual(len(postings), len(entry.postings))
             self.assertEqual(None, postings[0].cost)
@@ -979,7 +980,7 @@ class TestBookReductions(unittest.TestCase):
           Assets:Other
         """
         for entry in entries:
-            postings, errors = booking_full.book_reductions(entry, {})
+            postings, errors = booking_full.book_reductions(entry, entry.postings, {})
             self.assertFalse(errors)
             self.assertEqual(len(postings), len(entry.postings))
             self.assertEqual(
@@ -994,7 +995,7 @@ class TestBookReductions(unittest.TestCase):
           Assets:Account3          1 HOOL {}
           Assets:Other
         """
-        postings, errors = booking_full.book_reductions(entries[0], {})
+        postings, errors = booking_full.book_reductions(entries[0], entries[0].postings, {})
         self.assertFalse(errors)
         self.assertEqual(
             CostSpec(MISSING, None, MISSING, datetime.date(2015, 10, 1), None, False),
@@ -1007,7 +1008,7 @@ class TestBookReductions(unittest.TestCase):
           Assets:Account3          1 HOOL {USD}
           Assets:Other
         """
-        postings, errors = booking_full.book_reductions(entries[0], {})
+        postings, errors = booking_full.book_reductions(entries[0], entries[0].postings, {})
         self.assertFalse(errors)
         self.assertEqual(
             CostSpec(MISSING, None, 'USD', datetime.date(2015, 10, 1), None, False),
@@ -1025,7 +1026,7 @@ class TestBookReductions(unittest.TestCase):
           Assets:Other
         """
         for entry in entries:
-            postings, errors = booking_full.book_reductions(entry, {})
+            postings, errors = booking_full.book_reductions(entry, entry.postings, {})
             self.assertFalse(errors)
             self.assertEqual(postings, entry.postings)
 
@@ -1039,6 +1040,7 @@ class TestBookReductions(unittest.TestCase):
         for entry in entries:
             (booking_postings,
              booking_errors) = booking_full.book_reductions(entry,
+                                                            entry.postings,
                                                             balances)
             (inter_postings,
              interpolation_errors,
