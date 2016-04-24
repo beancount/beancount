@@ -1362,20 +1362,6 @@ http://furius.ca/beancount/doc/proposal-query
 
   Tasks:
 
-
-  - FIXME: I'm not sure where to put the conversion of CostSpec to Cost.
-
-    * Book reductions always resolves reductions to Cost instances.
-
-    * If I put the conversion of CostSpec to Cost in book_reductions(), it's not
-      possible to interpolate just one of the two numbers of the CostSpec
-      because interpolate_group() only see Cost() instances.
-
-    * If I put it in interpolate_group(), interpolate_group() will see Cost (for
-      reductions) and CostSpec instances (for augmentations), and needs to be
-      able to handle both.
-
-
   - Remove the horrible CARRY_DATE_AND_BOOK_COST kludge; do this by finishing
     the 'booking' branch and making the lots conform exactly to those present in
     the inventory balance, so that the inventory booking can proceed by
