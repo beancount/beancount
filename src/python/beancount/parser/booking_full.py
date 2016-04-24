@@ -574,42 +574,6 @@ def compute_cost_number(costspec, units):
     return unit_cost
 
 
-def compute_cost(costspec, units, date):
-    """Given a CostSpec, calculate the total cost.
-
-    Args:
-      costspec: A parsed instance of CostSpec.
-      units: An instance of Amount for the units of the position.
-      date: A datetime.date instance, the date on the entry, in case the CostSpec
-        has no date.
-    Returns:
-      If it is not possible to calculate the cost, return MISSING.
-      Otherwise, returns a Decimal instance, the per-unit cost.
-    """
-    number_per = costspec.number_per
-    number_total = costspec.number_total
-    if MISSING in (number_per, number_total):
-        return MISSING
-    if number_total is not None:
-        # Compute the per-unit cost if there is some total cost
-        # component involved.
-        cost_total = number_total
-        units_number = units.number
-        if number_per is not None:
-            cost_total += number_per * units_number
-        unit_cost = cost_total / abs(units_number)
-    elif number_per is None:
-        return MISSING
-    else:
-        unit_cost = number_per
-    if not costspec.currency:
-        return MISSING
-    return position.Cost(unit_cost,
-                         costspec.currency,
-                         costspec.date or date,
-                         costspec.label)
-
-
 def convert_costspec_to_cost(posting):
     """Convert an instance of CostSpec to Cost, if present on the posting.
 
@@ -640,7 +604,7 @@ def convert_costspec_to_cost(posting):
     return posting
 
 
-# FIXME: Refactor compute_cost_number(), compute_cost() and convert_costspec_to_cost().
+# FIXME: Refactor compute_cost_number() and convert_costspec_to_cost().
 
 
 class MissingType(misc_utils.Enum):
