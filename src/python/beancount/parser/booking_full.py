@@ -73,6 +73,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
 import copy
+import io
 import logging
 import pprint
 
@@ -140,34 +141,18 @@ def book(entries, options_map):
                 (booked_postings,
                  booking_errors) = book_reductions(entry, group_postings, balances)
 
-                # FIXME: Remove this temporary exception handler. I put this
-                # there to debug what's going on when I run this on my own file.
-                try:
-                    # Interpolate missing numbers from all postings. This
-                    # includes partially incomplete CostSpec instances remaining
-                    # on augmenting postings. After this interpolation, all
-                    # 'inter_postings' consists entirely of postings holding
-                    # instances of Cost.
-                    (inter_postings,
-                     interpolation_errors,
-                     interpolated) = interpolate_group(booked_postings, balances, currency)
-                except AttributeError as exc:
-                    # Print debugging output.
-                    # FIXME: Remove all this, including the exception handler.
-                    for p in booked_postings:
-                        print(p)
+                # If there were any errors, skip this group of postings.
+                if booking_errors:
+                    continue
 
-                    printer.print_entry(entry)
-                    (inter_postings,
-                     interpolation_errors,
-                     interpolated) = interpolate_group(booked_postings, balances, currency, debug=1)
-
-                    # print()
-                    # for p in entry.postings:
-                    #     print(p)
-                    # print()
-                    # for p in booked_postings:
-                    #     print(p)
+                # Interpolate missing numbers from all postings. This
+                # includes partially incomplete CostSpec instances remaining
+                # on augmenting postings. After this interpolation, all
+                # 'inter_postings' consists entirely of postings holding
+                # instances of Cost.
+                (inter_postings,
+                 interpolation_errors,
+                 interpolated) = interpolate_group(booked_postings, balances, currency)
 
                 repl_postings.extend(inter_postings)
 
@@ -463,8 +448,6 @@ def book_reductions(entry, group_postings, balances):
           CostSpec, left to be interpolated later.
         errors: A list of FullBookingError instances, if there were errors.
     """
-    #pr = print
-    pr = lambda *args: None
     errors = []
 
     empty = inventory.Inventory()
@@ -498,40 +481,33 @@ def book_reductions(entry, group_postings, balances):
                 # Match the positions.
                 cost_number = compute_cost_number(costspec, units)
                 matches = []
-                pr('----------------------------------------')
-                pr('balance', balance)
                 for position in balance:
-                    pr('position', position)
                     if (units.currency and
                         position.units.currency != units.currency):
-                        pr('a')
                         continue
                     if (cost_number is not None and
                         position.cost.number != cost_number):
-                        pr('b')
                         continue
                     if (isinstance(costspec.currency, str) and
                         position.cost.currency != costspec.currency):
-                        pr('c')
                         continue
                     if (costspec.date and
                         position.cost.date != costspec.date):
-                        pr('d')
                         continue
                     if (costspec.label and
                         position.cost.label != costspec.label):
-                        pr('e')
                         continue
                     matches.append(position)
 
                 # Check for ambiguous matches.
                 if len(matches) != 1:
-                    # FIXME: Handle this later by calling the booking resolution method.
-                    pr('@@', len(matches))
-                    pr('@P', posting)
-                    for posting in matches:
-                        pr('@', posting)
-                    raise ValueError("Ambiguous matches")
+                    errors.append(
+                        FullBookingError(entry.meta,
+                                         "Ambiguous matches: {}".format(
+                                             ', '.join(str(match_posting)
+                                                       for match_posting in matches)),
+                                         entry))
+                    return [], errors
 
                 # Replace the posting's units and cost values.
                 match_position = matches[0]
@@ -652,14 +628,13 @@ class MissingType(misc_utils.Enum):
 InterpolationError = collections.namedtuple('InterpolationError', 'source message entry')
 
 
-def interpolate_group(postings, balances, currency, debug=False):
+def interpolate_group(postings, balances, currency):
     """Interpolate missing numbers in the set of postings.
 
     Args:
       postings: A list of Posting instances.
       balances: A dict of account to its ante-inventory.
       currency: The weight currency of this group, used for reporting errors.
-      debug: A boolean, true if we should print debugging output.
     Returns:
       A tuple of
         postings: A lit of new posting instances.
@@ -678,12 +653,7 @@ def interpolate_group(postings, balances, currency, debug=False):
     # Figure out which type of amount is missing, by creating a list of
     # incomplete postings and which type of units is missing.
     incomplete = []
-    if debug:
-        print('B', balances)
-        print('C', currency)
     for index, posting in enumerate(postings):
-        if debug:
-            print('P', posting)
         units = posting.units
         cost = posting.cost
         price = posting.price

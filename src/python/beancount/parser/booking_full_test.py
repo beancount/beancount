@@ -510,7 +510,7 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
 
             # Run the interpolation for that group.
             new_postings, errors, interpolated = booking_full.interpolate_group(
-                postings, balances, currency, debug=debug)
+                postings, balances, currency)
 
             # Print out infos for troubleshooting.
             if debug:
