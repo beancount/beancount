@@ -1362,6 +1362,21 @@ http://furius.ca/beancount/doc/proposal-query
 
   Tasks:
 
+  - Make the "reduction_method" (rename from "booking_method") per-account and
+    support the old method in the new code, as "FIFO". It really just is FIFO
+    but now there will be lot splits instead of single lots being merged; this
+    should work. Or you could call it "PRICEONLY".
+
+    * Provide a global option "reduction_method" for its default value across
+      all accounts. Set the default to "PRICEONLY" so that no changes occur by
+      default.
+
+    * Dispatch the new 'full' booking method to reduction_method "STRICT".
+
+    * Support "NONE" and "AVCO" after that.
+
+    * "AVDO" should be able to work even without the star marker.
+
   - Remove the horrible CARRY_DATE_AND_BOOK_COST kludge; do this by finishing
     the 'booking' branch and making the lots conform exactly to those present in
     the inventory balance, so that the inventory booking can proceed by
