@@ -143,6 +143,7 @@ def book(entries, options_map):
 
                 # If there were any errors, skip this group of postings.
                 if booking_errors:
+                    errors.extend(booking_errors)
                     continue
 
                 # Interpolate missing numbers from all postings. This
@@ -154,6 +155,8 @@ def book(entries, options_map):
                  interpolation_errors,
                  interpolated) = interpolate_group(booked_postings, balances, currency)
 
+                if interpolation_errors:
+                    errors.extend(interpolation_errors)
                 repl_postings.extend(inter_postings)
 
             # Replace postings by interpolated ones.
