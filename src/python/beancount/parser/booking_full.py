@@ -455,8 +455,8 @@ def book_reductions(entry, balances):
           CostSpec, left to be interpolated later.
         errors: A list of FullBookingError instances, if there were errors.
     """
-    pr = print
-    #pr = lambda *args: None
+    #pr = print
+    pr = lambda *args: None
     errors = []
 
     empty = inventory.Inventory()
@@ -702,9 +702,10 @@ def interpolate_group(postings, balances, currency, debug=False):
         if price and price.number is MISSING:
             incomplete.append((MissingType.PRICE, index))
 
+    new_posting = None
     if len(incomplete) == 0:
         # If there are no missing numbers, return the original list of postings.
-        return postings, errors, False
+        pass
 
     elif len(incomplete) > 1:
         # If there is more than a single value to be interpolated, generate an
@@ -714,7 +715,7 @@ def interpolate_group(postings, balances, currency, debug=False):
             postings[posting_index].meta,
             "Too many missing numbers for currency group '{}'".format(currency),
             None))
-        return postings, errors, False
+        pass
 
     else:
         # If there is a single missing number, calculate it and fill it in here.
@@ -810,14 +811,21 @@ def interpolate_group(postings, balances, currency, debug=False):
         else:
             assert False, "Internal error; Invalid missing type."
 
+        # Replace the number in the posting.
+        postings = list(postings)
+        if new_posting is not None:
+            postings[index] = new_posting
+        else:
+            del postings[index]
 
-        # Convert augmenting postings' costs from CostSpec to corresponding Cost
-        # instances.
-        if new_posting and isinstance(new_posting.cost, position.CostSpec):
-            units = new_posting.units
-            cost = new_posting.cost
+    # Convert augmenting postings' costs from CostSpec to corresponding Cost
+    # instances.
+    new_postings = []
+    for posting in postings:
+        cost = posting.cost
+        if isinstance(cost, position.CostSpec):
             if cost is not None:
-                units_number = units.number
+                units_number = posting.units.number
                 number_per = cost.number_per
                 number_total = cost.number_total
                 if number_total is not None:
@@ -830,13 +838,7 @@ def interpolate_group(postings, balances, currency, debug=False):
                 else:
                     unit_cost = number_per
                 new_cost = Cost(unit_cost, cost.currency, cost.date, cost.label)
-                new_posting = new_posting._replace(units=units, cost=new_cost)
+                posting = posting._replace(units=posting.units, cost=new_cost)
+        new_postings.append(posting)
 
-        # Replace the number in the posting.
-        postings = list(postings)
-        if new_posting is not None:
-            postings[index] = new_posting
-        else:
-            del postings[index]
-
-    return postings, errors, (new_posting is not None)
+    return new_postings, errors, (new_posting is not None)

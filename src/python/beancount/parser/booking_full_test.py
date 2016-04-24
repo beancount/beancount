@@ -8,13 +8,16 @@ import re
 import io
 
 from beancount.core.number import D
+from beancount.core.amount import A
 from beancount.core.number import MISSING
 from beancount.core.position import CostSpec
+from beancount.core.position import Cost
 from beancount.core.inventory import from_string as I
 from beancount.utils.misc_utils import dictmap
 from beancount.core import inventory
 from beancount.core import position
 from beancount.core import amount
+from beancount.core import data
 from beancount.parser import parser
 from beancount.parser import printer
 from beancount.parser import booking_full
@@ -394,7 +397,6 @@ class TestReplaceCurrenciesInGroup(unittest.TestCase):
                         posting.price.currency if posting.price else None)
                        for posting in postings]
             for currency, postings in posting_groups.items()}
-        print(check_groups)
         self.assertEqual(expected, check_groups)
 
         # Check all the postings are unique instances.
@@ -437,36 +439,36 @@ class TestReplaceCurrenciesInGroup(unittest.TestCase):
         """
         2015-10-02 *
           Assets:Account   100.00
-          Assets:Other    -100.00 USD
+          Assets:Another  -100.00 USD
 
         2015-10-02 *
           Assets:Account   100.00 USD @ 120.00
-          Assets:Other    -120.00 CAD
+          Assets:Another  -120.00 CAD
 
         2015-10-02 *
           Assets:Account   10 HOOL {100.00}
-          Assets:Other    -1000.00 USD
+          Assets:Another  -1000.00 USD
 
         2015-10-02 *
           Assets:Account   10 HOOL {100.00} @ 120.00 USD
-          Assets:Other    -1000.00 USD
+          Assets:Another  -1000.00 USD
         2015-10-02 *
           Assets:Account   10 HOOL {100.00 USD} @ 120.00
-          Assets:Other    -1000.00 USD
+          Assets:Another  -1000.00 USD
         """
-        self.check({'USD': [('USD', None, None),
-                            ('USD', None, None)]}, entries[0])
+        self.check({'USD': [('Assets:Account', 'USD', None, None),
+                            ('Assets:Another', 'USD', None, None)]}, entries[0])
 
-        self.check({'CAD': [('USD', None, 'CAD'),
-                            ('CAD', None, None)]}, entries[1])
+        self.check({'CAD': [('Assets:Account', 'USD', None, 'CAD'),
+                            ('Assets:Another', 'CAD', None, None)]}, entries[1])
 
-        self.check({'USD': [('HOOL', 'USD', None),
-                            ('USD', None, None)]}, entries[2])
+        self.check({'USD': [('Assets:Account', 'HOOL', 'USD', None),
+                            ('Assets:Another', 'USD', None, None)]}, entries[2])
 
-        self.check({'USD': [('HOOL', 'USD', 'USD'),
-                            ('USD', None, None)]}, entries[3])
-        self.check({'USD': [('HOOL', 'USD', 'USD'),
-                            ('USD', None, None)]}, entries[4])
+        self.check({'USD': [('Assets:Account', 'HOOL', 'USD', 'USD'),
+                            ('Assets:Another', 'USD', None, None)]}, entries[3])
+        self.check({'USD': [('Assets:Account', 'HOOL', 'USD', 'USD'),
+                            ('Assets:Another', 'USD', None, None)]}, entries[4])
 
 
 def normalize_postings(postings):
@@ -1032,28 +1034,46 @@ class TestBookReductions(unittest.TestCase):
 
     # FIXME: Rewrite these tests.
 
-    def book_reductions(self, entries):
+    def book_reductions(self, entries, currency='USD'):
         balances = collections.defaultdict(inventory.Inventory)
         for entry in entries:
-            postings, errors = booking_full.book_reductions(entry, balances)
-            for posting in postings:
+            (booking_postings,
+             booking_errors) = booking_full.book_reductions(entry,
+                                                            balances)
+            (inter_postings,
+             interpolation_errors,
+             interpolated) = booking_full.interpolate_group(booking_postings,
+                                                            balances,
+                                                            currency)
+            for posting in inter_postings:
                 balances[posting.account].add_position(posting)
-        return balances
+        return inter_postings, balances
+
+    def assertPostingsEqual(self, postings1, postings2):
+        postings1 = [posting._replace(meta=None) for posting in postings1]
+        postings2 = [posting._replace(meta=None) for posting in postings2]
+        self.assertEqual(postings1, postings2)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_augment__at_cost__same(self, entries, _, __):
         """
         2015-10-01 * "Held-at-cost, positive"
           Assets:Account1          1 HOOL {100.00 USD}
-          Assets:Other          -100.00 USD
+          Assets:Other       -100.00 USD
 
         2015-10-01 * "Held-at-cost, positive, same cost"
           Assets:Account1          2 HOOL {100.00 USD}
-          Assets:Other          -200.00 USD
+          Assets:Other       -200.00 USD
         """
-        balances = self.book_reductions(entries)
+        postings, balances = self.book_reductions(entries)
         self.assertEqual(inventory.from_string('3 HOOL {100.00 USD, 2015-10-01}'),
                          balances['Assets:Account1'])
+        self.assertPostingsEqual([
+            data.Posting('Assets:Account1', A('2 HOOL'),
+                         Cost(D('100.00'), 'USD', datetime.date(2015, 10, 1), None),
+                         None, None, None),
+            data.Posting('Assets:Other', A('-200.00 USD'), None, None, None, None),
+            ], postings)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_augment__at_cost__different_date(self, entries, _, __):
@@ -1066,10 +1086,16 @@ class TestBookReductions(unittest.TestCase):
           Assets:Account1          2 HOOL {100.00 USD}
           Assets:Other          -200.00 USD
         """
-        balances = self.book_reductions(entries)
+        postings, balances = self.book_reductions(entries)
         self.assertEqual(inventory.from_string('1 HOOL {100.00 USD, 2015-10-01}, '
                                                '2 HOOL {100.00 USD, 2015-10-02}'),
                          balances['Assets:Account1'])
+        self.assertPostingsEqual([
+            data.Posting('Assets:Account1', A('2 HOOL'),
+                         Cost(D('100.00'), 'USD', datetime.date(2015, 10, 2), None),
+                         None, None, None),
+            data.Posting('Assets:Other', A('-200.00 USD'), None, None, None, None),
+            ], postings)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_augment__at_cost__different_date__overridden(self, entries, _, __):
@@ -1082,10 +1108,16 @@ class TestBookReductions(unittest.TestCase):
           Assets:Account1          2 HOOL {100.00 USD, 2015-10-02}
           Assets:Other          -200.00 USD
         """
-        balances = self.book_reductions(entries)
+        postings, balances = self.book_reductions(entries)
         self.assertEqual(inventory.from_string('1 HOOL {100.00 USD, 2015-10-01}, '
                                                '2 HOOL {100.00 USD, 2015-10-02}'),
                          balances['Assets:Account1'])
+        self.assertPostingsEqual([
+            data.Posting('Assets:Account1', A('2 HOOL'),
+                         Cost(D('100.00'), 'USD', datetime.date(2015, 10, 2), None),
+                         None, None, None),
+            data.Posting('Assets:Other', A('-200.00 USD'), None, None, None, None),
+            ], postings)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_augment__at_cost__different_cost(self, entries, _, __):
@@ -1098,10 +1130,16 @@ class TestBookReductions(unittest.TestCase):
           Assets:Account1          2 HOOL {101.00 USD}
           Assets:Other          -204.00 USD
         """
-        balances = self.book_reductions(entries)
+        postings, balances = self.book_reductions(entries)
         self.assertEqual(inventory.from_string('1 HOOL {100.00 USD, 2015-10-01}, '
                                                '2 HOOL {101.00 USD, 2015-10-01}'),
                          balances['Assets:Account1'])
+        self.assertPostingsEqual([
+            data.Posting('Assets:Account1', A('2 HOOL'),
+                         Cost(D('101.00'), 'USD', datetime.date(2015, 10, 1), None),
+                         None, None, None),
+            data.Posting('Assets:Other', A('-204.00 USD'), None, None, None, None),
+            ], postings)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_augment__at_cost__different_currency(self, entries, _, __):
@@ -1112,12 +1150,18 @@ class TestBookReductions(unittest.TestCase):
 
         2015-10-01 * "Held-at-cost, positive, same cost"
           Assets:Account1          2 HOOL {100.00 CAD}
-          Assets:Other          -204.00 USD
+          Assets:Other          -200.00 CAD
         """
-        balances = self.book_reductions(entries)
+        postings, balances = self.book_reductions(entries)
         self.assertEqual(inventory.from_string('1 HOOL {100.00 USD, 2015-10-01}, '
                                                '2 HOOL {100.00 CAD, 2015-10-01}'),
                          balances['Assets:Account1'])
+        self.assertPostingsEqual([
+            data.Posting('Assets:Account1', A('2 HOOL'),
+                         Cost(D('100.00'), 'CAD', datetime.date(2015, 10, 1), None),
+                         None, None, None),
+            data.Posting('Assets:Other', A('-200.00 CAD'), None, None, None, None),
+            ], postings)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_augment__at_cost__different_label(self, entries, _, __):
@@ -1128,12 +1172,18 @@ class TestBookReductions(unittest.TestCase):
 
         2015-10-01 * "Held-at-cost, positive, same cost"
           Assets:Account1          2 HOOL {100.00 USD, "lot1"}
-          Assets:Other          -204.00 USD
+          Assets:Other          -200.00 USD
         """
-        balances = self.book_reductions(entries)
+        postings, balances = self.book_reductions(entries)
         self.assertEqual(inventory.from_string('1 HOOL {100.00 USD, 2015-10-01}, '
                                                '2 HOOL {100.00 USD, 2015-10-01, "lot1"}'),
                          balances['Assets:Account1'])
+        self.assertPostingsEqual([
+            data.Posting('Assets:Account1', A('2 HOOL'),
+                         Cost(D('100.00'), 'USD', datetime.date(2015, 10, 1), "lot1"),
+                         None, None, None),
+            data.Posting('Assets:Other', A('-200.00 USD'), None, None, None, None),
+            ], postings)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_reduce__no_cost(self, entries, _, __):
@@ -1146,7 +1196,7 @@ class TestBookReductions(unittest.TestCase):
           Assets:Account1         -1 USD
           Assets:Other2            1 USD
         """
-        balances = self.book_reductions(entries)
+        _, balances = self.book_reductions(entries)
         self.assertEqual(inventory.from_string('9 USD'),
                          balances['Assets:Account1'])
 
@@ -1161,9 +1211,15 @@ class TestBookReductions(unittest.TestCase):
           Assets:Account1         -1 HOOL {100.00 USD}
           Assets:Other        100.00 USD
         """
-        balances = self.book_reductions(entries)
+        postings, balances = self.book_reductions(entries)
         self.assertEqual(inventory.from_string('2 HOOL {100.00 USD, 2015-10-01}'),
                          balances['Assets:Account1'])
+        self.assertPostingsEqual([
+            data.Posting('Assets:Account1', A('-1 HOOL'),
+                         Cost(D('100.00'), 'USD', datetime.date(2015, 10, 1), None),
+                         None, None, None),
+            data.Posting('Assets:Other', A('100.00 USD'), None, None, None, None),
+            ], postings)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_reduce__any_spec(self, entries, _, __):
@@ -1176,9 +1232,15 @@ class TestBookReductions(unittest.TestCase):
           Assets:Account1         -1 HOOL {}
           Assets:Other        100.00 USD
         """
-        balances = self.book_reductions(entries)
+        postings, balances = self.book_reductions(entries)
         self.assertEqual(inventory.from_string('2 HOOL {100.00 USD, 2015-10-01}'),
                          balances['Assets:Account1'])
+        self.assertPostingsEqual([
+            data.Posting('Assets:Account1', A('-1 HOOL'),
+                         Cost(D('100.00'), 'USD', datetime.date(2015, 10, 1), None),
+                         None, None, None),
+            data.Posting('Assets:Other', A('100.00 USD'), None, None, None, None),
+            ], postings)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_reduce__same_cost__per(self, entries, _, __):
@@ -1191,9 +1253,15 @@ class TestBookReductions(unittest.TestCase):
           Assets:Account1         -1 HOOL {100.00}
           Assets:Other        100.00 USD
         """
-        balances = self.book_reductions(entries)
+        postings, balances = self.book_reductions(entries)
         self.assertEqual(inventory.from_string('2 HOOL {100.00 USD, 2015-10-01}'),
                          balances['Assets:Account1'])
+        self.assertPostingsEqual([
+            data.Posting('Assets:Account1', A('-1 HOOL'),
+                         Cost(D('100.00'), 'USD', datetime.date(2015, 10, 1), None),
+                         None, None, None),
+            data.Posting('Assets:Other', A('100.00 USD'), None, None, None, None),
+            ], postings)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_reduce__same_cost__total(self, entries, _, __):
@@ -1206,9 +1274,15 @@ class TestBookReductions(unittest.TestCase):
           Assets:Account1         -2 HOOL {# 100.00 USD}
           Assets:Other        200.00 USD
         """
-        balances = self.book_reductions(entries)
+        postings, balances = self.book_reductions(entries)
         self.assertEqual(inventory.from_string('1 HOOL {100.00 USD, 2015-10-01}'),
                          balances['Assets:Account1'])
+        self.assertPostingsEqual([
+            data.Posting('Assets:Account1', A('-2 HOOL'),
+                         Cost(D('100.00'), 'USD', datetime.date(2015, 10, 1), None),
+                         None, None, None),
+            data.Posting('Assets:Other', A('200.00 USD'), None, None, None, None),
+            ], postings)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_reduce__same_currency(self, entries, _, __):
@@ -1221,9 +1295,15 @@ class TestBookReductions(unittest.TestCase):
           Assets:Account1         -1 HOOL {USD}
           Assets:Other        100.00 USD
         """
-        balances = self.book_reductions(entries)
+        postings, balances = self.book_reductions(entries)
         self.assertEqual(inventory.from_string('2 HOOL {100.00 USD, 2015-10-01}'),
                          balances['Assets:Account1'])
+        self.assertPostingsEqual([
+            data.Posting('Assets:Account1', A('-1 HOOL'),
+                         Cost(D('100.00'), 'USD', datetime.date(2015, 10, 1), None),
+                         None, None, None),
+            data.Posting('Assets:Other', A('100.00 USD'), None, None, None, None),
+            ], postings)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_reduce__same_date(self, entries, _, __):
@@ -1236,9 +1316,15 @@ class TestBookReductions(unittest.TestCase):
           Assets:Account1         -1 HOOL {2015-10-01}
           Assets:Other        100.00 USD
         """
-        balances = self.book_reductions(entries)
+        postings, balances = self.book_reductions(entries)
         self.assertEqual(inventory.from_string('2 HOOL {100.00 USD, 2015-10-01}'),
                          balances['Assets:Account1'])
+        self.assertPostingsEqual([
+            data.Posting('Assets:Account1', A('-1 HOOL'),
+                         Cost(D('100.00'), 'USD', datetime.date(2015, 10, 1), None),
+                         None, None, None),
+            data.Posting('Assets:Other', A('100.00 USD'), None, None, None, None),
+            ], postings)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_reduce__same_label(self, entries, _, __):
@@ -1251,10 +1337,17 @@ class TestBookReductions(unittest.TestCase):
           Assets:Account1         -1 HOOL {"6e425dd7b820"}
           Assets:Other        100.00 USD
         """
-        balances = self.book_reductions(entries)
+        postings, balances = self.book_reductions(entries)
         self.assertEqual(
             inventory.from_string('2 HOOL {100.00 USD, 2015-10-01, "6e425dd7b820"}'),
             balances['Assets:Account1'])
+        self.assertPostingsEqual([
+            data.Posting('Assets:Account1', A('-1 HOOL'),
+                         Cost(D('100.00'), 'USD', datetime.date(2015, 10, 1), "6e425dd7b820"),
+                         None, None, None),
+            data.Posting('Assets:Other', A('100.00 USD'), None, None, None, None),
+            ], postings)
+
 
 
 
