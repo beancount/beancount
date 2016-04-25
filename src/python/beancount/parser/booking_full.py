@@ -510,7 +510,7 @@ def book_reductions(entry, group_postings, balances):
                 # Check for ambiguous matches.
                 if len(matches) != 1:
                     errors.append(
-                        ReductinoError(entry.meta,
+                        ReductionError(entry.meta,
                                        "Ambiguous matches: {}".format(
                                            ', '.join(str(match_posting)
                                                      for match_posting in matches)),
