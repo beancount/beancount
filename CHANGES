@@ -4,6 +4,14 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-04-24
+
+  - Rewrote the section on "Core Data Structures" of the Design Doc, to reflect
+    the newer internals of Beancount, those which have been merged from the
+    ongoing 'booking' branch.
+    See http://furius.ca/beancount/doc/design-doc.
+
+
 2016-04-23
 
   - Added beancount.ingest.importers.fileonly, a simplistic importer which can

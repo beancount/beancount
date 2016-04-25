@@ -143,6 +143,7 @@ beancount: TODO
     HLedger.
 
   - Complete "How Inventories Work?"
+
   - Complete intro document on double-entry bookkeepingk."
   - Complete Design Doc
 
@@ -1484,6 +1485,14 @@ http://furius.ca/beancount/doc/proposal-query
     One way to handle this would be to process all account augmentations before
     reductions. But that's not really possible, because the augmentation may
     require interpolation first. Hmmm. Difficult question. {f89b5b01e568}
+
+  - Add an option "merge_lots" whose default value is TRUE, and which can be set
+    to FALSE in order to avoid merging augmenting lots in the Inventory. It this
+    is false, there's the possibillity of an inventory owning two lots which
+    cannot be differentiated, and the only way for the user out of that
+    situation would be to insert unique labels (indicate this somehow). Write
+    unit tests for this. And try running it over my personal file to see if
+    there's any instance of it ever happening (I don't think so).
 
 ** Auto-Link Booking Transactions
 
@@ -3123,6 +3132,11 @@ http://furius.ca/beancount/doc/proposal-query
     ensure that the mutable portion of the entries hasn't been modified by the
     user-provided validation functions.
     'beancount.ops.documents' could benefit from this split.
+
+** Plugin: sellgains
+
+  - This would probably benefit in being renamed to 'check_gains', a better
+    name.
 
 ** Plugin: flagged_subset
 
