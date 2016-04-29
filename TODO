@@ -1248,6 +1248,12 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Duplicate entries should cover all directive types (for balances).
 
+  - Also, similarly, if one is entirely contained in the other, as happens often
+    in OFX files, remove one. For example, here's what some OFX imports may
+    look like with the current OFX importer:
+
+       "DDA WITHDRAW MG21       MTL QC A / DDA WITHDRAW MG21       MTL QC ABM OPS MTL ABM O    MONTREAL      C AN"
+
   - Validation of directories (aka bean-doctor directories) should be
     automatically invoked by bean-file, and that would make sense.
 
@@ -4596,4 +4602,47 @@ http://furius.ca/beancount/doc/proposal-query
   - Merge TODO file entries here
   - Merge Email Starred entries
   - Merge all Open Tickets here
-  - Merge all Google Keep entries as well
+
+  - Rename amount.amount_sortkey() simply to amount.sortkey(), like the other
+    functions.
+
+** Add Google Keep Tickets
+
+  - Unicode support: add a basic filter with 'ignore' to a temp file, before I finish having a proper lexer. Kick the tires off a lexer anyhow.
+  - Idea: select * from transactions, but you have to find a way to open/close/clear either before filtering or after.
+  - Print out metadata from the C-c x bean-doctor context command
+  - Get to a point where you can compute long term vs short term
+  - For testing decimal, work the renderers from a given dictionary, either computed or given glabally. A maximum should be enforced too.
+  - Testing for rendering Needs to test with numbers under prec, over prec, integers, with wild prec (enforce max).
+  - Add a display_precision option yo allow the user to override it.
+  - Add warning on repeated metadata value key
+  - Returns: identify entries with intflows + extflows on one transaction, without assets, they should be printed out for review in dates after all assets accounts are opened
+  - Preso: offer an estimate of data size for a ledger and show how its really small.
+  - Finish prior to spreadsheet replicating g finance
+  - Add change from trailing day, week, month, helps making decision based on recent trends
+  - Idea: introduce balance checks on preso, immediately motivates the de method! Highlight errors
+  - If I sell my entire position of multiple lots the booking should be able to infer that this is umambiguous
+  - Don't allow negative units by default--modify STRICT method to disallow that.
+  - Idea: stock split could be its own directive with a corresponding stream transformation, all defined in a plugin
+  - Idea: wash adjusents to adjutsment account and zero balance in 2015, instead of washing to pnl account. Do this now.
+  - Beancount: Review terminology used in documents, use "Clearing" instead of "Transfer."
+  - Idea: report only on last posting of a transaction!
+  - In reading example of stock split, add one that maintains the original purchase date
+
+*** Sqltool why interesting ?
+
+  - Automatic schemas
+  - Typed calculations
+  - Single line
+  - Basic operations
+  - Running commands
+
+  - Broadcast concept, for inventories
+  - Data (..., "html", 1), Html(...)
+  - Sources: Beancount, ledger, hledger, CSV, dbm, Xls, xml, etc.
+
+*** Taxes & Finance
+
+  - In Canada, all trading is carried out at average lot! Since when? Adjust my Beancount file.
+  - When in foreign land, how much is the base deduction (-93k?) and are you only subject to federal tax rate when you're not there?
+  - Q: Can you convert short term gains into long ones via a wash sale?
