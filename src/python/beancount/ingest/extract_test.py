@@ -133,8 +133,8 @@ class TestScriptExtractFromFile(test_utils.TestCase):
         imp = mock.MagicMock()
         imp.identify = mock.MagicMock(return_value=True)
         imp.extract = mock.MagicMock(side_effect=ValueError("Unexpected error!"))
-        new_entries, dup_entries = extract.extract_from_file('/tmp/blabla.ofx', imp, [])
-        self.assertEqual(0, len(new_entries))
+        with self.assertRaises(ValueError):
+            extract.extract_from_file('/tmp/blabla.ofx', imp, [])
 
 
 class TestPrintExtractedEntries(scripts_utils.TestScriptsBase, unittest.TestCase):
