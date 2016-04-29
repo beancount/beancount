@@ -4,6 +4,16 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-04-29
+
+  - Don't just log an extraction error to logging.error() in the regression
+    tests; let the exception through. This makes building and debugging
+    importers much easier.
+
+  - Created an experimental script to extract date/location information required
+    for a naturalization application.
+
+
 2016-04-24
 
   - Rewrote the section on "Core Data Structures" of the Design Doc, to reflect
