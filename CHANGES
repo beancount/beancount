@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-05-01
+
+  - Fixed some warnings about unclosed files which occur only on default python
+    branch.
+
+
 2016-04-29
 
   - Don't just log an extraction error to logging.error() in the regression
