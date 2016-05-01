@@ -853,7 +853,7 @@ declarations : declarations directive
 
 file : declarations
      {
-         BUILDY(,
+         BUILDY(DECREF1($1),
                 $$, "store_result", "O", $1);
      }
 
