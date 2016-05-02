@@ -1,5 +1,15 @@
 -*- mode: org -*-
 beancount: TODO
+* Priorities
+
+{booking}
+{holding}
+{balance-where}
+{autogroup}
+{deprecation}
+{review-dcontext}
+{write-intro-doc}
+
 * Settlement Dates (Split & Merge)
 
   In http://furius.ca/beancount/doc/proposal-settlement, I describe the problem
@@ -92,6 +102,7 @@ beancount: TODO
     of shots at it but never really finished it. This document will also contain
     a section to explain how inventories "work", that is, how amounts posted to
     them are matched against their existing contents. Complete this doc first.
+    {write-intro-doc}
 
   - "Cookbook: Taxes." I have a nearly complete cookbook document on booking
     taxes. It's timely [April 2016] and I should try to complete that now for
@@ -511,6 +522,11 @@ Improve this bit:
   - bean-doctor context does not render all digits... it should render all the
     numbers as represented in memory. Don't round those numbers.
 
+  - Review all the reports code and convert it all to render using the
+    DisplayContext, make the query output also use it, and review rendering
+    precision for cost & prices and maybe find a self-contained solution for
+    passing two separate formatters somehow. {review-dcontext}
+
 * Move Much of Core to Plugins
 
   Some of the functionality currently residing in the Beancount core could be
@@ -762,6 +778,9 @@ Improve this bit:
   - Wouldn't it be nice if running a bean-query could automatically upload to a
     new Google Doc and bring up the web browser interface? Do this.
 
+  - Make BALANCES command support a WHERE clause. It’s dumb not to. {balance-where}
+
+  - Make auto-group work. {autogroup}
 
 ** Query Language
 http://furius.ca/beancount/doc/proposal-query
@@ -1431,10 +1450,6 @@ http://furius.ca/beancount/doc/proposal-query
   - Write a test to ensure that an auto-posting with no effect results in no
     new posting getting inserted.
 
-  - Replace Holding by the new, flattened Position, it's a _lot_ more like it.
-    Makes a lot of sense now. Move the price_date to .meta, I don't think it's
-    actually used.
-
   - Implement an optional feature that disables the merging of inventory lots
     for all lots except lots without cost. In other words, if there's a cost
     object, don't even compare them or try to merge them together; only lots
@@ -1990,7 +2005,7 @@ http://furius.ca/beancount/doc/proposal-query
 ** Deprecation
 
   Just some old things that are marked as not supported anymore; finally remove
-  them all at once.
+  them all at once. {deprecation}
 
   - Remove the parsing of "CHECK" at some point, that was just there for
     compatibility.
@@ -2436,7 +2451,11 @@ http://furius.ca/beancount/doc/proposal-query
   accumulated at a particular point in time.
 
   - Remove Holding object everywhere and replace it by Posting. Convert all
-    aggregation routines to work on Posting instances instead.
+    aggregation routines to work on Posting instances instead. {holding}
+
+  - Replace Holding by the new, flattened Position, it's a _lot_ more like it.
+    Makes a lot of sense now. Move the price_date to .meta, I don't think it's
+    actually used.
 
   - In doing so, it might be useful to enrich the Price field of a Posting
     object with a date (number, currency, date). This would allow the creation
@@ -2835,6 +2854,9 @@ http://furius.ca/beancount/doc/proposal-query
   somewhere in that script, not in Beancount. There is also another script
   (experiemnts/washsales/list-lots.py) which is used to list the resulting
   lots.
+
+  - Document all cases of wash sales and support arbitrary washing of sales in
+    an official Beancount plugin.
 
   - You need to make the washing of the lots a part of regular Beancount, the
     washing of the lots needs to occur within Beancount, not in
@@ -4599,35 +4621,62 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
-  - Merge TODO file entries here
-  - Merge Email Starred entries
-  - Merge all Open Tickets here
+** Google Keep Tickets
 
-  - Rename amount.amount_sortkey() simply to amount.sortkey(), like the other
-    functions.
+  - Unicode support: add a basic filter with 'ignore' to a temp file, before I
+    finish having a proper lexer. Kick the tires off a lexer anyhow.
 
-** Add Google Keep Tickets
+  - Idea: select * from transactions, but you have to find a way to
+    open/close/clear either before filtering or after.
 
-  - Unicode support: add a basic filter with 'ignore' to a temp file, before I finish having a proper lexer. Kick the tires off a lexer anyhow.
-  - Idea: select * from transactions, but you have to find a way to open/close/clear either before filtering or after.
   - Print out metadata from the C-c x bean-doctor context command
+
   - Get to a point where you can compute long term vs short term
-  - For testing decimal, work the renderers from a given dictionary, either computed or given glabally. A maximum should be enforced too.
-  - Testing for rendering Needs to test with numbers under prec, over prec, integers, with wild prec (enforce max).
+
+  - For testing decimal, work the renderers from a given dictionary, either
+    computed or given glabally. A maximum should be enforced too.
+
+  - Testing for rendering Needs to test with numbers under prec, over prec,
+    integers, with wild prec (enforce max).
+
   - Add a display_precision option yo allow the user to override it.
+
   - Add warning on repeated metadata value key
-  - Returns: identify entries with intflows + extflows on one transaction, without assets, they should be printed out for review in dates after all assets accounts are opened
-  - Preso: offer an estimate of data size for a ledger and show how its really small.
+
+  - Returns: identify entries with intflows + extflows on one transaction,
+    without assets, they should be printed out for review in dates after all
+    assets accounts are opened
+
+  - Preso: offer an estimate of data size for a ledger and show how its really
+    small.
+
   - Finish prior to spreadsheet replicating g finance
-  - Add change from trailing day, week, month, helps making decision based on recent trends
-  - Idea: introduce balance checks on preso, immediately motivates the de method! Highlight errors
-  - If I sell my entire position of multiple lots the booking should be able to infer that this is umambiguous
-  - Don't allow negative units by default--modify STRICT method to disallow that.
-  - Idea: stock split could be its own directive with a corresponding stream transformation, all defined in a plugin
-  - Idea: wash adjusents to adjutsment account and zero balance in 2015, instead of washing to pnl account. Do this now.
-  - Beancount: Review terminology used in documents, use "Clearing" instead of "Transfer."
+
+  - Add change from trailing day, week, month, helps making decision based on
+    recent trends
+
+  - Idea: introduce balance checks on preso, immediately motivates the de
+    method! Highlight errors
+
+  - If I sell my entire position of multiple lots the booking should be able to
+    infer that this is umambiguous
+
+  - Don't allow negative units by default--modify STRICT method to disallow
+    that.
+
+  - Idea: stock split could be its own directive with a corresponding stream
+    transformation, all defined in a plugin
+
+  - Idea: wash adjusents to adjutsment account and zero balance in 2015, instead
+    of washing to pnl account. Do this now.
+
+  - Beancount: Review terminology used in documents, use "Clearing" instead of
+    "Transfer."
+
   - Idea: report only on last posting of a transaction!
-  - In reading example of stock split, add one that maintains the original purchase date
+
+  - In reading example of stock split, add one that maintains the original
+    purchase date
 
 *** Sqltool why interesting ?
 
@@ -4646,3 +4695,215 @@ http://furius.ca/beancount/doc/proposal-query
   - In Canada, all trading is carried out at average lot! Since when? Adjust my Beancount file.
   - When in foreign land, how much is the base deduction (-93k?) and are you only subject to federal tax rate when you're not there?
   - Q: Can you convert short term gains into long ones via a wash sale?
+** File Entries from TODO file
+*** Urgent-ish
+
+  - Unify bean-doctor linked and bean-doctor context; make it one, and C-u
+    prefix triggers links, perhaps ask for which link
+
+  - Create a demo video about “context” and “linked” command-line tools.
+
+
+*** Documentation / Process
+
+  - Complete the CA and handle all remaining pull requests and minor bugs.
+
+  - Improve the Lang Syn doc right before the Unused Pad Directives by adding an
+    intervening transaction instead of explaining how it works. It would be much
+    clearer.
+
+  - Write a doc (video)  that explains how to debug issues, context, linked, print, etc.
+
+*** Branches
+
+  - Finish work on booking branch
+
+  - SQL tool really ought to be extracted away from Beancount, extract as a
+    separate project.
+
+*** Small Tasks
+
+  - A large imbalance will appear as a RoundingError, which it shouldn’t!
+    RoundingError’s should only be inserted when a transaction balances! Run a
+    context on a non-balancing transaction and you’ll see what I mean.
+
+  - Build a script that can run the reports found in Query and output them
+    either into files or all at once. This is probably TBD as part of bean-query
+    itself, with some options.
+
+  - Use Query directive, add “run ___” command + “run all”.
+
+  - Build a script that can list all my cap. gains for tax-loss harvesting.
+
+  - Modify networth script to list post-tax worth, basis + pre-tax value =
+    post-tax value, segment based on accounts.
+
+  - Finish that Health Care tracking document.
+
+  - Move over the updating process to Google Spreadsheets solution.
+
+  - Remove all double descriptions in importers in ledgerhub (when payee ==
+    narration).
+
+  - beancount-linked is broken, missing line number, and an exception is raised:
+    bean-doctor linked blais.beancount 57660; fix this now, rename as
+    beancount-context-linked and add a better binding. Use this a lot more.
+
+  - Booking: generate all combinations for just currencies, missing or not, in
+    order to complete categorize implementation; (1) apply cost-currency =
+    price-currency constraint, (2) infer currency from other legs, (3) infer
+    currency from inventory.
+
+  - Define a way to specify output format for rendering many queries, and
+    perhaps that should include a Google doc directly that makes an upload, even
+    if that has to call out to a Python2 subprocess (that’s fine). Use that
+    everywhere.
+
+  - Add “display_tolerances” rendering override to fix bug with rendering HKD in
+    trips, should be mirroring tolerances input syntax. Bug with Beancount:
+    journal ‘Assets:Caroline:Octopus’ does not render with correct precision.
+
+  - Remove unused auto-postings, they distract from the reporting.
+
+  - Deal with flattening now (default should be never to flatten, never render
+    empty fields on a continuation line for an inventory) and THEN implement CSV
+    rendering.
+
+  - Implement implicit GROUP-BY now.
+
+  - Move “bean-doctor missing-open” to “bean-reports missing-open”, this really
+    is a report type.
+
+  - Merge 3 newer monnier beancount.el patches.
+
+  - Bug: an unbalanced tag should output a correct line number in the error.
+    Right now mistaking push/pop as push/push outputs an error with a zero line
+    number, not useful. Need this. Fix this.
+
+  - Complete ultipro tables from PDF parser.
+
+  - payees: train a little model on my payee names to convert them to nice,
+    clean payee names. Extract the data now.
+
+  - returns2: Returns revamp + web reports.
+
+  - booking: Implement booking proposal.
+
+  - export: Export to spreadsheets.
+
+  - Write unit tests for query_env and the rest of the package (important, bugs
+    are being found by others).
+
+  - Document arithmetic operations support
+
+  - Export to Google Spreadsheets: Complete and document how to upload to a Trix
+
+  - Doc on exportpf
+
+  - Conversions: Document how open close clear works. This is really important.
+    Use as an important the desire to pre-enter transactions from the future
+    (e.g., Jon Stahl’s vesting events).
+
+  - Write Intro with an explanation of open/close/clear.
+
+  - Finish parser cleanup for Unicode.
+
+  - Store residual in metadata, print it out in context
+
+  - “Transaction does not balance” message should include the tolerance value
+    allowed.
+
+  - Complete “legacy” doc generation (merge assets.asc into that doc, we
+    shouldn’t need assets.asc once that’s done, and schematize its contents) And
+    start using this.
+
+  - Plugins doc: Add documentation for sellgains plugin in the rest of the docs
+    (and of all other plugins).
+
+  - Add a section about Options in the Trading document, with these contents.
+
+  - Implement year close via command-line.
+
+  - Implement bean-query to CSV output (easy).
+
+  - Convert dividends to per-stock returns.
+
+  - Wrap up docs? Use the framedocs script?
+
+  - This should be the goto/ project, it should be able to do that.
+
+  - Definitely make a teaching video… this will be useful for applications to
+    other things!
+
+  - Implement currency trading accounts as a prototype; see Conversions doc.
+
+  - Write a doc specifically on handling the vesting of shares, including the
+    tracking of unvested shares.
+
+  - Write doc on booking taxes NOW.
+
+  - Complete unfinished doc on health care.
+
+  - Convert blais.portfolio to a number of SQL scripts.
+
+  - Why doesn’t ^c2fbec103d99 generate an error?!?
+    Ha! It’s because it’s NOT a mixed result… only negatives. Maybe allow only
+    positive totals with a different mode, somehow. A constraint on
+    dictionaries, another booking method. Maybe that should be the default:
+    don’t allow negatives at all.
+
+*** Accounting
+
+  - Measure time taken to find and process documents in ingest and only cache it
+    if very long.
+
+  - Document the idea of implementing a virtual SQLite table for Beancount
+
+  - Plan is to support smart sniffers
+
+  - Convert to schema automatically
+
+  - Load them into SQLite tables, or make sources as adapters to virtual tables
+
+  - Add a first step that’s a conversion
+
+*** SQLite
+
+  - Q. Can we invoke arbitrary Python functions from SQLite?
+
+  - Look at termsql & sqlparse
+
+*** Idea for talk
+
+  - Start with a description of all the desired processes and their outputs
+
+  - Then put down the realization: (work to do all of these separately) >>>
+    (work to represent all inputs)
+
+  - Black box in the middle of >>>, *THAT*’s what Beancount does
+
+*** Contributor agreement
+
+  - Add this to Beancount contributor agreement notes: CLA:
+    https://cla.developers.google.com/about/google-corporate
+
+*** Idea
+
+  - Implement a feature that generates a closing + opening transaction to be
+    able to split one’s file to multiple files. This should include the currency
+    conversions as well.
+
+  - Create a script that splits up a file at a particular date and output two
+    files! You should be able to split by date interval, and by tag (to extract
+    all the transactions with a particular tag to a separate file).
+
+  - Provide a plugin that summarizes all the balances from transactions marked
+    with a particular tag, and replaces those with a single transaction. If all
+    the balances are zero, don’t output anything. This could be used to remove
+    the opening + closing transactions when including multiple files!
+
+*** Annuities
+
+  - Annuities w/ numpy
+** Starred Email - TODO
+** Open Tickets - TODO
