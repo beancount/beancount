@@ -45,15 +45,15 @@ def extract_from_file(filename, importer, existing_entries=None, min_date=None):
     Returns:
       A list of new imported entries and a subset of these which have been
       identified as possible duplicates.
+    Raises:
+      Exception: If there is an error in the importer's extract() method.
     """
     # Extract the entries.
     file = cache.get_file(filename)
-    try:
-        new_entries = importer.extract(file)
-    except Exception as exc:
-        logging.error("Importer %s.extract() raised an unexpected error: %s",
-                      importer.name(), exc)
-        new_entries = None
+
+    # Note: Let the exception through on purpose. This makes developing
+    # importers much easier by rendering the details of the exceptions.
+    new_entries = importer.extract(file)
     if not new_entries:
         return [], []
 
@@ -145,10 +145,15 @@ def extract(importer_config,
                                                      output):
         for importer in importers:
             # Import and process the file.
-            new_entries, duplicate_entries = extract_from_file(filename,
-                                                               importer,
-                                                               entries,
-                                                               mindate)
+            try:
+                new_entries, duplicate_entries = extract_from_file(filename,
+                                                                   importer,
+                                                                   entries,
+                                                                   mindate)
+            except Exception as exc:
+                logging.error("Importer %s.extract() raised an unexpected error: %s",
+                              importer.name(), exc)
+                continue
             if not new_entries and not duplicate_entries:
                 continue
 

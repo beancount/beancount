@@ -2538,7 +2538,7 @@ yyreduce:
   case 135:
 #line 855 "src/python/beancount/parser/grammar.y" 
     {
-         BUILDY(,
+         BUILDY(DECREF1((yyvsp[0].pyobj)),
                 (yyval.pyobj), "store_result", "O", (yyvsp[0].pyobj));
      }
 #line 2545 "src/python/beancount/parser/grammar.c" 
