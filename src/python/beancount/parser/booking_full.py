@@ -165,9 +165,9 @@ def book(entries, options_map):
 
             # Update the running balances for each account using the final,
             # booked and interpolated values. Note that we could optimize away
-            # some of this in book_reduction() but we choose not to do so, as a
+            # some of this in book_reductions() but we choose not to do so, as a
             # sanity check that the direct aggregation of the final booked lots
-            # will compute the same result as that during the book_reduction()
+            # will compute the same result as that during the book_reductions()
             # process.
             for posting in repl_postings:
                 balance = balances[posting.account]
@@ -490,9 +490,13 @@ def book_reductions(entry, group_postings, balances):
                 cost_number = compute_cost_number(costspec, units)
                 matches = []
                 for position in balance:
+                    # Note: The units currency should always match because the
+                    # groups have been selected as such here. We check anyhow.
                     if (units.currency and
                         position.units.currency != units.currency):
+                        logging.error("Internal error: group currency is inconsistent.")
                         continue
+
                     if (cost_number is not None and
                         position.cost.number != cost_number):
                         continue
@@ -508,10 +512,19 @@ def book_reductions(entry, group_postings, balances):
                     matches.append(position)
 
                 # Check for ambiguous matches.
-                if len(matches) != 1:
+                num_matches = len(matches)
+                if num_matches == 0:
                     errors.append(
                         ReductionError(entry.meta,
-                                       "Ambiguous matches: {}".format(
+                                       'No position matches "{}"'.format(str(posting)),
+                                       entry))
+                    return [], errors
+
+                elif len(matches) > 1:
+                    errors.append(
+                        ReductionError(entry.meta,
+                                       'Ambiguous matches for "{}": {}'.format(
+                                           str(posting),
                                            ', '.join(str(match_posting)
                                                      for match_posting in matches)),
                                        entry))

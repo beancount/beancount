@@ -987,9 +987,15 @@ class TestParseBookingOptions(cmptest.TestCase):
 
 
 class TestBookReductions(unittest.TestCase):
-    "Tests the booking of inventory reductions."
+    """Tests the booking of inventory reductions.
+    Note that this is expected to leave reductions unmodified.
+    """
 
-    maxDiff = 16384
+    maxDiff = 8192
+
+    #
+    # Test that the augmentations are left alone by the book_reductions() function.
+    #
 
     @parser.parse_doc(allow_incomplete=True)
     def test_augment__from_empty__no_cost(self, entries, _, __):
@@ -1070,10 +1076,111 @@ class TestBookReductions(unittest.TestCase):
             self.assertFalse(errors)
             self.assertEqual(postings, entry.postings)
 
+    #
+    # Test that reductions with no cost basis are left alone as well.
+    #
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_reduce__no_cost(self, entries, _, __):
+        """
+        2015-10-01 * "Regular currency, positive, not empty"
+          Assets:Account1          -5 USD
+          Assets:Other
+        """
+        balances = {'Assets:Account1': I('10 USD')}
+        entry = entries[-1]
+        postings, errors = booking_full.book_reductions(entry, entry.postings, balances)
+        # Check that the posting was left alone, nothing to be matched.
+        self.assertEqual(postings, entry.postings)
+
+    #
+    # Test reductions which trigger matching.
+    #
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_reduce__no_match(self, entries, _, __):
+        """
+        2016-05-02 *
+          Assets:Account          -5 HOOL {123.00 USD}
+          Assets:Other
+
+        2016-05-02 *
+          Assets:Account          -5 HOOL {123.45 CAD}
+          Assets:Other
+
+        2016-05-02 *
+          Assets:Account          -5 HOOL {123.45 USD, 2016-04-16}
+          Assets:Other
+
+        2016-05-02 *
+          Assets:Account          -5 HOOL {123.45 USD, "lot1"}
+          Assets:Other
+        """
+        balances = {'Assets:Account': I('10 HOOL {123.45 USD, 2016-04-15}')}
+        for entry in entries:
+            postings, errors = booking_full.book_reductions(entry, entry.postings, balances)
+            self.assertTrue(errors)
+            self.assertRegex(errors[0].message, "No position matches")
+            self.assertEqual(0, len(postings))
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_reduce__unambiguous(self, entries, _, __):
+        """
+        2016-05-02 *
+          Assets:Account          -5 HOOL {}
+          Assets:Other
+        """
+        ante_inv = I('10 HOOL {115.00 USD, 2016-04-15, "lot1"}')
+        balances = {'Assets:Account': ante_inv}
+        entry = entries[0]
+        postings, errors = booking_full.book_reductions(entry, entry.postings, balances)
+        self.assertFalse(errors)
+        self.assertEqual(2, len(postings))
+        self.assertEqual(ante_inv[0].cost, postings[0].cost)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_reduce__ambiguous(self, entries, _, __):
+        """
+        2016-05-02 *
+          Assets:Account          -5 HOOL {}
+          Assets:Other
+
+        2016-05-02 *
+          Assets:Account          -5 HOOL {115.00 USD}
+          Assets:Other
+
+        2016-05-02 *
+          Assets:Account          -5 HOOL {USD}
+          Assets:Other
+
+        2016-05-02 *
+          Assets:Account          -5 HOOL {2016-04-15}
+          Assets:Other
+        """
+        balances = {'Assets:Account': I('10 HOOL {115.00 USD, 2016-04-15, "lot1"}, '
+                                        '10 HOOL {115.00 USD, 2016-04-15, "lot2"}')}
+        for entry in entries:
+            postings, errors = booking_full.book_reductions(entry, entry.postings, balances)
+            self.assertTrue(errors)
+            self.assertRegex(errors[0].message, "Ambiguous matches")
+            self.assertEqual(0, len(postings))
 
 
 
-    # FIXME: Rewrite these tests.
+
+
+
+
+
+
+
+
+
+
+
+# FIXME: Rewrite these tests.
+
+class TestBook(unittest.TestCase):
 
     def book_reductions(self, entries, currency='USD'):
         balances = collections.defaultdict(inventory.Inventory)
