@@ -81,6 +81,7 @@ from beancount.core.number import MISSING
 from beancount.core.number import ZERO
 from beancount.core.number import Decimal
 from beancount.core.data import Transaction
+from beancount.core.data import BookingMethod
 from beancount.core.amount import Amount
 from beancount.core.position import Position
 from beancount.core.position import Cost
@@ -96,13 +97,15 @@ from beancount.parser import printer
 #FullBookingError = collections.namedtuple('FullBookingError', 'source message entry')
 
 
-def book(entries, options_map):
+def book(entries, options_map, booking_methods):
     """Interpolate missing data from the entries using the full historical algorithm.
 
     Args:
       incomplete_entries: A list of directives, with some postings possibly left
         with incomplete amounts as produced by the parser.
       options_map: An options dict as produced by the parser.
+      booking_methods: A mapping of account name to their corresponding booking
+        method.
     Returns:
       A pair of
         entries: A list of interpolated entries with all their postings completed.
@@ -140,7 +143,8 @@ def book(entries, options_map):
                 # let the interpolation do its magic on partially incomplete
                 # CostSpec instances below.
                 (booked_postings,
-                 booking_errors) = book_reductions(entry, group_postings, balances)
+                 booking_errors) = book_reductions(entry, group_postings, balances,
+                                                   booking_methods)
 
                 # If there were any errors, skip this group of postings.
                 if booking_errors:
@@ -428,7 +432,8 @@ def replace_currencies(postings, refer_groups):
 ReductionError = collections.namedtuple('ReductionError', 'source message entry')
 
 
-def book_reductions(entry, group_postings, balances):
+def book_reductions(entry, group_postings, balances,
+                    booking_methods):
     """Book inventory reductions against the ante-balances.
 
     This function accepts a dict of (account, Inventory balance) and for each
@@ -446,6 +451,8 @@ def book_reductions(entry, group_postings, balances):
         logging errors.
       group_postings: A list of Posting instances for the group.
       balances: A dict of account name to inventory contents.
+      booking_methods: A mapping of account name to their corresponding booking
+        method enum.
     Returns:
       A pair of
         booked_postings: A list of booked postings, with reducing lots resolved
@@ -477,12 +484,13 @@ def book_reductions(entry, group_postings, balances):
         # Check if this is a lot held at cost.
         if costspec is None:
             # This posting is not held at cost; we do nothing.
-            pass
+            booked_postings.append(posting)
         else:
             # This posting is held at cost; figure out if it's a reduction or an
             # augmentation.
             #
-            # FIXME: Remove the call to is_reduced_by() and do this in the following loop.
+            # FIXME: Remove the call to is_reduced_by() and do this in the
+            # following loop itself.
             if balance is not None and balance.is_reduced_by(units):
                 # This posting is a reduction.
 
@@ -513,28 +521,29 @@ def book_reductions(entry, group_postings, balances):
 
                 # Check for ambiguous matches.
                 num_matches = len(matches)
-                if num_matches == 0:
+                if num_matches == 1:
+                    # Replace the posting's units and cost values.
+                    match_position = matches[0]
+                    match_units = Amount(units.number, match_position.units.currency)
+                    booked_postings.append(
+                        posting._replace(units=match_units, cost=match_position.cost))
+
+                elif num_matches == 0:
                     errors.append(
                         ReductionError(entry.meta,
                                        'No position matches "{}"'.format(str(posting)),
                                        entry))
-                    return [], errors
+                    return [], errors  # This is irreconcilable, remove these postings.
 
                 elif len(matches) > 1:
-                    errors.append(
-                        ReductionError(entry.meta,
-                                       'Ambiguous matches for "{}": {}'.format(
-                                           str(posting),
-                                           ', '.join(str(match_posting)
-                                                     for match_posting in matches)),
-                                       entry))
-                    return [], errors
-
-                # Replace the posting's units and cost values.
-                match_position = matches[0]
-                posting = posting._replace(
-                    units=Amount(units.number, match_position.units.currency),
-                    cost=match_position.cost)
+                    postings, ambi_errors = handle_ambiguous_matches(entry, posting,
+                                                                     matches,
+                                                                     booking_methods)
+                    if ambi_errors:
+                        errors.extend(ambi_errors)
+                        return [], errors
+                    else:
+                        booked_postings.extend(postings)
             else:
                 # This posting is an augmentation.
                 #
@@ -548,17 +557,53 @@ def book_reductions(entry, group_postings, balances):
                 if costspec.date is None:
                     dated_costspec = costspec._replace(date=entry.date)
                     posting = posting._replace(cost=dated_costspec)
+                booked_postings.append(posting)
+
 
         # FIXME: Do we need to update the balances here in the case it's not a
         # reduction? What if we want to reduce off of positions added on other
         # legs of this transaction itself? See {f89b5b01e568}.
-        if posting is not None:
-            booked_postings.append(posting)
+        # At the very least, document this.
 
     return booked_postings, errors
 
 
+def handle_ambiguous_matches(entry, posting, matches, booking_methods):
+    """Handle ambiguous matches.
+
+    Args:
+      entry: The parent Transaction instance.
+      posting: An instance of Posting, the reducing posting which we're
+        attempting to match.
+      matches: A list of matching Position instances from the ante-inventory.
+      booking_methods: A mapping of account name to their corresponding booking
+        method.
+    Returns:
+      A pair of
+        booked_postings: A list of matched Posting instances.
+        erros: A list of errors to be generated.
+    """
+    booking_method = booking_methods[posting.account]
+    postings = []
+    errors = []
+    if booking_method is BookingMethod.STRICT:
+        errors.append(
+            ReductionError(entry.meta,
+                           'Ambiguous matches for "{}": {}'.format(
+                               str(posting),
+                               ', '.join(str(match_posting)
+                                         for match_posting in matches)),
+                           entry))
+
+    elif booking_method is BookingMethod.NONE:
+        postings.append(posting)
+
+    return postings, errors
+
+
+
 def compute_cost_number(costspec, units):
+
     """Given a CostSpec, return the cost number, if possible to compute.
 
     Args:

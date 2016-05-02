@@ -993,6 +993,8 @@ class TestBookReductions(unittest.TestCase):
 
     maxDiff = 8192
 
+    BM = collections.defaultdict(lambda: data.BookingMethod.STRICT)
+
     #
     # Test that the augmentations are left alone by the book_reductions() function.
     #
@@ -1009,7 +1011,8 @@ class TestBookReductions(unittest.TestCase):
           Assets:Other
         """
         for entry in entries:
-            postings, errors = booking_full.book_reductions(entry, entry.postings, {})
+            postings, errors = booking_full.book_reductions(entry, entry.postings, {},
+                                                            self.BM)
             self.assertFalse(errors)
             self.assertEqual(len(postings), len(entry.postings))
             self.assertEqual(None, postings[0].cost)
@@ -1026,7 +1029,8 @@ class TestBookReductions(unittest.TestCase):
           Assets:Other
         """
         for entry in entries:
-            postings, errors = booking_full.book_reductions(entry, entry.postings, {})
+            postings, errors = booking_full.book_reductions(entry, entry.postings, {},
+                                                            self.BM)
             self.assertFalse(errors)
             self.assertEqual(len(postings), len(entry.postings))
             self.assertEqual(
@@ -1041,7 +1045,8 @@ class TestBookReductions(unittest.TestCase):
           Assets:Account3          1 HOOL {}
           Assets:Other
         """
-        postings, errors = booking_full.book_reductions(entries[0], entries[0].postings, {})
+        postings, errors = booking_full.book_reductions(entries[0], entries[0].postings, {},
+                                                        self.BM)
         self.assertFalse(errors)
         self.assertEqual(
             CostSpec(MISSING, None, MISSING, datetime.date(2015, 10, 1), None, False),
@@ -1054,7 +1059,8 @@ class TestBookReductions(unittest.TestCase):
           Assets:Account3          1 HOOL {USD}
           Assets:Other
         """
-        postings, errors = booking_full.book_reductions(entries[0], entries[0].postings, {})
+        postings, errors = booking_full.book_reductions(entries[0], entries[0].postings, {},
+                                                        self.BM)
         self.assertFalse(errors)
         self.assertEqual(
             CostSpec(MISSING, None, 'USD', datetime.date(2015, 10, 1), None, False),
@@ -1072,7 +1078,8 @@ class TestBookReductions(unittest.TestCase):
           Assets:Other
         """
         for entry in entries:
-            postings, errors = booking_full.book_reductions(entry, entry.postings, {})
+            postings, errors = booking_full.book_reductions(entry, entry.postings, {},
+                                                            self.BM)
             self.assertFalse(errors)
             self.assertEqual(postings, entry.postings)
 
@@ -1089,7 +1096,8 @@ class TestBookReductions(unittest.TestCase):
         """
         balances = {'Assets:Account1': I('10 USD')}
         entry = entries[-1]
-        postings, errors = booking_full.book_reductions(entry, entry.postings, balances)
+        postings, errors = booking_full.book_reductions(entry, entry.postings, balances,
+                                                        self.BM)
         # Check that the posting was left alone, nothing to be matched.
         self.assertEqual(postings, entry.postings)
 
@@ -1118,7 +1126,8 @@ class TestBookReductions(unittest.TestCase):
         """
         balances = {'Assets:Account': I('10 HOOL {123.45 USD, 2016-04-15}')}
         for entry in entries:
-            postings, errors = booking_full.book_reductions(entry, entry.postings, balances)
+            postings, errors = booking_full.book_reductions(entry, entry.postings, balances,
+                                                            self.BM)
             self.assertTrue(errors)
             self.assertRegex(errors[0].message, "No position matches")
             self.assertEqual(0, len(postings))
@@ -1133,13 +1142,14 @@ class TestBookReductions(unittest.TestCase):
         ante_inv = I('10 HOOL {115.00 USD, 2016-04-15, "lot1"}')
         balances = {'Assets:Account': ante_inv}
         entry = entries[0]
-        postings, errors = booking_full.book_reductions(entry, entry.postings, balances)
+        postings, errors = booking_full.book_reductions(entry, entry.postings, balances,
+                                                        self.BM)
         self.assertFalse(errors)
         self.assertEqual(2, len(postings))
         self.assertEqual(ante_inv[0].cost, postings[0].cost)
 
     @parser.parse_doc(allow_incomplete=True)
-    def test_reduce__ambiguous(self, entries, _, __):
+    def test_reduce__ambiguous__strict(self, entries, _, __):
         """
         2016-05-02 *
           Assets:Account          -5 HOOL {}
@@ -1160,11 +1170,28 @@ class TestBookReductions(unittest.TestCase):
         balances = {'Assets:Account': I('10 HOOL {115.00 USD, 2016-04-15, "lot1"}, '
                                         '10 HOOL {115.00 USD, 2016-04-15, "lot2"}')}
         for entry in entries:
-            postings, errors = booking_full.book_reductions(entry, entry.postings, balances)
+            postings, errors = booking_full.book_reductions(entry, entry.postings, balances,
+                                                            self.BM)
             self.assertTrue(errors)
             self.assertRegex(errors[0].message, "Ambiguous matches")
             self.assertEqual(0, len(postings))
 
+    @parser.parse_doc(allow_incomplete=True)
+    def test_reduce__ambiguous__none(self, entries, _, __):
+        """
+        option "booking_method" "NONE"
+
+        2016-05-02 *
+          Assets:Account          -5 HOOL {117.00 USD}
+          Assets:Other
+        """
+        balances = {'Assets:Account': I('1 HOOL {115.00 USD}, '
+                                        '2 HOOL {116.00 USD}')}
+        for entry in entries:
+            postings, errors = booking_full.book_reductions(entry, entry.postings, balances,
+                                                            self.BM)
+            self.assertFalse(errors)
+            self.assertEqual(0, len(postings))
 
 
 
@@ -1184,18 +1211,21 @@ class TestBook(unittest.TestCase):
 
     def book_reductions(self, entries, currency='USD'):
         balances = collections.defaultdict(inventory.Inventory)
+        booking_methods = collections.defaultdict(lambda: data.BookingMethod.STRICT)
         for entry in entries:
-            (booking_postings,
-             booking_errors) = booking_full.book_reductions(entry,
-                                                            entry.postings,
-                                                            balances)
+            (booked_postings,
+             booked_errors) = booking_full.book_reductions(entry,
+                                                           entry.postings,
+                                                           balances,
+                                                           booking_methods)
             (inter_postings,
-             interpolation_errors,
-             interpolated) = booking_full.interpolate_group(booking_postings,
+             inter_errors,
+             interpolated) = booking_full.interpolate_group(booked_postings,
                                                             balances,
                                                             currency)
             for posting in inter_postings:
                 balances[posting.account].add_position(posting)
+
         return inter_postings, balances
 
     def assertPostingsEqual(self, postings1, postings2):

@@ -19,7 +19,7 @@ __sanity_checks__ = False
 SimpleBookingError = collections.namedtuple('SimpleBookingError', 'source message entry')
 
 
-def book(entries, options_map):
+def book(entries, options_map, unused_booking_methods):
     """Run a local interpolation on a list of incomplete entries from the parser.
 
     Note: this does not take previous positions into account.
@@ -30,6 +30,7 @@ def book(entries, options_map):
       incomplete_entries: A list of directives, with some postings possibly left
         with incomplete amounts as produced by the parser.
       options_map: An options dict as produced by the parser.
+      unused_booking_methods: (Unused.)
     Returns:
       A pair of
         entries: A list of interpolated entries with all their postings completed.
