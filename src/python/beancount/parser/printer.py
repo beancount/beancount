@@ -268,7 +268,7 @@ class EntryPrinter:
         oss.write('{e.date} open {e.account:47} {currencies} {booking}'.format(
             e=entry,
             currencies=','.join(entry.currencies or []),
-            booking=('"{}"'.format(entry.booking)
+            booking=('"{}"'.format(entry.booking.name)
                      if entry.booking is not None
                      else '')).rstrip())
         oss.write('\n')

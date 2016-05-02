@@ -26,19 +26,19 @@ def book(incomplete_entries, options_map):
         entries: A list of completed entries with all their postings completed.
         errors: New errors produced during interpolation.
     """
-    booking_methods = {
+    booking_algorithms = {
         'SIMPLE': booking_simple.book,
         'FULL': booking_full.book,
     }
-    method_name = options_map['booking_method']
+    method_name = options_map['experiment_booking_algorithm']
     errors = []
     try:
-        booking_fun = booking_methods[method_name]
+        booking_fun = booking_algorithms[method_name]
     except KeyError:
         meta = data.new_metadata(options_map['filename'], 1)
         booking_fun = booking_simple.book
         errors.append(
-            BookingError(meta, ("Unsupported booking method: {}; "
+            BookingError(meta, ("Unsupported booking algorithm: '{}'; "
                                 "falling back on SIMPLE method".format(method_name)), None))
 
     entries, booking_errors = booking_fun(incomplete_entries, options_map)
@@ -79,7 +79,7 @@ def validate_inventory_booking(entries, unused_options_map):
                 position_, _ = running_balance.add_position(posting)
 
                 # Skip this check if the booking method is set to ignore it.
-                if booking_methods.get(posting.account, None) == 'NONE':
+                if booking_methods.get(posting.account, None) == data.BookingMethod.NONE:
                     continue
 
                 # Check if the resulting inventory is mixed, which is not

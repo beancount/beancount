@@ -2028,6 +2028,7 @@ http://furius.ca/beancount/doc/proposal-query
   - Remove support for deprecated variants in all option names.
 
   - Remove Enum from misc_utils and commit to 3.5 and above.
+  - When you do this, also add @enum.unique to beancount.core.data.BookingMethod.
 
   - When the 'booking' branch is complete, remove deprecated support for total
     cost (e.g., {{ ... }}), we won't need it anymore.

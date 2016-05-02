@@ -939,6 +939,30 @@ class TestComputeCostNumber(unittest.TestCase):
                 amount.from_string('12 HOOL')))
 
 
+class TestSimpleBooking(cmptest.TestCase):
+
+    @loader.load_doc()
+    def test_simple_booking_algorithm__strict(self, entries, _, options_map):
+        """
+          option "booking_method" "STRICT"
+        """
+        self.assertEqual(data.BookingMethod.STRICT, options_map["booking_method"])
+
+    @loader.load_doc()
+    def test_simple_booking_algorithm__average(self, entries, _, options_map):
+        """
+          option "booking_method" "AVERAGE"
+        """
+        self.assertEqual(data.BookingMethod.AVERAGE, options_map["booking_method"])
+
+    @loader.load_doc(expect_errors=True)
+    def test_simple_booking_algorithm__invalid(self, _, errors, __):
+        """
+          option "booking_method" "XXX"
+        """
+        self.assertEqual(1, len(errors))
+
+
 class TestBookReductions(unittest.TestCase):
     "Tests the booking of inventory reductions."
 
