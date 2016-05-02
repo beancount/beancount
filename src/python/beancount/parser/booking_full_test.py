@@ -939,28 +939,51 @@ class TestComputeCostNumber(unittest.TestCase):
                 amount.from_string('12 HOOL')))
 
 
-class TestSimpleBooking(cmptest.TestCase):
+class TestParseBookingOptions(cmptest.TestCase):
 
     @loader.load_doc()
-    def test_simple_booking_algorithm__strict(self, entries, _, options_map):
+    def test_booking_algorithm__simple(self, entries, _, options_map):
+        """
+          option "experiment_booking_algorithm" "SIMPLE"
+        """
+        self.assertEqual("SIMPLE", options_map["experiment_booking_algorithm"])
+
+    @loader.load_doc()
+    def test_booking_algorithm__full(self, entries, _, options_map):
+        """
+          option "experiment_booking_algorithm" "FULL"
+        """
+        self.assertEqual("FULL", options_map["experiment_booking_algorithm"])
+
+    @loader.load_doc(expect_errors=True)
+    def test_booking_algorithm__invalid(self, entries, errors, options_map):
+        """
+          option "experiment_booking_algorithm" "XXX"
+        """
+        self.assertEqual(1, len(errors))
+
+    @loader.load_doc()
+    def test_booking_method__strict(self, entries, _, options_map):
         """
           option "booking_method" "STRICT"
         """
         self.assertEqual(data.BookingMethod.STRICT, options_map["booking_method"])
 
     @loader.load_doc()
-    def test_simple_booking_algorithm__average(self, entries, _, options_map):
+    def test_booking_method__average(self, entries, _, options_map):
         """
           option "booking_method" "AVERAGE"
         """
         self.assertEqual(data.BookingMethod.AVERAGE, options_map["booking_method"])
 
     @loader.load_doc(expect_errors=True)
-    def test_simple_booking_algorithm__invalid(self, _, errors, __):
+    def test_booking_method__invalid(self, _, errors, options_map):
         """
           option "booking_method" "XXX"
         """
         self.assertEqual(1, len(errors))
+        self.assertEqual(data.BookingMethod.STRICT,
+                         options_map["booking_method"])
 
 
 class TestBookReductions(unittest.TestCase):
