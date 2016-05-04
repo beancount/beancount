@@ -110,8 +110,7 @@ def csv_split_sections(rows):
 def csv_split_sections_with_titles(rows):
     """Given a list of rows, split their sections. If the sections have single
     column titles, consume those lines as their names and return a mapping of
-    section names
-
+    section names.
 
     This is useful for CSV files with multiple sections, where the separator is
     a title. We use this to separate the multiple tables within the CSV files.
@@ -147,8 +146,7 @@ def iter_sections(fileobj, separating_predicate=None):
       fileobj: A file object to read from.
       separating_predicate: A boolean predicate that is true on separating lines.
     Yields:
-      A file-like object that you can use to read. EOF is signaled on an empty
-      line.
+      A list of lines that you can use to iterate.
     """
     if separating_predicate is None:
         separating_predicate = lambda line: bool(line.strip())
@@ -156,9 +154,12 @@ def iter_sections(fileobj, separating_predicate=None):
     lineiter = iter(fileobj)
     for line in lineiter:
         if separating_predicate(line):
-            yield itertools.chain((line,),
-                                  iter_until_empty(lineiter,
-                                                   separating_predicate))
+            iterator = itertools.chain((line,),
+                                       iter_until_empty(lineiter,
+                                                        separating_predicate))
+            yield iterator
+            for _ in iterator:
+                pass
 
 
 def iter_until_empty(iterator, separating_predicate=None):
