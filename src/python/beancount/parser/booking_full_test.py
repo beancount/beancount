@@ -1179,21 +1179,55 @@ class TestBookReductions(unittest.TestCase):
     @parser.parse_doc(allow_incomplete=True)
     def test_reduce__ambiguous__none(self, entries, _, __):
         """
-        option "booking_method" "NONE"
+        ; option "booking_method" "NONE"
 
         2016-05-02 *
           Assets:Account          -5 HOOL {117.00 USD}
           Assets:Other
         """
+        BM = collections.defaultdict(lambda: data.BookingMethod.NONE)
         balances = {'Assets:Account': I('1 HOOL {115.00 USD}, '
                                         '2 HOOL {116.00 USD}')}
-        for entry in entries:
-            postings, errors = booking_full.book_reductions(entry, entry.postings, balances,
-                                                            self.BM)
-            self.assertFalse(errors)
-            self.assertEqual(0, len(postings))
+        entry = entries[0]
+        postings, errors = booking_full.book_reductions(entry, entry.postings, balances,
+                                                        BM)
+        self.assertFalse(errors)
+        self.assertEqual(2, len(postings))
 
+    @parser.parse_doc(allow_incomplete=True)
+    def test_reduce__ambiguous__none__from_mixed(self, entries, _, options_map):
+        """
+        ; option "booking_method" "NONE"
 
+        2016-05-02 *
+          Assets:Account          -5 HOOL {117.00 USD}
+          Assets:Other
+        """
+        BM = collections.defaultdict(lambda: data.BookingMethod.NONE)
+        balances = {'Assets:Account': I('1 HOOL {115.00 USD}, '
+                                        '-2 HOOL {116.00 USD}')}
+        entry = entries[0]
+        postings, errors = booking_full.book_reductions(entry, entry.postings, balances,
+                                                        BM)
+        self.assertFalse(errors)
+        self.assertEqual(2, len(postings))
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_reduce__other_currency(self, entries, _, __):
+        """
+        2016-05-02 *
+          Assets:Account          -5 HOOL {115.00 USD}
+          Assets:Other
+        """
+        balances = {'Assets:Account': I('8 AAPL {115.00 USD, 2016-01-11}, '
+                                        '8 HOOL {115.00 USD, 2016-01-10}')}
+        entry = entries[0]
+        postings, errors = booking_full.book_reductions(entry, entry.postings, balances,
+                                                        self.BM)
+        self.assertFalse(errors)
+        self.assertEqual(2, len(postings))
+        self.assertEqual(Cost(D('115.00'), 'USD', datetime.date(2016, 1, 10), None),
+                         postings[0].cost)
 
 
 

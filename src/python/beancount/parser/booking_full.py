@@ -491,20 +491,19 @@ def book_reductions(entry, group_postings, balances,
             #
             # FIXME: Remove the call to is_reduced_by() and do this in the
             # following loop itself.
-            if balance is not None and balance.is_reduced_by(units):
+            booking_method = booking_methods[posting.account]
+            if (booking_method is not BookingMethod.NONE and
+                balance is not None and balance.is_reduced_by(units)):
                 # This posting is a reduction.
 
                 # Match the positions.
                 cost_number = compute_cost_number(costspec, units)
                 matches = []
                 for position in balance:
-                    # Note: The units currency should always match because the
-                    # groups have been selected as such here. We check anyhow.
+                    # Skip inventory contents of a different currency.
                     if (units.currency and
                         position.units.currency != units.currency):
-                        logging.error("Internal error: group currency is inconsistent.")
                         continue
-
                     if (cost_number is not None and
                         position.cost.number != cost_number):
                         continue
@@ -538,7 +537,7 @@ def book_reductions(entry, group_postings, balances,
                 elif len(matches) > 1:
                     postings, ambi_errors = handle_ambiguous_matches(entry, posting,
                                                                      matches,
-                                                                     booking_methods)
+                                                                     booking_method)
                     if ambi_errors:
                         errors.extend(ambi_errors)
                         return [], errors
@@ -568,7 +567,7 @@ def book_reductions(entry, group_postings, balances,
     return booked_postings, errors
 
 
-def handle_ambiguous_matches(entry, posting, matches, booking_methods):
+def handle_ambiguous_matches(entry, posting, matches, booking_method):
     """Handle ambiguous matches.
 
     Args:
@@ -581,9 +580,8 @@ def handle_ambiguous_matches(entry, posting, matches, booking_methods):
     Returns:
       A pair of
         booked_postings: A list of matched Posting instances.
-        erros: A list of errors to be generated.
+        errors: A list of errors to be generated.
     """
-    booking_method = booking_methods[posting.account]
     postings = []
     errors = []
     if booking_method is BookingMethod.STRICT:
