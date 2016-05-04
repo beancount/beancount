@@ -128,7 +128,7 @@ debug:
 
 # Bake a release.
 release:
-	$(PYTHON) setup.py sdist register
+	$(PYTHON) setup.py register sdist upload
 
 
 # Run the unittests.
