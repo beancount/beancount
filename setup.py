@@ -121,7 +121,7 @@ upload-csv-to-google-sheet
 # Please read: http://furius.ca/beancount/doc/install about version numbers.
 setup(
     name="beancount",
-    version='2.0b10',
+    version='2.0b11',
     description="Command-line Double-Entry Accounting",
 
     long_description=
