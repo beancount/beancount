@@ -510,6 +510,22 @@ class GetItemStr(query_compile.EvalFunction):
             value = str(value)
         return value
 
+class FindFirst(query_compile.EvalFunction):
+    "Filter a string sequence by regular expression and return the first match."
+    __intypes__ = [str, set]
+
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        values = args[1]
+        if not values:
+            return
+        for value in sorted(values):
+            if re.match(args[0], value):
+                return value
+
 
 # FIXME: Why do I need to specify the arguments here? They are already derived
 # from the functions. Just fetch them from instead. Make the compiler better.
@@ -551,6 +567,7 @@ SIMPLE_FUNCTIONS = {
     'number'                                             : Number,
     'currency'                                           : Currency,
     'getitem'                                            : GetItemStr,
+    'findfirst'                                          : FindFirst,
     }
 
 
