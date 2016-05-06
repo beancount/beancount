@@ -582,6 +582,9 @@ def handle_ambiguous_matches(entry, posting, matches, booking_method):
         booked_postings: A list of matched Posting instances.
         errors: A list of errors to be generated.
     """
+    assert isinstance(booking_method, BookingMethod), (
+        "Invalid type: {}".format(booking_method))
+
     postings = []
     errors = []
     if booking_method is BookingMethod.STRICT:
@@ -592,6 +595,24 @@ def handle_ambiguous_matches(entry, posting, matches, booking_method):
                                ', '.join(str(match_posting)
                                          for match_posting in matches)),
                            entry))
+
+    elif booking_method is BookingMethod.FIFO:
+        remaining = posting.units.number
+        for match in sorted(matches, key=lambda posting: posting.cost and posting.cost.date):
+            size = min(match.units.number, remaining)
+            postings.append(posting._replace(units=Amount(size, match.units.currency),
+                                             cost=match.cost))
+            remaining -= size
+            if remaining <= ZERO:
+                break
+
+        # errors.append(
+        #     ReductionError(entry.meta,
+        #                    'Ambiguous matches for "{}": {}'.format(
+        #                        str(posting),
+        #                        ', '.join(str(match_posting)
+        #                                  for match_posting in matches)),
+        #                    entry))
 
     elif booking_method is BookingMethod.NONE:
         postings.append(posting)

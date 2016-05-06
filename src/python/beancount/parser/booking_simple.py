@@ -86,48 +86,57 @@ def convert_lot_specs_to_lots(entries):
 
         new_postings = []
         for posting in entry.postings:
-            units = posting.units
-            if isinstance(units, Amount):
-                cost_spec = posting.cost
-                currency = units.currency
-                if cost_spec is not None:
-                    number_per, number_total, cost_currency, date, label, merge = cost_spec
-
-                    # Compute the cost.
-                    if number_per is not MISSING or number_total is not None:
-                        if number_total is not None:
-                            # Compute the per-unit cost if there is some total cost
-                            # component involved.
-                            units_num = units.number
-                            cost_total = number_total
-                            if number_per is not MISSING:
-                                cost_total += number_per * units_num
-                            unit_cost = cost_total / abs(units_num)
-                        else:
-                            unit_cost = number_per
-                        cost = Cost(unit_cost, cost_currency, date, label)
-                    else:
-                        cost = None
-
-                    # If there is a cost, we don't allow either a cost value of
-                    # zero, nor a zero number of units. Note that we allow a price
-                    # of zero as the only special case (for conversion entries), but
-                    # never for costs.
-                    if cost is not None:
-                        if units.number == ZERO:
-                            errors.append(
-                                SimpleBookingError(
-                                    entry.meta, 'Amount is zero: "{}"'.format(units), None))
-
-                        if cost.number is not None and cost.number < ZERO:
-                            errors.append(
-                                SimpleBookingError(entry.meta,
-                                                   'Cost is negative: "{}"'.format(cost),
-                                                   None))
-
-                    units = Amount(units.number, currency)
-                    posting = posting._replace(units=units, cost=cost)
-
-            new_postings.append(posting)
+            try:
+                cost = convert_spec_to_cost(posting.units, posting.cost)
+            except ValueError as exc:
+                errors.append(SimpleBookingError(entry.meta, str(exc), None))
+                cost = None
+            new_postings.append(posting._replace(cost=cost))
         new_entries.append(entry._replace(postings=new_postings))
     return new_entries, errors
+
+
+def convert_spec_to_cost(units, cost_spec):
+    """Convert a posting's CostSpec instance to a Cost.
+
+    Args:
+      units: An instance of Amount.
+      cost_spec: An instance of CostSpec.
+    Returns:
+      An instance of Cost.
+    Raises:
+      ValueError: If there's something we cannot resolve.
+    """
+    cost = cost_spec
+    errors = []
+    if isinstance(units, Amount):
+        currency = units.currency
+        if cost_spec is not None:
+            number_per, number_total, cost_currency, date, label, merge = cost_spec
+
+            # Compute the cost.
+            if number_per is not MISSING or number_total is not None:
+                if number_total is not None:
+                    # Compute the per-unit cost if there is some total cost
+                    # component involved.
+                    units_num = units.number
+                    cost_total = number_total
+                    if number_per is not MISSING:
+                        cost_total += number_per * units_num
+                    unit_cost = cost_total / abs(units_num)
+                else:
+                    unit_cost = number_per
+                cost = Cost(unit_cost, cost_currency, date, label)
+            else:
+                cost = None
+
+            # If there is a cost, we don't allow either a cost value of
+            # zero, nor a zero number of units. Note that we allow a price
+            # of zero as the only special case (for conversion entries), but
+            # never for costs.
+            if cost is not None:
+                if units.number == ZERO:
+                    raise ValueError('Amount is zero: "{}"'.format(units))
+                if cost.number is not None and cost.number < ZERO:
+                    raise ValueError('Cost is negative: "{}"'.format(cost))
+    return cost

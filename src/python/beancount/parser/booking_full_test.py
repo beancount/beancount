@@ -12,15 +12,17 @@ from beancount.core.amount import A
 from beancount.core.number import MISSING
 from beancount.core.position import CostSpec
 from beancount.core.position import Cost
+from beancount.core.position import Position
 from beancount.core.inventory import from_string as I
 from beancount.utils.misc_utils import dictmap
+from beancount.core.data import BookingMethod
 from beancount.core import inventory
 from beancount.core import position
 from beancount.core import amount
 from beancount.core import data
 from beancount.parser import parser
 from beancount.parser import printer
-from beancount.parser import booking_full
+from beancount.parser import booking_full as bf
 from beancount.parser import booking_simple
 from beancount.parser import cmptest
 from beancount import loader
@@ -112,7 +114,7 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
           Assets:Other   -100.00 USD
         """
         for entry in entries:
-            groups, errors = booking_full.categorize_by_currency(entry, {})
+            groups, errors = bf.categorize_by_currency(entry, {})
             self.assertFalse(errors)
             self.assertEqual({'USD': {0, 1}}, indexes(groups))
 
@@ -129,15 +131,15 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
           Assets:Account  100.00
           Assets:Other
         """
-        groups, errors = booking_full.categorize_by_currency(entries[0], {})
+        groups, errors = bf.categorize_by_currency(entries[0], {})
         self.assertFalse(errors)
         self.assertEqual({'USD': {0, 1}}, indexes(groups))
 
-        groups, errors = booking_full.categorize_by_currency(
+        groups, errors = bf.categorize_by_currency(
             entries[1], {'Assets:Account': I('1.00 USD')})
         self.assertFalse(errors)
         self.assertEqual({'USD': {0, 1}}, indexes(groups))
-        groups, errors = booking_full.categorize_by_currency(
+        groups, errors = bf.categorize_by_currency(
             entries[1], {})
         self.assertTrue(errors)
         self.assertRegex(errors[0].message, 'Failed to categorize posting')
@@ -154,15 +156,15 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
           Assets:Account  100.00     @ 1.20 CAD
           Assets:Other   -120.00 CAD
         """
-        groups, errors = booking_full.categorize_by_currency(entries[0], {})
+        groups, errors = bf.categorize_by_currency(entries[0], {})
         self.assertFalse(errors)
         self.assertEqual({'CAD': {0, 1}}, indexes(groups))
 
-        groups, errors = booking_full.categorize_by_currency(
+        groups, errors = bf.categorize_by_currency(
             entries[1], {'Assets:Account': I('1.00 USD')})
         self.assertFalse(errors)
         self.assertEqual({'CAD': {0, 1}}, indexes(groups))
-        groups, errors = booking_full.categorize_by_currency(
+        groups, errors = bf.categorize_by_currency(
             entries[1], {})
         self.assertTrue(errors)
         self.assertRegex(errors[0].message, 'Could not resolve units currency')
@@ -190,21 +192,21 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
           Assets:Account  100.00     @ 1.20
           Assets:Other
         """
-        groups, errors = booking_full.categorize_by_currency(entries[0], {})
+        groups, errors = bf.categorize_by_currency(entries[0], {})
         self.assertFalse(errors)
         self.assertEqual({'CAD': {0, 1}}, indexes(groups))
 
-        groups, errors = booking_full.categorize_by_currency(
+        groups, errors = bf.categorize_by_currency(
             entries[1], {'Assets:Account': I('1.00 USD')})
         self.assertFalse(errors)
         self.assertEqual({'CAD': {0, 1}}, indexes(groups))
-        groups, errors = booking_full.categorize_by_currency(entries[1], {})
+        groups, errors = bf.categorize_by_currency(entries[1], {})
         self.assertTrue(errors)
         self.assertRegex(errors[0].message, 'Could not resolve units currency')
         self.assertEqual({'CAD': {0, 1}}, indexes(groups))
 
         for i in 2, 3:
-            groups, errors = booking_full.categorize_by_currency(entries[i], {})
+            groups, errors = bf.categorize_by_currency(entries[i], {})
             self.assertEqual(1, len(errors))
             self.assertRegex(errors[0].message, 'Failed to categorize posting')
             self.assertEqual({}, indexes(groups))
@@ -220,15 +222,15 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
           Assets:Account    10      {100.00 USD}
           Assets:Other   -1000 USD
         """
-        groups, errors = booking_full.categorize_by_currency(entries[0], {})
+        groups, errors = bf.categorize_by_currency(entries[0], {})
         self.assertFalse(errors)
         self.assertEqual({'USD': {0, 1}}, indexes(groups))
 
-        groups, errors = booking_full.categorize_by_currency(
+        groups, errors = bf.categorize_by_currency(
             entries[1], {'Assets:Account': I('1 HOOL {1.00 USD}')})
         self.assertFalse(errors)
         self.assertEqual({'USD': {0, 1}}, indexes(groups))
-        groups, errors = booking_full.categorize_by_currency(entries[1], {})
+        groups, errors = bf.categorize_by_currency(entries[1], {})
         self.assertTrue(errors)
         self.assertRegex(errors[0].message, 'Could not resolve units currency')
         self.assertEqual({'USD': {0, 1}}, indexes(groups))
@@ -255,25 +257,25 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
           Assets:Account    10      {100.00    }
           Assets:Other
         """
-        groups, errors = booking_full.categorize_by_currency(entries[0], {})
+        groups, errors = bf.categorize_by_currency(entries[0], {})
         self.assertFalse(errors)
         self.assertEqual({'USD': {0, 1}}, indexes(groups))
 
-        groups, errors = booking_full.categorize_by_currency(
+        groups, errors = bf.categorize_by_currency(
             entries[1], {'Assets:Account': I('1 HOOL {1.00 USD}')})
         self.assertFalse(errors)
         self.assertEqual({'USD': {0, 1}}, indexes(groups))
-        groups, errors = booking_full.categorize_by_currency(entries[1], {})
+        groups, errors = bf.categorize_by_currency(entries[1], {})
         self.assertTrue(errors)
         self.assertRegex(errors[0].message, 'Could not resolve units currency')
         self.assertEqual({'USD': {0, 1}}, indexes(groups))
 
         for i in 2, 3:
-            groups, errors = booking_full.categorize_by_currency(
+            groups, errors = bf.categorize_by_currency(
                 entries[i], {'Assets:Account': I('1 HOOL {1.00 USD}')})
             self.assertFalse(errors)
             self.assertEqual({'USD': {0, 1}}, indexes(groups))
-            groups, errors = booking_full.categorize_by_currency(
+            groups, errors = bf.categorize_by_currency(
                 entries[i], {})
             self.assertEqual(1, len(errors))
             self.assertRegex(errors[0].message, 'Failed to categorize posting')
@@ -307,12 +309,12 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
           Assets:Other
         """
         for i in 0, 2, 4:
-            groups, errors = booking_full.categorize_by_currency(entries[i], {})
+            groups, errors = bf.categorize_by_currency(entries[i], {})
             self.assertFalse(errors)
             self.assertEqual({'USD': {0, 1}}, indexes(groups))
 
         for i in 1, 3, 5:
-            groups, errors = booking_full.categorize_by_currency(entries[i], {})
+            groups, errors = bf.categorize_by_currency(entries[i], {})
             self.assertEqual(1, len(errors))
             self.assertRegex(errors[0].message, 'Could not resolve units currency')
             self.assertEqual({'USD': {0, 1}}, indexes(groups))
@@ -338,21 +340,21 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
           Assets:Account   10      {100.00    } @ 120.00
           Assets:Other
         """
-        groups, errors = booking_full.categorize_by_currency(entries[0], {})
+        groups, errors = bf.categorize_by_currency(entries[0], {})
         self.assertFalse(errors)
         self.assertEqual({'USD': {0, 1}}, indexes(groups))
 
-        groups, errors = booking_full.categorize_by_currency(entries[1], {})
+        groups, errors = bf.categorize_by_currency(entries[1], {})
         self.assertTrue(errors)
         self.assertRegex(errors[0].message, 'Could not resolve units currency')
         self.assertEqual({'USD': {0, 1}}, indexes(groups))
 
         for i in 2, 3:
-            groups, errors = booking_full.categorize_by_currency(
+            groups, errors = bf.categorize_by_currency(
                 entries[i], {'Assets:Account': I('1 HOOL {1.00 USD}')})
             self.assertFalse(errors)
             self.assertEqual({'USD': {0, 1}}, indexes(groups))
-            groups, errors = booking_full.categorize_by_currency(
+            groups, errors = bf.categorize_by_currency(
                 entries[i], {})
             self.assertTrue(errors)
             self.assertRegex(errors[0].message, 'Failed to categorize posting')
@@ -366,7 +368,7 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
           Assets:Account   100.00 CAD
           Assets:Other
         """
-        groups, errors = booking_full.categorize_by_currency(entries[0], {})
+        groups, errors = bf.categorize_by_currency(entries[0], {})
         self.assertFalse(errors)
         self.assertEqual({'USD': {0, 2}, 'CAD': {1, 2}}, indexes(groups))
 
@@ -379,7 +381,7 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
           Assets:Other
           Assets:Other
         """
-        groups, errors = booking_full.categorize_by_currency(entries[0], {})
+        groups, errors = bf.categorize_by_currency(entries[0], {})
         self.assertTrue(errors)
 
 
@@ -387,9 +389,9 @@ class TestReplaceCurrenciesInGroup(unittest.TestCase):
     "Tests the replacement of currencies inferred in the categorization step."
 
     def check(self, expected, entry):
-        groups, errors = booking_full.categorize_by_currency(entry, {})
+        groups, errors = bf.categorize_by_currency(entry, {})
         self.assertFalse(errors)
-        posting_groups = booking_full.replace_currencies(entry.postings, groups)
+        posting_groups = bf.replace_currencies(entry.postings, groups)
         check_groups = {
             currency: [(posting.account,
                         posting.units.currency,
@@ -499,9 +501,9 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
         if balances is None:
             balances = {}
 
-        groups, errors = booking_full.categorize_by_currency(entry, balances)
+        groups, errors = bf.categorize_by_currency(entry, balances)
         self.assertFalse(errors)
-        posting_groups = booking_full.replace_currencies(entry.postings, groups)
+        posting_groups = bf.replace_currencies(entry.postings, groups)
         for currency, postings in posting_groups.items():
             try:
                 exp_interpolated, exp_string, exp_errors = expected[currency]
@@ -509,7 +511,7 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
                 self.fail("Currency {} is unexpected".format(currency))
 
             # Run the interpolation for that group.
-            new_postings, errors, interpolated = booking_full.interpolate_group(
+            new_postings, errors, interpolated = bf.interpolate_group(
                 postings, balances, currency)
 
             # Print out infos for troubleshooting.
@@ -892,49 +894,49 @@ class TestComputeCostNumber(unittest.TestCase):
     def test_missing_per(self):
         self.assertEqual(
             None,
-            booking_full.compute_cost_number(
+            bf.compute_cost_number(
                 position.CostSpec(MISSING, D('1'), 'USD', None, None, False),
                 amount.from_string('12 HOOL')))
 
     def test_missing_total(self):
         self.assertEqual(
             None,
-            booking_full.compute_cost_number(
+            bf.compute_cost_number(
                 position.CostSpec(D('1'), MISSING, 'USD', None, None, False),
                 amount.from_string('12 HOOL')))
 
     def test_both_none(self):
         self.assertEqual(
             None,
-            booking_full.compute_cost_number(
+            bf.compute_cost_number(
                 position.CostSpec(None, None, 'USD', None, None, False),
                 amount.from_string('12 HOOL')))
 
     def test_total_only(self):
         self.assertEqual(
             D('4'),
-            booking_full.compute_cost_number(
+            bf.compute_cost_number(
                 position.CostSpec(None, D('48'), 'USD', None, None, False),
                 amount.from_string('12 HOOL')))
 
     def test_per_only(self):
         self.assertEqual(
             D('4'),
-            booking_full.compute_cost_number(
+            bf.compute_cost_number(
                 position.CostSpec(D('4'), None, 'USD', None, None, False),
                 amount.from_string('12 HOOL')))
 
     def test_both(self):
         self.assertEqual(
             D('3.5'),
-            booking_full.compute_cost_number(
+            bf.compute_cost_number(
                 position.CostSpec(D('3'), D('6'), 'USD', self.date, None, False),
                 amount.from_string('12 HOOL')))
 
     def test_no_currency(self):
         self.assertEqual(
             D('3.5'),
-            booking_full.compute_cost_number(
+            bf.compute_cost_number(
                 position.CostSpec(D('3'), D('6'), None, self.date, None, False),
                 amount.from_string('12 HOOL')))
 
@@ -967,14 +969,14 @@ class TestParseBookingOptions(cmptest.TestCase):
         """
           option "booking_method" "STRICT"
         """
-        self.assertEqual(data.BookingMethod.STRICT, options_map["booking_method"])
+        self.assertEqual(BookingMethod.STRICT, options_map["booking_method"])
 
     @loader.load_doc()
     def test_booking_method__average(self, entries, _, options_map):
         """
           option "booking_method" "AVERAGE"
         """
-        self.assertEqual(data.BookingMethod.AVERAGE, options_map["booking_method"])
+        self.assertEqual(BookingMethod.AVERAGE, options_map["booking_method"])
 
     @loader.load_doc(expect_errors=True)
     def test_booking_method__invalid(self, _, errors, options_map):
@@ -982,7 +984,7 @@ class TestParseBookingOptions(cmptest.TestCase):
           option "booking_method" "XXX"
         """
         self.assertEqual(1, len(errors))
-        self.assertEqual(data.BookingMethod.STRICT,
+        self.assertEqual(BookingMethod.STRICT,
                          options_map["booking_method"])
 
 
@@ -993,7 +995,7 @@ class TestBookReductions(unittest.TestCase):
 
     maxDiff = 8192
 
-    BM = collections.defaultdict(lambda: data.BookingMethod.STRICT)
+    BM = collections.defaultdict(lambda: BookingMethod.STRICT)
 
     #
     # Test that the augmentations are left alone by the book_reductions() function.
@@ -1011,7 +1013,7 @@ class TestBookReductions(unittest.TestCase):
           Assets:Other
         """
         for entry in entries:
-            postings, errors = booking_full.book_reductions(entry, entry.postings, {},
+            postings, errors = bf.book_reductions(entry, entry.postings, {},
                                                             self.BM)
             self.assertFalse(errors)
             self.assertEqual(len(postings), len(entry.postings))
@@ -1029,7 +1031,7 @@ class TestBookReductions(unittest.TestCase):
           Assets:Other
         """
         for entry in entries:
-            postings, errors = booking_full.book_reductions(entry, entry.postings, {},
+            postings, errors = bf.book_reductions(entry, entry.postings, {},
                                                             self.BM)
             self.assertFalse(errors)
             self.assertEqual(len(postings), len(entry.postings))
@@ -1045,7 +1047,7 @@ class TestBookReductions(unittest.TestCase):
           Assets:Account3          1 HOOL {}
           Assets:Other
         """
-        postings, errors = booking_full.book_reductions(entries[0], entries[0].postings, {},
+        postings, errors = bf.book_reductions(entries[0], entries[0].postings, {},
                                                         self.BM)
         self.assertFalse(errors)
         self.assertEqual(
@@ -1059,7 +1061,7 @@ class TestBookReductions(unittest.TestCase):
           Assets:Account3          1 HOOL {USD}
           Assets:Other
         """
-        postings, errors = booking_full.book_reductions(entries[0], entries[0].postings, {},
+        postings, errors = bf.book_reductions(entries[0], entries[0].postings, {},
                                                         self.BM)
         self.assertFalse(errors)
         self.assertEqual(
@@ -1078,7 +1080,7 @@ class TestBookReductions(unittest.TestCase):
           Assets:Other
         """
         for entry in entries:
-            postings, errors = booking_full.book_reductions(entry, entry.postings, {},
+            postings, errors = bf.book_reductions(entry, entry.postings, {},
                                                             self.BM)
             self.assertFalse(errors)
             self.assertEqual(postings, entry.postings)
@@ -1096,7 +1098,7 @@ class TestBookReductions(unittest.TestCase):
         """
         balances = {'Assets:Account1': I('10 USD')}
         entry = entries[-1]
-        postings, errors = booking_full.book_reductions(entry, entry.postings, balances,
+        postings, errors = bf.book_reductions(entry, entry.postings, balances,
                                                         self.BM)
         # Check that the posting was left alone, nothing to be matched.
         self.assertEqual(postings, entry.postings)
@@ -1126,7 +1128,7 @@ class TestBookReductions(unittest.TestCase):
         """
         balances = {'Assets:Account': I('10 HOOL {123.45 USD, 2016-04-15}')}
         for entry in entries:
-            postings, errors = booking_full.book_reductions(entry, entry.postings, balances,
+            postings, errors = bf.book_reductions(entry, entry.postings, balances,
                                                             self.BM)
             self.assertTrue(errors)
             self.assertRegex(errors[0].message, "No position matches")
@@ -1142,7 +1144,7 @@ class TestBookReductions(unittest.TestCase):
         ante_inv = I('10 HOOL {115.00 USD, 2016-04-15, "lot1"}')
         balances = {'Assets:Account': ante_inv}
         entry = entries[0]
-        postings, errors = booking_full.book_reductions(entry, entry.postings, balances,
+        postings, errors = bf.book_reductions(entry, entry.postings, balances,
                                                         self.BM)
         self.assertFalse(errors)
         self.assertEqual(2, len(postings))
@@ -1170,7 +1172,7 @@ class TestBookReductions(unittest.TestCase):
         balances = {'Assets:Account': I('10 HOOL {115.00 USD, 2016-04-15, "lot1"}, '
                                         '10 HOOL {115.00 USD, 2016-04-15, "lot2"}')}
         for entry in entries:
-            postings, errors = booking_full.book_reductions(entry, entry.postings, balances,
+            postings, errors = bf.book_reductions(entry, entry.postings, balances,
                                                             self.BM)
             self.assertTrue(errors)
             self.assertRegex(errors[0].message, "Ambiguous matches")
@@ -1185,11 +1187,11 @@ class TestBookReductions(unittest.TestCase):
           Assets:Account          -5 HOOL {117.00 USD}
           Assets:Other
         """
-        BM = collections.defaultdict(lambda: data.BookingMethod.NONE)
+        BM = collections.defaultdict(lambda: BookingMethod.NONE)
         balances = {'Assets:Account': I('1 HOOL {115.00 USD}, '
                                         '2 HOOL {116.00 USD}')}
         entry = entries[0]
-        postings, errors = booking_full.book_reductions(entry, entry.postings, balances,
+        postings, errors = bf.book_reductions(entry, entry.postings, balances,
                                                         BM)
         self.assertFalse(errors)
         self.assertEqual(2, len(postings))
@@ -1203,11 +1205,11 @@ class TestBookReductions(unittest.TestCase):
           Assets:Account          -5 HOOL {117.00 USD}
           Assets:Other
         """
-        BM = collections.defaultdict(lambda: data.BookingMethod.NONE)
+        BM = collections.defaultdict(lambda: BookingMethod.NONE)
         balances = {'Assets:Account': I('1 HOOL {115.00 USD}, '
                                         '-2 HOOL {116.00 USD}')}
         entry = entries[0]
-        postings, errors = booking_full.book_reductions(entry, entry.postings, balances,
+        postings, errors = bf.book_reductions(entry, entry.postings, balances,
                                                         BM)
         self.assertFalse(errors)
         self.assertEqual(2, len(postings))
@@ -1222,7 +1224,7 @@ class TestBookReductions(unittest.TestCase):
         balances = {'Assets:Account': I('8 AAPL {115.00 USD, 2016-01-11}, '
                                         '8 HOOL {115.00 USD, 2016-01-10}')}
         entry = entries[0]
-        postings, errors = booking_full.book_reductions(entry, entry.postings, balances,
+        postings, errors = bf.book_reductions(entry, entry.postings, balances,
                                                         self.BM)
         self.assertFalse(errors)
         self.assertEqual(2, len(postings))
@@ -1230,6 +1232,83 @@ class TestBookReductions(unittest.TestCase):
                          postings[0].cost)
 
 
+class TestHandleAmbiguousMatches(unittest.TestCase):
+
+    maxDiff = 8192
+
+
+    def check(self, balance_entry, reduction, booking_method):
+        matches = [Position(posting.units,
+                            booking_simple.convert_spec_to_cost(posting.units,
+                                                                posting.cost))
+                   for posting in balance_entry.postings]
+        entry = data.Transaction(None, datetime.date.today(), "*", None, "", None, None, [])
+        return bf.handle_ambiguous_matches(entry, reduction, matches, booking_method)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_ambiguous__NONE(self, entries, _, __):
+        """
+        2015-01-01 * "Non-mixed"
+          Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          5 HOOL {101.00 USD, 2015-10-01}
+
+        2015-01-01 * "Mixed"
+          Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         -5 HOOL {101.00 USD, 2015-10-01}
+
+        2015-06-01 * "Test"
+          Assets:Account         -2 HOOL {102.00 USD, 2015-06-01}
+          Assets:Account          2 HOOL {102.00 USD, 2015-06-01}
+        """
+        for posting in entries[-1].postings:
+            postings, errors = self.check(entries[0], posting, BookingMethod.NONE)
+            self.assertEqual(1, len(postings))
+            self.assertEqual(posting, postings[0])
+            self.assertFalse(errors)
+
+        for posting in entries[-1].postings:
+            postings, errors = self.check(entries[1], posting, BookingMethod.NONE)
+            self.assertEqual(1, len(postings))
+            self.assertEqual(posting, postings[0])
+            self.assertFalse(errors)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_ambiguous__STRICT(self, entries, _, __):
+        """
+        2015-01-01 * "Non-mixed"
+          Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          5 HOOL {101.00 USD, 2015-10-01}
+
+        ; 2015-01-01 * "Mixed"
+        ;   Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
+        ;   Assets:Account         -5 HOOL {101.00 USD, 2015-10-01}
+
+        2015-06-01 * "Negative test"
+          Assets:Account         -2 HOOL {102.00 USD, 2015-06-01}
+          Assets:Account         -2 HOOL {102.00 USD}
+          Assets:Account         -2 HOOL {2015-06-01}
+          Assets:Account         -2 HOOL {100.00 USD, 2015-10-01}
+        """
+        for posting in entries[-1].postings:
+            postings, errors = self.check(entries[0], posting, BookingMethod.STRICT)
+            self.assertTrue(errors)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_ambiguous__FIFO(self, entries, _, __):
+        """
+        2015-01-01 * "Non-mixed"
+          Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
+
+        2015-06-01 * "Test"
+          Assets:Account          7 HOOL {100.00 USD, 2015-06-01}
+          Assets:Account         12 HOOL {100.00 USD, 2015-06-01}
+        """
+        for posting in entries[-1].postings:
+            postings, errors = self.check(entries[0], posting, BookingMethod.FIFO)
+            for p in postings:
+                print(p)
+            break
 
 
 
@@ -1238,23 +1317,23 @@ class TestBookReductions(unittest.TestCase):
 
 
 
-
+
 # FIXME: Rewrite these tests.
 
 class TestBook(unittest.TestCase):
 
     def book_reductions(self, entries, currency='USD'):
         balances = collections.defaultdict(inventory.Inventory)
-        booking_methods = collections.defaultdict(lambda: data.BookingMethod.STRICT)
+        booking_methods = collections.defaultdict(lambda: BookingMethod.STRICT)
         for entry in entries:
             (booked_postings,
-             booked_errors) = booking_full.book_reductions(entry,
+             booked_errors) = bf.book_reductions(entry,
                                                            entry.postings,
                                                            balances,
                                                            booking_methods)
             (inter_postings,
              inter_errors,
-             interpolated) = booking_full.interpolate_group(booked_postings,
+             interpolated) = bf.interpolate_group(booked_postings,
                                                             balances,
                                                             currency)
             for posting in inter_postings:
@@ -1564,13 +1643,6 @@ class TestBook(unittest.TestCase):
 
 
 
-
-
-
-
-
-
-
 class TestBooking(unittest.TestCase):
     "Tests the booking & interpolation process."
 
@@ -1579,11 +1651,11 @@ class TestBooking(unittest.TestCase):
     # def book(self, entry, balances=None, exp_costs=None, debug=False):
     #     if balances is None:
     #         balances = {}
-    #     groups, errors = booking_full.categorize_by_currency(entry, balances)
+    #     groups, errors = bf.categorize_by_currency(entry, balances)
     #     self.assertFalse(errors)
-    #     posting_groups = booking_full.replace_currencies(entry.postings, groups)
+    #     posting_groups = bf.replace_currencies(entry.postings, groups)
     #     for currency, postings in posting_groups.items():
-    #         new_postings, new_balances = booking_full.book_reductions(postings, balances)
+    #         new_postings, new_balances = bf.book_reductions(postings, balances)
     #         if debug:
     #             for posting in new_postings:
     #                 print(posting)
@@ -1653,7 +1725,7 @@ __incomplete__ = True
 #           Assets:Bank:Investing          -1 HOOL {}
 #           Equity:Opening-Balances       101 USD
 #         """
-#         groups, free = booking_full.categorize_by_currency_by_currency(
+#         groups, free = bf.categorize_by_currency_by_currency(
 #             ientries[0].postings, {'USD': I('1 HOOL {100 USD}')})
 #         self.assertEqual({'USD': 2}, dictmap(groups, valfun=len))
 #         self.assertFalse(free)
@@ -1666,7 +1738,7 @@ __incomplete__ = True
 #           Assets:Bank:Investing          -1 HOOL {}
 #           Equity:Opening-Balances       101 USD
 #         """
-#         groups, free = booking_full.categorize_by_currency_by_currency(
+#         groups, free = bf.categorize_by_currency_by_currency(
 #             ientries[0].postings, {'USD': I('1 HOOL {100 USD}, '
 #                                             '1 HOOL {100 CAD}')})
 #
@@ -1679,7 +1751,7 @@ __incomplete__ = True
 #           Equity:Opening-Balances       101 USD
 #           Equity:Opening-Balances       102 CAD
 #         """
-#         groups, free = booking_full.categorize_by_currency_by_currency(
+#         groups, free = bf.categorize_by_currency_by_currency(
 #             ientries[0].postings, {'USD': I('1 HOOL {100 USD}')})
 #
 #     @parser.parse_doc()
@@ -1690,7 +1762,7 @@ __incomplete__ = True
 #           Assets:Bank:Investing          -1 HOOL {}
 #           Equity:Opening-Balances       100 USD
 #         """
-#         groups, free = booking_full.categorize_by_currency_by_currency(
+#         groups, free = bf.categorize_by_currency_by_currency(
 #             ientries[0].postings, {'USD': I('1 HOOL {100 USD}')})
 #
 #     @parser.parse_doc()
@@ -1704,7 +1776,7 @@ __incomplete__ = True
 #           Equity:Opening-Balances      -102 CAD
 #           Assets:Cash                   102 CAD
 #         """
-#         groups, free = booking_full.categorize_by_currency_by_currency(
+#         groups, free = bf.categorize_by_currency_by_currency(
 #             ientries[0].postings, {'USD': I('1 HOOL {100 USD}, '
 #                                                '1 HOOL {100 CAD}')})
 #
