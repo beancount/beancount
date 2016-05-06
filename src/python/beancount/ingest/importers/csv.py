@@ -56,8 +56,8 @@ class Col(misc_utils.Enum):
 class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
     """Importer for Chase credit card accounts."""
 
-    def __init__(self, config, account, currency, regexps, institution,
-                 header=None,
+    def __init__(self, config, account, currency, regexps,
+                 institution=None,
                  debug=False):
         """Constructor.
 
@@ -66,7 +66,8 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
           account: An account string, the account to post this to.
           currency: A currency string, the currenty of this account.
           regexps: A list of regular expression strings.
-
+          institution: An optional name of an institution to rename the files to.
+          header:
         """
         if isinstance(regexps, str):
             regexps = [regexps]
@@ -77,10 +78,11 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
         self.config = config
 
         self.account = account
-        self.institution = institution
         self.currency = currency
-        self.header = header
         self.debug = debug
+
+        # FIXME: This probably belongs to a mixin, not here.
+        self.institution = institution
 
     def name(self):
         name = self.name or super().name()
@@ -90,13 +92,28 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
         return self.account
 
     def file_name(self, file):
-        return '{}.{}.csv'.format(self.institution,
-                                  path.splitext(path.basename(file.name))[0])
+        filename = path.splitext(path.basename(file.name))[0]
+        if self.institution:
+            filename = '{}.{}'.format(self.institution, filename)
+        return '{}.csv'.format(filename)
 
     def file_date(self, file):
         "Get the maximum date from the file."
-        return max(parse_date_liberally(getattr(row, self.config[Col.DATE]))
-                   for row in csv_utils.csv_tuple_reader(open(file.name)))
+        iconfig, has_header = normalize_config(self.config, file.head())
+        if Col.DATE in iconfig:
+            reader = iter(csv.reader(open(file.name)))
+            if has_header:
+                next(reader)
+            max_date = None
+            for row in reader:
+                if not row:
+                    continue
+                date_str = row[iconfig[Col.DATE]]
+                date = parse_date_liberally(date_str)
+                if max_date is None or date > max_date:
+                    max_date = date
+            return max_date
+
 
     # def get_description(self, row):
     #     """Extract the payee and narration from the row.
@@ -133,11 +150,15 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
         # Parse all the transactions.
         first_row = last_row = None
         for index, row in enumerate(reader, 1):
+            if not row:
+                continue
+
             # If debugging, print out the rows.
             if self.debug: print(row)
 
             if first_row is None:
                 first_row = row
+            last_row = row
 
             # Extract the data we need from the row, based on the configuration.
             date = get(row, Col.DATE)
@@ -157,7 +178,6 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
             entries.append(txn)
 
         # Figure out if the file is in ascending or descending order.
-        last_row = row
         first_date = parse_date_liberally(get(first_row, Col.DATE))
         last_date = parse_date_liberally(get(last_row, Col.DATE))
         is_ascending = first_date < last_date
@@ -194,7 +214,7 @@ def normalize_config(config, head):
     has_header = csv.Sniffer().has_header(head)
     if has_header:
         header = next(csv.reader(io.StringIO(head)))
-        field_map = {field_name: index
+        field_map = {field_name.strip(): index
                      for index, field_name in enumerate(header)}
         index_config = {}
         for field_type, field in config.items():
