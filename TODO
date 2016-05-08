@@ -1522,6 +1522,11 @@ http://furius.ca/beancount/doc/proposal-query
     unit tests for this. And try running it over my personal file to see if
     there's any instance of it ever happening (I don't think so).
 
+  - Consider building a fromstring() constructor for Cost and CostSpec. This may
+    make writing tests even easier and would complement what's there already.
+
+  - Deal with all the FIXME cases in the new booking code.
+
 ** Auto-Link Booking Transactions
 
   - Automatically create a link between transactions that book each other.
@@ -4628,6 +4633,9 @@ http://furius.ca/beancount/doc/proposal-query
   have time to think about where to put it, I just come here at the end and jot
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
+
+  - Put all the contents of experiments/ under their own directories and add
+    decent README files for each of these.
 
 ** Google Keep Tickets
 

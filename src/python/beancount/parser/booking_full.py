@@ -465,21 +465,28 @@ def book_reductions(entry, group_postings, balances,
     """
     errors = []
 
+    # A local copy of the balances dictionary which is updated just for the
+    # duration of this function's updates, in order to take into account the
+    # cumulative effect of all the postings inferred here
+    local_balances = {}
+
     empty = inventory.Inventory()
     booked_postings = []
     for posting in group_postings:
         # Process a single posting.
         units = posting.units
         costspec = posting.cost
-        balance = balances.get(posting.account, None) # No mutation.
+        account = posting.account
 
-        # Note: if there is no existing balance, then won't be any lot reduction
-        # because none of the postings will be able to match against any
-        # currencies of the balance.
-        if balance is not None:
-            # Note: We make a copy of the account's balance, so we can modify it
-            # during the matching process.
-            balance = copy.copy(balance)
+        # Note: We ensure there is no mutation on 'balances' to keep this
+        # function without side-effects. Note that we may be able to optimize
+        # performance later on by giving up this property.
+        #
+        # Also note that if there is no existing balance, then won't be any lot
+        # reduction because none of the postings will be able to match against
+        # any currencies of the balance.
+        previous_balance = balances.get(account, None)
+        balance = local_balances.setdefault(account, copy.copy(previous_balance))
 
         # Check if this is a lot held at cost.
         if costspec is None:
@@ -491,7 +498,7 @@ def book_reductions(entry, group_postings, balances,
             #
             # FIXME: Remove the call to is_reduced_by() and do this in the
             # following loop itself.
-            booking_method = booking_methods[posting.account]
+            booking_method = booking_methods[account]
             if (booking_method is not Booking.NONE and
                 balance is not None and balance.is_reduced_by(units)):
                 # This posting is a reduction.
@@ -524,8 +531,8 @@ def book_reductions(entry, group_postings, balances,
                     # Replace the posting's units and cost values.
                     match_position = matches[0]
                     match_units = Amount(units.number, match_position.units.currency)
-                    booked_postings.append(
-                        posting._replace(units=match_units, cost=match_position.cost))
+                    reduction_postings = [
+                        posting._replace(units=match_units, cost=match_position.cost)]
 
                 elif num_matches == 0:
                     errors.append(
@@ -535,14 +542,22 @@ def book_reductions(entry, group_postings, balances,
                     return [], errors  # This is irreconcilable, remove these postings.
 
                 elif len(matches) > 1:
-                    postings, ambi_errors = handle_ambiguous_matches(entry, posting,
-                                                                     matches,
-                                                                     booking_method)
+                    reduction_postings, ambi_errors = handle_ambiguous_matches(
+                        entry, posting, matches, booking_method)
                     if ambi_errors:
                         errors.extend(ambi_errors)
                         return [], errors
-                    else:
-                        booked_postings.extend(postings)
+
+                # Add the reductions to the resulting list of booked postings.
+                booked_postings.extend(reduction_postings)
+
+                # Update the local balance in order to avoid matching against
+                # the same postings twice when processing multiple postings in
+                # the same transaction. Note that we only do this for postings
+                # held at cost because the other postings may need interpolation
+                # in order to be resolved properly.
+                for posting in reduction_postings:
+                    balance.add_position(posting)
             else:
                 # This posting is an augmentation.
                 #
@@ -557,7 +572,6 @@ def book_reductions(entry, group_postings, balances,
                     dated_costspec = costspec._replace(date=entry.date)
                     posting = posting._replace(cost=dated_costspec)
                 booked_postings.append(posting)
-
 
         # FIXME: Do we need to update the balances here in the case it's not a
         # reduction? What if we want to reduce off of positions added on other
@@ -597,12 +611,22 @@ def handle_ambiguous_matches(entry, posting, matches, booking_method):
                            entry))
 
     elif booking_method in (Booking.FIFO, Booking.LIFO):
+        ## FIXME: remove
+        debug = 0 ### posting.account == 'Assets:US:LendingClub:FundsLent'
+        if debug:
+            logging.info('processing reduction %s', posting)
+
         remaining = -posting.units.number
         for match in sorted(matches, key=lambda p: p.cost and p.cost.date,
                             reverse=(booking_method == Booking.LIFO)):
             if remaining <= ZERO:
                 break
             size = min(match.units.number, remaining)
+
+            ## FIXME: remove
+            if debug:
+                logging.info('  matched %s units against %s', size, match)
+
             postings.append(posting._replace(units=Amount(-size, match.units.currency),
                                              cost=match.cost))
             remaining -= size

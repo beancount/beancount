@@ -1013,8 +1013,7 @@ class TestBookReductions(unittest.TestCase):
           Assets:Other
         """
         for entry in entries:
-            postings, errors = bf.book_reductions(entry, entry.postings, {},
-                                                            self.BM)
+            postings, errors = bf.book_reductions(entry, entry.postings, {}, self.BM)
             self.assertFalse(errors)
             self.assertEqual(len(postings), len(entry.postings))
             self.assertEqual(None, postings[0].cost)
@@ -1031,8 +1030,7 @@ class TestBookReductions(unittest.TestCase):
           Assets:Other
         """
         for entry in entries:
-            postings, errors = bf.book_reductions(entry, entry.postings, {},
-                                                            self.BM)
+            postings, errors = bf.book_reductions(entry, entry.postings, {}, self.BM)
             self.assertFalse(errors)
             self.assertEqual(len(postings), len(entry.postings))
             self.assertEqual(
@@ -1047,8 +1045,7 @@ class TestBookReductions(unittest.TestCase):
           Assets:Account3          1 HOOL {}
           Assets:Other
         """
-        postings, errors = bf.book_reductions(entries[0], entries[0].postings, {},
-                                                        self.BM)
+        postings, errors = bf.book_reductions(entries[0], entries[0].postings, {}, self.BM)
         self.assertFalse(errors)
         self.assertEqual(
             CostSpec(MISSING, None, MISSING, datetime.date(2015, 10, 1), None, False),
@@ -1061,8 +1058,7 @@ class TestBookReductions(unittest.TestCase):
           Assets:Account3          1 HOOL {USD}
           Assets:Other
         """
-        postings, errors = bf.book_reductions(entries[0], entries[0].postings, {},
-                                                        self.BM)
+        postings, errors = bf.book_reductions(entries[0], entries[0].postings, {}, self.BM)
         self.assertFalse(errors)
         self.assertEqual(
             CostSpec(MISSING, None, 'USD', datetime.date(2015, 10, 1), None, False),
@@ -1080,8 +1076,7 @@ class TestBookReductions(unittest.TestCase):
           Assets:Other
         """
         for entry in entries:
-            postings, errors = bf.book_reductions(entry, entry.postings, {},
-                                                            self.BM)
+            postings, errors = bf.book_reductions(entry, entry.postings, {}, self.BM)
             self.assertFalse(errors)
             self.assertEqual(postings, entry.postings)
 
@@ -1098,8 +1093,7 @@ class TestBookReductions(unittest.TestCase):
         """
         balances = {'Assets:Account1': I('10 USD')}
         entry = entries[-1]
-        postings, errors = bf.book_reductions(entry, entry.postings, balances,
-                                                        self.BM)
+        postings, errors = bf.book_reductions(entry, entry.postings, balances, self.BM)
         # Check that the posting was left alone, nothing to be matched.
         self.assertEqual(postings, entry.postings)
 
@@ -1128,8 +1122,7 @@ class TestBookReductions(unittest.TestCase):
         """
         balances = {'Assets:Account': I('10 HOOL {123.45 USD, 2016-04-15}')}
         for entry in entries:
-            postings, errors = bf.book_reductions(entry, entry.postings, balances,
-                                                            self.BM)
+            postings, errors = bf.book_reductions(entry, entry.postings, balances, self.BM)
             self.assertTrue(errors)
             self.assertRegex(errors[0].message, "No position matches")
             self.assertEqual(0, len(postings))
@@ -1144,8 +1137,7 @@ class TestBookReductions(unittest.TestCase):
         ante_inv = I('10 HOOL {115.00 USD, 2016-04-15, "lot1"}')
         balances = {'Assets:Account': ante_inv}
         entry = entries[0]
-        postings, errors = bf.book_reductions(entry, entry.postings, balances,
-                                                        self.BM)
+        postings, errors = bf.book_reductions(entry, entry.postings, balances, self.BM)
         self.assertFalse(errors)
         self.assertEqual(2, len(postings))
         self.assertEqual(ante_inv[0].cost, postings[0].cost)
@@ -1172,8 +1164,7 @@ class TestBookReductions(unittest.TestCase):
         balances = {'Assets:Account': I('10 HOOL {115.00 USD, 2016-04-15, "lot1"}, '
                                         '10 HOOL {115.00 USD, 2016-04-15, "lot2"}')}
         for entry in entries:
-            postings, errors = bf.book_reductions(entry, entry.postings, balances,
-                                                            self.BM)
+            postings, errors = bf.book_reductions(entry, entry.postings, balances, self.BM)
             self.assertTrue(errors)
             self.assertRegex(errors[0].message, "Ambiguous matches")
             self.assertEqual(0, len(postings))
@@ -1191,8 +1182,7 @@ class TestBookReductions(unittest.TestCase):
         balances = {'Assets:Account': I('1 HOOL {115.00 USD}, '
                                         '2 HOOL {116.00 USD}')}
         entry = entries[0]
-        postings, errors = bf.book_reductions(entry, entry.postings, balances,
-                                                        BM)
+        postings, errors = bf.book_reductions(entry, entry.postings, balances, BM)
         self.assertFalse(errors)
         self.assertEqual(2, len(postings))
 
@@ -1209,8 +1199,7 @@ class TestBookReductions(unittest.TestCase):
         balances = {'Assets:Account': I('1 HOOL {115.00 USD}, '
                                         '-2 HOOL {116.00 USD}')}
         entry = entries[0]
-        postings, errors = bf.book_reductions(entry, entry.postings, balances,
-                                                        BM)
+        postings, errors = bf.book_reductions(entry, entry.postings, balances, BM)
         self.assertFalse(errors)
         self.assertEqual(2, len(postings))
 
@@ -1224,12 +1213,54 @@ class TestBookReductions(unittest.TestCase):
         balances = {'Assets:Account': I('8 AAPL {115.00 USD, 2016-01-11}, '
                                         '8 HOOL {115.00 USD, 2016-01-10}')}
         entry = entries[0]
-        postings, errors = bf.book_reductions(entry, entry.postings, balances,
-                                                        self.BM)
+        postings, errors = bf.book_reductions(entry, entry.postings, balances, self.BM)
         self.assertFalse(errors)
         self.assertEqual(2, len(postings))
         self.assertEqual(Cost(D('115.00'), 'USD', datetime.date(2016, 1, 10), None),
                          postings[0].cost)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_reduce__multiple_reductions(self, entries, _, __):
+        """
+        2016-05-02 *
+          Assets:Account          -40 HOOL {}
+          Assets:Account          -35 HOOL {}
+        """
+        balances = {'Assets:Account': I('50 HOOL {115.00 USD, 2016-01-15}, '
+                                        '50 HOOL {116.00 USD, 2016-01-16}')}
+        entry = entries[0]
+        BM = collections.defaultdict(lambda: Booking.FIFO)
+        postings, errors = bf.book_reductions(entry, entry.postings, balances, BM)
+        self.assertFalse(errors)
+        self.assertEqual([
+            data.Posting('Assets:Account', A('-40 HOOL'), Cost(D('115.00'), 'USD', datetime.date(2016, 1, 15), None), None, None, None),
+            data.Posting('Assets:Account', A('-10 HOOL'), Cost(D('115.00'), 'USD', datetime.date(2016, 1, 15), None), None, None, None),
+            data.Posting('Assets:Account', A('-25 HOOL'), Cost(D('116.00'), 'USD', datetime.date(2016, 1, 16), None), None, None, None),
+            ], [posting._replace(meta=None) for posting in postings])
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_reduce__multiple_reductions__with_error(self, entries, _, __):
+        """
+        2016-05-02 *
+          Assets:Account          -40 HOOL {}
+          Assets:Account          -65 HOOL {}
+        """
+        balances = {'Assets:Account': I('50 HOOL {115.00 USD, 2016-01-15}, '
+                                        '50 HOOL {116.00 USD, 2016-01-16}')}
+        entry = entries[0]
+        BM = collections.defaultdict(lambda: Booking.FIFO)
+        postings, errors = bf.book_reductions(entry, entry.postings, balances, BM)
+        self.assertTrue(errors)
+        self.assertRegex(errors[0].message, 'Not enough lots to reduce')
+        self.assertEqual([], postings)
+
+
+
+
+
+
+
+
 
 
 class TestHandleAmbiguousMatches(unittest.TestCase):
@@ -1279,9 +1310,9 @@ class TestHandleAmbiguousMatches(unittest.TestCase):
           Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
           Assets:Account          5 HOOL {101.00 USD, 2015-10-01}
 
-        ; 2015-01-01 * "Mixed"
-        ;   Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
-        ;   Assets:Account         -5 HOOL {101.00 USD, 2015-10-01}
+        2015-01-01 * "Mixed"
+          Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         -5 HOOL {101.00 USD, 2015-10-01}
 
         2015-06-01 * "Negative test"
           Assets:Account         -2 HOOL {102.00 USD, 2015-06-01}
@@ -1414,8 +1445,6 @@ class TestHandleAmbiguousMatches(unittest.TestCase):
           Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
         """
         self._test_ambiguous(entries, Booking.LIFO)
-
-
 
 
 
