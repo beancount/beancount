@@ -1388,6 +1388,13 @@ http://furius.ca/beancount/doc/proposal-query
 
   Tasks:
 
+  - In the average cost method, add an option to determine whether explicit lot
+    information should just be lost silently or if it should trigger an explicit
+    error.
+
+  - When lots are merged in AVERAGE booking, decide whether to keep the older or
+    youngest lot using an option (add an option for this).
+
   - Make the "reduction_method" (rename from "booking_method") per-account and
     support the old method in the new code, as "FIFO". It really just is FIFO
     but now there will be lot splits instead of single lots being merged; this
