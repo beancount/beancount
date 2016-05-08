@@ -318,8 +318,12 @@ def main():
 
     # Fetch all the required prices, processing all the jobs.
     executor = futures.ThreadPoolExecutor(max_workers=3)
-    price_entries = sorted(filter(None, executor.map(
-        functools.partial(fetch_price, swap_inverted=args.swap_inverted), jobs)))
+    price_entries = filter(None, executor.map(
+        functools.partial(fetch_price, swap_inverted=args.swap_inverted), jobs))
+
+    # Sort them by currency, regardless of date (the dates should be close
+    # anyhow, and we tend to put them in chunks in the input files anyhow).
+    price_entries = sorted(price_entries, key=lambda e: e.currency)
 
     # Avoid clobber, remove redundant entries.
     if not args.clobber:
