@@ -107,7 +107,7 @@ def options_validate_booking_method(value):
       ValueError: If the value is invalid.
     """
     try:
-        return data.BookingMethod[value]
+        return data.Booking[value]
     except KeyError as exc:
         raise ValueError(str(exc))
 
@@ -491,7 +491,7 @@ PUBLIC_OPTION_GROUPS = [
       See the following documents for details:
         http://furius.ca/beancount/doc/inventories
         http://furius.ca/beancount/doc/proposal-booking
-    """, [Opt("booking_method", data.BookingMethod.STRICT, "STRICT",
+    """, [Opt("booking_method", data.Booking.STRICT, "STRICT",
               converter=options_validate_booking_method)]),
 
     ]

@@ -53,17 +53,17 @@ def new_directive(clsname, fields):
 #   currencies: A list of strings, currencies that are allowed in this account.
 #     May be None, in which case it means that there are no restrictions on which
 #     currencies may be stored in this account.
-#   booking: A BookingMethod enum, the booking method to use to disambiguate
+#   booking: A Booking enum, the booking method to use to disambiguate
 #     postings to this account (when zero or more than one postings match the
 #     specification), or None if not specified. In practice, this attribute will
 #     be should be left unspecified (None) in the vast majority of cases. See
-#     BookingMethod below for a selection of valid methods.
+#     Booking below for a selection of valid methods.
 Open = new_directive('Open', 'account currencies booking')
 
 
 # A set of valid booking method names for positions on accounts.
 # See http://furius.ca/beancount/doc/inventories for a full explanation.
-class BookingMethod(misc_utils.Enum):
+class Booking(misc_utils.Enum):
 
     # Reject ambiguous matches with an error.
     STRICT = 'STRICT'

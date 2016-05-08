@@ -81,7 +81,7 @@ from beancount.core.number import MISSING
 from beancount.core.number import ZERO
 from beancount.core.number import Decimal
 from beancount.core.data import Transaction
-from beancount.core.data import BookingMethod
+from beancount.core.data import Booking
 from beancount.core.amount import Amount
 from beancount.core.position import Position
 from beancount.core.position import Cost
@@ -492,7 +492,7 @@ def book_reductions(entry, group_postings, balances,
             # FIXME: Remove the call to is_reduced_by() and do this in the
             # following loop itself.
             booking_method = booking_methods[posting.account]
-            if (booking_method is not BookingMethod.NONE and
+            if (booking_method is not Booking.NONE and
                 balance is not None and balance.is_reduced_by(units)):
                 # This posting is a reduction.
 
@@ -582,12 +582,12 @@ def handle_ambiguous_matches(entry, posting, matches, booking_method):
         booked_postings: A list of matched Posting instances.
         errors: A list of errors to be generated.
     """
-    assert isinstance(booking_method, BookingMethod), (
+    assert isinstance(booking_method, Booking), (
         "Invalid type: {}".format(booking_method))
 
     postings = []
     errors = []
-    if booking_method is BookingMethod.STRICT:
+    if booking_method is Booking.STRICT:
         errors.append(
             ReductionError(entry.meta,
                            'Ambiguous matches for "{}": {}'.format(
@@ -596,7 +596,7 @@ def handle_ambiguous_matches(entry, posting, matches, booking_method):
                                          for match_posting in matches)),
                            entry))
 
-    elif booking_method is BookingMethod.FIFO:
+    elif booking_method is Booking.FIFO:
         remaining = posting.units.number
         for match in sorted(matches, key=lambda posting: posting.cost and posting.cost.date):
             size = min(match.units.number, remaining)
@@ -614,7 +614,7 @@ def handle_ambiguous_matches(entry, posting, matches, booking_method):
         #                                  for match_posting in matches)),
         #                    entry))
 
-    elif booking_method is BookingMethod.NONE:
+    elif booking_method is Booking.NONE:
         postings.append(posting)
 
     return postings, errors

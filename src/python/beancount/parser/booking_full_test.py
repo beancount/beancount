@@ -15,7 +15,7 @@ from beancount.core.position import Cost
 from beancount.core.position import Position
 from beancount.core.inventory import from_string as I
 from beancount.utils.misc_utils import dictmap
-from beancount.core.data import BookingMethod
+from beancount.core.data import Booking
 from beancount.core import inventory
 from beancount.core import position
 from beancount.core import amount
@@ -969,14 +969,14 @@ class TestParseBookingOptions(cmptest.TestCase):
         """
           option "booking_method" "STRICT"
         """
-        self.assertEqual(BookingMethod.STRICT, options_map["booking_method"])
+        self.assertEqual(Booking.STRICT, options_map["booking_method"])
 
     @loader.load_doc()
     def test_booking_method__average(self, entries, _, options_map):
         """
           option "booking_method" "AVERAGE"
         """
-        self.assertEqual(BookingMethod.AVERAGE, options_map["booking_method"])
+        self.assertEqual(Booking.AVERAGE, options_map["booking_method"])
 
     @loader.load_doc(expect_errors=True)
     def test_booking_method__invalid(self, _, errors, options_map):
@@ -984,7 +984,7 @@ class TestParseBookingOptions(cmptest.TestCase):
           option "booking_method" "XXX"
         """
         self.assertEqual(1, len(errors))
-        self.assertEqual(BookingMethod.STRICT,
+        self.assertEqual(Booking.STRICT,
                          options_map["booking_method"])
 
 
@@ -995,7 +995,7 @@ class TestBookReductions(unittest.TestCase):
 
     maxDiff = 8192
 
-    BM = collections.defaultdict(lambda: BookingMethod.STRICT)
+    BM = collections.defaultdict(lambda: Booking.STRICT)
 
     #
     # Test that the augmentations are left alone by the book_reductions() function.
@@ -1187,7 +1187,7 @@ class TestBookReductions(unittest.TestCase):
           Assets:Account          -5 HOOL {117.00 USD}
           Assets:Other
         """
-        BM = collections.defaultdict(lambda: BookingMethod.NONE)
+        BM = collections.defaultdict(lambda: Booking.NONE)
         balances = {'Assets:Account': I('1 HOOL {115.00 USD}, '
                                         '2 HOOL {116.00 USD}')}
         entry = entries[0]
@@ -1205,7 +1205,7 @@ class TestBookReductions(unittest.TestCase):
           Assets:Account          -5 HOOL {117.00 USD}
           Assets:Other
         """
-        BM = collections.defaultdict(lambda: BookingMethod.NONE)
+        BM = collections.defaultdict(lambda: Booking.NONE)
         balances = {'Assets:Account': I('1 HOOL {115.00 USD}, '
                                         '-2 HOOL {116.00 USD}')}
         entry = entries[0]
@@ -1261,13 +1261,13 @@ class TestHandleAmbiguousMatches(unittest.TestCase):
           Assets:Account          2 HOOL {102.00 USD, 2015-06-01}
         """
         for posting in entries[-1].postings:
-            postings, errors = self.check(entries[0], posting, BookingMethod.NONE)
+            postings, errors = self.check(entries[0], posting, Booking.NONE)
             self.assertEqual(1, len(postings))
             self.assertEqual(posting, postings[0])
             self.assertFalse(errors)
 
         for posting in entries[-1].postings:
-            postings, errors = self.check(entries[1], posting, BookingMethod.NONE)
+            postings, errors = self.check(entries[1], posting, Booking.NONE)
             self.assertEqual(1, len(postings))
             self.assertEqual(posting, postings[0])
             self.assertFalse(errors)
@@ -1290,7 +1290,7 @@ class TestHandleAmbiguousMatches(unittest.TestCase):
           Assets:Account         -2 HOOL {100.00 USD, 2015-10-01}
         """
         for posting in entries[-1].postings:
-            postings, errors = self.check(entries[0], posting, BookingMethod.STRICT)
+            postings, errors = self.check(entries[0], posting, Booking.STRICT)
             self.assertTrue(errors)
 
     @parser.parse_doc(allow_incomplete=True)
@@ -1305,7 +1305,7 @@ class TestHandleAmbiguousMatches(unittest.TestCase):
           Assets:Account         12 HOOL {100.00 USD, 2015-06-01}
         """
         for posting in entries[-1].postings:
-            postings, errors = self.check(entries[0], posting, BookingMethod.FIFO)
+            postings, errors = self.check(entries[0], posting, Booking.FIFO)
             for p in postings:
                 print(p)
             break
@@ -1324,7 +1324,7 @@ class TestBook(unittest.TestCase):
 
     def book_reductions(self, entries, currency='USD'):
         balances = collections.defaultdict(inventory.Inventory)
-        booking_methods = collections.defaultdict(lambda: BookingMethod.STRICT)
+        booking_methods = collections.defaultdict(lambda: Booking.STRICT)
         for entry in entries:
             (booked_postings,
              booked_errors) = bf.book_reductions(entry,

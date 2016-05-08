@@ -30,7 +30,7 @@ from beancount.core.data import Document
 from beancount.core.data import Custom
 from beancount.core.data import new_metadata
 from beancount.core.data import Posting
-from beancount.core.data import BookingMethod
+from beancount.core.data import Booking
 
 from beancount.parser import lexer
 from beancount.parser import options
@@ -562,7 +562,7 @@ class Builder(lexer.LexBuilder):
         if booking_str:
             try:
                 # Note: Somehow the 'in' membership operator is not defined on Enum.
-                booking = BookingMethod[booking_str]
+                booking = Booking[booking_str]
             except KeyError:
                 # If the per-account method is invalid, set it to the global
                 # default method and continue.

@@ -75,7 +75,7 @@ class TestBookingValidation(cmptest.TestCase):
 
         """)
 
-    BM = collections.defaultdict(lambda: BookingMethod.STRICT)
+    BM = collections.defaultdict(lambda: Booking.STRICT)
 
     def convert_and_validate(self, entries, options_map):
         entries, _ = booking_simple.convert_lot_specs_to_lots(entries)

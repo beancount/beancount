@@ -94,7 +94,7 @@ def validate_inventory_booking(entries, unused_options_map, booking_methods):
                 position_, _ = running_balance.add_position(posting)
 
                 # Skip this check if the booking method is set to ignore it.
-                if booking_methods.get(posting.account, None) == data.BookingMethod.NONE:
+                if booking_methods.get(posting.account, None) == data.Booking.NONE:
                     continue
 
                 # Check if the resulting inventory is mixed, which is not
