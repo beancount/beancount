@@ -76,6 +76,8 @@ def convert_lot_specs_to_lots(entries):
     Returns:
       A list of entries whose postings's position costs have been converted to
       Cost instances but that may still be incomplete.
+    Raises:
+      ValueError: If there's a unacceptable number.
     """
     new_entries = []
     errors = []
@@ -87,7 +89,18 @@ def convert_lot_specs_to_lots(entries):
         new_postings = []
         for posting in entry.postings:
             try:
-                cost = convert_spec_to_cost(posting.units, posting.cost)
+                units = posting.units
+                cost_spec = posting.cost
+                cost = convert_spec_to_cost(units, cost_spec)
+                if cost_spec and isinstance(units, Amount):
+                    # If there is a cost, we don't allow either a cost value of
+                    # zero, nor a zero number of units. Note that we allow a price
+                    # of zero as the only special case (for conversion entries), but
+                    # never for costs.
+                    if units.number == ZERO:
+                        raise ValueError('Amount is zero: "{}"'.format(units))
+                    if cost.number is not None and cost.number < ZERO:
+                        raise ValueError('Cost is negative: "{}"'.format(cost))
             except ValueError as exc:
                 errors.append(SimpleBookingError(entry.meta, str(exc), None))
                 cost = None
@@ -104,8 +117,6 @@ def convert_spec_to_cost(units, cost_spec):
       cost_spec: An instance of CostSpec.
     Returns:
       An instance of Cost.
-    Raises:
-      ValueError: If there's something we cannot resolve.
     """
     cost = cost_spec
     errors = []
@@ -129,14 +140,4 @@ def convert_spec_to_cost(units, cost_spec):
                 cost = Cost(unit_cost, cost_currency, date, label)
             else:
                 cost = None
-
-            # If there is a cost, we don't allow either a cost value of
-            # zero, nor a zero number of units. Note that we allow a price
-            # of zero as the only special case (for conversion entries), but
-            # never for costs.
-            if cost is not None:
-                if units.number == ZERO:
-                    raise ValueError('Amount is zero: "{}"'.format(units))
-                if cost.number is not None and cost.number < ZERO:
-                    raise ValueError('Cost is negative: "{}"'.format(cost))
     return cost

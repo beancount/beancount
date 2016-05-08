@@ -1293,22 +1293,129 @@ class TestHandleAmbiguousMatches(unittest.TestCase):
             postings, errors = self.check(entries[0], posting, Booking.STRICT)
             self.assertTrue(errors)
 
+    def _test_ambiguous(self, entries, booking_method):
+        """Test the entries using the format examplified in the two following methods."""
+        pre_entry = entries[0]
+        for entry in entries[1:]:
+            apply_posting = entry.postings[0]
+            expected_postings = [
+                posting._replace(cost=booking_simple.convert_spec_to_cost(posting.units,
+                                                                          posting.cost))
+                for posting in entry.postings[1:]]
+            matched_postings, errors = self.check(pre_entry, apply_posting, booking_method)
+            self.assertEqual(len(expected_postings), len(matched_postings))
+            for expected_posting, matched_posting in zip(expected_postings,
+                                                         matched_postings):
+                self.assertEqual(expected_posting._replace(meta=None),
+                                 matched_posting._replace(meta=None))
+            expect_error = bool(entry.tags)
+            self.assertEqual(expect_error, bool(errors))
+
     @parser.parse_doc(allow_incomplete=True)
     def test_ambiguous__FIFO(self, entries, _, __):
         """
         2015-01-01 * "Non-mixed"
-          Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
-          Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
 
-        2015-06-01 * "Test"
-          Assets:Account          7 HOOL {100.00 USD, 2015-06-01}
-          Assets:Account         12 HOOL {100.00 USD, 2015-06-01}
+        ;; Each of the entries below is its on test. The first posting is applied.
+        ;; The other ones represent the expected output
+
+        2015-02-22 * "Test no match against any lots"
+          Assets:Account          0 HOOL {}  ;; EXPECTED
+
+        2015-02-22 * "Test match against partial first lot"
+          Assets:Account         -2 HOOL {}  ;; EXPECTED
+          Assets:Account         -2 HOOL {100.00 USD, 2015-10-01}
+
+        2015-02-22 * "Test match against complete first lot"
+          Assets:Account         -4 HOOL {}  ;; EXPECTED
+          Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
+
+        2015-02-22 * "Test partial match against first two lots"
+          Assets:Account         -7 HOOL {}  ;; EXPECTED
+          Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         -3 HOOL {111.11 USD, 2015-10-02}
+
+        2015-02-22 * "Test complete match against first two lots"
+          Assets:Account         -9 HOOL {}  ;; EXPECTED
+          Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
+
+        2015-02-22 * "Test partial match against first three lots"
+          Assets:Account        -12 HOOL {}  ;; EXPECTED
+          Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account         -3 HOOL {122.22 USD, 2015-10-03}
+
+        2015-02-22 * "Test complete match against first three lots"
+          Assets:Account        -15 HOOL {}  ;; EXPECTED
+          Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account         -6 HOOL {122.22 USD, 2015-10-03}
+
+        2015-02-22 * "Test matching more than is available" #error
+          Assets:Account        -16 HOOL {}  ;; EXPECTED
+          Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account         -6 HOOL {122.22 USD, 2015-10-03}
         """
-        for posting in entries[-1].postings:
-            postings, errors = self.check(entries[0], posting, Booking.FIFO)
-            for p in postings:
-                print(p)
-            break
+        self._test_ambiguous(entries, Booking.FIFO)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_ambiguous__LIFO(self, entries, _, __):
+        """
+        2015-01-01 * "Non-mixed"
+          Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
+
+        ;; Each of the entries below is its on test. The first posting is applied.
+        ;; The other ones represent the expected output
+
+        2015-02-22 * "Test no match against any lots"
+          Assets:Account          0 HOOL {}  ;; EXPECTED
+
+        2015-02-22 * "Test match against partial first lot"
+          Assets:Account         -2 HOOL {}  ;; EXPECTED
+          Assets:Account         -2 HOOL {122.22 USD, 2015-10-03}
+
+        2015-02-22 * "Test match against complete first lot"
+          Assets:Account         -6 HOOL {}  ;; EXPECTED
+          Assets:Account         -6 HOOL {122.22 USD, 2015-10-03}
+
+        2015-02-22 * "Test partial match against first two lots"
+          Assets:Account         -7 HOOL {}  ;; EXPECTED
+          Assets:Account         -6 HOOL {122.22 USD, 2015-10-03}
+          Assets:Account         -1 HOOL {111.11 USD, 2015-10-02}
+
+        2015-02-22 * "Test complete match against first two lots"
+          Assets:Account        -11 HOOL {}  ;; EXPECTED
+          Assets:Account         -6 HOOL {122.22 USD, 2015-10-03}
+          Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
+
+        2015-02-22 * "Test partial match against first three lots"
+          Assets:Account        -12 HOOL {}  ;; EXPECTED
+          Assets:Account         -6 HOOL {122.22 USD, 2015-10-03}
+          Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account         -1 HOOL {100.00 USD, 2015-10-01}
+
+        2015-02-22 * "Test complete match against first three lots"
+          Assets:Account        -15 HOOL {}  ;; EXPECTED
+          Assets:Account         -6 HOOL {122.22 USD, 2015-10-03}
+          Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
+
+        2015-02-22 * "Test matching more than is available" #error
+          Assets:Account        -16 HOOL {}  ;; EXPECTED
+          Assets:Account         -6 HOOL {122.22 USD, 2015-10-03}
+          Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
+        """
+        self._test_ambiguous(entries, Booking.LIFO)
+
+
 
 
 

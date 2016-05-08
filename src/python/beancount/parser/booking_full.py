@@ -596,26 +596,30 @@ def handle_ambiguous_matches(entry, posting, matches, booking_method):
                                          for match_posting in matches)),
                            entry))
 
-    elif booking_method is Booking.FIFO:
-        remaining = posting.units.number
-        for match in sorted(matches, key=lambda posting: posting.cost and posting.cost.date):
-            size = min(match.units.number, remaining)
-            postings.append(posting._replace(units=Amount(size, match.units.currency),
-                                             cost=match.cost))
-            remaining -= size
+    elif booking_method in (Booking.FIFO, Booking.LIFO):
+        remaining = -posting.units.number
+        for match in sorted(matches, key=lambda p: p.cost and p.cost.date,
+                            reverse=(booking_method == Booking.LIFO)):
             if remaining <= ZERO:
                 break
-
-        # errors.append(
-        #     ReductionError(entry.meta,
-        #                    'Ambiguous matches for "{}": {}'.format(
-        #                        str(posting),
-        #                        ', '.join(str(match_posting)
-        #                                  for match_posting in matches)),
-        #                    entry))
+            size = min(match.units.number, remaining)
+            postings.append(posting._replace(units=Amount(-size, match.units.currency),
+                                             cost=match.cost))
+            remaining -= size
+        if remaining > ZERO:
+            errors.append(
+                ReductionError(entry.meta,
+                               'Not enough lots to reduce "{}": {}'.format(
+                                   str(posting),
+                                   ', '.join(str(match_posting)
+                                             for match_posting in matches)),
+                               entry))
 
     elif booking_method is Booking.NONE:
         postings.append(posting)
+
+    # elif booking_method is Booking.NONE:
+    #     postings.append(posting)
 
     return postings, errors
 
