@@ -1098,6 +1098,27 @@ class TestBookReductions(unittest.TestCase):
         self.assertEqual(postings, entry.postings)
 
     #
+    # Test reductions crossing the sign line.
+    #
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_reduce__sign_change_simple(self, entries, _, __):
+        """
+        2016-05-08 *
+          Assets:Account        -13 HOOL {}
+        """
+        # We should not allow this because the implied cost basis has nothing to
+        # do with with the original cost basis. It does not make sense to carry
+        # over the cost basis into negative units territory. For instance, the
+        # negative 3 units that would result from this transaction have no
+        # justification to be at 33.33 USD.
+        balances = {'Assets:Account': I('10 HOOL {33.33 USD, 2016-01-01}')}
+        entry = entries[-1]
+        postings, errors = bf.book_reductions(entry, entry.postings, balances, self.BM)
+        self.assertTrue(errors)
+        self.assertEqual([], postings)
+
+    #
     # Test reductions which trigger matching.
     #
 
@@ -1267,8 +1288,7 @@ class TestHandleAmbiguousMatches(unittest.TestCase):
 
     maxDiff = 8192
 
-
-    def check(self, balance_entry, reduction, booking_method):
+    def _handle_ambiguous(self, balance_entry, reduction, booking_method):
         matches = [Position(posting.units,
                             booking_simple.convert_spec_to_cost(posting.units,
                                                                 posting.cost))
@@ -1292,13 +1312,13 @@ class TestHandleAmbiguousMatches(unittest.TestCase):
           Assets:Account          2 HOOL {102.00 USD, 2015-06-01}
         """
         for posting in entries[-1].postings:
-            postings, errors = self.check(entries[0], posting, Booking.NONE)
+            postings, errors = self._handle_ambiguous(entries[0], posting, Booking.NONE)
             self.assertEqual(1, len(postings))
             self.assertEqual(posting, postings[0])
             self.assertFalse(errors)
 
         for posting in entries[-1].postings:
-            postings, errors = self.check(entries[1], posting, Booking.NONE)
+            postings, errors = self._handle_ambiguous(entries[1], posting, Booking.NONE)
             self.assertEqual(1, len(postings))
             self.assertEqual(posting, postings[0])
             self.assertFalse(errors)
@@ -1319,26 +1339,39 @@ class TestHandleAmbiguousMatches(unittest.TestCase):
           Assets:Account         -2 HOOL {102.00 USD}
           Assets:Account         -2 HOOL {2015-06-01}
           Assets:Account         -2 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         -6 HOOL {100.00 USD, 2015-10-01}
         """
         for posting in entries[-1].postings:
-            postings, errors = self.check(entries[0], posting, Booking.STRICT)
+            postings, errors = self._handle_ambiguous(entries[0], posting, Booking.STRICT)
             self.assertTrue(errors)
 
-    def _test_ambiguous(self, entries, booking_method):
+    def _reduce_first_expect_rest(self, pre_entry, entries, booking_method):
         """Test the entries using the format examplified in the two following methods."""
-        pre_entry = entries[0]
-        for entry in entries[1:]:
+        for entry in entries:
             apply_posting = entry.postings[0]
             expected_postings = [
                 posting._replace(cost=booking_simple.convert_spec_to_cost(posting.units,
                                                                           posting.cost))
                 for posting in entry.postings[1:]]
-            matched_postings, errors = self.check(pre_entry, apply_posting, booking_method)
+            matched_postings, errors = self._handle_ambiguous(pre_entry, apply_posting,
+                                                              booking_method)
+
+
+            ## FIXME: remove
+            debug = 0
+            if debug:
+                print()
+                for matched_posting in matched_postings:
+                    print(matched_posting._replace(meta=None))
+
+
             self.assertEqual(len(expected_postings), len(matched_postings))
             for expected_posting, matched_posting in zip(expected_postings,
                                                          matched_postings):
                 self.assertEqual(expected_posting._replace(meta=None),
-                                 matched_posting._replace(meta=None))
+                                 matched_posting._replace(meta=None),
+                                 "Postings don't match: {} != {}".format(expected_posting,
+                                                                         matched_posting))
             expect_error = bool(entry.tags)
             self.assertEqual(expect_error, bool(errors))
 
@@ -1354,45 +1387,45 @@ class TestHandleAmbiguousMatches(unittest.TestCase):
         ;; The other ones represent the expected output
 
         2015-02-22 * "Test no match against any lots"
-          Assets:Account          0 HOOL {}  ;; EXPECTED
+          Assets:Account          0 HOOL {}  ;; REDUCING
 
         2015-02-22 * "Test match against partial first lot"
-          Assets:Account         -2 HOOL {}  ;; EXPECTED
+          Assets:Account         -2 HOOL {}  ;; REDUCING
           Assets:Account         -2 HOOL {100.00 USD, 2015-10-01}
 
         2015-02-22 * "Test match against complete first lot"
-          Assets:Account         -4 HOOL {}  ;; EXPECTED
+          Assets:Account         -4 HOOL {}  ;; REDUCING
           Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
 
         2015-02-22 * "Test partial match against first two lots"
-          Assets:Account         -7 HOOL {}  ;; EXPECTED
+          Assets:Account         -7 HOOL {}  ;; REDUCING
           Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
           Assets:Account         -3 HOOL {111.11 USD, 2015-10-02}
 
         2015-02-22 * "Test complete match against first two lots"
-          Assets:Account         -9 HOOL {}  ;; EXPECTED
+          Assets:Account         -9 HOOL {}  ;; REDUCING
           Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
           Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
 
         2015-02-22 * "Test partial match against first three lots"
-          Assets:Account        -12 HOOL {}  ;; EXPECTED
+          Assets:Account        -12 HOOL {}  ;; REDUCING
           Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
           Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
           Assets:Account         -3 HOOL {122.22 USD, 2015-10-03}
 
         2015-02-22 * "Test complete match against first three lots"
-          Assets:Account        -15 HOOL {}  ;; EXPECTED
+          Assets:Account        -15 HOOL {}  ;; REDUCING
           Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
           Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
           Assets:Account         -6 HOOL {122.22 USD, 2015-10-03}
 
         2015-02-22 * "Test matching more than is available" #error
-          Assets:Account        -16 HOOL {}  ;; EXPECTED
+          Assets:Account        -16 HOOL {}  ;; REDUCING
           Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
           Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
           Assets:Account         -6 HOOL {122.22 USD, 2015-10-03}
         """
-        self._test_ambiguous(entries, Booking.FIFO)
+        self._reduce_first_expect_rest(entries[0], entries[1:], Booking.FIFO)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_ambiguous__LIFO(self, entries, _, __):
@@ -1406,45 +1439,118 @@ class TestHandleAmbiguousMatches(unittest.TestCase):
         ;; The other ones represent the expected output
 
         2015-02-22 * "Test no match against any lots"
-          Assets:Account          0 HOOL {}  ;; EXPECTED
+          Assets:Account          0 HOOL {}  ;; REDUCING
 
         2015-02-22 * "Test match against partial first lot"
-          Assets:Account         -2 HOOL {}  ;; EXPECTED
+          Assets:Account         -2 HOOL {}  ;; REDUCING
           Assets:Account         -2 HOOL {122.22 USD, 2015-10-03}
 
         2015-02-22 * "Test match against complete first lot"
-          Assets:Account         -6 HOOL {}  ;; EXPECTED
+          Assets:Account         -6 HOOL {}  ;; REDUCING
           Assets:Account         -6 HOOL {122.22 USD, 2015-10-03}
 
         2015-02-22 * "Test partial match against first two lots"
-          Assets:Account         -7 HOOL {}  ;; EXPECTED
+          Assets:Account         -7 HOOL {}  ;; REDUCING
           Assets:Account         -6 HOOL {122.22 USD, 2015-10-03}
           Assets:Account         -1 HOOL {111.11 USD, 2015-10-02}
 
         2015-02-22 * "Test complete match against first two lots"
-          Assets:Account        -11 HOOL {}  ;; EXPECTED
+          Assets:Account        -11 HOOL {}  ;; REDUCING
           Assets:Account         -6 HOOL {122.22 USD, 2015-10-03}
           Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
 
         2015-02-22 * "Test partial match against first three lots"
-          Assets:Account        -12 HOOL {}  ;; EXPECTED
+          Assets:Account        -12 HOOL {}  ;; REDUCING
           Assets:Account         -6 HOOL {122.22 USD, 2015-10-03}
           Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
           Assets:Account         -1 HOOL {100.00 USD, 2015-10-01}
 
         2015-02-22 * "Test complete match against first three lots"
-          Assets:Account        -15 HOOL {}  ;; EXPECTED
+          Assets:Account        -15 HOOL {}  ;; REDUCING
           Assets:Account         -6 HOOL {122.22 USD, 2015-10-03}
           Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
           Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
 
         2015-02-22 * "Test matching more than is available" #error
-          Assets:Account        -16 HOOL {}  ;; EXPECTED
+          Assets:Account        -16 HOOL {}  ;; REDUCING
           Assets:Account         -6 HOOL {122.22 USD, 2015-10-03}
           Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
           Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
         """
-        self._test_ambiguous(entries, Booking.LIFO)
+        self._reduce_first_expect_rest(entries[0], entries[1:], Booking.LIFO)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_ambiguous__AVERAGE__simple(self, entries, _, __):
+        """
+        2015-01-01 * "Single position"
+          Assets:Account        100 HOOL {100.00 USD, 2015-10-01}
+
+        2015-06-01 * ""
+          Assets:Account         -2 HOOL {} ;; REDUCING
+          Assets:Account         -2 HOOL {100.00 USD, 2015-10-01}
+
+        2015-06-01 * "" #error
+          Assets:Account       -102 HOOL {} ;; REDUCING
+          Assets:Account       -100 HOOL {100.00 USD, 2015-10-01}
+        """
+        self._reduce_first_expect_rest(entries[0], entries[1:], Booking.AVERAGE)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_ambiguous__AVERAGE__merging_impossible(self, entries, _, __):
+        """
+        2015-01-01 * "Single position"
+          Assets:Account         60 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         40 HOOL {110.00 CAD, 2015-10-01}
+
+        2015-06-01 * "Cannot merge positions in multiple currencies" #error
+          Assets:Account        -20 HOOL {140.00} ;; REDUCING
+        """
+        self._reduce_first_expect_rest(entries[0], entries[1:], Booking.AVERAGE)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_ambiguous__AVERAGE__merging(self, entries, _, __):
+        """
+        2015-01-01 * "Single position"
+          Assets:Account         60 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         40 HOOL {110.00 USD, 2015-10-02}
+
+        2015-06-01 * ""
+          Assets:Account        -20 HOOL {140.00} ;; REDUCING
+          M Assets:Account      -60 HOOL {100.00 USD, 2015-10-01}
+          M Assets:Account      -40 HOOL {110.00 USD, 2015-10-02}
+          M Assets:Account      100 HOOL {104.00 USD, 2015-10-01}
+          Assets:Account        -20 HOOL {104.00 USD, 2015-10-01}
+
+        2015-06-01 * "" #error
+          Assets:Account       -120 HOOL {140.00} ;; REDUCING
+          M Assets:Account      -60 HOOL {100.00 USD, 2015-10-01}
+          M Assets:Account      -40 HOOL {110.00 USD, 2015-10-02}
+          M Assets:Account      100 HOOL {104.00 USD, 2015-10-01}
+          Assets:Account       -120 HOOL {104.00 USD, 2015-10-01}
+        """
+        self._reduce_first_expect_rest(entries[0], entries[1:], Booking.AVERAGE)
+        # FIXME: Should result in a single leg of: 80 @ 95.00 USD. Assert this.
+
+
+    # FIXME: You need to handle an explicit cost in an average reduction. This
+    # is required in order to handle pre-tax 401k accounts with fees that are
+    # calculated at market price.
+
+    # FIXME: You need to deal with the case of using the '*' syntax instead of
+    # having the matches come from the AVERAGE method. I'm not sure I need it
+    # anymore actually. If I do, then reductions need to be able to deal with
+    # mixed inventories.
+
+    # FIXME: If an account's method is AVERAGE we probably want to merge the
+    # augmentations together immediately after an augmentation. Do this now, it
+    # will result in nicer balances and a more predictable output, at the
+    # expense of some rounding error (probably negligible, given the precision
+    # we're supporting).
+
+    # FIXME: You need to test what happens when you use the NONE method and
+    # reduce without providing the cost information on the lot. Add a test for
+    # this case.
+
 
 
 

@@ -82,10 +82,12 @@ from beancount.core.number import ZERO
 from beancount.core.number import Decimal
 from beancount.core.data import Transaction
 from beancount.core.data import Booking
+from beancount.core.data import Posting
 from beancount.core.amount import Amount
 from beancount.core.position import Position
 from beancount.core.position import Cost
 from beancount.core.position import CostSpec
+from beancount.core import flags
 from beancount.core import position
 from beancount.core import inventory
 from beancount.core import interpolate
@@ -526,27 +528,18 @@ def book_reductions(entry, group_postings, balances,
                     matches.append(position)
 
                 # Check for ambiguous matches.
-                num_matches = len(matches)
-                if num_matches == 1:
-                    # Replace the posting's units and cost values.
-                    match_position = matches[0]
-                    match_units = Amount(units.number, match_position.units.currency)
-                    reduction_postings = [
-                        posting._replace(units=match_units, cost=match_position.cost)]
-
-                elif num_matches == 0:
+                if len(matches) == 0:
                     errors.append(
                         ReductionError(entry.meta,
                                        'No position matches "{}"'.format(str(posting)),
                                        entry))
                     return [], errors  # This is irreconcilable, remove these postings.
 
-                elif len(matches) > 1:
-                    reduction_postings, ambi_errors = handle_ambiguous_matches(
-                        entry, posting, matches, booking_method)
-                    if ambi_errors:
-                        errors.extend(ambi_errors)
-                        return [], errors
+                reduction_postings, ambi_errors = handle_ambiguous_matches(
+                    entry, posting, matches, booking_method)
+                if ambi_errors:
+                    errors.extend(ambi_errors)
+                    return [], errors
 
                 # Add the reductions to the resulting list of booked postings.
                 booked_postings.extend(reduction_postings)
@@ -589,64 +582,135 @@ def handle_ambiguous_matches(entry, posting, matches, booking_method):
       posting: An instance of Posting, the reducing posting which we're
         attempting to match.
       matches: A list of matching Position instances from the ante-inventory.
+        Those positions are known to already match the 'posting' spec.
       booking_methods: A mapping of account name to their corresponding booking
         method.
     Returns:
       A pair of
-        booked_postings: A list of matched Posting instances.
+        booked_postings: A list of matched Posting instances, whose 'cost'
+          attributes are ensured to be of type Cost.
         errors: A list of errors to be generated.
     """
     assert isinstance(booking_method, Booking), (
         "Invalid type: {}".format(booking_method))
+    assert matches, "Internal error: Invalid call with no matches"
 
     postings = []
     errors = []
+    insufficient = False
     if booking_method is Booking.STRICT:
-        errors.append(
-            ReductionError(entry.meta,
-                           'Ambiguous matches for "{}": {}'.format(
-                               str(posting),
-                               ', '.join(str(match_posting)
-                                         for match_posting in matches)),
-                           entry))
+        # In strict mode, we require at most a single matching posting.
+        if len(matches) > 1:
+            errors.append(
+                ReductionError(entry.meta,
+                               'Ambiguous matches for "{}": {}'.format(
+                                   position.to_string(posting),
+                                   ', '.join(position.to_string(match_posting)
+                                             for match_posting in matches)),
+                               entry))
+        else:
+            # Replace the posting's units and cost values.
+            match = matches[0]
+            sign = -1 if posting.units.number < ZERO else 1
+            number = min(abs(match.units.number), abs(posting.units.number))
+            match_units = Amount(number * sign, match.units.currency)
+            postings.append(posting._replace(units=match_units, cost=match.cost))
+            insufficient = (match_units.number != posting.units.number)
 
     elif booking_method in (Booking.FIFO, Booking.LIFO):
-        ## FIXME: remove
-        debug = 0 ### posting.account == 'Assets:US:LendingClub:FundsLent'
-        if debug:
-            logging.info('processing reduction %s', posting)
-
-        remaining = -posting.units.number
+        # Each up the positions.
+        sign = -1 if posting.units.number < ZERO else 1
+        remaining = abs(posting.units.number)
         for match in sorted(matches, key=lambda p: p.cost and p.cost.date,
                             reverse=(booking_method == Booking.LIFO)):
             if remaining <= ZERO:
                 break
-            size = min(match.units.number, remaining)
 
-            ## FIXME: remove
-            if debug:
-                logging.info('  matched %s units against %s', size, match)
+            # If the inventory somehow ended up with mixed lots, skip this one.
+            if match.units.number * sign > ZERO:
+                continue
 
-            postings.append(posting._replace(units=Amount(-size, match.units.currency),
+            # Compute the amount of units we can reduce from this leg.
+            size = min(abs(match.units.number), remaining)
+            postings.append(posting._replace(units=Amount(size * sign, match.units.currency),
                                              cost=match.cost))
             remaining -= size
-        if remaining > ZERO:
-            errors.append(
-                ReductionError(entry.meta,
-                               'Not enough lots to reduce "{}": {}'.format(
-                                   str(posting),
-                                   ', '.join(str(match_posting)
-                                             for match_posting in matches)),
-                               entry))
+
+        # If we couldn't eat up all the requested reduction, return an error.
+        insufficient = (remaining > ZERO)
 
     elif booking_method is Booking.NONE:
+        # This never needs to match against any existing positions... we
+        # disregard them, and there's never any error.
         postings.append(posting)
 
-    # elif booking_method is Booking.NONE:
-    #     postings.append(posting)
+    elif booking_method is Booking.AVERAGE:
+        # If there is more than a single match we need to ultimately merge the
+        # postings. Also, if the reducing posting provides a specific cost, we
+        # need to update the cost basis as well. Both of these cases are carried
+        # out by removing all the matches and readding them later on.
+        if len(matches) == 1 and (
+                not isinstance(posting.cost.number_per, Decimal) and
+                not isinstance(posting.cost.number_total, Decimal)):
+            # There is no cost. Just reduce the one leg. This should be the
+            # normal case if we always merge augmentations and the user lets
+            # Beancount deal with the cost.
+            match = matches[0]
+            sign = -1 if posting.units.number < ZERO else 1
+            number = min(abs(match.units.number), abs(posting.units.number))
+            match_units = Amount(number * sign, match.units.currency)
+            postings.append(posting._replace(units=match_units, cost=match.cost))
+            insufficient = (match_units.number != posting.units.number)
+        else:
+            # Merge the matching postings to a single one.
+            merged_units = inventory.Inventory()
+            merged_cost = inventory.Inventory()
+            for match in matches:
+                merged_units.add_amount(match.units)
+                merged_cost.add_amount(interpolate.get_posting_weight(match))
+            if len(merged_units) != 1 or len(merged_cost) != 1:
+                errors.append(
+                    ReductionError(
+                        entry.meta,
+                        'Cannot merge positions in multiple currencies: {}'.format(
+                            ', '.join(position.to_string(match_posting)
+                                      for match_posting in matches)), entry))
+            else:
+                if (isinstance(posting.cost.number_per, Decimal) or
+                    isinstance(posting.cost.number_total, Decimal)):
+                    errors.append(
+                        ReductionError(
+                            entry.meta,
+                            "Explicit cost reductions aren't supported yet: {}".format(
+                                position.to_string(posting)), entry))
+                else:
+                    # Insert postings to remove all the matches.
+                    postings.extend(posting._replace(units=-match.units, cost=match.cost,
+                                                     flag=flags.FLAG_MERGING)
+                                    for match in matches)
+                    units = merged_units[0].units
+                    date = matches[0].cost.date  ## FIXME: Select which one, oldest or latest.
+                    cost_units = merged_cost[0].units
+                    cost = Cost(cost_units.number/units.number, cost_units.currency, date, None)
+
+                    # Insert a posting to refill those with a replacement match.
+                    postings.append(posting._replace(units=units, cost=cost,
+                                                     flag=flags.FLAG_MERGING))
+
+                    # Now, match the reducing request against this lot.
+                    postings.append(posting._replace(units=posting.units, cost=cost))
+                    insufficient = abs(posting.units.number) > abs(units.number)
+
+    if insufficient:
+        errors.append(
+            ReductionError(entry.meta,
+                           'Not enough lots to reduce "{}": {}'.format(
+                               position.to_string(posting),
+                               ', '.join(position.to_string(match_posting)
+                                         for match_posting in matches)),
+                           entry))
 
     return postings, errors
-
 
 
 def compute_cost_number(costspec, units):

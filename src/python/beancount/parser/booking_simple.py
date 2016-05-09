@@ -92,7 +92,7 @@ def convert_lot_specs_to_lots(entries):
                 units = posting.units
                 cost_spec = posting.cost
                 cost = convert_spec_to_cost(units, cost_spec)
-                if cost_spec and isinstance(units, Amount):
+                if cost and isinstance(units, Amount):
                     # If there is a cost, we don't allow either a cost value of
                     # zero, nor a zero number of units. Note that we allow a price
                     # of zero as the only special case (for conversion entries), but

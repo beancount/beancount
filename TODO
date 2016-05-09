@@ -1527,6 +1527,17 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Deal with all the FIXME cases in the new booking code.
 
+  - Does the Inventory object require changes to make sure the dates are always
+    set? Would that not make sense?
+
+  - Write scripts to compare with the new and old method, on my own large file:
+
+    1. Compare balances at random points in time (many of them)
+    2. Compare transactions one-to-one.
+
+  - There's a fair bit of sign change in the new booking code. Do test the case
+    of negative inventories!
+
 ** Auto-Link Booking Transactions
 
   - Automatically create a link between transactions that book each other.
@@ -4636,6 +4647,9 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Put all the contents of experiments/ under their own directories and add
     decent README files for each of these.
+
+  - Write a new plugin to spread cash transactions over multiple dates. Use a
+    template transaction in the input file as input.
 
 ** Google Keep Tickets
 
