@@ -4733,6 +4733,10 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Create a demo video about “context” and “linked” command-line tools.
 
+  - Add a function to fetch a particular subset of tags with a regular
+    expression, e.g. FIRST_REGEXP('award'). Use this on the imported
+    stockstatement transactions. This can be used to create a column out of a
+    set of tags.
 
 *** Documentation / Process
 

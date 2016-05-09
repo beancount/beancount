@@ -4,6 +4,22 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-05-08
+
+  - In the output of bean-price, sort prices exclusively by currency, regardless
+    of date. This is because on weekends you'll tend to get slightly varying
+    dates, and manual/occasional price updates are usually put in "chunks" in a
+    file section. It's easier to visually find the price by scanning by currency
+    order.
+
+
+2016-05-05
+
+  - Added a shell function to filter a set of strings (for tags or links) with a
+    regular expression and return the first one. This way you can extract some
+    of the tags or links with a pattern as columns.
+
+
 2016-05-01
 
   - Fixed issue #124, a leak in the grammar parser which would leak the entire
