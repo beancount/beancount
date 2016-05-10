@@ -4651,6 +4651,9 @@ http://furius.ca/beancount/doc/proposal-query
   - Write a new plugin to spread cash transactions over multiple dates. Use a
     template transaction in the input file as input.
 
+  - Setup continuous integration that would push build status for each commit to
+    bitbucket's build status API. Buildbot already has a plugin for this.
+
 ** Google Keep Tickets
 
   - Unicode support: add a basic filter with 'ignore' to a temp file, before I
