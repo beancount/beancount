@@ -93,6 +93,7 @@ from beancount.core import inventory
 from beancount.core import interpolate
 from beancount.utils import misc_utils
 from beancount.parser import printer
+from beancount.parser import booking_simple as bs
 
 
 ## FIXME: remove
@@ -641,8 +642,17 @@ def handle_ambiguous_matches(entry, posting, matches, booking_method):
 
     elif booking_method is Booking.NONE:
         # This never needs to match against any existing positions... we
-        # disregard them, and there's never any error.
+        # disregard the matches, there's never any error. Note that this never
+        # gets called in practice, we want to treat NONE postings as
+        # augmentations. Default behaviour is to return them with their original
+        # CostSpec, and the augmentation code will handle signaling an error if
+        # there is insufficient detail to carry out the conversion to an
+        # instance of Cost.
         postings.append(posting)
+
+        # Note that it's an interesting question whether a reduction on an
+        # account with NONE method which happens to match a single position
+        # ought to be matched against it. We don't allow it for now.
 
     elif booking_method is Booking.AVERAGE:
         # If there is more than a single match we need to ultimately merge the

@@ -6,6 +6,7 @@ import textwrap
 import unittest
 import re
 import io
+import itertools
 
 from beancount.core.number import D
 from beancount.core.amount import A
@@ -23,7 +24,7 @@ from beancount.core import data
 from beancount.parser import parser
 from beancount.parser import printer
 from beancount.parser import booking_full as bf
-from beancount.parser import booking_simple
+from beancount.parser import booking_simple as bs
 from beancount.parser import cmptest
 from beancount import loader
 
@@ -536,7 +537,7 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
             # Check the expected postings.
             if exp_string is not None:
                 exp_entries, err1, _ = parser.parse_string(exp_string, dedent=True)
-                exp_entries, err2 = booking_simple.convert_lot_specs_to_lots(exp_entries)
+                exp_entries, err2 = bs.convert_lot_specs_to_lots(exp_entries)
                 self.assertFalse(err1 or err2, "Internal error in test")
                 self.assertEqual(1, len(exp_entries),
                                  "Internal error, expected one entry")
@@ -1276,33 +1277,92 @@ class TestBookReductions(unittest.TestCase):
         self.assertEqual([], postings)
 
 
-
-
-
-
-
-
-
-
 class TestHandleAmbiguousMatches(unittest.TestCase):
 
     maxDiff = 8192
 
-    def _handle_ambiguous(self, balance_entry, reduction, booking_method):
-        matches = [Position(posting.units,
-                            booking_simple.convert_spec_to_cost(posting.units,
-                                                                posting.cost))
-                   for posting in balance_entry.postings]
-        entry = data.Transaction(None, datetime.date.today(), "*", None, "", None, None, [])
-        return bf.handle_ambiguous_matches(entry, reduction, matches, booking_method)
+    def _handle_ambiguous(self, balance_entry, reduction, booking_method,
+                          balances=None, debug=False):
+        """Call handle_ambiguous_matches with a pre-existing balance.
+
+        Args:
+          balance_entry: A Transaction directive used to initialize ante-inventories
+            of all accounts before calling the function.
+          reduction: A Posting instance, to be applied by the function.
+          booking_method: The booking method to apply.
+          balances: An optional dict of account name to resulting ex-inventory balances.
+            Provide this argument if you'd like to have this function compute
+            the ex-balances.
+          debug: An optional flag, true if we should print out debug information.
+        Returns:
+          A triple of
+            postings: A list of matched postings to replace 'reduction'.
+            errors: A list of errors generated.
+
+        """
+        entries, convert_errors = bs.convert_lot_specs_to_lots([balance_entry])
+        assert len(entries) == 1
+        entry = entries[0]
+        assert not convert_errors
+
+        if debug:
+            print('reduction')
+            printer.print_entry(reduction)
+            print('/matches')
+            for match in entry.postings:
+                print(match)
+            print(r'\matches')
+
+        # Compute the new balances.
+        postings, errors = bf.handle_ambiguous_matches(entry, reduction, entry.postings,
+                                                       booking_method)
+
+        # Compute ex-balances.
+        if balances is not None:
+            for posting in itertools.chain(entry.postings, postings):
+                bal = balances.setdefault(posting.account, inventory.Inventory())
+                bal.add_position(posting)
+
+        return postings, errors
 
     @parser.parse_doc(allow_incomplete=True)
-    def test_ambiguous__NONE(self, entries, _, __):
+    def test_ambiguous__NONE__matching_existing(self, entries, _, __):
         """
         2015-01-01 * "Non-mixed"
           Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
           Assets:Account          5 HOOL {101.00 USD, 2015-10-01}
 
+        2015-06-01 * "Test"
+          Assets:Account         -2 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         -2 HOOL {101.00 USD, 2015-10-01}
+        """
+        for posting in entries[-1].postings:
+            postings, errors = self._handle_ambiguous(entries[0], posting, Booking.NONE)
+            self.assertEqual(1, len(postings))
+            self.assertFalse(errors)
+            # Check that the original posting isn't modified at all.
+            self.assertEqual(posting, postings[0])
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_ambiguous__NONE__notmatching_nonmixed(self, entries, _, __):
+        """
+        2015-01-01 * "Non-mixed"
+          Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          5 HOOL {101.00 USD, 2015-10-01}
+
+        2015-06-01 * "Test"
+          Assets:Account         -2 HOOL {102.00 USD, 2015-06-01}
+          Assets:Account          2 HOOL {102.00 USD, 2015-06-01}
+        """
+        for posting in entries[-1].postings:
+            postings, errors = self._handle_ambiguous(entries[0], posting, Booking.NONE)
+            self.assertEqual(1, len(postings))
+            self.assertFalse(errors)
+            self.assertEqual(posting, postings[0])
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_ambiguous__NONE__notmatching_mixed(self, entries, _, __):
+        """
         2015-01-01 * "Mixed"
           Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
           Assets:Account         -5 HOOL {101.00 USD, 2015-10-01}
@@ -1314,14 +1374,8 @@ class TestHandleAmbiguousMatches(unittest.TestCase):
         for posting in entries[-1].postings:
             postings, errors = self._handle_ambiguous(entries[0], posting, Booking.NONE)
             self.assertEqual(1, len(postings))
-            self.assertEqual(posting, postings[0])
             self.assertFalse(errors)
-
-        for posting in entries[-1].postings:
-            postings, errors = self._handle_ambiguous(entries[1], posting, Booking.NONE)
-            self.assertEqual(1, len(postings))
             self.assertEqual(posting, postings[0])
-            self.assertFalse(errors)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_ambiguous__STRICT(self, entries, _, __):
@@ -1345,25 +1399,30 @@ class TestHandleAmbiguousMatches(unittest.TestCase):
             postings, errors = self._handle_ambiguous(entries[0], posting, Booking.STRICT)
             self.assertTrue(errors)
 
-    def _reduce_first_expect_rest(self, pre_entry, entries, booking_method):
+    def _reduce_first_expect_rest(self, pre_entry, entries, booking_method, debug=False):
         """Test the entries using the format examplified in the two following methods."""
+        exbalances_list = []
         for entry in entries:
             apply_posting = entry.postings[0]
             expected_postings = [
-                posting._replace(cost=booking_simple.convert_spec_to_cost(posting.units,
+                posting._replace(cost=bs.convert_spec_to_cost(posting.units,
                                                                           posting.cost))
                 for posting in entry.postings[1:]]
-            matched_postings, errors = self._handle_ambiguous(pre_entry, apply_posting,
-                                                              booking_method)
-
+            exbalances = collections.defaultdict(inventory.Inventory)
+            matched_postings, errors = self._handle_ambiguous(
+                pre_entry, apply_posting, booking_method,
+                balances=exbalances, debug=debug)
+            exbalances_list.append(exbalances)
 
             ## FIXME: remove
-            debug = 0
             if debug:
-                print()
-                for matched_posting in matched_postings:
-                    print(matched_posting._replace(meta=None))
-
+                print(',------------------------------')
+                for posting in expected_postings:
+                    print(posting._replace(meta=None))
+                print(' ------------------------------')
+                for posting in matched_postings:
+                    print(posting._replace(meta=None))
+                print('`------------------------------')
 
             self.assertEqual(len(expected_postings), len(matched_postings))
             for expected_posting, matched_posting in zip(expected_postings,
@@ -1374,6 +1433,8 @@ class TestHandleAmbiguousMatches(unittest.TestCase):
                                                                          matched_posting))
             expect_error = bool(entry.tags)
             self.assertEqual(expect_error, bool(errors))
+
+        return exbalances_list
 
     @parser.parse_doc(allow_incomplete=True)
     def test_ambiguous__FIFO(self, entries, _, __):
@@ -1515,26 +1576,61 @@ class TestHandleAmbiguousMatches(unittest.TestCase):
           Assets:Account         40 HOOL {110.00 USD, 2015-10-02}
 
         2015-06-01 * ""
-          Assets:Account        -20 HOOL {140.00} ;; REDUCING
+          Assets:Account        -20 HOOL {} ;; REDUCING
           M Assets:Account      -60 HOOL {100.00 USD, 2015-10-01}
           M Assets:Account      -40 HOOL {110.00 USD, 2015-10-02}
           M Assets:Account      100 HOOL {104.00 USD, 2015-10-01}
           Assets:Account        -20 HOOL {104.00 USD, 2015-10-01}
+        """
+        exbal_list = self._reduce_first_expect_rest(entries[0], entries[1:],
+                                                       Booking.AVERAGE)
+        self.assertEqual(
+            {'Assets:Account': I('80 HOOL {104.00 USD, 2015-10-01}')},
+            exbal_list[0])
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_ambiguous__AVERAGE__merging_insufficient(self, entries, _, __):
+        """
+        2015-01-01 * "Single position"
+          Assets:Account         60 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         40 HOOL {110.00 USD, 2015-10-02}
 
         2015-06-01 * "" #error
-          Assets:Account       -120 HOOL {140.00} ;; REDUCING
+          Assets:Account       -120 HOOL {} ;; REDUCING
           M Assets:Account      -60 HOOL {100.00 USD, 2015-10-01}
           M Assets:Account      -40 HOOL {110.00 USD, 2015-10-02}
           M Assets:Account      100 HOOL {104.00 USD, 2015-10-01}
           Assets:Account       -120 HOOL {104.00 USD, 2015-10-01}
         """
-        self._reduce_first_expect_rest(entries[0], entries[1:], Booking.AVERAGE)
-        # FIXME: Should result in a single leg of: 80 @ 95.00 USD. Assert this.
+        exbal_list = self._reduce_first_expect_rest(entries[0], entries[1:],
+                                                    Booking.AVERAGE)
+        self.assertEqual(
+            {'Assets:Account': I('-20 HOOL {104.00 USD, 2015-10-01}')},
+            exbal_list[0])
 
+    # @parser.parse_doc(allow_incomplete=True)
+    # def test_ambiguous__AVERAGE__merging_with_cost(self, entries, _, __):
+    #     """
+    #     2015-01-01 * "Single position"
+    #       Assets:Account         60 HOOL {100.00 USD, 2015-10-01}
+    #       Assets:Account         40 HOOL {110.00 USD, 2015-10-02}
+
+    #     2015-06-01 * "" #error
+    #       Assets:Account        -20 HOOL {140.00 USD} ;; REDUCING
+    #       M Assets:Account      -60 HOOL {100.00 USD, 2015-10-01}
+    #       M Assets:Account      -40 HOOL {110.00 USD, 2015-10-02}
+    #       M Assets:Account       80 HOOL { 95.00 USD, 2015-10-01}
+    #     """
+    #     exbal_list = self._reduce_first_expect_rest(entries[0], entries[1:],
+    #                                                 Booking.AVERAGE)
+    #     self.assertEqual(
+    #         {'Assets:Account': I('-20 HOOL {104.00 USD, 2015-10-01}')},
+    #         exbal_list[0])
 
     # FIXME: You need to handle an explicit cost in an average reduction. This
     # is required in order to handle pre-tax 401k accounts with fees that are
     # calculated at market price.
+
 
     # FIXME: You need to deal with the case of using the '*' syntax instead of
     # having the matches come from the AVERAGE method. I'm not sure I need it
@@ -1549,7 +1645,140 @@ class TestHandleAmbiguousMatches(unittest.TestCase):
 
     # FIXME: You need to test what happens when you use the NONE method and
     # reduce without providing the cost information on the lot. Add a test for
-    # this case.
+    # this case. This ought to result in an error.
+
+
+
+
+
+
+
+# Eventually you will want to rewrite those tests such that each test case calls
+# handle_ambiguous_matches(), book_reductions(), and book(), all the on the same
+# test cases, initializing the ante-inventory and asserting the ex-inventory,
+# all using input syntax. Move all the existing code into these newer and better
+# integrated test cases for booking.
+
+_UNSET = object()
+
+def find_first_with_tag(tag, entries, default=_UNSET):
+    """Return the first entry matching the given tag."""
+    for entry in entries:
+        if tag in entry.tags:
+            return entry
+    if default is _UNSET:
+        raise KeyError("Entry with tag #{} is missing".format(tag))
+    else:
+        return default
+
+
+class _BookingBaseTest(unittest.TestCase):
+
+    # This reuses Beancount's input syntax to create a DSL for writing tests.
+    # The purpose is to easily write a single test per booking scenario for the
+    # various functions computing each part of the booking process.
+
+    def _test_handle_ambiguous(self, entries):
+        """Test a call to handle_ambiguous matchesfor a particular scenario.
+
+        Args:
+          entries: A list of entries with tags:
+            1. An entry with #matches provides a list of matches for the call.
+            2. An entry with #reduce provides a single reducing posting for the call.
+            3. An entry with #handled describes the list of resulting postings.
+            4. An entry with #balance describes and asserts the ex-inventory.
+          options_map: An options dict. The default booking method is consulted.
+
+        If the #handled transaction (3) has 'error' metadata, we expect that
+        some error occurred and match its text against the string value of the
+        metadata field.
+
+        Also, if a posting has a 'S' flag, it is not converted to a Cost and
+        we'll expect a CostSpec to be set on it.
+        """
+
+        # Check the shape of the reduction entry and get the corresponding account.
+        entry_reduce = find_first_with_tag('reduce', entries)
+        assert len(entry_reduce.postings) == 1, "Internal error in test"
+        reduction = entry_reduce.postings[0]
+
+        # Convert the list of matching postings to Position.
+        entry_matches = find_first_with_tag('matches', entries, None)
+        if entry_matches:
+            assert all(posting.account == reduction.account
+                       for posting in entry_matches.postings), "Internal error in test"
+            matches = [Position(posting.units,
+                                bs.convert_spec_to_cost(posting.units, posting.cost))
+                       for posting in entry_matches.postings]
+        else:
+            matches = []
+
+        # Handle the ambiguous matches.
+        postings_handled, errors = bf.handle_ambiguous_matches(
+            entry_reduce, reduction, matches, self.booking_method)
+
+        # Compare the reduced postings to the corresponding entry.
+        entry_handled = find_first_with_tag('handled', entries, None)
+        if entry_handled:
+            postings_expected = [
+                posting._replace(flag=None,
+                                 cost=(posting.cost
+                                       if posting.flag == 'S' else
+                                       bs.convert_spec_to_cost(posting.units,
+                                                               posting.cost)))
+                for posting in entry_handled.postings]
+            self.assertEqual(len(postings_expected), len(postings_handled))
+            for (posting_expected,
+                 posting_handled) in zip(postings_expected,
+                                         postings_handled):
+                posting_expected.meta.clear()
+                posting_handled.meta.clear()
+                self.assertEqual(posting_expected, posting_handled,
+                                 "Postings don't match:\n{} !=\n{}".format(posting_expected,
+                                                                           posting_handled))
+
+            error_regexp = entry_handled.meta.get('error', None)
+            if error_regexp:
+                self.assertEqual(1, len(errors))
+                self.assertRegex(errors[0].message, error_regexp)
+            else:
+                self.assertFalse(errors)
+
+        # Apply the resulting matches to the balance and compare this with the
+        # contents described in the balance entrie.
+        entry_balance = find_first_with_tag('balance', entries, None)
+        if entry_balance:
+            self.fail("Not implemented")
+
+
+class TestBookingNONE(_BookingBaseTest):
+
+    booking_method = Booking.NONE
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_ambiguous__NONE__matching_existing(self, entries, _, options_map):
+        """
+        option "booking_method" "NONE"
+
+        2015-01-01 * #matches
+          Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          5 HOOL {101.00 USD, 2015-10-01}
+
+        2015-06-01 * #reduce
+          Assets:Account         -2 HOOL {100.00 USD, 2015-10-01}
+
+        2015-06-01 * #handled
+          S Assets:Account       -2 HOOL {100.00 USD, 2015-10-01}
+
+        2015-06-01 * #balance
+          Assets:Account          3 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          5 HOOL {101.00 USD, 2015-10-01}
+        """
+        self._test_handle_ambiguous(entries)
+
+
+
+
 
 
 
