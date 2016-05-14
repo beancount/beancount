@@ -7,6 +7,7 @@ import unittest
 import re
 import io
 import itertools
+from unittest import mock
 
 from beancount.core.number import D
 from beancount.core.amount import A
@@ -16,6 +17,7 @@ from beancount.core.position import Cost
 from beancount.core.position import Position
 from beancount.core.inventory import from_string as I
 from beancount.utils.misc_utils import dictmap
+from beancount.utils import test_utils
 from beancount.core.data import Booking
 from beancount.core import inventory
 from beancount.core import position
@@ -1672,83 +1674,244 @@ def find_first_with_tag(tag, entries, default=_UNSET):
         return default
 
 
+
+
+
+
 class _BookingBaseTest(unittest.TestCase):
 
     # This reuses Beancount's input syntax to create a DSL for writing tests.
     # The purpose is to easily write a single test per booking scenario for the
     # various functions computing each part of the booking process.
 
-    def _test_handle_ambiguous(self, entries):
-        """Test a call to handle_ambiguous matchesfor a particular scenario.
+    # def _test_handle_ambiguous(self, entries):
+    #     """Test a call to handle_ambiguous matches for a particular scenario.
+    #
+    #     Args:
+    #       entries: A list of entries with tags:
+    #         1. An entry with #matches provides a list of matches for the call.
+    #         2. An entry with #reduce provides a single reducing posting for the call.
+    #         3. An entry with #handled describes the list of resulting postings.
+    #         4. An entry with #balance describes and asserts the ex-inventory.
+    #       options_map: An options dict. The default booking method is consulted.
+    #
+    #     If the #handled transaction (3) has 'error' metadata, we expect that
+    #     some error occurred and match its text against the string value of the
+    #     metadata field.
+    #
+    #     Also, if a posting has a 'S' flag, it is not converted to a Cost and
+    #     we'll expect a CostSpec to be set on it.
+    #     """
+    #
+    #     # Check the shape of the reduction entry and get the corresponding account.
+    #     entry_reduce = find_first_with_tag('reduce', entries)
+    #     assert len(entry_reduce.postings) == 1, "Internal error in test"
+    #     reduction = entry_reduce.postings[0]
+    #
+    #     # Convert the list of matching postings to Position.
+    #     entry_matches = find_first_with_tag('matches', entries, None)
+    #     if entry_matches:
+    #         assert all(posting.account == reduction.account
+    #                    for posting in entry_matches.postings), "Internal error in test"
+    #         matches = [Position(posting.units,
+    #                             bs.convert_spec_to_cost(posting.units, posting.cost))
+    #                    for posting in entry_matches.postings]
+    #     else:
+    #         matches = []
+    #
+    #     # Handle the ambiguous matches.
+    #     postings_handled, errors = bf.handle_ambiguous_matches(
+    #         entry_reduce, reduction, matches, self.booking_method)
+    #
+    #     # Compare the reduced postings to the corresponding entry.
+    #     entry_handled = find_first_with_tag('handled', entries, None)
+    #     if entry_handled:
+    #         postings_expected = [
+    #             posting._replace(flag=None,
+    #                              cost=(posting.cost
+    #                                    if posting.flag == 'S' else
+    #                                    bs.convert_spec_to_cost(posting.units,
+    #                                                            posting.cost)))
+    #             for posting in entry_handled.postings]
+    #         self.assertEqual(len(postings_expected), len(postings_handled))
+    #         for (posting_expected,
+    #              posting_handled) in zip(postings_expected,
+    #                                      postings_handled):
+    #             posting_expected.meta.clear()
+    #             posting_handled.meta.clear()
+    #             self.assertEqual(posting_expected, posting_handled,
+    #                              "Postings don't match:\n{} !=\n{}".format(posting_expected,
+    #                                                                        posting_handled))
+    #
+    #         error_regexp = entry_handled.meta.get('error', None)
+    #         if error_regexp:
+    #             self.assertEqual(1, len(errors))
+    #             self.assertRegex(errors[0].message, error_regexp)
+    #         else:
+    #             self.assertFalse(errors)
+    #
+    #     # Apply the resulting matches to the balance and compare this with the
+    #     # contents described in the balance entrie.
+    #     entry_balance = find_first_with_tag('balance', entries, None)
+    #     if entry_balance:
+    #         # pos_balance = [
+    #         #     Position(posting.units,
+    #         #              bs.convert_spec_to_cost(posting.units, posting.cost))
+    #         #     for posting in entry_balance.postings]
+    #         # self.assertEqual(len(pos_balance), len(
+    #         self.fail("Not implemented")
+
+    def _test_book(self, entries, options_map):
+        """Test a call to book a particular scenario.
+
+        This method will call 'book' with a subset of the entries provided to
+        it. It interprets the list of entries as a simple DSL where some are fed
+        to the routine and some are interpreted as assertions.
 
         Args:
-          entries: A list of entries with tags:
-            1. An entry with #matches provides a list of matches for the call.
-            2. An entry with #reduce provides a single reducing posting for the call.
-            3. An entry with #handled describes the list of resulting postings.
-            4. An entry with #balance describes and asserts the ex-inventory.
+          entries: A list of entries with particular tags:
+
+            - An entry with #ante provides entries to be applied before the
+              reduction. This is a mechanism to provide the ante-inventory of an
+              account. This is optional, the test will be run on an empty
+              inventory if there's no such entry.
+
+            - An entry with #apply provides a single reducing posting for the
+              call. This describes the type of reduction to be applied on the
+              ante-inventory. This is the test action we care about.
+
+            - An entry with #booked describes and asserts the list of postings
+              which were resolved from the call to book().
+
+            - An entry with #ex describes the expected contents of and asserts
+              the ex-inventory that results from booking on the reduction
+              account.
+
+            Further, some internal calls are traced and can be asserted against:
+
+            - An entry with #amb-matches asserts the expected set of matching
+              postings provided to handle_ambiguous_matches().
+
+            - An entry with #amb-resolved describes and asserts the list of
+              postings which were resolved from the call fo
+              handle_ambiguous_matches().
+
+            - An entry with #reduced describes and asserts the list of postings
+              which were resolved from the call to book_reductions().
+
           options_map: An options dict. The default booking method is consulted.
 
-        If the #handled transaction (3) has 'error' metadata, we expect that
-        some error occurred and match its text against the string value of the
-        metadata field.
+        In order to assert errors, create an 'error' metadata field with a
+        regular expression as value. If will be checked against the list of
+        errors generated by the particular call. This applies to #booked,
+        #reduced and #amb-resolved transactions.
 
-        Also, if a posting has a 'S' flag, it is not converted to a Cost and
-        we'll expect a CostSpec to be set on it.
+        If a posting has a 'S' flag, it is not converted to a Cost and we'll
+        expect a CostSpec to be set on it.
         """
+        # Override the booking method.
+        options_map = options_map.copy()
+        options_map['booking_method'] = self.booking_method
+        input_entries = []
 
-        # Check the shape of the reduction entry and get the corresponding account.
-        entry_reduce = find_first_with_tag('reduce', entries)
-        assert len(entry_reduce.postings) == 1, "Internal error in test"
-        reduction = entry_reduce.postings[0]
+        # Fetch the 'ante' entry.
+        entry_ante = find_first_with_tag('ante', entries)
+        if entry_ante:
+            input_entries.append(entry_ante)
 
-        # Convert the list of matching postings to Position.
-        entry_matches = find_first_with_tag('matches', entries, None)
-        if entry_matches:
-            assert all(posting.account == reduction.account
-                       for posting in entry_matches.postings), "Internal error in test"
-            matches = [Position(posting.units,
-                                bs.convert_spec_to_cost(posting.units, posting.cost))
-                       for posting in entry_matches.postings]
+        # Check that the 'apply' entry has a single posting only.
+        entry_apply = find_first_with_tag('apply', entries)
+        assert entry_apply is not None, (
+            "Internal error: No 'reduce' entry found in test")
+        assert len(entry_apply.postings) == 1, (
+            "Internal error: 'reduce' entry has more than one posting")
+        reduction = entry_apply.postings[0]
+        input_entries.append(entry_apply)
+
+        # Call the booking routine.
+        methods = collections.defaultdict(lambda: self.booking_method)
+        with mock.patch.object(bf, 'handle_ambiguous_matches',
+                               test_utils.record(bf.handle_ambiguous_matches)) as handle_mock, \
+             mock.patch.object(bf, 'book_reductions',
+                               test_utils.record(bf.book_reductions)) as reduce_mock:
+            output_entries, errors, balances = bf._book(input_entries, options_map, methods)
+
+        # If requested, check the input and output values to the last call to
+        # handle_ambiguous_matches().
+        entry_matches = find_first_with_tag('amb-matches', entries, None)
+        entry_resolved = find_first_with_tag('amb-resolved', entries, None)
+        if entry_matches or entry_resolved:
+            self.assertEqual(1, len(handle_mock.calls))
+
+            # FIXME: TODO
+            # if entry_matches:
+            #     # Convert the list of matching postings to Positions.
+            #     entry_matches = find_first_with_tag('matches', entries, None)
+            #     if entry_matches:
+            #         assert all(posting.account == reduction.account
+            #                    for posting in entry_matches.postings), "Internal error in test"
+            #         matches = [Position(posting.units,
+            #                             bs.convert_spec_to_cost(posting.units, posting.cost))
+            #                    for posting in entry_matches.postings]
+            #     else:
+            #         matches = []
         else:
-            matches = []
+            self.assertEqual(0, len(handle_mock.calls))
 
-        # Handle the ambiguous matches.
-        postings_handled, errors = bf.handle_ambiguous_matches(
-            entry_reduce, reduction, matches, self.booking_method)
+        # If requested, check the input and output values to the last call to
+        # book_reductions().
+        entry_reduced = find_first_with_tag('reduced', entries, None)
+        if entry_reduced:
+            self.assertEqual(len(input_entries), len(reduce_mock.calls))
+            reduced_postings, reduced_errors = reduce_mock.calls[-1].return_value
+            self.assertPostings(entry_reduced.postings, reduced_postings)
 
-        # Compare the reduced postings to the corresponding entry.
-        entry_handled = find_first_with_tag('handled', entries, None)
-        if entry_handled:
-            postings_expected = [
-                posting._replace(flag=None,
-                                 cost=(posting.cost
-                                       if posting.flag == 'S' else
-                                       bs.convert_spec_to_cost(posting.units,
-                                                               posting.cost)))
-                for posting in entry_handled.postings]
-            self.assertEqual(len(postings_expected), len(postings_handled))
-            for (posting_expected,
-                 posting_handled) in zip(postings_expected,
-                                         postings_handled):
-                posting_expected.meta.clear()
-                posting_handled.meta.clear()
-                self.assertEqual(posting_expected, posting_handled,
-                                 "Postings don't match:\n{} !=\n{}".format(posting_expected,
-                                                                           posting_handled))
+        # If requested, check the result of booking.
+        entry_booked = find_first_with_tag('booked', entries, None)
+        if entry_booked:
+            entry_output = output_entries[-1]
+            self.assertPostings(entry_booked.postings, entry_output.postings)
 
-            error_regexp = entry_handled.meta.get('error', None)
-            if error_regexp:
-                self.assertEqual(1, len(errors))
-                self.assertRegex(errors[0].message, error_regexp)
-            else:
-                self.assertFalse(errors)
+        # Check that the resulting inventory balance matches that of the 'ex'
+        # entry, if present.
+        entry_ex = find_first_with_tag('ex', entries, None)
+        if entry_ex:
+            inv_expected = inventory.Inventory()
+            for posting in entry_ex.postings:
+                inv_expected.add_amount(posting.units,
+                                        bs.convert_spec_to_cost(posting.units, posting.cost))
+            self.assertEqual(inv_expected, balances[reduction.account])
 
-        # Apply the resulting matches to the balance and compare this with the
-        # contents described in the balance entrie.
-        entry_balance = find_first_with_tag('balance', entries, None)
-        if entry_balance:
-            self.fail("Not implemented")
+
+
+
+        # FIXME: You still need to build the error handling checks in.
+
+
+
+    def assertPostings(self, expected_postings, actual_postings):
+        # Optionally convert the expected postings from CostSpec to Cost,
+        # depending on the presence of the 'S' flag on them. ('S' means to leave
+        # as CostSpect.)
+        expected_postings = [
+            posting._replace(flag=None,
+                             cost=(posting.cost
+                                   if posting.flag == 'S' else
+                                   bs.convert_spec_to_cost(posting.units,
+                                                           posting.cost)))
+            for posting in expected_postings]
+
+        self.assertEqual(len(expected_postings), len(actual_postings))
+
+        for (posting_expected,
+             actual_postings) in zip(expected_postings,
+                                     actual_postings):
+            posting_expected.meta.clear()
+            actual_postings.meta.clear()
+            self.assertEqual(posting_expected, actual_postings,
+                             "Postings don't match:\n{} !=\n{}".format(posting_expected,
+                                                                       actual_postings))
+
 
 
 class TestBookingNONE(_BookingBaseTest):
@@ -1758,23 +1921,24 @@ class TestBookingNONE(_BookingBaseTest):
     @parser.parse_doc(allow_incomplete=True)
     def test_ambiguous__NONE__matching_existing(self, entries, _, options_map):
         """
-        option "booking_method" "NONE"
-
-        2015-01-01 * #matches
+        2015-01-01 * #ante #matches
           Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
           Assets:Account          5 HOOL {101.00 USD, 2015-10-01}
 
-        2015-06-01 * #reduce
+        2015-06-01 * #apply
           Assets:Account         -2 HOOL {100.00 USD, 2015-10-01}
 
-        2015-06-01 * #handled
+        2015-06-01 * #resolved #reduced
           S Assets:Account       -2 HOOL {100.00 USD, 2015-10-01}
 
-        2015-06-01 * #balance
+        2015-06-01 * #booked
+          Assets:Account         -2 HOOL {100.00 USD, 2015-10-01}
+
+        2015-06-01 * #ex
           Assets:Account          3 HOOL {100.00 USD, 2015-10-01}
           Assets:Account          5 HOOL {101.00 USD, 2015-10-01}
         """
-        self._test_handle_ambiguous(entries)
+        self._test_book(entries, options_map)
 
 
 

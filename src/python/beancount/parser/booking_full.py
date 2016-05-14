@@ -102,6 +102,15 @@ from beancount.parser import booking_simple as bs
 
 def book(entries, options_map, booking_methods):
     """Interpolate missing data from the entries using the full historical algorithm.
+    See the internal implementation _book() for details.
+    This method only stripes some of the return values.
+    """
+    entries, errors, _ = _book(entries, options_map, booking_methods)
+    return entries, errors
+
+
+def _book(entries, options_map, booking_methods):
+    """Interpolate missing data from the entries using the full historical algorithm.
 
     Args:
       incomplete_entries: A list of directives, with some postings possibly left
@@ -180,7 +189,7 @@ def book(entries, options_map, booking_methods):
                 balance = balances[posting.account]
                 balance.add_position(posting)
 
-    return entries, errors
+    return entries, errors, balances
 
 
 # An error raised if we failed to bucket a posting to a particular currency.

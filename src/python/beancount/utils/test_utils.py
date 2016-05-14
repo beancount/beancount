@@ -3,6 +3,7 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import builtins
+import collections
 import textwrap
 import unittest
 import io
@@ -333,3 +334,26 @@ def environ(varname, newvalue):
     os.environ[varname] = newvalue
     yield
     os.environ[varname] = oldvalue
+
+
+# A function call's arguments, including its return value.
+# This is an improvement onto what mock.call provides.
+# That has not the return value normally.
+# You can use this to build internal call interceptors.
+RCall = collections.namedtuple('RCall', 'args kwargs return_value')
+
+def record(fun):
+    """Decorates the function to intercept and record all calls and return values.
+
+    Args:
+      fun: A callable to be decorated.
+    Returns:
+      A wrapper function with a .calls attribute, a list of RCall instances.
+    """
+    @functools.wraps(fun)
+    def wrapped(*args, **kw):
+        return_value = fun(*args, **kw)
+        wrapped.calls.append(RCall(args, kw, return_value))
+        return return_value
+    wrapped.calls = []
+    return wrapped
