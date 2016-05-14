@@ -245,6 +245,9 @@ beancount: TODO
 
   - Use impress.js to built a visualization of the DE method
 
+  - Use photos of white board instead of Slides, use post its, maybe a chalk
+    board. Do something original.
+
   - Record a video, that's an easy way to explain how this works.
 
   - IDEA!!!  Use drawings a-la-ThinkBig or whatever it is. This will be the
@@ -4620,6 +4623,8 @@ http://furius.ca/beancount/doc/proposal-query
   have time to think about where to put it, I just come here at the end and jot
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
+
+  - Investigate using PrettyTable over my custom one. Is there any point to that?
 
 ** Google Keep Tickets
 
