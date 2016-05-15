@@ -123,8 +123,9 @@ def _book(entries, options_map, booking_methods):
         entries: A list of interpolated entries with all their postings completed.
         errors: New errors produced during interpolation.
     """
-    balances = collections.defaultdict(inventory.Inventory)
+    new_entries = []
     errors = []
+    balances = collections.defaultdict(inventory.Inventory)
     for entry in entries:
         if isinstance(entry, Transaction):
             # Group postings by currency.
@@ -177,7 +178,7 @@ def _book(entries, options_map, booking_methods):
                 repl_postings.extend(inter_postings)
 
             # Replace postings by interpolated ones.
-            entry.postings[:] = repl_postings
+            entry = entry._replace(postings=repl_postings)
 
             # Update the running balances for each account using the final,
             # booked and interpolated values. Note that we could optimize away
@@ -189,7 +190,9 @@ def _book(entries, options_map, booking_methods):
                 balance = balances[posting.account]
                 balance.add_position(posting)
 
-    return entries, errors, balances
+        new_entries.append(entry)
+
+    return new_entries, errors, balances
 
 
 # An error raised if we failed to bucket a posting to a particular currency.
