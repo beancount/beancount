@@ -996,7 +996,7 @@ class TestParseBookingOptions(cmptest.TestCase):
 #
 # Booking involves a large number of scenarios, and because of this we leverage
 # Beancount's syntax to provide test input and expected values in the function's
-# docstrings. See _test_book() for details of how this is interpreted. What
+# docstrings. See _book() for details of how this is interpreted. What
 # follows is a helper base class for these tests.
 
 _UNSET = object()
@@ -1012,13 +1012,14 @@ def find_first_with_tag(tag, entries, default=_UNSET):
         return default
 
 
+@test_utils.nottest
 def book_test(booking_method):
-    "A decorator factory for all booking tests. This calls _test_book() below."
+    "A decorator factory for all booking tests. This calls _book() below."
     def decorator(func):
         @parser.parse_doc(allow_incomplete=True)
         @functools.wraps(func)
         def wrapper(self, entries, unused_errors, options_map):
-            self._test_book(entries, options_map, booking_method)
+            self._book(entries, options_map, booking_method)
             return func(self, entries, options_map)
         return wrapper
     return decorator
@@ -1047,7 +1048,7 @@ class _BookingTestBase(unittest.TestCase):
                   'ambi-resolved',
                   'reduced'}
 
-    def _test_book(self, entries, options_map, booking_method):
+    def _book(self, entries, options_map, booking_method):
         """Test a call to book a particular scenario.
 
         This method will call 'book' with a subset of the entries provided to
@@ -1232,7 +1233,6 @@ class _BookingTestBase(unittest.TestCase):
                                                                        actual_postings))
 
 
-
 class TestBookAugmentations(_BookingTestBase):
     """
     Test that the augmentations are left alone by the book_reductions() function.
@@ -1327,9 +1327,6 @@ class TestBookAugmentations(_BookingTestBase):
 class TestBookReductions(_BookingTestBase):
 
     pass
-
-
-
 
 
 

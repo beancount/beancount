@@ -26,6 +26,12 @@ from os import path
 get_test_port = itertools.count(9470).__next__
 
 
+def nottest(func):
+    "Make the given function not testable."
+    func.__test__ = False
+    return func
+
+
 def find_repository_root(filename=None):
     """Return the path to the repository root.
 
