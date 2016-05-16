@@ -104,6 +104,8 @@ def book(entries, options_map, booking_methods):
     """Interpolate missing data from the entries using the full historical algorithm.
     See the internal implementation _book() for details.
     This method only stripes some of the return values.
+
+    See _book() for arguments and return values.
     """
     entries, errors, _ = _book(entries, options_map, booking_methods)
     return entries, errors
@@ -119,9 +121,10 @@ def _book(entries, options_map, booking_methods):
       booking_methods: A mapping of account name to their corresponding booking
         method.
     Returns:
-      A pair of
+      A triple of
         entries: A list of interpolated entries with all their postings completed.
         errors: New errors produced during interpolation.
+        balances: A dict of account name and resulting balances.
     """
     new_entries = []
     errors = []

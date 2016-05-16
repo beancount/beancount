@@ -1135,7 +1135,7 @@ class _BookingTestBase(unittest.TestCase):
         entry_booked = find_first_with_tag('booked', entries)
         if entry_booked:
             # Check the output postings and errors.
-            entry_postings = book_entries[0].postings if book_entries else []
+            entry_postings = book_entries[-1].postings if book_entries else []
             self.assertPostings(entry_booked.postings, entry_postings)
             self.assertErrors(entry_booked, book_errors)
 
@@ -1326,11 +1326,43 @@ class TestBookAugmentations(_BookingTestBase):
 
 class TestBookReductions(_BookingTestBase):
 
-    pass
+    # Test that reductions with no cost basis are left alone.
+    @book_test(Booking.STRICT)
+    def test_reduce__no_cost(self, _, __):
+        """
+        2015-10-01 * #ante
+          Assets:Account          10 USD
 
+        2015-10-01 * #apply #booked #reduced
+          Assets:Account          -5 USD
 
+        2015-10-01 * #ex
+          Assets:Account           5 USD
+        """
 
+    # Test reductions crossing the sign line.
+    @book_test(Booking.STRICT)
+    def test_reduce__sign_change_simple(self, _, __):
+        """
+        2016-01-01 * #ante
+          Assets:Account         10 HOOL {33.33 USD, 2016-01-01}
 
+        2016-05-08 * #apply
+          Assets:Account        -13 HOOL {}
+
+        2016-05-08 * #booked
+          error: "Not enough lots to reduce"
+
+        2016-01-01 * #ex
+          Assets:Account         10 HOOL {33.33 USD, 2016-01-01}
+        """
+        # We should not allow this because the implied cost basis has nothing to
+        # do with with the original cost basis. It does not make sense to carry
+        # over the cost basis into negative units territory. For instance, the
+        # negative 3 units that would result from this transaction have no
+        # justification to be at 33.33 USD.
+        #
+        # FIXME: We may want to improve the error message here.
 
 
 
@@ -1341,45 +1373,6 @@ class TestBookReductionsOld(unittest.TestCase):
 
     BM = collections.defaultdict(lambda: Booking.STRICT)
 
-
-
-    #
-    # Test that reductions with no cost basis are left alone as well.
-    #
-
-    @parser.parse_doc(allow_incomplete=True)
-    def test_reduce__no_cost(self, entries, _, __):
-        """
-        2015-10-01 * "Regular currency, positive, not empty"
-          Assets:Account1          -5 USD
-          Assets:Other
-        """
-        balances = {'Assets:Account1': I('10 USD')}
-        entry = entries[-1]
-        postings, errors = bf.book_reductions(entry, entry.postings, balances, self.BM)
-        # Check that the posting was left alone, nothing to be matched.
-        self.assertEqual(postings, entry.postings)
-
-    #
-    # Test reductions crossing the sign line.
-    #
-
-    @parser.parse_doc(allow_incomplete=True)
-    def test_reduce__sign_change_simple(self, entries, _, __):
-        """
-        2016-05-08 *
-          Assets:Account        -13 HOOL {}
-        """
-        # We should not allow this because the implied cost basis has nothing to
-        # do with with the original cost basis. It does not make sense to carry
-        # over the cost basis into negative units territory. For instance, the
-        # negative 3 units that would result from this transaction have no
-        # justification to be at 33.33 USD.
-        balances = {'Assets:Account': I('10 HOOL {33.33 USD, 2016-01-01}')}
-        entry = entries[-1]
-        postings, errors = bf.book_reductions(entry, entry.postings, balances, self.BM)
-        self.assertTrue(errors)
-        self.assertEqual([], postings)
 
     #
     # Test reductions which trigger matching.
