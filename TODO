@@ -4440,6 +4440,16 @@ http://furius.ca/beancount/doc/proposal-query
     Create a routine to figure out if an account was open during a specific
     time period?
 
+  - Related topics:
+    (ticket) https://bitbucket.org/blais/beancount/issues/36/balances-output-sometimes-outputs-000
+    (fava) https://github.com/aumayr/fava/issues/292#issuecomment-219563582
+
+  - One question is whether we should display an account which has a non-zero
+    balance but when rounded for display rounds to a zero number?
+
+      "the problem is not the sell, but the buy
+      that leaves -0.00120 USD in Assets:XYZ"
+
 * Rejected Ideas
 
   - Why aren't we using the price on the first leg of this transaction? This is
