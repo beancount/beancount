@@ -141,6 +141,12 @@ beancount: TODO
 
   - Summarize Ledger's --limit --real --virtual --equity, etc. options.
 
+  - Write a doc about how conceptually Beancount's data is really just a single
+    large joined table of Transactions JOIN Postings with some repeated fields
+    for inventory and tags, some data types for Amount and Inventory along with
+    accompanying functions to deal with those types. This could really help a
+    lot of people understand the framework for extracting data from Beancount.
+
 ** Misc Documentation Tasks
 
   - Write a script to automatically convert and upload the docs for the shell
