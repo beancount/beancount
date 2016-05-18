@@ -8,6 +8,7 @@ import unittest
 import re
 import io
 import itertools
+import pprint
 from unittest import mock
 
 from beancount.core.number import D
@@ -390,6 +391,21 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
         """
         groups, errors = bf.categorize_by_currency(entries[0], {})
         self.assertTrue(errors)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_categorize__two_unknown_postings(self, entries, _, options_map):
+        """
+        2016-05-02 *
+          Assets:Account          -40 HOOL {}
+          Assets:Account          -35 HOOL {}
+        """
+        balances = {'Assets:Account': I('50 HOOL {115.00 USD, 2016-01-15}, '
+                                        '50 HOOL {116.00 USD, 2016-01-16}')}
+        groups, errors = bf.categorize_by_currency(entries[0], balances)
+        self.assertEqual(1, len(groups))
+        self.assertEqual(2, len(groups['USD']))
+        self.assertFalse(errors)
+
 
 
 class TestReplaceCurrenciesInGroup(unittest.TestCase):
@@ -1144,9 +1160,11 @@ class _BookingTestBase(unittest.TestCase):
             input_entries.append(entry_ante)
 
         # Check that the 'apply' entry has a single posting only.
-        assert len(entry_apply.postings) == 1, (
-            "Internal error: 'apply' entry has more than one posting")
-        reduction = entry_apply.postings[0]
+        # assert len(entry_apply.postings) == 1, (
+        #     "Internal error: 'apply' entry has more than one posting")
+        assert len(set(posting.account for posting in entry_apply.postings)) == 1, (
+            "Accounts don't match for 'apply' entry")
+        account = entry_apply.postings[0].account
         input_entries.append(entry_apply)
 
         # Call the booking routine.
@@ -1181,7 +1199,7 @@ class _BookingTestBase(unittest.TestCase):
                 inv_expected.add_amount(posting.units,
                                         bs.convert_spec_to_cost(posting.units,
                                                                 posting.cost))
-            self.assertEqual(inv_expected, balances[reduction.account])
+            self.assertEqual(inv_expected, balances[account])
 
         # If requested, check the output values to the last call to
         # book_reductions().
@@ -1533,12 +1551,31 @@ class TestBookReductions(_BookingTestBase):
           Assets:Account           3 HOOL {115.00 USD, 2016-01-10}
         """
 
+    @book_test(Booking.FIFO)
+    def test_reduce__multiple_reductions(self, _, __):
+        """
+        2016-01-01 * #ante
+          Assets:Account           50 HOOL {115.00 USD, 2016-01-15}
+          Assets:Account           50 HOOL {116.00 USD, 2016-01-16}
+
+        2016-05-02 * #apply
+          Assets:Account          -40 HOOL {}
+          Assets:Account          -35 HOOL {}
+
+        2016-05-02 * #booked
+          Assets:Account          -40 HOOL {115.00 USD, 2016-01-15}
+          Assets:Account          -10 HOOL {115.00 USD, 2016-01-15}
+          Assets:Account          -25 HOOL {116.00 USD, 2016-01-16}
+
+        2016-01-01 * #ex
+          Assets:Account           25 HOOL {116.00 USD, 2016-01-16}
+        """
 
 
 
 
 
-
+
 ## CONTINUE
 
 class TestBookReductionsOld(unittest.TestCase):
@@ -1547,31 +1584,6 @@ class TestBookReductionsOld(unittest.TestCase):
     """
 
     BMM = collections.defaultdict(lambda: Booking.STRICT)
-
-    @parser.parse_doc(allow_incomplete=True)
-    def test_reduce__multiple_reductions(self, entries, _, __):
-        """
-        2016-05-02 *
-          Assets:Account          -40 HOOL {}
-          Assets:Account          -35 HOOL {}
-        """
-        balances = {'Assets:Account': I('50 HOOL {115.00 USD, 2016-01-15}, '
-                                        '50 HOOL {116.00 USD, 2016-01-16}')}
-        entry = entries[0]
-        bmm = collections.defaultdict(lambda: Booking.FIFO)
-        postings, errors = bf.book_reductions(entry, entry.postings, balances, bmm)
-        self.assertFalse(errors)
-        self.assertEqual([
-            data.Posting('Assets:Account', A('-40 HOOL'),
-                         Cost(D('115.00'), 'USD', datetime.date(2016, 1, 15), None),
-                         None, None, None),
-            data.Posting('Assets:Account', A('-10 HOOL'),
-                         Cost(D('115.00'), 'USD', datetime.date(2016, 1, 15), None),
-                         None, None, None),
-            data.Posting('Assets:Account', A('-25 HOOL'),
-                         Cost(D('116.00'), 'USD', datetime.date(2016, 1, 16), None),
-                         None, None, None),
-            ], [posting._replace(meta=None) for posting in postings])
 
     @parser.parse_doc(allow_incomplete=True)
     def test_reduce__multiple_reductions__with_error(self, entries, _, __):

@@ -252,7 +252,8 @@ def categorize_by_currency(entry, balances):
 
     Args:
       postings: A list of incomplete postings to categorize.
-      balances: A dict of currency to inventory contents.
+      balances: A dict of currency to inventory contents before the transaction is
+        applied.
     Returns:
       A dict of currency (string) to a list of tuples describing each postings
       and its interpolated currencies, and a list of generated errors for
@@ -330,7 +331,7 @@ def categorize_by_currency(entry, balances):
     # Finally, try to resolve all the unknown legs using the inventory contents
     # of each account.
     for refer in unknown:
-        (index, units_currency, cost_currency, price_currency) = unknown.pop()
+        (index, units_currency, cost_currency, price_currency) = refer
         posting = entry.postings[index]
         balance = balances.get(posting.account, None)
         if balance is None:
