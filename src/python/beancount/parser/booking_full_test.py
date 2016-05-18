@@ -1070,6 +1070,10 @@ class _BookingTestBase(unittest.TestCase):
               call. This describes the type of reduction to be applied on the
               ante-inventory. This is the test action we care about.
 
+              Note that there may be many such entries. If so, the test is run
+              separately for each of those entries, everything else being kept
+              the same.
+
             - An entry with #booked describes and asserts the list of postings
               which were resolved from the call to book().
 
@@ -1108,6 +1112,22 @@ class _BookingTestBase(unittest.TestCase):
             remaining_meta = set(entry.meta.keys()) - set(['error', 'filename', 'lineno'])
             assert not remaining_meta, remaining_meta
 
+        # Find all entries with tags.
+        entries_apply = [entry
+                         for entry in entries
+                         if 'apply' in entry.tags]
+        assert entries_apply, "Internal error: No 'apply' entries found in test input"
+        entries_other = [entry
+                         for entry in entries
+                         if 'apply' not in entry.tags]
+
+        # Dispatch all the entries.
+        for entry_apply in entries_apply:
+            self._book_one(entry_apply, entries_other, options_map, booking_method)
+
+    def _book_one(self, entry_apply, entries, options_map, booking_method):
+        """See _book(). This is the same but with a single #apply entry."""
+
         # Override the booking method.
         options_map = options_map.copy()
         options_map['booking_method'] = booking_method
@@ -1119,11 +1139,8 @@ class _BookingTestBase(unittest.TestCase):
             input_entries.append(entry_ante)
 
         # Check that the 'apply' entry has a single posting only.
-        entry_apply = find_first_with_tag('apply', entries)
-        assert entry_apply is not None, (
-            "Internal error: No 'reduce' entry found in test")
         assert len(entry_apply.postings) == 1, (
-            "Internal error: 'reduce' entry has more than one posting")
+            "Internal error: 'apply' entry has more than one posting")
         reduction = entry_apply.postings[0]
         input_entries.append(entry_apply)
 
@@ -1338,10 +1355,7 @@ class TestBookAugmentations(_BookingTestBase):
 
 class TestBookReductions(_BookingTestBase):
 
-    #
     # Test that reductions with no cost basis are left alone.
-    #
-
     @book_test(Booking.STRICT)
     def test_reduce__no_cost(self, _, __):
         """
@@ -1355,11 +1369,7 @@ class TestBookReductions(_BookingTestBase):
           Assets:Account           5 USD
         """
 
-
-    #
     # Test reductions crossing the sign line.
-    #
-
     @book_test(Booking.STRICT)
     def test_reduce__sign_change_simple(self, _, __):
         """
@@ -1383,13 +1393,9 @@ class TestBookReductions(_BookingTestBase):
         #
         # FIXME: We may want to improve the error message here.
 
-
-    #
     # Test reductions which trigger matching.
-    #
-
     @book_test(Booking.STRICT)
-    def test_reduce__no_match__cost(self, _, __):
+    def test_reduce__no_match(self, _, __):
         """
         2016-01-01 * #ante
           Assets:Account          10 HOOL {123.45 USD, 2016-04-15}
@@ -1397,41 +1403,11 @@ class TestBookReductions(_BookingTestBase):
         2016-05-02 * #apply
           Assets:Account          -5 HOOL {123.00 USD}
 
-        2016-05-02 * #booked
-          error: "No position matches"
-        """
-
-    @book_test(Booking.STRICT)
-    def test_reduce__no_match__currency(self, _, __):
-        """
-        2016-01-01 * #ante
-          Assets:Account          10 HOOL {123.45 USD, 2016-04-15}
-
         2016-05-02 * #apply
           Assets:Account          -5 HOOL {123.45 CAD}
 
-        2016-05-02 * #booked
-          error: "No position matches"
-        """
-
-    @book_test(Booking.STRICT)
-    def test_reduce__no_match__date(self, _, __):
-        """
-        2016-01-01 * #ante
-          Assets:Account          10 HOOL {123.45 USD, 2016-04-15}
-
         2016-05-02 * #apply
           Assets:Account          -5 HOOL {123.45 USD, 2016-04-16}
-
-        2016-05-02 * #booked
-          error: "No position matches"
-        """
-
-    @book_test(Booking.STRICT)
-    def test_reduce__no_match__lot(self, _, __):
-        """
-        2016-01-01 * #ante
-          Assets:Account          10 HOOL {123.45 USD, 2016-04-15}
 
         2016-05-02 * #apply
           Assets:Account          -5 HOOL {123.45 USD, "lot1"}
@@ -1440,12 +1416,49 @@ class TestBookReductions(_BookingTestBase):
           error: "No position matches"
         """
 
+    # More reduction scenarios.
+    @book_test(Booking.STRICT)
+    def test_reduce__unambiguous(self, _, __):
+        """
+        2016-01-01 * #ante #ambi-matches
+          Assets:Account          10 HOOL {115.00 USD, 2016-04-15, "lot1"}
 
+        2016-05-02 * #apply
+          Assets:Account          -5 HOOL {}
 
+        2016-05-02 * #booked #ambi-resolved
+          Assets:Account          -5 HOOL {115.00 USD, 2016-04-15, "lot1"}
 
+        2016-01-01 * #ex
+          Assets:Account           5 HOOL {115.00 USD, 2016-04-15, "lot1"}
+        """
 
+    @book_test(Booking.STRICT)
+    def test_reduce__ambiguous__strict(self, _, __):
+        """
+        2016-01-01 * #ante
+          Assets:Account          10 HOOL {115.00 USD, 2016-04-15, "lot1"}
+          Assets:Account          10 HOOL {115.00 USD, 2016-04-15, "lot2"}
 
+        2016-05-02 * #apply
+          Assets:Account          -5 HOOL {}
 
+        2016-05-02 * #apply
+          Assets:Account          -5 HOOL {115.00 USD}
+
+        2016-05-02 * #apply
+          Assets:Account          -5 HOOL {USD}
+
+        2016-05-02 * #apply
+          Assets:Account          -5 HOOL {2016-04-15}
+
+        2016-05-02 * #booked
+          error: "Ambiguous matches"
+
+        2016-05-02 * #ex
+          Assets:Account          10 HOOL {115.00 USD, 2016-04-15, "lot1"}
+          Assets:Account          10 HOOL {115.00 USD, 2016-04-15, "lot2"}
+        """
 
 
 
@@ -1459,48 +1472,6 @@ class TestBookReductionsOld(unittest.TestCase):
     """
 
     BMM = collections.defaultdict(lambda: Booking.STRICT)
-
-    @parser.parse_doc(allow_incomplete=True)
-    def test_reduce__unambiguous(self, entries, _, __):
-        """
-        2016-05-02 *
-          Assets:Account          -5 HOOL {}
-          Assets:Other
-        """
-        ante_inv = I('10 HOOL {115.00 USD, 2016-04-15, "lot1"}')
-        balances = {'Assets:Account': ante_inv}
-        entry = entries[0]
-        postings, errors = bf.book_reductions(entry, entry.postings, balances, self.BMM)
-        self.assertFalse(errors)
-        self.assertEqual(2, len(postings))
-        self.assertEqual(ante_inv[0].cost, postings[0].cost)
-
-    @parser.parse_doc(allow_incomplete=True)
-    def test_reduce__ambiguous__strict(self, entries, _, __):
-        """
-        2016-05-02 *
-          Assets:Account          -5 HOOL {}
-          Assets:Other
-
-        2016-05-02 *
-          Assets:Account          -5 HOOL {115.00 USD}
-          Assets:Other
-
-        2016-05-02 *
-          Assets:Account          -5 HOOL {USD}
-          Assets:Other
-
-        2016-05-02 *
-          Assets:Account          -5 HOOL {2016-04-15}
-          Assets:Other
-        """
-        balances = {'Assets:Account': I('10 HOOL {115.00 USD, 2016-04-15, "lot1"}, '
-                                        '10 HOOL {115.00 USD, 2016-04-15, "lot2"}')}
-        for entry in entries:
-            postings, errors = bf.book_reductions(entry, entry.postings, balances, self.BMM)
-            self.assertTrue(errors)
-            self.assertRegex(errors[0].message, "Ambiguous matches")
-            self.assertEqual(0, len(postings))
 
     @parser.parse_doc(allow_incomplete=True)
     def test_reduce__ambiguous__none(self, entries, _, __):
