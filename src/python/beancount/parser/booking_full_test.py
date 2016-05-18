@@ -1006,9 +1006,14 @@ _UNSET = object()
 
 def find_first_with_tag(tag, entries, default=_UNSET):
     """Return the first entry matching the given tag."""
+    found_entry = None
     for entry in entries:
         if tag in entry.tags:
-            return entry
+            if found_entry is not None:
+                raise KeyError("Multiple entries with tag #{}".format(tag))
+            found_entry = entry
+    if found_entry is not None:
+        return found_entry
     if default is _UNSET:
         raise KeyError("Entry with tag #{} is missing".format(tag))
     else:
@@ -1482,7 +1487,51 @@ class TestBookReductions(_BookingTestBase):
           Assets:Account          -5 HOOL {117.00 USD, 2016-05-02}
         """
 
+    @book_test(Booking.NONE)
+    def test_reduce__ambiguous__none__from_mixed(self, _, __):
+        """
+        2016-01-01 * #ante
+          Assets:Account           1 HOOL {115.00 USD}
+          Assets:Account          -2 HOOL {116.00 USD}
 
+        2016-05-02 * #apply
+          Assets:Account          -5 HOOL {117.00 USD}
+
+        2016-05-02 * #booked
+          Assets:Account          -5 HOOL {117.00 USD, 2016-05-02}
+
+        2016-05-02 * #reduced
+          S Assets:Account        -5 HOOL {117.00 USD, 2016-05-02}
+
+        2016-01-01 * #ex
+          Assets:Account           1 HOOL {115.00 USD, 2016-01-01}
+          Assets:Account          -2 HOOL {116.00 USD, 2016-01-01}
+          Assets:Account          -5 HOOL {117.00 USD, 2016-05-02}
+        """
+
+    @book_test(Booking.STRICT)
+    def test_reduce__other_currency(self, _, __):
+        """
+        2016-01-01 * #ante
+          Assets:Account           8 AAPL {115.00 USD, 2016-01-11}
+          Assets:Account           8 HOOL {115.00 USD, 2016-01-10}
+
+        2016-01-01 * #ambi-matches
+          Assets:Account           8 HOOL {115.00 USD, 2016-01-10}
+
+        2016-01-01 * #ambi-resolved
+          Assets:Account          -5 HOOL {115.00 USD, 2016-01-10}
+
+        2016-05-02 * #apply
+          Assets:Account          -5 HOOL {115.00 USD}
+
+        2016-05-02 * #booked #reduced
+          Assets:Account          -5 HOOL {115.00 USD, 2016-01-10}
+
+        2016-01-01 * #ex
+          Assets:Account           8 AAPL {115.00 USD, 2016-01-11}
+          Assets:Account           3 HOOL {115.00 USD, 2016-01-10}
+        """
 
 
 
@@ -1498,39 +1547,6 @@ class TestBookReductionsOld(unittest.TestCase):
     """
 
     BMM = collections.defaultdict(lambda: Booking.STRICT)
-
-    @parser.parse_doc(allow_incomplete=True)
-    def test_reduce__ambiguous__none__from_mixed(self, entries, _, options_map):
-        """
-        ; option "booking_method" "NONE"
-
-        2016-05-02 *
-          Assets:Account          -5 HOOL {117.00 USD}
-          Assets:Other
-        """
-        bmm = collections.defaultdict(lambda: Booking.NONE)
-        balances = {'Assets:Account': I('1 HOOL {115.00 USD}, '
-                                        '-2 HOOL {116.00 USD}')}
-        entry = entries[0]
-        postings, errors = bf.book_reductions(entry, entry.postings, balances, bmm)
-        self.assertFalse(errors)
-        self.assertEqual(2, len(postings))
-
-    @parser.parse_doc(allow_incomplete=True)
-    def test_reduce__other_currency(self, entries, _, __):
-        """
-        2016-05-02 *
-          Assets:Account          -5 HOOL {115.00 USD}
-          Assets:Other
-        """
-        balances = {'Assets:Account': I('8 AAPL {115.00 USD, 2016-01-11}, '
-                                        '8 HOOL {115.00 USD, 2016-01-10}')}
-        entry = entries[0]
-        postings, errors = bf.book_reductions(entry, entry.postings, balances, self.BMM)
-        self.assertFalse(errors)
-        self.assertEqual(2, len(postings))
-        self.assertEqual(Cost(D('115.00'), 'USD', datetime.date(2016, 1, 10), None),
-                         postings[0].cost)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_reduce__multiple_reductions(self, entries, _, __):
