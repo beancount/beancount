@@ -1571,36 +1571,27 @@ class TestBookReductions(_BookingTestBase):
           Assets:Account           25 HOOL {116.00 USD, 2016-01-16}
         """
 
+    @book_test(Booking.FIFO)
+    def test_reduce__multiple_reductions__with_error(self, _, __):
+        """
+        2016-01-01 * #ante
+          Assets:Account           50 HOOL {115.00 USD, 2016-01-15}
+          Assets:Account           50 HOOL {116.00 USD, 2016-01-16}
+
+        2016-05-02 * #apply
+          Assets:Account          -40 HOOL {}
+          Assets:Account          -65 HOOL {}
+
+        2016-05-02 * #booked
+          error: "Not enough lots to reduce"
+        """
+
 
 
 
 
 
 ## CONTINUE
-
-class TestBookReductionsOld(unittest.TestCase):
-    """Tests the booking of inventory reductions.
-    Note that this is expected to leave reductions unmodified.
-    """
-
-    BMM = collections.defaultdict(lambda: Booking.STRICT)
-
-    @parser.parse_doc(allow_incomplete=True)
-    def test_reduce__multiple_reductions__with_error(self, entries, _, __):
-        """
-        2016-05-02 *
-          Assets:Account          -40 HOOL {}
-          Assets:Account          -65 HOOL {}
-        """
-        balances = {'Assets:Account': I('50 HOOL {115.00 USD, 2016-01-15}, '
-                                        '50 HOOL {116.00 USD, 2016-01-16}')}
-        entry = entries[0]
-        bmm = collections.defaultdict(lambda: Booking.FIFO)
-        postings, errors = bf.book_reductions(entry, entry.postings, balances, bmm)
-        self.assertTrue(errors)
-        self.assertRegex(errors[0].message, 'Not enough lots to reduce')
-        self.assertEqual([], postings)
-
 
 class TestHandleAmbiguousMatches(unittest.TestCase):
 
