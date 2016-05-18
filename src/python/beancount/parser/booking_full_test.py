@@ -1426,7 +1426,7 @@ class TestBookReductions(_BookingTestBase):
         2016-05-02 * #apply
           Assets:Account          -5 HOOL {}
 
-        2016-05-02 * #booked #ambi-resolved
+        2016-05-02 * #booked #ambi-resolved #reduced
           Assets:Account          -5 HOOL {115.00 USD, 2016-04-15, "lot1"}
 
         2016-01-01 * #ex
@@ -1460,6 +1460,32 @@ class TestBookReductions(_BookingTestBase):
           Assets:Account          10 HOOL {115.00 USD, 2016-04-15, "lot2"}
         """
 
+    @book_test(Booking.NONE)
+    def test_reduce__ambiguous__none(self, _, __):
+        """
+        2016-01-01 * #ante
+          Assets:Account           1 HOOL {115.00 USD}
+          Assets:Account           2 HOOL {116.00 USD}
+
+        2016-05-02 * #apply
+          Assets:Account          -5 HOOL {117.00 USD}
+
+        2016-05-02 * #booked
+          Assets:Account          -5 HOOL {117.00 USD, 2016-05-02}
+
+        2016-05-02 * #reduced
+          S Assets:Account        -5 HOOL {117.00 USD, 2016-05-02}
+
+        2016-01-01 * #ex
+          Assets:Account           1 HOOL {115.00 USD, 2016-01-01}
+          Assets:Account           2 HOOL {116.00 USD, 2016-01-01}
+          Assets:Account          -5 HOOL {117.00 USD, 2016-05-02}
+        """
+
+
+
+
+
 
 
 
@@ -1472,23 +1498,6 @@ class TestBookReductionsOld(unittest.TestCase):
     """
 
     BMM = collections.defaultdict(lambda: Booking.STRICT)
-
-    @parser.parse_doc(allow_incomplete=True)
-    def test_reduce__ambiguous__none(self, entries, _, __):
-        """
-        ; option "booking_method" "NONE"
-
-        2016-05-02 *
-          Assets:Account          -5 HOOL {117.00 USD}
-          Assets:Other
-        """
-        bmm = collections.defaultdict(lambda: Booking.NONE)
-        balances = {'Assets:Account': I('1 HOOL {115.00 USD}, '
-                                        '2 HOOL {116.00 USD}')}
-        entry = entries[0]
-        postings, errors = bf.book_reductions(entry, entry.postings, balances, bmm)
-        self.assertFalse(errors)
-        self.assertEqual(2, len(postings))
 
     @parser.parse_doc(allow_incomplete=True)
     def test_reduce__ambiguous__none__from_mixed(self, entries, _, options_map):
