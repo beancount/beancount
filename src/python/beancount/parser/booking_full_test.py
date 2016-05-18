@@ -1587,133 +1587,227 @@ class TestBookReductions(_BookingTestBase):
         """
 
 
+class TestBookAmbiguous(_BookingTestBase):
+
+    @book_test(Booking.FIFO)
+    def test_ambiguous__NONE__matching_existing1(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          5 HOOL {101.00 USD, 2015-10-01}
+
+        2015-06-01 * #apply
+          Assets:Account         -2 HOOL {100.00 USD, 2015-10-01}
+
+        2015-01-01 * #ex
+          Assets:Account          3 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          5 HOOL {101.00 USD, 2015-10-01}
+        """
+
+    @book_test(Booking.FIFO)
+    def test_ambiguous__NONE__matching_existing2(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          5 HOOL {101.00 USD, 2015-10-01}
+
+        2015-06-01 * #apply
+          Assets:Account         -2 HOOL {101.00 USD, 2015-10-01}
+
+        2015-01-01 * #ex
+          Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          3 HOOL {101.00 USD, 2015-10-01}
+        """
+
+    @book_test(Booking.NONE)
+    def test_ambiguous__NONE__notmatching_nonmixed1(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          5 HOOL {101.00 USD, 2015-10-01}
+
+        2015-06-01 * #apply #booked
+          Assets:Account         -2 HOOL {102.00 USD, 2015-06-01}
+
+        2015-01-01 * #ex
+          Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          5 HOOL {101.00 USD, 2015-10-01}
+          Assets:Account         -2 HOOL {102.00 USD, 2015-06-01}
+        """
+
+    @book_test(Booking.NONE)
+    def test_ambiguous__NONE__notmatching_nonmixed1(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          5 HOOL {101.00 USD, 2015-10-01}
+
+        2015-06-01 * #apply #booked
+          Assets:Account          2 HOOL {102.00 USD, 2015-06-01}
+
+        2015-01-01 * #ex
+          Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          5 HOOL {101.00 USD, 2015-10-01}
+          Assets:Account          2 HOOL {102.00 USD, 2015-06-01}
+        """
+
+    @book_test(Booking.NONE)
+    def test_ambiguous__NONE__notmatching_mixed1(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         -5 HOOL {101.00 USD, 2015-10-01}
+
+        2015-06-01 * #apply #booked
+          Assets:Account         -2 HOOL {102.00 USD, 2015-06-01}
+
+        2015-01-01 * #ex
+          Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         -5 HOOL {101.00 USD, 2015-10-01}
+          Assets:Account         -2 HOOL {102.00 USD, 2015-06-01}
+        """
+
+    @book_test(Booking.NONE)
+    def test_ambiguous__NONE__notmatching_mixed2(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         -5 HOOL {101.00 USD, 2015-10-01}
+
+        2015-06-01 * #apply #booked
+          Assets:Account          2 HOOL {102.00 USD, 2015-06-01}
+
+        2015-01-01 * #ex
+          Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         -5 HOOL {101.00 USD, 2015-10-01}
+          Assets:Account          2 HOOL {102.00 USD, 2015-06-01}
+        """
+
+    @book_test(Booking.STRICT)
+    def test_ambiguous__STRICT_1(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          5 HOOL {101.00 USD, 2015-10-01}
+
+        2015-06-01 * #apply
+          Assets:Account         -2 HOOL {102.00 USD, 2015-06-01}
+
+        2015-06-01 * #apply
+          Assets:Account         -2 HOOL {102.00 USD}
+
+        2015-06-01 * #apply
+          Assets:Account         -2 HOOL {2015-06-01}
+
+        2015-06-01 * #booked
+          error: "No position matches"
+
+        2015-01-01 * #ex
+          Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          5 HOOL {101.00 USD, 2015-10-01}
+        """
+
+    @book_test(Booking.STRICT)
+    def test_ambiguous__STRICT_2(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          5 HOOL {101.00 USD, 2015-10-01}
+
+        2015-06-01 * #apply
+          Assets:Account         -6 HOOL {100.00 USD, 2015-10-01}
+
+        2015-06-01 * #booked
+          error: "Not enough lots to reduce"
+
+        2015-01-01 * #ex
+          Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          5 HOOL {101.00 USD, 2015-10-01}
+        """
+
+    @book_test(Booking.STRICT)
+    def test_ambiguous__STRICT__mixed(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         -5 HOOL {101.00 USD, 2015-10-01}
+
+        2015-06-01 * #apply
+          Assets:Account         -2 HOOL {102.00 USD, 2015-06-01}
+
+        2015-06-01 * #apply
+          Assets:Account         -2 HOOL {102.00 USD}
+
+        2015-06-01 * #apply
+          Assets:Account         -2 HOOL {2015-06-01}
+
+        2015-06-01 * #booked
+          error: "No position matches"
+
+        2015-01-01 * #ex
+          Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         -5 HOOL {101.00 USD, 2015-10-01}
+        """
+
+
+
+
+
+
 
 
 
 
 ## CONTINUE
 
+def _handle_ambiguous(balance_entry, reduction, booking_method,
+                      balances=None, debug=False):
+    """Call handle_ambiguous_matches with a pre-existing balance.
+
+    Args:
+      balance_entry: A Transaction directive used to initialize ante-inventories
+        of all accounts before calling the function.
+      reduction: A Posting instance, to be applied by the function.
+      booking_method: The booking method to apply.
+      balances: An optional dict of account name to resulting ex-inventory balances.
+        Provide this argument if you'd like to have this function compute
+        the ex-balances.
+      debug: An optional flag, true if we should print out debug information.
+    Returns:
+      A triple of
+        postings: A list of matched postings to replace 'reduction'.
+        errors: A list of errors generated.
+
+    """
+    entries, convert_errors = bs.convert_lot_specs_to_lots([balance_entry])
+    assert len(entries) == 1
+    entry = entries[0]
+    assert not convert_errors
+
+    if debug:
+        print('reduction')
+        printer.print_entry(reduction)
+        print('/matches')
+        for match in entry.postings:
+            print(match)
+        print(r'\matches')
+
+    # Compute the new balances.
+    postings, errors = bf.handle_ambiguous_matches(entry, reduction, entry.postings,
+                                                   booking_method)
+
+    # Compute ex-balances.
+    if balances is not None:
+        for posting in itertools.chain(entry.postings, postings):
+            bal = balances.setdefault(posting.account, inventory.Inventory())
+            bal.add_position(posting)
+
+    return postings, errors
+
+
 class TestHandleAmbiguousMatches(unittest.TestCase):
 
     maxDiff = 8192
-
-    def _handle_ambiguous(self, balance_entry, reduction, booking_method,
-                          balances=None, debug=False):
-        """Call handle_ambiguous_matches with a pre-existing balance.
-
-        Args:
-          balance_entry: A Transaction directive used to initialize ante-inventories
-            of all accounts before calling the function.
-          reduction: A Posting instance, to be applied by the function.
-          booking_method: The booking method to apply.
-          balances: An optional dict of account name to resulting ex-inventory balances.
-            Provide this argument if you'd like to have this function compute
-            the ex-balances.
-          debug: An optional flag, true if we should print out debug information.
-        Returns:
-          A triple of
-            postings: A list of matched postings to replace 'reduction'.
-            errors: A list of errors generated.
-
-        """
-        entries, convert_errors = bs.convert_lot_specs_to_lots([balance_entry])
-        assert len(entries) == 1
-        entry = entries[0]
-        assert not convert_errors
-
-        if debug:
-            print('reduction')
-            printer.print_entry(reduction)
-            print('/matches')
-            for match in entry.postings:
-                print(match)
-            print(r'\matches')
-
-        # Compute the new balances.
-        postings, errors = bf.handle_ambiguous_matches(entry, reduction, entry.postings,
-                                                       booking_method)
-
-        # Compute ex-balances.
-        if balances is not None:
-            for posting in itertools.chain(entry.postings, postings):
-                bal = balances.setdefault(posting.account, inventory.Inventory())
-                bal.add_position(posting)
-
-        return postings, errors
-
-    @parser.parse_doc(allow_incomplete=True)
-    def test_ambiguous__NONE__matching_existing(self, entries, _, __):
-        """
-        2015-01-01 * "Non-mixed"
-          Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
-          Assets:Account          5 HOOL {101.00 USD, 2015-10-01}
-
-        2015-06-01 * "Test"
-          Assets:Account         -2 HOOL {100.00 USD, 2015-10-01}
-          Assets:Account         -2 HOOL {101.00 USD, 2015-10-01}
-        """
-        for posting in entries[-1].postings:
-            postings, errors = self._handle_ambiguous(entries[0], posting, Booking.NONE)
-            self.assertEqual(1, len(postings))
-            self.assertFalse(errors)
-            # Check that the original posting isn't modified at all.
-            self.assertEqual(posting, postings[0])
-
-    @parser.parse_doc(allow_incomplete=True)
-    def test_ambiguous__NONE__notmatching_nonmixed(self, entries, _, __):
-        """
-        2015-01-01 * "Non-mixed"
-          Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
-          Assets:Account          5 HOOL {101.00 USD, 2015-10-01}
-
-        2015-06-01 * "Test"
-          Assets:Account         -2 HOOL {102.00 USD, 2015-06-01}
-          Assets:Account          2 HOOL {102.00 USD, 2015-06-01}
-        """
-        for posting in entries[-1].postings:
-            postings, errors = self._handle_ambiguous(entries[0], posting, Booking.NONE)
-            self.assertEqual(1, len(postings))
-            self.assertFalse(errors)
-            self.assertEqual(posting, postings[0])
-
-    @parser.parse_doc(allow_incomplete=True)
-    def test_ambiguous__NONE__notmatching_mixed(self, entries, _, __):
-        """
-        2015-01-01 * "Mixed"
-          Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
-          Assets:Account         -5 HOOL {101.00 USD, 2015-10-01}
-
-        2015-06-01 * "Test"
-          Assets:Account         -2 HOOL {102.00 USD, 2015-06-01}
-          Assets:Account          2 HOOL {102.00 USD, 2015-06-01}
-        """
-        for posting in entries[-1].postings:
-            postings, errors = self._handle_ambiguous(entries[0], posting, Booking.NONE)
-            self.assertEqual(1, len(postings))
-            self.assertFalse(errors)
-            self.assertEqual(posting, postings[0])
-
-    @parser.parse_doc(allow_incomplete=True)
-    def test_ambiguous__STRICT(self, entries, _, __):
-        """
-        2015-01-01 * "Non-mixed"
-          Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
-          Assets:Account          5 HOOL {101.00 USD, 2015-10-01}
-
-        2015-01-01 * "Mixed"
-          Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
-          Assets:Account         -5 HOOL {101.00 USD, 2015-10-01}
-
-        2015-06-01 * "Negative test"
-          Assets:Account         -2 HOOL {102.00 USD, 2015-06-01}
-          Assets:Account         -2 HOOL {102.00 USD}
-          Assets:Account         -2 HOOL {2015-06-01}
-          Assets:Account         -2 HOOL {100.00 USD, 2015-10-01}
-          Assets:Account         -6 HOOL {100.00 USD, 2015-10-01}
-        """
-        for posting in entries[-1].postings:
-            postings, errors = self._handle_ambiguous(entries[0], posting, Booking.STRICT)
-            self.assertTrue(errors)
 
     def _reduce_first_expect_rest(self, pre_entry, entries, booking_method, debug=False):
         """Test the entries using the format examplified in the two following methods."""
@@ -1725,7 +1819,7 @@ class TestHandleAmbiguousMatches(unittest.TestCase):
                                                                           posting.cost))
                 for posting in entry.postings[1:]]
             exbalances = collections.defaultdict(inventory.Inventory)
-            matched_postings, errors = self._handle_ambiguous(
+            matched_postings, errors = _handle_ambiguous(
                 pre_entry, apply_posting, booking_method,
                 balances=exbalances, debug=debug)
             exbalances_list.append(exbalances)
