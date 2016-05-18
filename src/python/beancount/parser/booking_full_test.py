@@ -1750,9 +1750,100 @@ class TestBookAmbiguous(_BookingTestBase):
         """
 
 
+class TestBookAmbiguousFIFO(_BookingTestBase):
+
+    @book_test(Booking.FIFO)
+    def test_ambiguous__FIFO__no_match_against_any_lots(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
+
+        2015-02-22 * #apply #reduced
+          Assets:Account          0 HOOL {}
+
+        2015-02-22 * #booked
+
+        2015-01-01 * #ex
+          Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
+        """
+
+    @book_test(Booking.FIFO)
+    def test_ambiguous__FIFO__test_match_against_partial_first_lot(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
+
+        2015-02-22 * #apply
+          Assets:Account         -2 HOOL {}
+
+        2015-02-22 * #booked
+          Assets:Account         -2 HOOL {100.00 USD, 2015-10-01}
+
+        2015-01-01 * #ex
+          Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account          2 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
+        """
+
+    @book_test(Booking.FIFO)
+    def test_ambiguous__FIFO__test_match_against_complete_first_lot(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
+
+        2015-02-22 * #apply
+          Assets:Account         -4 HOOL {}
+
+        2015-02-22 * #booked
+          Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
+
+        2015-01-01 * #ex
+          Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
+        """
 
 
 
+
+
+
+        """
+        2015-02-22 * "test_partial_match_against_first_two_lots"
+          Assets:Account         -7 HOOL {}
+          Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         -3 HOOL {111.11 USD, 2015-10-02}
+
+        2015-02-22 * "test_complete_match_against_first_two_lots"
+          Assets:Account         -9 HOOL {}
+          Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
+
+        2015-02-22 * "test_partial_match_against_first_three_lots"
+          Assets:Account        -12 HOOL {}
+          Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account         -3 HOOL {122.22 USD, 2015-10-03}
+
+        2015-02-22 * "test_complete_match_against_first_three_lots"
+          Assets:Account        -15 HOOL {}
+          Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account         -6 HOOL {122.22 USD, 2015-10-03}
+
+        2015-02-22 * "test_matching_more_than_is_available" #error
+          Assets:Account        -16 HOOL {}
+          Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account         -6 HOOL {122.22 USD, 2015-10-03}
+        """
 
 
 
