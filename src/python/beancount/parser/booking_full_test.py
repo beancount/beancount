@@ -1149,13 +1149,15 @@ class _BookingTestBase(unittest.TestCase):
     def _book_one(self, entry_apply, entries, options_map, booking_method):
         """See _book(). This is the same but with a single #apply entry."""
 
+        all_entries = [entry_apply] + entries
+
         # Override the booking method.
         options_map = options_map.copy()
         options_map['booking_method'] = booking_method
         input_entries = []
 
         # Fetch the 'ante' entry.
-        entry_ante = find_first_with_tag('ante', entries, None)
+        entry_ante = find_first_with_tag('ante', all_entries, None)
         if entry_ante:
             input_entries.append(entry_ante)
 
@@ -1179,11 +1181,12 @@ class _BookingTestBase(unittest.TestCase):
 
         # ## FIXME: remove
         # printer.print_entries(input_entries)
+        # printer.print_entries(entries)
         # printer.print_entries(book_entries)
         # printer.print_errors(book_errors)
 
         # If requested, check the result of booking.
-        entry_booked = find_first_with_tag('booked', entries, None)
+        entry_booked = find_first_with_tag('booked', all_entries, None)
         if entry_booked:
             # Check the output postings and errors.
             entry_postings = book_entries[-1].postings if book_entries else []
@@ -1192,7 +1195,7 @@ class _BookingTestBase(unittest.TestCase):
 
         # Check that the resulting inventory balance matches that of the 'ex'
         # entry, if present.
-        entry_ex = find_first_with_tag('ex', entries, None)
+        entry_ex = find_first_with_tag('ex', all_entries, None)
         if entry_ex:
             inv_expected = inventory.Inventory()
             for posting in entry_ex.postings:
@@ -1203,7 +1206,7 @@ class _BookingTestBase(unittest.TestCase):
 
         # If requested, check the output values to the last call to
         # book_reductions().
-        entry_reduced = find_first_with_tag('reduced', entries, None)
+        entry_reduced = find_first_with_tag('reduced', all_entries, None)
         if entry_reduced:
             self.assertEqual(len(input_entries), len(reduce_mock.calls))
             reduce_postings, reduce_errors = reduce_mock.calls[-1].return_value
@@ -1212,8 +1215,8 @@ class _BookingTestBase(unittest.TestCase):
 
         # If requested, check the input and output values to the last call to
         # handle_ambiguous_matches().
-        entry_matches = find_first_with_tag('ambi-matches', entries, None)
-        entry_resolved = find_first_with_tag('ambi-resolved', entries, None)
+        entry_matches = find_first_with_tag('ambi-matches', all_entries, None)
+        entry_resolved = find_first_with_tag('ambi-resolved', all_entries, None)
         if entry_matches or entry_resolved:
             self.assertEqual(1, len(handle_mock.calls))
             call = handle_mock.calls[-1]
@@ -1760,8 +1763,11 @@ class TestBookAmbiguousFIFO(_BookingTestBase):
           Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
           Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
 
-        2015-02-22 * #apply #reduced
+        2015-02-22 * #apply
           Assets:Account          0 HOOL {}
+
+        2015-02-22 * #reduced
+          S Assets:Account          0 HOOL {USD, 2015-02-22}
 
         2015-02-22 * #booked
 
@@ -1914,8 +1920,11 @@ class TestBookAmbiguousLIFO(_BookingTestBase):
           Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
           Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
 
-        2015-02-22 * #apply #reduced
+        2015-02-22 * #apply
           Assets:Account          0 HOOL {}
+
+        2015-02-22 * #reduced
+          S Assets:Account          0 HOOL {USD, 2015-02-22}
 
         2015-02-22 * #booked
 
@@ -2432,13 +2441,67 @@ class TestHandleAmbiguousMatches(unittest.TestCase):
 
 
 
-# FIXME: Make it possible to apply more than a single posting.
+
+
+class TestBasicBooking(_BookingTestBase):
+
+    @book_test(Booking.STRICT)
+    def test_augment__at_cost__same_date(self, _, __):
+        """
+        2015-10-01 * #ante
+          Assets:Account          1 HOOL {100.00 USD}
+
+        2015-10-01 * #apply
+          Assets:Account          2 HOOL {100.00 USD}
+
+        2015-10-02 * #apply
+          Assets:Account          2 HOOL {100.00 USD, 2015-10-01}
+
+        2015-11-01 * #ex
+          Assets:Account          3 HOOL {100.00 USD, 2015-10-01}
+        """
+
+    @book_test(Booking.STRICT)
+    def test_augment__at_cost__different_date(self, _, __):
+        """
+        2015-10-01 * #ante
+          Assets:Account          1 HOOL {100.00 USD}
+
+        2015-10-02 * #apply
+          Assets:Account          2 HOOL {100.00 USD}
+
+        2015-10-01 * #apply
+          Assets:Account          2 HOOL {100.00 USD, 2015-10-02}
+
+        2015-11-01 * #ex
+          Assets:Account          1 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          2 HOOL {100.00 USD, 2015-10-02}
+        """
+
+    @book_test(Booking.STRICT)
+    def test_augment__at_cost__different_cost(self, _, __):
+        """
+        2015-10-01 * #ante
+          Assets:Account          1 HOOL {100.00 USD}
+
+        2015-10-01 * #apply
+          Assets:Account          2 HOOL {101.00 USD}
+
+        2015-10-01 * #booked
+          Assets:Account          2 HOOL {101.00 USD, 2015-10-01}
+
+        2015-11-01 * #ex
+          Assets:Account          1 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          2 HOOL {101.00 USD, 2015-10-01}
+        """
+
+
+
 
 
 
 
 # FIXME: Rewrite these tests.
-
 class TestBook(unittest.TestCase):
 
     def book_reductions(self, entries, currency='USD'):
@@ -2447,14 +2510,14 @@ class TestBook(unittest.TestCase):
         for entry in entries:
             (booked_postings,
              booked_errors) = bf.book_reductions(entry,
-                                                           entry.postings,
-                                                           balances,
-                                                           booking_methods)
+                                                 entry.postings,
+                                                 balances,
+                                                 booking_methods)
             (inter_postings,
              inter_errors,
              interpolated) = bf.interpolate_group(booked_postings,
-                                                            balances,
-                                                            currency)
+                                                  balances,
+                                                  currency)
             for posting in inter_postings:
                 balances[posting.account].add_position(posting)
 
@@ -2466,78 +2529,13 @@ class TestBook(unittest.TestCase):
         self.assertEqual(postings1, postings2)
 
     @parser.parse_doc(allow_incomplete=True)
-    def test_augment__at_cost__same(self, entries, _, __):
-        """
-        2015-10-01 * "Held-at-cost, positive"
-          Assets:Account1          1 HOOL {100.00 USD}
-          Assets:Other       -100.00 USD
-
-        2015-10-01 * "Held-at-cost, positive, same cost"
-          Assets:Account1          2 HOOL {100.00 USD}
-          Assets:Other       -200.00 USD
-        """
-        postings, balances = self.book_reductions(entries)
-        self.assertEqual(I('3 HOOL {100.00 USD, 2015-10-01}'),
-                         balances['Assets:Account1'])
-        self.assertPostingsEqual([
-            data.Posting('Assets:Account1', A('2 HOOL'),
-                         Cost(D('100.00'), 'USD', datetime.date(2015, 10, 1), None),
-                         None, None, None),
-            data.Posting('Assets:Other', A('-200.00 USD'), None, None, None, None),
-            ], postings)
-
-    @parser.parse_doc(allow_incomplete=True)
-    def test_augment__at_cost__different_date(self, entries, _, __):
-        """
-        2015-10-01 * "Held-at-cost, positive"
-          Assets:Account1          1 HOOL {100.00 USD}
-          Assets:Other          -100.00 USD
-
-        2015-10-02 * "Held-at-cost, positive, same cost"
-          Assets:Account1          2 HOOL {100.00 USD}
-          Assets:Other          -200.00 USD
-        """
-        postings, balances = self.book_reductions(entries)
-        self.assertEqual(I('1 HOOL {100.00 USD, 2015-10-01}, '
-                           '2 HOOL {100.00 USD, 2015-10-02}'),
-                         balances['Assets:Account1'])
-        self.assertPostingsEqual([
-            data.Posting('Assets:Account1', A('2 HOOL'),
-                         Cost(D('100.00'), 'USD', datetime.date(2015, 10, 2), None),
-                         None, None, None),
-            data.Posting('Assets:Other', A('-200.00 USD'), None, None, None, None),
-            ], postings)
-
-    @parser.parse_doc(allow_incomplete=True)
-    def test_augment__at_cost__different_date__overridden(self, entries, _, __):
-        """
-        2015-10-01 * "Held-at-cost, positive"
-          Assets:Account1          1 HOOL {100.00 USD}
-          Assets:Other          -100.00 USD
-
-        2015-10-01 * "Held-at-cost, positive, same cost"
-          Assets:Account1          2 HOOL {100.00 USD, 2015-10-02}
-          Assets:Other          -200.00 USD
-        """
-        postings, balances = self.book_reductions(entries)
-        self.assertEqual(I('1 HOOL {100.00 USD, 2015-10-01}, '
-                           '2 HOOL {100.00 USD, 2015-10-02}'),
-                         balances['Assets:Account1'])
-        self.assertPostingsEqual([
-            data.Posting('Assets:Account1', A('2 HOOL'),
-                         Cost(D('100.00'), 'USD', datetime.date(2015, 10, 2), None),
-                         None, None, None),
-            data.Posting('Assets:Other', A('-200.00 USD'), None, None, None, None),
-            ], postings)
-
-    @parser.parse_doc(allow_incomplete=True)
     def test_augment__at_cost__different_cost(self, entries, _, __):
         """
         2015-10-01 * "Held-at-cost, positive"
           Assets:Account1          1 HOOL {100.00 USD}
           Assets:Other          -100.00 USD
 
-        2015-10-01 * "Held-at-cost, positive, same cost"
+        2015-10-01 * "Held-at-cost, positive, differnt cost"
           Assets:Account1          2 HOOL {101.00 USD}
           Assets:Other          -204.00 USD
         """
