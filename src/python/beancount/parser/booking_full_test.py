@@ -1891,7 +1891,7 @@ class TestBookAmbiguousFIFO(_BookingTestBase):
     @book_test(Booking.FIFO)
     def test_ambiguous__FIFO__test_matching_more_than_is_available(self, _, __):
         """
-        2015-01-01 * #ante
+        2015-01-01 * #ante #ex
           Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
           Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
           Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
@@ -1901,11 +1901,6 @@ class TestBookAmbiguousFIFO(_BookingTestBase):
 
         2015-02-22 * #booked
           error: "Not enough lots to reduce"
-
-        2015-01-01 * #ex
-          Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
-          Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
-          Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
         """
 
 
@@ -2050,7 +2045,7 @@ class TestBookAmbiguousLIFO(_BookingTestBase):
     @book_test(Booking.LIFO)
     def test_ambiguous__LIFO__test_matching_more_than_is_available(self, _, __):
         """
-        2015-01-01 * #ante
+        2015-01-01 * #ante #ex
           Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
           Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
           Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
@@ -2060,18 +2055,122 @@ class TestBookAmbiguousLIFO(_BookingTestBase):
 
         2015-02-22 * #booked
           error: "Not enough lots to reduce"
+        """
+
+
+class TestBookAmbiguousAVERAGE(_BookingTestBase):
+
+    @book_test(Booking.AVERAGE)
+    def test_ambiguous__AVERAGE__simple1(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account        100 HOOL {100.00 USD, 2015-10-01}
+
+        2015-06-01 * #apply
+          Assets:Account         -2 HOOL {} ;; REDUCING
+
+        2015-06-01 * #booked
+          Assets:Account         -2 HOOL {100.00 USD, 2015-10-01}
 
         2015-01-01 * #ex
-          Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
-          Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
-          Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
+          Assets:Account         98 HOOL {100.00 USD, 2015-10-01}
+        """
+
+    @book_test(Booking.AVERAGE)
+    def test_ambiguous__AVERAGE__simple2(self, _, __):
+        """
+        2015-01-01 * #ante #ex
+          Assets:Account        100 HOOL {100.00 USD, 2015-10-01}
+
+        2015-06-01 * #apply
+          Assets:Account       -102 HOOL {} ;; REDUCING
+
+        2015-06-01 * #booked
+          error: "Not enough lots to reduce"
         """
 
 
 
+    # FIXME: Continue here.
 
+    # FIXME: We should allow inventories with such mixed cost currencies,
+    # just make the merging limited to each currencies. This should work if
+    # 140.00 has a specific currency on it.
 
+    @unittest.skip("FIXME TODO")
+    @book_test(Booking.AVERAGE)
+    def test_ambiguous__AVERAGE__merging__mixed_currencies__ambiguous(self, entries, _, __):
+        """
+        2015-01-01 * #ante #ex
+          Assets:Account         60 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         40 HOOL {110.00 CAD, 2015-10-01}
 
+        2015-06-01 * #apply
+          Assets:Account        -20 HOOL {}
+
+        2015-06-01 * #booked
+          error: "ambiguous"
+        """
+
+    @unittest.skip("FIXME TODO")
+    @book_test(Booking.AVERAGE)
+    def test_ambiguous__AVERAGE__merging__mixed_currencies__with_cost_and_currency(self, entries, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account         60 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         40 HOOL {110.00 CAD, 2015-10-01}
+
+        2015-06-01 * #apply
+          Assets:Account        -20 HOOL {101.00 USD}
+
+        2015-06-01 * #booked
+          Assets:Account        -20 HOOL {101.00 USD,2015-06-01}
+
+        2015-06-01 * #ex
+          Assets:Account         40 HOOL { 99.50 USD, 2015-10-01}
+          Assets:Account         40 HOOL {110.00 CAD, 2015-10-01}
+        """
+
+    @unittest.skip("FIXME TODO")
+    @book_test(Booking.AVERAGE)
+    def test_ambiguous__AVERAGE__merging__mixed_currencies__with_cost(self, entries, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account         60 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         40 HOOL {110.00 CAD, 2015-10-01}
+
+        2015-06-01 * #apply
+          Assets:Account        -20 HOOL {101.00}
+
+        2015-06-01 * #booked
+          error: "ambiguous"
+
+        2015-06-01 * #ex
+          Assets:Account         40 HOOL { 99.50 USD, 2015-10-01}
+          Assets:Account         40 HOOL {110.00 CAD, 2015-10-01}
+        """
+
+    @unittest.skip("FIXME TODO")
+    @book_test(Booking.AVERAGE)
+    def test_ambiguous__AVERAGE__merging__mixed_currencies__matching(self, entries, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account         60 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         40 HOOL {110.00 CAD, 2015-10-01}
+
+        2015-06-01 * #apply
+          Assets:Account        -20 HOOL {100.00}
+
+        2015-06-01 * #apply
+          Assets:Account        -20 HOOL {USD}
+
+        2015-06-01 * #booked
+          Assets:Account        -40 HOOL {100.00 USD, 2015-10-01}
+
+        2015-06-01 * #ex
+          Assets:Account         40 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         40 HOOL {110.00 CAD, 2015-10-01}
+        """
 
 
 
@@ -2164,34 +2263,6 @@ class TestHandleAmbiguousMatches(unittest.TestCase):
             self.assertEqual(expect_error, bool(errors))
 
         return exbalances_list
-
-    @parser.parse_doc(allow_incomplete=True)
-    def test_ambiguous__AVERAGE__simple(self, entries, _, __):
-        """
-        2015-01-01 * "Single position"
-          Assets:Account        100 HOOL {100.00 USD, 2015-10-01}
-
-        2015-06-01 * ""
-          Assets:Account         -2 HOOL {} ;; REDUCING
-          Assets:Account         -2 HOOL {100.00 USD, 2015-10-01}
-
-        2015-06-01 * "" #error
-          Assets:Account       -102 HOOL {} ;; REDUCING
-          Assets:Account       -100 HOOL {100.00 USD, 2015-10-01}
-        """
-        self._reduce_first_expect_rest(entries[0], entries[1:], Booking.AVERAGE)
-
-    @parser.parse_doc(allow_incomplete=True)
-    def test_ambiguous__AVERAGE__merging_impossible(self, entries, _, __):
-        """
-        2015-01-01 * "Single position"
-          Assets:Account         60 HOOL {100.00 USD, 2015-10-01}
-          Assets:Account         40 HOOL {110.00 CAD, 2015-10-01}
-
-        2015-06-01 * "Cannot merge positions in multiple currencies" #error
-          Assets:Account        -20 HOOL {140.00} ;; REDUCING
-        """
-        self._reduce_first_expect_rest(entries[0], entries[1:], Booking.AVERAGE)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_ambiguous__AVERAGE__merging(self, entries, _, __):
