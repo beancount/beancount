@@ -1810,40 +1810,268 @@ class TestBookAmbiguousFIFO(_BookingTestBase):
           Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
         """
 
-
-
-
-
-
+    @book_test(Booking.FIFO)
+    def test_ambiguous__FIFO__test_partial_match_against_first_two_lots(self, _, __):
         """
-        2015-02-22 * "test_partial_match_against_first_two_lots"
+        2015-01-01 * #ante
+          Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
+
+        2015-02-22 * #apply
           Assets:Account         -7 HOOL {}
+
+        2015-02-22 * #booked
           Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
           Assets:Account         -3 HOOL {111.11 USD, 2015-10-02}
 
-        2015-02-22 * "test_complete_match_against_first_two_lots"
+        2015-01-01 * #ex
+          Assets:Account          2 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
+        """
+
+    @book_test(Booking.FIFO)
+    def test_ambiguous__FIFO__test_complete_match_against_first_two_lots(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
+
+        2015-02-22 * #apply
           Assets:Account         -9 HOOL {}
+
+        2015-02-22 * #booked
           Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
           Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
 
-        2015-02-22 * "test_partial_match_against_first_three_lots"
+        2015-01-01 * #ex
+          Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
+        """
+
+    @book_test(Booking.FIFO)
+    def test_ambiguous__FIFO__test_partial_match_against_first_three_lots(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
+
+        2015-02-22 * #apply
           Assets:Account        -12 HOOL {}
+
+        2015-02-22 * #booked
           Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
           Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
           Assets:Account         -3 HOOL {122.22 USD, 2015-10-03}
 
-        2015-02-22 * "test_complete_match_against_first_three_lots"
+        2015-01-01 * #ex
+          Assets:Account          3 HOOL {122.22 USD, 2015-10-03}
+        """
+
+    @book_test(Booking.FIFO)
+    def test_ambiguous__FIFO__test_complete_match_against_first_three_lots (self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
+
+        2015-02-22 * #apply
           Assets:Account        -15 HOOL {}
+
+        2015-02-22 * #booked
           Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
           Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
           Assets:Account         -6 HOOL {122.22 USD, 2015-10-03}
 
-        2015-02-22 * "test_matching_more_than_is_available" #error
-          Assets:Account        -16 HOOL {}
-          Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
-          Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
-          Assets:Account         -6 HOOL {122.22 USD, 2015-10-03}
+        2015-01-01 * #ex
         """
+
+    @book_test(Booking.FIFO)
+    def test_ambiguous__FIFO__test_matching_more_than_is_available(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
+
+        2015-02-22 * #apply
+          Assets:Account        -16 HOOL {}
+
+        2015-02-22 * #booked
+          error: "Not enough lots to reduce"
+
+        2015-01-01 * #ex
+          Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
+        """
+
+
+class TestBookAmbiguousLIFO(_BookingTestBase):
+
+    @book_test(Booking.LIFO)
+    def test_ambiguous__LIFO__no_match_against_any_lots(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
+
+        2015-02-22 * #apply #reduced
+          Assets:Account          0 HOOL {}
+
+        2015-02-22 * #booked
+
+        2015-01-01 * #ex
+          Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
+        """
+
+    @book_test(Booking.LIFO)
+    def test_ambiguous__LIFO__test_match_against_partial_first_lot(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
+
+        2015-02-22 * #apply
+          Assets:Account         -2 HOOL {}
+
+        2015-02-22 * #booked
+          Assets:Account         -2 HOOL {122.22 USD, 2015-10-03}
+
+        2015-01-01 * #ex
+          Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          4 HOOL {122.22 USD, 2015-10-03}
+        """
+
+    @book_test(Booking.LIFO)
+    def test_ambiguous__LIFO__test_match_against_complete_first_lot(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
+
+        2015-02-22 * #apply
+          Assets:Account         -6 HOOL {}
+
+        2015-02-22 * #booked
+          Assets:Account         -6 HOOL {122.22 USD, 2015-10-03}
+
+        2015-01-01 * #ex
+          Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
+        """
+
+    @book_test(Booking.LIFO)
+    def test_ambiguous__LIFO__test_partial_match_against_first_two_lots(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
+
+        2015-02-22 * #apply
+          Assets:Account         -7 HOOL {}
+
+        2015-02-22 * #booked
+          Assets:Account         -6 HOOL {122.22 USD, 2015-10-03}
+          Assets:Account         -1 HOOL {111.11 USD, 2015-10-02}
+
+        2015-01-01 * #ex
+          Assets:Account          4 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
+        """
+
+    @book_test(Booking.LIFO)
+    def test_ambiguous__LIFO__test_complete_match_against_first_two_lots(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
+
+        2015-02-22 * #apply
+          Assets:Account        -11 HOOL {}
+
+        2015-02-22 * #booked
+          Assets:Account         -6 HOOL {122.22 USD, 2015-10-03}
+          Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
+
+        2015-01-01 * #ex
+          Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
+        """
+
+    @book_test(Booking.LIFO)
+    def test_ambiguous__LIFO__test_partial_match_against_first_three_lots(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
+
+        2015-02-22 * #apply
+          Assets:Account        -12 HOOL {}
+
+        2015-02-22 * #booked
+          Assets:Account         -6 HOOL {122.22 USD, 2015-10-03}
+          Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account         -1 HOOL {100.00 USD, 2015-10-01}
+
+        2015-01-01 * #ex
+          Assets:Account          3 HOOL {100.00 USD, 2015-10-01}
+        """
+
+    @book_test(Booking.LIFO)
+    def test_ambiguous__LIFO__test_complete_match_against_first_three_lots(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
+
+        2015-02-22 * #apply
+          Assets:Account        -15 HOOL {}
+
+        2015-02-22 * #booked
+          Assets:Account         -6 HOOL {122.22 USD, 2015-10-03}
+          Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
+
+        2015-01-01 * #ex
+        """
+
+    @book_test(Booking.LIFO)
+    def test_ambiguous__LIFO__test_matching_more_than_is_available(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
+
+        2015-02-22 * #apply
+          Assets:Account        -16 HOOL {}
+
+        2015-02-22 * #booked
+          error: "Not enough lots to reduce"
+
+        2015-01-01 * #ex
+          Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
+          Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
+        """
+
+
+
+
+
+
 
 
 
@@ -1936,110 +2164,6 @@ class TestHandleAmbiguousMatches(unittest.TestCase):
             self.assertEqual(expect_error, bool(errors))
 
         return exbalances_list
-
-    @parser.parse_doc(allow_incomplete=True)
-    def test_ambiguous__FIFO(self, entries, _, __):
-        """
-        2015-01-01 * "Non-mixed"
-          Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
-          Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
-          Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
-
-        ;; Each of the entries below is its on test. The first posting is applied.
-        ;; The other ones represent the expected output
-
-        2015-02-22 * "Test no match against any lots"
-          Assets:Account          0 HOOL {}  ;; REDUCING
-
-        2015-02-22 * "Test match against partial first lot"
-          Assets:Account         -2 HOOL {}  ;; REDUCING
-          Assets:Account         -2 HOOL {100.00 USD, 2015-10-01}
-
-        2015-02-22 * "Test match against complete first lot"
-          Assets:Account         -4 HOOL {}  ;; REDUCING
-          Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
-
-        2015-02-22 * "Test partial match against first two lots"
-          Assets:Account         -7 HOOL {}  ;; REDUCING
-          Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
-          Assets:Account         -3 HOOL {111.11 USD, 2015-10-02}
-
-        2015-02-22 * "Test complete match against first two lots"
-          Assets:Account         -9 HOOL {}  ;; REDUCING
-          Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
-          Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
-
-        2015-02-22 * "Test partial match against first three lots"
-          Assets:Account        -12 HOOL {}  ;; REDUCING
-          Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
-          Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
-          Assets:Account         -3 HOOL {122.22 USD, 2015-10-03}
-
-        2015-02-22 * "Test complete match against first three lots"
-          Assets:Account        -15 HOOL {}  ;; REDUCING
-          Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
-          Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
-          Assets:Account         -6 HOOL {122.22 USD, 2015-10-03}
-
-        2015-02-22 * "Test matching more than is available" #error
-          Assets:Account        -16 HOOL {}  ;; REDUCING
-          Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
-          Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
-          Assets:Account         -6 HOOL {122.22 USD, 2015-10-03}
-        """
-        self._reduce_first_expect_rest(entries[0], entries[1:], Booking.FIFO)
-
-    @parser.parse_doc(allow_incomplete=True)
-    def test_ambiguous__LIFO(self, entries, _, __):
-        """
-        2015-01-01 * "Non-mixed"
-          Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
-          Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
-          Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
-
-        ;; Each of the entries below is its on test. The first posting is applied.
-        ;; The other ones represent the expected output
-
-        2015-02-22 * "Test no match against any lots"
-          Assets:Account          0 HOOL {}  ;; REDUCING
-
-        2015-02-22 * "Test match against partial first lot"
-          Assets:Account         -2 HOOL {}  ;; REDUCING
-          Assets:Account         -2 HOOL {122.22 USD, 2015-10-03}
-
-        2015-02-22 * "Test match against complete first lot"
-          Assets:Account         -6 HOOL {}  ;; REDUCING
-          Assets:Account         -6 HOOL {122.22 USD, 2015-10-03}
-
-        2015-02-22 * "Test partial match against first two lots"
-          Assets:Account         -7 HOOL {}  ;; REDUCING
-          Assets:Account         -6 HOOL {122.22 USD, 2015-10-03}
-          Assets:Account         -1 HOOL {111.11 USD, 2015-10-02}
-
-        2015-02-22 * "Test complete match against first two lots"
-          Assets:Account        -11 HOOL {}  ;; REDUCING
-          Assets:Account         -6 HOOL {122.22 USD, 2015-10-03}
-          Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
-
-        2015-02-22 * "Test partial match against first three lots"
-          Assets:Account        -12 HOOL {}  ;; REDUCING
-          Assets:Account         -6 HOOL {122.22 USD, 2015-10-03}
-          Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
-          Assets:Account         -1 HOOL {100.00 USD, 2015-10-01}
-
-        2015-02-22 * "Test complete match against first three lots"
-          Assets:Account        -15 HOOL {}  ;; REDUCING
-          Assets:Account         -6 HOOL {122.22 USD, 2015-10-03}
-          Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
-          Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
-
-        2015-02-22 * "Test matching more than is available" #error
-          Assets:Account        -16 HOOL {}  ;; REDUCING
-          Assets:Account         -6 HOOL {122.22 USD, 2015-10-03}
-          Assets:Account         -5 HOOL {111.11 USD, 2015-10-02}
-          Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
-        """
-        self._reduce_first_expect_rest(entries[0], entries[1:], Booking.LIFO)
 
     @parser.parse_doc(allow_incomplete=True)
     def test_ambiguous__AVERAGE__simple(self, entries, _, __):
