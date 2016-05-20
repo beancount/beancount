@@ -29,8 +29,11 @@ import os
 import re
 import unittest
 import json
+import pprint
 from os import path
 
+from beancount.core.number import ZERO
+from beancount.core.number import ONE
 from beancount.core import data
 from beancount.core import flags
 from beancount.core import amount
@@ -51,8 +54,22 @@ from oauth2client.client import SignedJwtAssertionCredentials
 import gspread
 
 
+def clean_entries_for_balances(entries):
+    """
+    Remove the entries inserted by unrealized gains/losses. Those entries do
+    affect asset accounts, and we don't want them to appear in holdings.
+
+    Note: Perhaps it would make sense to generalize this concept of "inserted
+    unrealized gains."
+    """
+    return [entry
+            for entry in entries
+            if (not isinstance(entry, data.Transaction) or
+                entry.flag != flags.FLAG_UNREALIZED)]
+
+
 def get_assets(entries, options_map):
-    """Enumerate all the assets and liabilities of the unrealized entries.
+    """Enumerate all the assets and liabilities.
 
     Args:
       entries: A list of directives, as per the loader.
@@ -60,38 +77,30 @@ def get_assets(entries, options_map):
     Yields:
       Instances of Posting.
     """
-    # Compute a price map, to extract most current prices.
-    price_map = prices.build_price_map(entries)
-
-    # Remove the entries inserted by unrealized gains/losses. Those entries do
-    # affect asset accounts, and we don't want them to appear in holdings.
-    #
-    # Note: Perhaps it would make sense to generalize this concept of "inserted
-    # unrealized gains."
-    simple_entries = [entry
-                      for entry in entries
-                      if (not isinstance(entry, data.Transaction) or
-                          entry.flag != flags.FLAG_UNREALIZED)]
-    balances, _ = summarize.balance_by_account(simple_entries)
-
-    # Work through all positions of all the assets.
+    balances, _ = summarize.balance_by_account(entries)
     date = entries[-1].date
     acctypes = options.get_account_types(options_map)
     for account, balance in sorted(balances.items()):
+        # Keep only the balance sheet accounts.
         acctype = account_types.get_account_type(account)
         if not acctype in (acctypes.assets, acctypes.liabilities):
             continue
-        for pos in balance:
-            # Extract a price.
-            cost = pos.lot.cost
-            if cost is not None:
-                base_quote = (pos.lot.currency, cost.currency)
-                price_date, price_number = prices.get_price(price_map, base_quote, None)
-                price = amount.Amount(price_number, cost.currency)
-            else:
-                price = None
+        # Create a posting for each of the positions.
+        for position in balance:
+            yield data.Posting(account, position.units, position.cost, None, None, None)
 
-            yield data.Posting(account, pos, price, None, None)
+
+def add_prices_to_postings(entries, postings):
+    # Compute a price map, to extract most current prices.
+    price_map = prices.build_price_map(entries)
+    for posting in postings:
+        if posting.cost is not None:
+            cbase = posting.units.currency
+            cquote = posting.cost.currency
+            (price_date,
+             price_number) = prices.get_price(price_map, (cbase, cquote), None)
+            posting = posting._replace(price=amount.Amount(price_number, cquote))
+        yield posting
 
 
 def get_connection():
@@ -113,21 +122,25 @@ def get_connection():
 class Model:
     """A model of the spreadsheet that makes it easy to configure the output."""
 
-    def __init__(self, postings, exports):
+    def __init__(self, postings, exports, asset_type, cash_currency='USD'):
+        self.cash_currency = cash_currency
         self.postings = postings
         self.exports = exports
+        self.asset_type = asset_type
 
         columns = [
             ('Account', self._account),
-            ('Label', self._cost_label),
-            ('Date', self._cost_date),
-            ('Units', self._units_number),
             ('Currency', self._units_currency),
-            ('Unit Cost', self._cost_number),
-            ('Cost Currency', self._cost_currency),
-            ('Unit Price', self._price_number),
-            ('Price Currency', self._price_currency),
             ('Symbol', self._symbol),
+            ('Cost Currency', self._cost_currency),
+            ('Units', self._units_number),
+            ('Unit Cost', self._cost_number),
+            ('Unit Price', self._price_number),
+            ('Conversion Factor', self._conversion),
+            ('Asset Type', self._asset_type),
+            # ('Label', self._cost_label),
+            # ('Date', self._cost_date),
+            # ('Price Currency', self._price_currency),
         ]
         self.columns = {index: head_fun
                         for index, head_fun in enumerate(columns, start=1)}
@@ -151,25 +164,27 @@ class Model:
         return posting.account
 
     def _symbol(self, posting):
-        return self.exports.get(posting.position.lot.currency, '')
+        symbol = self.exports.get(posting.units.currency, '')
+        return ('' if symbol in ('CASH', 'IGNORE')
+                else symbol)
 
     def _units_number(self, posting):
-        return posting.position.number
+        return posting.units.number
 
     def _units_currency(self, posting):
-        return posting.position.lot.currency
+        return posting.units.currency
 
     def _cost_number(self, posting):
-        cost = posting.position.lot.cost
+        cost = posting.cost
         return cost.number if cost is not None else ''
 
     def _cost_currency(self, posting):
-        cost = posting.position.lot.cost
+        cost = posting.cost
         return cost.currency if cost is not None else ''
 
     def _cost_date(self, posting):
-        date = posting.position.lot.lot_date
-        return date if date is not None else ''
+        date = posting.cost.date if posting.cost else None
+        return date or ''
 
     def _cost_label(self, posting):
         return ''  # Not supported yet; see booking branch.
@@ -181,6 +196,25 @@ class Model:
     def _price_currency(self, posting):
         price = posting.price
         return price.currency if price is not None else ''
+
+    CURRENCY_MAP = {'NIS': 'ILS'}
+
+    def _conversion(self, posting):
+        currency = (posting.units.currency
+                    if posting.cost is None else
+                    posting.cost.currency)
+
+        if self.exports.get(currency, None) in 'IGNORE':
+            return ZERO
+
+        currency = self.CURRENCY_MAP.get(currency, currency)
+        if currency == self.cash_currency:
+            return ONE
+        else:
+            return '=GOOGLEFINANCE("CURRENCY:{}{}")'.format(currency, self.cash_currency)
+
+    def _asset_type(self, posting):
+        return self.asset_type.get(posting.units.currency)
 
 
 def get_root_accounts(postings):
@@ -196,7 +230,7 @@ def get_root_accounts(postings):
     """
     roots = {posting.account: (account.parent(posting.account)
                                if (account.leaf(posting.account) ==
-                                   posting.position.lot.currency)
+                                   posting.units.currency)
                                else posting.account)
              for posting in postings}
     values = set(roots.values())
@@ -217,26 +251,26 @@ def aggregate_postings(postings):
     """
     balances = collections.defaultdict(inventory.Inventory)
     for posting in postings:
-        lot = posting.position.lot
-        cost = lot.cost
-        key = ('Multiple' if cost is None else posting.account, lot.currency)
-        balances[key].add_position(posting.position)
+        # key = ('Multiple' if posting.cost is None else posting.account,
+        #        posting.units.currency)
+        # balances[key].add_position(posting)
+        key = (posting.account, posting.units.currency)
+        balances[key].add_position(posting)
 
     agg_postings = []
     for (account, currency), balance in balances.items():
         units = balance.units()
         assert len(units) == 1
-        pos_units = units[0]
+        units = units[0].units
 
         cost = balance.cost()
         assert len(cost) == 1
-        pos_cost = cost[0]
+        total_cost = cost[0].units
 
-        pos = position.from_amounts(
-            amount.Amount(pos_units.number, pos_units.lot.currency),
-            amount.Amount(pos_cost.number/pos_units.number, pos_cost.lot.currency))
-
-        posting = data.Posting(account, pos, None, None, None)
+        average_cost = position.Cost(total_cost.number/units.number,
+                                     total_cost.currency,
+                                     None, None)
+        posting = data.Posting(account, units, average_cost, None, None, None)
         agg_postings.append(posting)
 
     return agg_postings
@@ -270,38 +304,40 @@ def main():
     # Connect to the API.
     gc = get_connection()
     doc = gc.open_by_key(args.docid)
+    # Note: You have to share the sheet with the "client_email" address.
 
     # Load the file contents.
     entries, errors, options_map = loader.load_file(args.filename)
 
     # Enumerate the list of assets.
     def keyfun(posting):
-        lot = posting.position.lot
-        cost = lot.cost
-        if cost is None:
-            return (1, lot.currency, posting.account)
+        if posting.cost is None:
+            return (1, posting.units.currency, posting.account)
         else:
-            return (0, posting.account, lot.currency)
+            return (0, posting.account, posting.cost.currency)
 
-    postings = sorted(get_assets(entries, options_map), key=keyfun)
+    postings = sorted(get_assets(clean_entries_for_balances(entries), options_map),
+                      key=keyfun)
 
     # Simplify the accounts to their root accounts.
     root_accounts = get_root_accounts(postings)
     postings = [posting._replace(account=root_accounts[posting.account])
                 for posting in postings]
 
-    # Get the map of commodities to export meta tags.
-    commodities_map = getters.get_commodity_map(entries)
-    exports = getters.get_values_meta(commodities_map, 'export')
-    exports = {key: '' if value in ('CASH', 'IGNORE') else value
-               for key, value in exports.items()}
-
     # Aggregate postings by account/currency.
     agg_postings = sorted(aggregate_postings(postings), key=keyfun)
 
+    # Add prices to the postings.
+    agg_postings = add_prices_to_postings(entries, agg_postings)
+
+    # Get the map of commodities to export meta tags.
+    commodities_map = getters.get_commodity_map(entries)
+    exports = getters.get_values_meta(commodities_map, 'export')
+    asset_type = getters.get_values_meta(commodities_map, 'assets')
+
     # Create models and update the sheets.
-    upload_postings_to_sheet(Model(postings, exports), doc, 0)
-    upload_postings_to_sheet(Model(agg_postings, exports), doc, 1)
+    upload_postings_to_sheet(Model(list(agg_postings), exports, asset_type), doc, 0)
+    #upload_postings_to_sheet(Model(postings, exports), doc, 0)
 
 
 if __name__ == '__main__':
