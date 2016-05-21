@@ -1308,6 +1308,13 @@ http://furius.ca/beancount/doc/proposal-query
     Willing to share (see email).
 
 
+** Betterment
+
+  - Process xentac's Betterment example PDF for the booking branch, that would
+    be great input for a PDF converter, and figure out which lot identification
+    method Betterment uses for tax-loss harvesting and rebalancing.
+
+
 * Make Commodity Directives Required
 
   Zhuoyun Wei made a comment on a doc that account names are required to be
