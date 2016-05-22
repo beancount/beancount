@@ -6,7 +6,7 @@ Note: This file contains only changes in the 'default' branch.
 
 2016-05-22
 
-  - Create the beancount.plugins.mark_unverified plugin as a response to this
+  - Created the beancount.plugins.mark_unverified plugin as a response to this
     thread: https://groups.google.com/d/msg/beancount/hQoOSJE7qNo/-E__v-XhEgAJ
 
     This plugin makes it possible to compute the balances as of the last Balance
