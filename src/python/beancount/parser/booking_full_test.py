@@ -1232,6 +1232,8 @@ class _BookingTestBase(unittest.TestCase):
         # book_reductions().
         entry_reduced = find_first_with_tag('reduced', all_entries, None)
         if entry_reduced:
+            # Note: If there are multiple currencies in the input entries here
+            # this equality may not match.
             self.assertEqual(len(input_entries), len(reduce_mock.calls))
             reduce_postings, reduce_errors = reduce_mock.calls[-1].return_value
             self.assertPostings(entry_reduced.postings, reduce_postings)
@@ -2208,17 +2210,6 @@ class TestBookAmbiguousAVERAGE(_BookingTestBase):
           error: "Failed to categorize posting"
         """
 
-
-
-
-
-
-
-
-
-
-
-    @unittest.skip("FIXME TODO")
     @book_test(Booking.AVERAGE)
     def test_ambiguous__AVERAGE__mixed_currencies__unambi_currency(self, _, __):
         """
@@ -2237,7 +2228,6 @@ class TestBookAmbiguousAVERAGE(_BookingTestBase):
           Assets:Account         40 HOOL {110.00 CAD, 2015-10-01}
         """
 
-    @unittest.skip("FIXME TODO")
     @book_test(Booking.AVERAGE)
     def test_ambiguous__AVERAGE__mixed_currencies__unambi_currency__merging(self, _, __):
         """
@@ -2262,26 +2252,53 @@ class TestBookAmbiguousAVERAGE(_BookingTestBase):
           Assets:Account         40 HOOL {110.00 CAD, 2015-10-01}
         """
 
+    @book_test(Booking.AVERAGE)
+    def test_ambiguous__AVERAGE__mixed_currencies__unambi_date(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account         60 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         40 HOOL {110.00 USD, 2015-10-02}
+
+        ;; Notice how this matches only a portion of the inventory, even if we're at
+        ;; average cost. Handle this accordingly.
+        2015-06-01 * #apply
+          Assets:Account        -30 HOOL {2015-10-02}
+
+        2015-06-01 * #booked #reduced
+          Assets:Account        -30 HOOL {110.00 USD, 2015-10-02}
+
+        ;; Note that here we leave the remaining lots merged.
+        2015-01-01 * #ex
+          Assets:Account         60 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         10 HOOL {110.00 USD, 2015-10-02}
+        """
+
+    @book_test(Booking.AVERAGE)
+    def test_ambiguous__AVERAGE__mixed_currencies__unambi_with_merge(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account         60 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         10 HOOL {107.00 USD, 2015-10-02}
+          Assets:Account         30 HOOL {111.00 USD, 2015-10-02}
+
+        ;; This is like the previous example but which involves some merging.
+        2015-06-01 * #apply
+          Assets:Account        -30 HOOL {2015-10-02}
+
+        2015-06-01 * #booked #reduced
+          M Assets:Account      -10 HOOL {107.00 USD, 2015-10-02}
+          M Assets:Account      -30 HOOL {111.00 USD, 2015-10-02}
+          M Assets:Account       40 HOOL {110.00 USD, 2015-10-02}
+          Assets:Account        -30 HOOL {110.00 USD, 2015-10-02}
+
+        ;; Note that here we also leave the remaining lots merged.
+        2015-01-01 * #ex
+          Assets:Account         60 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         10 HOOL {110.00 USD, 2015-10-02}
+        """
 
 
-    # # FIXME: What should happen here?
-    # @book_test(Booking.AVERAGE)
-    # def test_ambiguous__AVERAGE__mixed_currencies__unambi_date(self, entries, _, __):
-    #     """
-    #     2015-01-01 * #ante
-    #       Assets:Account         60 HOOL {100.00 USD, 2015-10-01}
-    #       Assets:Account         40 HOOL {110.00 USD, 2015-10-02}
 
-    #     2015-06-01 * #apply
-    #       Assets:Account        -30 HOOL {2015-10-02}
-
-    #     2015-06-01 * #booked
-    #       Assets:Account        -30 HOOL {100.00 USD, 2015-10-01}
-
-    #     2015-01-01 * #ex
-    #       Assets:Account         30 HOOL {100.00 USD, 2015-10-01}
-    #       Assets:Account         40 HOOL {110.00 CAD, 2015-10-01}
-    #     """
 
 
 
@@ -2294,7 +2311,7 @@ class TestBookAmbiguousAVERAGE(_BookingTestBase):
 
     @unittest.skip("FIXME TODO")
     @book_test(Booking.AVERAGE)
-    def test_ambiguous__AVERAGE__merging__mixed_currencies__ambiguous(self, entries, _, __):
+    def test_ambiguous__AVERAGE__merging__mixed_currencies__ambiguous(self, _, __):
         """
         2015-01-01 * #ante #ex
           Assets:Account         60 HOOL {100.00 USD, 2015-10-01}
@@ -2309,7 +2326,7 @@ class TestBookAmbiguousAVERAGE(_BookingTestBase):
 
     @unittest.skip("FIXME TODO")
     @book_test(Booking.AVERAGE)
-    def test_ambiguous__AVERAGE__merging__mixed_currencies__with_cost_and_currency(self, entries, _, __):
+    def test_ambiguous__AVERAGE__merging__mixed_currencies__with_cost_and_currency(self, _, __):
         """
         2015-01-01 * #ante
           Assets:Account         60 HOOL {100.00 USD, 2015-10-01}
@@ -2328,7 +2345,7 @@ class TestBookAmbiguousAVERAGE(_BookingTestBase):
 
     @unittest.skip("FIXME TODO")
     @book_test(Booking.AVERAGE)
-    def test_ambiguous__AVERAGE__merging__mixed_currencies__with_cost(self, entries, _, __):
+    def test_ambiguous__AVERAGE__merging__mixed_currencies__with_cost(self, _, __):
         """
         2015-01-01 * #ante
           Assets:Account         60 HOOL {100.00 USD, 2015-10-01}
@@ -2347,7 +2364,7 @@ class TestBookAmbiguousAVERAGE(_BookingTestBase):
 
     @unittest.skip("FIXME TODO")
     @book_test(Booking.AVERAGE)
-    def test_ambiguous__AVERAGE__merging__mixed_currencies__matching(self, entries, _, __):
+    def test_ambiguous__AVERAGE__merging__mixed_currencies__matching(self, _, __):
         """
         2015-01-01 * #ante
           Assets:Account         60 HOOL {100.00 USD, 2015-10-01}
