@@ -2109,7 +2109,7 @@ class TestBookAmbiguousAVERAGE(_BookingTestBase):
           Assets:Account        100 HOOL {100.00 USD, 2015-10-01}
 
         2015-06-01 * #apply
-          Assets:Account         -2 HOOL {} ;; REDUCING
+          Assets:Account         -2 HOOL {}
 
         2015-06-01 * #booked
           Assets:Account         -2 HOOL {100.00 USD, 2015-10-01}
@@ -2125,7 +2125,7 @@ class TestBookAmbiguousAVERAGE(_BookingTestBase):
           Assets:Account        100 HOOL {100.00 USD, 2015-10-01}
 
         2015-06-01 * #apply
-          Assets:Account       -102 HOOL {} ;; REDUCING
+          Assets:Account       -102 HOOL {}
 
         2015-06-01 * #booked
           error: "Not enough lots to reduce"
@@ -2139,7 +2139,7 @@ class TestBookAmbiguousAVERAGE(_BookingTestBase):
           Assets:Account         50 HOOL {101.00 USD, 2015-10-01}
 
         2015-06-01 * #apply
-          Assets:Account        -49 HOOL {} ;; REDUCING
+          Assets:Account        -49 HOOL {}
 
         2015-06-01 * #booked #reduced
           M Assets:Account      -50 HOOL {100.00 USD, 2015-10-01}
@@ -2159,7 +2159,7 @@ class TestBookAmbiguousAVERAGE(_BookingTestBase):
           Assets:Account         50 HOOL {101.00 USD, 2015-10-01}
 
         2015-06-01 * #apply
-          Assets:Account        -51 HOOL {} ;; REDUCING
+          Assets:Account        -51 HOOL {}
 
         2015-06-01 * #booked #reduced
           M Assets:Account      -50 HOOL {100.00 USD, 2015-10-01}
@@ -2171,6 +2171,27 @@ class TestBookAmbiguousAVERAGE(_BookingTestBase):
           Assets:Account         49 HOOL {100.50 USD, 2015-10-01}
         """
 
+    # Just another of the same.
+    @book_test(Booking.AVERAGE)
+    def test_ambiguous__AVERAGE__simple_merge2_match2_b(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account         60 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         40 HOOL {110.00 USD, 2015-10-02}
+
+        2015-06-01 * #apply
+          Assets:Account        -20 HOOL {}
+
+        2015-06-01 * #booked
+          M Assets:Account      -60 HOOL {100.00 USD, 2015-10-01}
+          M Assets:Account      -40 HOOL {110.00 USD, 2015-10-02}
+          M Assets:Account      100 HOOL {104.00 USD, 2015-10-01}
+          Assets:Account        -20 HOOL {104.00 USD, 2015-10-01}
+
+        2015-01-01 * #ex
+          Assets:Account         80 HOOL {104.00 USD, 2015-10-01}
+        """
+
     @book_test(Booking.AVERAGE)
     def test_ambiguous__AVERAGE__simple_merge3_match1(self, _, __):
         """
@@ -2180,7 +2201,7 @@ class TestBookAmbiguousAVERAGE(_BookingTestBase):
           Assets:Account         50 HOOL {102.00 USD, 2015-10-01}
 
         2015-06-01 * #apply
-          Assets:Account        -49 HOOL {} ;; REDUCING
+          Assets:Account        -49 HOOL {}
 
         2015-06-01 * #booked #reduced
           M Assets:Account      -50 HOOL {100.00 USD, 2015-10-01}
@@ -2192,6 +2213,37 @@ class TestBookAmbiguousAVERAGE(_BookingTestBase):
         2015-01-01 * #ex
           Assets:Account        101 HOOL {101.00 USD, 2015-10-01}
         """
+
+    @book_test(Booking.AVERAGE)
+    def test_ambiguous__AVERAGE__simple_merge2_insufficient(self, _, __):
+        """
+        2015-01-01 * #ante #ex
+          Assets:Account         50 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         50 HOOL {101.00 USD, 2015-10-01}
+
+        2015-06-01 * #apply
+          Assets:Account       -101 HOOL {}
+
+        2015-06-01 * #booked #reduced
+          error: "Not enough lots to reduce"
+        """
+
+    # This is similar to the previous.
+    @book_test(Booking.AVERAGE)
+    def test_ambiguous__AVERAGE__simple_merge2_insufficient_b(self, _, __):
+        """
+        2015-01-01 * #ante #ex
+          Assets:Account         60 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         40 HOOL {110.00 USD, 2015-10-02}
+
+        2015-06-01 * #apply
+          Assets:Account       -120 HOOL {}
+
+        2015-06-01 * #booked #reduced
+          error: "Not enough lots to reduce"
+        """
+
+
 
     # Tests with mixed currencies. These should fail if the match is at all
     # ambiguous.
@@ -2302,6 +2354,11 @@ class TestBookAmbiguousAVERAGE(_BookingTestBase):
 
 
 
+
+
+
+
+
 
     # FIXME: Continue here.
 
@@ -2390,175 +2447,45 @@ class TestBookAmbiguousAVERAGE(_BookingTestBase):
 
 ## CONTINUE
 
-def _handle_ambiguous(balance_entry, reduction, booking_method,
-                      balances=None, debug=False):
-    """Call handle_ambiguous_matches with a pre-existing balance.
-
-    Args:
-      balance_entry: A Transaction directive used to initialize ante-inventories
-        of all accounts before calling the function.
-      reduction: A Posting instance, to be applied by the function.
-      booking_method: The booking method to apply.
-      balances: An optional dict of account name to resulting ex-inventory balances.
-        Provide this argument if you'd like to have this function compute
-        the ex-balances.
-      debug: An optional flag, true if we should print out debug information.
-    Returns:
-      A triple of
-        postings: A list of matched postings to replace 'reduction'.
-        errors: A list of errors generated.
-
-    """
-    entries, convert_errors = bs.convert_lot_specs_to_lots([balance_entry])
-    assert len(entries) == 1
-    entry = entries[0]
-    assert not convert_errors
-
-    if debug:
-        print('reduction')
-        printer.print_entry(reduction)
-        print('/matches')
-        for match in entry.postings:
-            print(match)
-        print(r'\matches')
-
-    # Compute the new balances.
-    postings, errors = bf.handle_ambiguous_matches(entry, reduction, entry.postings,
-                                                   booking_method)
-
-    # Compute ex-balances.
-    if balances is not None:
-        for posting in itertools.chain(entry.postings, postings):
-            bal = balances.setdefault(posting.account, inventory.Inventory())
-            bal.add_position(posting)
-
-    return postings, errors
 
 
-class TestHandleAmbiguousMatches(unittest.TestCase):
+# @parser.parse_doc(allow_incomplete=True)
+# def test_ambiguous__AVERAGE__merging_with_cost(self, entries, _, __):
+#     """
+#     2015-01-01 * "Single position"
+#       Assets:Account         60 HOOL {100.00 USD, 2015-10-01}
+#       Assets:Account         40 HOOL {110.00 USD, 2015-10-02}
 
-    maxDiff = 8192
+#     2015-06-01 * "" #error
+#       Assets:Account        -20 HOOL {140.00 USD}
+#       M Assets:Account      -60 HOOL {100.00 USD, 2015-10-01}
+#       M Assets:Account      -40 HOOL {110.00 USD, 2015-10-02}
+#       M Assets:Account       80 HOOL { 95.00 USD, 2015-10-01}
+#     """
+#     exbal_list = self._reduce_first_expect_rest(entries[0], entries[1:],
+#                                                 Booking.AVERAGE)
+#     self.assertEqual(
+#         {'Assets:Account': I('-20 HOOL {104.00 USD, 2015-10-01}')},
+#         exbal_list[0])
 
-    def _reduce_first_expect_rest(self, pre_entry, entries, booking_method, debug=False):
-        """Test the entries using the format examplified in the two following methods."""
-        exbalances_list = []
-        for entry in entries:
-            apply_posting = entry.postings[0]
-            expected_postings = [
-                posting._replace(cost=bs.convert_spec_to_cost(posting.units,
-                                                                          posting.cost))
-                for posting in entry.postings[1:]]
-            exbalances = collections.defaultdict(inventory.Inventory)
-            matched_postings, errors = _handle_ambiguous(
-                pre_entry, apply_posting, booking_method,
-                balances=exbalances, debug=debug)
-            exbalances_list.append(exbalances)
+# FIXME: You need to handle an explicit cost in an average reduction. This
+# is required in order to handle pre-tax 401k accounts with fees that are
+# calculated at market price.
 
-            ## FIXME: remove
-            if debug:
-                print(',------------------------------')
-                for posting in expected_postings:
-                    print(posting._replace(meta=None))
-                print(' ------------------------------')
-                for posting in matched_postings:
-                    print(posting._replace(meta=None))
-                print('`------------------------------')
+# FIXME: You need to deal with the case of using the '*' syntax instead of
+# having the matches come from the AVERAGE method. I'm not sure I need it
+# anymore actually. If I do, then reductions need to be able to deal with
+# mixed inventories.
 
-            self.assertEqual(len(expected_postings), len(matched_postings))
-            for expected_posting, matched_posting in zip(expected_postings,
-                                                         matched_postings):
-                self.assertEqual(expected_posting._replace(meta=None),
-                                 matched_posting._replace(meta=None),
-                                 "Postings don't match: {} != {}".format(expected_posting,
-                                                                         matched_posting))
-            expect_error = bool(entry.tags)
-            self.assertEqual(expect_error, bool(errors))
+# FIXME: If an account's method is AVERAGE we probably want to merge the
+# augmentations together immediately after an augmentation. Do this now, it
+# will result in nicer balances and a more predictable output, at the
+# expense of some rounding error (probably negligible, given the precision
+# we're supporting).
 
-        return exbalances_list
-
-    @parser.parse_doc(allow_incomplete=True)
-    def test_ambiguous__AVERAGE__merging(self, entries, _, __):
-        """
-        2015-01-01 * "Single position"
-          Assets:Account         60 HOOL {100.00 USD, 2015-10-01}
-          Assets:Account         40 HOOL {110.00 USD, 2015-10-02}
-
-        2015-06-01 * ""
-          Assets:Account        -20 HOOL {} ;; REDUCING
-          M Assets:Account      -60 HOOL {100.00 USD, 2015-10-01}
-          M Assets:Account      -40 HOOL {110.00 USD, 2015-10-02}
-          M Assets:Account      100 HOOL {104.00 USD, 2015-10-01}
-          Assets:Account        -20 HOOL {104.00 USD, 2015-10-01}
-        """
-        exbal_list = self._reduce_first_expect_rest(entries[0], entries[1:],
-                                                       Booking.AVERAGE)
-        self.assertEqual(
-            {'Assets:Account': I('80 HOOL {104.00 USD, 2015-10-01}')},
-            exbal_list[0])
-
-    @parser.parse_doc(allow_incomplete=True)
-    def test_ambiguous__AVERAGE__merging_insufficient(self, entries, _, __):
-        """
-        2015-01-01 * "Single position"
-          Assets:Account         60 HOOL {100.00 USD, 2015-10-01}
-          Assets:Account         40 HOOL {110.00 USD, 2015-10-02}
-
-        2015-06-01 * "" #error
-          Assets:Account       -120 HOOL {} ;; REDUCING
-          M Assets:Account      -60 HOOL {100.00 USD, 2015-10-01}
-          M Assets:Account      -40 HOOL {110.00 USD, 2015-10-02}
-          M Assets:Account      100 HOOL {104.00 USD, 2015-10-01}
-          Assets:Account       -120 HOOL {104.00 USD, 2015-10-01}
-        """
-        exbal_list = self._reduce_first_expect_rest(entries[0], entries[1:],
-                                                    Booking.AVERAGE)
-        self.assertEqual(
-            {'Assets:Account': I('-20 HOOL {104.00 USD, 2015-10-01}')},
-            exbal_list[0])
-
-    # @parser.parse_doc(allow_incomplete=True)
-    # def test_ambiguous__AVERAGE__merging_with_cost(self, entries, _, __):
-    #     """
-    #     2015-01-01 * "Single position"
-    #       Assets:Account         60 HOOL {100.00 USD, 2015-10-01}
-    #       Assets:Account         40 HOOL {110.00 USD, 2015-10-02}
-
-    #     2015-06-01 * "" #error
-    #       Assets:Account        -20 HOOL {140.00 USD} ;; REDUCING
-    #       M Assets:Account      -60 HOOL {100.00 USD, 2015-10-01}
-    #       M Assets:Account      -40 HOOL {110.00 USD, 2015-10-02}
-    #       M Assets:Account       80 HOOL { 95.00 USD, 2015-10-01}
-    #     """
-    #     exbal_list = self._reduce_first_expect_rest(entries[0], entries[1:],
-    #                                                 Booking.AVERAGE)
-    #     self.assertEqual(
-    #         {'Assets:Account': I('-20 HOOL {104.00 USD, 2015-10-01}')},
-    #         exbal_list[0])
-
-    # FIXME: You need to handle an explicit cost in an average reduction. This
-    # is required in order to handle pre-tax 401k accounts with fees that are
-    # calculated at market price.
-
-    # FIXME: You need to deal with the case of using the '*' syntax instead of
-    # having the matches come from the AVERAGE method. I'm not sure I need it
-    # anymore actually. If I do, then reductions need to be able to deal with
-    # mixed inventories.
-
-    # FIXME: If an account's method is AVERAGE we probably want to merge the
-    # augmentations together immediately after an augmentation. Do this now, it
-    # will result in nicer balances and a more predictable output, at the
-    # expense of some rounding error (probably negligible, given the precision
-    # we're supporting).
-
-    # FIXME: You need to test what happens when you use the NONE method and
-    # reduce without providing the cost information on the lot. Add a test for
-    # this case. This ought to result in an error.
-
-
-
-
-
-
+# FIXME: You need to test what happens when you use the NONE method and
+# reduce without providing the cost information on the lot. Add a test for
+# this case. This ought to result in an error.
 
 
 
@@ -2630,7 +2557,7 @@ class TestHandleAmbiguousMatches(unittest.TestCase):
 #           Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
 
 #         2015-02-22 * #apply
-#           Assets:Account         -7 HOOL {}  ;; REDUCING
+#           Assets:Account         -7 HOOL {}
 
 #         2015-02-22 * #booked #ambi-resolved
 #           Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
