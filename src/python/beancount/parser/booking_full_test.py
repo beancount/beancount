@@ -406,6 +406,18 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
         self.assertEqual(2, len(groups['USD']))
         self.assertFalse(errors)
 
+    @parser.parse_doc(allow_incomplete=True)
+    def test_categorize__against_mixed(self, entries, _, options_map):
+        """
+        2016-05-02 *
+          Assets:Account          -40 HOOL {}
+        """
+        balances = {'Assets:Account': I('50 HOOL {100.00 USD, 2016-01-15}, '
+                                        '50 HOOL { 50.00 CAD, 2016-01-15}')}
+        groups, errors = bf.categorize_by_currency(entries[0], balances)
+        self.assertEqual(0, len(groups))
+        self.assertTrue(errors)
+        self.assertRegex(errors[0].message, 'Failed to categorize posting')
 
 
 class TestReplaceCurrenciesInGroup(unittest.TestCase):
@@ -1070,7 +1082,8 @@ class _BookingTestBase(unittest.TestCase):
                   'booked',
                   'ambi-matches',
                   'ambi-resolved',
-                  'reduced'}
+                  'reduced',
+                  'print'}
 
     def _book(self, entries, options_map, booking_method):
         """Test a call to book a particular scenario.
@@ -1114,6 +1127,10 @@ class _BookingTestBase(unittest.TestCase):
             - An entry with #reduced describes and asserts the list of postings
               which were resolved from the call to book_reductions().
 
+            Finally, if you tag some entries with #print they will be printed by
+            the test routine. This is a convenient debugging helper while
+            crafting a new test.
+
           options_map: An options dict. The default booking method is consulted.
           booking_method: A data.Booking enum value.
 
@@ -1124,6 +1141,7 @@ class _BookingTestBase(unittest.TestCase):
 
         If a posting has a 'S' flag, it is not converted to a Cost and we'll
         expect a CostSpec to be set on it.
+
         """
         # Make sure that all the tags provided in the test input are valid.
         for entry in entries:
@@ -1132,6 +1150,11 @@ class _BookingTestBase(unittest.TestCase):
                 assert tag in self.VALID_TAGS, tag
             remaining_meta = set(entry.meta.keys()) - set(['error', 'filename', 'lineno'])
             assert not remaining_meta, remaining_meta
+
+        # Print all explicitly requested entries.
+        for entry in entries:
+            if 'print' in entry.tags:
+                printer.print_entry(entry)
 
         # Find all entries with tags.
         entries_apply = [entry
@@ -1179,19 +1202,20 @@ class _BookingTestBase(unittest.TestCase):
             book_entries, book_errors, balances = bf._book(input_entries, options_map,
                                                            methods)
 
-        # ## FIXME: remove
+        ## FIXME: remove
+        # print('-------------------------------- input_entries')
         # printer.print_entries(input_entries)
-        # printer.print_entries(entries)
+        # print('-------------------------------- book_entries')
         # printer.print_entries(book_entries)
-        # printer.print_errors(book_errors)
 
         # If requested, check the result of booking.
         entry_booked = find_first_with_tag('booked', all_entries, None)
         if entry_booked:
             # Check the output postings and errors.
-            entry_postings = book_entries[-1].postings if book_entries else []
-            self.assertPostings(entry_booked.postings, entry_postings)
             self.assertErrors(entry_booked, book_errors)
+            actual_postings = book_entries[-1].postings if book_entries else []
+            if not book_errors and (entry_booked.postings or actual_postings):
+                self.assertPostings(entry_booked.postings, actual_postings)
 
         # Check that the resulting inventory balance matches that of the 'ex'
         # entry, if present.
@@ -1264,6 +1288,12 @@ class _BookingTestBase(unittest.TestCase):
             a 'S' flag on the posting.
           actual_postings: A list of actual Posting instances.
         """
+        # Note: In this function we have to remove the flags to compare them
+        # because the flag is already used by the testing method's DSL to
+        # indicate to keep a CostSpec, so we cannot assert other flags like
+        # this, like for example the 'M' for merged flags for average cost
+        # booking.
+
         # Optionally convert CostSpec to Cost, removing the flag.
         expected_postings = [
             posting._replace(meta=None,
@@ -1275,7 +1305,8 @@ class _BookingTestBase(unittest.TestCase):
             for posting in expected_postings]
 
         actual_postings = [
-            posting._replace(meta=None)
+            posting._replace(meta=None,
+                             flag=None)
             for posting in actual_postings]
 
         # Compare them while maintaining their order.
@@ -2070,7 +2101,7 @@ class TestBookAmbiguousLIFO(_BookingTestBase):
 class TestBookAmbiguousAVERAGE(_BookingTestBase):
 
     @book_test(Booking.AVERAGE)
-    def test_ambiguous__AVERAGE__simple1(self, _, __):
+    def test_ambiguous__AVERAGE__trivial1(self, _, __):
         """
         2015-01-01 * #ante
           Assets:Account        100 HOOL {100.00 USD, 2015-10-01}
@@ -2086,7 +2117,7 @@ class TestBookAmbiguousAVERAGE(_BookingTestBase):
         """
 
     @book_test(Booking.AVERAGE)
-    def test_ambiguous__AVERAGE__simple2(self, _, __):
+    def test_ambiguous__AVERAGE__trivial2(self, _, __):
         """
         2015-01-01 * #ante #ex
           Assets:Account        100 HOOL {100.00 USD, 2015-10-01}
@@ -2098,8 +2129,163 @@ class TestBookAmbiguousAVERAGE(_BookingTestBase):
           error: "Not enough lots to reduce"
         """
 
+    @book_test(Booking.AVERAGE)
+    def test_ambiguous__AVERAGE__simple_merge2_match1(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account         50 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         50 HOOL {101.00 USD, 2015-10-01}
+
+        2015-06-01 * #apply
+          Assets:Account        -49 HOOL {} ;; REDUCING
+
+        2015-06-01 * #booked #reduced
+          M Assets:Account      -50 HOOL {100.00 USD, 2015-10-01}
+          M Assets:Account      -50 HOOL {101.00 USD, 2015-10-01}
+          M Assets:Account      100 HOOL {100.50 USD, 2015-10-01}
+          Assets:Account        -49 HOOL {100.50 USD, 2015-10-01}
+
+        2015-01-01 * #ex
+          Assets:Account         51 HOOL {100.50 USD, 2015-10-01}
+        """
+
+    @book_test(Booking.AVERAGE)
+    def test_ambiguous__AVERAGE__simple_merge2_match2(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account         50 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         50 HOOL {101.00 USD, 2015-10-01}
+
+        2015-06-01 * #apply
+          Assets:Account        -51 HOOL {} ;; REDUCING
+
+        2015-06-01 * #booked #reduced
+          M Assets:Account      -50 HOOL {100.00 USD, 2015-10-01}
+          M Assets:Account      -50 HOOL {101.00 USD, 2015-10-01}
+          M Assets:Account      100 HOOL {100.50 USD, 2015-10-01}
+          Assets:Account        -51 HOOL {100.50 USD, 2015-10-01}
+
+        2015-01-01 * #ex
+          Assets:Account         49 HOOL {100.50 USD, 2015-10-01}
+        """
+
+    @book_test(Booking.AVERAGE)
+    def test_ambiguous__AVERAGE__simple_merge3_match1(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account         50 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         50 HOOL {101.00 USD, 2015-10-01}
+          Assets:Account         50 HOOL {102.00 USD, 2015-10-01}
+
+        2015-06-01 * #apply
+          Assets:Account        -49 HOOL {} ;; REDUCING
+
+        2015-06-01 * #booked #reduced
+          M Assets:Account      -50 HOOL {100.00 USD, 2015-10-01}
+          M Assets:Account      -50 HOOL {101.00 USD, 2015-10-01}
+          M Assets:Account      -50 HOOL {102.00 USD, 2015-10-01}
+          M Assets:Account      150 HOOL {101.00 USD, 2015-10-01}
+          Assets:Account        -49 HOOL {101.00 USD, 2015-10-01}
+
+        2015-01-01 * #ex
+          Assets:Account        101 HOOL {101.00 USD, 2015-10-01}
+        """
+
+    # Tests with mixed currencies. These should fail if the match is at all
+    # ambiguous.
+
+    @book_test(Booking.AVERAGE)
+    def test_ambiguous__AVERAGE__mixed_currencies__ambi(self, _, __):
+        """
+        2015-01-01 * #ante #ex
+          Assets:Account         60 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         40 HOOL {110.00 CAD, 2015-10-01}
+
+        2015-06-01 * #apply
+          Assets:Account        -20 HOOL {}
+
+        2015-06-01 * #booked
+          error: "Failed to categorize posting"
+        """
 
 
+
+
+
+
+
+
+
+
+
+    @unittest.skip("FIXME TODO")
+    @book_test(Booking.AVERAGE)
+    def test_ambiguous__AVERAGE__mixed_currencies__unambi_currency(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account         60 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         40 HOOL {110.00 CAD, 2015-10-01}
+
+        2015-06-01 * #apply
+          Assets:Account        -30 HOOL {USD}
+
+        2015-06-01 * #booked
+          Assets:Account        -30 HOOL {100.00 USD, 2015-10-01}
+
+        2015-01-01 * #ex
+          Assets:Account         30 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         40 HOOL {110.00 CAD, 2015-10-01}
+        """
+
+    @unittest.skip("FIXME TODO")
+    @book_test(Booking.AVERAGE)
+    def test_ambiguous__AVERAGE__mixed_currencies__unambi_currency__merging(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account         25 HOOL { 99.00 USD, 2015-10-01}
+          Assets:Account         10 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         25 HOOL {101.00 USD, 2015-10-01}
+          Assets:Account         40 HOOL {110.00 CAD, 2015-10-01}
+
+        2015-06-01 * #apply
+          Assets:Account        -30 HOOL {USD}
+
+        2015-06-01 * #booked
+          M Assets:Account      -25 HOOL { 99.00 USD, 2015-10-01}
+          M Assets:Account      -10 HOOL {100.00 USD, 2015-10-01}
+          M Assets:Account      -25 HOOL {101.00 USD, 2015-10-01}
+          M Assets:Account       60 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account        -30 HOOL {100.00 USD, 2015-10-01}
+
+        2015-01-01 * #ex
+          Assets:Account         30 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         40 HOOL {110.00 CAD, 2015-10-01}
+        """
+
+
+
+    # # FIXME: What should happen here?
+    # @book_test(Booking.AVERAGE)
+    # def test_ambiguous__AVERAGE__mixed_currencies__unambi_date(self, entries, _, __):
+    #     """
+    #     2015-01-01 * #ante
+    #       Assets:Account         60 HOOL {100.00 USD, 2015-10-01}
+    #       Assets:Account         40 HOOL {110.00 USD, 2015-10-02}
+
+    #     2015-06-01 * #apply
+    #       Assets:Account        -30 HOOL {2015-10-02}
+
+    #     2015-06-01 * #booked
+    #       Assets:Account        -30 HOOL {100.00 USD, 2015-10-01}
+
+    #     2015-01-01 * #ex
+    #       Assets:Account         30 HOOL {100.00 USD, 2015-10-01}
+    #       Assets:Account         40 HOOL {110.00 CAD, 2015-10-01}
+    #     """
+
+
+
+
     # FIXME: Continue here.
 
     # FIXME: We should allow inventories with such mixed cost currencies,
