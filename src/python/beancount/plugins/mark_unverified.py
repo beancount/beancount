@@ -17,17 +17,7 @@ would make no sense).
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import collections
-
-from beancount.core.number import ZERO
 from beancount.core import data
-from beancount.core import account
-from beancount.core import getters
-from beancount.core import amount
-from beancount.core import flags
-from beancount.ops import holdings
-from beancount.ops import prices
-from beancount.parser import options
 
 
 __plugins__ = ('mark_unverified',)
