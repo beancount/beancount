@@ -159,7 +159,7 @@ class TestSetup(test_utils.TestCase):
 
         # Find the set of packaged files in the source distribution.
         tar = tarfile.open(targz)
-        tar_filenames = set(re.sub('^.*?{}'.format(os.sep, os.sep), '', info.name)
+        tar_filenames = set(re.sub('^.*?{}'.format(os.sep), '', info.name)
                             for info in tar
                             if re.match(r'.*\.[hc]$', info.name))
 

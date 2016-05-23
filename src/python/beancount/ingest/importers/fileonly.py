@@ -4,20 +4,10 @@ Sometimes you just want to save and accumulate data
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import datetime
-import itertools
-import re
-from xml.sax import saxutils
 from os import path
 
-import bs4
-
-from beancount.core.number import D
-from beancount.core import amount
-from beancount.core import data
 from beancount.ingest import importer
 from beancount.ingest.importers import regexp
-from beancount.utils import misc_utils
 
 
 class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):

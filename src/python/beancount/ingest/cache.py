@@ -6,9 +6,9 @@ text, can be expensive.
 """
 __author__ = 'Martin Blais <blais@furius.ca>'
 
-import chardet
-import logging
 from os import path
+
+import chardet
 
 from beancount.utils import file_type
 from beancount.utils import defdict

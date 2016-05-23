@@ -52,7 +52,7 @@ FixPayeesError = collections.namedtuple('FixPayeesError', 'source message entry'
 
 
 # Set this to true to dump debug outpout.
-debug = False
+_DEBUG = False
 
 
 def fix_payees(entries, options_map, config):
@@ -77,7 +77,7 @@ def fix_payees(entries, options_map, config):
                                          None))
             return entries, errors
     else:
-            return entries, errors
+        return entries, errors
 
     # Pre-compile the regular expressions for performance.
     rules = []
@@ -123,7 +123,7 @@ def fix_payees(entries, options_map, config):
                     replaced_entries[new_payee].append(entry)
         new_entries.append(entry)
 
-    if debug:
+    if _DEBUG:
         # Print debugging info.
         for payee, repl_entries in sorted(replaced_entries.items(),
                                           key=lambda x: len(x[1]),

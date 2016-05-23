@@ -9,6 +9,7 @@ beancount: TODO
 {deprecation}
 {review-dcontext}
 {write-intro-doc}
+{commodity-required}
 
 * Settlement Dates (Split & Merge)
 
@@ -139,6 +140,12 @@ beancount: TODO
   - Write more on saving, "Climbing the Capital Mountain."
 
   - Summarize Ledger's --limit --real --virtual --equity, etc. options.
+
+  - Write a doc about how conceptually Beancount's data is really just a single
+    large joined table of Transactions JOIN Postings with some repeated fields
+    for inventory and tags, some data types for Amount and Inventory along with
+    accompanying functions to deal with those types. This could really help a
+    lot of people understand the framework for extracting data from Beancount.
 
 ** Misc Documentation Tasks
 
@@ -1231,6 +1238,10 @@ http://furius.ca/beancount/doc/proposal-query
 
 ** Future Features
 
+  - When multiple files match (as is the case for the A:CA:R importer) make
+    file_one_file() put a copy of the file in each place instead of issuing an
+    "Ambiguous accounts from many importers" warning.
+
   - Make beancount.ingest.importers.regexp.RegexpImporterMixin accept a
     "convert" optional argument that would be called by its get_text() method,
     and would allow us not to have to derive in order to support non-text files.
@@ -1334,7 +1345,15 @@ http://furius.ca/beancount/doc/proposal-query
     Willing to share (see email).
 
 
+** Betterment
+
+  - Process xentac's Betterment example PDF for the booking branch, that would
+    be great input for a PDF converter, and figure out which lot identification
+    method Betterment uses for tax-loss harvesting and rebalancing.
+
+
 * Make Commodity Directives Required
+{commodity-required}
 
   Zhuoyun Wei made a comment on a doc that account names are required to be
   declared by default while commodities don't. However, at this point they both
@@ -1346,6 +1365,8 @@ http://furius.ca/beancount/doc/proposal-query
   auto_accounts, so you could use that in order to not bother. The stream of
   transactions would assured to always contain a Commodity directive if one
   appears, like for accounts.
+
+  https://groups.google.com/d/msg/beancount/RHaV16bXlJs/Gyy5plujFgAJ
 
   - Do this.
 
@@ -4460,6 +4481,16 @@ http://furius.ca/beancount/doc/proposal-query
     Create a routine to figure out if an account was open during a specific
     time period?
 
+  - Related topics:
+    (ticket) https://bitbucket.org/blais/beancount/issues/36/balances-output-sometimes-outputs-000
+    (fava) https://github.com/aumayr/fava/issues/292#issuecomment-219563582
+
+  - One question is whether we should display an account which has a non-zero
+    balance but when rounded for display rounds to a zero number?
+
+      "the problem is not the sell, but the buy
+      that leaves -0.00120 USD in Assets:XYZ"
+
 * Rejected Ideas
 
   - Why aren't we using the price on the first leg of this transaction? This is
@@ -4943,4 +4974,202 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Annuities w/ numpy
 ** Starred Email - TODO
+
+  - Omitting all currencies in a transaction does not raise an error.
+    https://bitbucket.org/blais/beancount/issues/125/omitting-all-currencies-in-a-transaction
+
+  - Option to disable pickle cache
+    https://bitbucket.org/blais/beancount/issues/123/option-to-disable-pickle-cache
+
+  - pickle cache prevents document folder from being scanned
+    https://bitbucket.org/blais/beancount/issues/122/pickle-cache-prevents-document-folder-from
+
+  - If beancount file is encrypted relative document paths behave differently
+    https://bitbucket.org/blais/beancount/issues/119/if-beancount-file-is-encrypted-relative
+
+  - Create a balance_end directive
+    https://bitbucket.org/blais/beancount/issues/118/create-a-balance_end-directive
+    https://groups.google.com/d/msgid/beancount/CALkVjQbGAgJiGFb0aT9rUUYtiWOYOWvJGUgKqgGsuSE7%3DrodCQ%40mail.gmail.com?utm_medium=email&utm_source=footer
+
+  - Allow arithmetic operations on dates
+    https://bitbucket.org/blais/beancount/issues/115/allow-arithmetic-operations-on-dates
+
+  - Missing account from bean-report balances
+    https://bitbucket.org/blais/beancount/issues/116/missing-account-from-bean-report-balances
+
+      That's odd indeed. There's some background to this issue; some facts: -
+      There are multiple different types of balance reports, they all use a
+      different method to determine whether an empty balance account should be
+      rendered or not - Some of the criteria include: empty account has had
+      entries posted to it during the reporting period, empty account is open,
+      empty account has children - I need to review all of those and make them
+      consistent.
+
+      I'll leave this ticket open for now and address this in time for your specific
+      case. (It's tax-time, so I have a few other features I'm focusing right now
+      which I need immediately, will work on this later.)
+
+  - Documents directive with a trailing slash fails; relative path is undocumented
+    https://bitbucket.org/blais/beancount/issues/120/documents-directive-with-a-trailing-slash
+
+  - Implement a HAVING clause
+    https://bitbucket.org/blais/beancount/issues/114/implement-having
+
+
+
+  - A lot of decimal digits if using total price
+    https://bitbucket.org/blais/beancount/issues/109/a-lot-of-decimal-digits-if-using-total
+
+      This is an interesting idea I hadn't thought about, basically for the completion
+      to round from the most precise until the tolerance fails. I like this. Will
+      definitely consider this and implement eventually.
+
+  - beancount.report reports aren't honoring the DisplayContext.. make them do so.
+    https://bitbucket.org/blais/beancount/issues/108/beancountreport-reports-arent-honoring-the
+
+  - Convert the query rendering routines to use the DisplayContext
+    https://bitbucket.org/blais/beancount/issues/105/context-the-query-rendering-routines-to
+
+  - Review all codes that renders units, costs and prices for precision using
+    display context.
+    https://bitbucket.org/blais/beancount/issues/107/review-all-codes-that-renders-units-costs
+
+  - New issue 65: Context should render with natural precision
+    https://bitbucket.org/blais/beancount/issues/65/context-should-render-with-natural
+
+  - New issue 60: Rendering precision for reports is inconsistent.
+    https://bitbucket.org/blais/beancount/issue/60/rendering-precision-for-reports-is
+
+
+
+
+  - Complete OANDA importer - deal with timezone
+    https://groups.google.com/d/msg/beancount/_9hzfHfEEh0/XHLFQJEmBQAJ
+
+      "Turns out I need to deal with timezone and I ran out of time for today.
+      It's mainly working - albeit could give you the wrong rate depending in
+      which time zone you're calling - if you want to test it out, try the
+      "price_source_oanda" branch. I'll try to finish this soon."
+
+  - Make the balance sheet and income statement reports support conversion to a
+    single currency
+    https://bitbucket.org/blais/beancount/issues/103/make-the-balance-sheet-and-income
+    https://groups.google.com/d/msg/beancount/5JE9vntz54o/Xrh4w74rEQAJ
+
+  - Create a balance assertion that applies only to tagged or linked transactions.
+    https://bitbucket.org/blais/beancount/issues/102/create-a-balance-assertion-that-applies
+
+  - Make stockstatement parser shareable with others. See thread.
+
+
+  - Integrate aumayr's beancount-docs into beancount/doc
+    https://bitbucket.org/blais/beancount/issues/101/integrate-aumayrs-beancount-docs-into
+
+  - New issue 100: Provide an external registration mechanism to build new
+    reports, for fava
+    https://bitbucket.org/blais/beancount/issues/100/provide-an-external-registration-mechanism
+
+  - New issue 74: Make the printer not output | separator anymore
+    https://bitbucket.org/blais/beancount/issues/74/make-the-printer-not-output-separator
+
+  - New issue 99: multi-line syntax for tags and links
+    https://bitbucket.org/blais/beancount/issues/99/multi-line-syntax-for-tags-and-links
+
+  - New issue 66: Change active years in bean-web to be calculated using the
+    correct year month boundary
+    https://bitbucket.org/blais/beancount/issues/66/change-active-years-in-bean-web-to-be
+
+  - New issue 61: Implement pivot table tool & make sure it works to produce monthly
+    aggregations
+    https://bitbucket.org/blais/beancount/issue/61/implement-pivot-table-tool-make-sure-it
+
+
+  - Integrate Jon Stahl's doc contribution into the main doc about vesting; from here:
+    https://docs.google.com/document/d/1BnPgPGUEcCsWWadlDCvOUxVXVI1W26ysJPqL_aG-5JQ/edit
+    He added a section about options a long while ago. Review and complete this.
+
+  - New issue 55: Make it easy to filter out transactions in the future
+    https://bitbucket.org/blais/beancount/issue/55/make-it-easy-to-filter-out-transactions-in
+
+  - Provide some better built-in way to associate a particular document with a
+    transaction, see discussion here:
+    https://groups.google.com/d/msg/beancount/xGMbpfgb220/WPAjxkr8BQAJ
+
+  - Add #tag to the Pad directive and propagate the tags to the generated
+    transactions
+    https://bitbucket.org/blais/beancount/issues/70/add-tag-to-the-pad-directive-and-propagate
+
+
+
+*** Emacs Support
+
+  - Continue patching beancount.el from Stefan's submitted patches:
+    https://mail.google.com/mail/u/0/#inbox/14fdc82a04d90565
+
+  - Try it outline-minor-mode to see if I could make Beancount be a major mode
+    instead of a minor mode.
+    https://mail.google.com/mail/u/0/#inbox/149d363077404909
+
+      From Stefan: "Hmm... so basically as a glorified outline-minor-mode.
+      Could you try out outline-minor-mode and tell me what irks you most?"
+
+  - Look into TAB problem:
+    https://mail.google.com/mail/u/0/#inbox/14fdc82a04d90565
+
+      "Ben, en fait j'attendais de résoudre le problème du TAB, et pour ça j'ai
+      besoin d'un "recipe" vu que ce que j'ai essayé fonctionne."
+
 ** Open Tickets - TODO
+** TaxMin Reporting
+
+  - Read about TaxMin loss harvesting and see if I couldn't implement a similar
+    thing in Beancount:
+
+      "Thank you for taking the time to write in and follow up. At this time, there is
+      no way to view the full cost basis of all of your holdings at once at
+      Betterment.
+
+      Betterment uses a unique algorithm to optimize the tax-efficiency when selling
+      shares. You can learn more about our cost basis method for sales here:
+      https://www.betterment.com/resources/investment-strategy/taxes/lowering-your-tax-bill-by-improving-our-cost-basis-accounting-methods/
+
+      The same data available on our PDF statements is available for download in CSV
+      format. At this time, there is no way to provide more digits of precision in
+      that PDF report. If you do transfer funds out of Betterment into another
+      brokerage service, your cost basis information will be provided in full to your
+      new financial institution upon completion of your transfer."
+
+      --
+
+      "Thank you for writing in about tax loss harvesting. To avoid wash sales,
+      Betterment uses a proprietary Parallel Position Management system that utilizes
+      secondary securities as a safe harbor to minimize wash sales. Sales will also be
+      delayed if recent deposits are made until they are clear of the 30 day wash sale
+      window.
+
+      You can find much more information in both our White Paper (see “Parallel
+      Position Management”) and FAQ below:
+
+      TLH White Paper:
+      https://www.betterment.com/resources/tax-loss-harvesting-white-paper/
+      TLH FAQ:
+      http://support.betterment.com/customer/portal/topics/670337-tax-loss-harvesting
+
+      In general, you’ll want to avoid investing in any passive ETFs or mutual funds
+      that track the same index as the funds in our portfolios. You can check the
+      indexes of our investments here.
+
+      TLH+ will automatically manage your purchases when they are made inside your
+      Betterment taxable account, as well as your Betterment IRA.
+
+      Target date funds, actively managed funds and individual stocks are generally
+      not problematic to use alongside our TLH+ algorithm. To read more about using
+      TLH+ with external accounts, please see our guide here.
+
+      Thank you for the feedback regarding exporting data to CSV format, your friend
+      is correct. My apologies for the earlier miscommunication; I’ll certainly pass
+      your suggestion to our product team.
+
+      Please let us know if you have any additional questions or if we can be of any
+      further assistance. Thank you for being a Betterment customer, have a wonderful
+      day."
