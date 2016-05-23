@@ -1,3 +1,9 @@
+Some experimental code in Clojure related to Beancount.
+
+WARNING: This is very very old and very much out-of-date. I should just delete
+it.
+
+
 Imported via
 
   hg convert --filemap /tmp/a --branchmap /tmp/b ../beanjure   .
@@ -6,5 +12,3 @@ mandarine [clojure]:~/p/.../rewrite/clojure$ cat /tmp/a
 rename . rewrite/clojure
 mandarine [clojure]:~/p/.../rewrite/clojure$ cat /tmp/b
 default clojure
-
-

@@ -38,8 +38,8 @@ def extract_trips_outside_us(events):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.strip())
-    parser.add_argument('filename')
-    parser.add_argument('detail')
+    parser.add_argument('filename', help="Beancount input filename")
+    parser.add_argument('detail', help="Filename to output details to")
     args = parser.parse_args()
 
     entries, _, options_map = loader.load_file(args.filename)
