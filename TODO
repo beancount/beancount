@@ -1241,6 +1241,10 @@ http://furius.ca/beancount/doc/proposal-query
 
 ** Future Features
 
+  - When multiple files match (as is the case for the A:CA:R importer) make
+    file_one_file() put a copy of the file in each place instead of issuing an
+    "Ambiguous accounts from many importers" warning.
+
   - Make beancount.ingest.importers.regexp.RegexpImporterMixin accept a
     "convert" optional argument that would be called by its get_text() method,
     and would allow us not to have to derive in order to support non-text files.
@@ -1342,6 +1346,13 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Contact xentac@ for an example GnuCash input file with 2-3 years of data.
     Willing to share (see email).
+
+
+** Betterment
+
+  - Process xentac's Betterment example PDF for the booking branch, that would
+    be great input for a PDF converter, and figure out which lot identification
+    method Betterment uses for tax-loss harvesting and rebalancing.
 
 
 * Make Commodity Directives Required

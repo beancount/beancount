@@ -4,6 +4,27 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-05-22
+
+  - Created the beancount.plugins.mark_unverified plugin as a response to this
+    thread: https://groups.google.com/d/msg/beancount/hQoOSJE7qNo/-E__v-XhEgAJ
+
+    This plugin makes it possible to compute the balances as of the last Balance
+    directive of each account by adding metadata to postings which appear after
+    that account's last balance. You'd filter out unverified postings with an SQL
+    query on meta-data like this:
+
+      SELECT account, sum(position)
+      WHERE NOT meta('unverified')
+      GROUP BY 1
+      ORDER BY 1
+
+    Note that the resulting balanaces almost certainly don't sum up to zero,
+    because of differing dates of the Balance directives. Also, note that
+    accounts without a single Balance directive will not have their postings
+    marked at all.
+
+
 2016-05-08
 
   - In the output of bean-price, sort prices exclusively by currency, regardless

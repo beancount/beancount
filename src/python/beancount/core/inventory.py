@@ -318,7 +318,7 @@ class Inventory(list):
         return cost_inventory
 
     def average(self):
-        """Average all lots of the same currency together..
+        """Average all lots of the same currency together.
 
         Returns:
           An instance of Inventory.
