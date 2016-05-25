@@ -4685,6 +4685,8 @@ http://furius.ca/beancount/doc/proposal-query
   - Setup continuous integration that would push build status for each commit to
     bitbucket's build status API. Buildbot already has a plugin for this.
 
+  - In upload_assets.py, add the export date somewhere very visible.
+
 ** Google Keep Tickets
 
   - Unicode support: add a basic filter with 'ignore' to a temp file, before I
