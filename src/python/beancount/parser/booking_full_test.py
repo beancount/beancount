@@ -2304,6 +2304,56 @@ class TestBookAmbiguousAVERAGE(_BookingTestBase):
           Assets:Account         40 HOOL {110.00 CAD, 2015-10-01}
         """
 
+    @unittest.skip("FIXME enable this when supporting explicit cost reductions")
+    @book_test(Booking.AVERAGE)
+    def test_ambiguous__AVERAGE__mixed_currencies__unambi_cost_and_currency__merging(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account         25 HOOL { 99.00 USD, 2015-10-01}
+          Assets:Account         10 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         25 HOOL {101.00 USD, 2015-10-01}
+          Assets:Account         40 HOOL {110.00 CAD, 2015-10-01}
+
+        2015-06-01 * #apply
+          Assets:Account         -5 HOOL {100.00 USD}
+
+        2015-06-01 * #booked
+          M Assets:Account      -25 HOOL { 99.00 USD, 2015-10-01}
+          M Assets:Account      -10 HOOL {100.00 USD, 2015-10-01}
+          M Assets:Account      -25 HOOL {101.00 USD, 2015-10-01}
+          M Assets:Account       60 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account        -30 HOOL {100.00 USD, 2015-10-01}
+
+        2015-01-01 * #ex
+          Assets:Account         30 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         40 HOOL {110.00 CAD, 2015-10-01}
+        """
+
+    @unittest.skip("FIXME enable this when supporting explicit cost reductions")
+    @book_test(Booking.AVERAGE)
+    def test_ambiguous__AVERAGE__mixed_currencies__unambi_cost__merging(self, _, __):
+        """
+        2015-01-01 * #ante
+          Assets:Account         25 HOOL { 99.00 USD, 2015-10-01}
+          Assets:Account         10 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         25 HOOL {101.00 USD, 2015-10-01}
+          Assets:Account         40 HOOL {110.00 CAD, 2015-10-01}
+
+        2015-06-01 * #apply
+          Assets:Account         -5 HOOL {100.00}
+
+        2015-06-01 * #booked
+          M Assets:Account      -25 HOOL { 99.00 USD, 2015-10-01}
+          M Assets:Account      -10 HOOL {100.00 USD, 2015-10-01}
+          M Assets:Account      -25 HOOL {101.00 USD, 2015-10-01}
+          M Assets:Account       60 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account        -30 HOOL {100.00 USD, 2015-10-01}
+
+        2015-01-01 * #ex
+          Assets:Account         30 HOOL {100.00 USD, 2015-10-01}
+          Assets:Account         40 HOOL {110.00 CAD, 2015-10-01}
+        """
+
     @book_test(Booking.AVERAGE)
     def test_ambiguous__AVERAGE__mixed_currencies__unambi_date(self, _, __):
         """
@@ -2356,90 +2406,6 @@ class TestBookAmbiguousAVERAGE(_BookingTestBase):
 
 
 
-
-
-
-
-    # FIXME: Continue here.
-
-    # FIXME: We should allow inventories with such mixed cost currencies,
-    # just make the merging limited to each currencies. This should work if
-    # 140.00 has a specific currency on it.
-
-    @unittest.skip("FIXME TODO")
-    @book_test(Booking.AVERAGE)
-    def test_ambiguous__AVERAGE__merging__mixed_currencies__ambiguous(self, _, __):
-        """
-        2015-01-01 * #ante #ex
-          Assets:Account         60 HOOL {100.00 USD, 2015-10-01}
-          Assets:Account         40 HOOL {110.00 CAD, 2015-10-01}
-
-        2015-06-01 * #apply
-          Assets:Account        -20 HOOL {}
-
-        2015-06-01 * #booked
-          error: "ambiguous"
-        """
-
-    @unittest.skip("FIXME TODO")
-    @book_test(Booking.AVERAGE)
-    def test_ambiguous__AVERAGE__merging__mixed_currencies__with_cost_and_currency(self, _, __):
-        """
-        2015-01-01 * #ante
-          Assets:Account         60 HOOL {100.00 USD, 2015-10-01}
-          Assets:Account         40 HOOL {110.00 CAD, 2015-10-01}
-
-        2015-06-01 * #apply
-          Assets:Account        -20 HOOL {101.00 USD}
-
-        2015-06-01 * #booked
-          Assets:Account        -20 HOOL {101.00 USD,2015-06-01}
-
-        2015-06-01 * #ex
-          Assets:Account         40 HOOL { 99.50 USD, 2015-10-01}
-          Assets:Account         40 HOOL {110.00 CAD, 2015-10-01}
-        """
-
-    @unittest.skip("FIXME TODO")
-    @book_test(Booking.AVERAGE)
-    def test_ambiguous__AVERAGE__merging__mixed_currencies__with_cost(self, _, __):
-        """
-        2015-01-01 * #ante
-          Assets:Account         60 HOOL {100.00 USD, 2015-10-01}
-          Assets:Account         40 HOOL {110.00 CAD, 2015-10-01}
-
-        2015-06-01 * #apply
-          Assets:Account        -20 HOOL {101.00}
-
-        2015-06-01 * #booked
-          error: "ambiguous"
-
-        2015-06-01 * #ex
-          Assets:Account         40 HOOL { 99.50 USD, 2015-10-01}
-          Assets:Account         40 HOOL {110.00 CAD, 2015-10-01}
-        """
-
-    @unittest.skip("FIXME TODO")
-    @book_test(Booking.AVERAGE)
-    def test_ambiguous__AVERAGE__merging__mixed_currencies__matching(self, _, __):
-        """
-        2015-01-01 * #ante
-          Assets:Account         60 HOOL {100.00 USD, 2015-10-01}
-          Assets:Account         40 HOOL {110.00 CAD, 2015-10-01}
-
-        2015-06-01 * #apply
-          Assets:Account        -20 HOOL {100.00}
-
-        2015-06-01 * #apply
-          Assets:Account        -20 HOOL {USD}
-
-        2015-06-01 * #booked
-          Assets:Account        -40 HOOL {100.00 USD, 2015-10-01}
-
-        2015-06-01 * #ex
-          Assets:Account         40 HOOL {100.00 USD, 2015-10-01}
-          Assets:Account         40 HOOL {110.00 CAD, 2015-10-01}
-        """
 
 
 
