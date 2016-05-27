@@ -396,7 +396,7 @@ class ConvertPositionWithDate(query_compile.EvalFunction):
         return convert_position(context.price_map, position_, currency, date)
 
 def convert_position(price_map, position_, currency, date):
-    amount_ = position_.get_cost()
+    amount_ = position_.units
     converted = prices.convert_amount(price_map, currency, amount_, date)
     if converted is None:
         logging.warning('Could not convert Position "{}" to USD'.format(amount_))
@@ -431,7 +431,7 @@ class ConvertInventoryWithDate(query_compile.EvalFunction):
 def convert_inventory(price_map, inventory_, currency, date):
     converted_inventory = inventory.Inventory()
     for position_ in inventory_:
-        amount_ = position_.get_cost()
+        amount_ = position_.units
         converted_amount = prices.convert_amount(price_map,
                                                  currency, amount_, date)
         if converted_amount is None:
