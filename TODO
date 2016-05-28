@@ -252,6 +252,9 @@ beancount: TODO
 
   - Use impress.js to built a visualization of the DE method
 
+  - Use photos of white board instead of Slides, use post its, maybe a chalk
+    board. Do something original.
+
   - Record a video, that's an easy way to explain how this works.
 
   - IDEA!!!  Use drawings a-la-ThinkBig or whatever it is. This will be the
@@ -4651,6 +4654,19 @@ http://furius.ca/beancount/doc/proposal-query
   have time to think about where to put it, I just come here at the end and jot
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
+
+  - Investigate using PrettyTable over my custom one. Is there any point to that?
+
+  - Important: CONVERT() currently converts at the market value. This needs to
+    be documented well, and how to use PRICE() and VALUE() as well. It's poorly
+    documented right now. (See question in May 2016 by redstreet0 on the
+    mailing-list.)
+
+  - Rename Position.get_cost() to Position.get_total_cost(), I've it confusing
+    to myself otherwise.
+
+  - Rename the shell function PRICE() to GETPRICE() in order to avoid confusion
+    as well.
 
   - In upload_assets.py, add the export date somewhere very visible.
 

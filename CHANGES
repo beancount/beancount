@@ -4,6 +4,30 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-05-28
+
+  - Made various changes to the shell in order to make it possible to convert to
+    the market value:
+
+    * CONVERT() has been converted to convert to the market value, when applied
+      to a position held at cost. However, it still requires a target currency
+      and it may fail if you apply it to a position for which the cost currency
+      differs from that of the target currency, i.e., it will not automatically
+      chase down the transitive conversions toward the desired target currency.
+
+    * A new function VALUE() has been added, which is similar to CONVERT() but
+      which when applied to a position held at cost converts to the cost
+      currency at the current price. It's similar to CONVERT() but you don't
+      have to provide the target currency. And similarly to CONVERT(), you may
+      provide a particular date, and if at that date there is no available
+      conversion rate in the prices database, the conversion will fail
+      analogously and spit out an error message.
+
+    * PRICE() has been renamed to GETPRICE() to avoid some confusion. PRICE()
+      does not convert, it merely gets the price from the price database.
+      GETPRICE() is thus a more appropriate name.
+
+
 2016-05-22
 
   - Created the beancount.plugins.mark_unverified plugin as a response to this

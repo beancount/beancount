@@ -380,8 +380,8 @@ class ConvertPosition(query_compile.EvalFunction):
 
     def __call__(self, context):
         args = self.eval_args(context)
-        position_, currency = args
-        return convert_position(context.price_map, position_, currency, None)
+        pos, currency = args
+        return convert_position(context.price_map, pos, currency, None)
 
 class ConvertPositionWithDate(query_compile.EvalFunction):
     "Coerce an amount to a particular currency."
@@ -392,15 +392,52 @@ class ConvertPositionWithDate(query_compile.EvalFunction):
 
     def __call__(self, context):
         args = self.eval_args(context)
-        position_, currency, date = args
-        return convert_position(context.price_map, position_, currency, date)
+        pos, currency, date = args
+        return convert_position(context.price_map, pos, currency, date)
 
-def convert_position(price_map, position_, currency, date):
-    amount_ = position_.get_cost()
+def convert_position(price_map, pos, currency, date):
+    amount_ = pos.units
     converted = prices.convert_amount(price_map, currency, amount_, date)
     if converted is None:
-        logging.warning('Could not convert Position "{}" to USD'.format(amount_))
+        logging.warning('Could not convert Position "{}" to {}'.format(amount_, currency))
         converted = amount_
+    return converted
+
+
+class ValuePosition(query_compile.EvalFunction):
+    "Convert a position to its cost currency at the market value."
+    __intypes__ = [position.Position]
+
+    def __init__(self, operands):
+        super().__init__(operands, amount.Amount)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        pos = args[0]
+        return value_position(context.price_map, pos, None)
+
+class ValuePositionWithDate(query_compile.EvalFunction):
+    "Convert a position to its cost currency at the market value of a particular date."
+    __intypes__ = [position.Position, datetime.date]
+
+    def __init__(self, operands):
+        super().__init__(operands, amount.Amount)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        pos, date = args
+        return value_position(context.price_map, pos, date)
+
+def value_position(price_map, pos, date):
+    units = pos.units
+    if pos.cost is None:
+        converted = units
+    else:
+        converted = prices.convert_amount(price_map, pos.cost.currency, units, date)
+        if converted is None:
+            logging.warning('Could not convert Position "{}" to {}'.format(
+                units, pos.cost.currency))
+            converted = units
     return converted
 
 
@@ -428,16 +465,54 @@ class ConvertInventoryWithDate(query_compile.EvalFunction):
         inventory_, currency, date = args
         return convert_inventory(context.price_map, inventory_, currency, date)
 
-def convert_inventory(price_map, inventory_, currency, date):
+def convert_inventory(price_map, inv, currency, date):
     converted_inventory = inventory.Inventory()
-    for position_ in inventory_:
-        amount_ = position_.get_cost()
+    for pos in inv:
+        amount_ = pos.units
         converted_amount = prices.convert_amount(price_map,
                                                  currency, amount_, date)
         if converted_amount is None:
             logging.warning(
-                'Could not convert Inventory position "{}" to USD'.format(amount_))
+                'Could not convert Inventory position "{}" to {}'.format(amount_, currency))
             converted_inventory.add_amount(amount_)
+        else:
+            converted_inventory.add_amount(converted_amount)
+    return converted_inventory
+
+
+class ValueInventory(query_compile.EvalFunction):
+    "Coerce an inventory to its market value at the current date."
+    __intypes__ = [inventory.Inventory]
+
+    def __init__(self, operands):
+        super().__init__(operands, inventory.Inventory)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        inv = args[0]
+        return value_inventory(context.price_map, inv, None)
+
+class ValueInventoryWithDate(query_compile.EvalFunction):
+    "Coerce an inventory to its market value at a particular date."
+    __intypes__ = [inventory.Inventory, datetime.date]
+
+    def __init__(self, operands):
+        super().__init__(operands, inventory.Inventory)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        inv, date = args
+        return value_inventory(context.price_map, inv, date)
+
+def value_inventory(price_map, inv, date):
+    converted_inventory = inventory.Inventory()
+    for pos in inv:
+        converted_amount = value_position(price_map, pos, date)
+        if converted_amount is None:
+            logging.warning(
+                'Could not convert Inventory position "{}" to {}'.format(
+                    pos, pos.cost.currency))
+            converted_inventory.add_position(pos)
         else:
             converted_inventory.add_amount(converted_amount)
     return converted_inventory
@@ -562,8 +637,15 @@ SIMPLE_FUNCTIONS = {
     ('convert', position.Position, str, datetime.date)   : ConvertPositionWithDate,
     ('convert', inventory.Inventory, str)                : ConvertInventory,
     ('convert', inventory.Inventory, str, datetime.date) : ConvertInventoryWithDate,
+    ('value', position.Position)                         : ValuePosition,
+    ('value', position.Position, datetime.date)          : ValuePositionWithDate,
+    ('value', inventory.Inventory)                       : ValueInventory,
+    ('value', inventory.Inventory, datetime.date)        : ValueInventoryWithDate,
+    # Note: Remove PRICE() at some point, GETPRICE() is less confusing.
     ('price', str, str)                                  : Price,
     ('price', str, str, datetime.date)                   : PriceWithDate,
+    ('getprice', str, str)                               : Price,
+    ('getprice', str, str, datetime.date)                : PriceWithDate,
     'number'                                             : Number,
     'currency'                                           : Currency,
     'getitem'                                            : GetItemStr,
