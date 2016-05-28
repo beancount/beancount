@@ -4657,6 +4657,17 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Investigate using PrettyTable over my custom one. Is there any point to that?
 
+  - Important: CONVERT() currently converts at the market value. This needs to
+    be documented well, and how to use PRICE() and VALUE() as well. It's poorly
+    documented right now. (See question in May 2016 by redstreet0 on the
+    mailing-list.)
+
+  - Rename Position.get_cost() to Position.get_total_cost(), I've it confusing
+    to myself otherwise.
+
+  - Rename the shell function PRICE() to GETPRICE() in order to avoid confusion
+    as well.
+
 ** Google Keep Tickets
 
   - Unicode support: add a basic filter with 'ignore' to a temp file, before I
