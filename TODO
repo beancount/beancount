@@ -4668,6 +4668,8 @@ http://furius.ca/beancount/doc/proposal-query
   - Rename the shell function PRICE() to GETPRICE() in order to avoid confusion
     as well.
 
+  - In upload_assets.py, add the export date somewhere very visible.
+
 ** Google Keep Tickets
 
   - Unicode support: add a basic filter with 'ignore' to a temp file, before I
