@@ -4655,6 +4655,12 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - Try to modify b.l._parse_recursive() to reuse the DisplayContext object
+    across all the parsed files, in order to accumulate its full state. Some
+    users (from fava, e.g. Daniel Bos, see thread on mailing-list) are defining
+    a single top-level file with only includes, and this breaks the rendering of
+    the fractional digits in the web interface in a severe way.
+
   - Investigate using PrettyTable over my custom one. Is there any point to that?
 
   - Important: CONVERT() currently converts at the market value. This needs to
