@@ -4676,6 +4676,8 @@ http://furius.ca/beancount/doc/proposal-query
 
   - In upload_assets.py, add the export date somewhere very visible.
 
+  - Convert the upload.py script to use the Sheets v4 API instead of gspread.
+
 ** Google Keep Tickets
 
   - Unicode support: add a basic filter with 'ignore' to a temp file, before I
