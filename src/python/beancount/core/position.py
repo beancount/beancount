@@ -19,7 +19,7 @@ from beancount.core.amount import CURRENCY_RE
 from beancount.core.display_context import DEFAULT_FORMATTER
 
 
-# A variant of Amount that also includes a date, a label and a merge flag.
+# A variant of Amount that also includes a date and a label.
 #
 # Attributes:
 #   number: A Decimal, the per-unit cost.
