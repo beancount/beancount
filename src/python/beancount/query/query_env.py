@@ -601,6 +601,18 @@ class FindFirst(query_compile.EvalFunction):
             if re.match(args[0], value):
                 return value
 
+class JoinStr(query_compile.EvalFunction):
+    "Join a sequence of strings to a single comma-separated string."
+    __intypes__ = [set]
+
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        values = args[0]
+        return ','.join(values)
+
 
 # FIXME: Why do I need to specify the arguments here? They are already derived
 # from the functions. Just fetch them from instead. Make the compiler better.
@@ -650,6 +662,7 @@ SIMPLE_FUNCTIONS = {
     'currency'                                           : Currency,
     'getitem'                                            : GetItemStr,
     'findfirst'                                          : FindFirst,
+    'joinstr'                                            : JoinStr,
     }
 
 
@@ -1250,6 +1263,19 @@ class AccountColumn(query_compile.EvalColumn):
     def __call__(self, context):
         return context.posting.account
 
+class OtherAccountsColumn(query_compile.EvalColumn):
+    "The list of other accounts in the transcation, excluding that of this posting."
+    __intypes__ = [data.Posting]
+
+    def __init__(self):
+        super().__init__(set)
+
+    def __call__(self, context):
+        return sorted({posting.account
+                       for posting in context.entry.postings
+                       if posting is not context.posting})
+
+
 class NumberColumn(query_compile.EvalColumn):
     "The number of units of the posting."
     __equivalent__ = 'posting.units.number'
@@ -1345,32 +1371,33 @@ class FilterPostingsEnvironment(query_compile.CompilationEnvironment):
     """
     context_name = 'WHERE clause'
     columns = {
-        'id'            : IdColumn,
-        'type'          : TypeColumn,
-        'filename'      : FilenameColumn,
-        'lineno'        : LineNoColumn,
-        'location'      : FileLocationColumn,
-        'date'          : DateColumn,
-        'year'          : YearColumn,
-        'month'         : MonthColumn,
-        'day'           : DayColumn,
-        'flag'          : FlagColumn,
-        'payee'         : PayeeColumn,
-        'narration'     : NarrationColumn,
-        'description'   : DescriptionColumn,
-        'tags'          : TagsColumn,
-        'links'         : LinksColumn,
-        'posting_flag'  : PostingFlagColumn,
-        'account'       : AccountColumn,
-        'number'        : NumberColumn,
-        'currency'      : CurrencyColumn,
-        'cost_number'   : CostNumberColumn,
-        'cost_currency' : CostCurrencyColumn,
-        'position'      : PositionColumn,
-        'change'        : PositionColumn,  # Backwards compatible.
-        'price'         : PriceColumn,
-        'weight'        : WeightColumn,
-        'balance'       : BalanceColumn,
+        'id'             : IdColumn,
+        'type'           : TypeColumn,
+        'filename'       : FilenameColumn,
+        'lineno'         : LineNoColumn,
+        'location'       : FileLocationColumn,
+        'date'           : DateColumn,
+        'year'           : YearColumn,
+        'month'          : MonthColumn,
+        'day'            : DayColumn,
+        'flag'           : FlagColumn,
+        'payee'          : PayeeColumn,
+        'narration'      : NarrationColumn,
+        'description'    : DescriptionColumn,
+        'tags'           : TagsColumn,
+        'links'          : LinksColumn,
+        'posting_flag'   : PostingFlagColumn,
+        'account'        : AccountColumn,
+        'other_accounts' : OtherAccountsColumn,
+        'number'         : NumberColumn,
+        'currency'       : CurrencyColumn,
+        'cost_number'    : CostNumberColumn,
+        'cost_currency'  : CostCurrencyColumn,
+        'position'       : PositionColumn,
+        'change'         : PositionColumn,  # Backwards compatible.
+        'price'          : PriceColumn,
+        'weight'         : WeightColumn,
+        'balance'        : BalanceColumn,
         }
     functions = copy.copy(SIMPLE_FUNCTIONS)
 

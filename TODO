@@ -11,6 +11,11 @@ beancount: TODO
 {write-intro-doc}
 {commodity-required}
 
+Export this to a CSV file and a Google Spreadsheet:
+
+  bean-query $L "select date, flag, joinstr(other_accounts), description, position, balance where account ~ 'Caroline' "
+
+
 * Settlement Dates (Split & Merge)
 
   In http://furius.ca/beancount/doc/proposal-settlement, I describe the problem

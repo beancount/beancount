@@ -4,6 +4,15 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-06-05
+
+  - Added a new column to the posting context: "other_accounts" is a set of
+    account strings for the other postings of the transaction.
+
+  - Added a new JOINSTR() generic function to the shell, to reduce the repeated
+    column above to a single comma-separated string.
+
+
 2016-05-28
 
   - Made various changes to the shell in order to make it possible to convert to
