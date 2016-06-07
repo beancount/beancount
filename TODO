@@ -2,6 +2,11 @@
 beancount: TODO
 * Priorities
 
+- Fix #128
+- Fix #130
+- Fix #131
+- Make included files accumulate the state of their DisplayContext.
+
 {booking}
 {holding}
 {balance-where}
@@ -4683,6 +4688,9 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Convert the upload.py script to use the Sheets v4 API instead of gspread.
 
+  - Produce pivot on monthly expenses as a custom report, the need for this
+    occurs too often to wait for the SQL shell to support it.
+
 ** Google Keep Tickets
 
   - Unicode support: add a basic filter with 'ignore' to a temp file, before I
@@ -5118,6 +5126,14 @@ http://furius.ca/beancount/doc/proposal-query
       besoin d'un "recipe" vu que ce que j'ai essayé fonctionne."
 
 ** Open Tickets - TODO
+
+  - Issue #130: Padding involving the same account doesn't work incrementally (blais/beancount)
+
+  - Issue #128: bean-report holdings market value incorrect if no price given
+    initially (blais/beancount)
+
+  - Issue #131: Aggregate the state of DisplayContext across all parsed files.
+
 ** TaxMin Reporting
 
   - Read about TaxMin loss harvesting and see if I couldn't implement a similar
