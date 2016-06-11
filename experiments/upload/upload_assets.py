@@ -50,7 +50,7 @@ from beancount import loader
 import oauth2client.client
 from oauth2client import tools
 from oauth2client.file import Storage
-from oauth2client.client import SignedJwtAssertionCredentials
+from oauth2client import service_account
 import gspread
 
 
@@ -120,11 +120,8 @@ def get_connection():
     """
     scopes = ['https://spreadsheets.google.com/feeds']
     json_filename = path.join(os.environ['HOME'], '.google-apis-service-account.json')
-    json_key = json.load(open(json_filename))
-    credentials = oauth2client.client.SignedJwtAssertionCredentials(
-        json_key['client_email'],
-        json_key['private_key'].encode(),
-        scopes)
+    credentials = service_account.ServiceAccountCredentials.from_json_keyfile_name(
+        json_filename, scopes)
     return gspread.authorize(credentials)
 
 
