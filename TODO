@@ -2,6 +2,11 @@
 beancount: TODO
 * Priorities
 
+- Fix #128
+- Fix #130
+- Fix #131
+- Make included files accumulate the state of their DisplayContext.
+
 {booking}
 {holding}
 {balance-where}
@@ -10,6 +15,11 @@ beancount: TODO
 {review-dcontext}
 {write-intro-doc}
 {commodity-required}
+
+Export this to a CSV file and a Google Spreadsheet:
+
+  bean-query $L "select date, flag, joinstr(other_accounts), description, position, balance where account ~ 'Caroline' "
+
 
 * Settlement Dates (Split & Merge)
 
@@ -251,6 +261,9 @@ beancount: TODO
   educational.
 
   - Use impress.js to built a visualization of the DE method
+
+  - Use photos of white board instead of Slides, use post its, maybe a chalk
+    board. Do something original.
 
   - Record a video, that's an easy way to explain how this works.
 
@@ -4676,6 +4689,25 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - Try to modify b.l._parse_recursive() to reuse the DisplayContext object
+    across all the parsed files, in order to accumulate its full state. Some
+    users (from fava, e.g. Daniel Bos, see thread on mailing-list) are defining
+    a single top-level file with only includes, and this breaks the rendering of
+    the fractional digits in the web interface in a severe way.
+
+  - Investigate using PrettyTable over my custom one. Is there any point to that?
+
+  - Important: CONVERT() currently converts at the market value. This needs to
+    be documented well, and how to use PRICE() and VALUE() as well. It's poorly
+    documented right now. (See question in May 2016 by redstreet0 on the
+    mailing-list.)
+
+  - Rename Position.get_cost() to Position.get_total_cost(), I've it confusing
+    to myself otherwise.
+
+  - Rename the shell function PRICE() to GETPRICE() in order to avoid confusion
+    as well.
+
   - Put all the contents of experiments/ under their own directories and add
     decent README files for each of these.
 
@@ -4686,6 +4718,11 @@ http://furius.ca/beancount/doc/proposal-query
     bitbucket's build status API. Buildbot already has a plugin for this.
 
   - In upload_assets.py, add the export date somewhere very visible.
+
+  - Convert the upload.py script to use the Sheets v4 API instead of gspread.
+
+  - Produce pivot on monthly expenses as a custom report, the need for this
+    occurs too often to wait for the SQL shell to support it.
 
 ** Google Keep Tickets
 
@@ -5122,6 +5159,14 @@ http://furius.ca/beancount/doc/proposal-query
       besoin d'un "recipe" vu que ce que j'ai essayé fonctionne."
 
 ** Open Tickets - TODO
+
+  - Issue #130: Padding involving the same account doesn't work incrementally (blais/beancount)
+
+  - Issue #128: bean-report holdings market value incorrect if no price given
+    initially (blais/beancount)
+
+  - Issue #131: Aggregate the state of DisplayContext across all parsed files.
+
 ** TaxMin Reporting
 
   - Read about TaxMin loss harvesting and see if I couldn't implement a similar

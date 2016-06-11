@@ -5,6 +5,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
 
+from beancount.core.number import MISSING
 from beancount.parser import booking_simple
 from beancount.parser import booking_full
 from beancount.core import data
@@ -58,7 +59,36 @@ def book(incomplete_entries, options_map):
     else:
         validation_errors = []
 
-    return entries, (errors + booking_errors + validation_errors)
+    # Check for MISSING elements remaining.
+    missing_errors = validate_missing_eliminated(entries, options_map)
+
+    return entries, (errors + booking_errors + validation_errors + missing_errors)
+
+
+def validate_missing_eliminated(entries, unused_options_map):
+    """Validate that all the missing bits of postings have been eliminated.
+
+    Args:
+      entries: A list of directives.
+      unused_options_map: An options map.
+    Returns:
+      A list of errors.
+    """
+    errors = []
+    for entry in entries:
+        if isinstance(entry, data.Transaction):
+            for posting in entry.postings:
+                units = posting.units
+                cost = posting.cost
+                if (MISSING in (units.number, units.currency) or
+                    cost is not None and MISSING in (cost.number, cost.currency,
+                                                     cost.date, cost.label)):
+                    errors.append(
+                        BookingError(entry.meta,
+                                     "Transaction has incomplete elements",
+                                     entry))
+                    break
+    return errors
 
 
 # FIXME: This goes away. Maybe moves to a pedantic plugin.

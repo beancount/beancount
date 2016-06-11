@@ -8,6 +8,8 @@ from beancount.parser import parser
 from beancount.parser import cmptest
 from beancount.parser import booking
 from beancount.parser import booking_simple
+from beancount.parser import printer
+from beancount import loader
 
 
 class TestInvalidAmountsErrors(cmptest.TestCase):
@@ -156,3 +158,22 @@ class TestBookingValidation(cmptest.TestCase):
         """
         validation_errors = self.convert_and_validate(entries, options_map)
         self.assertEqual([booking.BookingError], list(map(type, validation_errors)))
+
+
+class TestMissingEliminated(cmptest.TestCase):
+
+    @loader.load_doc(expect_errors=True)
+    def test_missing_data(self, entries, errors, options_map):
+        """
+          option "experiment_booking_algorithm" "SIMPLE"
+
+          2013-05-01 open Assets:Test
+          2013-05-01 open Expenses:Test
+
+          2016-06-10 * "" ""
+            Expenses:Test       10.00
+            Assets:Test
+        """
+        self.assertEqual(1, len(errors))
+        self.assertTrue(all(re.search('Transaction has incomplete elements', error.message)
+                            for error in errors))

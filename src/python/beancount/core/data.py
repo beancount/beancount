@@ -328,7 +328,7 @@ def new_metadata(filename, lineno, kvlist=None):
 #     associated with the posting. Most postings don't have a flag, but it can
 #     be convenient to mark a particular posting as problematic or pending to
 #     be reconciled for a future import of its account.
-#   metadata: A dict of strings to values, the metadata that was attached
+#   meta: A dict of strings to values, the metadata that was attached
 #     specifically to that posting, or None, if not provided. In practice, most
 #     of the instances will be unlikely to have metadata.
 Posting = namedtuple('Posting', 'account units cost price flag meta')

@@ -217,10 +217,10 @@ def docfile(function):
     """
     @functools.wraps(function)
     def new_function(self):
-        with tempfile.NamedTemporaryFile('w') as f:
-            f.write(textwrap.dedent(function.__doc__))
-            f.flush()
-            return function(self, f.name)
+        with tempfile.NamedTemporaryFile('w') as file:
+            file.write(textwrap.dedent(function.__doc__))
+            file.flush()
+            return function(self, file.name)
     new_function.__doc__ = None
     return new_function
 
