@@ -5,10 +5,11 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
 
-from beancount.parser import booking_simple
-from beancount.parser import booking_full
+from beancount.core.number import MISSING
 from beancount.core import data
 from beancount.core import inventory
+from beancount.parser import booking_simple
+from beancount.parser import booking_full
 
 
 BookingError = collections.namedtuple('BookingError', 'source message entry')
@@ -42,8 +43,38 @@ def book(incomplete_entries, options_map):
                                 "falling back on SIMPLE method".format(method_name)), None))
 
     entries, interpolation_errors = booking_fun(incomplete_entries, options_map)
+    missing_errors = validate_missing_eliminated(entries, options_map)
     validation_errors = validate_inventory_booking(entries, options_map)
-    return entries, (booking_errors + interpolation_errors + validation_errors)
+    return entries, (booking_errors +
+                     interpolation_errors +
+                     missing_errors +
+                     validation_errors)
+
+
+def validate_missing_eliminated(entries, unused_options_map):
+    """Validate that all the missing bits of postings have been eliminated.
+
+    Args:
+      entries: A list of directives.
+      unused_options_map: An options map.
+    Returns:
+      A list of errors.
+    """
+    errors = []
+    for entry in entries:
+        if isinstance(entry, data.Transaction):
+            for posting in entry.postings:
+                units = posting.units
+                cost = posting.cost
+                if (MISSING in (units.number, units.currency) or
+                    cost is not None and MISSING in (cost.number, cost.currency,
+                                                     cost.date, cost.label)):
+                    errors.append(
+                        BookingError(entry.meta,
+                                     "Transaction has incomplete elements",
+                                     entry))
+                    break
+    return errors
 
 
 def validate_inventory_booking(entries, unused_options_map):
