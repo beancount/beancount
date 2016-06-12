@@ -4691,6 +4691,10 @@ http://furius.ca/beancount/doc/proposal-query
   - Produce pivot on monthly expenses as a custom report, the need for this
     occurs too often to wait for the SQL shell to support it.
 
+  - The Beancount presentation should include the table's implicit join,
+    graphically, and then explain select/filter/aggregate. Include a section in
+    the design doc about this, or perhaps even in its own doc.
+
 ** Google Keep Tickets
 
   - Unicode support: add a basic filter with 'ignore' to a temp file, before I
