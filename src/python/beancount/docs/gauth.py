@@ -8,6 +8,7 @@ import os
 from os import path
 
 import oauth2client.client
+from oauth2client import service_account
 from oauth2client import tools
 from oauth2client.file import Storage
 import httplib2
@@ -94,4 +95,23 @@ def get_authenticated_http(scopes, args):
     if credentials.access_token_expired:
         credentials.refresh(http)
 
+    return http
+
+
+SERVICE_ACCOUNT_FILE = path.join(os.environ['HOME'],
+                                 '.google-apis-service-account.json')
+
+def get_auth_via_service_account(scopes):
+    """Get an authenticated http object via a service account.
+
+    Args:
+      scopes: A string or a list of strings, the scopes to get credentials for.
+    Returns:
+      An authenticated http client object, from which you can use the Google
+      APIs.
+    """
+    credentials = service_account.ServiceAccountCredentials.from_json_keyfile_name(
+        SERVICE_ACCOUNT_FILE, scopes)
+    http = httplib2.Http()
+    credentials.authorize(http)
     return http

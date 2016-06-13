@@ -4,6 +4,13 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-06-13
+
+  - Ported beancount.docs.download_docs to the v3 drive API and the use of a
+    service account instead of a full access to a user account. Service accounts
+    are easier to configure and work with.
+
+
 2016-06-05
 
   - Added a new column to the posting context: "other_accounts" is a set of
