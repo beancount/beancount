@@ -5,6 +5,7 @@ the source code and updated automatically using this script.
 """
 __author__ = 'Martin Blais <blais@furius.ca>'
 
+import argparse
 import logging
 import re
 from os import path
@@ -53,7 +54,7 @@ def get_options_docid():
 
 def main():
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
-    parser = gauth.get_argparser(description=__doc__.strip())
+    parser = argparse.ArgumentParser(description=__doc__.strip())
     args = parser.parse_args()
 
     # Find the document id.
