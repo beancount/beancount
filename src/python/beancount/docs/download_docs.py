@@ -132,7 +132,7 @@ def main():
 
     # Connect, with authentication.
     scopes = ['https://www.googleapis.com/auth/drive']
-    http = gauth.get_auth_via_service_account(scopes, args)
+    _, http = gauth.get_auth_via_service_account(scopes)
     service = discovery.build('drive', 'v3', http=http)
 
     # Get the list of documents.

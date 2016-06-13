@@ -63,7 +63,7 @@ def main():
     # Connect to the service.
     scopes = ['https://www.googleapis.com/auth/drive',
               'https://www.googleapis.com/auth/drive.scripts']
-    http = gauth.get_auth_via_service_account(scopes)
+    _, http = gauth.get_auth_via_service_account(scopes)
 
     # Replace the document.
     replace_gdocs_document(http,

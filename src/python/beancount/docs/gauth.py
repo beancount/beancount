@@ -18,11 +18,11 @@ def get_auth_via_service_account(scopes):
     Args:
       scopes: A string or a list of strings, the scopes to get credentials for.
     Returns:
-      An authenticated http client object, from which you can use the Google
-      APIs.
+      A pair or (credentials, http) objects, where 'http' is an authenticated
+      http client object, from which you can use the Google APIs.
     """
     credentials = service_account.ServiceAccountCredentials.from_json_keyfile_name(
         SERVICE_ACCOUNT_FILE, scopes)
     http = httplib2.Http()
     credentials.authorize(http)
-    return http
+    return credentials, http
