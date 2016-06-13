@@ -10,6 +10,8 @@ Note: This file contains only changes in the 'default' branch.
     service account instead of a full access to a user account. Service accounts
     are easier to configure and work with.
 
+  - Ported beancount.docs.upload_options to the v3 drive API.
+
 
 2016-06-05
 
