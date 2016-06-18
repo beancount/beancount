@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-06-18
+
+  - Added support for columns AMOUNT_DEBIT and AMOUNT_CREDIT in the csv
+    importer.
+
+
 2016-06-13
 
   - Ported beancount.docs.download_docs to the v3 drive API and the use of a

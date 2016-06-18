@@ -53,6 +53,26 @@ class Col(misc_utils.Enum):
     DRCR = '[DRCR]'
 
 
+def get_amounts(iconfig, row):
+    """Get the amount columns of a row.
+
+    Args:
+      iconfig: A dict of Col to row index.
+      row: A row array containing the values of the given row.
+    Returns:
+      A pair of (debit-amount, credit-amount), both of which are either an
+      instance of Decimal or None, or not available.
+    """
+    debit, credit = None, None
+    if Col.AMOUNT in iconfig:
+        credit = row[iconfig[Col.AMOUNT]]
+    else:
+        debit, credit = [row[iconfig[col]] if col in iconfig else None
+                         for col in [Col.AMOUNT_DEBIT, Col.AMOUNT_CREDIT]]
+    return (-D(debit) if debit else None,
+            D(credit) if credit else None)
+
+
 class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
     """Importer for Chase credit card accounts."""
 
@@ -162,7 +182,6 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
 
             # Extract the data we need from the row, based on the configuration.
             date = get(row, Col.DATE)
-            amount = D(get(row, Col.AMOUNT))
             payee = get(row, Col.PAYEE)
             narration = get(row, Col.NARRATION)
             tag = get(row, Col.TAG)
@@ -171,11 +190,16 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
             # Create a transaction and add it to the list of new entries.
             meta = data.new_metadata(file.name, index)
             date = parse_date_liberally(date)
-            units = Amount(amount, self.currency)
-            txn = data.Transaction(meta, date, self.FLAG, payee, narration, tags, None, [
-                data.Posting(self.account, units, None, None, None, None),
-            ])
+            txn = data.Transaction(meta, date, self.FLAG, payee, narration, tags, None, [])
             entries.append(txn)
+
+            amount_debit, amount_credit = get_amounts(iconfig, row)
+            for amount in [amount_debit, amount_credit]:
+                if amount is None:
+                    continue
+                units = Amount(amount, self.currency)
+                txn.postings.append(
+                    data.Posting(self.account, units, None, None, None, None))
 
         # Figure out if the file is in ascending or descending order.
         first_date = parse_date_liberally(get(first_row, Col.DATE))
