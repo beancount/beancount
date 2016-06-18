@@ -1350,6 +1350,10 @@ http://furius.ca/beancount/doc/proposal-query
     to match a matching directive in the other account, and insert a link into
     the imported one.
 
+  - Because one downloads all files manually, oftentimes the same file is
+    downloaded twice. This should be detected and the duplicated identical file
+    should be ignored entirely.
+
 ** GnuCash
 
   - Write a converter of GnuCash XML files into Beancount.
