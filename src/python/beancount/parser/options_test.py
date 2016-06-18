@@ -49,13 +49,13 @@ class TestAccountTypeOptions(unittest.TestCase):
           option "name_liabilities" "Passif"
           option "name_equity" "Capital"
           option "name_income" "Revenu"
-          option "name_expenses" "Depenses"
+          option "name_expenses" "Dépenses"
 
-          2014-01-04 open Actif:CA:RBC:CompteCheques
-          2014-01-04 open Passif:CA:RBC:CarteDeCredit
+          2014-01-04 open Actif:CA:RBC:CompteChèques
+          2014-01-04 open Passif:CA:RBC:CarteDeCrédit
           2014-01-04 open Capital:Ouverture
           2014-01-04 open Revenu:Salaire
-          2014-01-04 open Depenses:Bistrot
+          2014-01-04 open Dépenses:Bistrot
         """
         self.assertFalse(errors)
         self.assertEqual(5, len(entries))
@@ -67,7 +67,7 @@ class TestAccountTypeOptions(unittest.TestCase):
 
           option "name_assets" "Actif"
 
-          2014-01-04 open Actif:CA:RBC:CompteCheques
+          2014-01-04 open Actif:CA:RBC:CompteChèques
         """
         self.assertFalse(errors)
         self.assertEqual(2, len(entries))
@@ -75,8 +75,8 @@ class TestAccountTypeOptions(unittest.TestCase):
     @parser.parse_doc(expect_errors=True)
     def test_custom_account_names__basic_fail(self, entries, errors, options_map):
         """
-          2014-01-04 open Actif:CA:RBC:CompteCheques
-          2014-01-04 open Passif:CA:RBC:CarteDeCredit
+          2014-01-04 open Actif:CA:RBC:CompteChèques
+          2014-01-04 open Passif:CA:RBC:CarteDeCrédit
         """
         self.assertEqual(0, len(entries))
         self.assertEqual(2, len(errors))
@@ -86,7 +86,7 @@ class TestAccountTypeOptions(unittest.TestCase):
     @parser.parse_doc(expect_errors=True)
     def test_custom_account_names__fail_invalid_order(self, entries, errors, options_map):
         """
-          2014-01-04 open Actif:CA:RBC:CompteCheques
+          2014-01-04 open Actif:CA:RBC:CompteChèques
 
           option "name_assets" "Actif"
         """

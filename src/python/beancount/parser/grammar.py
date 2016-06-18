@@ -96,7 +96,11 @@ def valid_account_regexp(options):
                                       'name_equity',
                                       'name_income',
                                       'name_expenses'))
-    return re.compile('({})(:[A-Z][A-Za-z0-9\-]*)*$'.format('|'.join(names)))
+    rx = r'(?:{}(?:{}{})+)'.format(
+            '|'.join(names),
+            account.sep,
+            account.ACCOUNT_NAME_RE)
+    return re.compile(rx)
 
 
 # A temporary data structure used during parsing to hold and accumulate the
