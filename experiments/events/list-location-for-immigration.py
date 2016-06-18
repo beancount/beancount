@@ -44,7 +44,8 @@ def main():
 
     entries, _, options_map = loader.load_file(args.filename)
 
-    date_start = datetime.date.today() - datetime.timedelta(365 * 6)
+    today = datetime.date.today()
+    date_start = today - datetime.timedelta(365 * 6)
 
     events = [entry
               for entry in entries
@@ -63,7 +64,7 @@ def main():
           "United States during the last 5 years?")
     total_days = sum([(trip[-1].date - trip[0].date).days
                       for trip in trips])
-    print("{} days".format(total_days))
+    print("{} days ({:.1%})".format(total_days, float(total_days)/(today - date_start).days))
     print()
 
     print("How many trips of 24 hours of longer have you taken outside the "
