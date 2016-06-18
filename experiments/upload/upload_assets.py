@@ -44,6 +44,7 @@ from beancount.core import account_types
 from beancount.core import getters
 from beancount.ops import summarize
 from beancount.ops import prices
+from beancount.docs import gauth
 from beancount.parser import options
 from beancount import loader
 
@@ -110,19 +111,6 @@ def add_prices_to_postings(entries, postings):
              price_number) = prices.get_price(price_map, (cbase, cquote), None)
             posting = posting._replace(price=amount.Amount(price_number, cquote))
         yield posting
-
-
-def get_connection():
-    """Connect to the Drive API, with authentication.
-
-    Returns:
-      An initialized gspread.client.Client instance ready for combat.
-    """
-    scopes = ['https://spreadsheets.google.com/feeds']
-    json_filename = path.join(os.environ['HOME'], '.google-apis-service-account.json')
-    credentials = service_account.ServiceAccountCredentials.from_json_keyfile_name(
-        json_filename, scopes)
-    return gspread.authorize(credentials)
 
 
 class Model:
@@ -365,7 +353,9 @@ def main():
     args = parser.parse_args()
 
     # Connect to the API.
-    gc = get_connection()
+    scopes = ['https://spreadsheets.google.com/feeds']
+    credentials, _ = gauth.get_auth_via_service_account(scopes)
+    gc = gspread.authorize(credentials)
     doc = gc.open_by_key(args.docid)
     # Note: You have to share the sheet with the "client_email" address.
 

@@ -1350,6 +1350,10 @@ http://furius.ca/beancount/doc/proposal-query
     to match a matching directive in the other account, and insert a link into
     the imported one.
 
+  - Because one downloads all files manually, oftentimes the same file is
+    downloaded twice. This should be detected and the duplicated identical file
+    should be ignored entirely.
+
 ** GnuCash
 
   - Write a converter of GnuCash XML files into Beancount.
@@ -4723,6 +4727,10 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Produce pivot on monthly expenses as a custom report, the need for this
     occurs too often to wait for the SQL shell to support it.
+
+  - The Beancount presentation should include the table's implicit join,
+    graphically, and then explain select/filter/aggregate. Include a section in
+    the design doc about this, or perhaps even in its own doc.
 
 ** Google Keep Tickets
 

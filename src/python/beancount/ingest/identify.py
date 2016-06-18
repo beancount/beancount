@@ -15,7 +15,7 @@ from beancount.ingest import scripts_utils
 from beancount.ingest import cache
 
 
-# The format for the seciton titles in the extracted output.
+# The format for the section titles in the extracted output.
 # You may override this value from your .import script.
 SECTION = '**** {}'
 
