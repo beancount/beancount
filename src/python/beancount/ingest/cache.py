@@ -84,8 +84,11 @@ def head(num_bytes=8192):
       A converter function.
     """
     def head_reader(filename):
-        with open(filename) as file:
-            return file.read(num_bytes)
+        with open(filename, 'rb') as file:
+            rawdata = file.read(num_bytes)
+            detected = chardet.detect(rawdata)
+            encoding = detected['encoding']
+            return rawdata.decode(encoding)
     return head_reader
 
 
