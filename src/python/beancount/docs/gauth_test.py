@@ -23,5 +23,6 @@ class TestGAuth(unittest.TestCase):
         mock_factory.return_value = mock.MagicMock()
         scopes = ['https://www.googleapis.com/auth/drive',
                   'https://www.googleapis.com/auth/drive.scripts']
-        http = gauth.get_auth_via_service_account(scopes)
+        credentials, http = gauth.get_auth_via_service_account(scopes)
+        self.assertEqual(mock_factory.return_value, credentials)
         self.assertIsInstance(http, httplib2.Http)
