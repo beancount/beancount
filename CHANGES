@@ -9,6 +9,25 @@ Note: This file contains only changes in the 'default' branch.
   - Added support for columns AMOUNT_DEBIT and AMOUNT_CREDIT in the csv
     importer.
 
+  - Merged ongoing progress from 'booking' branch; if you don't use any of the
+    in-progress new booking methods, this should not have any effect.
+
+    However, the 'booking_method has changed names and you may have to adjust
+    its values if you've been tinkering with it:
+
+    * 'booking_method' used to take on value "SIMPLE" or "FULL" and dispatch
+      betwee the current (old) booking implementation and the new one which will
+      support many other booking methods. This option is now named
+      'experiment_booking_algorithm' (a new option) and takes on the same
+      values. The default value is "SIMPLE", which keeps the behavior unchanged.
+      Use "FULL" if you want to test out the new booking algorithm: the new
+      algorithms should work except for the AVERAGE cost method. WARNING: This
+      is still under flux and considered unreleased.
+
+    " 'booking_method': This is a different option now, and takes the value of
+      any one of the booking methods visible here:
+      https://bitbucket.org/blais/beancount/src/7b9e00e6e19136f680befc1d4322f47cdc294cf6/src/python/beancount/core/data.py?at=booking&fileviewer=file-view-default#data.py-64
+
 
 2016-06-13
 

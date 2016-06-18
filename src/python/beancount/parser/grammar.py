@@ -30,7 +30,7 @@ from beancount.core.data import Document
 from beancount.core.data import Custom
 from beancount.core.data import new_metadata
 from beancount.core.data import Posting
-from beancount.core.data import BOOKING_METHODS
+from beancount.core.data import Booking
 
 from beancount.parser import lexer
 from beancount.parser import options
@@ -543,7 +543,7 @@ class Builder(lexer.LexBuilder):
             object_list.append(new_object)
         return object_list
 
-    def open(self, filename, lineno, date, account, currencies, booking, kvlist):
+    def open(self, filename, lineno, date, account, currencies, booking_str, kvlist):
         """Process an open directive.
 
         Args:
@@ -552,16 +552,30 @@ class Builder(lexer.LexBuilder):
           date: A datetime object.
           account: A string, the name of the account.
           currencies: A list of constraint currencies.
-          booking: A string, the booking method, or None if none was specified.
+          booking_str: A string, the booking method, or None if none was specified.
           kvlist: a list of KeyValue instances.
         Returns:
           A new Open object.
         """
         meta = new_metadata(filename, lineno, kvlist)
+        error = False
+        if booking_str:
+            try:
+                # Note: Somehow the 'in' membership operator is not defined on Enum.
+                booking = Booking[booking_str]
+            except KeyError:
+                # If the per-account method is invalid, set it to the global
+                # default method and continue.
+                booking = self.options['booking_method']
+                error = True
+        else:
+            booking = None
+
         entry = Open(meta, date, account, currencies, booking)
-        if booking and booking not in BOOKING_METHODS:
-            self.errors.append(
-                ParserError(meta, "Invalid booking method: {}".format(booking), entry))
+        if error:
+            self.errors.append(ParserError(meta,
+                                           "Invalid booking method: {}".format(booking_str),
+                                           entry))
         return entry
 
     def close(self, filename, lineno, date, account, kvlist):
@@ -981,7 +995,7 @@ class Builder(lexer.LexBuilder):
 
         # We now allow a single posting when its balance is zero, so we
         # commented out the check below. If a transaction has a single posting
-        # with a non-zero balance, it'll get caught below int he
+        # with a non-zero balance, it'll get caught below in the
         # balance_incomplete_postings() code.
         #
         # # Detect when a transaction does not have at least two legs.

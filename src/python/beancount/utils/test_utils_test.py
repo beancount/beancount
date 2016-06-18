@@ -148,3 +148,8 @@ class TestSkipIfRaises(unittest.TestCase):
         with self.assertRaises(unittest.SkipTest):
             with test_utils.skipIfRaises(ValueError):
                 raise ValueError
+
+
+@test_utils.nottest
+def test_not_really():
+    assert False

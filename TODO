@@ -1426,6 +1426,13 @@ http://furius.ca/beancount/doc/proposal-query
 
   Tasks:
 
+  - In the average cost method, add an option to determine whether explicit lot
+    information should just be lost silently or if it should trigger an explicit
+    error.
+
+  - When lots are merged in AVERAGE booking, decide whether to keep the older or
+    youngest lot using an option (add an option for this).
+
   - Make the "reduction_method" (rename from "booking_method") per-account and
     support the old method in the new code, as "FIFO". It really just is FIFO
     but now there will be lot splits instead of single lots being merged; this
@@ -1552,6 +1559,22 @@ http://furius.ca/beancount/doc/proposal-query
     situation would be to insert unique labels (indicate this somehow). Write
     unit tests for this. And try running it over my personal file to see if
     there's any instance of it ever happening (I don't think so).
+
+  - Consider building a fromstring() constructor for Cost and CostSpec. This may
+    make writing tests even easier and would complement what's there already.
+
+  - Deal with all the FIXME cases in the new booking code.
+
+  - Does the Inventory object require changes to make sure the dates are always
+    set? Would that not make sense?
+
+  - Write scripts to compare with the new and old method, on my own large file:
+
+    1. Compare balances at random points in time (many of them)
+    2. Compare transactions one-to-one.
+
+  - There's a fair bit of sign change in the new booking code. Do test the case
+    of negative inventories!
 
 ** Auto-Link Booking Transactions
 
@@ -2066,6 +2089,7 @@ http://furius.ca/beancount/doc/proposal-query
   - Remove support for deprecated variants in all option names.
 
   - Remove Enum from misc_utils and commit to 3.5 and above.
+  - When you do this, also add @enum.unique to beancount.core.data.BookingMethod.
 
   - When the 'booking' branch is complete, remove deprecated support for total
     cost (e.g., {{ ... }}), we won't need it anymore.
@@ -4687,6 +4711,15 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Rename the shell function PRICE() to GETPRICE() in order to avoid confusion
     as well.
+
+  - Put all the contents of experiments/ under their own directories and add
+    decent README files for each of these.
+
+  - Write a new plugin to spread cash transactions over multiple dates. Use a
+    template transaction in the input file as input.
+
+  - Setup continuous integration that would push build status for each commit to
+    bitbucket's build status API. Buildbot already has a plugin for this.
 
   - In upload_assets.py, add the export date somewhere very visible.
 

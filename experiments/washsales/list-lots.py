@@ -56,6 +56,9 @@ def main():
     fieldspec = list(enumerate(['Vest Date', 'Units', 'Instrument', 'Cost']))
     for account in args.accounts:
         real_acc = realization.get(real_root, account)
+        if real_acc is None:
+            logging.error("Account '%s' does not exist", account)
+            continue
         for position in real_acc.balance:
             rows.append((position.cost.date,
                          position.units.number,
