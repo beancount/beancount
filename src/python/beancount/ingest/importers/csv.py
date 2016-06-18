@@ -65,7 +65,7 @@ def get_amounts(iconfig, row):
     """
     debit, credit = None, None
     if Col.AMOUNT in iconfig:
-        debit = row[iconfig[Col.AMOUNT]]
+        credit = row[iconfig[Col.AMOUNT]]
     else:
         debit, credit = [row[iconfig[col]] if col in iconfig else None
                          for col in [Col.AMOUNT_DEBIT, Col.AMOUNT_CREDIT]]
