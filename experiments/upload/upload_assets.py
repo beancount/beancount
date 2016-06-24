@@ -271,6 +271,8 @@ def aggregate_postings(postings):
     agg_postings = []
     for (account, currency), balance in balances.items():
         units = balance.units()
+        if units.is_empty():
+            continue
         assert len(units) == 1
         units = units[0].units
 
