@@ -2,6 +2,7 @@
 beancount: TODO
 * Priorities
 
+- Pull request for Unicode support: https://bitbucket.org/blais/beancount/pull-requests/13/allow-unicode-in-account-names/diff#comment-20233638
 - Fix #128
 - Fix #130
 - Fix #131
