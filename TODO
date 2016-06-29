@@ -4733,6 +4733,9 @@ http://furius.ca/beancount/doc/proposal-query
     graphically, and then explain select/filter/aggregate. Include a section in
     the design doc about this, or perhaps even in its own doc.
 
+  - Add support for the ABC's for the pure interfaces, e.g.
+    beancount.prices.sources, beancount.ingest.importers, etc.
+
 ** Google Keep Tickets
 
   - Unicode support: add a basic filter with 'ignore' to a temp file, before I
