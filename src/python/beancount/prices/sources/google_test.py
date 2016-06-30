@@ -55,10 +55,11 @@ class TestGoogleFinanceSource(unittest.TestCase):
         self.assertTrue(isinstance(srcprice.price, Decimal))
         self.assertEqual(D('556.33'), srcprice.price)
 
-        # Adjust time to compare with EST time, where I wrote this test.
-        tzdelta_local = datetime.timedelta(seconds=time.timezone)
-        tzdelta_est = datetime.timedelta(seconds=-5*60*60)
-        adjtime = srcprice.time + tzdelta_local + tzdelta_est
+        # Convert local time back to UTC and finally to -240 time, as specified
+        # by the response.
+        tzdelta_adj = datetime.timedelta(seconds=time.timezone - 240*60)
+        adjtime = srcprice.time + tzdelta_adj
+
         self.assertEqual(adjtime, datetime.datetime(2014, 6, 6, 16, 0, 0))
 
     def test_get_latest_price__invalid(self):

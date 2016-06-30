@@ -100,6 +100,7 @@ class Source(source.Source):
 
             match = re.match('a(\d+)', time_str)
             if match:
+                # Create time with no timezone, i.e., in localtime.
                 time_marker = datetime.datetime.fromtimestamp(int(match.group(1)))
                 time = time_marker
             else:
