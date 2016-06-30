@@ -4,6 +4,16 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-06-30
+
+  - Make it possible for a BALANCES statement to have a WHERE clause. BALANCES
+    is now equivalent to
+
+      SELECT account, sum(position) FROM ... WHERE ... GROUP BY account
+
+    Inching one step closer to removing that WHERE clause eventually.
+
+
 2016-06-18
 
   - Added support for columns AMOUNT_DEBIT and AMOUNT_CREDIT in the csv

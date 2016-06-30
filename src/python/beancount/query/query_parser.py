@@ -36,16 +36,18 @@ Select = collections.namedtuple(
                'group_by order_by pivot_by limit distinct flatten'))
 
 # A select query that produces final balances for accounts.
-# This is more or equivalent to
+# This is equivalent to
 #
-#   SELECT account, sum(position) FROM <from_clause>
+#   SELECT account, sum(position)
+#   FROM ...
+#   WHERE ...
 #   GROUP BY account
 #
 # Attributes:
 #   summary_func: A method on an inventory to call on the position column.
 #     May be to extract units, value at cost, etc.
 #   from_clause: An instance of 'From', or None if absent.
-Balances = collections.namedtuple('Balances', 'summary_func from_clause')
+Balances = collections.namedtuple('Balances', 'summary_func from_clause where_clause')
 
 # A select query that produces a journal of postings.
 # This is equivalent to
@@ -636,9 +638,9 @@ class Parser(SelectParser):
 
     def p_balances_statement(self, p):
         """
-        balances_statement : BALANCES summary_func from
+        balances_statement : BALANCES summary_func from where
         """
-        p[0] = Balances(p[2], p[3])
+        p[0] = Balances(p[2], p[3], p[4])
 
     def p_journal_statement(self, p):
         """
