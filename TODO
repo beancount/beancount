@@ -4736,6 +4736,9 @@ http://furius.ca/beancount/doc/proposal-query
   - Add support for the ABC's for the pure interfaces, e.g.
     beancount.prices.sources, beancount.ingest.importers, etc.
 
+  - Start accumulating test cases from real data for similarity classification,
+    and rewrite this function from scratch, it just doesn't work well at all.
+
 ** Google Keep Tickets
 
   - Unicode support: add a basic filter with 'ignore' to a temp file, before I
