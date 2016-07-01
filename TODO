@@ -21,28 +21,6 @@ Export this to a CSV file and a Google Spreadsheet:
 
   bean-query $L "select date, flag, joinstr(other_accounts), description, position, balance where account ~ 'Caroline' "
 
-
-* Caching
-
-  We need to improve the caching mechanisms. There are there types of caching
-  right now:
-
-  * Load cache: Caches the parsing and processing of a top-level Beancount file
-    to a pickle.
-
-  * Price cache: Caches previously fetched prices from external price sources.
-    This allows us to re-run price fetching cheaply.
-
-  * [Not Done] Document conversion cache: For importing new documents, some
-    conversions are very expensive, in particular conversions from PDF. When
-    there are problems, we end up having to re-run these slow conversions many
-    times. Even without problems, we run them at least twice: Once for
-    extraction and once for filing. We should build a conversion cache.
-
-
-
-
-
 * Settlement Dates (Split & Merge)
 
   In http://furius.ca/beancount/doc/proposal-settlement, I describe the problem
@@ -2320,6 +2298,25 @@ http://furius.ca/beancount/doc/proposal-query
   Caching is emerging as a key feature because adding more plugins increases
   processing time. I'd like to eventually be able to cache as much processed
   data as possible, per file.
+
+  There are therre types of relevant caching:
+
+  * Load cache: Caches the parsing and processing of a top-level Beancount file
+    to a pickle.
+
+  * Price cache: Caches previously fetched prices from external price sources.
+    This allows us to re-run price fetching cheaply.
+
+  * [Not Done] Document conversion cache: For importing new documents, some
+    conversions are very expensive, in particular conversions from PDF. When
+    there are problems, we end up having to re-run these slow conversions many
+    times. Even without problems, we run them at least twice: Once for
+    extraction and once for filing. We should build a conversion cache.
+
+  These need to have consistent sets of related options and file locations.
+
+  - Create a ~/.beancount-cache directory and store all the cache information in
+    there instead of in the different places they are now.
 
   - I really need a --no-cache and --clear-cache options across all the
     programs, consistently defined. When developing a plugin, it would be so
