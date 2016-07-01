@@ -139,7 +139,7 @@ def main():
     import argparse
     parser = argparse.ArgumentParser(description=__doc__.strip())
 
-    parser.add_argument('filename', help='Beancount filename')
+    parser.add_argument('filename', nargs='?', help='Beancount filename')
 
     parser.add_argument('-o', '--output', action='store',
                         help="Output file (stdout if not specified)")
@@ -147,7 +147,8 @@ def main():
     opts = parser.parse_args()
 
     # Read the original contents.
-    contents = open(opts.filename).read()
+    file = open(opts.filename) if opts.filename not in (None, '-') else sys.stdin
+    contents = file.read()
 
     # Align the contents.
     formatted_contents = align_beancount(contents)

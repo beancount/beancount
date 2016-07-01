@@ -4,6 +4,11 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-07-01
+
+  - bean-format now accepts input from stdin.
+
+
 2016-06-30
 
   - Make it possible for a BALANCES statement to have a WHERE clause. BALANCES
