@@ -4,6 +4,11 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-07-11
+
+  - Added parsing a transaction date column to metadata in the CSV importer.
+
+
 2016-07-01
 
   - bean-format now accepts input from stdin.

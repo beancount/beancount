@@ -182,6 +182,7 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
 
             # Extract the data we need from the row, based on the configuration.
             date = get(row, Col.DATE)
+            txn_date = get(row, Col.TXN_DATE)
             payee = get(row, Col.PAYEE)
             narration = get(row, Col.NARRATION)
             tag = get(row, Col.TAG)
@@ -189,6 +190,8 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
 
             # Create a transaction and add it to the list of new entries.
             meta = data.new_metadata(file.name, index)
+            if txn_date is not None:
+                meta['txndate'] = parse_date_liberally(txn_date)
             date = parse_date_liberally(date)
             txn = data.Transaction(meta, date, self.FLAG, payee, narration, tags, None, [])
             entries.append(txn)
