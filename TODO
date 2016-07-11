@@ -4757,6 +4757,13 @@ http://furius.ca/beancount/doc/proposal-query
   - Start accumulating test cases from real data for similarity classification,
     and rewrite this function from scratch, it just doesn't work well at all.
 
+  - Port all my wash sales scripts to use the new booking method. This ought to
+    be working now, with the new booking method.
+
+  - The printer should not output the | separator anymore, that's just
+    deprecated. Do this now, make sure all the tests still work. This may affect
+    some of the importers.
+
 ** Google Keep Tickets
 
   - Unicode support: add a basic filter with 'ignore' to a temp file, before I
