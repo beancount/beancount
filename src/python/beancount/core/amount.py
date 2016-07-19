@@ -112,7 +112,7 @@ class Amount:
         Returns:
           True if this is less than the other Amount.
         """
-        return amount_sortkey(self) < amount_sortkey(other)
+        return sortkey(self) < sortkey(other)
 
     def __hash__(self):
         """A hashing function for amounts. The hash includes the currency.
@@ -152,7 +152,7 @@ class Amount:
 # objects with functions instead of objects with methods... alright, this is
 # okay.
 
-def amount_sortkey(amount):
+def sortkey(amount):
     """A comparison function that sorts by currency first.
 
     Args:

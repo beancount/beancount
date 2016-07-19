@@ -127,7 +127,7 @@ class TestParserEntryTypes(unittest.TestCase):
           2013-05-18 open Assets:US:Vanguard:VIIPX  VIIPX  "STRICT"
         """
         check_list(self, entries, [data.Open])
-        self.assertEqual(entries[0].booking, 'STRICT')
+        self.assertEqual(entries[0].booking, data.Booking.STRICT)
 
     @parser.parse_doc()
     def test_entry_open_5(self, entries, errors, __):
@@ -135,7 +135,7 @@ class TestParserEntryTypes(unittest.TestCase):
           2013-05-18 open Assets:US:Vanguard:VIIPX    "STRICT"
         """
         check_list(self, entries, [data.Open])
-        self.assertEqual(entries[0].booking, 'STRICT')
+        self.assertEqual(entries[0].booking, data.Booking.STRICT)
 
     @parser.parse_doc()
     def test_entry_close(self, entries, _, __):

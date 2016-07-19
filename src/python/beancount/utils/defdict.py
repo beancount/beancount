@@ -12,10 +12,7 @@ class DefaultDictWithKey(collections.defaultdict):
     """A version of defaultdict whose factory accepts the key as an argument.
     Note: collections.defaultdict would be improved by supporting this directly,
     this is a common occurence.
-
-    Attributes:
-      factory: A callable which accepts the lookup key as an argument.
     """
     def __missing__(self, key):
-        self[key] = value = self.default_factory(key)
+        self[key] = value = self.default_factory(key)  # pylint: disable=not-callable
         return value

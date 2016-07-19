@@ -19,7 +19,7 @@ from beancount.core.amount import CURRENCY_RE
 from beancount.core.display_context import DEFAULT_FORMATTER
 
 
-# A variant of Amount that also includes a date, a label and a merge flag.
+# A variant of Amount that also includes a date and a label.
 #
 # Attributes:
 #   number: A Decimal, the per-unit cost.
@@ -62,7 +62,7 @@ def cost_to_str(cost, dformat, detail=True):
     strlist = []
 
     if isinstance(cost, Cost):
-        if cost.number is not None:
+        if isinstance(cost.number, Decimal):
             strlist.append(Amount(cost.number, cost.currency).to_string(dformat))
         if detail:
             if cost.date:
@@ -71,7 +71,7 @@ def cost_to_str(cost, dformat, detail=True):
                 strlist.append('"{}"'.format(cost.label))
 
     elif isinstance(cost, CostSpec):
-        if cost.number_per:
+        if isinstance(cost.number_per, Decimal):
             amountlist = []
             if isinstance(cost.number_per, Decimal):
                 amountlist.append(dformat.format(cost.number_per))

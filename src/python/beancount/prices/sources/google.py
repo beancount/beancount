@@ -23,6 +23,8 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import re
 import datetime
+import logging
+import socket
 from urllib import parse
 from urllib import error
 
@@ -70,7 +72,11 @@ class Source(source.Source):
         response = net_utils.retrying_urlopen(url)
         if response is None:
             return None
-        data = response.read().decode('utf-8')
+        try:
+            data = response.read().decode('utf-8')
+        except socket.timeout:
+            logging.error("Connection timed out")
+            return None
         data = parse.unquote(data).strip()
 
         # Process the meta-data.
@@ -94,6 +100,7 @@ class Source(source.Source):
 
             match = re.match('a(\d+)', time_str)
             if match:
+                # Create time with no timezone, i.e., in localtime.
                 time_marker = datetime.datetime.fromtimestamp(int(match.group(1)))
                 time = time_marker
             else:
@@ -126,6 +133,9 @@ class Source(source.Source):
             if response is None:
                 return None
             data = response.read()
+        except socket.timeout:
+            logging.error("Connection timed out")
+            return None
         except error.HTTPError:
             # When the instrument is incorrect, you will get a 404.
             return None

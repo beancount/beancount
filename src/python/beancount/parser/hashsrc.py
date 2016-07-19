@@ -33,7 +33,8 @@ def hash_parser_source_files():
         fullname = path.join(path.dirname(__file__), filename)
         if not path.exists(fullname):
             return None
-        md5.update(open(fullname, 'rb').read())
+        with open(fullname, 'rb') as file:
+            md5.update(file.read())
     return md5.hexdigest()
 
 

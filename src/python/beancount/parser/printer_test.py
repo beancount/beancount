@@ -475,8 +475,7 @@ class TestPrinterMisc(test_utils.TestCase):
 
         2000-01-03 *
           Assets:Invest:Options  100 HOOLOPT {0 USD}
-          Assets:Invest:Cash    0 USD
-
+          Assets:Invest:Cash       0 USD
         """)
         entries, errors, options_map = loader.load_string(input_string)
         self.assertFalse(errors)

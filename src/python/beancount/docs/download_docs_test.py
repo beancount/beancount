@@ -19,8 +19,7 @@ class TestDownloadDocs(unittest.TestCase):
         service = mock.MagicMock()
         execute = service.files().list().execute
         execute.return_value = {
-            'items': [
-                {'id': 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'},
-                {'id': 'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'}]}
+            'files': [
+                {'id': 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'}]}
         docid = download_docs.find_index_document(service)
         self.assertEqual('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', docid)

@@ -1,5 +1,6 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import collections
 import re
 import textwrap
 
@@ -7,6 +8,8 @@ from beancount.parser import parser
 from beancount.parser import cmptest
 from beancount.parser import booking
 from beancount.parser import booking_simple
+from beancount.parser import printer
+from beancount import loader
 
 
 class TestInvalidAmountsErrors(cmptest.TestCase):
@@ -74,9 +77,11 @@ class TestBookingValidation(cmptest.TestCase):
 
         """)
 
+    BM = collections.defaultdict(lambda: Booking.STRICT)
+
     def convert_and_validate(self, entries, options_map):
         entries, _ = booking_simple.convert_lot_specs_to_lots(entries)
-        return booking.validate_inventory_booking(entries, options_map)
+        return booking.validate_inventory_booking(entries, options_map, self.BM)
 
     def do_validate_inventory_booking(self, input_str):
         entries, errors, options_map = parser.parse_string(input_str)
@@ -153,3 +158,22 @@ class TestBookingValidation(cmptest.TestCase):
         """
         validation_errors = self.convert_and_validate(entries, options_map)
         self.assertEqual([booking.BookingError], list(map(type, validation_errors)))
+
+
+class TestMissingEliminated(cmptest.TestCase):
+
+    @loader.load_doc(expect_errors=True)
+    def test_missing_data(self, entries, errors, options_map):
+        """
+          option "experiment_booking_algorithm" "SIMPLE"
+
+          2013-05-01 open Assets:Test
+          2013-05-01 open Expenses:Test
+
+          2016-06-10 * "" ""
+            Expenses:Test       10.00
+            Assets:Test
+        """
+        self.assertEqual(1, len(errors))
+        self.assertTrue(all(re.search('Transaction has incomplete elements', error.message)
+                            for error in errors))

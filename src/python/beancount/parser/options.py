@@ -9,6 +9,7 @@ import re
 import textwrap
 
 from beancount.core.number import D
+from beancount.core import data
 from beancount.core import account_types
 from beancount.core import account
 from beancount.core import display_context
@@ -93,6 +94,22 @@ def options_validate_boolean(value):
       ValueError: If the value is invalid.
     """
     return value.lower() in ('1', 'true', 'yes')
+
+
+def options_validate_booking_method(value):
+    """Validate a booking method name.
+
+    Args:
+      value: A string, the value provided as option.
+    Returns:
+      The new value, converted, if the conversion is successful.
+    Raises:
+      ValueError: If the value is invalid.
+    """
+    try:
+        return data.Booking[value]
+    except KeyError as exc:
+        raise ValueError(str(exc))
 
 
 # List of option groups, with their description, option names and default
@@ -436,13 +453,46 @@ PUBLIC_OPTION_GROUPS = [
     """, [Opt("experiment_explicit_tolerances", False, True)]),
 
     OptGroup("""
-      The booking method to apply, for interpolation and for matching lot
-      specifications to the available lots in an inventory at the moment of the
-      transaction. Values may be 'SIMPLE' for the original method used in
-      Beancount, or 'FULL' for the newer method that does fuzzy matching against
-      the inventory and allows multiple amounts to be interpolated (see
-      http://furius.ca/beancount/doc/proposal-booking for details).
-    """, [Opt("booking_method", "SIMPLE", "SIMPLE")]),
+      The booking algorithm implementation, old or new.
+
+      By default Beancount matches using the old algorithm ("SIMPLE") which
+      essentially merges together all positions without a lot-date in an
+      inventory. In a lot-date is provided for a reducing lot, it must match a
+      lot in the inventory which also must have a date on it. In other words,
+      inventories distinguish between lots with or without dates.
+
+      The newer matching algorithm ("FULL") is much more useful and powerful:
+      information from reducing lots is treated as a filtering specification to
+      match against the lots of the ante-inventory of the transaction.
+      Interpolation is also significantly more powerful. Eventually this will be
+      the only method available in Beancount. However, this work is ongoing and
+      switching to this algorithm will surely cause you headaches at this moment
+      in time.
+
+      This is transient, and is only present until the booking branch is
+      completed and all booking occurs using the newer, better algorithm. (The
+      target completion for this is end of summer 2016.)
+    """, [Opt("experiment_booking_algorithm", "SIMPLE", "SIMPLE")]),
+
+    OptGroup("""
+      The booking method to apply to ambiguous reductions of inventory lots.
+      When a posting is matched against the contents of an account's inventory
+      to reduce its contents and multiple lots match, the method dictates how
+      this ambiguity is resolved. Methods include "STRICT" which raises an
+      error, "FIFO" which selects the oldest lot, "AVERAGE" which merges all
+      lots and their cost basis before and after applying the posting, and
+      "NONE" which allows any reduction to be added to the inventory despite the
+      absence of a match (resulting in mixed inventories).
+
+      (Note that this is only used for the new "FULL" booking algorithm, which
+      is not set as the default just yet. See "experiment_booking_algorithm" for
+      details.)
+
+      See the following documents for details:
+        http://furius.ca/beancount/doc/inventories
+        http://furius.ca/beancount/doc/proposal-booking
+    """, [Opt("booking_method", data.Booking.STRICT, "STRICT",
+              converter=options_validate_booking_method)]),
 
     OptGroup("""
       Enable a TEMPORARY feature which does two things: first, it carries the

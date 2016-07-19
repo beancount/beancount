@@ -14,6 +14,7 @@ from beancount.core.position import Cost
 from beancount.core.position import CostSpec
 from beancount.core.account import has_component
 from beancount.utils.bisect_key import bisect_left_with_key
+from beancount.utils import misc_utils
 
 
 def new_directive(clsname, fields):
@@ -52,17 +53,33 @@ def new_directive(clsname, fields):
 #   currencies: A list of strings, currencies that are allowed in this account.
 #     May be None, in which case it means that there are no restrictions on which
 #     currencies may be stored in this account.
-#   booking: A string, the booking method to use to disambiguate postings to this
-#     account (when zero or more than one postings match the specification), or
-#     None if not specified. In practice, this attribute will be should be left
-#     unspecified (None) in the vast majority of cases. See BOOKING_METHODS for
-#     valid attribute values when set.
+#   booking: A Booking enum, the booking method to use to disambiguate
+#     postings to this account (when zero or more than one postings match the
+#     specification), or None if not specified. In practice, this attribute will
+#     be should be left unspecified (None) in the vast majority of cases. See
+#     Booking below for a selection of valid methods.
 Open = new_directive('Open', 'account currencies booking')
 
+
 # A set of valid booking method names for positions on accounts.
-# The following methods are not yet implemented:
-#   FIFO, LIFO, AVERAGE, AVERAGE_ONLY.
-BOOKING_METHODS = {'STRICT', 'NONE'}
+# See http://furius.ca/beancount/doc/inventories for a full explanation.
+class Booking(misc_utils.Enum):
+
+    # Reject ambiguous matches with an error.
+    STRICT = 'STRICT'
+
+    # Disable matching and accept the creation of mixed inventories.
+    NONE = 'NONE'
+
+    # Average cost booking: merge all matching lots before and after.
+    AVERAGE = 'AVERAGE'
+
+    # First-in first-out in the case of ambiguity.
+    FIFO = 'FIFO'
+
+    # Last-in first-out in the case of ambiguity.
+    LIFO = 'LIFO'
+
 
 # A "close account" directive.
 #
@@ -311,7 +328,7 @@ def new_metadata(filename, lineno, kvlist=None):
 #     associated with the posting. Most postings don't have a flag, but it can
 #     be convenient to mark a particular posting as problematic or pending to
 #     be reconciled for a future import of its account.
-#   metadata: A dict of strings to values, the metadata that was attached
+#   meta: A dict of strings to values, the metadata that was attached
 #     specifically to that posting, or None, if not provided. In practice, most
 #     of the instances will be unlikely to have metadata.
 Posting = namedtuple('Posting', 'account units cost price flag meta')

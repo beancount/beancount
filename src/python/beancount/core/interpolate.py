@@ -79,7 +79,8 @@ def get_posting_weight(posting):
         price = posting.price
         if price is not None:
             assert posting.units.currency != price.currency, (
-                "Invalid currency for price: {} in {}".format(posting, price))
+                "Invalid currency for price, should be different: {} in {}".format(posting,
+                                                                                   price))
             amount = amount_mul(price, posting.units.number)
 
         # Otherwise, just use the units.
