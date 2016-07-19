@@ -4712,6 +4712,38 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - You need to add options to provide the precision to use for prices,
+    otherwise something like this:
+
+      2016-07-15 * "Resto" "Nice dinner near Storm Hotel" ^b4cd7330bc3d
+        Expenses:Food:Restaurants   12500 ISK
+        Income:Martin:CreditCard  -103.18 USD @ ISK
+
+    will render as
+
+      2016-07-15 * "Resto" | "Nice dinner near Storm Hotel" ^b4cd7330bc3d
+        Expenses:Food:Restaurants:Martin       6250 ISK                ;                           6250 ISK
+        Expenses:Food:Restaurants:Caroline     6250 ISK                ;                           6250 ISK
+        Income:Martin:CreditCard            -103.18 USD @ 121 ISK      ; -12499.99999999999999999999999 ISK
+
+    instead of
+
+      2016-07-15 * "Resto" | "Nice dinner near Storm Hotel" ^b4cd7330bc3d
+        Expenses:Food:Restaurants:Martin       6250 ISK                ;                           6250 ISK
+        Expenses:Food:Restaurants:Caroline     6250 ISK                ;                           6250 ISK
+        Income:Martin:CreditCard            -103.18 USD @ 121.148 ISK  ; -12499.99999999999999999999999 ISK
+
+    Right now, the only solution is to provide at least one price with a
+    suitable precision.
+
+    Another solution, instead of letting the user select the precision, for
+    inferred prices, would be to infer maximum precision by default if a digit
+    of precision hasn't been seen yet. Round prices shouldn't imply 0 digits of
+    precision when it comes to inferred prices, for rendering.
+
+    Note that the actual numbers derived are correct, the only problem is how
+    they get rendered by default.
+
   - Try to modify b.l._parse_recursive() to reuse the DisplayContext object
     across all the parsed files, in order to accumulate its full state. Some
     users (from fava, e.g. Daniel Bos, see thread on mailing-list) are defining
