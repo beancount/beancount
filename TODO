@@ -4764,6 +4764,9 @@ http://furius.ca/beancount/doc/proposal-query
     deprecated. Do this now, make sure all the tests still work. This may affect
     some of the importers.
 
+  - Create an explicit license for my documentation, one that is compatible to
+    publishing this as a book later on.
+
 ** Google Keep Tickets
 
   - Unicode support: add a basic filter with 'ignore' to a temp file, before I
