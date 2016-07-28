@@ -1354,6 +1354,11 @@ http://furius.ca/beancount/doc/proposal-query
     downloaded twice. This should be detected and the duplicated identical file
     should be ignored entirely.
 
+  - It would be useful in many circumstances to rename the files but not to move
+    them to their destination directory. For example, I'd rename the files and
+    look at the filenames when processing PDFs manually to figure out what
+    they're for.
+
 ** GnuCash
 
   - Write a converter of GnuCash XML files into Beancount.
