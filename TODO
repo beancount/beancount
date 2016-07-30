@@ -1354,6 +1354,9 @@ http://furius.ca/beancount/doc/proposal-query
     downloaded twice. This should be detected and the duplicated identical file
     should be ignored entirely.
 
+  - Transactions within the set of newly imported ones should never duplicate
+    each other. Right now they do (see Transactions-Download-07-14-2016.csv).
+
 ** GnuCash
 
   - Write a converter of GnuCash XML files into Beancount.
