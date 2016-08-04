@@ -26,10 +26,8 @@ from beancount.parser import printer
 from beancount.core import data
 from beancount.utils import misc_utils
 from beancount.utils import pager
+from beancount.utils import caching
 from beancount import loader
-
-
-HISTORY_FILENAME = "~/.bean-shell-history"
 
 
 def load_history(filename):
@@ -102,7 +100,7 @@ class DispatchingShell(cmd.Cmd):
         """
         super().__init__()
         if is_interactive:
-            load_history(path.expanduser(HISTORY_FILENAME))
+            load_history(caching.get_file('shell/history'))
         self.is_interactive = is_interactive
         self.parser = parser
         self.initialize_vars()
