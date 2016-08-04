@@ -58,22 +58,16 @@ class Cache:
 
         cache_group = parser.add_argument_group(name)
         cache_group.add_argument(
-            '--{}-dir'.format(name),
+            '--{}'.format(name),
             metavar='DIR',
             dest='{}_cache_dir'.format(self.prefix),
             action='store',
             default=None,
-            help="Enable the {} cache with the given cache directory.".format(self.prefix))
+            help=("Enable the {} cache with the given cache directory. "
+                  "Set to empty string if you want to disable the cache.").format(
+                      self.prefix))
 
         cache_group.add_argument(
-            '--{}-disable'.format(name),
-            '--no-{}'.format(name),
-            dest='{}_cache_disable'.format(self.prefix),
-            action='store_true',
-            help="Disable the {} cache.".format(self.prefix))
-
-        cache_group.add_argument(
-            '--{}-clear'.format(name),
             '--clear-{}'.format(name),
             dest='{}_cache_clear'.format(self.prefix),
             action='store_true',
@@ -86,6 +80,15 @@ class Cache:
         Args:
           args: An options object as produced by argparse.parse_args().
         """
-        self.dirname = (getattr(args, '{}_cache_dir'.format(self.prefix)) or
-                        path.join(BEANCOUNT_DIR, self.prefix))
+        self.enabled = True
+        self.dirname = getattr(args, '{}_cache_dir'.format(self.prefix), None)
+        if self.dirname is None:
+            self.dirname = path.join(BEANCOUNT_DIR, self.prefix)
+        elif not self.dirname:
+            self.dirname = None
+            self.enabled = False
         self.clear = getattr(args, '{}_cache_clear'.format(self.prefix))
+
+        # Ensure the parent directory exists.
+        if self.dirname and not path.exists(self.dirname):
+            os.makedirs(self.dirname, exist_ok=True)
