@@ -4,6 +4,13 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-08-04
+
+  - Made account name components allowed to have two characters (beyond the
+    first component). For instance, Assets:Investments:F is now a valid account
+    name.
+
+
 2016-07-11
 
   - Added parsing a transaction date column to metadata in the CSV importer.
