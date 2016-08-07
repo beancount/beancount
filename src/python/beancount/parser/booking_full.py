@@ -983,7 +983,7 @@ def interpolate_group(postings, balances, currency):
                 price = incomplete_posting.price
                 assert price.currency == weight_currency, (
                     "Internal error; residual currency different than missing currency.")
-                new_price_number = abs(units.number / weight)
+                new_price_number = abs(weight / units.number)
                 new_posting = incomplete_posting._replace(price=Amount(new_price_number,
                                                                        price.currency))
 

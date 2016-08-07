@@ -271,6 +271,8 @@ def aggregate_postings(postings):
     agg_postings = []
     for (account, currency), balance in balances.items():
         units = balance.units()
+        if units.is_empty():
+            continue
         assert len(units) == 1
         units = units[0].units
 
@@ -314,17 +316,22 @@ def populate_with_parents(accounts_map, default):
     return new_accounts_map
 
 
-def upload_postings_to_sheet(model, doc, index, min_rows):
+def upload_postings_to_sheet(model, doc, name_or_index, min_rows):
     """Upload a model to a spreadsheet.
 
     Args:
       model: An instance of Model.
       doc: A gspread.Spreadsheet instance.
-      index: An index of a sheet in the spreadsheet.
+      name_or_index: An index of a sheet in the spreadsheet.
+      min_rows: An integer, the minimum number of rows to create.
     """
     # Resize the sheet to the minimum number of required rows.
     num_rows = max(min_rows, model.num_rows())
-    sheet = doc.get_worksheet(index)
+    if isinstance(name_or_index, int):
+        sheet = doc.get_worksheet(name_or_index)
+    else:
+        assert isinstance(name_or_index, str)
+        sheet = doc.worksheet(name_or_index)
     sheet.resize(num_rows, model.num_cols())
 
     # Fill up the data.
@@ -405,7 +412,7 @@ def main():
     model = Model(price_map, list(agg_postings), exports, asset_type, tax_map)
 
     # Update the sheets.
-    upload_postings_to_sheet(model, doc, 0, min_rows=100)
+    upload_postings_to_sheet(model, doc, "Upload", min_rows=100)
 
 
 if __name__ == '__main__':

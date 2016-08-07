@@ -772,7 +772,7 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
     def test_incomplete_price(self, entries, _, options_map):
         """
         2015-10-02 *
-          Assets:Account  120.00 CAD @ USD
+          Assets:Account  125.00 CAD @ USD
           Assets:Other   -100.00 USD
 
         2015-10-02 *
@@ -782,7 +782,7 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
         self.check(entries[0], {
             'USD': (True, """
               2015-10-02 *
-                Assets:Account  120.00 CAD @ 1.2 USD
+                Assets:Account  125.00 CAD @ 0.8 USD
                 Assets:Other   -100.00 USD
             """, None)})
         self.check(entries[1], {

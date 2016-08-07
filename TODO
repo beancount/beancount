@@ -2,6 +2,7 @@
 beancount: TODO
 * Priorities
 
+- Pull request for Unicode support: https://bitbucket.org/blais/beancount/pull-requests/13/allow-unicode-in-account-names/diff#comment-20233638
 - Fix #128
 - Fix #130
 - Fix #131
@@ -19,7 +20,6 @@ beancount: TODO
 Export this to a CSV file and a Google Spreadsheet:
 
   bean-query $L "select date, flag, joinstr(other_accounts), description, position, balance where account ~ 'Caroline' "
-
 
 * Settlement Dates (Split & Merge)
 
@@ -1354,6 +1354,11 @@ http://furius.ca/beancount/doc/proposal-query
     downloaded twice. This should be detected and the duplicated identical file
     should be ignored entirely.
 
+  - It would be useful in many circumstances to rename the files but not to move
+    them to their destination directory. For example, I'd rename the files and
+    look at the filenames when processing PDFs manually to figure out what
+    they're for.
+
 ** GnuCash
 
   - Write a converter of GnuCash XML files into Beancount.
@@ -2298,6 +2303,25 @@ http://furius.ca/beancount/doc/proposal-query
   Caching is emerging as a key feature because adding more plugins increases
   processing time. I'd like to eventually be able to cache as much processed
   data as possible, per file.
+
+  There are therre types of relevant caching:
+
+  * Load cache: Caches the parsing and processing of a top-level Beancount file
+    to a pickle.
+
+  * Price cache: Caches previously fetched prices from external price sources.
+    This allows us to re-run price fetching cheaply.
+
+  * [Not Done] Document conversion cache: For importing new documents, some
+    conversions are very expensive, in particular conversions from PDF. When
+    there are problems, we end up having to re-run these slow conversions many
+    times. Even without problems, we run them at least twice: Once for
+    extraction and once for filing. We should build a conversion cache.
+
+  These need to have consistent sets of related options and file locations.
+
+  - Create a ~/.beancount-cache directory and store all the cache information in
+    there instead of in the different places they are now.
 
   - I really need a --no-cache and --clear-cache options across all the
     programs, consistently defined. When developing a plugin, it would be so
@@ -4693,6 +4717,38 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - You need to add options to provide the precision to use for prices,
+    otherwise something like this:
+
+      2016-07-15 * "Resto" "Nice dinner near Storm Hotel" ^b4cd7330bc3d
+        Expenses:Food:Restaurants   12500 ISK
+        Income:Martin:CreditCard  -103.18 USD @ ISK
+
+    will render as
+
+      2016-07-15 * "Resto" | "Nice dinner near Storm Hotel" ^b4cd7330bc3d
+        Expenses:Food:Restaurants:Martin       6250 ISK                ;                           6250 ISK
+        Expenses:Food:Restaurants:Caroline     6250 ISK                ;                           6250 ISK
+        Income:Martin:CreditCard            -103.18 USD @ 121 ISK      ; -12499.99999999999999999999999 ISK
+
+    instead of
+
+      2016-07-15 * "Resto" | "Nice dinner near Storm Hotel" ^b4cd7330bc3d
+        Expenses:Food:Restaurants:Martin       6250 ISK                ;                           6250 ISK
+        Expenses:Food:Restaurants:Caroline     6250 ISK                ;                           6250 ISK
+        Income:Martin:CreditCard            -103.18 USD @ 121.148 ISK  ; -12499.99999999999999999999999 ISK
+
+    Right now, the only solution is to provide at least one price with a
+    suitable precision.
+
+    Another solution, instead of letting the user select the precision, for
+    inferred prices, would be to infer maximum precision by default if a digit
+    of precision hasn't been seen yet. Round prices shouldn't imply 0 digits of
+    precision when it comes to inferred prices, for rendering.
+
+    Note that the actual numbers derived are correct, the only problem is how
+    they get rendered by default.
+
   - Try to modify b.l._parse_recursive() to reuse the DisplayContext object
     across all the parsed files, in order to accumulate its full state. Some
     users (from fava, e.g. Daniel Bos, see thread on mailing-list) are defining
@@ -4731,6 +4787,22 @@ http://furius.ca/beancount/doc/proposal-query
   - The Beancount presentation should include the table's implicit join,
     graphically, and then explain select/filter/aggregate. Include a section in
     the design doc about this, or perhaps even in its own doc.
+
+  - Add support for the ABC's for the pure interfaces, e.g.
+    beancount.prices.sources, beancount.ingest.importers, etc.
+
+  - Start accumulating test cases from real data for similarity classification,
+    and rewrite this function from scratch, it just doesn't work well at all.
+
+  - Port all my wash sales scripts to use the new booking method. This ought to
+    be working now, with the new booking method.
+
+  - The printer should not output the | separator anymore, that's just
+    deprecated. Do this now, make sure all the tests still work. This may affect
+    some of the importers.
+
+  - Create an explicit license for my documentation, one that is compatible to
+    publishing this as a book later on.
 
 ** Google Keep Tickets
 

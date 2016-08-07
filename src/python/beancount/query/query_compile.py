@@ -894,7 +894,7 @@ def transform_balances(balances):
 
     return query_parser.Select(cooked_select.targets,
                                balances.from_clause,
-                               None,
+                               balances.where_clause,
                                cooked_select.group_by,
                                cooked_select.order_by,
                                None, None, None, None)
