@@ -4,6 +4,9 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+  - Fixed bug with UNITS() function when applied to a Position object.
+
+
 2016-08-04
 
   - Made account name components allowed to have two characters (beyond the
@@ -234,8 +237,6 @@ Note: This file contains only changes in the 'default' branch.
 
   - Added a test to make sure that building a source dist includes the header
     files and C implementation files.
-
-  - Fixed bug with UNITS() function when applied to a Position object.
 
   - Sort Document directives after Transactions when they occur on the same day.
     The reason for this is that statements typically include transactions on
