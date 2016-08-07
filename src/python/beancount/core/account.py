@@ -17,7 +17,12 @@ sep = ':'
 
 
 # Regular expression string that matchs a valid account.
-ACCOUNT_RE = '[A-Z][A-Za-z0-9\-]+(?:{}[A-Z][A-Za-z0-9\-]+)+'.format(sep)
+ACCOUNT_RE = '[A-Z][A-Za-z0-9\-]+(?:{}[A-Z][A-Za-z0-9\-]*)+'.format(sep)
+
+
+# A dummy object which stands for the account type. Values in custom directives
+# use this to disambiguate between string objects and account names.
+TYPE = '<AccountDummy>'
 
 
 def is_valid(string):

@@ -3,11 +3,6 @@
 
 With this script I'm able to make the numbers reported by MS on the 1099 match
 mine, except for rounding error.
-
-TODO:
-
-* Move the allocation of commissions from this script to a plugin.
-
 """
 __author__ = 'Martin Blais <blais@furius.ca>'
 
@@ -32,6 +27,23 @@ from beancount import loader
 
 LotSale = collections.namedtuple(
     'LotSale', 'no ref date inst units cost price totcost totprice comm proc pnl wash adj')
+
+fieldspec = [
+    ('no', 'No'),
+    ('ref', 'Reference'),
+    ('date', 'Date of Sale'),
+    ('inst', 'Instrument'),
+    ('units', 'Shares'),
+    ('cost', 'Share Cost'),
+    ('price', 'Selling Price'),
+    ('totcost', 'Cost Basis'),
+    ('totprice', 'Market Value'),
+    ('comm', 'Commission'),
+    ('proc', 'Proceeds'),
+    ('pnl', 'Gain'),
+    ('wash', 'Washed?'),
+    ('adj', 'Adjustment'),
+]
 
 
 def aggregate_sales(sublots):
@@ -65,10 +77,11 @@ def main():
                         help="End date; if not set, at the end of star'ts year")
 
     parser.add_argument('-o', '--output', action='store',
-                        default=os.getcwd(),
                         help="Output directory for the CSV files")
 
     args = parser.parse_args()
+
+    calculate_commission = False
 
     # Setup date interval.
     if args.start is None:
@@ -101,23 +114,24 @@ def main():
                     logging.error("Missing price on %s", posting)
                 txn_sales.append(data.TxnPosting(txn, posting))
 
-        # Find total commission.
-        for posting in txn.postings:
-            if re.search('Commission', posting.account):
-                commission = posting.units.number
-                break
-        else:
-            commission = ZERO
+        if calculate_commission:
+            # Find total commission.
+            for posting in txn.postings:
+                if re.search('Commission', posting.account):
+                    commission = posting.units.number
+                    break
+            else:
+                commission = ZERO
 
-        # Compute total number of units.
-        tot_units = sum(sale.posting.units.number
-                        for sale in txn_sales)
+            # Compute total number of units.
+            tot_units = sum(sale.posting.units.number
+                            for sale in txn_sales)
 
-        # Assign a proportion of the commission to each of the sales by
-        # inserting it into its posting metadata. This will be processed below.
-        for sale in txn_sales:
-            fraction = sale.posting.units.number / tot_units
-            sale.posting.meta['commission'] = fraction * commission
+            # Assign a proportion of the commission to each of the sales by
+            # inserting it into its posting metadata. This will be processed below.
+            for sale in txn_sales:
+                fraction = sale.posting.units.number / tot_units
+                sale.posting.meta['commission'] = fraction * commission
 
         sales.extend(txn_sales)
 
@@ -134,7 +148,18 @@ def main():
         units = sale.posting.units
         totcost = (-units.number * sale.posting.cost.number).quantize(Q)
         totprice = (-units.number * sale.posting.price.number).quantize(Q)
-        commission = sale.posting.meta['commission'].quantize(Q)
+
+        commission_meta = sale.posting.meta.get('commission', None)
+        if commission_meta is None:
+            commission = ZERO
+        else:
+            if calculate_commission:
+                commission = commission_meta
+            else:
+                # Fetch the commission that was inserted by the commissions plugin.
+                commission = commission_meta[0].units.number
+        commission = commission.quantize(Q)
+
         pnl = (totprice - totcost - commission).quantize(Q)
         is_wash = sale.posting.meta.get('wash', False)
         if totprice > totcost:
@@ -163,14 +188,15 @@ def main():
                       code,
                       adj)
         lots.append(lot)
-    tab_detail = table.create_table(lots)
+    tab_detail = table.create_table(lots, fieldspec)
 
     # Aggregate by transaction in order to be able to cross-check against the
     # 1099 forms.
     agglots = [aggregate_sales(lots)
                for _, lots in misc_utils.groupby(
                        lambda lot: (lot.no, lot.ref), lots).items()]
-    tab_agg = table.create_table(sorted(agglots, key=lambda lot: (lot.ref, lot.no)))
+    tab_agg = table.create_table(sorted(agglots, key=lambda lot: (lot.ref, lot.no)),
+                                 fieldspec)
 
     # Write out a summary of P/L.
     summary_fields = list(enumerate(['Currency', 'Gain', 'Loss', 'Net', 'Adj/Wash']))
@@ -196,7 +222,7 @@ def main():
     table.render_table(tab_detail, sys.stdout, 'txt')
     print()
 
-    print('Aggregated by trade & reference number')
+    print('Aggregated by trade & Reference Number (to Match 1099/Form8459')
     print('=' * 48)
     table.render_table(tab_agg, sys.stdout, 'txt')
     print()
@@ -206,10 +232,13 @@ def main():
     table.render_table(tab_summary, sys.stdout, 'txt')
 
     # Write out CSV files.
-    with open(path.join(args.output, 'wash-sales-detail.csv'), 'w') as file:
-        table.render_table(tab_detail, file, 'csv')
-    with open(path.join(args.output, 'wash-sales-aggregate.csv'), 'w') as file:
-        table.render_table(tab_agg, file, 'csv')
+    if args.output:
+        with open(path.join(args.output, 'wash-sales-detail.csv'), 'w') as file:
+            table.render_table(tab_detail, file, 'csv')
+        with open(path.join(args.output, 'wash-sales-aggregate.csv'), 'w') as file:
+            table.render_table(tab_agg, file, 'csv')
+        with open(path.join(args.output, 'wash-sales-summary.csv'), 'w') as file:
+            table.render_table(tab_summary, file, 'csv')
 
 
 if __name__ == '__main__':

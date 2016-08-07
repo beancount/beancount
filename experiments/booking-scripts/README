@@ -1,2 +1,2 @@
-A couple of diagnostic scripts to prepare for inventory booking changes.
-
+Some diagnostic scripts to deal with the transition to the new inventory booking
+algorithm and corresponding changes in my input data.

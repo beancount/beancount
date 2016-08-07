@@ -84,7 +84,7 @@ def get_holdings_entries(entries, options_map):
       A string, the entries to print out.
     """
 
-    # The entries will be create at the latest date, against an equity account.
+    # The entries will be created at the latest date, against an equity account.
     latest_date = entries[-1].date
     _, equity_account, _ = options.get_previous_accounts(options_map)
 
@@ -109,7 +109,6 @@ def get_holdings_entries(entries, options_map):
             data.Posting(equity_account, pos_cost.units, pos_cost.cost, None, None, None))
 
         holdings_entries.append(entry)
-
 
     # Get opening directives for all the accounts.
     used_accounts = {holding.account for holding in holdings_list}

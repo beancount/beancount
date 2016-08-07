@@ -115,6 +115,8 @@ class TestEntryPrinter(cmptest.TestCase):
         2014-06-09 * "An entry like a conversion entry"
           Assets:Account1         1 USD @ 0 OTHER
           Assets:Account2         1 CAD @ 0 OTHER
+
+        2014-06-20 custom "budget" Assets:Account2 "balance < 200.00 USD" 200.00 10.00 USD
         """
         self.assertRoundTrip(entries, errors)
 
@@ -473,8 +475,7 @@ class TestPrinterMisc(test_utils.TestCase):
 
         2000-01-03 *
           Assets:Invest:Options  100 HOOLOPT {0 USD}
-          Assets:Invest:Cash    0 USD
-
+          Assets:Invest:Cash       0 USD
         """)
         entries, errors, options_map = loader.load_string(input_string)
         self.assertFalse(errors)

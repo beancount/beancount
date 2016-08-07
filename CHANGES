@@ -4,12 +4,244 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-08-04
+
+  - Made account name components allowed to have two characters (beyond the
+    first component). For instance, Assets:Investments:F is now a valid account
+    name.
+
+
+2016-07-11
+
+  - Added parsing a transaction date column to metadata in the CSV importer.
+
+
+2016-07-01
+
+  - bean-format now accepts input from stdin.
+
+
+2016-06-30
+
+  - Make it possible for a BALANCES statement to have a WHERE clause. BALANCES
+    is now equivalent to
+
+      SELECT account, sum(position) FROM ... WHERE ... GROUP BY account
+
+    Inching one step closer to removing that WHERE clause eventually.
+
+
+2016-06-18
+
+  - Added support for columns AMOUNT_DEBIT and AMOUNT_CREDIT in the csv
+    importer.
+
+  - Merged ongoing progress from 'booking' branch; if you don't use any of the
+    in-progress new booking methods, this should not have any effect.
+
+    However, the 'booking_method has changed names and you may have to adjust
+    its values if you've been tinkering with it:
+
+    * 'booking_method' used to take on value "SIMPLE" or "FULL" and dispatch
+      betwee the current (old) booking implementation and the new one which will
+      support many other booking methods. This option is now named
+      'experiment_booking_algorithm' (a new option) and takes on the same
+      values. The default value is "SIMPLE", which keeps the behavior unchanged.
+      Use "FULL" if you want to test out the new booking algorithm: the new
+      algorithms should work except for the AVERAGE cost method. WARNING: This
+      is still under flux and considered unreleased.
+
+    " 'booking_method': This is a different option now, and takes the value of
+      any one of the booking methods visible here:
+      https://bitbucket.org/blais/beancount/src/7b9e00e6e19136f680befc1d4322f47cdc294cf6/src/python/beancount/core/data.py?at=booking&fileviewer=file-view-default#data.py-64
+
+
+2016-06-13
+
+  - Ported beancount.docs.download_docs to the v3 drive API and the use of a
+    service account instead of a full access to a user account. Service accounts
+    are easier to configure and work with.
+
+  - Ported beancount.docs.upload_options to the v3 drive API.
+
+
+2016-06-05
+
+  - Added a new column to the posting context: "other_accounts" is a set of
+    account strings for the other postings of the transaction.
+
+  - Added a new JOINSTR() generic function to the shell, to reduce the repeated
+    column above to a single comma-separated string.
+
+
+2016-05-28
+
+  - Made various changes to the shell in order to make it possible to convert to
+    the market value:
+
+    * CONVERT() has been converted to convert to the market value, when applied
+      to a position held at cost. However, it still requires a target currency
+      and it may fail if you apply it to a position for which the cost currency
+      differs from that of the target currency, i.e., it will not automatically
+      chase down the transitive conversions toward the desired target currency.
+
+    * A new function VALUE() has been added, which is similar to CONVERT() but
+      which when applied to a position held at cost converts to the cost
+      currency at the current price. It's similar to CONVERT() but you don't
+      have to provide the target currency. And similarly to CONVERT(), you may
+      provide a particular date, and if at that date there is no available
+      conversion rate in the prices database, the conversion will fail
+      analogously and spit out an error message.
+
+    * PRICE() has been renamed to GETPRICE() to avoid some confusion. PRICE()
+      does not convert, it merely gets the price from the price database.
+      GETPRICE() is thus a more appropriate name.
+
+
+2016-05-22
+
+  - Created the beancount.plugins.mark_unverified plugin as a response to this
+    thread: https://groups.google.com/d/msg/beancount/hQoOSJE7qNo/-E__v-XhEgAJ
+
+    This plugin makes it possible to compute the balances as of the last Balance
+    directive of each account by adding metadata to postings which appear after
+    that account's last balance. You'd filter out unverified postings with an SQL
+    query on meta-data like this:
+
+      SELECT account, sum(position)
+      WHERE NOT meta('unverified')
+      GROUP BY 1
+      ORDER BY 1
+
+    Note that the resulting balanaces almost certainly don't sum up to zero,
+    because of differing dates of the Balance directives. Also, note that
+    accounts without a single Balance directive will not have their postings
+    marked at all.
+
+
+2016-05-08
+
+  - In the output of bean-price, sort prices exclusively by currency, regardless
+    of date. This is because on weekends you'll tend to get slightly varying
+    dates, and manual/occasional price updates are usually put in "chunks" in a
+    file section. It's easier to visually find the price by scanning by currency
+    order.
+
+
+2016-05-05
+
+  - Added a shell function to filter a set of strings (for tags or links) with a
+    regular expression and return the first one. This way you can extract some
+    of the tags or links with a pattern as columns.
+
+
+2016-05-01
+
+  - Fixed issue #124, a leak in the grammar parser which would leak the entire
+    set of entries on every instance of parse.
+
+  - Fixed some warnings about unclosed files which occur only on default python
+    branch.
+
+
+2016-04-29
+
+  - Don't just log an extraction error to logging.error() in the regression
+    tests; let the exception through. This makes building and debugging
+    importers much easier.
+
+  - Created an experimental script to extract date/location information required
+    for a naturalization application.
+
+
+2016-04-24
+
+  - Rewrote the section on "Core Data Structures" of the Design Doc, to reflect
+    the newer internals of Beancount, those which have been merged from the
+    ongoing 'booking' branch.
+    See http://furius.ca/beancount/doc/design-doc.
+
+
+2016-04-23
+
+  - Added beancount.ingest.importers.fileonly, a simplistic importer which can
+    be instantiated to just file away some downloads without extracting anything
+    from them.
+
+
+2016-04-18
+
+  - In bean-doctor context, all the accounts should appear in the
+    post-transaction balances, even if their balance is empty. This had been
+    fixed for the pre-transaction balances but I stumbled upon a case of
+    post-transaction balances not showing an empty account.
+
+
+2016-04-17
+
+  - Added support for the BEANCOUNT_LOAD_CACHE_FILENAME environment variable,
+    which can be set in order to overridde the location of the pickle cache.
+    This variable may contain the string "{filename}", and if it is present the
+    basename of the beancount file will be spliced in. This can be useful if,
+    for example, you are reading your Beancount input file from a read-only
+    filesystem and still want to use the cache by specifying an alternative
+    filename.
+
+  - Fixed a bug when reading from a read-only filesystem, the loader cache would
+    fail to be removed and raise an exception.
+
+  - Fixed an important bug in beancount.ingest whereby instances of
+    b.i.cache.FileMemo weren't being shared as widely as they could have been.
+    FileMemo instances now have to be created via b.i.cache.get_file() and
+    FileMemo is now a hidden class _FileMemo. See this discussion for more details:
+    https://groups.google.com/d/msg/beancount/b-ZqYqag7AU/N-AaGSZOAwAJ
+
+
+2016-04-10
+
+  - Create a new 'beancount.plugins.fix_payees' plugin that allows the user to
+    provide a set of rules to rewrite and clean up the names of the payees from
+    the Beancount file.
+
+    While it would be ideal to do this at import time, in practice there are a
+    lot of downloaded files' "memo" fields which get set as the payee
+    automatically. These "memos" aren't very clean and readable strings: they
+    sometimes contain numbers, partial city names, and other junk. In order to
+    produce clean reports where one might want to aggregate by payee, it's
+    useful to rewrite the payees to make them nice and clean. You can use this
+    plugin to do that.
+
+
+  - Made the Custom directive accept ACCOUNT tokens. You can now do something
+    like this:
+
+      2014-06-20 custom "budget" Assets:Account2 "balance < 200.00 USD"
+
+    Prior to this, the account name had to be represented as a string. (Users of
+    the burgeoning Custom directive not like this very much.)
+
+    Note that account names and regular strings are both output from the parser
+    as 'str' objects, so in order to make this possible, I had to change the
+    representation of the values to a pair of (value, dtype). Account names have
+    a 'dtype' of beancount.core.account.TYPE. (Eventually I will probably want
+    to make account strings represented with their own custom datatypes, but
+    that will require a fair amount of work on the codebase; this substitute is
+    fine for now, as there are no other places where such a disambiguation is
+    necessary.)
+
+
 2016-04-04
 
   - Added a test to make sure that building a source dist includes the header
     files and C implementation files.
 
   - Fixed bug with UNITS() function when applied to a Position object.
+
+  - Sort Document directives after Transactions when they occur on the same day.
+    The reason for this is that statements typically include transactions on
+    that final day, and we'd like for them to occur at the right place in the
+    journals. See originating thread:
+    https://groups.google.com/d/msg/beancount/3ItOYS9DJx4/VyTJB3ssBQAJ
 
 
 2016-04-03

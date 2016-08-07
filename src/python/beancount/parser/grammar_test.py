@@ -11,6 +11,7 @@ import re
 from unittest import mock
 
 from beancount.core.number import D
+from beancount.core.number import Decimal
 from beancount.core.number import ZERO
 from beancount.core.number import MISSING
 from beancount.core.amount import from_string as A
@@ -126,7 +127,7 @@ class TestParserEntryTypes(unittest.TestCase):
           2013-05-18 open Assets:US:Vanguard:VIIPX  VIIPX  "STRICT"
         """
         check_list(self, entries, [data.Open])
-        self.assertEqual(entries[0].booking, 'STRICT')
+        self.assertEqual(entries[0].booking, data.Booking.STRICT)
 
     @parser.parse_doc()
     def test_entry_open_5(self, entries, errors, __):
@@ -134,7 +135,7 @@ class TestParserEntryTypes(unittest.TestCase):
           2013-05-18 open Assets:US:Vanguard:VIIPX    "STRICT"
         """
         check_list(self, entries, [data.Open])
-        self.assertEqual(entries[0].booking, 'STRICT')
+        self.assertEqual(entries[0].booking, data.Booking.STRICT)
 
     @parser.parse_doc()
     def test_entry_close(self, entries, _, __):
@@ -196,11 +197,11 @@ class TestParserEntryTypes(unittest.TestCase):
         """
         check_list(self, entries, [data.Custom])
         txns = [entry for entry in entries if isinstance(entry, data.Custom)]
-        self.assertEqual(['weekly < 1000.00 USD',
-                          datetime.date(2016, 2, 28),
-                          True,
-                          amount.from_string('43.03 USD'),
-                          D('23')],
+        self.assertEqual([('weekly < 1000.00 USD', str),
+                          (datetime.date(2016, 2, 28), datetime.date),
+                          (True, bool),
+                          (amount.from_string('43.03 USD'), amount.Amount),
+                          (D('23'), Decimal)],
                          txns[0].values)
 
 

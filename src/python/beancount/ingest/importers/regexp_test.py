@@ -38,10 +38,10 @@ class TestRegexpMixin(unittest.TestCase):
         importer = SimpleTestImporter(['Filename: .*te?mp.*',
                                        'MimeType: text/plain',
                                        'Contents: .*DATE,TYPE'])
-        file = cache.FileMemo(filename)
+        file = cache._FileMemo(filename)
         self.assertTrue(importer.identify(file))
 
         importer = SimpleTestImporter(['Filename: .*te?mp.*',
                                        'MimeType: text/xml'])
-        file = cache.FileMemo(filename)
+        file = cache._FileMemo(filename)
         self.assertFalse(importer.identify(file))

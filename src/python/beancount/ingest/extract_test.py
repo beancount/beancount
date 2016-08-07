@@ -24,7 +24,7 @@ class TestScriptExtractFromFile(test_utils.TestCase):
         imp = mock.MagicMock()
         imp.identify = mock.MagicMock(return_value=True)
         imp.extract = mock.MagicMock(return_value=[])
-        new_entries, dup_entries = extract.extract_from_file('blabla.ofx', imp)
+        new_entries, dup_entries = extract.extract_from_file('/tmp/blabla.ofx', imp)
         self.assertEqual([], new_entries)
         self.assertEqual([], dup_entries)
 
@@ -48,7 +48,7 @@ class TestScriptExtractFromFile(test_utils.TestCase):
         imp = mock.MagicMock()
         imp.identify = mock.MagicMock(return_value=True)
         imp.extract = mock.MagicMock(return_value=entries)
-        new_entries, dup_entries = extract.extract_from_file('blabla.ofx', imp)
+        new_entries, dup_entries = extract.extract_from_file('/tmp/blabla.ofx', imp)
         self.assertEqual(3, len(entries))
         self.assertTrue(misc_utils.is_sorted(new_entries, key=lambda entry: entry.date))
         self.assertEqual([], dup_entries)
@@ -88,7 +88,7 @@ class TestScriptExtractFromFile(test_utils.TestCase):
         imp.identify = mock.MagicMock(return_value=True)
         imp.extract = mock.MagicMock(return_value=entries)
         new_entries, dup_entries = extract.extract_from_file(
-            'blabla.ofx', imp, min_date=datetime.date(2016, 2, 2))
+            '/tmp/blabla.ofx', imp, min_date=datetime.date(2016, 2, 2))
         self.assertEqual(2, len(new_entries))
         self.assertEqual([datetime.date(2016, 2, 2), datetime.date(2016, 2, 3)],
                          [entry.date for entry in new_entries])
@@ -118,7 +118,8 @@ class TestScriptExtractFromFile(test_utils.TestCase):
         imp.identify = mock.MagicMock(return_value=True)
         imp.extract = mock.MagicMock(return_value=[entries[1], entries[3]])
 
-        new_entries, dup_entries = extract.extract_from_file('blabla.ofx', imp, entries)
+        new_entries, dup_entries = extract.extract_from_file('/tmp/blabla.ofx', imp,
+                                                             entries)
         self.assertEqual(2, len(dup_entries))
         self.assertEqual([datetime.date(2016, 2, 2), datetime.date(2016, 2, 4)],
                          [entry.date for entry in new_entries])
@@ -133,8 +134,8 @@ class TestScriptExtractFromFile(test_utils.TestCase):
         imp = mock.MagicMock()
         imp.identify = mock.MagicMock(return_value=True)
         imp.extract = mock.MagicMock(side_effect=ValueError("Unexpected error!"))
-        new_entries, dup_entries = extract.extract_from_file('blabla.ofx', imp, [])
-        self.assertEqual(0, len(new_entries))
+        with self.assertRaises(ValueError):
+            extract.extract_from_file('/tmp/blabla.ofx', imp, [])
 
 
 class TestPrintExtractedEntries(scripts_utils.TestScriptsBase, unittest.TestCase):

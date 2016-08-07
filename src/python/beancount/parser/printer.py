@@ -11,7 +11,9 @@ import textwrap
 
 from beancount.core.number import Decimal
 from beancount.core import position
+from beancount.core import inventory
 from beancount.core import amount
+from beancount.core import account
 from beancount.core import data
 from beancount.core import interpolate
 from beancount.core import display_context
@@ -132,7 +134,7 @@ class EntryPrinter:
                     value_str = str(value)
                 elif isinstance(value, bool):
                     value_str = 'TRUE' if value else 'FALSE'
-                elif isinstance(value, dict):
+                elif isinstance(value, (dict, inventory.Inventory)):
                     pass # Ignore dicts, don't print them out.
                 else:
                     raise ValueError("Unexpected value: '{!r}'".format(value))
@@ -266,7 +268,7 @@ class EntryPrinter:
         oss.write('{e.date} open {e.account:47} {currencies} {booking}'.format(
             e=entry,
             currencies=','.join(entry.currencies or []),
-            booking=('"{}"'.format(entry.booking)
+            booking=('"{}"'.format(entry.booking.name)
                      if entry.booking is not None
                      else '')).rstrip())
         oss.write('\n')
@@ -295,9 +297,13 @@ class EntryPrinter:
 
     def Custom(self, entry, oss):
         custom_values = []
-        for value in entry.values:
-            if isinstance(value, str):
+        for value, dtype in entry.values:
+            if dtype is account.TYPE:
+                value = '{}'.format(value)
+            elif isinstance(value, str):
                 value = '"{}"'.format(value)
+            elif isinstance(value, Decimal):
+                value = str(value)
             elif isinstance(value, datetime.date):
                 value = value.isoformat()
             elif isinstance(value, bool):

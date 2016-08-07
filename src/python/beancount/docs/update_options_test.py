@@ -16,11 +16,11 @@ else:
 class TestUpdateOptions(unittest.TestCase):
 
     def test_get_options_doc_id(self):
-        docid = update_options.get_options_doc_id()
+        docid = update_options.get_options_docid()
         self.assertTrue(docid)
         self.assertIsInstance(docid, str)
 
     @mock.patch('apiclient.discovery.build')
     def test_replace_gdocs_document(self, build):
-        docid = update_options.get_options_doc_id()
+        docid = update_options.get_options_docid()
         update_options.replace_gdocs_document(None, docid, "Title", "Contents")

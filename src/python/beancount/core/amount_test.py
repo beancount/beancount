@@ -72,7 +72,7 @@ class TestAmount(unittest.TestCase):
             Amount(D('2'), 'USD'),
             Amount(D('200'), 'EUR'),
         ]
-        amounts = sorted(amounts, key=amount.amount_sortkey)
+        amounts = sorted(amounts, key=amount.sortkey)
         self.assertEqual([
             Amount(D('100'), 'CAD'),
             Amount(D('200'), 'EUR'),

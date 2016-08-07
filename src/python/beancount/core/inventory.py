@@ -3,19 +3,21 @@
 This module provides a container class that can hold positions. An inventory is an
 association list of positions, where each position is defined as
 
-  (currency, cost, lot-date) -> number
+  (currency, cost, lot-date, label) -> number
 
 where
 
-  'currency': the commodity under consideration, USD, CAD, or stock units such as HOOL,
-    MSFT;
+  'currency': The commodity under consideration, USD, CAD, or stock units such as HOOL,
+    MSFT, AAPL, etc.;
 
-  'cost': the amount (as a pair of (number, currency)) that the position is held under,
+  'cost': The amount (as a pair of (number, currency)) that the position is held under,
     otherwise known as the "book value";
 
-  'lot-date': the date at which the position was acquired.
+  'lot-date': The date at which the position was acquired.
 
-  'number': the amount of units of 'currency' that the position represents.
+  'label': A unique string provided by the user to explicitly disambiguate a lot.
+
+  'number': The amount of units of 'currency' that the position represents.
 
 This is meant to accommodate both booked and non-booked amounts. The clever trick that we
 pull to do this is that for positions which aren't booked, we simply leave the 'cost' and
@@ -318,7 +320,7 @@ class Inventory(list):
         return cost_inventory
 
     def average(self):
-        """Average all lots of the same currency together..
+        """Average all lots of the same currency together.
 
         Returns:
           An instance of Inventory.
