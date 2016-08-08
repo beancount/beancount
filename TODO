@@ -2,6 +2,9 @@
 beancount: TODO
 * Priorities
 
+- Start versioning very soon. It's desired by users.
+- Pivot report... very useful. I need it.
+
 - Pull request for Unicode support: https://bitbucket.org/blais/beancount/pull-requests/13/allow-unicode-in-account-names/diff#comment-20233638
 - Fix #128
 - Fix #130
