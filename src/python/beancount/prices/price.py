@@ -106,7 +106,6 @@ def setup_cache(cache_filename, clear_cache):
         global _CACHE
         _CACHE = shelve.open(cache_filename)
         _CACHE.expiration = DEFAULT_EXPIRATION
-        _CACHE.lock = threading.Lock()  # Note: 'shelve' is not thread-safe by itself.
 
 
 def reset_cache():

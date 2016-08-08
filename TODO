@@ -1357,6 +1357,9 @@ http://furius.ca/beancount/doc/proposal-query
     downloaded twice. This should be detected and the duplicated identical file
     should be ignored entirely.
 
+  - Transactions within the set of newly imported ones should never duplicate
+    each other. Right now they do (see Transactions-Download-07-14-2016.csv).
+
   - It would be useful in many circumstances to rename the files but not to move
     them to their destination directory. For example, I'd rename the files and
     look at the filenames when processing PDFs manually to figure out what
