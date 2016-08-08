@@ -2,6 +2,9 @@
 beancount: TODO
 * Priorities
 
+- Start versioning very soon. It's desired by users.
+- Pivot report... very useful. I need it.
+
 - Pull request for Unicode support: https://bitbucket.org/blais/beancount/pull-requests/13/allow-unicode-in-account-names/diff#comment-20233638
 - Fix #128
 - Fix #130
@@ -1358,6 +1361,16 @@ http://furius.ca/beancount/doc/proposal-query
     them to their destination directory. For example, I'd rename the files and
     look at the filenames when processing PDFs manually to figure out what
     they're for.
+
+  - A very interesting idea is for the CSV importers to cache already imported
+    entries in a separate file, e.g., one signature for each row, and to use
+    that to avoid double-importing. OTOH, it creates a potential problem whereby
+    the result of an extraction is not stored in the Beancount input file and so
+    further extractions ignore unseen transactions. An idea that is better than
+    both of these would be to create a unique link made up of a short checksum
+    for the import row and to cross-check this special link when considering the
+    duplication, e.g. ^import-signature-c21c0fc8fe13 or something like that.
+    That would work.
 
 ** GnuCash
 
