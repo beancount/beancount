@@ -4820,6 +4820,14 @@ http://furius.ca/beancount/doc/proposal-query
   - Create an explicit license for my documentation, one that is compatible to
     publishing this as a book later on.
 
+  - BUG: The "bean-doctor context" command does not provide any useful
+    information if there was an error on the transaction at context and its
+    postings are empty. If we're looking to get the set of lots before and
+    after, it's not obvious.
+
+  - Compute and render the difference on a sellgains error. In order to make
+    this work, you'll have to implement a difference between inventories.
+
 ** Google Keep Tickets
 
   - Unicode support: add a basic filter with 'ignore' to a temp file, before I
