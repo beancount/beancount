@@ -240,9 +240,12 @@ def get_root_accounts(postings):
     Returns:
       A dict of account names to root account names.
     """
-    roots = {posting.account: (account.parent(posting.account)
-                               if account.leaf(posting.account) == posting.units.currency
-                               else posting.account)
+    roots = {posting.account: (
+        account.parent(posting.account)
+        if (account.leaf(posting.account) == posting.units.currency or
+            (account.leaf(posting.account) == "Cash" and
+             posting.account != "Assets:Cash"))
+        else posting.account)
              for posting in postings}
     values = set(roots.values())
     for root in list(roots):
@@ -356,15 +359,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.strip())
     parser.add_argument('filename', help='Beancount input file')
     parser.add_argument('docid', help="Spreadsheets doc id to update")
-    #parser.add_argument('-n', '--dry-run', action='store_true')
+    parser.add_argument('-n', '--dry-run', action='store_true')
     args = parser.parse_args()
-
-    # Connect to the API.
-    scopes = ['https://spreadsheets.google.com/feeds']
-    credentials, _ = gauth.get_auth_via_service_account(scopes)
-    gc = gspread.authorize(credentials)
-    doc = gc.open_by_key(args.docid)
-    # Note: You have to share the sheet with the "client_email" address.
 
     # Load the file contents.
     entries, errors, options_map = loader.load_file(args.filename)
@@ -411,8 +407,16 @@ def main():
     price_map = prices.build_price_map(entries)
     model = Model(price_map, list(agg_postings), exports, asset_type, tax_map)
 
-    # Update the sheets.
-    upload_postings_to_sheet(model, doc, "Upload", min_rows=100)
+    if not args.dry_run:
+        # Connect to the API.
+        scopes = ['https://spreadsheets.google.com/feeds']
+        credentials, _ = gauth.get_auth_via_service_account(scopes)
+        gc = gspread.authorize(credentials)
+        doc = gc.open_by_key(args.docid)
+        # Note: You have to share the sheet with the "client_email" address.
+
+        # Update the sheets.
+        upload_postings_to_sheet(model, doc, "Upload", min_rows=100)
 
 
 if __name__ == '__main__':
