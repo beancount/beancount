@@ -12,6 +12,14 @@ Note: This file contains only changes in the 'default' branch.
     made it quiet by default. Added --output-stdout option to make it do that
     again.
 
+  - Created a new experimental script that attempts to match postings between
+    two ledgers. A pair of (filename, account-regexp) is provided for each, and
+    then the amounts and links are compared and paired up, and remaining
+    unmatched postings are printed out. This is very useful to reconcile trip
+    expenses between a personal ledger and the ledger for a trip or external
+    project where some of the expenses are paid from the personal ledger as
+    contributions to the trip or project.
+
 
 2016-08-04
 
