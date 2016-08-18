@@ -270,7 +270,7 @@ class BQLShell(DispatchingShell):
     """
     prompt = 'beancount> '
 
-    def __init__(self, is_interactive, loadfun, outfile, default_format):
+    def __init__(self, is_interactive, loadfun, outfile, default_format='text'):
         super().__init__(is_interactive, query_parser.Parser(), outfile, default_format)
 
         self.loadfun = loadfun
