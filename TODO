@@ -20,9 +20,6 @@ beancount: TODO
 {write-intro-doc}
 {commodity-required}
 
-Export this to a CSV file and a Google Spreadsheet:
-
-  bean-query $L "select date, flag, joinstr(other_accounts), description, position, balance where account ~ 'Caroline' "
 
 * Settlement Dates (Split & Merge)
 
@@ -76,12 +73,6 @@ Export this to a CSV file and a Google Spreadsheet:
 
   Beancount has various reports and export mechanisms, but there remain several
   flaws. I want to address some of these urgently.
-
-  - Implement output to CSV from bean-query. This is urgent. Being able to
-    export arbitrary data using the SQL syntax and import it in a spreadsheet is
-    something I've often had to do manually and there's no good reason for that.
-    The shell's code is already prepared to do this, it just needs to be
-    implemented. (Notify redstreet)
 
   - Implement output to XLS as well.
 

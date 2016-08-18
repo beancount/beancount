@@ -3,6 +3,7 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
+import csv
 import datetime
 import math
 from itertools import zip_longest
@@ -461,7 +462,8 @@ def get_renderers(result_types, result_rows, dcontext):
     return renderers
 
 
-def render_text(result_types, result_rows, dcontext, file, boxed=False, spaced=False):
+def render_rows(result_types, result_rows, dcontext,
+                expand=False, spaced=False):
     """Render the result of executing a query in text format.
 
     Args:
@@ -469,8 +471,7 @@ def render_text(result_types, result_rows, dcontext, file, boxed=False, spaced=F
         each column.
       result_rows: A list of ResultRow instances.
       dcontext: A DisplayContext object prepared for rendering numbers.
-      file: A file object to render the results to.
-      boxed: A boolean, true if we should render the results in a fancy-looking ASCII box.
+      expand: A boolean, if true, expand columns that render to lists on multiple rows.
       spaced: If true, leave an empty line between each of the rows. This is useful if the
         results have a lot of rows that render over multiple lines.
     """
@@ -510,10 +511,14 @@ def render_text(result_types, result_rows, dcontext, file, boxed=False, spaced=F
             # Update the column renderer.
             exp_lines = renderer.format(value)
             if isinstance(exp_lines, list):
-                max_lines = max(max_lines, len(exp_lines))
+                if expand:
+                    max_lines = max(max_lines, len(exp_lines))
+                else:
+                    # Join the lines onto a single cell.
+                    exp_lines = ', '.join(exp_lines)
             exp_row.append(exp_lines)
 
-        # If all the values were rendered directly to strings, this is row
+        # If all the values were rendered directly to strings, this is a row that
         # renders on a single line. Just append this one row. This is the common
         # case.
         if max_lines == 1:
@@ -536,6 +541,27 @@ def render_text(result_types, result_rows, dcontext, file, boxed=False, spaced=F
 
         if spaced:
             str_rows.append(spacing_row)
+
+    return str_rows, renderers
+
+
+def render_text(result_types, result_rows, dcontext, file,
+                expand=False, boxed=False, spaced=False):
+    """Render the result of executing a query in text format.
+
+    Args:
+      result_types: A list of items describing the names and data types of the items in
+        each column.
+      result_rows: A list of ResultRow instances.
+      dcontext: A DisplayContext object prepared for rendering numbers.
+      file: A file object to render the results to.
+      expand: A boolean, if true, expand columns that render to lists on multiple rows.
+      boxed: A boolean, true if we should render the results in a fancy-looking ASCII box.
+      spaced: If true, leave an empty line between each of the rows. This is useful if the
+        results have a lot of rows that render over multiple lines.
+    """
+    str_rows, renderers = render_rows(result_types, result_rows, dcontext,
+                                      expand=False, spaced=False)
 
     # Compute a final format strings.
     formats = ['{{:{}}}'.format(max(renderer.width(), 1))
@@ -573,6 +599,26 @@ def render_text(result_types, result_rows, dcontext, file, boxed=False, spaced=F
         file.write(line)
     if bottom_line:
         file.write(bottom_line)
+
+
+def render_csv(result_types, result_rows, dcontext, file, expand=False):
+    """Render the result of executing a query in text format.
+
+    Args:
+      result_types: A list of items describing the names and data types of the items in
+        each column.
+      result_rows: A list of ResultRow instances.
+      dcontext: A DisplayContext object prepared for rendering numbers.
+      file: A file object to render the results to.
+      expand: A boolean, if true, expand columns that render to lists on multiple rows.
+    """
+    str_rows, renderers = render_rows(result_types, result_rows, dcontext,
+                                      expand=False, spaced=False)
+
+    writer = csv.writer(file)
+    header_row = [name for name, _ in result_types]
+    writer.writerow(header_row)
+    writer.writerows(str_rows)
 
 
 # A mapping of data-type -> (render-function, alignment)

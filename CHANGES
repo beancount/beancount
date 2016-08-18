@@ -25,6 +25,16 @@ Note: This file contains only changes in the 'default' branch.
     numbers. (Note: This entire thing be rewritten using the new Google Sheets
     API which won't require gdata and which will be more stable.)
 
+  - Added a quick implementation of b.q.query_render.render_csv()
+    and refactored b.q.query_render.render_text() to use common code. Both
+    functions now have a new 'expand' option which will create multiple rows for
+    cells which return a list of strings. The new default behavior is to
+    concatenate the strings with commas.
+
+    The shell (bean-query) has a new 'expand' shell variable to match. Also, the
+    -f/--format option of it is now supported, and in interactive mode it sets
+    the default value for 'expand'.
+
 
 2016-08-14
 
