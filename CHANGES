@@ -4,6 +4,15 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-08-17
+
+  - Added beancount.core.amount.abs() function for absolute values of Amount.
+
+  - Added rendering of links to beancount.plugins.split_expenses plugin, and
+    made it quiet by default. Added --output-stdout option to make it do that
+    again.
+
+
 2016-08-04
 
   - Made account name components allowed to have two characters (beyond the

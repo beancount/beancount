@@ -153,6 +153,7 @@ def save_query(title, participant, entries, options_map, sql_query, *format_args
           the report.
         output_csv: An optional directory name, to produce a CSV rendering of
           the report.
+        output_stdout: A boolean, if true, also render the output to stdout.
         currency: An optional currency (a string). If you use this, you should
           wrap query targets to be converted with the pseudo-function
           "CONV[...]" and it will get replaced to CONVERT(..., CURRENCY)
@@ -193,9 +194,10 @@ def save_query(title, participant, entries, options_map, sql_query, *format_args
                 query_render.render_csv(rtypes, rrows, options_map['dcontext'],
                                         file, **fmtopts)
 
-    # Write out the query to stdout.
-    query_render.render_text(rtypes, rrows, options_map['dcontext'],
-                             sys.stdout, **fmtopts)
+    if args.output_stdout:
+        # Write out the query to stdout.
+        query_render.render_text(rtypes, rrows, options_map['dcontext'],
+                                 sys.stdout, **fmtopts)
 
 
 def get_participants(filename, options_map):
@@ -234,10 +236,13 @@ def main():
                         help="Convert all the amounts to a single common currency")
 
     oparser = parser.add_argument_group('Outputs')
+
     oparser.add_argument('-o', '--output-text', '--text', action='store',
                          help="Render results to text boxes")
     oparser.add_argument('--output-csv', '--csv', action='store',
                          help="Render results to CSV files")
+    oparser.add_argument('--output-stdout', '--stdout', action='store_true',
+                         help="Render results to stdout")
 
     args = parser.parse_args()
 
@@ -251,10 +256,9 @@ def main():
     participants = get_participants(args.filename, options_map)
 
     for participant in participants:
-        print()
         print("Participant: {}".format(participant))
 
-        save_query("Expenses by category", participant, entries, options_map, r"""
+        save_query("Expenses Aggregate", participant, entries, options_map, r"""
           SELECT
             PARENT(account) AS account,
             CONV[SUM(position)] AS amount
@@ -267,13 +271,17 @@ def main():
           SELECT
             date, flag, description,
             PARENT(account) AS account,
+            JOINSTR(links),
             CONV[position], CONV[balance]
           WHERE account ~ 'Expenses.*\b{}'
         """, participant, args=args)
 
-        save_query("Contributions Detail", participant, entries, options_map, r"""
+        save_query("Income Detail", participant, entries, options_map, r"""
           SELECT
-            date, flag, description, account, CONV[position], CONV[balance]
+            date, flag, description,
+            account,
+            JOINSTR(links),
+            CONV[position], CONV[balance]
           WHERE account ~ 'Income.*\b{}'
         """, participant, args=args)
 
