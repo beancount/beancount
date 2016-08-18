@@ -20,6 +20,11 @@ Note: This file contains only changes in the 'default' branch.
     project where some of the expenses are paid from the personal ledger as
     contributions to the trip or project.
 
+  - Made the upload-csv-to-google-sheet script use the basename (without
+    extension) of the given filenames as sheet names instead of "Sheet X"
+    numbers. (Note: This entire thing be rewritten using the new Google Sheets
+    API which won't require gdata and which will be more stable.)
+
 
 2016-08-14
 
