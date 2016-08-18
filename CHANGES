@@ -21,6 +21,12 @@ Note: This file contains only changes in the 'default' branch.
     contributions to the trip or project.
 
 
+2016-08-14
+
+  - Fixed bug in beancount.utils.file_type for Python3, whereby magic now returns
+    bytes, not a string
+
+
 2016-08-04
 
   - Made account name components allowed to have two characters (beyond the
