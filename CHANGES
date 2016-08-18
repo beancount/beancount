@@ -35,6 +35,9 @@ Note: This file contains only changes in the 'default' branch.
     -f/--format option of it is now supported, and in interactive mode it sets
     the default value for 'expand'.
 
+  - Since output to CSV is now implemented, I enabled the --output-csv option of
+    b.p.split_expenses as well.
+
 
 2016-08-14
 

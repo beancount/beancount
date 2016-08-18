@@ -179,20 +179,17 @@ def save_query(title, participant, entries, options_map, sql_query, *format_args
 
     # Output the text files.
     if args.output_text:
-        filename_txt = path.join(args.output_text, filebase + '.txt')
-        with open(filename_txt, 'w') as file:
+        filename = path.join(args.output_text, filebase + '.txt')
+        with open(filename, 'w') as file:
             query_render.render_text(rtypes, rrows, options_map['dcontext'],
                                      file, **fmtopts)
 
     # Output the CSV files.
     if args.output_csv:
-        logging.error("CSV rendering is not supported yet.")
-        # pylint: disable=using-constant-test
-        if False:
-            filename_csv = path.join(args.output_text, filebase + '.csv')
-            with open(filename_csv, 'w') as file:
-                query_render.render_csv(rtypes, rrows, options_map['dcontext'],
-                                        file, **fmtopts)
+        filename = path.join(args.output_csv, filebase + '.csv')
+        with open(filename, 'w') as file:
+            query_render.render_csv(rtypes, rrows, options_map['dcontext'],
+                                    file, expand=False)
 
     if args.output_stdout:
         # Write out the query to stdout.
@@ -271,8 +268,9 @@ def main():
           SELECT
             date, flag, description,
             PARENT(account) AS account,
-            JOINSTR(links),
-            CONV[position], CONV[balance]
+            JOINSTR(links) AS links,
+            CONV[position] AS amount,
+            CONV[balance] AS balance
           WHERE account ~ 'Expenses.*\b{}'
         """, participant, args=args)
 
@@ -280,8 +278,9 @@ def main():
           SELECT
             date, flag, description,
             account,
-            JOINSTR(links),
-            CONV[position], CONV[balance]
+            JOINSTR(links) AS links,
+            CONV[position] AS amount,
+            CONV[balance] AS balance
           WHERE account ~ 'Income.*\b{}'
         """, participant, args=args)
 
