@@ -4,6 +4,11 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-08-21
+
+  - Fixed a SQL shell bug with extracting UNITS() from a Position column.
+
+
 2016-08-17
 
   - Added beancount.core.amount.abs() function for absolute values of Amount.
