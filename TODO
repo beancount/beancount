@@ -4819,6 +4819,30 @@ http://furius.ca/beancount/doc/proposal-query
   - Compute and render the difference on a sellgains error. In order to make
     this work, you'll have to implement a difference between inventories.
 
+  - This will fail because of an unfortunate ordering in the transactions on
+    the same date:
+
+      2014-08-11 * "Google Massage - 60 minute Table Massage" | "Online purchase"
+        Assets:US:GoogleInc:Wallet              -60.00 USD
+        Assets:US:GoogleInc:Massage                         120  RUB {0.50 USD}
+
+      2014-08-11 * "Table Massage 60 mins - GB" ^7430817d565c
+        Assets:US:GoogleInc:Massage                                        -60 RUB {0.50 USD}
+        Expenses:Health:Healing:Massage
+
+    This is normally fixed by fudging the date on the second transaction to 8/12.
+    The thing is, we could either
+
+    * Make the check allow a temporary negative balance if on the same date, or
+    * Reorder the transactions so that the positive amounts always occur first.
+      (I'm not sure that's always possible, imaging a combo of postings that
+      requires the opposite order in order for this to work).
+
+    This problem occurs rarely, but when it does, it's annoying to deal with
+    because the error removes the transaction and it cascades to more errors.
+    Fixing this would help usability a fair amount.
+
+
 ** Google Keep Tickets
 
   - Unicode support: add a basic filter with 'ignore' to a temp file, before I
