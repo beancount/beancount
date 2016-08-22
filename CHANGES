@@ -8,6 +8,10 @@ Note: This file contains only changes in the 'default' branch.
 
   - Fixed a SQL shell bug with extracting UNITS() from a Position column.
 
+  - Finally properly fixed the timezone of the Google Finance price fetcher.
+    (It was done incorrectly and I found my unit tests failing whenever I would
+    work on Beancount from another timezone.)
+
 
 2016-08-17
 
