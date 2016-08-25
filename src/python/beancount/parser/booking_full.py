@@ -667,6 +667,10 @@ def handle_ambiguous_matches(entry, posting, matches, booking_method):
         # ought to be matched against it. We don't allow it for now.
 
     elif booking_method is Booking.AVERAGE:
+        errors.append(ReductionError(entry.meta, "AVERAGE method is not supported", entry))
+
+    elif False: # DISABLED - This is the code for AVERAGE
+
         # If there is more than a single match we need to ultimately merge the
         # postings. Also, if the reducing posting provides a specific cost, we
         # need to update the cost basis as well. Both of these cases are carried
