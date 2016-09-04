@@ -4957,8 +4957,6 @@ http://furius.ca/beancount/doc/proposal-query
     either into files or all at once. This is probably TBD as part of bean-query
     itself, with some options.
 
-  - Use Query directive, add “run ___” command + “run all”.
-
   - Build a script that can list all my cap. gains for tax-loss harvesting.
 
   - Modify networth script to list post-tax worth, basis + pre-tax value =
@@ -5049,8 +5047,6 @@ http://furius.ca/beancount/doc/proposal-query
   - Add a section about Options in the Trading document, with these contents.
 
   - Implement year close via command-line.
-
-  - Implement bean-query to CSV output (easy).
 
   - Convert dividends to per-stock returns.
 
