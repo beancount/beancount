@@ -486,6 +486,20 @@ class BQLShell(DispatchingShell):
                 c_target.c_expr.dtype.__name__))
         pr()
 
+    def on_Custom(self, run_stmt):
+        """
+        Run a custom query instead of a SQL command.
+
+           RUN <custom-query-name>
+
+        Where:
+
+          custom-query-name: Should be the name of a custom query to be defined
+            in the Beancount input file.
+
+        """
+        print(run_stmt)
+
     def help_targets(self):
         template = textwrap.dedent("""
 

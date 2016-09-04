@@ -80,6 +80,11 @@ Reload = collections.namedtuple('Reload', '')
 #   statement: An instance of a compiled statement to explain.
 Explain = collections.namedtuple('Explain', 'statement')
 
+# Custom command (runs a custom query defined in the input file).
+#
+# Attributes:
+#   query_name: A string, the name of the custom query.
+Custom = collections.namedtuple('Custom', 'query_name')
 
 
 # A parsed SELECT column or target.
@@ -192,7 +197,7 @@ class Lexer:
     keywords = {
         'EXPLAIN',
         'SELECT', 'AS', 'FROM', 'WHERE', 'OPEN', 'CLOSE', 'CLEAR', 'ON',
-        'BALANCES', 'JOURNAL', 'PRINT', 'AT',
+        'BALANCES', 'JOURNAL', 'PRINT', 'RUN', 'AT',
         'ERRORS', 'RELOAD',
         'GROUP', 'BY', 'HAVING', 'ORDER', 'DESC', 'ASC', 'PIVOT',
         'LIMIT', 'FLATTEN', 'DISTINCT',
@@ -625,6 +630,7 @@ class Parser(SelectParser):
                   | balances_statement
                   | journal_statement
                   | print_statement
+                  | run_statement
                   | errors_statement
                   | reload_statement
         """
@@ -661,6 +667,13 @@ class Parser(SelectParser):
         print_statement : PRINT from
         """
         p[0] = Print(p[2])
+
+    def p_run_statement(self, p):
+        """
+        run_statement : RUN ID
+                      | RUN STRING
+        """
+        p[0] = Custom(p[2])
 
     def p_errors_statement(self, p):
         """
