@@ -4,6 +4,30 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-09-04
+
+  - Implemented new "run" shell command that allows you to run a named query.
+    For example, if an input file has a Query directive like this:
+
+      2016-09-01 query "home" "select account, sum(position) where account ~ 'Home' group by 1"
+
+    And you input this command:
+
+      run home
+
+    The entries will be closed at tue query date (2016-09-01) and the query
+    automatically run. If you want to always include all the transactions, set a
+    date far into the future.
+
+    This works from the command-line and from the shell, equally. You can also
+    run all the queries in an input file, like this:
+
+      run *
+
+    To view the list of available queries, just type the "run" command without
+    an argument.
+
+
 2016-08-21
 
   - Fixed a SQL shell bug with extracting UNITS() from a Position column.

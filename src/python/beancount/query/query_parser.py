@@ -80,11 +80,11 @@ Reload = collections.namedtuple('Reload', '')
 #   statement: An instance of a compiled statement to explain.
 Explain = collections.namedtuple('Explain', 'statement')
 
-# Custom command (runs a custom query defined in the input file).
+# RunCustom command (runs a custom query defined in the input file).
 #
 # Attributes:
 #   query_name: A string, the name of the custom query.
-Custom = collections.namedtuple('Custom', 'query_name')
+RunCustom = collections.namedtuple('RunCustom', 'query_name')
 
 
 # A parsed SELECT column or target.
@@ -286,6 +286,9 @@ class SelectParser(Lexer):
                                         debug=False,
                                         **options)
 
+        # The default value to use for the close date.
+        self.default_close_date = None
+
     def tokenize(self, line):
         self.ply_lexer.input(line)
         while 1:
@@ -294,14 +297,16 @@ class SelectParser(Lexer):
                 break
             print(tok)
 
-    def parse(self, line, debug=False):
+    def parse(self, line, debug=False, default_close_date=None):
         try:
             self._input = line
+            self.default_close_date = default_close_date
             return self.ply_parser.parse(line,
                                          lexer=self.ply_lexer,
                                          debug=debug)
         finally:
             self._input = None
+            self.default_close_date = None
 
     def handle_comma_separated_list(self, p):
         """Handle a list of 0, 1 or more comma-separated values.
@@ -389,7 +394,9 @@ class SelectParser(Lexer):
                   | CLOSE
                   | CLOSE ON DATE
         """
-        p[0] = p[3] if len(p) == 4 else (True if (p[1] == 'CLOSE') else None)
+        p[0] = p[3] if len(p) == 4 else (True
+                                         if (p[1] == 'CLOSE') else
+                                         self.default_close_date)
 
     def p_opt_clear(self, p):
         """
@@ -672,8 +679,10 @@ class Parser(SelectParser):
         """
         run_statement : RUN ID
                       | RUN STRING
+                      | RUN WILDCARD
+                      | RUN empty
         """
-        p[0] = Custom(p[2])
+        p[0] = RunCustom(p[2])
 
     def p_errors_statement(self, p):
         """
