@@ -233,12 +233,11 @@ class TestLexer(unittest.TestCase):
           Assets:A
         """
         self.assertEqual([
-            ('LEX_ERROR', 1, 'Assets:A', None),
+            ('ACCOUNT', 1, 'Assets:A', 'Assets:A'),
             ('EOL', 2, '\n', None),
             ('EOL', 2, '\x00', None),
         ], tokens)
-        self.assertTrue(errors)
-        self.assertRegex(errors[0].message, 'Invalid token')
+        self.assertFalse(errors)
 
     @lex_tokens
     def test_invalid_directive(self, tokens, errors):
@@ -515,7 +514,7 @@ class TestLexerErrors(unittest.TestCase):
         # This modification is similar to what the options do, and will cause a
         # ValueError exception to be raised in the lexer.
         builder.account_regexp = re.compile('(Assets|Liabilities|Equity)'
-                                            '(:[A-Z][A-Za-z0-9\-]+)*$')
+                                            '(:[A-Z][A-Za-z0-9\-]*)*$')
         tokens = list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
         self.assertEqual([('EOL', 2, '\n', None),
                           ('LEX_ERROR', 2, 'Invalid:Something', None),

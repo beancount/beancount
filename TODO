@@ -2,6 +2,9 @@
 beancount: TODO
 * Priorities
 
+- Start versioning very soon. It's desired by users.
+- Pivot report... very useful. I need it.
+
 - Pull request for Unicode support: https://bitbucket.org/blais/beancount/pull-requests/13/allow-unicode-in-account-names/diff#comment-20233638
 - Fix #128
 - Fix #130
@@ -17,9 +20,6 @@ beancount: TODO
 {write-intro-doc}
 {commodity-required}
 
-Export this to a CSV file and a Google Spreadsheet:
-
-  bean-query $L "select date, flag, joinstr(other_accounts), description, position, balance where account ~ 'Caroline' "
 
 * Settlement Dates (Split & Merge)
 
@@ -73,12 +73,6 @@ Export this to a CSV file and a Google Spreadsheet:
 
   Beancount has various reports and export mechanisms, but there remain several
   flaws. I want to address some of these urgently.
-
-  - Implement output to CSV from bean-query. This is urgent. Being able to
-    export arbitrary data using the SQL syntax and import it in a spreadsheet is
-    something I've often had to do manually and there's no good reason for that.
-    The shell's code is already prepared to do this, it just needs to be
-    implemented. (Notify redstreet)
 
   - Implement output to XLS as well.
 
@@ -1356,6 +1350,21 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Transactions within the set of newly imported ones should never duplicate
     each other. Right now they do (see Transactions-Download-07-14-2016.csv).
+
+  - It would be useful in many circumstances to rename the files but not to move
+    them to their destination directory. For example, I'd rename the files and
+    look at the filenames when processing PDFs manually to figure out what
+    they're for.
+
+  - A very interesting idea is for the CSV importers to cache already imported
+    entries in a separate file, e.g., one signature for each row, and to use
+    that to avoid double-importing. OTOH, it creates a potential problem whereby
+    the result of an extraction is not stored in the Beancount input file and so
+    further extractions ignore unseen transactions. An idea that is better than
+    both of these would be to create a unique link made up of a short checksum
+    for the import row and to cross-check this special link when considering the
+    duplication, e.g. ^import-signature-c21c0fc8fe13 or something like that.
+    That would work.
 
 ** GnuCash
 
@@ -4715,6 +4724,38 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - You need to add options to provide the precision to use for prices,
+    otherwise something like this:
+
+      2016-07-15 * "Resto" "Nice dinner near Storm Hotel" ^b4cd7330bc3d
+        Expenses:Food:Restaurants   12500 ISK
+        Income:Martin:CreditCard  -103.18 USD @ ISK
+
+    will render as
+
+      2016-07-15 * "Resto" | "Nice dinner near Storm Hotel" ^b4cd7330bc3d
+        Expenses:Food:Restaurants:Martin       6250 ISK                ;                           6250 ISK
+        Expenses:Food:Restaurants:Caroline     6250 ISK                ;                           6250 ISK
+        Income:Martin:CreditCard            -103.18 USD @ 121 ISK      ; -12499.99999999999999999999999 ISK
+
+    instead of
+
+      2016-07-15 * "Resto" | "Nice dinner near Storm Hotel" ^b4cd7330bc3d
+        Expenses:Food:Restaurants:Martin       6250 ISK                ;                           6250 ISK
+        Expenses:Food:Restaurants:Caroline     6250 ISK                ;                           6250 ISK
+        Income:Martin:CreditCard            -103.18 USD @ 121.148 ISK  ; -12499.99999999999999999999999 ISK
+
+    Right now, the only solution is to provide at least one price with a
+    suitable precision.
+
+    Another solution, instead of letting the user select the precision, for
+    inferred prices, would be to infer maximum precision by default if a digit
+    of precision hasn't been seen yet. Round prices shouldn't imply 0 digits of
+    precision when it comes to inferred prices, for rendering.
+
+    Note that the actual numbers derived are correct, the only problem is how
+    they get rendered by default.
+
   - Try to modify b.l._parse_recursive() to reuse the DisplayContext object
     across all the parsed files, in order to accumulate its full state. Some
     users (from fava, e.g. Daniel Bos, see thread on mailing-list) are defining
@@ -4766,6 +4807,41 @@ http://furius.ca/beancount/doc/proposal-query
   - The printer should not output the | separator anymore, that's just
     deprecated. Do this now, make sure all the tests still work. This may affect
     some of the importers.
+
+  - Create an explicit license for my documentation, one that is compatible to
+    publishing this as a book later on.
+
+  - BUG: The "bean-doctor context" command does not provide any useful
+    information if there was an error on the transaction at context and its
+    postings are empty. If we're looking to get the set of lots before and
+    after, it's not obvious.
+
+  - Compute and render the difference on a sellgains error. In order to make
+    this work, you'll have to implement a difference between inventories.
+
+  - This will fail because of an unfortunate ordering in the transactions on
+    the same date:
+
+      2014-08-11 * "Google Massage - 60 minute Table Massage" | "Online purchase"
+        Assets:US:GoogleInc:Wallet              -60.00 USD
+        Assets:US:GoogleInc:Massage                         120  RUB {0.50 USD}
+
+      2014-08-11 * "Table Massage 60 mins - GB" ^7430817d565c
+        Assets:US:GoogleInc:Massage                                        -60 RUB {0.50 USD}
+        Expenses:Health:Healing:Massage
+
+    This is normally fixed by fudging the date on the second transaction to 8/12.
+    The thing is, we could either
+
+    * Make the check allow a temporary negative balance if on the same date, or
+    * Reorder the transactions so that the positive amounts always occur first.
+      (I'm not sure that's always possible, imaging a combo of postings that
+      requires the opposite order in order for this to work).
+
+    This problem occurs rarely, but when it does, it's annoying to deal with
+    because the error removes the transaction and it cascades to more errors.
+    Fixing this would help usability a fair amount.
+
 
 ** Google Keep Tickets
 
@@ -4881,8 +4957,6 @@ http://furius.ca/beancount/doc/proposal-query
     either into files or all at once. This is probably TBD as part of bean-query
     itself, with some options.
 
-  - Use Query directive, add “run ___” command + “run all”.
-
   - Build a script that can list all my cap. gains for tax-loss harvesting.
 
   - Modify networth script to list post-tax worth, basis + pre-tax value =
@@ -4973,8 +5047,6 @@ http://furius.ca/beancount/doc/proposal-query
   - Add a section about Options in the Trading document, with these contents.
 
   - Implement year close via command-line.
-
-  - Implement bean-query to CSV output (easy).
 
   - Convert dividends to per-stock returns.
 

@@ -240,9 +240,12 @@ def get_root_accounts(postings):
     Returns:
       A dict of account names to root account names.
     """
-    roots = {posting.account: (account.parent(posting.account)
-                               if account.leaf(posting.account) == posting.units.currency
-                               else posting.account)
+    roots = {posting.account: (
+        account.parent(posting.account)
+        if (account.leaf(posting.account) == posting.units.currency or
+            (account.leaf(posting.account) == "Cash" and
+             posting.account != "Assets:Cash"))
+        else posting.account)
              for posting in postings}
     values = set(roots.values())
     for root in list(roots):
@@ -316,17 +319,22 @@ def populate_with_parents(accounts_map, default):
     return new_accounts_map
 
 
-def upload_postings_to_sheet(model, doc, index, min_rows):
+def upload_postings_to_sheet(model, doc, name_or_index, min_rows):
     """Upload a model to a spreadsheet.
 
     Args:
       model: An instance of Model.
       doc: A gspread.Spreadsheet instance.
-      index: An index of a sheet in the spreadsheet.
+      name_or_index: An index of a sheet in the spreadsheet.
+      min_rows: An integer, the minimum number of rows to create.
     """
     # Resize the sheet to the minimum number of required rows.
     num_rows = max(min_rows, model.num_rows())
-    sheet = doc.get_worksheet(index)
+    if isinstance(name_or_index, int):
+        sheet = doc.get_worksheet(name_or_index)
+    else:
+        assert isinstance(name_or_index, str)
+        sheet = doc.worksheet(name_or_index)
     sheet.resize(num_rows, model.num_cols())
 
     # Fill up the data.
@@ -351,15 +359,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.strip())
     parser.add_argument('filename', help='Beancount input file')
     parser.add_argument('docid', help="Spreadsheets doc id to update")
-    #parser.add_argument('-n', '--dry-run', action='store_true')
+    parser.add_argument('-n', '--dry-run', action='store_true')
     args = parser.parse_args()
-
-    # Connect to the API.
-    scopes = ['https://spreadsheets.google.com/feeds']
-    credentials, _ = gauth.get_auth_via_service_account(scopes)
-    gc = gspread.authorize(credentials)
-    doc = gc.open_by_key(args.docid)
-    # Note: You have to share the sheet with the "client_email" address.
 
     # Load the file contents.
     entries, errors, options_map = loader.load_file(args.filename)
@@ -406,8 +407,16 @@ def main():
     price_map = prices.build_price_map(entries)
     model = Model(price_map, list(agg_postings), exports, asset_type, tax_map)
 
-    # Update the sheets.
-    upload_postings_to_sheet(model, doc, 0, min_rows=100)
+    if not args.dry_run:
+        # Connect to the API.
+        scopes = ['https://spreadsheets.google.com/feeds']
+        credentials, _ = gauth.get_auth_via_service_account(scopes)
+        gc = gspread.authorize(credentials)
+        doc = gc.open_by_key(args.docid)
+        # Note: You have to share the sheet with the "client_email" address.
+
+        # Update the sheets.
+        upload_postings_to_sheet(model, doc, "Upload", min_rows=100)
 
 
 if __name__ == '__main__':

@@ -132,17 +132,18 @@ release:
 
 
 # Run the unittests.
+NOSE = nosetests3
 vtest vtests verbose-test verbose-tests:
-	nosetests -v -s $(SRC)
+	$(NOSE) -v -s $(SRC)
 
 qtest qtests quiet-test quiet-tests test tests:
-	nosetests $(SRC)
+	$(NOSE) $(SRC)
 
 test-failed:
-	nosetests --failed $(SRC)
+	$(NOSE) --failed $(SRC)
 
 nakedtests:
-	PATH=/bin:/usr/bin PYTHONPATH= /usr/local/bin/nosetests -x $(SRC)
+	PATH=/bin:/usr/bin PYTHONPATH= /usr/local/bin/$(NOSE) -x $(SRC)
 
 
 # Run the parser and measure its performance.

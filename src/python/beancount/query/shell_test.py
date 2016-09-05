@@ -1,7 +1,9 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import re
 import sys
 import unittest
+import textwrap
 from os import path
 
 from beancount.utils import test_utils
@@ -20,21 +22,23 @@ def setUp(self):
     assert not errors
 
 
+def runshell(function):
+    """Decorate a function to run the shell and return the output."""
+    def test_function(self):
+        def loadfun():
+            return entries, errors, options_map
+        with test_utils.capture('stdout') as stdout:
+            shell_obj = shell.BQLShell(False, loadfun, sys.stdout)
+            shell_obj.on_Reload()
+            shell_obj.onecmd(function.__doc__)
+        return function(self, stdout.getvalue())
+    test_function.__name__ = function.__name__
+    return test_function
+
+
 class TestUseCases(unittest.TestCase):
     """Testing all the use cases from the proposal here.
     I'm hoping to replace reports by these queries instead."""
-
-    def runshell(function):
-        def test_function(self):
-            def loadfun():
-                return entries, errors, options_map
-            with test_utils.capture('stdout') as stdout:
-                shell_obj = shell.BQLShell(False, loadfun, sys.stdout)
-                shell_obj.on_Reload()
-                shell_obj.onecmd(function.__doc__)
-            return function(self, stdout.getvalue())
-        test_function.__name__ = function.__name__
-        return test_function
 
     @runshell
     def test_print_from(self, output):
@@ -151,6 +155,50 @@ class TestUseCases(unittest.TestCase):
         GROUP BY account, currency, cost_currency;
         """
         ## FIXME: Here we need to finally support FLATTEN to make this happen properly.
+
+
+class TestRun(unittest.TestCase):
+
+    @runshell
+    def test_run_custom__list(self, output):
+        """
+        RUN
+        """
+        self.assertEqual("home taxes",
+                         re.sub(r'[] \n\t]+', ' ', output).strip())
+
+    @runshell
+    def test_run_custom__query_not_exists(self, output):
+        """
+        RUN something
+        """
+        self.assertEqual("ERROR: Query 'something' not found", output.strip())
+
+    @runshell
+    def test_run_custom__query_id(self, output):
+        """
+        RUN taxes
+        """
+        self.assertRegex(output, 'date +description +position +balance')
+        self.assertRegex(output, r'Hoogle \| Payroll')
+
+    @runshell
+    def test_run_custom__query_string(self, output):
+        """
+        RUN "taxes"
+        """
+        self.assertRegex(output, 'date +description +position +balance')
+        self.assertRegex(output, r'Hoogle \| Payroll')
+
+    @runshell
+    def test_run_custom__all(self, output):
+        """
+        RUN *
+        """
+        self.assertRegex(output, 'date +description +position +balance')
+        self.assertRegex(output, r'Hoogle \| Payroll')
+        self.assertRegex(output, 'account +total')
+        self.assertRegex(output, 'Expenses:Home:Rent')
 
 
 class TestShell(test_utils.TestCase):

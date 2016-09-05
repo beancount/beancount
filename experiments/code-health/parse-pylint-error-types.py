@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Extract the error types output from pylint.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import collections
 import re
 import argparse

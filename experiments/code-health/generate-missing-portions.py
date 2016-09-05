@@ -2,6 +2,8 @@
 """
 Generate all combinations and permutations of missing accounts.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import sys
 
 

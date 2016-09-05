@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """A dashboard for portfolio composition and changes.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import argparse
 import functools
 import logging
