@@ -55,8 +55,8 @@ def main():
     current_entries = []
 
     monthly = rrule.rrule(rrule.MONTHLY, bymonthday=1,
-                         dtstart=dtstart,
-                         until=entries[-1].date)
+                          dtstart=dtstart,
+                          until=entries[-1].date)
     weekly = rrule.rrule(rrule.WEEKLY, byweekday=rrule.FR,
                          dtstart=dtstart,
                          until=entries[-1].date)
