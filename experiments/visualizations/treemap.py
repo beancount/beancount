@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Generate a JavaScript treemap of balances for a subtree of accounts.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import re
 import datetime
 import json

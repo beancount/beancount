@@ -1,7 +1,0 @@
-;; -*- mode: emacs-lisp -*-
-
-(defvar beanjure-root project-current)
-(defun file-cache-beanjure ()
-  (file-cache-add-by-regexp beanjure-root "\\.\\(clj\\|txt\\)$")
-  )
-(add-hook 'file-cache-init-hook 'file-cache-beanjure)

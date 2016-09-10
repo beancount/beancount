@@ -232,6 +232,18 @@ def sub(amount1, amount2):
                 amount1, amount2))
     return Amount(amount1.number - amount2.number, amount1.currency)
 
+def abs(amount):
+    """Return the absolute value of the given amount.
+
+    Args:
+      amount: An instance of Amount.
+    Returns:
+      An instance of Amount.
+    """
+    return (amount
+            if amount.number >= ZERO
+            else Amount(-amount.number, amount.currency))
+
 
 A = from_string = Amount.from_string  # pylint: disable=invalid-name
 NULL_AMOUNT = Amount(ZERO, '')

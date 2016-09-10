@@ -6157,6 +6157,14 @@ option "render_commas" "TRUE"
   Liabilities:AccountsPayable                      376.64 USD
 
 
+2030-01-01 query "taxes" "
+  select date, description, position, balance
+  where account ~ 'Taxes'
+  order by date desc
+  limit 20
+"
+
+
 
 ** Tax Year 2014
 
@@ -7159,3 +7167,10 @@ option "render_commas" "TRUE"
 
 
 * Cash
+* Queries
+
+2015-01-01 query "home" "
+  SELECT LAST(date) as latest, account, SUM(position) as total
+  WHERE account ~ ':Home:'
+  GROUP BY account
+"

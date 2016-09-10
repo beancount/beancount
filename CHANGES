@@ -7,6 +7,80 @@ Note: This file contains only changes in the 'default' branch.
   - Fixed bug with UNITS() function when applied to a Position object.
 
 
+2016-09-04
+
+  - Implemented new "run" shell command that allows you to run a named query.
+    For example, if an input file has a Query directive like this:
+
+      2016-09-01 query "home" "select account, sum(position) where account ~ 'Home' group by 1"
+
+    And you input this command:
+
+      run home
+
+    The entries will be closed at tue query date (2016-09-01) and the query
+    automatically run. If you want to always include all the transactions, set a
+    date far into the future.
+
+    This works from the command-line and from the shell, equally. You can also
+    run all the queries in an input file, like this:
+
+      run *
+
+    To view the list of available queries, just type the "run" command without
+    an argument.
+
+
+2016-08-21
+
+  - Fixed a SQL shell bug with extracting UNITS() from a Position column.
+
+  - Finally properly fixed the timezone of the Google Finance price fetcher.
+    (It was done incorrectly and I found my unit tests failing whenever I would
+    work on Beancount from another timezone.)
+
+
+2016-08-17
+
+  - Added beancount.core.amount.abs() function for absolute values of Amount.
+
+  - Added rendering of links to beancount.plugins.split_expenses plugin, and
+    made it quiet by default. Added --output-stdout option to make it do that
+    again.
+
+  - Created a new experimental script that attempts to match postings between
+    two ledgers. A pair of (filename, account-regexp) is provided for each, and
+    then the amounts and links are compared and paired up, and remaining
+    unmatched postings are printed out. This is very useful to reconcile trip
+    expenses between a personal ledger and the ledger for a trip or external
+    project where some of the expenses are paid from the personal ledger as
+    contributions to the trip or project.
+
+  - Made the upload-csv-to-google-sheet script use the basename (without
+    extension) of the given filenames as sheet names instead of "Sheet X"
+    numbers. (Note: This entire thing be rewritten using the new Google Sheets
+    API which won't require gdata and which will be more stable.)
+
+  - Added a quick implementation of b.q.query_render.render_csv()
+    and refactored b.q.query_render.render_text() to use common code. Both
+    functions now have a new 'expand' option which will create multiple rows for
+    cells which return a list of strings. The new default behavior is to
+    concatenate the strings with commas.
+
+    The shell (bean-query) has a new 'expand' shell variable to match. Also, the
+    -f/--format option of it is now supported, and in interactive mode it sets
+    the default value for 'expand'.
+
+  - Since output to CSV is now implemented, I enabled the --output-csv option of
+    b.p.split_expenses as well.
+
+
+2016-08-14
+
+  - Fixed bug in beancount.utils.file_type for Python3, whereby magic now returns
+    bytes, not a string
+
+
 2016-08-04
 
   - Made account name components allowed to have two characters (beyond the

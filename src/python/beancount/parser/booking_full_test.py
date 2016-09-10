@@ -2100,7 +2100,7 @@ class TestBookAmbiguousLIFO(_BookingTestBase):
         """
 
 
-class TestBookAmbiguousAVERAGE(_BookingTestBase):
+class _TestBookAmbiguousAVERAGE(_BookingTestBase):
 
     @book_test(Booking.AVERAGE)
     def test_ambiguous__AVERAGE__trivial1(self, _, __):

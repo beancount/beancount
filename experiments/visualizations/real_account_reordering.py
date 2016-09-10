@@ -1,6 +1,8 @@
-"""Just some incomplete snippets of code that were never integrated, for
-reordering the real_account according to various criteria for better rendering.
+"""Some incomplete snippets of code that were never integrated, for reordering
+the real_account according to various criteria for a more sensible rendering in
+the web interface and otherwise.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
 
 
 # FIXME: TODO, implement these properly.

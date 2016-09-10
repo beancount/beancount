@@ -14,6 +14,8 @@ from beancount.prices.sources import google
 from beancount.core.number import D
 from beancount.core.number import Decimal
 
+from dateutil import tz
+
 
 class _TestTimezone(datetime.tzinfo):
     def utcoffset(self, dt):
@@ -56,12 +58,9 @@ class TestGoogleFinanceSource(unittest.TestCase):
         self.assertTrue(isinstance(srcprice.price, Decimal))
         self.assertEqual(D('556.33'), srcprice.price)
 
-        # Convert local time back to UTC and finally to -240 time, as specified
-        # by the response.
-        tzdelta_adj = datetime.timedelta(seconds=time.timezone - 240*60)
-        adjtime = srcprice.time + tzdelta_adj
-
-        self.assertEqual(adjtime, datetime.datetime(2014, 6, 6, 16, 0, 0))
+        NYC = tz.gettz("America/New York")
+        self.assertEqual(srcprice.time,
+                         datetime.datetime(2014, 6, 6, 16, 0, 0, tzinfo=NYC))
 
     def test_get_latest_price__invalid(self):
         self.url_object.read.return_value = textwrap.dedent("""\
