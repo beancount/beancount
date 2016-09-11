@@ -34,7 +34,7 @@ class Source(source.Source):
 
         params_dict = {
             'instrument': ticker,
-            'count': '1',
+            'count': '10',
             'candleFormat': 'midpoint',
         }
         return fetch_candles(params_dict, None)
@@ -68,9 +68,9 @@ def fetch_candles(params, date=None):
     """
     if date:
         search_time = datetime.datetime(date.year, date.month, date.day, 0, 0, 0,
-                                        tzinfo=tz.tzutc())
+                                        tzinfo=tz.tzlocal())
     else:
-        search_time = datetime.datetime.now(tz.tzlocal()).astimezone(tz.tzutc())
+        search_time = datetime.datetime.now(tz.tzlocal())
 
         # FIXME: Read the docs and deal with the timezones correctly,
         # translating found times back to the local datetime.
@@ -103,6 +103,13 @@ def fetch_candles(params, date=None):
         # Find the candle with the latest time before the given time we're searching
         # for.
         candles = sorted(data['candles'], key=lambda candle: candle['time'])
+        ## FIXME: remove
+        for c in candles:
+            print()
+            print(c['time'])
+            dtnaive = datetime.datetime.strptime(c['time'], r"%Y-%m-%dT%H:%M:%S.%fZ")
+            dt = dtnaive.replace(tzinfo=tz.tzutc()).astimezone(tz.tzlocal())
+            print(dt)
         latest_candle = None
         for candle in candles:
             print('Z', candle['time'])
@@ -116,10 +123,12 @@ def fetch_candles(params, date=None):
         if latest_candle is None:
             logging.error("Could not find a valid candle for %s: %s", date, data)
             return None
-        candle_price = D(latest_candle[0]['openMid'])
+        candle_price = D(latest_candle['openMid'])
 
     except KeyError:
         logging.error("Unexpected response data: %s", data)
         return None
 
-    return source.SourcePrice(price, candle_time, quote_currency)
+    # FIXME: You need to invert here as well.
+
+    return source.SourcePrice(candle_price, candle_time, quote_currency)
