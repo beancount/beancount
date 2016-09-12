@@ -8,11 +8,12 @@ import io
 import textwrap
 import functools
 
-from beancount.reports import report
+from beancount.reports import base
 from beancount.reports import table
 from beancount.reports import tree_table
 from beancount.parser import printer
 from beancount.parser import options
+from beancount.core import display_context
 from beancount.core import data
 from beancount.core import realization
 from beancount.core import getters
@@ -21,7 +22,7 @@ from beancount.utils import misc_utils
 from beancount.utils import date_utils
 
 
-class NoopReport(report.Report):
+class NoopReport(base.Report):
     """Report nothing."""
 
     names = ['check', 'validate']
@@ -31,7 +32,7 @@ class NoopReport(report.Report):
         pass
 
 
-class ErrorReport(report.HTMLReport):
+class ErrorReport(base.HTMLReport):
     """Report the errors."""
 
     names = ['errors']
@@ -60,18 +61,22 @@ class ErrorReport(report.HTMLReport):
         file.write('</div>\n')
 
 
-class PrintReport(report.Report):
+class PrintReport(base.Report):
     """Print out the entries."""
 
     names = ['print']
     default_format = 'beancount'
 
     def render_beancount(self, entries, errors, options_map, file):
-        dcontext = options_map['dcontext']
+        # Create a context that renders all numbers with their natural
+        # precision, but honors the commas option. This is kept in sync with
+        # {2c694afe3140} to avoid a dependency.
+        dcontext = display_context.DisplayContext()
+        dcontext.set_commas(options_map['dcontext'].commas)
         printer.print_entries(entries, dcontext, file=file)
 
 
-class AccountsReport(report.Report):
+class AccountsReport(base.Report):
     """Print out the list of all accounts."""
 
     names = ['accounts']
@@ -95,7 +100,7 @@ class AccountsReport(report.Report):
                                                    len=maxlen))
 
 
-class CurrentEventsReport(report.TableReport):
+class CurrentEventsReport(base.TableReport):
     """Produce a table of the current values of all event types."""
 
     names = ['current_events', 'latest_events']
@@ -111,7 +116,7 @@ class CurrentEventsReport(report.TableReport):
                                    (1, "Description")])
 
 
-class EventsReport(report.TableReport):
+class EventsReport(base.TableReport):
     """Produce a table of all the values of a particular event."""
 
     names = ['events']
@@ -138,8 +143,8 @@ class EventsReport(report.TableReport):
 
 
 
-class ActivityReport(report.HTMLReport,
-                     metaclass=report.RealizationMeta):
+class ActivityReport(base.HTMLReport,
+                     metaclass=base.RealizationMeta):
     """Render the last or recent update activity."""
 
     names = ['activity', 'updated']
@@ -217,7 +222,7 @@ class ActivityReport(report.HTMLReport,
 
 
 
-class StatsDirectivesReport(report.TableReport):
+class StatsDirectivesReport(base.TableReport):
     """Render statistics on each directive type, the number of entries by type."""
 
     names = ['stats-types', 'stats-directives', 'stats-entries']
@@ -237,7 +242,7 @@ class StatsDirectivesReport(report.TableReport):
 
 
 
-class StatsPostingsReport(report.TableReport):
+class StatsPostingsReport(base.TableReport):
     """Render the number of postings for each account."""
 
     names = ['stats-postings']

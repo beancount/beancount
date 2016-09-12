@@ -12,6 +12,16 @@ import contextlib
 from collections import defaultdict
 
 
+# Provide an Enum that will work across all of Python 3.x. Enum was introduced
+# at Python 3.4 only. This will eventually be deprecated.
+# pylint: disable=invalid-name
+try:
+    import enum
+    Enum = enum.Enum
+except ImportError:
+    Enum = object
+
+
 @contextlib.contextmanager
 def log_time(operation_name, log_timings, indent=0):
     """A context manager that times the block and logs it to info level.
@@ -86,6 +96,9 @@ def groupby(keyfun, elements):
     Returns:
       A dict of key to list of sequences.
     """
+    # Note: We could allow a custom aggregation function. Another option is
+    # provide another method to reduce the list values of a dict, but that can
+    # be accomplished using a dict comprehension.
     grouped = defaultdict(list)
     for element in elements:
         grouped[keyfun(element)].append(element)
@@ -195,6 +208,7 @@ def replace_namedtuple_values(ntuple, predicate, mapper, memo=None):
         return
     memo.add(id_ntuple)
 
+    # pylint: disable=unidiomatic-typecheck
     if not (type(ntuple) is not tuple and isinstance(ntuple, tuple)):
         return ntuple
     replacements = {}
@@ -241,6 +255,36 @@ def compute_unique_clean_ids(strings):
         return # Could not find a unique mapping.
 
     return idmap
+
+
+def idify(string):
+    """Replace characters objectionable for a filename with underscores.
+
+    Args:
+      string: Any string.
+    Returns:
+      The input string, with offending characters replaced.
+    """
+    for from_, to in [(r'[ \(\)]+', '_'),
+                      (r'_*\._*', '.')]:
+        string = re.sub(from_, to, string)
+    string = string.strip('_')
+    return string
+
+
+def dictmap(mdict, keyfun=None, valfun=None):
+    """Map a dictionary's value.
+
+    Args:
+      mdict: A dict.
+      key: A callable to apply to the keys.
+      value: A callable to apply to the values.
+    """
+    if keyfun is None:
+        keyfun = lambda x: x
+    if valfun is None:
+        valfun = lambda x: x
+    return {keyfun(key): valfun(val) for key, val in mdict.items()}
 
 
 def map_namedtuple_attributes(attributes, mapper, object_):
@@ -444,6 +488,25 @@ def sorted_uniquify(iterable, keyfunc=None, last=False):
             if key != prev_key:
                 yield obj
                 prev_key = key
+
+
+def is_sorted(iterable, key=lambda x: x, cmp=lambda x, y: x <= y):
+    """Return true if the sequence is sorted.
+
+    Args:
+      iterable: An iterable sequence.
+      key: A function to extract the quantity by which to sort.
+      cmp: A function that compares two elements of a sequence.
+    Returns:
+      A boolean, true if the sequence is sorted.
+    """
+    it = map(key, iterable)
+    prev = next(it)
+    for element in it:
+        if not cmp(prev, element):
+            return False
+        prev = element
+    return True
 
 
 class LineFileProxy:

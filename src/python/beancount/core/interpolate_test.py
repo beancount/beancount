@@ -1,6 +1,5 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import re
 import textwrap
 import unittest
 
@@ -13,7 +12,7 @@ from beancount.core import data
 from beancount.core import inventory
 from beancount.core import position
 from beancount.parser import parser
-from beancount.parser import booking
+from beancount.parser import booking_simple
 from beancount.parser import cmptest
 from beancount import loader
 
@@ -23,7 +22,7 @@ ERRORS_ON_RESIDUAL = False
 
 
 # A default options map just to provide the tolerances.
-OPTIONS_MAP = {'default_tolerance': {},
+OPTIONS_MAP = {'inferred_tolerance_default': {},
                'inferred_tolerance_multiplier': D('0.5'),
                'use_legacy_fixed_tolerances': False,
                'account_rounding': None,
@@ -294,19 +293,38 @@ class TestBalance(cmptest.TestCase):
         self.assertEqual(1, len(new_postings))
         self.assertEqual(0, len(errors))
 
+    @loader.load_doc()
+    def test_cost_basis(self, entries, _, __):
+        """
+        2001-01-01 open Assets:Account1
+
+        2014-01-01 *
+          Assets:Account1        20 HOOL {40.00 USD}
+          Assets:Account1        20 HOOL {60.00 USD} @ 70.00 USD
+          Assets:Account1     -2000.00 USD
+          Assets:Account1         3 HOOL {30.00 CAD}
+          Assets:Account1       -90.00 CAD
+        """
+        postings = next(data.filter_txns(entries)).postings
+        self.assertEqual(inventory.from_string('2000.00 USD, 90.00 CAD'),
+                         interpolate.compute_cost_basis(postings))
+
 
 class TestBalanceIncompletePostings(cmptest.TestCase):
 
     def get_incomplete_entry(self, string):
-        """Parse an incomplete entry and convert its LotSpec representation to a Lot.
+        """Parse a single incomplete entry and convert its CostSpec to a Cost.
 
         Args:
           string: The input string to parse.
         Returns:
           A pair of (entry, list of errors).
         """
-        entries, _, options_map = parser.parse_string(string, dedent=True)
-        entries_with_lots, errors = booking.convert_lot_specs_to_lots(entries, options_map)
+        entries, errors, options_map = parser.parse_string(string, dedent=True)
+        self.assertFalse(errors)
+        self.assertEqual(1, len(entries))
+        (entries_with_lots, errors) = booking_simple.convert_lot_specs_to_lots(entries)
+        self.assertEqual(1, len(entries))
         entry = entries_with_lots[0]
         errors = interpolate.balance_incomplete_postings(entry, options_map)
         return entry, errors
@@ -328,7 +346,8 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
         """)
         self.assertFalse(errors)
         self.assertEqual(2, len(entry.postings))
-        self.assertEqual(entry.postings[1].position, position.from_string('50 USD'))
+        self.assertEqual(position.get_position(entry.postings[1]),
+                         position.from_string('50 USD'))
 
     def test_balance_incomplete_postings__fill2(self):
         entry, errors = self.get_incomplete_entry("""
@@ -341,8 +360,10 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
         self.assertEqual(4, len(entry.postings))
         self.assertEqual(entry.postings[2].account, 'Expenses:Restaurant')
         self.assertEqual(entry.postings[3].account, 'Expenses:Restaurant')
-        self.assertEqual(entry.postings[2].position, position.from_string('50 USD'))
-        self.assertEqual(entry.postings[3].position, position.from_string('50 CAD'))
+        self.assertEqual(position.get_position(entry.postings[2]),
+                         position.from_string('50 USD'))
+        self.assertEqual(position.get_position(entry.postings[3]),
+                         position.from_string('50 CAD'))
 
     def test_balance_incomplete_postings__cost(self):
         entry, errors = self.get_incomplete_entry("""
@@ -353,7 +374,8 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
         self.assertFalse(errors)
         self.assertEqual(2, len(entry.postings))
         self.assertEqual(entry.postings[1].account, 'Assets:Cash')
-        self.assertEqual(entry.postings[1].position, position.from_string('-432.30 USD'))
+        self.assertEqual(position.get_position(entry.postings[1]),
+                         position.from_string('-432.30 USD'))
 
     def test_balance_incomplete_postings__insert_rounding(self):
         entry, errors = self.get_incomplete_entry("""
@@ -366,33 +388,34 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
         self.assertFalse(errors)
         self.assertEqual(3, len(entry.postings))
         self.assertEqual(entry.postings[2].account, 'Equity:RoundingError')
-        self.assertEqual(entry.postings[2].position, position.from_string('-0.00135 USD'))
+        self.assertEqual(position.get_position(entry.postings[2]),
+                         position.from_string('-0.00135 USD'))
 
     def test_balance_incomplete_postings__quantum(self):
         entry, errors = self.get_incomplete_entry("""
-          option "default_tolerance" "USD:0.01"
+          option "inferred_tolerance_default" "USD:0.01"
 
           2013-02-23 * "Something"
             Assets:Invest     1.245 RGAGX {43.23 USD}
             Assets:Cash
         """)
         self.assertFalse(errors)
-        self.assertEqual(D('-53.82'), entry.postings[1].position.number)
+        self.assertEqual(D('-53.82'), entry.postings[1].units.number)
 
         entry, errors = self.get_incomplete_entry("""
-          option "default_tolerance" "USD:0.001"
+          option "inferred_tolerance_default" "USD:0.001"
 
           2013-02-23 * "Something"
             Assets:Invest     1.245 RGAGX {43.23 USD}
             Assets:Cash
         """)
         self.assertFalse(errors)
-        self.assertEqual(D('-53.821'), entry.postings[1].position.number)
+        self.assertEqual(D('-53.821'), entry.postings[1].units.number)
 
     def test_balance_incomplete_postings__rounding_and_quantum(self):
         entry, errors = self.get_incomplete_entry("""
           option "account_rounding" "RoundingError"
-          option "default_tolerance" "USD:0.01"
+          option "inferred_tolerance_default" "USD:0.01"
 
           2013-02-23 * "Something"
             Assets:Invest     1.245 RGAGX {43.23 USD}
@@ -400,13 +423,13 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
         """)
         self.assertFalse(errors)
         self.assertEqual(3, len(entry.postings))
-        self.assertEqual(D('-53.82'), entry.postings[1].position.number)
+        self.assertEqual(D('-53.82'), entry.postings[1].units.number)
         self.assertEqual('Equity:RoundingError', entry.postings[2].account)
-        self.assertEqual(D('-0.00135'), entry.postings[2].position.number)
+        self.assertEqual(D('-0.00135'), entry.postings[2].units.number)
 
         entry, errors = self.get_incomplete_entry("""
           option "account_rounding" "RoundingError"
-          option "default_tolerance" "USD:0.01"
+          option "inferred_tolerance_default" "USD:0.01"
 
           2014-05-06 * "Buy mutual fund"
             Assets:Investments:RGXGX       4.27 RGAGX {53.21 USD}
@@ -414,9 +437,9 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
         """)
         self.assertFalse(errors)
         self.assertEqual(3, len(entry.postings))
-        self.assertEqual(D('-227.2100'), entry.postings[1].position.number)
+        self.assertEqual(D('-227.2100'), entry.postings[1].units.number)
         self.assertEqual('Equity:RoundingError', entry.postings[2].account)
-        self.assertEqual(D('0.0033'), entry.postings[2].position.number)
+        self.assertEqual(D('0.0033'), entry.postings[2].units.number)
 
     def test_balance_incomplete_postings__rounding_with_error(self):
         # Here we want to verify that auto-inserting rounding postings does not
@@ -434,7 +457,38 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
             Assets:Cash:Checking                -5000.00 USD
         """, dedent=True)
         self.assertEqual(1, len(errors))
-        self.assertTrue(re.search('does not balance', errors[0].message))
+        self.assertRegex(errors[0].message, 'does not balance')
+
+    @loader.load_doc(expect_errors=True)
+    def test_balance_incomplete_postings__superfluous_unneeded(self, entries, errors, _):
+        """
+          2000-01-01 open Assets:Account1
+          2000-01-01 open Assets:Account2
+          2000-01-01 open Assets:Account3
+
+          2016-04-23 * ""
+            Assets:Account1   100.00 USD
+            Assets:Account2  -100.00 USD
+            Assets:Account3
+        """
+        # Note: this raises an error because the auto-posting is superfluous.
+        self.assertEqual(1, len(errors))
+        self.assertRegex(errors[0].message, 'Useless auto-posting')
+        self.assertEqual(3, len(entries[-1].postings))
+
+    @loader.load_doc()
+    def test_balance_incomplete_postings__superfluous_unused(self, entries, errors, _):
+        """
+          2000-01-01 open Assets:Account1
+          2000-01-01 open Assets:Account2
+
+          2016-04-23 * ""
+            Assets:Account1     0.00 USD
+            Assets:Account2
+        """
+        # This does not raise an error, but it ought to; do this in the full
+        # booking method since we're deprecating this code.
+        self.assertEqual(1, len(entries[-1].postings))
 
 
 class TestComputeBalance(unittest.TestCase):
@@ -486,7 +540,9 @@ class TestComputeBalance(unittest.TestCase):
         computed_balance = interpolate.compute_entries_balance(entries)
         expected_balance = inventory.Inventory()
         expected_balance.add_amount(A('-400 USD'))
-        expected_balance.add_amount(A('10 HOOL'), A('40 USD'))
+        expected_balance.add_amount(A('10 HOOL'),
+                                    position.Cost(D('40'), 'USD', None, None))
+
         self.assertEqual(expected_balance, computed_balance)
 
     @loader.load_doc()
@@ -682,8 +738,7 @@ class TestInferTolerances(cmptest.TestCase):
         entries, errors, options_map = loader.load_string(input_string)
         self.assertFalse(options_map["infer_tolerance_from_cost"])
         self.assertEqual(1, len(errors))
-        self.assertTrue(re.match('Transaction does not balance:.*0.20000 USD',
-                                 errors[0].message))
+        self.assertRegex(errors[0].message, 'Transaction does not balance:.*0.20000 USD')
 
         entries, errors, options_map = loader.load_string(input_option + input_string)
         self.assertTrue(options_map["infer_tolerance_from_cost"])
@@ -882,7 +937,7 @@ class TestInferTolerances(cmptest.TestCase):
         """
         plugin "beancount.plugins.split_expenses" "Martin Caroline Sheila"
 
-        option "default_tolerance" "USD:0.005"
+        option "inferred_tolerance_default" "USD:0.005"
 
         1970-01-01 open Expenses:Food
         1970-01-01 open Assets:Caroline

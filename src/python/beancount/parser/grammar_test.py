@@ -11,13 +11,16 @@ import re
 from unittest import mock
 
 from beancount.core.number import D
+from beancount.core.number import Decimal
 from beancount.core.number import ZERO
-from beancount.core.amount import A
+from beancount.core.number import MISSING
+from beancount.core.amount import from_string as A
+from beancount.core.amount import Amount
+from beancount.core.position import CostSpec
 from beancount.parser import parser
 from beancount.parser import lexer
 from beancount.core import data
 from beancount.core import amount
-from beancount.core import position
 from beancount.core import interpolate
 from beancount.core import interpolate_test
 from beancount.utils import test_utils
@@ -124,7 +127,7 @@ class TestParserEntryTypes(unittest.TestCase):
           2013-05-18 open Assets:US:Vanguard:VIIPX  VIIPX  "STRICT"
         """
         check_list(self, entries, [data.Open])
-        self.assertEqual(entries[0].booking, 'STRICT')
+        self.assertEqual(entries[0].booking, data.Booking.STRICT)
 
     @parser.parse_doc()
     def test_entry_open_5(self, entries, errors, __):
@@ -132,7 +135,7 @@ class TestParserEntryTypes(unittest.TestCase):
           2013-05-18 open Assets:US:Vanguard:VIIPX    "STRICT"
         """
         check_list(self, entries, [data.Open])
-        self.assertEqual(entries[0].booking, 'STRICT')
+        self.assertEqual(entries[0].booking, data.Booking.STRICT)
 
     @parser.parse_doc()
     def test_entry_close(self, entries, _, __):
@@ -169,18 +172,9 @@ class TestParserEntryTypes(unittest.TestCase):
     @parser.parse_doc()
     def test_entry_query(self, entries, _, __):
         """
-          option "experiment_query_directive" "TRUE"
           2013-05-18 query "cash" "SELECT SUM(position) WHERE currency = 'USD'"
         """
         check_list(self, entries, [data.Query])
-
-    @parser.parse_doc(expect_errors=True)
-    def test_entry_query__not_enabled(self, entries, errors, __):
-        """
-          2013-05-18 query "cash" "SELECT SUM(position) WHERE currency = 'USD'"
-        """
-        self.assertRegexpMatches(errors[0].message, "Query directive is not supported")
-        self.assertEqual([], entries)
 
     @parser.parse_doc()
     def test_entry_note(self, entries, _, __):
@@ -195,6 +189,20 @@ class TestParserEntryTypes(unittest.TestCase):
           2013-05-18 price USD   1.0290 CAD
         """
         check_list(self, entries, [data.Price])
+
+    @parser.parse_doc()
+    def test_entry_custom(self, entries, _, __):
+        """
+          2013-05-18 custom "budget" "weekly < 1000.00 USD" 2016-02-28 TRUE 43.03 USD 23
+        """
+        check_list(self, entries, [data.Custom])
+        txns = [entry for entry in entries if isinstance(entry, data.Custom)]
+        self.assertEqual([('weekly < 1000.00 USD', str),
+                          (datetime.date(2016, 2, 28), datetime.date),
+                          (True, bool),
+                          (amount.from_string('43.03 USD'), amount.Amount),
+                          (D('23'), Decimal)],
+                         txns[0].values)
 
 
 class TestParserComplete(unittest.TestCase):
@@ -224,12 +232,14 @@ class TestParserComplete(unittest.TestCase):
 class TestUglyBugs(unittest.TestCase):
     """Test all kinds of stupid sh*t that will inevitably occur in practice."""
 
+    # pylint: disable=empty-docstring
     @parser.parse_doc()
     def test_empty_1(self, entries, errors, _):
         ""
         check_list(self, entries, [])
         check_list(self, errors, [])
 
+    # pylint: disable=empty-docstring
     @parser.parse_doc()
     def test_empty_2(self, entries, errors, _):
         """
@@ -276,6 +286,7 @@ class TestUglyBugs(unittest.TestCase):
         check_list(self, entries, [data.Transaction])
         check_list(self, errors, [])
 
+    # pylint: disable=empty-docstring
     @parser.parse_doc()
     def test_indent_eof(self, entries, errors, _):
         "\t"
@@ -313,7 +324,7 @@ class TestPushPopTag(unittest.TestCase):
           pushtag #trip-to-nowhere
         """
         self.assertEqual(1, len(errors))
-        self.assertRegexpMatches(errors[0].message, 'Unbalanced pushed tag')
+        self.assertRegex(errors[0].message, 'Unbalanced pushed tag')
 
     @parser.parse_doc(expect_errors=True)
     def test_pop_invalid_tag(self, entries, errors, _):
@@ -321,7 +332,7 @@ class TestPushPopTag(unittest.TestCase):
           poptag #trip-to-nowhere
         """
         self.assertTrue(errors)
-        self.assertTrue(re.search('absent tag', errors[0].message))
+        self.assertRegex(errors[0].message, 'absent tag')
 
 
 class TestPushPopMeta(unittest.TestCase):
@@ -387,7 +398,7 @@ class TestPushPopMeta(unittest.TestCase):
           popmeta location:
         """
         self.assertEqual(1, len(errors))
-        self.assertRegexpMatches(errors[0].message,
+        self.assertRegex(errors[0].message,
                                  "Attempting to pop absent metadata key")
 
     @parser.parse_doc(expect_errors=True)
@@ -396,7 +407,7 @@ class TestPushPopMeta(unittest.TestCase):
           pushmeta location: "Lausanne, Switzerland"
         """
         self.assertEqual(1, len(errors))
-        self.assertRegexpMatches(errors[0].message,
+        self.assertRegex(errors[0].message,
                                  "Unbalanced metadata key")
 
 
@@ -451,7 +462,7 @@ class TestSyntaxErrors(unittest.TestCase):
         # Make sure at least one error is reported.
         self.assertEqual(1, len(errors))
         self.assertIsInstance(errors[0], lexer.LexerError)
-        self.assertRegexpMatches(errors[0].message, 'Invalid token')
+        self.assertRegex(errors[0].message, 'Invalid token')
 
     @parser.parse_doc()
     def test_no_final_newline(self, entries, errors, _):
@@ -653,7 +664,7 @@ class TestMiscOptions(unittest.TestCase):
         option "plugin_processing_mode" "invalid"
         """
         self.assertEqual(1, len(errors))
-        self.assertTrue(re.match("Error for option", errors[0].message))
+        self.assertRegex(errors[0].message, "Error for option")
         self.assertEqual("default", options_map['plugin_processing_mode'])
 
     @parser.parse_doc(expect_errors=True)
@@ -662,12 +673,13 @@ class TestMiscOptions(unittest.TestCase):
         option "account_rounding" "Equity:RoundingError"
         """
         self.assertEqual(1, len(errors))
-        self.assertRegexpMatches(errors[0].message, "should now refer to.*subaccount")
+        self.assertRegex(errors[0].message, "should now refer to.*subaccount")
         self.assertEqual(options_map['account_rounding'], 'RoundingError')
 
 
 class TestToleranceOptions(unittest.TestCase):
 
+    # pylint: disable=empty-docstring
     @parser.parse_doc()
     def test_tolerance_defaults(self, _, __, options_map):
         """
@@ -675,7 +687,7 @@ class TestToleranceOptions(unittest.TestCase):
         self.assertEqual(D('0.015'),
                          options_map['tolerance'])
         self.assertEqual({},
-                         options_map['default_tolerance'])
+                         options_map['inferred_tolerance_default'])
 
     @parser.parse_doc(expect_errors=True)
     def test_tolerance__deprecated(self, _, errors, options_map):
@@ -683,22 +695,31 @@ class TestToleranceOptions(unittest.TestCase):
           option "tolerance" "0.05"
         """
         self.assertEqual(D("0.05"), options_map['tolerance'])
-        self.assertRegexpMatches(errors[0].message, "has been deprecated")
+        self.assertRegex(errors[0].message, "has been deprecated")
 
     @parser.parse_doc()
-    def test_default_tolerance(self, _, __, options_map):
+    def test_inferred_tolerance_default(self, _, __, options_map):
         """
-          option "default_tolerance" "*:0"
-          option "default_tolerance" "USD:0.05"
-          option "default_tolerance" "JPY:0.5"
+          option "inferred_tolerance_default" "*:0"
+          option "inferred_tolerance_default" "USD:0.05"
+          option "inferred_tolerance_default" "JPY:0.5"
         """
         self.assertEqual({"*": D("0"),
                           "USD": D("0.05"),
                           "JPY": D("0.5")},
-                         options_map['default_tolerance'])
+                         options_map['inferred_tolerance_default'])
 
 
 class TestDeprecatedOptions(unittest.TestCase):
+
+    @parser.parse_doc(expect_errors=True)
+    def test_renamed_options(self, _, errors, options_map):
+        """
+          option "default_tolerance" "*:0.0042"
+        """
+        self.assertEqual(1, len(errors))
+        self.assertRegex(errors[0].message, 'option has been renamed')
+        self.assertEqual({'*': D('0.0042')}, options_map["inferred_tolerance_default"])
 
     @parser.parse_doc(expect_errors=True)
     def test_deprecated_plugin(self, _, errors, __):
@@ -706,7 +727,7 @@ class TestDeprecatedOptions(unittest.TestCase):
           option "plugin" "beancount.plugins.module_name"
         """
         self.assertEqual(1, len(errors))
-        self.assertTrue(re.search('option is deprecated', errors[0].message))
+        self.assertRegex(errors[0].message, 'option is deprecated')
 
     @parser.parse_doc(expect_errors=True)
     def test_deprecated_tolerance(self, _, errors, __):
@@ -714,7 +735,7 @@ class TestDeprecatedOptions(unittest.TestCase):
           option "tolerance" "0.00005"
         """
         self.assertEqual(1, len(errors))
-        self.assertTrue(re.search('option has been deprecated', errors[0].message))
+        self.assertRegex(errors[0].message, 'option has been deprecated')
 
 
 class TestParserLinks(unittest.TestCase):
@@ -898,87 +919,86 @@ class TestParseLots(unittest.TestCase):
     maxDiff = None
 
     @parser.parse_doc()
-    def test_lot_nolot(self, entries, errors, _):
+    def test_cost_none(self, entries, errors, _):
         """
           2014-01-01 *
             Assets:Invest:AAPL   45.23 USD
             Assets:Invest:Cash  -45.23 USD
         """
+        self.assertFalse(parser.is_entry_incomplete(entries[0]))
         self.assertFalse(errors)
-        pos = entries[0].postings[0].position
-        self.assertEqual(D('45.23'), pos.number)
-        self.assertEqual(grammar.LotSpec('USD', None, None, None, None), pos.lot)
+        posting = entries[0].postings[0]
+        self.assertEqual(A('45.23 USD'), posting.units)
+        self.assertEqual(None, posting.cost)
 
-    @parser.parse_doc()
-    def test_lot_empty(self, entries, errors, _):
+    @parser.parse_doc(allow_incomplete=True)
+    def test_cost_empty(self, entries, errors, _):
         """
           2014-01-01 *
             Assets:Invest:AAPL   20 AAPL {}
             Assets:Invest:Cash  -20 AAPL
         """
+        self.assertTrue(parser.is_entry_incomplete(entries[0]))
         self.assertFalse(errors)
-        pos = entries[0].postings[0].position
-        self.assertEqual(D('20'), pos.number)
-        self.assertEqual(grammar.LotSpec('AAPL', None, None, None, None), pos.lot)
+        posting = entries[0].postings[0]
+        self.assertEqual(A('20 AAPL'), posting.units)
+        self.assertEqual(CostSpec(MISSING, None, MISSING, None, None, False), posting.cost)
 
     @parser.parse_doc()
-    def test_lot_cost(self, entries, errors, _):
+    def test_cost_amount(self, entries, errors, _):
         """
           2014-01-01 *
             Assets:Invest:AAPL      20 AAPL {45.23 USD}
             Assets:Invest:Cash  -90.46 USD
         """
+        self.assertFalse(parser.is_entry_incomplete(entries[0]))
         self.assertFalse(errors)
-        pos = entries[0].postings[0].position
-        self.assertEqual(D('20'), pos.number)
-        self.assertEqual(
-            position.LotSpec('AAPL',
-                             grammar.CompoundAmount(D('45.23'), None, 'USD'),
-                             None, None, None),
-                         pos.lot)
+        posting = entries[0].postings[0]
+        self.assertEqual(A('20 AAPL'), posting.units)
+        self.assertEqual(CostSpec(D('45.23'), None, 'USD', None, None, False), posting.cost)
 
-    @parser.parse_doc()
-    def test_lot_date(self, entries, errors, _):
+    @parser.parse_doc(allow_incomplete=True)
+    def test_cost_date(self, entries, errors, _):
         """
           2014-01-01 *
             Assets:Invest:AAPL   20 AAPL {2014-12-26}
             Assets:Invest:Cash  -20 AAPL
         """
+        self.assertTrue(parser.is_entry_incomplete(entries[0]))
         self.assertFalse(errors)
-        pos = entries[0].postings[0].position
-        self.assertEqual(D('20'), pos.number)
+        posting = entries[0].postings[0]
+        self.assertEqual(A('20 AAPL'), posting.units)
         self.assertEqual(
-            grammar.LotSpec('AAPL', None, datetime.date(2014, 12, 26), None, None),
-            pos.lot)
+            CostSpec(MISSING, None, MISSING, datetime.date(2014, 12, 26), None, False),
+            posting.cost)
 
-    @parser.parse_doc(expect_errors=True)
-    def test_lot_label(self, entries, errors, _):
+    @parser.parse_doc(allow_incomplete=True)
+    def test_cost_label(self, entries, errors, _):
         """
           2014-01-01 *
             Assets:Invest:AAPL   20 AAPL {"d82d55a0dbe8"}
             Assets:Invest:Cash  -20 AAPL
         """
-        self.assertEqual(1, len(errors))
-        self.assertTrue(re.search("Labels not supported", errors[0].message))
-        pos = entries[0].postings[0].position
-        self.assertEqual(D('20'), pos.number)
-        self.assertEqual(grammar.LotSpec('AAPL', None, None, "d82d55a0dbe8", None), pos.lot)
+        self.assertTrue(parser.is_entry_incomplete(entries[0]))
+        posting = entries[0].postings[0]
+        self.assertEqual(A('20 AAPL'), posting.units)
+        self.assertEqual(CostSpec(MISSING, None, MISSING, None, "d82d55a0dbe8", False),
+                         posting.cost)
 
-    @parser.parse_doc(expect_errors=True)
-    def test_lot_merge(self, entries, errors, _):
+    @parser.parse_doc(allow_incomplete=True)
+    def test_cost_merge(self, entries, errors, _):
         """
           2014-01-01 *
             Assets:Invest:AAPL   20 AAPL {*}
             Assets:Invest:Cash  -20 AAPL
         """
-        self.assertEqual(1, len(errors))
-        self.assertTrue(re.search("Merge-cost not supported", errors[0].message))
-        pos = entries[0].postings[0].position
-        self.assertEqual(D('20'), pos.number)
-        self.assertEqual(grammar.LotSpec('AAPL', None, None, None, True), pos.lot)
+        self.assertTrue(parser.is_entry_incomplete(entries[0]))
+        posting = entries[0].postings[0]
+        self.assertEqual(A('20 AAPL'), posting.units)
+        self.assertEqual(CostSpec(MISSING, None, MISSING, None, None, True), posting.cost)
 
-    @parser.parse_doc(expect_errors=True)
-    def test_lot_two_types(self, entries, errors, _):
+    @parser.parse_doc(allow_incomplete=True)
+    def test_cost_two_components(self, entries, errors, _):
         """
           2014-01-01 *
             Assets:Invest:AAPL    1 AAPL {45.23 USD, 2014-12-26}
@@ -988,12 +1008,11 @@ class TestParseLots(unittest.TestCase):
             Assets:Invest:AAPL    1 AAPL {2014-12-26, "d82d55a0dbe8"}
             Assets:Invest:AAPL    1 AAPL {"d82d55a0dbe8", 2014-12-26}
         """
-        self.assertEqual(4, len(errors))
-        self.assertTrue(all(re.search("Labels not supported", error.message)
-                            for error in errors))
+        self.assertEqual(0, len(errors))
+        self.assertTrue(parser.is_entry_incomplete(entries[0]))
 
-    @parser.parse_doc(expect_errors=True)
-    def test_lot_three_types(self, entries, errors, _):
+    @parser.parse_doc()
+    def test_cost_three_components(self, entries, errors, _):
         """
           2014-01-01 *
             Assets:Invest:AAPL    1 AAPL {45.23 USD, 2014-12-26, "d82d55a0dbe8"}
@@ -1003,125 +1022,113 @@ class TestParseLots(unittest.TestCase):
             Assets:Invest:AAPL    1 AAPL {"d82d55a0dbe8", 45.23 USD, 2014-12-26}
             Assets:Invest:AAPL    1 AAPL {"d82d55a0dbe8", 2014-12-26, 45.23 USD}
         """
-        self.assertEqual(6, len(errors))
-        self.assertTrue(all(re.search("Labels not supported", error.message)
-                            for error in errors))
+        self.assertEqual(0, len(errors))
 
     @parser.parse_doc(expect_errors=True)
-    def test_lot_repeated_cost(self, entries, errors, _):
+    def test_cost_repeated(self, entries, errors, _):
         """
           2014-01-01 *
             Assets:Invest:AAPL       1 AAPL {45.23 USD, 45.24 USD}
             Assets:Invest:Cash  -45.23 USD
         """
         self.assertEqual(1, len(errors))
-        self.assertTrue(re.search("Duplicate cost", errors[0].message))
+        self.assertRegex(errors[0].message, "Duplicate cost")
 
     @parser.parse_doc(expect_errors=True)
-    def test_lot_repeated_date(self, entries, errors, _):
+    def test_cost_repeated_date(self, entries, errors, _):
         """
           2014-01-01 *
             Assets:Invest:AAPL    1 AAPL {45.23 USD, 2014-12-26, 2014-12-27}
             Assets:Invest:Cash   -1 AAPL
         """
         self.assertEqual(1, len(errors))
-        self.assertTrue(re.search("Duplicate date", errors[0].message))
+        self.assertRegex(errors[0].message, "Duplicate date")
 
     @parser.parse_doc(expect_errors=True)
-    def test_lot_repeated_label(self, entries, errors, _):
+    def test_cost_repeated_label(self, entries, errors, _):
         """
           2014-01-01 *
             Assets:Invest:AAPL       1 AAPL {"aaa", "bbb", 45.23 USD}
             Assets:Invest:Cash  -45.23 USD
         """
-        self.assertEqual(2, len(errors))
+        self.assertEqual(1, len(errors))
         self.assertTrue(any(re.search("Duplicate label", error.message)
                             for error in errors))
-        self.assertTrue(any(re.search("Labels not supported", error.message)
-                            for error in errors))
 
-    @parser.parse_doc(expect_errors=True)
-    def test_lot_repeated_merge(self, entries, errors, _):
+    @parser.parse_doc(expect_errors=True, allow_incomplete=True)
+    def test_cost_repeated_merge(self, entries, errors, _):
         """
           2014-01-01 *
             Assets:Invest:AAPL       1 AAPL {*, *}
             Assets:Invest:Cash  -45.23 USD
         """
-        self.assertEqual(2, len(errors))
+        self.assertTrue(parser.is_entry_incomplete(entries[0]))
+        self.assertEqual(1, len(errors))
         self.assertTrue(any(re.search("Duplicate merge", error.message)
-                            for error in errors))
-        self.assertTrue(any(re.search("Merge-cost not supported", error.message)
                             for error in errors))
 
     @parser.parse_doc()
-    def test_lot_both_costs(self, entries, errors, _):
+    def test_cost_both_costs(self, entries, errors, _):
         """
           2014-01-01 *
             Assets:Invest:AAPL       10 AAPL {45.23 # 9.95 USD}
             Assets:Invest:Cash  -110.36 USD
         """
-        pos = entries[0].postings[0].position
-        self.assertEqual(grammar.CompoundAmount(D('45.23'), D('9.95'), 'USD'),
-                         pos.lot.compound_cost)
+        posting = entries[0].postings[0]
+        self.assertEqual(CostSpec(D('45.23'), D('9.95'), 'USD', None, None, False),
+                         posting.cost)
 
-    @parser.parse_doc()
-    def test_lot_total_cost_only(self, entries, errors, _):
+    @parser.parse_doc(allow_incomplete=True)
+    def test_cost_total_cost_only(self, entries, errors, _):
         """
           2014-01-01 *
             Assets:Invest:AAPL      10 AAPL {# 9.95 USD}
             Assets:Invest:Cash  -19.90 USD
         """
-        pos = entries[0].postings[0].position
-        self.assertEqual(grammar.CompoundAmount(None, D('9.95'), 'USD'),
-                         pos.lot.compound_cost)
+        self.assertTrue(parser.is_entry_incomplete(entries[0]))
+        posting = entries[0].postings[0]
+        self.assertEqual(CostSpec(MISSING, D('9.95'), 'USD', None, None, False),
+                         posting.cost)
 
-    @parser.parse_doc()
-    def test_lot_total_empty_total(self, entries, errors, _):
+    @parser.parse_doc(allow_incomplete=True)
+    def test_cost_total_empty_total(self, entries, errors, _):
         """
           2014-01-01 *
             Assets:Invest:AAPL      20 AAPL {45.23 # USD}
             Assets:Invest:Cash  -45.23 USD
         """
         self.assertEqual(0, len(errors))
-        pos = entries[0].postings[0].position
-        self.assertEqual(D('20'), pos.number)
-        self.assertEqual(
-            position.LotSpec('AAPL',
-                             grammar.CompoundAmount(D('45.23'), None, 'USD'),
-                             None, None, None),
-            pos.lot)
+        self.assertTrue(parser.is_entry_incomplete(entries[0]))
+        posting = entries[0].postings[0]
+        self.assertEqual(A('20 AAPL'), posting.units)
+        self.assertEqual(CostSpec(D('45.23'), MISSING, 'USD', None, None, False),
+                         posting.cost)
 
-    @parser.parse_doc()
-    def test_lot_total_just_currency(self, entries, errors, _):
+    @parser.parse_doc(allow_incomplete=True)
+    def test_cost_total_just_currency(self, entries, errors, _):
         """
           2014-01-01 *
             Assets:Invest:AAPL   20 AAPL {USD}
             Assets:Invest:AAPL   20 AAPL { # USD}
             Assets:Invest:Cash    0 USD
         """
+        self.assertTrue(parser.is_entry_incomplete(entries[0]))
 
     @parser.parse_doc(expect_errors=True)
-    def test_lot_with_slashes(self, entries, errors, _):
+    def test_cost_with_slashes(self, entries, errors, _):
         """
           2014-01-01 *
             Assets:Invest:AAPL      1.1 AAPL {45.23 USD / 2015-07-16 / "blabla"}
             Assets:Invest:Cash   -45.23 USD
         """
-        # Note: When marking SLASH as deprecated, bring this check back in.
-        # {a6127ff32048}
-        # self.assertEqual(3, len(errors))
-        # self.assertTrue(re.search("slash", errors[0].message))
-        # self.assertTrue(re.search("slash", errors[1].message))
-        self.assertEqual(1, len(errors))
-        self.assertTrue(re.search("Labels not supported", errors[0].message))
-        pos = entries[0].postings[0].position
-        self.assertEqual(D('1.1'), pos.number)
-        self.assertEqual(position.LotSpec('AAPL',
-                                          grammar.CompoundAmount(D('45.23'), None, 'USD'),
-                                          datetime.date(2015, 7, 16),
-                                          'blabla',
-                                          None),
-                         pos.lot)
+        self.assertEqual(2, len(errors))
+        self.assertRegex(errors[0].message, "slash")
+        self.assertRegex(errors[1].message, "slash")
+        posting = entries[0].postings[0]
+        self.assertEqual(A('1.1 AAPL'), posting.units)
+        self.assertEqual(CostSpec(D('45.23'), None, 'USD',
+                                  datetime.date(2015, 7, 16), 'blabla', False),
+                         posting.cost)
 
 
 class TestCurrencies(unittest.TestCase):
@@ -1184,8 +1191,9 @@ class TestTotalsAndSigns(unittest.TestCase):
         """
         for entry in entries:
             posting = entry.postings[0]
-            self.assertEqual(grammar.CompoundAmount(ZERO, D('2000'), 'USD'),
-                             posting.position.lot.compound_cost)
+            self.assertEqual(ZERO, posting.cost.number_per)
+            self.assertEqual(D('2000'), posting.cost.number_total)
+            self.assertEqual('USD', posting.cost.currency)
             self.assertEqual(None, posting.price)
 
     @parser.parse_doc(expect_errors=False)
@@ -1205,7 +1213,7 @@ class TestTotalsAndSigns(unittest.TestCase):
             Assets:Investments:MSFT      -10 MSFT @ -200.00 USD
             Assets:Investments:Cash  2000.00 USD
         """
-        self.assertTrue(re.search('Negative.*allowed', errors[0].message))
+        self.assertRegex(errors[0].message, 'Negative.*allowed')
 
     @parser.parse_doc()
     def test_total_price_positive(self, entries, errors, _):
@@ -1215,8 +1223,8 @@ class TestTotalsAndSigns(unittest.TestCase):
             Assets:Investments:Cash  -2000.00 USD
         """
         posting = entries[0].postings[0]
-        self.assertEqual(A('200 USD'), posting.price)
-        self.assertEqual(None, posting.position.lot.compound_cost)
+        self.assertEqual(amount.from_string('200 USD'), posting.price)
+        self.assertEqual(None, posting.cost)
 
     @parser.parse_doc()
     def test_total_price_negative(self, entries, errors, _):
@@ -1226,8 +1234,8 @@ class TestTotalsAndSigns(unittest.TestCase):
             Assets:Investments:Cash  20000.00 USD
         """
         posting = entries[0].postings[0]
-        self.assertEqual(A('200 USD'), posting.price)
-        self.assertEqual(None, posting.position.lot.compound_cost)
+        self.assertEqual(amount.from_string('200 USD'), posting.price)
+        self.assertEqual(None, posting.cost)
 
     @parser.parse_doc(expect_errors=True)
     def test_total_price_inverted(self, entries, errors, _):
@@ -1236,7 +1244,7 @@ class TestTotalsAndSigns(unittest.TestCase):
             Assets:Investments:MSFT         10 MSFT @@ -2000.00 USD
             Assets:Investments:Cash   20000.00 USD
         """
-        self.assertTrue(re.search('Negative.*allowed', errors[0].message))
+        self.assertRegex(errors[0].message, 'Negative.*allowed')
 
 
 class TestAllowNegativePrices(unittest.TestCase):
@@ -1266,8 +1274,8 @@ class TestAllowNegativePrices(unittest.TestCase):
         self.assertFalse(errors)
         for entry in entries:
             posting = entry.postings[0]
-            self.assertEqual(grammar.CompoundAmount(ZERO, D('2000'), 'USD'),
-                             posting.position.lot.compound_cost)
+            self.assertEqual(D('2000'), posting.cost.number_total)
+            self.assertEqual('USD', posting.cost.currency)
             self.assertEqual(None, posting.price)
 
     @parser.parse_doc()
@@ -1278,8 +1286,8 @@ class TestAllowNegativePrices(unittest.TestCase):
             Assets:Investments:Cash  2000.00 USD
         """
         posting = entries[0].postings[0]
-        self.assertEqual(A('-200 USD'), posting.price)
-        self.assertEqual(None, posting.position.lot.compound_cost)
+        self.assertEqual(amount.from_string('-200 USD'), posting.price)
+        self.assertEqual(None, posting.cost)
 
     @parser.parse_doc()
     def test_total_price_negative(self, entries, errors, _):
@@ -1289,8 +1297,8 @@ class TestAllowNegativePrices(unittest.TestCase):
             Assets:Investments:Cash   20000.00 USD
         """
         posting = entries[0].postings[0]
-        self.assertEqual(A('-200 USD'), posting.price)
-        self.assertEqual(None, posting.position.lot.compound_cost)
+        self.assertEqual(amount.from_string('-200 USD'), posting.price)
+        self.assertEqual(None, posting.cost)
 
     @parser.parse_doc()
     def test_total_price_inverted(self, entries, errors, _):
@@ -1300,8 +1308,8 @@ class TestAllowNegativePrices(unittest.TestCase):
             Assets:Investments:Cash  -20000.00 USD
         """
         posting = entries[0].postings[0]
-        self.assertEqual(A('-200 USD'), posting.price)
-        self.assertEqual(None, posting.position.lot.compound_cost)
+        self.assertEqual(amount.from_string('-200 USD'), posting.price)
+        self.assertEqual(None, posting.cost)
 
 
 class TestBalance(unittest.TestCase):
@@ -1314,8 +1322,8 @@ class TestBalance(unittest.TestCase):
             Assets:Investments:Cash  -20000 USD
         """
         posting = entries[0].postings[0]
-        self.assertEqual(A('200 USD'), posting.price)
-        self.assertEqual(None, posting.position.lot.compound_cost)
+        self.assertEqual(amount.from_string('200 USD'), posting.price)
+        self.assertEqual(None, posting.cost)
 
     @parser.parse_doc()
     def test_total_cost(self, entries, errors, _):
@@ -1330,8 +1338,9 @@ class TestBalance(unittest.TestCase):
         """
         for entry in entries:
             posting = entry.postings[0]
-            self.assertEqual(grammar.CompoundAmount(ZERO, D('2000'), 'USD'),
-                             posting.position.lot.compound_cost)
+            self.assertEqual(ZERO, posting.cost.number_per)
+            self.assertEqual(D('2000'), posting.cost.number_total)
+            self.assertEqual('USD', posting.cost.currency)
             self.assertEqual(None, posting.price)
 
 
@@ -1548,8 +1557,8 @@ class TestArithmetic(unittest.TestCase):
         """
         self.assertEqual(1, len(entries))
         postings = entries[0].postings
-        self.assertEqual(D('15'), postings[0].position.number)
-        self.assertEqual(D('10.6'), postings[1].position.number)
+        self.assertEqual(D('15'), postings[0].units.number)
+        self.assertEqual(D('10.6'), postings[1].units.number)
 
     @parser.parse_doc()
     def test_number_expr__subtract(self, entries, errors, _):
@@ -1560,8 +1569,8 @@ class TestArithmetic(unittest.TestCase):
         """
         self.assertEqual(1, len(entries))
         postings = entries[0].postings
-        self.assertEqual(D('9'), postings[0].position.number)
-        self.assertEqual(D('4.4'), postings[1].position.number)
+        self.assertEqual(D('9'), postings[0].units.number)
+        self.assertEqual(D('4.4'), postings[1].units.number)
 
     @parser.parse_doc()
     def test_number_expr__multiply(self, entries, errors, _):
@@ -1572,8 +1581,8 @@ class TestArithmetic(unittest.TestCase):
         """
         self.assertEqual(1, len(entries))
         postings = entries[0].postings
-        self.assertEqual(D('36'), postings[0].position.number)
-        self.assertEqual(D('23.25'), postings[1].position.number)
+        self.assertEqual(D('36'), postings[0].units.number)
+        self.assertEqual(D('23.25'), postings[1].units.number)
 
     @parser.parse_doc()
     def test_number_expr__divide(self, entries, errors, _):
@@ -1584,8 +1593,8 @@ class TestArithmetic(unittest.TestCase):
         """
         self.assertEqual(1, len(entries))
         postings = entries[0].postings
-        self.assertEqual(D('4'), postings[0].position.number)
-        self.assertEqual(D('2.5'), postings[1].position.number)
+        self.assertEqual(D('4'), postings[0].units.number)
+        self.assertEqual(D('2.5'), postings[1].units.number)
 
     @parser.parse_doc()
     def test_number_expr__negative(self, entries, errors, _):
@@ -1597,9 +1606,9 @@ class TestArithmetic(unittest.TestCase):
         """
         self.assertEqual(1, len(entries))
         postings = entries[0].postings
-        self.assertEqual(D('-12'), postings[0].position.number)
-        self.assertEqual(D('-7.5'), postings[1].position.number)
-        self.assertEqual(D('-7.5'), postings[2].position.number)
+        self.assertEqual(D('-12'), postings[0].units.number)
+        self.assertEqual(D('-7.5'), postings[1].units.number)
+        self.assertEqual(D('-7.5'), postings[2].units.number)
 
     @parser.parse_doc()
     def test_number_expr__positive(self, entries, errors, _):
@@ -1610,7 +1619,7 @@ class TestArithmetic(unittest.TestCase):
         """
         self.assertEqual(1, len(entries))
         postings = entries[0].postings
-        self.assertEqual(D('12'), postings[0].position.number)
+        self.assertEqual(D('12'), postings[0].units.number)
 
     @parser.parse_doc()
     def test_number_expr__precedence(self, entries, errors, _):
@@ -1624,7 +1633,7 @@ class TestArithmetic(unittest.TestCase):
         self.assertEqual(1, len(entries))
         self.assertListEqual(
             [D('10'), D('14'), D('-10'), D('-4')],
-            [posting.position.number for posting in entries[0].postings])
+            [posting.units.number for posting in entries[0].postings])
 
     @parser.parse_doc()
     def test_number_expr__groups(self, entries, errors, _):
@@ -1636,7 +1645,7 @@ class TestArithmetic(unittest.TestCase):
         self.assertEqual(1, len(entries))
         self.assertListEqual(
             [D('-4'), D('-2')],
-            [posting.position.number
+            [posting.units.number
              for posting in entries[0].postings])
 
     @parser.parse_doc()
@@ -1650,11 +1659,11 @@ class TestArithmetic(unittest.TestCase):
         """
         self.assertFalse(errors)
         self.assertEqual(2, len(entries))
-        self.assertEqual(D('-12'), entries[0].postings[0].position.number)
+        self.assertEqual(D('-12'), entries[0].postings[0].units.number)
         self.assertEqual(D('252.021'),
-                         entries[0].postings[0].position.lot.compound_cost.number_per)
+                         entries[0].postings[0].cost.number_per)
         self.assertEqual(None,
-                         entries[0].postings[0].position.lot.compound_cost.number_total)
+                         entries[0].postings[0].cost.number_total)
         self.assertEqual(D('281.442'), entries[0].postings[0].price.number)
         self.assertEqual(D('3024.252'), entries[1].amount.number)
         self.assertEqual(D('-5684.53'), entries[1].meta['number'])
@@ -1727,7 +1736,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
         """
         self.assertEqual(0, len(entries))
         self.assertEqual(1, len(errors))
-        self.assertRegexpMatches(errors[0].message, r"syntax error, unexpected RPAREN")
+        self.assertRegex(errors[0].message, r"syntax error, unexpected RPAREN")
 
     @parser.parse_doc(expect_errors=True)
     def test_lexer_invalid_token__recovery(self, entries, errors, _):
@@ -1739,7 +1748,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
           2000-01-02 open Assets:Something
         """, entries)
         self.assertEqual(1, len(errors))
-        self.assertRegexpMatches(errors[0].message, r"syntax error, unexpected RPAREN")
+        self.assertRegex(errors[0].message, r"syntax error, unexpected RPAREN")
 
     @parser.parse_doc(expect_errors=True)
     def test_lexer_exception(self, entries, errors, _):
@@ -1748,7 +1757,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
         """
         self.assertEqual(0, len(entries))
         self.assertEqual(1, len(errors))
-        self.assertRegexpMatches(errors[0].message, 'month must be in 1..12')
+        self.assertRegex(errors[0].message, 'month must be in 1..12')
 
     @parser.parse_doc(expect_errors=True)
     def test_lexer_exception__recovery(self, entries, errors, _):
@@ -1761,7 +1770,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
         """, entries)
         self.assertEqual(1, len(entries))
         self.assertEqual(1, len(errors))
-        self.assertRegexpMatches(errors[0].message, 'month must be in 1..12')
+        self.assertRegex(errors[0].message, 'month must be in 1..12')
 
     def test_lexer_errors_in_postings(self):
         txn_strings = textwrap.dedent("""
@@ -1810,7 +1819,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
             """, entries)
             self.assertEqual(1, len(entries))
             self.assertEqual(1, len(errors))
-            self.assertRegexpMatches(errors[0].message,
+            self.assertRegex(errors[0].message,
                                      '(Invalid token|unexpected RPAREN)')
 
     @parser.parse_doc(expect_errors=True)
@@ -1820,7 +1829,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
         """
         self.assertEqual(0, len(entries))
         self.assertEqual(1, len(errors))
-        self.assertRegexpMatches(errors[0].message, r"syntax error")
+        self.assertRegex(errors[0].message, r"syntax error")
 
     @parser.parse_doc(expect_errors=True)
     def test_grammar_syntax_error__recovery(self, entries, errors, _):
@@ -1830,7 +1839,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
           2000-01-03 open Assets:After
         """
         self.assertEqual(1, len(errors))
-        self.assertRegexpMatches(errors[0].message, r"syntax error")
+        self.assertRegex(errors[0].message, r"syntax error")
         self.assertEqualEntries("""
           2000-01-01 open Assets:Before
           2000-01-03 open Assets:After
@@ -1843,7 +1852,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
           2000-01-02 open Assets:Something
         """
         self.assertEqual(1, len(errors))
-        self.assertRegexpMatches(errors[0].message, r"syntax error")
+        self.assertRegex(errors[0].message, r"syntax error")
         self.assertEqual(1, len(entries))
         self.assertEqualEntries("""
           2000-01-02 open Assets:Something
@@ -1860,7 +1869,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
         """
         self.assertEqual(2, len(errors))
         for error in errors:
-            self.assertRegexpMatches(error.message, r"syntax error")
+            self.assertRegex(error.message, r"syntax error")
         self.assertEqual(3, len(entries))
         self.assertEqualEntries("""
           2000-01-01 open Assets:Before
@@ -1870,7 +1879,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
 
     def check_entries_errors(self, entries, errors):
         self.assertEqual(1, len(errors))
-        self.assertRegexpMatches(errors[0].message, 'Patched exception')
+        self.assertRegex(errors[0].message, 'Patched exception')
         self.assertEqual(2, len(entries))
 
     @mock.patch('beancount.parser.grammar.Builder.pushtag', raise_exception)
@@ -1945,25 +1954,13 @@ class TestLexerAndParserErrors(cmptest.TestCase):
         """
         self.check_entries_errors(entries, errors)
 
-    @mock.patch('beancount.parser.grammar.Builder.lot_spec', raise_exception)
+    @mock.patch('beancount.parser.grammar.Builder.cost_spec', raise_exception)
     @parser.parse_doc(expect_errors=True)
     def test_grammar_exceptions__lot_cost_date(self, entries, errors, _):
         """
           2000-01-01 open Assets:Before
           2001-02-02 *
             Assets:Before   10.00 HOOL {100.00 USD}
-            Assets:After   -100.00 USD
-          2010-01-01 close Assets:Before
-        """
-        self.check_entries_errors(entries, errors)
-
-    @mock.patch('beancount.parser.grammar.Builder.position', raise_exception)
-    @parser.parse_doc(expect_errors=True)
-    def test_grammar_exceptions__position(self, entries, errors, _):
-        """
-          2000-01-01 open Assets:Before
-          2001-02-02 *
-            Assets:Before   100.00 USD
             Assets:After   -100.00 USD
           2010-01-01 close Assets:Before
         """
@@ -2157,93 +2154,295 @@ class TestLexerAndParserErrors(cmptest.TestCase):
 
 class TestIncompleteInputs(cmptest.TestCase):
 
+    #
+    # Units
+    #
+
     @parser.parse_doc(allow_incomplete=True)
-    def test_missing_amount(self, entries, _, options_map):
+    def test_units_full(self, entries, _, options_map):
         """
-          2000-01-01 open Assets:Account1
-          2000-01-01 open Assets:Account2
+          2010-05-28 *
+            Assets:Account1     100.00 USD
+            Assets:Account2    -100.00 USD
+        """
+        self.assertEqual(A('-100 USD'), entries[-1].postings[-1].units)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_units_missing(self, entries, _, options_map):
+        """
           2010-05-28 *
             Assets:Account1     100.00 USD
             Assets:Account2
         """
-        self.assertEqual(None, entries[-1].postings[-1].position)
+        self.assertEqual(MISSING, entries[-1].postings[-1].units)
+        self.assertEqual(None, entries[-1].postings[-1].cost)
 
     @parser.parse_doc(allow_incomplete=True)
-    def test_missing_number(self, entries, _, options_map):
+    def test_units_missing_number(self, entries, _, options_map):
         """
-          2000-01-01 open Assets:Account1
-          2000-01-01 open Assets:Account2
           2010-05-28 *
             Assets:Account1     100.00 USD
-            Assets:Account2            CAD
+            Assets:Account2            USD
         """
-        pos = entries[-1].postings[-1].position
-        self.assertFalse(pos is None)
-        self.assertEqual(None, pos.number)
-        self.assertEqual("CAD", pos.lot.currency)
+        units = entries[-1].postings[-1].units
+        self.assertEqual(Amount(MISSING, 'USD'), units)
 
     @parser.parse_doc(allow_incomplete=True)
-    def test_missing_price_amount(self, entries, _, options_map):
+    def test_units_missing_currency(self, entries, _, options_map):
         """
-          2000-01-01 open Assets:Account1
-          2000-01-01 open Assets:Account2
+          2010-05-28 *
+            Assets:Account1     100.00 USD
+            Assets:Account2    -100.00
+        """
+        units = entries[-1].postings[-1].units
+        self.assertEqual(Amount(D('-100.00'), MISSING), units)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_units_missing_with_cost(self, entries, _, options_map):
+        """
+          2010-05-28 *
+            Assets:Account1     {300.00 USD}
+            Assets:Account2    -600.00 USD
+        """
+        posting = entries[-1].postings[0]
+        self.assertEqual(Amount(MISSING, MISSING), posting.units)
+        self.assertEqual(CostSpec(D('300'), None, 'USD', None, None, False), posting.cost)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_units_missing_number_with_cost(self, entries, _, options_map):
+        """
+          2010-05-28 *
+            Assets:Account1            HOOL {300.00 USD}
+            Assets:Account2    -600.00 USD
+        """
+        posting = entries[-1].postings[0]
+        self.assertEqual(Amount(MISSING, 'HOOL'), posting.units)
+        self.assertEqual(CostSpec(D('300'), None, 'USD', None, None, False), posting.cost)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_units_missing_currency_with_cost(self, entries, _, options_map):
+        """
+          2010-05-28 *
+            Assets:Account1      10        {300.00 USD}
+            Assets:Account2    -600.00 USD
+        """
+        posting = entries[-1].postings[0]
+        self.assertEqual(Amount(D('10'), MISSING), posting.units)
+        self.assertEqual(CostSpec(D('300'), None, 'USD', None, None, False), posting.cost)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_units_missing_with_price(self, entries, _, options_map):
+        """
+          2010-05-28 *
+            Assets:Account2                @ 1.2 USD
+            Assets:Account1     100.00 USD @
+        """
+        posting = entries[-1].postings[0]
+        self.assertEqual(Amount(MISSING, MISSING), posting.units)
+        self.assertEqual(Amount(D('1.2'), 'USD'), posting.price)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_units_missing_number_with_price(self, entries, _, options_map):
+        """
+          2010-05-28 *
+            Assets:Account2            CAD @ 1.2 USD
+            Assets:Account1     100.00 USD @
+        """
+        posting = entries[-1].postings[0]
+        self.assertEqual(Amount(MISSING, 'CAD'), posting.units)
+        self.assertEqual(Amount(D('1.2'), 'USD'), posting.price)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_units_missing_currency_with_price(self, entries, _, options_map):
+        """
+          2010-05-28 *
+            Assets:Account2     120.00     @ 1.2 USD
+            Assets:Account1     100.00 USD @
+        """
+        posting = entries[-1].postings[0]
+        self.assertEqual(Amount(D('120.00'), MISSING), posting.units)
+        self.assertEqual(Amount(D('1.2'), 'USD'), posting.price)
+
+    #
+    # Price
+    #
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_price_none(self, entries, _, options_map):
+        """
+          2010-05-28 *
+            Assets:Account1     100.00 USD
+            Assets:Account2     120.00 CAD
+        """
+        posting = entries[-1].postings[0]
+        self.assertEqual(None, posting.cost)
+        self.assertEqual(None, posting.price)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_price_missing(self, entries, _, options_map):
+        """
           2010-05-28 *
             Assets:Account1     100.00 USD @
             Assets:Account2     120.00 CAD
         """
         posting = entries[-1].postings[0]
-        pos = posting.position
-        self.assertEqual(D('100.00'), pos.number)
-        self.assertEqual('USD', pos.lot.currency)
-        self.assertIsInstance(posting.price, amount.Amount)
-        self.assertEqual(amount.Amount(None, None), posting.price)
+        self.assertEqual(A('100.00 USD'), posting.units)
+        self.assertIsInstance(posting.price, Amount)
+        self.assertEqual(Amount(MISSING, MISSING), posting.price)
 
     @parser.parse_doc(allow_incomplete=True)
-    def test_missing_price_number(self, entries, _, options_map):
+    def test_price_missing_number(self, entries, _, options_map):
         """
-          2000-01-01 open Assets:Account1
-          2000-01-01 open Assets:Account2
           2010-05-28 *
             Assets:Account1     100.00 USD @ CAD
             Assets:Account2     120.00 CAD
         """
         posting = entries[-1].postings[0]
-        pos = posting.position
-        self.assertEqual(D('100.00'), pos.number)
-        self.assertEqual('USD', pos.lot.currency)
-        self.assertEqual(None, pos.lot.compound_cost)
-        self.assertIsInstance(posting.price, amount.Amount)
-        self.assertEqual(amount.Amount(None, 'CAD'), posting.price)
+        self.assertIsInstance(posting.price, Amount)
+        self.assertEqual(Amount(MISSING, 'CAD'), posting.price)
 
     @parser.parse_doc(allow_incomplete=True)
-    def test_missing_cost_amount(self, entries, _, options_map):
+    def test_price_missing_currency(self, entries, _, options_map):
         """
-          2000-01-01 open Assets:Account1
-          2000-01-01 open Assets:Account2
           2010-05-28 *
-            Assets:Account1     2 HOOL {}
+            Assets:Account1     100.00 USD @ 1.2
             Assets:Account2     120.00 CAD
         """
         posting = entries[-1].postings[0]
-        pos = posting.position
-        self.assertEqual(D('2'), pos.number)
-        self.assertIsInstance(pos.lot, position.LotSpec)
-        self.assertEqual(position.LotSpec('HOOL', None, None, None, None), pos.lot)
+        self.assertIsInstance(posting.price, Amount)
+        self.assertEqual(Amount(D('1.2'), MISSING), posting.price)
+
+
+    #
+    # Cost
+    #
 
     @parser.parse_doc(allow_incomplete=True)
-    def test_missing_cost_number(self, entries, _, options_map):
+    def test_cost_full(self, entries, _, options_map):
         """
-          2000-01-01 open Assets:Account1
-          2000-01-01 open Assets:Account2
+          2010-05-28 *
+            Assets:Account1     2 HOOL {150 # 5 USD}
+            Assets:Account2     120.00 USD
+        """
+        posting = entries[-1].postings[0]
+        self.assertEqual(CostSpec(D('150'), D('5'), 'USD', None, None, False), posting.cost)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_cost_missing_number_per(self, entries, _, options_map):
+        """
+          2010-05-28 *
+            Assets:Account1     2 HOOL {# 5 USD}
+            Assets:Account2     120.00 USD
+        """
+        posting = entries[-1].postings[0]
+        self.assertEqual(CostSpec(MISSING, D('5'), 'USD', None, None, False), posting.cost)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_cost_missing_number_total(self, entries, _, options_map):
+        """
+          2010-05-28 *
+            Assets:Account1     2 HOOL {150 # USD}
+            Assets:Account2     120.00 USD
+        """
+        posting = entries[-1].postings[0]
+        self.assertEqual(CostSpec(D('150'), MISSING, 'USD', None, None, False),
+                         posting.cost)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_cost_no_number_total(self, entries, _, options_map):
+        """
+          2010-05-28 *
+            Assets:Account1     2 HOOL {150 USD}
+            Assets:Account2     120.00 USD
+        """
+        posting = entries[-1].postings[0]
+        self.assertEqual(CostSpec(D('150'), None, 'USD', None, None, False), posting.cost)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_cost_missing_numbers(self, entries, _, options_map):
+        """
           2010-05-28 *
             Assets:Account1     2 HOOL {USD}
             Assets:Account2     120.00 USD
         """
         posting = entries[-1].postings[0]
-        pos = posting.position
-        self.assertEqual(D('2'), pos.number)
-        self.assertIsInstance(pos.lot, position.LotSpec)
-        self.assertEqual(
-            position.LotSpec('HOOL',
-                             grammar.CompoundAmount(None, None, 'USD'), None, None, None),
-            pos.lot)
+        self.assertEqual(CostSpec(MISSING, None, 'USD', None, None, False), posting.cost)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_cost_missing_currency(self, entries, _, options_map):
+        """
+          2010-05-28 *
+            Assets:Account1     2 HOOL {150}
+            Assets:Account2     120.00 USD
+        """
+        posting = entries[-1].postings[0]
+        self.assertEqual(CostSpec(D('150'), None, MISSING, None, None, False), posting.cost)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_cost_empty(self, entries, _, options_map):
+        """
+          2010-05-28 *
+            Assets:Account1     2 HOOL {}
+            Assets:Account2     120.00 CAD
+        """
+        posting = entries[-1].postings[0]
+        self.assertEqual(CostSpec(MISSING, None, MISSING, None, None, False), posting.cost)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_cost_empty_with_other(self, entries, _, options_map):
+        """
+          2010-05-28 *
+            Assets:Account1     2 HOOL {2015-09-21, "blablabla"}
+            Assets:Account2     120.00 CAD
+        """
+        posting = entries[-1].postings[0]
+        self.assertEqual(CostSpec(MISSING, None, MISSING,
+                                  datetime.date(2015, 9, 21), "blablabla", False),
+                         posting.cost)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_cost_missing_basis(self, entries, _, options_map):
+        """
+          2010-05-28 *
+            Assets:Account1     2 HOOL {2015-09-21, "blablabla"}
+            Assets:Account2     120.00 CAD
+        """
+        posting = entries[-1].postings[0]
+        self.assertEqual(CostSpec(MISSING, None, MISSING,
+                                  datetime.date(2015, 9, 21), "blablabla", False),
+                         posting.cost)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_cost_average(self, entries, _, options_map):
+        """
+          2010-05-28 *
+            Assets:Account1     2 HOOL {*}
+            Assets:Account2     120.00 CAD
+        """
+        posting = entries[-1].postings[0]
+        self.assertEqual(CostSpec(MISSING, None, MISSING, None, None, True),
+                         posting.cost)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_cost_average_missing_basis(self, entries, _, options_map):
+        """
+          2010-05-28 *
+            Assets:Account1     2 HOOL {*, 2015-09-21, "blablabla"}
+            Assets:Account2     120.00 CAD
+        """
+        posting = entries[-1].postings[0]
+        self.assertEqual(CostSpec(MISSING, None, MISSING,
+                                  datetime.date(2015, 9, 21), "blablabla", True),
+                         posting.cost)
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_cost_average_with_other(self, entries, _, options_map):
+        """
+          2010-05-28 *
+            Assets:Account1     2 HOOL {*, 100.00 CAD, 2015-09-21, "blablabla"}
+            Assets:Account2     120.00 CAD
+        """
+        posting = entries[-1].postings[0]
+        self.assertEqual(CostSpec(D("100.00"), None, "CAD",
+                                  datetime.date(2015, 9, 21), "blablabla", True),
+                         posting.cost)

@@ -17,24 +17,20 @@ from beancount.utils import test_utils
 
 class TestCompareTestFunctions(unittest.TestCase):
 
-    def test_has_auto_postings(self):
+    def test_is_entry_incomplete(self):
         entries, _, __ = parser.parse_string("""
 
           2014-01-27 * "UNION MARKET"
             Liabilities:US:Amex:BlueCash    -22.02 USD
             Expenses:Food:Grocery            22.02 USD
 
-        """, dedent=True)
-        self.assertFalse(parser.has_auto_postings(entries))
-
-        entries, _, __ = parser.parse_string("""
-
           2014-01-27 * "UNION MARKET"
             Liabilities:US:Amex:BlueCash    -22.02 USD
             Expenses:Food:Grocery
 
         """, dedent=True)
-        self.assertTrue(parser.has_auto_postings(entries))
+        self.assertFalse(parser.is_entry_incomplete(entries[0]))
+        self.assertTrue(parser.is_entry_incomplete(entries[1]))
 
 
 class TestParserDoc(unittest.TestCase):
@@ -171,7 +167,7 @@ class TestUnicodeErrors(unittest.TestCase):
         latin1_bytes = self.test_latin1_string.encode('latin1')
         entries, errors, _ = parser.parse_string(latin1_bytes, encoding='garbage')
         self.assertEqual(1, len(errors))
-        self.assertRegexpMatches(errors[0].message, "unknown encoding")
+        self.assertRegex(errors[0].message, "unknown encoding")
         self.assertFalse(entries)
 
 
@@ -190,11 +186,11 @@ class TestTestUtils(unittest.TestCase):
             Equity:Blah
         """)
         self.assertEqual(1, len(entries))
-        self.assertEqual(number, entries[0].postings[0].position.number)
+        self.assertEqual(number, entries[0].postings[0].units.number)
 
     def test_parse_one(self):
         with self.assertRaises(AssertionError):
-            entries = parser.parse_one("""
+            parser.parse_one("""
               2014-12-15 * 2014-12-15
             """)
 

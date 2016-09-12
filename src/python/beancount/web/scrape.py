@@ -2,7 +2,6 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 from os import path
 import re
-import argparse
 import urllib.request
 import urllib.parse
 import logging
@@ -10,7 +9,9 @@ import os
 
 import lxml.html
 
-from beancount.web import web
+
+# Note: Keep this dependency local, or move it to another file, so that
+# third-party projects can benefit from the scraping utility.
 
 
 def iterlinks(html, html_path):
@@ -112,52 +113,6 @@ def scrape_urls(url_format, callback, ignore_regexp=None):
         callback(url, response, response_contents, html_root, skipped_urls)
 
     return all_processed_urls, all_skipped_urls
-
-
-def scrape(filename, callback, port, ignore_regexp, quiet=True, extra_args=None):
-    """Run a web server on a Beancount file and scrape it.
-
-    This is the main entry point of this module.
-
-    Args:
-      filename: A string, the name of the file to parse.
-      callback: A callback function to invoke on each page to validate it.
-        The function is called with the response and the url as arguments.
-        This function should trigger an error on failure (via an exception).
-      port: An integer, a free port to use for serving the pages.
-      ignore_regexp: A regular expression string, the urls to ignore.
-      quiet: True if we shouldn't log the web server pages.
-      extra_args: Extra arguments to bean-web that we want to start the
-        server with.
-    Returns:
-      A set of all the processed URLs and a set of all the skipped URLs.
-    """
-    url_format = 'http://localhost:{}{{}}'.format(port)
-
-    # Create a set of valid arguments to run the app.
-    argparser = argparse.ArgumentParser()
-    group = web.add_web_arguments(argparser)
-    group.set_defaults(filename=filename,
-                       port=port,
-                       quiet=quiet)
-
-    all_args = [filename]
-    if extra_args:
-        all_args.extend(extra_args)
-    args = argparser.parse_args(args=all_args)
-
-    thread = web.thread_server_start(args)
-
-    # Skips:
-    # - Docs cannot be read for external files.
-    #
-    # - Components views... well there are just too many, makes the tests
-    #   impossibly slow. Just keep the A's so some are covered.
-    url_lists = scrape_urls(url_format, callback, ignore_regexp)
-
-    web.thread_server_shutdown(thread)
-
-    return url_lists
 
 
 def validate_local_links(filename):

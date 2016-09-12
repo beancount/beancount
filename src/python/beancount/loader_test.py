@@ -4,18 +4,13 @@ import logging
 import unittest
 import tempfile
 import textwrap
-import re
 import os
-import time
-import subprocess
-import shutil
 from unittest import mock
 from os import path
 
 from beancount import loader
 from beancount.parser import parser
 from beancount.utils import test_utils
-from beancount.utils import file_utils
 
 
 TEST_INPUT = """
@@ -82,7 +77,7 @@ class TestLoader(unittest.TestCase):
         entries, errors, options_map = loader.load_file('/some/bullshit/filename.beancount')
         self.assertEqual([], entries)
         self.assertTrue(errors)
-        self.assertTrue(re.search('does not exist', errors[0].message))
+        self.assertRegex(errors[0].message, 'does not exist')
 
     @mock.patch.dict(loader.DEPRECATED_MODULES,
                      {"beancount.ops.auto_accounts": "beancount.plugins.auto_accounts"},
@@ -109,6 +104,7 @@ class TestLoadDoc(unittest.TestCase):
         test_function = loader.load_doc(test_function)
         test_function(self)
 
+    # pylint: disable=empty-docstring
     @loader.load_doc()
     def test_load_doc_empty(self, entries, errors, options_map):
         """
@@ -144,7 +140,7 @@ class TestLoadIncludes(unittest.TestCase):
     def test_load_file_nonexist(self):
         entries, errors, options_map = loader.load_file('/bull/bla/root.beancount')
         self.assertEqual(1, len(errors))
-        self.assertTrue(re.search('does not exist', errors[0].message))
+        self.assertRegex(errors[0].message, 'does not exist')
         self.assertEqual([], list(map(path.basename, options_map['include'])))
 
     def test_load_file_with_nonexist_include(self):
@@ -156,7 +152,7 @@ class TestLoadIncludes(unittest.TestCase):
             entries, errors, options_map = loader.load_file(
                 path.join(tmp, 'root.beancount'))
             self.assertEqual(1, len(errors))
-            self.assertTrue(re.search('does not exist', errors[0].message))
+            self.assertRegex(errors[0].message, 'does not exist')
         self.assertEqual(['root.beancount'],
                          list(map(path.basename, options_map['include'])))
 
@@ -324,7 +320,6 @@ class TestLoadCache(unittest.TestCase):
                   2014-01-02 open Assets:Bananas
                 """})
             top_filename = path.join(tmp, 'apples.beancount')
-            other_filename = path.join(tmp, 'bananas.beancount')
             entries, errors, options_map = loader.load_file(top_filename)
             self.assertFalse(errors)
             self.assertEqual(3, len(entries))
@@ -352,6 +347,79 @@ class TestLoadCache(unittest.TestCase):
                 file.write('\n')
             entries, errors, options_map = loader.load_file(top_filename)
             self.assertEqual(3, self.num_calls)
+
+    def test_load_cache_moved_file(self):
+        # Create an initial set of files and load file, thus creating a cache.
+        with test_utils.tempdir() as tmp:
+            test_utils.create_temporary_files(tmp, {
+                'apples.beancount': """
+                  include "oranges.beancount"
+                  2014-01-01 open Assets:Apples
+                """,
+                'oranges.beancount': """
+                  2014-01-02 open Assets:Oranges
+                """})
+            top_filename = path.join(tmp, 'apples.beancount')
+            entries, errors, options_map = loader.load_file(top_filename)
+            self.assertFalse(errors)
+            self.assertEqual(2, len(entries))
+            self.assertEqual(1, self.num_calls)
+
+            # Make sure the cache was created.
+            self.assertTrue(path.exists(path.join(tmp, '.apples.beancount.picklecache')))
+
+            # CHeck that it doesn't need refresh
+            self.assertFalse(loader.needs_refresh(options_map))
+
+            # Move the input file.
+            new_top_filename = path.join(tmp, 'bigapples.beancount')
+            os.rename(top_filename, new_top_filename)
+
+            # Check that it needs refresh.
+            self.assertTrue(loader.needs_refresh(options_map))
+
+            # Load the root file again, make sure the cache is being hit.
+            entries, errors, options_map = loader.load_file(top_filename)
+            self.assertEqual(2, self.num_calls)
+
+    @mock.patch('os.remove', side_effect=OSError)
+    @mock.patch('logging.warning')
+    def test_load_cache_read_only_fs(self, remove_mock, warn_mock):
+        # Create an initial set of files and load file, thus creating a cache.
+        with test_utils.tempdir() as tmp:
+            test_utils.create_temporary_files(tmp, {
+                'apples.beancount': """
+                  2014-01-01 open Assets:Apples
+                """})
+            filename = path.join(tmp, 'apples.beancount')
+            entries, errors, options_map = loader.load_file(filename)
+            with open(filename, 'w'): pass
+            entries, errors, options_map = loader.load_file(filename)
+            self.assertEqual(1, len(warn_mock.mock_calls))
+
+    @mock.patch('beancount.loader.PICKLE_CACHE_THRESHOLD', 0.0)
+    def test_load_cache_override_filename_pattern(self):
+        orig_load_file = loader._load_file
+        prev_env = os.getenv('BEANCOUNT_LOAD_CACHE_FILENAME')
+        os.environ['BEANCOUNT_LOAD_CACHE_FILENAME'] = '__{filename}__'
+        loader.initialize()
+        try:
+            with test_utils.tempdir() as tmp:
+                test_utils.create_temporary_files(tmp, {
+                    'apples.beancount': """
+                      2014-01-01 open Assets:Apples
+                    """})
+                filename = path.join(tmp, 'apples.beancount')
+                entries, errors, options_map = loader.load_file(filename)
+                self.assertEqual({'__apples.beancount__', 'apples.beancount'},
+                                 set(os.listdir(tmp)))
+        finally:
+            # Restore pre-test values.
+            loader._load_file = orig_load_file
+            if prev_env is None:
+                del os.environ['BEANCOUNT_LOAD_CACHE_FILENAME']
+            else:
+                os.environ['BEANCOUNT_LOAD_CACHE_FILENAME'] = prev_env
 
 
 class TestEncoding(unittest.TestCase):
@@ -390,7 +458,6 @@ class TestOptionsAggregation(unittest.TestCase):
                   option "operating_currency" "EUR"
                 """})
             top_filename = path.join(tmp, 'apples.beancount')
-            other_filename = path.join(tmp, 'bananas.beancount')
             entries, errors, options_map = loader.load_file(top_filename)
 
             self.assertEqual({'USD', 'EUR', 'CAD'}, set(options_map['operating_currency']))
@@ -410,7 +477,6 @@ class TestOptionsAggregation(unittest.TestCase):
                   2015-12-13 open Assets:FR:Checking  EUR
                 """})
             top_filename = path.join(tmp, 'apples.beancount')
-            other_filename = path.join(tmp, 'bananas.beancount')
             entries, errors, options_map = loader.load_file(top_filename)
 
             self.assertEqual({'EUR', 'CAD'}, options_map['commodities'])

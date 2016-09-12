@@ -13,7 +13,6 @@ import re
 import textwrap
 
 from beancount.core.number import Decimal
-from beancount.core.number import ZERO
 from beancount.core.data import Transaction
 from beancount.core.compare import hash_entry
 from beancount.core import interpolate
@@ -29,6 +28,17 @@ from beancount.query import query_compile
 
 
 # Non-agreggating functions. These functionals maintain no state.
+
+class Abs(query_compile.EvalFunction):
+    "Compute the length of the argument. This works on sequences."
+    __intypes__ = [Decimal]
+
+    def __init__(self, operands):
+        super().__init__(operands, Decimal)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        return abs(args[0])
 
 class Length(query_compile.EvalFunction):
     "Compute the length of the argument. This works on sequences."
@@ -122,6 +132,17 @@ class Weekday(query_compile.EvalFunction):
         args = self.eval_args(context)
         return args[0].strftime('%a')
 
+class Today(query_compile.EvalFunction):
+    "Today's date"
+    __intypes__ = []
+
+    def __init__(self, operands):
+        super().__init__(operands, datetime.date)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        return datetime.date.today()
+
 
 # Operations on accounts.
 
@@ -195,6 +216,34 @@ class CloseDate(query_compile.EvalFunction):
         close_entry, close_entry = context.open_close_map[args[0]]
         return close_entry.date if close_entry else None
 
+class Meta(query_compile.EvalFunction):
+    "Get some metadata key of the Posting."
+    __intypes__ = [str]
+
+    def __init__(self, operands):
+        super().__init__(operands, object)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        meta = context.posting.meta
+        if meta is None:
+            return None
+        return meta.get(args[0], None)
+
+class EntryMeta(query_compile.EvalFunction):
+    "Get some metadata key of the parent directive (Transaction)."
+    __intypes__ = [str]
+
+    def __init__(self, operands):
+        super().__init__(operands, object)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        meta = context.entry.meta
+        if meta is None:
+            return None
+        return meta.get(args[0], None)
+
 class OpenMeta(query_compile.EvalFunction):
     "Get the metadata dict of the open directive of the account."
     __intypes__ = [str]
@@ -243,10 +292,10 @@ class UnitsPosition(query_compile.EvalFunction):
 
     def __call__(self, context):
         args = self.eval_args(context)
-        return args[0].get_units()
+        return args[0].units
 
 class UnitsInventory(query_compile.EvalFunction):
-    "Get the number of units of a position (stripping cost)."
+    "Get the number of units of an inventory (stripping cost)."
     __intypes__ = [inventory.Inventory]
 
     def __init__(self, operands):
@@ -287,8 +336,7 @@ class OnlyInventory(query_compile.EvalFunction):
 
     def __call__(self, context):
         currency, inventory_ = self.eval_args(context)
-        lot = position.Lot(currency, None, None)
-        return inventory_.get_position(lot)
+        return inventory_.get_units(currency)
 
 
 class ConvertAmount(query_compile.EvalFunction):
@@ -301,11 +349,27 @@ class ConvertAmount(query_compile.EvalFunction):
     def __call__(self, context):
         args = self.eval_args(context)
         amount_, currency = args
-        converted = prices.convert_amount(context.price_map, currency, amount_)
-        if converted is None:
-            logging.warn('Could not convert Amount "{}" to USD'.format(amount_))
-            converted = amount_
-        return converted
+        return convert_amount(context.price_map, amount_, currency, None)
+
+class ConvertAmountWithDate(query_compile.EvalFunction):
+    "Coerce an amount to a particular currency."
+    __intypes__ = [amount.Amount, str, datetime.date]
+
+    def __init__(self, operands):
+        super().__init__(operands, amount.Amount)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        amount_, currency, date = args
+        return convert_amount(context.price_map, amount_, currency, date)
+
+def convert_amount(price_map, amount_, currency, date):
+    converted = prices.convert_amount(price_map, currency, amount_, date)
+    if converted is None:
+        logging.warning('Could not convert Amount "{}" to USD'.format(amount_))
+        converted = amount_
+    return converted
+
 
 class ConvertPosition(query_compile.EvalFunction):
     "Coerce an amount to a particular currency."
@@ -316,13 +380,66 @@ class ConvertPosition(query_compile.EvalFunction):
 
     def __call__(self, context):
         args = self.eval_args(context)
-        position_, currency = args
-        amount_ = position_.get_cost()
-        converted = prices.convert_amount(context.price_map, currency, amount_)
+        pos, currency = args
+        return convert_position(context.price_map, pos, currency, None)
+
+class ConvertPositionWithDate(query_compile.EvalFunction):
+    "Coerce an amount to a particular currency."
+    __intypes__ = [position.Position, str, datetime.date]
+
+    def __init__(self, operands):
+        super().__init__(operands, amount.Amount)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        pos, currency, date = args
+        return convert_position(context.price_map, pos, currency, date)
+
+def convert_position(price_map, pos, currency, date):
+    amount_ = pos.units
+    converted = prices.convert_amount(price_map, currency, amount_, date)
+    if converted is None:
+        logging.warning('Could not convert Position "{}" to {}'.format(amount_, currency))
+        converted = amount_
+    return converted
+
+
+class ValuePosition(query_compile.EvalFunction):
+    "Convert a position to its cost currency at the market value."
+    __intypes__ = [position.Position]
+
+    def __init__(self, operands):
+        super().__init__(operands, amount.Amount)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        pos = args[0]
+        return value_position(context.price_map, pos, None)
+
+class ValuePositionWithDate(query_compile.EvalFunction):
+    "Convert a position to its cost currency at the market value of a particular date."
+    __intypes__ = [position.Position, datetime.date]
+
+    def __init__(self, operands):
+        super().__init__(operands, amount.Amount)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        pos, date = args
+        return value_position(context.price_map, pos, date)
+
+def value_position(price_map, pos, date):
+    units = pos.units
+    if pos.cost is None:
+        converted = units
+    else:
+        converted = prices.convert_amount(price_map, pos.cost.currency, units, date)
         if converted is None:
-            logging.warn('Could not convert Position "{}" to USD'.format(amount_))
-            converted = amount_
-        return converted
+            logging.warning('Could not convert Position "{}" to {}'.format(
+                units, pos.cost.currency))
+            converted = units
+    return converted
+
 
 class ConvertInventory(query_compile.EvalFunction):
     "Coerce an inventory to a particular currency."
@@ -334,18 +451,100 @@ class ConvertInventory(query_compile.EvalFunction):
     def __call__(self, context):
         args = self.eval_args(context)
         inventory_, currency = args
-        converted_inventory = inventory.Inventory()
-        for position_ in inventory_:
-            amount_ = position_.get_cost()
-            converted_amount = prices.convert_amount(context.price_map,
-                                                     currency, amount_)
-            if converted_amount is None:
-                logging.warn('Could not convert Inventory position "{}" to USD'.format(
-                    amount_))
-                converted_inventory.add_amount(amount_)
-            else:
-                converted_inventory.add_amount(converted_amount)
-        return converted_inventory
+        return convert_inventory(context.price_map, inventory_, currency, None)
+
+class ConvertInventoryWithDate(query_compile.EvalFunction):
+    "Coerce an inventory to a particular currency."
+    __intypes__ = [inventory.Inventory, str, datetime.date]
+
+    def __init__(self, operands):
+        super().__init__(operands, inventory.Inventory)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        inventory_, currency, date = args
+        return convert_inventory(context.price_map, inventory_, currency, date)
+
+def convert_inventory(price_map, inv, currency, date):
+    converted_inventory = inventory.Inventory()
+    for pos in inv:
+        amount_ = pos.units
+        converted_amount = prices.convert_amount(price_map,
+                                                 currency, amount_, date)
+        if converted_amount is None:
+            logging.warning(
+                'Could not convert Inventory position "{}" to {}'.format(amount_, currency))
+            converted_inventory.add_amount(amount_)
+        else:
+            converted_inventory.add_amount(converted_amount)
+    return converted_inventory
+
+
+class ValueInventory(query_compile.EvalFunction):
+    "Coerce an inventory to its market value at the current date."
+    __intypes__ = [inventory.Inventory]
+
+    def __init__(self, operands):
+        super().__init__(operands, inventory.Inventory)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        inv = args[0]
+        return value_inventory(context.price_map, inv, None)
+
+class ValueInventoryWithDate(query_compile.EvalFunction):
+    "Coerce an inventory to its market value at a particular date."
+    __intypes__ = [inventory.Inventory, datetime.date]
+
+    def __init__(self, operands):
+        super().__init__(operands, inventory.Inventory)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        inv, date = args
+        return value_inventory(context.price_map, inv, date)
+
+def value_inventory(price_map, inv, date):
+    converted_inventory = inventory.Inventory()
+    for pos in inv:
+        converted_amount = value_position(price_map, pos, date)
+        if converted_amount is None:
+            logging.warning(
+                'Could not convert Inventory position "{}" to {}'.format(
+                    pos, pos.cost.currency))
+            converted_inventory.add_position(pos)
+        else:
+            converted_inventory.add_amount(converted_amount)
+    return converted_inventory
+
+
+class Price(query_compile.EvalFunction):
+    "Fetch a price for something at a particular date"
+    __intypes__ = [str, str]
+
+    def __init__(self, operands):
+        super().__init__(operands, Decimal)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        base, quote = args
+        pair = (base.upper(), quote.upper())
+        _, price = prices.get_price(context.price_map, pair, None)
+        return price
+
+class PriceWithDate(query_compile.EvalFunction):
+    "Fetch a price for something at a particular date"
+    __intypes__ = [str, str, datetime.date]
+
+    def __init__(self, operands):
+        super().__init__(operands, Decimal)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        base, quote, date = args
+        pair = (base.upper(), quote.upper())
+        _, price = prices.get_price(context.price_map, pair, date)
+        return price
 
 
 class Number(query_compile.EvalFunction):
@@ -386,36 +585,84 @@ class GetItemStr(query_compile.EvalFunction):
             value = str(value)
         return value
 
+class FindFirst(query_compile.EvalFunction):
+    "Filter a string sequence by regular expression and return the first match."
+    __intypes__ = [str, set]
 
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        values = args[1]
+        if not values:
+            return
+        for value in sorted(values):
+            if re.match(args[0], value):
+                return value
+
+class JoinStr(query_compile.EvalFunction):
+    "Join a sequence of strings to a single comma-separated string."
+    __intypes__ = [set]
+
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        values = args[0]
+        return ','.join(values)
+
+
+# FIXME: Why do I need to specify the arguments here? They are already derived
+# from the functions. Just fetch them from instead. Make the compiler better.
 SIMPLE_FUNCTIONS = {
-    'str'                                 : Str,
-    'length'                              : Length,
-    'maxwidth'                            : MaxWidth,
-    'root'                                : Root,
-    'parent'                              : Parent,
-    'leaf'                                : Leaf,
-    'grep'                                : Grep,
-    'open_date'                           : OpenDate,
-    'close_date'                          : CloseDate,
-    'open_meta'                           : OpenMeta,
-    'commodity_meta'                      : CommodityMeta,
-    'account_sortkey'                     : AccountSortKey,
-    ('units', position.Position)          : UnitsPosition,
-    ('units', inventory.Inventory)        : UnitsInventory,
-    ('cost', position.Position)           : CostPosition,
-    ('cost', inventory.Inventory)         : CostInventory,
-    'only'                                : OnlyInventory,
-    'year'                                : Year,
-    'month'                               : Month,
-    'ymonth'                              : YearMonth,
-    'day'                                 : Day,
-    'weekday'                             : Weekday,
-    ('convert', amount.Amount, str)       : ConvertAmount,
-    ('convert', position.Position, str)   : ConvertPosition,
-    ('convert', inventory.Inventory, str) : ConvertInventory,
-    'number'                              : Number,
-    'currency'                            : Currency,
-    'getitem'                             : GetItemStr,
+    'abs'                                                : Abs,
+    'length'                                             : Length,
+    'str'                                                : Str,
+    'maxwidth'                                           : MaxWidth,
+    'root'                                               : Root,
+    'parent'                                             : Parent,
+    'leaf'                                               : Leaf,
+    'grep'                                               : Grep,
+    'open_date'                                          : OpenDate,
+    'close_date'                                         : CloseDate,
+    'meta'                                               : Meta,
+    'entry_meta'                                         : EntryMeta,
+    'open_meta'                                          : OpenMeta,
+    'commodity_meta'                                     : CommodityMeta,
+    'account_sortkey'                                    : AccountSortKey,
+    ('units', position.Position)                         : UnitsPosition,
+    ('units', inventory.Inventory)                       : UnitsInventory,
+    ('cost', position.Position)                          : CostPosition,
+    ('cost', inventory.Inventory)                        : CostInventory,
+    'only'                                               : OnlyInventory,
+    'year'                                               : Year,
+    'month'                                              : Month,
+    'ymonth'                                             : YearMonth,
+    'day'                                                : Day,
+    'weekday'                                            : Weekday,
+    'today'                                              : Today,
+    ('convert', amount.Amount, str)                      : ConvertAmount,
+    ('convert', amount.Amount, str, datetime.date)       : ConvertAmountWithDate,
+    ('convert', position.Position, str)                  : ConvertPosition,
+    ('convert', position.Position, str, datetime.date)   : ConvertPositionWithDate,
+    ('convert', inventory.Inventory, str)                : ConvertInventory,
+    ('convert', inventory.Inventory, str, datetime.date) : ConvertInventoryWithDate,
+    ('value', position.Position)                         : ValuePosition,
+    ('value', position.Position, datetime.date)          : ValuePositionWithDate,
+    ('value', inventory.Inventory)                       : ValueInventory,
+    ('value', inventory.Inventory, datetime.date)        : ValueInventoryWithDate,
+    # Note: Remove PRICE() at some point, GETPRICE() is less confusing.
+    ('price', str, str)                                  : Price,
+    ('price', str, str, datetime.date)                   : PriceWithDate,
+    ('getprice', str, str)                               : Price,
+    ('getprice', str, str, datetime.date)                : PriceWithDate,
+    'number'                                             : Number,
+    'currency'                                           : Currency,
+    'getitem'                                            : GetItemStr,
+    'findfirst'                                          : FindFirst,
+    'joinstr'                                            : JoinStr,
     }
 
 
@@ -457,7 +704,8 @@ class Sum(query_compile.EvalAggregator):
 
     def update(self, store, context):
         value = self.eval_args(context)[0]
-        store[self.handle] += value
+        if value is not None:
+            store[self.handle] += value
 
     def __call__(self, context):
         return context.store[self.handle]
@@ -876,8 +1124,11 @@ class FileLocationColumn(query_compile.EvalColumn):
         super().__init__(str)
 
     def __call__(self, context):
-        return '{}:{:d}:'.format(context.posting.meta["filename"],
-                                 context.posting.meta["lineno"])
+        if context.posting.meta is not None:
+            return '{}:{:d}:'.format(context.posting.meta["filename"],
+                                     context.posting.meta["lineno"])
+        else:
+            return '' # Unknown.
 
 class DateColumn(query_compile.EvalColumn):
     "The date of the parent transaction for this posting."
@@ -1015,62 +1266,76 @@ class AccountColumn(query_compile.EvalColumn):
     def __call__(self, context):
         return context.posting.account
 
+class OtherAccountsColumn(query_compile.EvalColumn):
+    "The list of other accounts in the transcation, excluding that of this posting."
+    __intypes__ = [data.Posting]
+
+    def __init__(self):
+        super().__init__(set)
+
+    def __call__(self, context):
+        return sorted({posting.account
+                       for posting in context.entry.postings
+                       if posting is not context.posting})
+
+
 class NumberColumn(query_compile.EvalColumn):
     "The number of units of the posting."
-    __equivalent__ = 'posting.position.number'
+    __equivalent__ = 'posting.units.number'
     __intypes__ = [data.Posting]
 
     def __init__(self):
         super().__init__(Decimal)
 
     def __call__(self, context):
-        return context.posting.position.number
+        return context.posting.units.number
 
 class CurrencyColumn(query_compile.EvalColumn):
     "The currency of the posting."
-    __equivalent__ = 'posting.position.currency'
+    __equivalent__ = 'posting.units.currency'
     __intypes__ = [data.Posting]
 
     def __init__(self):
         super().__init__(str)
 
     def __call__(self, context):
-        return context.posting.position.lot.currency
+        return context.posting.units.currency
 
 class CostNumberColumn(query_compile.EvalColumn):
     "The number of cost units of the posting."
-    __equivalent__ = 'posting.position.lot.cost'
+    __equivalent__ = 'posting.cost.number'
     __intypes__ = [data.Posting]
 
     def __init__(self):
         super().__init__(Decimal)
 
     def __call__(self, context):
-        cost = context.posting.position.lot.cost
-        return cost.number if cost else ZERO
+        cost = context.posting.cost
+        return cost.number if cost else None
 
 class CostCurrencyColumn(query_compile.EvalColumn):
     "The cost currency of the posting."
-    __equivalent__ = 'posting.lot.cost.cost_currency'
+    __equivalent__ = 'posting.cost.currency'
     __intypes__ = [data.Posting]
 
     def __init__(self):
         super().__init__(str)
 
     def __call__(self, context):
-        cost = context.posting.position.lot.cost
+        cost = context.posting.cost
         return cost.currency if cost else ''
 
 class PositionColumn(query_compile.EvalColumn):
     "The position for the posting. These can be summed into inventories."
-    __equivalent__ = 'posting.position'
+    __equivalent__ = 'posting'
     __intypes__ = [data.Posting]
 
     def __init__(self):
         super().__init__(position.Position)
 
     def __call__(self, context):
-        return context.posting.position
+        posting = context.posting
+        return position.Position(posting.units, posting.cost)
 
 class PriceColumn(query_compile.EvalColumn):
     "The price attached to the posting."
@@ -1109,32 +1374,33 @@ class FilterPostingsEnvironment(query_compile.CompilationEnvironment):
     """
     context_name = 'WHERE clause'
     columns = {
-        'id'            : IdColumn,
-        'type'          : TypeColumn,
-        'filename'      : FilenameColumn,
-        'lineno'        : LineNoColumn,
-        'location'      : FileLocationColumn,
-        'date'          : DateColumn,
-        'year'          : YearColumn,
-        'month'         : MonthColumn,
-        'day'           : DayColumn,
-        'flag'          : FlagColumn,
-        'payee'         : PayeeColumn,
-        'narration'     : NarrationColumn,
-        'description'   : DescriptionColumn,
-        'tags'          : TagsColumn,
-        'links'         : LinksColumn,
-        'posting_flag'  : PostingFlagColumn,
-        'account'       : AccountColumn,
-        'number'        : NumberColumn,
-        'currency'      : CurrencyColumn,
-        'cost_number'   : CostNumberColumn,
-        'cost_currency' : CostCurrencyColumn,
-        'position'      : PositionColumn,
-        'change'        : PositionColumn,  # Backwards compatible.
-        'price'         : PriceColumn,
-        'weight'        : WeightColumn,
-        'balance'       : BalanceColumn,
+        'id'             : IdColumn,
+        'type'           : TypeColumn,
+        'filename'       : FilenameColumn,
+        'lineno'         : LineNoColumn,
+        'location'       : FileLocationColumn,
+        'date'           : DateColumn,
+        'year'           : YearColumn,
+        'month'          : MonthColumn,
+        'day'            : DayColumn,
+        'flag'           : FlagColumn,
+        'payee'          : PayeeColumn,
+        'narration'      : NarrationColumn,
+        'description'    : DescriptionColumn,
+        'tags'           : TagsColumn,
+        'links'          : LinksColumn,
+        'posting_flag'   : PostingFlagColumn,
+        'account'        : AccountColumn,
+        'other_accounts' : OtherAccountsColumn,
+        'number'         : NumberColumn,
+        'currency'       : CurrencyColumn,
+        'cost_number'    : CostNumberColumn,
+        'cost_currency'  : CostCurrencyColumn,
+        'position'       : PositionColumn,
+        'change'         : PositionColumn,  # Backwards compatible.
+        'price'          : PriceColumn,
+        'weight'         : WeightColumn,
+        'balance'        : BalanceColumn,
         }
     functions = copy.copy(SIMPLE_FUNCTIONS)
 

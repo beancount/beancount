@@ -197,7 +197,7 @@ class TestScriptBake(test_utils.TestCase):
         """
         with test_utils.tempdir() as tmpdir:
             outdir = path.join(tmpdir, 'output')
-            with test_utils.capture() as output:
+            with test_utils.capture('stdout', 'stderr') as (output, _):
                 test_utils.run_with_args(bake.main, self.get_args() + [filename, outdir])
             self.assertTrue(output.getvalue())
             self.assertTrue(path.exists(outdir) and path.isdir(outdir))
@@ -215,7 +215,7 @@ class TestScriptBake(test_utils.TestCase):
         """
         with test_utils.tempdir(delete=0) as tmpdir:
             tmpdir = path.join(tmpdir, 'output')
-            with test_utils.capture() as output:
+            with test_utils.capture('stdout', 'stderr') as (output, _):
                 test_utils.run_with_args(bake.main, self.get_args() + [filename, tmpdir])
             self.assertTrue(output.getvalue())
             self.assertFalse(path.exists(
@@ -242,7 +242,7 @@ class TestScriptArchive(TestScriptBake):
                                  'archive.tar.bz2',
                                  'archive.zip'):
                 outfile = path.join(tmpdir, archive_name)
-                with test_utils.capture():
+                with test_utils.capture('stdout', 'stderr'):
                     test_utils.run_with_args(bake.main,
                                              self.get_args() + [filename, outfile])
                 self.assertFalse(path.exists(file_utils.path_greedy_split(outfile)[0]))

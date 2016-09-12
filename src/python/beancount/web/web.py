@@ -12,6 +12,8 @@ import re
 import sys
 import time
 import threading
+import datetime
+import calendar
 
 import bottle
 from bottle import response
@@ -31,6 +33,7 @@ from beancount.parser import options
 from beancount.parser import printer
 from beancount import loader
 from beancount.web import views
+from beancount.web import scrape
 from beancount.reports import html_formatter
 from beancount.reports import balance_reports
 from beancount.reports import journal_html
@@ -203,8 +206,8 @@ app = bottle.Bottle()
 A = bottle_utils.AttrMapper(app.router.build)
 
 
-def render_overlay():
-    """Render an overlay with the current errors.
+def render_overlay(contents):
+    """Render an overlay of the navigation with the current errors.
 
     This is used to bring up new errors on any page when they occur.
 
@@ -214,9 +217,9 @@ def render_overlay():
     return '''
       <div class="navigation" id="nav-right">
         <ul>
-          <li><a href="{}">Errors</a></li>
+          {}
         </ul>
-      </div>'''.format(app.router.build('errors'))
+      </div>'''.format(contents)
 
     # It would be nice to have a fancy overlay here, that automatically appears
     # after parsing if there are errors and that automatically smoothly fades
@@ -239,9 +242,12 @@ def render_global(*args, **kw):
     kw['view_title'] = ''
     kw['navigation'] = GLOBAL_NAVIGATION
     kw['scripts'] = kw.get('scripts', '')
-    kw['overlay'] = (render_overlay()
-                     if request.params.pop('render_overlay', True)
-                     else '')
+
+    kw['overlay'] = (
+        render_overlay('<li><a href="{}">Errors</a></li>'.format(
+            app.router.build('errors')))
+        if request.params.pop('render_overlay', True)
+        else '')
     return template.render(*args, **kw)
 
 
@@ -279,7 +285,7 @@ def toc():
         viewboxes.append(
             ('year', 'By Year',
              [(view_url('year', year=year), 'Year {}'.format(year))
-              for year in reversed(list(getters.get_active_years(app.entries)))]))
+              for year in reversed(app.active_years)]))
 
         # By tag views.
         viewboxes.append(('tag', 'Tags',
@@ -464,7 +470,24 @@ def doc(filename=None):
 # View application pages.
 
 viewapp = bottle.Bottle()
+
+# (We disable this error because access to request.app needs to be delayed.)
+# pylint: disable=unnecessary-lambda
 V = bottle_utils.AttrMapper(lambda *args, **kw: request.app.get_url(*args, **kw))
+M = bottle_utils.AttrMapper(lambda month: month_request(request.view.year, month))
+Mp = bottle_utils.AttrMapper(lambda month: month_request(request.view.year-1, month))
+Mn = bottle_utils.AttrMapper(lambda month: month_request(request.view.year+1, month))
+
+
+def month_request(year, month):
+    """Render a URL to a particular month of the context's request.
+    """
+    if year < app.active_years[0] or year > app.active_years[-1]:
+        return ''
+    month = list(calendar.month_abbr).index(month)
+    month = "{:0>2d}".format(month)
+    return app.router.build('month', year=year, month=month,
+            path=request.path[1:])
 
 
 def render_view(*args, **kw):
@@ -481,15 +504,33 @@ def render_view(*args, **kw):
     kw['V'] = V # View mapper
     kw['title'] = app.options['title']
     kw['view_title'] = ' - ' + request.view.title
-    kw['navigation'] = APP_NAVIGATION.render(A=A, V=V, view_title=request.view.title)
+
+    overlays = []
+    if request.params.pop('render_overlay', False):
+        overlays.append(
+            '<li><a href="{}">Errors</a></li>'.format(app.router.build('errors')))
+
+    # Render navigation, with monthly navigation option.
+    oss = io.StringIO()
+    oss.write(APP_NAVIGATION.render(A=A, V=V, view_title=request.view.title))
+    if request.view.monthly is views.MonthNavigation.COMPACT:
+        overlays.append(
+            '<li><a href="{}">Monthly</a></li>'.format(M.Jan))
+    elif request.view.monthly is views.MonthNavigation.FULL:
+        annual = app.router.build('year',
+                                  path=DEFAULT_VIEW_REDIRECT,
+                                  year=request.view.year)
+        oss.write(APP_NAVIGATION_MONTHLY_FULL.render(M=M, Mp=Mp, Mn=Mn, V=V, annual=annual))
+    kw['navigation'] = oss.getvalue()
+    kw['overlay'] = render_overlay(' '.join(overlays))
+
     kw['scripts'] = kw.get('scripts', '')
-    kw['overlay'] = (render_overlay()
-                     if request.params.pop('render_overlay', False)
-                     else '')
+
     return template.render(*args, **kw)
 
+
 APP_NAVIGATION = bottle.SimpleTemplate("""
-<ul>
+<ul id="nav-main">
   <li><a href="{{A.toc}}">Table of Contents</a></li>
   <li><span class="ledger-name">{{view_title}}:</span></li>
   <li><a href="{{V.balsheet}}">Balance Sheet</a></li>
@@ -501,6 +542,27 @@ APP_NAVIGATION = bottle.SimpleTemplate("""
 </ul>
 """)
 
+APP_NAVIGATION_MONTHLY_FULL = bottle.SimpleTemplate("""
+<ul>
+  <li><a href="{{annual}}">Annual</a></li>
+  [
+  <li><a href="{{Mp.Dec}}">Prev December</a></li> &laquo;
+  <li><a href="{{M.Jan}}">January</a></li>
+  <li><a href="{{M.Feb}}">February</a></li>
+  <li><a href="{{M.Mar}}">March</a></li>
+  <li><a href="{{M.Apr}}">April</a></li>
+  <li><a href="{{M.May}}">May</a></li>
+  <li><a href="{{M.Jun}}">June</a></li>
+  <li><a href="{{M.Jul}}">July</a></li>
+  <li><a href="{{M.Aug}}">August</a></li>
+  <li><a href="{{M.Sep}}">September</a></li>
+  <li><a href="{{M.Oct}}">October</a></li>
+  <li><a href="{{M.Nov}}">November</a></li>
+  <li><a href="{{M.Dec}}">December</a></li> &raquo;
+  <li><a href="{{Mn.Jan}}">Next January</a></li>
+  ]
+</ul>
+""")
 
 @viewapp.route('/', name='approot')
 def approot():
@@ -894,6 +956,15 @@ def get_all_view(app):
 def all(path=None):
     return get_all_view(app)
 
+@app.route(r'/view/year/<year:re:\d\d\d\d>/month/<month:re:\d\d>/<path:re:.*>',
+           name='month')
+@handle_view(5)
+def month(year=None, month=None, path=None):
+    year = int(year)
+    month = int(month)
+    date = datetime.date(year, month, 1)
+    text = date.strftime('%B %Y')
+    return views.MonthView(app.entries, app.options, text, year, month)
 
 @app.route(r'/view/year/<year:re:\d\d\d\d>/<path:re:.*>', name='year')
 @handle_view(3)
@@ -902,7 +973,6 @@ def year(year=None, path=None):
     first_month = app.args.first_month
     return views.YearView(app.entries, app.options, 'Year {:4d}'.format(year),
                           year, first_month)
-
 
 @app.route(r'/view/tag/<tag:re:[^/]*>/<path:re:.*>', name='tag')
 @handle_view(3)
@@ -931,7 +1001,6 @@ def auto_reload_input_file(callback):
     last page was loaded."""
     def wrapper(*posargs, **kwargs):
         filename = app.args.filename
-        mtime = path.getmtime(filename)
 
         if loader.needs_refresh(app.options):
             logging.info('Reloading...')
@@ -957,7 +1026,10 @@ def auto_reload_input_file(callback):
             app.account_types = options.get_account_types(options_map)
 
             # Pre-compute the price database.
-            app.price_map = prices.build_price_map(app.entries)
+            app.price_map = prices.build_price_map(entries)
+
+            # Pre-compute the list of active years.
+            app.active_years = list(getters.get_active_years(entries))
 
             # Reset the view cache.
             app.views.clear()
@@ -1116,6 +1188,52 @@ def main():
     args = argparser.parse_args()
 
     run_app(args)
+
+
+def scrape_webapp(filename, callback, port, ignore_regexp, quiet=True, extra_args=None):
+    """Run a web server on a Beancount file and scrape it.
+
+    This is the main entry point of this module.
+
+    Args:
+      filename: A string, the name of the file to parse.
+      callback: A callback function to invoke on each page to validate it.
+        The function is called with the response and the url as arguments.
+        This function should trigger an error on failure (via an exception).
+      port: An integer, a free port to use for serving the pages.
+      ignore_regexp: A regular expression string, the urls to ignore.
+      quiet: True if we shouldn't log the web server pages.
+      extra_args: Extra arguments to bean-web that we want to start the
+        server with.
+    Returns:
+      A set of all the processed URLs and a set of all the skipped URLs.
+    """
+    url_format = 'http://localhost:{}{{}}'.format(port)
+
+    # Create a set of valid arguments to run the app.
+    argparser = argparse.ArgumentParser()
+    group = add_web_arguments(argparser)
+    group.set_defaults(filename=filename,
+                       port=port,
+                       quiet=quiet)
+
+    all_args = [filename]
+    if extra_args:
+        all_args.extend(extra_args)
+    args = argparser.parse_args(args=all_args)
+
+    thread = thread_server_start(args)
+
+    # Skips:
+    # - Docs cannot be read for external files.
+    #
+    # - Components views... well there are just too many, makes the tests
+    #   impossibly slow. Just keep the A's so some are covered.
+    url_lists = scrape.scrape_urls(url_format, callback, ignore_regexp)
+
+    thread_server_shutdown(thread)
+
+    return url_lists
 
 
 def thread_server_start(web_args, **kwargs):

@@ -17,7 +17,7 @@ from beancount.core.number import ZERO
 from beancount.core import data
 from beancount.core import account
 from beancount.core import getters
-from beancount.core import position
+from beancount.core import amount
 from beancount.core import flags
 from beancount.ops import holdings
 from beancount.ops import prices
@@ -143,13 +143,15 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
         entry.postings.extend([
             data.Posting(
                 asset_account,
-                position.Position(position.Lot(holding.cost_currency, None, None), pnl),
+                amount.Amount(pnl, holding.cost_currency),
+                None,
                 None,
                 None,
                 None),
             data.Posting(
                 income_account,
-                position.Position(position.Lot(holding.cost_currency, None, None), -pnl),
+                amount.Amount(-pnl, holding.cost_currency),
+                None,
                 None,
                 None,
                 None)

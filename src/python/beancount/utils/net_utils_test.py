@@ -1,7 +1,5 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
-from urllib import request
-from urllib import response
 import http.client
 import unittest
 from unittest import mock

@@ -17,6 +17,7 @@ from beancount.query import query_render
 
 class ColumnRendererBase(unittest.TestCase):
 
+    # pylint: disable=not-callable
     RendererClass = None
 
     dcontext = display_context.DisplayContext()

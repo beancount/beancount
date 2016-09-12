@@ -229,7 +229,7 @@ class TestBookConversions(cmptest.TestCase):
             Assets:Bitcoin      -2.000001 BTC @ 280.00 USD
             Expenses:Something
         """
-        self.assertRegexpMatches(errors[0].message, "Could not match position")
+        self.assertRegex(errors[0].message, "Could not match position")
 
     @loader.load_doc(expect_errors=True)
     def test_book_conversions_split_complete_failure(self, entries, errors, __):
@@ -249,14 +249,14 @@ class TestBookConversions(cmptest.TestCase):
             Assets:Bitcoin      -0.000001 BTC @ 280.00 USD
             Expenses:Something
         """
-        self.assertRegexpMatches(errors[0].message, "Could not match position")
+        self.assertRegex(errors[0].message, "Could not match position")
 
     @loader.load_doc(expect_errors=True)
     def test_book_conversions_bad_configuration(self, entries, errors, __):
         """
           plugin "beancount.plugins.book_conversions" "Assets:Bitcoin"
         """
-        self.assertRegexpMatches(errors[0].message, "Invalid configuration")
+        self.assertRegex(errors[0].message, "Invalid configuration")
 
 
 class TestExtractTradesScript(unittest.TestCase):

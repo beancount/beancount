@@ -16,7 +16,7 @@ import sys
 
 
 # A regular expression that matches an account name.
-ACCOUNT_RE = '([A-Z][A-Za-z0-9\-]+)(:[A-Z][A-Za-z0-9\-]+)+'
+ACCOUNT_RE = '([A-Z][A-Za-z0-9\-]+)(:[A-Z][A-Za-z0-9\-]*)+'
 
 
 def align_beancount(contents):
@@ -33,7 +33,7 @@ def align_beancount(contents):
     # of the stripped prefix and the number.
     match_pairs = []
     for index, line in enumerate(contents.splitlines()):
-        match = re.match(r'([^";]*?)\s+([-+]?\s*\d+(?:\.\d*)?)\s+([A-Z0-9]+\b.*)', line)
+        match = re.match(r'([^";]*?)\s+([-+]?\s*[\d,]+(?:\.\d*)?)\s+([A-Z0-9]+\b.*)', line)
         if match:
             prefix, number, rest = match.groups()
             match_pairs.append((prefix, number, rest))
@@ -139,7 +139,7 @@ def main():
     import argparse
     parser = argparse.ArgumentParser(description=__doc__.strip())
 
-    parser.add_argument('filename', help='Beancount filename')
+    parser.add_argument('filename', nargs='?', help='Beancount filename')
 
     parser.add_argument('-o', '--output', action='store',
                         help="Output file (stdout if not specified)")
@@ -147,7 +147,8 @@ def main():
     opts = parser.parse_args()
 
     # Read the original contents.
-    contents = open(opts.filename).read()
+    file = open(opts.filename) if opts.filename not in (None, '-') else sys.stdin
+    contents = file.read()
 
     # Align the contents.
     formatted_contents = align_beancount(contents)

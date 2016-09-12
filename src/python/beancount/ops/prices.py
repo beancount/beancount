@@ -268,20 +268,21 @@ def get_price(price_map, base_quote, date=None):
         return None, None
 
 
-def convert_amount(price_map, target_currency, amount_):
+def convert_amount(price_map, target_currency, amount_, date=None):
     """Convert commodities held at a cost that differ from the value currency.
 
     Args:
       price_map: A price map dict, as created by build_price_map.
       target_currency: A string, the currency to convert to.
       amount_: An Amount instance, the amount to convert from.
+      date: A datetime.date instance, the date at which to convert.
     Returns:
       An instance of Amount, or None, if we could not convert it to the target
       currency.
     """
     if amount_.currency != target_currency:
         base_quote = (amount_.currency, target_currency)
-        _, rate = get_latest_price(price_map, base_quote)
+        _, rate = get_price(price_map, base_quote, date)
         if rate is not None:
             converted_amount = amount.Amount(amount_.number * rate, target_currency)
         else:
@@ -292,14 +293,14 @@ def convert_amount(price_map, target_currency, amount_):
     return converted_amount
 
 
-def get_position_market_value(position_, date, price_map):
+def get_position_market_value(pos, date, price_map):
     """Compute the market value of the position at a particular date.
 
     If the price map does not contain price information, we avoid converting the
     position and return itself, unchanged.
 
     Args:
-      position: An instance of Position
+      pos: An instance of Position
       date: A datetime.date instance, the date at which to market the instruments.
         If the date provided is None, the inventory is valued at the latest market
         prices.
@@ -308,17 +309,16 @@ def get_position_market_value(position_, date, price_map):
       An inventory of market values per currency.
 
     """
-    lot = position_.lot
-    cost_currency = lot.cost.currency if lot.cost else None
+    cost_currency = pos.cost.currency if pos.cost else None
     if cost_currency:
-        base_quote = (lot.currency, cost_currency)
+        base_quote = (pos.units.currency, cost_currency)
         price_date, price_number = get_price(price_map, base_quote, date)
         if price_number is None:
-            return position_
+            return pos
         else:
-            new_amount = amount.Amount(position_.number * price_number, cost_currency)
+            new_amount = amount.Amount(pos.units.number * price_number, cost_currency)
     else:
-        new_amount = amount.Amount(position_.number, lot.currency)
+        new_amount = pos.units
     return position.from_amounts(new_amount)
 
 

@@ -2,7 +2,6 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import unittest
 import datetime
-import re
 
 from beancount.core.number import D
 from beancount.core.amount import A
@@ -99,7 +98,7 @@ class TestPriceMap(unittest.TestCase):
             prices._lookup_price_and_inverse(price_map, ('EUR', 'USD'))
             self.fail("Exception not raised")
         except KeyError as exc:
-            self.assertTrue(re.search("('EUR', 'USD')", str(exc)))
+            self.assertRegex(str(exc), "('EUR', 'USD')")
 
     @loader.load_doc()
     def test_get_all_prices(self, entries, _, __):
@@ -205,6 +204,26 @@ class TestPriceMap(unittest.TestCase):
         self.assertEqual(None,
                          prices.convert_amount(price_map, 'EUR',
                                                A('100 USD')))
+
+    @loader.load_doc()
+    def test_convert_amount_with_date(self, entries, _, __):
+        """
+        2013-01-01 price  USD  1.20 CAD
+        2014-01-01 price  USD  1.25 CAD
+        2015-01-01 price  USD  1.30 CAD
+        """
+        price_map = prices.build_price_map(entries)
+        for date, exp_amount in [
+                (None, A('130 CAD')),
+                (datetime.date(2015, 1, 1), A('130 CAD')),
+                (datetime.date(2014, 12, 31), A('125 CAD')),
+                (datetime.date(2014, 1, 1), A('125 CAD')),
+                (datetime.date(2013, 12, 31), A('120 CAD')),
+                (datetime.date(2013, 1, 1), A('120 CAD')),
+                (datetime.date(2012, 12, 31), None),
+                ]:
+            self.assertEqual(exp_amount,
+                             prices.convert_amount(price_map, 'CAD', A('100 USD'), date))
 
     @loader.load_doc()
     def test_ordering_same_date(self, entries, _, __):

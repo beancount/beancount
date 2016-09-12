@@ -3,17 +3,20 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import builtins
+import collections
 import textwrap
 import unittest
 import io
 import re
 import tempfile
+import logging
 import sys
 import contextlib
 import functools
 import shutil
 import itertools
 import os
+import subprocess
 from os import path
 
 
@@ -21,6 +24,12 @@ from os import path
 # avoid port collisions during testing.
 # pylint: disable=invalid-name
 get_test_port = itertools.count(9470).__next__
+
+
+def nottest(func):
+    "Make the given function not testable."
+    func.__test__ = False
+    return func
 
 
 def find_repository_root(filename=None):
@@ -77,12 +86,32 @@ def run_with_args(function, args):
       The return value of the function run.
     """
     saved_argv = sys.argv
+    saved_handlers = logging.root.handlers
     try:
         module = sys.modules[function.__module__]
         sys.argv = [module.__file__] + args
+        logging.root.handlers = []
         return function()
     finally:
         sys.argv = saved_argv
+        logging.root.handlers = saved_handlers
+
+
+def call_command(command):
+    """Run the script with a subprocess.
+
+    Args:
+      script_args: A list of strings, the arguments to the subprocess,
+        including the script name.
+    Returns:
+      A triplet of (return code integer, stdout ext, stderr text).
+    """
+    assert isinstance(command, list), command
+    p = subprocess.Popen(command,
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE)
+    stdout, stderr = p.communicate()
+    return p.returncode, stdout.decode(), stderr.decode()
 
 
 @contextlib.contextmanager
@@ -188,10 +217,10 @@ def docfile(function):
     """
     @functools.wraps(function)
     def new_function(self):
-        with tempfile.NamedTemporaryFile('w') as f:
-            f.write(textwrap.dedent(function.__doc__))
-            f.flush()
-            return function(self, f.name)
+        with tempfile.NamedTemporaryFile('w') as file:
+            file.write(textwrap.dedent(function.__doc__))
+            file.flush()
+            return function(self, file.name)
     new_function.__doc__ = None
     return new_function
 
@@ -208,6 +237,20 @@ def search_words(words, line):
     if isinstance(words, str):
         words = words.split()
     return re.search('.*'.join(r'\b{}\b'.format(word) for word in words), line)
+
+
+class TestTempdirMixin:
+
+    def setUp(self):
+        super().setUp()
+        # Create a temporary directory.
+        self.prefix = self.__class__.__name__
+        self.tempdir = tempfile.mkdtemp(prefix='{}.'.format(self.prefix))
+
+    def tearDown(self):
+        super().tearDown()
+        # Clean up the temporary directory.
+        shutil.rmtree(self.tempdir)
 
 
 class TestCase(unittest.TestCase):
@@ -247,6 +290,23 @@ class TestCase(unittest.TestCase):
         self.assertLines(textwrap.dedent(expected_text), oss.getvalue())
 
 
+@contextlib.contextmanager
+def skipIfRaises(*exc_types):
+    """A context manager (or decorator) that skips a test if an exception is raised.
+
+    Args:
+      exc_type
+    Yields:
+      Nothing, for you to execute the function code.
+    Raises:
+      SkipTest: if the test raised the expected exception.
+    """
+    try:
+        yield
+    except exc_types as exception:
+        raise unittest.SkipTest(exception)
+
+
 def make_failing_importer(*removed_module_names):
     """Make an importer that raise an ImportError for some modules.
 
@@ -280,3 +340,26 @@ def environ(varname, newvalue):
     os.environ[varname] = newvalue
     yield
     os.environ[varname] = oldvalue
+
+
+# A function call's arguments, including its return value.
+# This is an improvement onto what mock.call provides.
+# That has not the return value normally.
+# You can use this to build internal call interceptors.
+RCall = collections.namedtuple('RCall', 'args kwargs return_value')
+
+def record(fun):
+    """Decorates the function to intercept and record all calls and return values.
+
+    Args:
+      fun: A callable to be decorated.
+    Returns:
+      A wrapper function with a .calls attribute, a list of RCall instances.
+    """
+    @functools.wraps(fun)
+    def wrapped(*args, **kw):
+        return_value = fun(*args, **kw)
+        wrapped.calls.append(RCall(args, kw, return_value))
+        return return_value
+    wrapped.calls = []
+    return wrapped

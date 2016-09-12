@@ -1,0 +1,14 @@
+This is an old script I used to use before I had a working export to a Google
+Sheets document. It aggregated holdings against various features:
+
+- ETF issuer
+- Liquidity
+- My employer's stock
+- Asset class
+- Currency/country exposure
+- Taxable or non-taxable
+
+Since then, I've replaced much of this by exporting to a spreadsheet and doing
+the aggregations there. This allows me to access the most up-to-date information
+from my phone during the day (not that I watch that closely, but I do observe
+the total change once or twice/day while waiting for coffee).

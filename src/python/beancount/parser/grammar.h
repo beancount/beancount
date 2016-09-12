@@ -80,23 +80,24 @@ extern int yydebug;
     NOTE = 290,
     DOCUMENT = 291,
     QUERY = 292,
-    PUSHTAG = 293,
-    POPTAG = 294,
-    PUSHMETA = 295,
-    POPMETA = 296,
-    OPTION = 297,
-    INCLUDE = 298,
-    PLUGIN = 299,
-    BOOL = 300,
-    DATE = 301,
-    ACCOUNT = 302,
-    CURRENCY = 303,
-    STRING = 304,
-    NUMBER = 305,
-    TAG = 306,
-    LINK = 307,
-    KEY = 308,
-    NEGATIVE = 309
+    CUSTOM = 293,
+    PUSHTAG = 294,
+    POPTAG = 295,
+    PUSHMETA = 296,
+    POPMETA = 297,
+    OPTION = 298,
+    INCLUDE = 299,
+    PLUGIN = 300,
+    BOOL = 301,
+    DATE = 302,
+    ACCOUNT = 303,
+    CURRENCY = 304,
+    STRING = 305,
+    NUMBER = 306,
+    TAG = 307,
+    LINK = 308,
+    KEY = 309,
+    NEGATIVE = 310
   };
 #endif
 
@@ -105,7 +106,7 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 130 "src/python/beancount/parser/grammar.y" 
+#line 126 "src/python/beancount/parser/grammar.y" 
 
     char character;
     const char* string;
@@ -115,7 +116,7 @@ union YYSTYPE
         PyObject* pyobj2;
     } pairobj;
 
-#line 119 "src/python/beancount/parser/grammar.h" 
+#line 120 "src/python/beancount/parser/grammar.h" 
 };
 
 typedef union YYSTYPE YYSTYPE;

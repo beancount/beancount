@@ -1,15 +1,13 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import datetime
-import textwrap
 import tempfile
-import unittest
-from os import path
 
 from beancount import loader
-from beancount.plugins import merge_meta
 from beancount.parser import cmptest
-from beancount.parser import printer
+
+
+# pylint: disable=invalid-name
 TmpFile = tempfile.NamedTemporaryFile
 
 

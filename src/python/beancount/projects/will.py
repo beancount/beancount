@@ -12,16 +12,12 @@ be included in the document rendered by this script.
 """
 __author__ = 'Martin Blais <blais@furius.ca>'
 
+import argparse
 import collections
 import logging
-import itertools
 import io
 import re
-import pprint
-import subprocess
 import sys
-import textwrap
-from os import path
 
 from beancount import loader
 from beancount.core import realization
@@ -29,9 +25,7 @@ from beancount.core import getters
 from beancount.core import account_types
 from beancount.core import data
 from beancount.core import account
-from beancount.core import realization
 from beancount.parser import options
-from beancount.parser import printer
 
 
 def group_accounts_by_metadata(accounts_map, meta_name):
@@ -309,7 +303,6 @@ def format_xhtml_table(items, klass='fields'):
 
 
 def main():
-    import argparse, logging
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
     parser = argparse.ArgumentParser(description=__doc__.strip())
     parser.add_argument('filename', help='Beancount input filename')

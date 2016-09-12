@@ -10,8 +10,7 @@ from os import path
 from beancount.core import account
 
 
-# Note: Ideally this should live in beancount.utils.test_utils, but since we
-# sync these files to ledgerhub, we leave this here for now.
+# Note: This should live in beancount.utils.test_utils.
 class TmpFilesTestBase(unittest.TestCase):
     """A test utility base class that creates and cleans up a directory hierarchy.
     This convenience is useful for testing functions that work on files, such as the

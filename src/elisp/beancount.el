@@ -89,7 +89,8 @@
     "account_current_conversions"
     "account_rounding"
     "conversion_currency"
-    "default_tolerance"
+    "default_tolerance"  ;; Deprecated.
+    "inferred_tolerance_default"
     "inferred_tolerance_multiplier"
     "infer_tolerance_from_cost"
     "tolerance"
@@ -131,6 +132,7 @@
     (define-key map [(control c)(q)] #'beancount-query)
     (define-key map [(control c)(x)] #'beancount-context)
     (define-key map [(control c)(k)] #'beancount-linked)
+    (define-key map [(control c)(k)] #'beancount-insert-prices)
     (define-key map [(control c)(\;)] #'beancount-align-to-previous-number)
     (define-key map [(control c)(\:)] #'beancount-align-numbers)
 
@@ -629,6 +631,15 @@ Only useful if you have not installed Beancount properly in your PATH.")
     (beancount--run beancount-doctor-program "linked"
                     (file-relative-name buffer-file-name)
                     (number-to-string (line-number-at-pos)))))
+
+(defvar beancount-price-program "bean-price"
+  "Program to run the price fetching commands.")
+
+(defun beancount-insert-prices ()
+  "Run bean-price on the current file and insert the output inline."
+  (interactive)
+  (call-process beancount-price-program nil t nil
+                (file-relative-name buffer-file-name)))
 
 
 (provide 'beancount)

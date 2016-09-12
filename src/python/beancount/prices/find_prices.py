@@ -3,7 +3,6 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
-import itertools
 import logging
 import re
 import sys
@@ -118,7 +117,7 @@ def parse_single_source(source):
     Raises:
       ValueError: If invalid.
     """
-    match = re.match(r'([a-zA-Z]+[a-zA-Z0-9\.]+)/(\^?)([a-zA-Z0-9:_\-\.]+)', source)
+    match = re.match(r'([a-zA-Z]+[a-zA-Z0-9\.]+)/(\^?)([a-zA-Z0-9:=_\-\.]+)$', source)
     if not match:
         raise ValueError('Invalid source name: "{}"'.format(source))
     short_module_name, invert, symbol = match.groups()
@@ -223,9 +222,8 @@ def find_currencies_at_cost(entries):
         if not isinstance(entry, data.Transaction):
             continue
         for posting in entry.postings:
-            lot = posting.position.lot
-            if lot.cost:
-                currencies.add((lot.currency, lot.cost.currency))
+            if posting.cost is not None and posting.cost.number is not None:
+                currencies.add((posting.units.currency, posting.cost.currency))
     return currencies
 
 
@@ -249,11 +247,10 @@ def find_currencies_converted(entries, date=None):
         if date and entry.date >= date:
             break
         for posting in entry.postings:
-            lot = posting.position.lot
             price = posting.price
-            if lot.cost is not None or price is None:
+            if posting.cost is not None or price is None:
                 continue
-            currencies.add((lot.currency, price.currency))
+            currencies.add((posting.units.currency, price.currency))
     return currencies
 
 
@@ -299,13 +296,12 @@ def find_balance_currencies(entries, date=None):
     balances, _ = summarize.balance_by_account(entries, date)
     for _, balance in balances.items():
         for pos in balance:
-            lot = pos.lot
-            if lot.cost is not None:
+            if pos.cost is not None:
                 # Add currencies held at cost.
-                currencies.add((lot.currency, lot.cost.currency))
+                currencies.add((pos.units.currency, pos.cost.currency))
             else:
                 # Add regular currencies.
-                currencies_on_books.add(lot.currency)
+                currencies_on_books.add(pos.units.currency)
 
     # Create currency pairs from the currencies which are on account balances.
     # In order to figure out the the quote currencies, we use the list of price
@@ -322,7 +318,7 @@ def find_balance_currencies(entries, date=None):
 
 
 def log_currency_list(message, currencies):
-    """Lot a list of currencies to debug output.
+    """Log a list of currencies to debug output.
 
     Args:
       message: A message string to prepend.

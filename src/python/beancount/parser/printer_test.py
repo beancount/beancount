@@ -25,8 +25,8 @@ class TestPrinter(unittest.TestCase):
     def test_render_source(self):
         source_str = printer.render_source(META)
         self.assertTrue(isinstance(source_str, str))
-        self.assertTrue(re.search('12345', source_str))
-        self.assertTrue(re.search(META['filename'], source_str))
+        self.assertRegex(source_str, '12345')
+        self.assertRegex(source_str, META['filename'])
 
     def test_format_and_print_error(self):
         entry = data.Open(META, date(2014, 1, 15), 'Assets:Bank:Checking', [], None)
@@ -51,7 +51,6 @@ class TestEntryPrinter(cmptest.TestCase):
         # Print out the entries and parse them back in.
         oss1 = io.StringIO()
         oss1.write('option "plugin_processing_mode" "raw"\n')
-        oss1.write('option "experiment_query_directive" "TRUE"\n')
         printer.print_entries(entries1, file=oss1)
         entries2, errors, __ = loader.load_string(oss1.getvalue())
 
@@ -61,7 +60,6 @@ class TestEntryPrinter(cmptest.TestCase):
         # Print out those reparsed and parse them back in.
         oss2 = io.StringIO()
         oss2.write('option "plugin_processing_mode" "raw"\n')
-        oss2.write('option "experiment_query_directive" "TRUE"\n')
         printer.print_entries(entries2, file=oss2)
         entries3, errors, __ = loader.load_string(oss2.getvalue())
 
@@ -117,6 +115,8 @@ class TestEntryPrinter(cmptest.TestCase):
         2014-06-09 * "An entry like a conversion entry"
           Assets:Account1         1 USD @ 0 OTHER
           Assets:Account2         1 CAD @ 0 OTHER
+
+        2014-06-20 custom "budget" Assets:Account2 "balance < 200.00 USD" 200.00 10.00 USD
         """
         self.assertRoundTrip(entries, errors)
 
@@ -149,7 +149,6 @@ class TestEntryPrinter(cmptest.TestCase):
     @loader.load_doc()
     def test_Query(self, entries, errors, __):
         """
-        option "plugin_processing_mode" "raw"
         2014-06-08 query "cash" "SELECT sum(position) WHERE currency = 'USD'"
         """
         self.assertRoundTrip(entries, errors)
@@ -195,14 +194,6 @@ class TestEntryPrinter(cmptest.TestCase):
         """
         2014-06-08 event "location" "New York, NY, USA"
         2014-06-08 event "employer" "Four Square"
-        """
-        self.assertRoundTrip(entries, errors)
-
-    @loader.load_doc()
-    def test_Query(self, entries, errors, __):
-        """
-        option "experiment_query_directive" "TRUE"
-        2014-06-08 query "cash" "SELECT SUM(position) WHERE currency = 'USD'"
         """
         self.assertRoundTrip(entries, errors)
 
@@ -405,20 +396,20 @@ class TestPrinterAlignment(test_utils.TestCase):
         self.assertFalse(errors)
         dcontext = options_map['dcontext']
 
-        oss = io.StringIO()
-        printer.print_entries(entries, dcontext, render_weights=False, file=oss)
-        expected_str = ''.join([
-            '2014-01-01 open Assets:US:Investments:HOOL\n',
-            '2014-01-01 open Expenses:Commissions\n',
-            '2014-01-01 open Assets:US:Investments:Cash\n',
-            '\n',
-            '2014-07-01 * "Something"\n',
-            '  Assets:US:Investments:HOOL         45 HOOL {504.30 USD}            \n',
-            '  Assets:US:Investments:HOOL          4 HOOL {504.30 USD, 2014-11-11}\n',
-            '  Expenses:Commissions             9.95 USD                          \n',
-            '  Assets:US:Investments:Cash  -22473.32 CAD @ 1.1000 USD             \n',
-            ])
-        self.assertEqual(expected_str, oss.getvalue())
+        # oss = io.StringIO()
+        # printer.print_entries(entries, dcontext, render_weights=False, file=oss)
+        # expected_str = ''.join([
+        #     '2014-01-01 open Assets:US:Investments:HOOL\n',
+        #     '2014-01-01 open Expenses:Commissions\n',
+        #     '2014-01-01 open Assets:US:Investments:Cash\n',
+        #     '\n',
+        #     '2014-07-01 * "Something"\n',
+        #     '  Assets:US:Investments:HOOL         45 HOOL {504.30 USD}            \n',
+        #     '  Assets:US:Investments:HOOL          4 HOOL {504.30 USD, 2014-11-11}\n',
+        #     '  Expenses:Commissions             9.95 USD                          \n',
+        #     '  Assets:US:Investments:Cash  -22473.32 CAD @ 1.1000 USD             \n',
+        #     ])
+        # self.assertEqual(expected_str, oss.getvalue())
 
         oss = io.StringIO()
         printer.print_entries(entries, dcontext, render_weights=True, file=oss)
@@ -469,6 +460,22 @@ class TestPrinterMisc(test_utils.TestCase):
           Assets:US:Investments:HOOL    1 HOOL {23.45 USD}
             settlement: 2000-01-05
 
+        """)
+        entries, errors, options_map = loader.load_string(input_string)
+        self.assertFalse(errors)
+        oss = io.StringIO()
+        printer.print_entries(entries, file=oss)
+        self.assertLines(input_string, oss.getvalue())
+
+    def test_zero_cost(self):
+        input_string = textwrap.dedent("""
+
+        2000-01-01 open Assets:Invest:Cash
+        2000-01-01 open Assets:Invest:Options
+
+        2000-01-03 *
+          Assets:Invest:Options  100 HOOLOPT {0 USD}
+          Assets:Invest:Cash       0 USD
         """)
         entries, errors, options_map = loader.load_string(input_string)
         self.assertFalse(errors)

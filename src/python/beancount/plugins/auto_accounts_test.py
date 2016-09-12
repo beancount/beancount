@@ -22,8 +22,8 @@ class TestAutoInsertOpen(cmptest.TestCase):
 
         self.assertEqualEntries("""
 
-        2014-02-01 open Assets:US:Bank:Savings
         2014-02-01 open Assets:US:Bank:Checking
+        2014-02-01 open Assets:US:Bank:Savings
 
         2014-02-01 *
           Assets:US:Bank:Checking     100 USD

@@ -20,6 +20,10 @@ extern int yy_firstline;
 /* The current builder during parsing (as a global variable for now). */
 PyObject* builder = 0;
 
+/* A reference to a Python-defined constant object used as a placeholder for
+   missing cost specifications. */
+PyObject* missing_obj = 0;
+
 
 PyDoc_STRVAR(parse_file_doc,
 "Parse the filename, calling back methods on the builder.\n\
@@ -259,8 +263,9 @@ static struct PyModuleDef moduledef = {
 PyMODINIT_FUNC PyInit__parser(void)
 {
     PyObject* module = PyModule_Create(&moduledef);
-    if ( module == NULL )
+    if ( module == NULL ) {
         Py_RETURN_NONE;
+    }
 
     /* Provide the source hash to the parser module for verification that the
      * extension module is up-to-date. */
@@ -268,5 +273,17 @@ PyMODINIT_FUNC PyInit__parser(void)
     PyObject* source_hash = PyUnicode_FromString(PARSER_SOURCE_HASH);
     PyObject_SetAttrString(module, "SOURCE_HASH", source_hash);
 
+    /* Import the module that defines the missing object constant. */
+    PyObject* number_module = PyImport_ImportModule("beancount.core.number");
+    if ( number_module == NULL ) {
+        Py_RETURN_NONE;
+    }
+    missing_obj = PyObject_GetAttrString(number_module, "MISSING");
+    if ( missing_obj == NULL ) {
+        Py_RETURN_NONE;
+    }
+
     return module;
 }
+
+/* FIXME: Finalize too, unrefing the constants. {48414425cf78} */

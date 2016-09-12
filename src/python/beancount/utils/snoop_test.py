@@ -28,7 +28,11 @@ class TestSnoop(unittest.TestCase):
         if snoop.snooper(re.match("bro", "brother")):
             self.assertTrue(isinstance(snoop.snooper.value, MatchObject))
         else:
-            self.assertFalse(True)
+            self.fail()
+
+    def test_snoop_attribute(self):
+        snoop.snooper(re.match("a(b+)a", "abbba"))
+        self.assertEqual('bbb', snoop.snooper.group(1))
 
     def test_snoopify(self):
         original_match = re.match

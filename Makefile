@@ -7,6 +7,9 @@ DOWNLOADS = $(HOME)/u/Downloads
 GREP="grep --include="*.py" -srnE"
 SRC=src/python
 
+PYTHON=python3
+#PYTHON=$(HOME)/src/python/vginstall/bin/python3
+
 all: compile
 
 
@@ -27,9 +30,6 @@ YACC = bison --report=itemset --verbose
 FILTERYACC = sed -e 's@/\*[ \t]yacc\.c:.*\*/@@'
 TMP=/tmp
 
-xy:
-	cat $(CROOT)/grammar.c | $(FILTERYACC) | less
-
 $(CROOT)/grammar.c $(CROOT)/grammar.h: $(CROOT)/grammar.y
 	$(YACC) -o $(CROOT)/grammar.c $<
 	(cat $(CROOT)/grammar.c | $(FILTERYACC) > $(TMP)/grammar.c ; mv $(TMP)/grammar.c $(CROOT)/grammar.c )
@@ -45,7 +45,7 @@ SOURCES =					\
 	$(CROOT)/grammar.h
 
 compile: $(SOURCES)
-	python3 setup.py build_ext -i
+	$(PYTHON) setup.py build_ext -i
 
 .PHONY: build
 build: compile
@@ -58,7 +58,7 @@ dump_lexer:
 
 # Check for memory leaks.
 grind:
-	valgrind --leak-check=full /usr/local/bin/python3 bean-sandbox $(INPUT)
+	valgrind --leak-check=full $(PYTHON) bean-sandbox $(INPUT)
 
 # Regenerate the website.
 html docs:
@@ -123,18 +123,27 @@ showdeps-core: build/beancount-core.pdf
 
 # Run in the debugger.
 debug:
-	gdb --args /usr/local/bin/python3 /home/blais/p/beancount/bin/bean-sandbox $(INPUT)
+	gdb --args $(PYTHON) /home/blais/p/beancount/bin/bean-sandbox $(INPUT)
+
+
+# Bake a release.
+release:
+	$(PYTHON) setup.py register sdist upload
 
 
 # Run the unittests.
+NOSE = nosetests3
 vtest vtests verbose-test verbose-tests:
-	nosetests -v -s $(SRC)
+	$(NOSE) -v -s $(SRC)
 
 qtest qtests quiet-test quiet-tests test tests:
-	nosetests $(SRC)
+	$(NOSE) $(SRC)
+
+test-failed:
+	$(NOSE) --failed $(SRC)
 
 nakedtests:
-	PATH=/bin:/usr/bin PYTHONPATH= /usr/local/bin/nosetests -x $(SRC)
+	PATH=/bin:/usr/bin PYTHONPATH= /usr/local/bin/$(NOSE) -x $(SRC)
 
 
 # Run the parser and measure its performance.
@@ -155,7 +164,7 @@ example $(EXAMPLE):
 
 TUTORIAL=examples/tutorial
 tutorial: $(EXAMPLE)
-	python3 src/python/beancount/scripts/tutorial.py $(EXAMPLE) $(TUTORIAL)
+	$(PYTHON) src/python/beancount/scripts/tutorial.py $(EXAMPLE) $(TUTORIAL)
 
 
 # Run the web server.
@@ -185,7 +194,7 @@ fixmes:
 	egrep -srn '\b(FIXME|TODO\()' $(SRC) || true
 
 filter-terms:
-	egrep --exclude-dir='.hg' --exclude-dir='__pycache__' -srn 'GOOGL?' $(PWD) | grep -v GOOGLE_APIS || true
+	egrep --exclude-dir='.hg' --exclude-dir='__pycache__' -srn 'GOOGL?\b' $(PWD) | grep -v GOOGLE_APIS || true
 
 multi-imports:
 	egrep -srn '^(from.*)?import.*,' $(SRC) || true
@@ -202,26 +211,16 @@ check-author:
 	find src/python/beancount -type f -name '*.py' ! -exec grep -q '__author__' {} \; -print
 
 # Run the linter on all source code.
-#LINT_PASS=line-too-long,bad-whitespace,bad-continuation,bad-indentation
-LINT_PASS=line-too-long,bad-whitespace,bad-indentation,unused-import,invalid-name,reimported
-LINT_FAIL=bad-continuation
+# To list all messages, call: "pylint --list-msgs"
+LINT_SRCS =					\
+  $(SRC)/beancount				\
+  examples/ingest/office/importers		\
 
-
-pylint-pass:
-	pylint --rcfile=$(PWD)/etc/pylintrc --disable=all --enable=$(LINT_PASS) $(SRC)
-
-pylint-fail:
-	pylint --rcfile=$(PWD)/etc/pylintrc --disable=all --enable=$(LINT_FAIL) $(SRC)
-
-pylint-all:
-	pylint --rcfile=$(PWD)/etc/pylintrc $(SRC)
+pylint lint:
+	pylint --rcfile=$(PWD)/etc/pylintrc $(LINT_SRCS)
 
 pyflakes:
-	pyflakes $(SRC)
-
-# Run all currently configured linter checks.
-pylint lint: pylint-pass
-
+	pyflakes $(LINT_SRCS)
 
 
 # Check everything.

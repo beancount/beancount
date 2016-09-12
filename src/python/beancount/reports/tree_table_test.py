@@ -1,6 +1,5 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import re
 import io
 import unittest
 
@@ -65,21 +64,21 @@ class TestTables(unittest.TestCase):
                 continue
             cells.append("<pre>{}</pre>".format(real_node.balance))
         html = oss.getvalue()
-        self.assertTrue(re.search('<table', html))
-        self.assertTrue(re.search('3000', html))
-        self.assertTrue(re.search('-3000', html))
-        self.assertTrue(re.search('5cdc3b134179', html))
-        self.assertTrue(re.search('Assets:US:Checking', html))
+        self.assertRegex(html, '<table')
+        self.assertRegex(html, '3000')
+        self.assertRegex(html, '-3000')
+        self.assertRegex(html, '5cdc3b134179')
+        self.assertRegex(html, 'Assets:US:Checking')
 
     def test_table_of_balances(self):
         formatter = html_formatter.HTMLFormatter(display_context.DEFAULT_DISPLAY_CONTEXT)
         html = tree_table.table_of_balances(self.real_root, ['USD', 'CAD'], formatter,
                                             classes=['586e8200b379'])
-        self.assertTrue(re.search('<table', html))
-        self.assertTrue(re.search('USD', html))
-        self.assertTrue(re.search('CAD', html))
-        self.assertTrue(re.search('586e8200b379', html))
-        self.assertTrue(re.search('Checking', html))
+        self.assertRegex(html, '<table')
+        self.assertRegex(html, 'USD')
+        self.assertRegex(html, 'CAD')
+        self.assertRegex(html, '586e8200b379')
+        self.assertRegex(html, 'Checking')
 
         # Check that an inactive account is being skipped.
-        self.assertFalse(re.search('Inactive', html))
+        self.assertNotRegex(html, 'Inactive')

@@ -214,8 +214,7 @@ class TestLexer(unittest.TestCase):
             ('EOL', 2, '\x00', None),
         ], tokens)
         self.assertTrue(errors)
-        self.assertTrue(re.search('out of range', errors[0].message) or
-                        re.search('month must be', errors[0].message))
+        self.assertRegex(errors[0].message, '(out of range|month must be)')
 
     @lex_tokens
     def test_date_followed_by_number(self, tokens, errors):
@@ -234,12 +233,11 @@ class TestLexer(unittest.TestCase):
           Assets:A
         """
         self.assertEqual([
-            ('LEX_ERROR', 1, 'Assets:A', None),
+            ('ACCOUNT', 1, 'Assets:A', 'Assets:A'),
             ('EOL', 2, '\n', None),
             ('EOL', 2, '\x00', None),
         ], tokens)
-        self.assertTrue(errors)
-        self.assertTrue(re.search('Invalid token', errors[0].message))
+        self.assertFalse(errors)
 
     @lex_tokens
     def test_invalid_directive(self, tokens, errors):
@@ -256,7 +254,7 @@ class TestLexer(unittest.TestCase):
             ('EOL', 2, '\x00', None),
             ], tokens)
         self.assertTrue(errors)
-        self.assertTrue(re.search(r'\bcheck\b', errors[0].message))
+        self.assertRegex(errors[0].message, r'\bcheck\b')
 
     def test_string_too_long_warning(self):
         # This tests the maximum string length implemented in Python, which is used
@@ -282,7 +280,7 @@ class TestLexer(unittest.TestCase):
         builder.long_string_maxlines_default = 8
         list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
         self.assertLessEqual(1, len(builder.errors))
-        self.assertRegexpMatches(builder.errors[0].message, 'String too long')
+        self.assertRegex(builder.errors[0].message, 'String too long')
 
     def test_very_long_string(self):
         # This tests lexing with a string of 256k.
@@ -493,7 +491,7 @@ class TestLexerErrors(unittest.TestCase):
         self.assertEqual([('LEX_ERROR', 1, '"', None),
                           ('EOL', 1, '\x00', None)], tokens)
         self.assertEqual(1, len(builder.errors))
-        self.assertRegexpMatches(builder.errors[0].message, "None result from lexer")
+        self.assertRegex(builder.errors[0].message, "None result from lexer")
 
     @lex_tokens
     def test_lexer_exception_DATE(self, tokens, errors):
@@ -516,7 +514,7 @@ class TestLexerErrors(unittest.TestCase):
         # This modification is similar to what the options do, and will cause a
         # ValueError exception to be raised in the lexer.
         builder.account_regexp = re.compile('(Assets|Liabilities|Equity)'
-                                            '(:[A-Z][A-Za-z0-9\-]+)*$')
+                                            '(:[A-Z][A-Za-z0-9\-]*)*$')
         tokens = list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
         self.assertEqual([('EOL', 2, '\n', None),
                           ('LEX_ERROR', 2, 'Invalid:Something', None),
@@ -537,6 +535,21 @@ class TestLexerErrors(unittest.TestCase):
                           ('EOL', 3, '\n', None),
                           ('EOL', 3, '\x00', None)], tokens)
         self.assertEqual(1, len(builder.errors))
+
+    def test_lexer_exception_substring_with_quotes(self):
+        test_input = """
+          2016-07-15 query "hotels" "SELECT * WHERE account ~ 'Expenses:Accommodation'"
+        """
+        builder = lexer.LexBuilder()
+        tokens = list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
+        self.assertEqual([('EOL', 2, '\n', None),
+                          ('DATE', 2, '2016-07-15', datetime.date(2016, 7, 15)),
+                          ('QUERY', 2, 'query', None),
+                          ('STRING', 2, '"', 'hotels'),
+                          ('STRING', 2, '"', "SELECT * WHERE account ~ 'Expenses:Accommodation'"),
+                          ('EOL', 3, '\n', None),
+                          ('EOL', 3, '\x00', None)], tokens)
+        self.assertEqual(0, len(builder.errors))
 
     def _run_lexer_with_raising_builder_method(self, test_input, method_name,
                                                expected_tokens):
@@ -577,6 +590,7 @@ class TestLexerErrors(unittest.TestCase):
             ' mykey: ', 'KEY',
             [('LEX_ERROR', 1, 'mykey:', None),
              ('EOL', 1, '\x00', None)])
+
 
 
 class TestLexerUnicode(unittest.TestCase):

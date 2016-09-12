@@ -22,8 +22,7 @@ class HTMLFormatter:
           dcontext: DisplayContext to use to render the numbers.
         """
         self._dformat = dcontext.build(
-            precision=display_context.Precision.MOST_COMMON,
-            commas=True)
+            precision=display_context.Precision.MOST_COMMON)
 
     def render_account(self, account_name):
         """Render an account name.
