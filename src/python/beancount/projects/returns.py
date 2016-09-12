@@ -110,11 +110,11 @@ Other transactions are a bit more problematic:
          Assets:Invest:Cash         480.00 USD
          Expenses:Fees               20.00 USD
 
-The question here is whether the postings with interflows should be internalized
-or not, e.g., whether the 20.00 USD wire fee in the transaction above should be
-considered a cost within the portfolio activity or not. We will assume that they
-always are, and in order to keep our algorithm simple, we will internalize the
-postings by splitting the transaction like this:
+The question here is whether the postings with internal flows should be
+internalized or not, e.g., whether the 20.00 USD wire fee in the transaction
+above should be considered a cost within the portfolio activity or not. We will
+assume that they always are, and in order to keep our algorithm simple, we will
+internalize the postings by splitting the transaction like this:
 
        2014-04-01 * "Transferring money by wire" ^internalized-27356
          Assets:Bank:Checking      -500.00 USD
@@ -209,7 +209,6 @@ Notes:
    another valid solution would have been to insert this account in the list of
    internal accounts but that creates a more difficult set of resulting
    transactions, it's a bit confusing.).
-
 
 """
 __author__ = "Martin Blais <blais@furius.ca>"
@@ -598,12 +597,7 @@ def create_timeline(entries, options_map,
         See internalize() for details.
       price_map: An instance of PriceMap as computed by prices.build_price_map().
     Returns:
-      A triple of
-        returns: A dict of currency -> float total returns.
-        dates: A pair of (date_first, date_last) datetime.date instances.
-        internalized_entries: A short list of the entries that were required to be split
-          up in order to internalize their flow. (This is mostly returns to be used by
-          tests, you can otherwise safely discard this.)
+      A timeline, which is a list of Segment instances.
     """
     if not accounts_value:
         raise ValueError("Cannot calculate returns without assets accounts to value")
@@ -641,18 +635,44 @@ def create_timeline(entries, options_map,
     return segment_periods(entries, accounts_value, accounts_internal)
 
 
-def dump_timeline_brief(timeline, file):
+def value_inventory(price_map, date, inv):
+    """Convert a position to its market value at a particular date.
+
+    Args:
+      price_map: A mapping of prices as per build_price_map().
+      date: A datetime.date instance, the date at which to value the inventory.
+      inv: The inventory to convert.
+    Returns:
+      A resulting inventory.
+    """
+    result = inventory.Inventory()
+    for pos in inv:
+        units = pos.units
+        if pos.cost is None:
+            converted_pos = units
+        else:
+            converted_pos = prices.convert_amount(price_map, pos.cost.currency, units, date)
+            if converted_pos is None:
+                logging.warning('Could not convert Position "{}" to {}'.format(
+                    units, pos.cost.currency))
+                converted_pos = units
+        result.add_amount(converted_pos)
+    return result
+
+
+def dump_timeline_brief(timeline, price_map, file):
     """Dump a text rendering of the timeline to a given file output for debugging.
 
     Args:
       timeline: A list of Segment instances.
+      price_map: A mapping of prices as per build_price_map().
       file: A file object to write to.
     """
     pr = lambda *args: print(*args, file=file)
-
-    str_balances = [(segment.begin.balance.units().to_string(),
-                     segment.end.balance.units().to_string())
-                    for segment in timeline]
+    str_balances = [(
+        value_inventory(price_map, segment.begin.date, segment.begin.balance).to_string(),
+        value_inventory(price_map, segment.end.date, segment.end.balance).to_string()
+    ) for segment in timeline]
     max_width = max(max(len(str_begin), len(str_end))
                     for str_begin, str_end in str_balances)
     fmt = "   {{}} -> {{}}  {{:>{w}}}  {{:>{w}}}".format(w=max_width)
@@ -661,14 +681,16 @@ def dump_timeline_brief(timeline, file):
     pr("")
 
 
-def dump_timeline(timeline, file):
+def dump_timeline(timeline, price_map, file):
     """Dump a text rendering of the timeline to a given file output for debugging.
     This provides all, the detail. Useful just for debugging.
 
     Args:
       timeline: A list of Segment instances.
+      price_map: A mapping of prices as per build_price_map().
       file: A file object to write to.
     """
+    # FIXME: Convert this to make use of the price map.
     pr = lambda *args: print(*args, file=file)
     indfile = misc_utils.LineFileProxy(file.write, '   ', write_newlines=True)
     for segment in timeline:
