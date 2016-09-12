@@ -1124,8 +1124,11 @@ class FileLocationColumn(query_compile.EvalColumn):
         super().__init__(str)
 
     def __call__(self, context):
-        return '{}:{:d}:'.format(context.posting.meta["filename"],
-                                 context.posting.meta["lineno"])
+        if context.posting.meta is not None:
+            return '{}:{:d}:'.format(context.posting.meta["filename"],
+                                     context.posting.meta["lineno"])
+        else:
+            return '' # Unknown.
 
 class DateColumn(query_compile.EvalColumn):
     "The date of the parent transaction for this posting."

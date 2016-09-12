@@ -796,6 +796,13 @@ Improve this bit:
 
   - Make auto-group work. {autogroup}
 
+  - When you run a query like this:
+
+      "select ..., position, balance where ... order by date desc"
+
+    The balances appear in the wrong order! Compute the balances after
+    reordering.
+
 ** Query Language
 http://furius.ca/beancount/doc/proposal-query
 
