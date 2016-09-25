@@ -4,6 +4,11 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-09-25
+
+  - Fixed typo in grammar that was parsing a transaction flag as '#' into '*'.
+
+
 2016-09-04
 
   - Implemented new "run" shell command that allows you to run a named query.

@@ -1835,7 +1835,7 @@ yyreduce:
   case 30:
 #line 377 "src/python/beancount/parser/grammar.y" 
     {
-            (yyval.character) = '*';
+            (yyval.character) = '#';
         }
 #line 1841 "src/python/beancount/parser/grammar.c" 
     break;
