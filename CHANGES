@@ -8,6 +8,8 @@ Note: This file contains only changes in the 'default' branch.
 
   - Fixed typo in grammar that was parsing a transaction flag as '#' into '*'.
 
+  - Added "cost_date" and "cost_label" columns in the SQL shell.
+
 
 2016-09-04
 
