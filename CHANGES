@@ -6,6 +6,9 @@ Note: This file contains only changes in the 'default' branch.
 
 2016-10-08
 
+  - Fixed a bug in the full booking matching code whereby an existing position
+    not held at cost would trip up the matching code. (Credits to Son Nguyen for
+    finding and reporting.)
 
   - During ingest, when multiple extractors match a particular file, select the
     first matching account instead of raising an error.

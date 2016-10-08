@@ -526,6 +526,9 @@ def book_reductions(entry, group_postings, balances,
                     if (units.currency and
                         position.units.currency != units.currency):
                         continue
+                    # Skip balance positions not held at cost.
+                    if position.cost is None:
+                        continue
                     if (cost_number is not None and
                         position.cost.number != cost_number):
                         continue
