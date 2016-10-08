@@ -4,6 +4,16 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-10-08
+
+
+  - During ingest, when multiple extractors match a particular file, select the
+    first matching account instead of raising an error.
+
+  - Fixed accidentally colliding key-binding for invoking bean-price from Emacs,
+    to C-c p.
+
+
 2016-09-25
 
   - Fixed typo in grammar that was parsing a transaction flag as '#' into '*'.

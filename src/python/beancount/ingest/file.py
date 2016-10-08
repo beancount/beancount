@@ -43,25 +43,28 @@ def file_one_file(filename, importers, destination, idify=False, logfile=None):
     file = cache.get_file(filename)
 
     # Get the account corresponding to the file.
-    file_accounts = set()
-    for importer in importers:
+    file_accounts = []
+    for index, importer in enumerate(importers):
         try:
-            file_accounts.add(importer.file_account(file))
+            account_ = importer.file_account(file)
         except Exception as exc:
             logging.error("Importer %s.file_account() raised an unexpected error: %s",
                           importer.name(), exc)
+        if account_ is not None:
+            file_accounts.append(account_)
 
-    file_accounts.discard(None)
-    if not file_accounts:
+    file_accounts_set = set(file_accounts)
+    if not file_accounts_set:
         logging.error("No account provided by importers: {}".format(
             ", ".join(imp.name() for imp in importers)))
         return None
 
-    if len(file_accounts) > 1:
-        logging.error("Ambiguous accounts from many importers: {}".format(
-            ', '.join(file_accounts)))
-        return None
-    file_account = file_accounts.pop()
+    if len(file_accounts_set) > 1:
+        logging.warning("Ambiguous accounts from many importers: {}".format(
+            ', '.join(file_accounts_set)))
+        # Note: Don't exit; select the first matching importer's account.
+
+    file_account = file_accounts.pop(0)
 
     # Given multiple importers, select the first one that was yielded to
     # obtain the date and process the filename.
