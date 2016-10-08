@@ -132,7 +132,7 @@
     (define-key map [(control c)(q)] #'beancount-query)
     (define-key map [(control c)(x)] #'beancount-context)
     (define-key map [(control c)(k)] #'beancount-linked)
-    (define-key map [(control c)(k)] #'beancount-insert-prices)
+    (define-key map [(control c)(p)] #'beancount-insert-prices)
     (define-key map [(control c)(\;)] #'beancount-align-to-previous-number)
     (define-key map [(control c)(\:)] #'beancount-align-numbers)
 
