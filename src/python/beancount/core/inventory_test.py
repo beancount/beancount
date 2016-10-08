@@ -197,11 +197,13 @@ class TestInventory(unittest.TestCase):
         self.assertFalse(inv.is_mixed())
 
     def test_is_reduced_by(self):
+        # Test with regular all position inventory.
         inv = I('100 HOOL {250 USD}, 101 HOOL {251 USD}')
         self.assertFalse(inv.is_reduced_by(A('2 HOOL')))
         self.assertFalse(inv.is_reduced_by(A('0 HOOL')))
         self.assertTrue(inv.is_reduced_by(A('-2 HOOL')))
 
+        # Test with a mixed-sign inventory.
         inv = I('100 HOOL {250 USD}, -101 HOOL {251 USD}')
         self.assertTrue(inv.is_reduced_by(A('2 HOOL')))
         self.assertFalse(inv.is_reduced_by(A('0 HOOL')))

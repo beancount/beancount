@@ -547,7 +547,8 @@ def book_reductions(entry, group_postings, balances,
                 if len(matches) == 0:
                     errors.append(
                         ReductionError(entry.meta,
-                                       'No position matches "{}"'.format(str(posting)),
+                                       'No position matches "{}" against balance {}'.format(
+                                           posting, balance),
                                        entry))
                     return [], errors  # This is irreconcilable, remove these postings.
 

@@ -6,6 +6,10 @@ Note: This file contains only changes in the 'default' branch.
 
 2016-10-08
 
+  - Documented a subtle problem reported about balances against inventory of
+    mixed at-cost and no-cost, added more context to the error and a unit test
+    for balance checks with mixed at-cost and no-cost positions.
+
   - Fixed a bug in the full booking matching code whereby an existing position
     not held at cost would trip up the matching code. (Credits to Son Nguyen for
     finding and reporting.)

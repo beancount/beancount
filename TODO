@@ -4731,6 +4731,36 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - Core: Some problems occur (with the new method) if you mix at-cost and
+    without-cost for the same currency, like this:
+
+      2015-09-15 * "Buy"
+        Assets:Investments:HOOL   50.795 HOOL {14.63 USD} @ 14.63 USD
+        Assets:Investments:Cash   -743.13 USD
+        Equity:Vanguard:Rounding
+
+      2015-09-24 * "Dividend Received"
+        Assets:Investments:HOOL           0.252 HOOL {14.11 USD} @ 14.11 USD
+        Income:Vanguard:Retire:AfterTax:HOOL:Dividend  -3.56 USD
+        Equity:Vanguard:Rounding
+
+      2016-05-09 * "Conversion From"
+        Assets:Investments:HOOL      -51.047 HOOL @ 14.33 USD
+        Assets:Investments:Cash       731.50 USD
+        Income:Vanguard:Retire:AfterTax:HOOL:Pnl
+
+      2016-05-10 balance Assets:Investments:HOOL 0 HOOL
+
+      2016-05-10 * "Buy"
+        Assets:Investments:HOOL   292.285 HOOL {14.33 USD} @ 14.33 USD
+        Assets:Investments:Cash   -4188.44 USD
+        Equity:Vanguard:Rounding
+
+    The better way to deal with this would be not to allow it to happen. Because
+    this needs to be applied during matching, we cannot implement this in a
+    plugin, this needs to become an option (to allow it, and to make it
+    disallowed by default) in the parser itself.
+
   - You need to add options to provide the precision to use for prices,
     otherwise something like this:
 
