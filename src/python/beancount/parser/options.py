@@ -440,17 +440,19 @@ PUBLIC_OPTION_GROUPS = [
     """, [Opt("long_string_maxlines", 64)]),
 
     OptGroup("""
-      Enable an EXPERIMENTAL feature that supports an explicit tolerance value
-      on Balance assertions. If enabled, the balance amount supports a tolerance in
-      the input, with this syntax: <number> ~ <tolerance> <currency>, for example,
+      This experiment has been merged as stable. This flag has been deprecated
+      and is now unnecessary.
+
+      Enable a feature that supports an explicit tolerance value on Balance
+      assertions. If enabled, the balance amount supports a tolerance in the
+      input, with this syntax: <number> ~ <tolerance> <currency>, for example,
       "532.23 ~ 0.001 USD".
 
       See the document on tolerances for more details:
       http://furius.ca/beancount/doc/tolerances
-
-      WARNING: This feature may go away at any time. It is an exploration to see
-      if it is truly useful. We may be able to do without.
-    """, [Opt("experiment_explicit_tolerances", False, True)]),
+    """, [Opt("experiment_explicit_tolerances", True, True,
+              deprecated=("This experiment is now accepted as stable. "
+                          "The flag is unnecessary.'"))]),
 
     OptGroup("""
       The booking algorithm implementation, old or new.

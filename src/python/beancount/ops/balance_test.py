@@ -316,8 +316,6 @@ class TestBalancePrecision(unittest.TestCase):
     @loader.load_doc(expect_errors=True)
     def test_get_tolerance__explicit(self, entries, errors, options_map):
         """
-          option "experiment_explicit_tolerances" "TRUE"
-
           2015-05-01 open Assets:Bank:Checking
           2015-05-02 balance Assets:Bank:Checking   0    ~ 0.002 USD
           2015-05-02 balance Assets:Bank:Checking   0.0  ~ 0.002 USD
@@ -359,8 +357,6 @@ class TestBalancePrecision(unittest.TestCase):
     @loader.load_doc(expect_errors=True)
     def test_balance_with_tolerance(self, entries, errors, __):
         """
-          option "experiment_explicit_tolerances" "TRUE"
-
           2013-05-01 open Assets:Bank:Checking
           2013-05-01 open Equity:Opening-Balances
 

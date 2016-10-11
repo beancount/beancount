@@ -3,6 +3,11 @@
 ========================
 Note: This file contains only changes in the 'default' branch.
 
+2016-10-10
+
+  - Removed "experiment_explicit_tolerances" flag; made this supported by
+    default permanently.
+
 
 2016-10-08
 
