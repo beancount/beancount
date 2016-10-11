@@ -96,10 +96,6 @@ from beancount.parser import printer
 from beancount.parser import booking_simple as bs
 
 
-## FIXME: remove
-#FullBookingError = collections.namedtuple('FullBookingError', 'source message entry')
-
-
 def book(entries, options_map, booking_methods):
     """Interpolate missing data from the entries using the full historical algorithm.
     See the internal implementation _book() for details.
@@ -480,7 +476,7 @@ def book_reductions(entry, group_postings, balances,
           result in multiple postings in the output. Also note that augmenting
           postings held-at-cost will still refer to 'cost' instances of
           CostSpec, left to be interpolated later.
-        errors: A list of FullBookingError instances, if there were errors.
+        errors: A list of errors, if there were any.
     """
     errors = []
 
@@ -530,6 +526,9 @@ def book_reductions(entry, group_postings, balances,
                     if (units.currency and
                         position.units.currency != units.currency):
                         continue
+                    # Skip balance positions not held at cost.
+                    if position.cost is None:
+                        continue
                     if (cost_number is not None and
                         position.cost.number != cost_number):
                         continue
@@ -548,7 +547,8 @@ def book_reductions(entry, group_postings, balances,
                 if len(matches) == 0:
                     errors.append(
                         ReductionError(entry.meta,
-                                       'No position matches "{}"'.format(str(posting)),
+                                       'No position matches "{}" against balance {}'.format(
+                                           posting, balance),
                                        entry))
                     return [], errors  # This is irreconcilable, remove these postings.
 
@@ -671,6 +671,10 @@ def handle_ambiguous_matches(entry, posting, matches, booking_method):
         # ought to be matched against it. We don't allow it for now.
 
     elif booking_method is Booking.AVERAGE:
+        errors.append(ReductionError(entry.meta, "AVERAGE method is not supported", entry))
+
+    elif False: # DISABLED - This is the code for AVERAGE
+
         # If there is more than a single match we need to ultimately merge the
         # postings. Also, if the reducing posting provides a specific cost, we
         # need to update the cost basis as well. Both of these cases are carried

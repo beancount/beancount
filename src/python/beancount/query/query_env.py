@@ -292,7 +292,7 @@ class UnitsPosition(query_compile.EvalFunction):
 
     def __call__(self, context):
         args = self.eval_args(context)
-        return args[0].get_units()
+        return args[0].units
 
 class UnitsInventory(query_compile.EvalFunction):
     "Get the number of units of an inventory (stripping cost)."
@@ -1124,8 +1124,11 @@ class FileLocationColumn(query_compile.EvalColumn):
         super().__init__(str)
 
     def __call__(self, context):
-        return '{}:{:d}:'.format(context.posting.meta["filename"],
-                                 context.posting.meta["lineno"])
+        if context.posting.meta is not None:
+            return '{}:{:d}:'.format(context.posting.meta["filename"],
+                                     context.posting.meta["lineno"])
+        else:
+            return '' # Unknown.
 
 class DateColumn(query_compile.EvalColumn):
     "The date of the parent transaction for this posting."
@@ -1322,6 +1325,30 @@ class CostCurrencyColumn(query_compile.EvalColumn):
         cost = context.posting.cost
         return cost.currency if cost else ''
 
+class CostDateColumn(query_compile.EvalColumn):
+    "The cost currency of the posting."
+    __equivalent__ = 'posting.cost.date'
+    __intypes__ = [data.Posting]
+
+    def __init__(self):
+        super().__init__(datetime.date)
+
+    def __call__(self, context):
+        cost = context.posting.cost
+        return cost.date if cost else None
+
+class CostLabelColumn(query_compile.EvalColumn):
+    "The cost currency of the posting."
+    __equivalent__ = 'posting.cost.label'
+    __intypes__ = [data.Posting]
+
+    def __init__(self):
+        super().__init__(str)
+
+    def __call__(self, context):
+        cost = context.posting.cost
+        return cost.label if cost else ''
+
 class PositionColumn(query_compile.EvalColumn):
     "The position for the posting. These can be summed into inventories."
     __equivalent__ = 'posting'
@@ -1393,6 +1420,8 @@ class FilterPostingsEnvironment(query_compile.CompilationEnvironment):
         'currency'       : CurrencyColumn,
         'cost_number'    : CostNumberColumn,
         'cost_currency'  : CostCurrencyColumn,
+        'cost_date'      : CostDateColumn,
+        'cost_label'     : CostLabelColumn,
         'position'       : PositionColumn,
         'change'         : PositionColumn,  # Backwards compatible.
         'price'          : PriceColumn,

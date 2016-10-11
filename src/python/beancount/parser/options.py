@@ -427,7 +427,7 @@ PUBLIC_OPTION_GROUPS = [
       return a pair of (new entries, error instances). If a plugin configuration
       is provided, it is provided as an extra argument to the plugin function.
       Errors should not be printed out the output, they will be converted to
-      strins by the loader and displayed as dictacted by the output medium.
+      strings by the loader and displayed as dictated by the output medium.
     """, [Opt("plugin", [], "beancount.plugins.module_name",
               converter=options_validate_plugin,
               deprecated=("The 'plugin' option is deprecated; it should be "
@@ -440,17 +440,19 @@ PUBLIC_OPTION_GROUPS = [
     """, [Opt("long_string_maxlines", 64)]),
 
     OptGroup("""
-      Enable an EXPERIMENTAL feature that supports an explicit tolerance value
-      on Balance assertions. If enabled, the balance amount supports a tolerance in
-      the input, with this syntax: <number> ~ <tolerance> <currency>, for example,
+      This experiment has been merged as stable. This flag has been deprecated
+      and is now unnecessary.
+
+      Enable a feature that supports an explicit tolerance value on Balance
+      assertions. If enabled, the balance amount supports a tolerance in the
+      input, with this syntax: <number> ~ <tolerance> <currency>, for example,
       "532.23 ~ 0.001 USD".
 
       See the document on tolerances for more details:
       http://furius.ca/beancount/doc/tolerances
-
-      WARNING: This feature may go away at any time. It is an exploration to see
-      if it is truly useful. We may be able to do without.
-    """, [Opt("experiment_explicit_tolerances", False, True)]),
+    """, [Opt("experiment_explicit_tolerances", True, True,
+              deprecated=("This experiment is now accepted as stable. "
+                          "The flag is unnecessary.'"))]),
 
     OptGroup("""
       The booking algorithm implementation, old or new.

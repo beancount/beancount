@@ -375,7 +375,7 @@ optflag : empty
         }
         | HASH
         {
-            $$ = '*';
+            $$ = '#';
         }
         | FLAG
 

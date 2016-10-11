@@ -1622,6 +1622,19 @@ class TestBookReductions(_BookingTestBase):
           error: "Not enough lots to reduce"
         """
 
+    @book_test(Booking.FIFO)
+    def test_reduce__reduction_with_same_currency_not_at_cost(self, _, __):
+        """
+        2016-01-01 * #ante
+          Assets:Vanguard:Retire:AfterTax:HOOL   50 HOOL @ 14.33 USD
+
+        2016-05-02 * #apply
+          Assets:Vanguard:Retire:AfterTax:HOOL  -40 HOOL {14.33 USD} @ 14.33 USD
+
+        2016-05-02 * #booked
+          error: "No position matches"
+        """
+
 
 class TestBookAmbiguous(_BookingTestBase):
 
@@ -2100,7 +2113,7 @@ class TestBookAmbiguousLIFO(_BookingTestBase):
         """
 
 
-class TestBookAmbiguousAVERAGE(_BookingTestBase):
+class _TestBookAmbiguousAVERAGE(_BookingTestBase):
 
     @book_test(Booking.AVERAGE)
     def test_ambiguous__AVERAGE__trivial1(self, _, __):
@@ -2853,8 +2866,6 @@ class TestBook(unittest.TestCase):
                 None, None, None),
             data.Posting('Assets:Other', A('100.00 USD'), None, None, None, None),
             ], postings)
-
-
 
 
 class TestBooking(unittest.TestCase):

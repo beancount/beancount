@@ -2,6 +2,7 @@
 """
 Can you specialize a str type?
 """
+__author__ = "Martin Blais <blais@furius.ca>"
 
 class tag(str):
     pass

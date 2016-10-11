@@ -123,7 +123,7 @@ class TestSplitReports(unittest.TestCase):
         self.assertRegex(output, "balance")
 
     def test_split_reports(self):
-        self.run_split_reports([])
+        self.run_split_reports(['--output-stdout'])
 
     def test_split_reports_with_currency(self):
-        self.run_split_reports(['--currency=USD'])
+        self.run_split_reports(['--output-stdout', '--currency=USD'])

@@ -9,7 +9,6 @@ RedirectMatch /doc/index$                 https://docs.google.com/document/d/1Ra
 RedirectMatch /doc/meta$                  /beancount/doc/index
 
 RedirectMatch /doc/motivation$            https://docs.google.com/document/d/1e4Vz3wZB_8-ZcAwIFde8X5CjzKshE4-OXtVVHm4RQ8s/
-RedirectMatch /doc/intro$                 /beancount/doc/motivation
 RedirectMatch /doc/context$               /beancount/doc/motivation
 
 RedirectMatch /doc/comparison$            https://docs.google.com/document/d/1dW2vIjaXVJAf9hr7GlZVe3fJOkM-MtlVjvCO1ZpNLmg/
@@ -22,6 +21,8 @@ RedirectMatch /doc/double_entry$          /beancount/doc/double-entry
 RedirectMatch /doc/doubleentry$           /beancount/doc/double-entry
 RedirectMatch /doc/double$                /beancount/doc/double-entry
 RedirectMatch /doc/de-method$             /beancount/doc/double-entry
+RedirectMatch /doc/method$                /beancount/doc/double-entry
+RedirectMatch /doc/intro$                 /beancount/doc/double-entry
 
 RedirectMatch /doc/equity$                https://docs.google.com/document/d/1H6C4YNPSe8GvC9Pe4Mp84q7ErPwI2AlZrFfKuNq-TG4/
 RedirectMatch /doc/using-equity           /beancount/doc/equity

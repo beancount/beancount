@@ -32,6 +32,8 @@ from beancount.core.number import D
 from beancount.prices import source
 from beancount.utils import net_utils
 
+from dateutil import tz
+
 
 class Source(source.Source):
     "Google Finance price source extractor."
@@ -67,6 +69,7 @@ class Source(source.Source):
 
         url = 'http://www.google.com/finance/getprices?{}'.format(
             parse.urlencode(sorted(params_dict.items())))
+        logging.info("Fetching %s", url)
 
         # Fetch the data.
         response = net_utils.retrying_urlopen(url)
@@ -91,19 +94,40 @@ class Source(source.Source):
             # No data was found.
             return None
 
+        # Initialize a custom timezone, if there was one.
+        try:
+            offset = int(metadata['TIMEZONE_OFFSET']) * 60
+            zone = tz.tzoffset("Custom", offset)
+        except KeyError:
+            zone = None
+
         interval = int(metadata['INTERVAL'])
         data_lines = lines[index:]
         for line in data_lines:
-            if re.match('TIMEZONE_OFFSET', line):
+            # Process an update on timezone (I'm not sure if this will ever be
+            # seen, but we handle it).
+            match = re.match('TIMEZONE_OFFSET=(.*)', line)
+            if match:
+                # Associate an appropriately defined timezone matching that of
+                # the response. This is extra... we could just as well return a
+                # UTC time.
+                zone = tz.tzoffset("Custom", int(match.group(1)))
                 continue
+
             time_str, price_str = line.split(',')
 
             match = re.match('a(\d+)', time_str)
             if match:
-                # Create time with no timezone, i.e., in localtime.
-                time_marker = datetime.datetime.fromtimestamp(int(match.group(1)))
+                # Create time from the UNIX timestamp. Note: This must be
+                # initialized in UTC coordinates.
+                time_marker = datetime.datetime.fromtimestamp(int(match.group(1)),
+                                                              tz.tzutc())
+                # Convert to the local timezone if required.
+                if zone is not None:
+                    time_marker = time_marker.astimezone(zone)
                 time = time_marker
             else:
+                # Add time as relative from previous timestamp.
                 seconds = int(time_str) * interval
                 time = time_marker + datetime.timedelta(seconds=seconds)
 
