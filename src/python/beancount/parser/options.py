@@ -427,7 +427,7 @@ PUBLIC_OPTION_GROUPS = [
       return a pair of (new entries, error instances). If a plugin configuration
       is provided, it is provided as an extra argument to the plugin function.
       Errors should not be printed out the output, they will be converted to
-      strins by the loader and displayed as dictacted by the output medium.
+      strings by the loader and displayed as dictated by the output medium.
     """, [Opt("plugin", [], "beancount.plugins.module_name",
               converter=options_validate_plugin,
               deprecated=("The 'plugin' option is deprecated; it should be "
