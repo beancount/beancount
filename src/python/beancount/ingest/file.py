@@ -48,6 +48,7 @@ def file_one_file(filename, importers, destination, idify=False, logfile=None):
         try:
             account_ = importer.file_account(file)
         except Exception as exc:
+            account_ = None
             logging.error("Importer %s.file_account() raised an unexpected error: %s",
                           importer.name(), exc)
         if account_ is not None:
