@@ -981,21 +981,21 @@ class TestParseBookingOptions(cmptest.TestCase):
     @loader.load_doc()
     def test_booking_algorithm__simple(self, entries, _, options_map):
         """
-          option "experiment_booking_algorithm" "SIMPLE"
+          option "booking_algorithm" "SIMPLE"
         """
-        self.assertEqual("SIMPLE", options_map["experiment_booking_algorithm"])
+        self.assertEqual("SIMPLE", options_map["booking_algorithm"])
 
     @loader.load_doc()
     def test_booking_algorithm__full(self, entries, _, options_map):
         """
-          option "experiment_booking_algorithm" "FULL"
+          option "booking_algorithm" "FULL"
         """
-        self.assertEqual("FULL", options_map["experiment_booking_algorithm"])
+        self.assertEqual("FULL", options_map["booking_algorithm"])
 
     @loader.load_doc(expect_errors=True)
     def test_booking_algorithm__invalid(self, entries, errors, options_map):
         """
-          option "experiment_booking_algorithm" "XXX"
+          option "booking_algorithm" "XXX"
         """
         self.assertEqual(1, len(errors))
 

@@ -273,6 +273,25 @@ class TestBalance(unittest.TestCase):
         self.assertEqual([], list(map(type, errors)))
 
 
+    @loader.load_doc()
+    def test_balance_mixed_cost_and_no_cost(self, entries, errors, __):
+        """
+          2013-05-01 open Assets:Invest
+          2013-05-01 open Equity:Opening-Balances
+
+          2013-05-01 *
+            Assets:Invest                100 HOOL {14.33 USD}
+            Equity:Opening-Balances
+
+          2013-05-02 *
+            Assets:Invest               -100 HOOL @ 15.66 USD
+            Equity:Opening-Balances
+
+          2013-05-10 balance Assets:Invest   0 HOOL
+        """
+        self.assertEqual([], list(map(type, errors)))
+
+
 class TestBalancePrecision(unittest.TestCase):
 
     @loader.load_doc(expect_errors=True)

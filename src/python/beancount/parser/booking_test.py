@@ -165,7 +165,7 @@ class TestMissingEliminated(cmptest.TestCase):
     @loader.load_doc(expect_errors=True)
     def test_missing_data(self, entries, errors, options_map):
         """
-          option "experiment_booking_algorithm" "SIMPLE"
+          option "booking_algorithm" "SIMPLE"
 
           2013-05-01 open Assets:Test
           2013-05-01 open Expenses:Test

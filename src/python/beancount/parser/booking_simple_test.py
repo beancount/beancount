@@ -11,7 +11,7 @@ class TestSimpleBooking(cmptest.TestCase):
     @loader.load_doc()
     def test_simple_booking_algorithm(self, entries, _, options_map):
         """
-          option "experiment_booking_algorithm" "SIMPLE"
+          option "booking_algorithm" "SIMPLE"
 
           2013-05-01 open Assets:Bank:Investing
           2013-05-01 open Equity:Opening-Balances
@@ -40,6 +40,6 @@ class TestSimpleBooking(cmptest.TestCase):
     @loader.load_doc(expect_errors=True)
     def test_simple_booking_algorithm__invalid(self, _, errors, __):
         """
-          option "experiment_booking_algorithm" "XXX"
+          option "booking_algorithm" "XXX"
         """
         self.assertEqual(1, len(errors))
