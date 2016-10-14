@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Count and report the number of arguments used to call a particular function in a codebase.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import ast
 import os
 import argparse

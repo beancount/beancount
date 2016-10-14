@@ -4,6 +4,8 @@ Extract the org-mode structure and open/close directives from the input text.
 No actual parsing.
 This is a utility script used to share with others my chart-of-accounts.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import re
 
 def main():

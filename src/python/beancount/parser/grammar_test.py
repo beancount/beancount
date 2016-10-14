@@ -84,8 +84,6 @@ class TestParserEntryTypes(unittest.TestCase):
     @parser.parse_doc()
     def test_entry_balance(self, entries, _, __):
         """
-          option "experiment_explicit_tolerances" "TRUE"
-
           2013-05-18 balance Assets:US:BestBank:Checking  200 USD
           2013-05-18 balance Assets:US:BestBank:Checking  200 ~ 0.002 USD
         """

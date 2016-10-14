@@ -449,8 +449,6 @@ class TestPadding(cmptest.TestCase):
     @loader.load_doc(expect_errors=True)
     def test_pad_tolerance(self, entries, errors, __):
         """
-          option "experiment_explicit_tolerances" "TRUE"
-
           1998-01-01 open Assets:CA:Bank:Checking
           1998-01-01 open Income:CA:Something
           1998-01-01 open Equity:Beginning-Balances

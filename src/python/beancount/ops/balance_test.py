@@ -273,6 +273,27 @@ class TestBalance(unittest.TestCase):
         self.assertEqual([], list(map(type, errors)))
 
 
+    @loader.load_doc()
+    def test_balance_mixed_cost_and_no_cost(self, entries, errors, __):
+        """
+          option "experiment_booking_algorithm" "FULL"
+
+          2013-05-01 open Assets:Invest
+          2013-05-01 open Equity:Opening-Balances
+
+          2013-05-01 *
+            Assets:Invest                100 HOOL {14.33 USD}
+            Equity:Opening-Balances
+
+          2013-05-02 *
+            Assets:Invest               -100 HOOL @ 15.66 USD
+            Equity:Opening-Balances
+
+          2013-05-10 balance Assets:Invest   0 HOOL
+        """
+        self.assertEqual([], list(map(type, errors)))
+
+
 class TestBalancePrecision(unittest.TestCase):
 
     @loader.load_doc(expect_errors=True)
@@ -295,8 +316,6 @@ class TestBalancePrecision(unittest.TestCase):
     @loader.load_doc(expect_errors=True)
     def test_get_tolerance__explicit(self, entries, errors, options_map):
         """
-          option "experiment_explicit_tolerances" "TRUE"
-
           2015-05-01 open Assets:Bank:Checking
           2015-05-02 balance Assets:Bank:Checking   0    ~ 0.002 USD
           2015-05-02 balance Assets:Bank:Checking   0.0  ~ 0.002 USD
@@ -338,8 +357,6 @@ class TestBalancePrecision(unittest.TestCase):
     @loader.load_doc(expect_errors=True)
     def test_balance_with_tolerance(self, entries, errors, __):
         """
-          option "experiment_explicit_tolerances" "TRUE"
-
           2013-05-01 open Assets:Bank:Checking
           2013-05-01 open Equity:Opening-Balances
 

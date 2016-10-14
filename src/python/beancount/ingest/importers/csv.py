@@ -183,8 +183,14 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
             # Extract the data we need from the row, based on the configuration.
             date = get(row, Col.DATE)
             txn_date = get(row, Col.TXN_DATE)
+
             payee = get(row, Col.PAYEE)
-            narration = get(row, Col.NARRATION)
+            fields = filter(None, [get(row, field)
+                                   for field in (Col.NARRATION1,
+                                                 Col.NARRATION2,
+                                                 Col.NARRATION3)])
+            narration = ' -- '.join(fields)
+
             tag = get(row, Col.TAG)
             tags = {tag} if tag is not None else None
 

@@ -16,7 +16,7 @@ import sys
 
 
 # A regular expression that matches an account name.
-ACCOUNT_RE = '([A-Z][A-Za-z0-9\-]+)(:[A-Z][A-Za-z0-9\-]+)+'
+ACCOUNT_RE = '([A-Z][A-Za-z0-9\-]+)(:[A-Z][A-Za-z0-9\-]*)+'
 
 
 def align_beancount(contents):

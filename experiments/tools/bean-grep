@@ -2,6 +2,8 @@
 """Load up a ledger and match against various parts of the entries in a way
 that one can iterate with Emacs.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import re
 
 from beancount import load

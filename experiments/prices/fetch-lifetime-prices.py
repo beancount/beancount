@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """A script that will fetch missing prices.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
 
 from dateutil.parser import parse as parse_datetime
 

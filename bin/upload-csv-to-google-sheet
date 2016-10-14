@@ -229,13 +229,15 @@ def csv_to_batch_update(filename, batch):
     return (max_rows, max_cols)
 
 
-def enumerate_arguments(args):
+def enumerate_arguments(args, use_filenames=True):
     """Parse the filenames and their optional worksheet names or numbers.
 
     Args:
       args: A list of "filename:worksheet-id" or "filename:index" that specifies
         CSV files to be uploaded and which worksheet id (name) or index to upload
         them to.
+      use_filenames: A boolean, if true, we use the filenames instead of the
+        indexes to create new sheet names.
     Returns:
       A list of string filenames and a list of names or integer index for each
       of the spreadsheets.
@@ -254,7 +256,10 @@ def enumerate_arguments(args):
                                      "sheet indexes start at 1.".format(filename))
         else:
             filename = arg
-            name_or_index = None  # To be allocated below.
+            if use_filenames:
+                name_or_index = path.splitext(path.basename(filename))[0]
+            else:
+                name_or_index = None  # To be allocated below.
 
         filenames.append(filename)
         names.append(name_or_index)
@@ -289,24 +294,25 @@ def find_or_create_worksheets(gd_client, docid, names):
         # Get the worksheet id.
         if isinstance(name, int):
             index = name
+            name = "Sheet {:d}".format(index)
             worksheets = gd_client.get_worksheets(docid)
-            try:
-                ws = worksheets.entry[index]
-            except IndexError:
-                # We have to create at least this many sheets.
-                for i in range(len(worksheets.entry), index+1):
-                    title = "Sheet {:d}".format(i)
-                    logging.info("Creating worksheet: %s", title)
-                    gd_client.add_worksheet(docid, title, 1, 1)
-
-                # Try again.
-                worksheets = gd_client.get_worksheets(docid)
-                ws = worksheets.entry[index]
         else:
             assert isinstance(name, str)
             query = sheets_client.WorksheetQuery(name)
             worksheets = gd_client.get_worksheets(docid, query=query)
-            ws = worksheets.entry[0]
+            index = 0
+
+        try:
+            ws = worksheets.entry[index]
+        except IndexError:
+            # We have to create at least this many sheets.
+            for i in range(len(worksheets.entry), index+1):
+                logging.info("Creating worksheet: %s", name)
+                gd_client.add_worksheet(docid, name, 1, 1)
+
+            # Try again.
+            worksheets = gd_client.get_worksheets(docid)
+            ws = worksheets.entry[index]
 
         wslist.append(ws)
 
@@ -324,6 +330,10 @@ def main():
     parser.add_argument('filenames', nargs='+', action='store',
                         help="CSV filenames[:worksheet] to upload")
 
+    parser.add_argument('--no-use-filenames',
+                        dest='use_filenames', action='store_false', default=True,
+                        help="Don't use the basenames in creating default sheet names")
+
     args = parser.parse_args()
     docid = args.docid
 
@@ -331,7 +341,7 @@ def main():
     gd_client = get_spreadsheets_client(args)
 
     logging.info("Resolving indexes for each of the input files.")
-    filenames, names = enumerate_arguments(args.filenames)
+    filenames, names = enumerate_arguments(args.filenames, args.use_filenames)
 
     logging.info("Find or create the worksheets.")
     wslist = find_or_create_worksheets(gd_client, docid, names)

@@ -3,6 +3,8 @@
 
 (This is the main test program I fiddle with during development.)
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import datetime
 import argparse
 import contextlib

@@ -15,7 +15,7 @@ class TestFileType(unittest.TestCase):
             expected_mime_types = [expected_mime_types]
         mime_type = file_type.guess_file_type(
             path.join(self.DATA_DIR, example_file))
-        self.assertTrue(mime_type in expected_mime_types, mime_type)
+        self.assertIn(mime_type, expected_mime_types)
 
     def test_csv(self):
         self.check_mime_type('example.csv', 'text/csv')

@@ -15,3 +15,15 @@ problems which can be apparent in this code:
    not carry acquisition dates in its lots. So I've had to apply some ugly
    kludge in the 'carry_date_and_book_cost' branch in order to make this work in
    the meantime. The 'booking' branch will solve this problem entirely.
+
+
+Update [2016-08-21]:
+
+Beancount now supports dated postings by using the new booking algorithm, which
+can be enabled like this:
+
+  option "experiment_booking_algorithm" "FULL"
+  option "booking_method" "FIFO"
+
+It's likely that by the time you're reading this, this method will have become
+the default booking method.
