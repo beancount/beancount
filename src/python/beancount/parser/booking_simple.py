@@ -199,14 +199,7 @@ def get_incomplete_postings(entry, options_map):
     residual = Inventory()
 
     # A dict of values for default tolerances.
-    if options_map['use_legacy_fixed_tolerances']:
-        # This is supported only to support an easy transition for users.
-        # Users should be able to revert to this easily.
-        tolerances = {}
-        default_tolerances = interpolate.LEGACY_DEFAULT_TOLERANCES
-    else:
-        tolerances = interpolate.infer_tolerances(postings, options_map)
-        default_tolerances = options_map['inferred_tolerance_default']
+    tolerances, default_tolerances = interpolate.get_tolerances(postings, options_map)
 
     # Process all the postings.
     has_nonzero_amount = False

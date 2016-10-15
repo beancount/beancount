@@ -1,5 +1,6 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import datetime
 import textwrap
 import unittest
 
@@ -211,8 +212,8 @@ class TestComputeBalance(unittest.TestCase):
         expected_balance = inventory.Inventory()
         expected_balance.add_amount(A('-400 USD'))
         expected_balance.add_amount(A('10 HOOL'),
-                                    position.Cost(D('40'), 'USD', None, None))
-
+                                    position.Cost(D('40'), 'USD',
+                                                  None, None))
         self.assertEqual(expected_balance, computed_balance)
 
     @loader.load_doc()

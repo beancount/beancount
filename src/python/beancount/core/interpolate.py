@@ -146,6 +146,28 @@ def compute_residual(postings):
     return inventory
 
 
+def get_tolerances(postings, options_map):
+    """Get the list of tolerances, based on the global options.
+
+    For use in inventory.get_tolerance().
+
+    Args:
+      postings: A list of Posting instances.
+      options_map: A dict of options.
+    Returns:
+      A pairt of dicts, tolerances and default_tolerances.
+    """
+    if options_map['use_legacy_fixed_tolerances']:
+        # This is supported only to support an easy transition for users.
+        # Users should be able to revert to this easily.
+        tolerances = {}
+        default_tolerances = LEGACY_DEFAULT_TOLERANCES
+    else:
+        tolerances = infer_tolerances(postings, options_map)
+        default_tolerances = options_map['inferred_tolerance_default']
+    return tolerances, default_tolerances
+
+
 def infer_tolerances(postings, options_map, use_cost=None):
     """Infer tolerances from a list of postings.
 
@@ -184,6 +206,7 @@ def infer_tolerances(postings, options_map, use_cost=None):
 
     Args:
       postings: A list of Posting instances.
+      options_map: A dict of options.
       use_cost: A boolean, true if we should be using a combination of the smallest
         digit of the number times the cost or price in order to infer the tolerance.
         If the value is left unspecified (as 'None'), the default value can be
