@@ -134,6 +134,9 @@ def _book(entries, options_map, booking_methods):
                 continue
             posting_groups = replace_currencies(entry.postings, refer_groups)
 
+            # Get the list of tolerances.
+            tolerances = interpolate.infer_tolerances(entry.postings, options_map)
+
             # Resolve reductions to a particular lot in their inventory balance.
             repl_postings = []
             for currency, group_postings in posting_groups.items():
@@ -170,7 +173,8 @@ def _book(entries, options_map, booking_methods):
                 # instances of Cost.
                 (inter_postings,
                  interpolation_errors,
-                 interpolated) = interpolate_group(booked_postings, balances, currency)
+                 interpolated) = interpolate_group(booked_postings, balances, currency,
+                                                   tolerances)
 
                 if interpolation_errors:
                     errors.extend(interpolation_errors)
@@ -744,7 +748,6 @@ def handle_ambiguous_matches(entry, posting, matches, booking_method):
 
 
 def compute_cost_number(costspec, units):
-
     """Given a CostSpec, return the cost number, if possible to compute.
 
     Args:
@@ -818,13 +821,14 @@ class MissingType(misc_utils.Enum):
 InterpolationError = collections.namedtuple('InterpolationError', 'source message entry')
 
 
-def interpolate_group(postings, balances, currency):
+def interpolate_group(postings, balances, currency, tolerances):
     """Interpolate missing numbers in the set of postings.
 
     Args:
       postings: A list of Posting instances.
       balances: A dict of account to its ante-inventory.
       currency: The weight currency of this group, used for reporting errors.
+      tolerances: A dict of currency to tolerance values.
     Returns:
       A tuple of
         postings: A lit of new posting instances.
@@ -934,14 +938,20 @@ def interpolate_group(postings, balances, currency):
                     "Internal error; residual currency different than missing currency.")
                 cost_total = cost.number_total or ZERO
                 units_number = (weight - cost_total) / cost.number_per
+
             elif incomplete_posting.price:
                 assert incomplete_posting.price.currency == weight_currency, (
                     "Internal error; residual currency different than missing currency.")
                 units_number = weight / incomplete_posting.price.number
+
             else:
                 assert units.currency == weight_currency, (
                     "Internal error; residual currency different than missing currency.")
                 units_number = weight
+
+            # Quantize the interpolated units if necessary.
+            units_number = interpolate.quantize_with_tolerance(
+                tolerances, Amount(units_number, units.currency)).number
 
             if weight != ZERO:
                 new_pos = Position(Amount(units_number, units.currency), cost)

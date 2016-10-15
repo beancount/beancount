@@ -262,25 +262,7 @@ def get_incomplete_postings(entry, options_map):
             # each position.
             for pos in residual_positions:
                 pos = -pos
-                units = pos.units
-
-                # Applying rounding to the default tolerance, if there is one.
-                tolerance = tolerances.get(units.currency)
-                if tolerance:
-                    quantum = (tolerance * 2).normalize()
-
-                    # If the tolerance is a neat number provided by the user,
-                    # quantize the inferred numbers. See doc on quantize():
-                    #
-                    # Unlike other operations, if the length of the coefficient
-                    # after the quantize operation would be greater than
-                    # precision, then an InvalidOperation is signaled. This
-                    # guarantees that, unless there is an error condition, the
-                    # quantized exponent is always equal to that of the
-                    # right-hand operand.
-                    if interpolate.is_tolerance_user_specified(quantum):
-                        pos.set_units(Amount(units.number.quantize(quantum),
-                                             units.currency))
+                pos.set_units(interpolate.quantize_with_tolerance(tolerances, pos.units))
 
                 meta = copy.copy(old_posting.meta) if old_posting.meta else {}
                 meta[interpolate.AUTOMATIC_META] = True

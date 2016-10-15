@@ -224,7 +224,6 @@ def infer_tolerances(postings, options_map, use_cost=None):
                 tolerance = ONE.scaleb(expo) * inferred_tolerance_multiplier
                 tolerances[currency] = max(tolerance,
                                            tolerances.get(currency, -1024))
-
                 if not use_cost:
                     continue
 
@@ -370,3 +369,32 @@ def compute_entry_context(entries, context_entry):
             balance.add_position(posting)
 
     return context_before, context_after
+
+
+def quantize_with_tolerance(tolerances, units):
+    """Quantize the units using the tolerance dict.
+
+    Args:
+      tolerances: A dict of currency to tolerance Decimalvalues.
+      units: An instance of Amount.
+    Returns:
+      An instance of Amount, with the number possibly quantized.
+    """
+    # Applying rounding to the default tolerance, if there is one.
+    tolerance = tolerances.get(units.currency)
+    if tolerance:
+        quantum = (tolerance * 2).normalize()
+
+        # If the tolerance is a neat number provided by the user,
+        # quantize the inferred numbers. See doc on quantize():
+        #
+        # Unlike other operations, if the length of the coefficient
+        # after the quantize operation would be greater than
+        # precision, then an InvalidOperation is signaled. This
+        # guarantees that, unless there is an error condition, the
+        # quantized exponent is always equal to that of the
+        # right-hand operand.
+        if is_tolerance_user_specified(quantum):
+            units = Amount(units.number.quantize(quantum),
+                           units.currency)
+    return units

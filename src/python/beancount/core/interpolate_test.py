@@ -17,6 +17,7 @@ from beancount.core import position
 from beancount.parser import parser
 from beancount.parser import booking_simple
 from beancount.parser import cmptest
+from beancount.utils import defdict
 from beancount import loader
 
 
@@ -626,3 +627,23 @@ class TestInferTolerances(cmptest.TestCase):
         # all legs end up being automatic... and we have to fall back on the
         # default tolerance.
         pass
+
+
+class TestQuantize(unittest.TestCase):
+
+    def test_quantize_with_tolerance(self):
+        tolerances = defdict.ImmutableDictWithDefault(D('0.000005'), {'USD': D('0.01')})
+        self.assertEqual(
+            A('100.12 USD'),
+            interpolate.quantize_with_tolerance(tolerances, A('100.123123123 USD')))
+        self.assertEqual(
+            A('100.12312 CAD'),
+            interpolate.quantize_with_tolerance(tolerances, A('100.123123123 CAD')))
+
+        tolerances = defdict.ImmutableDictWithDefault(ZERO, {'USD': D('0.01')})
+        self.assertEqual(
+            A('100.12 USD'),
+            interpolate.quantize_with_tolerance(tolerances, A('100.123123123 USD')))
+        self.assertEqual(
+            A('100.123123123 CAD'),
+            interpolate.quantize_with_tolerance(tolerances, A('100.123123123 CAD')))

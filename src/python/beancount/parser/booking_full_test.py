@@ -18,13 +18,13 @@ from beancount.core.position import CostSpec
 from beancount.core.position import Cost
 from beancount.core.position import Position
 from beancount.core.inventory import from_string as I
-#from beancount.utils.misc_utils import dictmap
 from beancount.utils import test_utils
 from beancount.core.data import Booking
 from beancount.core import inventory
 from beancount.core import position
 from beancount.core import amount
 from beancount.core import data
+from beancount.core import interpolate
 from beancount.parser import parser
 from beancount.parser import printer
 from beancount.parser import booking_full as bf
@@ -532,13 +532,19 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
     #   interpolated: A boolean, asserting the return value of interpolate_group().
     #   string: A string, to be parsed to obtain the resulting Posting instances.
     #   errors: A list of error strings to check against the interpolation for that group.
-    def check(self, entry, expected, balances=None, debug=False):
+    def check(self, entry, expected, balances=None, debug=False, options_map=None):
         if balances is None:
             balances = {}
 
         groups, errors = bf.categorize_by_currency(entry, balances)
         self.assertFalse(errors)
         posting_groups = bf.replace_currencies(entry.postings, groups)
+
+        if options_map is not None:
+            tolerances = interpolate.infer_tolerances(entry.postings, options_map)
+        else:
+            tolerances = {}
+
         for currency, postings in posting_groups.items():
             try:
                 exp_interpolated, exp_string, exp_errors = expected[currency]
@@ -547,7 +553,7 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
 
             # Run the interpolation for that group.
             new_postings, errors, interpolated = bf.interpolate_group(
-                postings, balances, currency)
+                postings, balances, currency, tolerances)
 
             # Print out infos for troubleshooting.
             if debug:
@@ -920,6 +926,46 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
                 Assets:Account4   -99.00 CAD
                 Assets:Account5    -1.00 CAD
             """, None)})
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_auto_posting__quantize_with_tolerances(self, entries, errors, options_map):
+        """
+          option "booking_algorithm" "FULL"
+          option "inferred_tolerance_default" "USD:0.00005"
+          option "inferred_tolerance_default" "JPY:0.5"
+
+          2000-01-01 open Assets:Account1
+
+          2016-04-23 * ""
+            Assets:Account1   100.123412341234 USD
+            Assets:Account1
+
+          2016-04-24 * ""
+            Assets:Account1   100.123412341234 CAD
+            Assets:Account1
+
+          2016-04-25 * ""
+            Assets:Account1   100.123412341234 JPY
+            Assets:Account1
+        """
+        self.check(entries[1], {
+            'USD': (True, """
+              2016-04-24 * ""
+                Assets:Account1   100.123412341234 USD
+                Assets:Account1  -100.1234 USD
+            """, None)}, options_map=options_map)
+        self.check(entries[2], {
+            'CAD': (True, """
+              2016-04-24 * ""
+                Assets:Account1   100.123412341234 CAD
+                Assets:Account1  -100.123412341234 CAD
+            """, None)}, options_map=options_map)
+        self.check(entries[3], {
+            'JPY': (True, """
+              2016-04-25 * ""
+                Assets:Account1   100.123412341234 JPY
+                Assets:Account1  -100 JPY
+            """, None)}, options_map=options_map)
 
 
 class TestComputeCostNumber(unittest.TestCase):
