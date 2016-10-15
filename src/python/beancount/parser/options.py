@@ -499,7 +499,7 @@ PUBLIC_OPTION_GROUPS = [
     OptGroup("""
       This variable is deprecated. It has been renamed to "booking_algorithm."
     """, [Opt("experiment_booking_algorithm", "FULL", "SIMPLE",
-              deprecated=('This variable has been renamed to booking_algorithm" and '
+              deprecated=('This variable has been renamed to "booking_algorithm" and '
                           'is now permanent. The new default is "FULL".'))]),
 
     OptGroup("""
