@@ -181,7 +181,10 @@ def _book(entries, options_map, booking_methods):
                 repl_postings.extend(inter_postings)
 
             # Replace postings by interpolated ones.
-            entry = entry._replace(postings=repl_postings)
+            meta = entry.meta.copy()
+            meta[interpolate.AUTOMATIC_TOLERANCES] = tolerances
+            entry = entry._replace(postings=repl_postings,
+                                   meta=meta)
 
             # Update the running balances for each account using the final,
             # booked and interpolated values. Note that we could optimize away
@@ -950,8 +953,9 @@ def interpolate_group(postings, balances, currency, tolerances):
                 units_number = weight
 
             # Quantize the interpolated units if necessary.
-            units_number = interpolate.quantize_with_tolerance(
-                tolerances, Amount(units_number, units.currency)).number
+            units_number = interpolate.quantize_with_tolerance(tolerances,
+                                                               units.currency,
+                                                               units_number)
 
             if weight != ZERO:
                 new_pos = Position(Amount(units_number, units.currency), cost)

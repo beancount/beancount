@@ -2668,11 +2668,13 @@ class TestBook(unittest.TestCase):
                                                  entry.postings,
                                                  balances,
                                                  booking_methods)
+            tolerances = {}
             (inter_postings,
              inter_errors,
              interpolated) = bf.interpolate_group(booked_postings,
                                                   balances,
-                                                  currency)
+                                                  currency,
+                                                  tolerances)
             for posting in inter_postings:
                 balances[posting.account].add_position(posting)
 

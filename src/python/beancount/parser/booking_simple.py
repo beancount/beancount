@@ -262,7 +262,11 @@ def get_incomplete_postings(entry, options_map):
             # each position.
             for pos in residual_positions:
                 pos = -pos
-                pos.set_units(interpolate.quantize_with_tolerance(tolerances, pos.units))
+                pos.set_units(Amount(
+                    interpolate.quantize_with_tolerance(tolerances,
+                                                        pos.units.currency,
+                                                        pos.units.number),
+                    pos.units.currency))
 
                 meta = copy.copy(old_posting.meta) if old_posting.meta else {}
                 meta[interpolate.AUTOMATIC_META] = True
@@ -330,6 +334,6 @@ def balance_incomplete_postings(entry, options_map):
 
     if entry.meta is None:
         entry.meta = {}
-    entry.meta['__tolerances__'] = tolerances
+    entry.meta[interpolate.AUTOMATIC_TOLERANCES] = tolerances
 
     return errors or None

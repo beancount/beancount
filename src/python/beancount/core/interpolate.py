@@ -255,6 +255,9 @@ AUTOMATIC_META = '__automatic__'
 # Meta-data field appended to postings inserted to absorb rounding error.
 AUTOMATIC_RESIDUAL = '__residual__'
 
+# Meta-data field added for the tolerances inferred for this entry.
+AUTOMATIC_TOLERANCES = '__tolerances__'
+
 
 def get_residual_postings(residual, account_rounding):
     """Create postings to book the given residuals.
@@ -371,17 +374,18 @@ def compute_entry_context(entries, context_entry):
     return context_before, context_after
 
 
-def quantize_with_tolerance(tolerances, units):
+def quantize_with_tolerance(tolerances, currency, number):
     """Quantize the units using the tolerance dict.
 
     Args:
       tolerances: A dict of currency to tolerance Decimalvalues.
-      units: An instance of Amount.
+      number: A number to quantize.
+      currency: A string currecy.
     Returns:
-      An instance of Amount, with the number possibly quantized.
+      A Decimal, the number possibly quantized.
     """
     # Applying rounding to the default tolerance, if there is one.
-    tolerance = tolerances.get(units.currency)
+    tolerance = tolerances.get(currency)
     if tolerance:
         quantum = (tolerance * 2).normalize()
 
@@ -395,6 +399,5 @@ def quantize_with_tolerance(tolerances, units):
         # quantized exponent is always equal to that of the
         # right-hand operand.
         if is_tolerance_user_specified(quantum):
-            units = Amount(units.number.quantize(quantum),
-                           units.currency)
-    return units
+            number = number.quantize(quantum)
+    return number

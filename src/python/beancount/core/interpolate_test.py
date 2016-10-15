@@ -634,16 +634,16 @@ class TestQuantize(unittest.TestCase):
     def test_quantize_with_tolerance(self):
         tolerances = defdict.ImmutableDictWithDefault(D('0.000005'), {'USD': D('0.01')})
         self.assertEqual(
-            A('100.12 USD'),
-            interpolate.quantize_with_tolerance(tolerances, A('100.123123123 USD')))
+            D('100.12'),
+            interpolate.quantize_with_tolerance(tolerances, 'USD', D('100.123123123')))
         self.assertEqual(
-            A('100.12312 CAD'),
-            interpolate.quantize_with_tolerance(tolerances, A('100.123123123 CAD')))
+            D('100.12312'),
+            interpolate.quantize_with_tolerance(tolerances, 'CAD', D('100.123123123')))
 
         tolerances = defdict.ImmutableDictWithDefault(ZERO, {'USD': D('0.01')})
         self.assertEqual(
-            A('100.12 USD'),
-            interpolate.quantize_with_tolerance(tolerances, A('100.123123123 USD')))
+            D('100.12'),
+            interpolate.quantize_with_tolerance(tolerances, 'USD', D('100.123123123')))
         self.assertEqual(
-            A('100.123123123 CAD'),
-            interpolate.quantize_with_tolerance(tolerances, A('100.123123123 CAD')))
+            D('100.123123123'),
+            interpolate.quantize_with_tolerance(tolerances, 'CAD', D('100.123123123')))
