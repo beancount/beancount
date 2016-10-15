@@ -17,6 +17,7 @@ from beancount.core.data import Transaction
 from beancount.core.data import Posting
 from beancount.core import getters
 from beancount.core import account
+from beancount.utils import defdict
 
 
 # The default tolerances value to use for legacy tolerances.
@@ -146,28 +147,6 @@ def compute_residual(postings):
     return inventory
 
 
-def get_tolerances(postings, options_map):
-    """Get the list of tolerances, based on the global options.
-
-    For use in inventory.get_tolerance().
-
-    Args:
-      postings: A list of Posting instances.
-      options_map: A dict of options.
-    Returns:
-      A pairt of dicts, tolerances and default_tolerances.
-    """
-    if options_map['use_legacy_fixed_tolerances']:
-        # This is supported only to support an easy transition for users.
-        # Users should be able to revert to this easily.
-        tolerances = {}
-        default_tolerances = LEGACY_DEFAULT_TOLERANCES
-    else:
-        tolerances = infer_tolerances(postings, options_map)
-        default_tolerances = options_map['inferred_tolerance_default']
-    return tolerances, default_tolerances
-
-
 def infer_tolerances(postings, options_map, use_cost=None):
     """Infer tolerances from a list of postings.
 
@@ -214,53 +193,60 @@ def infer_tolerances(postings, options_map, use_cost=None):
     Returns:
       A dict of currency to the tolerated difference amount to be used for it,
       e.g. 0.005.
-
     """
     if use_cost is None:
         use_cost = options_map["infer_tolerance_from_cost"]
 
     inferred_tolerance_multiplier = options_map["inferred_tolerance_multiplier"]
 
-    tolerances = {}
-    cost_tolerances = collections.defaultdict(D)
-    for posting in postings:
-        # Skip the precision on automatically inferred postings.
-        if posting.meta and AUTOMATIC_META in posting.meta:
-            continue
-        units = posting.units
-        if units is MISSING or units is None:
-            continue
+    if options_map['use_legacy_fixed_tolerances']:
+        # This is supported only to support an easy transition for users.
+        # Users should be able to revert to this easily.
+        tolerances = LEGACY_DEFAULT_TOLERANCES.copy()
+    else:
+        default_tolerances = options_map['inferred_tolerance_default']
+        tolerances = default_tolerances.copy()
 
-        # Compute bounds on the number.
-        currency = units.currency
-        expo = units.number.as_tuple().exponent
-        if expo < 0:
-            # Note: the exponent is a negative value.
-            tolerance = ONE.scaleb(expo) * inferred_tolerance_multiplier
-            tolerances[currency] = max(tolerance,
-                                       tolerances.get(currency, -1024))
-
-            if not use_cost:
+        cost_tolerances = collections.defaultdict(D)
+        for posting in postings:
+            # Skip the precision on automatically inferred postings.
+            if posting.meta and AUTOMATIC_META in posting.meta:
+                continue
+            units = posting.units
+            if units is MISSING or units is None:
                 continue
 
-            # Compute bounds on the smallest digit of the number implied as cost.
-            cost = posting.cost
-            if cost is not None:
-                cost_currency = cost.currency
-                cost_tolerance = min(tolerance * cost.number, MAXIMUM_TOLERANCE)
-                cost_tolerances[cost_currency] += cost_tolerance
+            # Compute bounds on the number.
+            currency = units.currency
+            expo = units.number.as_tuple().exponent
+            if expo < 0:
+                # Note: the exponent is a negative value.
+                tolerance = ONE.scaleb(expo) * inferred_tolerance_multiplier
+                tolerances[currency] = max(tolerance,
+                                           tolerances.get(currency, -1024))
 
-            # Compute bounds on the smallest digit of the number implied as cost.
-            price = posting.price
-            if price is not None:
-                price_currency = price.currency
-                price_tolerance = min(tolerance * price.number, MAXIMUM_TOLERANCE)
-                cost_tolerances[price_currency] += price_tolerance
+                if not use_cost:
+                    continue
 
-    for currency, tolerance in cost_tolerances.items():
-        tolerances[currency] = max(tolerance, tolerances.get(currency, -1024))
+                # Compute bounds on the smallest digit of the number implied as cost.
+                cost = posting.cost
+                if cost is not None:
+                    cost_currency = cost.currency
+                    cost_tolerance = min(tolerance * cost.number, MAXIMUM_TOLERANCE)
+                    cost_tolerances[cost_currency] += cost_tolerance
 
-    return tolerances
+                # Compute bounds on the smallest digit of the number implied as cost.
+                price = posting.price
+                if price is not None:
+                    price_currency = price.currency
+                    price_tolerance = min(tolerance * price.number, MAXIMUM_TOLERANCE)
+                    cost_tolerances[price_currency] += price_tolerance
+
+        for currency, tolerance in cost_tolerances.items():
+            tolerances[currency] = max(tolerance, tolerances.get(currency, -1024))
+
+    default = tolerances.pop('*', ZERO)
+    return defdict.ImmutableDictWithDefault(default, tolerances)
 
 
 # Meta-data field appended to automatically inserted postings.

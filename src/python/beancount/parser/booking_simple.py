@@ -65,9 +65,7 @@ def book(entries, options_map, unused_booking_methods):
         if __sanity_checks__:
             residual = interpolate.compute_residual(entry.postings)
             tolerances = interpolate.infer_tolerances(entry.postings, options_map)
-            assert residual.is_small(tolerances,
-                                     options_map['inferred_tolerance_default']), (
-                                         "Invalid residual {}".format(residual))
+            assert residual.is_small(tolerances), "Invalid residual {}".format(residual)
 
     return entries_with_lots, errors
 
@@ -199,7 +197,7 @@ def get_incomplete_postings(entry, options_map):
     residual = Inventory()
 
     # A dict of values for default tolerances.
-    tolerances, default_tolerances = interpolate.get_tolerances(postings, options_map)
+    tolerances = interpolate.infer_tolerances(postings, options_map)
 
     # Process all the postings.
     has_nonzero_amount = False
@@ -267,9 +265,7 @@ def get_incomplete_postings(entry, options_map):
                 units = pos.units
 
                 # Applying rounding to the default tolerance, if there is one.
-                tolerance = inventory.get_tolerance(tolerances,
-                                                    default_tolerances,
-                                                    units.currency)
+                tolerance = tolerances.get(units.currency)
                 if tolerance:
                     quantum = (tolerance * 2).normalize()
 

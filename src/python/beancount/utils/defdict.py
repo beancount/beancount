@@ -16,3 +16,29 @@ class DefaultDictWithKey(collections.defaultdict):
     def __missing__(self, key):
         self[key] = value = self.default_factory(key)  # pylint: disable=not-callable
         return value
+
+
+NOTFOUND = object()
+
+class ImmutableDictWithDefault(dict):
+    """An immutable dict which returns a default value for missing keys.
+
+    This differs from a defualtdict in that it does not insert a missing default
+    value when one is materialized (from a missing fetch), and furtheremore, the
+    set method is make unavailable to prevent mutation beyond construction.
+    """
+    def __init__(self, default, *args):
+        super(ImmutableDictWithDefault, self).__init__(*args)
+        self.default = default
+
+    def __setitem__(self, key, value):
+        raise NotImplementedError
+
+    def __getitem__(self, key):
+        value = dict.get(self, key, NOTFOUND)
+        if value is NOTFOUND:
+            value = self.default
+        return value
+
+    def get(self, key, _=None):
+        return self.__getitem__(key)

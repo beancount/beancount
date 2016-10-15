@@ -1,11 +1,13 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import collections
 import datetime
 import textwrap
 import unittest
 
 from beancount.core.number import D
 from beancount.core.amount import A
+from beancount.core.amount import ZERO
 from beancount.core.data import create_simple_posting as P
 from beancount.core.data import create_simple_posting_with_cost as PCost
 from beancount.core import interpolate
