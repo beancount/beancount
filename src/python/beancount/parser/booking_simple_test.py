@@ -1,9 +1,205 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import textwrap
+import unittest
+
 from beancount.core.number import D
-from beancount.core import data
-from beancount.parser import cmptest
+from beancount.core.amount import A
+from beancount.core.data import create_simple_posting as P
+from beancount.core.data import create_simple_posting_with_cost as PCost
+
 from beancount import loader
+from beancount.core import data
+from beancount.core import interpolate
+from beancount.core import inventory
+from beancount.core import position
+from beancount.parser import cmptest
+from beancount.parser import cmptest
+from beancount.parser import parser
+from beancount.parser import booking_simple
+
+
+class TestBalanceIncompletePostings(cmptest.TestCase):
+
+    def get_incomplete_entry(self, string):
+        """Parse a single incomplete entry and convert its CostSpec to a Cost.
+
+        Args:
+          string: The input string to parse.
+        Returns:
+          A pair of (entry, list of errors).
+        """
+        entries, errors, options_map = parser.parse_string(string, dedent=True)
+        self.assertFalse(errors)
+        self.assertEqual(1, len(entries))
+        (entries_with_lots, errors) = booking_simple.convert_lot_specs_to_lots(entries)
+        self.assertEqual(1, len(entries))
+        entry = entries_with_lots[0]
+        errors = booking_simple.balance_incomplete_postings(entry, options_map)
+        return entry, errors
+
+    def test_balance_incomplete_postings__noop(self):
+        entry, errors = self.get_incomplete_entry("""
+          2013-02-23 * "Something"
+            Liabilities:CreditCard     -50 USD
+            Expenses:Restaurant         50 USD
+        """)
+        self.assertFalse(errors)
+        self.assertEqual(2, len(entry.postings))
+
+    def test_balance_incomplete_postings__fill1(self):
+        entry, errors = self.get_incomplete_entry("""
+          2013-02-23 * "Something"
+            Liabilities:CreditCard     -50 USD
+            Expenses:Restaurant
+        """)
+        self.assertFalse(errors)
+        self.assertEqual(2, len(entry.postings))
+        self.assertEqual(position.get_position(entry.postings[1]),
+                         position.from_string('50 USD'))
+
+    def test_balance_incomplete_postings__fill2(self):
+        entry, errors = self.get_incomplete_entry("""
+          2013-02-23 * "Something"
+            Liabilities:CreditCard     -50 USD
+            Liabilities:CreditCard     -50 CAD
+            Expenses:Restaurant
+        """)
+        self.assertFalse(errors)
+        self.assertEqual(4, len(entry.postings))
+        self.assertEqual(entry.postings[2].account, 'Expenses:Restaurant')
+        self.assertEqual(entry.postings[3].account, 'Expenses:Restaurant')
+        self.assertEqual(position.get_position(entry.postings[2]),
+                         position.from_string('50 USD'))
+        self.assertEqual(position.get_position(entry.postings[3]),
+                         position.from_string('50 CAD'))
+
+    def test_balance_incomplete_postings__cost(self):
+        entry, errors = self.get_incomplete_entry("""
+          2013-02-23 * "Something"
+            Assets:Invest     10 MSFT {43.23 USD}
+            Assets:Cash
+        """)
+        self.assertFalse(errors)
+        self.assertEqual(2, len(entry.postings))
+        self.assertEqual(entry.postings[1].account, 'Assets:Cash')
+        self.assertEqual(position.get_position(entry.postings[1]),
+                         position.from_string('-432.30 USD'))
+
+    def test_balance_incomplete_postings__insert_rounding(self):
+        entry, errors = self.get_incomplete_entry("""
+          option "account_rounding" "RoundingError"
+
+          2013-02-23 * "Something"
+            Assets:Invest     1.245 RGAGX {43.23 USD}
+            Assets:Cash      -53.82 USD
+        """)
+        self.assertFalse(errors)
+        self.assertEqual(3, len(entry.postings))
+        self.assertEqual(entry.postings[2].account, 'Equity:RoundingError')
+        self.assertEqual(position.get_position(entry.postings[2]),
+                         position.from_string('-0.00135 USD'))
+
+    def test_balance_incomplete_postings__quantum(self):
+        entry, errors = self.get_incomplete_entry("""
+          option "inferred_tolerance_default" "USD:0.01"
+
+          2013-02-23 * "Something"
+            Assets:Invest     1.245 RGAGX {43.23 USD}
+            Assets:Cash
+        """)
+        self.assertFalse(errors)
+        self.assertEqual(D('-53.82'), entry.postings[1].units.number)
+
+        entry, errors = self.get_incomplete_entry("""
+          option "inferred_tolerance_default" "USD:0.001"
+
+          2013-02-23 * "Something"
+            Assets:Invest     1.245 RGAGX {43.23 USD}
+            Assets:Cash
+        """)
+        self.assertFalse(errors)
+        self.assertEqual(D('-53.821'), entry.postings[1].units.number)
+
+    def test_balance_incomplete_postings__rounding_and_quantum(self):
+        entry, errors = self.get_incomplete_entry("""
+          option "account_rounding" "RoundingError"
+          option "inferred_tolerance_default" "USD:0.01"
+
+          2013-02-23 * "Something"
+            Assets:Invest     1.245 RGAGX {43.23 USD}
+            Assets:Cash
+        """)
+        self.assertFalse(errors)
+        self.assertEqual(3, len(entry.postings))
+        self.assertEqual(D('-53.82'), entry.postings[1].units.number)
+        self.assertEqual('Equity:RoundingError', entry.postings[2].account)
+        self.assertEqual(D('-0.00135'), entry.postings[2].units.number)
+
+        entry, errors = self.get_incomplete_entry("""
+          option "account_rounding" "RoundingError"
+          option "inferred_tolerance_default" "USD:0.01"
+
+          2014-05-06 * "Buy mutual fund"
+            Assets:Investments:RGXGX       4.27 RGAGX {53.21 USD}
+            Assets:Investments:Cash
+        """)
+        self.assertFalse(errors)
+        self.assertEqual(3, len(entry.postings))
+        self.assertEqual(D('-227.2100'), entry.postings[1].units.number)
+        self.assertEqual('Equity:RoundingError', entry.postings[2].account)
+        self.assertEqual(D('0.0033'), entry.postings[2].units.number)
+
+    def test_balance_incomplete_postings__rounding_with_error(self):
+        # Here we want to verify that auto-inserting rounding postings does not
+        # disable non-balancing transactions. This is rather an important check!
+        entries, errors, options_map = loader.load_string("""
+          option "account_rounding" "RoundingError"
+
+          2000-01-01 open Assets:Investments:MutualFunds:XXX
+          2000-01-01 open Assets:Cash:Checking
+          2000-01-01 open Equity:RoundingError
+
+          ;; This transaction does not balance.
+          2002-02-08 * "Mutual fund purchase"
+            Assets:Investments:MutualFunds:XXX    51.031 XXX {97.98 USD}
+            Assets:Cash:Checking                -5000.00 USD
+        """, dedent=True)
+        self.assertEqual(1, len(errors))
+        self.assertRegex(errors[0].message, 'does not balance')
+
+    @loader.load_doc(expect_errors=True)
+    def test_balance_incomplete_postings__superfluous_unneeded(self, entries, errors, _):
+        """
+          option "booking_algorithm" "SIMPLE"
+
+          2000-01-01 open Assets:Account1
+          2000-01-01 open Assets:Account2
+          2000-01-01 open Assets:Account3
+
+          2016-04-23 * ""
+            Assets:Account1   100.00 USD
+            Assets:Account2  -100.00 USD
+            Assets:Account3
+        """
+        # Note: this raises an error because the auto-posting is superfluous.
+        self.assertEqual(1, len(errors))
+        self.assertRegex(errors[0].message, 'Useless auto-posting')
+        self.assertEqual(3, len(entries[-1].postings))
+
+    @loader.load_doc()
+    def test_balance_incomplete_postings__superfluous_unused(self, entries, errors, _):
+        """
+          2000-01-01 open Assets:Account1
+          2000-01-01 open Assets:Account2
+
+          2016-04-23 * ""
+            Assets:Account1     0.00 USD
+            Assets:Account2
+        """
+        # This does not raise an error, but it ought to; do this in the full
+        # booking method since we're deprecating this code.
+        self.assertEqual(1, len(entries[-1].postings))
 
 
 class TestSimpleBooking(cmptest.TestCase):

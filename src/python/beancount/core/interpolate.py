@@ -456,51 +456,6 @@ def get_incomplete_postings(entry, options_map):
     return (postings, has_inserted, balance_errors, residual, tolerances)
 
 
-def balance_incomplete_postings(entry, options_map):
-    """Balance an entry with incomplete postings, modifying the
-    empty postings on the entry itself. This sets the parent of
-    all the postings to this entry. Futhermore, it stores the dict
-    of inferred tolerances as metadata.
-
-    WARNING: This destructively modifies entry itself!
-
-    Args:
-      entry: An instance of a valid directive. This entry is modified by
-        having new postings inserted to it.
-      options_map: A dict of options, as produced by the parser.
-    Returns:
-      A list of errors, or None, if none occurred.
-    """
-    # No postings... nothing to do.
-    if not entry.postings:
-        return None
-
-    # Get the list of corrected postings.
-    (postings, unused_inserted, errors,
-     residual, tolerances) = get_incomplete_postings(entry, options_map)
-
-    # If we need to accumulate rounding error to accumulate the residual, add
-    # suitable postings here.
-    if not residual.is_empty():
-        rounding_subaccount = options_map["account_rounding"]
-        if rounding_subaccount:
-            account_rounding = account.join(options_map['name_equity'], rounding_subaccount)
-            rounding_postings = get_residual_postings(residual, account_rounding)
-            postings.extend(rounding_postings)
-
-    # If we could make this faster to avoid the unnecessary copying, it would
-    # make parsing substantially faster.
-    entry.postings.clear()
-    for posting in postings:
-        entry.postings.append(posting)
-
-    if entry.meta is None:
-        entry.meta = {}
-    entry.meta['__tolerances__'] = tolerances
-
-    return errors or None
-
-
 def compute_entries_balance(entries, prefix=None, date=None):
     """Compute the balance of all postings of a list of entries.
 
