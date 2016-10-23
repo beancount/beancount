@@ -2090,9 +2090,9 @@ class TestLexerAndParserErrors(cmptest.TestCase):
         """
         self.check_entries_errors(entries, errors)
 
-    @mock.patch('beancount.parser.grammar.Builder.txn_field_new', raise_exception)
+    @mock.patch('beancount.parser.grammar.Builder.tag_link_new', raise_exception)
     @parser.parse_doc(expect_errors=True)
-    def test_grammar_exceptions__txn_field_new(self, entries, errors, _):
+    def test_grammar_exceptions__tag_link_new(self, entries, errors, _):
         """
           2010-01-01 close Assets:Before
           2010-01-01 * "Payee" "Narration"
@@ -2102,9 +2102,9 @@ class TestLexerAndParserErrors(cmptest.TestCase):
         """
         self.check_entries_errors(entries, errors)
 
-    @mock.patch('beancount.parser.grammar.Builder.txn_field_TAG', raise_exception)
+    @mock.patch('beancount.parser.grammar.Builder.tag_link_TAG', raise_exception)
     @parser.parse_doc(expect_errors=True)
-    def test_grammar_exceptions__txn_field_TAG(self, entries, errors, _):
+    def test_grammar_exceptions__tag_link_TAG(self, entries, errors, _):
         """
           2010-01-01 close Assets:Before
           2010-01-01 * "Payee" "Narration" #sometag
@@ -2114,9 +2114,9 @@ class TestLexerAndParserErrors(cmptest.TestCase):
         """
         self.check_entries_errors(entries, errors)
 
-    @mock.patch('beancount.parser.grammar.Builder.txn_field_LINK', raise_exception)
+    @mock.patch('beancount.parser.grammar.Builder.tag_link_LINK', raise_exception)
     @parser.parse_doc(expect_errors=True)
-    def test_grammar_exceptions__txn_field_LINK(self, entries, errors, _):
+    def test_grammar_exceptions__tag_link_LINK(self, entries, errors, _):
         """
           2010-01-01 close Assets:Before
           2010-01-01 * "Payee" "Narration" ^somelink
@@ -2127,7 +2127,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
         self.check_entries_errors(entries, errors)
 
     @parser.parse_doc()
-    def test_grammar_exceptions__txn_field_PIPE(self, entries, errors, _):
+    def test_grammar_exceptions__tag_link_PIPE(self, entries, errors, _):
         """
           2010-01-01 close Assets:Before
           2010-01-01 * "Payee" | "Narration"

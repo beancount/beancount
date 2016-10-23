@@ -103,13 +103,9 @@ def valid_account_regexp(options):
 # them intelligently in the transaction callback.
 #
 # Attributes:
-#  strings: a list of strings, for the payee and the narration.
 #  tags: a set object  of the tags to be applied to this transaction.
 #  links: a set of link strings to be applied to this transaction.
-#  has_pipe: True if a pipe has been seen somewhere in the list. This is used
-#    to issue an error if only a single string is present, because the PIPE
-#    character does not carry any special meaning anymore.
-TxnFields = collections.namedtuple('TxnFields', 'strings tags links has_pipe')
+TagsLinks = collections.namedtuple('TagsLinks', 'tags links')
 
 
 class Builder(lexer.LexBuilder):
@@ -822,69 +818,52 @@ class Builder(lexer.LexBuilder):
         meta = new_metadata(filename, lineno)
         return Posting(account, units, cost, price, chr(flag) if flag else None, meta)
 
-    def txn_field_new(self, _):
-        """Create a new TxnFields instance.
+    def tag_link_new(self, _):
+        """Create a new TagsLinks instance.
 
         Returns:
-          An instance of TxnFields, initialized with expected attributes.
+          An instance of TagsLinks, initialized with expected attributes.
         """
-        return TxnFields([], set(), set(), [])
+        return TagsLinks(set(), set())
 
-    def txn_field_TAG(self, txn_fields, tag):
-        """Add a tag to the TxnFields accumulator.
+    def tag_link_TAG(self, tags_links, tag):
+        """Add a tag to the TagsLinks accumulator.
 
         Args:
-          txn_fields: The current TxnFields accumulator.
+          tags_links: The current TagsLinks accumulator.
           tag: A string, the new tag to insert.
         Returns:
-          An updated TxnFields instance.
+          An updated TagsLinks instance.
         """
-        txn_fields.tags.add(tag)
-        return txn_fields
+        tags_links.tags.add(tag)
+        return tags_links
 
-    def txn_field_LINK(self, txn_fields, link):
-        """Add a link to the TxnFields accumulator.
+    def tag_link_LINK(self, tags_links, link):
+        """Add a link to the TagsLinks accumulator.
 
         Args:
-          txn_fields: The current TxnFields accumulator.
+          tags_links: The current TagsLinks accumulator.
           link: A string, the new link to insert.
         Returns:
-          An updated TxnFields instance.
+          An updated TagsLinks instance.
         """
-        txn_fields.links.add(link)
-        return txn_fields
+        tags_links.links.add(link)
+        return tags_links
 
-    def txn_field_STRING(self, txn_fields, string):
-        """Add a string to the TxnFields accumulator.
+    def tag_link_STRING(self, tags_links, string):
+        """Add a string to the TagsLinks accumulator.
 
         Args:
-          txn_fields: The current TxnFields accumulator.
+          tags_links: The current TagsLinks accumulator.
           string: A string, the new string to insert in the list.
         Returns:
-          An updated TxnFields instance.
+          An updated TagsLinks instance.
         """
-        txn_fields.strings.append(string)
-        return txn_fields
-
-    def txn_field_PIPE(self, txn_fields, _):
-        """Mark the PIPE as present, in order to raise a backwards compatibility error.
-
-        Args:
-          txn_fields: The current TxnFields accumulator.
-          _: This second argument is only there to prevent the caller method to
-             unbundle the arguments; if you call with only a tuple, it gets applied.
-             (I think this may be a bug in the Python C-API. When you upgrade to
-             Python 3.4, check if this is still the case.)
-        Returns:
-          An updated TxnFields instance.
-        """
-        # Note: we're using a list because it runs faster than creating a new
-        # tuple and there are possibly many of these.
-        txn_fields.has_pipe.append(1)
-        return txn_fields
+        tags_links.strings.append(string)
+        return tags_links
 
     def unpack_txn_strings(self, txn_strings, meta):
-        """Unpack a txn_fields accumulator to its payee and narration fields.
+        """Unpack a tags_links accumulator to its payee and narration fields.
 
         Args:
           txn_strings: A list of strings.
@@ -908,7 +887,7 @@ class Builder(lexer.LexBuilder):
             return None
         return payee, narration
 
-    def transaction(self, filename, lineno, date, flag, txn_strings, txn_fields,
+    def transaction(self, filename, lineno, date, flag, txn_strings, tags_links,
                     posting_or_kv_list):
         """Process a transaction directive.
 
@@ -926,7 +905,7 @@ class Builder(lexer.LexBuilder):
           date: a datetime object.
           flag: a str, one-character, the flag associated with this transaction.
           txn_strings: A list of strings, possibly empty, possibly longer.
-          txn_fields: A tuple of transaction fields, which includes descriptions
+          tags_links: A tuple of transaction fields, which includes descriptions
             (payee and narration), tags, and links.
           posting_or_kv_list: a list of Posting or KeyValue instances, to be inserted in
             this transaction, or None, if no postings have been declared.
@@ -1001,14 +980,14 @@ class Builder(lexer.LexBuilder):
 
         # Merge the tags from the stack with the explicit tags of this
         # transaction, or make None.
-        tags = txn_fields.tags
+        tags = tags_links.tags
         assert isinstance(tags, (set, frozenset)), "Tags is not a set: {}".format(tags)
         if self.tags:
             tags.update(self.tags)
         tags = frozenset(tags) if tags else None
 
         # Make links to None if empty.
-        links = txn_fields.links
+        links = tags_links.links
         links = frozenset(links) if links else None
 
         # Create the transaction.

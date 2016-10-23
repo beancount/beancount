@@ -633,7 +633,7 @@ static const char *const yytname[] =
   "QUERY", "CUSTOM", "PUSHTAG", "POPTAG", "PUSHMETA", "POPMETA", "OPTION",
   "INCLUDE", "PLUGIN", "BOOL", "DATE", "ACCOUNT", "CURRENCY", "STRING",
   "NUMBER", "TAG", "LINK", "KEY", "NEGATIVE", "$accept", "empty", "txn",
-  "eol", "empty_line", "number_expr", "txn_strings", "txn_fields",
+  "eol", "empty_line", "number_expr", "txn_strings", "tags_links",
   "transaction", "optflag", "price_annotation", "posting", "key_value",
   "key_value_line", "key_value_value", "posting_or_kv_list",
   "key_value_list", "currency_list", "pushtag", "poptag", "pushmeta",
@@ -1798,7 +1798,7 @@ yyreduce:
                 * having to declare a second macro just for this one special
                 * case. */
                BUILDY(,
-                      (yyval.pyobj), "txn_field_new", "O", Py_None);
+                      (yyval.pyobj), "tag_link_new", "O", Py_None);
            }
 #line 1804 "src/python/beancount/parser/grammar.c" 
     break;
@@ -1807,7 +1807,7 @@ yyreduce:
 #line 357 "src/python/beancount/parser/grammar.y" 
     {
                BUILDY(DECREF2((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
-                      (yyval.pyobj), "txn_field_LINK", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
+                      (yyval.pyobj), "tag_link_LINK", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
            }
 #line 1813 "src/python/beancount/parser/grammar.c" 
     break;
@@ -1816,7 +1816,7 @@ yyreduce:
 #line 362 "src/python/beancount/parser/grammar.y" 
     {
                BUILDY(DECREF2((yyvsp[-1].pyobj), (yyvsp[0].pyobj)),
-                      (yyval.pyobj), "txn_field_TAG", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
+                      (yyval.pyobj), "tag_link_TAG", "OO", (yyvsp[-1].pyobj), (yyvsp[0].pyobj));
            }
 #line 1822 "src/python/beancount/parser/grammar.c" 
     break;

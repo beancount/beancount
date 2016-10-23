@@ -222,7 +222,7 @@ const char* getTokenName(int token);
 %type <pyobj> entry
 %type <pyobj> declarations
 %type <pyobj> txn_strings
-%type <pyobj> txn_fields
+%type <pyobj> tags_links
 %type <pyobj> filename
 %type <pyobj> opt_booking
 %type <pyobj> number_expr
@@ -345,26 +345,26 @@ txn_strings : empty
                 $$ = $1;
             }
 
-txn_fields : empty
+tags_links : empty
            {
                /* Note: We're passing a bogus value here in order to avoid
                 * having to declare a second macro just for this one special
                 * case. */
                BUILDY(,
-                      $$, "txn_field_new", "O", Py_None);
+                      $$, "tag_link_new", "O", Py_None);
            }
-           | txn_fields LINK
+           | tags_links LINK
            {
                BUILDY(DECREF2($1, $2),
-                      $$, "txn_field_LINK", "OO", $1, $2);
+                      $$, "tag_link_LINK", "OO", $1, $2);
            }
-           | txn_fields TAG
+           | tags_links TAG
            {
                BUILDY(DECREF2($1, $2),
-                      $$, "txn_field_TAG", "OO", $1, $2);
+                      $$, "tag_link_TAG", "OO", $1, $2);
            }
 
-transaction : DATE txn txn_strings txn_fields eol posting_or_kv_list
+transaction : DATE txn txn_strings tags_links eol posting_or_kv_list
             {
                 BUILDY(DECREF4($1, $3, $4, $6),
                        $$, "transaction", "siObOOO", FILE_LINE_ARGS, $1, $2, $3, $4, $6);
