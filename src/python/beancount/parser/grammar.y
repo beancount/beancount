@@ -712,10 +712,10 @@ note : DATE NOTE ACCOUNT STRING eol key_value_list
 
 filename : STRING
 
-document : DATE DOCUMENT ACCOUNT filename eol key_value_list
+document : DATE DOCUMENT ACCOUNT filename tags_links eol key_value_list
          {
-             BUILDY(DECREF4($1, $3, $4, $6),
-                    $$, "document", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
+             BUILDY(DECREF5($1, $3, $4, $5, $7),
+                    $$, "document", "siOOOOO", FILE_LINE_ARGS, $1, $3, $4, $5, $7);
          }
 
 

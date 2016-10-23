@@ -706,7 +706,8 @@ class Builder(lexer.LexBuilder):
         meta = new_metadata(filename, lineno, kvlist)
         return Note(meta, date, account, comment)
 
-    def document(self, filename, lineno, date, account, document_filename, kvlist):
+    def document(self, filename, lineno, date, account, document_filename, tags_links,
+                 kvlist):
         """Process a document directive.
 
         Args:
@@ -715,6 +716,7 @@ class Builder(lexer.LexBuilder):
           date: a datetime object.
           account: an Account instance.
           document_filename: a str, the name of the document file.
+          tags_links: The current TagsLinks accumulator.
           kvlist: a list of KeyValue instances.
         Returns:
           A new Document object.
@@ -723,6 +725,8 @@ class Builder(lexer.LexBuilder):
         if not path.isabs(document_filename):
             document_filename = path.abspath(path.join(path.dirname(filename),
                                                        document_filename))
+        tags, links = self.process_tags_links(tags_links)
+        # FIXME: Add tags links to the Document directive.
         return Document(meta, date, account, document_filename)
 
     def custom(self, filename, lineno, date, dir_type, custom_values, kvlist):
@@ -887,6 +891,31 @@ class Builder(lexer.LexBuilder):
             return None
         return payee, narration
 
+    def process_tags_links(self, tags_links):
+        """Process tags and links, include tags from the tag stack if present.
+
+        Args:
+          tags_links: The current TagsLinks accumulator.
+        Returns:
+          A sanitized pair of (tags, links).
+        """
+        if tags_links is None:
+            return None, None
+
+        # Merge the tags from the stack with the explicit tags of this
+        # transaction, or make None.
+        tags = tags_links.tags
+        assert isinstance(tags, (set, frozenset)), "Tags is not a set: {}".format(tags)
+        if self.tags:
+            tags.update(self.tags)
+        tags = frozenset(tags) if tags else None
+
+        # Make links to None if empty.
+        links = tags_links.links
+        links = frozenset(links) if links else None
+
+        return tags, links
+
     def transaction(self, filename, lineno, date, flag, txn_strings, tags_links,
                     posting_or_kv_list):
         """Process a transaction directive.
@@ -905,8 +934,7 @@ class Builder(lexer.LexBuilder):
           date: a datetime object.
           flag: a str, one-character, the flag associated with this transaction.
           txn_strings: A list of strings, possibly empty, possibly longer.
-          tags_links: A tuple of transaction fields, which includes descriptions
-            (payee and narration), tags, and links.
+          tags_links: A TagsLinks namedtuple of tags, and/or links.
           posting_or_kv_list: a list of Posting or KeyValue instances, to be inserted in
             this transaction, or None, if no postings have been declared.
         Returns:
@@ -978,17 +1006,7 @@ class Builder(lexer.LexBuilder):
         if postings is None:
             postings = []
 
-        # Merge the tags from the stack with the explicit tags of this
-        # transaction, or make None.
-        tags = tags_links.tags
-        assert isinstance(tags, (set, frozenset)), "Tags is not a set: {}".format(tags)
-        if self.tags:
-            tags.update(self.tags)
-        tags = frozenset(tags) if tags else None
-
-        # Make links to None if empty.
-        links = tags_links.links
-        links = frozenset(links) if links else None
+        tags, links = self.process_tags_links(tags_links)
 
         # Create the transaction.
         return Transaction(meta, date, chr(flag),

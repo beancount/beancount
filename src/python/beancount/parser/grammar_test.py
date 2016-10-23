@@ -201,6 +201,13 @@ class TestParserEntryTypes(unittest.TestCase):
         check_list(self, entries, [data.Note])
 
     @parser.parse_doc()
+    def test_entry_document(self, entries, _, __):
+        """
+          2013-05-18 document Assets:US:BestBank:Checking "/Accounting/statement.pdf"
+        """
+        check_list(self, entries, [data.Document])
+
+    @parser.parse_doc()
     def test_entry_price(self, entries, _, __):
         """
           2013-05-18 price USD   1.0290 CAD
@@ -2443,3 +2450,33 @@ class TestIncompleteInputs(cmptest.TestCase):
         self.assertEqual(CostSpec(D("100.00"), None, "CAD",
                                   datetime.date(2015, 9, 21), "blablabla", True),
                          posting.cost)
+
+
+class TestDocument(unittest.TestCase):
+
+    @parser.parse_doc()
+    def test_document_no_tags_links(self, entries, _, __):
+        """
+          2013-05-18 document Assets:US:BestBank:Checking "/Accounting/statement.pdf"
+        """
+        check_list(self, entries, [data.Document])
+
+    @parser.parse_doc()
+    def test_document_tags(self, entries, _, __):
+        """
+          pushtag #something
+          2013-05-18 document Assets:US:BestBank:Checking "/Accounting/statement.pdf" #else
+          poptag #something
+        """
+        check_list(self, entries, [data.Document])
+        # FIXME: Introduce this once the tags and links are grokked.
+        # self.assertEqual({'something', 'else'}, entries[0].tags)
+
+    @parser.parse_doc()
+    def test_document_links(self, entries, _, __):
+        """
+          2013-05-18 document Assets:US:BestBank:Checking "/statement.pdf" ^something
+        """
+        check_list(self, entries, [data.Document])
+        # FIXME: Introduce this once the tags and links are grokked.
+        # self.assertEqual({'something'}, entries[0].links)
