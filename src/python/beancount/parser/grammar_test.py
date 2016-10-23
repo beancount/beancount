@@ -2469,8 +2469,7 @@ class TestDocument(unittest.TestCase):
           poptag #something
         """
         check_list(self, entries, [data.Document])
-        # FIXME: Introduce this once the tags and links are grokked.
-        # self.assertEqual({'something', 'else'}, entries[0].tags)
+        self.assertEqual({'something', 'else'}, entries[0].tags)
 
     @parser.parse_doc()
     def test_document_links(self, entries, _, __):
@@ -2478,5 +2477,4 @@ class TestDocument(unittest.TestCase):
           2013-05-18 document Assets:US:BestBank:Checking "/statement.pdf" ^something
         """
         check_list(self, entries, [data.Document])
-        # FIXME: Introduce this once the tags and links are grokked.
-        # self.assertEqual({'something'}, entries[0].links)
+        self.assertEqual({'something'}, entries[0].links)

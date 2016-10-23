@@ -726,8 +726,7 @@ class Builder(lexer.LexBuilder):
             document_filename = path.abspath(path.join(path.dirname(filename),
                                                        document_filename))
         tags, links = self.process_tags_links(tags_links)
-        # FIXME: Add tags links to the Document directive.
-        return Document(meta, date, account, document_filename)
+        return Document(meta, date, account, document_filename, tags, links)
 
     def custom(self, filename, lineno, date, dir_type, custom_values, kvlist):
         """Process a custom directive.
