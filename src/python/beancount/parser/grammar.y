@@ -221,6 +221,7 @@ const char* getTokenName(int token);
 %type <pyobj> document
 %type <pyobj> entry
 %type <pyobj> declarations
+%type <pyobj> txn_strings
 %type <pyobj> txn_fields
 %type <pyobj> filename
 %type <pyobj> opt_booking
@@ -329,6 +330,21 @@ number_expr : NUMBER
                 $$ = $2;
             }
 
+txn_strings : empty
+            {
+                Py_INCREF(Py_None);
+                $$ = Py_None;
+            }
+            | txn_strings STRING
+            {
+                BUILDY(DECREF2($1, $2),
+                       $$, "handle_list", "OO", $1, $2);
+            }
+            | txn_strings PIPE
+            {
+                $$ = $1;
+            }
+
 txn_fields : empty
            {
                /* Note: We're passing a bogus value here in order to avoid
@@ -336,11 +352,6 @@ txn_fields : empty
                 * case. */
                BUILDY(,
                       $$, "txn_field_new", "O", Py_None);
-           }
-           | txn_fields STRING
-           {
-               BUILDY(DECREF2($1, $2),
-                      $$, "txn_field_STRING", "OO", $1, $2);
            }
            | txn_fields LINK
            {
@@ -352,17 +363,11 @@ txn_fields : empty
                BUILDY(DECREF2($1, $2),
                       $$, "txn_field_TAG", "OO", $1, $2);
            }
-           | txn_fields PIPE
-           {
-               /* Mark PIPE as present for backwards compatibility and raise an error */
-               BUILDY(DECREF1($1),
-                      $$, "txn_field_PIPE", "OO", $1, Py_None);
-           }
 
-transaction : DATE txn txn_fields eol posting_or_kv_list
+transaction : DATE txn txn_strings txn_fields eol posting_or_kv_list
             {
-                BUILDY(DECREF3($1, $3, $5),
-                       $$, "transaction", "siObOO", FILE_LINE_ARGS, $1, $2, $3, $5);
+                BUILDY(DECREF4($1, $3, $4, $6),
+                       $$, "transaction", "siObOOO", FILE_LINE_ARGS, $1, $2, $3, $4, $6);
             }
 
 optflag : empty

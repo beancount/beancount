@@ -855,7 +855,7 @@ class Builder(lexer.LexBuilder):
         return txn_fields
 
     def txn_field_STRING(self, txn_fields, string):
-        """Add a tag to the TxnFields accumulator.
+        """Add a string to the TxnFields accumulator.
 
         Args:
           txn_fields: The current TxnFields accumulator.
@@ -883,37 +883,33 @@ class Builder(lexer.LexBuilder):
         txn_fields.has_pipe.append(1)
         return txn_fields
 
-    def unpack_txn_strings(self, txn_fields, meta):
+    def unpack_txn_strings(self, txn_strings, meta):
         """Unpack a txn_fields accumulator to its payee and narration fields.
 
         Args:
-          txn_fields: The current TxnFields accumulator.
+          txn_strings: A list of strings.
           meta: A metadata dict for errors generated in this routine.
         Returns:
           A pair of (payee, narration) strings or None objects, or None, if
           there was an error.
         """
-        num_strings = len(txn_fields.strings)
+        num_strings = 0 if txn_strings is None else len(txn_strings)
         if num_strings == 1:
-            payee, narration = None, txn_fields.strings[0]
-            if txn_fields.has_pipe:
-                self.errors.append(
-                    ParserError(meta,
-                                "One string with a | symbol yields only a narration: "
-                                "{}".format(txn_fields.strings), None))
+            payee, narration = None, txn_strings[0]
         elif num_strings == 2:
-            payee, narration = txn_fields.strings
+            payee, narration = txn_strings
         elif num_strings == 0:
             payee, narration = None, ""
         else:
             self.errors.append(
                 ParserError(meta,
                             "Too many strings on transaction description: {}".format(
-                                txn_fields.strings), None))
+                                txn_strings), None))
             return None
         return payee, narration
 
-    def transaction(self, filename, lineno, date, flag, txn_fields, posting_or_kv_list):
+    def transaction(self, filename, lineno, date, flag, txn_strings, txn_fields,
+                    posting_or_kv_list):
         """Process a transaction directive.
 
         All the postings of the transaction are available at this point, and so the
@@ -929,6 +925,7 @@ class Builder(lexer.LexBuilder):
           lineno: the current line number.
           date: a datetime object.
           flag: a str, one-character, the flag associated with this transaction.
+          txn_strings: A list of strings, possibly empty, possibly longer.
           txn_fields: A tuple of transaction fields, which includes descriptions
             (payee and narration), tags, and links.
           posting_or_kv_list: a list of Posting or KeyValue instances, to be inserted in
@@ -980,7 +977,7 @@ class Builder(lexer.LexBuilder):
             meta.update(explicit_meta)
 
         # Unpack the transaction fields.
-        payee_narration = self.unpack_txn_strings(txn_fields, meta)
+        payee_narration = self.unpack_txn_strings(txn_strings, meta)
         if payee_narration is None:
             return None
         payee, narration = payee_narration

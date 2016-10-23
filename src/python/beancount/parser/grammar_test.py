@@ -64,7 +64,7 @@ class TestParserEntryTypes(unittest.TestCase):
     """Basic smoke test one entry of each kind."""
 
     @parser.parse_doc()
-    def test_entry_transaction_1(self, entries, _, __):
+    def test_entry_transaction_one_string(self, entries, _, __):
         """
           2013-05-18 * "Nice dinner at Mermaid Inn"
             Expenses:Restaurant         100 USD
@@ -73,7 +73,26 @@ class TestParserEntryTypes(unittest.TestCase):
         check_list(self, entries, [data.Transaction])
 
     @parser.parse_doc()
-    def test_entry_transaction_2(self, entries, _, __):
+    def test_entry_transaction_two_strings(self, entries, _, __):
+        """
+          2013-05-18 * "Mermaid Inn" "Nice dinner"
+            Expenses:Restaurant         100 USD
+            Assets:US:Cash             -100 USD
+        """
+        check_list(self, entries, [data.Transaction])
+
+    @parser.parse_doc(expect_errors=True)
+    def test_entry_transaction_three_strings(self, entries, errors, _):
+        """
+          2013-05-18 * "Mermaid Inn" "Nice dinner" "With Caroline"
+            Expenses:Restaurant         100 USD
+            Assets:US:Cash             -100 USD
+        """
+        check_list(self, entries, [])
+        self.assertRegex(errors[0].message, "Too many strings")
+
+    @parser.parse_doc()
+    def test_entry_transaction_with_txn_keyword(self, entries, _, __):
         """
           2013-05-18 txn "Nice dinner at Mermaid Inn"
             Expenses:Restaurant         100 USD
@@ -808,17 +827,15 @@ class TestTransactions(unittest.TestCase):
         self.assertEqual("", entries[0].narration)
         self.assertEqual(None, entries[0].payee)
 
-    @parser.parse_doc(expect_errors=True)
+    @parser.parse_doc()
     def test_payee_no_narration(self, entries, errors, _):
         """
           2013-05-18 * "Mermaid Inn" |
             Expenses:Restaurant         100 USD
             Assets:US:Cash             -100 USD
         """
-        # Make sure a single string and a pipe raises an error, because '|' does
-        # not carry any special meaning anymore.
         check_list(self, entries, [data.Transaction])
-        check_list(self, errors, [parser.ParserError])
+        check_list(self, errors, [])
         self.assertEqual(None, entries[0].payee)
         self.assertEqual("Mermaid Inn", entries[0].narration)
 
@@ -846,19 +863,15 @@ class TestTransactions(unittest.TestCase):
         self.assertEqual(set(["610fa7f17e7a"]), entries[0].links)
         self.assertEqual(set(["trip"]), entries[0].tags)
 
-    @parser.parse_doc()
+    @parser.parse_doc(expect_errors=True)
     def test_tag_then_link(self, entries, errors, _):
         """
           2014-04-20 * #trip "Money from CC" ^610fa7f17e7a
             Expenses:Restaurant         100 USD
             Assets:US:Cash             -100 USD
         """
-        check_list(self, entries, [data.Transaction])
-        check_list(self, errors, [])
-        self.assertEqual("Money from CC", entries[0].narration)
-        self.assertEqual(None, entries[0].payee)
-        self.assertEqual(set(["610fa7f17e7a"]), entries[0].links)
-        self.assertEqual(set(["trip"]), entries[0].tags)
+        check_list(self, entries, [])
+        check_list(self, errors, [parser.ParserError])
 
     @parser.parse_doc()
     def test_zero_prices(self, entries, errors, _):
@@ -2113,20 +2126,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
         """
         self.check_entries_errors(entries, errors)
 
-    @mock.patch('beancount.parser.grammar.Builder.txn_field_STRING', raise_exception)
-    @parser.parse_doc(expect_errors=True)
-    def test_grammar_exceptions__txn_field_STRING(self, entries, errors, _):
-        """
-          2010-01-01 close Assets:Before
-          2010-01-01 * "Payee" "Narration" ^somelink
-            Assets:Before   100.00 USD
-            Assets:After   -100.00 USD
-          2000-01-01 open Assets:Before
-        """
-        self.check_entries_errors(entries, errors)
-
-    @mock.patch('beancount.parser.grammar.Builder.txn_field_PIPE', raise_exception)
-    @parser.parse_doc(expect_errors=True)
+    @parser.parse_doc()
     def test_grammar_exceptions__txn_field_PIPE(self, entries, errors, _):
         """
           2010-01-01 close Assets:Before
@@ -2135,7 +2135,6 @@ class TestLexerAndParserErrors(cmptest.TestCase):
             Assets:After   -100.00 USD
           2000-01-01 open Assets:Before
         """
-        self.check_entries_errors(entries, errors)
 
     @mock.patch('beancount.parser.grammar.Builder.transaction', raise_exception)
     @parser.parse_doc(expect_errors=True)
