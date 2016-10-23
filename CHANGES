@@ -3,6 +3,24 @@
 ========================
 Note: This file contains only changes in the 'default' branch.
 
+
+2016-10-23
+
+  - Modified parsing of transaction strings and links and tags. I did this to
+    factor out the parsing of tags and links in order to add it to other
+    transactions and minimize grammar code. There is user-visible impact to this
+    change: all of a transaction's strings must appear before tags or links. You
+    cannot place tags or links before or in-between strings anymore. This is a
+    reasonable restriction and I doubt anybody did anyway.
+
+  - Added support for tags and links to the Document directive. This works just
+    as for Transactions, e.g.
+
+      2016-10-23 document Assets:Checking "/statements/oct.pdf" #banking ^9fed846348c2
+
+    The current tags on the tag stack are also included, like for transactions.
+
+
 2016-10-10
 
   - Removed "experiment_explicit_tolerances" flag; made this supported by

@@ -249,7 +249,9 @@ Price = new_directive('Price', 'currency amount')
 #   account: A string, the account which the statement or document is associated
 #     with.
 #   filename: The absolute filename of the document file.
-Document = new_directive('Document', 'account filename')
+#   tags: A set of tag strings (without the '#'), or None, if an empty set.
+#   links: A set of link strings (without the '^'), or None, if an empty set.
+Document = new_directive('Document', 'account filename tags links')
 
 # A custom directive. This directive can be used to implement new experimental
 # dated features in the Beancount file. This is meant as an intermediate measure

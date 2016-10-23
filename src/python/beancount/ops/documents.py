@@ -139,7 +139,7 @@ def find_documents(directory, input_filename, accounts_only=None, strict=False):
             # Create a new directive.
             meta = data.new_metadata(input_filename, 0)
             date = datetime.date(*map(int, match.group(1, 2, 3)))
-            entry = Document(meta, date, account_name, path.join(root, filename))
+            entry = Document(meta, date, account_name, path.join(root, filename), None, None)
             entries.append(entry)
 
     return (entries, errors)

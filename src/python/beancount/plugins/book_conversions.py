@@ -211,6 +211,7 @@ def link_entries_with_metadata(entries, all_matches):
 
     Args:
       entries: The list of entries to modify.
+      all_matches: A list of pairs of (augmenting-posting, reducing-posting).
     Returns:
       A list of pairs of (index, Posting) for the new (augmenting, reducing)
       annotated postings.

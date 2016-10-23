@@ -221,7 +221,8 @@ const char* getTokenName(int token);
 %type <pyobj> document
 %type <pyobj> entry
 %type <pyobj> declarations
-%type <pyobj> txn_fields
+%type <pyobj> txn_strings
+%type <pyobj> tags_links
 %type <pyobj> filename
 %type <pyobj> opt_booking
 %type <pyobj> number_expr
@@ -329,40 +330,44 @@ number_expr : NUMBER
                 $$ = $2;
             }
 
-txn_fields : empty
+txn_strings : empty
+            {
+                Py_INCREF(Py_None);
+                $$ = Py_None;
+            }
+            | txn_strings STRING
+            {
+                BUILDY(DECREF2($1, $2),
+                       $$, "handle_list", "OO", $1, $2);
+            }
+            | txn_strings PIPE
+            {
+                $$ = $1;
+            }
+
+tags_links : empty
            {
                /* Note: We're passing a bogus value here in order to avoid
                 * having to declare a second macro just for this one special
                 * case. */
                BUILDY(,
-                      $$, "txn_field_new", "O", Py_None);
+                      $$, "tag_link_new", "O", Py_None);
            }
-           | txn_fields STRING
+           | tags_links LINK
            {
                BUILDY(DECREF2($1, $2),
-                      $$, "txn_field_STRING", "OO", $1, $2);
+                      $$, "tag_link_LINK", "OO", $1, $2);
            }
-           | txn_fields LINK
+           | tags_links TAG
            {
                BUILDY(DECREF2($1, $2),
-                      $$, "txn_field_LINK", "OO", $1, $2);
-           }
-           | txn_fields TAG
-           {
-               BUILDY(DECREF2($1, $2),
-                      $$, "txn_field_TAG", "OO", $1, $2);
-           }
-           | txn_fields PIPE
-           {
-               /* Mark PIPE as present for backwards compatibility and raise an error */
-               BUILDY(DECREF1($1),
-                      $$, "txn_field_PIPE", "OO", $1, Py_None);
+                      $$, "tag_link_TAG", "OO", $1, $2);
            }
 
-transaction : DATE txn txn_fields eol posting_or_kv_list
+transaction : DATE txn txn_strings tags_links eol posting_or_kv_list
             {
-                BUILDY(DECREF3($1, $3, $5),
-                       $$, "transaction", "siObOO", FILE_LINE_ARGS, $1, $2, $3, $5);
+                BUILDY(DECREF4($1, $3, $4, $6),
+                       $$, "transaction", "siObOOO", FILE_LINE_ARGS, $1, $2, $3, $4, $6);
             }
 
 optflag : empty
@@ -707,10 +712,10 @@ note : DATE NOTE ACCOUNT STRING eol key_value_list
 
 filename : STRING
 
-document : DATE DOCUMENT ACCOUNT filename eol key_value_list
+document : DATE DOCUMENT ACCOUNT filename tags_links eol key_value_list
          {
-             BUILDY(DECREF4($1, $3, $4, $6),
-                    $$, "document", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
+             BUILDY(DECREF5($1, $3, $4, $5, $7),
+                    $$, "document", "siOOOOO", FILE_LINE_ARGS, $1, $3, $4, $5, $7);
          }
 
 
