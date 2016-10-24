@@ -2,6 +2,8 @@
 beancount: TODO
 * Priorities
 
+booking_full.py: # FIXME: Refactor compute_cost_number() and convert_costspec_to_cost().
+
 - Start versioning very soon. It's desired by users.
 - Pivot report... very useful. I need it.
 

@@ -43,6 +43,7 @@ class TestInvalidAmountsErrors(cmptest.TestCase):
             Assets:Investments:Cash  2000.00 USD
         """
         booked_entries, booking_errors = booking.book(entries, options_map)
+        self.assertEqual(1, len(entries))
         self.assertEqual(1, len(booking_errors))
         self.assertRegex(booking_errors[0].message, 'Cost is negative')
 

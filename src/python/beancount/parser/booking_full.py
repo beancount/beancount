@@ -1020,4 +1020,11 @@ def interpolate_group(postings, balances, currency, tolerances):
     assert all(not isinstance(posting.cost, CostSpec)
                for posting in postings)
 
+    # Check that no cost remains negative; issue an error if this is the case.
+    for posting in postings:
+        if posting.cost and posting.cost.number < ZERO:
+            errors.append(InterpolationError(
+                posting.meta,
+                'Cost is negative: "{}"'.format(posting.cost), None))
+
     return postings, errors, (new_posting is not None)
