@@ -216,7 +216,7 @@ class TestComputeBalance(unittest.TestCase):
         expected_balance.add_amount(A('-400 USD'))
         expected_balance.add_amount(A('10 HOOL'),
                                     position.Cost(D('40'), 'USD',
-                                                  None, None))
+                                                  _X(datetime.date(2014, 6, 5)), None))
         self.assertEqual(expected_balance, computed_balance)
 
     @loader.load_doc()
@@ -430,7 +430,7 @@ class TestInferTolerances(cmptest.TestCase):
         tolerances = interpolate.infer_tolerances(entries[0].postings, options_map)
         self.assertEqual({'VHT': D('0.000005'), 'USD': D('0.005')}, tolerances)
 
-    @loader.load_doc(expect_errors=True)
+    @parser.parse_doc(allow_incomplete=True)
     def test_tolerances__with_inference(self, entries, _, options_map):
         """
         2014-02-25 *
@@ -444,12 +444,9 @@ class TestInferTolerances(cmptest.TestCase):
         self.assertEqual({'VHT': D('0.00005'), 'USD': D('0.005111700')},
                          tolerances)
 
-    @loader.load_doc()
+    @parser.parse_doc(allow_incomplete=True)
     def test_tolerances__capped_inference(self, entries, _, options_map):
         """
-        2014-01-01 open Assets:Account3
-        2014-01-01 open Assets:Account4
-
         2014-02-25 *
           Assets:Account3       5.1   VHT {102.2340 USD}
           Assets:Account4

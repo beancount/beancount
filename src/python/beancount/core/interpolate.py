@@ -13,6 +13,7 @@ from beancount.core.amount import Amount
 from beancount.core.amount import mul as amount_mul
 from beancount.core.inventory import Inventory
 from beancount.core import inventory
+from beancount.core import position
 from beancount.core.data import Transaction
 from beancount.core.data import Posting
 from beancount.core import getters
@@ -231,7 +232,15 @@ def infer_tolerances(postings, options_map, use_cost=None):
                 cost = posting.cost
                 if cost is not None:
                     cost_currency = cost.currency
-                    cost_tolerance = min(tolerance * cost.number, MAXIMUM_TOLERANCE)
+                    if isinstance(cost, position.Cost):
+                        cost_tolerance = min(tolerance * cost.number, MAXIMUM_TOLERANCE)
+                    else:
+                        assert isinstance(cost, position.CostSpec)
+                        cost_tolerance = MAXIMUM_TOLERANCE
+                        for cost_number in cost.number_total, cost.number_per:
+                            if cost_number is None:
+                                continue
+                            cost_tolerance = min(tolerance * cost_number, cost_tolerance)
                     cost_tolerances[cost_currency] += cost_tolerance
 
                 # Compute bounds on the smallest digit of the number implied as cost.

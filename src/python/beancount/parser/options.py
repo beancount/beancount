@@ -494,7 +494,7 @@ PUBLIC_OPTION_GROUPS = [
          2016-10-11 open Assets:Invest:MoneyMarket   VIIIX   "FIFO"
 
       See the Open directive for details.
-    """, [Opt("booking_algorithm", "SIMPLE", "SIMPLE")]),
+    """, [Opt("booking_algorithm", "FULL", "SIMPLE")]),
 
     OptGroup("""
       This variable is deprecated. It has been renamed to "booking_algorithm."
