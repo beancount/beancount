@@ -1020,11 +1020,24 @@ def interpolate_group(postings, balances, currency, tolerances):
     assert all(not isinstance(posting.cost, CostSpec)
                for posting in postings)
 
-    # Check that no cost remains negative; issue an error if this is the case.
+    # Check that units are non-zero and that no cost remains negative; issue an
+    # error if this is the case.
     for posting in postings:
-        if posting.cost and posting.cost.number < ZERO:
+        if posting.cost is None:
+            continue
+        # If there is a cost, we don't allow either a cost value of zero,
+        # nor a zero number of units. Note that we allow a price of zero as
+        # the only special case allowed (for conversion entries), but never
+        # for costs.
+        if posting.units.number == ZERO:
+            errors.append(InterpolationError(
+                posting.meta,
+                'Amount is zero: "{}"'.format(posting.units), None))
+        if posting.cost.number < ZERO:
             errors.append(InterpolationError(
                 posting.meta,
                 'Cost is negative: "{}"'.format(posting.cost), None))
+
+
 
     return postings, errors, (new_posting is not None)

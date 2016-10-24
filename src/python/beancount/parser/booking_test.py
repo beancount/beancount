@@ -18,8 +18,18 @@ class TestInvalidAmountsErrors(cmptest.TestCase):
     def test_zero_amount(self, entries, errors, options_map):
         """
           2013-05-18 * ""
-            Assets:Investments:MSFT      0 MSFT {200.00 USD}
+            Assets:Investments:MSFT      0 MSFT
             Assets:Investments:Cash      0 USD
+        """
+        booked_entries, booking_errors = booking.book(entries, options_map)
+        self.assertEqual(0, len(booking_errors))
+
+    @parser.parse_doc()
+    def test_zero_amount__with_cost(self, entries, errors, options_map):
+        """
+          2013-05-18 * ""
+            Assets:Investments:MSFT      0 MSFT {200.00 USD}
+            Assets:Investments:Cash    1 USD
         """
         booked_entries, booking_errors = booking.book(entries, options_map)
         self.assertEqual(1, len(booking_errors))
