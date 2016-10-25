@@ -1,5 +1,10 @@
 -*- mode: org -*-
 beancount: TODO
+* Types
+
+  - Remove misc_utils.Enum since we're committing to 3.5 with this branch.
+
+
 * Priorities
 
 - Start versioning very soon. It's desired by users.
