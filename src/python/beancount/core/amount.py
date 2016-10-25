@@ -199,8 +199,8 @@ def add(amount1, amount2):
       amount1: An instance of Amount.
       amount2: An instance of Amount.
     Returns:
-      An instance of Amount, with the difference between the two amount's
-      numbers, in the same currency.
+      An instance of Amount, with the sum the two amount's numbers, in the same
+      currency.
     """
     assert isinstance(amount1.number, Decimal), (
         "Amount1's number is not a Decimal instance: {}".format(amount1.number))
