@@ -17,10 +17,10 @@ if (sys.version_info.major, sys.version_info.minor) < (3, 3):
 # default of "SIMPLE" or "FULL".
 
 from beancount.parser.options import OPTIONS_DEFAULTS
-def _X(cost_date):
-    return (cost_date
+def _X(value, default=None):
+    return (value
             if OPTIONS_DEFAULTS["booking_algorithm"] == 'FULL'
-            else None)
+            else default)
 
 import builtins
 builtins._X = _X
