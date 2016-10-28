@@ -239,7 +239,7 @@ grep-uses:
 #--------------------------------------------------------------------------------
 # FIXME: Temporary.
 
-TRANSRC=$(SRC)/beancount/{core,parser}
+TRANSRC=$(SRC)/beancount/{utils,core,parser,ops}
 
 bothtest bothtests both:
 	BOOKING_ALGORITHM=SIMPLE $(NOSE) $(TRANSRC)
