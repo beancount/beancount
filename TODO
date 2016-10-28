@@ -4680,6 +4680,9 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+
+
+
   - Core: Some problems occur (with the new method) if you mix at-cost and
     without-cost for the same currency, like this:
 
@@ -5325,3 +5328,29 @@ http://furius.ca/beancount/doc/proposal-query
       Please let us know if you have any additional questions or if we can be of any
       further assistance. Thank you for being a Betterment customer, have a wonderful
       day."
+** Adding Types
+
+  Comments from YYing re. adding types:
+  https://bitbucket.org/blais/beancount/issues/140/add-type-annotation-to-beancount-codebase
+
+  - typing.NamedTuple is a good drop-in replacement for namedtuple. See
+    https://github.com/yegle/beancount-type-stubs/blob/master/beancount/core/data.pyi
+    for example
+
+  - There should be an abc for all directives, thus the signatures of many
+    functions can expressed more accurately. E.g.
+    https://github.com/yegle/beancount-type-stubs/blob/master/beancount/core/data.pyi#L149
+    without a proper abc, the argument can only be List[Any]
+
+  - Some bad design choice is more obvious when adding type annotation. E.g.
+    https://github.com/yegle/beancount-type-stubs/blob/master/beancount/core/data.pyi#L67
+    the tags field of Transcation type is an Optional[Set[str]]. I think it should
+    be a Set[str] since an empty set should be sufficient to express "there's no
+    tags for this transaction". I'm not sure if there's any difference in turns of
+    performance
+
+  - mypy has very limited ability to infer function return types. E.g. functions
+    like is_balance_sheet_account in beancount/core/account_types.py, which
+    returns foo in bar, mypy is unable to infer that the return type is a bool.
+    I think pytype from Google have better type inference but it's written in
+    Python2 and I haven't figure out how to run it against python3 code.
