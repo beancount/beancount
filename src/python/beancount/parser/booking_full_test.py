@@ -104,7 +104,7 @@ class TestAllInterpolationCombinations(cmptest.TestCase):
 def indexes(groups):
     """Return only the index sets from currency categorized groups."""
     return {currency: {refer[0] for refer in refers}
-            for currency, refers in groups.items()}
+            for currency, refers in groups}
 
 
 class TestCategorizeCurrencyGroup(unittest.TestCase):
@@ -403,7 +403,7 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
                                         '50 HOOL {116.00 USD, 2016-01-16}')}
         groups, errors = bf.categorize_by_currency(entries[0], balances)
         self.assertEqual(1, len(groups))
-        self.assertEqual(2, len(groups['USD']))
+        self.assertEqual(2, len(dict(groups)['USD']))
         self.assertFalse(errors)
 
     @parser.parse_doc(allow_incomplete=True)
@@ -433,12 +433,12 @@ class TestReplaceCurrenciesInGroup(unittest.TestCase):
                         posting.cost.currency if posting.cost else None,
                         posting.price.currency if posting.price else None)
                        for posting in postings]
-            for currency, postings in posting_groups.items()}
+            for currency, postings in posting_groups}
         self.assertEqual(expected, check_groups)
 
         # Check all the postings are unique instances.
         all_postings = [posting
-                        for postings in posting_groups.values()
+                        for postings in [item[1] for item in posting_groups]
                         for posting in postings]
         self.assertEqual(len(set(map(id, all_postings))), len(all_postings))
 
@@ -545,7 +545,7 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
         else:
             tolerances = {}
 
-        for currency, postings in posting_groups.items():
+        for currency, postings in posting_groups:
             try:
                 exp_interpolated, exp_string, exp_errors = expected[currency]
             except KeyError:

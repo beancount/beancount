@@ -139,7 +139,7 @@ def _book(entries, options_map, booking_methods):
 
             # Resolve reductions to a particular lot in their inventory balance.
             repl_postings = []
-            for currency, group_postings in posting_groups.items():
+            for currency, group_postings in posting_groups:
                 # Important note: the group of 'postings' here is a subset of
                 # that from entry.postings, and may include replicated
                 # auto-postings. Never use entry.postings further on.
@@ -258,7 +258,7 @@ def categorize_by_currency(entry, balances):
       balances: A dict of currency to inventory contents before the transaction is
         applied.
     Returns:
-      A dict of currency (string) to a list of tuples describing each postings
+      A list of (currency string, list of tuples) items describing each postings
       and its interpolated currencies, and a list of generated errors for
       currency interpolation. The entry's original postings are left unmodified.
       Each tuple in the value-list contains:
@@ -270,6 +270,7 @@ def categorize_by_currency(entry, balances):
     errors = []
 
     groups = collections.defaultdict(list)
+    sortdict = {}
     auto_postings = []
     unknown = []
     for index, posting in enumerate(entry.postings):
@@ -305,6 +306,7 @@ def categorize_by_currency(entry, balances):
             # Bucket with what we know so far.
             currency = get_bucket_currency(refer)
             if currency is not None:
+                sortdict.setdefault(currency, index)
                 groups[currency].append(refer)
             else:
                 # If we need to infer the currency, store in unknown.
@@ -329,6 +331,7 @@ def categorize_by_currency(entry, balances):
         refer = Refer(index, units_currency, cost_currency, price_currency)
         currency = get_bucket_currency(refer)
         assert currency is not None
+        sortdict.setdefault(currency, index)
         groups[currency].append(refer)
 
     # Finally, try to resolve all the unknown legs using the inventory contents
@@ -357,6 +360,7 @@ def categorize_by_currency(entry, balances):
         refer = Refer(index, units_currency, cost_currency, price_currency)
         currency = get_bucket_currency(refer)
         if currency is not None:
+            sortdict.setdefault(currency, index)
             groups[currency].append(refer)
         else:
             errors.append(
@@ -389,6 +393,7 @@ def categorize_by_currency(entry, balances):
         auto_postings = auto_postings[0:1]
     for refer in auto_postings:
         for currency in groups.keys():
+            sortdict.setdefault(currency, refer.index)
             groups[currency].append(Refer(refer.index, currency, None, None))
 
     # Issue error for all currencies which we could not resolve.
@@ -404,7 +409,8 @@ def categorize_by_currency(entry, balances):
                         "Could not resolve {} currency".format(name),
                         entry))
 
-    return groups, errors
+    sorted_groups = sorted(groups.items(), key=lambda item: sortdict[item[0]])
+    return sorted_groups, errors
 
 
 def replace_currencies(postings, refer_groups):
@@ -415,15 +421,14 @@ def replace_currencies(postings, refer_groups):
 
     Args:
       postings: A list of Posting instances to replace.
-      refer_groups: A dict of currency to list of posting references as per
-        categorize_by_currency().
+      refer_groups: A list of (currency, list of posting references) items as
+        returned by categorize_by_currency().
     Returns:
-      A new mapping of currency to a list of Postings, postings for which the
+      A new list of items of (currency, list of Postings), postings for which the
       currencies have been replaced by their interpolated currency values.
-
     """
-    new_groups = {}
-    for currency, refers in refer_groups.items():
+    new_groups = []
+    for currency, refers in refer_groups:
         new_postings = []
         for refer in sorted(refers, key=lambda r: r.index):
             posting = postings[refer.index]
@@ -446,7 +451,7 @@ def replace_currencies(postings, refer_groups):
                 if replace:
                     posting = posting._replace(units=units, cost=cost, price=price)
             new_postings.append(posting)
-        new_groups[currency] = new_postings
+        new_groups.append((currency, new_postings))
     return new_groups
 
 

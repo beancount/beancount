@@ -5,6 +5,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
 import io
+import os
 import re
 import textwrap
 
@@ -494,7 +495,10 @@ PUBLIC_OPTION_GROUPS = [
          2016-10-11 open Assets:Invest:MoneyMarket   VIIIX   "FIFO"
 
       See the Open directive for details.
-    """, [Opt("booking_algorithm", "SIMPLE", "SIMPLE")]),
+    """, [Opt("booking_algorithm", os.getenv("BOOKING_ALGORITHM", "SIMPLE"), "SIMPLE")]),
+    # FIXME: Remove the getenv() call above; it's only there temporarily, in
+    # order to support testing of both default methods for all codes towards the
+    # transition to only supporting the new booking algorithm.
 
     OptGroup("""
       This variable is deprecated. It has been renamed to "booking_algorithm."

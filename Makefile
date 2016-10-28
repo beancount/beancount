@@ -145,7 +145,6 @@ test-failed:
 nakedtests:
 	PATH=/bin:/usr/bin PYTHONPATH= /usr/local/bin/$(NOSE) -x $(SRC)
 
-
 # Run the parser and measure its performance.
 .PHONY: check
 check:
@@ -235,3 +234,19 @@ grep-import:
 
 grep-uses:
 	grep --include='*.py' --exclude='*/beancount/parser/*' -srn  'parser.parse'  ~/p/beancount/src/python/beancount
+
+
+#--------------------------------------------------------------------------------
+# FIXME: Temporary.
+
+TRANSRC=$(SRC)/beancount/{core,parser}
+
+bothtest bothtests both:
+	BOOKING_ALGORITHM=SIMPLE $(NOSE) $(TRANSRC)
+	BOOKING_ALGORITHM=FULL $(NOSE) $(TRANSRC)
+
+simpletest:
+	BOOKING_ALGORITHM=SIMPLE $(NOSE) $(SRC)
+
+fulltest:
+	BOOKING_ALGORITHM=FULL $(NOSE) $(SRC)

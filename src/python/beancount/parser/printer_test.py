@@ -299,14 +299,14 @@ class TestDisplayContext(test_utils.TestCase):
           Assets:Cash               -1 INT
           Assets:Account           1.1 FP1
           Assets:Cash             -1.1 FP1
-          Assets:Account   55555.55555 FP5
-          Assets:Cash     -55555.55555 FP5
           Assets:Account         22.22 FP2
           Assets:Cash           -22.22 FP2
-          Assets:Account     4444.4444 FP4
-          Assets:Cash       -4444.4444 FP4
           Assets:Account       333.333 FP3
           Assets:Cash         -333.333 FP3
+          Assets:Account     4444.4444 FP4
+          Assets:Cash       -4444.4444 FP4
+          Assets:Account   55555.55555 FP5
+          Assets:Cash     -55555.55555 FP5
         """), textwrap.dedent("""\
         2014-07-01 *
           Assets:Account             1 INT

@@ -67,6 +67,11 @@ def book(entries, options_map, unused_booking_methods):
             tolerances = interpolate.infer_tolerances(entry.postings, options_map)
             assert residual.is_small(tolerances), "Invalid residual {}".format(residual)
 
+        # FIXME: Remove
+        # # Reorder the lots by currency, otherwise maintaining order. This is used to
+        # # match the output of the FULL booking method, which has this side-effect.
+        # reorder_postings(entry)
+
     return entries_with_lots, errors
 
 
@@ -337,3 +342,16 @@ def balance_incomplete_postings(entry, options_map):
     entry.meta[interpolate.AUTOMATIC_TOLERANCES] = tolerances
 
     return errors or None
+
+
+# FIXME: Remove
+# def reorder_postings(entry):
+#     """Reorder the list of postings by currency, otherwise keeping the order all the same.
+#
+#     This returns nothing; this operates by side-effect, changing the order of the postings.
+#
+#     Args:
+#       entry: A Transaction directive.
+#     """
+#     for posting in entry.postings:
+#         posting.units.currency
