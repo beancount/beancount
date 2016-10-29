@@ -148,7 +148,7 @@ def get_account_components(entries):
     Args:
       entries: A list of directive instances.
     Returns:
-      A set of strings, the unique account components, including the root
+      A list of strings, the unique account components, including the root
       account names.
     """
     accounts = get_accounts(entries)

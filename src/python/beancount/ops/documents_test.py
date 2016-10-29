@@ -129,6 +129,20 @@ class TestDocuments(account_test.TmpFilesTestBase, cmptest.TestCase):
         self.assertEqual([], errors1)
 
 
+class TestDocumentsDate(account_test.TmpFilesTestBase, cmptest.TestCase):
+
+    TEST_DOCUMENTS = [
+        'root/Assets/US/Bank/Checking/',
+        'root/Assets/US/Bank/Checking/2014-02-31.bank-statement.pdf',
+    ]
+
+    def test_invalid_date(self):
+        entries, errors = documents.find_documents(self.root, '/tmp/input.beancount')
+        self.assertEqual(0, len(entries))
+        self.assertRegex(errors[0].message, "Invalid date on document file")
+
+
+
 class TestDocumentsConstraints(account_test.TmpFilesTestBase, cmptest.TestCase):
 
     TEST_DOCUMENTS = [
