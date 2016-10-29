@@ -889,8 +889,8 @@ def interpolate_group(postings, balances, currency, tolerances):
     if len(incomplete) == 0:
         # If there are no missing numbers, just convert the CostSpec to Cost and
         # return that.
-        postings = [convert_costspec_to_cost(posting)
-                    for posting in postings]
+        out_postings = [convert_costspec_to_cost(posting)
+                        for posting in postings]
 
     elif len(incomplete) > 1:
         # If there is more than a single value to be interpolated, generate an
@@ -900,7 +900,7 @@ def interpolate_group(postings, balances, currency, tolerances):
             postings[posting_index].meta,
             "Too many missing numbers for currency group '{}'".format(currency),
             None))
-        postings = []
+        out_postings = []
 
     else:
         # If there is a single missing number, calculate it and fill it in here.
@@ -1015,19 +1015,22 @@ def interpolate_group(postings, balances, currency, tolerances):
 
         # Replace the number in the posting.
         if new_posting is not None:
+            # Set meta-data on the new posting to indicate it was interpolated.
+            new_posting.meta[interpolate.AUTOMATIC_META] = True
+
             # Convert augmenting posting costs from CostSpec to a corresponding
             # Cost instance.
             new_postings[index] = convert_costspec_to_cost(new_posting)
         else:
             del new_postings[index]
-        postings = new_postings
+        out_postings = new_postings
 
     assert all(not isinstance(posting.cost, CostSpec)
-               for posting in postings)
+               for posting in out_postings)
 
     # Check that units are non-zero and that no cost remains negative; issue an
     # error if this is the case.
-    for posting in postings:
+    for posting in out_postings:
         if posting.cost is None:
             continue
         # If there is a cost, we don't allow either a cost value of zero,
@@ -1043,6 +1046,4 @@ def interpolate_group(postings, balances, currency, tolerances):
                 posting.meta,
                 'Cost is negative: "{}"'.format(posting.cost), None))
 
-
-
-    return postings, errors, (new_posting is not None)
+    return out_postings, errors, (new_posting is not None)
