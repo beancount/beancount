@@ -4680,8 +4680,8 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
-
-
+  - There ought to be some unit tests for all the custom metadata added to
+    Posting instances. I think this is undertested at the moment.
 
   - Core: Some problems occur (with the new method) if you mix at-cost and
     without-cost for the same currency, like this:

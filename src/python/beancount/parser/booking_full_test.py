@@ -1668,6 +1668,26 @@ class TestBookReductions(_BookingTestBase):
           error: "Not enough lots to reduce"
         """
 
+    @book_test(Booking.STRICT)
+    def test_reduce__multiple_reductions__no_error_because_total(self, _, __):
+        """
+        2016-01-01 * #ante
+          Assets:Account            7 HOOL {115.00 USD, 2016-01-15}
+          Assets:Account            4 HOOL {115.00 USD, 2016-01-16}
+          Assets:Account            3 HOOL {117.00 USD, 2016-01-15}
+
+        2016-05-02 * #apply
+          Assets:Account          -11 HOOL {115.00 USD}
+
+        2016-01-01 * #ambi-matches
+          Assets:Account            7 HOOL {115.00 USD, 2016-01-15}
+          Assets:Account            4 HOOL {115.00 USD, 2016-01-16}
+
+        2016-01-01 * #ambi-resolved #booked
+          Assets:Account           -7 HOOL {115.00 USD, 2016-01-15}
+          Assets:Account           -4 HOOL {115.00 USD, 2016-01-16}
+        """
+
     @book_test(Booking.FIFO)
     def test_reduce__reduction_with_same_currency_not_at_cost(self, _, __):
         """

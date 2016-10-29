@@ -246,7 +246,8 @@ $(SRC)/beancount/parser				\
 $(SRC)/beancount/ops				\
 $(SRC)/beancount/ingest				\
 $(SRC)/beancount/docs				\
-$(SRC)/beancount/plugins
+$(SRC)/beancount/plugins			\
+$(SRC)/beancount/scripts
 
 bothtest bothtests both:
 	BOOKALGO=SIMPLE $(NOSE) $(TRANSRC)
