@@ -136,7 +136,7 @@ def augment_inventory(pending_lots, posting, entry, eindex):
         units=copy.copy(posting.units),
         cost=position.Cost(posting.price.number,
                            posting.price.currency,
-                           None, # FIXME: You should enter the date here.
+                           _X(entry.date, None),
                            None))
     pending_lots.append(([number], new_posting, eindex))
     return new_posting
