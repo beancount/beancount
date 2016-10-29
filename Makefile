@@ -239,7 +239,14 @@ grep-uses:
 #--------------------------------------------------------------------------------
 # FIXME: Temporary.
 
-TRANSRC=$(SRC)/beancount/{utils,core,parser,ops,ingest}
+TRANSRC=					\
+$(SRC)/beancount/utils				\
+$(SRC)/beancount/core				\
+$(SRC)/beancount/parser				\
+$(SRC)/beancount/ops				\
+$(SRC)/beancount/ingest				\
+$(SRC)/beancount/docs				\
+$(SRC)/beancount/plugins
 
 bothtest bothtests both:
 	BOOKALGO=SIMPLE $(NOSE) $(TRANSRC)
