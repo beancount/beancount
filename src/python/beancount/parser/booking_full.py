@@ -630,13 +630,21 @@ def handle_ambiguous_matches(entry, posting, matches, booking_method):
     if booking_method is Booking.STRICT:
         # In strict mode, we require at most a single matching posting.
         if len(matches) > 1:
-            errors.append(
-                ReductionError(entry.meta,
-                               'Ambiguous matches for "{}": {}'.format(
-                                   position.to_string(posting),
-                                   ', '.join(position.to_string(match_posting)
-                                             for match_posting in matches)),
-                               entry))
+            # If the total requested to reduce matches the sum of all the
+            # ambiguous postings, match against all of them.
+            sum_matches = sum(p.units.number for p in matches)
+            if sum_matches == -posting.units.number:
+                postings.extend(
+                    posting._replace(units=-match.units, cost=match.cost)
+                    for match in matches)
+            else:
+                errors.append(
+                    ReductionError(entry.meta,
+                                   'Ambiguous matches for "{}": {}'.format(
+                                       position.to_string(posting),
+                                       ', '.join(position.to_string(match_posting)
+                                                 for match_posting in matches)),
+                                   entry))
         else:
             # Replace the posting's units and cost values.
             match = matches[0]
@@ -685,7 +693,7 @@ def handle_ambiguous_matches(entry, posting, matches, booking_method):
     elif booking_method is Booking.AVERAGE:
         errors.append(ReductionError(entry.meta, "AVERAGE method is not supported", entry))
 
-    elif False: # DISABLED - This is the code for AVERAGE
+    elif False: # DISABLED - This is the code for AVERAGE, which is currently disabled.
 
         # If there is more than a single match we need to ultimately merge the
         # postings. Also, if the reducing posting provides a specific cost, we
