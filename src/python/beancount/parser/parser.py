@@ -197,10 +197,6 @@ def parse_file(filename, **kw):
     _parser.parse_file(filename, builder, **kw)
     return builder.finalize()
 
-# Alias, for compatibility.
-# pylint: disable=invalid-name
-parse = parse_file
-
 
 def parse_string(string, **kw):
     """Parse a beancount input file and return Ledger with the list of
@@ -220,11 +216,6 @@ def parse_string(string, **kw):
     builder.options['filename'] = '<string>'
     return builder.finalize()
 
-
-# FIXME: Deprecate this eventually.
-def parsedoc(*args, **kw):
-    warnings.warn("parsedoc() is obsolete; use parse_doc() instead.")
-    return parse_doc(*args, **kw)
 
 def parse_doc(expect_errors=False, allow_incomplete=False):
     """Factory of decorators that parse the function's docstring as an argument.
