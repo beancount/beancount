@@ -1,8 +1,9 @@
 import unittest
+import tempfile
+import pickle
 from unittest import mock
 
 from beancount.utils import defdict
-
 
 class TestDefDictWithKey(unittest.TestCase):
 
@@ -35,3 +36,9 @@ class TestImmutableDictWithDefault(unittest.TestCase):
 
         with self.assertRaises(NotImplementedError):
             dwd['c'] = 17
+
+    def test_pickle_defdict(self):
+        dwd = defdict.ImmutableDictWithDefault(100, {'a': 1, 'b': 2})
+        pick = pickle.dumps(dwd)
+        dwd2 = pickle.loads(pick)
+        self.assertEqual(dwd, dwd2)

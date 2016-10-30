@@ -27,11 +27,12 @@ class ImmutableDictWithDefault(dict):
     value when one is materialized (from a missing fetch), and furtheremore, the
     set method is make unavailable to prevent mutation beyond construction.
     """
-    def __init__(self, default, *args):
+    def __init__(self, default=None, *args):
         super(ImmutableDictWithDefault, self).__init__(*args)
         self.default = default
 
     def __setitem__(self, key, value):
+        """Disallow mutating the dict in the usual way."""
         raise NotImplementedError
 
     def __getitem__(self, key):
@@ -42,3 +43,17 @@ class ImmutableDictWithDefault(dict):
 
     def get(self, key, _=None):
         return self.__getitem__(key)
+
+    # The next three methods are present in order to support pickling. Note that
+    # because this class is a specialization of dict, and that dict has a
+    # special handler in pickle, you have to resort to using __reduce__().
+
+    def __getstate__(self):
+        return (self.default, list(self.items()))
+
+    def __setstate__(self, state):
+        self.default, items = state
+        super(ImmutableDictWithDefault, self).update(items)
+
+    def __reduce__(self):
+        return (ImmutableDictWithDefault, (), self.__getstate__())
