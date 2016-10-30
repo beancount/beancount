@@ -6,6 +6,32 @@ Note: This file contains only changes in the 'default' branch.
 
 2016-10-30
 
+  - Removed parsing of the pipe (|) symbol as a separator for strings on
+    transaction description lines. This was vestigial from the days long long
+    ago when Beancount was attempting to be compatible with Ledger syntax; this
+    is wholly unnecessary how.
+
+    You will have to convert transactions like this:
+
+      2015-08-25 * "Tunnel" | "Coffees"
+        Expenses:Food:Coffee           15 CAD
+        Assets:Cash
+
+    Into transactions like this:
+
+      2015-08-25 * "Tunnel" "Coffees"
+        Expenses:Food:Coffee           15 CAD
+        Assets:Cash
+
+    This can be done using a sed script, or as a macro in your favorite text editor.
+    If you need a temporary respite, you can use the following option, which
+    will replace all the error messages by a single warning:
+
+      option "allow_pipe_separator" "TRUE"
+
+    Support for this option will be removed eventually.
+
+
   - Moved the {{...}}} total cost syntax from a legacy support with only "/"
     separator and a date, no label, to full support. Previously, only these syntaxes
     were supported for total cost:

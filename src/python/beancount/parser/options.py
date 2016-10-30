@@ -169,8 +169,9 @@ def Opt(name, default_value,
 _TYPES = account_types.DEFAULT_ACCOUNT_TYPES
 
 
-# Options that consist of data output from the parsing process. These cannot be
-# input by the user.
+# Options that consist of data produced as a by-product of the parsing process.
+# These options cannot be input by the user. This is essentially read-only state
+# that is conceptually separate from the input options.
 OUTPUT_OPTION_GROUPS = [
 
     OptGroup("""
@@ -516,6 +517,14 @@ PUBLIC_OPTION_GROUPS = [
     """, [Opt("booking_method", data.Booking.STRICT, "STRICT",
               converter=options_validate_booking_method)]),
 
+    OptGroup("""
+      Support the pipe (|) symbol to for transaction separator.
+
+      This is only provided as a temporary stopgap to ease transition, and will
+      be removed eventually. This is why this option is marked as deprecated.
+    """, [Opt("allow_pipe_separator", False, True,
+              deprecated=('Allowing pipe separator temporary; '
+                          'this will go away eventually.'))]),
     ]
 
 

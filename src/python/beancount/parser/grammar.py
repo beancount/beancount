@@ -238,6 +238,19 @@ class Builder(lexer.LexBuilder):
         self.errors.append(
             ParserSyntaxError(meta, message, None))
 
+    def pipe_deprecated_error(self, filename, lineno):
+        """Issue a 'Pipe deprecated' error.
+
+        Args:
+          filename: The current filename
+          lineno: The current line number
+        """
+        if self.options['allow_pipe_separator']:
+            return
+        meta = new_metadata(filename, lineno)
+        self.errors.append(
+            ParserSyntaxError(meta, "Pipe symbol is deprecated.", None))
+
     def pushtag(self, tag):
         """Push a tag on the current set of tags.
 

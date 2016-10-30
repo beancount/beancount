@@ -2035,8 +2035,6 @@ http://furius.ca/beancount/doc/proposal-query
   Just some old things that are marked as not supported anymore; finally remove
   them all at once. {deprecation}
 
-  - Remove legacy support for PIPE character in syntax, update cheatsheet.
-
   - Remove negative number warning and __ setting
 
   - In 'beancount.core.number' and 'beancount.core.amount', there are deprecated
@@ -2055,6 +2053,16 @@ http://furius.ca/beancount/doc/proposal-query
 
   - When the 'booking' branch is complete, remove deprecated support for total
     cost (e.g., {{ ... }}), we won't need it anymore.
+
+  - Remove this:
+
+      # Fix up account_rounding to be a subaccount if the user specified a
+      # full account name. This is intended to ease transition in the
+      # change of semantics that occurred on 2015-09-05, whereby the value
+      # of this option became defined as a subaccount of Equity instead of
+      # a full account name. See Issue #67.
+      # This should eventually be deprecated, say, in a year (after Sep 2016).
+
 
 ** Parser Cleanup & Improvements
 

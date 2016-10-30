@@ -341,6 +341,8 @@ txn_strings : empty
             }
             | txn_strings PIPE
             {
+                BUILDY(,
+                       $$, "pipe_deprecated_error", "si", FILE_LINE_ARGS);
                 $$ = $1;
             }
 
