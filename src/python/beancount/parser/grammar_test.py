@@ -622,24 +622,14 @@ class TestParserPlugin(unittest.TestCase):
         self.assertEqual([('beancount.plugin.unrealized', 'Unrealized')],
                          options_map['plugin'])
 
-    # Note: this is testing the old method, which will become obsolete one day.
     @parser.parse_doc(expect_errors=True)
     def test_plugin_as_option(self, entries, errors, options_map):
         """
           option "plugin" "beancount.plugin.unrealized"
         """
+        # Test that the very old method of plugin specification is disallowed.
         self.assertEqual(1, len(errors))
-        self.assertEqual([('beancount.plugin.unrealized', None)],
-                         options_map['plugin'])
-
-    @parser.parse_doc(expect_errors=True)
-    def test_plugin_as_option_with_config(self, entries, errors, options_map):
-        """
-          option "plugin" "beancount.plugin.unrealized:Unrealized"
-        """
-        self.assertEqual(1, len(errors))
-        self.assertEqual([('beancount.plugin.unrealized', 'Unrealized')],
-                         options_map['plugin'])
+        self.assertEqual([], options_map['plugin'])
 
 
 class TestDisplayContextOptions(unittest.TestCase):
@@ -741,7 +731,7 @@ class TestDeprecatedOptions(unittest.TestCase):
           option "plugin" "beancount.plugins.module_name"
         """
         self.assertEqual(1, len(errors))
-        self.assertRegex(errors[0].message, 'option is deprecated')
+        self.assertRegex(errors[0].message, 'may not be set')
 
     @parser.parse_doc(expect_errors=True)
     def test_deprecated_tolerance(self, _, errors, options_map):

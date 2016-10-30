@@ -212,6 +212,24 @@ OUTPUT_OPTION_GROUPS = [
       This is mainly used for efficiency, best computed once at parse time.
     """, [Opt("commodities", set())]),
 
+    OptGroup("""
+      A list of Python modules containing transformation functions to run the
+      entries through after parsing. The parser reads the entries as they are,
+      transforms them through a list of standard functions, such as balance
+      checks and inserting padding entries, and then hands the entries over to
+      those plugins to add more auto-generated goodies. The list is a list of
+      pairs/tuples, in the format (plugin-name, plugin-configuration). The
+      plugin-name should be the name of a Python module to import, and within
+      the module we expect a special '__plugins__' attribute that should list
+      the name of transform functions to run the entries through. The
+      plugin-configuration argument is an optional string to be provided by the
+      user. Each function accepts a pair of (entries, options_map) and should
+      return a pair of (new entries, error instances). If a plugin configuration
+      is provided, it is provided as an extra argument to the plugin function.
+      Errors should not be printed out the output, they will be converted to
+      strings by the loader and displayed as dictated by the output medium.
+    """, [Opt("plugin", [], "beancount.plugins.module_name",
+              converter=options_validate_plugin)]),
     ]
 
 
@@ -384,27 +402,6 @@ PUBLIC_OPTION_GROUPS = [
               converter=options_validate_processing_mode)]),
 
     OptGroup("""
-      A list of Python modules containing transformation functions to run the
-      entries through after parsing. The parser reads the entries as they are,
-      transforms them through a list of standard functions, such as balance
-      checks and inserting padding entries, and then hands the entries over to
-      those plugins to add more auto-generated goodies. The list is a list of
-      pairs/tuples, in the format (plugin-name, plugin-configuration). The
-      plugin-name should be the name of a Python module to import, and within
-      the module we expect a special '__plugins__' attribute that should list
-      the name of transform functions to run the entries through. The
-      plugin-configuration argument is an optional string to be provided by the
-      user. Each function accepts a pair of (entries, options_map) and should
-      return a pair of (new entries, error instances). If a plugin configuration
-      is provided, it is provided as an extra argument to the plugin function.
-      Errors should not be printed out the output, they will be converted to
-      strings by the loader and displayed as dictated by the output medium.
-    """, [Opt("plugin", [], "beancount.plugins.module_name",
-              converter=options_validate_plugin,
-              deprecated=("The 'plugin' option is deprecated; it should be "
-                          "replaced by the 'plugin' directive"))]),
-
-    OptGroup("""
       The number of lines beyond which a multi-line string will trigger a
       overly long line warning. This warning is meant to help detect a dangling
       quote by warning users of unexpectedly long strings.
@@ -521,7 +518,7 @@ OPTIONS_DEFAULTS = {desc.name: desc.default_value
 
 
 # A list of options that cannot be modified.
-READ_ONLY_OPTIONS = {"filename"}
+READ_ONLY_OPTIONS = {"filename", "plugin"}
 
 
 def get_account_types(options):

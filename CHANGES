@@ -85,6 +85,9 @@ Note: This file contains only changes in the 'default' branch.
 
   - Removed deprecated option "tolerance".
 
+  - Remove deprecated use of 'plugin' as an option. The directive ought to be
+    the only way.
+
 
 2016-10-23
 
