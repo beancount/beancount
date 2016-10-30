@@ -41,10 +41,7 @@ DEFAULT_PLUGINS_POST = [
     ]
 
 # A mapping of modules to warn about, to their renamed names.
-DEPRECATED_MODULES = {
-    "beancount.ops.auto_accounts": "beancount.plugins.auto_accounts",
-    "beancount.ops.implicit_prices": "beancount.plugins.implicit_prices",
-    }
+RENAMED_MODULES = {}
 
 
 # Filename pattern for the pickle-cache.
@@ -501,7 +498,7 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
     for plugin_name, plugin_config in plugins_iter:
 
         # Issue a warning on a deprecated module.
-        renamed_name = DEPRECATED_MODULES.get(plugin_name, None)
+        renamed_name = RENAMED_MODULES.get(plugin_name, None)
         if renamed_name:
             warnings.warn("Deprecation notice: Module '{}' has been renamed to '{}'; "
                           "please adjust your plugin directive.".format(

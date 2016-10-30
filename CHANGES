@@ -77,6 +77,9 @@ Note: This file contains only changes in the 'default' branch.
     since I cleaned up the definition of the D() constructor and moved it to
     beancount.core.number.
 
+  - Removed built-in aliases for auto_accounts and implicit_prices modules, from
+    beancount.ops to beancount.plugins.
+
 
 2016-10-23
 
