@@ -2035,8 +2035,6 @@ http://furius.ca/beancount/doc/proposal-query
   Just some old things that are marked as not supported anymore; finally remove
   them all at once. {deprecation}
 
-  - Remove deprecated options, 'tolerance'.
-
   - Remove deprecated options, 'plugin' (replaced by a directive).
 
   - Remove support for deprecated variants in all option names.

@@ -343,20 +343,6 @@ PUBLIC_OPTION_GROUPS = [
       Enabling this flag only makes the tolerances potentially wider.
     """, [Opt("infer_tolerance_from_cost", False, True)]),
 
-    # Note: This option will go away. Its behavior has been replaced by
-    # precision/tolerance inference.
-    # See this for details: http://furius.ca/beancount/doc/tolerances
-    OptGroup("""
-      The tolerance allowed for balance checks and padding directives. In the
-      real world, rounding occurs in various places, and we need to allow a
-      small (but very small) amount of tolerance in checking the balance of
-      transactions and in requiring padding entries to be auto-inserted. This is
-      the tolerance amount, which you can override.
-    """, [Opt("tolerance", D("0.015"), "0.015",
-              converter=options_validate_tolerance,
-              deprecated=("The 'tolerance' option has been deprecated "
-                          "and has no effect."))]),
-
     OptGroup("""
       A list of directory roots, relative to the CWD, which should be searched
       for document files. For the document files to be automatically found they

@@ -708,18 +708,8 @@ class TestToleranceOptions(unittest.TestCase):
     def test_tolerance_defaults(self, _, __, options_map):
         """
         """
-        self.assertEqual(D('0.015'),
-                         options_map['tolerance'])
         self.assertEqual({},
                          options_map['inferred_tolerance_default'])
-
-    @parser.parse_doc(expect_errors=True)
-    def test_tolerance__deprecated(self, _, errors, options_map):
-        """
-          option "tolerance" "0.05"
-        """
-        self.assertEqual(D("0.05"), options_map['tolerance'])
-        self.assertRegex(errors[0].message, "has been deprecated")
 
     @parser.parse_doc()
     def test_inferred_tolerance_default(self, _, __, options_map):
@@ -754,12 +744,12 @@ class TestDeprecatedOptions(unittest.TestCase):
         self.assertRegex(errors[0].message, 'option is deprecated')
 
     @parser.parse_doc(expect_errors=True)
-    def test_deprecated_tolerance(self, _, errors, __):
+    def test_deprecated_tolerance(self, _, errors, options_map):
         """
-          option "tolerance" "0.00005"
+          option "experiment_booking_algorithm" "FULL"
         """
-        self.assertEqual(1, len(errors))
-        self.assertRegex(errors[0].message, 'option has been deprecated')
+        self.assertEqual("FULL", options_map['experiment_booking_algorithm'])
+        self.assertRegex(errors[0].message, "has been renamed")
 
 
 class TestParserLinks(unittest.TestCase):

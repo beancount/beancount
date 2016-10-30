@@ -83,6 +83,8 @@ Note: This file contains only changes in the 'default' branch.
   - Removed deprecated option "default_tolerance" (which had been renamed to
     "inferred_tolerance_default").
 
+  - Removed deprecated option "tolerance".
+
 
 2016-10-23
 
