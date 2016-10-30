@@ -86,7 +86,7 @@ class TestEntryPrinter(cmptest.TestCase):
           Assets:Account1       111.00 BEAN
           Assets:Cash          -111.00 BEAN
 
-        2014-06-08 * "Payee" | "Narration"
+        2014-06-08 * "Payee" "Narration"
           Assets:Account1       111.00 BEAN
           Assets:Cash          -111.00 BEAN
 
@@ -240,7 +240,7 @@ class TestPrinterSpacing(unittest.TestCase):
           Assets:Account1       111.00 BEAN
           Assets:Cash
 
-        2014-06-08 * "Payee" | "Narration"
+        2014-06-08 * "Payee" "Narration"
           Assets:Account2       111.00 BEAN
           Assets:Cash
 

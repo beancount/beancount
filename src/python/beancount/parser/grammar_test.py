@@ -798,7 +798,7 @@ class TestTransactions(unittest.TestCase):
             Expenses:Restaurant         100 USD
             Assets:US:Cash             -100 USD
 
-          2013-05-20 * "Duane Reade" | "Toothbrush"
+          2013-05-20 * "Duane Reade" "Toothbrush"
             Expenses:BathroomSupplies         4 USD
             Assets:US:BestBank:Checking      -4 USD
 
@@ -837,7 +837,7 @@ class TestTransactions(unittest.TestCase):
     @parser.parse_doc()
     def test_payee_no_narration(self, entries, errors, _):
         """
-          2013-05-18 * "Mermaid Inn" |
+          2013-05-18 * "Mermaid Inn"
             Expenses:Restaurant         100 USD
             Assets:US:Cash             -100 USD
         """
@@ -2153,7 +2153,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
     def test_grammar_exceptions__tag_link_PIPE(self, entries, errors, _):
         """
           2010-01-01 close Assets:Before
-          2010-01-01 * "Payee" | "Narration"
+          2010-01-01 * "Payee" "Narration"
             Assets:Before   100.00 USD
             Assets:After   -100.00 USD
           2000-01-01 open Assets:Before
@@ -2164,7 +2164,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
     def test_grammar_exceptions__transaction(self, entries, errors, _):
         """
           2010-01-01 close Assets:Before
-          2010-01-01 * "Payee" | "Narration"
+          2010-01-01 * "Payee" "Narration"
             Assets:Before   100.00 USD
             Assets:After   -100.00 USD
           2000-01-01 open Assets:Before

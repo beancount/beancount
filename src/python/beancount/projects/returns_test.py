@@ -62,7 +62,7 @@ class TestReturnsFunctions(test_utils.TestCase):
     2014-07-30 balance Assets:US:Prosper:FundsLent     21005.79 LENCLUB
 
 
-    2014-07-10 * "PROSPER" | "Transfer money into it."
+    2014-07-10 * "PROSPER" "Transfer money into it."
       Assets:US:TD:Checking                                               -10000.00 USD
       Assets:US:Prosper:Cash
 
@@ -120,7 +120,7 @@ class TestReturnsFunctions(test_utils.TestCase):
       Expenses:Financial:Fees:Prosper                              0.42 USD ;; Collection fees
       Assets:US:Prosper:Cash
 
-    2014-11-06 * "PROSPER" | "Withdrawal"
+    2014-11-06 * "PROSPER" "Withdrawal"
       Assets:US:TD:Checking                                                 3200.00 USD
       Assets:US:Prosper:Cash
 

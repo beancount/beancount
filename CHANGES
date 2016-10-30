@@ -73,6 +73,10 @@ Note: This file contains only changes in the 'default' branch.
     suspect that many users are still using {{...}} instead of {{# ...}}, so I
     won't remove it just yet.
 
+  - Removed very old compatibility code in beancount.core.amount that lived
+    since I cleaned up the definition of the D() constructor and moved it to
+    beancount.core.number.
+
 
 2016-10-23
 

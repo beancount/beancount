@@ -2035,11 +2035,6 @@ http://furius.ca/beancount/doc/proposal-query
   Just some old things that are marked as not supported anymore; finally remove
   them all at once. {deprecation}
 
-  - Remove negative number warning and __ setting
-
-  - In 'beancount.core.number' and 'beancount.core.amount', there are deprecated
-    sections; remove them.
-
   - Remove support for DEPRECATED_MODULES module names.
 
   - Remove deprecated options, 'tolerance'.
@@ -2053,6 +2048,8 @@ http://furius.ca/beancount/doc/proposal-query
 
   - When the 'booking' branch is complete, remove deprecated support for total
     cost (e.g., {{ ... }}), we won't need it anymore.
+
+  - Removed parsedoc() and loaddoc().
 
   - Remove this:
 
