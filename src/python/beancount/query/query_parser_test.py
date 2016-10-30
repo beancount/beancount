@@ -511,7 +511,7 @@ class TestBalances(QueryParserTestBase):
                         None),
             "BALANCES AT units FROM date = 2014-01-01 CLOSE;")
 
-    def test_balances_from_with_transformer(self):
+    def test_balances_from_with_transformer_simple(self):
         self.assertParse(
             qp.Balances('units',
                         None,

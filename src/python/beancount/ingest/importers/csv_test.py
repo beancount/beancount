@@ -1,15 +1,11 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import datetime
-import re
 import textwrap
-import tempfile
 import unittest
 
 from beancount.ingest.importers import csv
 from beancount.ingest import cache
 from beancount.parser import cmptest
-from beancount.parser import printer
 from beancount.utils import test_utils
 
 Col = csv.Col
@@ -55,6 +51,7 @@ class TestCSVImporter(cmptest.TestCase):
 
     @test_utils.docfile
     def test_column_types(self, filename):
+        # pylint: disable=line-too-long
         """\
           Details,Posting Date,"Description",Amount,Type,Balance,Check or Slip #,
           DEBIT,3/18/2016,"Payment to Chafe card ending in 1234 03/18",-2680.89,ACCT_XFER,3409.86,,

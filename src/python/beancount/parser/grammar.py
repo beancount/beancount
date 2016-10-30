@@ -996,8 +996,7 @@ class Builder(lexer.LexBuilder):
 
         # We now allow a single posting when its balance is zero, so we
         # commented out the check below. If a transaction has a single posting
-        # with a non-zero balance, it'll get caught below in the
-        # balance_incomplete_postings() code.
+        # with a non-zero balance, it'll get caught below in the booking code.
         #
         # # Detect when a transaction does not have at least two legs.
         # if postings is None or len(postings) < 2:

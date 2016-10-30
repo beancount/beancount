@@ -95,8 +95,6 @@ def validate_sell_gains(entries, options_map):
                          acc_types.equity,
                          acc_types.expenses])
 
-    default_tolerances = options_map['inferred_tolerance_default']
-
     for entry in entries:
         if not isinstance(entry, data.Transaction):
             continue
@@ -138,9 +136,7 @@ def validate_sell_gains(entries, options_map):
             # Accept a looser than usual tolerance because rounding occurs
             # differently. Also, it would be difficult for the user to satisfy
             # two sets of constraints manually.
-            tolerance = inventory.get_tolerance(tolerances,
-                                                default_tolerances,
-                                                currency) * EXTRA_TOLERANCE_MULTIPLIER
+            tolerance = tolerances.get(currency) * EXTRA_TOLERANCE_MULTIPLIER
 
             proceeds_number = dict_proceeds.pop(currency, ZERO)
             diff = abs(price_number - proceeds_number)

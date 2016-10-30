@@ -2,6 +2,8 @@
 beancount: TODO
 * Priorities
 
+booking_full.py: # FIXME: Refactor compute_cost_number() and convert_costspec_to_cost().
+
 - Start versioning very soon. It's desired by users.
 - Pivot report... very useful. I need it.
 
@@ -4674,6 +4676,9 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - There ought to be some unit tests for all the custom metadata added to
+    Posting instances. I think this is undertested at the moment.
+
   - Implement a new plugin to convert metadata-fields to Document directives.
 
       Scan all transactions that have the invoice-metadata field (or any other
@@ -4716,6 +4721,10 @@ http://furius.ca/beancount/doc/proposal-query
     this needs to be applied during matching, we cannot implement this in a
     plugin, this needs to become an option (to allow it, and to make it
     disallowed by default) in the parser itself.
+
+  - The Beancount loader cache should be automatically invalidated if the
+    revision of Beancount has been updated. This could avoid some potentially
+    confusing user interpretation of errors.
 
   - You need to add options to provide the precision to use for prices,
     otherwise something like this:
@@ -5328,3 +5337,31 @@ http://furius.ca/beancount/doc/proposal-query
       Please let us know if you have any additional questions or if we can be of any
       further assistance. Thank you for being a Betterment customer, have a wonderful
       day."
+
+
+** Adding Types
+
+  Comments from YYing re. adding types:
+  https://bitbucket.org/blais/beancount/issues/140/add-type-annotation-to-beancount-codebase
+
+  - typing.NamedTuple is a good drop-in replacement for namedtuple. See
+    https://github.com/yegle/beancount-type-stubs/blob/master/beancount/core/data.pyi
+    for example
+
+  - There should be an abc for all directives, thus the signatures of many
+    functions can expressed more accurately. E.g.
+    https://github.com/yegle/beancount-type-stubs/blob/master/beancount/core/data.pyi#L149
+    without a proper abc, the argument can only be List[Any]
+
+  - Some bad design choice is more obvious when adding type annotation. E.g.
+    https://github.com/yegle/beancount-type-stubs/blob/master/beancount/core/data.pyi#L67
+    the tags field of Transcation type is an Optional[Set[str]]. I think it should
+    be a Set[str] since an empty set should be sufficient to express "there's no
+    tags for this transaction". I'm not sure if there's any difference in turns of
+    performance
+
+  - mypy has very limited ability to infer function return types. E.g. functions
+    like is_balance_sheet_account in beancount/core/account_types.py, which
+    returns foo in bar, mypy is unable to infer that the return type is a bool.
+    I think pytype from Google have better type inference but it's written in
+    Python2 and I haven't figure out how to run it against python3 code.

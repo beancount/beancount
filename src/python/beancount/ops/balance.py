@@ -21,7 +21,7 @@ __plugins__ = ('check',)
 BalanceError = collections.namedtuple('BalanceError', 'source message entry')
 
 
-def get_tolerance(balance_entry, options_map):
+def get_balance_tolerance(balance_entry, options_map):
     """Get the tolerance amount for a single entry.
 
     Args:
@@ -128,7 +128,7 @@ def check(entries, options_map):
             diff_amount = amount.sub(balance_amount, expected_amount)
 
             # Use the specified tolerance or automatically infer it.
-            tolerance = get_tolerance(entry, options_map)
+            tolerance = get_balance_tolerance(entry, options_map)
 
             if abs(diff_amount.number) > tolerance:
                 check_errors.append(

@@ -542,13 +542,14 @@ class TestLexerErrors(unittest.TestCase):
         """
         builder = lexer.LexBuilder()
         tokens = list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
-        self.assertEqual([('EOL', 2, '\n', None),
-                          ('DATE', 2, '2016-07-15', datetime.date(2016, 7, 15)),
-                          ('QUERY', 2, 'query', None),
-                          ('STRING', 2, '"', 'hotels'),
-                          ('STRING', 2, '"', "SELECT * WHERE account ~ 'Expenses:Accommodation'"),
-                          ('EOL', 3, '\n', None),
-                          ('EOL', 3, '\x00', None)], tokens)
+        self.assertEqual([
+            ('EOL', 2, '\n', None),
+            ('DATE', 2, '2016-07-15', datetime.date(2016, 7, 15)),
+            ('QUERY', 2, 'query', None),
+            ('STRING', 2, '"', 'hotels'),
+            ('STRING', 2, '"', "SELECT * WHERE account ~ 'Expenses:Accommodation'"),
+            ('EOL', 3, '\n', None),
+            ('EOL', 3, '\x00', None)], tokens)
         self.assertEqual(0, len(builder.errors))
 
     def _run_lexer_with_raising_builder_method(self, test_input, method_name,
