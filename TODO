@@ -4683,6 +4683,19 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - Implement a new plugin to convert metadata-fields to Document directives.
+
+      Scan all transactions that have the invoice-metadata field (or any other
+    suiting field-name of your choice), and create a Document directive for
+    each, with a link to the transaction it comes from.
+
+    In doing so, add support for "fuzzy-matching":  When only a relative
+    filename is specified in the metadata-field (and Document directive), search
+    different locations based on the Account this is on/in.
+
+    See https://github.com/aumayr/fava/issues/386#issuecomment-256895713.
+
+
   - Core: Some problems occur (with the new method) if you mix at-cost and
     without-cost for the same currency, like this:
 
