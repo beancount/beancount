@@ -5,7 +5,6 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import builtins
 import collections
 import datetime
-import collections
 import sys
 
 from typing import NamedTuple, Union, Optional, List, Set, Dict, Tuple, Any
