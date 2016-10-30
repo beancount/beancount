@@ -408,23 +408,7 @@ PUBLIC_OPTION_GROUPS = [
     """, [Opt("long_string_maxlines", 64)]),
 
     OptGroup("""
-      This experiment has been merged as stable. This flag has been deprecated
-      and is now unnecessary.
-
-      Enable a feature that supports an explicit tolerance value on Balance
-      assertions. If enabled, the balance amount supports a tolerance in the
-      input, with this syntax: <number> ~ <tolerance> <currency>, for example,
-      "532.23 ~ 0.001 USD".
-
-      See the document on tolerances for more details:
-      http://furius.ca/beancount/doc/tolerances
-    """, [Opt("experiment_explicit_tolerances", True, True,
-              deprecated=("This experiment is now accepted as stable. "
-                          "The flag is unnecessary.'"))]),
-
-    OptGroup("""
       The booking algorithm implementation, new (FULL) or old (SIMPLE).
-
 
       By default Beancount matches using a powerful matching algorithm ("FULL"):
       the cost specification (e.g., {...}) in reducing postings is interpreted
@@ -470,12 +454,6 @@ PUBLIC_OPTION_GROUPS = [
     """, [Opt("booking_algorithm", "FULL", "SIMPLE")]),
 
     OptGroup("""
-      This variable is deprecated. It has been renamed to "booking_algorithm."
-    """, [Opt("experiment_booking_algorithm", "FULL", "SIMPLE",
-              deprecated=('This variable has been renamed to "booking_algorithm" and '
-                          'is now permanent. The new default is "FULL".'))]),
-
-    OptGroup("""
       The booking method to apply to ambiguous reductions of inventory lots.
       When a posting is matched against the contents of an account's inventory
       to reduce its contents and multiple lots match, the method dictates how
@@ -497,7 +475,8 @@ PUBLIC_OPTION_GROUPS = [
 
       This is only provided as a temporary stopgap to ease transition, and will
       be removed eventually. This is why this option is marked as deprecated.
-    """, [Opt("allow_pipe_separator", False, True,
+    """, [Opt("allow_pipe_separator", False, "TRUE",
+              converter=options_validate_boolean,
               deprecated=('Allowing pipe separator temporary; '
                           'this will go away eventually.'))]),
     ]

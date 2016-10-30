@@ -717,15 +717,6 @@ class TestToleranceOptions(unittest.TestCase):
 class TestDeprecatedOptions(unittest.TestCase):
 
     @parser.parse_doc(expect_errors=True)
-    def test_renamed_options(self, _, errors, options_map):
-        """
-          option "experiment_booking_algorithm" "*:0.0042"
-        """
-        self.assertEqual(1, len(errors))
-        self.assertRegex(errors[0].message, 'has been renamed')
-        self.assertEqual('FULL', options_map["booking_algorithm"])
-
-    @parser.parse_doc(expect_errors=True)
     def test_deprecated_plugin(self, _, errors, __):
         """
           option "plugin" "beancount.plugins.module_name"
@@ -734,12 +725,13 @@ class TestDeprecatedOptions(unittest.TestCase):
         self.assertRegex(errors[0].message, 'may not be set')
 
     @parser.parse_doc(expect_errors=True)
-    def test_deprecated_tolerance(self, _, errors, options_map):
+    def test_deprecated_option(self, _, errors, options_map):
         """
-          option "experiment_booking_algorithm" "FULL"
+          option "allow_pipe_separator" "TRUE"
         """
-        self.assertEqual("FULL", options_map['experiment_booking_algorithm'])
-        self.assertRegex(errors[0].message, "has been renamed")
+        self.assertEqual(1, len(errors))
+        self.assertEqual(True, options_map['allow_pipe_separator'])
+        self.assertRegex(errors[0].message, "this will go away")
 
 
 class TestParserLinks(unittest.TestCase):

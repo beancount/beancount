@@ -90,6 +90,10 @@ Note: This file contains only changes in the 'default' branch.
 
   - Removed deprecated option "experiment_explicit_tolerances".
 
+  - Renamed "experiment_booking_algorithm" to "booking_algorithm", and changed
+    the default value to "FULL". The old "SIMPLE" algorithm will be deprecated
+    eventually.
+
 
 2016-10-23
 
