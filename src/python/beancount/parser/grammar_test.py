@@ -1111,14 +1111,9 @@ class TestParseLots(unittest.TestCase):
             Assets:Invest:AAPL      1.1 AAPL {45.23 USD / 2015-07-16 / "blabla"}
             Assets:Invest:Cash   -45.23 USD
         """
-        self.assertEqual(2, len(errors))
-        self.assertRegex(errors[0].message, "slash")
-        self.assertRegex(errors[1].message, "slash")
-        posting = entries[0].postings[0]
-        self.assertEqual(A('1.1 AAPL'), posting.units)
-        self.assertEqual(CostSpec(D('45.23'), None, 'USD',
-                                  datetime.date(2015, 7, 16), 'blabla', False),
-                         posting.cost)
+        self.assertEqual(1, len(errors))
+        self.assertRegex(errors[0].message, "unexpected SLASH")
+        self.assertEqual(0, len(entries))
 
 
 class TestCurrencies(unittest.TestCase):
