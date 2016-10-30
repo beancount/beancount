@@ -663,10 +663,10 @@ class TestTransferBalances(cmptest.TestCase):
         self.assertIncludesEntries("""
 
         2010-12-31 T "Transfer balance for 'Assets:US:Investing:HOOL' (Transfer balance)"
-          Assets:US:Investing:HOOL         -5 HOOL {510.00 USD%s}   ;   -2550.00 USD
-          Equity:Transfer             2550.00 USD                   ;    2550.00 USD
+          Assets:US:Investing:HOOL         -5 HOOL {510.00 USD, 2010-12-05} ;   -2550.00 USD
+          Equity:Transfer             2550.00 USD                           ;    2550.00 USD
 
-        """ % _X(', 2010-12-05', ''), xfer_entries)
+        """, xfer_entries)
         self.assertEqual(len(self.entries) + 1, len(xfer_entries))
 
     def test_transfer_balances__end_assets_implicit(self):
@@ -769,8 +769,8 @@ class TestSummarize(cmptest.TestCase):
           Equity:Opening-Balances                                              -2459.98 USD
 
         2010-12-31 S "Opening balance for 'Assets:US:Investing:HOOL' (Summarization)"
-          Assets:US:Investing:HOOL                                                5 HOOL     {510.00 USD%s}                  ;    2550.00 USD
-          Equity:Opening-Balances                                              -2550.00 USD                                   ;   -2550.00 USD
+          Assets:US:Investing:HOOL                                                5 HOOL     {510.00 USD, 2010-12-05}  ;    2550.00 USD
+          Equity:Opening-Balances                                              -2550.00 USD                            ;   -2550.00 USD
 
         2010-12-31 S "Opening balance for 'Expenses:Flights' (Summarization)"
           Expenses:Flights                                                       345.23 USD
@@ -796,7 +796,7 @@ class TestSummarize(cmptest.TestCase):
           Liabilities:US:Chase:CreditCard                                       -412.43 USD
           Equity:Opening-Balances                                                412.43 USD
 
-        """ % _X(', 2010-12-05', ''), summarizing_entries)
+        """, summarizing_entries)
 
         # Check that all the transactions before the index are summarizing ones
         # and dated before the summarizing date.
@@ -915,11 +915,11 @@ class TestConversions(cmptest.TestCase):
         self.assertIncludesEntries(self.entries, conversion_entries)
         self.assertIncludesEntries("""
 
-        2012-03-09 C "Conversion for (-800.00 USD, 200.00 CAD, 60 NT {10 CAD%s})"
+        2012-03-09 C "Conversion for (-800.00 USD, 200.00 CAD, 60 NT {10 CAD, 2012-03-03})"
           Equity:Conversions   800.00 USD  @ 0 XFER
           Equity:Conversions  -800.00 CAD  @ 0 XFER
 
-        """ % _X(', 2012-03-03', ''), conversion_entries)
+        """, conversion_entries)
 
         converted_balance = interpolate.compute_entries_balance(conversion_entries,
                                                              date=date)
@@ -933,11 +933,11 @@ class TestConversions(cmptest.TestCase):
         self.assertIncludesEntries(self.entries, conversion_entries)
         self.assertIncludesEntries("""
 
-        2012-05-09 C "Conversion for (-700.00 USD, 100.00 CAD, 60 NT {10 CAD%s})"
+        2012-05-09 C "Conversion for (-700.00 USD, 100.00 CAD, 60 NT {10 CAD, 2012-03-03})"
           Equity:Conversions   700.00 USD  @ 0 NOTHING
           Equity:Conversions  -700.00 CAD  @ 0 NOTHING
 
-        """ % _X(', 2012-03-03', ''), conversion_entries)
+        """, conversion_entries)
 
         converted_balance = interpolate.compute_entries_balance(conversion_entries)
         self.assertTrue(converted_balance.cost().is_empty())
@@ -948,11 +948,11 @@ class TestConversions(cmptest.TestCase):
         self.assertIncludesEntries(self.entries, conversion_entries)
         self.assertIncludesEntries("""
 
-        2012-05-01 C "Conversion for (-700.00 USD, 100.00 CAD, 60 NT {10 CAD%s})"
+        2012-05-01 C "Conversion for (-700.00 USD, 100.00 CAD, 60 NT {10 CAD, 2012-03-03})"
           Equity:Conversions   700.00 USD  @ 0 NOTHING
           Equity:Conversions  -700.00 CAD  @ 0 NOTHING
 
-        """ % _X(', 2012-03-03', ''), conversion_entries)
+        """, conversion_entries)
 
         converted_balance = interpolate.compute_entries_balance(conversion_entries)
         self.assertTrue(converted_balance.cost().is_empty())
@@ -1070,7 +1070,7 @@ class TestEntriesFromBalance(cmptest.TestCase):
     def setUp(self):
         self.balances = collections.defaultdict(inventory.Inventory)
         self.balances['Assets:US:Investment'] = (
-            inventory.from_string('10 HOOL {500.00 USD%s}' % _X(', 2014-01-01', '')))
+            inventory.from_string('10 HOOL {500.00 USD, 2014-01-01}'))
         self.balances['Assets:US:Bank:Checking'] = inventory.from_string('1823.23 USD')
 
     def test_create_entries_from_balances__simple(self):

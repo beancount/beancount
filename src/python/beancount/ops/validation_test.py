@@ -321,8 +321,7 @@ class TestValidate(cmptest.TestCase):
         validation_errors = validation.validate(entries, options_map)
 
         self.assertEqual(2, len(errors))
-        self.assertRegex(errors[0].message, _X('No position matches',
-                                               'Reducing position results'))
+        self.assertRegex(errors[0].message, 'No position matches')
         self.assertRegex(errors[1].message, 'Invalid currency')
 
         self.assertEqual(1, len(validation_errors))

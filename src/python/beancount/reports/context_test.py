@@ -60,14 +60,14 @@ class TestContext(test_utils.TestCase):
                                                   search_filename, search_lineno)
 
         self.assertLines(textwrap.dedent("""
-        Hash:%s
+        Hash:0cd6e0b5c696951e006e228d40b09bf3
         Location: <string>:31
 
         ------------ Balances before transaction
 
           Assets:US:ETrade:Cash                       -1411.44 USD
 
-          Assets:US:ETrade:ITOT             4.00 ITOT {173.11 USD%s}
+          Assets:US:ETrade:ITOT             4.00 ITOT {173.11 USD, 2012-08-31}
 
           Expenses:Financial:Commissions                 35.80 USD
 
@@ -75,9 +75,9 @@ class TestContext(test_utils.TestCase):
         ------------ Transaction
 
         2013-02-07 * "Buy shares of ITOT"
-          Assets:US:ETrade:Cash           -1126.21 USD                ;  -1126.21 USD
-          Assets:US:ETrade:ITOT               6.00 ITOT {186.21 USD%s}  ; 1117.2600 USD
-          Expenses:Financial:Commissions      8.95 USD                ;      8.95 USD
+          Assets:US:ETrade:Cash           -1126.21 USD                            ;  -1126.21 USD
+          Assets:US:ETrade:ITOT               6.00 ITOT {186.21 USD, 2013-02-07}  ; 1117.2600 USD
+          Expenses:Financial:Commissions      8.95 USD                            ;      8.95 USD
 
 
         Tolerances: ITOT=0.005, USD=0.005
@@ -87,14 +87,10 @@ class TestContext(test_utils.TestCase):
 
         * Assets:US:ETrade:Cash                      -2537.65 USD
 
-          Assets:US:ETrade:ITOT             4.00 ITOT {173.11 USD%s}
-        * Assets:US:ETrade:ITOT             6.00 ITOT {186.21 USD%s}
+          Assets:US:ETrade:ITOT             4.00 ITOT {173.11 USD, 2012-08-31}
+        * Assets:US:ETrade:ITOT             6.00 ITOT {186.21 USD, 2013-02-07}
 
         * Expenses:Financial:Commissions                 44.75 USD
-        """ % (_X('0cd6e0b5c696951e006e228d40b09bf3', '331ed7920624f28e12cb21be551cb363'),
-               _X(', 2012-08-31', ''),
-               _X(', 2013-02-07', ''),
-               _X(', 2012-08-31', ''),
-               _X(', 2013-02-07', ''))), str_context)
+        """), str_context)
 
     maxDiff = 8192

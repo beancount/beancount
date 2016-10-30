@@ -234,17 +234,3 @@ grep-import:
 
 grep-uses:
 	grep --include='*.py' --exclude='*/beancount/parser/*' -srn  'parser.parse'  ~/p/beancount/src/python/beancount
-
-
-#--------------------------------------------------------------------------------
-# FIXME: Temporary.
-
-bothtest bothtests both:
-	BOOKALGO=SIMPLE $(NOSE) $(SRC)
-	BOOKALGO=FULL $(NOSE) $(SRC)
-
-simpletest:
-	BOOKALGO=SIMPLE $(NOSE) $(SRC)
-
-fulltest:
-	BOOKALGO=FULL $(NOSE) $(SRC)

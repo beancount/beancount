@@ -293,7 +293,7 @@ class TestDisplayContext(test_utils.TestCase):
         2014-01-01 open Assets:Account
         2014-01-01 open Assets:Cash
 
-        """) + _X(textwrap.dedent("""\
+        """) + textwrap.dedent("""\
         2014-07-01 *
           Assets:Account             1 INT
           Assets:Cash               -1 INT
@@ -307,21 +307,7 @@ class TestDisplayContext(test_utils.TestCase):
           Assets:Cash       -4444.4444 FP4
           Assets:Account   55555.55555 FP5
           Assets:Cash     -55555.55555 FP5
-        """), textwrap.dedent("""\
-        2014-07-01 *
-          Assets:Account             1 INT
-          Assets:Account           1.1 FP1
-          Assets:Account         22.22 FP2
-          Assets:Account       333.333 FP3
-          Assets:Account     4444.4444 FP4
-          Assets:Account   55555.55555 FP5
-          Assets:Cash               -1 INT
-          Assets:Cash             -1.1 FP1
-          Assets:Cash           -22.22 FP2
-          Assets:Cash         -333.333 FP3
-          Assets:Cash       -4444.4444 FP4
-          Assets:Cash     -55555.55555 FP5
-        """))
+        """)
         self.assertLines(expected_str, oss.getvalue())
 
 
@@ -434,11 +420,11 @@ class TestPrinterAlignment(test_utils.TestCase):
         2014-01-01 open Assets:US:Investments:Cash
 
         2014-07-01 * "Something"
-          Assets:US:Investments:HOOL         45 HOOL {504.30 USD*** ;    22693.50 USD
+          Assets:US:Investments:HOOL         45 HOOL {504.30 USD, 2014-07-01}  ;    22693.50 USD
           Assets:US:Investments:HOOL          4 HOOL {504.30 USD, 2014-11-11}  ;     2017.20 USD
           Expenses:Commissions             9.95 USD                            ;      9.9520 USD
           Assets:US:Investments:Cash  -22473.32 CAD @ 1.1000 USD               ; -24720.6520 USD
-        """.replace('***', _X(', 2014-07-01} ', '}             ')))
+        """)
         self.assertEqual(expected_str, oss.getvalue())
 
 
@@ -472,10 +458,10 @@ class TestPrinterMisc(test_utils.TestCase):
           doc: "some-statement.pdf"
           Assets:US:Investments:Cash  -23.45 USD
             note: "No commission"
-          Assets:US:Investments:HOOL    1 HOOL {23.45 USD***}
+          Assets:US:Investments:HOOL    1 HOOL {23.45 USD, 2000-01-03}
             settlement: 2000-01-05
 
-        """.replace('***', _X(', 2000-01-03', '')))
+        """)
         entries, errors, options_map = loader.load_string(input_string)
         self.assertFalse(errors)
         oss = io.StringIO()
@@ -489,9 +475,9 @@ class TestPrinterMisc(test_utils.TestCase):
         2000-01-01 open Assets:Invest:Options
 
         2000-01-03 *
-          Assets:Invest:Options  100 HOOLOPT {0 USD***}
+          Assets:Invest:Options  100 HOOLOPT {0 USD, 2000-01-03}
           Assets:Invest:Cash       0 USD
-        """.replace('***', _X(', 2000-01-03', '')))
+        """)
         entries, errors, options_map = loader.load_string(input_string)
         self.assertFalse(errors)
         oss = io.StringIO()

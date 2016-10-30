@@ -119,8 +119,8 @@ class TestMerge(cmptest.TestCase):
             Expenses:Grocery         1.11 USD
             Expenses:Restaurant      1.11 CAD
             Expenses:Restaurant      1.11 USD @ 10 ECUS
-            Expenses:Restaurant      1.11 USD {5 ECUS%s}
+            Expenses:Restaurant      1.11 USD {5 ECUS, 2015-01-04}
             Expenses:Restaurant      1.11 USD
             ! Expenses:Restaurant    1.11 USD
 
-        """ % _X(', 2015-01-04', ''), [merged_entry])
+        """, [merged_entry])

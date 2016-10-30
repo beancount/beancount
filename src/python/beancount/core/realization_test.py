@@ -718,6 +718,6 @@ class TestComputeBalance(unittest.TestCase):
         expected_balance.add_amount(A('17.23 CAD'))
         expected_balance.add_amount(A('32 HOOL'),
                                     position.Cost(D('45.203'), 'USD',
-                                                  _X(datetime.date(2014, 5, 30)), None))
+                                                  datetime.date(2014, 5, 30), None))
         expected_balance.add_amount(A('12000 EUR'))
         self.assertEqual(expected_balance, computed_balance)
