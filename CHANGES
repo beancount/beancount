@@ -88,6 +88,8 @@ Note: This file contains only changes in the 'default' branch.
   - Remove deprecated use of 'plugin' as an option. The directive ought to be
     the only way.
 
+  - Removed deprecated option "experiment_explicit_tolerances".
+
 
 2016-10-23
 
