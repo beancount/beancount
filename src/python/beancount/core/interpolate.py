@@ -198,58 +198,53 @@ def infer_tolerances(postings, options_map, use_cost=None):
 
     inferred_tolerance_multiplier = options_map["inferred_tolerance_multiplier"]
 
-    if options_map['use_legacy_fixed_tolerances']:
-        # This is supported only to support an easy transition for users.
-        # Users should be able to revert to this easily.
-        tolerances = LEGACY_DEFAULT_TOLERANCES.copy()
-    else:
-        default_tolerances = options_map['inferred_tolerance_default']
-        tolerances = default_tolerances.copy()
+    default_tolerances = options_map['inferred_tolerance_default']
+    tolerances = default_tolerances.copy()
 
-        cost_tolerances = collections.defaultdict(D)
-        for posting in postings:
-            # Skip the precision on automatically inferred postings.
-            if posting.meta and AUTOMATIC_META in posting.meta:
+    cost_tolerances = collections.defaultdict(D)
+    for posting in postings:
+        # Skip the precision on automatically inferred postings.
+        if posting.meta and AUTOMATIC_META in posting.meta:
+            continue
+        units = posting.units
+        if units is MISSING or units is None:
+            continue
+
+        # Compute bounds on the number.
+        currency = units.currency
+        expo = units.number.as_tuple().exponent
+        if expo < 0:
+            # Note: the exponent is a negative value.
+            tolerance = ONE.scaleb(expo) * inferred_tolerance_multiplier
+            tolerances[currency] = max(tolerance,
+                                       tolerances.get(currency, -1024))
+            if not use_cost:
                 continue
-            units = posting.units
-            if units is MISSING or units is None:
-                continue
 
-            # Compute bounds on the number.
-            currency = units.currency
-            expo = units.number.as_tuple().exponent
-            if expo < 0:
-                # Note: the exponent is a negative value.
-                tolerance = ONE.scaleb(expo) * inferred_tolerance_multiplier
-                tolerances[currency] = max(tolerance,
-                                           tolerances.get(currency, -1024))
-                if not use_cost:
-                    continue
+            # Compute bounds on the smallest digit of the number implied as cost.
+            cost = posting.cost
+            if cost is not None:
+                cost_currency = cost.currency
+                if isinstance(cost, position.Cost):
+                    cost_tolerance = min(tolerance * cost.number, MAXIMUM_TOLERANCE)
+                else:
+                    assert isinstance(cost, position.CostSpec)
+                    cost_tolerance = MAXIMUM_TOLERANCE
+                    for cost_number in cost.number_total, cost.number_per:
+                        if cost_number is None:
+                            continue
+                        cost_tolerance = min(tolerance * cost_number, cost_tolerance)
+                cost_tolerances[cost_currency] += cost_tolerance
 
-                # Compute bounds on the smallest digit of the number implied as cost.
-                cost = posting.cost
-                if cost is not None:
-                    cost_currency = cost.currency
-                    if isinstance(cost, position.Cost):
-                        cost_tolerance = min(tolerance * cost.number, MAXIMUM_TOLERANCE)
-                    else:
-                        assert isinstance(cost, position.CostSpec)
-                        cost_tolerance = MAXIMUM_TOLERANCE
-                        for cost_number in cost.number_total, cost.number_per:
-                            if cost_number is None:
-                                continue
-                            cost_tolerance = min(tolerance * cost_number, cost_tolerance)
-                    cost_tolerances[cost_currency] += cost_tolerance
+            # Compute bounds on the smallest digit of the number implied as cost.
+            price = posting.price
+            if price is not None:
+                price_currency = price.currency
+                price_tolerance = min(tolerance * price.number, MAXIMUM_TOLERANCE)
+                cost_tolerances[price_currency] += price_tolerance
 
-                # Compute bounds on the smallest digit of the number implied as cost.
-                price = posting.price
-                if price is not None:
-                    price_currency = price.currency
-                    price_tolerance = min(tolerance * price.number, MAXIMUM_TOLERANCE)
-                    cost_tolerances[price_currency] += price_tolerance
-
-        for currency, tolerance in cost_tolerances.items():
-            tolerances[currency] = max(tolerance, tolerances.get(currency, -1024))
+    for currency, tolerance in cost_tolerances.items():
+        tolerances[currency] = max(tolerance, tolerances.get(currency, -1024))
 
     default = tolerances.pop('*', ZERO)
     return defdict.ImmutableDictWithDefault(default, tolerances)

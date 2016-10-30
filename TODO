@@ -2035,8 +2035,6 @@ http://furius.ca/beancount/doc/proposal-query
   Just some old things that are marked as not supported anymore; finally remove
   them all at once. {deprecation}
 
-  - Remove the "use_legacy_fixed_tolerances" option.
-
   - Remove legacy support for PIPE character in syntax, update cheatsheet.
 
   - Remove negative number warning and __ setting

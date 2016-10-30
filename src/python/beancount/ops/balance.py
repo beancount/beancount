@@ -30,12 +30,7 @@ def get_balance_tolerance(balance_entry, options_map):
     Returns:
       A Decimal, the amount of tolerance implied by the directive.
     """
-    if options_map['use_legacy_fixed_tolerances']:
-        # This is to support the legacy behavior to ease the transition
-        # for some users.
-        tolerance = D('0.015')
-
-    elif balance_entry.tolerance is not None:
+    if balance_entry.tolerance is not None:
         # Use the balance-specific tolerance override if it is provided.
         tolerance = balance_entry.tolerance
 

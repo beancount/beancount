@@ -22,7 +22,6 @@ from beancount import loader
 # A default options map just to provide the tolerances.
 OPTIONS_MAP = {'inferred_tolerance_default': {},
                'inferred_tolerance_multiplier': D('0.5'),
-               'use_legacy_fixed_tolerances': False,
                'account_rounding': None,
                'infer_tolerance_from_cost': False}
 
@@ -474,20 +473,6 @@ class TestInferTolerances(cmptest.TestCase):
         """
         self.assertEqual(1, len(errors))
         self.assertTrue(errors[0].entry is entries[-1])
-
-    @loader.load_doc(expect_errors=False)
-    def test_tolerances__legacy(self, entries, _, __):
-        """
-        ;; issue/47
-        option "use_legacy_fixed_tolerances" "TRUE"
-
-        1970-01-01 open Assets:B1
-        1970-01-01 open Assets:B2
-
-        2010-01-01 * "something"
-          Assets:B1      -200 EUR
-          Assets:B2
-        """
 
     @loader.load_doc()
     def test_tolerances__bug(self, entries, errors, _):
