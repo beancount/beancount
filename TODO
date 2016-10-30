@@ -15,7 +15,6 @@ beancount: TODO
 {holding}
 {balance-where}
 {autogroup}
-{deprecation}
 {review-dcontext}
 {write-intro-doc}
 {commodity-required}
@@ -2033,9 +2032,6 @@ http://furius.ca/beancount/doc/proposal-query
 
   Just some old things that are marked as not supported anymore; finally remove
   them all at once. {deprecation}
-
-  - Remove the parsing of "CHECK" at some point, that was just there for
-    compatibility.
 
   - Remove the "use_legacy_fixed_tolerances" option.
 
