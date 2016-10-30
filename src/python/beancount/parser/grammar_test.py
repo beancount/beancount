@@ -1200,7 +1200,7 @@ class TestTotalsAndSigns(unittest.TestCase):
             Assets:Investments:Cash  -20000 USD
 
           2013-05-18 * ""
-            Assets:Investments:MSFT      10 MSFT {{2000 USD / 2014-02-25}}
+            Assets:Investments:MSFT      10 MSFT {{2000 USD, 2014-02-25}}
             Assets:Investments:Cash  -20000 USD
 
           2013-06-01 * ""
@@ -1213,6 +1213,22 @@ class TestTotalsAndSigns(unittest.TestCase):
             self.assertEqual(D('2000'), posting.cost.number_total)
             self.assertEqual('USD', posting.cost.currency)
             self.assertEqual(None, posting.price)
+
+    @parser.parse_doc(expect_errors=True)
+    def test_total_cost__invalid(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            Assets:Investments:MSFT      10 MSFT {{100 # 2,000 USD}}
+            Assets:Investments:Cash  -20000 USD
+        """
+        posting = entries[0].postings[0]
+        self.assertEqual(1, len(errors))
+        self.assertRegex(errors[0].message,
+                         'Per-unit cost may not be specified using total cost syntax')
+        self.assertEqual(ZERO, posting.cost.number_per) # Note how this gets canceled.
+        self.assertEqual(D('2000'), posting.cost.number_total)
+        self.assertEqual('USD', posting.cost.currency)
+        self.assertEqual(None, posting.price)
 
     @parser.parse_doc(expect_errors=False)
     def test_total_cost_negative(self, entries, errors, _):
@@ -1282,7 +1298,7 @@ class TestAllowNegativePrices(unittest.TestCase):
             Assets:Investments:Cash  -20000 USD
 
           2013-05-18 * ""
-            Assets:Investments:MSFT      10 MSFT {{2000 USD / 2014-02-25}}
+            Assets:Investments:MSFT      10 MSFT {{2000 USD, 2014-02-25}}
             Assets:Investments:Cash  -20000 USD
 
           2013-06-01 * ""
@@ -1351,7 +1367,7 @@ class TestBalance(unittest.TestCase):
             Assets:Investments:Cash  -20000 USD
 
           2013-05-18 * ""
-            Assets:Investments:MSFT      10 MSFT {{2000 USD / 2014-02-25}}
+            Assets:Investments:MSFT      10 MSFT {{2000 USD, 2014-02-25}}
             Assets:Investments:Cash  -20000 USD
         """
         for entry in entries:

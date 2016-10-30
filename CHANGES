@@ -4,6 +4,50 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-10-30
+
+  - Moved the {{...}}} total cost syntax from a legacy support with only "/"
+    separator and a date, no label, to full support. Previously, only these syntaxes
+    were supported for total cost:
+
+      Assets:Account     100 MSFT {{2000.00 USD}}
+      Assets:Account     100 MSFT {{2000.00 USD / 2016-10-30}}
+
+    Changes:
+
+    * The "/" separator support has been removed, you must now use a comma, like
+      for the {...} full booking syntax.
+
+    * The same syntax as for the regular {...} compound cost is supported;
+      however, specifying a compound amount will raise an error, and the
+      per-unit cost is interpreted as a total cost.
+
+    For example, this:
+
+      Assets:Account     100 MSFT {{2000.00 USD}}
+
+    is interpreted as:
+
+      Assets:Account     100 MSFT {0 # 2000.00 USD}
+
+    which is equivalent to:
+
+      Assets:Account     100 MSFT {20.00 USD}
+
+    And the following will raise an error, it is not legal syntax:
+
+      Assets:Account     100 MSFT {{0 # 2000.00 USD}}
+
+    Finally, specifying a date and a label can be done, just like for {...}:
+
+      Assets:Account     100 MSFT {{2000.00 USD, 2011-10-30, "ref32"}}
+
+    The intention here is to deprecate the older limited syntax while keeping
+    support for total cost input using {{...}}. Based on previous questions, I
+    suspect that many users are still using {{...}} instead of {{# ...}}, so I
+    won't remove it just yet.
+
+
 2016-10-23
 
   - Modified parsing of transaction strings and links and tags. I did this to

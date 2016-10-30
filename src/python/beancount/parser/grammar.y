@@ -213,7 +213,6 @@ const char* getTokenName(int token);
 %type <pyobj> cost_comp
 %type <pyobj> cost_comp_list
 %type <pyobj> cost_spec
-%type <pyobj> cost_spec_total_legacy
 %type <pyobj> price
 %type <pyobj> event
 %type <pyobj> query
@@ -616,29 +615,18 @@ incomplete_amount : maybe_number maybe_currency
 cost_spec : LCURL cost_comp_list RCURL
           {
               BUILDY(DECREF1($2),
-                     $$, "cost_spec", "O", $2);
+                     $$, "cost_spec", "OO", $2, Py_False);
           }
-          | cost_spec_total_legacy
+          | LCURLCURL cost_comp_list RCURLCURL
           {
-              $$ = $1;
+              BUILDY(DECREF1($2),
+                     $$, "cost_spec", "OO", $2, Py_True);
           }
           | empty
           {
               Py_INCREF(Py_None);
               $$ = Py_None;
           }
-
-/* This is deprecated, but kept for legacy until the booking branch is complete. */
-cost_spec_total_legacy : LCURLCURL amount RCURLCURL
-                       {
-                           BUILDY(DECREF1($2),
-                                  $$, "cost_spec_total_legacy", "OO", $2, Py_None);
-                       }
-                       | LCURLCURL amount SLASH DATE RCURLCURL
-                       {
-                           BUILDY(DECREF2($2, $4),
-                                  $$, "cost_spec_total_legacy", "OO", $2, $4);
-                       }
 
 cost_comp_list : empty
                {
