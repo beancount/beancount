@@ -239,19 +239,9 @@ grep-uses:
 #--------------------------------------------------------------------------------
 # FIXME: Temporary.
 
-TRANSRC=					\
-$(SRC)/beancount/utils				\
-$(SRC)/beancount/core				\
-$(SRC)/beancount/parser				\
-$(SRC)/beancount/ops				\
-$(SRC)/beancount/ingest				\
-$(SRC)/beancount/docs				\
-$(SRC)/beancount/plugins			\
-$(SRC)/beancount/scripts
-
 bothtest bothtests both:
-	BOOKALGO=SIMPLE $(NOSE) $(TRANSRC)
-	BOOKALGO=FULL $(NOSE) $(TRANSRC)
+	BOOKALGO=SIMPLE $(NOSE) $(SRC)
+	BOOKALGO=FULL $(NOSE) $(SRC)
 
 simpletest:
 	BOOKALGO=SIMPLE $(NOSE) $(SRC)
