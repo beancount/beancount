@@ -4,11 +4,11 @@ import collections
 import re
 import textwrap
 
+from beancount.core.data import Booking
 from beancount.parser import parser
 from beancount.parser import cmptest
 from beancount.parser import booking
 from beancount.parser import booking_simple
-from beancount.parser import printer
 from beancount import loader
 
 
@@ -88,11 +88,11 @@ class TestBookingValidation(cmptest.TestCase):
 
         """)
 
-    BM = collections.defaultdict(lambda: Booking.STRICT)
+    BOOKMETH = collections.defaultdict(lambda: Booking.STRICT)
 
     def convert_and_validate(self, entries, options_map):
         entries, _ = booking_simple.convert_lot_specs_to_lots(entries)
-        return booking.validate_inventory_booking(entries, options_map, self.BM)
+        return booking.validate_inventory_booking(entries, options_map, self.BOOKMETH)
 
     def do_validate_inventory_booking(self, input_str):
         entries, errors, options_map = parser.parse_string(input_str)

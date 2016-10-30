@@ -9,7 +9,6 @@ import copy
 from datetime import date
 
 from beancount.core.number import D
-from beancount.core.number import ZERO
 from beancount.core.amount import A
 from beancount.core import amount
 from beancount.core.position import Position

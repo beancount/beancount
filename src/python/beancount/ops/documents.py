@@ -146,7 +146,8 @@ def find_documents(directory, input_filename, accounts_only=None, strict=False):
                     "Invalid date on document file '{}': {}".format(
                         filename, exc), None))
             else:
-                entry = Document(meta, date, account_name, path.join(root, filename), None, None)
+                entry = Document(meta, date, account_name, path.join(root, filename),
+                                 None, None)
                 entries.append(entry)
 
     return (entries, errors)

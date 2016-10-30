@@ -1,6 +1,5 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import collections
 import datetime
 import textwrap
 import unittest
@@ -15,7 +14,6 @@ from beancount.core import data
 from beancount.core import inventory
 from beancount.core import position
 from beancount.parser import parser
-from beancount.parser import booking_simple
 from beancount.parser import cmptest
 from beancount.utils import defdict
 from beancount import loader

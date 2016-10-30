@@ -4,7 +4,6 @@ __author__ = 'Martin Blais <blais@furius.ca>'
 
 import csv
 import datetime
-import re
 import io
 from os import path
 
@@ -13,10 +12,7 @@ from beancount.core.amount import Amount
 from beancount.utils.date_utils import parse_date_liberally
 from beancount.core import data
 from beancount.ingest import importer
-from beancount.ingest import regression
 from beancount.ingest.importers import regexp
-from beancount.utils import csv_utils
-from beancount.parser import printer
 from beancount.utils import misc_utils
 
 

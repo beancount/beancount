@@ -21,17 +21,17 @@ class TestImmutableDictWithDefault(unittest.TestCase):
 
     def test_dict_with_default(self):
         init_value = {'a': 1, 'b': 2}
-        d = defdict.ImmutableDictWithDefault(100, init_value)
-        self.assertEqual(init_value, d)
+        dwd = defdict.ImmutableDictWithDefault(100, init_value)
+        self.assertEqual(init_value, dwd)
 
-        self.assertEqual(1, d['a'])
-        self.assertEqual(2, d['b'])
-        self.assertEqual(1, d.get('a'))
-        self.assertEqual(2, d.get('b'))
+        self.assertEqual(1, dwd['a'])
+        self.assertEqual(2, dwd['b'])
+        self.assertEqual(1, dwd.get('a'))
+        self.assertEqual(2, dwd.get('b'))
 
-        self.assertEqual(100, d['c'])
-        self.assertEqual(100, d.get('c'))
-        self.assertEqual(init_value, d)
+        self.assertEqual(100, dwd['c'])
+        self.assertEqual(100, dwd.get('c'))
+        self.assertEqual(init_value, dwd)
 
         with self.assertRaises(NotImplementedError):
-            d['c'] = 17
+            dwd['c'] = 17

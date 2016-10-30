@@ -7,8 +7,6 @@ import functools
 import unittest
 import re
 import io
-import itertools
-import pprint
 from unittest import mock
 
 from beancount.core.number import D
@@ -1751,7 +1749,7 @@ class TestBookAmbiguous(_BookingTestBase):
         """
 
     @book_test(Booking.NONE)
-    def test_ambiguous__NONE__notmatching_nonmixed1(self, _, __):
+    def test_ambiguous__NONE__notmatching_nonmixed2(self, _, __):
         """
         2015-01-01 * #ante
           Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
@@ -1988,7 +1986,7 @@ class TestBookAmbiguousFIFO(_BookingTestBase):
         """
 
     @book_test(Booking.FIFO)
-    def test_ambiguous__FIFO__test_complete_match_against_first_three_lots (self, _, __):
+    def test_ambiguous__FIFO__test_complete_match_against_first_three_lots(self, _, __):
         """
         2015-01-01 * #ante
           Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
@@ -2385,7 +2383,7 @@ class _TestBookAmbiguousAVERAGE(_BookingTestBase):
 
     @unittest.skip("FIXME enable this when supporting explicit cost reductions")
     @book_test(Booking.AVERAGE)
-    def test_ambiguous__AVERAGE__mixed_currencies__unambi_cost_and_currency__merging(self, _, __):
+    def test_ambiguous__AVERAGE__mixed_currencies__unambi_cost_ccy__merging(self, _, __):
         """
         2015-01-01 * #ante
           Assets:Account         25 HOOL { 99.00 USD, 2015-10-01}

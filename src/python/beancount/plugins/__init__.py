@@ -8,4 +8,3 @@ installed via a --plugin option, or one-offs to answer questions on the
 mailing-list.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
-

@@ -512,7 +512,7 @@ class BQLShell(DispatchingShell):
         name = run_stmt.query_name
         if name is None:
             # List the available queries.
-            for name in sorted(custom_query_map.keys()):
+            for name in sorted(custom_query_map):
                 print(name)
         elif name == "*":
             for name, query in sorted(custom_query_map.items()):

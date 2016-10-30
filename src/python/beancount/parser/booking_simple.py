@@ -7,21 +7,15 @@ import collections
 import copy
 
 from beancount.core.amount import Amount
-from beancount.core.amount import mul as amount_mul
 from beancount.core.data import Posting
 from beancount.core.data import Transaction
 from beancount.core.inventory import Inventory
-from beancount.core.number import D
 from beancount.core.number import MISSING
-from beancount.core.number import ONE
 from beancount.core.number import ZERO
 from beancount.core.position import Cost
 
 from beancount.core import account
 from beancount.core import interpolate
-from beancount.core import inventory
-from beancount.core import getters
-from beancount.core import account
 
 
 
@@ -323,7 +317,8 @@ def balance_incomplete_postings(entry, options_map):
         rounding_subaccount = options_map["account_rounding"]
         if rounding_subaccount:
             account_rounding = account.join(options_map['name_equity'], rounding_subaccount)
-            rounding_postings = interpolate.get_residual_postings(residual, account_rounding)
+            rounding_postings = interpolate.get_residual_postings(residual,
+                                                                  account_rounding)
             postings.extend(rounding_postings)
 
     # If we could make this faster to avoid the unnecessary copying, it would

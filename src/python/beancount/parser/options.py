@@ -5,7 +5,6 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
 import io
-import os
 import re
 import textwrap
 

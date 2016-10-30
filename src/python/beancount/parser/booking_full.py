@@ -73,16 +73,12 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
 import copy
-import io
-import logging
-import pprint
 
 from beancount.core.number import MISSING
 from beancount.core.number import ZERO
 from beancount.core.number import Decimal
 from beancount.core.data import Transaction
 from beancount.core.data import Booking
-from beancount.core.data import Posting
 from beancount.core.amount import Amount
 from beancount.core.position import Position
 from beancount.core.position import Cost
@@ -92,8 +88,6 @@ from beancount.core import position
 from beancount.core import inventory
 from beancount.core import interpolate
 from beancount.utils import misc_utils
-from beancount.parser import printer
-from beancount.parser import booking_simple as bs
 
 
 def book(entries, options_map, booking_methods):
@@ -669,8 +663,9 @@ def handle_ambiguous_matches(entry, posting, matches, booking_method):
 
             # Compute the amount of units we can reduce from this leg.
             size = min(abs(match.units.number), remaining)
-            postings.append(posting._replace(units=Amount(size * sign, match.units.currency),
-                                             cost=match.cost))
+            postings.append(
+                posting._replace(units=Amount(size * sign, match.units.currency),
+                                 cost=match.cost))
             remaining -= size
 
         # If we couldn't eat up all the requested reduction, return an error.
@@ -693,7 +688,8 @@ def handle_ambiguous_matches(entry, posting, matches, booking_method):
     elif booking_method is Booking.AVERAGE:
         errors.append(ReductionError(entry.meta, "AVERAGE method is not supported", entry))
 
-    elif False: # DISABLED - This is the code for AVERAGE, which is currently disabled.
+    elif False: # pylint: disable=using-constant-test
+        # DISABLED - This is the code for AVERAGE, which is currently disabled.
 
         # If there is more than a single match we need to ultimately merge the
         # postings. Also, if the reducing posting provides a specific cost, we
@@ -739,9 +735,11 @@ def handle_ambiguous_matches(entry, posting, matches, booking_method):
                                                      flag=flags.FLAG_MERGING)
                                     for match in matches)
                     units = merged_units[0].units
-                    date = matches[0].cost.date  ## FIXME: Select which one, oldest or latest.
+                    date = matches[0].cost.date  ## FIXME: Select which one,
+                                                 ## oldest or latest.
                     cost_units = merged_cost[0].units
-                    cost = Cost(cost_units.number/units.number, cost_units.currency, date, None)
+                    cost = Cost(cost_units.number/units.number, cost_units.currency,
+                                date, None)
 
                     # Insert a posting to refill those with a replacement match.
                     postings.append(posting._replace(units=units, cost=cost,

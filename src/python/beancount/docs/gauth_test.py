@@ -1,7 +1,5 @@
 __author__ = 'Martin Blais <blais@furius.ca>'
 
-import argparse
-import tempfile
 import unittest
 from unittest import mock
 
@@ -18,7 +16,8 @@ else:
 @unittest.skipIf(oauth2client is None, "oauth2client and/or httplib2 not installed")
 class TestGAuth(unittest.TestCase):
 
-    @mock.patch('oauth2client.service_account.ServiceAccountCredentials.from_json_keyfile_name')
+    @mock.patch(
+        'oauth2client.service_account.ServiceAccountCredentials.from_json_keyfile_name')
     def test_get_auth_via_service_account(self, mock_factory):
         mock_factory.return_value = mock.MagicMock()
         scopes = ['https://www.googleapis.com/auth/drive',

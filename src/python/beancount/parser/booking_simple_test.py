@@ -1,19 +1,13 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import textwrap
-import unittest
-
 from beancount.core.number import D
-from beancount.core.amount import A
 from beancount.core.data import create_simple_posting as P
-from beancount.core.data import create_simple_posting_with_cost as PCost
 
 from beancount import loader
 from beancount.core import data
 from beancount.core import interpolate
 from beancount.core import inventory
 from beancount.core import position
-from beancount.parser import cmptest
 from beancount.parser import cmptest
 from beancount.parser import parser
 from beancount.parser import booking_simple
