@@ -739,11 +739,11 @@ class TestDeprecatedOptions(unittest.TestCase):
     @parser.parse_doc(expect_errors=True)
     def test_renamed_options(self, _, errors, options_map):
         """
-          option "default_tolerance" "*:0.0042"
+          option "experiment_booking_algorithm" "*:0.0042"
         """
         self.assertEqual(1, len(errors))
-        self.assertRegex(errors[0].message, 'option has been renamed')
-        self.assertEqual({'*': D('0.0042')}, options_map["inferred_tolerance_default"])
+        self.assertRegex(errors[0].message, 'has been renamed')
+        self.assertEqual('FULL', options_map["booking_algorithm"])
 
     @parser.parse_doc(expect_errors=True)
     def test_deprecated_plugin(self, _, errors, __):

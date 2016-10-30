@@ -89,7 +89,6 @@
     "account_current_conversions"
     "account_rounding"
     "conversion_currency"
-    "default_tolerance"  ;; Deprecated.
     "inferred_tolerance_default"
     "inferred_tolerance_multiplier"
     "infer_tolerance_from_cost"

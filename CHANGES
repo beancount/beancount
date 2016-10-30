@@ -80,6 +80,9 @@ Note: This file contains only changes in the 'default' branch.
   - Removed built-in aliases for auto_accounts and implicit_prices modules, from
     beancount.ops to beancount.plugins.
 
+  - Removed deprecated option "default_tolerance" (which had been renamed to
+    "inferred_tolerance_default").
+
 
 2016-10-23
 

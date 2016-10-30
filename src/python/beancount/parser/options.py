@@ -299,18 +299,10 @@ PUBLIC_OPTION_GROUPS = [
       itself, this last example sets the fallabck tolerance as '0.5' for all
       currencies.
 
-      (Note: The new value of this option is "inferred_tolerance_default"; it
-      renames the option which used to be called "default_tolerance". The latter
-      name was confusing.)
-
       For detailed documentation about how precision is handled, see this doc:
       http://furius.ca/beancount/doc/tolerances
     """, [Opt("inferred_tolerance_default", {}, "CHF:0.01",
-              converter=options_validate_tolerance_map),
-          Opt("default_tolerance", {}, "CHF:0.01",
-              converter=options_validate_tolerance_map,
-              deprecated="This option has been renamed to 'inferred_tolerance_default'",
-              alias="inferred_tolerance_default")]),
+              converter=options_validate_tolerance_map)]),
 
     OptGroup("""
       A multiplier for inferred tolerance values.
