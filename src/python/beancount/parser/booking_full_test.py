@@ -7,8 +7,6 @@ import functools
 import unittest
 import re
 import io
-import itertools
-import pprint
 from unittest import mock
 
 from beancount.core.number import D
@@ -18,13 +16,13 @@ from beancount.core.position import CostSpec
 from beancount.core.position import Cost
 from beancount.core.position import Position
 from beancount.core.inventory import from_string as I
-#from beancount.utils.misc_utils import dictmap
 from beancount.utils import test_utils
 from beancount.core.data import Booking
 from beancount.core import inventory
 from beancount.core import position
 from beancount.core import amount
 from beancount.core import data
+from beancount.core import interpolate
 from beancount.parser import parser
 from beancount.parser import printer
 from beancount.parser import booking_full as bf
@@ -104,7 +102,7 @@ class TestAllInterpolationCombinations(cmptest.TestCase):
 def indexes(groups):
     """Return only the index sets from currency categorized groups."""
     return {currency: {refer[0] for refer in refers}
-            for currency, refers in groups.items()}
+            for currency, refers in groups}
 
 
 class TestCategorizeCurrencyGroup(unittest.TestCase):
@@ -403,7 +401,7 @@ class TestCategorizeCurrencyGroup(unittest.TestCase):
                                         '50 HOOL {116.00 USD, 2016-01-16}')}
         groups, errors = bf.categorize_by_currency(entries[0], balances)
         self.assertEqual(1, len(groups))
-        self.assertEqual(2, len(groups['USD']))
+        self.assertEqual(2, len(dict(groups)['USD']))
         self.assertFalse(errors)
 
     @parser.parse_doc(allow_incomplete=True)
@@ -433,12 +431,12 @@ class TestReplaceCurrenciesInGroup(unittest.TestCase):
                         posting.cost.currency if posting.cost else None,
                         posting.price.currency if posting.price else None)
                        for posting in postings]
-            for currency, postings in posting_groups.items()}
+            for currency, postings in posting_groups}
         self.assertEqual(expected, check_groups)
 
         # Check all the postings are unique instances.
         all_postings = [posting
-                        for postings in posting_groups.values()
+                        for postings in [item[1] for item in posting_groups]
                         for posting in postings]
         self.assertEqual(len(set(map(id, all_postings))), len(all_postings))
 
@@ -532,14 +530,20 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
     #   interpolated: A boolean, asserting the return value of interpolate_group().
     #   string: A string, to be parsed to obtain the resulting Posting instances.
     #   errors: A list of error strings to check against the interpolation for that group.
-    def check(self, entry, expected, balances=None, debug=False):
+    def check(self, entry, expected, balances=None, debug=False, options_map=None):
         if balances is None:
             balances = {}
 
         groups, errors = bf.categorize_by_currency(entry, balances)
         self.assertFalse(errors)
         posting_groups = bf.replace_currencies(entry.postings, groups)
-        for currency, postings in posting_groups.items():
+
+        if options_map is not None:
+            tolerances = interpolate.infer_tolerances(entry.postings, options_map)
+        else:
+            tolerances = {}
+
+        for currency, postings in posting_groups:
             try:
                 exp_interpolated, exp_string, exp_errors = expected[currency]
             except KeyError:
@@ -547,7 +551,7 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
 
             # Run the interpolation for that group.
             new_postings, errors, interpolated = bf.interpolate_group(
-                postings, balances, currency)
+                postings, balances, currency, tolerances)
 
             # Print out infos for troubleshooting.
             if debug:
@@ -921,6 +925,46 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
                 Assets:Account5    -1.00 CAD
             """, None)})
 
+    @parser.parse_doc(allow_incomplete=True)
+    def test_auto_posting__quantize_with_tolerances(self, entries, errors, options_map):
+        """
+          option "booking_algorithm" "FULL"
+          option "inferred_tolerance_default" "USD:0.00005"
+          option "inferred_tolerance_default" "JPY:0.5"
+
+          2000-01-01 open Assets:Account1
+
+          2016-04-23 * ""
+            Assets:Account1   100.123412341234 USD
+            Assets:Account1
+
+          2016-04-24 * ""
+            Assets:Account1   100.123412341234 CAD
+            Assets:Account1
+
+          2016-04-25 * ""
+            Assets:Account1   100.123412341234 JPY
+            Assets:Account1
+        """
+        self.check(entries[1], {
+            'USD': (True, """
+              2016-04-24 * ""
+                Assets:Account1   100.123412341234 USD
+                Assets:Account1  -100.1234 USD
+            """, None)}, options_map=options_map)
+        self.check(entries[2], {
+            'CAD': (True, """
+              2016-04-24 * ""
+                Assets:Account1   100.123412341234 CAD
+                Assets:Account1  -100.123412341234 CAD
+            """, None)}, options_map=options_map)
+        self.check(entries[3], {
+            'JPY': (True, """
+              2016-04-25 * ""
+                Assets:Account1   100.123412341234 JPY
+                Assets:Account1  -100 JPY
+            """, None)}, options_map=options_map)
+
 
 class TestComputeCostNumber(unittest.TestCase):
 
@@ -981,21 +1025,21 @@ class TestParseBookingOptions(cmptest.TestCase):
     @loader.load_doc()
     def test_booking_algorithm__simple(self, entries, _, options_map):
         """
-          option "experiment_booking_algorithm" "SIMPLE"
+          option "booking_algorithm" "SIMPLE"
         """
-        self.assertEqual("SIMPLE", options_map["experiment_booking_algorithm"])
+        self.assertEqual("SIMPLE", options_map["booking_algorithm"])
 
     @loader.load_doc()
     def test_booking_algorithm__full(self, entries, _, options_map):
         """
-          option "experiment_booking_algorithm" "FULL"
+          option "booking_algorithm" "FULL"
         """
-        self.assertEqual("FULL", options_map["experiment_booking_algorithm"])
+        self.assertEqual("FULL", options_map["booking_algorithm"])
 
     @loader.load_doc(expect_errors=True)
     def test_booking_algorithm__invalid(self, entries, errors, options_map):
         """
-          option "experiment_booking_algorithm" "XXX"
+          option "booking_algorithm" "XXX"
         """
         self.assertEqual(1, len(errors))
 
@@ -1622,6 +1666,26 @@ class TestBookReductions(_BookingTestBase):
           error: "Not enough lots to reduce"
         """
 
+    @book_test(Booking.STRICT)
+    def test_reduce__multiple_reductions__no_error_because_total(self, _, __):
+        """
+        2016-01-01 * #ante
+          Assets:Account            7 HOOL {115.00 USD, 2016-01-15}
+          Assets:Account            4 HOOL {115.00 USD, 2016-01-16}
+          Assets:Account            3 HOOL {117.00 USD, 2016-01-15}
+
+        2016-05-02 * #apply
+          Assets:Account          -11 HOOL {115.00 USD}
+
+        2016-01-01 * #ambi-matches
+          Assets:Account            7 HOOL {115.00 USD, 2016-01-15}
+          Assets:Account            4 HOOL {115.00 USD, 2016-01-16}
+
+        2016-01-01 * #ambi-resolved #booked
+          Assets:Account           -7 HOOL {115.00 USD, 2016-01-15}
+          Assets:Account           -4 HOOL {115.00 USD, 2016-01-16}
+        """
+
     @book_test(Booking.FIFO)
     def test_reduce__reduction_with_same_currency_not_at_cost(self, _, __):
         """
@@ -1685,7 +1749,7 @@ class TestBookAmbiguous(_BookingTestBase):
         """
 
     @book_test(Booking.NONE)
-    def test_ambiguous__NONE__notmatching_nonmixed1(self, _, __):
+    def test_ambiguous__NONE__notmatching_nonmixed2(self, _, __):
         """
         2015-01-01 * #ante
           Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
@@ -1922,7 +1986,7 @@ class TestBookAmbiguousFIFO(_BookingTestBase):
         """
 
     @book_test(Booking.FIFO)
-    def test_ambiguous__FIFO__test_complete_match_against_first_three_lots (self, _, __):
+    def test_ambiguous__FIFO__test_complete_match_against_first_three_lots(self, _, __):
         """
         2015-01-01 * #ante
           Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
@@ -2319,7 +2383,7 @@ class _TestBookAmbiguousAVERAGE(_BookingTestBase):
 
     @unittest.skip("FIXME enable this when supporting explicit cost reductions")
     @book_test(Booking.AVERAGE)
-    def test_ambiguous__AVERAGE__mixed_currencies__unambi_cost_and_currency__merging(self, _, __):
+    def test_ambiguous__AVERAGE__mixed_currencies__unambi_cost_ccy__merging(self, _, __):
         """
         2015-01-01 * #ante
           Assets:Account         25 HOOL { 99.00 USD, 2015-10-01}
@@ -2413,145 +2477,6 @@ class _TestBookAmbiguousAVERAGE(_BookingTestBase):
         """
 
 
-
-
-
-
-
-
-
-
-
-
-
-## CONTINUE
-
-
-
-# @parser.parse_doc(allow_incomplete=True)
-# def test_ambiguous__AVERAGE__merging_with_cost(self, entries, _, __):
-#     """
-#     2015-01-01 * "Single position"
-#       Assets:Account         60 HOOL {100.00 USD, 2015-10-01}
-#       Assets:Account         40 HOOL {110.00 USD, 2015-10-02}
-
-#     2015-06-01 * "" #error
-#       Assets:Account        -20 HOOL {140.00 USD}
-#       M Assets:Account      -60 HOOL {100.00 USD, 2015-10-01}
-#       M Assets:Account      -40 HOOL {110.00 USD, 2015-10-02}
-#       M Assets:Account       80 HOOL { 95.00 USD, 2015-10-01}
-#     """
-#     exbal_list = self._reduce_first_expect_rest(entries[0], entries[1:],
-#                                                 Booking.AVERAGE)
-#     self.assertEqual(
-#         {'Assets:Account': I('-20 HOOL {104.00 USD, 2015-10-01}')},
-#         exbal_list[0])
-
-# FIXME: You need to handle an explicit cost in an average reduction. This
-# is required in order to handle pre-tax 401k accounts with fees that are
-# calculated at market price.
-
-# FIXME: You need to deal with the case of using the '*' syntax instead of
-# having the matches come from the AVERAGE method. I'm not sure I need it
-# anymore actually. If I do, then reductions need to be able to deal with
-# mixed inventories.
-
-# FIXME: If an account's method is AVERAGE we probably want to merge the
-# augmentations together immediately after an augmentation. Do this now, it
-# will result in nicer balances and a more predictable output, at the
-# expense of some rounding error (probably negligible, given the precision
-# we're supporting).
-
-# FIXME: You need to test what happens when you use the NONE method and
-# reduce without providing the cost information on the lot. Add a test for
-# this case. This ought to result in an error.
-
-
-
-# Note: these are redundant tests from the above; delete these or reuse the work.
-
-# class TestBookingNEW(_BookingTestBase):
-
-#     @book_test(Booking.NONE)
-#     def test_ambiguous__NONE__matching_existing(self, _, __):
-#         """
-#         2015-01-01 * #ante
-#           Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
-#           Assets:Account          5 HOOL {101.00 USD, 2015-10-01}
-
-#         2015-06-01 * #apply
-#           Assets:Account         -2 HOOL {100.00 USD, 2015-10-01}
-
-#         2015-06-01 * #booked
-#           Assets:Account         -2 HOOL {100.00 USD, 2015-10-01}
-
-#         2015-06-01 * #ex
-#           Assets:Account          3 HOOL {100.00 USD, 2015-10-01}
-#           Assets:Account          5 HOOL {101.00 USD, 2015-10-01}
-
-#         2015-06-01 * #reduced
-#           S Assets:Account       -2 HOOL {100.00 USD, 2015-10-01}
-#         """
-
-#     @book_test(Booking.NONE)
-#     def test_ambiguous__NONE__notmatching_mixed(self, _, __):
-#         """
-#         2015-01-01 * #ante
-#           Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
-#           Assets:Account         -5 HOOL {101.00 USD, 2015-10-01}
-
-#         2015-06-01 * #apply
-#           Assets:Account         -2 HOOL {102.00 USD, 2015-06-01}
-
-#         2015-01-01 * #ex
-#           Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
-#           Assets:Account         -5 HOOL {101.00 USD, 2015-10-01}
-#           Assets:Account         -2 HOOL {102.00 USD, 2015-06-01}
-#         """
-
-#     @book_test(Booking.STRICT)
-#     def test_ambiguous__STRICT(self, _, __):
-#         """
-#         2015-01-01 * #ante
-#           Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
-#           Assets:Account          5 HOOL {101.00 USD, 2015-10-01}
-
-#         2015-06-01 * #apply
-#           Assets:Account         -2 HOOL {102.00 USD, 2015-06-01}
-
-#         2015-06-01 * #booked
-#           error: "No position matches"
-
-#         2015-06-01 * #ex
-#           Assets:Account          5 HOOL {100.00 USD, 2015-10-01}
-#           Assets:Account          5 HOOL {101.00 USD, 2015-10-01}
-#         """
-
-#     @book_test(Booking.FIFO)
-#     def test_ambiguous__FIFO(self, _, __):
-#         """
-#         2015-01-01 * #ante #ambi-matches
-#           Assets:Account          5 HOOL {111.11 USD, 2015-10-02}
-#           Assets:Account          4 HOOL {100.00 USD, 2015-10-01}
-#           Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
-
-#         2015-02-22 * #apply
-#           Assets:Account         -7 HOOL {}
-
-#         2015-02-22 * #booked #ambi-resolved
-#           Assets:Account         -4 HOOL {100.00 USD, 2015-10-01}
-#           Assets:Account         -3 HOOL {111.11 USD, 2015-10-02}
-
-#         2015-01-01 * #ex
-#           Assets:Account          2 HOOL {111.11 USD, 2015-10-02}
-#           Assets:Account          6 HOOL {122.22 USD, 2015-10-03}
-#         """
-
-
-
-
-
-
 class TestBasicBooking(_BookingTestBase):
 
     @book_test(Booking.STRICT)
@@ -2605,12 +2530,7 @@ class TestBasicBooking(_BookingTestBase):
         """
 
 
-
-
-
-
-
-# FIXME: Rewrite these tests.
+# FIXME: TODO - Rewrite these tests. See average_test.py.
 class TestBook(unittest.TestCase):
 
     def book_reductions(self, entries, currency='USD'):
@@ -2622,11 +2542,13 @@ class TestBook(unittest.TestCase):
                                                  entry.postings,
                                                  balances,
                                                  booking_methods)
+            tolerances = {}
             (inter_postings,
              inter_errors,
              interpolated) = bf.interpolate_group(booked_postings,
                                                   balances,
-                                                  currency)
+                                                  currency,
+                                                  tolerances)
             for posting in inter_postings:
                 balances[posting.account].add_position(posting)
 
@@ -2866,157 +2788,3 @@ class TestBook(unittest.TestCase):
                 None, None, None),
             data.Posting('Assets:Other', A('100.00 USD'), None, None, None, None),
             ], postings)
-
-
-class TestBooking(unittest.TestCase):
-    "Tests the booking & interpolation process."
-
-    maxDiff = 8192
-
-    # def book(self, entry, balances=None, exp_costs=None, debug=False):
-    #     if balances is None:
-    #         balances = {}
-    #     groups, errors = bf.categorize_by_currency(entry, balances)
-    #     self.assertFalse(errors)
-    #     posting_groups = bf.replace_currencies(entry.postings, groups)
-    #     for currency, postings in posting_groups.items():
-    #         new_postings, new_balances = bf.book_reductions(postings, balances)
-    #         if debug:
-    #             for posting in new_postings:
-    #                 print(posting)
-    #             print(new_balances)
-
-    #         # Check the expected costs.
-    #         if exp_costs is not None:
-    #             for posting, exp_cost in zip(new_postings, exp_costs):
-    #                 self.assertEqual(posting.cost, exp_cost)
-
-    # for balances in {}, {'Assets:Account': I('10 HOOL {99.00 USD}')}:
-    #     self.book(entries[0], balances, [
-    #         position.CostSpec(D('100.00'), None, 'USD', None, None, False),
-    #         None])
-    #     self.book(entries[1], balances, [
-    #         position.CostSpec(MISSING, None, 'USD', None, None, False),
-    #         None])
-
-
-
-    # @parser.parse_doc(allow_incomplete=True)
-    # def test_augmentation_noop(self, entries, _, options_map):
-    #     """
-    #     2015-10-01 *
-    #       Assets:Account          2 HOOL {100.00 USD}
-    #       Assets:Other     -1000.00 USD
-
-    #     2015-10-02 *
-    #       Assets:Account          2 HOOL {USD}
-    #       Assets:Other     -1000.00 USD
-    #     """
-    #     # Check that these augmenting legs aren't being touched.
-    #     for balances in {}, {'Assets:Account': I('10 HOOL {99.00 USD}')}:
-    #         self.book(entries[0], balances, [
-    #             position.CostSpec(D('100.00'), None, 'USD', None, None, False),
-    #             None])
-    #         self.book(entries[1], balances, [
-    #             position.CostSpec(MISSING, None, 'USD', None, None, False),
-    #             None])
-
-    # @parser.parse_doc(allow_incomplete=True)
-    # def test_reduction(self, entries, _, options_map):
-    #     """
-    #     2015-10-01 *
-    #       Assets:Account         -2 HOOL {100.00 USD}
-    #       Assets:Other      1000.00 USD
-    #     """
-    #     balances = {'Assets:Account':
-    #                 I('5 HOOL {100.00 USD, 2015-01-01}')}
-    #     # FIXME: Bring this back in.
-    #     # self.book(entries[0], balances, [
-    #     #     position.Cost(D('100.00'), 'USD', datetime.date(2015, 1, 1), None),
-    #     #     None], debug=1)
-
-
-# FIXME: Continue here.
-__incomplete__ = True
-
-
-# class TestFullBooking1(cmptest.TestCase):
-#
-#     @parser.parse_doc()
-#     def __test_categorize_by_currency__ambiguous_cost_no_choice(self, ientries, _, __):
-#         """
-#         ;; Pick the USD lot, because that's all there is in the inventory
-#         2015-01-01 *
-#           Assets:Bank:Investing          -1 HOOL {}
-#           Equity:Opening-Balances       101 USD
-#         """
-#         groups, free = bf.categorize_by_currency_by_currency(
-#             ientries[0].postings, {'USD': I('1 HOOL {100 USD}')})
-#         self.assertEqual({'USD': 2}, dictmap(groups, valfun=len))
-#         self.assertFalse(free)
-#
-#     @parser.parse_doc()
-#     def __test_categorize_by_currency__ambiguous_cost_choose_lot(self, ientries, _, __):
-#         """
-#         ;; This should know to pick the USD leg because that's the only currency
-#         2015-01-01 *
-#           Assets:Bank:Investing          -1 HOOL {}
-#           Equity:Opening-Balances       101 USD
-#         """
-#         groups, free = bf.categorize_by_currency_by_currency(
-#             ientries[0].postings, {'USD': I('1 HOOL {100 USD}, '
-#                                             '1 HOOL {100 CAD}')})
-#
-#     @parser.parse_doc()
-#     def __test_categorize_by_currency__ambiguous_cost_choose_ccy(self, ientries, _, __):
-#         """
-#         ;; Pick the USD lot, because that's all there is in the inventory
-#         2015-01-01 *
-#           Assets:Bank:Investing          -1 HOOL {}
-#           Equity:Opening-Balances       101 USD
-#           Equity:Opening-Balances       102 CAD
-#         """
-#         groups, free = bf.categorize_by_currency_by_currency(
-#             ientries[0].postings, {'USD': I('1 HOOL {100 USD}')})
-#
-#     @parser.parse_doc()
-#     def __test_categorize_by_currency__ambiguous_cost_no_choice(self, ientries, _, __):
-#         """
-#         ;; Pick the USD lot, because that's all there is in the inventory
-#         2015-01-01 *
-#           Assets:Bank:Investing          -1 HOOL {}
-#           Equity:Opening-Balances       100 USD
-#         """
-#         groups, free = bf.categorize_by_currency_by_currency(
-#             ientries[0].postings, {'USD': I('1 HOOL {100 USD}')})
-#
-#     @parser.parse_doc()
-#     def __test_categorize_by_currency__ambiguous_cost_with_bal(self, ientries, _, __):
-#         """
-#         ;; This should know to pick the USD leg because that's the only that doesn't
-#         ;; already balance from the other postings.
-#         2015-01-01 *
-#           Assets:Bank:Investing          -1 HOOL {}
-#           Equity:Opening-Balances       101 USD
-#           Equity:Opening-Balances      -102 CAD
-#           Assets:Cash                   102 CAD
-#         """
-#         groups, free = bf.categorize_by_currency_by_currency(
-#             ientries[0].postings, {'USD': I('1 HOOL {100 USD}, '
-#                                                '1 HOOL {100 CAD}')})
-#
-#
-# class TestFullBooking2(cmptest.TestCase):
-#
-#     @loader.load_doc()
-#     def __test_full_booking(self, entries, _, __):
-#         """
-#           option "booking_method" "FULL"
-#           2013-05-01 open Assets:Bank:Investing
-#           2013-05-01 open Equity:Opening-Balances
-#
-#           2013-05-02 *
-#             Assets:Bank:Investing           5 HOOL {501 USD}
-#             Equity:Opening-Balances     -2505 USD
-#         """
-#         self.assertEqual(D('-2505'), entries[-1].postings[-1].units.number)

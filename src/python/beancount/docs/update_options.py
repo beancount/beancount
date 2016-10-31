@@ -10,9 +10,8 @@ import logging
 import re
 from os import path
 
-from apiclient import http
 from apiclient import discovery
-from apiclient.http import MediaInMemoryUpload
+from apiclient.http import MediaInMemoryUpload # pylint: disable=import-error
 
 from beancount.parser import options
 from beancount.utils import test_utils

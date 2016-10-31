@@ -4,7 +4,6 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import datetime
 import functools
-import threading
 from os import path
 import shelve
 import tempfile

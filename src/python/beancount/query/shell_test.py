@@ -3,7 +3,6 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import re
 import sys
 import unittest
-import textwrap
 from os import path
 
 from beancount.utils import test_utils

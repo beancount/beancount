@@ -138,7 +138,7 @@ class Inventory(list):
         """
         return sorted(self) == sorted(other)
 
-    def is_small(self, tolerances, default_tolerances=None):
+    def is_small(self, tolerances):
         """Return true if all the positions in the inventory are small.
 
         Args:
@@ -147,13 +147,9 @@ class Inventory(list):
         Returns:
           A boolean.
         """
-        if default_tolerances is None:
-            default_tolerances = {}
         if isinstance(tolerances, dict):
             for position in self:
-                tolerance = get_tolerance(tolerances, default_tolerances,
-                                          position.units.currency)
-
+                tolerance = tolerances.get(position.units.currency, ZERO)
                 if abs(position.units.number) > tolerance:
                     return False
             return True
@@ -486,24 +482,3 @@ def check_invariants(inv):
     # Check that none of the amounts is zero.
     for pos in inv:
         assert pos.units.number != ZERO, "Invalid position size: {}".format(pos)
-
-
-def get_tolerance(tolerances, default_tolerances, currency):
-    """Given dicts of tolerances, return the tolerance for the currency.
-
-    If a tolerance hasn't been specified for the given currency, return the
-    global default tolerance, or the default value (zero).
-
-    Args:
-      tolerances: A dict of currency to a tolerance Decimal value.
-      default_tolerances: A fallback dict of currency to a tolerance Decimal value.
-      currency: A string, the currency to look up.
-    Returns:
-      A Decimal value, the tolerance to check for.
-    """
-    tolerance = tolerances.get(currency, None)
-    if tolerance is None:
-        tolerance = default_tolerances.get(currency, None)
-        if tolerance is None:
-            tolerance = default_tolerances.get('*', ZERO)
-    return tolerance

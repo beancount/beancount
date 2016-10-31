@@ -5,7 +5,6 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import textwrap
 import datetime
 import unittest
-import time
 from unittest import mock
 from urllib import request
 from urllib import error
@@ -57,9 +56,9 @@ class TestGoogleFinanceSource(unittest.TestCase):
         self.assertTrue(isinstance(srcprice.price, Decimal))
         self.assertEqual(D('556.33'), srcprice.price)
 
-        NYC = tz.gettz("America/New York")
+        tz_nyc = tz.gettz("America/New York")
         self.assertEqual(srcprice.time,
-                         datetime.datetime(2014, 6, 6, 16, 0, 0, tzinfo=NYC))
+                         datetime.datetime(2014, 6, 6, 16, 0, 0, tzinfo=tz_nyc))
 
     def test_get_latest_price__invalid(self):
         self.url_object.read.return_value = textwrap.dedent("""\

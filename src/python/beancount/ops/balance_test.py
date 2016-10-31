@@ -276,7 +276,7 @@ class TestBalance(unittest.TestCase):
     @loader.load_doc()
     def test_balance_mixed_cost_and_no_cost(self, entries, errors, __):
         """
-          option "experiment_booking_algorithm" "FULL"
+          option "booking_algorithm" "FULL"
 
           2013-05-01 open Assets:Invest
           2013-05-01 open Equity:Opening-Balances
@@ -297,7 +297,7 @@ class TestBalance(unittest.TestCase):
 class TestBalancePrecision(unittest.TestCase):
 
     @loader.load_doc(expect_errors=True)
-    def test_get_tolerance__legacy(self, entries, errors, options_map):
+    def test_get_balance_tolerance__legacy(self, entries, errors, options_map):
         """
           option "use_legacy_fixed_tolerances" "True"
 
@@ -309,12 +309,12 @@ class TestBalancePrecision(unittest.TestCase):
           2015-05-02 balance Assets:Bank:Checking   1.0 USD
           2015-05-02 balance Assets:Bank:Checking   1.00 USD
         """
-        tolerances = [balance.get_tolerance(entry, options_map)
+        tolerances = [balance.get_balance_tolerance(entry, options_map)
                       for entry in entries[1:]]
         self.assertEqual([D('0.015')] * 6, tolerances)
 
     @loader.load_doc(expect_errors=True)
-    def test_get_tolerance__explicit(self, entries, errors, options_map):
+    def test_get_balance_tolerance__explicit(self, entries, errors, options_map):
         """
           2015-05-01 open Assets:Bank:Checking
           2015-05-02 balance Assets:Bank:Checking   0    ~ 0.002 USD
@@ -324,12 +324,12 @@ class TestBalancePrecision(unittest.TestCase):
           2015-05-02 balance Assets:Bank:Checking   1.0  ~ 0.002 USD
           2015-05-02 balance Assets:Bank:Checking   1.00 ~ 0.002 USD
         """
-        tolerances = [balance.get_tolerance(entry, options_map)
+        tolerances = [balance.get_balance_tolerance(entry, options_map)
                       for entry in entries[1:]]
         self.assertEqual([D('0.002')] * 6, tolerances)
 
     @loader.load_doc(expect_errors=True)
-    def test_get_tolerance__regular(self, entries, errors, options_map):
+    def test_get_balance_tolerance__regular(self, entries, errors, options_map):
         """
           2015-05-01 open Assets:Bank:Checking
           2015-05-02 balance Assets:Bank:Checking   0 USD
@@ -342,7 +342,7 @@ class TestBalancePrecision(unittest.TestCase):
           2015-05-02 balance Assets:Bank:Checking   1.000 USD
           2015-05-02 balance Assets:Bank:Checking   1.01 USD
         """
-        tolerances = [balance.get_tolerance(entry, options_map)
+        tolerances = [balance.get_balance_tolerance(entry, options_map)
                       for entry in entries[1:]]
         self.assertEqual([D('0'),
                           D('0.1'),

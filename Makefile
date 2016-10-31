@@ -145,7 +145,6 @@ test-failed:
 nakedtests:
 	PATH=/bin:/usr/bin PYTHONPATH= /usr/local/bin/$(NOSE) -x $(SRC)
 
-
 # Run the parser and measure its performance.
 .PHONY: check
 check:
