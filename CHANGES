@@ -6,6 +6,58 @@ Note: This file contains only changes in the 'default' branch.
 
 2016-10-30
 
+  - Merge the current versio of the 'booking' branch and made the "FULL" booking
+    algorithm the default one.
+
+    * The "experiment_booking_algorithm" option has been renamed to
+      "booking_algorithm". Its default value is now "FULL"; everyone will be
+      using the new booking code. If for some reason you have a transitional
+      need to revert to the older booking method use this option.
+
+        option "booking_algorithm" "SIMPLE"
+
+    * The new booking algorithm is _MUCH_ more powerful than the one old. I'll
+      describe it soon in a new document, but briefly:
+
+      - It supports many more interpolation capabilities; try omitting amounts
+        or currencies which you think it ought be able to figure out
+        automatically and you might find it does.
+
+      - All positions carry a date. This means that if you have transactions
+        that would merge because they weren't specified with a date, like this
+        you may face a problem:
+
+          2016-01-15 *
+            Assets:Investments          70 UUG {10.00 USD}
+            ...
+
+          2016-02-16 *
+            Assets:Investments          25 UUG {10.00 USD}
+            ...
+
+          2016-03-30 *
+            Assets:Investments         -80 UUG {10.00 USD}
+            ...
+
+        Those used to resolve automatically because both augmenting lots would
+        merge into a single one without a date. Now that all positions have an
+        acquisition date, the -80 reducing posting is ambiguous, because it
+        matches against these:
+
+            Assets:Investments          70 UUG {10.00 USD, 2016-01-15}
+            Assets:Investments          25 UUG {10.00 USD, 2016-02-16}
+
+        Either you'll have to disambiguate, or let Beancount do so. One way to
+        do this is to add more specific matching data, and split the posting.
+        An even easier way to do this is to make the default booking method of
+        this account to "FIFO" or "LIFO", which will automatically select the
+        oldest (newest) postings without issuing a warning.
+
+        If you find yourself in a bind, please email the mailing-list with a
+        specific and as small as possible data input that reproduces the
+        problem.
+
+
   - Removed parsing of the pipe (|) symbol as a separator for strings on
     transaction description lines. This was vestigial from the days long long
     ago when Beancount was attempting to be compatible with Ledger syntax; this
