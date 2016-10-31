@@ -370,23 +370,6 @@ class Builder(lexer.LexBuilder):
                 self.options[key] = value
 
             else:
-                # Fix up account_rounding to be a subaccount if the user specified a
-                # full account name. This is intended to ease transition in the
-                # change of semantics that occurred on 2015-09-05, whereby the value
-                # of this option became defined as a subaccount of Equity instead of
-                # a full account name. See Issue #67.
-                # This should eventually be deprecated, say, in a year (after Sep 2016).
-                if key == 'account_rounding':
-                    root = account.root(1, value)
-                    if root in (self.options['name_{}'.format(name)]
-                                for name in ['assets', 'liabilities', 'equity',
-                                             'income', 'expenses']):
-                        self.errors.append(
-                            ParserError(self.get_lexer_location(),
-                                        "'account_rounding' option should now refer to "
-                                        "a subaccount.", None))
-                        value = account.sans_root(value)
-
                 # Set the value.
                 self.options[key] = value
 

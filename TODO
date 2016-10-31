@@ -2038,15 +2038,6 @@ http://furius.ca/beancount/doc/proposal-query
   - Remove Enum from misc_utils and commit to 3.5 and above.
   - When you do this, also add @enum.unique to beancount.core.data.BookingMethod.
 
-  - Remove this:
-
-      # Fix up account_rounding to be a subaccount if the user specified a
-      # full account name. This is intended to ease transition in the
-      # change of semantics that occurred on 2015-09-05, whereby the value
-      # of this option became defined as a subaccount of Equity instead of
-      # a full account name. See Issue #67.
-      # This should eventually be deprecated, say, in a year (after Sep 2016).
-
 
 ** Parser Cleanup & Improvements
 

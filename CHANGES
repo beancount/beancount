@@ -94,6 +94,9 @@ Note: This file contains only changes in the 'default' branch.
     the default value to "FULL". The old "SIMPLE" algorithm will be deprecated
     eventually.
 
+  - Removed old code that would warn if the user set account_rounding to a full
+    account name; it just needs be a subaccount.
+
 
 2016-10-23
 
