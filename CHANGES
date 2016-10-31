@@ -6,7 +6,7 @@ Note: This file contains only changes in the 'default' branch.
 
 2016-10-30
 
-  - Merge the current versio of the 'booking' branch and made the "FULL" booking
+  - Merge the current version of the 'booking' branch and made the "FULL" booking
     algorithm the default one.
 
     * The "experiment_booking_algorithm" option has been renamed to
@@ -154,6 +154,9 @@ Note: This file contains only changes in the 'default' branch.
 
   - Remove old code to dispatch between an external Enum class and the built-in
     one that's included in 3.5 (commit to 3.5).
+
+  - Added type annotations to beancount.core.data. This will grow more over
+    time. (I also need to add rules to use those.)
 
 
 2016-10-23

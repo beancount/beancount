@@ -1,5 +1,10 @@
 -*- mode: org -*-
 beancount: TODO
+* Types
+
+  - Remove misc_utils.Enum since we're committing to 3.5 with this branch.
+
+
 * Priorities
 
 booking_full.py: # FIXME: Refactor compute_cost_number() and convert_costspec_to_cost().
