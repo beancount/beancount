@@ -3,6 +3,7 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import datetime
+import enum
 import logging
 
 from beancount.core import data
@@ -13,7 +14,7 @@ from beancount.utils import misc_utils
 from beancount.utils import date_utils
 
 
-class MonthNavigation(misc_utils.Enum):
+class MonthNavigation(enum.Enum):
     NONE = 0    # No monthly navigation.
     COMPACT = 1 # Compact combobox outgoing to monthly navigation.
     FULL = 2    # Full rendering with single-click to each month.

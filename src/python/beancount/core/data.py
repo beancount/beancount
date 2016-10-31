@@ -4,6 +4,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import builtins
 import datetime
+import enum
 from collections import namedtuple
 import sys
 
@@ -14,7 +15,6 @@ from beancount.core.position import Cost
 from beancount.core.position import CostSpec
 from beancount.core.account import has_component
 from beancount.utils.bisect_key import bisect_left_with_key
-from beancount.utils import misc_utils
 
 
 def new_directive(clsname, fields):
@@ -63,7 +63,8 @@ Open = new_directive('Open', 'account currencies booking')
 
 # A set of valid booking method names for positions on accounts.
 # See http://furius.ca/beancount/doc/inventories for a full explanation.
-class Booking(misc_utils.Enum):
+@enum.unique
+class Booking(enum.Enum):
 
     # Reject ambiguous matches with an error.
     STRICT = 'STRICT'

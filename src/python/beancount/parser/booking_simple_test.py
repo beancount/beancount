@@ -21,7 +21,6 @@ class TestGetIncompletePostings(cmptest.TestCase):
 
     OPTIONS_MAP = {'inferred_tolerance_default': {},
                    'inferred_tolerance_multiplier': D('0.5'),
-                   'use_legacy_fixed_tolerances': False,
                    'account_rounding': None,
                    'infer_tolerance_from_cost': False}
 

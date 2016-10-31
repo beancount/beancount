@@ -4,6 +4,7 @@ __author__ = 'Martin Blais <blais@furius.ca>'
 
 import csv
 import datetime
+import enum
 import io
 from os import path
 
@@ -13,11 +14,10 @@ from beancount.utils.date_utils import parse_date_liberally
 from beancount.core import data
 from beancount.ingest import importer
 from beancount.ingest.importers import regexp
-from beancount.utils import misc_utils
 
 
 # The set of interpretable columns.
-class Col(misc_utils.Enum):
+class Col(enum.Enum):
     # The settlement date, the date we should create the posting at.
     DATE = '[DATE]'
 

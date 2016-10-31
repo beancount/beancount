@@ -169,8 +169,9 @@ def Opt(name, default_value,
 _TYPES = account_types.DEFAULT_ACCOUNT_TYPES
 
 
-# Options that consist of data output from the parsing process. These cannot be
-# input by the user.
+# Options that consist of data produced as a by-product of the parsing process.
+# These options cannot be input by the user. This is essentially read-only state
+# that is conceptually separate from the input options.
 OUTPUT_OPTION_GROUPS = [
 
     OptGroup("""
@@ -211,6 +212,24 @@ OUTPUT_OPTION_GROUPS = [
       This is mainly used for efficiency, best computed once at parse time.
     """, [Opt("commodities", set())]),
 
+    OptGroup("""
+      A list of Python modules containing transformation functions to run the
+      entries through after parsing. The parser reads the entries as they are,
+      transforms them through a list of standard functions, such as balance
+      checks and inserting padding entries, and then hands the entries over to
+      those plugins to add more auto-generated goodies. The list is a list of
+      pairs/tuples, in the format (plugin-name, plugin-configuration). The
+      plugin-name should be the name of a Python module to import, and within
+      the module we expect a special '__plugins__' attribute that should list
+      the name of transform functions to run the entries through. The
+      plugin-configuration argument is an optional string to be provided by the
+      user. Each function accepts a pair of (entries, options_map) and should
+      return a pair of (new entries, error instances). If a plugin configuration
+      is provided, it is provided as an extra argument to the plugin function.
+      Errors should not be printed out the output, they will be converted to
+      strings by the loader and displayed as dictated by the output medium.
+    """, [Opt("plugin", [], "beancount.plugins.module_name",
+              converter=options_validate_plugin)]),
     ]
 
 
@@ -298,18 +317,10 @@ PUBLIC_OPTION_GROUPS = [
       itself, this last example sets the fallabck tolerance as '0.5' for all
       currencies.
 
-      (Note: The new value of this option is "inferred_tolerance_default"; it
-      renames the option which used to be called "default_tolerance". The latter
-      name was confusing.)
-
       For detailed documentation about how precision is handled, see this doc:
       http://furius.ca/beancount/doc/tolerances
     """, [Opt("inferred_tolerance_default", {}, "CHF:0.01",
-              converter=options_validate_tolerance_map),
-          Opt("default_tolerance", {}, "CHF:0.01",
-              converter=options_validate_tolerance_map,
-              deprecated="This option has been renamed to 'inferred_tolerance_default'",
-              alias="inferred_tolerance_default")]),
+              converter=options_validate_tolerance_map)]),
 
     OptGroup("""
       A multiplier for inferred tolerance values.
@@ -349,28 +360,6 @@ PUBLIC_OPTION_GROUPS = [
       http://furius.ca/beancount/doc/tolerances) are still taken into account.
       Enabling this flag only makes the tolerances potentially wider.
     """, [Opt("infer_tolerance_from_cost", False, True)]),
-
-    # Note: This option will go away. Its behavior has been replaced by
-    # precision/tolerance inference.
-    # See this for details: http://furius.ca/beancount/doc/tolerances
-    OptGroup("""
-      The tolerance allowed for balance checks and padding directives. In the
-      real world, rounding occurs in various places, and we need to allow a
-      small (but very small) amount of tolerance in checking the balance of
-      transactions and in requiring padding entries to be auto-inserted. This is
-      the tolerance amount, which you can override.
-    """, [Opt("tolerance", D("0.015"), "0.015",
-              converter=options_validate_tolerance,
-              deprecated=("The 'tolerance' option has been deprecated "
-                          "and has no effect."))]),
-
-    OptGroup("""
-      Restore the legacy fixed handling of tolerances. Balance and Pad directives
-      have a fixed tolerance of 0.015 units, and Transactions balance at 0.005 units.
-      For any units. This is intended as a way for people to revert the behavior of
-      Beancount to ease the transition to the new inferred tolerance logic. See
-      http://furius.ca/beancount/doc/tolerances for more details.
-    """, [Opt("use_legacy_fixed_tolerances", False, True)]),
 
     OptGroup("""
       A list of directory roots, relative to the CWD, which should be searched
@@ -413,50 +402,13 @@ PUBLIC_OPTION_GROUPS = [
               converter=options_validate_processing_mode)]),
 
     OptGroup("""
-      A list of Python modules containing transformation functions to run the
-      entries through after parsing. The parser reads the entries as they are,
-      transforms them through a list of standard functions, such as balance
-      checks and inserting padding entries, and then hands the entries over to
-      those plugins to add more auto-generated goodies. The list is a list of
-      pairs/tuples, in the format (plugin-name, plugin-configuration). The
-      plugin-name should be the name of a Python module to import, and within
-      the module we expect a special '__plugins__' attribute that should list
-      the name of transform functions to run the entries through. The
-      plugin-configuration argument is an optional string to be provided by the
-      user. Each function accepts a pair of (entries, options_map) and should
-      return a pair of (new entries, error instances). If a plugin configuration
-      is provided, it is provided as an extra argument to the plugin function.
-      Errors should not be printed out the output, they will be converted to
-      strings by the loader and displayed as dictated by the output medium.
-    """, [Opt("plugin", [], "beancount.plugins.module_name",
-              converter=options_validate_plugin,
-              deprecated=("The 'plugin' option is deprecated; it should be "
-                          "replaced by the 'plugin' directive"))]),
-
-    OptGroup("""
       The number of lines beyond which a multi-line string will trigger a
       overly long line warning. This warning is meant to help detect a dangling
       quote by warning users of unexpectedly long strings.
     """, [Opt("long_string_maxlines", 64)]),
 
     OptGroup("""
-      This experiment has been merged as stable. This flag has been deprecated
-      and is now unnecessary.
-
-      Enable a feature that supports an explicit tolerance value on Balance
-      assertions. If enabled, the balance amount supports a tolerance in the
-      input, with this syntax: <number> ~ <tolerance> <currency>, for example,
-      "532.23 ~ 0.001 USD".
-
-      See the document on tolerances for more details:
-      http://furius.ca/beancount/doc/tolerances
-    """, [Opt("experiment_explicit_tolerances", True, True,
-              deprecated=("This experiment is now accepted as stable. "
-                          "The flag is unnecessary.'"))]),
-
-    OptGroup("""
       The booking algorithm implementation, new (FULL) or old (SIMPLE).
-
 
       By default Beancount matches using a powerful matching algorithm ("FULL"):
       the cost specification (e.g., {...}) in reducing postings is interpreted
@@ -502,12 +454,6 @@ PUBLIC_OPTION_GROUPS = [
     """, [Opt("booking_algorithm", "FULL", "SIMPLE")]),
 
     OptGroup("""
-      This variable is deprecated. It has been renamed to "booking_algorithm."
-    """, [Opt("experiment_booking_algorithm", "FULL", "SIMPLE",
-              deprecated=('This variable has been renamed to "booking_algorithm" and '
-                          'is now permanent. The new default is "FULL".'))]),
-
-    OptGroup("""
       The booking method to apply to ambiguous reductions of inventory lots.
       When a posting is matched against the contents of an account's inventory
       to reduce its contents and multiple lots match, the method dictates how
@@ -524,6 +470,15 @@ PUBLIC_OPTION_GROUPS = [
     """, [Opt("booking_method", data.Booking.STRICT, "STRICT",
               converter=options_validate_booking_method)]),
 
+    OptGroup("""
+      Support the pipe (|) symbol to for transaction separator.
+
+      This is only provided as a temporary stopgap to ease transition, and will
+      be removed eventually. This is why this option is marked as deprecated.
+    """, [Opt("allow_pipe_separator", False, "TRUE",
+              converter=options_validate_boolean,
+              deprecated=('Allowing pipe separator temporary; '
+                          'this will go away eventually.'))]),
     ]
 
 
@@ -542,7 +497,7 @@ OPTIONS_DEFAULTS = {desc.name: desc.default_value
 
 
 # A list of options that cannot be modified.
-READ_ONLY_OPTIONS = {"filename"}
+READ_ONLY_OPTIONS = {"filename", "plugin"}
 
 
 def get_account_types(options):

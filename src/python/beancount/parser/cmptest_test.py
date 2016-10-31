@@ -42,7 +42,7 @@ class TestTestCase(cmptest.TestCase):
         Liabilities:US:Amex:BlueCash                                           -12.74 USD
         Expenses:Books                                                          12.74 USD
 
-      2014-02-01 * "LAFAYETTE STREET PARNEW YORK / 5869184     RESTAURANT" | "Drinks w/ Jo"
+      2014-02-01 * "LAFAYETTE STREET PARNEW YORK / 5869184     RESTAURANT" "Drinks w/ Jo"
         Liabilities:US:Amex:BlueCash                                           -34.40 USD
         Expenses:Food:Alcohol                                                   34.40 USD
 

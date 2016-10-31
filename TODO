@@ -17,7 +17,6 @@ booking_full.py: # FIXME: Refactor compute_cost_number() and convert_costspec_to
 {holding}
 {balance-where}
 {autogroup}
-{deprecation}
 {review-dcontext}
 {write-intro-doc}
 {commodity-required}
@@ -2031,37 +2030,6 @@ http://furius.ca/beancount/doc/proposal-query
     negative amounts for prices. This will match Ledger semantics and will
     remove one degree of freedom that wasn't necessary.
 
-** Deprecation
-
-  Just some old things that are marked as not supported anymore; finally remove
-  them all at once. {deprecation}
-
-  - Remove the parsing of "CHECK" at some point, that was just there for
-    compatibility.
-
-  - Remove the "use_legacy_fixed_tolerances" option.
-
-  - Remove legacy support for PIPE character in syntax, update cheatsheet.
-
-  - Remove negative number warning and __ setting
-
-  - In 'beancount.core.number' and 'beancount.core.amount', there are deprecated
-    sections; remove them.
-
-  - Remove support for DEPRECATED_MODULES module names.
-
-  - Remove deprecated options, 'tolerance'.
-
-  - Remove deprecated options, 'plugin' (replaced by a directive).
-
-  - Remove support for deprecated variants in all option names.
-
-  - Remove Enum from misc_utils and commit to 3.5 and above.
-  - When you do this, also add @enum.unique to beancount.core.data.BookingMethod.
-
-  - When the 'booking' branch is complete, remove deprecated support for total
-    cost (e.g., {{ ... }}), we won't need it anymore.
-
 ** Parser Cleanup & Improvements
 
   - You need to validate the account name options (empty, or no :, use regex to
@@ -2372,11 +2340,8 @@ http://furius.ca/beancount/doc/proposal-query
           def __str__(self):
               return _Posting.__str__(self._replace(entry=None))
 
-  - Also derive from namedtuple to provide a stable hash function instead of
-    code in beancount.core.compare.
-
-  - Try creating a "Record" class to replace namedtuple using a class decorator
-    and properties.
+  - Also derive from typing.Namedtuple to provide a stable hash function instead
+    of code in beancount.core.compare.
 
 ** Typed Data Types
 
@@ -4809,10 +4774,6 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Port all my wash sales scripts to use the new booking method. This ought to
     be working now, with the new booking method.
-
-  - The printer should not output the | separator anymore, that's just
-    deprecated. Do this now, make sure all the tests still work. This may affect
-    some of the importers.
 
   - Create an explicit license for my documentation, one that is compatible to
     publishing this as a book later on.

@@ -14,29 +14,8 @@ import warnings
 from beancount.core.display_context import DEFAULT_FORMATTER
 from beancount.core.number import ZERO
 from beancount.core.number import Decimal
+from beancount.core.number import D
 from beancount.core import number
-
-
-#,-----------------------------------------------------------------------------.
-# Temporary forwarding of number functions to the number module.
-# IMPORTANT/FIXME: This will get removed after August 2015.
-ONE = number.ONE
-HALF = number.HALF
-decimal = number.decimal  # pylint: disable=invalid-name
-
-# pylint: disable=invalid-name
-def D(string):
-    warnings.warn("beancount.core.amount.D has been renamed to "
-                  "beancount.core.number.D")
-    return number.D(string)
-
-def round_to(number, increment):
-    warnings.warn("beancount.core.amount.round_to has been renamed to "
-                  "beancount.core.number.round_to")
-    return number.round_to(number, increment)
-
-_D = number.D
-#`-----------------------------------------------------------------------------'
 
 
 # A regular expression to match the name of a currency.
@@ -144,7 +123,7 @@ class Amount:
         if not match:
             raise ValueError("Invalid string for amount: '{}'".format(string))
         number, currency = match.group(1, 2)
-        return Amount(_D(number), currency)
+        return Amount(D(number), currency)
 
 
 # Note: We don't implement operators on Amount here in favour of the more
@@ -247,12 +226,3 @@ def abs(amount):
 
 A = from_string = Amount.from_string  # pylint: disable=invalid-name
 NULL_AMOUNT = Amount(ZERO, '')
-
-
-#,-----------------------------------------------------------------------------.
-# Support for deprecated API.
-amount_add = add
-amount_sub = sub
-amount_mul = mul
-amount_div = div
-#`-----------------------------------------------------------------------------'

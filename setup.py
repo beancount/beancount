@@ -12,8 +12,8 @@ import warnings
 
 
 # Check if the version is sufficient.
-if sys.version_info[:2] < (3,3):
-    raise SystemExit("ERROR: Insufficient Python version; you need v3.3 or higher.")
+if sys.version_info[:2] < (3,5):
+    raise SystemExit("ERROR: Insufficient Python version; you need v3.5 or higher.")
 
 
 # Import setup().
