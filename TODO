@@ -2340,11 +2340,8 @@ http://furius.ca/beancount/doc/proposal-query
           def __str__(self):
               return _Posting.__str__(self._replace(entry=None))
 
-  - Also derive from namedtuple to provide a stable hash function instead of
-    code in beancount.core.compare.
-
-  - Try creating a "Record" class to replace namedtuple using a class decorator
-    and properties.
+  - Also derive from typing.Namedtuple to provide a stable hash function instead
+    of code in beancount.core.compare.
 
 ** Typed Data Types
 
@@ -4777,10 +4774,6 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Port all my wash sales scripts to use the new booking method. This ought to
     be working now, with the new booking method.
-
-  - The printer should not output the | separator anymore, that's just
-    deprecated. Do this now, make sure all the tests still work. This may affect
-    some of the importers.
 
   - Create an explicit license for my documentation, one that is compatible to
     publishing this as a book later on.
