@@ -44,6 +44,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import copy
 import collections
+import enum
 import re
 
 from beancount.core.number import ZERO
@@ -53,10 +54,9 @@ from beancount.core.position import Cost
 from beancount.core.position import Position
 from beancount.core.position import from_string as position_from_string
 from beancount.core.display_context import DEFAULT_FORMATTER
-from beancount.utils import misc_utils
 
 
-class Booking(misc_utils.Enum):
+class Booking(enum.Enum):
     """Result of booking a new lot to an existing inventory."""
     CREATED = 1   # A new lot was created.
     REDUCED = 2   # An existing lot was reduced.

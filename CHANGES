@@ -97,6 +97,12 @@ Note: This file contains only changes in the 'default' branch.
   - Removed old code that would warn if the user set account_rounding to a full
     account name; it just needs be a subaccount.
 
+  - Commit to Python 3.5. 3.5.0 released more than a year ago. You need to
+    update or stick with the 2.0b13 release.
+
+  - Remove old code to dispatch between an external Enum class and the built-in
+    one that's included in 3.5 (commit to 3.5).
+
 
 2016-10-23
 
