@@ -10,6 +10,8 @@ Note: This file contains only changes in the 'default' branch.
     booking algorithm can interpret. In the old code, explicitly disallow some
     interpolation cases which cannot be handled.
 
+  - Fixed #129: Ignore custom directives for Ledger and HLedger conversion.
+
 
 2016-11-05
 
