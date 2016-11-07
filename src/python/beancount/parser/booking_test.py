@@ -186,5 +186,5 @@ class TestMissingEliminated(cmptest.TestCase):
             Assets:Test
         """
         self.assertEqual(1, len(errors))
-        self.assertTrue(all(re.search('Transaction has incomplete elements', error.message)
+        self.assertTrue(all(re.search('Missing number or currency.*not handled', error.message)
                             for error in errors))

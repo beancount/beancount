@@ -4,6 +4,13 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-11-06
+
+  - Fixed #139: Full booking parsing had been more liberal than the old SIMPLE
+    booking algorithm can interpret. In the old code, explicitly disallow some
+    interpolation cases which cannot be handled.
+
+
 2016-11-05
 
   - Fixed #142: bean-check should return non-zero exit code upon failure.
