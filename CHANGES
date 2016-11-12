@@ -4,6 +4,13 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-11-12
+
+  - Made the Emacs prefix key configurable via a new beancount-mode-map-prefix
+    variable. See discussion here:
+    https://groups.google.com/d/msg/beancount/_7TscZ9phNE/K8PkcRMpBAAJ
+
+
 2016-11-06
 
   - Fixed #139: Full booking parsing had been more liberal than the old SIMPLE

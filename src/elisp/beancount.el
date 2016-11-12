@@ -122,18 +122,23 @@
     ;;; ("\\([\\-+]?[0-9,]+\\(\\.[0-9]+\\)?\\)\\s-+\\([A-Z][A-Z0-9'\.]\\{1,10\\}\\)" . )
     ))
 
+
+(defvar beancount-mode-map-prefix [(control c)]
+  "The prefix key used to bind Beancount commands in Emacs")
+
 (defvar beancount-mode-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map [(control c)(\')] #'beancount-insert-account)
-    (define-key map [(control c)(control g)] #'beancount-transaction-set-flag)
-    (define-key map [(control c)(r)] #'beancount-init-accounts)
-    (define-key map [(control c)(l)] #'beancount-check)
-    (define-key map [(control c)(q)] #'beancount-query)
-    (define-key map [(control c)(x)] #'beancount-context)
-    (define-key map [(control c)(k)] #'beancount-linked)
-    (define-key map [(control c)(p)] #'beancount-insert-prices)
-    (define-key map [(control c)(\;)] #'beancount-align-to-previous-number)
-    (define-key map [(control c)(\:)] #'beancount-align-numbers)
+  (let ((map (make-sparse-keymap))
+        (p beancount-mode-map-prefix))
+    (define-key map (vconcat p [(\')]) #'beancount-insert-account)
+    (define-key map (vconcat p [(control g)]) #'beancount-transaction-set-flag)
+    (define-key map (vconcat p [(r)]) #'beancount-init-accounts)
+    (define-key map (vconcat p [(l)]) #'beancount-check)
+    (define-key map (vconcat p [(q)]) #'beancount-query)
+    (define-key map (vconcat p [(x)]) #'beancount-context)
+    (define-key map (vconcat p [(k)]) #'beancount-linked)
+    (define-key map (vconcat p [(p)]) #'beancount-insert-prices)
+    (define-key map (vconcat p [(\;)]) #'beancount-align-to-previous-number)
+    (define-key map (vconcat p [(\:)]) #'beancount-align-numbers)
 
     ;; FIXME: Binding TAB breaks expected org-mode behavior to fold/unfold. We
     ;; need to find a better solution.
