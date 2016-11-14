@@ -73,6 +73,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
 import copy
+import enum
 
 from beancount.core.number import MISSING
 from beancount.core.number import ZERO
@@ -854,7 +855,7 @@ def convert_costspec_to_cost(posting):
 # FIXME: Refactor compute_cost_number() and convert_costspec_to_cost().
 
 
-class MissingType(misc_utils.Enum):
+class MissingType(enum.Enum):
     """The type of missing number."""
     UNITS = 1
     COST_PER = 2

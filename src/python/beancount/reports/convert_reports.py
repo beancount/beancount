@@ -269,6 +269,9 @@ class LedgerPrinter:
         oss.write(
             ';; Query: {e.date:%Y/%m/%d} "{e.name}" "{e.query_string}"\n'.format(e=entry))
 
+    def Custom(_, entry, oss):
+        pass  # Don't render anything.
+
 
 class HLedgerReport(base.Report):
     """Print out the entries in a format that can be parsed by HLedger."""

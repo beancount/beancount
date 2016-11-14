@@ -11,6 +11,7 @@ from beancount.core import position
 from beancount.parser import cmptest
 from beancount.parser import parser
 from beancount.parser import booking_simple
+from beancount.parser import printer
 
 
 # True if errors are generated on residual by get_incomplete_postings().
@@ -21,7 +22,6 @@ class TestGetIncompletePostings(cmptest.TestCase):
 
     OPTIONS_MAP = {'inferred_tolerance_default': {},
                    'inferred_tolerance_multiplier': D('0.5'),
-                   'use_legacy_fixed_tolerances': False,
                    'account_rounding': None,
                    'infer_tolerance_from_cost': False}
 
@@ -193,6 +193,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
 
     def test_balance_incomplete_postings__noop(self):
         entry, errors = self.get_incomplete_entry("""
+          option "booking_algorithm" "SIMPLE"
           2013-02-23 * "Something"
             Liabilities:CreditCard     -50 USD
             Expenses:Restaurant         50 USD
@@ -202,6 +203,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
 
     def test_balance_incomplete_postings__fill1(self):
         entry, errors = self.get_incomplete_entry("""
+          option "booking_algorithm" "SIMPLE"
           2013-02-23 * "Something"
             Liabilities:CreditCard     -50 USD
             Expenses:Restaurant
@@ -213,6 +215,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
 
     def test_balance_incomplete_postings__fill2(self):
         entry, errors = self.get_incomplete_entry("""
+          option "booking_algorithm" "SIMPLE"
           2013-02-23 * "Something"
             Liabilities:CreditCard     -50 USD
             Liabilities:CreditCard     -50 CAD
@@ -229,6 +232,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
 
     def test_balance_incomplete_postings__cost(self):
         entry, errors = self.get_incomplete_entry("""
+          option "booking_algorithm" "SIMPLE"
           2013-02-23 * "Something"
             Assets:Invest     10 MSFT {43.23 USD}
             Assets:Cash
@@ -241,6 +245,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
 
     def test_balance_incomplete_postings__insert_rounding(self):
         entry, errors = self.get_incomplete_entry("""
+          option "booking_algorithm" "SIMPLE"
           option "account_rounding" "RoundingError"
 
           2013-02-23 * "Something"
@@ -255,6 +260,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
 
     def test_balance_incomplete_postings__quantum(self):
         entry, errors = self.get_incomplete_entry("""
+          option "booking_algorithm" "SIMPLE"
           option "inferred_tolerance_default" "USD:0.01"
 
           2013-02-23 * "Something"
@@ -265,6 +271,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
         self.assertEqual(D('-53.82'), entry.postings[1].units.number)
 
         entry, errors = self.get_incomplete_entry("""
+          option "booking_algorithm" "SIMPLE"
           option "inferred_tolerance_default" "USD:0.001"
 
           2013-02-23 * "Something"
@@ -276,6 +283,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
 
     def test_balance_incomplete_postings__rounding_and_quantum(self):
         entry, errors = self.get_incomplete_entry("""
+          option "booking_algorithm" "SIMPLE"
           option "account_rounding" "RoundingError"
           option "inferred_tolerance_default" "USD:0.01"
 
@@ -290,6 +298,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
         self.assertEqual(D('-0.00135'), entry.postings[2].units.number)
 
         entry, errors = self.get_incomplete_entry("""
+          option "booking_algorithm" "SIMPLE"
           option "account_rounding" "RoundingError"
           option "inferred_tolerance_default" "USD:0.01"
 
@@ -307,6 +316,7 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
         # Here we want to verify that auto-inserting rounding postings does not
         # disable non-balancing transactions. This is rather an important check!
         entries, errors, options_map = loader.load_string("""
+          option "booking_algorithm" "SIMPLE"
           option "account_rounding" "RoundingError"
 
           2000-01-01 open Assets:Investments:MutualFunds:XXX
@@ -343,6 +353,8 @@ class TestBalanceIncompletePostings(cmptest.TestCase):
     @loader.load_doc()
     def test_balance_incomplete_postings__superfluous_unused(self, entries, errors, _):
         """
+          option "booking_algorithm" "SIMPLE"
+
           2000-01-01 open Assets:Account1
           2000-01-01 open Assets:Account2
 
@@ -392,3 +404,17 @@ class TestSimpleBooking(cmptest.TestCase):
           option "booking_algorithm" "XXX"
         """
         self.assertEqual(1, len(errors))
+
+    @loader.load_doc(expect_errors=True)
+    def test_simple_booking_algorithm__issue139(self, _, errors, __):
+        """
+          option "booking_algorithm" "SIMPLE"
+          plugin "beancount.plugins.auto_accounts"
+
+          2016-08-06 * "Test"
+            Expenses:Other                          57.30 BRL @@ 16.18 EUR
+            Expenses:Food                             21.90 BRL @@ 6.18
+            Assets:Something
+        """
+        printer.print_errors(errors)
+        ##self.assertEqual(1, len(errors))

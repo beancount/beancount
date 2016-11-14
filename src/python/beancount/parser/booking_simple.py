@@ -46,22 +46,54 @@ def book(entries, options_map, unused_booking_methods):
     # not even looking at inventory contents.
     entries_with_lots, errors = convert_lot_specs_to_lots(entries)
 
+    new_entries = []
     for entry in entries_with_lots:
-        if not isinstance(entry, Transaction):
-            continue
-        # Balance incomplete auto-postings and set the parent link to this
-        # entry as well.
-        balance_errors = balance_incomplete_postings(entry, options_map)
-        if balance_errors:
-            errors.extend(balance_errors)
+        if isinstance(entry, Transaction):
 
-        # Check that the balance actually is empty.
-        if __sanity_checks__:
-            residual = interpolate.compute_residual(entry.postings)
-            tolerances = interpolate.infer_tolerances(entry.postings, options_map)
-            assert residual.is_small(tolerances), "Invalid residual {}".format(residual)
+            # Check that incompleteness may only occur at the posting level; reject
+            # otherwise. These cases are handled by the FULL booking algorithm but
+            # not so well by the SIMPLE algorithm. The new parsing is more liberal
+            # than this old code can handle, so explicitly reject cases where it
+            # would fail.
+            skip = False
+            for posting in entry.postings:
+                units = posting.units
+                if units is not MISSING:
+                    if units.number is MISSING or units.currency is MISSING:
+                        errors.append(SimpleBookingError(
+                            entry.meta,
+                            "Missing number or currency on units not handled",
+                            None))
+                        skip = True
+                        break
 
-    return entries_with_lots, errors
+                price = posting.price
+                if price is not None:
+                    if price.number is MISSING or price.currency is MISSING:
+                        errors.append(SimpleBookingError(
+                            entry.meta,
+                            "Missing number or currency on price not handled",
+                            None))
+                        skip = True
+                        break
+            if skip:
+                continue
+
+            # Balance incomplete auto-postings and set the parent link to this
+            # entry as well.
+            balance_errors = balance_incomplete_postings(entry, options_map)
+            if balance_errors:
+                errors.extend(balance_errors)
+
+            # Check that the balance actually is empty.
+            if __sanity_checks__:
+                residual = interpolate.compute_residual(entry.postings)
+                tolerances = interpolate.infer_tolerances(entry.postings, options_map)
+                assert residual.is_small(tolerances), "Invalid residual {}".format(residual)
+
+        new_entries.append(entry)
+
+    return new_entries, errors
 
 
 def convert_lot_specs_to_lots(entries):

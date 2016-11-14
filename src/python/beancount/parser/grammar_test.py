@@ -622,24 +622,14 @@ class TestParserPlugin(unittest.TestCase):
         self.assertEqual([('beancount.plugin.unrealized', 'Unrealized')],
                          options_map['plugin'])
 
-    # Note: this is testing the old method, which will become obsolete one day.
     @parser.parse_doc(expect_errors=True)
     def test_plugin_as_option(self, entries, errors, options_map):
         """
           option "plugin" "beancount.plugin.unrealized"
         """
+        # Test that the very old method of plugin specification is disallowed.
         self.assertEqual(1, len(errors))
-        self.assertEqual([('beancount.plugin.unrealized', None)],
-                         options_map['plugin'])
-
-    @parser.parse_doc(expect_errors=True)
-    def test_plugin_as_option_with_config(self, entries, errors, options_map):
-        """
-          option "plugin" "beancount.plugin.unrealized:Unrealized"
-        """
-        self.assertEqual(1, len(errors))
-        self.assertEqual([('beancount.plugin.unrealized', 'Unrealized')],
-                         options_map['plugin'])
+        self.assertEqual([], options_map['plugin'])
 
 
 class TestDisplayContextOptions(unittest.TestCase):
@@ -691,15 +681,6 @@ class TestMiscOptions(unittest.TestCase):
         self.assertRegex(errors[0].message, "Error for option")
         self.assertEqual("default", options_map['plugin_processing_mode'])
 
-    @parser.parse_doc(expect_errors=True)
-    def test_account_rounding_old_fixup(self, _, errors, options_map):
-        """
-        option "account_rounding" "Equity:RoundingError"
-        """
-        self.assertEqual(1, len(errors))
-        self.assertRegex(errors[0].message, "should now refer to.*subaccount")
-        self.assertEqual(options_map['account_rounding'], 'RoundingError')
-
 
 class TestToleranceOptions(unittest.TestCase):
 
@@ -708,18 +689,8 @@ class TestToleranceOptions(unittest.TestCase):
     def test_tolerance_defaults(self, _, __, options_map):
         """
         """
-        self.assertEqual(D('0.015'),
-                         options_map['tolerance'])
         self.assertEqual({},
                          options_map['inferred_tolerance_default'])
-
-    @parser.parse_doc(expect_errors=True)
-    def test_tolerance__deprecated(self, _, errors, options_map):
-        """
-          option "tolerance" "0.05"
-        """
-        self.assertEqual(D("0.05"), options_map['tolerance'])
-        self.assertRegex(errors[0].message, "has been deprecated")
 
     @parser.parse_doc()
     def test_inferred_tolerance_default(self, _, __, options_map):
@@ -737,29 +708,21 @@ class TestToleranceOptions(unittest.TestCase):
 class TestDeprecatedOptions(unittest.TestCase):
 
     @parser.parse_doc(expect_errors=True)
-    def test_renamed_options(self, _, errors, options_map):
-        """
-          option "default_tolerance" "*:0.0042"
-        """
-        self.assertEqual(1, len(errors))
-        self.assertRegex(errors[0].message, 'option has been renamed')
-        self.assertEqual({'*': D('0.0042')}, options_map["inferred_tolerance_default"])
-
-    @parser.parse_doc(expect_errors=True)
     def test_deprecated_plugin(self, _, errors, __):
         """
           option "plugin" "beancount.plugins.module_name"
         """
         self.assertEqual(1, len(errors))
-        self.assertRegex(errors[0].message, 'option is deprecated')
+        self.assertRegex(errors[0].message, 'may not be set')
 
     @parser.parse_doc(expect_errors=True)
-    def test_deprecated_tolerance(self, _, errors, __):
+    def test_deprecated_option(self, _, errors, options_map):
         """
-          option "tolerance" "0.00005"
+          option "allow_pipe_separator" "TRUE"
         """
         self.assertEqual(1, len(errors))
-        self.assertRegex(errors[0].message, 'option has been deprecated')
+        self.assertEqual(True, options_map['allow_pipe_separator'])
+        self.assertRegex(errors[0].message, "this will go away")
 
 
 class TestParserLinks(unittest.TestCase):
@@ -798,7 +761,7 @@ class TestTransactions(unittest.TestCase):
             Expenses:Restaurant         100 USD
             Assets:US:Cash             -100 USD
 
-          2013-05-20 * "Duane Reade" | "Toothbrush"
+          2013-05-20 * "Duane Reade" "Toothbrush"
             Expenses:BathroomSupplies         4 USD
             Assets:US:BestBank:Checking      -4 USD
 
@@ -837,7 +800,7 @@ class TestTransactions(unittest.TestCase):
     @parser.parse_doc()
     def test_payee_no_narration(self, entries, errors, _):
         """
-          2013-05-18 * "Mermaid Inn" |
+          2013-05-18 * "Mermaid Inn"
             Expenses:Restaurant         100 USD
             Assets:US:Cash             -100 USD
         """
@@ -1139,14 +1102,9 @@ class TestParseLots(unittest.TestCase):
             Assets:Invest:AAPL      1.1 AAPL {45.23 USD / 2015-07-16 / "blabla"}
             Assets:Invest:Cash   -45.23 USD
         """
-        self.assertEqual(2, len(errors))
-        self.assertRegex(errors[0].message, "slash")
-        self.assertRegex(errors[1].message, "slash")
-        posting = entries[0].postings[0]
-        self.assertEqual(A('1.1 AAPL'), posting.units)
-        self.assertEqual(CostSpec(D('45.23'), None, 'USD',
-                                  datetime.date(2015, 7, 16), 'blabla', False),
-                         posting.cost)
+        self.assertEqual(1, len(errors))
+        self.assertRegex(errors[0].message, "unexpected SLASH")
+        self.assertEqual(0, len(entries))
 
 
 class TestCurrencies(unittest.TestCase):
@@ -1200,7 +1158,7 @@ class TestTotalsAndSigns(unittest.TestCase):
             Assets:Investments:Cash  -20000 USD
 
           2013-05-18 * ""
-            Assets:Investments:MSFT      10 MSFT {{2000 USD / 2014-02-25}}
+            Assets:Investments:MSFT      10 MSFT {{2000 USD, 2014-02-25}}
             Assets:Investments:Cash  -20000 USD
 
           2013-06-01 * ""
@@ -1213,6 +1171,22 @@ class TestTotalsAndSigns(unittest.TestCase):
             self.assertEqual(D('2000'), posting.cost.number_total)
             self.assertEqual('USD', posting.cost.currency)
             self.assertEqual(None, posting.price)
+
+    @parser.parse_doc(expect_errors=True)
+    def test_total_cost__invalid(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            Assets:Investments:MSFT      10 MSFT {{100 # 2,000 USD}}
+            Assets:Investments:Cash  -20000 USD
+        """
+        posting = entries[0].postings[0]
+        self.assertEqual(1, len(errors))
+        self.assertRegex(errors[0].message,
+                         'Per-unit cost may not be specified using total cost syntax')
+        self.assertEqual(ZERO, posting.cost.number_per) # Note how this gets canceled.
+        self.assertEqual(D('2000'), posting.cost.number_total)
+        self.assertEqual('USD', posting.cost.currency)
+        self.assertEqual(None, posting.price)
 
     @parser.parse_doc(expect_errors=False)
     def test_total_cost_negative(self, entries, errors, _):
@@ -1282,7 +1256,7 @@ class TestAllowNegativePrices(unittest.TestCase):
             Assets:Investments:Cash  -20000 USD
 
           2013-05-18 * ""
-            Assets:Investments:MSFT      10 MSFT {{2000 USD / 2014-02-25}}
+            Assets:Investments:MSFT      10 MSFT {{2000 USD, 2014-02-25}}
             Assets:Investments:Cash  -20000 USD
 
           2013-06-01 * ""
@@ -1351,7 +1325,7 @@ class TestBalance(unittest.TestCase):
             Assets:Investments:Cash  -20000 USD
 
           2013-05-18 * ""
-            Assets:Investments:MSFT      10 MSFT {{2000 USD / 2014-02-25}}
+            Assets:Investments:MSFT      10 MSFT {{2000 USD, 2014-02-25}}
             Assets:Investments:Cash  -20000 USD
         """
         for entry in entries:
@@ -2137,7 +2111,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
     def test_grammar_exceptions__tag_link_PIPE(self, entries, errors, _):
         """
           2010-01-01 close Assets:Before
-          2010-01-01 * "Payee" | "Narration"
+          2010-01-01 * "Payee" "Narration"
             Assets:Before   100.00 USD
             Assets:After   -100.00 USD
           2000-01-01 open Assets:Before
@@ -2148,7 +2122,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
     def test_grammar_exceptions__transaction(self, entries, errors, _):
         """
           2010-01-01 close Assets:Before
-          2010-01-01 * "Payee" | "Narration"
+          2010-01-01 * "Payee" "Narration"
             Assets:Before   100.00 USD
             Assets:After   -100.00 USD
           2000-01-01 open Assets:Before

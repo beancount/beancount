@@ -4,6 +4,182 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-11-12
+
+  - Made the Emacs prefix key configurable via a new beancount-mode-map-prefix
+    variable. See discussion here:
+    https://groups.google.com/d/msg/beancount/_7TscZ9phNE/K8PkcRMpBAAJ
+
+
+2016-11-06
+
+  - Fixed #139: Full booking parsing had been more liberal than the old SIMPLE
+    booking algorithm can interpret. In the old code, explicitly disallow some
+    interpolation cases which cannot be handled.
+
+  - Fixed #129: Ignore custom directives for Ledger and HLedger conversion.
+
+
+2016-11-05
+
+  - Fixed #142: bean-check should return non-zero exit code upon failure.
+
+
+2016-10-30
+
+  - Merge the current version of the 'booking' branch and made the "FULL" booking
+    algorithm the default one.
+
+    * The "experiment_booking_algorithm" option has been renamed to
+      "booking_algorithm". Its default value is now "FULL"; everyone will be
+      using the new booking code. If for some reason you have a transitional
+      need to revert to the older booking method use this option.
+
+        option "booking_algorithm" "SIMPLE"
+
+    * The new booking algorithm is _MUCH_ more powerful than the one old. I'll
+      describe it soon in a new document, but briefly:
+
+      - It supports many more interpolation capabilities; try omitting amounts
+        or currencies which you think it ought be able to figure out
+        automatically and you might find it does.
+
+      - All positions carry a date. This means that if you have transactions
+        that would merge because they weren't specified with a date, like this
+        you may face a problem:
+
+          2016-01-15 *
+            Assets:Investments          70 UUG {10.00 USD}
+            ...
+
+          2016-02-16 *
+            Assets:Investments          25 UUG {10.00 USD}
+            ...
+
+          2016-03-30 *
+            Assets:Investments         -80 UUG {10.00 USD}
+            ...
+
+        Those used to resolve automatically because both augmenting lots would
+        merge into a single one without a date. Now that all positions have an
+        acquisition date, the -80 reducing posting is ambiguous, because it
+        matches against these:
+
+            Assets:Investments          70 UUG {10.00 USD, 2016-01-15}
+            Assets:Investments          25 UUG {10.00 USD, 2016-02-16}
+
+        Either you'll have to disambiguate, or let Beancount do so. One way to
+        do this is to add more specific matching data, and split the posting.
+        An even easier way to do this is to make the default booking method of
+        this account to "FIFO" or "LIFO", which will automatically select the
+        oldest (newest) postings without issuing a warning.
+
+        If you find yourself in a bind, please email the mailing-list with a
+        specific and as small as possible data input that reproduces the
+        problem.
+
+
+  - Removed parsing of the pipe (|) symbol as a separator for strings on
+    transaction description lines. This was vestigial from the days long long
+    ago when Beancount was attempting to be compatible with Ledger syntax; this
+    is wholly unnecessary how.
+
+    You will have to convert transactions like this:
+
+      2015-08-25 * "Tunnel" | "Coffees"
+        Expenses:Food:Coffee           15 CAD
+        Assets:Cash
+
+    Into transactions like this:
+
+      2015-08-25 * "Tunnel" "Coffees"
+        Expenses:Food:Coffee           15 CAD
+        Assets:Cash
+
+    This can be done using a sed script, or as a macro in your favorite text editor.
+    If you need a temporary respite, you can use the following option, which
+    will replace all the error messages by a single warning:
+
+      option "allow_pipe_separator" "TRUE"
+
+    Support for this option will be removed eventually.
+
+
+  - Moved the {{...}}} total cost syntax from a legacy support with only "/"
+    separator and a date, no label, to full support. Previously, only these syntaxes
+    were supported for total cost:
+
+      Assets:Account     100 MSFT {{2000.00 USD}}
+      Assets:Account     100 MSFT {{2000.00 USD / 2016-10-30}}
+
+    Changes:
+
+    * The "/" separator support has been removed, you must now use a comma, like
+      for the {...} full booking syntax.
+
+    * The same syntax as for the regular {...} compound cost is supported;
+      however, specifying a compound amount will raise an error, and the
+      per-unit cost is interpreted as a total cost.
+
+    For example, this:
+
+      Assets:Account     100 MSFT {{2000.00 USD}}
+
+    is interpreted as:
+
+      Assets:Account     100 MSFT {0 # 2000.00 USD}
+
+    which is equivalent to:
+
+      Assets:Account     100 MSFT {20.00 USD}
+
+    And the following will raise an error, it is not legal syntax:
+
+      Assets:Account     100 MSFT {{0 # 2000.00 USD}}
+
+    Finally, specifying a date and a label can be done, just like for {...}:
+
+      Assets:Account     100 MSFT {{2000.00 USD, 2011-10-30, "ref32"}}
+
+    The intention here is to deprecate the older limited syntax while keeping
+    support for total cost input using {{...}}. Based on previous questions, I
+    suspect that many users are still using {{...}} instead of {{# ...}}, so I
+    won't remove it just yet.
+
+  - Removed very old compatibility code in beancount.core.amount that lived
+    since I cleaned up the definition of the D() constructor and moved it to
+    beancount.core.number.
+
+  - Removed built-in aliases for auto_accounts and implicit_prices modules, from
+    beancount.ops to beancount.plugins.
+
+  - Removed deprecated option "default_tolerance" (which had been renamed to
+    "inferred_tolerance_default").
+
+  - Removed deprecated option "tolerance".
+
+  - Remove deprecated use of 'plugin' as an option. The directive ought to be
+    the only way.
+
+  - Removed deprecated option "experiment_explicit_tolerances".
+
+  - Renamed "experiment_booking_algorithm" to "booking_algorithm", and changed
+    the default value to "FULL". The old "SIMPLE" algorithm will be deprecated
+    eventually.
+
+  - Removed old code that would warn if the user set account_rounding to a full
+    account name; it just needs be a subaccount.
+
+  - Commit to Python 3.5. 3.5.0 released more than a year ago. You need to
+    update or stick with the 2.0b13 release.
+
+  - Remove old code to dispatch between an external Enum class and the built-in
+    one that's included in 3.5 (commit to 3.5).
+
+  - Added type annotations to beancount.core.data. This will grow more over
+    time. (I also need to add rules to use those.)
+
+
 2016-10-23
 
   - Modified parsing of transaction strings and links and tags. I did this to

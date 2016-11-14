@@ -3,9 +3,12 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import builtins
+import collections
 import datetime
-from collections import namedtuple
+import enum
 import sys
+
+from typing import NamedTuple, Union, Optional, List, Set, Dict, Tuple, Any
 
 from beancount.core.amount import Amount
 from beancount.core.number import Decimal
@@ -14,10 +17,37 @@ from beancount.core.position import Cost
 from beancount.core.position import CostSpec
 from beancount.core.account import has_component
 from beancount.utils.bisect_key import bisect_left_with_key
-from beancount.utils import misc_utils
 
 
-def new_directive(clsname, fields):
+# Type declarations.
+Account = str
+Currency = str
+Flag = str
+Meta = Dict[str, Any]
+
+
+# A set of valid booking method names for positions on accounts.
+# See http://furius.ca/beancount/doc/inventories for a full explanation.
+@enum.unique
+class Booking(enum.Enum):
+
+    # Reject ambiguous matches with an error.
+    STRICT = 'STRICT'
+
+    # Disable matching and accept the creation of mixed inventories.
+    NONE = 'NONE'
+
+    # Average cost booking: merge all matching lots before and after.
+    AVERAGE = 'AVERAGE'
+
+    # First-in first-out in the case of ambiguity.
+    FIFO = 'FIFO'
+
+    # Last-in first-out in the case of ambiguity.
+    LIFO = 'LIFO'
+
+
+def new_directive(clsname, fields: List[Tuple]):
     """Create a directive class. Do not include default fields.
     This should probably be carried out through inheritance.
 
@@ -28,7 +58,9 @@ def new_directive(clsname, fields):
     Returns:
       A type object for the new directive type.
     """
-    return namedtuple(clsname, 'meta date {}'.format(fields))
+    return NamedTuple(
+        clsname,
+        [('meta', Meta), ('date', datetime.date)] + fields)
 
 
 # All possible types of entries. These are the main data structures in use
@@ -58,34 +90,18 @@ def new_directive(clsname, fields):
 #     specification), or None if not specified. In practice, this attribute will
 #     be should be left unspecified (None) in the vast majority of cases. See
 #     Booking below for a selection of valid methods.
-Open = new_directive('Open', 'account currencies booking')
-
-
-# A set of valid booking method names for positions on accounts.
-# See http://furius.ca/beancount/doc/inventories for a full explanation.
-class Booking(misc_utils.Enum):
-
-    # Reject ambiguous matches with an error.
-    STRICT = 'STRICT'
-
-    # Disable matching and accept the creation of mixed inventories.
-    NONE = 'NONE'
-
-    # Average cost booking: merge all matching lots before and after.
-    AVERAGE = 'AVERAGE'
-
-    # First-in first-out in the case of ambiguity.
-    FIFO = 'FIFO'
-
-    # Last-in first-out in the case of ambiguity.
-    LIFO = 'LIFO'
+Open = new_directive('Open', [
+    ('account', Account),
+    ('currencies', Currency),
+    ('booking', Booking)])
 
 
 # A "close account" directive.
 #
 # Attributes:
 #   account: A string, the name of the account that is being closed.
-Close = new_directive('Close', 'account')
+Close = new_directive('Close', [
+    ('account', Account)])
 
 # An optional commodity declaration directive. Commodities generally do not need
 # to be declared, but they may, and this is mainly created as intended to be
@@ -100,7 +116,8 @@ Close = new_directive('Close', 'account')
 #   meta: See above.
 #   date: See above.
 #   currency: A string, the commodity under consideration.
-Commodity = new_directive('Commodity', 'currency')
+Commodity = new_directive('Commodity', [
+    ('currency', Currency)])
 
 # A "pad this account with this other account" directive. This directive
 # automatically inserts transactions that will make the next chronological
@@ -114,7 +131,9 @@ Commodity = new_directive('Commodity', 'currency')
 #   account: A string, the name of the account which needs to be filled.
 #   source_account: A string, the anem of the account which is used to debit from
 #     in order to fill 'account'.
-Pad = new_directive('Pad', 'account source_account')
+Pad = new_directive('Pad', [
+    ('account', Account),
+    ('source_account', Account)])
 
 # A "check the balance of this account" directive. This directive asserts that
 # the declared account should have a known number of units of a particular
@@ -133,7 +152,46 @@ Pad = new_directive('Pad', 'account source_account')
 #     an Amount instance if the balance fails, the amount of the difference.
 #   tolerance: A Decimal object, the amount of tolerance to use in the
 #     verification.
-Balance = new_directive('Balance', 'account amount tolerance diff_amount')
+Balance = new_directive('Balance', [
+    ('account', Account),
+    ('amount', Amount),
+    ('tolerance', Decimal),
+    ('diff_amount', Optional[Amount])])
+
+
+# Postings are contained in Transaction entries. These represent the individual
+# legs of a transaction. Note: a posting may only appear within a single entry
+# (multiple transactions may not share a Posting instance), and that's what the
+# entry field should be set to.
+#
+# Attributes:
+#   entry: A Transaction instance (see above), which the posting applies to.
+#     It is convenient to have Posting instances point to their parent entries,
+#     because account journals contain lists of Postings and non-Transaction
+#     entries and though it creates a circular dependency between Transaction
+#     and Posting, it allows us to easily resolve the lists of Postings to their
+#     transactions for rendering.
+#   account: A string, the account that is modified by this posting.
+#   units: An Amount, the units of the position.
+#   cost: A Cost or CostSpec instances, the units of the position.
+#   price: An Amount, the price at which the position took place, or
+#     None, where not relevant. Providing a price member to a posting
+#     automatically adds a price in the prices database at the date of the
+#     transaction.
+#   flag: An optional flag, a one-character string or None, which is to be
+#     associated with the posting. Most postings don't have a flag, but it can
+#     be convenient to mark a particular posting as problematic or pending to
+#     be reconciled for a future import of its account.
+#   meta: A dict of strings to values, the metadata that was attached
+#     specifically to that posting, or None, if not provided. In practice, most
+#     of the instances will be unlikely to have metadata.
+Posting = NamedTuple('Posting', [
+    ('account', Account),
+    ('units', Amount),
+    ('cost', Union[Cost, CostSpec]),
+    ('price', Optional[Amount]),
+    ('flag', Flag),
+    ('meta', Meta)])
 
 # A transaction! This is the main type of object that we manipulate, and the
 # entire reason this whole project exists in the first place, because
@@ -154,8 +212,25 @@ Balance = new_directive('Balance', 'account amount tolerance diff_amount')
 #   links: A set of link strings (without the '^'), or None, if an empty set.
 #   postings: A list of Posting instances, the legs of this transaction. See the
 #     doc under Posting below.
-Transaction = new_directive('Transaction',
-                            'flag payee narration tags links postings')
+Transaction = new_directive('Transaction', [
+    ('flag', Flag),
+    ('payee', str),
+    ('narration', str),
+    ('tags', Optional[Set]),
+    ('links', Optional[Set]),
+    ('postings', List[Posting])])
+
+# A pair of a Posting and its parent Transaction. This is inserted as
+# temporaries in lists of postings-of-entries, which is the product of a
+# realization.
+#
+# Attributes:
+#   txn: The parent Transaction instance.
+#   posting: The Posting instance.
+TxnPosting = NamedTuple('TxnPosting', [
+    ('txn', Transaction),
+    ('posting', Posting)])
+
 
 # A note directive, a general note that is attached to an account. These are
 # used to attach text at a particular date in a specific account. The notes can
@@ -171,7 +246,9 @@ Transaction = new_directive('Transaction',
 #     never None, notes always have an account they correspond to.
 #   comment: A free-form string, the text of the note. This can be logn if you
 #     want it to.
-Note = new_directive('Note', 'account comment')
+Note = new_directive('Note', [
+    ('account', Account),
+    ('comment', str)])
 
 # An "event value change" directive. These directives are used as string
 # variables that have different values over time. You can use these to track an
@@ -200,7 +277,9 @@ Note = new_directive('Note', 'account comment')
 #     unique variable whose value changes over time. For example, 'location'.
 #   description: A free-form string, the value of the variable as of the date
 #     of the transaction.
-Event = new_directive('Event', 'type description')
+Event = new_directive('Event', [
+    ('type', str),
+    ('description', str)])
 
 # A named query declaration. This directive is used to create pre-canned queries
 # that can then be automatically run or made available to the shell, or perhaps be
@@ -214,7 +293,9 @@ Event = new_directive('Event', 'type description')
 #     the CLOSE modifier in the shell syntax.
 #   name: A string, the unique idenfitier for the query.
 #   query_string: The SQL query string to be run or made available.
-Query = new_directive('Query', 'name query_string')
+Query = new_directive('Query', [
+    ('name', str),
+    ('query_string', str)])
 
 # A price declaration directive. This establishes the price of a currency in
 # terms of another currency as of the directive's date. A history of the prices
@@ -231,7 +312,9 @@ Query = new_directive('Query', 'name query_string')
 #  currency: A string, the currency that is being priced, e.g. HOOL.
 #  amount: An instance of Amount, the number of units and currency that
 #    'currency' is worth, for instance 1200.12 USD.
-Price = new_directive('Price', 'currency amount')
+Price = new_directive('Price', [
+    ('currency', Currency),
+    ('amount', Amount)])
 
 # A document file declaration directive. This directive is used to attach a
 # statement to an account, at a particular date. A typical usage would be to
@@ -251,7 +334,12 @@ Price = new_directive('Price', 'currency amount')
 #   filename: The absolute filename of the document file.
 #   tags: A set of tag strings (without the '#'), or None, if an empty set.
 #   links: A set of link strings (without the '^'), or None, if an empty set.
-Document = new_directive('Document', 'account filename tags links')
+Document = new_directive('Document', [
+    ('account', Account),
+    ('filename', str),
+    ('tags', Optional[Set]),
+    ('links', Optional[Set])])
+
 
 # A custom directive. This directive can be used to implement new experimental
 # dated features in the Beancount file. This is meant as an intermediate measure
@@ -270,7 +358,9 @@ Document = new_directive('Document', 'account filename tags links')
 #   values: A list of values of various simple types supported by the grammar.
 #     (Note that this list is not enforced to be consistent for all directives
 #     of hte same type by the parser.)
-Custom = new_directive('Custom', 'type values')
+Custom = new_directive('Custom', [
+    ('type', str),
+    ('values', List)])
 
 
 # A list of all the valid directive types.
@@ -305,45 +395,6 @@ def new_metadata(filename, lineno, kvlist=None):
     if kvlist:
         meta.update(kvlist)
     return meta
-
-
-# Postings are contained in Transaction entries. These represent the individual
-# legs of a transaction. Note: a posting may only appear within a single entry
-# (multiple transactions may not share a Posting instance), and that's what the
-# entry field should be set to.
-#
-# Attributes:
-#   entry: A Transaction instance (see above), which the posting applies to.
-#     It is convenient to have Posting instances point to their parent entries,
-#     because account journals contain lists of Postings and non-Transaction
-#     entries and though it creates a circular dependency between Transaction
-#     and Posting, it allows us to easily resolve the lists of Postings to their
-#     transactions for rendering.
-#   account: A string, the account that is modified by this posting.
-#   units: An Amount, the units of the position.
-#   cost: A Cost or CostSpec instances, the units of the position.
-#   price: An Amount, the price at which the position took place, or
-#     None, where not relevant. Providing a price member to a posting
-#     automatically adds a price in the prices database at the date of the
-#     transaction.
-#   flag: An optional flag, a one-character string or None, which is to be
-#     associated with the posting. Most postings don't have a flag, but it can
-#     be convenient to mark a particular posting as problematic or pending to
-#     be reconciled for a future import of its account.
-#   meta: A dict of strings to values, the metadata that was attached
-#     specifically to that posting, or None, if not provided. In practice, most
-#     of the instances will be unlikely to have metadata.
-Posting = namedtuple('Posting', 'account units cost price flag meta')
-
-
-# A pair of a Posting and its parent Transaction. This is inserted as
-# temporaries in lists of postings-of-entries, which is the product of a
-# realization.
-#
-# Attributes:
-#   txn: The parent Transaction instance.
-#   posting: The Posting instance.
-TxnPosting = namedtuple('TxnPosting', 'txn posting')
 
 
 def create_simple_posting(entry, account, number, currency):

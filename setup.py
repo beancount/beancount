@@ -12,8 +12,8 @@ import warnings
 
 
 # Check if the version is sufficient.
-if sys.version_info[:2] < (3,3):
-    raise SystemExit("ERROR: Insufficient Python version; you need v3.3 or higher.")
+if sys.version_info[:2] < (3,5):
+    raise SystemExit("ERROR: Insufficient Python version; you need v3.5 or higher.")
 
 
 # Import setup().
@@ -121,7 +121,7 @@ upload-csv-to-google-sheet
 # Please read: http://furius.ca/beancount/doc/install about version numbers.
 setup(
     name="beancount",
-    version='2.0b12',
+    version='2.0b13',
     description="Command-line Double-Entry Accounting",
 
     long_description=

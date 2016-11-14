@@ -181,7 +181,7 @@ class TestTestUtils(unittest.TestCase):
 
         number = D('101.23')
         entries = parser.parse_many("""
-          2014-12-15 * "Payee" | "Narration"
+          2014-12-15 * "Payee" "Narration"
             Assets:Checking   {number} USD
             Equity:Blah
         """)
@@ -195,7 +195,7 @@ class TestTestUtils(unittest.TestCase):
             """)
 
         entry = parser.parse_one("""
-          2014-12-15 * "Payee" | "Narration"
+          2014-12-15 * "Payee" "Narration"
             Assets:Checking   101.23 USD
             Equity:Blah
         """)

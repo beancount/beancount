@@ -41,10 +41,7 @@ DEFAULT_PLUGINS_POST = [
     ]
 
 # A mapping of modules to warn about, to their renamed names.
-DEPRECATED_MODULES = {
-    "beancount.ops.auto_accounts": "beancount.plugins.auto_accounts",
-    "beancount.ops.implicit_prices": "beancount.plugins.implicit_prices",
-    }
+RENAMED_MODULES = {}
 
 
 # Filename pattern for the pickle-cache.
@@ -87,11 +84,6 @@ def load_file(filename, log_timings=None, log_errors=None, extra_validations=Non
                                                   extra_validations, encoding)
         _log_errors(errors, log_errors)
         return entries, errors, options_map
-
-
-# Alias, for compatibility.
-# pylint: disable=invalid-name
-load = load_file
 
 
 def load_encrypted_file(filename, log_timings=None, log_errors=None, extra_validations=None,
@@ -500,8 +492,8 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
 
     for plugin_name, plugin_config in plugins_iter:
 
-        # Issue a warning on a deprecated module.
-        renamed_name = DEPRECATED_MODULES.get(plugin_name, None)
+        # Issue a warning on a renamed module.
+        renamed_name = RENAMED_MODULES.get(plugin_name, None)
         if renamed_name:
             warnings.warn("Deprecation notice: Module '{}' has been renamed to '{}'; "
                           "please adjust your plugin directive.".format(
@@ -539,11 +531,6 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
 
     return entries, errors
 
-
-# FIXME: Deprecate this eventually.
-def loaddoc(*args, **kw):
-    warnings.warn("loaddoc() is obsolete; use load_doc() instead.")
-    return load_doc(*args, **kw)
 
 def load_doc(expect_errors=False):
     """A factory of decorators that loads the docstring and calls the function with entries.

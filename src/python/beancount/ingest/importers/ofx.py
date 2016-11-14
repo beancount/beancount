@@ -18,6 +18,7 @@ the ofxparse module (see https://sites.google.com/site/ofxparse/).
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import datetime
+import enum
 import itertools
 import re
 from xml.sax import saxutils
@@ -29,10 +30,9 @@ from beancount.core.number import D
 from beancount.core import amount
 from beancount.core import data
 from beancount.ingest import importer
-from beancount.utils import misc_utils
 
 
-class BalanceType(misc_utils.Enum):
+class BalanceType(enum.Enum):
     """Type of Balance directive to be inserted."""
     NONE = 0     # Don't insert a Balance directive.
     DECLARED = 1 # Insert a Balance directive at the declared date.

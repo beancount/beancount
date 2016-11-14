@@ -144,6 +144,7 @@ class TestLedgerConversion(test_utils.TestCase):
             Expenses:Restaurant   50.02 USD
             Assets:Cash
 
+          2015-01-01 custom "budget" Expenses:Food  "yearly"  34.43 HRK
         """
         with test_utils.capture() as stdout:
             result = test_utils.run_with_args(report.main, [filename, 'ledger'])

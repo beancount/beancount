@@ -238,6 +238,19 @@ class Builder(lexer.LexBuilder):
         self.errors.append(
             ParserSyntaxError(meta, message, None))
 
+    def pipe_deprecated_error(self, filename, lineno):
+        """Issue a 'Pipe deprecated' error.
+
+        Args:
+          filename: The current filename
+          lineno: The current line number
+        """
+        if self.options['allow_pipe_separator']:
+            return
+        meta = new_metadata(filename, lineno)
+        self.errors.append(
+            ParserSyntaxError(meta, "Pipe symbol is deprecated.", None))
+
     def pushtag(self, tag):
         """Push a tag on the current set of tags.
 
@@ -357,23 +370,6 @@ class Builder(lexer.LexBuilder):
                 self.options[key] = value
 
             else:
-                # Fix up account_rounding to be a subaccount if the user specified a
-                # full account name. This is intended to ease transition in the
-                # change of semantics that occurred on 2015-09-05, whereby the value
-                # of this option became defined as a subaccount of Equity instead of
-                # a full account name. See Issue #67.
-                # This should eventually be deprecated, say, in a year (after Sep 2016).
-                if key == 'account_rounding':
-                    root = account.root(1, value)
-                    if root in (self.options['name_{}'.format(name)]
-                                for name in ['assets', 'liabilities', 'equity',
-                                             'income', 'expenses']):
-                        self.errors.append(
-                            ParserError(self.get_lexer_location(),
-                                        "'account_rounding' option should now refer to "
-                                        "a subaccount.", None))
-                        value = account.sans_root(value)
-
                 # Set the value.
                 self.options[key] = value
 
@@ -446,12 +442,15 @@ class Builder(lexer.LexBuilder):
         """Create a 'merge cost' token."""
         return MERGE_COST
 
-    def cost_spec(self, cost_comp_list):
+    def cost_spec(self, cost_comp_list, is_total):
         """Process a cost_spec grammar rule.
 
         Args:
           cost_comp_list: A list of CompoundAmount, a datetime.date, or
             label ID strings.
+          is_total: Assume only the total cost is specified; reject the <number> # <number>
+              syntax, that is, no compound amounts may be specified. This is used to support
+              the {{...}} syntax.
         Returns:
           A cost-info tuple of CompoundAmount, lot date and label string. Any of these
           may be set to a sentinel indicating "unset".
@@ -507,22 +506,25 @@ class Builder(lexer.LexBuilder):
             number_per, number_total, currency = MISSING, None, MISSING
         else:
             number_per, number_total, currency = compound_cost
+            if is_total:
+                if number_total is not None:
+                    self.errors.append(
+                        ParserError(
+                            self.get_lexer_location(),
+                            ("Per-unit cost may not be specified using total cost "
+                             "syntax: '{}'; ignoring per-unit cost").format(compound_cost),
+                            None))
+                    # Ignore per-unit numbrer.
+                    number_per = ZERO
+                else:
+                    # There's a single number specified; interpret it as a total cost.
+                    number_total = number_per
+                    number_per = ZERO
 
         if merge is None:
             merge = False
 
         return CostSpec(number_per, number_total, currency, date_, label, merge)
-
-    def cost_spec_total_legacy(self, cost, date):
-        """Process a deprecated legacy 'total cost' specification.
-
-        Args:
-          cost: An instance of Amount, the total cost.
-          date: A datetime.date instance, the lot date for the lot.
-        Returns:
-          Same as cost_spec().
-        """
-        return CostSpec(ZERO, cost.number, cost.currency, date, None, False)
 
     def handle_list(self, object_list, new_object):
         """Handle a recursive list grammar rule, generically.
