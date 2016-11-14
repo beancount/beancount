@@ -1651,8 +1651,22 @@ class TestBookReductions(_BookingTestBase):
           Assets:Account           25 HOOL {116.00 USD, 2016-01-16}
         """
 
+    @book_test(Booking.STRICT)
+    def test_reduce__multiple_reductions__competing__with_error(self, _, __):
+        """
+        2016-01-01 * #ante
+          Assets:Account            5 HOOL {115.00 USD, 2016-01-15}
+
+        2016-05-02 * #apply
+          Assets:Account           -4 HOOL {115.00 USD}
+          Assets:Account           -4 HOOL {2016-01-15}
+
+        2016-05-02 * #booked
+          error: "Not enough lots to reduce"
+        """
+
     @book_test(Booking.FIFO)
-    def test_reduce__multiple_reductions__with_error(self, _, __):
+    def test_reduce__multiple_reductions__overflowing__with_error(self, _, __):
         """
         2016-01-01 * #ante
           Assets:Account           50 HOOL {115.00 USD, 2016-01-15}
@@ -1690,14 +1704,81 @@ class TestBookReductions(_BookingTestBase):
     def test_reduce__reduction_with_same_currency_not_at_cost(self, _, __):
         """
         2016-01-01 * #ante
-          Assets:Vanguard:Retire:AfterTax:HOOL   50 HOOL @ 14.33 USD
+          Assets:Account   50 HOOL @ 14.33 USD
 
         2016-05-02 * #apply
-          Assets:Vanguard:Retire:AfterTax:HOOL  -40 HOOL {14.33 USD} @ 14.33 USD
+          Assets:Account  -40 HOOL {14.33 USD} @ 14.33 USD
 
         2016-05-02 * #booked
           error: "No position matches"
         """
+
+    @book_test(Booking.STRICT)
+    def test_reduce__augment_and_reduce_with_empty_balance(self, _, __):
+        """
+        2016-01-01 * #ante
+
+        2016-05-02 * #apply
+          Assets:Account            2 HOOL {115.00 USD}
+          Assets:Account           -2 HOOL {116.00 USD}
+
+        2016-05-02 * #booked
+          error: "No position matches"
+        """
+        # What's interesting here is that both postings will be detected as
+        # augmentations.
+
+    # FIXME: Uncomment and complete these tests.
+
+    # @book_test(Booking.STRICT)
+    # def test_reduce__augment_and_reduce_with_empty_balance__matching_pos(self, _, __):
+    #     """
+    #     2016-01-01 * #ante
+    #
+    #     2016-05-02 * #apply
+    #       Assets:Account            2 HOOL {115.00 USD}
+    #       Assets:Account           -2 HOOL {}
+    #
+    #     2016-01-01 * #ambi-matches
+    #       Assets:Account            2 HOOL {115.00 USD}
+    #
+    #     2016-01-01 * #ambi-resolved #booked
+    #       Assets:Account            2 HOOL {115.00 USD}
+    #     """
+
+    # @book_test(Booking.STRICT)
+    # def test_reduce__augment_and_reduce_with_empty_balance__matching_neg(self, _, __):
+    #     """
+    #     2016-01-01 * #ante
+    #
+    #     2016-05-02 * #apply
+    #       Assets:Account           -2 HOOL {115.00 USD}
+    #       Assets:Account            2 HOOL {}
+    #
+    #     2016-01-01 * #ambi-matches
+    #       Assets:Account           -2 HOOL {115.00 USD}
+    #
+    #     2016-01-01 * #ambi-resolved #booked
+    #       Assets:Account           -2 HOOL {115.00 USD}
+    #     """
+
+    # @book_test(Booking.STRICT)
+    # def test_reduce__augment_and_reduce_with_non_empty_balance(self, _, __):
+    #     """
+    #     2016-02-01 * #ante
+    #       Assets:Account            1 HOOL {5 USD}
+    #
+    #     ;; Acquiring an asset and selling it in the same transaction.
+    #     2016-03-01 * #apply
+    #       Assets:Account            2 HOOL {6 USD}
+    #       Assets:Account           -2 HOOL {6 USD} @ 7 USD
+    #
+    #     2016-05-02 * #ambi-matches
+    #       Assets:Account            2 HOOL {6 USD}
+    #
+    #     2016-05-02 * #ambi-resolved #booked
+    #       Assets:Account            2 HOOL {6 USD}
+    #     """
 
 
 class TestBookAmbiguous(_BookingTestBase):

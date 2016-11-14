@@ -1509,17 +1509,6 @@ http://furius.ca/beancount/doc/proposal-query
     * Move balance_incomplete_postings & get_incomplete_postings to beancount.parser.booking_simple.
     * Move the corresponding unit tests to beancount.parser.booking_simple_test.
 
-  - An important question: on an empty inventory, does the following transaction
-    work?
-
-      2016-04-23 * "Buy and sell on the same transaction"
-        Assets:Investments:HOOL    1 HOOL {100.00 USD}
-        Assets:Investments:HOOL   -1 HOOL {}
-
-    One way to handle this would be to process all account augmentations before
-    reductions. But that's not really possible, because the augmentation may
-    require interpolation first. Hmmm. Difficult question. {f89b5b01e568}
-
   - Add an option "merge_lots" whose default value is TRUE, and which can be set
     to FALSE in order to avoid merging augmenting lots in the Inventory. It this
     is false, there's the possibillity of an inventory owning two lots which
@@ -4679,6 +4668,12 @@ http://furius.ca/beancount/doc/proposal-query
   have time to think about where to put it, I just come here at the end and jot
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
+
+  - Idea to deal with #145: Add all augmenting postings, THEN book all reducing
+    ones against that.
+
+  - Full booking: We need an example of two reducing bookings competing for the
+    same lot.
 
   - There ought to be some unit tests for all the custom metadata added to
     Posting instances. I think this is undertested at the moment.
