@@ -14,9 +14,8 @@ import io
 import re
 import sys
 
-
-# A regular expression that matches an account name.
-ACCOUNT_RE = '([A-Z][A-Za-z0-9\-]+)(:[A-Z][A-Za-z0-9\-]*)+'
+from beancount.core import amount
+from beancount.core import account
 
 
 def align_beancount(contents):
@@ -33,7 +32,9 @@ def align_beancount(contents):
     # of the stripped prefix and the number.
     match_pairs = []
     for index, line in enumerate(contents.splitlines()):
-        match = re.match(r'([^";]*?)\s+([-+]?\s*[\d,]+(?:\.\d*)?)\s+([A-Z0-9]+\b.*)', line)
+        match = re.match(
+            r'([^";]*?)\s+([-+]?\s*[\d,]+(?:\.\d*)?)\s+({}\b.*)'.format(amount.CURRENCY_RE),
+            line)
         if match:
             prefix, number, rest = match.groups()
             match_pairs.append((prefix, number, rest))
@@ -115,14 +116,13 @@ def normalize_indent_whitespace(match_pairs):
       adjusted with a different whitespace prefi.
     """
     # Compute most frequent account name prefix.
-    match_posting = re.compile(r'([ \t]+)({})'.format(ACCOUNT_RE)).match
+    match_posting = re.compile(r'([ \t]+)({}.*)'.format(account.ACCOUNT_RE)).match
     width = compute_most_frequent(
         len(match.group(1))
         for match in (match_posting(prefix)
                       for prefix, _, _ in match_pairs)
         if match is not None)
-    if width:
-        norm_format = ' ' * width + '{}'
+    norm_format = ' ' * (width or 0) + '{}'
 
     # Make the necessary adjustments.
     adjusted_pairs = []

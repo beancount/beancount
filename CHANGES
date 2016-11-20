@@ -6,6 +6,11 @@ Note: This file contains only changes in the 'default' branch.
 
 2016-11-20
 
+  - Fixed bugs in bean-format; in order to do this properly I made bean-format
+    reuse the globally defined regular expressions for currency and account in
+    the rest of Beancount's code. This makes bean-format depend on the Beancount
+    installation. Bah, it's reasonable. This issue is related to issue #146.
+
   - Added ANY_META() function to the SQL shell's environment; ANY_META() allows
     you to query a posting's metadata, falling back on the parent entry's
     metadata. This idea was suggested by Stefano Zacchiroli in
