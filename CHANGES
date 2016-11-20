@@ -8,7 +8,7 @@ Note: This file contains only changes in the 'default' branch.
 
   - Added ANY_META() function to the SQL shell's environment; ANY_META() allows
     you to query a posting's metadata, falling back on the parent entry's
-    metadata. This idea was suggested by Stefano Zacchirolli in
+    metadata. This idea was suggested by Stefano Zacchiroli in
     https://groups.google.com/d/msg/beancount/jh-n4rvbQAI/Hz5Mmd60BAAJ. I also
     added the first unit tests for environment functions--I'll have to write all
     of those at some point.
