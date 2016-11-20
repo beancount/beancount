@@ -244,6 +244,29 @@ class EntryMeta(query_compile.EvalFunction):
             return None
         return meta.get(args[0], None)
 
+class AnyMeta(query_compile.EvalFunction):
+    "Get metadata from the posting or its parent transaction's metadata if not present."
+    __intypes__ = [str]
+
+    def __init__(self, operands):
+        super().__init__(operands, object)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        key = args[0]
+
+        # Note: if the looked up key is explicitly defined in posting as None,
+        # we return it, rather than falling back to parent Transaction.
+        posting_meta = context.posting.meta
+        entry_meta = context.entry.meta
+        if posting_meta and key in posting_meta:
+            value = posting_meta[key]
+        elif entry_meta and key in entry_meta:
+            value = entry_meta[key]
+        else:
+            value = None
+        return value
+
 class OpenMeta(query_compile.EvalFunction):
     "Get the metadata dict of the open directive of the account."
     __intypes__ = [str]
@@ -629,6 +652,7 @@ SIMPLE_FUNCTIONS = {
     'close_date'                                         : CloseDate,
     'meta'                                               : Meta,
     'entry_meta'                                         : EntryMeta,
+    'any_meta'                                           : AnyMeta,
     'open_meta'                                          : OpenMeta,
     'commodity_meta'                                     : CommodityMeta,
     'account_sortkey'                                    : AccountSortKey,

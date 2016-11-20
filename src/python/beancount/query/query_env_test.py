@@ -8,8 +8,10 @@ from beancount.core.number import Decimal
 from beancount.core import inventory
 from beancount.core import position
 from beancount.core import amount
+from beancount.parser import parser
 from beancount.query import query_compile as qc
 from beancount.query import query_env as qe
+from beancount.query import query
 
 
 class TestCompileDataTypes(unittest.TestCase):
@@ -106,3 +108,35 @@ class TestCompileDataTypes(unittest.TestCase):
         for cls, dtype in class_types:
             instance = cls()
             self.assertEqual(dtype, instance.dtype)
+
+
+
+class TestEnv(unittest.TestCase):
+
+    @parser.parse_doc()
+    def test_AnyMeta(self, entries, _, options_map):
+        """
+        2016-11-20 *
+          name: "TheName"
+          address: "1 Wrong Way"
+          empty: "NotEmpty"
+          Assets:Banking          1 USD
+            color: "Green"
+            address: "1 Right Way"
+            empty:
+        """
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT ANY_META("name") as m')
+        self.assertEqual([('TheName',)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT ANY_META("color") as m')
+        self.assertEqual([('Green',)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT ANY_META("address") as m')
+        self.assertEqual([('1 Right Way',)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT ANY_META("empty") as m')
+        self.assertEqual([(None,)], rrows)

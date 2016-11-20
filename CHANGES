@@ -6,6 +6,13 @@ Note: This file contains only changes in the 'default' branch.
 
 2016-11-20
 
+  - Added ANY_META() function to the SQL shell's environment; ANY_META() allows
+    you to query a posting's metadata, falling back on the parent entry's
+    metadata. This idea was suggested by Stefano Zacchirolli in
+    https://groups.google.com/d/msg/beancount/jh-n4rvbQAI/Hz5Mmd60BAAJ. I also
+    added the first unit tests for environment functions--I'll have to write all
+    of those at some point.
+
   - Made unsupported cost specifications in the SIMPLE booking algorithm issue
     an appropriate error. For example, instead of just ignoring the cost spec in
     this:
