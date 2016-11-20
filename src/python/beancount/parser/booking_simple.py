@@ -128,6 +128,12 @@ def convert_lot_specs_to_lots(entries):
                 units = posting.units
                 cost_spec = posting.cost
                 cost = convert_spec_to_cost(units, cost_spec)
+                if cost_spec is not None and cost is None:
+                    errors.append(
+                        SimpleBookingError(entry.meta,
+                                           "Cost syntax not supported; cost spec ignored",
+                                           None))
+
                 if cost and isinstance(units, Amount):
                     # If there is a cost, we don't allow either a cost value of
                     # zero, nor a zero number of units. Note that we allow a price

@@ -416,5 +416,19 @@ class TestSimpleBooking(cmptest.TestCase):
             Expenses:Food                             21.90 BRL @@ 6.18
             Assets:Something
         """
-        printer.print_errors(errors)
-        ##self.assertEqual(1, len(errors))
+        self.assertRegex(errors[0].message,
+                         'Missing number or currency on price not handled')
+
+    @loader.load_doc(expect_errors=True)
+    def test_no_cost_is_rejected(self, _, errors, __):
+        """
+          option "booking_algorithm" "SIMPLE"
+          plugin "beancount.plugins.auto_accounts"
+
+          2014-10-15 * "buy widgets"
+            Assets:Inventory     10 WIDGET {} ;; Not supported.
+            Assets:Cash         -80 GBP
+        """
+        # See https://groups.google.com/d/msg/beancount/9NBcT-SXZMQ/sy7Z3dIdBQAJ
+        self.assertRegex(errors[0].message,
+                         'Cost syntax not supported')

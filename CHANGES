@@ -4,6 +4,21 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-11-20
+
+  - Made unsupported cost specifications in the SIMPLE booking algorithm issue
+    an appropriate error. For example, instead of just ignoring the cost spec in
+    this:
+
+          2014-10-15 * "buy widgets"
+            Assets:Inventory     10 WIDGET {} ;; Not supported.
+            Assets:Cash         -80 GBP
+
+    It will issue an error. See
+    https://groups.google.com/d/msg/beancount/9NBcT-SXZMQ/sy7Z3dIdBQAJ for
+    context.
+
+
 2016-11-12
 
   - Made the Emacs prefix key configurable via a new beancount-mode-map-prefix
