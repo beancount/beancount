@@ -5,7 +5,6 @@ Just saved here until I have time to integrate them into the booking_full_test.
 """
 
 
-
 # @parser.parse_doc(allow_incomplete=True)
 # def test_ambiguous__AVERAGE__merging_with_cost(self, entries, _, __):
 #     """
@@ -127,7 +126,6 @@ Just saved here until I have time to integrate them into the booking_full_test.
 
 
 
-
 class TestBooking(unittest.TestCase):
     "Tests the booking & interpolation process."
 
