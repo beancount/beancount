@@ -81,6 +81,12 @@ CompoundAmount = collections.namedtuple('CompoundAmount',
 MERGE_COST = '***'
 
 
+# An immutable constant for all empty sets. This is used to set links and tags
+# and ensure that they never has a None value. This makes some of the processing
+# code a bit simpler.
+EMPTY_SET = frozenset()
+
+
 def valid_account_regexp(options):
     """Build a regexp to validate account names from the options.
 
@@ -909,11 +915,11 @@ class Builder(lexer.LexBuilder):
         assert isinstance(tags, (set, frozenset)), "Tags is not a set: {}".format(tags)
         if self.tags:
             tags.update(self.tags)
-        tags = frozenset(tags) if tags else None
+        tags = frozenset(tags) if tags else EMPTY_SET
 
         # Make links to None if empty.
         links = tags_links.links
-        links = frozenset(links) if links else None
+        links = frozenset(links) if links else EMPTY_SET
 
         return tags, links
 
