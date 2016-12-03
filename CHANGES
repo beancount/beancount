@@ -4,6 +4,13 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-12-03
+
+  - Fixed fava bug #429, avoid empty conversion entries if the cost of the
+    conversion balance is zero. See:
+    https://github.com/beancount/fava/issues/429.
+
+
 2016-11-20
 
   - Fixed bugs in bean-format; in order to do this properly I made bean-format

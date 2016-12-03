@@ -957,6 +957,22 @@ class TestConversions(cmptest.TestCase):
         converted_balance = interpolate.compute_entries_balance(conversion_entries)
         self.assertTrue(converted_balance.cost().is_empty())
 
+    @loader.load_doc()
+    def test_conversions__non_empty_but_empty_cost(self, entries, _, __):
+        """
+          2012-01-01 open Assets:Checking
+          2012-01-01 open Assets:Invest
+
+          2012-03-01 *
+            Assets:Checking        -800.00 USD
+            Assets:Invest           40 HOOL {20.00 USD}
+        """
+        conversion_entries = summarize.conversions(entries, self.ACCOUNT, 'XFER')
+        self.assertEqualEntries(entries, conversion_entries)
+
+        converted_balance = interpolate.compute_entries_balance(entries)
+        self.assertTrue(converted_balance.cost().is_empty())
+
 
 class TestTruncate(cmptest.TestCase):
 

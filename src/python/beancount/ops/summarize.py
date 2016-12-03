@@ -472,7 +472,8 @@ def conversions(entries, conversion_account, conversion_currency, date=None):
     conversion_balance = interpolate.compute_entries_balance(entries, date=date)
 
     # Early exit if there is nothing to do.
-    if conversion_balance.is_empty():
+    conversion_cost_balance = conversion_balance.cost()
+    if conversion_cost_balance.is_empty():
         return entries
 
     # Calculate the index and the date for the new entry. We want to store it as
@@ -488,7 +489,7 @@ def conversions(entries, conversion_account, conversion_currency, date=None):
     narration = 'Conversion for {}'.format(conversion_balance)
     conversion_entry = Transaction(meta, last_date, flags.FLAG_CONVERSIONS,
                                    None, narration, None, None, [])
-    for position in conversion_balance.cost().get_positions():
+    for position in conversion_cost_balance.get_positions():
         # Important note: Set the cost to zero here to maintain the balance
         # invariant. (This is the only single place we cheat on the balance rule
         # in the entire system and this is necessary; see documentation on
