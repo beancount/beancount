@@ -59,9 +59,6 @@ booking_full.py: # FIXME: Refactor compute_cost_number() and convert_costspec_to
          2013-03-01  Grocery          10 USD
          Cash
 
-  - I really need a --no-cache option across the programs. When developing a
-    plugin, it would be so much more convenient. The naming for these options
-    should be similar to that which is used on bean-price.
     This would create three transactions, with these dates:
 
         date           aux-date
