@@ -113,7 +113,6 @@ import functools
 import inspect
 import textwrap
 import io
-import warnings
 from os import path
 
 from beancount.parser import _parser

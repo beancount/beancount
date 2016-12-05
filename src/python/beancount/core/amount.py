@@ -10,13 +10,11 @@ __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import re
-import warnings
 
 from beancount.core.display_context import DEFAULT_FORMATTER
 from beancount.core.number import ZERO
 from beancount.core.number import Decimal
 from beancount.core.number import D
-from beancount.core import number
 
 
 # A regular expression to match the name of a currency.
