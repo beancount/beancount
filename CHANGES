@@ -11,6 +11,11 @@ Note: This file contains only changes in the 'default' branch.
   - Added a script to automatically verify that all source files include a
     copyright notice.
 
+  - Removed ancestral Beancount documentation from eons ago. These notes and
+    conversationsa are now wildly irrelevant to the current state of Beancount,
+    and all the documentation from Google Docs is vastly more recent and
+    obsoletes all these old snippets and notes.
+
 
 2016-12-03
 
