@@ -1,13 +1,15 @@
 """
 Tests for documents.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import datetime
 import textwrap
 from os import path
 
 from beancount.core import account_test
+from beancount.core import data
 from beancount.ops import documents
 from beancount.parser import cmptest
 from beancount import loader
@@ -58,7 +60,7 @@ class TestDocuments(account_test.TmpFilesTestBase, cmptest.TestCase):
         self.assertEqualEntries(expected_entries,
                                 [entry
                                  for entry in entries
-                                 if isinstance(entry, documents.Document)])
+                                 if isinstance(entry, data.Document)])
 
         self.assertEqual(0, len(errors))
 
@@ -84,14 +86,14 @@ class TestDocuments(account_test.TmpFilesTestBase, cmptest.TestCase):
         self.assertEqual([], errors1)
 
         entry = entries1[0]
-        self.assertTrue(isinstance(entry, documents.Document))
+        self.assertTrue(isinstance(entry, data.Document))
         self.assertTrue(entry.filename.endswith(
             'Assets/US/Bank/Checking/2014-06-08.bank-statement.pdf'))
         self.assertEqual('Assets:US:Bank:Checking', entry.account)
         self.assertEqual(datetime.date(2014, 6, 8), entry.date)
 
         entry = entries1[1]
-        self.assertTrue(isinstance(entry, documents.Document))
+        self.assertTrue(isinstance(entry, data.Document))
         self.assertTrue(entry.filename.endswith(
             'Assets/US/Bank/Savings/2014-07-01.savings.pdf'))
         self.assertEqual('Assets:US:Bank:Savings', entry.account)
@@ -127,6 +129,20 @@ class TestDocuments(account_test.TmpFilesTestBase, cmptest.TestCase):
             self.root, '/tmp/input.beancount', accounts)
         self.assertEqualEntries(entries1[:1], entries6)
         self.assertEqual([], errors1)
+
+
+class TestDocumentsDate(account_test.TmpFilesTestBase, cmptest.TestCase):
+
+    TEST_DOCUMENTS = [
+        'root/Assets/US/Bank/Checking/',
+        'root/Assets/US/Bank/Checking/2014-02-31.bank-statement.pdf',
+    ]
+
+    def test_invalid_date(self):
+        entries, errors = documents.find_documents(self.root, '/tmp/input.beancount')
+        self.assertEqual(0, len(entries))
+        self.assertRegex(errors[0].message, "Invalid date on document file")
+
 
 
 class TestDocumentsConstraints(account_test.TmpFilesTestBase, cmptest.TestCase):

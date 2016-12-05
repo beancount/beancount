@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Print metadata attributes used for the price fetcher.
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2015  Martin Blais"
+__license__ = "GNU GPLv2"
 
 from pprint import pprint
 

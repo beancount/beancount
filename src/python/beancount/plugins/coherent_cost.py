@@ -3,7 +3,8 @@ price and vice-versa. This is usually the case, and using it will prevent users
 from making the mistake of selling a lot without specifying it via its cost
 basis.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 

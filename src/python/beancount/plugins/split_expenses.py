@@ -23,7 +23,8 @@ After these transformations, all account names should include the name of a
 member. You can generate reports for a particular person by filtering postings
 to accounts with a component by their name.
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 from os import path
 import argparse

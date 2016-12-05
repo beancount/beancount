@@ -3,7 +3,8 @@
 This module describes the contract to be fulfilled by all implementations of
 price sources.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 

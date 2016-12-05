@@ -6,42 +6,20 @@ currency:
   (number, currency).
 
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import re
-import warnings
 
 from beancount.core.display_context import DEFAULT_FORMATTER
 from beancount.core.number import ZERO
 from beancount.core.number import Decimal
-from beancount.core import number
-
-
-#,-----------------------------------------------------------------------------.
-# Temporary forwarding of number functions to the number module.
-# IMPORTANT/FIXME: This will get removed after August 2015.
-ONE = number.ONE
-HALF = number.HALF
-decimal = number.decimal  # pylint: disable=invalid-name
-
-# pylint: disable=invalid-name
-def D(string):
-    warnings.warn("beancount.core.amount.D has been renamed to "
-                  "beancount.core.number.D")
-    return number.D(string)
-
-def round_to(number, increment):
-    warnings.warn("beancount.core.amount.round_to has been renamed to "
-                  "beancount.core.number.round_to")
-    return number.round_to(number, increment)
-
-_D = number.D
-#`-----------------------------------------------------------------------------'
+from beancount.core.number import D
 
 
 # A regular expression to match the name of a currency.
 # Note: This is kept in sync with "beancount/parser/lexer.l".
-CURRENCY_RE = '[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]'
+CURRENCY_RE = r'[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]'
 
 
 class Amount:
@@ -144,7 +122,7 @@ class Amount:
         if not match:
             raise ValueError("Invalid string for amount: '{}'".format(string))
         number, currency = match.group(1, 2)
-        return Amount(_D(number), currency)
+        return Amount(D(number), currency)
 
 
 # Note: We don't implement operators on Amount here in favour of the more
@@ -199,8 +177,8 @@ def add(amount1, amount2):
       amount1: An instance of Amount.
       amount2: An instance of Amount.
     Returns:
-      An instance of Amount, with the difference between the two amount's
-      numbers, in the same currency.
+      An instance of Amount, with the sum the two amount's numbers, in the same
+      currency.
     """
     assert isinstance(amount1.number, Decimal), (
         "Amount1's number is not a Decimal instance: {}".format(amount1.number))
@@ -247,12 +225,3 @@ def abs(amount):
 
 A = from_string = Amount.from_string  # pylint: disable=invalid-name
 NULL_AMOUNT = Amount(ZERO, '')
-
-
-#,-----------------------------------------------------------------------------.
-# Support for deprecated API.
-amount_add = add
-amount_sub = sub
-amount_mul = mul
-amount_div = div
-#`-----------------------------------------------------------------------------'

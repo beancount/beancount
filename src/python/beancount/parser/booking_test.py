@@ -1,14 +1,15 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 import re
 import textwrap
 
+from beancount.core.data import Booking
 from beancount.parser import parser
 from beancount.parser import cmptest
 from beancount.parser import booking
 from beancount.parser import booking_simple
-from beancount.parser import printer
 from beancount import loader
 
 
@@ -18,8 +19,18 @@ class TestInvalidAmountsErrors(cmptest.TestCase):
     def test_zero_amount(self, entries, errors, options_map):
         """
           2013-05-18 * ""
-            Assets:Investments:MSFT      0 MSFT {200.00 USD}
+            Assets:Investments:MSFT      0 MSFT
             Assets:Investments:Cash      0 USD
+        """
+        booked_entries, booking_errors = booking.book(entries, options_map)
+        self.assertEqual(0, len(booking_errors))
+
+    @parser.parse_doc()
+    def test_zero_amount__with_cost(self, entries, errors, options_map):
+        """
+          2013-05-18 * ""
+            Assets:Investments:MSFT      0 MSFT {200.00 USD}
+            Assets:Investments:Cash    1 USD
         """
         booked_entries, booking_errors = booking.book(entries, options_map)
         self.assertEqual(1, len(booking_errors))
@@ -43,6 +54,7 @@ class TestInvalidAmountsErrors(cmptest.TestCase):
             Assets:Investments:Cash  2000.00 USD
         """
         booked_entries, booking_errors = booking.book(entries, options_map)
+        self.assertEqual(1, len(entries))
         self.assertEqual(1, len(booking_errors))
         self.assertRegex(booking_errors[0].message, 'Cost is negative')
 
@@ -77,11 +89,11 @@ class TestBookingValidation(cmptest.TestCase):
 
         """)
 
-    BM = collections.defaultdict(lambda: Booking.STRICT)
+    BOOKMETH = collections.defaultdict(lambda: Booking.STRICT)
 
     def convert_and_validate(self, entries, options_map):
         entries, _ = booking_simple.convert_lot_specs_to_lots(entries)
-        return booking.validate_inventory_booking(entries, options_map, self.BM)
+        return booking.validate_inventory_booking(entries, options_map, self.BOOKMETH)
 
     def do_validate_inventory_booking(self, input_str):
         entries, errors, options_map = parser.parse_string(input_str)
@@ -165,7 +177,7 @@ class TestMissingEliminated(cmptest.TestCase):
     @loader.load_doc(expect_errors=True)
     def test_missing_data(self, entries, errors, options_map):
         """
-          option "experiment_booking_algorithm" "SIMPLE"
+          option "booking_algorithm" "SIMPLE"
 
           2013-05-01 open Assets:Test
           2013-05-01 open Expenses:Test
@@ -175,5 +187,6 @@ class TestMissingEliminated(cmptest.TestCase):
             Assets:Test
         """
         self.assertEqual(1, len(errors))
-        self.assertTrue(all(re.search('Transaction has incomplete elements', error.message)
-                            for error in errors))
+        self.assertTrue(
+            all(re.search('Missing number or currency.*not handled', error.message)
+                for error in errors))

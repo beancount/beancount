@@ -1,4 +1,5 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 from beancount import loader
 from beancount.parser import cmptest
@@ -45,7 +46,7 @@ class TestIraContributions(cmptest.TestCase):
           Expenses:Taxes:TY2013:US:StateNY                 400.00 USD
           Expenses:Taxes:TY2013:US:SocSec                  300.00 USD
 
-        2013-02-17 * "BUYMF - MATCH" | "Employer match, invested in SaveEasy 2030 fund"
+        2013-02-17 * "BUYMF - MATCH" "Employer match, invested in SaveEasy 2030 fund"
           Assets:US:Fidelity:Match401k:SE2030              34.793 SE2030 {17.834 USD}
           Income:US:Acme:Match401k                        -620.50 USD
 
@@ -84,7 +85,7 @@ class TestIraContributions(cmptest.TestCase):
           & Assets:US:Federal:PreTax401k                    -620.50 IRAUSD
           & Expenses:Taxes:TY2013:US:Federal:PreTax401k      620.50 IRAUSD
 
-        2013-02-17 * "BUYMF - MATCH" | "Employer match, invested in SaveEasy 2030 fund"
+        2013-02-17 * "BUYMF - MATCH" "Employer match, invested in SaveEasy 2030 fund"
           Assets:US:Fidelity:Match401k:SE2030              34.793 SE2030 {17.834 USD}
           Income:US:Acme:Match401k                        -620.50 USD
           & Assets:US:Federal:Match401k                     -620.50 IRAUSD

@@ -1,6 +1,7 @@
 """An interactive command-line shell interpreter for the Beancount Query Language.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import argparse
 import atexit
@@ -510,7 +511,7 @@ class BQLShell(DispatchingShell):
         name = run_stmt.query_name
         if name is None:
             # List the available queries.
-            for name in sorted(custom_query_map.keys()):
+            for name in sorted(custom_query_map):
                 print(name)
         elif name == "*":
             for name, query in sorted(custom_query_map.items()):

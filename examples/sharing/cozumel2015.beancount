@@ -74,7 +74,7 @@ option "inferred_tolerance_default" "MXN:0.5"
   Assets:Cash:Caroline                    -100.00 USD @ 12.00 MXN
   Assets:Cash:Pesos                              1200 MXN
 
-2015-02-25 * "Yellow Transfers" | "SuperShuttle to Playa del Carmen" ^e25fcd8cbf93
+2015-02-25 * "Yellow Transfers" "SuperShuttle to Playa del Carmen" ^e25fcd8cbf93
   Expenses:Transport:Bus                      656 MXN
   Income:Martin:CreditCard            -44.12 USD @ 14.86854 MXN
 
@@ -86,7 +86,7 @@ option "inferred_tolerance_default" "MXN:0.5"
   Expenses:Transport:Bus                      326 MXN
   Assets:Cash:Pesos
 
-2015-02-25 * "Senor Frogs" | "Beers & Coconut"
+2015-02-25 * "Senor Frogs" "Beers & Coconut"
   Expenses:Alcohol                            134 MXN
   Assets:Cash:Pesos
 
@@ -110,7 +110,7 @@ option "inferred_tolerance_default" "MXN:0.5"
 ;; 4 nights / 3 days diving diver rate $655.00
 ;; 4 nights / 0 days diving non-diver rate $505
 ;; + 19 % tax = $1380.40 See attachment for details.
-2015-02-28 * "Scuba Club Cozumel" | "Room bill" ^8215bf8afa1d
+2015-02-28 * "Scuba Club Cozumel" "Room bill" ^8215bf8afa1d
   Income:Martin:CreditCard          -1380.40 USD ;; Credit card
   Expenses:Scuba:Martin                    178.50 USD ;; (655 - 505) * 1.19
   Expenses:Accommodation
@@ -128,7 +128,7 @@ option "inferred_tolerance_default" "MXN:0.5"
   Expenses:Tips                             20.00 USD ;; Cleaning staff
   Assets:Cash:Martin
 
-2015-03-01 * "Scuba Club Cozumel" | "Dive shop bill" ^69b409189b37
+2015-03-01 * "Scuba Club Cozumel" "Dive shop bill" ^69b409189b37
   Income:Martin:CreditCard           -381.64 USD
   Expenses:Scuba:Martin                        27 USD ;; Regulator w/ Gauge
   Expenses:Scuba:Caroline                       9 USD ;; Regulator w/ Gauge
@@ -147,7 +147,7 @@ option "inferred_tolerance_default" "MXN:0.5"
   Expenses:Scuba:Caroline                   24.00 USD ;; Taxes
 
 
-2015-03-01 * "Scuba Club Cozumel" | "Bar bill" ^004abe4d81b6
+2015-03-01 * "Scuba Club Cozumel" "Bar bill" ^004abe4d81b6
   Expenses:Alcohol                            832 MXN
   Income:Martin:CreditCard            -55.76 USD @ 14.9211 MXN
 
@@ -155,11 +155,11 @@ option "inferred_tolerance_default" "MXN:0.5"
   Expenses:Transport:Taxi                      70 MXN
   Assets:Cash:Pesos
 
-2015-03-01 * "Express Ferry" | "from Cozumel to Playa del Carmen"
+2015-03-01 * "Express Ferry" "from Cozumel to Playa del Carmen"
   Expenses:Transport:Taxi                     270 MXN
   Assets:Cash:Pesos
 
-2015-03-01 * "Cafe Antoinette" | "Coffee"
+2015-03-01 * "Cafe Antoinette" "Coffee"
   Expenses:Restaurant                         100 MXN
   Assets:Cash:Pesos
 
@@ -168,7 +168,7 @@ option "inferred_tolerance_default" "MXN:0.5"
   Expenses:Tips                              5.00 USD
   Assets:Cash:Martin
 
-2015-03-01 * "Motmot Diving" | "Deposit for cenote diving"
+2015-03-01 * "Motmot Diving" "Deposit for cenote diving"
   Expenses:Scuba                            50.00 USD
   Assets:Cash:Martin
 
@@ -181,7 +181,7 @@ option "inferred_tolerance_default" "MXN:0.5"
   Assets:Cash:Pesos
 
 ;; They wanted to charge 12.00 USD/MXN for US payment.
-2015-03-01 * "Hartwood" | "Dinner - ran out of pesos, had to pay with mix of cash, they billed 1886 MXN"
+2015-03-01 * "Hartwood" "Dinner - ran out of pesos, had to pay with mix of cash, they billed 1886 MXN"
   Expenses:Restaurant                        1880 MXN
   Assets:Cash:Pesos                             -1400 MXN
   Assets:Cash:Martin                       -40.00 USD @ 12.00 MXN
@@ -195,11 +195,11 @@ option "inferred_tolerance_default" "MXN:0.5"
 
 2015-03-02 balance Assets:Cash:Pesos               40 MXN
 
-2015-03-02 * "Motmot Diving" | "Remainder for diving Casa Cenote and Gran Cenote"
+2015-03-02 * "Motmot Diving" "Remainder for diving Casa Cenote and Gran Cenote"
   Expenses:Scuba                           190.00 USD
   Assets:Cash:Martin
 
-2015-03-02 * "Motmot Diving" | "Tips for Peter Tovey DM"
+2015-03-02 * "Motmot Diving" "Tips for Peter Tovey DM"
   Expenses:Tips                             20.00 USD
   Assets:Cash:Martin
 
@@ -211,20 +211,20 @@ option "inferred_tolerance_default" "MXN:0.5"
   Expenses:Groceries                           37 MXN
   Assets:Cash:Pesos
 
-2015-03-02 * "El Camello Jr." | "Real mexican Lunch"
+2015-03-02 * "El Camello Jr." "Real mexican Lunch"
   Expenses:Restaurant                         365 MXN
   Assets:Cash:Pesos
 
-2015-03-02 * "Kelly Bikes" | "Renting two bikes for 24 hours"
+2015-03-02 * "Kelly Bikes" "Renting two bikes for 24 hours"
   Expenses:Bicycles                           139 MXN
   Assets:Cash:Pesos
 
-2015-03-02 * "Casa Banana" | "Light dinner in Tulum beach area"
+2015-03-02 * "Casa Banana" "Light dinner in Tulum beach area"
   Expenses:Restaurant                         770 MXN
   Assets:Cash:Pesos
 
 
-2015-03-03 * "Zona Arqueologica de Tulum" | "Entry tickets to Tulum Mayan ruins in the morning"
+2015-03-03 * "Zona Arqueologica de Tulum" "Entry tickets to Tulum Mayan ruins in the morning"
   Expenses:Museum                             128 MXN
   Assets:Cash:Pesos
 
@@ -232,19 +232,19 @@ option "inferred_tolerance_default" "MXN:0.5"
   Assets:Cash:Caroline                     -60.00 USD @ 13.70 MXN
   Assets:Cash:Pesos                               822 MXN
 
-2015-03-03 * "Aqua Viva" | "Tip for Casper"
+2015-03-03 * "Aqua Viva" "Tip for Casper"
   Expenses:Tips                             20.00 USD
   Assets:Cash:Martin
 
-2015-03-03 * "ADO Bus" | "Bus tickets Tulum to Playa del Carmen"
+2015-03-03 * "ADO Bus" "Bus tickets Tulum to Playa del Carmen"
   Expenses:Transport:Bus                      124 MXN
   Assets:Cash:Pesos
 
-2015-03-03 * "ADO Bus" | "Bus tickets Playa del Carmen to Cancun"
+2015-03-03 * "ADO Bus" "Bus tickets Playa del Carmen to Cancun"
   Expenses:Transport:Bus                      312 MXN
   Assets:Cash:Pesos
 
-2015-03-03 * "Cafe Antoinette" | "Coffee + pastries, Orange juice"
+2015-03-03 * "Cafe Antoinette" "Coffee + pastries, Orange juice"
   Expenses:Restaurant                         128 MXN
   Expenses:Restaurant                          25 MXN
   Assets:Cash:Pesos
@@ -257,15 +257,15 @@ option "inferred_tolerance_default" "MXN:0.5"
 
 ;; Spending remaining pesos at Cancun airport.
 
-2015-03-03 * "Cancun Airport Shops" | "Chocolates"
+2015-03-03 * "Cancun Airport Shops" "Chocolates"
   Expenses:Groceries                          357 MXN
   Assets:Cash:Pesos
 
-2015-03-03 * "Cancun Airport Shops" | "Burrito/Quesadilla Lunch"
+2015-03-03 * "Cancun Airport Shops" "Burrito/Quesadilla Lunch"
   Expenses:Restaurant                         323 MXN
   Assets:Cash:Pesos
 
-2015-03-03 * "Airtrain" | "Caroline paid to Jamaica sta. off of her MetroCard"
+2015-03-03 * "Airtrain" "Caroline paid to Jamaica sta. off of her MetroCard"
   Expenses:Transport:Train                  10.00 USD
   Income:Caroline:MetroCard
 

@@ -4,7 +4,8 @@ Each report class should be able to render a filtered list of entries to a
 variety of formats. Each report has a name, some command-line options, and
 supports some subset of formats.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import argparse
 import io

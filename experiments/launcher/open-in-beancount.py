@@ -17,7 +17,8 @@ How to install this on Ubuntu
      xdg-open 'beancount:///path/to/file.beancount?lineno=100'
 
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import argparse
 import cgi

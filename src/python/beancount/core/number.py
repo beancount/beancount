@@ -9,7 +9,8 @@ About Decimal usage:
   handles more syntax, e.g., handles None, and numbers with commas.
 
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import types
 import warnings

@@ -1,6 +1,7 @@
 """Check that document directories mirror a list of accounts correctly.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014  Martin Blais"
+__license__ = "GNU GPLv2"
 
 from beancount.core import getters
 from beancount.core import account

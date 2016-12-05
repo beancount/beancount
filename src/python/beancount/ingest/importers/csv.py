@@ -1,10 +1,11 @@
 """CSV importer.
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import csv
 import datetime
-import re
+import enum
 import io
 from os import path
 
@@ -13,15 +14,11 @@ from beancount.core.amount import Amount
 from beancount.utils.date_utils import parse_date_liberally
 from beancount.core import data
 from beancount.ingest import importer
-from beancount.ingest import regression
 from beancount.ingest.importers import regexp
-from beancount.utils import csv_utils
-from beancount.parser import printer
-from beancount.utils import misc_utils
 
 
 # The set of interpretable columns.
-class Col(misc_utils.Enum):
+class Col(enum.Enum):
     # The settlement date, the date we should create the posting at.
     DATE = '[DATE]'
 
@@ -192,14 +189,15 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
             narration = ' -- '.join(fields)
 
             tag = get(row, Col.TAG)
-            tags = {tag} if tag is not None else None
+            tags = {tag} if tag is not None else data.EMPTY_SET
 
             # Create a transaction and add it to the list of new entries.
             meta = data.new_metadata(file.name, index)
             if txn_date is not None:
                 meta['txndate'] = parse_date_liberally(txn_date)
             date = parse_date_liberally(date)
-            txn = data.Transaction(meta, date, self.FLAG, payee, narration, tags, None, [])
+            txn = data.Transaction(meta, date, self.FLAG, payee, narration,
+                                   tags, data.EMPTY_SET, [])
             entries.append(txn)
 
             amount_debit, amount_credit = get_amounts(iconfig, row)

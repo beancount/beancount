@@ -5,7 +5,8 @@ looks as realistic as possible for a moderately complex mock individual. This
 can also be used as an input generator for a stress test for performance
 evaluation.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import argparse
 import calendar
@@ -481,7 +482,7 @@ def generate_employment_income(employer_name,
         vacation_hrs_neg = -vacation_hrs
 
         template = """
-            {date} * "{employer_name}" | "Payroll"
+            {date} * "{employer_name}" "Payroll"
               {account_deposit}                                 {deposit:.2f} CCY
               {account_retirement}                              {retirement:.2f} CCY
               Assets:CC:Federal:PreTax401k                      {retirement_neg:.2f} DEFCCY

@@ -3,7 +3,8 @@
 
 This prints out entries with an explicit lot-date on one of its postings.
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 from beancount.core import data
 from beancount.parser import printer

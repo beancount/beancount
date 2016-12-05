@@ -19,7 +19,8 @@ in the main file overwrites it (external data wins).
   the contents extraction from the encrypted file may appear in the cache.
 
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 from beancount import loader
 from beancount.core import getters
@@ -56,7 +57,7 @@ def merge_meta(entries, options_map, config):
     # Map Commodity directives.
     comm_map = getters.get_commodity_map(entries, False)
     ext_comm_map = getters.get_commodity_map(ext_entries, False)
-    for currency in set(comm_map.keys()) & set(ext_comm_map.keys()):
+    for currency in set(comm_map) & set(ext_comm_map):
         comm_entry = comm_map[currency]
         ext_comm_entry = ext_comm_map[currency]
         if comm_entry and ext_comm_entry:

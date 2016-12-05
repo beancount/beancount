@@ -3,4 +3,5 @@
 This package is looked up by the driver script to figure out which extractor to
 use.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015  Martin Blais"
+__license__ = "GNU GPLv2"

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """An experiment plotting net worth values over time in all operating currencies.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 import datetime
@@ -19,7 +20,7 @@ from beancount import loader
 from beancount.reports import holdings_reports
 
 
-EXTRAPOLATE_WORTHS = 1000000, 1500000, 2000000, 3000000, 5000000
+EXTRAPOLATE_WORTHS = 1000000, 1500000, 2000000, 2500000, 3000000, 4000000, 5000000, 6000000
 
 
 def main():
@@ -36,6 +37,10 @@ def main():
 
     parser.add_argument('--hide', action='store_true',
                         help="Mask out the vertical axis")
+
+    parser.add_argument('--period', choices=['weekly', 'monthly', 'daily'],
+                        default='weekly',
+                        help="Period of aggregation")
 
     parser.add_argument('filename', help='Beancount input filename')
     args = parser.parse_args()
@@ -54,14 +59,15 @@ def main():
     index = 0
     current_entries = []
 
-    monthly = rrule.rrule(rrule.MONTHLY, bymonthday=1,
-                          dtstart=dtstart,
-                          until=entries[-1].date)
-    weekly = rrule.rrule(rrule.WEEKLY, byweekday=rrule.FR,
-                         dtstart=dtstart,
-                         until=entries[-1].date)
+    dtend = datetime.date.today()
+    if args.period == 'weekly':
+        period = rrule.rrule(rrule.WEEKLY, byweekday=rrule.FR, dtstart=dtstart, until=dtend)
+    elif args.period == 'monthly':
+        period = rrule.rrule(rrule.MONTHLY, bymonthday=1, dtstart=dtstart, until=dtend)
+    elif args.period == 'daily':
+        period = rrule.rrule(rrule.DAILY, dtstart=dtstart, until=dtend)
 
-    for dtime in weekly:
+    for dtime in period:
         date = dtime.date()
         logging.info(date)
 
@@ -98,7 +104,16 @@ def main():
             net_worths_dict[currency].append((date, holdings_list[0].market_value))
 
     # Extrapolate milestones in various currencies.
-    num_points = 4
+    days_interp = 365
+    if args.period == 'weekly':
+        num_points = int(days_interp / 7)
+    elif args.period == 'monthly':
+        num_points = int(days_interp / 30)
+    elif args.period == 'daily':
+        num_points = 365
+
+    lines = []
+    today = datetime.date.today()
     for currency, currency_data in net_worths_dict.items():
         recent_data = currency_data[-num_points:]
         dates = [time.mktime(date.timetuple()) for date, _ in recent_data]
@@ -109,12 +124,20 @@ def main():
                      num_points, currency)
         for amount in EXTRAPOLATE_WORTHS:
             try:
-                date_1m = date.fromtimestamp((amount - poly.c[1]) / poly.c[0])
-                logging.info("%10d %s: %s", amount, currency, date_1m)
+                date_reach = date.fromtimestamp((amount - poly.c[1]) / poly.c[0])
+                if date_reach < today:
+                    continue
+                time_until = (date_reach - today).days / 365.
+                logging.info("%10d %s: %s (%.1f years)",
+                             amount, currency, date_reach, time_until)
             except OverflowError:
                 pass
+        logging.info("Time to save 1M %s: %.1f years",
+                     currency, (1000000 / poly.c[0]) / (365*24*60*60))
 
-        #print(poly(time.mktime(datetime.date.today().timetuple())))
+        dates = [today - datetime.timedelta(days=days_interp), today]
+        amounts = [time.mktime(date.timetuple()) * poly.c[0] + poly.c[1] for date in dates]
+        lines.append((dates, amounts))
 
     # Plot each operating currency as a separate curve.
     for currency, currency_data in net_worths_dict.items():
@@ -126,6 +149,9 @@ def main():
     pyplot.legend(loc=2)
     if args.hide:
         pyplot.yticks([])
+
+    for dates, amounts in lines:
+        pyplot.plot(dates, amounts, 'k--')
 
     # Output the plot.
     if args.output:

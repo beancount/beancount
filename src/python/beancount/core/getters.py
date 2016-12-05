@@ -1,7 +1,8 @@
 """Getter functions that operate on lists of entries to return various lists of
 things that they reference, accounts, tags, links, currencies, etc.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 from collections import defaultdict
 
@@ -148,7 +149,7 @@ def get_account_components(entries):
     Args:
       entries: A list of directive instances.
     Returns:
-      A set of strings, the unique account components, including the root
+      A list of strings, the unique account components, including the root
       account names.
     """
     accounts = get_accounts(entries)

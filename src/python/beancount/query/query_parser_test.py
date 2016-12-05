@@ -1,4 +1,5 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import datetime
 import unittest
@@ -511,7 +512,7 @@ class TestBalances(QueryParserTestBase):
                         None),
             "BALANCES AT units FROM date = 2014-01-01 CLOSE;")
 
-    def test_balances_from_with_transformer(self):
+    def test_balances_from_with_transformer_simple(self):
         self.assertParse(
             qp.Balances('units',
                         None,

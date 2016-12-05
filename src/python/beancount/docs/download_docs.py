@@ -1,7 +1,8 @@
 #!/usr/bin/python
 """Download all the Beancount docs from Google Drive and bake a nice PDF with it.
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import argparse
 import datetime
@@ -11,7 +12,6 @@ import shutil
 import tempfile
 import subprocess
 import re
-from urllib import request
 from os import path
 
 from apiclient import discovery
@@ -32,7 +32,7 @@ def find_index_document(service):
     files = listing['files']
     if len(files) != 1:
         raise ValueError("Could not find the index file: "
-                         "{} files matched".format( len(files)))
+                         "{} files matched".format(len(files)))
     for file in files:
         return file['id']
 
