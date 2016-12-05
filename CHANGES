@@ -8,6 +8,9 @@ Note: This file contains only changes in the 'default' branch.
 
   - Updated all copyright and license notices on all files.
 
+  - Added a script to automatically verify that all source files include a
+    copyright notice.
+
 
 2016-12-03
 

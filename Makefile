@@ -196,7 +196,7 @@ filter-terms:
 	egrep --exclude-dir='.hg' --exclude-dir='__pycache__' -srn 'GOOGL?\b' $(PWD) | grep -v GOOGLE_APIS || true
 
 multi-imports:
-	egrep -srn '^(from.*)?import.*,' $(SRC) || true
+	(egrep -srn '^(from.*)?import.*,' $(SRC) | grep -v 'from typing') || true
 
 # Check for unused imports.
 sfood-checker:
@@ -206,8 +206,9 @@ sfood-checker:
 constraints dep-constraints: build/beancount.deps
 	./etc/dependency-constraints.py $<
 
-check-author:
-	find src/python/beancount -type f -name '*.py' ! -exec grep -q '__author__' {} \; -print
+check-copyright:
+	./etc/check-copyright.py --root=$(PWD)
+
 
 # Run the linter on all source code.
 # To list all messages, call: "pylint --list-msgs"
@@ -223,14 +224,4 @@ pyflakes:
 
 
 # Check everything.
-status check: pylint pyflakes filter-terms missing-tests dep-constraints multi-imports tests-quiet
-# fixmes: For later.
-
-
-
-# FIXME: Remove
-grep-import:
-	grep --include='*.py' --exclude='*/beancount/parser/*' -srn  'from beancount.parser import parser'  ~/p/beancount/src/python/beancount
-
-grep-uses:
-	grep --include='*.py' --exclude='*/beancount/parser/*' -srn  'parser.parse'  ~/p/beancount/src/python/beancount
+status check: pylint pyflakes check-copyright filter-terms missing-tests dep-constraints multi-imports test
