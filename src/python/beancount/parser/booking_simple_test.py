@@ -29,7 +29,8 @@ class TestGetIncompletePostings(cmptest.TestCase):
         meta = data.new_metadata(__file__, 0)
 
         # Test with no entries.
-        entry = data.Transaction(meta, None, None, None, None, None, None, [])
+        entry = data.Transaction(meta, None, None, None, None,
+                                 data.EMPTY_SET, data.EMPTY_SET, [])
         new_postings, has_inserted, errors, _, __ = booking_simple.get_incomplete_postings(
             entry, self.OPTIONS_MAP)
         self.assertFalse(has_inserted)
@@ -37,7 +38,8 @@ class TestGetIncompletePostings(cmptest.TestCase):
         self.assertEqual(0, len(errors))
 
         # Test with only a single leg (and check that it does not balance).
-        entry = data.Transaction(meta, None, None, None, None, None, None, [
+        entry = data.Transaction(meta, None, None, None, None,
+                                 data.EMPTY_SET, data.EMPTY_SET, [
             P(None, "Assets:Bank:Checking", "105.50", "USD"),
             ])
         (new_postings, has_inserted, errors,
@@ -49,9 +51,10 @@ class TestGetIncompletePostings(cmptest.TestCase):
         self.assertIsInstance(tolerances, dict)
 
         # Test with two legs that balance.
-        entry = data.Transaction(meta, None, None, None, None, None, None, [
-            P(None, "Assets:Bank:Checking", "105.50", "USD"),
-            P(None, "Assets:Bank:Savings", "-105.50", "USD"),
+        entry = data.Transaction(
+            meta, None, None, None, None, data.EMPTY_SET, data.EMPTY_SET, [
+                P(None, "Assets:Bank:Checking", "105.50", "USD"),
+                P(None, "Assets:Bank:Savings", "-105.50", "USD"),
             ])
         new_postings, has_inserted, errors, _, __ = booking_simple.get_incomplete_postings(
             entry, self.OPTIONS_MAP)
@@ -60,9 +63,10 @@ class TestGetIncompletePostings(cmptest.TestCase):
         self.assertEqual(0, len(errors))
 
         # Test with two legs that do not balance.
-        entry = data.Transaction(meta, None, None, None, None, None, None, [
-            P(None, "Assets:Bank:Checking", "105.50", "USD"),
-            P(None, "Assets:Bank:Savings", "-115.50", "USD"),
+        entry = data.Transaction(
+            meta, None, None, None, None, data.EMPTY_SET, data.EMPTY_SET, [
+                P(None, "Assets:Bank:Checking", "105.50", "USD"),
+                P(None, "Assets:Bank:Savings", "-115.50", "USD"),
             ])
         new_postings, has_inserted, errors, _, __ = booking_simple.get_incomplete_postings(
             entry, self.OPTIONS_MAP)
@@ -71,8 +75,9 @@ class TestGetIncompletePostings(cmptest.TestCase):
         self.assertEqual(1 if ERRORS_ON_RESIDUAL else 0, len(errors))
 
         # Test with only one auto-posting.
-        entry = data.Transaction(meta, None, None, None, None, None, None, [
-            P(None, "Assets:Bank:Checking", None, None),
+        entry = data.Transaction(
+            meta, None, None, None, None, data.EMPTY_SET, data.EMPTY_SET, [
+                P(None, "Assets:Bank:Checking", None, None),
             ])
         new_postings, has_inserted, errors, _, __ = booking_simple.get_incomplete_postings(
             entry, self.OPTIONS_MAP)
@@ -81,10 +86,11 @@ class TestGetIncompletePostings(cmptest.TestCase):
         self.assertEqual(1, len(errors))
 
         # Test with an auto-posting where there is no residual.
-        entry = data.Transaction(meta, None, None, None, None, None, None, [
-            P(None, "Assets:Bank:Checking", "105.50", "USD"),
-            P(None, "Assets:Bank:Savings", "-105.50", "USD"),
-            P(None, "Assets:Bank:Balancing", None, None),
+        entry = data.Transaction(
+            meta, None, None, None, None, data.EMPTY_SET, data.EMPTY_SET, [
+                P(None, "Assets:Bank:Checking", "105.50", "USD"),
+                P(None, "Assets:Bank:Savings", "-105.50", "USD"),
+                P(None, "Assets:Bank:Balancing", None, None),
             ])
         new_postings, has_inserted, errors, _, __ = booking_simple.get_incomplete_postings(
             entry, self.OPTIONS_MAP)
@@ -93,11 +99,12 @@ class TestGetIncompletePostings(cmptest.TestCase):
         self.assertEqual(1, len(errors))
 
         # Test with too many empty postings.
-        entry = data.Transaction(meta, None, None, None, None, None, None, [
-            P(None, "Assets:Bank:Checking", "105.50", "USD"),
-            P(None, "Assets:Bank:Savings", "-106.50", "USD"),
-            P(None, "Assets:Bank:BalancingA", None, None),
-            P(None, "Assets:Bank:BalancingB", None, None),
+        entry = data.Transaction(
+            meta, None, None, None, None, data.EMPTY_SET, data.EMPTY_SET, [
+                P(None, "Assets:Bank:Checking", "105.50", "USD"),
+                P(None, "Assets:Bank:Savings", "-106.50", "USD"),
+                P(None, "Assets:Bank:BalancingA", None, None),
+                P(None, "Assets:Bank:BalancingB", None, None),
             ])
         new_postings, has_inserted, errors, _, __ = booking_simple.get_incomplete_postings(
             entry, self.OPTIONS_MAP)
@@ -109,10 +116,11 @@ class TestGetIncompletePostings(cmptest.TestCase):
         meta = data.new_metadata(__file__, 0)
 
         # Test with a single auto-posting with a residual.
-        entry = data.Transaction(meta, None, None, None, None, None, None, [
-            P(None, "Assets:Bank:Checking", "105.50", "USD"),
-            P(None, "Assets:Bank:Savings", "-115.50", "USD"),
-            P(None, "Assets:Bank:Balancing", None, None),
+        entry = data.Transaction(
+            meta, None, None, None, None, data.EMPTY_SET, data.EMPTY_SET, [
+                P(None, "Assets:Bank:Checking", "105.50", "USD"),
+                P(None, "Assets:Bank:Savings", "-115.50", "USD"),
+                P(None, "Assets:Bank:Balancing", None, None),
             ])
         new_postings, has_inserted, errors, _, __ = booking_simple.get_incomplete_postings(
             entry, self.OPTIONS_MAP)
@@ -125,10 +133,11 @@ class TestGetIncompletePostings(cmptest.TestCase):
         meta = data.new_metadata(__file__, 0)
 
         # Test with a single auto-posting with a residual.
-        entry = data.Transaction(meta, None, None, None, None, None, None, [
-            P(None, "Assets:Bank:Checking", "105.50", "USD"),
-            P(None, "Assets:Bank:Savings", "-115.501", "USD"),
-            P(None, "Assets:Bank:Balancing", "10.00", "USD"),
+        entry = data.Transaction(
+            meta, None, None, None, None, data.EMPTY_SET, data.EMPTY_SET, [
+                P(None, "Assets:Bank:Checking", "105.50", "USD"),
+                P(None, "Assets:Bank:Savings", "-115.501", "USD"),
+                P(None, "Assets:Bank:Balancing", "10.00", "USD"),
             ])
         _, __, ___, residual, ____ = booking_simple.get_incomplete_postings(
             entry, self.OPTIONS_MAP)
@@ -148,10 +157,11 @@ class TestGetIncompletePostings(cmptest.TestCase):
         meta = data.new_metadata(__file__, 0)
 
         # Test with a single auto-posting with a residual.
-        entry = data.Transaction(meta, None, None, None, None, None, None, [
-            P(None, "Income:US:Anthem:InsurancePayments", "-275.81", "USD"),
-            P(None, "Income:US:Anthem:InsurancePayments", "-23738.54", "USD"),
-            P(None, "Assets:Bank:Checking", "24014.45", "USD"),
+        entry = data.Transaction(
+            meta, None, None, None, None, data.EMPTY_SET, data.EMPTY_SET, [
+                P(None, "Income:US:Anthem:InsurancePayments", "-275.81", "USD"),
+                P(None, "Income:US:Anthem:InsurancePayments", "-23738.54", "USD"),
+                P(None, "Assets:Bank:Checking", "24014.45", "USD"),
             ])
         new_postings, has_inserted, errors, _, __ = booking_simple.get_incomplete_postings(
             entry, self.OPTIONS_MAP)
@@ -161,9 +171,10 @@ class TestGetIncompletePostings(cmptest.TestCase):
 
     def test_balance_with_zero_posting(self):
         meta = data.new_metadata(__file__, 0)
-        entry = data.Transaction(meta, None, None, None, None, None, None, [
-            P(None, "Income:US:Anthem:InsurancePayments", "0", "USD"),
-            P(None, "Income:US:Anthem:InsurancePayments", None, None),
+        entry = data.Transaction(
+            meta, None, None, None, None, data.EMPTY_SET, data.EMPTY_SET, [
+                P(None, "Income:US:Anthem:InsurancePayments", "0", "USD"),
+                P(None, "Income:US:Anthem:InsurancePayments", None, None),
             ])
         new_postings, has_inserted, errors, _, __ = booking_simple.get_incomplete_postings(
             entry, self.OPTIONS_MAP)

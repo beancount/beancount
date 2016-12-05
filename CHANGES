@@ -6,6 +6,24 @@ Note: This file contains only changes in the 'default' branch.
 
 2016-12-04
 
+  - Made .tags and .links attributes of b.data.Transaction and b.data.Document
+    directives ensured to always be a set when they're empty. If there are no
+    tags (or links), those attributes are set to b.data.EMPTY_SET, whose value
+    is a frozenset(). This should make the processing of those attributes a bit
+    simpler.
+
+    Note that if you create transactions from plugins and their tags and/or
+    links attributes are set None, they will now fail. The right thing to do is
+    to set their value to an empty set, or reuse the immutable
+    beancount.core.data.EMPTY_SET object.
+
+    If you need to circumvent this temporarily, set the following option in your
+    file, which will allow None again:
+
+      option "allow_deprecated_none_for_tags_and_links" "TRUE"
+
+    See {1989ba9e0e79} for details.
+
   - Updated all copyright and license notices on all files.
 
   - Added a script to automatically verify that all source files include a

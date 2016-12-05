@@ -306,7 +306,8 @@ def validate_data_types(entries, options_map):
     errors = []
     for entry in entries:
         try:
-            data.sanity_check_types(entry)
+            data.sanity_check_types(
+                entry, options_map["allow_deprecated_none_for_tags_and_links"])
         except AssertionError as exc:
             errors.append(
                 ValidationError(entry.meta,

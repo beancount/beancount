@@ -9,6 +9,7 @@ import textwrap
 from os import path
 
 from beancount.core import account_test
+from beancount.core import data
 from beancount.ops import documents
 from beancount.parser import cmptest
 from beancount import loader
@@ -59,7 +60,7 @@ class TestDocuments(account_test.TmpFilesTestBase, cmptest.TestCase):
         self.assertEqualEntries(expected_entries,
                                 [entry
                                  for entry in entries
-                                 if isinstance(entry, documents.Document)])
+                                 if isinstance(entry, data.Document)])
 
         self.assertEqual(0, len(errors))
 
@@ -85,14 +86,14 @@ class TestDocuments(account_test.TmpFilesTestBase, cmptest.TestCase):
         self.assertEqual([], errors1)
 
         entry = entries1[0]
-        self.assertTrue(isinstance(entry, documents.Document))
+        self.assertTrue(isinstance(entry, data.Document))
         self.assertTrue(entry.filename.endswith(
             'Assets/US/Bank/Checking/2014-06-08.bank-statement.pdf'))
         self.assertEqual('Assets:US:Bank:Checking', entry.account)
         self.assertEqual(datetime.date(2014, 6, 8), entry.date)
 
         entry = entries1[1]
-        self.assertTrue(isinstance(entry, documents.Document))
+        self.assertTrue(isinstance(entry, data.Document))
         self.assertTrue(entry.filename.endswith(
             'Assets/US/Bank/Savings/2014-07-01.savings.pdf'))
         self.assertEqual('Assets:US:Bank:Savings', entry.account)

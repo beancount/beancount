@@ -32,6 +32,7 @@ from beancount.core.data import Custom
 from beancount.core.data import new_metadata
 from beancount.core.data import Posting
 from beancount.core.data import Booking
+from beancount.core.data import EMPTY_SET
 
 from beancount.parser import lexer
 from beancount.parser import options
@@ -80,12 +81,6 @@ CompoundAmount = collections.namedtuple('CompoundAmount',
 
 # A unique token used to indicate a merge of the lots of an inventory.
 MERGE_COST = '***'
-
-
-# An immutable constant for all empty sets. This is used to set links and tags
-# and ensure that they never has a None value. This makes some of the processing
-# code a bit simpler.
-EMPTY_SET = frozenset()
 
 
 def valid_account_regexp(options):

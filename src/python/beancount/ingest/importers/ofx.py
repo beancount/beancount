@@ -290,4 +290,5 @@ def build_transaction(stmttrn, flag, account, currency):
 
     # Build the transaction with a single leg.
     fileloc = data.new_metadata('<build_transaction>', 0)
-    return data.Transaction(fileloc, date, flag, payee, narration, None, None, [posting])
+    return data.Transaction(fileloc, date, flag, payee, narration,
+                            data.EMPTY_SET, data.EMPTY_SET, [posting])
