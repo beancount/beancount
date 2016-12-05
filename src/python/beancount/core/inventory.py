@@ -360,9 +360,10 @@ class Inventory(list):
           cost: An instance of Cost or None, as a key to the inventory.
         Returns:
           A pair of (position, booking) where 'position' is the position that
-          that was modified, and where 'booking' is a Booking enum that hints at
-          how the lot was booked to this inventory. Position may be None if there
-          is no corresponding Position object, e.g. the position was deleted.
+          that was modified BEFORE it was modified, and where 'booking' is a
+          Booking enum that hints at how the lot was booked to this inventory.
+          Position may be None if there is no corresponding Position object,
+          e.g. the position was deleted.
         """
         assert isinstance(units, Amount), (
             "Internal error: {!r} (type: {})".format(units, type(units).__name__))
@@ -373,6 +374,7 @@ class Inventory(list):
         for index, pos in enumerate(self):
             if (pos.units.currency == units.currency and
                 pos.cost == cost):
+                # Note: In order to augment or reduce, all the fields have to match.
 
                 # Check if reducing.
                 booking = (Booking.REDUCED
@@ -384,20 +386,17 @@ class Inventory(list):
                 if number == ZERO:
                     # If empty, delete the position.
                     del self[index]
-                    pos = None
                 else:
                     # Otherwise update it.
-                    pos = Position(Amount(number, units.currency), cost)
-                    self[index] = pos
+                    self[index] = Position(Amount(number, units.currency), cost)
                 break
         else:
             # If not found, create a new one.
+            pos = None
             if units.number == ZERO:
-                pos = None
                 booking = Booking.IGNORED
             else:
-                pos = Position(units, cost)
-                self.append(pos)
+                self.append(Position(units, cost))
                 booking = Booking.CREATED
 
         return pos, booking

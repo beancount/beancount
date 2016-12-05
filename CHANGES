@@ -4,6 +4,22 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-12-05
+
+  - Merged changes made for calculating wash sales a long time ago. I had
+    implemnted a temporary kludge to carry dates on all augmenting postings,
+    left it in a branch so I could use it there for taxes every year. Now that
+    the booking branch is merged, this is supported by default, so I could undo
+    that kludge. Some changes remained:
+
+    * The Inventory.add_amount() method used to return the modified position.
+      Now it returns the position before being modified, which is more useful.
+
+    * The list-wash-sales.py script has been updated. It now works on 'default'.
+
+    * The 'carry_date_and_book_cost' branch has been merged away.
+
+
 2016-12-04
 
   - Made .tags and .links attributes of b.data.Transaction and b.data.Document
