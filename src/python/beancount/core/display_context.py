@@ -57,7 +57,8 @@ Here are all the aspects supported by this module:
   files, and these need to be accommodated when aligning to the right.
 
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 import enum

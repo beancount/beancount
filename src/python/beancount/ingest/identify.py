@@ -4,7 +4,8 @@ Read an import script and a list of downloaded filenames or directories of
 2downloaded files, and for each of those files, identify which importer it should
 be associated with.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import logging
 import sys

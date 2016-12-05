@@ -1,0 +1,13 @@
+The pristine source for the documentation is located in Google Docs.
+This allows users to collaborate and ask questions directly in the docs.
+You can access the index for this documentation here:
+
+  http://furius.ca/beancount/doc/index
+
+Or, without a redirect, here (this is the same doc document):
+
+  https://docs.google.com/document/d/1RaondTJCS_IUPBHFNdT8oqFKJjVJDsfsn6JEjBG04eA/
+
+This directory will contain the future text conversion of the documentation for
+Beancount. An attempt will be made to convert the Google Docs here in text
+format, and so that they get published to beancount.github.io.

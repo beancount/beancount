@@ -3,7 +3,8 @@
 Note: This really ought to be an enhancement to Python itself. I should bother
 adding this in eventually.
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 

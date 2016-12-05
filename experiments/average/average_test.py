@@ -3,9 +3,10 @@ In particular, it should contain some tests relevant for the AVERAGE booking met
 
 Just saved here until I have time to integrate them into the booking_full_test.
 """
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 
-
 # @parser.parse_doc(allow_incomplete=True)
 # def test_ambiguous__AVERAGE__merging_with_cost(self, entries, _, __):
 #     """
@@ -127,7 +128,6 @@ Just saved here until I have time to integrate them into the booking_full_test.
 
 
 
-
 class TestBooking(unittest.TestCase):
     "Tests the booking & interpolation process."
 

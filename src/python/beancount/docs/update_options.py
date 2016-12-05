@@ -3,7 +3,8 @@
 For example, the options documentation is a Google Doc. It can be generated from
 the source code and updated automatically using this script.
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import argparse
 import logging

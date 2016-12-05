@@ -1,4 +1,5 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import textwrap
 import unittest
@@ -139,6 +140,28 @@ class TestScriptFormat(test_utils.TestCase):
             Assets:Other                           10 HOOL {5,000.23} USD ; Bla
             Assets:Cash
 
+        """), stdout.getvalue())
+
+    @test_utils.docfile
+    def test_currency_issue146(self, filename):
+        """
+          1970-01-01 open Equity:Opening-balances
+          1970-01-01 open Assets:Investments
+
+          2014-03-31 * "opening"
+            Assets:Investments                 1.23 FOO_BAR
+            Equity:Opening-balances
+        """
+        with test_utils.capture() as stdout:
+            result = test_utils.run_with_args(format.main, [filename])
+        self.assertEqual(0, result)
+        self.assertEqual(textwrap.dedent("""
+          1970-01-01 open Equity:Opening-balances
+          1970-01-01 open Assets:Investments
+
+          2014-03-31 * "opening"
+            Assets:Investments  1.23 FOO_BAR
+            Equity:Opening-balances
         """), stdout.getvalue())
 
     @unittest.skip("Eventually we will want to support arithmetic expressions. "

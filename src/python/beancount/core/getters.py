@@ -1,7 +1,8 @@
 """Getter functions that operate on lists of entries to return various lists of
 things that they reference, accounts, tags, links, currencies, etc.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 from collections import defaultdict
 

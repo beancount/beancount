@@ -106,13 +106,13 @@ or label:
 See the test beancount.parser.grammar_test.TestIncompleteInputs for examples and
 corresponding expected values.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import functools
 import inspect
 import textwrap
 import io
-import warnings
 from os import path
 
 from beancount.parser import _parser

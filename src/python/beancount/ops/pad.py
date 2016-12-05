@@ -1,6 +1,7 @@
 """Automatic padding of gaps between entries.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 
@@ -130,7 +131,7 @@ def pad(entries, options_map):
                                      'difference {})').format(check_amount, diff_position)
                         new_entry = data.Transaction(
                             active_pad.meta.copy(), active_pad.date, flags.FLAG_PADDING,
-                            None, narration, None, None, [])
+                            None, narration, data.EMPTY_SET, data.EMPTY_SET, [])
 
                         new_entry.postings.append(
                             data.Posting(active_pad.account,

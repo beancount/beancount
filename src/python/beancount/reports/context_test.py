@@ -1,4 +1,5 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import textwrap
 
@@ -60,7 +61,7 @@ class TestContext(test_utils.TestCase):
                                                   search_filename, search_lineno)
 
         self.assertLines(textwrap.dedent("""
-        Hash:0cd6e0b5c696951e006e228d40b09bf3
+        Hash:fa550e3e0c65107d658be07c9cf87356
         Location: <string>:31
 
         ------------ Balances before transaction

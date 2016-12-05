@@ -1,7 +1,8 @@
 """Algorithms for 'booking' inventory, that is, the process of finding a
 matching lot when reducing the content of an inventory.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 import copy
@@ -128,6 +129,12 @@ def convert_lot_specs_to_lots(entries):
                 units = posting.units
                 cost_spec = posting.cost
                 cost = convert_spec_to_cost(units, cost_spec)
+                if cost_spec is not None and cost is None:
+                    errors.append(
+                        SimpleBookingError(entry.meta,
+                                           "Cost syntax not supported; cost spec ignored",
+                                           None))
+
                 if cost and isinstance(units, Amount):
                     # If there is a cost, we don't allow either a cost value of
                     # zero, nor a zero number of units. Note that we allow a price

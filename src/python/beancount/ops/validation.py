@@ -7,7 +7,8 @@ invariants are violated. They are not sanity checks--user data is subject to
 constraints which are hopefully detected here and which will result in errors
 trickled up to the user.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 from os import path
 import collections
@@ -305,7 +306,8 @@ def validate_data_types(entries, options_map):
     errors = []
     for entry in entries:
         try:
-            data.sanity_check_types(entry)
+            data.sanity_check_types(
+                entry, options_map["allow_deprecated_none_for_tags_and_links"])
         except AssertionError as exc:
             errors.append(
                 ValidationError(entry.meta,

@@ -1,9 +1,9 @@
 """Basic data structures used to represent the Ledger entries.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import builtins
-import collections
 import datetime
 import enum
 import sys
@@ -20,10 +20,17 @@ from beancount.utils.bisect_key import bisect_left_with_key
 
 
 # Type declarations.
+# pylint: disable=invalid-name
 Account = str
 Currency = str
 Flag = str
 Meta = Dict[str, Any]
+
+
+# An immutable constant for all empty sets. This is used to set links and tags
+# and ensure that they never has a None value. This makes some of the processing
+# code a bit simpler.
+EMPTY_SET = frozenset()
 
 
 # A set of valid booking method names for positions on accounts.
@@ -455,11 +462,14 @@ def create_simple_posting_with_cost(entry, account,
 
 NoneType = type(None)  # pylint: disable=invalid-name
 
-def sanity_check_types(entry):
+def sanity_check_types(entry, allow_none_for_tags_and_links=False):
     """Check that the entry and its postings has all correct data types.
 
     Args:
       entry: An instance of one of the entries to be checked.
+      allow_none_for_tags_and_links: A boolean, whether to allow plugins to
+        generate Transaction objects with None as value for the 'tags' or 'links'
+        attributes.
     Raises:
       AssertionError: If there is anything that is unexpected, raises an exception.
     """
@@ -472,8 +482,13 @@ def sanity_check_types(entry):
         assert isinstance(entry.flag, (NoneType, str)), "Invalid flag type"
         assert isinstance(entry.payee, (NoneType, str)), "Invalid payee type"
         assert isinstance(entry.narration, (NoneType, str)), "Invalid narration type"
-        assert isinstance(entry.tags, (NoneType, set, frozenset)), "Invalid tags type"
-        assert isinstance(entry.links, (NoneType, set, frozenset)), "Invalid links type"
+        set_types = ((NoneType, set, frozenset)
+                     if allow_none_for_tags_and_links
+                     else (set, frozenset))
+        assert isinstance(entry.tags, set_types), (
+            "Invalid tags type: {}".format(type(entry.tags)))
+        assert isinstance(entry.links, set_types), (
+            "Invalid links type: {}".format(type(entry.links)))
         assert isinstance(entry.postings, list), "Invalid postings list type"
         for posting in entry.postings:
             assert isinstance(posting, Posting), "Invalid posting type"

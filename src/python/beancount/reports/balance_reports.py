@@ -1,6 +1,7 @@
 """Report classes for all reports that display ending balances of accounts.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import re
 

@@ -384,9 +384,9 @@ booking_full.py: # FIXME: Refactor compute_cost_number() and convert_costspec_to
 
 Improve this bit:
 
-    >   But the detailed explanation cannot be found. There's only one phrase: „Think
+    >   But the detailed explanation cannot be found. There's only one phrase: ?Think
     >   of the Equity account as something from the past that you had to give up in
-    >   order to obtain the beginning snapshot of the Assets + Liabilities balance.“
+    >   order to obtain the beginning snapshot of the Assets + Liabilities balance.?
     >
     > Great comment. I'll improve this.
 
@@ -745,7 +745,7 @@ Improve this bit:
   - Wouldn't it be nice if running a bean-query could automatically upload to a
     new Google Doc and bring up the web browser interface? Do this.
 
-  - Make BALANCES command support a WHERE clause. It’s dumb not to. {balance-where}
+  - Make BALANCES command support a WHERE clause. It?s dumb not to. {balance-where}
 
   - Make auto-group work. {autogroup}
 
@@ -995,8 +995,8 @@ http://furius.ca/beancount/doc/proposal-query
 
     Although MySQL treats it differently: "If you use a group function in a
     statement containing no GROUP BY clause, it is equivalent to grouping on all
-    rows. For more information, see Section 12.17.3, “MySQL Handling of GROUP
-    BY”."
+    rows. For more information, see Section 12.17.3, ?MySQL Handling of GROUP
+    BY?."
 
 
 
@@ -2074,14 +2074,14 @@ http://furius.ca/beancount/doc/proposal-query
   - BUG: This input file without currencies does not currently fail! This is due
     to the parser accepting incomplete input. It should fail!
 
-      2014-01-01 * "Buy Google"
-        Assets:US:Broker:GOOGL      120.00  {1212.5100 USD}
+      2014-01-01 * "Buy Hooli"
+        Assets:US:Broker:HOOL      120.00  {1212.5100 USD}
         Assets:US:Broker:Cash
 
-      2014-04-08 * "GOOGLE INC CL C SPINOFF   ON"
-        Assets:US:Broker:GOOGL     -120.00  {1212.5100 USD}
-        Assets:US:Broker:GOOGL      120.00  {1212.5100 * 0.4992 USD}
-        Assets:US:Broker:GOOG       120.00  {1212.5100 * 0.5008 USD}
+      2014-04-08 * "HOOLI INC CL C SPINOFF   ON"
+        Assets:US:Broker:HOOLA     -120.00  {1212.5100 USD}
+        Assets:US:Broker:HOOLA      120.00  {1212.5100 * 0.4992 USD}
+        Assets:US:Broker:HOOL       120.00  {1212.5100 * 0.5008 USD}
 
   - When an error occurs while parsing a directive/transaction, add the ability
     to let the parser skip until the next directive and ignore the parsed
@@ -4645,6 +4645,10 @@ http://furius.ca/beancount/doc/proposal-query
   - Full booking: We need an example of two reducing bookings competing for the
     same lot.
 
+  - Add an AVERAGE function to the SQL shell.
+    See related discussion, I would like to compute this for myself too:
+    https://groups.google.com/d/msg/ledger-cli/dWuWysV6qZU/cyYNzleTCAAJ
+
   - There ought to be some unit tests for all the custom metadata added to
     Posting instances. I think this is undertested at the moment.
 
@@ -4890,7 +4894,7 @@ http://furius.ca/beancount/doc/proposal-query
   - Unify bean-doctor linked and bean-doctor context; make it one, and C-u
     prefix triggers links, perhaps ask for which link
 
-  - Create a demo video about “context” and “linked” command-line tools.
+  - Create a demo video about ?context? and ?linked? command-line tools.
 
   - Add a function to fetch a particular subset of tags with a regular
     expression, e.g. FIRST_REGEXP('award'). Use this on the imported
@@ -4916,9 +4920,9 @@ http://furius.ca/beancount/doc/proposal-query
 
 *** Small Tasks
 
-  - A large imbalance will appear as a RoundingError, which it shouldn’t!
-    RoundingError’s should only be inserted when a transaction balances! Run a
-    context on a non-balancing transaction and you’ll see what I mean.
+  - A large imbalance will appear as a RoundingError, which it shouldn?t!
+    RoundingError?s should only be inserted when a transaction balances! Run a
+    context on a non-balancing transaction and you?ll see what I mean.
 
   - Build a script that can run the reports found in Query and output them
     either into files or all at once. This is probably TBD as part of bean-query
@@ -4947,12 +4951,12 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Define a way to specify output format for rendering many queries, and
     perhaps that should include a Google doc directly that makes an upload, even
-    if that has to call out to a Python2 subprocess (that’s fine). Use that
+    if that has to call out to a Python2 subprocess (that?s fine). Use that
     everywhere.
 
-  - Add “display_tolerances” rendering override to fix bug with rendering HKD in
+  - Add ?display_tolerances? rendering override to fix bug with rendering HKD in
     trips, should be mirroring tolerances input syntax. Bug with Beancount:
-    journal ‘Assets:Caroline:Octopus’ does not render with correct precision.
+    journal ?Assets:Caroline:Octopus? does not render with correct precision.
 
   - Remove unused auto-postings, they distract from the reporting.
 
@@ -4962,7 +4966,7 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Implement implicit GROUP-BY now.
 
-  - Move “bean-doctor missing-open” to “bean-reports missing-open”, this really
+  - Move ?bean-doctor missing-open? to ?bean-reports missing-open?, this really
     is a report type.
 
   - Merge 3 newer monnier beancount.el patches.
@@ -4993,7 +4997,7 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Conversions: Document how open close clear works. This is really important.
     Use as an important the desire to pre-enter transactions from the future
-    (e.g., Jon Stahl’s vesting events).
+    (e.g., Jon Stahl?s vesting events).
 
   - Write Intro with an explanation of open/close/clear.
 
@@ -5001,11 +5005,11 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Store residual in metadata, print it out in context
 
-  - “Transaction does not balance” message should include the tolerance value
+  - ?Transaction does not balance? message should include the tolerance value
     allowed.
 
-  - Complete “legacy” doc generation (merge assets.asc into that doc, we
-    shouldn’t need assets.asc once that’s done, and schematize its contents) And
+  - Complete ?legacy? doc generation (merge assets.asc into that doc, we
+    shouldn?t need assets.asc once that?s done, and schematize its contents) And
     start using this.
 
   - Plugins doc: Add documentation for sellgains plugin in the rest of the docs
@@ -5021,7 +5025,7 @@ http://furius.ca/beancount/doc/proposal-query
 
   - This should be the goto/ project, it should be able to do that.
 
-  - Definitely make a teaching video… this will be useful for applications to
+  - Definitely make a teaching video? this will be useful for applications to
     other things!
 
   - Implement currency trading accounts as a prototype; see Conversions doc.
@@ -5035,11 +5039,11 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Convert blais.portfolio to a number of SQL scripts.
 
-  - Why doesn’t ^c2fbec103d99 generate an error?!?
-    Ha! It’s because it’s NOT a mixed result… only negatives. Maybe allow only
+  - Why doesn?t ^c2fbec103d99 generate an error?!?
+    Ha! It?s because it?s NOT a mixed result? only negatives. Maybe allow only
     positive totals with a different mode, somehow. A constraint on
     dictionaries, another booking method. Maybe that should be the default:
-    don’t allow negatives at all.
+    don?t allow negatives at all.
 
 *** Accounting
 
@@ -5054,7 +5058,7 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Load them into SQLite tables, or make sources as adapters to virtual tables
 
-  - Add a first step that’s a conversion
+  - Add a first step that?s a conversion
 
 *** SQLite
 
@@ -5069,7 +5073,7 @@ http://furius.ca/beancount/doc/proposal-query
   - Then put down the realization: (work to do all of these separately) >>>
     (work to represent all inputs)
 
-  - Black box in the middle of >>>, *THAT*’s what Beancount does
+  - Black box in the middle of >>>, *THAT*?s what Beancount does
 
 *** Contributor agreement
 
@@ -5079,7 +5083,7 @@ http://furius.ca/beancount/doc/proposal-query
 *** Idea
 
   - Implement a feature that generates a closing + opening transaction to be
-    able to split one’s file to multiple files. This should include the currency
+    able to split one?s file to multiple files. This should include the currency
     conversions as well.
 
   - Create a script that splits up a file at a particular date and output two
@@ -5088,7 +5092,7 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Provide a plugin that summarizes all the balances from transactions marked
     with a particular tag, and replaces those with a single transaction. If all
-    the balances are zero, don’t output anything. This could be used to remove
+    the balances are zero, don?t output anything. This could be used to remove
     the opening + closing transactions when including multiple files!
 
 *** Annuities
@@ -5237,8 +5241,8 @@ http://furius.ca/beancount/doc/proposal-query
   - Look into TAB problem:
     https://mail.google.com/mail/u/0/#inbox/14fdc82a04d90565
 
-      "Ben, en fait j'attendais de résoudre le problème du TAB, et pour ça j'ai
-      besoin d'un "recipe" vu que ce que j'ai essayé fonctionne."
+      "Ben, en fait j'attendais de r�soudre le probl�me du TAB, et pour �a j'ai
+      besoin d'un "recipe" vu que ce que j'ai essay� fonctionne."
 
 ** Open Tickets - TODO
 
@@ -5276,15 +5280,15 @@ http://furius.ca/beancount/doc/proposal-query
       delayed if recent deposits are made until they are clear of the 30 day wash sale
       window.
 
-      You can find much more information in both our White Paper (see “Parallel
-      Position Management”) and FAQ below:
+      You can find much more information in both our White Paper (see ?Parallel
+      Position Management?) and FAQ below:
 
       TLH White Paper:
       https://www.betterment.com/resources/tax-loss-harvesting-white-paper/
       TLH FAQ:
       http://support.betterment.com/customer/portal/topics/670337-tax-loss-harvesting
 
-      In general, you’ll want to avoid investing in any passive ETFs or mutual funds
+      In general, you?ll want to avoid investing in any passive ETFs or mutual funds
       that track the same index as the funds in our portfolios. You can check the
       indexes of our investments here.
 
@@ -5296,7 +5300,7 @@ http://furius.ca/beancount/doc/proposal-query
       TLH+ with external accounts, please see our guide here.
 
       Thank you for the feedback regarding exporting data to CSV format, your friend
-      is correct. My apologies for the earlier miscommunication; I’ll certainly pass
+      is correct. My apologies for the earlier miscommunication; I?ll certainly pass
       your suggestion to our product team.
 
       Please let us know if you have any additional questions or if we can be of any

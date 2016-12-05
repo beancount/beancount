@@ -4,7 +4,8 @@ This object is used in lieu of a file in order to allow the various importers to
 reuse each others' conversion results. Converting file contents, e.g. PDF to
 text, can be expensive.
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 from os import path
 

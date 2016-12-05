@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Generate a JavaScript treemap of balances for a subtree of accounts.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import re
 import datetime

@@ -1,5 +1,6 @@
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 import unittest
-import tempfile
 import pickle
 from unittest import mock
 

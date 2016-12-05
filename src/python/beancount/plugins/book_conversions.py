@@ -73,7 +73,8 @@ Implementation notes:
 
 """
 
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 __plugins__ = ('book_price_conversions_plugin',)
 
 import argparse

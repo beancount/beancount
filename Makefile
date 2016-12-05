@@ -6,6 +6,7 @@ DOWNLOADS = $(HOME)/u/Downloads
 
 GREP="grep --include="*.py" -srnE"
 SRC=src/python
+TOOLS=./etc
 
 PYTHON=python3
 #PYTHON=$(HOME)/src/python/vginstall/bin/python3
@@ -187,7 +188,7 @@ sandbox:
 	bean-sandbox $(INPUT)
 
 missing-tests:
-	./etc/find-missing-tests.py $(SRC)
+	$(TOOLS)/find-missing-tests.py $(SRC)
 
 fixmes:
 	egrep -srn '\b(FIXME|TODO\()' $(SRC) || true
@@ -196,7 +197,7 @@ filter-terms:
 	egrep --exclude-dir='.hg' --exclude-dir='__pycache__' -srn 'GOOGL?\b' $(PWD) | grep -v GOOGLE_APIS || true
 
 multi-imports:
-	egrep -srn '^(from.*)?import.*,' $(SRC) || true
+	(egrep -srn '^(from.*)?import.*,' $(SRC) | grep -v 'from typing') || true
 
 # Check for unused imports.
 sfood-checker:
@@ -204,16 +205,18 @@ sfood-checker:
 
 # Check dependency constraints.
 constraints dep-constraints: build/beancount.deps
-	./etc/dependency-constraints.py $<
+	$(TOOLS)/dependency-constraints.py $<
 
-check-author:
-	find src/python/beancount -type f -name '*.py' ! -exec grep -q '__author__' {} \; -print
+check-copyright:
+	$(TOOLS)/check-copyright.py --root=$(PWD)
+
 
 # Run the linter on all source code.
 # To list all messages, call: "pylint --list-msgs"
 LINT_SRCS =					\
   $(SRC)/beancount				\
   examples/ingest/office/importers		\
+  tools
 
 pylint lint:
 	pylint --rcfile=$(PWD)/etc/pylintrc $(LINT_SRCS)
@@ -223,14 +226,4 @@ pyflakes:
 
 
 # Check everything.
-status check: pylint pyflakes filter-terms missing-tests dep-constraints multi-imports tests-quiet
-# fixmes: For later.
-
-
-
-# FIXME: Remove
-grep-import:
-	grep --include='*.py' --exclude='*/beancount/parser/*' -srn  'from beancount.parser import parser'  ~/p/beancount/src/python/beancount
-
-grep-uses:
-	grep --include='*.py' --exclude='*/beancount/parser/*' -srn  'parser.parse'  ~/p/beancount/src/python/beancount
+status check: pylint pyflakes check-copyright filter-terms missing-tests dep-constraints multi-imports test

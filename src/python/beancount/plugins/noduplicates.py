@@ -1,6 +1,7 @@
 """This plugin validates that there are no duplicate transactions.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014  Martin Blais"
+__license__ = "GNU GPLv2"
 
 from beancount.core import compare
 

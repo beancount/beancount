@@ -5,7 +5,8 @@ that can actually be imported in a spreadsheet. An example is Think-or-Swim
 input files, the signs are expressed as XXX.XX DB or XXX.XX CR, and this is just
 a little tool to make it possible to import those.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import sys, re
 

@@ -7,13 +7,12 @@ full detail of these daily interests, and compressing these interest-only
 entries to monthly ones made sense. This is the code that was used to carry this
 out.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013, 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 
-from beancount.core.data import Transaction
-from beancount.core.data import Posting
-from beancount.core.data import Decimal
+from beancount.core.number import Decimal
 from beancount.core.amount import Amount
 from beancount.core import data
 
@@ -44,7 +43,7 @@ def compress(entries, predicate):
     new_entries = []
     pending = []
     for entry in entries:
-        if isinstance(entry, Transaction) and predicate(entry):
+        if isinstance(entry, data.Transaction) and predicate(entry):
             # Save for compressing later.
             pending.append(entry)
         else:
@@ -85,21 +84,21 @@ def merge(entries, prototype_txn):
     for entry in data.filter_txns(entries):
         for posting in entry.postings:
             # We strip the number off the posting to act as an aggregation key.
-            key = Posting(posting.account,
-                          Amount(None, posting.units.currency),
-                          posting.cost,
-                          posting.price,
-                          posting.flag,
-                          None)
+            key = data.Posting(posting.account,
+                               Amount(None, posting.units.currency),
+                               posting.cost,
+                               posting.price,
+                               posting.flag,
+                               None)
             postings_map[key] += posting.units.number
 
     # Create a new transaction with the aggregated postings.
-    new_entry = Transaction(prototype_txn.meta,
-                            prototype_txn.date,
-                            prototype_txn.flag,
-                            prototype_txn.payee,
-                            prototype_txn.narration,
-                            None, None, [])
+    new_entry = data.Transaction(prototype_txn.meta,
+                                 prototype_txn.date,
+                                 prototype_txn.flag,
+                                 prototype_txn.payee,
+                                 prototype_txn.narration,
+                                 data.EMPTY_SET, data.EMPTY_SET, [])
 
     # Sort for at least some stability of output.
     sorted_items = sorted(postings_map.items(),
@@ -111,7 +110,7 @@ def merge(entries, prototype_txn):
     for posting, number in sorted_items:
         units = Amount(number, posting.units.currency)
         new_entry.postings.append(
-            Posting(posting.account, units, posting.cost, posting.price,
-                    posting.flag, posting.meta))
+            data.Posting(posting.account, units, posting.cost, posting.price,
+                         posting.flag, posting.meta))
 
     return new_entry

@@ -3,7 +3,8 @@
 This tool is able to dump lexer/parser state, and will provide other services in
 the name of debugging.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 import os
@@ -248,7 +249,9 @@ def do_linked(filename, args):
     # Find its links.
     if closest_entry is None:
         raise SystemExit("No entry could be found before {}:{}".format(filename, lineno))
-    links = closest_entry.links if isinstance(closest_entry, data.Transaction) else None
+    links = (closest_entry.links
+             if isinstance(closest_entry, data.Transaction)
+             else data.EMPTY_SET)
     if not links:
         linked_entries = [closest_entry]
     else:
@@ -279,7 +282,7 @@ def do_linked(filename, args):
                 if len(linked_entries) == num_linked:
                     break
                 for entry in linked_entries:
-                    if entry.links is not None:
+                    if entry.links:
                         links.update(entry.links)
 
     # Render linked entries (in date order) as errors (for Emacs).

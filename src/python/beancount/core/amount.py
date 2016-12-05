@@ -6,21 +6,20 @@ currency:
   (number, currency).
 
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import re
-import warnings
 
 from beancount.core.display_context import DEFAULT_FORMATTER
 from beancount.core.number import ZERO
 from beancount.core.number import Decimal
 from beancount.core.number import D
-from beancount.core import number
 
 
 # A regular expression to match the name of a currency.
 # Note: This is kept in sync with "beancount/parser/lexer.l".
-CURRENCY_RE = '[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]'
+CURRENCY_RE = r'[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]'
 
 
 class Amount:

@@ -22,7 +22,8 @@ At the end of the trip, before reconciling the income and expenses, one has to
 make sure that each person's personal expenses have been replicated as income
 postings in the shared common file. This is what this script does.
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import re
 import collections
@@ -35,13 +36,20 @@ from beancount.core import data
 from beancount import loader
 
 
-def get_postings(filename, regexp):
-    match = re.compile(regexp).match
+def get_postings(filename, account_regexp, tag=None):
+    if tag:
+        match = lambda entry, posting: (
+            re.match(account_regexp, posting.account) and
+            tag in entry.tags)
+    else:
+        match = lambda _, posting: (
+            re.match(account_regexp, posting.account))
+
     entries, _, _ = loader.load_file(filename)
     txn_postings = [data.TxnPosting(entry, posting)
                     for entry in data.filter_txns(entries)
                     for posting in entry.postings
-                    if match(posting.account)]
+                    if match(entry, posting)]
     return txn_postings
 
 
@@ -53,9 +61,9 @@ def index_postings(txn_postings, func):
     return amount_map
 
 
-def match_postings(left_postings, rght_postings, key):
-    left_map = index_postings(left_postings, key)
-    rght_map = index_postings(rght_postings, key)
+def match_postings(left_postings, rght_postings, keyfun):
+    left_map = index_postings(left_postings, keyfun)
+    rght_map = index_postings(rght_postings, keyfun)
 
     common_keys = set(left_map) & set(rght_map)
     matched = []
@@ -82,14 +90,14 @@ def match_postings(left_postings, rght_postings, key):
     return matched, (left_remain, rght_remain)
 
 
-def print_unmatched(postings, filename, regexp):
-    if not postings:
+def print_unmatched(txn_postings, filename, regexp):
+    if not txn_postings:
         return
     print()
     print()
     print('=== Ummatched from {}, "{}"'.format(filename, regexp))
     print()
-    for txn_posting in postings:
+    for txn_posting in sorted(txn_postings, key=lambda tp: tp.txn.date):
         printer.print_entry(txn_posting.txn)
 
 
@@ -99,19 +107,22 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.strip())
     parser.add_argument('filename_left', help='Left filename')
     parser.add_argument('regexp_left', help='Left account regexp')
+    parser.add_argument('--tag', dest='tag_left',
+                        help='Tag to filter left file (optional)')
     parser.add_argument('filename_rght', help='Right filename')
     parser.add_argument('regexp_rght', help='Right account regexp')
     args = parser.parse_args()
 
-    left_postings = get_postings(args.filename_left, args.regexp_left)
+    left_postings = get_postings(args.filename_left, args.regexp_left, args.tag_left)
     rght_postings = get_postings(args.filename_rght, args.regexp_rght)
     #print(len(left_postings), len(rght_postings))
 
     # Progressively try different unique keys to match up postings to each other
     # unambiguously.
-    for key in [lambda tp: amount.abs(tp.posting.units),
+    for keyfun in [lambda tp: amount.abs(tp.posting.units),
                 lambda tp: tp.txn.links]:
-        matched, (left_postings, rght_postings) = match_postings(left_postings, rght_postings, key)
+        _, (left_postings, rght_postings) = (
+            match_postings(left_postings, rght_postings, keyfun))
 
     print("Unmatched: {} left & {} right".format(len(left_postings), len(rght_postings)))
     print_unmatched(left_postings, args.filename_left, args.regexp_left)

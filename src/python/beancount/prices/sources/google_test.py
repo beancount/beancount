@@ -1,6 +1,7 @@
 """Test for price extractor of Google Finance.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import textwrap
 import datetime
@@ -10,7 +11,8 @@ from urllib import request
 from urllib import error
 
 from beancount.prices.sources import google
-from beancount.core.number import D, Decimal
+from beancount.core.number import D
+from beancount.core.number import Decimal
 
 from dateutil import tz
 

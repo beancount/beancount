@@ -2,7 +2,9 @@
 """
 Install script for beancount.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2008-2011, 2013-2016  Martin Blais"
+__license__ = "GNU GPLv2"
+
 
 import os
 from os import path
@@ -138,7 +140,7 @@ setup(
       Beancount syntax.
     """,
 
-    license="GPL",
+    license="GNU GPLv2 only",
     author="Martin Blais",
     author_email="blais@furius.ca",
     url="http://furius.ca/beancount",

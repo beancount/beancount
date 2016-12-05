@@ -1,7 +1,8 @@
 """
 Declaration of options and their default values.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 import io
@@ -479,6 +480,19 @@ PUBLIC_OPTION_GROUPS = [
               converter=options_validate_boolean,
               deprecated=('Allowing pipe separator temporary; '
                           'this will go away eventually.'))]),
+
+    OptGroup("""
+      Allow plugins to produce a None object for the 'tags' and 'links'
+      attributes of a Transaction instance. By default, without this, those
+      attributes are now ensured to be a Set type, and an empty frozenset()
+      instance if there are no values
+
+      This is only provided as a temporary mechanism to allow you some time to
+      port your plugins code.
+    """, [Opt("allow_deprecated_none_for_tags_and_links", False, "TRUE",
+              converter=options_validate_boolean,
+              deprecated=('Allowing None for tags and link '
+                          'will go away eventually.'))]),
     ]
 
 

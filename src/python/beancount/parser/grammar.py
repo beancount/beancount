@@ -1,6 +1,7 @@
 """Builder for Beancount grammar.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 import copy
@@ -31,6 +32,7 @@ from beancount.core.data import Custom
 from beancount.core.data import new_metadata
 from beancount.core.data import Posting
 from beancount.core.data import Booking
+from beancount.core.data import EMPTY_SET
 
 from beancount.parser import lexer
 from beancount.parser import options
@@ -909,11 +911,11 @@ class Builder(lexer.LexBuilder):
         assert isinstance(tags, (set, frozenset)), "Tags is not a set: {}".format(tags)
         if self.tags:
             tags.update(self.tags)
-        tags = frozenset(tags) if tags else None
+        tags = frozenset(tags) if tags else EMPTY_SET
 
         # Make links to None if empty.
         links = tags_links.links
-        links = frozenset(links) if links else None
+        links = frozenset(links) if links else EMPTY_SET
 
         return tags, links
 

@@ -1,7 +1,8 @@
 """
 Generic utility packages and functions.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 import io
@@ -255,9 +256,9 @@ def idify(string):
     Returns:
       The input string, with offending characters replaced.
     """
-    for from_, to in [(r'[ \(\)]+', '_'),
+    for sfrom, sto in [(r'[ \(\)]+', '_'),
                       (r'_*\._*', '.')]:
-        string = re.sub(from_, to, string)
+        string = re.sub(sfrom, sto, string)
     string = string.strip('_')
     return string
 
@@ -490,9 +491,9 @@ def is_sorted(iterable, key=lambda x: x, cmp=lambda x, y: x <= y):
     Returns:
       A boolean, true if the sequence is sorted.
     """
-    it = map(key, iterable)
-    prev = next(it)
-    for element in it:
+    iterator = map(key, iterable)
+    prev = next(iterator)
+    for element in iterator:
         if not cmp(prev, element):
             return False
         prev = element

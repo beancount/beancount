@@ -1,10 +1,10 @@
 """Automatic padding of gaps between entries.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 
-from beancount.core.number import D
 from beancount.core.number import ONE
 from beancount.core.number import ZERO
 from beancount.core.data import Transaction
