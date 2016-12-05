@@ -1,7 +1,8 @@
 """
 Unit tests for the Inventory class.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import datetime
 import unittest
@@ -9,7 +10,6 @@ import copy
 from datetime import date
 
 from beancount.core.number import D
-from beancount.core.number import ZERO
 from beancount.core.amount import A
 from beancount.core import amount
 from beancount.core.position import Position
@@ -183,8 +183,6 @@ class TestInventory(unittest.TestCase):
         inv = I('0.03 JPY')
         self.assertTrue(inv.is_small({'JPY': D('0.05')}))
         self.assertFalse(inv.is_small({'JPY': D('0.02')}))
-        self.assertTrue(inv.is_small({}, {'JPY': D('0.05')}))
-        self.assertFalse(inv.is_small({}, {'JPY': D('0.02')}))
 
     def test_is_mixed(self):
         inv = I('100 HOOL {250 USD}, 101 HOOL {251 USD}')
@@ -197,11 +195,13 @@ class TestInventory(unittest.TestCase):
         self.assertFalse(inv.is_mixed())
 
     def test_is_reduced_by(self):
+        # Test with regular all position inventory.
         inv = I('100 HOOL {250 USD}, 101 HOOL {251 USD}')
         self.assertFalse(inv.is_reduced_by(A('2 HOOL')))
         self.assertFalse(inv.is_reduced_by(A('0 HOOL')))
         self.assertTrue(inv.is_reduced_by(A('-2 HOOL')))
 
+        # Test with a mixed-sign inventory.
         inv = I('100 HOOL {250 USD}, -101 HOOL {251 USD}')
         self.assertTrue(inv.is_reduced_by(A('2 HOOL')))
         self.assertFalse(inv.is_reduced_by(A('0 HOOL')))
@@ -377,7 +377,7 @@ class TestInventory(unittest.TestCase):
 
         position_, _ = inv.add_amount(A('-12 HOOL'),
                                       Cost(D('700'), 'USD', None, None))
-        self.assertTrue(position_.is_negative_at_cost())
+        self.assertTrue(inv[0].is_negative_at_cost())
 
         # Testing the strict case where everything matches, a cost and a lot-date.
         inv = Inventory()
@@ -389,29 +389,38 @@ class TestInventory(unittest.TestCase):
 
         position_, _ = inv.add_amount(A('-12 HOOL'), Cost(D('700'), 'USD',
                                                           date(2000, 1, 1), None))
-        self.assertTrue(position_.is_negative_at_cost())
+        self.assertTrue(inv[0].is_negative_at_cost())
 
     def test_add_amount__allow_negative(self):
-
-        def check_allow_negative(inv):
-            position_, _ = inv.add_amount(A('-11 USD'))
-            self.assertFalse(position_.is_negative_at_cost())
-            position_, _ = inv.add_amount(A('-11 USD'), Cost(D('1.10'), 'CAD', None, None))
-            self.assertTrue(position_.is_negative_at_cost())
-            position_, _ = inv.add_amount(A('-11 USD'),
-                                          Cost(None, None, date(2012, 1, 1), None))
-            self.assertTrue(position_.is_negative_at_cost())
-            inv.add_amount(A('-11 USD'), Cost(D('1.10'), 'CAD', None, None))
-            inv.add_amount(A('-11 USD'), Cost(None, None, date(2012, 1, 1), None))
-
-        # Test adding to a position that does not exist.
         inv = Inventory()
-        check_allow_negative(inv)
+
+        # Test adding positions of different types.
+        position_, _ = inv.add_amount(A('-11 USD'))
+        self.assertIsNone(position_)
+        position_, _ = inv.add_amount(A('-11 USD'),
+                                      Cost(D('1.10'), 'CAD', None, None))
+        self.assertIsNone(position_)
+        position_, _ = inv.add_amount(A('-11 USD'),
+                                      Cost(D('1.10'), 'CAD', date(2012, 1, 1), None))
+        self.assertIsNone(position_)
+
+        # Check for reductions.
+        self.assertTrue(inv[1].is_negative_at_cost())
+        self.assertTrue(inv[2].is_negative_at_cost())
+        inv.add_amount(A('-11 USD'), Cost(D('1.10'), 'CAD', None, None))
+        inv.add_amount(A('-11 USD'), Cost(D('1.10'), 'CAD', date(2012, 1, 1), None))
+        self.assertEqual(3, len(inv))
 
         # Test adding to a position that does exist.
-        inv = I(
-            '10 USD, 10 USD {1.10 CAD}, 10 USD {1.10 CAD, 2012-01-01}')
-        check_allow_negative(inv)
+        inv = I('10 USD, 10 USD {1.10 CAD}, 10 USD {1.10 CAD, 2012-01-01}')
+        position_, _ = inv.add_amount(A('-11 USD'))
+        self.assertEqual(position_, position.from_string('10 USD'))
+        position_, _ = inv.add_amount(A('-11 USD'),
+                                      Cost(D('1.10'), 'CAD', None, None))
+        self.assertEqual(position_, position.from_string('10 USD {1.10 CAD}'))
+        position_, _ = inv.add_amount(A('-11 USD'),
+                                      Cost(D('1.10'), 'CAD', date(2012, 1, 1), None))
+        self.assertEqual(position_, position.from_string('10 USD {1.10 CAD, 2012-01-01}'))
 
     def test_add_position(self):
         inv = Inventory()
@@ -444,43 +453,3 @@ class TestInventory(unittest.TestCase):
         inv2.add_amount(A('55 HOOL'))
 
         _ = inv1 + inv2
-
-
-class TestDefaultTolerance(unittest.TestCase):
-
-    def test_default_tolerance__present(self):
-        self.assertEqual(
-            D('0.001'),
-            inventory.get_tolerance({'USD': D('0.001')},
-                                    {},
-                                    'USD'))
-        self.assertEqual(
-            D('0.001'),
-            inventory.get_tolerance({'USD': D('0.001')},
-                                    {'USD': D('0.00001')},
-                                    'USD'))
-        self.assertEqual(
-            D('0.001'),
-            inventory.get_tolerance({'USD': D('0.001')},
-                                    {'*': D('0.5')},
-                                    'USD'))
-
-    def test_default_tolerance__global(self):
-        self.assertEqual(
-            D('0.001'),
-            inventory.get_tolerance({},
-                                    {'USD': D('0.001'), '*': D('0.5')},
-                                    'USD'))
-
-    def test_default_tolerance__global_default(self):
-        self.assertEqual(
-            D('0.5'),
-            inventory.get_tolerance({},
-                                    {'USD': D('0.001'), '*': D('0.5')},
-                                    'JPY'))
-
-    def test_default_tolerance__not_found(self):
-        self.assertEqual(
-            ZERO,
-            inventory.get_tolerance({'USD': D('0.001')}, {},
-                                    'JPY'))

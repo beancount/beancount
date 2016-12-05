@@ -9,7 +9,8 @@ If you don't specify a name for the subaccount (the configuration value is
 optional), by default it inserts the unrealized gains in the same account that
 is being adjusted.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 

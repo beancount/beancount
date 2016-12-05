@@ -4,7 +4,8 @@ This script computes, for each commodity, which time intervals it is required at
 This can then be used to identify a list of dates at which we need to fetch prices
 in order to properly fill the price database.
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2014-2015  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 import datetime

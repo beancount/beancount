@@ -1,8 +1,10 @@
 """Views are filters on the global list of entries, which produces a subset of entries.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import datetime
+import enum
 import logging
 
 from beancount.core import data
@@ -13,7 +15,7 @@ from beancount.utils import misc_utils
 from beancount.utils import date_utils
 
 
-class MonthNavigation(misc_utils.Enum):
+class MonthNavigation(enum.Enum):
     NONE = 0    # No monthly navigation.
     COMPACT = 1 # Compact combobox outgoing to monthly navigation.
     FULL = 2    # Full rendering with single-click to each month.

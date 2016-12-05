@@ -3,7 +3,8 @@
 This module contains reports that can convert an input file into other formats,
 such as Ledger.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import re
 import io
@@ -268,6 +269,9 @@ class LedgerPrinter:
     def Query(_, entry, oss):
         oss.write(
             ';; Query: {e.date:%Y/%m/%d} "{e.name}" "{e.query_string}"\n'.format(e=entry))
+
+    def Custom(_, entry, oss):
+        pass  # Don't render anything.
 
 
 class HLedgerReport(base.Report):

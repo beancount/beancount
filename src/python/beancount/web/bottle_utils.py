@@ -1,7 +1,8 @@
 """
 Bottle utilities, mostly helpers to do mounts on top of dynamic routes.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import bottle
 from bottle import request

@@ -1,4 +1,5 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import datetime
 
@@ -9,8 +10,8 @@ from beancount import loader
 
 class TestValidateUnusedAccounts(cmptest.TestCase):
 
-    @loader.load_doc(expect_errors=True)
-    def test_validate_unused_accounts(self, entries, _, options_map):
+    @loader.load_doc()
+    def test_validate_unused_accounts(self, entries, in_errors, options_map):
         """
         2014-01-01 open  Assets:Invest:Shares
         2014-01-01 open  Assets:Invest:Cash
@@ -26,7 +27,7 @@ class TestValidateUnusedAccounts(cmptest.TestCase):
           Assets:Invest:Cash
 
         2014-03-02 *
-          Assets:Invest:Shares       -1 HOOL @ 720.00 USD
+          Assets:Invest:Shares       1 HOOL @ 720.00 USD
           Assets:Invest:Cash
 
         """

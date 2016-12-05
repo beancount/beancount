@@ -1,7 +1,8 @@
 """Produce a rendering of the account balances just before and after a
 particular entry is applied.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import io
 

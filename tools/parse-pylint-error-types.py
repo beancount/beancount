@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Extract the error types output from pylint.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 import re

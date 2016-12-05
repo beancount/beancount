@@ -4,7 +4,8 @@ This module contains the various column accessors and function evaluators that
 are made available by the query compiler via their compilation context objects.
 Define new columns and functions here.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import copy
 import datetime
@@ -243,6 +244,29 @@ class EntryMeta(query_compile.EvalFunction):
         if meta is None:
             return None
         return meta.get(args[0], None)
+
+class AnyMeta(query_compile.EvalFunction):
+    "Get metadata from the posting or its parent transaction's metadata if not present."
+    __intypes__ = [str]
+
+    def __init__(self, operands):
+        super().__init__(operands, object)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        key = args[0]
+
+        # Note: if the looked up key is explicitly defined in posting as None,
+        # we return it, rather than falling back to parent Transaction.
+        posting_meta = context.posting.meta
+        entry_meta = context.entry.meta
+        if posting_meta and key in posting_meta:
+            value = posting_meta[key]
+        elif entry_meta and key in entry_meta:
+            value = entry_meta[key]
+        else:
+            value = None
+        return value
 
 class OpenMeta(query_compile.EvalFunction):
     "Get the metadata dict of the open directive of the account."
@@ -629,6 +653,7 @@ SIMPLE_FUNCTIONS = {
     'close_date'                                         : CloseDate,
     'meta'                                               : Meta,
     'entry_meta'                                         : EntryMeta,
+    'any_meta'                                           : AnyMeta,
     'open_meta'                                          : OpenMeta,
     'commodity_meta'                                     : CommodityMeta,
     'account_sortkey'                                    : AccountSortKey,
@@ -1124,8 +1149,11 @@ class FileLocationColumn(query_compile.EvalColumn):
         super().__init__(str)
 
     def __call__(self, context):
-        return '{}:{:d}:'.format(context.posting.meta["filename"],
-                                 context.posting.meta["lineno"])
+        if context.posting.meta is not None:
+            return '{}:{:d}:'.format(context.posting.meta["filename"],
+                                     context.posting.meta["lineno"])
+        else:
+            return '' # Unknown.
 
 class DateColumn(query_compile.EvalColumn):
     "The date of the parent transaction for this posting."
@@ -1322,6 +1350,30 @@ class CostCurrencyColumn(query_compile.EvalColumn):
         cost = context.posting.cost
         return cost.currency if cost else ''
 
+class CostDateColumn(query_compile.EvalColumn):
+    "The cost currency of the posting."
+    __equivalent__ = 'posting.cost.date'
+    __intypes__ = [data.Posting]
+
+    def __init__(self):
+        super().__init__(datetime.date)
+
+    def __call__(self, context):
+        cost = context.posting.cost
+        return cost.date if cost else None
+
+class CostLabelColumn(query_compile.EvalColumn):
+    "The cost currency of the posting."
+    __equivalent__ = 'posting.cost.label'
+    __intypes__ = [data.Posting]
+
+    def __init__(self):
+        super().__init__(str)
+
+    def __call__(self, context):
+        cost = context.posting.cost
+        return cost.label if cost else ''
+
 class PositionColumn(query_compile.EvalColumn):
     "The position for the posting. These can be summed into inventories."
     __equivalent__ = 'posting'
@@ -1393,6 +1445,8 @@ class FilterPostingsEnvironment(query_compile.CompilationEnvironment):
         'currency'       : CurrencyColumn,
         'cost_number'    : CostNumberColumn,
         'cost_currency'  : CostCurrencyColumn,
+        'cost_date'      : CostDateColumn,
+        'cost_label'     : CostLabelColumn,
         'position'       : PositionColumn,
         'change'         : PositionColumn,  # Backwards compatible.
         'price'          : PriceColumn,

@@ -1,6 +1,7 @@
 """A library of codes create price fetching jobs from strings and files.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 import logging

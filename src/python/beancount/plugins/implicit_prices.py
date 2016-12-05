@@ -1,7 +1,8 @@
 """This plugin synthesizes Price directives for all Postings with a price or
 directive or if it is an augmenting posting, has a cost directive.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 
