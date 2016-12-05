@@ -25,7 +25,7 @@ On the other hand, consider this transaction:
       Assets:Cash               1000 USD
       Income:Gains
 
-Now the interpolation cannot succeed. If the Assets:Investments accoujnt is
+Now the interpolation cannot succeed. If the Assets:Investments account is
 configured to use the FIFO method, the 10 oldest shares would be selected for
 the cost, and we could then interpolate the capital gains correctly.
 
@@ -123,7 +123,6 @@ def _book(entries, options_map, booking_methods):
     errors = []
     balances = collections.defaultdict(inventory.Inventory)
     for entry in entries:
-        printer.print_entry(entry) ## FIXME: remove
         if isinstance(entry, Transaction):
             # Group postings by currency.
             refer_groups, cat_errors = categorize_by_currency(entry, balances)
@@ -141,6 +140,26 @@ def _book(entries, options_map, booking_methods):
                 # Important note: the group of 'postings' here is a subset of
                 # that from entry.postings, and may include replicated
                 # auto-postings. Never use entry.postings going forward.
+
+                # See booking_full.txt for an explanation of how we treat each
+                # currency group in this block.
+
+                if has_self_reduction(group_postings):
+                    # If there's an augmentation and a reduction of the same
+                    # commodity in the same currency group, don't allow
+                    # interpolation, convert CostSpec to Cost for augmentations,
+                    # apply them, and then book reduction. This allows us to reduce
+                    # an augmentation that occurs in the same transaction.
+
+                    pass  ## FIXME: TODO
+
+                else:
+                    # Otherwise, we can first match the reductions against the
+                    # ante-inventory and let the interpolation process take
+                    # advantage of any information acquired in doing that.
+
+                    pass  ## FIXME: TODO
+
 
                 # Perform booking reductions, that is, match postings which
                 # reduce the ante-inventory of their accounts to an existing
@@ -457,6 +476,27 @@ def replace_currencies(postings, refer_groups):
 ReductionError = collections.namedtuple('ReductionError', 'source message entry')
 
 
+def has_self_reduction(postings):
+    """Return true if the postings potentially reduce each other.
+
+    Args:
+      postings: A list of postings with uninterpolated CostSpec cost instances.
+    Returns:
+      A boolean, true if there's a potential for self-reduction.
+    """
+    # A mapping of (currency, cost-currency) and sign.
+    cost_changes = {}
+    for posting in postings:
+        cost = posting.cost
+        if cost is None:
+            continue
+        key = (posting.units.currency, posting.cost.currency)
+        sign = 1 if posting.units.number > ZERO else -1
+        if cost_changes.setdefault(key, sign) != sign:
+            return True
+    return False
+
+
 def book_reductions(entry, group_postings, balances,
                     booking_methods):
     """Book inventory reductions against the ante-balances.
@@ -549,16 +589,15 @@ def book_reductions(entry, group_postings, balances,
                     posting = posting._replace(cost=dated_costspec)
                 booked_postings.append(posting)
 
+                if 0:
+                    # FIXME: There is a problem here... I need to apply the
+                    # augmentations in order for the classifications of the
+                    # reductions to apply right, but I can't interpolate them this
+                    # early. Not sure how to resolve this.
 
-
-                # FIXME: There is a problem here... I need to apply the
-                # augmentations in order for the classifications of the
-                # reductions to apply right, but I can't interpolate them this
-                # early. Not sure how to resolve this.
-
-                # Update the local balance so that postings reducing off
-                # balances added within the same transaction will match.
-                balance.add_position(posting)
+                    # Update the local balance so that postings reducing off
+                    # balances added within the same transaction will match.
+                    balance.add_position(posting)
 
     # Process all the reductions.
     for posting in reductions:
