@@ -4,7 +4,8 @@ Read an import script and a list of downloaded filenames or directories of
 downloaded files, and for each of those files, move the file under an account
 corresponding to the filing directory.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 from os import path
 import collections

@@ -17,7 +17,8 @@ The purpose of this is manyfold:
   intends to be a bit of a simplified reboot of the export code.
 
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import argparse
 import bisect

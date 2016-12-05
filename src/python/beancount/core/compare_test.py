@@ -1,4 +1,5 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import unittest
 
@@ -20,11 +21,11 @@ TEST_INPUT = """
   Expenses:Grocery            200 USD
   Assets:US:Cash
 
-2013-06-20 * "Whole Foods Market" | "Buying books" #books #dinner ^ee89ada94a39
+2013-06-20 * "Whole Foods Market" "Buying books" #books #dinner ^ee89ada94a39
   Expenses:Restaurant         150 USD
   Assets:US:Credit-Card
 
-2013-06-22 * "La Colombe" | "Buying coffee"  ^ee89ada94a39
+2013-06-22 * "La Colombe" "Buying coffee"  ^ee89ada94a39
   Expenses:Coffee         5 USD
   Assets:US:Cash
 

@@ -1,6 +1,7 @@
 """Support for encrypted tests.
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2015  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import re
 import subprocess

@@ -15,7 +15,8 @@ Also, postings for accounts without a single Balance directive on them will not
 be marked as unverified as all (otherwise all the postings would be marked, this
 would make no sense).
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 from beancount.core import data
 

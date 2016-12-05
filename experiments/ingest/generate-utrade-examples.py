@@ -2,7 +2,8 @@
 """A quick one-off script to generate some random transactions for a fake trading account.
 Outputs a CSV file, that looks realistic.
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 import datetime

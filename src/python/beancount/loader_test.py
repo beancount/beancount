@@ -1,4 +1,5 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import logging
 import unittest
@@ -79,11 +80,11 @@ class TestLoader(unittest.TestCase):
         self.assertTrue(errors)
         self.assertRegex(errors[0].message, 'does not exist')
 
-    @mock.patch.dict(loader.DEPRECATED_MODULES,
+    @mock.patch.dict(loader.RENAMED_MODULES,
                      {"beancount.ops.auto_accounts": "beancount.plugins.auto_accounts"},
                      clear=True)
     @mock.patch('warnings.warn')
-    def test_deprecated_plugin_warnings(self, warn):
+    def test_renamed_plugin_warnings(self, warn):
         with test_utils.capture('stderr'):
             entries, errors, options_map = loader.load_string("""
               plugin "beancount.ops.auto_accounts"

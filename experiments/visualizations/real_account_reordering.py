@@ -2,7 +2,8 @@
 the real_account according to various criteria for a more sensible rendering in
 the web interface and otherwise.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 
 # FIXME: TODO, implement these properly.

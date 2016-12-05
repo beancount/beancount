@@ -15,9 +15,11 @@ please consider either writing one or contributing changes. Also, this importer
 does its own very basic parsing; a better one would probably use (and depend on)
 the ofxparse module (see https://sites.google.com/site/ofxparse/).
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import datetime
+import enum
 import itertools
 import re
 from xml.sax import saxutils
@@ -29,10 +31,9 @@ from beancount.core.number import D
 from beancount.core import amount
 from beancount.core import data
 from beancount.ingest import importer
-from beancount.utils import misc_utils
 
 
-class BalanceType(misc_utils.Enum):
+class BalanceType(enum.Enum):
     """Type of Balance directive to be inserted."""
     NONE = 0     # Don't insert a Balance directive.
     DECLARED = 1 # Insert a Balance directive at the declared date.
@@ -289,4 +290,5 @@ def build_transaction(stmttrn, flag, account, currency):
 
     # Build the transaction with a single leg.
     fileloc = data.new_metadata('<build_transaction>', 0)
-    return data.Transaction(fileloc, date, flag, payee, narration, None, None, [posting])
+    return data.Transaction(fileloc, date, flag, payee, narration,
+                            data.EMPTY_SET, data.EMPTY_SET, [posting])

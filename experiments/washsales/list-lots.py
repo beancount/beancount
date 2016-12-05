@@ -4,7 +4,8 @@
 NOTE: Ideally this should be replaced by a SQL query.
 bean-query just has to be improved in order to do this, and the 'booking' branch completed.
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import argparse
 import collections

@@ -4,7 +4,8 @@
 With this script I'm able to make the numbers reported by MS on the 1099 match
 mine, except for rounding error.
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import argparse
 import collections

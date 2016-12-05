@@ -12,7 +12,8 @@ editing mode. Google Docs does not appear to support an option to open a
 document in "Viewing" mode by default (and by that I mean "Viewing" as part of
 the /edit page).
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import argparse
 import collections

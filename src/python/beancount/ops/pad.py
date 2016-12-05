@@ -1,6 +1,7 @@
 """Automatic padding of gaps between entries.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 
@@ -97,7 +98,7 @@ def pad(entries, options_map):
                 diff_amount = amount.sub(balance_amount, check_amount)
 
                 # Use the specified tolerance or automatically infer it.
-                tolerance = balance.get_tolerance(entry, options_map)
+                tolerance = balance.get_balance_tolerance(entry, options_map)
 
                 if abs(diff_amount.number) > tolerance:
                     # The check fails; we need to pad.
@@ -130,7 +131,7 @@ def pad(entries, options_map):
                                      'difference {})').format(check_amount, diff_position)
                         new_entry = data.Transaction(
                             active_pad.meta.copy(), active_pad.date, flags.FLAG_PADDING,
-                            None, narration, None, None, [])
+                            None, narration, data.EMPTY_SET, data.EMPTY_SET, [])
 
                         new_entry.postings.append(
                             data.Posting(active_pad.account,

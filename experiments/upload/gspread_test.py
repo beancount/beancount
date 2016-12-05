@@ -6,7 +6,8 @@ uploads and getting rid of the Google Finance API usage. It's simpler too, and
 it's also actively maintained, unlike the Google API which appears to have been
 abandoned.
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import argparse
 import bisect

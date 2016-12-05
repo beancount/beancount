@@ -1,7 +1,8 @@
 """
 Unit tests for the Inventory class.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import datetime
 import unittest
@@ -9,7 +10,6 @@ import copy
 from datetime import date
 
 from beancount.core.number import D
-from beancount.core.number import ZERO
 from beancount.core.amount import A
 from beancount.core import amount
 from beancount.core.position import Position
@@ -183,8 +183,6 @@ class TestInventory(unittest.TestCase):
         inv = I('0.03 JPY')
         self.assertTrue(inv.is_small({'JPY': D('0.05')}))
         self.assertFalse(inv.is_small({'JPY': D('0.02')}))
-        self.assertTrue(inv.is_small({}, {'JPY': D('0.05')}))
-        self.assertFalse(inv.is_small({}, {'JPY': D('0.02')}))
 
     def test_is_mixed(self):
         inv = I('100 HOOL {250 USD}, 101 HOOL {251 USD}')
@@ -455,43 +453,3 @@ class TestInventory(unittest.TestCase):
         inv2.add_amount(A('55 HOOL'))
 
         _ = inv1 + inv2
-
-
-class TestDefaultTolerance(unittest.TestCase):
-
-    def test_default_tolerance__present(self):
-        self.assertEqual(
-            D('0.001'),
-            inventory.get_tolerance({'USD': D('0.001')},
-                                    {},
-                                    'USD'))
-        self.assertEqual(
-            D('0.001'),
-            inventory.get_tolerance({'USD': D('0.001')},
-                                    {'USD': D('0.00001')},
-                                    'USD'))
-        self.assertEqual(
-            D('0.001'),
-            inventory.get_tolerance({'USD': D('0.001')},
-                                    {'*': D('0.5')},
-                                    'USD'))
-
-    def test_default_tolerance__global(self):
-        self.assertEqual(
-            D('0.001'),
-            inventory.get_tolerance({},
-                                    {'USD': D('0.001'), '*': D('0.5')},
-                                    'USD'))
-
-    def test_default_tolerance__global_default(self):
-        self.assertEqual(
-            D('0.5'),
-            inventory.get_tolerance({},
-                                    {'USD': D('0.001'), '*': D('0.5')},
-                                    'JPY'))
-
-    def test_default_tolerance__not_found(self):
-        self.assertEqual(
-            ZERO,
-            inventory.get_tolerance({'USD': D('0.001')}, {},
-                                    'JPY'))

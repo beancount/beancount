@@ -1,6 +1,13 @@
 -*- mode: org -*-
 beancount: TODO
+* Types
+
+  - Remove misc_utils.Enum since we're committing to 3.5 with this branch.
+
+
 * Priorities
+
+booking_full.py: # FIXME: Refactor compute_cost_number() and convert_costspec_to_cost().
 
 - Start versioning very soon. It's desired by users.
 - Pivot report... very useful. I need it.
@@ -15,7 +22,6 @@ beancount: TODO
 {holding}
 {balance-where}
 {autogroup}
-{deprecation}
 {review-dcontext}
 {write-intro-doc}
 {commodity-required}
@@ -572,62 +578,9 @@ Improve this bit:
     modules provide a import_link() function on the associated PDF files?
     (This is related to ^64647f10b2fd)
 
-  - Adding the ability for links on document directives was also requested on
-    the ledger-cli mailing list.
-
-        On Sat, Apr 26, 2014 at 6:18 AM, Esben Stien <b0ef@esben-stien.name> wrote:
-
-        "Craig Earls" <enderw88@gmail.com> writes:
-         The first use in ledger-cli is to link each transaction to a document,
-        which is pretty important in accounting;)
-
-        Well no, not exactly. The thing you do in importing financial data is basically
-        to funnel transactions from all of your statements from all your institutions
-        in a single place in a single format with a single set of accounts, so that you
-        can do reporting with a view of everything you have. Having support for a
-        per-transaction link to a particular document is generally unnecessary--you can
-        easily find the corresponding document by date if you need to.
-
-        In order to associate a unique ID with a particular transaction, in Beancount
-        you can use a "link" which is like a special kind of tag. I think Ledger has a
-        similar feature, per-post ("tag"?). It looks like this in Beancount:
-
-          2013-04-06 * "Invoice to Metropolis for job well done, waiting for payment."
-          ^metropolis-invoice-103
-             ...
-             ...
-
-        The "^...." bit is a link. You can have multiple links per transactions. The
-        web interface can show you all transactions with the same link in a separate
-        list (under the /link/.... URL).
-
-        Separately, there is a "document" directive that allows you to associate a
-        document with an account, e.g.
-
-          2014-01-01 document  Expenses:Electricity
-          "/path/to/filename/ConEdison-2013-12.pdf"
-
-        Documents don't have to be declared that way explicitly: you can also tell
-        Beancount about a root directory where it will find documents automatically and
-        create the document entries for you. The files just have to be organized in a
-        directory hierarchy mirrorring the account names exactly, and files must begin
-        with "YYYY-MM-DD" to provide a date for the document. That's a simple
-        convention. LedgerHub is able to move files that it recognizes to such a file
-        hierarchy, so after you import the data, you file the files into e.g. a local
-        git repo with all your statemetns, and your document entries show up in the
-        registers. It's also a nice way to organize all your statements, so if you need
-        to bring something up for e.g. a tax audit, you quickly know where to find it.
-
-        Those two features are not related at the moment... but I think I'll add the
-        ability to have links on document directives. That seems like an effective way
-        one could associate a particular pdf document (given a declaration) with a list
-        of transactions. You click on the link, see all the transactions + the
-        document, and you can click on the document itself to see the detail. Seems
-        like a legit idea.
-
-  - Auto-doc from directories of files should ignore files already associated
-    via an explicit documents directive; just ignore files with the same
-    absolute name.
+  - Document directives created automatically from directories of files should
+    ignore documents already associated via an explicit documents directive;
+    just ignore files with the same absolute name.
 
   - Documents found in parent directories don't end up creating a directive
     because we skip them because we only restrict to accounts which have had an
@@ -2082,37 +2035,6 @@ http://furius.ca/beancount/doc/proposal-query
     negative amounts for prices. This will match Ledger semantics and will
     remove one degree of freedom that wasn't necessary.
 
-** Deprecation
-
-  Just some old things that are marked as not supported anymore; finally remove
-  them all at once. {deprecation}
-
-  - Remove the parsing of "CHECK" at some point, that was just there for
-    compatibility.
-
-  - Remove the "use_legacy_fixed_tolerances" option.
-
-  - Remove legacy support for PIPE character in syntax, update cheatsheet.
-
-  - Remove negative number warning and __ setting
-
-  - In 'beancount.core.number' and 'beancount.core.amount', there are deprecated
-    sections; remove them.
-
-  - Remove support for DEPRECATED_MODULES module names.
-
-  - Remove deprecated options, 'tolerance'.
-
-  - Remove deprecated options, 'plugin' (replaced by a directive).
-
-  - Remove support for deprecated variants in all option names.
-
-  - Remove Enum from misc_utils and commit to 3.5 and above.
-  - When you do this, also add @enum.unique to beancount.core.data.BookingMethod.
-
-  - When the 'booking' branch is complete, remove deprecated support for total
-    cost (e.g., {{ ... }}), we won't need it anymore.
-
 ** Parser Cleanup & Improvements
 
   - You need to validate the account name options (empty, or no :, use regex to
@@ -2163,14 +2085,14 @@ http://furius.ca/beancount/doc/proposal-query
   - BUG: This input file without currencies does not currently fail! This is due
     to the parser accepting incomplete input. It should fail!
 
-      2014-01-01 * "Buy Google"
-        Assets:US:Broker:GOOGL      120.00  {1212.5100 USD}
+      2014-01-01 * "Buy Hooli"
+        Assets:US:Broker:HOOL      120.00  {1212.5100 USD}
         Assets:US:Broker:Cash
 
-      2014-04-08 * "GOOGLE INC CL C SPINOFF   ON"
-        Assets:US:Broker:GOOGL     -120.00  {1212.5100 USD}
-        Assets:US:Broker:GOOGL      120.00  {1212.5100 * 0.4992 USD}
-        Assets:US:Broker:GOOG       120.00  {1212.5100 * 0.5008 USD}
+      2014-04-08 * "HOOLI INC CL C SPINOFF   ON"
+        Assets:US:Broker:HOOLA     -120.00  {1212.5100 USD}
+        Assets:US:Broker:HOOLA      120.00  {1212.5100 * 0.4992 USD}
+        Assets:US:Broker:HOOL       120.00  {1212.5100 * 0.5008 USD}
 
   - When an error occurs while parsing a directive/transaction, add the ability
     to let the parser skip until the next directive and ignore the parsed
@@ -2423,11 +2345,8 @@ http://furius.ca/beancount/doc/proposal-query
           def __str__(self):
               return _Posting.__str__(self._replace(entry=None))
 
-  - Also derive from namedtuple to provide a stable hash function instead of
-    code in beancount.core.compare.
-
-  - Try creating a "Record" class to replace namedtuple using a class decorator
-    and properties.
+  - Also derive from typing.Namedtuple to provide a stable hash function instead
+    of code in beancount.core.compare.
 
 ** Typed Data Types
 
@@ -4731,6 +4650,26 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - Add an AVERAGE function to the SQL shell.
+    See related discussion, I would like to compute this for myself too:
+    https://groups.google.com/d/msg/ledger-cli/dWuWysV6qZU/cyYNzleTCAAJ
+
+  - There ought to be some unit tests for all the custom metadata added to
+    Posting instances. I think this is undertested at the moment.
+
+  - Implement a new plugin to convert metadata-fields to Document directives.
+
+      Scan all transactions that have the invoice-metadata field (or any other
+    suiting field-name of your choice), and create a Document directive for
+    each, with a link to the transaction it comes from.
+
+    In doing so, add support for "fuzzy-matching":  When only a relative
+    filename is specified in the metadata-field (and Document directive), search
+    different locations based on the Account this is on/in.
+
+    See https://github.com/aumayr/fava/issues/386#issuecomment-256895713.
+
+
   - Core: Some problems occur (with the new method) if you mix at-cost and
     without-cost for the same currency, like this:
 
@@ -4760,6 +4699,10 @@ http://furius.ca/beancount/doc/proposal-query
     this needs to be applied during matching, we cannot implement this in a
     plugin, this needs to become an option (to allow it, and to make it
     disallowed by default) in the parser itself.
+
+  - The Beancount loader cache should be automatically invalidated if the
+    revision of Beancount has been updated. This could avoid some potentially
+    confusing user interpretation of errors.
 
   - You need to add options to provide the precision to use for prices,
     otherwise something like this:
@@ -4840,10 +4783,6 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Port all my wash sales scripts to use the new booking method. This ought to
     be working now, with the new booking method.
-
-  - The printer should not output the | separator anymore, that's just
-    deprecated. Do this now, make sure all the tests still work. This may affect
-    some of the importers.
 
   - Create an explicit license for my documentation, one that is compatible to
     publishing this as a book later on.
@@ -5372,3 +5311,31 @@ http://furius.ca/beancount/doc/proposal-query
       Please let us know if you have any additional questions or if we can be of any
       further assistance. Thank you for being a Betterment customer, have a wonderful
       day."
+
+
+** Adding Types
+
+  Comments from YYing re. adding types:
+  https://bitbucket.org/blais/beancount/issues/140/add-type-annotation-to-beancount-codebase
+
+  - typing.NamedTuple is a good drop-in replacement for namedtuple. See
+    https://github.com/yegle/beancount-type-stubs/blob/master/beancount/core/data.pyi
+    for example
+
+  - There should be an abc for all directives, thus the signatures of many
+    functions can expressed more accurately. E.g.
+    https://github.com/yegle/beancount-type-stubs/blob/master/beancount/core/data.pyi#L149
+    without a proper abc, the argument can only be List[Any]
+
+  - Some bad design choice is more obvious when adding type annotation. E.g.
+    https://github.com/yegle/beancount-type-stubs/blob/master/beancount/core/data.pyi#L67
+    the tags field of Transcation type is an Optional[Set[str]]. I think it should
+    be a Set[str] since an empty set should be sufficient to express "there's no
+    tags for this transaction". I'm not sure if there's any difference in turns of
+    performance
+
+  - mypy has very limited ability to infer function return types. E.g. functions
+    like is_balance_sheet_account in beancount/core/account_types.py, which
+    returns foo in bar, mypy is unable to infer that the return type is a bool.
+    I think pytype from Google have better type inference but it's written in
+    Python2 and I haven't figure out how to run it against python3 code.

@@ -56,7 +56,8 @@ This provides yet another level of verification and allows you to elide the
 income amounts, knowing that the price is there to provide an extra level of
 error-checking in case you enter a typo.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 
@@ -94,8 +95,6 @@ def validate_sell_gains(entries, options_map):
                          acc_types.liabilities,
                          acc_types.equity,
                          acc_types.expenses])
-
-    default_tolerances = options_map['inferred_tolerance_default']
 
     for entry in entries:
         if not isinstance(entry, data.Transaction):
@@ -138,9 +137,7 @@ def validate_sell_gains(entries, options_map):
             # Accept a looser than usual tolerance because rounding occurs
             # differently. Also, it would be difficult for the user to satisfy
             # two sets of constraints manually.
-            tolerance = inventory.get_tolerance(tolerances,
-                                                default_tolerances,
-                                                currency) * EXTRA_TOLERANCE_MULTIPLIER
+            tolerance = tolerances.get(currency) * EXTRA_TOLERANCE_MULTIPLIER
 
             proceeds_number = dict_proceeds.pop(currency, ZERO)
             diff = abs(price_number - proceeds_number)

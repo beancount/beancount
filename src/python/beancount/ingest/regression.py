@@ -10,7 +10,8 @@ regression tests for your importers. Use it like this in your own importer code:
        yield from regression.compare_sample_files(importer, __file__)
 
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import datetime
 import io

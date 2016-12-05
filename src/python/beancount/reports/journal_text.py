@@ -1,6 +1,7 @@
 """Text rendering routines for serving a lists of postings/entries.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import csv
 import itertools

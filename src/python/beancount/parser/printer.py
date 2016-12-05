@@ -1,6 +1,7 @@
 """Conversion from internal data structures to text.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import codecs
 import datetime
@@ -145,7 +146,7 @@ class EntryPrinter:
         # Compute the string for the payee and narration line.
         strings = []
         if entry.payee:
-            strings.append('"{}" |'.format(entry.payee))
+            strings.append('"{}"'.format(entry.payee))
         if entry.narration:
             strings.append('"{}"'.format(entry.narration))
         elif entry.payee:
