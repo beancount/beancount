@@ -4,6 +4,22 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-12-05
+
+  - Merged changes made for calculating wash sales a long time ago. I had
+    implemnted a temporary kludge to carry dates on all augmenting postings,
+    left it in a branch so I could use it there for taxes every year. Now that
+    the booking branch is merged, this is supported by default, so I could undo
+    that kludge. Some changes remained:
+
+    * The Inventory.add_amount() method used to return the modified position.
+      Now it returns the position before being modified, which is more useful.
+
+    * The list-wash-sales.py script has been updated. It now works on 'default'.
+
+    * The 'carry_date_and_book_cost' branch has been merged away.
+
+
 2016-12-04
 
   - Made .tags and .links attributes of b.data.Transaction and b.data.Document
@@ -374,48 +390,6 @@ Note: This file contains only changes in the 'default' branch.
   - Made account name components allowed to have two characters (beyond the
     first component). For instance, Assets:Investments:F is now a valid account
     name.
-
-
-2016-??-??
-
-  - In order to carry out some important tax work, I've added an experimental
-    option to kludge in a feature that will be available by default when the
-    'booking' branch and proposal is complete: the automatic association of
-    dates on augmenting postings. For example, when you buy some instrument and
-    hold it at cost, that lot will always carry its transaction's date, unless
-    you had specified a particular date in the input syntax. (With this, I can
-    produce lists of stocks with their acquisition date and infer short or long
-    term capital gains.)
-
-    This also meant that I needed to change the method used to reduce an
-    inventory to match only on the cost amount instead of on all detail of the
-    cost spec provided in the input. This means that if you truly used the date
-    to disambiguate between two lots at the same cost (this should be
-    exceedingly rare), using this option, the behavior is undefined.
-
-    By default, nothing changes. If you want to turn on this behavior, you need
-    to set the new option like this:
-
-      option "experiment_carry_date_and_book_cost" "TRUE"
-
-    In the long term, with the "FULL" booking method (from the 'booking'
-    branch), this behavior will always be the default. Also note that the
-    implementation of this feature is somewhat kludgy in that it sets global
-    state. This will go away.
-
-  - Made some important internal changes to beancount.core.inventory.Inventory,
-    changes which are only triggered when the
-    "experiment_carry_date_and_book_cost" option is set: augmenting a position
-    requires an exact match on the lot (and this almost never happens because
-    the cost carries the date from its transaction) but for reducing a lot, only
-    the cost number and currency has to match. This will be removed when the
-    'booking' branch will be merged.
-
-    This behavior is not triggered in the normal case, and you should observe no
-    change in behavior. However, the return value of Inventory.add_amount() has
-    changed: it used to be inconsistent, it now returns the PREVIOUS position
-    that was modified, before it got modified. I had to change some of the few
-    places which use this return value in order to fix this inconsistency.
 
 
 2016-07-11

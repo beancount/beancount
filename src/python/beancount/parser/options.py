@@ -493,26 +493,6 @@ PUBLIC_OPTION_GROUPS = [
               converter=options_validate_boolean,
               deprecated=('Allowing None for tags and link '
                           'will go away eventually.'))]),
-    OptGroup("""
-      Enable a TEMPORARY feature which does two things: first, it carries the
-      date of a Transaction object onto all Posting instances which do not have
-      an explicit date provided in the input (at parse time) and are augmenting
-      postings (please note: values greater than zero only, short reductions
-      will fail for now), and second, the inventory booking method does not
-      require a strict match of the cost spec, it only requires for the cost
-      amount to match. This may trigger some ambiguities in cases where you had
-      been using the date to disambiguate a match.
-
-      If there are no ambiguities, this will ensure that all lots have an
-      acquisition date. This is very useful for reporting the full detail of
-      lots for tax purposes.
-
-      In the long term, with the "FULL" booking method (from the 'booking'
-      branch), this behavior  will always be the default. Also note that the
-      implementation of this feature is somewhat kludgy in that it sets global
-      state.
-    """, [Opt("experiment_carry_date_and_book_cost", True, False)]),
-
     ]
 
 

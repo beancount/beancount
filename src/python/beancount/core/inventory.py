@@ -65,11 +65,6 @@ class Booking(enum.Enum):
     IGNORED = 4   # No change was applied.
 
 
-# Global value of the 'experiment_carry_date_and_book_cost' option. This is set
-# by the parser. This is a kludge.
-CARRY_DATE_AND_BOOK_COST = False
-
-
 class Inventory(list):
     """An Inventory is a set of positions.
 
@@ -377,54 +372,24 @@ class Inventory(list):
 
         # Find the position.
         for index, pos in enumerate(self):
-            if pos.units.currency == units.currency:
+            if (pos.units.currency == units.currency and
+                pos.cost == cost):
+                # Note: In order to augment or reduce, all the fields have to match.
 
-                if not CARRY_DATE_AND_BOOK_COST:
-                    # Look for an exact match. This is the pre-'booking' branch
-                    # behavior. In order to augment or reduce, all the fields
-                    # have to match.
-                    if pos.cost == cost:
-                        # Check if reducing.
-                        booking = (Booking.REDUCED
-                                   if not same_sign(pos.units.number, units.number) else
-                                   Booking.AUGMENTED)
+                # Check if reducing.
+                booking = (Booking.REDUCED
+                           if not same_sign(pos.units.number, units.number) else
+                           Booking.AUGMENTED)
 
-                        # Compute the new number of units.
-                        number = pos.units.number + units.number
-                        if number == ZERO:
-                            # If empty, delete the position.
-                            del self[index]
-                        else:
-                            # Otherwise update it.
-                            self[index] = Position(Amount(number, units.currency), cost)
-                        break
+                # Compute the new number of units.
+                number = pos.units.number + units.number
+                if number == ZERO:
+                    # If empty, delete the position.
+                    del self[index]
                 else:
-                    # In order to augment, the full cost has to match, with all
-                    # details.
-                    booking = None
-                    if pos.cost == cost:
-                        booking = (Booking.AUGMENTED
-                                   if same_sign(pos.units.number, units.number)
-                                   else Booking.REDUCED)
-
-                    # In order to reduce, only the cost has to match.
-                    elif (pos.cost and cost and
-                          pos.cost.number == cost.number and
-                          pos.cost.currency == cost.currency and
-                          not same_sign(pos.units.number, units.number)):
-                        booking = Booking.REDUCED
-
-                    if booking is not None:
-                        # Compute the new number of units.
-                        number = pos.units.number + units.number
-                        if number == ZERO:
-                            # If empty, delete the position.
-                            del self[index]
-                        else:
-                            # Otherwise update it.
-                            self[index] = Position(Amount(number, units.currency), pos.cost)
-                        break
-
+                    # Otherwise update it.
+                    self[index] = Position(Amount(number, units.currency), cost)
+                break
         else:
             # If not found, create a new one.
             pos = None
