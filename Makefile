@@ -216,6 +216,7 @@ check-copyright:
 LINT_SRCS =					\
   $(SRC)/beancount				\
   examples/ingest/office/importers		\
+  tools
 
 pylint lint:
 	pylint --rcfile=$(PWD)/etc/pylintrc $(LINT_SRCS)

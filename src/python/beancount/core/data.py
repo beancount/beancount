@@ -4,7 +4,6 @@ __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import builtins
-import collections
 import datetime
 import enum
 import sys
@@ -21,6 +20,7 @@ from beancount.utils.bisect_key import bisect_left_with_key
 
 
 # Type declarations.
+# pylint: disable=invalid-name
 Account = str
 Currency = str
 Flag = str

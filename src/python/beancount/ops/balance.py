@@ -5,7 +5,6 @@ __license__ = "GNU GPLv2"
 
 import collections
 
-from beancount.core.number import D
 from beancount.core.number import ONE
 from beancount.core.number import ZERO
 from beancount.core.data import Transaction

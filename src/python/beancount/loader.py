@@ -189,13 +189,13 @@ def pickle_cache_function(pattern, time_threshold, function):
                 logging.warning("Could not remove picklecache file %s: %s",
                                 cache_filename, exc)
 
-        t1 = time.time()
+        time_before = time.time()
         result = function(toplevel_filename, *args, **kw)
-        t2 = time.time()
+        time_after = time.time()
 
         # Overwrite the cache file if the time it takes to compute it
         # justifies it.
-        if t2 - t1 > time_threshold:
+        if time_after - time_before > time_threshold:
             try:
                 with open(cache_filename, 'wb') as file:
                     pickle.dump(result, file)
@@ -210,7 +210,7 @@ def pickle_cache_function(pattern, time_threshold, function):
 def _load_file(filename, *args, **kw):
     """Delegate to _load. Note: This gets conditionally advised by caching below."""
     return _load([(filename, True)], *args, **kw)
-_uncached_load_file = _load_file
+_uncached_load_file = _load_file  # pylint: disable=invalid-name
 
 
 def needs_refresh(options_map):
@@ -587,6 +587,7 @@ def initialize():
 
     # Unless an environment variable disables it, use the pickle load cache
     # automatically.
+    # pylint: disable=invalid-name
     global _load_file
     if os.getenv('BEANCOUNT_DISABLE_LOAD_CACHE') is None:
         _load_file = pickle_cache_function(

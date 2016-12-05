@@ -12,7 +12,6 @@ from beancount.core import position
 from beancount.parser import cmptest
 from beancount.parser import parser
 from beancount.parser import booking_simple
-from beancount.parser import printer
 
 
 # True if errors are generated on residual by get_incomplete_postings().
