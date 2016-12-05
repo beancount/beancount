@@ -4,6 +4,22 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-12-04
+
+  - Updated all copyright and license notices on all files.
+
+  - Added a script to automatically verify that all source files include a
+    copyright notice.
+
+  - Removed ancestral Beancount documentation from eons ago. These notes and
+    conversationsa are now wildly irrelevant to the current state of Beancount,
+    and all the documentation from Google Docs is vastly more recent and
+    obsoletes all these old snippets and notes.
+
+  - Moved all development tools under tools/, from etc/ and
+    experiments/code-health/.
+
+
 2016-12-03
 
   - Fixed fava bug #429, avoid empty conversion entries if the cost of the

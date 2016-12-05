@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """An experiment plotting net worth values over time in all operating currencies.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 import datetime

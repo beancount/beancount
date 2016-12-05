@@ -1,7 +1,8 @@
 #!/usr/bin/python
 """Download all the Beancount docs from Google Drive and bake a nice PDF with it.
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import argparse
 import datetime

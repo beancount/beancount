@@ -1,6 +1,7 @@
 """Basic data structures used to represent the Ledger entries.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import builtins
 import collections

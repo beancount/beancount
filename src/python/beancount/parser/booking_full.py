@@ -69,7 +69,8 @@ occur. We may consider that for later, as an experimental feature. My hunch is
 that there are so few cases for which this would be useful that we won't bother
 improving on the algorithm above.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 import copy

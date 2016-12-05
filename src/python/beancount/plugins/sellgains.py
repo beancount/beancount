@@ -56,7 +56,8 @@ This provides yet another level of verification and allows you to elide the
 income amounts, knowing that the price is there to provide an extra level of
 error-checking in case you enter a typo.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 

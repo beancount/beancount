@@ -2085,14 +2085,14 @@ http://furius.ca/beancount/doc/proposal-query
   - BUG: This input file without currencies does not currently fail! This is due
     to the parser accepting incomplete input. It should fail!
 
-      2014-01-01 * "Buy Google"
-        Assets:US:Broker:GOOGL      120.00  {1212.5100 USD}
+      2014-01-01 * "Buy Hooli"
+        Assets:US:Broker:HOOL      120.00  {1212.5100 USD}
         Assets:US:Broker:Cash
 
-      2014-04-08 * "GOOGLE INC CL C SPINOFF   ON"
-        Assets:US:Broker:GOOGL     -120.00  {1212.5100 USD}
-        Assets:US:Broker:GOOGL      120.00  {1212.5100 * 0.4992 USD}
-        Assets:US:Broker:GOOG       120.00  {1212.5100 * 0.5008 USD}
+      2014-04-08 * "HOOLI INC CL C SPINOFF   ON"
+        Assets:US:Broker:HOOLA     -120.00  {1212.5100 USD}
+        Assets:US:Broker:HOOLA      120.00  {1212.5100 * 0.4992 USD}
+        Assets:US:Broker:HOOL       120.00  {1212.5100 * 0.5008 USD}
 
   - When an error occurs while parsing a directive/transaction, add the ability
     to let the parser skip until the next directive and ignore the parsed

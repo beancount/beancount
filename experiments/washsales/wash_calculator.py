@@ -10,7 +10,8 @@ You specify
 The script will then output a list of events to be analyzed for wash sales. Then
 it will compute the wash sales and resulting cost bases.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 import datetime

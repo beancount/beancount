@@ -7,7 +7,8 @@ full detail of these daily interests, and compressing these interest-only
 entries to monthly ones made sense. This is the code that was used to carry this
 out.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013, 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 

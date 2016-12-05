@@ -7,7 +7,8 @@ postings are all aligned to the same column. The currency should match.
 Note: this does not parse the Beancount ledger. It simply uses regular
 expressions and text manipulations to do its work.
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 import io

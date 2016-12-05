@@ -6,7 +6,8 @@ a specific time period: we don't want to see the entries from before some period
 of time, so we fold them into a single transaction per account that has the sum
 total amount of that account.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import datetime
 import collections

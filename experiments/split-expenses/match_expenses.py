@@ -22,7 +22,8 @@ At the end of the trip, before reconciling the income and expenses, one has to
 make sure that each person's personal expenses have been replicated as income
 postings in the shared common file. This is what this script does.
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import re
 import collections

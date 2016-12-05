@@ -15,7 +15,8 @@ please consider either writing one or contributing changes. Also, this importer
 does its own very basic parsing; a better one would probably use (and depend on)
 the ofxparse module (see https://sites.google.com/site/ofxparse/).
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import datetime
 import enum

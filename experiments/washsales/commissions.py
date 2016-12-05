@@ -40,7 +40,8 @@ a 'commission' metadata. This can be used for reporting on individual lots
 without the commissions. See the list-wash-sales script in experiments, which
 uses this.
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 import re
