@@ -6,6 +6,7 @@ DOWNLOADS = $(HOME)/u/Downloads
 
 GREP="grep --include="*.py" -srnE"
 SRC=src/python
+TOOLS=./etc
 
 PYTHON=python3
 #PYTHON=$(HOME)/src/python/vginstall/bin/python3
@@ -187,7 +188,7 @@ sandbox:
 	bean-sandbox $(INPUT)
 
 missing-tests:
-	./etc/find-missing-tests.py $(SRC)
+	$(TOOLS)/find-missing-tests.py $(SRC)
 
 fixmes:
 	egrep -srn '\b(FIXME|TODO\()' $(SRC) || true
@@ -204,10 +205,10 @@ sfood-checker:
 
 # Check dependency constraints.
 constraints dep-constraints: build/beancount.deps
-	./etc/dependency-constraints.py $<
+	$(TOOLS)/dependency-constraints.py $<
 
 check-copyright:
-	./etc/check-copyright.py --root=$(PWD)
+	$(TOOLS)/check-copyright.py --root=$(PWD)
 
 
 # Run the linter on all source code.

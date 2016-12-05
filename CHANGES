@@ -16,6 +16,9 @@ Note: This file contains only changes in the 'default' branch.
     and all the documentation from Google Docs is vastly more recent and
     obsoletes all these old snippets and notes.
 
+  - Moved all development tools under tools/, from etc/ and
+    experiments/code-health/.
+
 
 2016-12-03
 
