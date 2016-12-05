@@ -144,12 +144,12 @@ def main():
         new_contents = process(filename, contents)
 
         if 0:
-        with tempfile.NamedTemporaryFile('w') as f:
-            f.write(new_contents)
-            f.flush()
-            if 0:
-                print(filename)
-                subprocess.call(['diff', filename, f.name])
+            with tempfile.NamedTemporaryFile('w') as f:
+                f.write(new_contents)
+                f.flush()
+                if 0:
+                    print(filename)
+                    subprocess.call(['diff', filename, f.name])
 
         with open(filename, 'w') as f:
             f.write(new_contents)
