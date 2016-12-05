@@ -10,6 +10,7 @@ __license__ = "GNU GPLv2"
 import argparse
 import collections
 import datetime
+import itertools
 import logging
 import os
 import re
@@ -195,8 +196,16 @@ def main():
     total_loss = collections.defaultdict(D)
     total_gain = collections.defaultdict(D)
     total_adj = collections.defaultdict(D)
+
+    # If no mssb number has been assigned explicitly, assign a random one. I
+    # need to figure out how to find those numbers again.
+    auto_mssb_number = itertools.count(start=1000000 + 1)
+
     for sale in sales:
-        sale_no = sale.txn.meta['mssb']
+        try:
+            sale_no = sale.txn.meta['mssb']
+        except KeyError:
+            sale_no = next(auto_mssb_number)
         ref = sale.txn.meta['ref']
 
         units = sale.posting.units
