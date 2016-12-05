@@ -4,9 +4,6 @@
 Note: This file contains only changes in the 'default' branch.
 
 
-  - Fixed bug with UNITS() function when applied to a Position object.
-
-
 2016-12-05
 
   - Merged changes made for calculating wash sales a long time ago. I had
