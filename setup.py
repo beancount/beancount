@@ -2,6 +2,8 @@
 """
 Install script for beancount.
 """
+__copyright__ = "Copyright (C) 2008-2011, 2013-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 
 import os

@@ -7,7 +7,8 @@ invariants are violated. They are not sanity checks--user data is subject to
 constraints which are hopefully detected here and which will result in errors
 trickled up to the user.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 from os import path
 import collections

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Count and report the number of arguments used to call a particular function in a codebase.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import ast
 import os

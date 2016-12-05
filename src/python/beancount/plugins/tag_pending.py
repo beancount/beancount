@@ -26,7 +26,8 @@ the corresponding view in the web interface, or just find the entries and
 produce a listing of them.
 """
 
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2014-2015  Martin Blais"
+__license__ = "GNU GPLv2"
 
 from beancount.core import inventory
 from beancount.ops import basicops

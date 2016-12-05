@@ -3,7 +3,8 @@
 Python answer to:
 https://gist.github.com/darthcloud/134875df4e624b0cf92a
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import argparse
 import csv

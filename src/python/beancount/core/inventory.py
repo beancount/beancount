@@ -40,7 +40,8 @@ pull to do this is that for positions which aren't booked, we simply leave the '
   match.
 
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import copy
 import collections

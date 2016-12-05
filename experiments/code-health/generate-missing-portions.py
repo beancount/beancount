@@ -2,7 +2,8 @@
 """
 Generate all combinations and permutations of missing accounts.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import sys
 

@@ -3,8 +3,8 @@
 
 hg log --template '{date|isodate} {desc}\n' src/python/beancount/core/inventory.py    2>&1 | less
 """
-__copyright__ = "Copyright (C) 2007-2016  Martin Blais"
-__license__ = "GNU GPL v2 only"
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import argparse
 import contextlib
