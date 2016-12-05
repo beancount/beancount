@@ -489,7 +489,7 @@ def conversions(entries, conversion_account, conversion_currency, date=None):
     meta = data.new_metadata('<conversions>', -1)
     narration = 'Conversion for {}'.format(conversion_balance)
     conversion_entry = Transaction(meta, last_date, flags.FLAG_CONVERSIONS,
-                                   None, narration, None, None, [])
+                                   None, narration, data.EMPTY_SET, data.EMPTY_SET, [])
     for position in conversion_cost_balance.get_positions():
         # Important note: Set the cost to zero here to maintain the balance
         # invariant. (This is the only single place we cheat on the balance rule
@@ -563,7 +563,7 @@ def create_entries_from_balances(balances, date, source_account, direction,
 
         postings = []
         new_entry = Transaction(
-            meta, date, flag, None, narration, None, None, postings)
+            meta, date, flag, None, narration, data.EMPTY_SET, data.EMPTY_SET, postings)
 
         for position in account_balance.get_positions():
             postings.append(data.Posting(account, position.units, position.cost,

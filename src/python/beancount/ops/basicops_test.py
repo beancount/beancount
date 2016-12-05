@@ -57,12 +57,17 @@ class TestBasicOpsLinks(unittest.TestCase):
         date = datetime.date(2014, 5, 10)
         self.assertEqual(
             {'apple': [
-                data.Transaction(None, date, '*', None, 'B', None, {'apple'}, None),
-                data.Transaction(None, date, '*', None, 'D', None, {'apple', 'banana'},
+                data.Transaction(None, date, '*', None, 'B',
+                                 data.EMPTY_SET, {'apple'}, None),
+                data.Transaction(None, date, '*', None, 'D',
+                                 data.EMPTY_SET, {'apple', 'banana'},
                                  None)],
              'banana': [
-                 data.Transaction(None, date, '*', None, 'C', None, {'banana'}, None),
-                 data.Transaction(None, date, '*', None, 'D', None, {'apple', 'banana'},
+                 data.Transaction(None, date, '*', None, 'C',
+                                  data.EMPTY_SET, {'banana'},
+                                  None),
+                 data.Transaction(None, date, '*', None, 'D',
+                                  data.EMPTY_SET, {'apple', 'banana'},
                                   None)]},
             link_groups)
 

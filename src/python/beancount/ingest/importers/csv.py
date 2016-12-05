@@ -189,14 +189,15 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
             narration = ' -- '.join(fields)
 
             tag = get(row, Col.TAG)
-            tags = {tag} if tag is not None else None
+            tags = {tag} if tag is not None else data.EMPTY_SET
 
             # Create a transaction and add it to the list of new entries.
             meta = data.new_metadata(file.name, index)
             if txn_date is not None:
                 meta['txndate'] = parse_date_liberally(txn_date)
             date = parse_date_liberally(date)
-            txn = data.Transaction(meta, date, self.FLAG, payee, narration, tags, None, [])
+            txn = data.Transaction(meta, date, self.FLAG, payee, narration,
+                                   tags, data.EMPTY_SET, [])
             entries.append(txn)
 
             amount_debit, amount_credit = get_amounts(iconfig, row)

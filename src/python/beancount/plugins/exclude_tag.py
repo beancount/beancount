@@ -30,6 +30,6 @@ def exclude_tag(entries, options_map):
     filtered_entries = [entry
                         for entry in entries
                         if (not isinstance(entry, data.Transaction) or
-                            entry.tags is None or
+                            not entry.tags or
                             EXCLUDED_TAG not in entry.tags)]
     return (filtered_entries, [])
