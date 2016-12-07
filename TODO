@@ -1121,6 +1121,25 @@ http://furius.ca/beancount/doc/proposal-query
     Also, there should be an option to bean-query (or less likely, a dedicated
     command) to generate all the queries defined in an input file.
 
+** SQL Shell (saved notes from 'shell' branch)
+
+  - Rewrite the shell code from scratch to be independent of Beancount:
+
+    * Compilation should generate a Python AST and that should get compiled by
+      the Python compiler and executed directly.
+
+    * Data sources should be abstracted away to provide rows of any type. This
+      should include support for dotted notation. The main data source type
+      should be "beancount.postings" as in
+
+        "from beancount.postings:/path/to/filename"
+
+    * It should be possible to provide the schema separately, in the SQL.
+
+    * The new rendering code should use the DisplayContext. This would close the
+      "display_context" branch.
+
+
 * SQLite3 Integration
 
   - Another area of shell experimentation is that I should build some way to
