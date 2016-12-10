@@ -11,6 +11,8 @@ __license__ = "GNU GPLv2"
 
 import re
 
+from typing import NamedTuple, Optional
+
 from beancount.core.display_context import DEFAULT_FORMATTER
 from beancount.core.number import ZERO
 from beancount.core.number import Decimal
@@ -21,30 +23,32 @@ from beancount.core.number import D
 # Note: This is kept in sync with "beancount/parser/lexer.l".
 CURRENCY_RE = r'[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]'
 
+_Amount = NamedTuple('_Amount', [
+    ('number', Optional[Decimal]),
+    ('currency', str)])
 
-class Amount:
+class Amount(_Amount):
     """An 'Amount' represents a number of a particular unit of something.
 
     It's essentially a typed number, with corresponding manipulation operations
     defined on it.
     """
 
-    __slots__ = ('number', 'currency')
+    __slots__ = ()  # Prevent the creation of new attributes.
 
     valid_types_number = (Decimal, type, type(None))
     valid_types_currency = (str, type, type(None))
 
-    def __init__(self, number, currency):
+    def __new__(cls, number, currency):
         """Constructor from a number and currency.
 
         Args:
           number: A string or Decimal instance. Will get converted automatically.
           currency: A string, the currency symbol to use.
         """
-        assert isinstance(number, self.valid_types_number), repr(number)
-        assert isinstance(currency, self.valid_types_currency), repr(currency)
-        self.number = number
-        self.currency = currency
+        assert isinstance(number, Amount.valid_types_number), repr(number)
+        assert isinstance(currency, Amount.valid_types_currency), repr(currency)
+        return _Amount.__new__(cls, number, currency)
 
     def to_string(self, dformat=DEFAULT_FORMATTER):
         """Convert an Amount instance to a printable string.

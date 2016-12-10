@@ -10,6 +10,8 @@ import datetime
 import collections
 import re
 
+from typing import NamedTuple, Optional
+
 from beancount.core.number import ZERO
 from beancount.core.number import Decimal
 from beancount.core.number import NUMBER_RE
@@ -28,8 +30,11 @@ from beancount.core.display_context import DEFAULT_FORMATTER
 #   date: A datetime.date for the date that the lot was created at. There
 #      should always be a valid date.
 #   label: A string for the label of this lot, or None, if there is no label.
-Cost = collections.namedtuple(
-    'Cost', 'number currency date label')
+Cost = NamedTuple('Cost', [
+    ('number', Decimal),
+    ('currency', str),
+    ('date', datetime.date),
+    ('label', Optional[str])])
 
 
 # A stand-in for an "incomplete" Cost, that is, a container all the data that
@@ -46,8 +51,14 @@ Cost = collections.namedtuple(
 #   label: A string for the label of this lot, or None if unspecified.
 #   merge: A boolean, true if this specification calls for averaging the units
 #      of this lot's currency, or False if unspecified.
-CostSpec = collections.namedtuple(
-    'CostSpec', 'number_per number_total currency date label merge')
+CostSpec = NamedTuple('CostSpec', [
+    ('number_per', Optional[Decimal]),
+    ('number_total', Optional[Decimal]),
+    ('currency', Optional[str]),
+    ('date', Optional[datetime.date]),
+    ('label', Optional[str]),
+    ('merge', Optional[bool])])
+
 
 
 def cost_to_str(cost, dformat, detail=True):
@@ -140,7 +151,11 @@ def to_string(pos, dformat=DEFAULT_FORMATTER, detail=True):
     return pos_str
 
 
-class Position:
+_Position = NamedTuple('_Position', [
+    ('units', Amount),
+    ('cost', Cost)])
+
+class Position(_Position):
     """A 'Position' is a pair of units and optional cost.
     This is used to track inventories.
 
@@ -148,18 +163,18 @@ class Position:
       units: An Amount, the number of units and its currency.
       cost: A Cost that represents the lot, or None.
     """
-    __slots__ = ('units', 'cost')
+
+    __slots__ = ()  # Prevent the creation of new attributes.
 
     # Allowed data types for lot.cost
     cost_types = (Cost, CostSpec)
 
-    def __init__(self, units, cost=None):
+    def __new__(cls, units, cost=None):
         assert isinstance(units, Amount), (
             "Expected an Amount for units; received '{}'".format(units))
         assert cost is None or isinstance(cost, Position.cost_types), (
             "Expected a Cost for cost; received '{}'".format(cost))
-        self.units = units
-        self.cost = cost
+        return _Position.__new__(cls, units, cost)
 
     def __hash__(self):
         """Compute a hash for this position.
@@ -286,17 +301,6 @@ class Position:
             pos = Position(Amount(self.units.number * cost.number, self.cost.currency),
                            None)
         return pos
-
-    def add(self, number):
-        """Add a number of units to this position.
-
-        Args:
-          number: A Decimal instance, the number of units to add to this position.
-        """
-        # Note: Checks for positions going negative do not belong here, but
-        # rather belong in the inventory.
-        assert isinstance(number, Decimal)
-        self.units = Amount(self.units.number + number, self.units.currency)
 
     def get_negative(self):
         """Get a copy of this position but with a negative number.

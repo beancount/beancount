@@ -14,6 +14,7 @@ from beancount.core.inventory import Inventory
 from beancount.core.number import MISSING
 from beancount.core.number import ZERO
 from beancount.core.position import Cost
+from beancount.core.position import Position
 
 from beancount.core import account
 from beancount.core import interpolate
@@ -295,21 +296,27 @@ def get_incomplete_postings(entry, options_map):
             # each position.
             for pos in residual_positions:
                 pos = -pos
-                pos.set_units(Amount(
+
+                units = pos.units
+                new_units = Amount(
                     interpolate.quantize_with_tolerance(tolerances,
-                                                        pos.units.currency,
-                                                        pos.units.number),
-                    pos.units.currency))
+                                                        units.currency,
+                                                        units.number),
+                    units.currency)
 
                 meta = copy.copy(old_posting.meta) if old_posting.meta else {}
                 meta[interpolate.AUTOMATIC_META] = True
                 new_postings.append(
-                    Posting(old_posting.account, pos.units, pos.cost,
+                    Posting(old_posting.account, new_units, pos.cost,
                             None, old_posting.flag, meta))
                 has_inserted = True
 
+                # Note/FIXME: This is dumb; refactor cost computation so we can
+                # reuse it directly.
+                new_pos = Position(new_units, pos.cost)
+
                 # Update the residuals inventory.
-                weight = pos.get_cost()
+                weight = new_pos.get_cost()
                 residual.add_amount(weight)
 
         postings[index:index+1] = new_postings

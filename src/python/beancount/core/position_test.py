@@ -229,12 +229,6 @@ class TestPosition(unittest.TestCase):
         self.assertEqual(A('15 AUD'), cost_pos.units)
         self.assertEqual(A('15 AUD'), cost_pos.get_cost())
 
-    def test_add(self):
-        pos = Position(A("28372 USD"), Cost(D('10'), 'AUD', None, None))
-        pos.add(D('337'))
-        self.assertEqual(A('28709 USD'), pos.units)
-        self.assertEqual(A('287090 AUD'), pos.get_cost())
-
     def test_negative(self):
         pos = Position(A("28372 USD"), Cost(D('10'), 'AUD', None, None))
         negpos = pos.get_negative()
