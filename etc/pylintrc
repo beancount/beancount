@@ -7,9 +7,6 @@
 # pygtk.require().
 #init-hook=
 
-# Profiled execution.
-profile=no
-
 # Add files or directories to the blacklist. They should be base names, not
 # paths.
 ignore=.hg
@@ -50,10 +47,6 @@ reports=no
 # (RP0004).
 evaluation=10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10)
 
-# Add a comment according to your evaluation note. This is used by the global
-# evaluation report (RP0004).
-comment=no
-
 # Template used to display messages. This is a python new-style format string
 # used to format the message information. See doc for all details
 msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}"
@@ -64,7 +57,9 @@ msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}"
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
 # multiple time. See also the "--disable" option for examples.
-enable=
+
+enable=all
+
 
 # Disable the message, report, category or checker with the given id(s). You
 # can either give multiple identifiers separated by comma (,) or put this
@@ -75,7 +70,48 @@ enable=
 # --enable=similarities". If you want to run only the classes checker, but have
 # no Warning level messages displayed, use"--disable=all --enable=classes
 # --disable=W"
-disable=I
+
+disable=locally-disabled,
+  suppressed-message,
+  missing-docstring,
+  too-many-lines,
+  multiple-statements,
+  superfluous-parens,
+  bad-continuation,
+  ungrouped-imports,
+  wrong-import-position,
+  no-self-argument,
+  no-member,
+  no-value-for-parameter,
+  too-many-function-args,
+  unsubscriptable-object,
+  too-many-nested-blocks,
+  no-self-use,
+  redefined-variable-type,
+  duplicate-code,
+  too-few-public-methods,
+  too-many-public-methods,
+  too-many-branches,
+  too-many-arguments,
+  too-many-locals,
+  too-many-statements,
+  attribute-defined-outside-init,
+  protected-access,
+  arguments-differ,
+  abstract-method,
+  fixme,
+  global-variable-undefined,
+  global-statement,
+  unused-variable,
+  unused-argument,
+  redefined-outer-name,
+  redefined-builtin,
+  undefined-loop-variable,
+  broad-except,
+  logging-format-interpolation,
+  anomalous-backslash-in-string
+
+
 
 
 [VARIABLES]
@@ -107,10 +143,6 @@ ignored-modules=
 # (useful for classes with attributes dynamically set).
 ignored-classes=
 
-# When zope mode is activated, add a predefined set of Zope acquired attributes
-# to generated-members.
-zope=no
-
 # List of members which are set dynamically and missed by pylint inference
 # system, and so shouldn't trigger E0201 when accessed. Python regular
 # expressions are accepted.
@@ -132,9 +164,6 @@ notes=FIXME,XXX,TODO
 
 
 [BASIC]
-
-# Required attributes for module, separated by a comma
-required-attributes=
 
 # List of builtins function names that should not be used, separated by a comma
 bad-functions=
@@ -159,7 +188,7 @@ module-rgx=(([a-z_][a-z0-9_]*)|([A-Z][a-zA-Z0-9]+))$
 module-name-hint=(([a-z_][a-z0-9_]*)|([A-Z][a-zA-Z0-9]+))$
 
 # Regular expression matching correct method names
-method-rgx=[a-z_][a-zA-Z0-9_]{2,64}$
+method-rgx=[a-z_][a-zA-Z0-9_]{2,72}$
 
 # Naming hint for method names
 method-name-hint=[a-z_][a-zA-Z0-9_]{2,64}$

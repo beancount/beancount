@@ -1,6 +1,7 @@
 """Automatic padding of gaps between entries.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 
@@ -76,7 +77,7 @@ def pad(entries, options_map):
             if isinstance(entry, data.TxnPosting):
                 # This is a transaction; update the running balance for this
                 # account.
-                pad_balance.add_position(entry.posting.position)
+                pad_balance.add_position(entry.posting)
 
             elif isinstance(entry, data.Pad):
                 if entry.account == account_:
@@ -94,10 +95,10 @@ def pad(entries, options_map):
                 # total amount for a particular currency (which itself is
                 # distinct from the cost).
                 balance_amount = pad_balance.get_units(check_amount.currency)
-                diff_amount = amount.amount_sub(balance_amount, check_amount)
+                diff_amount = amount.sub(balance_amount, check_amount)
 
                 # Use the specified tolerance or automatically infer it.
-                tolerance = balance.get_tolerance(entry, options_map)
+                tolerance = balance.get_balance_tolerance(entry, options_map)
 
                 if abs(diff_amount.number) > tolerance:
                     # The check fails; we need to pad.
@@ -111,9 +112,9 @@ def pad(entries, options_map):
                         # positions with that currency have no cost.
                         positions = [pos
                                      for pos in pad_balance.get_positions()
-                                     if pos.lot.currency == check_amount.currency]
+                                     if pos.units.currency == check_amount.currency]
                         for position_ in positions:
-                            if position_.lot.cost is not None:
+                            if position_.cost is not None:
                                 pad_errors.append(
                                     PadError(entry.meta,
                                              ("Attempt to pad an entry with cost for "
@@ -121,32 +122,35 @@ def pad(entries, options_map):
                                              active_pad))
 
                         # Thus our padding lot is without cost by default.
-                        lot = position.Lot(check_amount.currency, None, None)
-                        diff_position = position.Position(
-                            lot, check_amount.number - balance_amount.number)
+                        diff_position = position.Position.from_amounts(
+                            amount.Amount(check_amount.number - balance_amount.number,
+                                          check_amount.currency))
 
                         # Synthesize a new transaction entry for the difference.
                         narration = ('(Padding inserted for Balance of {} for '
                                      'difference {})').format(check_amount, diff_position)
                         new_entry = data.Transaction(
                             active_pad.meta.copy(), active_pad.date, flags.FLAG_PADDING,
-                            None, narration, None, None, [])
+                            None, narration, data.EMPTY_SET, data.EMPTY_SET, [])
 
                         new_entry.postings.append(
-                            data.Posting(active_pad.account, diff_position,
+                            data.Posting(active_pad.account,
+                                         diff_position.units, diff_position.cost,
                                          None, None, None))
+                        neg_diff_position = -diff_position
                         new_entry.postings.append(
-                            data.Posting(active_pad.source_account, -diff_position,
+                            data.Posting(active_pad.source_account,
+                                         neg_diff_position.units, neg_diff_position.cost,
                                          None, None, None))
 
                         # Save it for later insertion after the active pad.
                         new_entries[id(active_pad)].append(new_entry)
 
                         # Fixup the running balance.
-                        position_, _ = pad_balance.add_position(diff_position)
-                        if position_.is_negative_at_cost():
+                        pos, _ = pad_balance.add_position(diff_position)
+                        if pos is not None and pos.is_negative_at_cost():
                             raise ValueError(
-                                "Position held at cost goes negative: {}".format(position_))
+                                "Position held at cost goes negative: {}".format(pos))
 
                 # Mark this lot as padded. Further checks should not pad this lot.
                 padded_lots.add(check_amount.currency)

@@ -1,0 +1,489 @@
+;; -*- mode: org; mode: beancount -*-
+;; Example Beancount input file for the purpose of showing how to integrate
+;; import scripts.
+
+** General Expenses
+
+2000-04-01 open Equity:Opening-Balances
+
+2000-01-01 open Expenses:Books
+2000-01-01 open Expenses:Communications:Phone
+2000-01-01 open Expenses:Food:Grocery
+2000-01-01 open Expenses:Food:Pharmacy
+2000-01-01 open Expenses:Food:Restaurant
+2000-01-01 open Expenses:Fun:Movie
+2000-01-01 open Expenses:Fun:Music
+2000-01-01 open Expenses:Financial:Fees
+
+
+
+** BofA Checking Account
+
+2013-10-01 open Assets:US:BofA:Checking
+
+
+** BofA Credit Card Account
+
+2013-10-01 open Liabilities:US:CreditCard
+
+2013-10-01 pad Liabilities:US:CreditCard Equity:Opening-Balances
+
+2013-10-26 * "DUANE READE #14354 0NEW YORK / 99999993299 8002892273"
+  Liabilities:US:CreditCard  -18.92 USD
+  Expenses:Food:Pharmacy
+
+2013-10-30 * "WHOLEFDS HOU 10236 02124201320 / 042902720262124201320"
+  Liabilities:US:CreditCard  -16.59 USD
+  Expenses:Food:Grocery
+
+2013-11-02 * "BARNES & NOBLE 2675 NEW YORK / 00001102    BOOK STORE"
+  Liabilities:US:CreditCard  -30.49 USD
+  Expenses:Books
+
+2013-11-04 * "UNION MARKET -  HOUSNEW YORK / 44692       GROCERY STORE"
+  Liabilities:US:CreditCard  -10.77 USD
+  Expenses:Food:Grocery
+
+2013-11-05 * "CULL AND PISTOL     NEW YORK / 85133313309 212-255-5672"
+  Liabilities:US:CreditCard  -18.45 USD
+  Expenses:Food:Restaurant
+
+2013-11-06 * "CAFETASIA - #2 88430NEW YORK / 4195        RESTAURANT"
+  Liabilities:US:CreditCard  -16.75 USD
+  Expenses:Food:Restaurant
+
+2013-11-08 * "EATALY NY           NEW YORK / 84988943312 212-229-2560"
+  Liabilities:US:CreditCard  -102.1 USD
+  Expenses:Food:Restaurant
+
+2013-11-09 * "WHOLEFDS HOU 10236 02124201320 / 042802720252124201320"
+  Liabilities:US:CreditCard  -10.72 USD
+  Expenses:Food:Grocery
+
+2013-11-09 * "UNION MARKET -  HOUSNEW YORK / 108039      GROCERY STORE"
+  Liabilities:US:CreditCard  -8.98 USD
+  Expenses:Food:Grocery
+
+2013-11-10 * "DUANE READE #14354 0NEW YORK / 99999993314 8002892273"
+  Liabilities:US:CreditCard  -14.68 USD
+  Expenses:Food:Pharmacy
+
+2013-11-10 * "WHOLEFDS HOU 10236 02124201320 / 042902720282124201320"
+  Liabilities:US:CreditCard  -15.9 USD
+  Expenses:Food:Grocery
+
+2013-11-11 * "AMAZON.COM          AMZN.COM/BI / YFTFUBNN1O6 MERCHANDISE"
+  Liabilities:US:CreditCard  -172.02 USD
+  Expenses:Books
+
+2013-11-11 * "CAFE MOGADOR 0048   NEW YORK / 960990      212-677-2226"
+  Liabilities:US:CreditCard  -30.09 USD
+  Expenses:Food:Restaurant
+
+2013-11-11 * "UNION MARKET -  HOUSNEW YORK / 108634      GROCERY STORE"
+  Liabilities:US:CreditCard  -15.46 USD
+  Expenses:Food:Grocery
+
+2013-11-12 * "LOBSTER JOINT 542929NEW YORK / 000224167   6468961200"
+  Liabilities:US:CreditCard  -21.51 USD
+  Expenses:Food:Restaurant
+
+2013-11-14 * "UNION MARKET -  HOUSNEW YORK / 12189       GROCERY STORE"
+  Liabilities:US:CreditCard  -22.55 USD
+  Expenses:Food:Grocery
+
+2013-11-21 * "JEFFREY'S 0252      NEW YORK / 0000000681  646-429-8383"
+  Liabilities:US:CreditCard  -29 USD
+  Expenses:Food:Restaurant
+
+2013-11-22 * "WHOLEFDS HOU 10236 02124201320 / 042102720272124201320"
+  Liabilities:US:CreditCard  -13.93 USD
+  Expenses:Food:Grocery
+
+2013-11-23 * "AMAZON.COM          AMZN.COM/BI / V7P27IJ69JX MERCHANDISE"
+  Liabilities:US:CreditCard  -54.99 USD
+  Expenses:Books
+
+2013-11-24 * "PRUNE               NEW YORK / 7101466     RESTAURANT"
+  Liabilities:US:CreditCard  -143.94 USD
+  Expenses:Food:Restaurant
+
+2013-11-25 * "TAKAHACHI RESTAURANTNEW YORK / 000451990   RESTAURANT"
+  Liabilities:US:CreditCard  -28.05 USD
+  Expenses:Food:Restaurant
+
+2013-11-26 * "UNION MARKET -  HOUSNEW YORK / 47155       GROCERY STORE"
+  Liabilities:US:CreditCard  -18.76 USD
+  Expenses:Food:Grocery
+
+2013-11-29 * "WHOLEFDS HOU 10236 02124201320 / 042802720282124201320"
+  Liabilities:US:CreditCard  -23.18 USD
+  Expenses:Food:Grocery
+
+2013-11-29 * "T-MOBILE RECURNG PMTT-MOBILE / 1070888371 828422957        98006"
+  Liabilities:US:CreditCard  -61.98 USD
+  Expenses:Communications:Phone
+
+2013-12-01 * "SPOTIFY USA         28770130901 / 2600720879  WWW.SPOTIFY.COM"
+  Liabilities:US:CreditCard  -9.99 USD
+  Expenses:Fun:Music
+
+2013-12-02 * "GOAT TOWN 1200000549NEW YORK / 071000163   2126873641"
+  Liabilities:US:CreditCard  -61.71 USD
+  Expenses:Food:Restaurant
+
+2013-12-02 * "AMC VILLAGE 7 #2110 NEW YORK / 12010365699 212-982-2116"
+  Liabilities:US:CreditCard  -17.75 USD
+  Expenses:Fun:Movie
+
+2013-12-04 balance Liabilities:US:CreditCard                       -2093.01 USD
+
+
+
+** UTrade Investment Account
+
+2014-04-01 open Assets:US:UTrade:Cash
+
+2015-02-01 open Assets:US:UTrade:BAPL
+2015-02-01 open Income:US:UTrade:BAPL:Dividend
+2015-02-01 open Income:US:UTrade:BAPL:Gains
+
+2014-04-01 open Assets:US:UTrade:CSKO
+2014-04-01 open Income:US:UTrade:CSKO:Dividend
+2014-04-01 open Income:US:UTrade:CSKO:Gains
+
+2014-05-01 open Assets:US:UTrade:HOOL
+2014-05-01 open Income:US:UTrade:HOOL:Dividend
+2014-05-01 open Income:US:UTrade:HOOL:Gains
+
+2014-05-01 open Assets:US:UTrade:MSFX
+2014-05-01 open Income:US:UTrade:MSFX:Dividend
+2015-05-01 open Income:US:UTrade:MSFX:Gains
+
+
+2014-04-01 pad Assets:US:UTrade:Cash Equity:Opening-Balances
+2014-04-15 balance Assets:US:UTrade:Cash  25674.63 USD
+
+
+2014-04-14 * "(BUY) BOUGHT +CSKO 50 @98.35" ^ut14167001
+  Assets:US:UTrade:Cash    -4925.45 USD
+  Expenses:Financial:Fees      7.95 USD
+  Assets:US:UTrade:CSKO          50 CSKO {98.35 USD}
+
+2014-05-08 * "(BUY) BOUGHT +HOOL 121 @79.11" ^ut12040838
+  Assets:US:UTrade:Cash    -9580.26 USD
+  Expenses:Financial:Fees      7.95 USD
+  Assets:US:UTrade:HOOL         121 HOOL {79.11 USD}
+
+2014-05-11 * "(BUY) BOUGHT +MSFX 104 @64.39" ^ut41579908
+  Assets:US:UTrade:Cash    -6704.51 USD
+  Expenses:Financial:Fees      7.95 USD
+  Assets:US:UTrade:MSFX         104 MSFX {64.39 USD}
+
+2014-05-22 * "(DIV) ORDINARY DIVIDEND~HOOL" ^ut54857517
+  Assets:US:UTrade:Cash            28.56 USD
+  Income:US:UTrade:HOOL:Dividend  -28.56 USD
+
+2014-05-23 * "(XFER) CLIENT REQUESTED ELECTRONIC FUNDING" ^ut27634682
+  Assets:US:UTrade:Cash     7148.74 USD
+  Assets:US:BofA:Checking  -7148.74 USD
+
+2014-05-25 * "(DIV) ORDINARY DIVIDEND~CSKO" ^ut31749124
+  Assets:US:UTrade:Cash            9.63 USD
+  Income:US:UTrade:CSKO:Dividend  -9.63 USD
+
+2014-05-28 * "(BUY) BOUGHT +HOOL 92 @52.10" ^ut83788120
+  Assets:US:UTrade:Cash    -4801.15 USD
+  Expenses:Financial:Fees      7.95 USD
+  Assets:US:UTrade:HOOL          92 HOOL {52.10 USD}
+
+2014-05-29 * "(DIV) ORDINARY DIVIDEND~HOOL" ^ut97871874
+  Assets:US:UTrade:Cash            7.49 USD
+  Income:US:UTrade:HOOL:Dividend  -7.49 USD
+
+2014-06-05 * "(DIV) ORDINARY DIVIDEND~CSKO" ^ut85665025
+  Assets:US:UTrade:Cash            16.32 USD
+  Income:US:UTrade:CSKO:Dividend  -16.32 USD
+
+2014-06-14 * "(DIV) ORDINARY DIVIDEND~HOOL" ^ut31730597
+  Assets:US:UTrade:Cash            15.60 USD
+  Income:US:UTrade:HOOL:Dividend  -15.60 USD
+
+2014-06-21 * "(BUY) BOUGHT +MSFX 101 @78.00" ^ut22346704
+  Assets:US:UTrade:Cash    -7885.95 USD
+  Expenses:Financial:Fees      7.95 USD
+  Assets:US:UTrade:MSFX         101 MSFX {78.00 USD}
+
+2014-06-23 * "(DIV) ORDINARY DIVIDEND~HOOL" ^ut36811051
+  Assets:US:UTrade:Cash            8.70 USD
+  Income:US:UTrade:HOOL:Dividend  -8.70 USD
+
+2014-07-01 * "(DIV) ORDINARY DIVIDEND~MSFX" ^ut30631356
+  Assets:US:UTrade:Cash            9.39 USD
+  Income:US:UTrade:MSFX:Dividend  -9.39 USD
+
+2014-07-12 * "(DIV) ORDINARY DIVIDEND~MSFX" ^ut33403638
+  Assets:US:UTrade:Cash            16.64 USD
+  Income:US:UTrade:MSFX:Dividend  -16.64 USD
+
+2014-07-13 balance Assets:US:UTrade:Cash                           3963.83 USD
+
+
+2014-07-28 * "(DIV) ORDINARY DIVIDEND~CSKO" ^ut23571586
+  Assets:US:UTrade:Cash            15.60 USD
+  Income:US:UTrade:CSKO:Dividend  -15.60 USD
+
+2014-08-07 * "(BUY) BOUGHT +CSKO 48 @52.93" ^ut90404110
+  Assets:US:UTrade:Cash    -2548.59 USD
+  Expenses:Financial:Fees      7.95 USD
+  Assets:US:UTrade:CSKO          48 CSKO {52.93 USD}
+
+2014-08-22 * "(DIV) ORDINARY DIVIDEND~HOOL" ^ut70106713
+  Assets:US:UTrade:Cash            22.58 USD
+  Income:US:UTrade:HOOL:Dividend  -22.58 USD
+
+2014-08-26 * "(DIV) ORDINARY DIVIDEND~CSKO" ^ut18874360
+  Assets:US:UTrade:Cash            8.46 USD
+  Income:US:UTrade:CSKO:Dividend  -8.46 USD
+
+2014-09-24 * "(DIV) ORDINARY DIVIDEND~CSKO" ^ut18146488
+  Assets:US:UTrade:Cash            7.36 USD
+  Income:US:UTrade:CSKO:Dividend  -7.36 USD
+
+2014-09-25 balance Assets:US:UTrade:Cash                           1469.24 USD
+
+
+2014-10-13 * "(DIV) ORDINARY DIVIDEND~CSKO" ^ut42072631
+  Assets:US:UTrade:Cash            11.39 USD
+  Income:US:UTrade:CSKO:Dividend  -11.39 USD
+
+2014-10-14 * "(DIV) ORDINARY DIVIDEND~HOOL" ^ut45612217
+  Assets:US:UTrade:Cash            17.45 USD
+  Income:US:UTrade:HOOL:Dividend  -17.45 USD
+
+2014-10-22 * "(SELL) SOLD +CSKO 22 @88.13 (LOT 98.35)" ^ut84625538
+  Assets:US:UTrade:Cash        1930.91 USD
+  Expenses:Financial:Fees         7.95 USD
+  Assets:US:UTrade:CSKO             22 CSKO {98.35 USD} @ 88.13 USD
+  Income:US:UTrade:CSKO:Gains
+
+2014-11-09 * "(DIV) ORDINARY DIVIDEND~HOOL" ^ut65176118
+  Assets:US:UTrade:Cash            7.01 USD
+  Income:US:UTrade:HOOL:Dividend  -7.01 USD
+
+2014-11-27 * "(SELL) SOLD +CSKO 93 @33.31 (LOT 32.59)" ^ut92392307
+  Assets:US:UTrade:Cash        3089.88 USD
+  Expenses:Financial:Fees         7.95 USD
+  Assets:US:UTrade:CSKO             93 CSKO {32.59 USD} @ 33.31 USD
+  Income:US:UTrade:CSKO:Gains
+
+2014-12-01 * "(DIV) ORDINARY DIVIDEND~CSKO" ^ut10447525
+  Assets:US:UTrade:Cash            6.82 USD
+  Income:US:UTrade:CSKO:Dividend  -6.82 USD
+
+2014-12-02 * "(BUY) BOUGHT +HOOL 55 @66.61" ^ut74330963
+  Assets:US:UTrade:Cash    -3671.50 USD
+  Expenses:Financial:Fees      7.95 USD
+  Assets:US:UTrade:HOOL          55 HOOL {66.61 USD}
+
+2014-12-13 * "(SELL) SOLD +HOOL 50 @39.13 (LOT 42.33)" ^ut79580321
+  Assets:US:UTrade:Cash        1948.55 USD
+  Expenses:Financial:Fees         7.95 USD
+  Assets:US:UTrade:HOOL             50 HOOL {42.33 USD} @ 39.13 USD
+  Income:US:UTrade:HOOL:Gains
+
+2014-12-14 balance Assets:US:UTrade:Cash                           4809.75 USD
+
+
+2014-12-20 * "(DIV) ORDINARY DIVIDEND~CSKO" ^ut60292945
+  Assets:US:UTrade:Cash            5.17 USD
+  Income:US:UTrade:CSKO:Dividend  -5.17 USD
+
+2014-12-22 * "(DIV) ORDINARY DIVIDEND~HOOL" ^ut98071623
+  Assets:US:UTrade:Cash            19.97 USD
+  Income:US:UTrade:HOOL:Dividend  -19.97 USD
+
+2014-12-31 * "(BUY) BOUGHT +MSFX 87 @50.34" ^ut94789086
+  Assets:US:UTrade:Cash    -4387.53 USD
+  Expenses:Financial:Fees      7.95 USD
+  Assets:US:UTrade:MSFX          87 MSFX {50.34 USD}
+
+2015-01-05 * "(DIV) ORDINARY DIVIDEND~CSKO" ^ut89525843
+  Assets:US:UTrade:Cash            23.67 USD
+  Income:US:UTrade:CSKO:Dividend  -23.67 USD
+
+2015-01-17 * "(XFER) CLIENT REQUESTED ELECTRONIC FUNDING" ^ut92120597
+  Assets:US:UTrade:Cash     4876.00 USD
+  Assets:US:BofA:Checking  -4876.00 USD
+
+2015-01-19 * "(BUY) BOUGHT +HOOL 40 @99.15" ^ut76302399
+  Assets:US:UTrade:Cash    -3973.95 USD
+  Expenses:Financial:Fees      7.95 USD
+  Assets:US:UTrade:HOOL          40 HOOL {99.15 USD}
+
+2015-02-02 * "(DIV) ORDINARY DIVIDEND~HOOL" ^ut57564142
+  Assets:US:UTrade:Cash            7.98 USD
+  Income:US:UTrade:HOOL:Dividend  -7.98 USD
+
+2015-02-06 * "(DIV) ORDINARY DIVIDEND~BAPL" ^ut90692243
+  Assets:US:UTrade:Cash            12.27 USD
+  Income:US:UTrade:BAPL:Dividend  -12.27 USD
+
+2015-02-20 * "(DIV) ORDINARY DIVIDEND~BAPL" ^ut34606455
+  Assets:US:UTrade:Cash            14.83 USD
+  Income:US:UTrade:BAPL:Dividend  -14.83 USD
+
+2015-02-22 * "(DIV) ORDINARY DIVIDEND~BAPL" ^ut16360724
+  Assets:US:UTrade:Cash            24.24 USD
+  Income:US:UTrade:BAPL:Dividend  -24.24 USD
+
+2015-02-23 balance Assets:US:UTrade:Cash                           1432.40 USD
+
+
+2015-02-26 * "(DIV) ORDINARY DIVIDEND~HOOL" ^ut39293066
+  Assets:US:UTrade:Cash            10.71 USD
+  Income:US:UTrade:HOOL:Dividend  -10.71 USD
+
+2015-03-06 * "(XFER) CLIENT REQUESTED ELECTRONIC FUNDING" ^ut95397432
+  Assets:US:UTrade:Cash     5393.93 USD
+  Assets:US:BofA:Checking  -5393.93 USD
+
+2015-03-20 * "(SELL) SOLD +BAPL 107 @42.87 (LOT 38.83)" ^ut47069288
+  Assets:US:UTrade:Cash        4579.14 USD
+  Expenses:Financial:Fees         7.95 USD
+  Assets:US:UTrade:BAPL            107 BAPL {38.83 USD} @ 42.87 USD
+  Income:US:UTrade:BAPL:Gains
+
+2015-03-24 * "(BUY) BOUGHT +BAPL 89 @56.05" ^ut91955231
+  Assets:US:UTrade:Cash    -4996.40 USD
+  Expenses:Financial:Fees      7.95 USD
+  Assets:US:UTrade:BAPL          89 BAPL {56.05 USD}
+
+2015-03-30 * "(XFER) CLIENT REQUESTED ELECTRONIC FUNDING" ^ut68299938
+  Assets:US:UTrade:Cash     3944.15 USD
+  Assets:US:BofA:Checking  -3944.15 USD
+
+2015-04-01 * "(DIV) ORDINARY DIVIDEND~HOOL" ^ut11669685
+  Assets:US:UTrade:Cash            4.69 USD
+  Income:US:UTrade:HOOL:Dividend  -4.69 USD
+
+2015-04-02 * "(BUY) BOUGHT +CSKO 149 @63.85" ^ut35067825
+  Assets:US:UTrade:Cash    -9521.60 USD
+  Expenses:Financial:Fees      7.95 USD
+  Assets:US:UTrade:CSKO         149 CSKO {63.85 USD}
+
+2015-04-14 * "(DIV) ORDINARY DIVIDEND~BAPL" ^ut26605450
+  Assets:US:UTrade:Cash            9.95 USD
+  Income:US:UTrade:BAPL:Dividend  -9.95 USD
+
+2015-04-15 balance Assets:US:UTrade:Cash                           856.97 USD
+
+
+2015-05-17 * "(DIV) ORDINARY DIVIDEND~HOOL" ^ut57567122
+  Assets:US:UTrade:Cash            15.96 USD
+  Income:US:UTrade:HOOL:Dividend  -15.96 USD
+
+2015-05-18 * "(SELL) SOLD +BAPL 146 @32.01 (LOT 26.15)" ^ut98562913
+  Assets:US:UTrade:Cash        4665.51 USD
+  Expenses:Financial:Fees         7.95 USD
+  Assets:US:UTrade:BAPL            146 BAPL {26.15 USD} @ 32.01 USD
+  Income:US:UTrade:BAPL:Gains
+
+2015-05-19 * "(DIV) ORDINARY DIVIDEND~HOOL" ^ut45119594
+  Assets:US:UTrade:Cash            13.91 USD
+  Income:US:UTrade:HOOL:Dividend  -13.91 USD
+
+2015-05-26 * "(SELL) SOLD +CSKO 89 @66.30 (LOT 63.85)" ^ut53367649
+  Assets:US:UTrade:Cash        5892.75 USD
+  Expenses:Financial:Fees         7.95 USD
+  Assets:US:UTrade:CSKO             89 CSKO {63.85 USD} @ 66.30 USD
+  Income:US:UTrade:CSKO:Gains
+
+2015-06-07 * "(BUY) BOUGHT +HOOL 777 @5.16" ^ut56695140
+  Assets:US:UTrade:Cash    -4017.27 USD
+  Expenses:Financial:Fees      7.95 USD
+  Assets:US:UTrade:HOOL         777 HOOL {5.16 USD}
+
+2015-06-19 * "(DIV) ORDINARY DIVIDEND~BAPL" ^ut17207133
+  Assets:US:UTrade:Cash            12.79 USD
+  Income:US:UTrade:BAPL:Dividend  -12.79 USD
+
+2015-06-20 * "(DIV) ORDINARY DIVIDEND~BAPL" ^ut50840576
+  Assets:US:UTrade:Cash            13.89 USD
+  Income:US:UTrade:BAPL:Dividend  -13.89 USD
+
+2015-06-25 * "(DIV) ORDINARY DIVIDEND~BAPL" ^ut88647893
+  Assets:US:UTrade:Cash            10.13 USD
+  Income:US:UTrade:BAPL:Dividend  -10.13 USD
+
+2015-06-29 * "(BUY) BOUGHT +CSKO 54 @64.93" ^ut22740217
+  Assets:US:UTrade:Cash    -3514.17 USD
+  Expenses:Financial:Fees      7.95 USD
+  Assets:US:UTrade:CSKO          54 CSKO {64.93 USD}
+
+2015-07-02 * "(DIV) ORDINARY DIVIDEND~HOOL" ^ut27217440
+  Assets:US:UTrade:Cash            26.19 USD
+  Income:US:UTrade:HOOL:Dividend  -26.19 USD
+
+2015-07-18 * "(DIV) ORDINARY DIVIDEND~BAPL" ^ut64873832
+  Assets:US:UTrade:Cash            9.80 USD
+  Income:US:UTrade:BAPL:Dividend  -9.80 USD
+
+2015-07-19 * "(BUY) BOUGHT +HOOL 31 @97.08" ^ut51600680
+  Assets:US:UTrade:Cash    -3017.43 USD
+  Expenses:Financial:Fees      7.95 USD
+  Assets:US:UTrade:HOOL          31 HOOL {97.08 USD}
+
+2015-07-20 balance Assets:US:UTrade:Cash                           969.03 USD
+
+
+2015-07-26 * "(DIV) ORDINARY DIVIDEND~HOOL" ^ut75756901
+  Assets:US:UTrade:Cash            14.45 USD
+  Income:US:UTrade:HOOL:Dividend  -14.45 USD
+
+2015-08-18 * "(DIV) ORDINARY DIVIDEND~CSKO" ^ut28729581
+  Assets:US:UTrade:Cash            8.15 USD
+  Income:US:UTrade:CSKO:Dividend  -8.15 USD
+
+2015-08-31 * "(DIV) ORDINARY DIVIDEND~BAPL" ^ut97130478
+  Assets:US:UTrade:Cash            11.21 USD
+  Income:US:UTrade:BAPL:Dividend  -11.21 USD
+
+2015-09-13 * "(DIV) ORDINARY DIVIDEND~CSKO" ^ut74624169
+  Assets:US:UTrade:Cash            12.47 USD
+  Income:US:UTrade:CSKO:Dividend  -12.47 USD
+
+2015-09-19 * "(DIV) ORDINARY DIVIDEND~MSFX" ^ut86506548
+  Assets:US:UTrade:Cash            14.07 USD
+  Income:US:UTrade:MSFX:Dividend  -14.07 USD
+
+2015-09-20 balance Assets:US:UTrade:Cash                           1029.38 USD
+
+
+2015-10-21 * "(DIV) ORDINARY DIVIDEND~HOOL" ^ut71819731
+  Assets:US:UTrade:Cash            7.98 USD
+  Income:US:UTrade:HOOL:Dividend  -7.98 USD
+
+2015-10-26 * "(DIV) ORDINARY DIVIDEND~HOOL" ^ut99810091
+  Assets:US:UTrade:Cash            16.83 USD
+  Income:US:UTrade:HOOL:Dividend  -16.83 USD
+
+2015-11-15 * "(DIV) ORDINARY DIVIDEND~BAPL" ^ut84191955
+  Assets:US:UTrade:Cash            22.75 USD
+  Income:US:UTrade:BAPL:Dividend  -22.75 USD
+
+2015-11-17 * "(SELL) SOLD +MSFX 41 @84.22 (LOT 93.91)" ^ut35166597
+  Assets:US:UTrade:Cash        3445.07 USD
+  Expenses:Financial:Fees         7.95 USD
+  Assets:US:UTrade:MSFX             41 MSFX {93.91 USD} @ 84.22 USD
+  Income:US:UTrade:MSFX:Gains
+
+2015-12-03 * "(DIV) ORDINARY DIVIDEND~CSKO" ^ut48233019
+  Assets:US:UTrade:Cash            9.01 USD
+  Income:US:UTrade:CSKO:Dividend  -9.01 USD
+
+2015-12-04 balance Assets:US:UTrade:Cash                           4531.02 USD
+
+
+
+;; NEW TRANSACTIONS NEED BE INSERTED HERE.

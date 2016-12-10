@@ -1,6 +1,7 @@
 """Table rendering.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import csv
 import collections
@@ -37,11 +38,12 @@ def create_table(rows, field_spec=None):
 
     Args:
       rows: A list of tuples.
-      field_spec: A list of strings, or a list of (strings, header,
-        formatter-function) triplets, that selects a subset of the fields is to
-        be rendered as well as their ordering. If this is a dict, the values are
-        functions to call on the fields to render them. If a function is set to
-        None, we will just call str() on the field.
+      field_spec: A list of strings, or a list of
+        (FIELDNAME-OR-INDEX, HEADER, FORMATTER-FUNCTION)
+        triplets, that selects a subset of the fields is to be rendered as well
+        as their ordering. If this is a dict, the values are functions to call
+        on the fields to render them. If a function is set to None, we will just
+        call str() on the field.
     Returns:
       A Table instance.
     """

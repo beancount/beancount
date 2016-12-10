@@ -3,17 +3,19 @@
 This module contains reports that can convert an input file into other formats,
 such as Ledger.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import re
 import io
 
+from beancount.core.amount import Amount
 from beancount.core import data
 from beancount.core import position
 from beancount.core import amount
 from beancount.core import interpolate
 from beancount.core import display_context
-from beancount.reports import report
+from beancount.reports import base
 
 
 ROUNDING_ACCOUNT = 'Equity:Rounding'
@@ -54,7 +56,7 @@ def postings_by_type(entry):
     postings_at_price = []
     postings_simple = []
     for posting in entry.postings:
-        if posting.position.lot.cost:
+        if posting.cost:
             accumlator = postings_at_cost
         elif posting.price:
             accumlator = postings_at_price
@@ -106,11 +108,9 @@ def split_currency_conversions(entry):
         replacement_postings = []
         for posting_orig in postings_at_price:
             weight = interpolate.get_posting_weight(posting_orig)
-            simple_position = position.Position(position.Lot(weight.currency, None, None),
-                                                weight.number)
-            posting_pos = data.Posting(posting_orig.account, simple_position,
+            posting_pos = data.Posting(posting_orig.account, weight, None,
                                        None, None, None)
-            posting_neg = data.Posting(posting_orig.account, -simple_position,
+            posting_neg = data.Posting(posting_orig.account, -weight, None,
                                        None, None, None)
 
             currency_entry = entry._replace(
@@ -128,7 +128,7 @@ def split_currency_conversions(entry):
     return converted, new_entries
 
 
-class LedgerReport(report.Report):
+class LedgerReport(base.Report):
     """Print out the entries in a format that can be parsed by Ledger."""
 
     names = ['ledger']
@@ -193,8 +193,8 @@ class LedgerPrinter:
 
         flag_posting = '{:}{:62}'.format(flag, posting.account)
 
-        pos_str = (posting.position.to_string(self.dformat, detail=False)
-                   if posting.position
+        pos_str = (position.to_string(posting, self.dformat, detail=False)
+                   if isinstance(posting.units, Amount)
                    else '')
 
         if posting.price is not None:
@@ -206,9 +206,11 @@ class LedgerPrinter:
              postings_at_price,
              postings_at_cost) = postings_by_type(entry)
 
-            if postings_at_price and postings_at_cost and posting.position.lot.cost:
+            cost = posting.cost
+            if postings_at_price and postings_at_cost and cost:
                 price_str = '@ {}'.format(
-                    posting.position.lot.cost.to_string(self.dformat))
+                    amount.Amount(cost.number,
+                                  cost.currency).to_string(self.dformat))
             else:
                 price_str = ''
 
@@ -268,8 +270,11 @@ class LedgerPrinter:
         oss.write(
             ';; Query: {e.date:%Y/%m/%d} "{e.name}" "{e.query_string}"\n'.format(e=entry))
 
+    def Custom(_, entry, oss):
+        pass  # Don't render anything.
 
-class HLedgerReport(report.Report):
+
+class HLedgerReport(base.Report):
     """Print out the entries in a format that can be parsed by HLedger."""
 
     names = ['hledger']
@@ -285,16 +290,14 @@ class HLedgerReport(report.Report):
 class HLedgerPrinter(LedgerPrinter):
     "Multi-method for printing directives in HLedger format."
 
-    # pylint: disable=invalid-name
-
     def Posting(self, posting, entry, oss):
         flag = '{} '.format(posting.flag) if posting.flag else ''
         assert posting.account is not None
 
         flag_posting = '{:}{:62}'.format(flag, posting.account)
 
-        pos_str = (posting.position.to_string(self.dformat, detail=False)
-                   if posting.position
+        pos_str = (position.to_string(posting, self.dformat, detail=False)
+                   if isinstance(posting.units, Amount)
                    else '')
         if pos_str:
             # Convert the cost as a price entry, that's what HLedger appears to want.

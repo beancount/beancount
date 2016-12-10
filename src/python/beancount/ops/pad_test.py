@@ -1,7 +1,7 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import datetime
-import re
 
 from beancount.core.amount import A
 from beancount.core import inventory
@@ -10,7 +10,6 @@ from beancount.core import realization
 from beancount.ops import pad
 from beancount.ops import balance
 from beancount.parser import cmptest
-from beancount.parser import printer
 from beancount import loader
 
 
@@ -46,6 +45,42 @@ class TestPadding(cmptest.TestCase):
 
         """, entries)
 
+    @loader.load_doc()
+    def test_pad_to_zero(self, entries, errors, __):
+        """
+          ;; Test the case that this directive generates a padding entry, padding to zero.
+          2013-01-01 open Assets:Checking
+          2013-01-01 open Equity:Opening-Balances
+
+          2013-02-01 *
+            Assets:Checking           234.56 USD
+            Equity:Opening-Balances  -234.56 USD
+
+          2013-05-01 pad Assets:Checking Equity:Opening-Balances
+
+          2013-05-03 balance Assets:Checking                                 0.00 USD
+
+        """
+        self.assertFalse(errors)
+        self.assertEqualEntries("""
+
+          2013-01-01 open Assets:Checking
+          2013-01-01 open Equity:Opening-Balances
+
+          2013-02-01 *
+            Assets:Checking           234.56 USD
+            Equity:Opening-Balances  -234.56 USD
+
+          2013-05-01 pad Assets:Checking Equity:Opening-Balances
+
+          ;; Check this is inserted.
+          2013-05-01 P "(Padding inserted for Balance of 0.00 USD for difference -234.56 USD)"
+            Assets:Checking          -234.56 USD
+            Equity:Opening-Balances   234.56 USD
+
+          2013-05-03 balance Assets:Checking                                 0.00 USD
+
+        """, entries)
 
     @loader.load_doc(expect_errors=True)
     def test_pad_no_overflow(self, entries, errors, __):
@@ -350,8 +385,7 @@ class TestPadding(cmptest.TestCase):
         pad_balance = inventory.Inventory()
         for txn_posting in txn_postings:
             if isinstance(txn_posting, data.TxnPosting):
-                position_, _ = pad_balance.add_position(txn_posting.posting.position)
-                self.assertFalse(position_.is_negative_at_cost())
+                position_, _ = pad_balance.add_position(txn_posting.posting)
             balances.append((type(txn_posting), pad_balance.get_units('USD')))
 
         self.assertEqual(balances, [(data.Open, A('0.00 USD')),
@@ -393,8 +427,7 @@ class TestPadding(cmptest.TestCase):
           2013-10-01 balance Assets:Investments   12 MSFT
         """
         self.assertEqual([pad.PadError], list(map(type, errors)))
-        self.assertTrue(re.search('Attempt to pad an entry with cost for',
-                                  errors[0].message))
+        self.assertRegex(errors[0].message, 'Attempt to pad an entry with cost for')
 
     @loader.load_doc()
     def test_pad_parent(self, entries, errors, __):
@@ -417,8 +450,6 @@ class TestPadding(cmptest.TestCase):
     @loader.load_doc(expect_errors=True)
     def test_pad_tolerance(self, entries, errors, __):
         """
-          option "experiment_explicit_tolerances" "TRUE"
-
           1998-01-01 open Assets:CA:Bank:Checking
           1998-01-01 open Income:CA:Something
           1998-01-01 open Equity:Beginning-Balances
@@ -433,7 +464,7 @@ class TestPadding(cmptest.TestCase):
 
         """
         self.assertEqual(1, len(errors))
-        self.assertTrue(re.search('Unused Pad entry', errors[0].message))
+        self.assertRegex(errors[0].message, 'Unused Pad entry')
 
     @loader.load_doc(expect_errors=True)
     def test_pad_zero_padding_issue78a(self, entries, errors, __):
@@ -450,10 +481,10 @@ class TestPadding(cmptest.TestCase):
         """
         self.assertEqual(2, len(errors))
 
-        self.assertRegexpMatches(errors[0].message, "Unused")
+        self.assertRegex(errors[0].message, "Unused")
         self.assertEqual(datetime.date(2015, 9, 15), errors[0].entry.date)
 
-        self.assertRegexpMatches(errors[1].message, "Balance failed")
+        self.assertRegex(errors[1].message, "Balance failed")
         self.assertEqual(datetime.date(2015, 11, 2), errors[1].entry.date)
 
     @loader.load_doc(expect_errors=True)
@@ -474,10 +505,10 @@ class TestPadding(cmptest.TestCase):
         """
         self.assertEqual(2, len(errors))
 
-        self.assertRegexpMatches(errors[0].message, "Unused")
+        self.assertRegex(errors[0].message, "Unused")
         self.assertEqual(datetime.date(2015, 9, 15), errors[0].entry.date)
 
-        self.assertRegexpMatches(errors[1].message, "Balance failed")
+        self.assertRegex(errors[1].message, "Balance failed")
         self.assertEqual(datetime.date(2015, 11, 2), errors[1].entry.date)
 
     @loader.load_doc(expect_errors=True)
@@ -501,5 +532,5 @@ class TestPadding(cmptest.TestCase):
 
         self.assertEqual(1, len(errors))
 
-        self.assertRegexpMatches(errors[0].message, "Balance failed")
+        self.assertRegex(errors[0].message, "Balance failed")
         self.assertEqual(datetime.date(2015, 9, 15), errors[0].entry.date)

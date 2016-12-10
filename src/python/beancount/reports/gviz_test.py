@@ -1,9 +1,9 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014, 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import unittest
 import datetime
 import random
-import re
 
 from beancount.reports import gviz
 
@@ -28,8 +28,8 @@ class TestGviz(unittest.TestCase):
         html = gviz.gviz_timeline(times, data)
         self.assertTrue(isinstance(html, str))
 
-        self.assertTrue(re.search(r'\bx\b', html))
-        self.assertTrue(re.search(r'\by\b', html))
-        self.assertTrue(re.search(r'\bz\b', html))
-        self.assertTrue(re.search(r'\.visualization\.AnnotatedTimeLine', html))
-        self.assertTrue(re.search(r'\.setOnLoadCallback', html))
+        self.assertRegex(html, r'\bx\b')
+        self.assertRegex(html, r'\by\b')
+        self.assertRegex(html, r'\bz\b')
+        self.assertRegex(html, r'\.visualization\.AnnotatedTimeLine')
+        self.assertRegex(html, r'\.setOnLoadCallback')

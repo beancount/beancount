@@ -1,0 +1,318 @@
+#!/usr/bin/env python3
+"""Try to automatically convert a V1 ".ledger" beancount input file to the newer
+".beancount" V2 syntax.
+
+This script takes an Beancount V1 file and tries to transform it as much as
+possible so that it is compatible with Beancount V2. I'm pretty sure almost
+noone will have to use that--I have no idea how many people were using Beancount
+V1.
+"""
+__author__ = "Martin Blais <blais@furius.ca>"
+
+import sys
+import re
+import datetime
+
+
+def unquote(s):
+    """Replace double-quotes by single-quotes
+
+    Args:
+      s: A string, to be transformed.
+    Returns:
+      The string, with the double-quotes replaced by single-quotes.
+    """
+    return s.replace('"', "'")
+
+
+def add_strings(line):
+    """Add string separators to narrations.
+
+    Args:
+      line: A string, the transaction line to modify.
+    Returns:
+      The transaction line with the narration and possibly the payee wrapped up
+      in a string literal.
+    """
+    mo = re.match('^((?:\d\d\d\d-\d\d-\d\d)(?:=\d\d\d\d-\d\d-\d\d)? .) (?:(.+?)[ \t]*\|)?(.*)$', line)
+    if mo:
+        dateflag, payee, desc = mo.groups()
+        payee = (unquote(payee).strip() if payee else payee)
+        desc = unquote(desc).strip()
+        if mo.group(2) is None:
+            return '{} "{}"\n'.format(dateflag, desc)
+        else:
+            return '{} "{}" | "{}"\n'.format(dateflag, payee, desc)
+    else:
+        return line
+
+
+def convert_certain_commodities(line):
+    """Convert certain currency names to new names, which are compatible with the
+    new syntax which admits uppercase chars only.
+
+    Args:
+      line: A string, the line to have currencies converted for.
+    Returns:
+      The string with the currencies converted.
+    """
+    line = re.sub('\bMiles\b', 'MILES', line)
+    line = re.sub('\bHsbcPoints\b', 'HSBCPTS', line)
+    line = re.sub('\bFidoDollars\b', 'FIDOPTS', line)
+    line = re.sub('\bAmtrak\b', 'AMTRAKPTS', line)
+    return line
+
+
+def convert_var_directive(line):
+    """Comment out the deprecated var directives.
+
+    Args:
+      line: A string, with the declaration.
+    Returns:
+      A string, with the declaration commented out.
+    """
+    mo = re.match('@var ofx accid\s+([^ ]+)\s+(.*)', line)
+    if mo:
+        return ';;accid "{}" {}\n'.format(mo.group(1), mo.group(2))
+    else:
+        return line
+
+
+def convert_defcomm_directive(line):
+    """Comment out deprecated commodity declaration directives.
+
+    Args:
+      line: A string, with the declaration.
+    Returns:
+      A string, with the declaration commented out.
+    """
+    mo = re.match('@defcomm', line)
+    if mo:
+        return ';%s' % line
+    else:
+        return line
+
+
+def convert_tags(line):
+    """Convert tag begin/end markers to have string literals.
+
+    Args:
+      line: A begin/end tag declaration line.
+    Returns:
+      A string, the modified line.
+    """
+    mo = re.match('(@(?:begin|end)tag)\s+(.*)', line)
+    if mo:
+        return '{} "{}"\n'.format(mo.group(1), mo.group(2).strip())
+    else:
+        return line
+
+
+def unindent_comments(line):
+    """Some comments were indented; unindent them.
+
+    Args:
+      line: A string, the indented line.
+    Returns:
+      A string, the line without comments.
+    """
+    mo = re.match(r'\s+(;.*)', line)
+    if mo:
+        return '{}\n'.format(mo.group(1))
+    else:
+        return line
+
+
+def convert_quoted_currencies(line):
+    """Remove string literals around quoted currencies.
+
+    Args:
+      line: A string, with currencies quoted.
+    Returns:
+      The same string, with currencies unquoted.
+    """
+    return re.sub('"(CRA1|JDU.TO|NT.TO|NT.TO1|AIS\d+|RBF\d+|NBC\d+|H107659)"', "\\1", line)
+
+
+def convert_location(line):
+    """Convert location directives to event directives.
+
+    Args:
+      line: A string, with a location directive in it.
+    Returns:
+      A string, converted to an event directive.
+    """
+    mo = re.match('@location\s+([\d-]+)\s+(.*)', line)
+    if mo:
+        return '@event {} "location" "{}"\n'.format(mo.group(1), mo.group(2))
+    else:
+        return line
+
+
+def convert_directives(line):
+    """Convert all directive named without the @ character.
+
+    Args:
+      line: A string, with a @-directive.
+    Returns:
+      The string, without the @-directive.
+    """
+    return re.sub('@(defaccount|var|pad|check|begintag|endtag|price|location|event)', '\\1', line)
+
+
+def swap_directives_into_events(line):
+    """Move the dates to be in front of the directives.
+
+    Args:
+      line: A string, with a directive.
+    Returns:
+      A string, with the date in front of the directive.
+    """
+    return re.sub('(check|pad|location|price|event)\s+(\d\d\d\d-\d\d-\d\d)', '\\2 \\1', line)
+
+
+def defaccount_to_open(line):
+    """Convert account declarations to open directives.
+
+    Args:
+      line: A string, with a defaccount directive.
+    Returns:
+      A string, with an equivalent open directive.
+    """
+    mo = re.match('^defaccount\s+(D[re]|Cr)\s+([A-Za-z0-9:\-_]+)\s*(.*)\n', line)
+    if mo:
+        return '1970-01-01 open {:64} {}\n'.format(
+            mo.group(2).strip(),
+            mo.group(3) or '')
+    else:
+        return line
+
+
+def uncomment_tentative(line):
+    """Uncomment tentative directives.
+
+    Args:
+      line: A string, with a tentative commented-out directive.
+    Returns:
+      A string, with the uncommented directive.
+    """
+    mo = re.match('^;@([a-z]+)\s+(\d\d\d\d-\d\d-\d\d)\s*(.*)', line)
+    if mo:
+        return '{} {} {}\n'.format(mo.group(2), mo.group(1), mo.group(3))
+    else:
+        return line
+
+
+def add_org_mode_section(line):
+    """Add org-mode style section separators.
+
+    Args:
+      line: A string, with a section separator.
+    Returns:
+      A string with an org-mode style section.
+    """
+    mo = re.match('^;;;;; (.*)', line)
+    if mo:
+        return '* {}\n'.format(mo.group(1))
+    else:
+        return line
+
+
+def remove_datepair(line):
+    """Remove datepairs, convert into a single date.
+
+    Args:
+      line: A string, possibly with a date=date pair.
+    Returns:
+      The same line, wiht a single date only.
+    """
+    mo = re.match('^(\d\d\d\d-\d\d-\d\d)=(\d\d\d\d-\d\d-\d\d) (.*)', line)
+    if mo:
+        return '{} {} {{{}}}\n'.format(*mo.group(1,3,2))
+    else:
+        return line
+
+
+def convert_tags(line):
+    """Convert begin/end tag directives to use the #tag syntax.
+
+    Args:
+      line: A string, with a begin/end tag directive.
+    Returns:
+      A string with the tag prepended with a '#' character.
+    """
+    if re.match('(begintag|endtag)', line):
+        return re.sub('(begintag|endtag)\s+(.*)', '\\1 #\\2', line)
+    else:
+        return line
+
+
+def check_to_check_after(line):
+    """Move balance checks to the next day.
+
+    Args:
+      line: A string, with a balance check directive.
+    Returns:
+      A string, with the directive's date moved forward by one day.
+    """
+    mo = re.match('(\d\d\d\d)-(\d\d)-(\d\d) (?:check|balance) (.*)', line)
+    if mo:
+        d = datetime.date(*list(map(int, mo.group(1,2,3))))
+        d += datetime.timedelta(days=1)
+        return '{:%Y-%m-%d} check {}\n'.format(d, mo.group(4))
+    else:
+        return line
+
+
+def tags_begin_to_push(line):
+    """Convert begin/end to push/pop for tag directives.
+
+    Args:
+      line: A string, with a begin/end tag directive.
+    Returns:
+      A string, with a push/pop tag directive instead.
+    """
+    mo = re.match('^(begin|end)tag', line)
+    if mo:
+        newtag = 'push' if mo.group(1) == 'begin' else 'pop'
+        return re.sub('(begin|end)', newtag, line)
+    else:
+        return line
+
+
+def main():
+    import argparse, logging
+    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
+    parser = argparse.ArgumentParser(description=__doc__.strip())
+    parser.add_argument('filename', help='Filenames')
+    opts = parser.parse_args()
+
+    # Read the input lines.
+    lines = open(opts.filename).readlines()
+
+    # A big pipeline of converters.
+    lines = map(remove_datepair, lines)
+    lines = map(add_strings, lines)
+    lines = map(convert_certain_commodities, lines)
+    lines = map(convert_var_directive, lines)
+    lines = map(convert_defcomm_directive, lines)
+    lines = map(convert_tags, lines)
+    lines = map(unindent_comments, lines)
+    lines = map(convert_quoted_currencies, lines)
+    lines = map(convert_location, lines)
+    lines = map(convert_directives, lines)
+    lines = map(swap_directives_into_events, lines)
+    lines = map(defaccount_to_open, lines)
+    lines = map(uncomment_tentative, lines)
+    lines = map(add_org_mode_section, lines)
+    lines = map(convert_tags, lines)
+    lines = map(check_to_check_after, lines)
+    lines = map(tags_begin_to_push, lines)
+
+    # Write the output lines.
+    for line in lines:
+        sys.stdout.write(line)
+
+
+if __name__ == '__main__':
+    main()

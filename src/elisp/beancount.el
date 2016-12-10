@@ -82,6 +82,8 @@
     "name_equity"
     "name_income"
     "name_expenses"
+    "bookin_algorithm"
+    "bookin_method"
     "account_previous_balances"
     "account_previous_earnings"
     "account_previous_conversions"
@@ -89,11 +91,9 @@
     "account_current_conversions"
     "account_rounding"
     "conversion_currency"
-    "default_tolerance"
+    "inferred_tolerance_default"
     "inferred_tolerance_multiplier"
     "infer_tolerance_from_cost"
-    "tolerance"
-    "use_legacy_fixed_tolerances"
     "documents"
     "operating_currency"
     "render_commas"
@@ -122,17 +122,23 @@
     ;;; ("\\([\\-+]?[0-9,]+\\(\\.[0-9]+\\)?\\)\\s-+\\([A-Z][A-Z0-9'\.]\\{1,10\\}\\)" . )
     ))
 
+
+(defvar beancount-mode-map-prefix [(control c)]
+  "The prefix key used to bind Beancount commands in Emacs")
+
 (defvar beancount-mode-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map [(control c)(\')] #'beancount-insert-account)
-    (define-key map [(control c)(control g)] #'beancount-transaction-set-flag)
-    (define-key map [(control c)(r)] #'beancount-init-accounts)
-    (define-key map [(control c)(l)] #'beancount-check)
-    (define-key map [(control c)(q)] #'beancount-query)
-    (define-key map [(control c)(x)] #'beancount-context)
-    (define-key map [(control c)(k)] #'beancount-linked)
-    (define-key map [(control c)(\;)] #'beancount-align-to-previous-number)
-    (define-key map [(control c)(\:)] #'beancount-align-numbers)
+  (let ((map (make-sparse-keymap))
+        (p beancount-mode-map-prefix))
+    (define-key map (vconcat p [(\')]) #'beancount-insert-account)
+    (define-key map (vconcat p [(control g)]) #'beancount-transaction-set-flag)
+    (define-key map (vconcat p [(r)]) #'beancount-init-accounts)
+    (define-key map (vconcat p [(l)]) #'beancount-check)
+    (define-key map (vconcat p [(q)]) #'beancount-query)
+    (define-key map (vconcat p [(x)]) #'beancount-context)
+    (define-key map (vconcat p [(k)]) #'beancount-linked)
+    (define-key map (vconcat p [(p)]) #'beancount-insert-prices)
+    (define-key map (vconcat p [(\;)]) #'beancount-align-to-previous-number)
+    (define-key map (vconcat p [(\:)]) #'beancount-align-numbers)
 
     ;; FIXME: Binding TAB breaks expected org-mode behavior to fold/unfold. We
     ;; need to find a better solution.
@@ -629,6 +635,15 @@ Only useful if you have not installed Beancount properly in your PATH.")
     (beancount--run beancount-doctor-program "linked"
                     (file-relative-name buffer-file-name)
                     (number-to-string (line-number-at-pos)))))
+
+(defvar beancount-price-program "bean-price"
+  "Program to run the price fetching commands.")
+
+(defun beancount-insert-prices ()
+  "Run bean-price on the current file and insert the output inline."
+  (interactive)
+  (call-process beancount-price-program nil t nil
+                (file-relative-name buffer-file-name)))
 
 
 (provide 'beancount)

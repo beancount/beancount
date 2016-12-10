@@ -1,10 +1,11 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import unittest
 import urllib.parse
 from os import path
 
-from beancount.web import scrape
+from beancount.web import web
 from beancount.utils import test_utils
 
 
@@ -14,8 +15,11 @@ class TestWeb(unittest.TestCase):
     #
     # Components views... well there are just too many, makes the tests
     # impossibly slow. Just keep the A's so some are covered for testing.
-    ####ignore_regexp = '^/(doc/|context/|view/component/[^A])'
-    ignore_regexp = '^(/context/|/view/component/[^A]|.*/doc/)'
+    ignore_regexp = r'^({})'.format('|'.join([
+        '/context/',
+        '/view/component/[^A]',
+        '/view/year/\d+/month/[^1][^0]',
+        '.*/doc/']))
 
     def check_page_okay(self, url, response, _, __, ___):
         self.assertIn(response.status, (200, 202),
@@ -27,11 +31,11 @@ class TestWeb(unittest.TestCase):
     def scrape(self, filename, **extra):
         abs_filename = path.join(test_utils.find_repository_root(__file__),
                                  'examples', filename)
-        scrape.scrape(abs_filename,
-                      self.check_page_okay,
-                      test_utils.get_test_port(),
-                      self.ignore_regexp,
-                      **extra)
+        web.scrape_webapp(abs_filename,
+                          self.check_page_okay,
+                          test_utils.get_test_port(),
+                          self.ignore_regexp,
+                          **extra)
 
     @test_utils.docfile
     def test_scrape_empty_file(self, filename):

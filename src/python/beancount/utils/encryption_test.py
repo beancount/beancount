@@ -1,7 +1,6 @@
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
-import contextlib
-import io
 import os
 import unittest
 import subprocess

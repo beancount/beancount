@@ -6,7 +6,8 @@ a specific time period: we don't want to see the entries from before some period
 of time, so we fold them into a single transaction per account that has the sum
 total amount of that account.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import datetime
 import collections
@@ -444,8 +445,9 @@ def summarize(entries, date, account_opening):
     # Gather the list of active open entries at date.
     open_entries = get_open_entries(entries, date)
 
-    # Compute entries before hte date and preserve the entries after the date.
-    before_entries = open_entries + price_entries + summarizing_entries
+    # Compute entries before the date and preserve the entries after the date.
+    before_entries = sorted(open_entries + price_entries + summarizing_entries,
+                            key=data.entry_sortkey)
     after_entries = entries[index:]
 
     # Return a new list of entries and the index that points after the entries
@@ -471,7 +473,8 @@ def conversions(entries, conversion_account, conversion_currency, date=None):
     conversion_balance = interpolate.compute_entries_balance(entries, date=date)
 
     # Early exit if there is nothing to do.
-    if conversion_balance.is_empty():
+    conversion_cost_balance = conversion_balance.cost()
+    if conversion_cost_balance.is_empty():
         return entries
 
     # Calculate the index and the date for the new entry. We want to store it as
@@ -486,15 +489,17 @@ def conversions(entries, conversion_account, conversion_currency, date=None):
     meta = data.new_metadata('<conversions>', -1)
     narration = 'Conversion for {}'.format(conversion_balance)
     conversion_entry = Transaction(meta, last_date, flags.FLAG_CONVERSIONS,
-                                   None, narration, None, None, [])
-    for position in conversion_balance.cost().get_positions():
+                                   None, narration, data.EMPTY_SET, data.EMPTY_SET, [])
+    for position in conversion_cost_balance.get_positions():
         # Important note: Set the cost to zero here to maintain the balance
         # invariant. (This is the only single place we cheat on the balance rule
         # in the entire system and this is necessary; see documentation on
         # Conversions.)
         price = amount.Amount(ZERO, conversion_currency)
+        neg_pos = -position
         conversion_entry.postings.append(
-            data.Posting(conversion_account, -position, price, None, None))
+            data.Posting(conversion_account, neg_pos.units, neg_pos.cost,
+                         price, None, None))
 
     # Make a copy of the list of entries and insert the new transaction into it.
     new_entries = list(entries)
@@ -558,13 +563,14 @@ def create_entries_from_balances(balances, date, source_account, direction,
 
         postings = []
         new_entry = Transaction(
-            meta, date, flag, None, narration, None, None, postings)
+            meta, date, flag, None, narration, data.EMPTY_SET, data.EMPTY_SET, postings)
 
         for position in account_balance.get_positions():
-            postings.append(data.Posting(account, position, None, None, None))
-            cost_position = position.cost()
-            postings.append(
-                data.Posting(source_account, -cost_position, None, None, None))
+            postings.append(data.Posting(account, position.units, position.cost,
+                                         None, None, None))
+            cost_pos = -position.at_cost()
+            postings.append(data.Posting(source_account, cost_pos.units, cost_pos.cost,
+                                         None, None, None))
 
         new_entries.append(new_entry)
 
@@ -601,7 +607,7 @@ def balance_by_account(entries, date=None):
                 # zero is if all the entries are being summed together, no
                 # entries are filtered, at least for a particular account's
                 # postings.
-                account_balance.add_position(posting.position)
+                account_balance.add_position(posting)
     else:
         index = len(entries)
 

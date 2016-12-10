@@ -1,6 +1,7 @@
 """Builder for Beancount grammar.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 import copy
@@ -11,10 +12,11 @@ from os import path
 from datetime import date
 
 from beancount.core.number import ZERO
+from beancount.core.number import MISSING
+from beancount.core.number import Decimal
 from beancount.core.amount import Amount
 from beancount.core import display_context
-from beancount.core.position import LotSpec
-from beancount.core.position import Position
+from beancount.core.position import CostSpec
 from beancount.core.data import Transaction
 from beancount.core.data import Balance
 from beancount.core.data import Open
@@ -26,9 +28,11 @@ from beancount.core.data import Query
 from beancount.core.data import Price
 from beancount.core.data import Note
 from beancount.core.data import Document
+from beancount.core.data import Custom
 from beancount.core.data import new_metadata
 from beancount.core.data import Posting
-from beancount.core.data import BOOKING_METHODS
+from beancount.core.data import Booking
+from beancount.core.data import EMPTY_SET
 
 from beancount.parser import lexer
 from beancount.parser import options
@@ -50,12 +54,20 @@ DeprecatedError = collections.namedtuple('DeprecatedError', 'source message entr
 
 
 
-# Temporary holder for key-value pairs.
+# Key-value pairs. This is used to hold meta-data attachments temporarily.
 #
 # Attributes:
 #  key: A string, the name of the key.
 #  value: Any object.
 KeyValue = collections.namedtuple('KeyValue', 'key value')
+
+# Value-type pairs. This is used to represent custom values where the concrete
+# datatypes aren't matching those which are found in the parser.
+#
+# Attributes:
+#  value: Any object.
+#  dtype: The datatype of the object.
+ValueType = collections.namedtuple('ValueType', 'value dtype')
 
 # Convenience holding class for amounts with per-share and total value.
 #
@@ -84,7 +96,7 @@ def valid_account_regexp(options):
                                       'name_equity',
                                       'name_income',
                                       'name_expenses'))
-    return re.compile('({})(:[A-Z][A-Za-z0-9\-]+)*$'.format('|'.join(names)))
+    return re.compile('({})(:[A-Z][A-Za-z0-9\-]*)*$'.format('|'.join(names)))
 
 
 # A temporary data structure used during parsing to hold and accumulate the
@@ -93,13 +105,9 @@ def valid_account_regexp(options):
 # them intelligently in the transaction callback.
 #
 # Attributes:
-#  strings: a list of strings, for the payee and the narration.
 #  tags: a set object  of the tags to be applied to this transaction.
 #  links: a set of link strings to be applied to this transaction.
-#  has_pipe: True if a pipe has been seen somewhere in the list. This is used
-#    to issue an error if only a single string is present, because the PIPE
-#    character does not carry any special meaning anymore.
-TxnFields = collections.namedtuple('TxnFields', 'strings tags links has_pipe')
+TagsLinks = collections.namedtuple('TagsLinks', 'tags links')
 
 
 class Builder(lexer.LexBuilder):
@@ -154,6 +162,10 @@ class Builder(lexer.LexBuilder):
                 ParserError(meta, (
                     "Unbalanced metadata key '{}'; leftover metadata '{}'").format(
                         key, ', '.join(value_list)), None))
+
+        # Weave the commas option in the DisplayContext itself, so it propagages
+        # everywhere it is used automatically.
+        self.dcontext.set_commas(self.options['render_commas'])
 
         return (self.get_entries(), self.errors, self.get_options())
 
@@ -228,6 +240,19 @@ class Builder(lexer.LexBuilder):
         self.errors.append(
             ParserSyntaxError(meta, message, None))
 
+    def pipe_deprecated_error(self, filename, lineno):
+        """Issue a 'Pipe deprecated' error.
+
+        Args:
+          filename: The current filename
+          lineno: The current line number
+        """
+        if self.options['allow_pipe_separator']:
+            return
+        meta = new_metadata(filename, lineno)
+        self.errors.append(
+            ParserSyntaxError(meta, "Pipe symbol is deprecated.", None))
+
     def pushtag(self, tag):
         """Push a tag on the current set of tags.
 
@@ -269,7 +294,7 @@ class Builder(lexer.LexBuilder):
             if key not in self.meta:
                 raise IndexError
             value_list = self.meta[key]
-            value = value_list.pop(-1)
+            value_list.pop(-1)
             if not value_list:
                 self.meta.pop(key)
         except IndexError:
@@ -303,9 +328,15 @@ class Builder(lexer.LexBuilder):
 
             # Issue a warning if the option is deprecated.
             if option_descriptor.deprecated:
+                assert isinstance(option_descriptor.deprecated, str), "Internal error."
                 meta = new_metadata(filename, lineno)
                 self.errors.append(
                     DeprecatedError(meta, option_descriptor.deprecated, None))
+
+            # Rename the option if it has an alias.
+            if option_descriptor.alias:
+                key = option_descriptor.alias
+                option_descriptor = options.OPTIONS[key]
 
             # Convert the value, if necessary.
             if option_descriptor.converter:
@@ -341,23 +372,6 @@ class Builder(lexer.LexBuilder):
                 self.options[key] = value
 
             else:
-                # Fix up account_rounding to be a subaccount if the user specified a
-                # full account name. This is intended to ease transition in the
-                # change of semantics that occurred on 2015-09-05, whereby the value
-                # of this option became defined as a subaccount of Equity instead of
-                # a full account name. See Issue #67.
-                # This should eventually be deprecated, say, in a year (after Sep 2016).
-                if key == 'account_rounding':
-                    root = account.root(1, value)
-                    if root in (self.options['name_{}'.format(name)]
-                                for name in ['assets', 'liabilities', 'equity',
-                                             'income', 'expenses']):
-                        self.errors.append(
-                            ParserError(self.get_lexer_location(),
-                                        "'account_rounding' option should now refer to "
-                                        "a subaccount.", None))
-                        value = account.sans_root(value)
-
                 # Set the value.
                 self.options[key] = value
 
@@ -400,7 +414,8 @@ class Builder(lexer.LexBuilder):
         """
         # Update the mapping that stores the parsed precisions.
         # Note: This is relatively slow, adds about 70ms because of number.as_tuple().
-        self.dcupdate(number, currency)
+        if isinstance(number, Decimal) and currency:
+            self.dcupdate(number, currency)
         return Amount(number, currency)
 
     def compound_amount(self, number_per, number_total, currency):
@@ -412,43 +427,46 @@ class Builder(lexer.LexBuilder):
           currency: a currency object (a str, really, see CURRENCY above)
         Returns:
           A triple of (Decimal, Decimal, currency string) to be processed further when
-          creating a Lot instance.
+          creating the final per-unit cost number.
         """
         # Update the mapping that stores the parsed precisions.
         # Note: This is relatively slow, adds about 70ms because of number.as_tuple().
-        if number_per is not None:
+        if isinstance(number_per, Decimal):
             self.dcupdate(number_per, currency)
-        if number_total is not None:
+        if isinstance(number_total, Decimal):
             self.dcupdate(number_total, currency)
 
         # Note that we are not able to reduce the value to a number per-share
         # here because we only get the number of units in the full lot spec.
         return CompoundAmount(number_per, number_total, currency)
 
-    def lot_merge(self, _):
+    def cost_merge(self, _):
         """Create a 'merge cost' token."""
         return MERGE_COST
 
-    def lot_spec(self, lot_comp_list):
-        """Process a lot_spec grammar rule.
+    def cost_spec(self, cost_comp_list, is_total):
+        """Process a cost_spec grammar rule.
 
         Args:
-          lot_comp_list: A list of CompoundAmountAmount, a datetime.date, or
+          cost_comp_list: A list of CompoundAmount, a datetime.date, or
             label ID strings.
+          is_total: Assume only the total cost is specified; reject the <number> # <number>
+              syntax, that is, no compound amounts may be specified. This is used to support
+              the {{...}} syntax.
         Returns:
-          A lot-info tuple of CompoundAmount, lot date and label string. Any of these
-          may be None.
+          A cost-info tuple of CompoundAmount, lot date and label string. Any of these
+          may be set to a sentinel indicating "unset".
         """
-        if lot_comp_list is None:
-            return LotSpec(None, None, None, None, None)
-        assert isinstance(lot_comp_list, list), (
-            "Internal error in parser: {}".format(lot_comp_list))
+        if not cost_comp_list:
+            return CostSpec(MISSING, None, MISSING, None, None, False)
+        assert isinstance(cost_comp_list, list), (
+            "Internal error in parser: {}".format(cost_comp_list))
 
         compound_cost = None
-        lot_date = None
+        date_ = None
         label = None
         merge = None
-        for comp in lot_comp_list:
+        for comp in cost_comp_list:
             if isinstance(comp, CompoundAmount):
                 if compound_cost is None:
                     compound_cost = comp
@@ -458,8 +476,8 @@ class Builder(lexer.LexBuilder):
                                     "Duplicate cost: '{}'.".format(comp), None))
 
             elif isinstance(comp, date):
-                if lot_date is None:
-                    lot_date = comp
+                if date_ is None:
+                    date_ = comp
                 else:
                     self.errors.append(
                         ParserError(self.get_lexer_location(),
@@ -483,47 +501,32 @@ class Builder(lexer.LexBuilder):
                         ParserError(self.get_lexer_location(),
                                     "Duplicate label: '{}'.".format(comp), None))
 
-        if label is not None:
-            self.errors.append(
-                ParserError(self.get_lexer_location(),
-                            "Labels not supported yet: '{}'.".format(label), None))
+        # If there was a cost_comp_list, thus a "{...}" cost basis spec, you must
+        # indicate that by creating a CompoundAmount(), always.
 
-        if merge is not None:
-            self.errors.append(
-                ParserError(self.get_lexer_location(),
-                            "Merge-cost not supported yet.", None))
+        if compound_cost is None:
+            number_per, number_total, currency = MISSING, None, MISSING
+        else:
+            number_per, number_total, currency = compound_cost
+            if is_total:
+                if number_total is not None:
+                    self.errors.append(
+                        ParserError(
+                            self.get_lexer_location(),
+                            ("Per-unit cost may not be specified using total cost "
+                             "syntax: '{}'; ignoring per-unit cost").format(compound_cost),
+                            None))
+                    # Ignore per-unit numbrer.
+                    number_per = ZERO
+                else:
+                    # There's a single number specified; interpret it as a total cost.
+                    number_total = number_per
+                    number_per = ZERO
 
-        return LotSpec(None, compound_cost, lot_date, label, merge)
+        if merge is None:
+            merge = False
 
-    def lot_spec_total_legacy(self, cost, lot_date):
-        """Process a deprecated legacy 'total cost' specification.
-
-        Args:
-          cost: An instance of Amount, the total cost.
-          lot_date: A datetime.date instance, the lot date for the lot.
-        Returns:
-          Same as lot_spec().
-        """
-        compound_cost = CompoundAmount(ZERO, cost.number, cost.currency)
-        return LotSpec(None, compound_cost, lot_date, None, None)
-
-    def position(self, filename, lineno, amount, lot_spec):
-        """Process a position grammar rule.
-
-        Args:
-          filename: The current filename.
-          lineno: The current line number.
-          amount: An instance of Amount for the position.
-          lot_spec: An instance of LotSpec.
-        Returns:
-          A new instance of Position.
-        """
-        if lot_spec is None:
-            lot_spec = LotSpec(None, None, None, None, None)
-        # FIXME: Remove this assert for performance reasons.
-        assert isinstance(lot_spec, LotSpec), (
-            "Invalid type for Position.lot: %s (%s)".format(type(lot_spec), lot_spec))
-        return Position(lot_spec._replace(currency=amount.currency), amount.number)
+        return CostSpec(number_per, number_total, currency, date_, label, merge)
 
     def handle_list(self, object_list, new_object):
         """Handle a recursive list grammar rule, generically.
@@ -540,7 +543,7 @@ class Builder(lexer.LexBuilder):
             object_list.append(new_object)
         return object_list
 
-    def open(self, filename, lineno, date, account, currencies, booking, kvlist):
+    def open(self, filename, lineno, date, account, currencies, booking_str, kvlist):
         """Process an open directive.
 
         Args:
@@ -549,16 +552,30 @@ class Builder(lexer.LexBuilder):
           date: A datetime object.
           account: A string, the name of the account.
           currencies: A list of constraint currencies.
-          booking: A string, the booking method, or None if none was specified.
+          booking_str: A string, the booking method, or None if none was specified.
           kvlist: a list of KeyValue instances.
         Returns:
           A new Open object.
         """
         meta = new_metadata(filename, lineno, kvlist)
+        error = False
+        if booking_str:
+            try:
+                # Note: Somehow the 'in' membership operator is not defined on Enum.
+                booking = Booking[booking_str]
+            except KeyError:
+                # If the per-account method is invalid, set it to the global
+                # default method and continue.
+                booking = self.options['booking_method']
+                error = True
+        else:
+            booking = None
+
         entry = Open(meta, date, account, currencies, booking)
-        if booking and booking not in BOOKING_METHODS:
-            self.errors.append(
-                ParserError(meta, "Invalid booking method: {}".format(booking), entry))
+        if error:
+            self.errors.append(ParserError(meta,
+                                           "Invalid booking method: {}".format(booking_str),
+                                           entry))
         return entry
 
     def close(self, filename, lineno, date, account, kvlist):
@@ -627,14 +644,6 @@ class Builder(lexer.LexBuilder):
         """
         diff_amount = None
         meta = new_metadata(filename, lineno, kvlist)
-
-        # Only support explicit tolerance syntax if the experiment is enabled.
-        if (tolerance is not None and
-            not self.options["experiment_explicit_tolerances"]):
-            self.errors.append(
-                ParserError(meta, "Tolerance syntax is not supported", None))
-            tolerance = '__tolerance_syntax_not_supported__'
-
         return Balance(meta, date, account, amount, tolerance, diff_amount)
 
     def event(self, filename, lineno, date, event_type, description, kvlist):
@@ -667,14 +676,7 @@ class Builder(lexer.LexBuilder):
           A new Query object.
         """
         meta = new_metadata(filename, lineno, kvlist)
-        if not self.options['experiment_query_directive']:
-            self.errors.append(
-                ParserError(meta, (
-                    "Query directive is not supported. "
-                    "You have to enable 'experiment_query_directive' to enable it."), None))
-            return None
-        else:
-            return Query(meta, date, query_name, query_string)
+        return Query(meta, date, query_name, query_string)
 
     def price(self, filename, lineno, date, currency, amount, kvlist):
         """Process a price directive.
@@ -708,7 +710,8 @@ class Builder(lexer.LexBuilder):
         meta = new_metadata(filename, lineno, kvlist)
         return Note(meta, date, account, comment)
 
-    def document(self, filename, lineno, date, account, document_filename, kvlist):
+    def document(self, filename, lineno, date, account, document_filename, tags_links,
+                 kvlist):
         """Process a document directive.
 
         Args:
@@ -717,6 +720,7 @@ class Builder(lexer.LexBuilder):
           date: a datetime object.
           account: an Account instance.
           document_filename: a str, the name of the document file.
+          tags_links: The current TagsLinks accumulator.
           kvlist: a list of KeyValue instances.
         Returns:
           A new Document object.
@@ -725,7 +729,37 @@ class Builder(lexer.LexBuilder):
         if not path.isabs(document_filename):
             document_filename = path.abspath(path.join(path.dirname(filename),
                                                        document_filename))
-        return Document(meta, date, account, document_filename)
+        tags, links = self.process_tags_links(tags_links)
+        return Document(meta, date, account, document_filename, tags, links)
+
+    def custom(self, filename, lineno, date, dir_type, custom_values, kvlist):
+        """Process a custom directive.
+
+        Args:
+          filename: the current filename.
+          lineno: the current line number.
+          date: a datetime object.
+          dir_type: A string, a type for the custom directive being parsed.
+          custom_values: A list of the various tokens seen on the same line.
+          kvlist: a list of KeyValue instances.
+        Returns:
+          A new Custom object.
+        """
+        meta = new_metadata(filename, lineno, kvlist)
+        return Custom(meta, date, dir_type, custom_values)
+
+    def custom_value(self, value, dtype=None):
+        """Create a custom value object, along with its type.
+
+        Args:
+          value: One of the accepted custom values.
+        Returns:
+          A pair of (value, dtype) where 'dtype' is the datatype is that of the
+          value.
+        """
+        if dtype is None:
+            dtype = type(value)
+        return ValueType(value, dtype)
 
     def key_value(self, key, value):
         """Process a document directive.
@@ -741,7 +775,7 @@ class Builder(lexer.LexBuilder):
         """
         return KeyValue(key, value)
 
-    def posting(self, filename, lineno, account, position, price, istotal, flag):
+    def posting(self, filename, lineno, account, units, cost, price, istotal, flag):
         """Process a posting grammar rule.
 
         Args:
@@ -758,7 +792,7 @@ class Builder(lexer.LexBuilder):
         """
         # Prices may not be negative.
         if not __allow_negative_prices__:
-            if price and price.number is not None and price.number < ZERO:
+            if price and isinstance(price.number, Decimal) and price.number < ZERO:
                 meta = new_metadata(filename, lineno)
                 self.errors.append(
                     ParserError(meta, (
@@ -767,18 +801,18 @@ class Builder(lexer.LexBuilder):
                         "for workaround)"
                     ).format(price), None))
                 # Fix it and continue.
-                price.number = abs(price.number)
+                price = Amount(abs(price.number), price.currency)
 
         # If the price is specified for the entire amount, compute the effective
         # price here and forget about that detail of the input syntax.
         if istotal:
-            if position.number == ZERO:
+            if units.number == ZERO:
                 number = ZERO
             else:
                 if __allow_negative_prices__:
-                    number = price.number/position.number
+                    number = price.number/units.number
                 else:
-                    number = price.number/abs(position.number)
+                    number = price.number/abs(units.number)
             price = Amount(number, price.currency)
 
         # Note: Allow zero prices because we need them for round-trips for
@@ -789,100 +823,104 @@ class Builder(lexer.LexBuilder):
         #         ParserError(meta, "Price is zero: {}".format(price), None))
 
         meta = new_metadata(filename, lineno)
-        return Posting(account, position, price, chr(flag) if flag else None, meta)
+        return Posting(account, units, cost, price, chr(flag) if flag else None, meta)
 
-    def txn_field_new(self, _):
-        """Create a new TxnFields instance.
+    def tag_link_new(self, _):
+        """Create a new TagsLinks instance.
 
         Returns:
-          An instance of TxnFields, initialized with expected attributes.
+          An instance of TagsLinks, initialized with expected attributes.
         """
-        return TxnFields([], set(), set(), [])
+        return TagsLinks(set(), set())
 
-    def txn_field_TAG(self, txn_fields, tag):
-        """Add a tag to the TxnFields accumulator.
+    def tag_link_TAG(self, tags_links, tag):
+        """Add a tag to the TagsLinks accumulator.
 
         Args:
-          txn_fields: The current TxnFields accumulator.
+          tags_links: The current TagsLinks accumulator.
           tag: A string, the new tag to insert.
         Returns:
-          An updated TxnFields instance.
+          An updated TagsLinks instance.
         """
-        txn_fields.tags.add(tag)
-        return txn_fields
+        tags_links.tags.add(tag)
+        return tags_links
 
-    def txn_field_LINK(self, txn_fields, link):
-        """Add a link to the TxnFields accumulator.
+    def tag_link_LINK(self, tags_links, link):
+        """Add a link to the TagsLinks accumulator.
 
         Args:
-          txn_fields: The current TxnFields accumulator.
+          tags_links: The current TagsLinks accumulator.
           link: A string, the new link to insert.
         Returns:
-          An updated TxnFields instance.
+          An updated TagsLinks instance.
         """
-        txn_fields.links.add(link)
-        return txn_fields
+        tags_links.links.add(link)
+        return tags_links
 
-    def txn_field_STRING(self, txn_fields, string):
-        """Add a tag to the TxnFields accumulator.
+    def tag_link_STRING(self, tags_links, string):
+        """Add a string to the TagsLinks accumulator.
 
         Args:
-          txn_fields: The current TxnFields accumulator.
+          tags_links: The current TagsLinks accumulator.
           string: A string, the new string to insert in the list.
         Returns:
-          An updated TxnFields instance.
+          An updated TagsLinks instance.
         """
-        txn_fields.strings.append(string)
-        return txn_fields
+        tags_links.strings.append(string)
+        return tags_links
 
-    def txn_field_PIPE(self, txn_fields, _):
-        """Mark the PIPE as present, in order to raise a backwards compatibility error.
+    def unpack_txn_strings(self, txn_strings, meta):
+        """Unpack a tags_links accumulator to its payee and narration fields.
 
         Args:
-          txn_fields: The current TxnFields accumulator.
-          _: This second argument is only there to prevent the caller method to
-             unbundle the arguments; if you call with only a tuple, it gets applied.
-             (I think this may be a bug in the Python C-API. When you upgrade to
-             Python 3.4, check if this is still the case.)
-        Returns:
-          An updated TxnFields instance.
-        """
-        # Note: we're using a list because it runs faster than creating a new
-        # tuple and there are possibly many of these.
-        txn_fields.has_pipe.append(1)
-        return txn_fields
-
-    def unpack_txn_strings(self, txn_fields, meta):
-        """Unpack a txn_fields accumulator to its payee and narration fields.
-
-        Args:
-          txn_fields: The current TxnFields accumulator.
+          txn_strings: A list of strings.
           meta: A metadata dict for errors generated in this routine.
         Returns:
           A pair of (payee, narration) strings or None objects, or None, if
           there was an error.
         """
-        num_strings = len(txn_fields.strings)
+        num_strings = 0 if txn_strings is None else len(txn_strings)
         if num_strings == 1:
-            payee, narration = None, txn_fields.strings[0]
-            if txn_fields.has_pipe:
-                self.errors.append(
-                    ParserError(meta,
-                                "One string with a | symbol yields only a narration: "
-                                "{}".format(txn_fields.strings), None))
+            payee, narration = None, txn_strings[0]
         elif num_strings == 2:
-            payee, narration = txn_fields.strings
+            payee, narration = txn_strings
         elif num_strings == 0:
             payee, narration = None, ""
         else:
             self.errors.append(
                 ParserError(meta,
                             "Too many strings on transaction description: {}".format(
-                                txn_fields.strings), None))
+                                txn_strings), None))
             return None
         return payee, narration
 
-    def transaction(self, filename, lineno, date, flag, txn_fields, posting_or_kv_list):
+    def process_tags_links(self, tags_links):
+        """Process tags and links, include tags from the tag stack if present.
+
+        Args:
+          tags_links: The current TagsLinks accumulator.
+        Returns:
+          A sanitized pair of (tags, links).
+        """
+        if tags_links is None:
+            return None, None
+
+        # Merge the tags from the stack with the explicit tags of this
+        # transaction, or make None.
+        tags = tags_links.tags
+        assert isinstance(tags, (set, frozenset)), "Tags is not a set: {}".format(tags)
+        if self.tags:
+            tags.update(self.tags)
+        tags = frozenset(tags) if tags else EMPTY_SET
+
+        # Make links to None if empty.
+        links = tags_links.links
+        links = frozenset(links) if links else EMPTY_SET
+
+        return tags, links
+
+    def transaction(self, filename, lineno, date, flag, txn_strings, tags_links,
+                    posting_or_kv_list):
         """Process a transaction directive.
 
         All the postings of the transaction are available at this point, and so the
@@ -898,8 +936,8 @@ class Builder(lexer.LexBuilder):
           lineno: the current line number.
           date: a datetime object.
           flag: a str, one-character, the flag associated with this transaction.
-          txn_fields: A tuple of transaction fields, which includes descriptions
-            (payee and narration), tags, and links.
+          txn_strings: A list of strings, possibly empty, possibly longer.
+          tags_links: A TagsLinks namedtuple of tags, and/or links.
           posting_or_kv_list: a list of Posting or KeyValue instances, to be inserted in
             this transaction, or None, if no postings have been declared.
         Returns:
@@ -949,15 +987,14 @@ class Builder(lexer.LexBuilder):
             meta.update(explicit_meta)
 
         # Unpack the transaction fields.
-        payee_narration = self.unpack_txn_strings(txn_fields, meta)
+        payee_narration = self.unpack_txn_strings(txn_strings, meta)
         if payee_narration is None:
             return None
         payee, narration = payee_narration
 
         # We now allow a single posting when its balance is zero, so we
         # commented out the check below. If a transaction has a single posting
-        # with a non-zero balance, it'll get caught below int he
-        # balance_incomplete_postings() code.
+        # with a non-zero balance, it'll get caught below in the booking code.
         #
         # # Detect when a transaction does not have at least two legs.
         # if postings is None or len(postings) < 2:
@@ -971,17 +1008,7 @@ class Builder(lexer.LexBuilder):
         if postings is None:
             postings = []
 
-        # Merge the tags from the stack with the explicit tags of this
-        # transaction, or make None.
-        tags = txn_fields.tags
-        assert isinstance(tags, (set, frozenset)), "Tags is not a set: {}".format(tags)
-        if self.tags:
-            tags.update(self.tags)
-        tags = frozenset(tags) if tags else None
-
-        # Make links to None if empty.
-        links = txn_fields.links
-        links = frozenset(links) if links else None
+        tags, links = self.process_tags_links(tags_links)
 
         # Create the transaction.
         return Transaction(meta, date, chr(flag),

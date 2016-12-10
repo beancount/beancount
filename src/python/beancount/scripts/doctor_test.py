@@ -1,4 +1,5 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import os
 import re
@@ -52,6 +53,7 @@ class TestScriptDoctor(test_utils.TestCase):
         """
         self.assertLines(expected_output, stdout.getvalue())
 
+    # pylint: disable=empty-docstring
     @test_utils.docfile
     def test_dump_lexer_empty(self, filename):
         ""
@@ -68,7 +70,7 @@ class TestScriptDoctor(test_utils.TestCase):
           Expenses:Restaurant   50.02 USD
           Assets:Cash
         """
-        with test_utils.capture():
+        with test_utils.capture('stdout', 'stderr'):
             test_utils.run_with_args(doctor.main, ['roundtrip', filename])
 
     def test_list_options(self):
@@ -76,8 +78,9 @@ class TestScriptDoctor(test_utils.TestCase):
             test_utils.run_with_args(doctor.main, ['list_options'])
             test_utils.run_with_args(doctor.main, ['list-options'])
 
-    def test_checkdeps(self):
+    def test_deps(self):
         with test_utils.capture():
+            test_utils.run_with_args(doctor.main, ['deps'])
             test_utils.run_with_args(doctor.main, ['checkdeps'])
 
 
@@ -187,8 +190,8 @@ class TestScriptContextualCommands(cmptest.TestCase):
         """
         with test_utils.capture() as stdout:
             test_utils.run_with_args(doctor.main, ['context', filename, '6'])
-        self.assertTrue(re.search('Location:', stdout.getvalue()))
-        self.assertTrue(re.search('50.02', stdout.getvalue()))
+        self.assertRegex(stdout.getvalue(), 'Location:')
+        self.assertRegex(stdout.getvalue(), '50.02')
 
     @test_utils.docfile
     def test_linked(self, filename):
@@ -213,7 +216,7 @@ class TestScriptContextualCommands(cmptest.TestCase):
         """
         with test_utils.capture() as stdout:
             test_utils.run_with_args(doctor.main, ['linked', filename, '6'])
-        self.assertTrue(re.search('Apples', stdout.getvalue()))
-        self.assertTrue(re.search('Oranges', stdout.getvalue()))
+        self.assertRegex(stdout.getvalue(), 'Apples')
+        self.assertRegex(stdout.getvalue(), 'Oranges')
         self.assertEqual(2, len(list(re.finditer('/(tmp|var/folders)/.*:\d+:',
                                                  stdout.getvalue()))))

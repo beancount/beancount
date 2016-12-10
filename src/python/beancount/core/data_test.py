@@ -1,4 +1,5 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 from datetime import date
 import unittest
@@ -17,7 +18,8 @@ class TestData(unittest.TestCase):
 
     def create_empty_transaction(self):
         return data.Transaction(META, date(2014, 1, 15), FLAG, None,
-                                "Some example narration", None, None, [])
+                                "Some example narration",
+                                data.EMPTY_SET, data.EMPTY_SET, [])
 
     def test_create_simple_posting(self):
         entry = self.create_empty_transaction()
@@ -150,6 +152,13 @@ class TestData(unittest.TestCase):
                          [entry.meta["lineno"]
                           for entry in map(data.get_entry, sorted_txn_postings)])
 
+    def test_filter_txns(self):
+        entries = self.create_sort_data()
+        txns = list(data.filter_txns(entries))
+        self.assertEqual(4, len(txns))
+        self.assertTrue(all(isinstance(txn, data.Transaction)
+                            for txn in txns))
+
     def test_has_entry_account_component(self):
         entry = data.Transaction(data.new_metadata(".", 0), datetime.date.today(), FLAG,
                                  None, "Something", None, None, [])
@@ -206,12 +215,84 @@ class TestData(unittest.TestCase):
         self.assertTrue(
             data.find_closest(entries, "/tmp/apples.beancount", 99) is None)
 
+    def test_iter_entry_dates(self):
+        prototype = data.Transaction(data.new_metadata("misc", 200),
+                                     None, '*', None, "", None, None, [])
+        dates = [datetime.date(2016, 1, 10),
+                 datetime.date(2016, 1, 11),
+                 datetime.date(2016, 1, 14),
+                 datetime.date(2016, 1, 15),
+                 datetime.date(2016, 1, 16),
+                 datetime.date(2016, 1, 20),
+                 datetime.date(2016, 1, 22)]
+
+        entries = [prototype._replace(date=date) for date in dates]
+
+        # Same date, present.
+        self.assertEqual([],
+                         [entry.date
+                          for entry in data.iter_entry_dates(entries,
+                                                             datetime.date(2016, 1, 14),
+                                                             datetime.date(2016, 1, 14))])
+        # Same date, absent.
+        self.assertEqual([],
+                         [entry.date
+                          for entry in data.iter_entry_dates(entries,
+                                                             datetime.date(2016, 1, 12),
+                                                             datetime.date(2016, 1, 12))])
+        # Both dates exist.
+        self.assertEqual([datetime.date(2016, 1, 11),
+                          datetime.date(2016, 1, 14)],
+                         [entry.date
+                          for entry in data.iter_entry_dates(entries,
+                                                             datetime.date(2016, 1, 11),
+                                                             datetime.date(2016, 1, 15))])
+        # First doesn't exist.
+        self.assertEqual([datetime.date(2016, 1, 14)],
+                         [entry.date
+                          for entry in data.iter_entry_dates(entries,
+                                                             datetime.date(2016, 1, 12),
+                                                             datetime.date(2016, 1, 15))])
+        # Second doesn't exist.
+        self.assertEqual([datetime.date(2016, 1, 11)],
+                         [entry.date
+                          for entry in data.iter_entry_dates(entries,
+                                                             datetime.date(2016, 1, 11),
+                                                             datetime.date(2016, 1, 13))])
+        # Neither exist.
+        self.assertEqual([datetime.date(2016, 1, 14),
+                          datetime.date(2016, 1, 15),
+                          datetime.date(2016, 1, 16)],
+                         [entry.date
+                          for entry in data.iter_entry_dates(entries,
+                                                             datetime.date(2016, 1, 13),
+                                                             datetime.date(2016, 1, 17))])
+        # Before.
+        self.assertEqual([datetime.date(2016, 1, 10)],
+                         [entry.date
+                          for entry in data.iter_entry_dates(entries,
+                                                             datetime.date(2016, 1, 5),
+                                                             datetime.date(2016, 1, 11))])
+        # After.
+        self.assertEqual([datetime.date(2016, 1, 22)],
+                         [entry.date
+                          for entry in data.iter_entry_dates(entries,
+                                                             datetime.date(2016, 1, 21),
+                                                             datetime.date(2016, 1, 30))])
+        # Around.
+        self.assertEqual(dates,
+                         [entry.date
+                          for entry in data.iter_entry_dates(entries,
+                                                             datetime.date(2016, 1, 2),
+                                                             datetime.date(2016, 1, 30))])
+
 
 class TestPickle(unittest.TestCase):
 
     def test_data_tuples_support_pickle(self):
         txn1 = data.Transaction(META, date(2014, 1, 15), FLAG, None,
-                               "Some example narration", None, None, [])
+                                "Some example narration",
+                                data.EMPTY_SET, data.EMPTY_SET, [])
         pickled_str = pickle.dumps(txn1)
         txn2 = pickle.loads(pickled_str)
         self.assertEqual(txn1, txn2)

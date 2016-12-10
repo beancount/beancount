@@ -4,7 +4,8 @@ This object encapsulates the rendering of various objects to HTML.
 You may, and should, derive and override from this object in order to
 provide links within a web interface.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 from beancount.core import display_context
 from beancount.parser import printer
@@ -22,8 +23,7 @@ class HTMLFormatter:
           dcontext: DisplayContext to use to render the numbers.
         """
         self._dformat = dcontext.build(
-            precision=display_context.Precision.MOST_COMMON,
-            commas=True)
+            precision=display_context.Precision.MOST_COMMON)
 
     def render_account(self, account_name):
         """Render an account name.

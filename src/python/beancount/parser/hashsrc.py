@@ -1,6 +1,7 @@
 """Compute a hash of the source files in order to warn when the source goes out of date.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import hashlib
 import warnings
@@ -33,7 +34,8 @@ def hash_parser_source_files():
         fullname = path.join(path.dirname(__file__), filename)
         if not path.exists(fullname):
             return None
-        md5.update(open(fullname, 'rb').read())
+        with open(fullname, 'rb') as file:
+            md5.update(file.read())
     return md5.hexdigest()
 
 

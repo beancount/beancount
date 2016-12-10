@@ -7,7 +7,7 @@
 
 option "title" "Duxbury - Oustanding in the Field - August 2015"
 
-option "default_tolerance" "USD:0.005"
+option "inferred_tolerance_default" "USD:0.005"
 
 plugin "beancount.plugins.split_expenses" "Martin Caroline Sheila"
 plugin "beancount.plugins.auto_accounts"

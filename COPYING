@@ -337,3 +337,11 @@ proprietary programs.  If your program is a subroutine library, you may
 consider it more useful to permit linking proprietary applications with the
 library.  If this is what you want to do, use the GNU Lesser General
 Public License instead of this License.
+
+
+          ------------------------------------------------------------
+
+Note:
+This is a GNU GPL "v2 only" license.
+This is not a GNU GPL "v2 or any later version" license.
+                                                             ---Martin Blais

@@ -1,6 +1,7 @@
 """Comparison helpers for data objects.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2015  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 import hashlib

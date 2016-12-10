@@ -200,14 +200,13 @@ Then, we turn to other groups that don't include value accounts:
      (Examples of these are rare.)
 
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import argparse
 import copy
 import re
 import logging
-
-from dateutil.parser import parse as parse_datetime
 
 from beancount.core.number import ZERO
 from beancount import loader
@@ -217,8 +216,10 @@ from beancount.core import data
 from beancount.core import inventory
 from beancount.core import getters
 from beancount.core import flags
+from beancount.core import interpolate
 from beancount.ops import prices
 from beancount.utils import misc_utils
+from beancount.utils import date_utils
 
 
 def sum_balances_for_accounts(balance, entry, accounts):
@@ -234,7 +235,7 @@ def sum_balances_for_accounts(balance, entry, accounts):
     if isinstance(entry, data.Transaction):
         for posting in entry.postings:
             if posting.account in accounts:
-                balance.add_position(posting.position)
+                balance.add_position(posting)
     return balance
 
 
@@ -411,12 +412,12 @@ def compute_period_returns(date_begin, date_end,
     for mktvalue, single in [(mktvalue_begin, single_begin),
                              (mktvalue_end, single_end)]:
         for pos in mktvalue.get_positions():
-            if pos.lot.cost:
+            if pos.cost:
                 logging.error('Could not reduce position "%s" to its value', pos)
             else:
-                currencies.add(pos.lot.currency)
-                assert pos.lot.currency not in single
-                single[pos.lot.currency] = pos.number
+                currencies.add(pos.units.currency)
+                assert pos.units.currency not in single
+                single[pos.units.currency] = pos.units.number
 
     # Now for each of the currencies, compute the returns. Handle cases where
     # the currency is not present as a zero value for that currency.
@@ -550,22 +551,22 @@ def internalize(entries, transfer_account,
             # Calculate the weight of the balance to transfer.
             balance_transfer = inventory.Inventory()
             for posting in postings_extflows:
-                balance_transfer.add_amount(posting.position.get_weight(posting.price))
+                balance_transfer.add_amount(interpolate.get_posting_weight(posting))
 
             prototype_entry = entry._replace(flag=flags.FLAG_RETURNS,
                                              links=(entry.links or set()) | set([link]))
 
             # Create internal flows posting.
             postings_transfer_int = [
-                data.Posting(transfer_account, position_, None, None, None)
-                for position_ in balance_transfer.get_positions()]
+                data.Posting(transfer_account, pos.units, pos.cost, None, None, None)
+                for pos in balance_transfer.get_positions()]
             new_entries.append(prototype_entry._replace(
                 postings=(postings_assets + postings_intflows + postings_transfer_int)))
 
             # Create external flows posting.
             postings_transfer_ext = [
-                data.Posting(transfer_account, -position_, None, None, None)
-                for position_ in balance_transfer.get_positions()]
+                data.Posting(transfer_account, -pos.units, pos.cost, None, None, None)
+                for pos in balance_transfer.get_positions()]
             new_entries.append(prototype_entry._replace(
                 postings=(postings_transfer_ext + postings_extflows)))
         else:
@@ -804,7 +805,6 @@ def compute_returns_with_regexp(entries, options_map,
 
 
 def main():
-    parse_date = lambda s: parse_datetime(s).date()
     parser = argparse.ArgumentParser()
 
     parser.add_argument('filename', help='Ledger filename')
@@ -829,12 +829,14 @@ def main():
     parser.add_argument('-v', '--verbose', action='store_true',
                         help="Output detailed processing information. Useful for debugging")
 
-    parser.add_argument('--date-begin', '--begin-date', action='store', type=parse_date,
+    parser.add_argument('--date-begin', '--begin-date',
+                        action='store', type=date_utils.parse_date_liberally,
                         default=None,
                         help=("Beginning date of the period to compute returns over "
                               "(default is the first related directive)"))
 
-    parser.add_argument('--date-end', '--end-date', action='store', type=parse_date,
+    parser.add_argument('--date-end', '--end-date',
+                        action='store', type=date_utils.parse_date_liberally,
                         default=None,
                         help=("End date of the period to compute returns over "
                               "(default is the last related directive)"))

@@ -1,250 +1,30 @@
-"""Base class for all reports classes.
-
-Each report class should be able to render a filtered list of entries to a
-variety of formats. Each report has a name, some command-line options, and
-supports some subset of formats.
+"""Produce various custom implemented reports.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
-import functools
-import operator
 import argparse
 import io
+import functools
+import operator
+import logging
 import re
-from os import path
+import sys
+import textwrap
 
+from beancount import loader
+from beancount.ops import validation
+from beancount.reports import base
 from beancount.reports import table
-from beancount.reports import html_formatter
-from beancount.parser import options
-from beancount.core import realization
-from beancount.core import display_context
-
-
-class ReportError(Exception):
-    "Error that occurred during report generation."
-
-
-class Report:
-    """Base class for all reports.
-
-    Attributes:
-      names: A list of strings, the various names of this report. The first name
-        is taken to be the authoritative name of the report; the rest are
-        considered aliases.
-      parser: The parser for the command's arguments. This is used to raise errors.
-      args: An object that contains the values of this command's parsed arguments.
-    """
-
-    # The names of this report. Must be overridden by derived classes.
-    names = None
-
-    # The defaault format to use.
-    default_format = None
-
-    def __init__(self, args, parser):
-        self.parser = parser
-        self.args = args
-        assert self.default_format, "You must provide a default format."
-
-    @classmethod
-    def from_args(cls, argv=None, **kwds):
-        """A convenience method used to create an instance from arguments.
-
-        This creates an instance of the report with default arguments. This is a
-        convenience that may be used for tests. Our actual script uses subparsers
-        and invokes add_args() and creates an appropriate instance directly.
-
-        Args:
-          argv: A list of strings, command-line arguments to use to construct tbe report.
-          kwds: A dict of other keyword arguments to pass to the report's constructor.
-        Returns:
-          A new instace of the report.
-        """
-        parser = argparse.ArgumentParser()
-        cls.add_args(parser)
-        return cls(parser.parse_args(argv or []), parser, **kwds)
-
-    @classmethod
-    def add_args(cls, parser):
-        """Add arguments to parse for this report.
-
-        Args:
-          parser: An instance of argparse.ArgumentParser.
-        """
-        # No-op.
-
-    @classmethod
-    def get_supported_formats(cls):
-        """Enumerates the list of supported formats, by inspecting methods of this object.
-
-        Returns:
-          A list of strings, such as ['html', 'text'].
-        """
-        formats = []
-        for name in dir(cls):
-            match = re.match('render_([a-z0-9]+)$', name)
-            if match:
-                formats.append(match.group(1))
-        return sorted(formats)
-
-    def render(self, entries, errors, options_map, output_format=None, file=None):
-        """Render a report of filtered entries to any format.
-
-        This function dispatches to a specific method.
-
-        Args:
-          entries: A list of directives to render.
-          errors: A list of errors that occurred during processing.
-          options_map: A dict of options, as produced by the parser.
-          output_format: A string, the name of the format. I fnot specified, use
-            the default format.
-          file: The file to write the output to.
-        Returns:
-          If no 'file' is provided, return the contents of the report as a
-          string.
-        Raises:
-          ReportError: If the requested format is not supported.
-        """
-        try:
-            render_method = getattr(self, 'render_{}'.format(output_format or
-                                                             self.default_format))
-        except AttributeError:
-            raise ReportError("Unsupported format: '{}'".format(output_format))
-
-        outfile = io.StringIO() if file is None else file
-        result = render_method(entries, errors, options_map, outfile)
-        assert result is None, "Render method must write to file."
-        if file is None:
-            return outfile.getvalue()
-
-    __call__ = render
-
-
-class HTMLReport(Report):
-    """A mixin for reports that support forwarding html to htmldiv implementation."""
-
-    default_format = 'html'
-
-    def __init__(self, *args, formatter=None, css_id=None, css_class=None):
-        super().__init__(*args)
-        if formatter is None:
-            formatter = html_formatter.HTMLFormatter(
-                display_context.DEFAULT_DISPLAY_CONTEXT)
-        self.formatter = formatter
-        self.css_id = css_id
-        self.css_class = css_class
-
-    def render_html(self, entries, errors, options_map, file):
-        template = get_html_template()
-        oss = io.StringIO()
-        self.render_htmldiv(entries, errors, options_map, oss)
-        file.write(template.format(body=oss.getvalue(),
-                                   title=''))
-
-
-
-class TableReport(HTMLReport):
-    """A base class for reports that supports automatic conversions from Table."""
-
-    default_format = 'text'
-
-    def generate_table(self, entries, errors, options_map):
-        """Render the report to a Table instance.
-
-        Args:
-          entries: A list of directives to render.
-          errors: A list of errors that occurred during processing.
-          options_map: A dict of options, as produced by the parser.
-        Returns:
-          An instance of Table, that will get converted to another format.
-        """
-        raise NotImplementedError
-
-    def render_text(self, entries, errors, options_map, file):
-        table_ = self.generate_table(entries, errors, options_map)
-        table.render_table(table_, file, 'text')
-
-    def render_htmldiv(self, entries, errors, options_map, file):
-        table_ = self.generate_table(entries, errors, options_map)
-        table.render_table(table_, file, 'htmldiv',
-                           css_id=self.css_id, css_class=self.css_class)
-
-    def render_csv(self, entries, errors, options_map, file):
-        table_ = self.generate_table(entries, errors, options_map)
-        table.render_table(table_, file, 'csv')
-
-
-class RealizationMeta(type):
-    """A metaclass for reports that render a realization.
-
-    The main use of this metaclass is to allow us to create report classes with
-    render_real_*() methods that accept a RealAccount instance as the basis for
-    producing a report.
-
-    RealAccount can be expensive to build, and may be pre-computed and kept
-    around to generate the various reports related to a particular filter of a
-    subset of transactions, and it would be inconvenient to have to recalculate
-    it every time we need to produce a report. In particular, this is the case
-    for the web interface: the user selects a particular subset of transactions
-    to view, and can then click to the various reports related to this subset of
-    transactions. This is why this is useful.
-
-    The classes generated with this metaclass respond to the same interface as
-    the regular report classes, so that if invoked from the command-line, it
-    will automatically build the realization from the given set of entries. This
-    metaclass looks at the class' existing render_real_*() methods and generate
-    the corresponding render_*() methods automatically.
-    """
-
-    # Note: I'm not a big fan of metaclass magic, but this use case is squarely
-    # relevant for it, so I'm using it.
-    def __new__(cls, name, bases, namespace):
-        new_type = super(RealizationMeta, cls).__new__(cls, name, bases, namespace)
-
-        # Go through the methods of the new type and look for render_real() methods.
-        new_methods = {}
-        for attr, value in new_type.__dict__.items():
-            match = re.match('render_real_(.*)', attr)
-            if not match:
-                continue
-
-            # Make sure that if an explicit version of render_*() has already
-            # been declared, that we don't override it.
-            render_function_name = 'render_{}'.format(match.group(1))
-            if render_function_name in new_type.__dict__:
-                continue
-
-            # Define a render_*() method on the class.
-            def forward_method(self, entries, errors, options_map, file, fwdfunc=value):
-                account_types = options.get_account_types(options_map)
-                real_root = realization.realize(entries, account_types)
-                return fwdfunc(self, real_root, options_map, file)
-            forward_method.__name__ = render_function_name
-            new_methods[render_function_name] = forward_method
-
-        # Update the type with the newly defined methods..
-        for name, value in new_methods.items():
-            setattr(new_type, name, value)
-
-        # Auto-generate other methods if necessary.
-        if hasattr(new_type, 'render_real_htmldiv'):
-            setattr(new_type, 'render_real_html', cls.render_real_html)
-
-        return new_type
-
-    def render_real_html(self, real_root, options_map, file):
-        """Wrap an htmldiv into our standard HTML template.
-
-        Args:
-          real_root: An instance of RealAccount.
-          options_map: A dict, options as produced by the parser.
-          file: A file object to write the output to.
-        """
-        template = get_html_template()
-        oss = io.StringIO()
-        self.render_real_htmldiv(real_root, options_map, oss)
-        file.write(template.format(body=oss.getvalue(),
-                                   title=''))
+from beancount.reports import misc_reports
+from beancount.reports import balance_reports
+from beancount.reports import journal_reports
+from beancount.reports import holdings_reports
+from beancount.reports import export_reports
+from beancount.reports import price_reports
+from beancount.reports import convert_reports
+from beancount.utils import file_utils
+from beancount.utils import misc_utils
 
 
 def get_all_reports():
@@ -253,13 +33,6 @@ def get_all_reports():
     Returns:
       A list of all available report classes.
     """
-    from beancount.reports import balance_reports
-    from beancount.reports import journal_reports
-    from beancount.reports import holdings_reports
-    from beancount.reports import export_reports
-    from beancount.reports import price_reports
-    from beancount.reports import misc_reports
-    from beancount.reports import convert_reports
     return functools.reduce(operator.add,
                             map(lambda module: module.__reports__,
                                 [balance_reports,
@@ -271,12 +44,219 @@ def get_all_reports():
                                  convert_reports]))
 
 
-def get_html_template():
-    """Returns our vanilla HTML template for embedding an HTML div.
+def get_list_report_string(only_report=None):
+    """Return a formatted string for the list of supported reports.
 
+    Args:
+      only_report: A string, the name of a single report to produce the help
+        for. If not specified, list all the available reports.
     Returns:
-      A string, with a formatting style placeholders:
-        {title}: for the title of the page.
-        {body}: for the body, where the div goes.
+      A help string, or None, if 'only_report' was provided and is not a valid
+      report name.
     """
-    return open(path.join(path.dirname(__file__), 'template.html')).read()
+    oss = io.StringIO()
+    num_reports = 0
+    for report_class in get_all_reports():
+        # Filter the name
+        if only_report and only_report not in report_class.names:
+            continue
+
+        # Get the texttual description.
+        description = textwrap.fill(
+            re.sub(' +', ' ', ' '.join(report_class.__doc__.splitlines())),
+            initial_indent="    ",
+            subsequent_indent="    ",
+            width=80)
+
+        # Get the report's arguments.
+        parser = argparse.ArgumentParser()
+        report_ = report_class
+        report_class.add_args(parser)
+
+        # Get the list of supported formats.
+        ## formats = report_class.get_supported_formats()
+
+        oss.write('{}:\n{}\n'.format(','.join(report_.names),
+                                     description))
+        num_reports += 1
+
+    if not num_reports:
+        return None
+    return oss.getvalue()
+
+
+class ListReportsAction(argparse.Action):
+    """An argparse action that just prints the list of reports and exits."""
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        help_string = get_list_report_string(values)
+        if values and help_string is None:
+            sys.stderr.write("Error: Invalid report name '{}'\n".format(values))
+            sys.exit(1)
+        else:
+            print(help_string)
+            sys.exit(0)
+
+
+class ListFormatsAction(argparse.Action):
+    """An argparse action that prints all supported formats (for each report)."""
+
+    # Ordering of formats rendering.
+    format_order = {'text': 1,
+                    'html': 2,
+                    'htmldiv': 3,
+                    'csv': 4,
+                    'beancount': 99}
+    format_order_last = 100
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        # Get all the report types and formats.
+        matrix = []
+        for report_class in get_all_reports():
+            formats = report_class.get_supported_formats()
+            matrix.append((report_class.names[0], formats))
+
+        # Compute a list of unique output formats.
+        all_formats = sorted({format_
+                              for name, formats in matrix
+                              for format_ in formats},
+                             key=lambda fmt: self.format_order.get(fmt,
+                                                                   self.format_order_last))
+
+        # Bulid a list of rows.
+        rows = []
+        for name, formats in matrix:
+            xes = ['X' if fmt in formats else ''
+                   for fmt in all_formats]
+            rows.append([name] + xes)
+
+        # Build a description of the rows, a field specificaiton.
+        header = ['Name'] + all_formats
+        field_spec = [(index, name) for index, name in enumerate(header)]
+
+        # Create and render an ASCII table.
+        table_ = table.create_table(rows, field_spec)
+        sys.stdout.write(table.table_to_text(table_, "  "))
+
+        sys.exit(0)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+
+    parser.add_argument('--help-reports', '--list-reports',
+                        nargs='?',
+                        default=None,
+                        action=ListReportsAction,
+                        help="Print the full list of supported reports and exit.")
+
+    parser.add_argument('--help-formats', '--list-formats',
+                        nargs='?',
+                        default=None,
+                        action=ListFormatsAction,
+                        help="Print the full list of supported formats and exit.")
+
+    parser.add_argument('-f', '--format', default=None,
+                        choices=['text', 'csv', 'html', 'htmldiv', 'xls', 'ofx',
+                                 'beancount'],
+                        help="Output format.")
+
+    parser.add_argument('-o', '--output', action='store',
+                        help=("Output filename. If not specified, the output goes "
+                              "to stdout. The filename is inspected to select a "
+                              "sensible default format, if one is not requested."))
+
+    parser.add_argument('-t', '--timings', '--verbose', action='store_true',
+                        help='Print timings.')
+
+    parser.add_argument('-q', '--no-errors', action='store_true',
+                        help='Do not report errors.')
+
+    parser.add_argument('filename', metavar='FILENAME.beancount',
+                        help='The Beancount input filename to load.')
+
+    subparsers = parser.add_subparsers(title='report',
+                                       help='Name/specification of the desired report.')
+
+    for report_class in get_all_reports():
+        name, aliases = report_class.names[0], report_class.names[1:]
+
+        oss = io.StringIO()
+        oss.write('  {} (aliases: {}; formats: {})'.format(
+            report_class.__doc__,
+            ','.join(report_class.names),
+            ','.join(report_class.get_supported_formats())))
+
+        report_parser = subparsers.add_parser(name,
+                                              aliases=aliases,
+                                              description=oss.getvalue())
+        report_parser.set_defaults(report_class=report_class)
+        report_class.add_args(report_parser)
+
+        # Each subparser must gather the filter arguments. This is unfortunate,
+        # but it works.
+        report_parser.add_argument(
+            'filters', nargs='*',
+            help='Filter expression(s) to select the subset of transactions.')
+
+    args = parser.parse_args()
+
+    # Warn on filters--not supported at this time.
+    if hasattr(args, 'filters') and args.filters:
+        parser.error(("Filters are not supported yet. Extra args: {}. "
+                      "See bean-query if you need filtering now.").format(args.filters))
+
+    # Handle special commands.
+    if args.help_reports:
+        print(get_list_report_string())
+        return
+
+    is_check = False
+    if hasattr(args, 'report_class'):
+        # Open output file and guess file format.
+        outfile = open(args.output, 'w') if args.output else sys.stdout
+        args.format = args.format or file_utils.guess_file_format(args.output)
+
+        # Create the requested report and parse its arguments.
+        chosen_report = args.report_class(args, parser)
+        if chosen_report is None:
+            parser.error("Unknown report")
+        is_check = isinstance(chosen_report, misc_reports.ErrorReport)
+
+        # Verify early that the format is supported, in order to avoid parsing the
+        # input file if we need to bail out.
+        supported_formats = chosen_report.get_supported_formats()
+        if args.format and args.format not in supported_formats:
+            parser.error("Unsupported format '{}' for {} (available: {})".format(
+                args.format, chosen_report.names[0], ','.join(supported_formats)))
+
+    # Force hardcore validations, just for check.
+    extra_validations = (validation.HARDCORE_VALIDATIONS if is_check else None)
+
+    logging.basicConfig(level=logging.INFO if args.timings else logging.WARNING,
+                        format='%(levelname)-8s: %(message)s')
+
+    # Parse the input file.
+    errors_file = None if args.no_errors else sys.stderr
+    with misc_utils.log_time('beancount.loader (total)', logging.info):
+        entries, errors, options_map = loader.load_file(args.filename,
+                                                        log_timings=logging.info,
+                                                        log_errors=errors_file,
+                                                        extra_validations=extra_validations)
+
+    if hasattr(args, 'report_class'):
+        # Create holdings list.
+        with misc_utils.log_time('report.render', logging.info):
+            try:
+                chosen_report.render(entries, errors, options_map, args.format, outfile)
+            except base.ReportError as exc:
+                sys.stderr.write("Error: {}\n".format(exc))
+                sys.exit(1)
+    else:
+        print(get_list_report_string())
+
+    return 0
+
+
+if __name__ == '__main__':
+    main()

@@ -1,10 +1,10 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import textwrap
 import datetime
 import unittest
 from unittest import mock
-from urllib import request
 from urllib import error
 
 
@@ -28,14 +28,14 @@ class YahooFinancePriceFetcher(unittest.TestCase):
 
         # c4l1d1
         self.url_object.read.side_effect = [b'USD,553.37,"12/7/2015"\r\n']
-        srcprice = self.fetcher.get_latest_price('GOOG')
+        srcprice = self.fetcher.get_latest_price('HOOL')
         self.assertTrue(isinstance(srcprice.price, Decimal))
         self.assertEqual(D('553.37'), srcprice.price)
 
         # c4b3b2d2
         self.url_object.read.side_effect = [b'N/A,N/A\r\n',
                                             b'USD,553.37,556.70,"12/7/2015"\r\n']
-        srcprice = self.fetcher.get_latest_price('GOOG')
+        srcprice = self.fetcher.get_latest_price('HOOL')
         self.assertTrue(isinstance(srcprice.price, Decimal))
         self.assertEqual(D('555.035'), srcprice.price)
 
@@ -43,7 +43,7 @@ class YahooFinancePriceFetcher(unittest.TestCase):
         self.url_object.read.side_effect = [b'N/A,N/A\r\n',
                                             b'N/A,N/A\r\n',
                                             b'USD,553.37,556.70,"12/7/2015"\r\n']
-        srcprice = self.fetcher.get_latest_price('GOOG')
+        srcprice = self.fetcher.get_latest_price('HOOL')
         self.assertTrue(isinstance(srcprice.price, Decimal))
         self.assertEqual(D('555.035'), srcprice.price)
 
@@ -52,7 +52,7 @@ class YahooFinancePriceFetcher(unittest.TestCase):
                                             b'N/A,N/A\r\n',
                                             b'N/A,N/A\r\n',
                                             b'USD,553.37,"12/7/2015"\r\n']
-        srcprice = self.fetcher.get_latest_price('GOOG')
+        srcprice = self.fetcher.get_latest_price('HOOL')
         self.assertTrue(isinstance(srcprice.price, Decimal))
         self.assertEqual(D('553.37'), srcprice.price)
 
@@ -61,7 +61,7 @@ class YahooFinancePriceFetcher(unittest.TestCase):
                                             b'N/A,N/A\r\n',
                                             b'N/A,N/A\r\n',
                                             b'N/A,N/A\r\n']
-        srcprice = self.fetcher.get_latest_price('GOOG')
+        srcprice = self.fetcher.get_latest_price('HOOL')
         self.assertIsNone(srcprice)
 
     def test_get_latest_price__invalid(self):
@@ -78,7 +78,7 @@ class YahooFinancePriceFetcher(unittest.TestCase):
         """).encode('utf-8')
         request_date = datetime.date(2014, 5, 7)
         expected_date = datetime.date(2014, 5, 6)
-        srcprice = self.fetcher.get_historical_price('GOOG', request_date)
+        srcprice = self.fetcher.get_historical_price('HOOL', request_date)
         self.assertTrue(isinstance(srcprice.price, Decimal))
         self.assertEqual(D('515.14'), srcprice.price)
         self.assertEqual(expected_date, srcprice.time.date())

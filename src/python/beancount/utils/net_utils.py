@@ -1,6 +1,7 @@
 """Network utilities.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import urllib.error
 import logging
@@ -24,7 +25,7 @@ def retrying_urlopen(url, timeout=5, max_retry=5):
             response = request.urlopen(url, timeout=timeout)
             if response:
                 break
-        except urllib.error.URLError as exc:
+        except urllib.error.URLError:
             return None
     if response and response.getcode() != 200:
         return None

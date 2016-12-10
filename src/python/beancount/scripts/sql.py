@@ -1,6 +1,7 @@
 """Convert a Beancount ledger into an SQL database.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2015  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import sqlite3 as dbapi
 import argparse
@@ -70,6 +71,7 @@ def output_transactions(connection, entries):
             cost_number         DECIMAL(16, 6),
             cost_currency       CHARACTER(10),
             cost_date           DATE,
+            cost_label          VARCHAR,
             price_number        DECIMAL(16, 6),
             price_currency      CHARACTER(10),
             FOREIGN KEY(id) REFERENCES entries(id)
@@ -92,19 +94,20 @@ def output_transactions(connection, entries):
 
             for posting in entry.postings:
                 pid = next(postings_count)
-                position = posting.position
-                lot = position.lot
+                units = posting.units
+                cost = posting.cost
                 price = posting.price
                 connection.execute("""
-                  INSERT INTO postings VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                  INSERT INTO postings VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
                 """, (pid, eid,
                       posting.flag,
                       posting.account,
-                      position.number,
-                      lot.currency,
-                      lot.cost.number if lot.cost else None,
-                      lot.cost.currency if lot.cost else None,
-                      lot.lot_date if lot else None,
+                      units.number,
+                      units.currency,
+                      cost.number if cost else None,
+                      cost.currency if cost else None,
+                      cost.date if cost else None,
+                      cost.label if cost else None,
                       price.number if price else None,
                       price.currency if price else None))
 

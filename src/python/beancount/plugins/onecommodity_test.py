@@ -1,6 +1,6 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
-import re
 import unittest
 
 from beancount import loader
@@ -26,7 +26,7 @@ class TestOneCommodity(unittest.TestCase):
 
         """
         self.assertEqual(1, len(errors))
-        self.assertTrue(re.search('Expenses:Restaurant', errors[0].message))
+        self.assertRegex(errors[0].message, 'Expenses:Restaurant')
 
 
     @loader.load_doc(expect_errors=True)
@@ -45,4 +45,4 @@ class TestOneCommodity(unittest.TestCase):
 
         """
         self.assertEqual(1, len(errors))
-        self.assertTrue(re.search('Expenses:Restaurant', errors[0].message))
+        self.assertRegex(errors[0].message, 'Expenses:Restaurant')

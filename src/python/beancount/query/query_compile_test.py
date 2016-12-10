@@ -1,7 +1,7 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import datetime
-import re
 import unittest
 
 from beancount.core.number import D
@@ -347,8 +347,7 @@ class TestCompileSelect(CompileSelectBase):
             self.compile("""
               SELECT length(account) and sum(length(account));
             """)
-        self.assertTrue(re.search('Mixed aggregates and non-aggregates',
-                                  str(assertion.exception)))
+        self.assertRegex(str(assertion.exception), 'Mixed aggregates and non-aggregates')
 
     def test_compile_aggregates_of_aggregates(self):
         # Check mixed aggregates and non-aggregates in a target.
@@ -356,8 +355,7 @@ class TestCompileSelect(CompileSelectBase):
             self.compile("""
               SELECT sum(sum(length(account)));
             """)
-        self.assertTrue(re.search('Aggregates of aggregates',
-                                  str(assertion.exception)))
+        self.assertRegex(str(assertion.exception), 'Aggregates of aggregates')
 
     def test_compile_having(self):
         with self.assertRaises(qc.CompilationError):
@@ -377,8 +375,7 @@ class TestCompileSelectGroupBy(CompileSelectBase):
             self.compile("""
               SELECT payee GROUP BY payee, last(account);
             """)
-        self.assertTrue(re.search('may not be aggregates',
-                                  str(assertion.exception)))
+        self.assertRegex(str(assertion.exception), 'may not be aggregates')
 
     def test_compile_group_by_reference_by_name(self):
         # Valid references to target names.

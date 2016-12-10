@@ -1,6 +1,5 @@
-__author__ = "Martin Blais <blais@furius.ca>"
-
-import re
+__copyright__ = "Copyright (C) 2014, 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 from beancount.utils import test_utils
 from beancount.scripts import check
@@ -18,7 +17,7 @@ class TestScriptCheck(test_utils.TestCase):
           Expenses:Restaurant   50.02 USD
           Assets:Cash
         """
-        with test_utils.capture() as stdout:
+        with test_utils.capture('stdout', 'stderr') as (stdout, _):
             result = test_utils.run_with_args(check.main, [filename])
         self.assertEqual(0, result)
         self.assertLines("", stdout.getvalue())
@@ -38,5 +37,5 @@ class TestScriptCheck(test_utils.TestCase):
         with test_utils.capture('stderr') as stderr:
             result = test_utils.run_with_args(check.main, [filename])
         self.assertEqual(1, result)
-        self.assertTrue(re.search("Balance failed", stderr.getvalue()))
-        self.assertTrue(re.search("Assets:Cash", stderr.getvalue()))
+        self.assertRegex(stderr.getvalue(), "Balance failed")
+        self.assertRegex(stderr.getvalue(), "Assets:Cash")

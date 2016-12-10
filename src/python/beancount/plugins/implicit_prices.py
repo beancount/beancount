@@ -1,12 +1,14 @@
 """This plugin synthesizes Price directives for all Postings with a price or
 directive or if it is an augmenting posting, has a cost directive.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 
 from beancount.core.data import Transaction
 from beancount.core import data
+from beancount.core import amount
 from beancount.core import inventory
 
 __plugins__ = ('add_implicit_prices',)
@@ -43,9 +45,12 @@ def add_implicit_prices(entries, unused_options_map):
         if isinstance(entry, Transaction):
             # Inspect all the postings in the transaction.
             for posting in entry.postings:
+                units = posting.units
+                cost = posting.cost
+
                 # Check if the position is matching against an existing
                 # position.
-                _, booking = balances[posting.account].add_position(posting.position)
+                _, booking = balances[posting.account].add_position(posting)
 
                 # Add prices when they're explicitly specified on a posting. An
                 # explicitly specified price may occur in a conversion, e.g.
@@ -56,19 +61,20 @@ def add_implicit_prices(entries, unused_options_map):
                 if posting.price is not None:
                     meta = data.new_metadata(entry.meta["filename"], entry.meta["lineno"])
                     price_entry = data.Price(meta, entry.date,
-                                             posting.position.lot.currency,
+                                             units.currency,
                                              posting.price)
 
                 # Add costs, when we're not matching against an existing
                 # position. This happens when we're just specifying the cost,
                 # e.g.
                 #      Assets:Account    100 HOOL {564.20}
-                elif (posting.position.lot.cost is not None and
+                elif (cost is not None and
                       booking != inventory.Booking.REDUCED):
                     meta = data.new_metadata(entry.meta["filename"], entry.meta["lineno"])
                     price_entry = data.Price(meta, entry.date,
-                                             posting.position.lot.currency,
-                                             posting.position.lot.cost)
+                                             units.currency,
+                                             amount.Amount(cost.number,
+                                                           cost.currency))
 
                 else:
                     price_entry = None
@@ -76,7 +82,7 @@ def add_implicit_prices(entries, unused_options_map):
                 if price_entry is not None:
                     key = (price_entry.date,
                            price_entry.currency,
-                           price_entry.amount.number,  # Ideally should bd removed.
+                           price_entry.amount.number,  # Ideally should be removed.
                            price_entry.amount.currency)
                     try:
                         new_price_entry_map[key]

@@ -1,10 +1,10 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import unittest
-import re
-from decimal import Decimal
 
 from beancount.core import display_context
+from beancount.core.number import Decimal
 from beancount.core.display_context import Precision
 from beancount.core.display_context import Align
 
@@ -54,7 +54,7 @@ class TestDisplayContext(DisplayContextBaseTest):
         dcontext.update(Decimal('1.234'))
         dcontext.update(Decimal('1.23'), 'USD')
         dcontext.update(Decimal('7'), 'HOOL')
-        self.assertTrue(re.search('sign=', str(dcontext)))
+        self.assertRegex(str(dcontext), 'sign=')
 
 
 class TestDisplayContextNatural(DisplayContextBaseTest):
@@ -86,10 +86,9 @@ class TestDisplayContextNatural(DisplayContextBaseTest):
                                  commas=True)
 
     def test_natural_reserved(self):
-        with self.assertRaises(NotImplementedError):
-            self.assertFormatNumbers(['1.2345', '1.23', '234.26', '38.019'],
-                                     ['1.23', '1.23', '234.26', '38.02'],
-                                     reserved=10)
+        self.assertFormatNumbers(['1.2345', '1.23', '234.26', '38.019'],
+                                 ['1.23', '1.23', '234.26', '38.02'],
+                                 reserved=10)
 
 
 class TestDisplayContextRight(DisplayContextBaseTest):

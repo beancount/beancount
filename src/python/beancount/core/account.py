@@ -4,7 +4,8 @@ These account objects are rather simple and dumb; they do not contain the list
 of their associated postings. This is achieved by building a realization; see
 realization.py for details.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import re
 import os
@@ -17,7 +18,12 @@ sep = ':'
 
 
 # Regular expression string that matchs a valid account.
-ACCOUNT_RE = '[A-Z][A-Za-z0-9\-]+(?:{}[A-Z][A-Za-z0-9\-]+)+'.format(sep)
+ACCOUNT_RE = '[A-Z][A-Za-z0-9\-]+(?:{}[A-Z][A-Za-z0-9\-]*)+'.format(sep)
+
+
+# A dummy object which stands for the account type. Values in custom directives
+# use this to disambiguate between string objects and account names.
+TYPE = '<AccountDummy>'
 
 
 def is_valid(string):

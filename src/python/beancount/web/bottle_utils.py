@@ -1,7 +1,8 @@
 """
 Bottle utilities, mostly helpers to do mounts on top of dynamic routes.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import bottle
 from bottle import request
@@ -30,7 +31,7 @@ class AttrMapper:
 # Silence pyflakes errors.
 # pylint: disable=invalid-name
 itertools = None
-_raise = None
+_raise = lambda *args: None
 
 def internal_redirect(app, path_depth):
     """A version of bottle's mountpoint_wrapper() that we call explicitly.

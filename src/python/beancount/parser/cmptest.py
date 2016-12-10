@@ -1,6 +1,7 @@
 """Support utillities for testing scripts.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2015  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import unittest
 import io
@@ -29,7 +30,7 @@ def read_string_or_entries(entries_or_str):
             textwrap.dedent(entries_or_str))
 
         # Don't accept incomplete entries either.
-        if parser.has_auto_postings(entries):
+        if any(parser.is_entry_incomplete(entry) for entry in entries):
             raise TestError("Entries in assertions may not use interpolation.")
 
         entries, booking_errors = booking.book(entries, options_map)

@@ -1,7 +1,8 @@
 """
 Unit tests for summarization.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 
 from datetime import date
@@ -17,6 +18,7 @@ from beancount.ops import summarize
 from beancount.parser import printer
 from beancount.parser import options
 from beancount.parser import cmptest
+from beancount.utils import misc_utils
 from beancount import loader
 
 
@@ -662,8 +664,8 @@ class TestTransferBalances(cmptest.TestCase):
         self.assertIncludesEntries("""
 
         2010-12-31 T "Transfer balance for 'Assets:US:Investing:HOOL' (Transfer balance)"
-          Assets:US:Investing:HOOL                                               -5 HOOL     {510.00 USD}                  ;   -2550.00 USD
-          Equity:Transfer                                                       2550.00 USD                                   ;    2550.00 USD
+          Assets:US:Investing:HOOL         -5 HOOL {510.00 USD, 2010-12-05} ;   -2550.00 USD
+          Equity:Transfer             2550.00 USD                           ;    2550.00 USD
 
         """, xfer_entries)
         self.assertEqual(len(self.entries) + 1, len(xfer_entries))
@@ -768,8 +770,8 @@ class TestSummarize(cmptest.TestCase):
           Equity:Opening-Balances                                              -2459.98 USD
 
         2010-12-31 S "Opening balance for 'Assets:US:Investing:HOOL' (Summarization)"
-          Assets:US:Investing:HOOL                                                5 HOOL     {510.00 USD}                  ;    2550.00 USD
-          Equity:Opening-Balances                                              -2550.00 USD                                   ;   -2550.00 USD
+          Assets:US:Investing:HOOL                                                5 HOOL     {510.00 USD, 2010-12-05}  ;    2550.00 USD
+          Equity:Opening-Balances                                              -2550.00 USD                            ;   -2550.00 USD
 
         2010-12-31 S "Opening balance for 'Expenses:Flights' (Summarization)"
           Expenses:Flights                                                       345.23 USD
@@ -817,6 +819,27 @@ class TestSummarize(cmptest.TestCase):
         self.assertFalse(any(entry.date < summarize_date
                              for entry in after_transactions))
 
+    @loader.load_doc()
+    def test_summarize__ordering_non_transactions(self, entries, _, __):
+        """
+          2016-01-15 price HOOL    123.45 USD
+
+          2016-02-01 open Assets:Invest:Cash
+          2016-02-01 open Assets:Invest:HOOL
+
+          2016-02-16 *
+            Assets:Invest:HOOL    10 HOOL {143.45 USD}
+            Assets:Invest:Cash
+
+          2016-04-01 *
+            Assets:Invest:HOOL      2 HOOL {156.32 USD}
+            Assets:Invest:Cash
+        """
+        summarize_date = datetime.date(2016, 3, 1)
+        summarized_entries, index = summarize.summarize(entries, summarize_date,
+                                                        self.OPENING_ACCOUNT)
+        self.assertTrue(misc_utils.is_sorted(summarized_entries, lambda entry: entry.date))
+
 
 class TestConversions(cmptest.TestCase):
 
@@ -856,7 +879,7 @@ class TestConversions(cmptest.TestCase):
         self.assertEqualEntries(self.entries, conversion_entries)
 
         converted_balance = interpolate.compute_entries_balance(conversion_entries,
-                                                             date=date)
+                                                                date=date)
         self.assertTrue(converted_balance.cost().is_empty())
 
     def test_conversions__not_needed(self):
@@ -893,7 +916,7 @@ class TestConversions(cmptest.TestCase):
         self.assertIncludesEntries(self.entries, conversion_entries)
         self.assertIncludesEntries("""
 
-        2012-03-09 C "Conversion for (-800.00 USD, 200.00 CAD, 60 NT {10 CAD})"
+        2012-03-09 C "Conversion for (-800.00 USD, 200.00 CAD, 60 NT {10 CAD, 2012-03-03})"
           Equity:Conversions   800.00 USD  @ 0 XFER
           Equity:Conversions  -800.00 CAD  @ 0 XFER
 
@@ -907,10 +930,11 @@ class TestConversions(cmptest.TestCase):
         date = datetime.date(2012, 5, 10)
         conversion_entries = summarize.conversions(self.entries, self.ACCOUNT,
                                                    'NOTHING', date)
+
         self.assertIncludesEntries(self.entries, conversion_entries)
         self.assertIncludesEntries("""
 
-        2012-05-09 C "Conversion for (-700.00 USD, 100.00 CAD, 60 NT {10 CAD})"
+        2012-05-09 C "Conversion for (-700.00 USD, 100.00 CAD, 60 NT {10 CAD, 2012-03-03})"
           Equity:Conversions   700.00 USD  @ 0 NOTHING
           Equity:Conversions  -700.00 CAD  @ 0 NOTHING
 
@@ -925,13 +949,29 @@ class TestConversions(cmptest.TestCase):
         self.assertIncludesEntries(self.entries, conversion_entries)
         self.assertIncludesEntries("""
 
-        2012-05-01 C "Conversion for (-700.00 USD, 100.00 CAD, 60 NT {10 CAD})"
+        2012-05-01 C "Conversion for (-700.00 USD, 100.00 CAD, 60 NT {10 CAD, 2012-03-03})"
           Equity:Conversions   700.00 USD  @ 0 NOTHING
           Equity:Conversions  -700.00 CAD  @ 0 NOTHING
 
         """, conversion_entries)
 
         converted_balance = interpolate.compute_entries_balance(conversion_entries)
+        self.assertTrue(converted_balance.cost().is_empty())
+
+    @loader.load_doc()
+    def test_conversions__non_empty_but_empty_cost(self, entries, _, __):
+        """
+          2012-01-01 open Assets:Checking
+          2012-01-01 open Assets:Invest
+
+          2012-03-01 *
+            Assets:Checking        -800.00 USD
+            Assets:Invest           40 HOOL {20.00 USD}
+        """
+        conversion_entries = summarize.conversions(entries, self.ACCOUNT, 'XFER')
+        self.assertEqualEntries(entries, conversion_entries)
+
+        converted_balance = interpolate.compute_entries_balance(entries)
         self.assertTrue(converted_balance.cost().is_empty())
 
 
@@ -1038,7 +1078,7 @@ class TestEntriesFromBalance(cmptest.TestCase):
 
     def test_create_entries_from_balances__empty(self):
         balances = collections.defaultdict(inventory.Inventory)
-        balances['Assets:US:Bank:Empty']
+        _ = balances['Assets:US:Bank:Empty']
         entries = summarize.create_entries_from_balances(balances, datetime.date.today(),
                                                          self.SOURCE_ACCOUNT, True,
                                                          self.META, '!', 'narration')
@@ -1047,7 +1087,7 @@ class TestEntriesFromBalance(cmptest.TestCase):
     def setUp(self):
         self.balances = collections.defaultdict(inventory.Inventory)
         self.balances['Assets:US:Investment'] = (
-            inventory.from_string('10 HOOL {500.00 USD}'))
+            inventory.from_string('10 HOOL {500.00 USD, 2014-01-01}'))
         self.balances['Assets:US:Bank:Checking'] = inventory.from_string('1823.23 USD')
 
     def test_create_entries_from_balances__simple(self):

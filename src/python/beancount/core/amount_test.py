@@ -1,4 +1,5 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import unittest
 
@@ -72,7 +73,7 @@ class TestAmount(unittest.TestCase):
             Amount(D('2'), 'USD'),
             Amount(D('200'), 'EUR'),
         ]
-        amounts = sorted(amounts, key=amount.amount_sortkey)
+        amounts = sorted(amounts, key=amount.sortkey)
         self.assertEqual([
             Amount(D('100'), 'CAD'),
             Amount(D('200'), 'EUR'),
@@ -115,17 +116,33 @@ class TestAmount(unittest.TestCase):
     def test_mult(self):
         amount_ = Amount(D('100'), 'CAD')
         self.assertEqual(Amount(D('102.1'), 'CAD'),
-                         amount.amount_mult(amount_, D('1.021')))
+                         amount.mul(amount_, D('1.021')))
 
     def test_div(self):
         amount_ = Amount(D('100'), 'CAD')
         self.assertEqual(Amount(D('20'), 'CAD'),
-                         amount.amount_div(amount_, D('5')))
+                         amount.div(amount_, D('5')))
+
+    def test_add(self):
+        self.assertEqual(Amount(D('117.02'), 'CAD'),
+                         amount.add(Amount(D('100'), 'CAD'),
+                                    Amount(D('17.02'), 'CAD')))
+        with self.assertRaises(ValueError):
+            amount.sub(Amount(D('100'), 'USD'),
+                       Amount(D('17.02'), 'CAD'))
 
     def test_sub(self):
         self.assertEqual(Amount(D('82.98'), 'CAD'),
-                         amount.amount_sub(Amount(D('100'), 'CAD'),
+                         amount.sub(Amount(D('100'), 'CAD'),
                                            Amount(D('17.02'), 'CAD')))
         with self.assertRaises(ValueError):
-            amount.amount_sub(Amount(D('100'), 'USD'),
+            amount.sub(Amount(D('100'), 'USD'),
                               Amount(D('17.02'), 'CAD'))
+
+    def test_abs(self):
+        self.assertEqual(Amount(D('82.98'), 'CAD'),
+                         amount.abs(Amount(D('82.98'), 'CAD')))
+        self.assertEqual(Amount(D('0'), 'CAD'),
+                         amount.abs(Amount(D('0'), 'CAD')))
+        self.assertEqual(Amount(D('82.98'), 'CAD'),
+                         amount.abs(Amount(D('-82.98'), 'CAD')))
