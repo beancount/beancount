@@ -1,4 +1,5 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import unittest
 import re
@@ -38,10 +39,10 @@ class TestRegexpMixin(unittest.TestCase):
         importer = SimpleTestImporter(['Filename: .*te?mp.*',
                                        'MimeType: text/plain',
                                        'Contents: .*DATE,TYPE'])
-        file = cache.FileMemo(filename)
+        file = cache._FileMemo(filename)
         self.assertTrue(importer.identify(file))
 
         importer = SimpleTestImporter(['Filename: .*te?mp.*',
                                        'MimeType: text/xml'])
-        file = cache.FileMemo(filename)
+        file = cache._FileMemo(filename)
         self.assertFalse(importer.identify(file))

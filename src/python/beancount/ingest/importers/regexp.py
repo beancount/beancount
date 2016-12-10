@@ -7,7 +7,8 @@ its full name, its MIME type, and its contents, which looks like this:
 The point is to allow an implementor to specify identification using just a few
 regular expressions.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import re
 
@@ -29,7 +30,7 @@ class RegexpImporterMixin:
         super().__init__()
         assert isinstance(regexps, (list, type(None)))
 
-        self.regexps = [(regexp, re.compile(regexp, re.DOTALL))
+        self.regexps = [(regexp, re.compile(regexp, re.DOTALL|re.IGNORECASE|re.MULTILINE))
                         for regexp in regexps]
 
     def get_text(self, file):

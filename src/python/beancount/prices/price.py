@@ -1,10 +1,10 @@
 """Driver code for the price script.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import datetime
 import functools
-import threading
 from os import path
 import shelve
 import tempfile
@@ -106,7 +106,6 @@ def setup_cache(cache_filename, clear_cache):
         global _CACHE
         _CACHE = shelve.open(cache_filename)
         _CACHE.expiration = DEFAULT_EXPIRATION
-        _CACHE.lock = threading.Lock()  # Note: 'shelve' is not thread-safe by itself.
 
 
 def reset_cache():
@@ -318,8 +317,12 @@ def main():
 
     # Fetch all the required prices, processing all the jobs.
     executor = futures.ThreadPoolExecutor(max_workers=3)
-    price_entries = sorted(filter(None, executor.map(
-        functools.partial(fetch_price, swap_inverted=args.swap_inverted), jobs)))
+    price_entries = filter(None, executor.map(
+        functools.partial(fetch_price, swap_inverted=args.swap_inverted), jobs))
+
+    # Sort them by currency, regardless of date (the dates should be close
+    # anyhow, and we tend to put them in chunks in the input files anyhow).
+    price_entries = sorted(price_entries, key=lambda e: e.currency)
 
     # Avoid clobber, remove redundant entries.
     if not args.clobber:

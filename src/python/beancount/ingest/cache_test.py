@@ -1,4 +1,5 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import tempfile
 import shutil
@@ -13,7 +14,7 @@ class TestFileMemo(unittest.TestCase):
     def test_cache(self):
         with tempfile.NamedTemporaryFile() as tmpfile:
             shutil.copy(__file__, tmpfile.name)
-            wrap = cache.FileMemo(tmpfile.name)
+            wrap = cache._FileMemo(tmpfile.name)
 
             # Check attributes.
             self.assertEqual(tmpfile.name, wrap.name)
@@ -28,7 +29,7 @@ class TestFileMemo(unittest.TestCase):
     def test_cache_head_and_contents(self):
         with tempfile.NamedTemporaryFile() as tmpfile:
             shutil.copy(__file__, tmpfile.name)
-            wrap = cache.FileMemo(tmpfile.name)
+            wrap = cache._FileMemo(tmpfile.name)
 
             contents = wrap.convert(cache.contents)
             self.assertIsInstance(contents, str)

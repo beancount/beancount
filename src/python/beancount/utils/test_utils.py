@@ -1,8 +1,10 @@
 """Support utillities for testing scripts.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import builtins
+import collections
 import textwrap
 import unittest
 import io
@@ -23,6 +25,12 @@ from os import path
 # avoid port collisions during testing.
 # pylint: disable=invalid-name
 get_test_port = itertools.count(9470).__next__
+
+
+def nottest(func):
+    "Make the given function not testable."
+    func.__test__ = False
+    return func
 
 
 def find_repository_root(filename=None):
@@ -210,10 +218,10 @@ def docfile(function):
     """
     @functools.wraps(function)
     def new_function(self):
-        with tempfile.NamedTemporaryFile('w') as f:
-            f.write(textwrap.dedent(function.__doc__))
-            f.flush()
-            return function(self, f.name)
+        with tempfile.NamedTemporaryFile('w') as file:
+            file.write(textwrap.dedent(function.__doc__))
+            file.flush()
+            return function(self, file.name)
     new_function.__doc__ = None
     return new_function
 
@@ -333,3 +341,26 @@ def environ(varname, newvalue):
     os.environ[varname] = newvalue
     yield
     os.environ[varname] = oldvalue
+
+
+# A function call's arguments, including its return value.
+# This is an improvement onto what mock.call provides.
+# That has not the return value normally.
+# You can use this to build internal call interceptors.
+RCall = collections.namedtuple('RCall', 'args kwargs return_value')
+
+def record(fun):
+    """Decorates the function to intercept and record all calls and return values.
+
+    Args:
+      fun: A callable to be decorated.
+    Returns:
+      A wrapper function with a .calls attribute, a list of RCall instances.
+    """
+    @functools.wraps(fun)
+    def wrapped(*args, **kw):
+        return_value = fun(*args, **kw)
+        wrapped.calls.append(RCall(args, kw, return_value))
+        return return_value
+    wrapped.calls = []
+    return wrapped

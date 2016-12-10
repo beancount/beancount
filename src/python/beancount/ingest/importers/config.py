@@ -5,7 +5,8 @@ which accept a long number of account names or regular expressions on the set of
 account names. This is inspired by functionality in the importers in the
 previous iteration of the ingest code, which used to be its own project.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import logging
 

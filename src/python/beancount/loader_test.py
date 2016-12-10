@@ -1,4 +1,5 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import logging
 import unittest
@@ -79,11 +80,11 @@ class TestLoader(unittest.TestCase):
         self.assertTrue(errors)
         self.assertRegex(errors[0].message, 'does not exist')
 
-    @mock.patch.dict(loader.DEPRECATED_MODULES,
+    @mock.patch.dict(loader.RENAMED_MODULES,
                      {"beancount.ops.auto_accounts": "beancount.plugins.auto_accounts"},
                      clear=True)
     @mock.patch('warnings.warn')
-    def test_deprecated_plugin_warnings(self, warn):
+    def test_renamed_plugin_warnings(self, warn):
         with test_utils.capture('stderr'):
             entries, errors, options_map = loader.load_string("""
               plugin "beancount.ops.auto_accounts"
@@ -381,6 +382,45 @@ class TestLoadCache(unittest.TestCase):
             # Load the root file again, make sure the cache is being hit.
             entries, errors, options_map = loader.load_file(top_filename)
             self.assertEqual(2, self.num_calls)
+
+    @mock.patch('os.remove', side_effect=OSError)
+    @mock.patch('logging.warning')
+    def test_load_cache_read_only_fs(self, remove_mock, warn_mock):
+        # Create an initial set of files and load file, thus creating a cache.
+        with test_utils.tempdir() as tmp:
+            test_utils.create_temporary_files(tmp, {
+                'apples.beancount': """
+                  2014-01-01 open Assets:Apples
+                """})
+            filename = path.join(tmp, 'apples.beancount')
+            entries, errors, options_map = loader.load_file(filename)
+            with open(filename, 'w'): pass
+            entries, errors, options_map = loader.load_file(filename)
+            self.assertEqual(1, len(warn_mock.mock_calls))
+
+    @mock.patch('beancount.loader.PICKLE_CACHE_THRESHOLD', 0.0)
+    def test_load_cache_override_filename_pattern(self):
+        orig_load_file = loader._load_file
+        prev_env = os.getenv('BEANCOUNT_LOAD_CACHE_FILENAME')
+        os.environ['BEANCOUNT_LOAD_CACHE_FILENAME'] = '__{filename}__'
+        loader.initialize()
+        try:
+            with test_utils.tempdir() as tmp:
+                test_utils.create_temporary_files(tmp, {
+                    'apples.beancount': """
+                      2014-01-01 open Assets:Apples
+                    """})
+                filename = path.join(tmp, 'apples.beancount')
+                entries, errors, options_map = loader.load_file(filename)
+                self.assertEqual({'__apples.beancount__', 'apples.beancount'},
+                                 set(os.listdir(tmp)))
+        finally:
+            # Restore pre-test values.
+            loader._load_file = orig_load_file
+            if prev_env is None:
+                del os.environ['BEANCOUNT_LOAD_CACHE_FILENAME']
+            else:
+                os.environ['BEANCOUNT_LOAD_CACHE_FILENAME'] = prev_env
 
 
 class TestEncoding(unittest.TestCase):

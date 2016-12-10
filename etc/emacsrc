@@ -22,3 +22,15 @@
   (add-to-list
    'compilation-error-regexp-alist 'python-logging)
   )
+
+
+;; Experimental: Bind a key to reformat the entire file using bean-format.
+(defun beancount-format-file ()
+  (interactive)
+  (let ((line-no (line-number-at-pos)))
+      (call-process-region (point-min) (point-max) "bean-format" t (current-buffer))
+      (goto-line line-no)
+      (recenter)
+      ))
+
+(define-key* beancount-mode-map [(control c)(F)] 'beancount-format-file)

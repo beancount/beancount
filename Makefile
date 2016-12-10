@@ -6,6 +6,10 @@ DOWNLOADS = $(HOME)/u/Downloads
 
 GREP="grep --include="*.py" -srnE"
 SRC=src/python
+TOOLS=./etc
+
+PYTHON=python3
+#PYTHON=$(HOME)/src/python/vginstall/bin/python3
 
 all: compile
 
@@ -42,7 +46,7 @@ SOURCES =					\
 	$(CROOT)/grammar.h
 
 compile: $(SOURCES)
-	python3 setup.py build_ext -i
+	$(PYTHON) setup.py build_ext -i
 
 .PHONY: build
 build: compile
@@ -55,7 +59,7 @@ dump_lexer:
 
 # Check for memory leaks.
 grind:
-	valgrind --leak-check=full /usr/local/bin/python3 bean-sandbox $(INPUT)
+	valgrind --leak-check=full $(PYTHON) bean-sandbox $(INPUT)
 
 # Regenerate the website.
 html docs:
@@ -120,27 +124,27 @@ showdeps-core: build/beancount-core.pdf
 
 # Run in the debugger.
 debug:
-	gdb --args /usr/local/bin/python3 /home/blais/p/beancount/bin/bean-sandbox $(INPUT)
+	gdb --args $(PYTHON) /home/blais/p/beancount/bin/bean-sandbox $(INPUT)
 
 
 # Bake a release.
 release:
-	python3 setup.py sdist register
+	$(PYTHON) setup.py register sdist upload
 
 
 # Run the unittests.
+NOSE = nosetests3
 vtest vtests verbose-test verbose-tests:
-	nosetests -v -s $(SRC)
+	$(NOSE) -v -s $(SRC)
 
 qtest qtests quiet-test quiet-tests test tests:
-	nosetests $(SRC)
+	$(NOSE) $(SRC)
 
 test-failed:
-	nosetests --failed $(SRC)
+	$(NOSE) --failed $(SRC)
 
 nakedtests:
-	PATH=/bin:/usr/bin PYTHONPATH= /usr/local/bin/nosetests -x $(SRC)
-
+	PATH=/bin:/usr/bin PYTHONPATH= /usr/local/bin/$(NOSE) -x $(SRC)
 
 # Run the parser and measure its performance.
 .PHONY: check
@@ -160,7 +164,7 @@ example $(EXAMPLE):
 
 TUTORIAL=examples/tutorial
 tutorial: $(EXAMPLE)
-	python3 src/python/beancount/scripts/tutorial.py $(EXAMPLE) $(TUTORIAL)
+	$(PYTHON) src/python/beancount/scripts/tutorial.py $(EXAMPLE) $(TUTORIAL)
 
 
 # Run the web server.
@@ -184,7 +188,7 @@ sandbox:
 	bean-sandbox $(INPUT)
 
 missing-tests:
-	./etc/find-missing-tests.py $(SRC)
+	$(TOOLS)/find-missing-tests.py $(SRC)
 
 fixmes:
 	egrep -srn '\b(FIXME|TODO\()' $(SRC) || true
@@ -193,7 +197,7 @@ filter-terms:
 	egrep --exclude-dir='.hg' --exclude-dir='__pycache__' -srn 'GOOGL?\b' $(PWD) | grep -v GOOGLE_APIS || true
 
 multi-imports:
-	egrep -srn '^(from.*)?import.*,' $(SRC) || true
+	(egrep -srn '^(from.*)?import.*,' $(SRC) | grep -v 'from typing') || true
 
 # Check for unused imports.
 sfood-checker:
@@ -201,16 +205,18 @@ sfood-checker:
 
 # Check dependency constraints.
 constraints dep-constraints: build/beancount.deps
-	./etc/dependency-constraints.py $<
+	$(TOOLS)/dependency-constraints.py $<
 
-check-author:
-	find src/python/beancount -type f -name '*.py' ! -exec grep -q '__author__' {} \; -print
+check-copyright:
+	$(TOOLS)/check-copyright.py --root=$(PWD)
+
 
 # Run the linter on all source code.
 # To list all messages, call: "pylint --list-msgs"
 LINT_SRCS =					\
   $(SRC)/beancount				\
   examples/ingest/office/importers		\
+  tools
 
 pylint lint:
 	pylint --rcfile=$(PWD)/etc/pylintrc $(LINT_SRCS)
@@ -220,14 +226,4 @@ pyflakes:
 
 
 # Check everything.
-status check: pylint pyflakes filter-terms missing-tests dep-constraints multi-imports tests-quiet
-# fixmes: For later.
-
-
-
-# FIXME: Remove
-grep-import:
-	grep --include='*.py' --exclude='*/beancount/parser/*' -srn  'from beancount.parser import parser'  ~/p/beancount/src/python/beancount
-
-grep-uses:
-	grep --include='*.py' --exclude='*/beancount/parser/*' -srn  'parser.parse'  ~/p/beancount/src/python/beancount
+status check: pylint pyflakes check-copyright filter-terms missing-tests dep-constraints multi-imports test

@@ -73,7 +73,8 @@ Implementation notes:
 
 """
 
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 __plugins__ = ('book_price_conversions_plugin',)
 
 import argparse
@@ -136,7 +137,7 @@ def augment_inventory(pending_lots, posting, entry, eindex):
         units=copy.copy(posting.units),
         cost=position.Cost(posting.price.number,
                            posting.price.currency,
-                           None, # FIXME: You should enter the date here.
+                           entry.date,
                            None))
     pending_lots.append(([number], new_posting, eindex))
     return new_posting
@@ -211,6 +212,7 @@ def link_entries_with_metadata(entries, all_matches):
 
     Args:
       entries: The list of entries to modify.
+      all_matches: A list of pairs of (augmenting-posting, reducing-posting).
     Returns:
       A list of pairs of (index, Posting) for the new (augmenting, reducing)
       annotated postings.

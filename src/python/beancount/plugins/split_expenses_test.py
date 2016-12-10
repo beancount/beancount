@@ -1,4 +1,5 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import textwrap
 import unittest
@@ -123,7 +124,7 @@ class TestSplitReports(unittest.TestCase):
         self.assertRegex(output, "balance")
 
     def test_split_reports(self):
-        self.run_split_reports([])
+        self.run_split_reports(['--output-stdout'])
 
     def test_split_reports_with_currency(self):
-        self.run_split_reports(['--currency=USD'])
+        self.run_split_reports(['--output-stdout', '--currency=USD'])

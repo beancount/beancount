@@ -4,7 +4,8 @@ Read an import script and a list of downloaded filenames or directories of
 2downloaded files, and for each of those files, identify which importer it should
 be associated with.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import logging
 import sys
@@ -15,7 +16,7 @@ from beancount.ingest import scripts_utils
 from beancount.ingest import cache
 
 
-# The format for the seciton titles in the extracted output.
+# The format for the section titles in the extracted output.
 # You may override this value from your .import script.
 SECTION = '**** {}'
 
@@ -56,7 +57,7 @@ def find_imports(importer_config, files_or_directories, logfile=None):
 
         # For each of the sources the user has declared, identify which
         # match the text.
-        file = cache.FileMemo(filename)
+        file = cache.get_file(filename)
         matching_importers = []
         for importer in importer_config:
             try:
@@ -80,7 +81,7 @@ def identify(importer_config, files_or_directories):
     logfile = sys.stdout
     for filename, importers in find_imports(importer_config, files_or_directories,
                                             logfile=logfile):
-        file = cache.FileMemo(filename)
+        file = cache.get_file(filename)
         for importer in importers:
             logfile.write('Importer:    {}\n'.format(importer.name() if importer else '-'))
             logfile.write('Account:     {}\n'.format(importer.file_account(file)))

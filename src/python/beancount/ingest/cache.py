@@ -4,19 +4,25 @@ This object is used in lieu of a file in order to allow the various importers to
 reuse each others' conversion results. Converting file contents, e.g. PDF to
 text, can be expensive.
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
+
+from os import path
 
 import chardet
-import logging
 
 from beancount.utils import file_type
+from beancount.utils import defdict
+
+
+# NOTE: See get_file() at the end of this file to create instances of FileMemo.
 
 
 # Maximum number of bytes to read in order to detect the encoding of a file.
 HEAD_DETECT_MAX_BYTES = 128 * 1024
 
 
-class FileMemo:
+class _FileMemo:
     """A file memoizer which acts as a cache for on-demand evaluation of conversions.
 
     Attributes:
@@ -79,8 +85,11 @@ def head(num_bytes=8192):
       A converter function.
     """
     def head_reader(filename):
-        with open(filename) as file:
-            return file.read(num_bytes)
+        with open(filename, 'rb') as file:
+            rawdata = file.read(num_bytes)
+            detected = chardet.detect(rawdata)
+            encoding = detected['encoding']
+            return rawdata.decode(encoding)
     return head_reader
 
 
@@ -104,3 +113,23 @@ def contents(filename):
 
     with open(filename, encoding=encoding, errors=errors) as file:
         return file.read()
+
+
+def get_file(filename):
+    """Create or reuse a globally registered instance of a FileMemo.
+
+    Note: the FileMemo objects' lifetimes are reused for the duration of the
+    process. This is usually the intended behavior. Always create them by
+    calling this constructor.
+
+    Args:
+      filename: A path string, the absolute name of the file whose memo to create.
+    Returns:
+      A FileMemo instance.
+
+    """
+    assert path.isabs(filename), (
+        "Path should be absolute in order to guarantee a single call.")
+    return _CACHE[filename]
+
+_CACHE = defdict.DefaultDictWithKey(_FileMemo)

@@ -1,6 +1,7 @@
 """Loader code. This is the main entry point to load up a file.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 import functools
@@ -41,15 +42,14 @@ DEFAULT_PLUGINS_POST = [
     ]
 
 # A mapping of modules to warn about, to their renamed names.
-DEPRECATED_MODULES = {
-    "beancount.ops.auto_accounts": "beancount.plugins.auto_accounts",
-    "beancount.ops.implicit_prices": "beancount.plugins.implicit_prices",
-    }
+RENAMED_MODULES = {}
 
 
 # Filename pattern for the pickle-cache.
 PICKLE_CACHE_FILENAME = '.{filename}.picklecache'
-PICKLE_CACHE_THRESHOLD = 1.0  # Secs.
+
+# The threshold below which we don't bother creating a cache file, in seconds.
+PICKLE_CACHE_THRESHOLD = 1.0
 
 
 def load_file(filename, log_timings=None, log_errors=None, extra_validations=None,
@@ -85,11 +85,6 @@ def load_file(filename, log_timings=None, log_errors=None, extra_validations=Non
                                                   extra_validations, encoding)
         _log_errors(errors, log_errors)
         return entries, errors, options_map
-
-
-# Alias, for compatibility.
-# pylint: disable=invalid-name
-load = load_file
 
 
 def load_encrypted_file(filename, log_timings=None, log_errors=None, extra_validations=None,
@@ -145,7 +140,7 @@ def pickle_cache_function(pattern, time_threshold, function):
 
     Args:
       pattern: A string, the filename pattern for the pickled cache file.
-        A {filename} in it gets replaced by the input filename.
+        A {filename} in it gets replaced by the basename of the input filename.
       time_threshold: A float, the number of seconds below which we don't bother
         caching.
       function: A function object to decorate for caching.
@@ -167,7 +162,6 @@ def pickle_cache_function(pattern, time_threshold, function):
             with open(cache_filename, 'rb') as file:
                 try:
                     result = pickle.load(file)
-
                 except Exception as exc:
                     # Note: Not a big fan of doing this, but here we handle all
                     # possible exceptions because unpickling of an old or
@@ -188,38 +182,35 @@ def pickle_cache_function(pattern, time_threshold, function):
 
         # We failed; recompute the value.
         if exists:
-            os.remove(cache_filename)
+            try:
+                os.remove(cache_filename)
+            except OSError as exc:
+                # Warn for errors on read-only filesystems.
+                logging.warning("Could not remove picklecache file %s: %s",
+                                cache_filename, exc)
 
-        t1 = time.time()
+        time_before = time.time()
         result = function(toplevel_filename, *args, **kw)
-        t2 = time.time()
+        time_after = time.time()
 
         # Overwrite the cache file if the time it takes to compute it
         # justifies it.
-        if t2 - t1 > time_threshold:
+        if time_after - time_before > time_threshold:
             try:
                 with open(cache_filename, 'wb') as file:
                     pickle.dump(result, file)
-            except Exception:
-                logging.warning("Could not write to picklecache file {}".format(
-                    cache_filename))
+            except Exception as exc:
+                logging.warning("Could not write to picklecache file %s: %s",
+                                cache_filename, exc)
 
         return result
     return wrapped
 
 
 def _load_file(filename, *args, **kw):
-    """Delegate to _load. This gets conditionally advised by caching below."""
+    """Delegate to _load. Note: This gets conditionally advised by caching below."""
     return _load([(filename, True)], *args, **kw)
-
-
-# Unless an environment variable disables it, use the pickle load cache
-# automatically.
-_uncached_load_file = _load_file
-if os.getenv('BEANCOUNT_DISABLE_LOAD_CACHE') is None:
-    _load_file = pickle_cache_function(PICKLE_CACHE_FILENAME,
-                                       PICKLE_CACHE_THRESHOLD,
-                                       _load_file)
+_uncached_load_file = _load_file  # pylint: disable=invalid-name
 
 
 def needs_refresh(options_map):
@@ -462,7 +453,7 @@ def _load(sources, log_timings, extra_validations, encoding):
                                            extra_validations)
         errors.extend(valid_errors)
 
-        # Note: We could go hardcode here and further verify that the entries
+        # Note: We could go hardcore here and further verify that the entries
         # haven't been modified by user-provided validation routines, by
         # comparing hashes before and after. Not needed for now.
 
@@ -502,8 +493,8 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
 
     for plugin_name, plugin_config in plugins_iter:
 
-        # Issue a warning on a deprecated module.
-        renamed_name = DEPRECATED_MODULES.get(plugin_name, None)
+        # Issue a warning on a renamed module.
+        renamed_name = RENAMED_MODULES.get(plugin_name, None)
         if renamed_name:
             warnings.warn("Deprecation notice: Module '{}' has been renamed to '{}'; "
                           "please adjust your plugin directive.".format(
@@ -541,11 +532,6 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
 
     return entries, errors
 
-
-# FIXME: Deprecate this eventually.
-def loaddoc(*args, **kw):
-    warnings.warn("loaddoc() is obsolete; use load_doc() instead.")
-    return load_doc(*args, **kw)
 
 def load_doc(expect_errors=False):
     """A factory of decorators that loads the docstring and calls the function with entries.
@@ -594,3 +580,19 @@ def load_doc(expect_errors=False):
         return wrapper
 
     return decorator
+
+
+def initialize():
+    """Initialize the loader."""
+
+    # Unless an environment variable disables it, use the pickle load cache
+    # automatically.
+    # pylint: disable=invalid-name
+    global _load_file
+    if os.getenv('BEANCOUNT_DISABLE_LOAD_CACHE') is None:
+        _load_file = pickle_cache_function(
+            os.getenv('BEANCOUNT_LOAD_CACHE_FILENAME') or PICKLE_CACHE_FILENAME,
+            PICKLE_CACHE_THRESHOLD,
+            _uncached_load_file)
+
+initialize()

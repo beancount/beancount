@@ -3,7 +3,8 @@
 This is v2, a complete rewrite of Beancount v1, simplified and improved
 drastically.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2014, 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 
 # Check the version requirements.

@@ -10,7 +10,8 @@ output that should be readable by a layperson.
 A special field 'institution' is detected to identify root accounts that should
 be included in the document rendered by this script.
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import argparse
 import collections

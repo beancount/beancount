@@ -15,7 +15,8 @@ final balance of that account, resulting from its list of postings.
 You should not build RealAccount trees yourself; instead, you should filter the
 list of desired directives to display and call the realize() function with them.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import io
 import collections
@@ -640,7 +641,7 @@ def dump_balances(real_account, dformat, at_cost=False, fullnames=False, file=No
                 rinv = real_account.balance.units()
             amounts = [position.units for position in rinv.get_positions()]
             positions = [amount_.to_string(dformat)
-                         for amount_ in sorted(amounts, key=amount.amount_sortkey)]
+                         for amount_ in sorted(amounts, key=amount.sortkey)]
         else:
             positions = ['']
 

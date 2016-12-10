@@ -3,7 +3,8 @@
 Read an import script and a list of downloaded filenames or directories of
 downloaded files, and for each of those files, extract transactions from it.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import itertools
 import sys
@@ -28,7 +29,10 @@ HEADER = ';; -*- mode: beancount -*-\n'
 DUPLICATE_META = '__duplicate__'
 
 
-def extract_from_file(filename, importer, existing_entries=None, min_date=None):
+def extract_from_file(filename, importer,
+                      existing_entries=None,
+                      min_date=None,
+                      allow_none_for_tags_and_links=False):
     """Import entries from file 'filename' with the given matches,
 
     Also cross-check against a list of provided 'existing_entries' entries,
@@ -42,18 +46,21 @@ def extract_from_file(filename, importer, existing_entries=None, min_date=None):
       min_date: A date before which entries should be ignored. This is useful
         when an account has a valid check/assert; we could just ignore whatever
         comes before, if desired.
+      allow_none_for_tags_and_links: A boolean, whether to allow plugins to
+        generate Transaction objects with None as value for the 'tags' or 'links'
+        attributes.
     Returns:
       A list of new imported entries and a subset of these which have been
       identified as possible duplicates.
+    Raises:
+      Exception: If there is an error in the importer's extract() method.
     """
     # Extract the entries.
-    file = cache.FileMemo(filename)
-    try:
-        new_entries = importer.extract(file)
-    except Exception as exc:
-        logging.error("Importer %s.extract() raised an unexpected error: %s",
-                      importer.name(), exc)
-        new_entries = None
+    file = cache.get_file(filename)
+
+    # Note: Let the exception through on purpose. This makes developing
+    # importers much easier by rendering the details of the exceptions.
+    new_entries = importer.extract(file)
     if not new_entries:
         return [], []
 
@@ -62,7 +69,7 @@ def extract_from_file(filename, importer, existing_entries=None, min_date=None):
 
     # Ensure that the entries are typed correctly.
     for entry in new_entries:
-        data.sanity_check_types(entry)
+        data.sanity_check_types(entry, allow_none_for_tags_and_links)
 
     # Filter out entries with dates before 'min_date'.
     if min_date:
@@ -139,16 +146,26 @@ def extract(importer_config,
       options_map: The options parsed from existing file.
       mindate: Optional minimum date to output transactions for.
     """
+    allow_none_for_tags_and_links = (
+        options_map and options_map["allow_deprecated_none_for_tags_and_links"])
+
     output.write(HEADER)
     for filename, importers in identify.find_imports(importer_config,
                                                      files_or_directories,
                                                      output):
         for importer in importers:
             # Import and process the file.
-            new_entries, duplicate_entries = extract_from_file(filename,
-                                                               importer,
-                                                               entries,
-                                                               mindate)
+            try:
+                new_entries, duplicate_entries = extract_from_file(
+                    filename,
+                    importer,
+                    existing_entries=entries,
+                    min_date=mindate,
+                    allow_none_for_tags_and_links=allow_none_for_tags_and_links)
+            except Exception as exc:
+                logging.error("Importer %s.extract() raised an unexpected error: %s",
+                              importer.name(), exc)
+                continue
             if not new_entries and not duplicate_entries:
                 continue
 

@@ -10,7 +10,8 @@ regression tests for your importers. Use it like this in your own importer code:
        yield from regression.compare_sample_files(importer, __file__)
 
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import datetime
 import io
@@ -95,7 +96,7 @@ class ImportFileTestCase(unittest.TestCase):
           AssertionError: If the contents differ from the expected file.
         """
         # Import the date.
-        file = cache.FileMemo(filename)
+        file = cache.get_file(filename)
         date = self.importer.file_date(file)
         if date is None:
             self.fail("No date produced from {}".format(file.name))
@@ -126,7 +127,7 @@ class ImportFileTestCase(unittest.TestCase):
           AssertionError: If the contents differ from the expected file.
         """
         # Import the date.
-        file = cache.FileMemo(filename)
+        file = cache.get_file(filename)
         generated_basename = self.importer.file_name(file)
         if generated_basename is None:
             self.fail("No filename produced from {}".format(filename))

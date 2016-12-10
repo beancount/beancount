@@ -9,7 +9,8 @@ Furthermore, it uses an external library called PDFMiner2
 your machine. This example shows how to write a test that gets skipped
 automatically when an external tool isn't installed.
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import csv
 import datetime

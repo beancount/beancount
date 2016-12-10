@@ -1,17 +1,20 @@
 """Test for price extractor of Google Finance.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import textwrap
 import datetime
 import unittest
-import time
 from unittest import mock
 from urllib import request
 from urllib import error
 
 from beancount.prices.sources import google
-from beancount.core.number import D, Decimal
+from beancount.core.number import D
+from beancount.core.number import Decimal
+
+from dateutil import tz
 
 
 class _TestTimezone(datetime.tzinfo):
@@ -55,11 +58,9 @@ class TestGoogleFinanceSource(unittest.TestCase):
         self.assertTrue(isinstance(srcprice.price, Decimal))
         self.assertEqual(D('556.33'), srcprice.price)
 
-        # Adjust time to compare with EST time, where I wrote this test.
-        tzdelta_local = datetime.timedelta(seconds=time.timezone)
-        tzdelta_est = datetime.timedelta(seconds=-5*60*60)
-        adjtime = srcprice.time + tzdelta_local + tzdelta_est
-        self.assertEqual(adjtime, datetime.datetime(2014, 6, 6, 16, 0, 0))
+        tz_nyc = tz.gettz("America/New York")
+        self.assertEqual(srcprice.time,
+                         datetime.datetime(2014, 6, 6, 16, 0, 0, tzinfo=tz_nyc))
 
     def test_get_latest_price__invalid(self):
         self.url_object.read.return_value = textwrap.dedent("""\

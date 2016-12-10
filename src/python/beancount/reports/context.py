@@ -1,13 +1,15 @@
 """Produce a rendering of the account balances just before and after a
 particular entry is applied.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import io
 
 from beancount.core import compare
 from beancount.core import data
 from beancount.core import interpolate
+from beancount.core import getters
 from beancount.parser import printer
 
 
@@ -53,18 +55,17 @@ def render_entry_context(entries, options_map, entry):
     print("Hash:{}".format(compare.hash_entry(entry)), file=oss)
     print("Location: {}:{}".format(meta["filename"], meta["lineno"]), file=oss)
 
-    # Get the entry's accounts and accumulate the balances of these accounts up
-    # to the entry.
-    balance_before, balance_after = interpolate.compute_entry_context(entries,
-                                                                      entry)
-
     # Get the list of accounts sorted by the order in which they appear in the
     # closest entry.
-    accounts = sorted(balance_before.keys())
+    order = {}
     if isinstance(entry, data.Transaction):
-        ordering = {posting.account: index
-                    for (index, posting) in enumerate(entry.postings)}
-        accounts = sorted(accounts, key=ordering.get)
+        order = {posting.account: index
+                 for index, posting in enumerate(entry.postings)}
+    accounts = sorted(getters.get_entry_accounts(entry), key=order.get)
+
+    # Accumulate the balances of these accounts up to the entry.
+    balance_before, balance_after = interpolate.compute_entry_context(entries,
+                                                                      entry)
 
     # Create a format line for printing the contents of account balances.
     max_account_width = max(map(len, accounts)) if accounts else 1
@@ -117,10 +118,13 @@ def render_entry_context(entries, options_map, entry):
     print("------------ Balances after transaction", file=oss)
     print(file=oss)
     for account in accounts:
-        for position in balance_after[account].get_positions():
+        positions = balance_after[account].get_positions()
+        for position in positions:
             changed = (account, hash(position)) not in before_hashes
             print(position_line.format('*' if changed else '', account, str(position)),
                   file=oss)
+        if not positions:
+            print(position_line.format('', account, ''), file=oss)
         print(file=oss)
 
     return oss.getvalue()

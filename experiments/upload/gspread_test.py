@@ -6,7 +6,8 @@ uploads and getting rid of the Google Finance API usage. It's simpler too, and
 it's also actively maintained, unlike the Google API which appears to have been
 abandoned.
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import argparse
 import bisect
@@ -22,7 +23,7 @@ from os import path
 import oauth2client.client
 from oauth2client import tools
 from oauth2client.file import Storage
-from oauth2client.client import SignedJwtAssertionCredentials
+from oauth2client import service_account
 import gspread
 
 
@@ -37,11 +38,8 @@ def main():
     # Connect, with authentication.
     scopes = ['https://spreadsheets.google.com/feeds']
     json_filename = path.join(os.environ['HOME'], '.google-apis-service-account.json')
-    json_key = json.load(open(json_filename))
-    credentials = oauth2client.client.SignedJwtAssertionCredentials(
-        json_key['client_email'],
-        json_key['private_key'].encode(),
-        scopes)
+    credentials = service_account.ServiceAccountCredentials.from_json_keyfile_name(
+        json_filename, scopes)
     gc = gspread.authorize(credentials)
 
     # Access some document and print out something from them.

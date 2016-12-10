@@ -9,7 +9,6 @@ RedirectMatch /doc/index$                 https://docs.google.com/document/d/1Ra
 RedirectMatch /doc/meta$                  /beancount/doc/index
 
 RedirectMatch /doc/motivation$            https://docs.google.com/document/d/1e4Vz3wZB_8-ZcAwIFde8X5CjzKshE4-OXtVVHm4RQ8s/
-RedirectMatch /doc/intro$                 /beancount/doc/motivation
 RedirectMatch /doc/context$               /beancount/doc/motivation
 
 RedirectMatch /doc/comparison$            https://docs.google.com/document/d/1dW2vIjaXVJAf9hr7GlZVe3fJOkM-MtlVjvCO1ZpNLmg/
@@ -22,6 +21,8 @@ RedirectMatch /doc/double_entry$          /beancount/doc/double-entry
 RedirectMatch /doc/doubleentry$           /beancount/doc/double-entry
 RedirectMatch /doc/double$                /beancount/doc/double-entry
 RedirectMatch /doc/de-method$             /beancount/doc/double-entry
+RedirectMatch /doc/method$                /beancount/doc/double-entry
+RedirectMatch /doc/intro$                 /beancount/doc/double-entry
 
 RedirectMatch /doc/equity$                https://docs.google.com/document/d/1H6C4YNPSe8GvC9Pe4Mp84q7ErPwI2AlZrFfKuNq-TG4/
 RedirectMatch /doc/using-equity           /beancount/doc/equity
@@ -171,24 +172,20 @@ RedirectMatch /doc/fetch-price$        	  /beancount/doc/prices
 
 RedirectMatch /doc/bug-negative-prices 	  https://groups.google.com/forum/#!topic/beancount/2Y7EWFUA3OA
 
+RedirectMatch /doc/ingest$                https://docs.google.com/document/d/11EwQdujzEo2cxqaF5PgxCEZXWfKKQCYSMfdJowp_1S8/
+RedirectMatch /doc/import$                /beancount/doc/ingest
+RedirectMatch /doc/ingesting$             /beancount/doc/ingest
+RedirectMatch /doc/importing$             /beancount/doc/ingest
+
 # Old LedgerHub documents now redirected from here.
 
-RedirectMatch /doc/ledgerhub-design-doc   https://docs.google.com/document/d/11u1sWv7H7Ykbc7ayS4M9V3yKqcuTY7LJ3n1tgnEN2Hk/
-RedirectMatch /doc/ledgerhub-design       /ledgerhub/doc/ledgerhub-design-doc
-RedirectMatch /doc/ingest-design-doc      /ledgerhub/doc/ledgerhub-design-doc
-RedirectMatch /doc/ingest-design          /ledgerhub/doc/ledgerhub-design-doc
-RedirectMatch /doc/ledgerhub/design-doc   /ledgerhub/doc/ledgerhub-design-doc
-RedirectMatch /doc/ledgerhub/design       /ledgerhub/doc/ledgerhub-design-doc
+RedirectMatch /doc/ledgerhub/design-doc   https://docs.google.com/document/d/11u1sWv7H7Ykbc7ayS4M9V3yKqcuTY7LJ3n1tgnEN2Hk/
+RedirectMatch /doc/ledgerhub/design       /beancount/doc/ledgerhub/design-doc
+RedirectMatch /doc/ingest-design-doc      /beancount/doc/ledgerhub/design-doc
+RedirectMatch /doc/ingest-design          /beancount/doc/ledgerhub/design-doc
 
-RedirectMatch /doc/ledgerhub-instructions-status  https://docs.google.com/document/d/1vnvqQNGaHOM3opRnEZspvALpv-G6fVQq0bSgAchVpuk/
-RedirectMatch /doc/ledgerhub-instructions         /doc/ledgerhub-instructions-status
-RedirectMatch /doc/ledgerhub-manual               /doc/ledgerhub-instructions-status
-RedirectMatch /doc/ledgerhub-status               /doc/ledgerhub-instructions-status
-RedirectMatch /doc/ledgerhub/manual               /doc/ledgerhub-instructions-status
-RedirectMatch /doc/ledgerhub/status               /doc/ledgerhub-instructions-status
+RedirectMatch /doc/ledgerhub/manual       https://docs.google.com/document/d/1vnvqQNGaHOM3opRnEZspvALpv-G6fVQq0bSgAchVpuk/
+RedirectMatch /doc/ledgerhub/status       /beancount/doc/ledgerhub/manual
 
-RedirectMatch /doc/ledgerhub-postmortem           https://docs.google.com/document/d/1Bln8Zo11Cvez2rdEgpnM-oBHC1B6uPC18Qm7ulobolM/
-RedirectMatch /doc/ledgerhub-proposal-v2          /doc/ledgerhub-postmortem
-RedirectMatch /doc/ledgerhub-v2                   /doc/ledgerhub-postmortem
-RedirectMatch /doc/ledgerhub/postmortem           /doc/ledgerhub-postmortem
-RedirectMatch /doc/ledgerhub/proposal-v2          /doc/ledgerhub-postmortem
+RedirectMatch /doc/ledgerhub/postmortem   https://docs.google.com/document/d/1Bln8Zo11Cvez2rdEgpnM-oBHC1B6uPC18Qm7ulobolM/
+RedirectMatch /doc/ledgerhub/proposal-v2  /beancount/doc/ledgerhub/postmortem

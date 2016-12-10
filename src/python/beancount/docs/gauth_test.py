@@ -1,7 +1,6 @@
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
-import argparse
-import tempfile
 import unittest
 from unittest import mock
 
@@ -18,13 +17,12 @@ else:
 @unittest.skipIf(oauth2client is None, "oauth2client and/or httplib2 not installed")
 class TestGAuth(unittest.TestCase):
 
-    def test_get_argparser(self):
-        parser = gauth.get_argparser()
-        self.assertIsInstance(parser, argparse.ArgumentParser)
-
-    @mock.patch('oauth2client.tools.run_flow')
-    def test_get_authenticated_http(self, run_flow):
-        parser = gauth.get_argparser()
-        args = parser.parse_args(['--storage', tempfile.NamedTemporaryFile().name])
-        http = gauth.get_authenticated_http('https://www.googleapis.com/auth/drive', args)
+    @mock.patch(
+        'oauth2client.service_account.ServiceAccountCredentials.from_json_keyfile_name')
+    def test_get_auth_via_service_account(self, mock_factory):
+        mock_factory.return_value = mock.MagicMock()
+        scopes = ['https://www.googleapis.com/auth/drive',
+                  'https://www.googleapis.com/auth/drive.scripts']
+        credentials, http = gauth.get_auth_via_service_account(scopes)
+        self.assertEqual(mock_factory.return_value, credentials)
         self.assertIsInstance(http, httplib2.Http)

@@ -1,4 +1,5 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import unittest
 
@@ -72,7 +73,7 @@ class TestAmount(unittest.TestCase):
             Amount(D('2'), 'USD'),
             Amount(D('200'), 'EUR'),
         ]
-        amounts = sorted(amounts, key=amount.amount_sortkey)
+        amounts = sorted(amounts, key=amount.sortkey)
         self.assertEqual([
             Amount(D('100'), 'CAD'),
             Amount(D('200'), 'EUR'),
@@ -137,3 +138,11 @@ class TestAmount(unittest.TestCase):
         with self.assertRaises(ValueError):
             amount.sub(Amount(D('100'), 'USD'),
                               Amount(D('17.02'), 'CAD'))
+
+    def test_abs(self):
+        self.assertEqual(Amount(D('82.98'), 'CAD'),
+                         amount.abs(Amount(D('82.98'), 'CAD')))
+        self.assertEqual(Amount(D('0'), 'CAD'),
+                         amount.abs(Amount(D('0'), 'CAD')))
+        self.assertEqual(Amount(D('82.98'), 'CAD'),
+                         amount.abs(Amount(D('-82.98'), 'CAD')))

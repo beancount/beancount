@@ -1,6 +1,7 @@
 """An interactive command-line shell interpreter for the Beancount Query Language.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import argparse
 import atexit
@@ -92,36 +93,39 @@ class DispatchingShell(cmd.Cmd):
     doc_header = "Shell utility commands (type help <topic>):"
     misc_header = "Beancount query commands:"
 
-    def __init__(self, is_interactive, parser, outfile):
+    def __init__(self, is_interactive, parser, outfile, default_format):
         """Create a shell with history.
 
         Args:
           is_interactive: A boolean, true if this serves an interactive tty.
           parser: A command parser.
           outfile: An output file object to write communications to.
+          default_format: A string, the default output format.
         """
         super().__init__()
         if is_interactive:
             load_history(path.expanduser(HISTORY_FILENAME))
         self.is_interactive = is_interactive
         self.parser = parser
-        self.initialize_vars()
+        self.initialize_vars(default_format)
         self.add_help()
         self.outfile = outfile
 
-    def initialize_vars(self):
+    def initialize_vars(self, default_format):
         """Initialize the setting variables of the interactive shell."""
         self.vars_types = {
             'pager': str,
             'format': str,
             'boxed': convert_bool,
             'spaced': convert_bool,
+            'expand': convert_bool,
             }
         self.vars = {
             'pager': os.environ.get('PAGER', None),
-            'format': 'text',
+            'format': default_format,
             'boxed': False,
             'spaced': False,
+            'expand': False,
             }
 
     def add_help(self):
@@ -234,13 +238,23 @@ class DispatchingShell(cmd.Cmd):
             return method(statement)
 
     def default(self, line):
-        """Handle statements via our parser instance and dispatch to appropriate methods.
+        """Default handling of lines which aren't recognized as native shell commands.
 
         Args:
           line: The string to be parsed.
         """
+        self.run_parser(line)
+
+    def run_parser(self, line, default_close_date=None):
+        """Handle statements via our parser instance and dispatch to appropriate methods.
+
+        Args:
+          line: The string to be parsed.
+          default_close_date: A datetimed.date instance, the default close date.
+        """
         try:
-            statement = self.parser.parse(line)
+            statement = self.parser.parse(line,
+                                          default_close_date=default_close_date)
             self.dispatch(statement)
         except query_parser.ParseError as exc:
             print(exc, file=self.outfile)
@@ -267,8 +281,8 @@ class BQLShell(DispatchingShell):
     """
     prompt = 'beancount> '
 
-    def __init__(self, is_interactive, loadfun, outfile):
-        super().__init__(is_interactive, query_parser.Parser(), outfile)
+    def __init__(self, is_interactive, loadfun, outfile, default_format='text'):
+        super().__init__(is_interactive, query_parser.Parser(), outfile, default_format)
 
         self.loadfun = loadfun
         self.entries = None
@@ -393,25 +407,34 @@ class BQLShell(DispatchingShell):
         if not result_rows:
             print("(empty)", file=self.outfile)
         else:
-            # FIXME: Implement output to other formats; use 'formats' to dispatch.
             output_format = self.vars['format']
-            if output_format != 'text':
-                print("Unsupported output format '{}'.".format(output_format),
+            if output_format == 'text':
+                kwds = dict(boxed=self.vars['boxed'],
+                            spaced=self.vars['spaced'],
+                            expand=self.vars['expand'])
+                if self.outfile is sys.stdout:
+                    with self.get_pager() as file:
+                        query_render.render_text(result_types, result_rows,
+                                                 self.options_map['dcontext'],
+                                                 file,
+                                                 **kwds)
+                else:
+                    query_render.render_text(result_types, result_rows,
+                                             self.options_map['dcontext'],
+                                             self.outfile,
+                                             **kwds)
+
+            elif output_format == 'csv':
+                query_render.render_csv(result_types, result_rows,
+                                        self.options_map['dcontext'],
+                                        self.outfile,
+                                        expand=self.vars['expand'])
+
+            else:
+                assert output_format not in _SUPPORTED_FORMATS
+                print("Unsupported output format: '{}'.".format(output_format),
                       file=self.outfile)
 
-            if self.outfile is sys.stdout:
-                with self.get_pager() as file:
-                    query_render.render_text(result_types, result_rows,
-                                                         self.options_map['dcontext'],
-                                                         file,
-                                                         boxed=self.vars['boxed'],
-                                                         spaced=self.vars['spaced'])
-            else:
-                query_render.render_text(result_types, result_rows,
-                                         self.options_map['dcontext'],
-                                         self.outfile,
-                                         boxed=self.vars['boxed'],
-                                         spaced=self.vars['spaced'])
 
     def on_Journal(self, journal):
         """
@@ -473,6 +496,40 @@ class BQLShell(DispatchingShell):
                 ' (aggregate)' if query_compile.is_aggregate(c_target.c_expr) else '',
                 c_target.c_expr.dtype.__name__))
         pr()
+
+    def on_RunCustom(self, run_stmt):
+        """
+        Run a custom query instead of a SQL command.
+
+           RUN <custom-query-name>
+
+        Where:
+
+          custom-query-name: Should be the name of a custom query to be defined
+            in the Beancount input file.
+
+        """
+        custom_query_map = create_custom_query_map(self.entries)
+        name = run_stmt.query_name
+        if name is None:
+            # List the available queries.
+            for name in sorted(custom_query_map):
+                print(name)
+        elif name == "*":
+            for name, query in sorted(custom_query_map.items()):
+                print('{}:'.format(name))
+                self.run_parser(query.query_string, default_close_date=query.date)
+                print()
+                print()
+        else:
+            try:
+                query = custom_query_map[name]
+            except KeyError:
+                print("ERROR: Query '{}' not found".format(name))
+            else:
+                statement = self.parser.parse(query.query_string)
+                self.dispatch(statement)
+
 
     def help_targets(self):
         template = textwrap.dedent("""
@@ -670,13 +727,33 @@ def print_statistics(entries, options_map, outfile):
           file=outfile)
 
 
+def create_custom_query_map(entries):
+    """Extract a mapping of the custom queries from the list of entries.
+
+    Args:
+      entries: A list of entries.
+    Returns:
+      A map of query-name strings to Query directives.
+    """
+    query_map = {}
+    for entry in entries:
+        if not isinstance(entry, data.Query):
+            continue
+        if entry.name in query_map:
+            logging.warning("Duplicate query: %s", entry.name)
+        query_map[entry.name] = entry
+    return query_map
+
+
+_SUPPORTED_FORMATS = ('text', 'csv')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
 
-    ## FIXME: implement this.
-    # parser.add_argument('-f', '--format', default=None,
-    #                     choices=['text', 'csv', 'html', 'htmldiv', 'beancount', 'xls'],
-    #                     help="Output format.")
+    parser.add_argument('-f', '--format', action='store', default=_SUPPORTED_FORMATS[0],
+                        choices=_SUPPORTED_FORMATS, # 'html', 'htmldiv', 'beancount', 'xls',
+                        help="Output format.")
 
     parser.add_argument('-o', '--output', action='store',
                         help=("Output filename. If not specified, the output goes "
@@ -707,7 +784,7 @@ def main():
 
     # Create the shell.
     is_interactive = os.isatty(sys.stdin.fileno()) and not args.query
-    shell_obj = BQLShell(is_interactive, load, outfile)
+    shell_obj = BQLShell(is_interactive, load, outfile, args.format)
     shell_obj.on_Reload()
 
     # Run interactively if we're a TTY and no query is supplied.

@@ -1,7 +1,8 @@
 """
 Tests for test utilities.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import unittest
 import io
@@ -148,3 +149,8 @@ class TestSkipIfRaises(unittest.TestCase):
         with self.assertRaises(unittest.SkipTest):
             with test_utils.skipIfRaises(ValueError):
                 raise ValueError
+
+
+@test_utils.nottest
+def test_not_really():
+    assert False

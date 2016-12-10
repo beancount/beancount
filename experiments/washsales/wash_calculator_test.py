@@ -1,3 +1,6 @@
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
+
 import unittest
 
 from beancount.core import inventory

@@ -1,6 +1,7 @@
 """Unit tests for realizations.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import copy
 import datetime
@@ -717,6 +718,7 @@ class TestComputeBalance(unittest.TestCase):
         expected_balance.add_amount(A('333.97 USD'))
         expected_balance.add_amount(A('17.23 CAD'))
         expected_balance.add_amount(A('32 HOOL'),
-                                    position.Cost(D('45.203'), 'USD', None, None))
+                                    position.Cost(D('45.203'), 'USD',
+                                                  datetime.date(2014, 5, 30), None))
         expected_balance.add_amount(A('12000 EUR'))
         self.assertEqual(expected_balance, computed_balance)
