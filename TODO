@@ -4533,6 +4533,10 @@ http://furius.ca/beancount/doc/proposal-query
     example. Then add a PRICE(ccy, ccycost, date) function to pull the price at
     any date.
 
+    * Test negative numbers
+    * Rename WILDCARD token to STAR
+    * Test operators without spaces
+
   - SQL: "IS" and "IS NOT" is not implemented.
 
   - Idea: The "HELP" command of the SQL shell should be made analogous to the
