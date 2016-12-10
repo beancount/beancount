@@ -4673,6 +4673,10 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - Make Amount and other basic classes descendants of tuple because
+    this makes their attributes truly immutable. Do this! You may
+    find bugs.
+
   - Add an AVERAGE function to the SQL shell.
     See related discussion, I would like to compute this for myself too:
     https://groups.google.com/d/msg/ledger-cli/dWuWysV6qZU/cyYNzleTCAAJ
