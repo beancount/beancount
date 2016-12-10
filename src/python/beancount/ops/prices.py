@@ -53,7 +53,7 @@ class PriceMap(dict):
     Atttributes:
       forward_pairs: A list of (base, quote) keys for the forward pairs.
     """
-    __slots__ = ('forward_pairs')
+    __slots__ = ('forward_pairs',)
 
 
 def build_price_map(entries):
@@ -168,7 +168,7 @@ def _lookup_price_and_inverse(price_map, base_quote):
       A list of price-dates, if succesful.
     Raises:
       KeyError: If the base_quote and its inverse both weren't able to be looked
-      up.
+        up.
     """
     try:
         return price_map[base_quote]
@@ -178,7 +178,7 @@ def _lookup_price_and_inverse(price_map, base_quote):
         if prices:
             return prices
         else:
-            raise exc
+            raise
 
 
 def get_all_prices(price_map, base_quote):

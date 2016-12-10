@@ -98,7 +98,7 @@ __plugins__ = ('add_ira_contribs',)
 DEBUG = 0
 
 
-def add_ira_contribs(entries, options_map, config):
+def add_ira_contribs(entries, options_map, config_str):
     """Add legs for 401k employer match contributions.
 
     See module docstring for an example configuration.
@@ -106,7 +106,7 @@ def add_ira_contribs(entries, options_map, config):
     Args:
       entries: a list of entry instances
       options_map: a dict of options parsed from the file
-      config: A configuration string, which is intended to be a Python dict
+      config_str: A configuration string, which is intended to be a Python dict
         mapping match-accounts to a pair of (negative-account, position-account)
         account names.
     Returns:
@@ -118,7 +118,7 @@ def add_ira_contribs(entries, options_map, config):
     # this for all the plugins.
     # FIXME: This too is temporary.
     # pylint: disable=eval-used
-    config_obj = eval(config, {}, {})
+    config_obj = eval(config_str, {}, {})
     if not isinstance(config_obj, dict):
         raise RuntimeError("Invalid plugin configuration: should be a single dict.")
 

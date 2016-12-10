@@ -77,14 +77,16 @@ def load_file(filename, log_timings=None, log_errors=None, extra_validations=Non
 
     if encryption.is_encrypted_file(filename):
         # Note: Caching is not supported for encrypted files.
-        return load_encrypted_file(filename,
-                                   log_timings, log_errors,
-                                   extra_validations, False, encoding)
+        entries, errors, options_map = load_encrypted_file(
+            filename,
+            log_timings, log_errors,
+            extra_validations, False, encoding)
     else:
-        entries, errors, options_map = _load_file(filename, log_timings,
-                                                  extra_validations, encoding)
+        entries, errors, options_map = _load_file(
+            filename, log_timings,
+            extra_validations, encoding)
         _log_errors(errors, log_errors)
-        return entries, errors, options_map
+    return entries, errors, options_map
 
 
 def load_encrypted_file(filename, log_timings=None, log_errors=None, extra_validations=None,

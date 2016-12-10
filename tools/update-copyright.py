@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """A script to process all source code and update the license and copyright headers.
 
-hg log --template '{date|isodate} {desc}\n' src/python/beancount/core/inventory.py    2>&1 | less
+hg log --template '{date|isodate} {desc}\n' src/python/beancount/core/inventory.py
 """
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
@@ -9,7 +9,6 @@ __license__ = "GNU GPLv2"
 import argparse
 import contextlib
 import datetime
-import logging
 import os
 import re
 import tempfile
@@ -123,7 +122,7 @@ def process(filename, contents):
         if re.match('__author__', line):
             break
     else:
-         index = None
+        index = None
     lines = [line for line in lines if not re.match('__author__', line)]
     lines = add_copyright(filename, lines, index)
     return ''.join(line + os.linesep for line in lines)
@@ -136,23 +135,23 @@ def main():
     args = parser.parse_args()
 
     for filename in find_files(args.root, r'.*\.py$', r'\.hg$'):
-        with open(filename) as f:
-            contents = f.read()
+        with open(filename) as file_:
+            contents = file_.read()
         if not contents.strip():
             continue
 
         new_contents = process(filename, contents)
 
         if 0:
-            with tempfile.NamedTemporaryFile('w') as f:
-                f.write(new_contents)
-                f.flush()
+            with tempfile.NamedTemporaryFile('w') as file_:
+                file_.write(new_contents)
+                file_.flush()
                 if 0:
                     print(filename)
-                    subprocess.call(['diff', filename, f.name])
+                    subprocess.call(['diff', filename, file_.name])
 
-        with open(filename, 'w') as f:
-            f.write(new_contents)
+        with open(filename, 'w') as file_:
+            file_.write(new_contents)
 
 
 if __name__ == '__main__':

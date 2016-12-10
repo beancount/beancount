@@ -114,9 +114,9 @@ def do_roundtrip(filename, unused_args):
                 print(printer.format_entry(entry))
                 print()
     finally:
-        for filename in (round1_filename, round2_filename):
-            if path.exists(filename):
-                os.remove(filename)
+        for rfilename in (round1_filename, round2_filename):
+            if path.exists(rfilename):
+                os.remove(rfilename)
 
 
 def do_directories(filename, args):

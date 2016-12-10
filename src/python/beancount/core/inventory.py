@@ -153,10 +153,11 @@ class Inventory(list):
                 tolerance = tolerances.get(position.units.currency, ZERO)
                 if abs(position.units.number) > tolerance:
                     return False
-            return True
+            small = True
         else:
-            return not any(abs(position.units.number) > tolerances
-                           for position in self)
+            small = not any(abs(position.units.number) > tolerances
+                            for position in self)
+        return small
 
     def is_mixed(self):
         """Return true if the inventory contains a mix of positive and negative lots for

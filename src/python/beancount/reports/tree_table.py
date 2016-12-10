@@ -81,13 +81,13 @@ def tree_table(oss, real_account, formatter, header=None, classes=None):
     # Yield with a None for the final line.
     lines.append((None, None, TOTALS_LINE))
 
-    for first_line, unused_cont_line, real_account in lines:
+    for first_line, unused_cont_line, real_acc in lines:
         # Let the caller fill in the data to be rendered by adding it to a list
         # objects. The caller may return multiple cell values; this will create
         # multiple columns.
         cells = []
         row_classes = []
-        yield real_account, cells, row_classes
+        yield real_acc, cells, row_classes
 
         # If no cells were added, skip the line. If you want to render empty
         # cells, append empty strings.
@@ -97,12 +97,12 @@ def tree_table(oss, real_account, formatter, header=None, classes=None):
         # Render the row
         write('<tr class="{}">'.format(' '.join(row_classes)))
 
-        if real_account is TOTALS_LINE:
+        if real_acc is TOTALS_LINE:
             label = '<span class="totals-label"></span>'
         else:
-            label = (formatter.render_account(real_account.account)
+            label = (formatter.render_account(real_acc.account)
                      if formatter
-                     else real_account.account)
+                     else real_acc.account)
 
         write('<td class="tree-node-name">{}</td>'.format(label))
 
