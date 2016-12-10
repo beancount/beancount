@@ -11,6 +11,8 @@ __license__ = "GNU GPLv2"
 
 import re
 
+from typing import NamedTuple, Optional
+
 from beancount.core.display_context import DEFAULT_FORMATTER
 from beancount.core.number import ZERO
 from beancount.core.number import Decimal
@@ -21,8 +23,9 @@ from beancount.core.number import D
 # Note: This is kept in sync with "beancount/parser/lexer.l".
 CURRENCY_RE = r'[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]'
 
-import collections
-_Amount = collections.namedtuple('_Amount', ('number', 'currency'))
+_Amount = NamedTuple('_Amount', [
+    ('number', Optional[Decimal]),
+    ('currency', str)])
 
 class Amount(_Amount):
     """An 'Amount' represents a number of a particular unit of something.
