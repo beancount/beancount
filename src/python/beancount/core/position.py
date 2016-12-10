@@ -155,8 +155,7 @@ _Position = NamedTuple('_Position', [
     ('units', Amount),
     ('cost', Cost)])
 
-# FIXME: Convert to inherit from namedtuple here.
-class Position:
+class Position(_Position):
     """A 'Position' is a pair of units and optional cost.
     This is used to track inventories.
 
@@ -164,18 +163,18 @@ class Position:
       units: An Amount, the number of units and its currency.
       cost: A Cost that represents the lot, or None.
     """
-    __slots__ = ('units', 'cost')
+
+    __slots__ = ()  # Prevent the creation of new attributes.
 
     # Allowed data types for lot.cost
     cost_types = (Cost, CostSpec)
 
-    def __init__(self, units, cost=None):
+    def __new__(cls, units, cost=None):
         assert isinstance(units, Amount), (
             "Expected an Amount for units; received '{}'".format(units))
         assert cost is None or isinstance(cost, Position.cost_types), (
             "Expected a Cost for cost; received '{}'".format(cost))
-        self.units = units
-        self.cost = cost
+        return _Position.__new__(cls, units, cost)
 
     def __hash__(self):
         """Compute a hash for this position.
@@ -302,17 +301,6 @@ class Position:
             pos = Position(Amount(self.units.number * cost.number, self.cost.currency),
                            None)
         return pos
-
-    def add(self, number):
-        """Add a number of units to this position.
-
-        Args:
-          number: A Decimal instance, the number of units to add to this position.
-        """
-        # Note: Checks for positions going negative do not belong here, but
-        # rather belong in the inventory.
-        assert isinstance(number, Decimal)
-        self.units = Amount(self.units.number + number, self.units.currency)
 
     def get_negative(self):
         """Get a copy of this position but with a negative number.

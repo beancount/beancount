@@ -2351,22 +2351,6 @@ http://furius.ca/beancount/doc/proposal-query
     could have a dramatic effect on performance.
 
 * Python Types & Namedtuple
-
-  I've been using namedtuple types a lot so far, in order to represent immutable
-  records. These aren't perfect, however, they could stand to be improved. I
-  discovered I could subclass them and customize their behavior. I think I
-  should do this and review the type mechanism I'm using.
-
-  - COOL! I can subclass the namedtuples!  Do this to make printing the
-    postings and entries much easier.
-
-      class Posting(_Posting):
-          def __str__(self):
-              return _Posting.__str__(self._replace(entry=None))
-
-  - Also derive from typing.Namedtuple to provide a stable hash function instead
-    of code in beancount.core.compare.
-
 ** Typed Data Types
 
   - Install proto3 and try to represent all the data using it; measure the
@@ -2374,8 +2358,7 @@ http://furius.ca/beancount/doc/proposal-query
 
 ** Hashing
 
-  - Make Position into a namedtuple with hashing instead of just an object. See
-    if we can remove its __hash__ method.
+  - See if we can remove Position's __hash__ method now that it's a namedtuple.
 
   - Also, look at all the objects in b.core.data, and see if you can override
     the hash function on them automatically in order to ignore the entry in
@@ -4672,6 +4655,10 @@ http://furius.ca/beancount/doc/proposal-query
   have time to think about where to put it, I just come here at the end and jot
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
+
+  - The computation of cost, weight and market value must be uniformized.
+    Moreover, these values should be equally computable over a Posting or a
+    Position objects. See discussion w/ Jason Chu on thread.
 
   - Make Amount and other basic classes descendants of tuple because
     this makes their attributes truly immutable. Do this! You may
