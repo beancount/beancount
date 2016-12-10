@@ -122,12 +122,12 @@ JSON but it requires a key, so that's why we're using the CSV API here, for
 simplicity's sake. In any case, the YQL API docs is located here:
 http://finance.yahoo.com/webservice/v1/symbols/allcurrencies/quote
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import datetime
 import logging
 import re
-from urllib import request
 from urllib import parse
 from urllib import error
 
@@ -148,6 +148,7 @@ class Source(source.Source):
                                    ('b0a0d2', 2),
                                    ('p0d2', 1)]:
             url = 'http://finance.yahoo.com/d/quotes.csv?s={}&f=c4{}'.format(ticker, fields)
+            logging.info("Fetching %s", url)
             try:
                 response = net_utils.retrying_urlopen(url)
                 if response is None:
@@ -202,6 +203,8 @@ class Source(source.Source):
         url = 'http://ichart.yahoo.com/table.csv?{}'.format(params)
         try:
             response = net_utils.retrying_urlopen(url)
+            if response is None:
+                return None
             data = response.read().decode('utf-8').strip()
         except error.HTTPError:
             return None

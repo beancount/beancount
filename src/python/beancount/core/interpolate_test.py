@@ -1,11 +1,13 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
-import re
+import datetime
 import textwrap
 import unittest
 
 from beancount.core.number import D
 from beancount.core.amount import A
+from beancount.core.amount import ZERO
 from beancount.core.data import create_simple_posting as P
 from beancount.core.data import create_simple_posting_with_cost as PCost
 from beancount.core import interpolate
@@ -13,19 +15,14 @@ from beancount.core import data
 from beancount.core import inventory
 from beancount.core import position
 from beancount.parser import parser
-from beancount.parser import booking
 from beancount.parser import cmptest
+from beancount.utils import defdict
 from beancount import loader
 
 
-# True if errors are generated on residual by get_incomplete_postings().
-ERRORS_ON_RESIDUAL = False
-
-
 # A default options map just to provide the tolerances.
-OPTIONS_MAP = {'default_tolerance': {},
+OPTIONS_MAP = {'inferred_tolerance_default': {},
                'inferred_tolerance_multiplier': D('0.5'),
-               'use_legacy_fixed_tolerances': False,
                'account_rounding': None,
                'infer_tolerance_from_cost': False}
 
@@ -130,7 +127,7 @@ class TestBalance(cmptest.TestCase):
 
         """, [entry])
         residual = interpolate.compute_residual(entry.postings)
-        # Note: The residual calcualtion ignores postings inserted by the
+        # Note: The residual calculation ignores postings inserted by the
         # rounding account.
         self.assertFalse(residual.is_empty())
         self.assertEqual(inventory.from_string('-0.0000001 USD'), residual)
@@ -149,292 +146,21 @@ class TestBalance(cmptest.TestCase):
         self.assertFalse(residual.is_empty())
         self.assertEqual(inventory.from_string('-0.012375 USD'), residual)
 
-    def test_get_incomplete_postings_pathological(self):
-        meta = data.new_metadata(__file__, 0)
-
-        # Test with no entries.
-        entry = data.Transaction(meta, None, None, None, None, None, None, [])
-        new_postings, has_inserted, errors, _, __ = interpolate.get_incomplete_postings(
-            entry, OPTIONS_MAP)
-        self.assertFalse(has_inserted)
-        self.assertEqual(0, len(new_postings))
-        self.assertEqual(0, len(errors))
-
-        # Test with only a single leg (and check that it does not balance).
-        entry = data.Transaction(meta, None, None, None, None, None, None, [
-            P(None, "Assets:Bank:Checking", "105.50", "USD"),
-            ])
-        (new_postings, has_inserted, errors,
-         residual, tolerances) = interpolate.get_incomplete_postings(
-            entry, OPTIONS_MAP)
-        self.assertFalse(has_inserted)
-        self.assertEqual(1, len(new_postings))
-        self.assertEqual(1 if ERRORS_ON_RESIDUAL else 0, len(errors))
-        self.assertIsInstance(tolerances, dict)
-
-        # Test with two legs that balance.
-        entry = data.Transaction(meta, None, None, None, None, None, None, [
-            P(None, "Assets:Bank:Checking", "105.50", "USD"),
-            P(None, "Assets:Bank:Savings", "-105.50", "USD"),
-            ])
-        new_postings, has_inserted, errors, _, __ = interpolate.get_incomplete_postings(
-            entry, OPTIONS_MAP)
-        self.assertFalse(has_inserted)
-        self.assertEqual(2, len(new_postings))
-        self.assertEqual(0, len(errors))
-
-        # Test with two legs that do not balance.
-        entry = data.Transaction(meta, None, None, None, None, None, None, [
-            P(None, "Assets:Bank:Checking", "105.50", "USD"),
-            P(None, "Assets:Bank:Savings", "-115.50", "USD"),
-            ])
-        new_postings, has_inserted, errors, _, __ = interpolate.get_incomplete_postings(
-            entry, OPTIONS_MAP)
-        self.assertFalse(has_inserted)
-        self.assertEqual(2, len(new_postings))
-        self.assertEqual(1 if ERRORS_ON_RESIDUAL else 0, len(errors))
-
-        # Test with only one auto-posting.
-        entry = data.Transaction(meta, None, None, None, None, None, None, [
-            P(None, "Assets:Bank:Checking", None, None),
-            ])
-        new_postings, has_inserted, errors, _, __ = interpolate.get_incomplete_postings(
-            entry, OPTIONS_MAP)
-        self.assertFalse(has_inserted)
-        self.assertEqual(0, len(new_postings))
-        self.assertEqual(1, len(errors))
-
-        # Test with an auto-posting where there is no residual.
-        entry = data.Transaction(meta, None, None, None, None, None, None, [
-            P(None, "Assets:Bank:Checking", "105.50", "USD"),
-            P(None, "Assets:Bank:Savings", "-105.50", "USD"),
-            P(None, "Assets:Bank:Balancing", None, None),
-            ])
-        new_postings, has_inserted, errors, _, __ = interpolate.get_incomplete_postings(
-            entry, OPTIONS_MAP)
-        self.assertTrue(has_inserted)
-        self.assertEqual(3, len(new_postings))
-        self.assertEqual(1, len(errors))
-
-        # Test with too many empty postings.
-        entry = data.Transaction(meta, None, None, None, None, None, None, [
-            P(None, "Assets:Bank:Checking", "105.50", "USD"),
-            P(None, "Assets:Bank:Savings", "-106.50", "USD"),
-            P(None, "Assets:Bank:BalancingA", None, None),
-            P(None, "Assets:Bank:BalancingB", None, None),
-            ])
-        new_postings, has_inserted, errors, _, __ = interpolate.get_incomplete_postings(
-            entry, OPTIONS_MAP)
-        self.assertTrue(has_inserted)
-        self.assertEqual(3, len(new_postings))
-        self.assertEqual(1, len(errors))
-
-    def test_get_incomplete_postings_normal(self):
-        meta = data.new_metadata(__file__, 0)
-
-        # Test with a single auto-posting with a residual.
-        entry = data.Transaction(meta, None, None, None, None, None, None, [
-            P(None, "Assets:Bank:Checking", "105.50", "USD"),
-            P(None, "Assets:Bank:Savings", "-115.50", "USD"),
-            P(None, "Assets:Bank:Balancing", None, None),
-            ])
-        new_postings, has_inserted, errors, _, __ = interpolate.get_incomplete_postings(
-            entry, OPTIONS_MAP)
-        self.assertTrue(has_inserted)
-        self.assertEqual(3, len(new_postings))
-        self.assertEqual(0, len(errors))
-        self.assertTrue(interpolate.AUTOMATIC_META in new_postings[2].meta)
-
-    def test_get_incomplete_postings_residual(self):
-        meta = data.new_metadata(__file__, 0)
-
-        # Test with a single auto-posting with a residual.
-        entry = data.Transaction(meta, None, None, None, None, None, None, [
-            P(None, "Assets:Bank:Checking", "105.50", "USD"),
-            P(None, "Assets:Bank:Savings", "-115.501", "USD"),
-            P(None, "Assets:Bank:Balancing", "10.00", "USD"),
-            ])
-        _, __, ___, residual, ____ = interpolate.get_incomplete_postings(entry, OPTIONS_MAP)
-        self.assertEqual(inventory.from_string('-0.001 USD'), residual)
-
-    def test_get_residual_postings(self):
-        residual = inventory.from_string('0.001 USD, -0.00002 CAD')
-        account_rounding = 'Equity:RoundingError'
-        postings = interpolate.get_residual_postings(residual, account_rounding)
-        self.assertEqual(2, len(postings))
-        self.assertEqual([
-            P(None, "Equity:RoundingError", "-0.001", "USD"),
-            P(None, "Equity:RoundingError", "0.00002", "CAD"),
-            ], [posting._replace(meta=None) for posting in postings])
-
-    def test_balance_with_large_amount(self):
-        meta = data.new_metadata(__file__, 0)
-
-        # Test with a single auto-posting with a residual.
-        entry = data.Transaction(meta, None, None, None, None, None, None, [
-            P(None, "Income:US:Anthem:InsurancePayments", "-275.81", "USD"),
-            P(None, "Income:US:Anthem:InsurancePayments", "-23738.54", "USD"),
-            P(None, "Assets:Bank:Checking", "24014.45", "USD"),
-            ])
-        new_postings, has_inserted, errors, _, __ = interpolate.get_incomplete_postings(
-            entry, OPTIONS_MAP)
-        self.assertFalse(has_inserted)
-        self.assertEqual(3, len(new_postings))
-        self.assertEqual(1 if ERRORS_ON_RESIDUAL else 0, len(errors))
-
-    def test_balance_with_zero_posting(self):
-        meta = data.new_metadata(__file__, 0)
-        entry = data.Transaction(meta, None, None, None, None, None, None, [
-            P(None, "Income:US:Anthem:InsurancePayments", "0", "USD"),
-            P(None, "Income:US:Anthem:InsurancePayments", None, None),
-            ])
-        new_postings, has_inserted, errors, _, __ = interpolate.get_incomplete_postings(
-            entry, OPTIONS_MAP)
-        self.assertFalse(has_inserted)
-        self.assertEqual(1, len(new_postings))
-        self.assertEqual(0, len(errors))
-
-
-class TestBalanceIncompletePostings(cmptest.TestCase):
-
-    def get_incomplete_entry(self, string):
-        """Parse an incomplete entry and convert its LotSpec representation to a Lot.
-
-        Args:
-          string: The input string to parse.
-        Returns:
-          A pair of (entry, list of errors).
+    @loader.load_doc()
+    def test_compute_cost_basis(self, entries, _, __):
         """
-        entries, _, options_map = parser.parse_string(string, dedent=True)
-        entries_with_lots, errors = booking.convert_lot_specs_to_lots(entries, options_map)
-        entry = entries_with_lots[0]
-        errors = interpolate.balance_incomplete_postings(entry, options_map)
-        return entry, errors
+        2001-01-01 open Assets:Account1
 
-    def test_balance_incomplete_postings__noop(self):
-        entry, errors = self.get_incomplete_entry("""
-          2013-02-23 * "Something"
-            Liabilities:CreditCard     -50 USD
-            Expenses:Restaurant         50 USD
-        """)
-        self.assertFalse(errors)
-        self.assertEqual(2, len(entry.postings))
-
-    def test_balance_incomplete_postings__fill1(self):
-        entry, errors = self.get_incomplete_entry("""
-          2013-02-23 * "Something"
-            Liabilities:CreditCard     -50 USD
-            Expenses:Restaurant
-        """)
-        self.assertFalse(errors)
-        self.assertEqual(2, len(entry.postings))
-        self.assertEqual(entry.postings[1].position, position.from_string('50 USD'))
-
-    def test_balance_incomplete_postings__fill2(self):
-        entry, errors = self.get_incomplete_entry("""
-          2013-02-23 * "Something"
-            Liabilities:CreditCard     -50 USD
-            Liabilities:CreditCard     -50 CAD
-            Expenses:Restaurant
-        """)
-        self.assertFalse(errors)
-        self.assertEqual(4, len(entry.postings))
-        self.assertEqual(entry.postings[2].account, 'Expenses:Restaurant')
-        self.assertEqual(entry.postings[3].account, 'Expenses:Restaurant')
-        self.assertEqual(entry.postings[2].position, position.from_string('50 USD'))
-        self.assertEqual(entry.postings[3].position, position.from_string('50 CAD'))
-
-    def test_balance_incomplete_postings__cost(self):
-        entry, errors = self.get_incomplete_entry("""
-          2013-02-23 * "Something"
-            Assets:Invest     10 MSFT {43.23 USD}
-            Assets:Cash
-        """)
-        self.assertFalse(errors)
-        self.assertEqual(2, len(entry.postings))
-        self.assertEqual(entry.postings[1].account, 'Assets:Cash')
-        self.assertEqual(entry.postings[1].position, position.from_string('-432.30 USD'))
-
-    def test_balance_incomplete_postings__insert_rounding(self):
-        entry, errors = self.get_incomplete_entry("""
-          option "account_rounding" "RoundingError"
-
-          2013-02-23 * "Something"
-            Assets:Invest     1.245 RGAGX {43.23 USD}
-            Assets:Cash      -53.82 USD
-        """)
-        self.assertFalse(errors)
-        self.assertEqual(3, len(entry.postings))
-        self.assertEqual(entry.postings[2].account, 'Equity:RoundingError')
-        self.assertEqual(entry.postings[2].position, position.from_string('-0.00135 USD'))
-
-    def test_balance_incomplete_postings__quantum(self):
-        entry, errors = self.get_incomplete_entry("""
-          option "default_tolerance" "USD:0.01"
-
-          2013-02-23 * "Something"
-            Assets:Invest     1.245 RGAGX {43.23 USD}
-            Assets:Cash
-        """)
-        self.assertFalse(errors)
-        self.assertEqual(D('-53.82'), entry.postings[1].position.number)
-
-        entry, errors = self.get_incomplete_entry("""
-          option "default_tolerance" "USD:0.001"
-
-          2013-02-23 * "Something"
-            Assets:Invest     1.245 RGAGX {43.23 USD}
-            Assets:Cash
-        """)
-        self.assertFalse(errors)
-        self.assertEqual(D('-53.821'), entry.postings[1].position.number)
-
-    def test_balance_incomplete_postings__rounding_and_quantum(self):
-        entry, errors = self.get_incomplete_entry("""
-          option "account_rounding" "RoundingError"
-          option "default_tolerance" "USD:0.01"
-
-          2013-02-23 * "Something"
-            Assets:Invest     1.245 RGAGX {43.23 USD}
-            Assets:Cash
-        """)
-        self.assertFalse(errors)
-        self.assertEqual(3, len(entry.postings))
-        self.assertEqual(D('-53.82'), entry.postings[1].position.number)
-        self.assertEqual('Equity:RoundingError', entry.postings[2].account)
-        self.assertEqual(D('-0.00135'), entry.postings[2].position.number)
-
-        entry, errors = self.get_incomplete_entry("""
-          option "account_rounding" "RoundingError"
-          option "default_tolerance" "USD:0.01"
-
-          2014-05-06 * "Buy mutual fund"
-            Assets:Investments:RGXGX       4.27 RGAGX {53.21 USD}
-            Assets:Investments:Cash
-        """)
-        self.assertFalse(errors)
-        self.assertEqual(3, len(entry.postings))
-        self.assertEqual(D('-227.2100'), entry.postings[1].position.number)
-        self.assertEqual('Equity:RoundingError', entry.postings[2].account)
-        self.assertEqual(D('0.0033'), entry.postings[2].position.number)
-
-    def test_balance_incomplete_postings__rounding_with_error(self):
-        # Here we want to verify that auto-inserting rounding postings does not
-        # disable non-balancing transactions. This is rather an important check!
-        entries, errors, options_map = loader.load_string("""
-          option "account_rounding" "RoundingError"
-
-          2000-01-01 open Assets:Investments:MutualFunds:XXX
-          2000-01-01 open Assets:Cash:Checking
-          2000-01-01 open Equity:RoundingError
-
-          ;; This transaction does not balance.
-          2002-02-08 * "Mutual fund purchase"
-            Assets:Investments:MutualFunds:XXX    51.031 XXX {97.98 USD}
-            Assets:Cash:Checking                -5000.00 USD
-        """, dedent=True)
-        self.assertEqual(1, len(errors))
-        self.assertTrue(re.search('does not balance', errors[0].message))
+        2014-01-01 *
+          Assets:Account1        20 HOOL {40.00 USD}
+          Assets:Account1        20 HOOL {60.00 USD} @ 70.00 USD
+          Assets:Account1     -2000.00 USD
+          Assets:Account1         3 HOOL {30.00 CAD}
+          Assets:Account1       -90.00 CAD
+        """
+        postings = next(data.filter_txns(entries)).postings
+        self.assertEqual(inventory.from_string('2000.00 USD, 90.00 CAD'),
+                         interpolate.compute_cost_basis(postings))
 
 
 class TestComputeBalance(unittest.TestCase):
@@ -486,7 +212,9 @@ class TestComputeBalance(unittest.TestCase):
         computed_balance = interpolate.compute_entries_balance(entries)
         expected_balance = inventory.Inventory()
         expected_balance.add_amount(A('-400 USD'))
-        expected_balance.add_amount(A('10 HOOL'), A('40 USD'))
+        expected_balance.add_amount(A('10 HOOL'),
+                                    position.Cost(D('40'), 'USD',
+                                                  datetime.date(2014, 6, 5), None))
         self.assertEqual(expected_balance, computed_balance)
 
     @loader.load_doc()
@@ -682,8 +410,7 @@ class TestInferTolerances(cmptest.TestCase):
         entries, errors, options_map = loader.load_string(input_string)
         self.assertFalse(options_map["infer_tolerance_from_cost"])
         self.assertEqual(1, len(errors))
-        self.assertTrue(re.match('Transaction does not balance:.*0.20000 USD',
-                                 errors[0].message))
+        self.assertRegex(errors[0].message, 'Transaction does not balance:.*0.20000 USD')
 
         entries, errors, options_map = loader.load_string(input_option + input_string)
         self.assertTrue(options_map["infer_tolerance_from_cost"])
@@ -701,7 +428,7 @@ class TestInferTolerances(cmptest.TestCase):
         tolerances = interpolate.infer_tolerances(entries[0].postings, options_map)
         self.assertEqual({'VHT': D('0.000005'), 'USD': D('0.005')}, tolerances)
 
-    @loader.load_doc(expect_errors=True)
+    @parser.parse_doc(allow_incomplete=True)
     def test_tolerances__with_inference(self, entries, _, options_map):
         """
         2014-02-25 *
@@ -715,12 +442,9 @@ class TestInferTolerances(cmptest.TestCase):
         self.assertEqual({'VHT': D('0.00005'), 'USD': D('0.005111700')},
                          tolerances)
 
-    @loader.load_doc()
+    @parser.parse_doc(allow_incomplete=True)
     def test_tolerances__capped_inference(self, entries, _, options_map):
         """
-        2014-01-01 open Assets:Account3
-        2014-01-01 open Assets:Account4
-
         2014-02-25 *
           Assets:Account3       5.1   VHT {102.2340 USD}
           Assets:Account4
@@ -750,20 +474,6 @@ class TestInferTolerances(cmptest.TestCase):
         """
         self.assertEqual(1, len(errors))
         self.assertTrue(errors[0].entry is entries[-1])
-
-    @loader.load_doc(expect_errors=False)
-    def test_tolerances__legacy(self, entries, _, __):
-        """
-        ;; issue/47
-        option "use_legacy_fixed_tolerances" "TRUE"
-
-        1970-01-01 open Assets:B1
-        1970-01-01 open Assets:B2
-
-        2010-01-01 * "something"
-          Assets:B1      -200 EUR
-          Assets:B2
-        """
 
     @loader.load_doc()
     def test_tolerances__bug(self, entries, errors, _):
@@ -882,7 +592,7 @@ class TestInferTolerances(cmptest.TestCase):
         """
         plugin "beancount.plugins.split_expenses" "Martin Caroline Sheila"
 
-        option "default_tolerance" "USD:0.005"
+        option "inferred_tolerance_default" "USD:0.005"
 
         1970-01-01 open Expenses:Food
         1970-01-01 open Assets:Caroline
@@ -898,3 +608,23 @@ class TestInferTolerances(cmptest.TestCase):
         # all legs end up being automatic... and we have to fall back on the
         # default tolerance.
         pass
+
+
+class TestQuantize(unittest.TestCase):
+
+    def test_quantize_with_tolerance(self):
+        tolerances = defdict.ImmutableDictWithDefault(D('0.000005'), {'USD': D('0.01')})
+        self.assertEqual(
+            D('100.12'),
+            interpolate.quantize_with_tolerance(tolerances, 'USD', D('100.123123123')))
+        self.assertEqual(
+            D('100.12312'),
+            interpolate.quantize_with_tolerance(tolerances, 'CAD', D('100.123123123')))
+
+        tolerances = defdict.ImmutableDictWithDefault(ZERO, {'USD': D('0.01')})
+        self.assertEqual(
+            D('100.12'),
+            interpolate.quantize_with_tolerance(tolerances, 'USD', D('100.123123123')))
+        self.assertEqual(
+            D('100.123123123'),
+            interpolate.quantize_with_tolerance(tolerances, 'CAD', D('100.123123123')))

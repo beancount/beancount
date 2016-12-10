@@ -1,4 +1,5 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 from beancount.parser import cmptest
 from beancount.plugins import auto_accounts
@@ -22,8 +23,8 @@ class TestAutoInsertOpen(cmptest.TestCase):
 
         self.assertEqualEntries("""
 
-        2014-02-01 open Assets:US:Bank:Savings
         2014-02-01 open Assets:US:Bank:Checking
+        2014-02-01 open Assets:US:Bank:Savings
 
         2014-02-01 *
           Assets:US:Bank:Checking     100 USD

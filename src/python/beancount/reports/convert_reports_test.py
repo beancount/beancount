@@ -1,4 +1,5 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import tempfile
 import datetime
@@ -7,7 +8,7 @@ import subprocess
 
 from beancount.core import data
 from beancount.utils import test_utils
-from beancount.scripts import report
+from beancount.reports import report
 from beancount.scripts import example
 from beancount.parser import cmptest
 from beancount.reports import convert_reports
@@ -144,6 +145,7 @@ class TestLedgerConversion(test_utils.TestCase):
             Expenses:Restaurant   50.02 USD
             Assets:Cash
 
+          2015-01-01 custom "budget" Expenses:Food  "yearly"  34.43 HRK
         """
         with test_utils.capture() as stdout:
             result = test_utils.run_with_args(report.main, [filename, 'ledger'])

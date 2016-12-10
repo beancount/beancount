@@ -1,177 +1,163 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
-import argparse
-import collections
+from os import path
 import unittest
-import re
-import io
 
-from beancount.core.number import D
-from beancount.core import realization
+from beancount.utils import test_utils
 from beancount.reports import report
-from beancount.reports import table
-from beancount.parser import options
-from beancount import loader
+from beancount.reports import base
 
 
-def iter_reports(report_classes):
-    """Iterate over and instantiate all report classes.
+class TestHelpReports(test_utils.TestCase):
 
-    Args:
-      A list of subclasses of report.Report.
-    Yields:
-      Pairs of (report instance, supported output format).
-    """
-    for report_class in report_classes:
-        assert issubclass(report_class, report.Report), report_class
-        argv = getattr(report_class, 'test_args', [])
-        report_ = report_class.from_args(argv)
-        for format_ in report_class.get_supported_formats():
-            yield (report_, format_)
+    def test_get_list_report_string(self):
+        help_string = report.get_list_report_string()
+        self.assertTrue(help_string and isinstance(help_string, str))
 
+    def test_get_list_report_string__one_report(self):
+        help_string = report.get_list_report_string('print')
+        self.assertTrue(help_string and isinstance(help_string, str))
 
-class ExampleReport(report.Report):
-
-    names = ['example']
-    default_format = 'text'
-
-    @classmethod
-    def add_args(cls, parser):
-        parser.add_argument('--currency', default='CAD', help="Currency.")
-
-    def render_html(self, entries, errors, options_map, file):
-        file.write('<html>something {}</html>'.format(self.args.currency))
-
-    def render_text(self, entries, errors, options_map, file):
-        file.write('something {}'.format(self.args.currency))
-
-
-class TestReport(unittest.TestCase):
-
-    ReportClass = ExampleReport
-
-    @loader.load_doc()
-    def setUp(self, entries, errors, options_map):
-        """
-        2014-07-27 open Assets:Example
-        """
-        self.entries = entries
-        self.errors = errors
-        self.options_map = options_map
-
-    def test_from_args(self):
-        report_ = self.ReportClass.from_args([])
-        self.assertTrue(isinstance(report_, report.Report))
-
-    def test_add_args(self):
-        parser = argparse.ArgumentParser()
-        self.ReportClass.add_args(parser)
-        args = parser.parse_args([])
-        self.assertTrue('CAD', args.currency)
-
-    def test_supported_formats(self):
-        report_ = self.ReportClass.from_args([])
-        formats = report_.get_supported_formats()
-        self.assertEqual(['html', 'text'], formats)
-
-    def test_render__html(self):
-        report_ = self.ReportClass.from_args([])
-        output = report_.render(self.entries, self.errors, self.options_map, 'html')
-        self.assertEqual('<html>something CAD</html>', output)
-
-    def test_render__text(self):
-        report_ = self.ReportClass.from_args([])
-        output = report_.render(self.entries, self.errors, self.options_map, 'text')
-        self.assertEqual('something CAD', output)
-
-    def test_call(self):
-        report_ = self.ReportClass.from_args([])
-        output = report_(self.entries, self.errors, self.options_map, 'text')
-        self.assertEqual('something CAD', output)
-
-
-class ExampleTableReport(report.TableReport):
-
-    names = ['example']
-
-    def generate_table(self, entries, errors, options_map):
-        # pylint: disable=invalid-name
-        ABC = collections.namedtuple('ABC', 'account balance')
-        return table.create_table([ABC('account1', D(2000)),
-                                   ABC('account2', D(5000))])
-
-class TestTableReport(unittest.TestCase):
-
-    ReportClass = ExampleTableReport
-
-    @loader.load_doc()
-    def setUp(self, entries, errors, options_map):
-        """
-        2014-07-27 open Assets:Example
-        """
-        self.entries = entries
-        self.errors = errors
-        self.options_map = options_map
-        self.report = self.ReportClass.from_args()
-
-    def test_generate_table(self):
-        output = self.report.generate_table(self.entries, self.errors, self.options_map)
-        self.assertTrue(isinstance(output, table.Table))
-
-    def test_table__render_text(self):
-        output = self.report.render(self.entries, self.errors, self.options_map, 'text')
-        self.assertTrue(all(re.search(x, output)
-                            for x in ['account1', 'account2', 'Account', 'Balance']))
-
-    def test_table__render_html(self):
-        output = self.report.render(self.entries, self.errors, self.options_map, 'html')
-        self.assertTrue(all(re.search(x, output)
-                            for x in ['account1', 'account2', 'Account', 'Balance']))
-
-    def test_table__render_htmldiv(self):
-        output = self.report.render(self.entries, self.errors, self.options_map, 'htmldiv')
-        self.assertTrue(all(re.search(x, output)
-                            for x in ['account1', 'account2', 'Account', 'Balance']))
-
-    def test_table__render_csv(self):
-        output = self.report.render(self.entries, self.errors, self.options_map, 'csv')
-        self.assertTrue(all(re.search(x, output)
-                            for x in ['account1', 'account2', 'Account', 'Balance']))
-
-
-class TestRealizationMeta(unittest.TestCase):
-
-    def test_realization_metaclass(self):
-
-        class MyReport(report.Report, metaclass=report.RealizationMeta):
-
-            default_format = 'html'
-
-            def render_real_text(self, real_account, options_map, file):
-                realization.dump_balances(real_account, file=file)
-
-            def render_real_html(self, real_account, options_map, file):
-                self.render_real_text(real_account, options_map, file)
-
-        self.assertEqual({'html', 'text'}, set(MyReport.get_supported_formats()))
-
-        report_ = MyReport.from_args([])
-        oss = io.StringIO()
-        report_.render([], [], options.OPTIONS_DEFAULTS, 'text', oss)
-        self.assertTrue(oss.getvalue())
-        report_.render([], [], options.OPTIONS_DEFAULTS, 'html', oss)
-        self.assertTrue(oss.getvalue())
+    def test_get_list_report_string__invalid_report(self):
+        help_string = report.get_list_report_string('blablabla')
+        self.assertEqual(None, help_string)
 
 
 class TestReportFunctions(unittest.TestCase):
 
     def test_get_all_report(self):
         all_reports = report.get_all_reports()
-        self.assertTrue(all(issubclass(report_, report.Report)
+        self.assertTrue(all(issubclass(report_, base.Report)
                             for report_ in all_reports))
 
-    def test_get_html_template(self):
-        template = report.get_html_template()
-        self.assertTrue(template)
-        self.assertTrue(re.search('{title}', template))
-        self.assertTrue(re.search('{body}', template))
+
+class TestScriptQuery(test_utils.TestCase):
+
+    # pylint: disable=empty-docstring
+    @test_utils.docfile
+    def test_list_accounts_empty(self, filename):
+        ""
+        # Check that invocation with just a filename prints something (the list of reports).
+        with test_utils.capture() as stdout:
+            test_utils.run_with_args(report.main, [filename])
+        self.assertTrue(stdout.getvalue())
+
+
+class TestScriptPositions(test_utils.TestCase):
+
+    @test_utils.docfile
+    def test_success(self, filename):
+        """
+        2013-01-01 open Assets:Account1
+        2013-01-01 open Assets:Account2
+        2013-01-01 open Assets:Account3
+        2013-01-01 open Equity:Unknown
+
+        2013-04-05 *
+          Equity:Unknown
+          Assets:Account1     5000 USD
+
+        2013-04-05 *
+          Assets:Account1     -3000 USD
+          Assets:Account2     30 BOOG {100 USD}
+
+        2013-04-05 *
+          Assets:Account1     -1000 USD
+          Assets:Account3     800 EUR @ 1.25 USD
+        """
+        with test_utils.capture() as stdout:
+            test_utils.run_with_args(report.main, [filename, 'holdings'])
+        output = stdout.getvalue()
+        self.assertTrue(test_utils.search_words('Assets:Account1 1,000.00 USD', output))
+        self.assertTrue(test_utils.search_words('Assets:Account2    30.00 BOOG', output))
+        self.assertTrue(test_utils.search_words('Assets:Account3   800.00 EUR', output))
+
+    @test_utils.docfile
+    def test_print_trial(self, filename):
+        """
+        2013-01-01 open Expenses:Restaurant
+        2013-01-01 open Assets:Cash
+
+        2014-03-02 * "Something"
+          Expenses:Restaurant   50.02 USD
+          Assets:Cash
+        """
+        with test_utils.capture() as stdout:
+            test_utils.run_with_args(report.main, [filename, 'trial'])
+        output = stdout.getvalue()
+        self.assertLines("""
+            Assets:Cash          -50.02 USD
+            Equity
+            Expenses:Restaurant   50.02 USD
+            Income
+            Liabilities
+        """, output)
+
+    # pylint: disable=empty-docstring
+    @test_utils.docfile
+    def test_print_trial_empty(self, filename):
+        ""
+        with test_utils.capture():
+            test_utils.run_with_args(report.main, [filename, 'trial'])
+
+    @test_utils.docfile
+    def test_all_prices(self, filename):
+        """
+        plugin "beancount.plugins.implicit_prices"
+
+        2014-01-01 open Assets:Account1
+        2014-01-01 open Income:Misc
+
+        2014-01-15 *
+          Assets:Account1       10 HOOL @ 512.01 USD
+          Income:Misc
+
+        2014-02-01 price HOOL 524.02 USD
+        2014-02-10 price HOOL 536.03 USD
+        """
+        with test_utils.capture() as stdout:
+            test_utils.run_with_args(report.main, [filename, 'all_prices'])
+        output = stdout.getvalue()
+        self.assertLines("""
+           2014-01-15 price HOOL             512.01 USD
+           2014-02-01 price HOOL             524.02 USD
+           2014-02-10 price HOOL             536.03 USD
+        """, output)
+
+    @test_utils.docfile
+    def test_list_accounts(self, filename):
+        """
+        2013-01-01 open Expenses:Restaurant
+        2013-01-01 open Assets:Cash
+
+        2014-03-02 * "Something"
+          Expenses:Restaurant   50.02 USD
+          Assets:Cash
+        """
+        with test_utils.capture() as stdout:
+            test_utils.run_with_args(report.main, [filename, 'accounts'])
+
+        self.assertLines("""
+            Assets:Cash          2013-01-01
+            Expenses:Restaurant  2013-01-01
+        """, stdout.getvalue())
+
+    # pylint: disable=empty-docstring
+    @test_utils.docfile
+    def test_list_accounts_empty(self, filename):
+        ""
+        with test_utils.capture():
+            test_utils.run_with_args(report.main, [filename, 'accounts'])
+
+    def test_export_portfolio_on_example(self):
+        rootdir = test_utils.find_repository_root(__file__)
+        filename = path.join(rootdir, 'examples/example.beancount')
+        with test_utils.capture() as stdout:
+            test_utils.run_with_args(report.main,
+                                     [filename, 'export_holdings', '--promiscuous'])
+        output = stdout.getvalue()
+        self.assertTrue(output)
+        self.assertRegex(output, 'OFXHEADER:100')
+        self.assertRegex(output, '<SIGNONMSGSRSV1>')
+        self.assertRegex(output, '</OFX>')

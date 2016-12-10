@@ -1,26 +1,18 @@
 """Algorithms for 'booking' inventory, that is, the process of finding a
 matching lot when reducing the content of an inventory.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
-import os
-import logging
 
-from beancount.core.data import Transaction
-from beancount.core.position import Position
-from beancount.core.position import Lot
-from beancount.core.amount import Amount
-from beancount.core.number import ZERO
-from beancount.core import interpolate
+from beancount.core.number import MISSING
+from beancount.parser import booking_simple
+from beancount.parser import booking_full
 from beancount.core import data
 from beancount.core import inventory
 
 
-__sanity_checks__ = False
-
-
-# An error booking a lot reduction to an existing lot.
 BookingError = collections.namedtuple('BookingError', 'source message entry')
 
 
@@ -36,156 +28,72 @@ def book(incomplete_entries, options_map):
         entries: A list of completed entries with all their postings completed.
         errors: New errors produced during interpolation.
     """
-    if os.getenv("BEANCOUNT_BOOKING"):
-        entries, interpolation_errors = full_interpolation(incomplete_entries,
-                                                           options_map)
+    booking_algorithms = {
+        'SIMPLE': booking_simple.book,
+        'FULL': booking_full.book,
+    }
+    method_name = options_map['booking_algorithm']
+    errors = []
+    try:
+        booking_fun = booking_algorithms[method_name]
+    except KeyError:
+        meta = data.new_metadata(options_map['filename'], 1)
+        booking_fun = booking_simple.book
+        errors.append(
+            BookingError(meta, ("Unsupported booking algorithm: '{}'; "
+                                "falling back on SIMPLE method".format(method_name)), None))
+
+    # Get the list of booking methods for each account.
+    booking_methods = collections.defaultdict(lambda: options_map["booking_method"])
+    for entry in incomplete_entries:
+        if isinstance(entry, data.Open) and entry.booking:
+            booking_methods[entry.account] = entry.booking
+
+    # Do the booking here!
+    entries, booking_errors = booking_fun(incomplete_entries, options_map,
+                                          booking_methods)
+
+    if method_name == 'SIMPLE':
+        # Check that the inventory reductions are normal-looking.
+        validation_errors = validate_inventory_booking(entries, options_map,
+                                                       booking_methods)
     else:
-        # Old-school local-only interpolation.
-        entries, interpolation_errors = simple_interpolation(incomplete_entries,
-                                                             options_map)
+        validation_errors = []
 
-    validation_errors = validate_inventory_booking(entries, options_map)
-    return entries, (interpolation_errors + validation_errors)
+    # Check for MISSING elements remaining.
+    missing_errors = validate_missing_eliminated(entries, options_map)
+
+    return entries, (errors + booking_errors + validation_errors + missing_errors)
 
 
-def full_interpolation(entries, options_map):
-    """Interpolate missing data from the entries using the full historical algorithm.
+def validate_missing_eliminated(entries, unused_options_map):
+    """Validate that all the missing bits of postings have been eliminated.
 
     Args:
-      incomplete_entries: A list of directives, with some postings possibly left
-        with incomplete amounts as produced by the parser.
-      options_map: An options dict as produced by the parser.
+      entries: A list of directives.
+      unused_options_map: An options map.
     Returns:
-      A pair of
-        entries: A list of interpolated entries with all their postings completed.
-        errors: New errors produced during interpolation.
+      A list of errors.
     """
-    num_transactions = 0
-    num_interpolated = 0
     errors = []
     for entry in entries:
-        if isinstance(entry, Transaction):
-            if any((posting.position is None or
-                    posting.position.number is None)
-                   for posting in entry.postings):
-                #printer.print_entry(entry)
-                num_interpolated += 1
-            num_transactions += 1
-
-        # FIXME: TODO
-
-    logging.info("Num interpolated: %d (%.2f%%)",
-                 num_interpolated,
-                 num_interpolated/num_transactions * 100)
-    return entries, errors
-
-
-def convert_lot_specs_to_lots(entries, unused_options_map):
-    """For all the entries, convert the posting's position's LotSpec to Lot instances.
-
-    This essentially replicates the way the old parser used to work, but
-    allowing positions to have the fuzzy lot specifications instead of the
-    resolved ones. We used to simply compute the costs locally, and this gets
-    rid of the LotSpec to produce the Lot without fuzzy matching. This is only
-    there for the sake of transition to the new matching logic.
-
-    Args:
-      entries: A list of incomplte directives as per the parser.
-      options_map: An options dict from the parser.
-    Returns:
-      A list of entries whose postings's positions have been converted to Lot
-      instances but that may still be incomplete.
-    """
-    new_entries = []
-    errors = []
-    for entry in entries:
-        if not isinstance(entry, Transaction):
-            new_entries.append(entry)
-            continue
-
-        new_postings = []
-        for posting in entry.postings:
-            pos = posting.position
-            if pos is not None:
-                currency, compound_cost, lot_date, label, merge = pos.lot
-
-                # Compute the cost.
-                if compound_cost is not None:
-                    if compound_cost.number_total is not None:
-                        # Compute the per-unit cost if there is some total cost
-                        # component involved.
-                        units = pos.number
-                        cost_total = compound_cost.number_total
-                        if compound_cost.number_per is not None:
-                            cost_total += compound_cost.number_per * units
-                        unit_cost = cost_total / abs(units)
-                    else:
-                        unit_cost = compound_cost.number_per
-                    cost = Amount(unit_cost, compound_cost.currency)
-                else:
-                    cost = None
-
-                # If there is a cost, we don't allow either a cost value of
-                # zero, nor a zero number of units. Note that we allow a price
-                # of zero as the only special case (for conversion entries), but
-                # never for costs.
-                if cost is not None:
-                    if pos.number == ZERO:
-                        errors.append(
-                            BookingError(entry.meta,
-                                         'Amount is zero: "{}"'.format(pos), None))
-
-                    if cost.number is not None and cost.number < ZERO:
-                        errors.append(
-                            BookingError(entry.meta,
-                                         'Cost is negative: "{}"'.format(cost), None))
-
-                lot = Lot(currency, cost, lot_date)
-                posting = posting._replace(position=Position(lot, pos.number))
-
-            new_postings.append(posting)
-        new_entries.append(entry._replace(postings=new_postings))
-    return new_entries, errors
+        if isinstance(entry, data.Transaction):
+            for posting in entry.postings:
+                units = posting.units
+                cost = posting.cost
+                if (MISSING in (units.number, units.currency) or
+                    cost is not None and MISSING in (cost.number, cost.currency,
+                                                     cost.date, cost.label)):
+                    errors.append(
+                        BookingError(entry.meta,
+                                     "Transaction has incomplete elements",
+                                     entry))
+                    break
+    return errors
 
 
-def simple_interpolation(entries, options_map):
-    """Run a local interpolation on a list of incomplete entries from the parser.
-
-    Note: this does not take previous positions into account.
-
-    !WARNING!!! This destructively modifies some of the Transaction entries directly.
-
-    Args:
-      incomplete_entries: A list of directives, with some postings possibly left
-        with incomplete amounts as produced by the parser.
-      options_map: An options dict as produced by the parser.
-    Returns:
-      A pair of
-        entries: A list of interpolated entries with all their postings completed.
-        errors: New errors produced during interpolation.
-    """
-    entries_with_lots, errors = convert_lot_specs_to_lots(entries, options_map)
-
-    for entry in entries_with_lots:
-        if not isinstance(entry, Transaction):
-            continue
-        # Balance incomplete auto-postings and set the parent link to this
-        # entry as well.
-        balance_errors = interpolate.balance_incomplete_postings(entry, options_map)
-        if balance_errors:
-            errors.extend(balance_errors)
-
-        # Check that the balance actually is empty.
-        if __sanity_checks__:
-            residual = interpolate.compute_residual(entry.postings)
-            tolerances = interpolate.infer_tolerances(entry.postings, options_map)
-            assert residual.is_small(tolerances, options_map['default_tolerance']), (
-                "Invalid residual {}".format(residual))
-
-    return entries_with_lots, errors
-
-
-def validate_inventory_booking(entries, unused_options_map):
+# FIXME: This goes away. Maybe moves to a pedantic plugin.
+def validate_inventory_booking(entries, unused_options_map, booking_methods):
     """Validate that no position at cost is allowed to go negative.
 
     This routine checks that when a posting reduces a position, existing or not,
@@ -199,14 +107,13 @@ def validate_inventory_booking(entries, unused_options_map):
     Args:
       entries: A list of directives.
       unused_options_map: An options map.
+      booking_methods: A mapping of account name to booking method, accumulated
+        in the main loop.
     Returns:
       A list of errors.
+
     """
     errors = []
-
-    # A mapping of account name to booking method, accumulated in the main loop.
-    booking_methods = {}
-
     balances = collections.defaultdict(inventory.Inventory)
     for entry in entries:
         if isinstance(entry, data.Transaction):
@@ -215,10 +122,10 @@ def validate_inventory_booking(entries, unused_options_map):
                 # without allowing booking to a negative position, and if an error
                 # is encountered, catch it and return it.
                 running_balance = balances[posting.account]
-                position_, _ = running_balance.add_position(posting.position)
+                position_, _ = running_balance.add_position(posting)
 
                 # Skip this check if the booking method is set to ignore it.
-                if booking_methods.get(posting.account, None) == 'NONE':
+                if booking_methods.get(posting.account, None) == data.Booking.NONE:
                     continue
 
                 # Check if the resulting inventory is mixed, which is not
@@ -230,11 +137,5 @@ def validate_inventory_booking(entries, unused_options_map):
                             ("Reducing position results in inventory with positive "
                              "and negative lots: {}").format(position_),
                             entry))
-
-        elif isinstance(entry, data.Open):
-            # These Open directives should always appear beforehand as per the
-            # assumptions on the list of entries, so should never be a problem
-            # finding them. If not, move this loop to a dedicated before.
-            booking_methods[entry.account] = entry.booking
 
     return errors

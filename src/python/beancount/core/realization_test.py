@@ -1,11 +1,11 @@
 """Unit tests for realizations.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import copy
 import datetime
 import operator
-import re
 import unittest
 
 from beancount.core.number import D
@@ -14,7 +14,9 @@ from beancount.core.realization import RealAccount
 from beancount.core import realization
 from beancount.core import data
 from beancount.core import inventory
+from beancount.core import position
 from beancount.core import account_types
+from beancount.core import display_context
 from beancount.utils import test_utils
 from beancount import loader
 
@@ -53,9 +55,9 @@ class TestRealAccount(unittest.TestCase):
 
         ra0 = create_simple_account()
         ra0_str = str(ra0)
-        self.assertTrue(re.search('Assets', ra0_str))
-        self.assertTrue(re.search('Bank', ra0_str))
-        self.assertTrue(re.search('Checking', ra0_str))
+        self.assertRegex(ra0_str, 'Assets')
+        self.assertRegex(ra0_str, 'Bank')
+        self.assertRegex(ra0_str, 'Checking')
 
     def test_equality(self):
         ra1 = RealAccount('Assets:US:Bank:Checking')
@@ -87,7 +89,7 @@ class TestRealAccount(unittest.TestCase):
         self.assertTrue(isinstance(ra0['Assets'], RealAccount))
         self.assertTrue(isinstance(ra0['Assets']['US'], RealAccount))
         with self.assertRaises(KeyError):
-            ra0['Liabilities']
+            _ = ra0['Liabilities']
 
     def test_setitem_constraints(self):
         ra0 = RealAccount('')
@@ -460,7 +462,7 @@ class TestRealOther(test_utils.TestCase):
             if exp_account:
                 self.assertEqual(exp_account, entpost.account)
             if exp_number:
-                self.assertEqual(D(exp_number), entpost.position.number)
+                self.assertEqual(D(exp_number), entpost.units.number)
 
     def test_compare_realizations(self):
         # Check that value comparison uses our balance comparison properly.
@@ -624,7 +626,7 @@ class TestRealOther(test_utils.TestCase):
                 for first_line, cont_line, _1 in lines])
 
     @loader.load_doc()
-    def test_dump_balances(self, entries, _, __):
+    def test_dump_balances(self, entries, _, options_map):
         """
         2012-01-01 open Expenses:Restaurant
         2012-01-01 open Liabilities:US:CreditCard
@@ -640,6 +642,8 @@ class TestRealOther(test_utils.TestCase):
 
         """
         real_account = realization.realize(entries)
+        dformat = options_map['dcontext'].build(alignment=display_context.Align.DOT,
+                                                reserved=2)
         self.assertLines("""
             |-- Expenses
             |   `-- Restaurant          -123.45 CAD
@@ -649,7 +653,7 @@ class TestRealOther(test_utils.TestCase):
                 |   `-- CreditCard       123.45 CAD
                 `-- US
                     `-- CreditCard       123.45 USD
-        """, realization.dump_balances(real_account))
+        """, realization.dump_balances(real_account, dformat))
 
 
 class TestRealMisc(unittest.TestCase):
@@ -714,6 +718,7 @@ class TestComputeBalance(unittest.TestCase):
         expected_balance.add_amount(A('333.97 USD'))
         expected_balance.add_amount(A('17.23 CAD'))
         expected_balance.add_amount(A('32 HOOL'),
-                                    A('45.203 USD'))
+                                    position.Cost(D('45.203'), 'USD',
+                                                  datetime.date(2014, 5, 30), None))
         expected_balance.add_amount(A('12000 EUR'))
         self.assertEqual(expected_balance, computed_balance)

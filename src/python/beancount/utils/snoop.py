@@ -1,6 +1,7 @@
 """Text manipulation utilities.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014, 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 import functools
@@ -47,6 +48,16 @@ class Snoop:
         if self.history is not None:
             self.history.append(value)
         return value
+
+    def __getattr__(self, attr):
+        """Forward the attribute to the value.
+
+        Args:
+          attr: A string, the name of the attribute.
+        Returns:
+          The value of the attribute.
+        """
+        return getattr(self.value, attr)
 
 
 # A global instance of a Snoop, for convenience. In many cases you can just

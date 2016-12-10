@@ -1,16 +1,18 @@
 """Report classes for all reports that display ending balances of accounts.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import re
 
-from beancount.reports import report
+from beancount.reports import base
 from beancount.reports import tree_table
 from beancount.core import realization
+from beancount.core import display_context
 
 
-class BalancesReport(report.HTMLReport,
-                     metaclass=report.RealizationMeta):
+class BalancesReport(base.HTMLReport,
+                     metaclass=base.RealizationMeta):
     """Print out the trial balance of accounts matching an expression."""
 
     names = ['balances', 'bal', 'trial']
@@ -32,7 +34,9 @@ class BalancesReport(report.HTMLReport,
                 real_root,
                 lambda real_account: regexp.search(real_account.account))
         if real_root:
-            realization.dump_balances(real_root,
+            dformat = options_map['dcontext'].build(alignment=display_context.Align.DOT,
+                                                    reserved=2)
+            realization.dump_balances(real_root, dformat,
                                       self.args.at_cost, True, file=file)
 
     def render_real_htmldiv(self, real_root, options_map, file):
@@ -50,8 +54,8 @@ class BalancesReport(report.HTMLReport,
         file.write(text)
 
 
-class BalanceSheetReport(report.HTMLReport,
-                         metaclass=report.RealizationMeta):
+class BalanceSheetReport(base.HTMLReport,
+                         metaclass=base.RealizationMeta):
     """Print out a balance sheet."""
 
     names = ['balsheet']
@@ -98,8 +102,8 @@ class BalanceSheetReport(report.HTMLReport,
             """.format(**locals()))
 
 
-class IncomeStatementReport(report.HTMLReport,
-                            metaclass=report.RealizationMeta):
+class IncomeStatementReport(base.HTMLReport,
+                            metaclass=base.RealizationMeta):
     """Print out an income statement."""
 
     names = ['income']

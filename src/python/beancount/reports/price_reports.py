@@ -1,23 +1,23 @@
 """Miscellaneous report classes.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import datetime
 import re
 
-from beancount.reports import report
+from beancount.reports import base
 from beancount.reports import table
 from beancount.reports import gviz
 from beancount.parser import printer
 from beancount.core import data
 from beancount.core import amount
-from beancount.core import account
 from beancount.core import getters
 from beancount.ops import prices
 from beancount.ops import lifetimes
 
 
-class CommoditiesReport(report.TableReport):
+class CommoditiesReport(base.TableReport):
     """Print out a list of commodities."""
 
     names = ['commodities']
@@ -30,7 +30,7 @@ class CommoditiesReport(report.TableReport):
                                   [(0, "Base/Quote", self.formatter.render_commodity)])
 
 
-class CommodityLifetimes(report.TableReport):
+class CommodityLifetimes(base.TableReport):
     """Print out a list of lifetimes of each commodity."""
 
     names = ['lifetimes']
@@ -60,7 +60,7 @@ class CommodityLifetimes(report.TableReport):
                 width=ccywidth))
 
 
-class CommodityPricesReport(report.TableReport):
+class CommodityPricesReport(base.TableReport):
     """Print all the prices for a particular commodity."""
 
     names = ['prices']
@@ -110,7 +110,7 @@ class CommodityPricesReport(report.TableReport):
 
 
 
-class PricesReport(report.Report):
+class PricesReport(base.Report):
     """Print out the unnormalized price entries that we input.
     Unnormalized means that we may render both (base,quote) and (quote,base).
     This can be used to rebuild a prices database without having to share the
@@ -132,7 +132,7 @@ class PricesReport(report.Report):
         printer.print_entries(price_entries, dcontext, file=file)
 
 
-class PriceDBReport(report.Report):
+class PriceDBReport(base.Report):
     """Print out the normalized price entries from the price db.
     Normalized means that we print prices in the most common (base, quote) order.
     This can be used to rebuild a prices database without having to share the
@@ -160,7 +160,7 @@ class PriceDBReport(report.Report):
 
 
 # Note: This should use the same routines as in beancount.prices.find_prices.
-class TickerReport(report.TableReport):
+class TickerReport(base.TableReport):
     """Print a parseable mapping of (base, quote, ticker, name) for all commodities."""
 
     names = ['tickers', 'symbols']

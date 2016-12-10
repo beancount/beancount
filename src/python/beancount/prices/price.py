@@ -1,40 +1,28 @@
 """Driver code for the price script.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
-import csv
-import collections
 import datetime
-import io
 import functools
-import threading
 from os import path
 import shelve
 import tempfile
-import re
 import hashlib
 import os
 import sys
-from urllib import parse
-from urllib import request
-import urllib.parse
-import hashlib
 import argparse
 import logging
 from concurrent import futures
-
-from dateutil.parser import parse as parse_datetime
 
 from beancount.core.number import ONE
 import beancount.prices
 from beancount import loader
 from beancount.core import data
 from beancount.core import amount
-from beancount.ops import holdings
 from beancount.parser import printer
-from beancount.utils import net_utils
-from beancount.utils import memo
 from beancount.prices import find_prices
+from beancount.utils import date_utils
 
 
 # Stand-in currency name for unknown currencies.
@@ -42,7 +30,7 @@ UNKNOWN_CURRENCY = '?'
 
 
 # A cache for the prices.
-_cache = None
+_CACHE = None
 
 # Expiration for latest prices in the cache.
 DEFAULT_EXPIRATION = datetime.timedelta(seconds=30*60)  # 30 mins.
@@ -68,7 +56,7 @@ def fetch_cached_price(source, symbol, date):
       A SourcePrice instance.
     """
     time_now = now()
-    if _cache is None:
+    if _CACHE is None:
         # The cache is disabled; just call and return.
         result = (source.get_latest_price(symbol)
                   if date is None else
@@ -80,12 +68,12 @@ def fetch_cached_price(source, symbol, date):
         md5.update(str((type(source).__module__, symbol)).encode('utf-8'))
         key = md5.hexdigest()
         try:
-            time_created, result = _cache[key]
-            if (time_now - time_created) > _cache.expiration:
+            time_created, result = _CACHE[key]
+            if (time_now - time_created) > _CACHE.expiration:
                 raise KeyError
         except KeyError:
             result = source.get_latest_price(symbol)
-            _cache[key] = (time_now, result)
+            _CACHE[key] = (time_now, result)
     else:
         # The cache is enabled and we are asked to provide an old price. Assume
         # it doesn't change and return the cached value if at all available.
@@ -93,10 +81,10 @@ def fetch_cached_price(source, symbol, date):
         md5.update(str((type(source).__module__, symbol, date)).encode('utf-8'))
         key = md5.hexdigest()
         try:
-            _, result = _cache[key]
+            _, result = _CACHE[key]
         except KeyError:
             result = source.get_historical_price(symbol, date)
-            _cache[key] = (None, result)
+            _CACHE[key] = (None, result)
     return result
 
 
@@ -115,16 +103,15 @@ def setup_cache(cache_filename, clear_cache):
         logging.info('Using price cache at "{}" (with indefinite expiration)'.format(
             cache_filename))
 
-        global _cache
-        _cache = shelve.open(cache_filename)
-        _cache.expiration = DEFAULT_EXPIRATION
-        _cache.lock = threading.Lock()  # Note: 'shelve' is not thread-safe by itself.
+        global _CACHE
+        _CACHE = shelve.open(cache_filename)
+        _CACHE.expiration = DEFAULT_EXPIRATION
 
 
 def reset_cache():
     """Reset the cache to its uninitialized state."""
-    global _cache
-    _cache = None
+    global _CACHE
+    _CACHE = None
 
 
 def fetch_price(dprice, swap_inverted=False):
@@ -226,8 +213,8 @@ def process_args():
     parser.add_argument('-v', '--verbose', action='count', help=(
         "Print out progress log. Specify twice for debugging info."))
 
-    parse_date = lambda s: parse_datetime(s).date()
-    parser.add_argument('-d', '--date', action='store', type=parse_date, help=(
+    parser.add_argument('-d', '--date', action='store',
+                        type=date_utils.parse_date_liberally, help=(
         "Specify the date for which to fetch the prices."))
 
     parser.add_argument('-i', '--inactive', action='store_true', help=(
@@ -330,8 +317,12 @@ def main():
 
     # Fetch all the required prices, processing all the jobs.
     executor = futures.ThreadPoolExecutor(max_workers=3)
-    price_entries = sorted(filter(None, executor.map(
-        functools.partial(fetch_price, swap_inverted=args.swap_inverted), jobs)))
+    price_entries = filter(None, executor.map(
+        functools.partial(fetch_price, swap_inverted=args.swap_inverted), jobs))
+
+    # Sort them by currency, regardless of date (the dates should be close
+    # anyhow, and we tend to put them in chunks in the input files anyhow).
+    price_entries = sorted(price_entries, key=lambda e: e.currency)
 
     # Avoid clobber, remove redundant entries.
     if not args.clobber:

@@ -1,6 +1,7 @@
 """Reports to Export to third-party portfolio sites.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 import csv
@@ -20,7 +21,7 @@ from beancount.core import getters
 from beancount.core import amount
 from beancount.ops import prices
 from beancount.ops import holdings
-from beancount.reports import report
+from beancount.reports import base
 from beancount.reports import holdings_reports
 
 
@@ -81,10 +82,10 @@ def classify_holdings_for_export(holdings_list, commodities_map):
             else:
                 action_holdings.append((export, holding))
         else:
-            logging.warn(("Exporting holding using default commodity name '{}'; this "
-                          "can potentially break the OFX import. Consider providing "
-                          "'export' metadata for your commodities.").format(
-                              holding.currency))
+            logging.warning(("Exporting holding using default commodity name '{}'; this "
+                             "can potentially break the OFX import. Consider providing "
+                             "'export' metadata for your commodities.").format(
+                                 holding.currency))
             action_holdings.append((holding.currency, holding))
 
     return action_holdings
@@ -214,7 +215,7 @@ def export_holdings(entries, options_map, promiscuous, aggregate_by_commodity=Fa
         else:
             # The holding is not in terms of one of the money instruments.
             # Find the first available price to convert it into one
-            for money_currency in money_instruments.keys():
+            for money_currency in money_instruments:
                 base_quote = (cost_currency, money_currency)
                 _, rate = prices.get_latest_price(price_map, base_quote)
                 if rate is not None:
@@ -296,7 +297,7 @@ def get_symbol(sources, prefer='google'):
     return symbol_map.get(prefer, symbol_items[0][1])
 
 
-class ExportPortfolioReport(report.TableReport):
+class ExportPortfolioReport(base.TableReport):
     """Holdings lists that can be exported to external portfolio management software."""
 
     names = ['export_holdings', 'export_portfolio', 'pfexport', 'exportpf']
@@ -452,7 +453,8 @@ class ExportPortfolioReport(report.TableReport):
         sys.stderr.write('\n')
 
     def render_csv(self, entries, unused_errors, options_map, file):
-        exported, converted, holdings_ignored = export_holdings(entries, options_map, False)
+        exported, converted, holdings_ignored = export_holdings(
+            entries, options_map, False, self.args.aggregate_by_commodity)
         writer = csv.writer(file)
         writer.writerow(ExportEntry._fields[:-1])
         for index, export in enumerate(itertools.chain(exported, converted)):

@@ -1,7 +1,6 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
-from urllib import request
-from urllib import response
 import http.client
 import unittest
 from unittest import mock

@@ -1,2 +1,4 @@
-A couple of diagnostic scripts to prepare for inventory booking changes.
-
+Some diagnostic scripts to deal with the transition to the new inventory booking
+algorithm - the one that uses the historical inventory evolution -- i.e.,
+furius.ca/beancount/doc/proposal-booking -- and corresponding changes in my
+input data.

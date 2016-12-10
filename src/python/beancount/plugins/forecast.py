@@ -19,7 +19,8 @@ Note the use of the '#' flag and the word 'MONTHLY' which defines the
 periodicity. This needs more expansion, but as an example, it works.
 """
 
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2014-2015  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import re
 

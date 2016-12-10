@@ -1,6 +1,7 @@
 """Beancount syntax lexer.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 import datetime
@@ -8,6 +9,7 @@ import re
 import tempfile
 
 from beancount.core import data
+from beancount.core import account
 from beancount.core.number import Decimal
 from beancount.parser import _parser
 
@@ -30,7 +32,7 @@ class LexBuilder(object):
         self.accounts = {}
 
         # A regexp for valid account names.
-        self.account_regexp = re.compile('([A-Z][A-Za-z0-9\-]+)(:[A-Z][A-Za-z0-9\-]+)*$')
+        self.account_regexp = re.compile(account.ACCOUNT_RE)
 
         # A set of all the commodities that we have seen in the file.
         self.commodities = set()

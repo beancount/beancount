@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """A script that will fetch missing prices.
 """
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 from dateutil.parser import parse as parse_datetime
 

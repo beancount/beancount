@@ -1,8 +1,10 @@
 """Views are filters on the global list of entries, which produces a subset of entries.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import datetime
+import enum
 import logging
 
 from beancount.core import data
@@ -10,11 +12,20 @@ from beancount.ops import summarize
 from beancount.core import realization
 from beancount.parser import options
 from beancount.utils import misc_utils
+from beancount.utils import date_utils
+
+
+class MonthNavigation(enum.Enum):
+    NONE = 0    # No monthly navigation.
+    COMPACT = 1 # Compact combobox outgoing to monthly navigation.
+    FULL = 2    # Full rendering with single-click to each month.
 
 
 class View:
     """A container for filtering a subset of entries and realizing that for
     display."""
+
+    # pylint: disable=too-many-instance-attributes
 
     def __init__(self, all_entries, options_map, title):
         """Build a View instance.
@@ -43,6 +54,9 @@ class View:
         self.real_accounts = None
         self.opening_real_accounts = None
         self.closing_real_accounts = None
+
+        # Monthly navigation style.
+        self.monthly = MonthNavigation.NONE
 
         # Realize now, we don't need to do this lazily because we create these
         # view objects on-demand and cache them.
@@ -127,7 +141,7 @@ class AllView(View):
 
 
 class YearView(View):
-    """A view of the entries for just a single year."""
+    """A view of the entries for a single year."""
 
     def __init__(self, entries, options_map, title, year, first_month=1):
         """Create a view clamped to one year.
@@ -148,10 +162,43 @@ class YearView(View):
             raise ValueError("Invalid month: {}".format(first_month))
         View.__init__(self, entries, options_map, title)
 
+        self.monthly = MonthNavigation.COMPACT
+
     def apply_filter(self, entries, options_map):
         # Clamp to the desired period.
         begin_date = datetime.date(self.year, self.first_month, 1)
         end_date = datetime.date(self.year+1, self.first_month, 1)
+        with misc_utils.log_time('clamp', logging.info):
+            entries, index = summarize.clamp_opt(entries,
+                                                          begin_date, end_date,
+                                                          options_map)
+        return entries, index
+
+
+class MonthView(View):
+    """A view of the entries for a single month."""
+
+    def __init__(self, entries, options_map, title, year, month):
+        """Create a view clamped to one month.
+
+        Args:
+          entries: A list of directives.
+          options_map: A dict of options, as produced by the parser.
+          title: A string, the title of this view.
+          year: An integer, the year of period.
+          month: An integer, the month to be used as year end.
+        """
+        self.year = year
+        self.month = month
+        View.__init__(self, entries, options_map, title)
+
+        self.monthly = MonthNavigation.FULL
+
+    def apply_filter(self, entries, options_map):
+        # Clamp to the desired period.
+        begin_date = datetime.date(self.year, self.month, 1)
+        end_date = date_utils.next_month(begin_date)
+
         with misc_utils.log_time('clamp', logging.info):
             entries, index = summarize.clamp_opt(entries,
                                                           begin_date, end_date,

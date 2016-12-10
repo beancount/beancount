@@ -1,8 +1,10 @@
 """Rendering of rows.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
+import csv
 import datetime
 import math
 from itertools import zip_longest
@@ -62,6 +64,52 @@ class ColumnRenderer:
           lines, which is why a list may be returned here.
         """
         raise NotImplementedError
+
+
+class ObjectRenderer(ColumnRenderer):
+    """A renderer for a generic object type."""
+    dtype = object
+
+    def __init__(self, dcontext):
+        super().__init__(dcontext)
+        self.maxlen = 0
+
+    def update(self, string):
+        if string is not None:
+            self.maxlen = len(str(string))
+
+    def prepare(self):
+        pass
+
+    def width(self):
+        return self.maxlen
+
+    def format(self, string):
+        return '' if string is None else str(string)
+
+
+class BoolRenderer(ColumnRenderer):
+    """A renderer for left-aligned strings."""
+    dtype = bool
+
+    def __init__(self, dcontext):
+        super().__init__(dcontext)
+        self.maxlen = 0
+        self.seen_true = False
+
+    def update(self, value):
+        if value:
+            self.seen_true = True
+
+    def prepare(self):
+        self.maxlen = 5 if self.seen_true else 4
+        self.fmt = '{{:<{}.{}}}'.format(self.maxlen, self.maxlen)
+
+    def width(self):
+        return self.maxlen
+
+    def format(self, value):
+        return self.fmt.format('TRUE' if value else 'FALSE')
 
 
 class StringRenderer(ColumnRenderer):
@@ -163,6 +211,7 @@ class IntegerRenderer(ColumnRenderer):
         return self.fmt.format(number)
 
 
+# pylint: disable=too-many-instance-attributes
 class DecimalRenderer(ColumnRenderer):
     """A renderer for decimal numbers."""
     dtype = Decimal
@@ -290,10 +339,8 @@ class PositionRenderer(ColumnRenderer):
     def update(self, pos):
         if pos is None:
             return
-        lot = pos.lot
-        cost = lot.cost
-        self.units_rdr.update(pos.get_units())
-        self.cost_rdr.update(cost)
+        self.units_rdr.update(pos.units)
+        self.cost_rdr.update(pos.cost)
 
     def prepare(self):
         self.units_rdr.prepare()
@@ -327,22 +374,20 @@ class PositionRenderer(ColumnRenderer):
 
         strings = []
         if self.fmt_with_cost is None:
-            lot = pos.lot
             strings.append(
                 self.fmt_without_cost.format(
-                    self.units_rdr.format(pos.get_units())))
+                    self.units_rdr.format(pos.units)))
         else:
-            lot = pos.lot
-            cost = lot.cost
+            cost = pos.cost
             if cost:
                 strings.append(
                     self.fmt_with_cost.format(
-                        self.units_rdr.format(pos.get_units()),
+                        self.units_rdr.format(pos.units),
                         self.cost_rdr.format(cost)))
             else:
                 strings.append(
                     self.fmt_without_cost.format(
-                        self.units_rdr.format(pos.get_units())))
+                        self.units_rdr.format(pos.units)))
 
         if len(strings) == 1:
             return strings[0]
@@ -368,23 +413,21 @@ class InventoryRenderer(PositionRenderer):
         strings = []
         if self.fmt_with_cost is None:
             for pos in inv.get_positions():
-                lot = pos.lot
                 strings.append(
                     self.fmt_without_cost.format(
-                        self.units_rdr.format(pos.get_units())))
+                        self.units_rdr.format(pos.units)))
         else:
             for pos in inv.get_positions():
-                lot = pos.lot
-                cost = lot.cost
+                cost = pos.cost
                 if cost:
                     strings.append(
                         self.fmt_with_cost.format(
-                            self.units_rdr.format(pos.get_units()),
+                            self.units_rdr.format(pos.units),
                             self.cost_rdr.format(cost)))
                 else:
                     strings.append(
                         self.fmt_without_cost.format(
-                            self.units_rdr.format(pos.get_units())))
+                            self.units_rdr.format(pos.units)))
 
         if len(strings) == 1:
             return strings[0]
@@ -420,7 +463,8 @@ def get_renderers(result_types, result_rows, dcontext):
     return renderers
 
 
-def render_text(result_types, result_rows, dcontext, file, boxed=False, spaced=False):
+def render_rows(result_types, result_rows, dcontext,
+                expand=False, spaced=False):
     """Render the result of executing a query in text format.
 
     Args:
@@ -428,8 +472,7 @@ def render_text(result_types, result_rows, dcontext, file, boxed=False, spaced=F
         each column.
       result_rows: A list of ResultRow instances.
       dcontext: A DisplayContext object prepared for rendering numbers.
-      file: A file object to render the results to.
-      boxed: A boolean, true if we should render the results in a fancy-looking ASCII box.
+      expand: A boolean, if true, expand columns that render to lists on multiple rows.
       spaced: If true, leave an empty line between each of the rows. This is useful if the
         results have a lot of rows that render over multiple lines.
     """
@@ -469,10 +512,14 @@ def render_text(result_types, result_rows, dcontext, file, boxed=False, spaced=F
             # Update the column renderer.
             exp_lines = renderer.format(value)
             if isinstance(exp_lines, list):
-                max_lines = max(max_lines, len(exp_lines))
+                if expand:
+                    max_lines = max(max_lines, len(exp_lines))
+                else:
+                    # Join the lines onto a single cell.
+                    exp_lines = ', '.join(exp_lines)
             exp_row.append(exp_lines)
 
-        # If all the values were rendered directly to strings, this is row
+        # If all the values were rendered directly to strings, this is a row that
         # renders on a single line. Just append this one row. This is the common
         # case.
         if max_lines == 1:
@@ -495,6 +542,27 @@ def render_text(result_types, result_rows, dcontext, file, boxed=False, spaced=F
 
         if spaced:
             str_rows.append(spacing_row)
+
+    return str_rows, renderers
+
+
+def render_text(result_types, result_rows, dcontext, file,
+                expand=False, boxed=False, spaced=False):
+    """Render the result of executing a query in text format.
+
+    Args:
+      result_types: A list of items describing the names and data types of the items in
+        each column.
+      result_rows: A list of ResultRow instances.
+      dcontext: A DisplayContext object prepared for rendering numbers.
+      file: A file object to render the results to.
+      expand: A boolean, if true, expand columns that render to lists on multiple rows.
+      boxed: A boolean, true if we should render the results in a fancy-looking ASCII box.
+      spaced: If true, leave an empty line between each of the rows. This is useful if the
+        results have a lot of rows that render over multiple lines.
+    """
+    str_rows, renderers = render_rows(result_types, result_rows, dcontext,
+                                      expand=False, spaced=False)
 
     # Compute a final format strings.
     formats = ['{{:{}}}'.format(max(renderer.width(), 1))
@@ -534,9 +602,31 @@ def render_text(result_types, result_rows, dcontext, file, boxed=False, spaced=F
         file.write(bottom_line)
 
 
+def render_csv(result_types, result_rows, dcontext, file, expand=False):
+    """Render the result of executing a query in text format.
+
+    Args:
+      result_types: A list of items describing the names and data types of the items in
+        each column.
+      result_rows: A list of ResultRow instances.
+      dcontext: A DisplayContext object prepared for rendering numbers.
+      file: A file object to render the results to.
+      expand: A boolean, if true, expand columns that render to lists on multiple rows.
+    """
+    str_rows, renderers = render_rows(result_types, result_rows, dcontext,
+                                      expand=False, spaced=False)
+
+    writer = csv.writer(file)
+    header_row = [name for name, _ in result_types]
+    writer.writerow(header_row)
+    writer.writerows(str_rows)
+
+
 # A mapping of data-type -> (render-function, alignment)
 RENDERERS = {renderer_cls.dtype: renderer_cls
-             for renderer_cls in [StringRenderer,
+             for renderer_cls in [ObjectRenderer,
+                                  BoolRenderer,
+                                  StringRenderer,
                                   StringSetRenderer,
                                   IntegerRenderer,
                                   DecimalRenderer,

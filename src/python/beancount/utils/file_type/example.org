@@ -1,0 +1,28 @@
+-*- mode: org -*-
+beancount: TODO
+* Dependency Checks
+
+  - Create a csv_converter module, parallel to pdf_converter.
+
+
+* Misc.
+
+  - Complete import example file.
+  - Add tests for import.
+
+
+* Import
+
+  - (cleanup) Convert all the importers to use the DateIntervalTicker.
+
+** Filing
+
+  - Bla bla
+
+** Payee Normalization
+
+  - Bla bla
+
+** Auto-Categorization
+
+  - Bla bla

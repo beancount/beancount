@@ -45,27 +45,20 @@ div.navigation {
 }
 
 div.navigation ul {
-    /* margin: 10px 0px 0px 0px; */
     margin-top: 5px;
-    /* padding-top: 5px; */
     padding-left: 0px;
-    /* border: thin solid red; */
 }
 
 div.navigation li {
     display: inline;
     margin: 4px;
-/* font-size: x-small; */
 }
 
 div.navigation li span.ledger-name {
     margin-left: 1.5em;
-    /* font-weight: bold; */
 }
 
 div.navigation#nav-right {
-    /* position: absolute; */
-    /* right: 1.5em; */
     float: right;
 }
 
@@ -154,7 +147,6 @@ table.entry-table tr td.change {
 }
 
 table.entry-table tr td.balance {
-    /* font-weight: bold; */
 }
 
 table.entry-table tr td.description {
@@ -230,12 +222,6 @@ table.entry-table tr.Posting.warning {
     background-color: #f66;
 }
 
-/* table.entry-table tr.Posting.leg { */
-/*     opacity: 0.6; */
-/* } */
-
-
-
 
 
 /* Side-by-side views */
@@ -243,7 +229,6 @@ table.entry-table tr.Posting.warning {
 div.halfleft h3, div.halfright h3 {
     text-align: center;
     margin: 10px 0px 10px 0px;
-    /* border: thin dashed red; */
 }
 
 div.halfleft {
@@ -252,7 +237,6 @@ div.halfleft {
     width: 50%;
     margin: 0px;
     padding: 0px;
-    /* border: thin solid #DDD; */
 }
 
 div.halfright {
@@ -261,7 +245,6 @@ div.halfright {
     width: 49%;
     margin: 0px;
     padding: 0px;
-    /* border: thin solid #DDD; */
 }
 
 /* For balance sheet, add a little more spacing between liabilities and equity. */
@@ -298,12 +281,6 @@ table.holdings.detail-table td:nth-child(1) {
 
 
 div#viewboxes {
-    /* margin-left: auto; */
-    /* margin-right: auto; */
-    /* border: medium solid blue; */
-    /* display: box; */
-    /* box-orient: horizontal; */
-    /* box-pack: center; */
 }
 
 div#viewboxes hr {
@@ -312,12 +289,7 @@ div#viewboxes hr {
 }
 
 div.viewbox {
-    /* box-flex: 1; */
-    /* display: block; */
-    /* width: 300px; */
-    /* float: left; */
     padding: 0px;
-    /* border: thin solid red; */
 }
 
 div.viewbox ul {

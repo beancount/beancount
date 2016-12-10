@@ -19,17 +19,21 @@ http://www.google.com/finance/getprices?q=AAPL&x=NASD&i=120&sessions=ext_hours&p
 
 This code implements the beancount.prices.source.Source.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import re
 import datetime
-from urllib import request
+import logging
+import socket
 from urllib import parse
 from urllib import error
 
 from beancount.core.number import D
 from beancount.prices import source
 from beancount.utils import net_utils
+
+from dateutil import tz
 
 
 class Source(source.Source):
@@ -66,38 +70,65 @@ class Source(source.Source):
 
         url = 'http://www.google.com/finance/getprices?{}'.format(
             parse.urlencode(sorted(params_dict.items())))
+        logging.info("Fetching %s", url)
 
         # Fetch the data.
         response = net_utils.retrying_urlopen(url)
         if response is None:
             return None
-        data = response.read().decode('utf-8')
+        try:
+            data = response.read().decode('utf-8')
+        except socket.timeout:
+            logging.error("Connection timed out")
+            return None
         data = parse.unquote(data).strip()
 
         # Process the meta-data.
         metadata = {}
         lines = data.splitlines()
         for index, line in enumerate(lines):
-            mo = re.match('([A-Z_+]+)=(.*)$', line)
-            if not mo:
+            match = re.match('([A-Z_+]+)=(.*)$', line)
+            if not match:
                 break
-            metadata[mo.group(1)] = mo.group(2)
+            metadata[match.group(1)] = match.group(2)
         else:
             # No data was found.
             return None
 
+        # Initialize a custom timezone, if there was one.
+        try:
+            offset = int(metadata['TIMEZONE_OFFSET']) * 60
+            zone = tz.tzoffset("Custom", offset)
+        except KeyError:
+            zone = None
+
         interval = int(metadata['INTERVAL'])
         data_lines = lines[index:]
         for line in data_lines:
-            if re.match('TIMEZONE_OFFSET', line):
+            # Process an update on timezone (I'm not sure if this will ever be
+            # seen, but we handle it).
+            match = re.match('TIMEZONE_OFFSET=(.*)', line)
+            if match:
+                # Associate an appropriately defined timezone matching that of
+                # the response. This is extra... we could just as well return a
+                # UTC time.
+                zone = tz.tzoffset("Custom", int(match.group(1)))
                 continue
+
             time_str, price_str = line.split(',')
 
-            mo = re.match('a(\d+)', time_str)
-            if mo:
-                time_marker = datetime.datetime.fromtimestamp(int(mo.group(1)))
+            match = re.match('a(\d+)', time_str)
+            if match:
+                # Create time from the UNIX timestamp. Note: This must be
+                # initialized in UTC coordinates.
+                time_marker = datetime.datetime.fromtimestamp(int(match.group(1)),
+                                                              tz.tzutc())
+                # Convert to the local timezone if required.
+                if zone is not None:
+                    time_marker = time_marker.astimezone(zone)
                 time = time_marker
             else:
+                # Add time as relative from previous timestamp.
                 seconds = int(time_str) * interval
                 time = time_marker + datetime.timedelta(seconds=seconds)
 
@@ -127,6 +158,9 @@ class Source(source.Source):
             if response is None:
                 return None
             data = response.read()
+        except socket.timeout:
+            logging.error("Connection timed out")
+            return None
         except error.HTTPError:
             # When the instrument is incorrect, you will get a 404.
             return None

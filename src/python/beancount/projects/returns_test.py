@@ -1,7 +1,7 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import datetime
-import re
 import logging
 import textwrap
 import sys
@@ -31,7 +31,7 @@ class TestReturnsFunctions(test_utils.TestCase):
 
     2013-06-10 open Assets:US:Prosper:Cash            USD
     2013-06-10 open Assets:US:Prosper:InFunding       USD
-    2013-06-10 open Assets:US:Prosper:FundsLent       LENCLUB
+    2013-06-10 open Assets:US:Prosper:FundsLent       LENCLUB  "FIFO"
     2013-06-10 open Income:US:Prosper:LoanInterest    USD
     2013-06-10 open Income:US:Prosper:ChargedOff      USD
     2013-06-10 open Income:US:Prosper:LateFeesRecv    USD
@@ -63,7 +63,7 @@ class TestReturnsFunctions(test_utils.TestCase):
     2014-07-30 balance Assets:US:Prosper:FundsLent     21005.79 LENCLUB
 
 
-    2014-07-10 * "PROSPER" | "Transfer money into it."
+    2014-07-10 * "PROSPER" "Transfer money into it."
       Assets:US:TD:Checking                                               -10000.00 USD
       Assets:US:Prosper:Cash
 
@@ -121,7 +121,7 @@ class TestReturnsFunctions(test_utils.TestCase):
       Expenses:Financial:Fees:Prosper                              0.42 USD ;; Collection fees
       Assets:US:Prosper:Cash
 
-    2014-11-06 * "PROSPER" | "Withdrawal"
+    2014-11-06 * "PROSPER" "Withdrawal"
       Assets:US:TD:Checking                                                 3200.00 USD
       Assets:US:Prosper:Cash
 
@@ -327,7 +327,7 @@ class TestReturnsConstrained(test_utils.TestCase):
             (datetime.date(2014, 6, 15), datetime.date(2014, 10, 1)),
             ], [(date_begin, date_end) for date_begin, date_end, _1, _2 in periods])
 
-        self.assertEqual(inventory.from_string('2900 USD, 21 ACME {100 USD}'),
+        self.assertEqual(inventory.from_string('2900 USD, 21 ACME {100 USD, 2014-02-01}'),
                          periods[0][2])
 
         # Test with another begin date.
@@ -337,10 +337,12 @@ class TestReturnsConstrained(test_utils.TestCase):
             (datetime.date(2014, 9, 10), datetime.date(2014, 10, 1)),
             ], [(date_begin, date_end) for date_begin, date_end, _1, _2 in periods])
 
-        self.assertEqual(inventory.from_string('3720 USD, '
-                                               '21 ACME {100 USD}, '
-                                               '22 ACME {110 USD}, '
-                                               '23 ACME {120 USD}'), periods[0][2])
+        self.assertEqual(
+            inventory.from_string('3720 USD, '
+                                  '21 ACME {100 USD, 2014-02-01}, '
+                                  '22 ACME {110 USD, 2014-05-01}, '
+                                  '23 ACME {120 USD, 2014-08-01}'),
+            periods[0][2])
 
         # Test with another begin date.
         periods, _ = returns.segment_periods(self.entries, self.assets, self.assets,
@@ -349,11 +351,12 @@ class TestReturnsConstrained(test_utils.TestCase):
             (datetime.date(2014, 10, 15), datetime.date(2014, 10, 15))
             ], [(date_begin, date_end) for date_begin, date_end, _1, _2 in periods])
 
-        self.assertEqual(inventory.from_string('600 USD, '
-                                               '21 ACME {100 USD}, '
-                                               '22 ACME {110 USD}, '
-                                               '23 ACME {120 USD}, '
-                                               '24 ACME {130 USD}'), periods[0][2])
+        self.assertEqual(
+            inventory.from_string('600 USD, '
+                                  '21 ACME {100 USD, 2014-02-01}, '
+                                  '22 ACME {110 USD, 2014-05-01}, '
+                                  '23 ACME {120 USD, 2014-08-01}, '
+                                  '24 ACME {130 USD, 2014-10-01}'), periods[0][2])
 
     def test_segment_periods_with_end(self):
         # Test with an end date.
@@ -364,7 +367,7 @@ class TestReturnsConstrained(test_utils.TestCase):
             (datetime.date(2014, 1, 15), datetime.date(2014, 4, 20)),
             ], [(date_begin, date_end) for date_begin, date_end, _1, _2 in periods])
 
-        self.assertEqual(inventory.from_string('2900 USD, 21 ACME {100 USD}'),
+        self.assertEqual(inventory.from_string('2900 USD, 21 ACME {100 USD, 2014-02-01}'),
                          periods[-1][3])
 
         # Test with another end date.
@@ -376,10 +379,11 @@ class TestReturnsConstrained(test_utils.TestCase):
             (datetime.date(2014, 6, 15), datetime.date(2014, 9, 10)),
             ], [(date_begin, date_end) for date_begin, date_end, _1, _2 in periods])
 
-        self.assertEqual(inventory.from_string('3720 USD, '
-                                               '21 ACME {100 USD}, '
-                                               '22 ACME {110 USD}, '
-                                               '23 ACME {120 USD}'), periods[-1][3])
+        self.assertEqual(inventory.from_string(
+            '3720 USD, '
+            '21 ACME {100 USD, 2014-02-01}, '
+            '22 ACME {110 USD, 2014-05-01}, '
+            '23 ACME {120 USD, 2014-08-01}'), periods[-1][3])
 
         # Test with yet another end date.
         periods, _ = returns.segment_periods(self.entries, self.assets, self.assets,
@@ -390,11 +394,12 @@ class TestReturnsConstrained(test_utils.TestCase):
             (datetime.date(2014, 6, 15), datetime.date(2014, 10, 15)),
             ], [(date_begin, date_end) for date_begin, date_end, _1, _2 in periods])
 
-        self.assertEqual(inventory.from_string('600 USD, '
-                                               '21 ACME {100 USD}, '
-                                               '22 ACME {110 USD}, '
-                                               '23 ACME {120 USD}, '
-                                               '24 ACME {130 USD}'), periods[-1][3])
+        self.assertEqual(inventory.from_string(
+            '600 USD, '
+            '21 ACME {100 USD, 2014-02-01}, '
+            '22 ACME {110 USD, 2014-05-01}, '
+            '23 ACME {120 USD, 2014-08-01}, '
+            '24 ACME {130 USD, 2014-10-01}'), periods[-1][3])
 
     def test_segment_periods_with_begin_and_end(self):
         # Test with an end date.
@@ -406,10 +411,11 @@ class TestReturnsConstrained(test_utils.TestCase):
             (datetime.date(2014, 6, 15), datetime.date(2014, 9, 10)),
             ], [(date_begin, date_end) for date_begin, date_end, _1, _2 in periods])
 
-        self.assertEqual(inventory.from_string('3720 USD, '
-                                               '21 ACME {100 USD}, '
-                                               '22 ACME {110 USD}, '
-                                               '23 ACME {120 USD}'), periods[-1][3])
+        self.assertEqual(
+            inventory.from_string('3720 USD, '
+                                  '21 ACME {100 USD, 2014-02-01}, '
+                                  '22 ACME {110 USD, 2014-05-01}, '
+                                  '23 ACME {120 USD, 2014-08-01}'), periods[-1][3])
 
     def test_segment_periods_preceding(self):
         periods, _ = returns.segment_periods(self.entries, self.assets, self.assets,
@@ -425,11 +431,12 @@ class TestReturnsConstrained(test_utils.TestCase):
                                              date_begin=datetime.date(2015, 3, 1),
                                              date_end=datetime.date(2015, 6, 1))
 
-        inv_final = inventory.from_string('600 USD, '
-                                          '21 ACME {100 USD}, '
-                                          '22 ACME {110 USD}, '
-                                          '23 ACME {120 USD}, '
-                                          '24 ACME {130 USD}')
+        inv_final = inventory.from_string(
+            '600 USD, '
+            '21 ACME {100 USD, 2014-02-01}, '
+            '22 ACME {110 USD, 2014-05-01}, '
+            '23 ACME {120 USD, 2014-08-01}, '
+            '24 ACME {130 USD, 2014-10-01}')
         self.assertEqual([
             (datetime.date(2015, 3, 1), datetime.date(2015, 6, 1), inv_final, inv_final),
             ], periods)
@@ -445,11 +452,12 @@ class TestReturnsConstrained(test_utils.TestCase):
             (datetime.date(2014, 6, 15), datetime.date(2015, 3, 1)),
             ], [(date_begin, date_end) for date_begin, date_end, _1, _2 in periods])
 
-        inv_final = inventory.from_string('600 USD, '
-                                          '21 ACME {100 USD}, '
-                                          '22 ACME {110 USD}, '
-                                          '23 ACME {120 USD}, '
-                                          '24 ACME {130 USD}')
+        inv_final = inventory.from_string(
+            '600 USD, '
+            '21 ACME {100 USD, 2014-02-01}, '
+            '22 ACME {110 USD, 2014-05-01}, '
+            '23 ACME {120 USD, 2014-08-01}, '
+            '24 ACME {130 USD, 2014-10-01}')
         self.assertEqual(inv_final, periods[-1][3])
 
     @loader.load_doc()
@@ -482,8 +490,8 @@ class TestReturnsConstrained(test_utils.TestCase):
             (datetime.date(2014, 6, 15), datetime.date(2020, 1, 1)),
             ], [(date_begin, date_end) for date_begin, date_end, _1, _2 in periods])
 
-        self.assertEqual(inventory.from_string('1400 USD, '
-                                               '21 ACME {100 USD}'), periods[-1][3])
+        inv_expected = inventory.from_string('1400 USD, 21 ACME {100 USD, 2014-02-01}')
+        self.assertEqual(inv_expected, periods[-1][3])
 
 
 class TestReturnsInternalize(cmptest.TestCase):
@@ -759,8 +767,8 @@ class TestReturnsExampleScript(test_utils.TestCase):
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         output, errors = pipe.communicate()
         self.assertEqual(0, pipe.returncode)
-        self.assertTrue(re.search(b'Total returns', output))
-        self.assertTrue(re.search(b'Averaged annual returns', output))
+        self.assertRegex(output, b'Total returns')
+        self.assertRegex(output, b'Averaged annual returns')
 
     def test_returns_example_script(self):
         # We want to ensure the example script doesn't break unexpectedly, so
@@ -775,7 +783,7 @@ class TestReturnsExampleScript(test_utils.TestCase):
         output, errors = pipe.communicate()
         self.assertEqual(0, pipe.returncode)
         self.assertFalse(errors)
-        self.assertTrue(re.search(b'Returns for', output))
+        self.assertRegex(output, b'Returns for')
 
 
 class TestReturnsWithUnrealized(test_utils.TestCase):

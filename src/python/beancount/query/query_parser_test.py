@@ -1,4 +1,5 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import datetime
 import unittest
@@ -490,7 +491,7 @@ class TestSelectOptions(QueryParserTestBase):
 class TestBalances(QueryParserTestBase):
 
     def test_balances_empty(self):
-        self.assertParse(qp.Balances(None, None),
+        self.assertParse(qp.Balances(None, None, None),
                          "BALANCES;")
 
     def test_balances_from(self):
@@ -498,7 +499,8 @@ class TestBalances(QueryParserTestBase):
             qp.Balances(None,
                         qp.From(qp.Equal(qp.Column('date'),
                                          qp.Constant(datetime.date(2014, 1, 1))),
-                                None, True, None)),
+                                None, True, None),
+                        None),
             "BALANCES FROM date = 2014-01-01 CLOSE;")
 
     def test_balances_from_with_transformer(self):
@@ -506,8 +508,17 @@ class TestBalances(QueryParserTestBase):
             qp.Balances('units',
                         qp.From(qp.Equal(qp.Column('date'),
                                          qp.Constant(datetime.date(2014, 1, 1))),
-                                None, True, None)),
+                                None, True, None),
+                        None),
             "BALANCES AT units FROM date = 2014-01-01 CLOSE;")
+
+    def test_balances_from_with_transformer_simple(self):
+        self.assertParse(
+            qp.Balances('units',
+                        None,
+                        qp.Equal(qp.Column('date'),
+                                 qp.Constant(datetime.date(2014, 1, 1)))),
+            "BALANCES AT units WHERE date = 2014-01-01;")
 
 
 class TestJournal(QueryParserTestBase):
@@ -586,7 +597,7 @@ class TestExplain(QueryParserTestBase):
 
     def test_explain_balances(self):
         self.assertParse(qp.Explain(
-            qp.Balances('cost', None)
+            qp.Balances('cost', None, None)
             ), "EXPLAIN BALANCES AT cost;")
 
     def test_explain_journal(self):

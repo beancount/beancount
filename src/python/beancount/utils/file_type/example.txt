@@ -1,0 +1,20 @@
+========================================================
+   beancount: Double-Entry Accounting from Text Files
+========================================================
+
+.. contents::
+..
+    1  Description
+    2  Documentation
+    3  Download & Installation
+    4  Filing Bugs
+    5  Copyright and License
+    6  Author
+
+
+Description
+===========
+
+A double-entry bookkeeping computer language that lets you define financial
+transaction records in a text file, read them in memory, generate a variety of
+reports from them, and provides a web interface.

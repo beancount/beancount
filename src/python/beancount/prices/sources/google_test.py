@@ -1,6 +1,7 @@
 """Test for price extractor of Google Finance.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import textwrap
 import datetime
@@ -10,7 +11,19 @@ from urllib import request
 from urllib import error
 
 from beancount.prices.sources import google
-from beancount.core.number import D, Decimal
+from beancount.core.number import D
+from beancount.core.number import Decimal
+
+from dateutil import tz
+
+
+class _TestTimezone(datetime.tzinfo):
+    def utcoffset(self, dt):
+        return datetime.timedelta(hours=-4) + self.dst(dt)
+    def dst(self, dt):
+        return datetime.timedelta(0)
+    def tzname(self, dt):
+        return "Test"
 
 
 class TestGoogleFinanceSource(unittest.TestCase):
@@ -41,10 +54,13 @@ class TestGoogleFinanceSource(unittest.TestCase):
             389,555.89
             390,556.33
         """).encode('utf-8')
-        srcprice = self.fetcher.get_latest_price('NASD:GOOG')
+        srcprice = self.fetcher.get_latest_price('NASD:HOOL')
         self.assertTrue(isinstance(srcprice.price, Decimal))
         self.assertEqual(D('556.33'), srcprice.price)
-        self.assertEqual(srcprice.time, datetime.datetime(2014, 6, 6, 16, 0, 0))
+
+        tz_nyc = tz.gettz("America/New York")
+        self.assertEqual(srcprice.time,
+                         datetime.datetime(2014, 6, 6, 16, 0, 0, tzinfo=tz_nyc))
 
     def test_get_latest_price__invalid(self):
         self.url_object.read.return_value = textwrap.dedent("""\
@@ -68,14 +84,13 @@ class TestGoogleFinanceSource(unittest.TestCase):
         """).encode('utf-8')
         request_date = datetime.date(2014, 5, 7)
         expected_datetime = datetime.datetime(2014, 5, 6)
-        srcprice = self.fetcher.get_historical_price('NASD:GOOG', request_date)
+        srcprice = self.fetcher.get_historical_price('NASD:HOOL', request_date)
         self.assertTrue(isinstance(srcprice.price, Decimal))
         self.assertEqual(D('515.14'), srcprice.price)
         self.assertEqual(expected_datetime, srcprice.time)
 
     def test_get_historical_price__invalid(self):
         self.url_object.read.side_effect = error.HTTPError('url', 'code', '404', {}, None)
-        expected_date = datetime.date(2014, 5, 6)
         srcprice = self.fetcher.get_historical_price('CURRENCY:INVALID',
                                                      datetime.date(2014, 5, 7))
         self.assertIsNone(srcprice)

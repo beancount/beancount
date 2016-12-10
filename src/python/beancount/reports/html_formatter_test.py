@@ -1,7 +1,7 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import unittest
-import re
 
 from beancount.reports import html_formatter
 from beancount.core import data
@@ -30,10 +30,10 @@ class TestHTMLFormatter(unittest.TestCase):
 
         balance = inventory.Inventory.from_string('111 USD, 222 CAD, 3 HOOL {400 USD}')
         html_balance = formatter.render_inventory(balance)
-        self.assertTrue(re.search(r'\b111\b', html_balance))
-        self.assertTrue(re.search(r'\bUSD\b', html_balance))
-        self.assertTrue(re.search(r'\b222\b', html_balance))
-        self.assertTrue(re.search(r'\bCAD\b', html_balance))
-        self.assertTrue(re.search(r'\b3\b', html_balance))
-        self.assertTrue(re.search(r'\bHOOL\b', html_balance))
-        self.assertTrue(re.search(r'\b400\b', html_balance))
+        self.assertRegex(html_balance, r'\b111\b')
+        self.assertRegex(html_balance, r'\bUSD\b')
+        self.assertRegex(html_balance, r'\b222\b')
+        self.assertRegex(html_balance, r'\bCAD\b')
+        self.assertRegex(html_balance, r'\b3\b')
+        self.assertRegex(html_balance, r'\bHOOL\b')
+        self.assertRegex(html_balance, r'\b400\b')

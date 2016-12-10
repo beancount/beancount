@@ -1,10 +1,10 @@
 """Automatic padding of gaps between entries.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 
-from beancount.core.number import D
 from beancount.core.number import ONE
 from beancount.core.number import ZERO
 from beancount.core.data import Transaction
@@ -21,7 +21,7 @@ __plugins__ = ('check',)
 BalanceError = collections.namedtuple('BalanceError', 'source message entry')
 
 
-def get_tolerance(balance_entry, options_map):
+def get_balance_tolerance(balance_entry, options_map):
     """Get the tolerance amount for a single entry.
 
     Args:
@@ -30,13 +30,7 @@ def get_tolerance(balance_entry, options_map):
     Returns:
       A Decimal, the amount of tolerance implied by the directive.
     """
-    if options_map['use_legacy_fixed_tolerances']:
-        # This is to support the legacy behavior to ease the transition
-        # for some users.
-        tolerance = D('0.015')
-
-    elif (options_map["experiment_explicit_tolerances"] and
-          balance_entry.tolerance is not None):
+    if balance_entry.tolerance is not None:
         # Use the balance-specific tolerance override if it is provided.
         tolerance = balance_entry.tolerance
 
@@ -106,7 +100,7 @@ def check(entries, options_map):
                 if real_account is not None:
                     # Note: Always allow negative lots for the purpose of balancing.
                     # This error should show up somewhere else than here.
-                    real_account.balance.add_position(posting.position)
+                    real_account.balance.add_position(posting)
 
         elif isinstance(entry, Balance):
             # Check the balance against the check entry.
@@ -126,10 +120,10 @@ def check(entries, options_map):
             balance_amount = subtree_balance.get_units(expected_amount.currency)
 
             # Check if the amount is within bounds of the expected amount.
-            diff_amount = amount.amount_sub(balance_amount, expected_amount)
+            diff_amount = amount.sub(balance_amount, expected_amount)
 
             # Use the specified tolerance or automatically infer it.
-            tolerance = get_tolerance(entry, options_map)
+            tolerance = get_balance_tolerance(entry, options_map)
 
             if abs(diff_amount.number) > tolerance:
                 check_errors.append(

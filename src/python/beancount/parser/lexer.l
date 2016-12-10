@@ -154,6 +154,7 @@ int strtonl(const char* buf, size_t nchars);
 \+		{ return PLUS; }
 \-		{ return MINUS; }
 \/		{ return SLASH; }
+\:		{ return COLON; }
 \(		{ return LPAREN; }
 \)		{ return RPAREN; }
 
@@ -195,7 +196,7 @@ int strtonl(const char* buf, size_t nchars);
     beancount.core.flags, in order for round-trips between text and entries to
     be possible. {5307d8fa1e7b}
     */
-[!&#?%PSTCUR]	{
+[!&#?%PSTCURM]	{
     if ( yy_line_tokens != 1 ) {
         yylval->character = yytext[0];
         return FLAG;
@@ -215,11 +216,14 @@ commodity	{ return COMMODITY; }
 pad		{ return PAD; }
 event		{ return EVENT; }
 query		{ return QUERY; }
+custom		{ return CUSTOM; }
 price		{ return PRICE; }
 note		{ return NOTE; }
 document	{ return DOCUMENT; }
 pushtag	        { return PUSHTAG; }
 poptag		{ return POPTAG; }
+pushmeta	{ return PUSHMETA; }
+popmeta		{ return POPMETA; }
 option		{ return OPTION; }
 plugin		{ return PLUGIN; }
 include		{ return INCLUDE; }
@@ -260,7 +264,7 @@ FALSE		{
 }
 
  /* Account names. */
-([A-Z][A-Za-z0-9\-]+)(:[A-Z][A-Za-z0-9\-]+)+		{
+([A-Z][A-Za-z0-9\-]+)(:[A-Z][A-Za-z0-9\-]*)+		{
     BUILD_LEX("ACCOUNT", "s", yytext);
     return ACCOUNT;
 }
@@ -341,6 +345,7 @@ FALSE		{
  /* Key */
 [a-z][a-zA-Z0-9\-_]+: 		{
     BUILD_LEX("KEY", "s#", yytext, yyleng-1);
+    unput(':');
     return KEY;
 }
 
@@ -496,7 +501,7 @@ int strtonl(const char* buf, size_t nchars)
 /* Build and accumulate an error on the builder object. */
 void build_lexer_error(const char* string, size_t length)
 {
-    /* TRACE_ERROR("Invalid Token"); */
+    TRACE_ERROR("Invalid Token");
 
     /* Build and accumulate a new error object. {27d1d459c5cd} */
     PyObject* rv = PyObject_CallMethod(builder, "build_lexer_error",
@@ -510,7 +515,7 @@ void build_lexer_error(const char* string, size_t length)
 
 void build_lexer_error_from_exception()
 {
-    /* TRACE_ERROR("Lexer Builder Exception"); */
+    TRACE_ERROR("Lexer Builder Exception");
 
     /* Get the exception context. */
     PyObject* ptype = NULL;

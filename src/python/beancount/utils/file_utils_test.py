@@ -1,13 +1,62 @@
 """Tests for file utilities.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014, 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
+from os import path
+import os
+import re
 import unittest
 
+from beancount.utils import test_utils
 from beancount.utils import file_utils
 
 
-class TestFileUtils(unittest.TestCase):
+def clean(prefix, iterable):
+    return [re.sub('^{}/'.format(re.escape(prefix)), '', f)
+            for f in iterable]
+
+
+class TestFileUtilsFind(test_utils.TestTempdirMixin, test_utils.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        for filename in [
+                'alice/',
+                'alice/bottle.txt',
+                'rabbit/',
+                'rabbit/suit/',
+                'rabbit/suit/glasses.txt',
+                'caterpillar/',
+                'caterpillar/who-are-you.txt',
+                ]:
+            abs_filename = path.join(self.tempdir, filename)
+            if filename.endswith('/'):
+                os.makedirs(abs_filename)
+            else:
+                open(abs_filename, 'w').close()
+
+    def test_find_files(self):
+        def walk(fords):
+            return sorted(clean(self.tempdir, file_utils.find_files(fords)))
+
+        self.assertEqual(sorted(['alice/bottle.txt',
+                                 'rabbit/suit/glasses.txt',
+                                 'caterpillar/who-are-you.txt']),
+                         walk([self.tempdir]))
+
+        self.assertEqual(['alice/bottle.txt'],
+                         walk([path.join(self.tempdir, 'alice/bottle.txt')]))
+
+        self.assertEqual([],
+                         walk([path.join(self.tempdir, 'alice/blabla.txt')]))
+
+        # Test a string directly.
+        self.assertEqual(['alice/bottle.txt'],
+                         walk(path.join(self.tempdir, 'alice/bottle.txt')))
+
+
+class TestMiscFileUtils(unittest.TestCase):
 
     def test_guess_file_format(self):
         self.assertEqual('csv', file_utils.guess_file_format('/user/output.csv'))

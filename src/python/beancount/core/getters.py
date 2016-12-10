@@ -1,7 +1,8 @@
 """Getter functions that operate on lists of entries to return various lists of
 things that they reference, accounts, tags, links, currencies, etc.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 from collections import defaultdict
 
@@ -96,7 +97,7 @@ class GetAccounts:
 
     # Associate all the possible directives with their respective handlers.
     Open = Close = Balance = Note = Document = _one
-    Commodity = Event = Query = Price = _zero
+    Commodity = Event = Query = Price = Custom = _zero
 
 
 # Global instance to share.
@@ -148,7 +149,7 @@ def get_account_components(entries):
     Args:
       entries: A list of directive instances.
     Returns:
-      A set of strings, the unique account components, including the root
+      A list of strings, the unique account components, including the root
       account names.
     """
     accounts = get_accounts(entries)
@@ -310,11 +311,11 @@ def get_commodity_map(entries, create_missing=True):
             for posting in entry.postings:
 
                 # Main currency.
-                lot = posting.position.lot
-                commodities_map.setdefault(lot.currency, None)
+                units = posting.units
+                commodities_map.setdefault(units.currency, None)
 
                 # Currency in cost.
-                cost = lot.cost
+                cost = posting.cost
                 if cost:
                     commodities_map.setdefault(cost.currency, None)
 

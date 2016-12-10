@@ -1,11 +1,12 @@
 """Routines to render an HTML table with a tree of accounts.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import io
 
+from beancount.core.number import ZERO
 from beancount.core import account_types
-from beancount.core import position
 from beancount.core import data
 from beancount.core import inventory
 from beancount.core import realization
@@ -149,7 +150,6 @@ def table_of_balances(real_root, operating_currencies, formatter, classes=None):
             row_classes.append('totals')
         else:
             # Check if this account has had activity; if not, skip rendering it.
-            # pylint: disable=bad-continuation
             if (real_account.account not in active_set and
                 not account_types.is_root_account(real_account.account)):
                 continue
@@ -164,20 +164,23 @@ def table_of_balances(real_root, operating_currencies, formatter, classes=None):
             balance_totals += line_balance
 
         # Extract all the positions that the user has identified as operating
-        # currencies.
-        positions = list(line_balance.get_positions())
+        # currencies to their own subinventories.
+        ccy_dict = line_balance.segregate_units(operating_currencies)
 
         # FIXME: This little algorithm is inefficient; rewrite it.
         for currency in operating_currencies:
-            position_ = line_balance.get_position(position.Lot(currency, None, None))
-            if position_:
-                positions.remove(position_)
-                cells.append(formatter.render_number(position_.number, currency))
-            else:
-                cells.append('')
+            units = ccy_dict[currency].get_units(currency)
+            cells.append(formatter.render_number(units.number, units.currency)
+                         if units.number != ZERO
+                         else '')
 
         # Render all the rest of the inventory in the last cell.
-        cells.append('<br/>'.join(formatter.render_amount(position_.get_units())
-                                  for position_ in sorted(positions)))
+        if None in ccy_dict:
+            ccy_balance = ccy_dict[None]
+            last_cell = '<br/>'.join(formatter.render_amount(pos.units)
+                                     for pos in sorted(ccy_balance))
+        else:
+            last_cell = ''
+        cells.append(last_cell)
 
     return oss.getvalue()

@@ -7,16 +7,16 @@ postings are all aligned to the same column. The currency should match.
 Note: this does not parse the Beancount ledger. It simply uses regular
 expressions and text manipulations to do its work.
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 import io
 import re
 import sys
 
-
-# A regular expression that matches an account name.
-ACCOUNT_RE = '([A-Z][A-Za-z0-9\-]+)(:[A-Z][A-Za-z0-9\-]+)+'
+from beancount.core import amount
+from beancount.core import account
 
 
 def align_beancount(contents):
@@ -33,7 +33,9 @@ def align_beancount(contents):
     # of the stripped prefix and the number.
     match_pairs = []
     for index, line in enumerate(contents.splitlines()):
-        match = re.match(r'([^";]*?)\s+([-+]?\s*\d+(?:\.\d*)?)\s+([A-Z0-9]+\b.*)', line)
+        match = re.match(
+            r'([^";]*?)\s+([-+]?\s*[\d,]+(?:\.\d*)?)\s+({}\b.*)'.format(amount.CURRENCY_RE),
+            line)
         if match:
             prefix, number, rest = match.groups()
             match_pairs.append((prefix, number, rest))
@@ -115,14 +117,13 @@ def normalize_indent_whitespace(match_pairs):
       adjusted with a different whitespace prefi.
     """
     # Compute most frequent account name prefix.
-    match_posting = re.compile(r'([ \t]+)({})'.format(ACCOUNT_RE)).match
+    match_posting = re.compile(r'([ \t]+)({}.*)'.format(account.ACCOUNT_RE)).match
     width = compute_most_frequent(
         len(match.group(1))
         for match in (match_posting(prefix)
                       for prefix, _, _ in match_pairs)
         if match is not None)
-    if width:
-        norm_format = ' ' * width + '{}'
+    norm_format = ' ' * (width or 0) + '{}'
 
     # Make the necessary adjustments.
     adjusted_pairs = []
@@ -139,7 +140,7 @@ def main():
     import argparse
     parser = argparse.ArgumentParser(description=__doc__.strip())
 
-    parser.add_argument('filename', help='Beancount filename')
+    parser.add_argument('filename', nargs='?', help='Beancount filename')
 
     parser.add_argument('-o', '--output', action='store',
                         help="Output file (stdout if not specified)")
@@ -147,7 +148,8 @@ def main():
     opts = parser.parse_args()
 
     # Read the original contents.
-    contents = open(opts.filename).read()
+    file = open(opts.filename) if opts.filename not in (None, '-') else sys.stdin
+    contents = file.read()
 
     # Align the contents.
     formatted_contents = align_beancount(contents)

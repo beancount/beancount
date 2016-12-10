@@ -4,7 +4,8 @@ This code accepts the abstract syntax tree produced by the query parser,
 resolves the column and function names, compiles and interpreter and prepares a
 query to be run against a list of entries.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 import copy
@@ -894,7 +895,7 @@ def transform_balances(balances):
 
     return query_parser.Select(cooked_select.targets,
                                balances.from_clause,
-                               None,
+                               balances.where_clause,
                                cooked_select.group_by,
                                cooked_select.order_by,
                                None, None, None, None)

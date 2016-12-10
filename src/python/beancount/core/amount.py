@@ -6,50 +6,20 @@ currency:
   (number, currency).
 
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
-# Note: this file is mirrorred into ledgerhub. Relative imports only.
 import re
 
-# Note: Python 3.3 guarantees a fast "C" decimal implementation. No need to
-# install cdecimal anymore.
-from decimal import Decimal
-
-# Import object to format numbers at specific precisions.
 from beancount.core.display_context import DEFAULT_FORMATTER
 from beancount.core.number import ZERO
-from beancount.core import number
-
-
-#,-----------------------------------------------------------------------------.
-# Temporary forwarding of number functions to the number module.
-# IMPORTANT/FIXME: This will get removed after August 2015.
-import warnings
-
-ONE = number.ONE
-HALF = number.HALF
-decimal = number.decimal  # pylint: disable=invalid-name
-
-# pylint: disable=invalid-name
-def D(string):
-    warnings.warn("beancount.core.amount.D has been renamed to "
-                  "beancount.core.number.D")
-    return number.D(string)
-
-def round_to(number, increment):
-    warnings.warn("beancount.core.amount.round_to has been renamed to "
-                  "beancount.core.number.round_to")
-    return number.round_to(number, increment)
-
-_D = number.D
-#`-----------------------------------------------------------------------------'
-
+from beancount.core.number import Decimal
+from beancount.core.number import D
 
 
 # A regular expression to match the name of a currency.
 # Note: This is kept in sync with "beancount/parser/lexer.l".
-CURRENCY_RE = '[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]'
-
+CURRENCY_RE = r'[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]'
 
 import collections
 _Amount = collections.namedtuple('_Amount', ('number', 'currency'))
@@ -73,8 +43,8 @@ class Amount(_Amount):
           number: A string or Decimal instance. Will get converted automatically.
           currency: A string, the currency symbol to use.
         """
-        assert isinstance(number, Amount.valid_types_number)
-        assert isinstance(currency, Amount.valid_types_currency)
+        assert isinstance(number, Amount.valid_types_number), repr(number)
+        assert isinstance(currency, Amount.valid_types_currency), repr(currency)
         return _Amount.__new__(cls, number, currency)
 
     def to_string(self, dformat=DEFAULT_FORMATTER):
@@ -121,7 +91,7 @@ class Amount(_Amount):
         Returns:
           True if this is less than the other Amount.
         """
-        return amount_sortkey(self) < amount_sortkey(other)
+        return sortkey(self) < sortkey(other)
 
     def __hash__(self):
         """A hashing function for amounts. The hash includes the currency.
@@ -153,7 +123,7 @@ class Amount(_Amount):
         if not match:
             raise ValueError("Invalid string for amount: '{}'".format(string))
         number, currency = match.group(1, 2)
-        return Amount(_D(number), currency)
+        return Amount(D(number), currency)
 
 
 # Note: We don't implement operators on Amount here in favour of the more
@@ -161,7 +131,7 @@ class Amount(_Amount):
 # objects with functions instead of objects with methods... alright, this is
 # okay.
 
-def amount_sortkey(amount):
+def sortkey(amount):
     """A comparison function that sorts by currency first.
 
     Args:
@@ -171,7 +141,7 @@ def amount_sortkey(amount):
     """
     return (amount.currency, amount.number)
 
-def amount_mult(amount, number):
+def mul(amount, number):
     """Multiply the given amount by a number.
 
     Args:
@@ -186,7 +156,7 @@ def amount_mult(amount, number):
         "Number is not a Decimal instance: {}".format(amount.number))
     return Amount(amount.number * number, amount.currency)
 
-def amount_div(amount, number):
+def div(amount, number):
     """Divide the given amount by a number.
 
     Args:
@@ -201,7 +171,27 @@ def amount_div(amount, number):
         "Number is not a Decimal instance: {}".format(amount.number))
     return Amount(amount.number / number, amount.currency)
 
-def amount_sub(amount1, amount2):
+def add(amount1, amount2):
+    """Add the given amounts with the same currency.
+
+    Args:
+      amount1: An instance of Amount.
+      amount2: An instance of Amount.
+    Returns:
+      An instance of Amount, with the sum the two amount's numbers, in the same
+      currency.
+    """
+    assert isinstance(amount1.number, Decimal), (
+        "Amount1's number is not a Decimal instance: {}".format(amount1.number))
+    assert isinstance(amount2.number, Decimal), (
+        "Amount2's number is not a Decimal instance: {}".format(amount2.number))
+    if amount1.currency != amount2.currency:
+        raise ValueError(
+            "Unmatching currencies for operation on {} and {}".format(
+                amount1, amount2))
+    return Amount(amount1.number + amount2.number, amount1.currency)
+
+def sub(amount1, amount2):
     """Subtract the given amounts with the same currency.
 
     Args:
@@ -220,6 +210,18 @@ def amount_sub(amount1, amount2):
             "Unmatching currencies for operation on {} and {}".format(
                 amount1, amount2))
     return Amount(amount1.number - amount2.number, amount1.currency)
+
+def abs(amount):
+    """Return the absolute value of the given amount.
+
+    Args:
+      amount: An instance of Amount.
+    Returns:
+      An instance of Amount.
+    """
+    return (amount
+            if amount.number >= ZERO
+            else Amount(-amount.number, amount.currency))
 
 
 A = from_string = Amount.from_string  # pylint: disable=invalid-name

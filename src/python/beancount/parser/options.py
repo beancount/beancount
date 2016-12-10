@@ -1,7 +1,8 @@
 """
 Declaration of options and their default values.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 import io
@@ -9,6 +10,7 @@ import re
 import textwrap
 
 from beancount.core.number import D
+from beancount.core import data
 from beancount.core import account_types
 from beancount.core import account
 from beancount.core import display_context
@@ -63,8 +65,8 @@ def options_validate_tolerance(value):
     return D(value)
 
 
-def options_validate_default_tolerance(value):
-    """Validate the default_tolerance option.
+def options_validate_tolerance_map(value):
+    """Validate an option with a map of currency/tolerance pairs in a string.
 
     Args:
       value: A string, the value provided as option.
@@ -95,6 +97,22 @@ def options_validate_boolean(value):
     return value.lower() in ('1', 'true', 'yes')
 
 
+def options_validate_booking_method(value):
+    """Validate a booking method name.
+
+    Args:
+      value: A string, the value provided as option.
+    Returns:
+      The new value, converted, if the conversion is successful.
+    Raises:
+      ValueError: If the value is invalid.
+    """
+    try:
+        return data.Booking[value]
+    except KeyError as exc:
+        raise ValueError(str(exc))
+
+
 # List of option groups, with their description, option names and default
 # values.
 OptGroup = collections.namedtuple('OptGroup',
@@ -117,9 +135,12 @@ OptGroup = collections.namedtuple('OptGroup',
 #  deprecated: A string, a message set if the option is deprecated. This is
 #    used to issue suitable warnings when options aren't honored or about
 #    not to be anymore.
+#  alias: A string or None; if set, this option automatically gets
+#    translated to this alias. This is present to support renaming of
+#    option names.
 OptDesc = collections.namedtuple(
     'OptDesc',
-    'name default_value example_value converter deprecated')
+    'name default_value example_value converter deprecated alias')
 
 UNSET = object()
 
@@ -127,7 +148,8 @@ UNSET = object()
 def Opt(name, default_value,
         example_value=UNSET,
         converter=None,
-        deprecated=False):
+        deprecated=False,
+        alias=None):
     """Alternative constructor for OptDesc, with default values.
 
     Args:
@@ -136,19 +158,21 @@ def Opt(name, default_value,
       example_value: See OptDesc.
       converter: See OptDesc.
       deprecated: See OptDesc.
+      alias: See OptDesc.
     Returns:
       An instance of OptDesc.
     """
     if example_value is UNSET:
         example_value = default_value
-    return OptDesc(name, default_value, example_value, converter, deprecated)
+    return OptDesc(name, default_value, example_value, converter, deprecated, alias)
 
 
 _TYPES = account_types.DEFAULT_ACCOUNT_TYPES
 
 
-# Options that consist of data output from the parsing process. These cannot be
-# input by the user.
+# Options that consist of data produced as a by-product of the parsing process.
+# These options cannot be input by the user. This is essentially read-only state
+# that is conceptually separate from the input options.
 OUTPUT_OPTION_GROUPS = [
 
     OptGroup("""
@@ -189,6 +213,24 @@ OUTPUT_OPTION_GROUPS = [
       This is mainly used for efficiency, best computed once at parse time.
     """, [Opt("commodities", set())]),
 
+    OptGroup("""
+      A list of Python modules containing transformation functions to run the
+      entries through after parsing. The parser reads the entries as they are,
+      transforms them through a list of standard functions, such as balance
+      checks and inserting padding entries, and then hands the entries over to
+      those plugins to add more auto-generated goodies. The list is a list of
+      pairs/tuples, in the format (plugin-name, plugin-configuration). The
+      plugin-name should be the name of a Python module to import, and within
+      the module we expect a special '__plugins__' attribute that should list
+      the name of transform functions to run the entries through. The
+      plugin-configuration argument is an optional string to be provided by the
+      user. Each function accepts a pair of (entries, options_map) and should
+      return a pair of (new entries, error instances). If a plugin configuration
+      is provided, it is provided as an extra argument to the plugin function.
+      Errors should not be printed out the output, they will be converted to
+      strings by the loader and displayed as dictated by the output medium.
+    """, [Opt("plugin", [], "beancount.plugins.module_name",
+              converter=options_validate_plugin)]),
     ]
 
 
@@ -261,7 +303,7 @@ PUBLIC_OPTION_GROUPS = [
     OptGroup("""
       Mappings of currency to the tolerance used when it cannot be inferred
       automatically. The tolerance at hand is the one used for verifying (1)
-      that transactions balance, (2) that explicit balance checks from 'balance'
+      that transactions balance, (2) explicit balance checks from 'balance'
       directives balance, and (3) in the precision used for padding (from the
       'pad' directive).
 
@@ -269,26 +311,26 @@ PUBLIC_OPTION_GROUPS = [
         <currency>:<tolerance>
       for example, 'USD:0.005'.
 
-      By default, the default tolerance used for currencies without an explicit
-      value is zero (which means infinite precision). As a special case, this
-      default value, that is, the default value used for all currencies without
-      an explicit default can be overridden using the '*' currency, like this:
-      '*:0.5'. Used by itself, this last example sets the default tolerance as
-      '0.5' for all currencies.
+      By default, the tolerance used for currencies without an inferred value is
+      zero (which means infinite precision). As a special case, this value, that
+      is, the fallabck value used for all currencies without an explicit default
+      can be overridden using the '*' currency, like this:  '*:0.5'. Used by
+      itself, this last example sets the fallabck tolerance as '0.5' for all
+      currencies.
 
       For detailed documentation about how precision is handled, see this doc:
       http://furius.ca/beancount/doc/tolerances
-    """, [Opt("default_tolerance", {}, "CHF:0.01",
-              converter=options_validate_default_tolerance)]),
+    """, [Opt("inferred_tolerance_default", {}, "CHF:0.01",
+              converter=options_validate_tolerance_map)]),
 
     OptGroup("""
       A multiplier for inferred tolerance values.
 
       When the tolerance values aren't specified explicitly via the
-      'default_tolerance' option, the tolerance is inferred from the numbers in
-      the input file. For example, if a transaction has posting with a value
-      like '32.424 CAD', the tolerance for CAD will be inferred to be 0.001
-      times some multiplier. This is the muliplier value.
+      'inferred_tolerance_default' option, the tolerance is inferred from the
+      numbers in the input file. For example, if a transaction has posting with
+      a value like '32.424 CAD', the tolerance for CAD will be inferred to be
+      0.001 times some multiplier. This is the muliplier value.
 
       We normally assume that the institution we're reproducing this posting
       from applies rounding, and so the default value for the multiplier is
@@ -319,28 +361,6 @@ PUBLIC_OPTION_GROUPS = [
       http://furius.ca/beancount/doc/tolerances) are still taken into account.
       Enabling this flag only makes the tolerances potentially wider.
     """, [Opt("infer_tolerance_from_cost", False, True)]),
-
-    # Note: This option will go away. Its behavior has been replaced by
-    # precision/tolerance inference.
-    # See this for details: http://furius.ca/beancount/doc/tolerances
-    OptGroup("""
-      The tolerance allowed for balance checks and padding directives. In the
-      real world, rounding occurs in various places, and we need to allow a
-      small (but very small) amount of tolerance in checking the balance of
-      transactions and in requiring padding entries to be auto-inserted. This is
-      the tolerance amount, which you can override.
-    """, [Opt("tolerance", D("0.015"), "0.015",
-              converter=options_validate_tolerance,
-              deprecated=("The 'tolerance' option has been deprecated "
-                          "and has no effect."))]),
-
-    OptGroup("""
-      Restore the legacy fixed handling of tolerances. Balance and Pad directives
-      have a fixed tolerance of 0.015 units, and Transactions balance at 0.005 units.
-      For any units. This is intended as a way for people to revert the behavior of
-      Beancount to ease the transition to the new inferred tolerance logic. See
-      http://furius.ca/beancount/doc/tolerances for more details.
-    """, [Opt("use_legacy_fixed_tolerances", False, True)]),
 
     OptGroup("""
       A list of directory roots, relative to the CWD, which should be searched
@@ -383,55 +403,96 @@ PUBLIC_OPTION_GROUPS = [
               converter=options_validate_processing_mode)]),
 
     OptGroup("""
-      A list of Python modules containing transformation functions to run the
-      entries through after parsing. The parser reads the entries as they are,
-      transforms them through a list of standard functions, such as balance
-      checks and inserting padding entries, and then hands the entries over to
-      those plugins to add more auto-generated goodies. The list is a list of
-      pairs/tuples, in the format (plugin-name, plugin-configuration). The
-      plugin-name should be the name of a Python module to import, and within
-      the module we expect a special '__plugins__' attribute that should list
-      the name of transform functions to run the entries through. The
-      plugin-configuration argument is an optional string to be provided by the
-      user. Each function accepts a pair of (entries, options_map) and should
-      return a pair of (new entries, error instances). If a plugin configuration
-      is provided, it is provided as an extra argument to the plugin function.
-      Errors should not be printed out the output, they will be converted to
-      strins by the loader and displayed as dictacted by the output medium.
-    """, [Opt("plugin", [], "beancount.plugins.module_name",
-              converter=options_validate_plugin,
-              deprecated=("The 'plugin' option is deprecated; it should be "
-                          "replaced by the 'plugin' directive"))]),
-
-    OptGroup("""
       The number of lines beyond which a multi-line string will trigger a
       overly long line warning. This warning is meant to help detect a dangling
       quote by warning users of unexpectedly long strings.
     """, [Opt("long_string_maxlines", 64)]),
 
     OptGroup("""
-      Enable an EXPERIMENTAL feature that supports an explicit tolerance value
-      on Balance assertions. If enabled, the balance amount supports a tolerance in
-      the input, with this syntax: <number> ~ <tolerance> <currency>, for example,
-      "532.23 ~ 0.001 USD".
+      The booking algorithm implementation, new (FULL) or old (SIMPLE).
 
-      See the document on tolerances for more details:
-      http://furius.ca/beancount/doc/tolerances
+      By default Beancount matches using a powerful matching algorithm ("FULL"):
+      the cost specification (e.g., {...}) in reducing postings is interpreted
+      as a filter to match against existing position in the inventory of the
+      account prior to the transaction taking place. Whatever information you
+      provide:  cost amount, lot-date, label, will be used to reduce the set of
+      valid positions to reduce, and if the resulting set has more than one
+      position, a booking_method is applied.
 
-      WARNING: This feature may go away at any time. It is an exploration to see
-      if it is truly useful. We may be able to do without.
-    """, [Opt("experiment_explicit_tolerances", False, True)]),
+      Note: Don't confuse this with the booking "method". Beancount also has
+      global and per-account booking methods, which provides instructions on
+      what to do in case a reducing posting matches multiple lots. The default
+      booking "method" is STRICT, which raises an error on ambiguous matching
+      positions, but you can set the booking method default to FIFO or LIFO (see
+      "booking_method" option) to choose which positions to reduce to
+      automatically resolve the ambiguity, either globally (for all accounts),
+      or per account (see the Open directive).
+
+      Interpolation is also significantly more powerful than previously and many
+      parts of a posting can often be elided and automatically inferred.
+
+      For a limited time, you will be able to revert Beancount to use its older
+      algorithm ("SIMPLE") which merges together all positions at cost with an
+      exact match on the cost basis pair defined by (cost-amount, lot-date).
+      Lots without a lot-date will match against each other; controversely, if
+      you provide a lot-date in an augmenting posting, the reducing posting must
+      also provide the same lot-date in order to match. This old method is
+      inferior, and only supported in order to ease the transition to the newer,
+      more powerful method. It will be removed eventually, and correspondingly
+      this option will be deprecated.
+
+      If you find yourself experiencing errors while making the transition, it
+      is possible that previous lots matched each other that don't match
+      anymore; to resolve this, inspect the specific error and consider whether
+      it is appropriate to set the corresponding account's booking method to
+      "FIFO", which will automatically resolve the ambiguous matches. One
+      provides the booking method by inserting a string in the Open directive,
+      like this:
+
+         2016-10-11 open Assets:Invest:MoneyMarket   VIIIX   "FIFO"
+
+      See the Open directive for details.
+    """, [Opt("booking_algorithm", "FULL", "SIMPLE")]),
 
     OptGroup("""
-      Enable an EXPERIMENTAL feature that supports a new "name query" directive,
-      whose purpsoe is to define useful queries for the context of the
-      particular given Beancount input file. We can play with this feature for a
-      while to figure out if it is sufficiently powerful and generic to include
-      unconditionally.
+      The booking method to apply to ambiguous reductions of inventory lots.
+      When a posting is matched against the contents of an account's inventory
+      to reduce its contents and multiple lots match, the method dictates how
+      this ambiguity is resolved. Methods include "STRICT" which raises an
+      error, "FIFO" which selects the oldest lot, and "NONE" which allows any
+      reduction to be added to the inventory despite the absence of a match
+      (resulting in mixed inventories).
 
-      WARNING: This feature may go away at any time.
-    """, [Opt("experiment_query_directive", False, True)]),
+      (Note that this is only used with the new "FULL" booking algorithm.)
 
+      See the following documents for details:
+        http://furius.ca/beancount/doc/inventories
+        http://furius.ca/beancount/doc/proposal-booking
+    """, [Opt("booking_method", data.Booking.STRICT, "STRICT",
+              converter=options_validate_booking_method)]),
+
+    OptGroup("""
+      Support the pipe (|) symbol to for transaction separator.
+
+      This is only provided as a temporary stopgap to ease transition, and will
+      be removed eventually. This is why this option is marked as deprecated.
+    """, [Opt("allow_pipe_separator", False, "TRUE",
+              converter=options_validate_boolean,
+              deprecated=('Allowing pipe separator temporary; '
+                          'this will go away eventually.'))]),
+
+    OptGroup("""
+      Allow plugins to produce a None object for the 'tags' and 'links'
+      attributes of a Transaction instance. By default, without this, those
+      attributes are now ensured to be a Set type, and an empty frozenset()
+      instance if there are no values
+
+      This is only provided as a temporary mechanism to allow you some time to
+      port your plugins code.
+    """, [Opt("allow_deprecated_none_for_tags_and_links", False, "TRUE",
+              converter=options_validate_boolean,
+              deprecated=('Allowing None for tags and link '
+                          'will go away eventually.'))]),
     ]
 
 
@@ -450,7 +511,7 @@ OPTIONS_DEFAULTS = {desc.name: desc.default_value
 
 
 # A list of options that cannot be modified.
-READ_ONLY_OPTIONS = {"filename"}
+READ_ONLY_OPTIONS = {"filename", "plugin"}
 
 
 def get_account_types(options):

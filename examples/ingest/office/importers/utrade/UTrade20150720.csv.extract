@@ -1,0 +1,57 @@
+
+2015-05-17 * "(DIV) ORDINARY DIVIDEND~HOOL" ^ut57567122
+  Assets:US:UTrade:Cash            15.96 USD
+  Income:US:UTrade:HOOL:Dividend  -15.96 USD
+
+2015-05-18 * "(SELL) SOLD +BAPL 146 @32.01 (LOT 26.15)" ^ut98562913
+  Assets:US:UTrade:Cash        4665.51 USD                         
+  Expenses:Financial:Fees         7.95 USD                         
+  Assets:US:UTrade:BAPL            146 BAPL {26.15 USD} @ 32.01 USD
+  Income:US:UTrade:BAPL:Gains                                      
+
+2015-05-19 * "(DIV) ORDINARY DIVIDEND~HOOL" ^ut45119594
+  Assets:US:UTrade:Cash            13.91 USD
+  Income:US:UTrade:HOOL:Dividend  -13.91 USD
+
+2015-05-26 * "(SELL) SOLD +CSKO 89 @66.30 (LOT 63.85)" ^ut53367649
+  Assets:US:UTrade:Cash        5892.75 USD                         
+  Expenses:Financial:Fees         7.95 USD                         
+  Assets:US:UTrade:CSKO             89 CSKO {63.85 USD} @ 66.30 USD
+  Income:US:UTrade:CSKO:Gains                                      
+
+2015-06-07 * "(BUY) BOUGHT +HOOL 777 @5.16" ^ut56695140
+  Assets:US:UTrade:Cash    -4017.27 USD            
+  Expenses:Financial:Fees      7.95 USD            
+  Assets:US:UTrade:HOOL         777 HOOL {5.16 USD}
+
+2015-06-19 * "(DIV) ORDINARY DIVIDEND~BAPL" ^ut17207133
+  Assets:US:UTrade:Cash            12.79 USD
+  Income:US:UTrade:BAPL:Dividend  -12.79 USD
+
+2015-06-20 * "(DIV) ORDINARY DIVIDEND~BAPL" ^ut50840576
+  Assets:US:UTrade:Cash            13.89 USD
+  Income:US:UTrade:BAPL:Dividend  -13.89 USD
+
+2015-06-25 * "(DIV) ORDINARY DIVIDEND~BAPL" ^ut88647893
+  Assets:US:UTrade:Cash            10.13 USD
+  Income:US:UTrade:BAPL:Dividend  -10.13 USD
+
+2015-06-29 * "(BUY) BOUGHT +CSKO 54 @64.93" ^ut22740217
+  Assets:US:UTrade:Cash    -3514.17 USD             
+  Expenses:Financial:Fees      7.95 USD             
+  Assets:US:UTrade:CSKO          54 CSKO {64.93 USD}
+
+2015-07-02 * "(DIV) ORDINARY DIVIDEND~HOOL" ^ut27217440
+  Assets:US:UTrade:Cash            26.19 USD
+  Income:US:UTrade:HOOL:Dividend  -26.19 USD
+
+2015-07-18 * "(DIV) ORDINARY DIVIDEND~BAPL" ^ut64873832
+  Assets:US:UTrade:Cash            9.80 USD
+  Income:US:UTrade:BAPL:Dividend  -9.80 USD
+
+2015-07-19 * "(BUY) BOUGHT +HOOL 31 @97.08" ^ut51600680
+  Assets:US:UTrade:Cash    -3017.43 USD             
+  Expenses:Financial:Fees      7.95 USD             
+  Assets:US:UTrade:HOOL          31 HOOL {97.08 USD}
+
+2015-07-20 balance Assets:US:UTrade:Cash                           969.03 USD

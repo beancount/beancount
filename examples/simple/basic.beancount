@@ -156,7 +156,7 @@ option "operating_currency" "CAD"
 
 
 ;; A check deposit, e.g. depositing a government check.
-2008-01-05 * "GST CANADA" | "Deposit from govt for consumer tax rebate"
+2008-01-05 * "GST CANADA" "Deposit from govt for consumer tax rebate"
   Assets:BestBank:Checking       77.76 USD
   Expenses:Taxes:US-Federal
 
@@ -169,19 +169,19 @@ option "operating_currency" "CAD"
 ;; interpret this as the "amount of work-dollars that you took
 ;; from society and placed into your account").
 
-2008-01-10 * "ACME" | "Salary paid from employer"
+2008-01-10 * "ACME" "Salary paid from employer"
   Assets:BestBank:Checking        2000.00 USD
   Income:Salary:AcmeCo                    -2000 USD
 
-2008-01-25 * "ACME" | "Salary paid from employer"
+2008-01-25 * "ACME" "Salary paid from employer"
   Assets:BestBank:Checking        2000.00 USD
   Income:Salary:AcmeCo
 
-2008-02-10 * "ACME" | "Salary paid from employer"
+2008-02-10 * "ACME" "Salary paid from employer"
   Assets:BestBank:Checking        2000.00 USD
   Income:Salary:AcmeCo
 
-2008-02-25 * "ACME" | "Salary paid from employer"
+2008-02-25 * "ACME" "Salary paid from employer"
   Assets:BestBank:Checking        2000.00 USD
   Income:Salary:AcmeCo
 
@@ -344,21 +344,21 @@ option "operating_currency" "CAD"
 
 
 ;; Expenses at restaurants on credit card.
-2008-01-15 * "Cafe Imagination" | ""
+2008-01-15 * "Cafe Imagination" ""
   Liabilities:Credit-Card:VISA
   Expenses:Food:Restaurant              47.00 USD
 
-2008-01-19 * "Soupe Bol" | ""
+2008-01-19 * "Soupe Bol" ""
   Liabilities:Credit-Card:VISA          -21.00 USD
   Expenses:Food:Restaurant
 
-2008-01-27 * "Scola Pasta" | ""
+2008-01-27 * "Scola Pasta" ""
   Liabilities:Credit-Card:VISA
   Expenses:Food:Restaurant              51.17 USD
 
 
 ;; Cell phone bill via credit crad.
-2008-01-19 * "FIDO" | ""
+2008-01-19 * "FIDO" ""
   Liabilities:Credit-Card:VISA
   Expenses:Communications:Phone         121.96 USD
 
@@ -475,23 +475,23 @@ option "operating_currency" "CAD"
 
 2008-01-01 balance Liabilities:Condo-Management      -41.11 USD
 
-2008-01-01 * "Propri-Manage" | ""
+2008-01-01 * "Propri-Manage" ""
   Expenses:Home:Monthly:Condo-Fees        212.61 USD
   Liabilities:Condo-Management
 
-2008-01-14 * "(998) Propri-Manage" | "cheque sent by snail mail"
+2008-01-14 * "(998) Propri-Manage" "cheque sent by snail mail"
   Liabilities:Condo-Management         800.00 USD
   Assets:BestBank:Checking
 
-2008-02-01 * "Propri-Manage" | ""
+2008-02-01 * "Propri-Manage" ""
   Expenses:Home:Monthly:Condo-Fees        212.61 USD
   Liabilities:Condo-Management
 
-2008-03-01 * "Propri-Manage" | ""
+2008-03-01 * "Propri-Manage" ""
   Expenses:Home:Monthly:Condo-Fees        212.61 USD
   Liabilities:Condo-Management
 
-2008-03-10 * "Propri-Manage" | "special billing, spring works"
+2008-03-10 * "Propri-Manage" "special billing, spring works"
   Expenses:Home:Monthly:Condo-Fees     61.25 USD
   Liabilities:Condo-Management
 
@@ -558,15 +558,15 @@ option "operating_currency" "CAD"
 ;; Some common cash expenses.
 ;;
 
-2008-02-18 * "DMV" | "Renewal of driver's license."
+2008-02-18 * "DMV" "Renewal of driver's license."
   Expenses:Govt-Services     110.00 USD
   Assets:Cash
 
-2008-01-21 * "WHOLE FOODS" | ""
+2008-01-21 * "WHOLE FOODS" ""
   Expenses:Food:Grocery    54.03 USD
   Assets:Cash
 
-2008-01-21 * "USPS" | "sent package to mom"
+2008-01-21 * "USPS" "sent package to mom"
   Expenses:Communications:Mail      4.43 USD
   Assets:Cash
 
@@ -586,11 +586,11 @@ option "operating_currency" "CAD"
 
 pushtag #ski-trip
 
-2008-01-27 * "SUNONO" | "fill'er up"
+2008-01-27 * "SUNONO" "fill'er up"
   Expenses:Car:Gas            40 USD
   Assets:Cash
 
-2008-01-27 * "SKII" | "Lift tickets"
+2008-01-27 * "SKII" "Lift tickets"
   Expenses:Sports        120 USD
   Assets:Cash
 
@@ -611,24 +611,24 @@ poptag #ski-trip
 
 
 
-2008-03-03 * "ALDO" | "new shoes"
+2008-03-03 * "ALDO" "new shoes"
   Expenses:Clothes              121.20 USD
   Assets:Cash
 
-2008-02-24 * "AMC" | "movies with girlfriend"
+2008-02-24 * "AMC" "movies with girlfriend"
   Expenses:Fun:Movie           24 USD
   Assets:Cash
 
-2008-03-06 * "Barnes & Noble" | "books on accounting"
+2008-03-06 * "Barnes & Noble" "books on accounting"
   Expenses:Books            74.43 USD
   Assets:Cash      -74.43 USD
 
-2008-02-03 * "ITHURTS MEDICAL CENT" | "x-ray for broken bones"
+2008-02-03 * "ITHURTS MEDICAL CENT" "x-ray for broken bones"
   Expenses:Medical           312.00 USD
   Assets:Cash
 
 
-2008-03-02 * "ZEN CENTER" | "Donation to Zen center"
+2008-03-02 * "ZEN CENTER" "Donation to Zen center"
   Expenses:Charity        50 USD
   Assets:Cash
 

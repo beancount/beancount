@@ -1,4 +1,5 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import datetime
 import io
@@ -17,6 +18,7 @@ from beancount.query import query_render
 
 class ColumnRendererBase(unittest.TestCase):
 
+    # pylint: disable=not-callable
     RendererClass = None
 
     dcontext = display_context.DisplayContext()

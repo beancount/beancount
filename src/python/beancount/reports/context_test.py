@@ -1,4 +1,5 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import textwrap
 
@@ -60,30 +61,37 @@ class TestContext(test_utils.TestCase):
                                                   search_filename, search_lineno)
 
         self.assertLines(textwrap.dedent("""
-        Hash:298dca350249afe0378cf8bac2fb12cf
+        Hash:fa550e3e0c65107d658be07c9cf87356
         Location: <string>:31
 
-        ;   Assets:US:ETrade:Cash                       -1411.44 USD
+        ------------ Balances before transaction
 
-        ;   Assets:US:ETrade:ITOT             4.00 ITOT {173.11 USD}
+          Assets:US:ETrade:Cash                       -1411.44 USD
 
-        ;   Expenses:Financial:Commissions                 35.80 USD
+          Assets:US:ETrade:ITOT             4.00 ITOT {173.11 USD, 2012-08-31}
 
+          Expenses:Financial:Commissions                 35.80 USD
+
+
+        ------------ Transaction
 
         2013-02-07 * "Buy shares of ITOT"
-          Assets:US:ETrade:Cash           -1126.21 USD                ;  -1126.21 USD
-          Assets:US:ETrade:ITOT               6.00 ITOT {186.21 USD}  ; 1117.2600 USD
-          Expenses:Financial:Commissions      8.95 USD                ;      8.95 USD
+          Assets:US:ETrade:Cash           -1126.21 USD                            ;  -1126.21 USD
+          Assets:US:ETrade:ITOT               6.00 ITOT {186.21 USD, 2013-02-07}  ; 1117.2600 USD
+          Expenses:Financial:Commissions      8.95 USD                            ;      8.95 USD
 
 
-        ;;; Tolerances: ITOT=0.005, USD=0.005
+        Tolerances: ITOT=0.005, USD=0.005
+        Basis: (1117.2600 USD)
 
-        ; ! Assets:US:ETrade:Cash                      -2537.65 USD
+        ------------ Balances after transaction
 
-        ;   Assets:US:ETrade:ITOT             4.00 ITOT {173.11 USD}
-        ; ! Assets:US:ETrade:ITOT             6.00 ITOT {186.21 USD}
+        * Assets:US:ETrade:Cash                      -2537.65 USD
 
-        ; ! Expenses:Financial:Commissions                 44.75 USD
+          Assets:US:ETrade:ITOT             4.00 ITOT {173.11 USD, 2012-08-31}
+        * Assets:US:ETrade:ITOT             6.00 ITOT {186.21 USD, 2013-02-07}
+
+        * Expenses:Financial:Commissions                 44.75 USD
         """), str_context)
 
     maxDiff = 8192
