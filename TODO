@@ -75,9 +75,6 @@ beancount: TODO
     This function should catch useless errors from the cdecimal library:
       Declined: [<class 'decimal.ConversionSyntax'>]
     and always provide the input string so we can debug WTF happened.
-  - Make Amount and other basic classes descendants of tuple because
-    this makes their attributes truly immutable. Do this! You may
-    find bugs.
 
 
 * Explicit Tolerance
