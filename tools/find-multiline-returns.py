@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Find the instances of multi-line docstring Returns sections.
 
-See: https://bitbucket.org/birkenfeld/sphinx-contrib/issues/111/napoleon-multiple-returns-indentations
+See: https://bitbucket.org/birkenfeld/sphinx-contrib/issues/111
 """
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
@@ -33,17 +33,17 @@ def main():
 
     for filename in find_python_files(args.root):
         logging.info("File: %s", filename)
-        it = enumerate(open(filename))
-        for no, line in it:
+        lines = enumerate(open(filename))
+        for lineno, line in lines:
             if re.match(r'\s*Returns:', line):
                 oss = io.StringIO()
-                no, line = next(it)
-                first_no = no
+                lineno, line = next(lines)
+                first_no = lineno
                 while True:
                     if re.match(r"\s*(\"\"\"|'''|Raises:)", line):
                         break
                     print(line, end="", file=oss)
-                    no, line = next(it)
+                    lineno, line = next(lines)
                 paragraph = textwrap.dedent(oss.getvalue())
                 if any(re.match(r"\s+", line)
                        for line in paragraph.splitlines()

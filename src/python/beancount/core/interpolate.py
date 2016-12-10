@@ -299,12 +299,11 @@ def fill_residual_posting(entry, account_rounding):
 
     """
     residual = compute_residual(entry.postings)
-    if residual.is_empty():
-        return entry
-    else:
+    if not residual.is_empty():
         new_postings = list(entry.postings)
         new_postings.extend(get_residual_postings(residual, account_rounding))
-        return entry._replace(postings=new_postings)
+        entry = entry._replace(postings=new_postings)
+    return entry
 
 
 def compute_entries_balance(entries, prefix=None, date=None):

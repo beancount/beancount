@@ -460,7 +460,7 @@ def create_simple_posting_with_cost(entry, account,
     return posting
 
 
-NoneType = type(None)  # pylint: disable=invalid-name
+NoneType = type(None)
 
 def sanity_check_types(entry, allow_none_for_tags_and_links=False):
     """Check that the entry and its postings has all correct data types.
@@ -541,10 +541,9 @@ def get_entry(posting_or_entry):
     Returns:
       A datetime instance.
     """
-    if isinstance(posting_or_entry, TxnPosting):
-        return posting_or_entry.txn
-    else:
-        return posting_or_entry
+    return (posting_or_entry.txn
+            if isinstance(posting_or_entry, TxnPosting)
+            else posting_or_entry)
 
 
 # Sorting order of directives on the same day, by type:

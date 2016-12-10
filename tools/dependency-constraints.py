@@ -13,31 +13,32 @@ import sys
 from os import path
 
 
+# pylint: disable=line-too-long
 RULES = [
-    ('ALLOW',    'beancount/.*_test$', 'beancount/loader'),
-    ('ALLOW',    'beancount/.*_test$', 'beancount/utils'),
-    ('ALLOW',    'beancount/loader', 'beancount/(core|utils|parser|ops)'),
-    ('ALLOW',    'beancount/core', 'beancount/(core|utils)'),
-    ('ALLOW',    'beancount/core/.*_test', 'beancount/parser'),
+    ('ALLOW', 'beancount/.*_test$', 'beancount/loader'),
+    ('ALLOW', 'beancount/.*_test$', 'beancount/utils'),
+    ('ALLOW', 'beancount/loader', 'beancount/(core|utils|parser|ops)'),
+    ('ALLOW', 'beancount/core', 'beancount/(core|utils)'),
+    ('ALLOW', 'beancount/core/.*_test', 'beancount/parser'),
     ('DISALLOW', 'beancount/core/(?!interpolate)', 'beancount/core/interpolate'),
-    ('ALLOW',    'beancount/parser', 'beancount/(utils|core|parser)'),
-    ('ALLOW',    'beancount/ops', 'beancount/(core|utils|ops)'),
-    ('ALLOW',    'beancount/ops/summarize', 'beancount/parser/options'),
-    ('ALLOW',    'beancount/ops/.*_test', 'beancount/parser'),
-    ('ALLOW',    'beancount/plugins', 'beancount/(core|parser|ops|plugins)'),
-    ('ALLOW',    'beancount/plugins/book_conversions', 'beancount/(loader|reports)'),
-    ('ALLOW',    'beancount/plugins/merge_meta', 'beancount/(loader)'),
-    ('ALLOW',    'beancount/reports', 'beancount/(core|utils|ops|parser|reports|loader)'),
-    ('ALLOW',    'beancount/reports/convert_reports_test', 'beancount/scripts/example'),
-    ('ALLOW',    'beancount/query', 'beancount/(core|utils|ops|parser|query)'),
-    ('ALLOW',    'beancount/scripts', 'beancount/(core|utils|parser|web|ops|loader$|reports|query|scripts)'),
-    ('ALLOW',    'beancount/web', 'beancount/(core|utils|parser|ops|loader$|reports|web)'),
-    ('ALLOW',    'beancount/projects', 'beancount/(core|utils|parser|web|ops|loader$|reports|scripts)'),
-    ('ALLOW',    'beancount/projects/.*_test', 'beancount/(projects)'),
-    ('ALLOW',    'beancount/docs/.*_test', 'beancount/docs'),
-    ('ALLOW',    'beancount/docs', 'beancount/(docs|parser|utils)'),
-    ('ALLOW',    'beancount/prices', 'beancount/(core|ops|prices|loader|parser|utils)'),
-    ('ALLOW',    'beancount/ingest', 'beancount/(utils|core|parser|ingest)'),
+    ('ALLOW', 'beancount/parser', 'beancount/(utils|core|parser)'),
+    ('ALLOW', 'beancount/ops', 'beancount/(core|utils|ops)'),
+    ('ALLOW', 'beancount/ops/summarize', 'beancount/parser/options'),
+    ('ALLOW', 'beancount/ops/.*_test', 'beancount/parser'),
+    ('ALLOW', 'beancount/plugins', 'beancount/(core|parser|ops|plugins)'),
+    ('ALLOW', 'beancount/plugins/book_conversions', 'beancount/(loader|reports)'),
+    ('ALLOW', 'beancount/plugins/merge_meta', 'beancount/(loader)'),
+    ('ALLOW', 'beancount/reports', 'beancount/(core|utils|ops|parser|reports|loader)'),
+    ('ALLOW', 'beancount/reports/convert_reports_test', 'beancount/scripts/example'),
+    ('ALLOW', 'beancount/query', 'beancount/(core|utils|ops|parser|query)'),
+    ('ALLOW', 'beancount/scripts', 'beancount/(core|utils|parser|web|ops|loader$|reports|query|scripts)'),
+    ('ALLOW', 'beancount/web', 'beancount/(core|utils|parser|ops|loader$|reports|web)'),
+    ('ALLOW', 'beancount/projects', 'beancount/(core|utils|parser|web|ops|loader$|reports|scripts)'),
+    ('ALLOW', 'beancount/projects/.*_test', 'beancount/(projects)'),
+    ('ALLOW', 'beancount/docs/.*_test', 'beancount/docs'),
+    ('ALLOW', 'beancount/docs', 'beancount/(docs|parser|utils)'),
+    ('ALLOW', 'beancount/prices', 'beancount/(core|ops|prices|loader|parser|utils)'),
+    ('ALLOW', 'beancount/ingest', 'beancount/(utils|core|parser|ingest)'),
     ]
 
 
@@ -53,6 +54,7 @@ def main():
 
     has_errors = False
     for line in open(opts.dependencies):
+        # pylint: disable=eval-used
         ((from_dir, from_file), (to_dir, to_file)) = eval(line)
         if to_dir is None:
             continue

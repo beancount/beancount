@@ -6,13 +6,8 @@ __license__ = "GNU GPLv2"
 
 import argparse
 import contextlib
-import datetime
-import logging
 import os
 import re
-import tempfile
-import subprocess
-import unittest
 from os import path
 
 
@@ -49,8 +44,8 @@ def main():
     args = parser.parse_args()
 
     for filename in find_files(args.root, r'.*\.py$', r'\.hg$'):
-        with open(filename) as f:
-            contents = f.read()
+        with open(filename) as file_:
+            contents = file_.read()
         if not contents.strip():
             continue
         check_required(filename, contents, print)

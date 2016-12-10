@@ -194,10 +194,9 @@ class Position:
         Returns:
           A boolean, true if the positions are equal.
         """
-        if other is None:
-            return self.units.number == ZERO
-        else:
-            return (self.units == other.units and self.cost == other.cost)
+        return (self.units.number == ZERO
+                if other is None
+                else (self.units == other.units and self.cost == other.cost))
 
     def sortkey(self):
         """Return a key to sort positions by. This key depends on the order of the
@@ -266,9 +265,10 @@ class Position:
         """
         cost = self.cost
         if cost is None:
-            return self.units
+            rcost = self.units
         else:
-            return amount_mul(cost, self.units.number)
+            rcost = amount_mul(cost, self.units.number)
+        return rcost
 
     def at_cost(self):
         """Return a Position representing the cost of this position. See get_cost().
@@ -281,10 +281,11 @@ class Position:
         """
         cost = self.cost
         if cost is None:
-            return self
+            pos = self
         else:
-            return Position(Amount(self.units.number * cost.number, self.cost.currency),
-                            None)
+            pos = Position(Amount(self.units.number * cost.number, self.cost.currency),
+                           None)
+        return pos
 
     def add(self, number):
         """Add a number of units to this position.

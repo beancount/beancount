@@ -109,7 +109,10 @@ disable=locally-disabled,
   undefined-loop-variable,
   broad-except,
   logging-format-interpolation,
-  anomalous-backslash-in-string
+  anomalous-backslash-in-string,
+  len-as-condition,
+  no-else-return,
+  invalid-unary-operand-type
 
 
 
@@ -212,7 +215,7 @@ inlinevar-rgx=[A-Za-z_][A-Za-z0-9_]*$
 inlinevar-name-hint=[A-Za-z_][A-Za-z0-9_]*$
 
 # Regular expression matching correct variable names
-variable-rgx=([a-z_][a-z0-9_]{2,30}|_+|mu)$
+variable-rgx=([a-z_][a-z0-9_]{2,30}|_+|mu|no)$
 
 # Naming hint for variable names
 variable-name-hint=[a-z_][a-z0-9_]{2,30}$
