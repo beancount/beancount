@@ -4,6 +4,14 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-12-10
+
+  - Made Amount, Posting, Cost and CostSpec all immutable classes that inherit
+    from typing.NamedTuple.
+
+  - Removed mutable method Posting.add().
+
+
 2016-12-05
 
   - Merged changes made for calculating wash sales a long time ago. I had
