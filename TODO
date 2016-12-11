@@ -4656,6 +4656,10 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - Complete tests for csv importer; it should be tested frantically, and a
+    decent sniffer should be implemented, specifically with credit/debit support
+    and balance vs. posting amount support, as well as detecting fees.
+
   - The computation of cost, weight and market value must be uniformized.
     Moreover, these values should be equally computable over a Posting or a
     Position objects. See discussion w/ Jason Chu on thread.
