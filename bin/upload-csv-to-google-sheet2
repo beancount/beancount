@@ -33,14 +33,16 @@ __author__ = 'Martin Blais <blais@furius.ca>'
 
 import argparse
 import bisect
+import collections
 import csv
 import codecs
 import logging
 import os
 import re
+import string
 import unittest
-import pprint
 from os import path
+from pprint import pprint as pp
 
 from oauth2client import client
 from oauth2client import tools
@@ -82,151 +84,25 @@ def get_credentials(scopes, args):
     return credentials, http, service
 
 
+def csv_unicode_reader(source, **kwargs):
+    """Temporarily encode unicode source to UTF8 because CSV does not support unicode.
 
-# def csv_unicode_reader(source, **kwargs):
-#     """Temporarily encode unicode source to UTF8 because CSV does not support unicode.
-#
-#     Args:
-#       source: An iterable sequence of unicode objects.
-#       **kwargs: Arguments for csv.reader().
-#     Yields:
-#       Rows of unicode objects.
-#     """
-#     lineiter = (line.encode('utf-8') for line in source)
-#     csv_reader = csv.reader(lineiter, **kwargs)
-#     for row in csv_reader:
-#         yield [cell.decode('utf-8') for cell in row]
-#
-#
-# def csv_to_batch_update(filename, batch):
-#     """Convert a CSV file to a batch update.
-#
-#     This creates cell update requests for all available data and updates of
-#     empty cells where cells aren't present.
-#
-#     Args:
-#       filename: A string, the CSV filename to open and parse.
-#       batch: A CellsFeed instance.
-#     Returns:
-#       A pair of (row_count, col_count), the size of the CSV batch update /
-#       table.
-#
-#     """
-#     # Open the CSV file and loop over the values, creating a batch request.
-#     csvfile = codecs.open(filename, 'r', encoding='utf-8-sig')
-#     max_cols = 0
-#     locations = set()
-#     irow = 0
-#     for irow, row in enumerate(csv_unicode_reader(csvfile), 1):
-#         #logging.info("Row: %s", row)
-#         for icol, value in enumerate(row, 1):
-#             batch.add_set_cell(irow, icol, value)
-#             locations.add((irow, icol))
-#         max_cols = max(max_cols, icol)
-#     max_rows = irow
-#
-#     # Add empty cells.
-#     for irow in range(max_rows):
-#         for icol in range(max_cols):
-#             location = (irow, icol)
-#             if location not in locations:
-#                 #logging.info("Empty cell at %s,%s", irow, icol)
-#                 batch.add_set_cell(irow, icol, '')
-#
-#     return (max_rows, max_cols)
-#
-#
-# def enumerate_arguments(args, use_filenames=True):
-#     """Parse the filenames and their optional worksheet names or numbers.
-#
-#     Args:
-#       args: A list of "filename:worksheet-id" or "filename:index" that specifies
-#         CSV files to be uploaded and which worksheet id (name) or index to upload
-#         them to.
-#       use_filenames: A boolean, if true, we use the filenames instead of the
-#         indexes to create new sheet names.
-#     Returns:
-#       A list of string filenames and a list of names or integer index for each
-#       of the spreadsheets.
-#     """
-#     filenames = []
-#     names = []
-#     for arg in args:
-#         match = re.match('(.*):(.*)$', arg)
-#         if match:
-#             filename, name_or_index = match.groups()
-#             # If the name is an integer, treat it as a worksheet index.
-#             if re.match('\d+', name_or_index):
-#                 name_or_index = int(name_or_index) - 1
-#                 if name_or_index < 0:
-#                     raise SystemExit("Invalid index for '{}'; "
-#                                      "sheet indexes start at 1.".format(filename))
-#         else:
-#             filename = arg
-#             if use_filenames:
-#                 name_or_index = path.splitext(path.basename(filename))[0]
-#             else:
-#                 name_or_index = None  # To be allocated below.
-#
-#         filenames.append(filename)
-#         names.append(name_or_index)
-#
-#     # Compute a list of unused ids.
-#     available_ids = iter(set(range(len(args))) - set(name
-#                                                      for name in names
-#                                                      if isinstance(name, int)))
-#
-#     # Compute the list of numbered pairs.
-#     names = [(next(available_ids) if name is None else name)
-#              for name in names]
-#
-#     # Check that the set of names or indexes is unique.
-#     if len(set(names)) < len(names):
-#         raise SystemExit('Error: Indexes {} are not unique.'.format(names))
-#
-#     return filenames, names
-#
-#
-# def find_or_create_worksheets(gd_client, docid, names):
-#     """Find or create all the required worksheets and resolve them to worksheet-ids.
-#
-#     Args:
-#       docid: A string, the document id.
-#       names_or_indexes: A list of strings or integers, the worksheet names or ids.
-#     Returns:
-#       A list of worksheets corresponding to the input names.
-#     """
-#     wslist = []
-#     for name in names:
-#         # Get the worksheet id.
-#         if isinstance(name, int):
-#             index = name
-#             name = "Sheet {:d}".format(index)
-#             worksheets = gd_client.get_worksheets(docid)
-#         else:
-#             assert isinstance(name, str)
-#             query = sheets_client.WorksheetQuery(name)
-#             worksheets = gd_client.get_worksheets(docid, query=query)
-#             index = 0
-#
-#         try:
-#             ws = worksheets.entry[index]
-#         except IndexError:
-#             # We have to create at least this many sheets.
-#             for i in range(len(worksheets.entry), index+1):
-#                 logging.info("Creating worksheet: %s", name)
-#                 gd_client.add_worksheet(docid, name, 1, 1)
-#
-#             # Try again.
-#             worksheets = gd_client.get_worksheets(docid)
-#             ws = worksheets.entry[index]
-#
-#         wslist.append(ws)
-#
-#     return wslist
+    Args:
+      source: An iterable sequence of unicode objects.
+      **kwargs: Arguments for csv.reader().
+    Yields:
+      Rows of unicode objects.
+    """
+    lineiter = (line.encode('utf-8') for line in source)
+    csv_reader = csv.reader(lineiter, **kwargs)
+    for row in csv_reader:
+        yield [cell.decode('utf-8') for cell in row]
 
 
-EMPTY_SHEET_NAME = '__EMPTY__'
+# The name of a sheet left as the unique sheet temporarily, while creating a new
+# spreadsheet.
+EMPTY_SHEET_TITLE = '__EMPTY__'
+
 
 def create_doc(service):
     """Create a new spreadsheet with an empty initial sheet.
@@ -235,39 +111,128 @@ def create_doc(service):
     spreadsheet without at least a single sheet in it.
     """
     resp = service.spreadsheets().create(body={
-        'sheets': {'properties': {'title': EMPTY_SHEET_NAME}}}).execute()
+        'sheets': {'properties': {'title': EMPTY_SHEET_TITLE}}}).execute()
     return resp['spreadsheetId']
 
 
 def delete_empty_sheets(service, docid):
     """Remove empty sheets created only temporarily."""
     requests = [{'deleteSheet': {'sheetId': sheetId}}
-                for sheetId, title in get_sheets(docid)
-                if title == EMPTY_SHEET_NAME]
+                for title, sheetId in get_sheets(service, docid)
+                if title == EMPTY_SHEET_TITLE]
     resp = service.spreadsheets().batchUpdate(spreadsheetId=docid,
                                               body={'requests': requests}).execute()
-    pprint.pprint(resp)
 
 
 def get_sheets(service, docid):
     """Get the sheet titles and ids of the given spreadsheet."""
     resp = service.spreadsheets().get(spreadsheetId=docid).execute()
-    return [(sheet['properties']['sheetId'], sheet['properties']['title'])
+    return [(sheet['properties']['title'], sheet['properties']['sheetId'])
             for sheet in resp['sheets']]
 
 
+def add_sheet(service, docid, title):
+    """Create a new sheet and return the sheet id."""
+    requests = [{'addSheet': {'properties': {'title': title}}}]
+    resp = service.spreadsheets().batchUpdate(spreadsheetId=docid,
+                                              body={'requests': requests}).execute()
+    return resp['replies'][0]['addSheet']['properties']['sheetId']
 
 
-# sheetId = resp['sheets'][0]['properties']['sheetId']
-# requests = [{'addSheet': {}}]
-# #requests = [{'deleteSheet': {'sheetId': sheetId}}]
-# resp = service.spreadsheets().batchUpdate(spreadsheetId=docid,
-#                                           body={'requests': requests}).execute()
+def get_sheet_size(service, docid, title):
+    """Get the size of a spreadsheet."""
+    resp = service.spreadsheets().get(spreadsheetId=docid,
+                                      ranges=title).execute()
+    gridProperties = resp['sheets'][0]['properties']['gridProperties']
+    return (gridProperties['rowCount'], gridProperties['columnCount'])
 
-# resp = service.spreadsheets().batchUpdate(spreadsheetId=docid, body={'deleteSheet': {'sheetId': sheetId}}).execute()
-# pprint.pprint(resp)
-# return resp['spreadsheetId']
 
+def clear_sheet(service, docid, title, nrowcols=None):
+    """Clear the sheet."""
+    if nrowcols is None:
+        nrows, ncols = get_sheet_size(service, docid, title)
+    else:
+        nrows, ncols = nrowcols
+    range = sheet_range(title, nrows, ncols)
+    # Q: Why is an empty body required here?
+    resp = service.spreadsheets().values().clear(spreadsheetId=docid,
+                                                 range=range,
+                                                 body={}).execute()
+
+
+def resize_sheet(service, docid, sheetId, title, nrows, ncols):
+    """Update the size of a sheet."""
+    # Q: Why are both the sheetId and the title required here?
+    requests = [{
+        'updateSheetProperties': {
+            'properties': {
+                'sheetId': sheetId,
+                'title': title,  # Required, unfortunately.
+                'gridProperties': {'rowCount': nrows,
+                                   'columnCount': ncols}},
+            'fields': '*'}}]
+    resp = service.spreadsheets().batchUpdate(spreadsheetId=docid,
+                                              body={'requests': requests}).execute()
+
+
+def auto_resize_sheet(service, docid, sheetId):
+    """Auto-resize the spreadsheet based on the current data in it."""
+    requests = [{
+        'autoResizeDimensions': {
+            'dimensions': {
+                'sheetId': sheetId,
+                'dimension': 'COLUMNS'}}}]
+    resp = service.spreadsheets().batchUpdate(spreadsheetId=docid,
+                                              body={'requests': requests}).execute()
+
+
+def update_sheet(service, docid, sheetId, title, filename):
+    """Clear and replace the data in a sheet with that of a file."""
+
+    # Load the CSV file into an array of rows.
+    with open(filename, 'r') as csvfile:
+        reader = csv.reader(csvfile)
+        rows = list(reader)
+        #for irow, row in enumerate(csv_unicode_reader(csvfile), 1):
+
+
+    nrows = len(rows)
+    ncols = max(len(row) for row in rows) if rows else 0
+
+    # Note: Sizing down the sheet also deletes the values from the cells removed
+    # automatically.
+
+    resize_sheet(service, docid, sheetId, title, nrows, ncols)
+    clear_sheet(service, docid, title, (nrows, ncols))
+
+    # Upload the new values.
+    range = sheet_range(title, nrows, ncols)
+    resp = service.spreadsheets().values().update(
+        spreadsheetId=docid,
+        range=range,
+        valueInputOption='USER_ENTERED',
+        body={'range': range,
+              'values': rows}).execute()
+
+    auto_resize_sheet(service, docid, sheetId)
+
+    # FIXME: TODO - is updateCells request in order to be able to set not only
+    # the values, but also the formatting of numbers. Don't use USER_ENTERED in
+    # this way.
+
+
+def sheet_range(title, nrows, ncols):
+    return '{}!A1:{}{}'.format(title, string.ascii_uppercase[ncols-1], nrows)
+
+
+
+def pop_alist(items, key, default=None):
+    "Remove the first found element in a multi-association list."
+    for index, item in enumerate(items):
+        if item[0] == key:
+            del items[index]
+            return item
+    return default
 
 
 def main():
@@ -280,7 +245,7 @@ def main():
                         help=("CSV filenames[:name] to upload. "
                               "If 'name' is not provided, infer from the filename."))
 
-    parser.add_argument('--docid', action='store',
+    parser.add_argument('--docid', '--id', '-d', dest='docid', action='store',
                         help="Spreadsheets doc id to update")
 
     args = parser.parse_args()
@@ -288,23 +253,60 @@ def main():
 
     # Figure out what the name mappings should be, from the filenames (or
     # explicitly).
+    new_sheets = []
     for filename in args.filenames:
-        pass
-
-
-
-
+        match = re.match('(.*):(.*)$', filename)
+        if match:
+            filename, sheet_name = (match.group(1), match.group(2))
+        else:
+            sheet_name = path.splitext(path.basename(filename))[0]
+        new_sheets.append((sheet_name, filename))
+    ##pp(new_sheets)
 
     # Get or create the spreadsheet.
     if args.docid:
+        created = False
         docid = args.docid
     else:
+        created = True
         docid = create_doc(service)
+        logging.info("Created doc: https://docs.google.com/spreadsheets/d/%s/", docid)
 
     # Get the existings sheets within (this also validates the existence of the
     # document).
-    sheets = get_sheets(service, docid)
-    pprint.pprint(sheets)
+    existing_sheets = get_sheets(service, docid)
+    ##pp(existing_sheets)
+
+    # Create new or match against existing sheets if necessary. This essentially
+    # pairs up spreadsheets from the input to sheet-ids in the doc.
+    sheets_alist = []
+    for title, filename in new_sheets:
+        esheet = pop_alist(existing_sheets, title)
+        if esheet is None:
+            sheetId = add_sheet(service, docid, title)
+        else:
+            _, sheetId = esheet
+        sheets_alist.append((sheetId, title, filename))
+    pp(sheets_alist)
+
+    # Clear and replace the data in the given sheet with that of the given
+    # filename.
+    for sheetId, title, filename in sheets_alist:
+        update_sheet(service, docid, sheetId, title, filename)
+
+    # Clean up temporary sheets created for new documents only.
+    if created:
+        delete_empty_sheets(service, docid)
+
+
+if __name__ == '__main__':
+    main()
+
+
+# Q: The API is inconsistent -- sometimes the sheetId is used, sometimes the
+# title, and sometimes both are required. This needs to be fixed.
+
+# Q: Why is there UpdateCellsRequest is there is the spreadsheets.values() API?
 
 
     # rangeName = 'Class Data!A2:E'
@@ -312,11 +314,9 @@ def main():
     #     spreadsheetId=spreadsheetId, range=rangeName).execute()
     # values = result.get('values', [])
 
-
     # logging.info("Resolving indexes for each of the input files.")
     # filenames, names = enumerate_arguments(args.filenames, args.use_filenames)
 
-    # logging.info("Find or create the worksheets.")
     # wslist = find_or_create_worksheets(gd_client, docid, names)
 
     # logging.info("Processing each worksheet.")
@@ -340,7 +340,3 @@ def main():
     #     gd_client.batch(batch, force=True)
 
     # logging.info("Done.")
-
-
-if __name__ == '__main__':
-    main()
