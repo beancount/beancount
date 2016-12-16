@@ -7,9 +7,10 @@ __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import itertools
+import logging
 import sys
 import textwrap
-import logging
+import traceback
 
 from beancount.core import data
 from beancount.parser import printer
@@ -165,6 +166,7 @@ def extract(importer_config,
             except Exception as exc:
                 logging.error("Importer %s.extract() raised an unexpected error: %s",
                               importer.name(), exc)
+                logging.error("Traceback: %s",traceback.format_exc())
                 continue
             if not new_entries and not duplicate_entries:
                 continue
