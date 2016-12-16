@@ -4656,6 +4656,15 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - "numberify" is only made available from run_query(). This is insufficient;
+    it needs be made available through the SQL shell output (as an option) and
+    even from the Google sheets uploader.
+
+    In addition, this ought to work as a standalone tool, whereby a CSV file's
+    column types (including Beancount-specific ones like Amount, Position and
+    Inventory) should be inferred automatically, and the transformations can be
+    applied to them.
+
   - Complete tests for csv importer; it should be tested frantically, and a
     decent sniffer should be implemented, specifically with credit/debit support
     and balance vs. posting amount support, as well as detecting fees.
