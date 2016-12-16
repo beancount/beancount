@@ -50,6 +50,7 @@ import codecs
 import logging
 import os
 import re
+import sys
 import string
 import unittest
 from os import path
@@ -59,6 +60,7 @@ from oauth2client import tools
 from oauth2client import file
 import httplib2
 from apiclient import discovery
+from apiclient import errors
 
 
 # Location of your secrets file.
@@ -98,21 +100,6 @@ def get_credentials(scopes, args):
     return credentials, http
 
 
-def csv_unicode_reader(source, **kwargs):
-    """Encode unicode source to UTF8 because the csv module does not support unicode.
-
-    Args:
-      source: An iterable sequence of unicode objects.
-      **kwargs: Arguments for csv.reader().
-    Yields:
-      Rows of unicode objects.
-    """
-    lineiter = (line.encode('utf-8') for line in source)
-    csv_reader = csv.reader(lineiter, **kwargs)
-    for row in csv_reader:
-        yield [cell.decode('utf-8') for cell in row]
-
-
 def pop_alist(items, key, default=None):
     """Remove the first found element in a multi-association list.
 
@@ -126,7 +113,7 @@ def pop_alist(items, key, default=None):
     for index, item in enumerate(items):
         if item[0] == key:
             del items[index]
-            return item
+            return item[1]
     else:
         return default
 
@@ -291,8 +278,8 @@ def update_sheet(service, docid, sheetId, title, filename):
       filename: A string, the path to the CSV filename to load and upload.
     """
     # Load the CSV file into an array of rows.
-    with open(filename, 'r') as csvfile:
-        rows = csv_unicode_reader(csvfile)
+    with open(filename, 'r', encoding='utf-8') as csvfile:
+        rows = list(csv.reader(csvfile))
 
     nrows = len(rows)
     ncols = max(len(row) for row in rows) if rows else 0
@@ -352,6 +339,7 @@ def main():
         else:
             sheet_name = path.splitext(path.basename(filename))[0]
         new_sheets.append((sheet_name, filename))
+    logging.info("New sheets: %s", new_sheets)
 
     # Get or create the spreadsheet.
     if args.docid:
@@ -365,6 +353,7 @@ def main():
     # Get the existings sheets within (this also validates the existence of the
     # document).
     existing_sheets = get_sheets(service, docid)
+    logging.info("Existing sheets: %s", existing_sheets)
 
     # Create new or match against existing sheets if necessary. This essentially
     # pairs up spreadsheets from the input to sheet-ids in the doc.
@@ -374,6 +363,7 @@ def main():
         if sheetId is None:
             sheetId = add_sheet(service, docid, title)
         sheets_alist.append((sheetId, title, filename))
+    logging.info("Matched sheets: %s", sheets_alist)
 
     # Clear and replace the data in the given sheet with that of the given
     # filename.
@@ -386,4 +376,8 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except errors.Error as exc:
+        logging.fatal(str(exc))
+        raise

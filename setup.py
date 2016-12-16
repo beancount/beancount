@@ -115,7 +115,7 @@ bean-identify
 bean-extract
 bean-file
 treeify
-upload-csv-to-google-sheet
+upload-to-sheets
 """.split() if x and not x.startswith('#')]
 
 

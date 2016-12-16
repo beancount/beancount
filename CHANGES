@@ -12,6 +12,21 @@ Note: This file contains only changes in the 'default' branch.
   - Fixed bugs in beancount.query.query_render where expand wasn't being passed
     through the rendering functions.
 
+  - Deprecated bin/upload-csv-to-google-sheet; I moved the last version to
+    beancount/experiments/gapis in case you've come to be dependent on its
+    particularities. It doesn't need any of the Beancount libraries, so you can
+    just copy it somewhere and keep using it if so desired.
+
+  - Replaced "bin/upload-csv-to-google-sheet" to "bin/upload-to-sheets". The
+    newer script is a complete rewrite which does not require the antiquated
+    gdata library, and which uses the latest and greatest version of the Google
+    Sheets API (v4). You don't need gdata anymore. Moreover, this one runs in
+    Python3 instead of depending on Python2.
+
+    The script has slightly improved invocation semantics, and I'll using it
+    regularly to share CSV files with others, most often CSV files produced by
+    bean-query.
+
 
 2016-12-11
 
