@@ -25,3 +25,8 @@ Sometimes the sheetId is used, sometimes the title, and sometimes both are
 required. This needs to be fixed.
 
 ** Q: Why is there UpdateCellsRequest is there is the spreadsheets.values() API?
+
+** Q: Prepending doesn't work
+
+        # Note: the 'index' options appears not to work. It always prepends at
+        # the beginning of the sheets list.

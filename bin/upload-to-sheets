@@ -148,170 +148,169 @@ def create_doc(service):
     return resp['spreadsheetId']
 
 
-def delete_empty_sheets(service, docid):
-    """Remove empty sheets created only temporarily.
+class BatchRequester:
+    """A callable for batchUpdate()."""
 
-    Args:
-      service: A Google sheets v4 API Resource object.
-      docid: The id of the spreadsheet drive document.
-    """
-    requests = [{'deleteSheet': {'sheetId': sheetId}}
-                for title, sheetId in get_sheets(service, docid)
-                if title == EMPTY_SHEET_TITLE]
-    resp = service.spreadsheets().batchUpdate(spreadsheetId=docid,
-                                              body={'requests': requests}).execute()
+    def __init__(self, service, docid, method):
+        self.service = service
+        self.docid = docid
+        self.method = method
 
-
-def get_sheets(service, docid):
-    """Get the sheet titles and ids of the given spreadsheet.
-
-    Args:
-      service: A Google sheets v4 API Resource object.
-      docid: The id of the spreadsheet drive document.
-    Returns:
-      A list of (title string, sheet-id integer) pairs, in the order that they appear in
-      the document.
-    """
-    resp = service.spreadsheets().get(spreadsheetId=docid).execute()
-    return [(sheet['properties']['title'], sheet['properties']['sheetId'])
-            for sheet in resp['sheets']]
+    def __call__(self, methodArgs):
+        requests = [{self.method: methodArgs}]
+        return self.service.spreadsheets().batchUpdate(
+            spreadsheetId=self.docid,
+            body={'requests': requests}).execute()
 
 
-def add_sheet(service, docid, title):
-    """Create a new sheet in an existing doc.
+class Doc:
+    "A wrapper for a particular document. This just keeps common immutable arguments."
 
-    Args:
-      service: A Google sheets v4 API Resource object.
-      docid: The id of the spreadsheet drive document.
-      title: A string, the name of the new sheet to create.
-    Returns:
-      An integer, the sheet-id of the newly created sheet.
-    """
-    requests = [{'addSheet': {'properties': {'title': title}}}]
-    resp = service.spreadsheets().batchUpdate(spreadsheetId=docid,
-                                              body={'requests': requests}).execute()
-    return resp['replies'][0]['addSheet']['properties']['sheetId']
+    def __init__(self, service, docid):
+        self.service = service
+        self.docid = docid
 
 
-def get_sheet_size(service, docid, title):
-    """Get the size of a spreadsheet.
-
-    Args:
-      service: A Google sheets v4 API Resource object.
-      docid: The id of the spreadsheet drive document.
-      title: A string, the name of the sheet in the doc.
-    Returns:
-      A pair of (num-rows, num-columns) integers, the size of the sheet.
-    """
-    resp = service.spreadsheets().get(spreadsheetId=docid,
-                                      ranges=title).execute()
-    gridProperties = resp['sheets'][0]['properties']['gridProperties']
-    return (gridProperties['rowCount'], gridProperties['columnCount'])
+    def __getattr__(self, method):
+        """Convenience to run a single batchUpdate() call for one request."""
+        return BatchRequester(self.service, self.docid, method)
 
 
-def clear_sheet(service, docid, title, nrowcols=None):
-    """Clear the sheet.
-
-    Args:
-      service: A Google sheets v4 API Resource object.
-      docid: The id of the spreadsheet drive document.
-      title: A string, the name of the sheet in the doc.
-    """
-    if nrowcols is None:
-        nrows, ncols = get_sheet_size(service, docid, title)
-    else:
-        nrows, ncols = nrowcols
-    srange = sheet_range(title, nrows, ncols)
-    resp = service.spreadsheets().values().clear(spreadsheetId=docid,
-                                                 range=srange,
-                                                 body={}).execute()
+    def delete_empty_sheets(self):
+        """Remove empty sheets created only temporarily."""
+        for title, sheetId in self.get_sheets():
+            if title == EMPTY_SHEET_TITLE:
+                return self.deleteSheet({'sheetId': sheetId})
 
 
-def resize_sheet(service, docid, sheetId, title, nrows, ncols):
-    """Update the size of a sheet.
+    def get_sheets(self):
+        """Get the sheet titles and ids of the given spreadsheet.
 
-    Args:
-      service: A Google sheets v4 API Resource object.
-      docid: The id of the spreadsheet drive document.
-      sheetId: An integer, the id of the sheet in the doc.
-      title: A string, the name of the sheet in the doc.
-      nrows: An integer, the number of rows to resize to.
-      ncols: An integer, the number of columns to resize to.
-    """
-    requests = [{
-        'updateSheetProperties': {
+        Returns:
+          A list of (title string, sheet-id integer) pairs, in the order that they appear in
+          the document.
+        """
+        resp = self.service.spreadsheets().get(spreadsheetId=self.docid).execute()
+        return [(sheet['properties']['title'], sheet['properties']['sheetId'])
+                for sheet in resp['sheets']]
+
+
+    def add_sheet(self, title):
+        """Create a new sheet in an existing doc.
+
+        Args:
+          title: A string, the name of the new sheet to create.
+        Returns:
+          An integer, the sheet-id of the newly created sheet.
+        """
+        # Note: the 'index' options appears not to work. It always prepends at
+        # the beginning of the sheets list.
+        resp = self.addSheet({'properties': {'title': title}})
+        return resp['replies'][0]['addSheet']['properties']['sheetId']
+
+
+    def get_sheet_size(self, title):
+        """Get the size of a spreadsheet.
+
+        Args:
+          title: A string, the name of the sheet in the doc.
+        Returns:
+          A pair of (num-rows, num-columns) integers, the size of the sheet.
+        """
+        resp = self.service.spreadsheets().get(spreadsheetId=self.docid,
+                                               ranges=title).execute()
+        gridProperties = resp['sheets'][0]['properties']['gridProperties']
+        return (gridProperties['rowCount'], gridProperties['columnCount'])
+
+
+    def clear_sheet(self, title, nrowcols=None):
+        """Clear the sheet.
+
+        Args:
+          title: A string, the name of the sheet in the doc.
+          nrowcols: An optional (nrows, ncols) pair of integers. If you don't specify it,
+            it will be requested.
+        """
+        if nrowcols is None:
+            nrows, ncols = self.get_sheet_size(title)
+        else:
+            nrows, ncols = nrowcols
+        srange = sheet_range(title, nrows, ncols)
+        resp = self.service.spreadsheets().values().clear(
+            spreadsheetId=self.docid,
+            range=srange,
+            body={}).execute()
+
+
+    def resize_sheet(self, sheetId, title, nrows, ncols):
+        """Update the size of a sheet.
+
+        Args:
+          sheetId: An integer, the id of the sheet in the doc.
+          title: A string, the name of the sheet in the doc.
+          nrows: An integer, the number of rows to resize to.
+          ncols: An integer, the number of columns to resize to.
+        """
+        self.updateSheetProperties({
             'properties': {
                 'sheetId': sheetId,
                 'title': title,  # Required, unfortunately.
                 'gridProperties': {'rowCount': nrows,
                                    'columnCount': ncols}},
-            'fields': '*'}}]
-    resp = service.spreadsheets().batchUpdate(spreadsheetId=docid,
-                                              body={'requests': requests}).execute()
+            'fields': '*'})
 
 
-def auto_resize_sheet(service, docid, sheetId):
-    """Auto-resize the spreadsheet based on the current data in it.
+    def auto_resize_sheet(self, sheetId):
+        """Auto-resize the spreadsheet based on the current data in it.
 
-    Args:
-      service: A Google sheets v4 API Resource object.
-      docid: The id of the spreadsheet drive document.
-      sheetId: An integer, the id of the sheet in the doc.
-    """
-    requests = [{
-        'autoResizeDimensions': {
-            'dimensions': {
-                'sheetId': sheetId,
-                'dimension': 'COLUMNS'}}}]
-    resp = service.spreadsheets().batchUpdate(spreadsheetId=docid,
-                                              body={'requests': requests}).execute()
+        Args:
+          sheetId: An integer, the id of the sheet in the doc.
+        """
+        return self.autoResizeDimensions(
+            {'dimensions': {'sheetId': sheetId,
+                            'dimension': 'COLUMNS'}})
 
+    def update_sheet(self, sheetId, title, filename):
+        """Clear and replace the data in a sheet with that of a file.
 
-def update_sheet(service, docid, sheetId, title, filename):
-    """Clear and replace the data in a sheet with that of a file.
+        Args:
+          sheetId: An integer, the id of the sheet in the doc.
+          title: A string, the name of the sheet in the doc.
+          filename: A string, the path to the CSV filename to load and upload.
+        """
+        # Load the CSV file into an array of rows.
+        with open(filename, 'r', encoding='utf-8') as csvfile:
+            rows = list(csv.reader(csvfile))
 
-    Args:
-      service: A Google sheets v4 API Resource object.
-      docid: The id of the spreadsheet drive document.
-      sheetId: An integer, the id of the sheet in the doc.
-      title: A string, the name of the sheet in the doc.
-      filename: A string, the path to the CSV filename to load and upload.
-    """
-    # Load the CSV file into an array of rows.
-    with open(filename, 'r', encoding='utf-8') as csvfile:
-        rows = list(csv.reader(csvfile))
+        nrows = len(rows)
+        ncols = max(len(row) for row in rows) if rows else 0
 
-    nrows = len(rows)
-    ncols = max(len(row) for row in rows) if rows else 0
+        # Note: Sizing down the sheet also deletes the values from the cells removed
+        # automatically.
+        self.resize_sheet(sheetId, title, nrows, ncols)
 
-    # Note: Sizing down the sheet also deletes the values from the cells removed
-    # automatically.
-    resize_sheet(service, docid, sheetId, title, nrows, ncols)
+        # Clear the remaining contents.
+        self.clear_sheet(title, (nrows, ncols))
 
-    # Clear the remaining contents.
-    clear_sheet(service, docid, title, (nrows, ncols))
+        # Upload the new values.
+        #
+        # FIXME: Using an "updateCells" request in order to be able to set not only
+        # the values would be an improvement and allow for much more control over
+        # the formatting of numbers. It would be better not to use USER_ENTERED.
+        srange = sheet_range(title, nrows, ncols)
+        resp = self.service.spreadsheets().values().update(
+            spreadsheetId=self.docid,
+            range=srange,
+            valueInputOption='USER_ENTERED',
+            body={'range': srange,
+                  'values': rows}).execute()
 
-    # Upload the new values.
-    #
-    # FIXME: Using an "updateCells" request in order to be able to set not only
-    # the values would be an improvement and allow for much more control over
-    # the formatting of numbers. It would be better not to use USER_ENTERED.
-    srange = sheet_range(title, nrows, ncols)
-    resp = service.spreadsheets().values().update(
-        spreadsheetId=docid,
-        range=srange,
-        valueInputOption='USER_ENTERED',
-        body={'range': srange,
-              'values': rows}).execute()
-
-    # Make sure the newly created sheet looks good by default, by sizing the
-    # columns to fit the newly updated data.
-    auto_resize_sheet(service, docid, sheetId)
+        # Make sure the newly created sheet looks good by default, by sizing the
+        # columns to fit the newly updated data.
+        self.auto_resize_sheet(sheetId)
 
 
 def main():
-    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
-
     parser = argparse.ArgumentParser(description=__doc__.strip(),
                                      parents=[tools.argparser])
 
@@ -322,7 +321,13 @@ def main():
     parser.add_argument('--docid', '--doc', '--id', '-d', dest='docid', action='store',
                         help="Spreadsheets doc id to update")
 
+    parser.add_argument('--verbose', '-v', action='store_true',
+                        help="Print out the log")
+
     args = parser.parse_args()
+
+    logging.basicConfig(level=logging.INFO if args.verbose else logging.WARNING,
+                        format='%(levelname)-8s: %(message)s')
 
     # Discover the service.
     _, http = get_credentials('https://www.googleapis.com/auth/spreadsheets', args)
@@ -349,30 +354,34 @@ def main():
         created = True
         docid = create_doc(service)
         logging.info("Created doc: https://docs.google.com/spreadsheets/d/%s/", docid)
+    doc = Doc(service, docid)
 
     # Get the existings sheets within (this also validates the existence of the
     # document).
-    existing_sheets = get_sheets(service, docid)
+    existing_sheets = doc.get_sheets()
     logging.info("Existing sheets: %s", existing_sheets)
 
     # Create new or match against existing sheets if necessary. This essentially
     # pairs up spreadsheets from the input to sheet-ids in the doc.
     sheets_alist = []
-    for title, filename in new_sheets:
+    for title, filename in reversed(new_sheets):
+        logging.info("Updating sheet '%s'", title)
         sheetId = pop_alist(existing_sheets, title)
         if sheetId is None:
-            sheetId = add_sheet(service, docid, title)
+            sheetId = doc.add_sheet(title)
         sheets_alist.append((sheetId, title, filename))
     logging.info("Matched sheets: %s", sheets_alist)
 
     # Clear and replace the data in the given sheet with that of the given
     # filename.
     for sheetId, title, filename in sheets_alist:
-        update_sheet(service, docid, sheetId, title, filename)
+        doc.update_sheet(sheetId, title, filename)
 
     # Clean up temporary sheets created for new documents only.
     if created:
-        delete_empty_sheets(service, docid)
+        doc.delete_empty_sheets()
+
+    print("https://docs.google.com/spreadsheets/d/{}/".format(docid))
 
 
 if __name__ == '__main__':
