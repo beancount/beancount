@@ -4,22 +4,33 @@
 This is a convenient script to update an existing Google Spreadsheet document
 with the contents of a CSV file.
 
-For example:
+NOTE: This script replaces and obsoletes 'upload-csv-to-google-sheet'.
 
-  upload-csv-to-google-sheet 19cwo....XFtgM apples.csv oranges.csv
+For example, this invocation creates a new Google Sheet doc and upload the
+contents of the CSV files to sheets named 'apples' and 'oranges':
 
-By default, this updates (overwrites) the first two worksheets in the
-spreadsheet with the contents of the given CSV files. If you want to update
-another sheet or index, you can add them to the filenames, like this:
+  upload-to-sheets apples.csv oranges.csv
 
-  upload-csv-to-google-sheet 19cwo....XFtgM apples.csv:MySheet oranges.csv:2
+You can override the name of the sheets created by appending a colon and the
+name, like this:
 
-This would override the sheet "MySheet" with the contents of "apples.csv" and
-the third sheet with the contents of "oranges.csv". Note that the sheets are
-1-indexed, not 0-indexed.
+  upload-to-sheets apples.csv:Apples oranges.csv:Oranges
 
-You will need to have an installation of the following libraries for this to
-work:
+If you'd like to upload the sheets in an existing document, provide it as an
+option:
+
+  upload-to-sheets --docid=1xcCjHM-Tjvkwq3R5NuHCv0dGj1ubo0Y09DfGn8HRMLY apples.csv oranges.csv
+
+Note that if you do this and there are existing sheets with the same names, e.g.
+"apples", the contents of these sheets will be replaced by the uploaded
+contents. All the other sheets will remain untouched. This is designed so that
+you can manually craft a custom spreadsheet and upload only some of it sheets
+with contents derived from another program (e.g. Beancount).
+
+This script only requires the latest and official Google client API libraries
+(it does not need gdata nor Python wrappers for sheets). It uses the v4 Sheets
+API (current as of 2016-12-15). You will need to have an installation of the
+following libraries for this to work:
 
  * apiclient (Google Python client API)
  * oauth2client
@@ -42,7 +53,6 @@ import re
 import string
 import unittest
 from os import path
-from pprint import pprint as pp
 
 from oauth2client import client
 from oauth2client import tools
@@ -51,13 +61,23 @@ import httplib2
 from apiclient import discovery
 
 
+# Location of your secrets file.
 SECRETS_FILENAME = os.environ.get('GOOGLE_APIS',
                                   path.expanduser('~/.google-apis.json'))
+
+
+# Location to store credentials for reuse between invocations.
 STORAGE_FILENAME = os.environ.get('GOOGLE_STORAGE',
                                   path.expanduser('~/.google-storage.json'))
 
+
+# The name of a sheet left as the unique sheet temporarily, while creating a new
+# spreadsheet.
+EMPTY_SHEET_TITLE = '__EMPTY__'
+
+
 def get_credentials(scopes, args):
-    """Authenticate via oauth2 and cache credentials to a file.
+    """Authenticate via oauth2 and cache credentials to a file (or refresh them).
 
     Args:
       scopes: A string or a list of strings, the scopes to get credentials for.
@@ -65,9 +85,7 @@ def get_credentials(scopes, args):
     Returns:
       An authenticated http client object.
     """
-    flow = client.flow_from_clientsecrets(
-        SECRETS_FILENAME,
-        scope=scopes)
+    flow = client.flow_from_clientsecrets(SECRETS_FILENAME, scope=scopes)
     storage = file.Storage(STORAGE_FILENAME)
     credentials = storage.get()
     if not credentials or credentials.invalid:
@@ -77,15 +95,11 @@ def get_credentials(scopes, args):
     credentials.authorize(http)
     if credentials.access_token_expired:
         credentials.refresh(http)
-    service = discovery.build(
-        'sheets', 'v4',
-        http=http,
-        discoveryServiceUrl='https://sheets.googleapis.com/$discovery/rest?version=v4')
-    return credentials, http, service
+    return credentials, http
 
 
 def csv_unicode_reader(source, **kwargs):
-    """Temporarily encode unicode source to UTF8 because CSV does not support unicode.
+    """Encode unicode source to UTF8 because the csv module does not support unicode.
 
     Args:
       source: An iterable sequence of unicode objects.
@@ -99,9 +113,35 @@ def csv_unicode_reader(source, **kwargs):
         yield [cell.decode('utf-8') for cell in row]
 
 
-# The name of a sheet left as the unique sheet temporarily, while creating a new
-# spreadsheet.
-EMPTY_SHEET_TITLE = '__EMPTY__'
+def pop_alist(items, key, default=None):
+    """Remove the first found element in a multi-association list.
+
+    Args:
+      items: An iterable sequence of pairs of items.
+      key: A key for those pairs.
+    Returns:
+      The value associated with the first matching key in the list, or the
+      default value if not found.
+    """
+    for index, item in enumerate(items):
+        if item[0] == key:
+            del items[index]
+            return item
+    else:
+        return default
+
+
+def sheet_range(title, nrows, ncols):
+    """Build up the full range of a sheet for some size of rows and columns.
+
+    Args:
+      title: A string, the name of the sheet in the doc.
+      nrows: An integer, the number of rows to resize to.
+      ncols: An integer, the number of columns to resize to.
+    Returns:
+      A string repreenting the full range of this sheet.
+    """
+    return '{}!A1:{}{}'.format(title, string.ascii_uppercase[ncols-1], nrows)
 
 
 def create_doc(service):
@@ -109,6 +149,12 @@ def create_doc(service):
 
     The empty initial sheet gets deleted later. We cannot create a new
     spreadsheet without at least a single sheet in it.
+
+    Args:
+      service: A Google sheets v4 API Resource object.
+    Returns:
+      A string, the id of the spreadsheet drive document. Something that
+      looks like '1xcCjHM-Tjvkwq3R5NuHCv0dGj1ubo0Y09DfGn8HRMLY'.
     """
     resp = service.spreadsheets().create(body={
         'sheets': {'properties': {'title': EMPTY_SHEET_TITLE}}}).execute()
@@ -116,7 +162,12 @@ def create_doc(service):
 
 
 def delete_empty_sheets(service, docid):
-    """Remove empty sheets created only temporarily."""
+    """Remove empty sheets created only temporarily.
+
+    Args:
+      service: A Google sheets v4 API Resource object.
+      docid: The id of the spreadsheet drive document.
+    """
     requests = [{'deleteSheet': {'sheetId': sheetId}}
                 for title, sheetId in get_sheets(service, docid)
                 if title == EMPTY_SHEET_TITLE]
@@ -125,14 +176,30 @@ def delete_empty_sheets(service, docid):
 
 
 def get_sheets(service, docid):
-    """Get the sheet titles and ids of the given spreadsheet."""
+    """Get the sheet titles and ids of the given spreadsheet.
+
+    Args:
+      service: A Google sheets v4 API Resource object.
+      docid: The id of the spreadsheet drive document.
+    Returns:
+      A list of (title string, sheet-id integer) pairs, in the order that they appear in
+      the document.
+    """
     resp = service.spreadsheets().get(spreadsheetId=docid).execute()
     return [(sheet['properties']['title'], sheet['properties']['sheetId'])
             for sheet in resp['sheets']]
 
 
 def add_sheet(service, docid, title):
-    """Create a new sheet and return the sheet id."""
+    """Create a new sheet in an existing doc.
+
+    Args:
+      service: A Google sheets v4 API Resource object.
+      docid: The id of the spreadsheet drive document.
+      title: A string, the name of the new sheet to create.
+    Returns:
+      An integer, the sheet-id of the newly created sheet.
+    """
     requests = [{'addSheet': {'properties': {'title': title}}}]
     resp = service.spreadsheets().batchUpdate(spreadsheetId=docid,
                                               body={'requests': requests}).execute()
@@ -140,7 +207,15 @@ def add_sheet(service, docid, title):
 
 
 def get_sheet_size(service, docid, title):
-    """Get the size of a spreadsheet."""
+    """Get the size of a spreadsheet.
+
+    Args:
+      service: A Google sheets v4 API Resource object.
+      docid: The id of the spreadsheet drive document.
+      title: A string, the name of the sheet in the doc.
+    Returns:
+      A pair of (num-rows, num-columns) integers, the size of the sheet.
+    """
     resp = service.spreadsheets().get(spreadsheetId=docid,
                                       ranges=title).execute()
     gridProperties = resp['sheets'][0]['properties']['gridProperties']
@@ -148,21 +223,34 @@ def get_sheet_size(service, docid, title):
 
 
 def clear_sheet(service, docid, title, nrowcols=None):
-    """Clear the sheet."""
+    """Clear the sheet.
+
+    Args:
+      service: A Google sheets v4 API Resource object.
+      docid: The id of the spreadsheet drive document.
+      title: A string, the name of the sheet in the doc.
+    """
     if nrowcols is None:
         nrows, ncols = get_sheet_size(service, docid, title)
     else:
         nrows, ncols = nrowcols
-    range = sheet_range(title, nrows, ncols)
-    # Q: Why is an empty body required here?
+    srange = sheet_range(title, nrows, ncols)
     resp = service.spreadsheets().values().clear(spreadsheetId=docid,
-                                                 range=range,
+                                                 range=srange,
                                                  body={}).execute()
 
 
 def resize_sheet(service, docid, sheetId, title, nrows, ncols):
-    """Update the size of a sheet."""
-    # Q: Why are both the sheetId and the title required here?
+    """Update the size of a sheet.
+
+    Args:
+      service: A Google sheets v4 API Resource object.
+      docid: The id of the spreadsheet drive document.
+      sheetId: An integer, the id of the sheet in the doc.
+      title: A string, the name of the sheet in the doc.
+      nrows: An integer, the number of rows to resize to.
+      ncols: An integer, the number of columns to resize to.
+    """
     requests = [{
         'updateSheetProperties': {
             'properties': {
@@ -176,7 +264,13 @@ def resize_sheet(service, docid, sheetId, title, nrows, ncols):
 
 
 def auto_resize_sheet(service, docid, sheetId):
-    """Auto-resize the spreadsheet based on the current data in it."""
+    """Auto-resize the spreadsheet based on the current data in it.
+
+    Args:
+      service: A Google sheets v4 API Resource object.
+      docid: The id of the spreadsheet drive document.
+      sheetId: An integer, the id of the sheet in the doc.
+    """
     requests = [{
         'autoResizeDimensions': {
             'dimensions': {
@@ -187,52 +281,45 @@ def auto_resize_sheet(service, docid, sheetId):
 
 
 def update_sheet(service, docid, sheetId, title, filename):
-    """Clear and replace the data in a sheet with that of a file."""
+    """Clear and replace the data in a sheet with that of a file.
 
+    Args:
+      service: A Google sheets v4 API Resource object.
+      docid: The id of the spreadsheet drive document.
+      sheetId: An integer, the id of the sheet in the doc.
+      title: A string, the name of the sheet in the doc.
+      filename: A string, the path to the CSV filename to load and upload.
+    """
     # Load the CSV file into an array of rows.
     with open(filename, 'r') as csvfile:
-        reader = csv.reader(csvfile)
-        rows = list(reader)
-        #for irow, row in enumerate(csv_unicode_reader(csvfile), 1):
-
+        rows = csv_unicode_reader(csvfile)
 
     nrows = len(rows)
     ncols = max(len(row) for row in rows) if rows else 0
 
     # Note: Sizing down the sheet also deletes the values from the cells removed
     # automatically.
-
     resize_sheet(service, docid, sheetId, title, nrows, ncols)
+
+    # Clear the remaining contents.
     clear_sheet(service, docid, title, (nrows, ncols))
 
     # Upload the new values.
-    range = sheet_range(title, nrows, ncols)
+    #
+    # FIXME: Using an "updateCells" request in order to be able to set not only
+    # the values would be an improvement and allow for much more control over
+    # the formatting of numbers. It would be better not to use USER_ENTERED.
+    srange = sheet_range(title, nrows, ncols)
     resp = service.spreadsheets().values().update(
         spreadsheetId=docid,
-        range=range,
+        range=srange,
         valueInputOption='USER_ENTERED',
-        body={'range': range,
+        body={'range': srange,
               'values': rows}).execute()
 
+    # Make sure the newly created sheet looks good by default, by sizing the
+    # columns to fit the newly updated data.
     auto_resize_sheet(service, docid, sheetId)
-
-    # FIXME: TODO - is updateCells request in order to be able to set not only
-    # the values, but also the formatting of numbers. Don't use USER_ENTERED in
-    # this way.
-
-
-def sheet_range(title, nrows, ncols):
-    return '{}!A1:{}{}'.format(title, string.ascii_uppercase[ncols-1], nrows)
-
-
-
-def pop_alist(items, key, default=None):
-    "Remove the first found element in a multi-association list."
-    for index, item in enumerate(items):
-        if item[0] == key:
-            del items[index]
-            return item
-    return default
 
 
 def main():
@@ -245,11 +332,15 @@ def main():
                         help=("CSV filenames[:name] to upload. "
                               "If 'name' is not provided, infer from the filename."))
 
-    parser.add_argument('--docid', '--id', '-d', dest='docid', action='store',
+    parser.add_argument('--docid', '--doc', '--id', '-d', dest='docid', action='store',
                         help="Spreadsheets doc id to update")
 
     args = parser.parse_args()
-    _, __, service = get_credentials('https://www.googleapis.com/auth/spreadsheets', args)
+
+    # Discover the service.
+    _, http = get_credentials('https://www.googleapis.com/auth/spreadsheets', args)
+    url = discoveryServiceUrl='https://sheets.googleapis.com/$discovery/rest?version=v4'
+    service = discovery.build('sheets', 'v4', http=http, discoveryServiceUrl=url)
 
     # Figure out what the name mappings should be, from the filenames (or
     # explicitly).
@@ -261,7 +352,6 @@ def main():
         else:
             sheet_name = path.splitext(path.basename(filename))[0]
         new_sheets.append((sheet_name, filename))
-    ##pp(new_sheets)
 
     # Get or create the spreadsheet.
     if args.docid:
@@ -275,19 +365,15 @@ def main():
     # Get the existings sheets within (this also validates the existence of the
     # document).
     existing_sheets = get_sheets(service, docid)
-    ##pp(existing_sheets)
 
     # Create new or match against existing sheets if necessary. This essentially
     # pairs up spreadsheets from the input to sheet-ids in the doc.
     sheets_alist = []
     for title, filename in new_sheets:
-        esheet = pop_alist(existing_sheets, title)
-        if esheet is None:
+        sheetId = pop_alist(existing_sheets, title)
+        if sheetId is None:
             sheetId = add_sheet(service, docid, title)
-        else:
-            _, sheetId = esheet
         sheets_alist.append((sheetId, title, filename))
-    pp(sheets_alist)
 
     # Clear and replace the data in the given sheet with that of the given
     # filename.
@@ -301,42 +387,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-# Q: The API is inconsistent -- sometimes the sheetId is used, sometimes the
-# title, and sometimes both are required. This needs to be fixed.
-
-# Q: Why is there UpdateCellsRequest is there is the spreadsheets.values() API?
-
-
-    # rangeName = 'Class Data!A2:E'
-    # result = service.spreadsheets().values().get(
-    #     spreadsheetId=spreadsheetId, range=rangeName).execute()
-    # values = result.get('values', [])
-
-    # logging.info("Resolving indexes for each of the input files.")
-    # filenames, names = enumerate_arguments(args.filenames, args.use_filenames)
-
-    # wslist = find_or_create_worksheets(gd_client, docid, names)
-
-    # logging.info("Processing each worksheet.")
-    # for ws, filename in zip(wslist, filenames):
-    #     title = ws.title.text
-
-    #     logging.info("[%-32.32s] Loading CSV data and creating batch update.", title)
-    #     batch = sheets_data.build_batch_cells_update(docid, ws.get_worksheet_id())
-    #     nrows, ncols = csv_to_batch_update(filename, batch)
-
-    #     if nrows == 0:
-    #         logging.warn("[%-32.32s] No data, empty file. Skipping.", title)
-    #         continue
-
-    #     logging.info("[%-32.32s] Resizing and clearing.", title)
-    #     ws.row_count.text = str(nrows)
-    #     ws.col_count.text = str(ncols)
-    #     gd_client.update(ws)
-
-    #     logging.info("[%-32.32s] Uploading data to spreadsheet.", title)
-    #     gd_client.batch(batch, force=True)
-
-    # logging.info("Done.")
