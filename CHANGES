@@ -9,6 +9,9 @@ Note: This file contains only changes in the 'default' branch.
   - Made beancount.ingest.extrat print out a stack trace when an unexpected
     exception is raised.
 
+  - Fixed bugs in beancount.query.query_render where expand wasn't being passed
+    through the rendering functions.
+
 
 2016-12-11
 
