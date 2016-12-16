@@ -148,21 +148,6 @@ def create_doc(service):
     return resp['spreadsheetId']
 
 
-class BatchRequester:
-    """A callable for batchUpdate()."""
-
-    def __init__(self, service, docid, method):
-        self.service = service
-        self.docid = docid
-        self.method = method
-
-    def __call__(self, methodArgs):
-        requests = [{self.method: methodArgs}]
-        return self.service.spreadsheets().batchUpdate(
-            spreadsheetId=self.docid,
-            body={'requests': requests}).execute()
-
-
 class Doc:
     "A wrapper for a particular document. This just keeps common immutable arguments."
 
@@ -171,16 +156,14 @@ class Doc:
         self.docid = docid
 
 
-    def __getattr__(self, method):
-        """Convenience to run a single batchUpdate() call for one request."""
-        return BatchRequester(self.service, self.docid, method)
-
-
     def delete_empty_sheets(self):
         """Remove empty sheets created only temporarily."""
-        for title, sheetId in self.get_sheets():
-            if title == EMPTY_SHEET_TITLE:
-                return self.deleteSheet({'sheetId': sheetId})
+        requests = [{'deleteSheet': {'sheetId': sheetId}}
+                    for title, sheetId in self.get_sheets()
+                    if title == EMPTY_SHEET_TITLE]
+        self.service.spreadsheets().batchUpdate(
+            spreadsheetId=self.docid,
+            body={'requests': requests}).execute()
 
 
     def get_sheets(self):
@@ -205,7 +188,10 @@ class Doc:
         """
         # Note: the 'index' options appears not to work. It always prepends at
         # the beginning of the sheets list.
-        resp = self.addSheet({'properties': {'title': title}})
+        requests = [{'addSheet': {'properties': {'title': title}}}]
+        resp = self.service.spreadsheets().batchUpdate(
+            spreadsheetId=self.docid,
+            body={'requests': requests}).execute()
         return resp['replies'][0]['addSheet']['properties']['sheetId']
 
 
@@ -217,8 +203,9 @@ class Doc:
         Returns:
           A pair of (num-rows, num-columns) integers, the size of the sheet.
         """
-        resp = self.service.spreadsheets().get(spreadsheetId=self.docid,
-                                               ranges=title).execute()
+        resp = self.service.spreadsheets().get(
+            spreadsheetId=self.docid,
+            ranges=title).execute()
         gridProperties = resp['sheets'][0]['properties']['gridProperties']
         return (gridProperties['rowCount'], gridProperties['columnCount'])
 
@@ -251,13 +238,16 @@ class Doc:
           nrows: An integer, the number of rows to resize to.
           ncols: An integer, the number of columns to resize to.
         """
-        self.updateSheetProperties({
+        requests = [{'updateSheetProperties': {
             'properties': {
                 'sheetId': sheetId,
                 'title': title,  # Required, unfortunately.
                 'gridProperties': {'rowCount': nrows,
                                    'columnCount': ncols}},
-            'fields': '*'})
+            'fields': '*'}}]
+        self.service.spreadsheets().batchUpdate(
+            spreadsheetId=self.docid,
+            body={'requests': requests}).execute()
 
 
     def auto_resize_sheet(self, sheetId):
@@ -266,9 +256,13 @@ class Doc:
         Args:
           sheetId: An integer, the id of the sheet in the doc.
         """
-        return self.autoResizeDimensions(
-            {'dimensions': {'sheetId': sheetId,
-                            'dimension': 'COLUMNS'}})
+        requests = [{'autoResizeDimensions': {
+            'dimensions': {'sheetId': sheetId,
+                           'dimension': 'COLUMNS'}}}]
+        self.service.spreadsheets().batchUpdate(
+            spreadsheetId=self.docid,
+            body={'requests': requests}).execute()
+
 
     def update_sheet(self, sheetId, title, filename):
         """Clear and replace the data in a sheet with that of a file.
@@ -328,6 +322,11 @@ def main():
 
     logging.basicConfig(level=logging.INFO if args.verbose else logging.WARNING,
                         format='%(levelname)-8s: %(message)s')
+
+    # Parse out the doc id, in case the user provided a full URL.
+    match = re.match('https://docs.google.com/spreadsheets/d/([^/]+)(/|$)', args.docid)
+    if match:
+        args.docid = match.group(1)
 
     # Discover the service.
     _, http = get_credentials('https://www.googleapis.com/auth/spreadsheets', args)
