@@ -9,6 +9,9 @@ Note: This file contains only changes in the 'default' branch.
   - Added a --title option to upload-to-sheets in order to conveniently set the
     document's title.
 
+  - Removed obsolete variable LEGACY_DEFAULT_TOLERANCES which had been
+    forgotten.
+
 
 2016-12-15
 

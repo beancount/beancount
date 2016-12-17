@@ -4665,6 +4665,9 @@ http://furius.ca/beancount/doc/proposal-query
     Inventory) should be inferred automatically, and the transformations can be
     applied to them.
 
+    Make a nice library, plug this in many places, and make a standalone script
+    as well.
+
   - Complete tests for csv importer; it should be tested frantically, and a
     decent sniffer should be implemented, specifically with credit/debit support
     and balance vs. posting amount support, as well as detecting fees.

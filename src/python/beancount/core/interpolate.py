@@ -20,10 +20,6 @@ from beancount.core import getters
 from beancount.utils import defdict
 
 
-# The default tolerances value to use for legacy tolerances.
-LEGACY_DEFAULT_TOLERANCES = {'*': D('0.005')}
-
-
 # An upper bound on the tolerance value, this is the maximum the tolerance
 # should ever be.
 MAXIMUM_TOLERANCE = D('0.5')
