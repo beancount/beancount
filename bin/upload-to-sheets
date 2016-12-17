@@ -303,17 +303,33 @@ class Doc:
         # columns to fit the newly updated data.
         self.auto_resize_sheet(sheetId)
 
+    def set_title(self, doctitle):
+        """Set the document's title (not the sheet title, the document's).
+
+        Args:
+          doctitle: A string, the name of the document.
+        """
+        requests = [{'updateSpreadsheetProperties': {
+            'properties': {'title': doctitle},
+            'fields': 'title'}}]
+        self.service.spreadsheets().batchUpdate(
+            spreadsheetId=self.docid,
+            body={'requests': requests}).execute()
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.strip(),
                                      parents=[tools.argparser])
 
-    parser.add_argument('filenames', nargs='+', action='store',
+    parser.add_argument('filenames', nargs='*', action='store',
                         help=("CSV filenames[:name] to upload. "
                               "If 'name' is not provided, infer from the filename."))
 
     parser.add_argument('--docid', '--doc', '--id', '-d', dest='docid', action='store',
                         help="Spreadsheets doc id to update")
+
+    parser.add_argument('--title', '-t', action='store',
+                        help="Set or update the spreadsheet's title")
 
     parser.add_argument('--verbose', '-v', action='store_true',
                         help="Print out the log")
@@ -354,6 +370,10 @@ def main():
         docid = create_doc(service)
         logging.info("Created doc: https://docs.google.com/spreadsheets/d/%s/", docid)
     doc = Doc(service, docid)
+
+    # Set the document title (if requested).
+    if args.title:
+        doc.set_title(args.title)
 
     # Get the existings sheets within (this also validates the existence of the
     # document).

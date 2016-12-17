@@ -4,9 +4,15 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-12-17
+
+  - Added a --title option to upload-to-sheets in order to conveniently set the
+    document's title.
+
+
 2016-12-15
 
-  - Made beancount.ingest.extrat print out a stack trace when an unexpected
+  - Made beancount.ingest.extract print out a stack trace when an unexpected
     exception is raised.
 
   - Fixed bugs in beancount.query.query_render where expand wasn't being passed
