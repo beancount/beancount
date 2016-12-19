@@ -4672,14 +4672,6 @@ http://furius.ca/beancount/doc/proposal-query
     decent sniffer should be implemented, specifically with credit/debit support
     and balance vs. posting amount support, as well as detecting fees.
 
-  - The computation of cost, weight and market value must be uniformized.
-    Moreover, these values should be equally computable over a Posting or a
-    Position objects. See discussion w/ Jason Chu on thread.
-
-  - Make Amount and other basic classes descendants of tuple because
-    this makes their attributes truly immutable. Do this! You may
-    find bugs.
-
   - Add an AVERAGE function to the SQL shell.
     See related discussion, I would like to compute this for myself too:
     https://groups.google.com/d/msg/ledger-cli/dWuWysV6qZU/cyYNzleTCAAJ
@@ -4773,17 +4765,6 @@ http://furius.ca/beancount/doc/proposal-query
     the fractional digits in the web interface in a severe way.
 
   - Investigate using PrettyTable over my custom one. Is there any point to that?
-
-  - Important: CONVERT() currently converts at the market value. This needs to
-    be documented well, and how to use PRICE() and VALUE() as well. It's poorly
-    documented right now. (See question in May 2016 by redstreet0 on the
-    mailing-list.)
-
-  - Rename Position.get_cost() to Position.get_total_cost(), I've it confusing
-    to myself otherwise.
-
-  - Rename the shell function PRICE() to GETPRICE() in order to avoid confusion
-    as well.
 
   - Put all the contents of experiments/ under their own directories and add
     decent README files for each of these.
@@ -5369,3 +5350,48 @@ http://furius.ca/beancount/doc/proposal-query
     returns foo in bar, mypy is unable to infer that the return type is a bool.
     I think pytype from Google have better type inference but it's written in
     Python2 and I haven't figure out how to run it against python3 code.
+** Refactoring Conversions
+
+  The computation of cost, weight and market value must be uniformized.
+  Moreover, these values should be equally computable over a Posting or a
+  Position objects, or a list of them (an Inventory). See discussion w/ Jason
+  Chu on mailing-list:
+  https://groups.google.com/d/msg/beancount/zK6sFnzY4fg/msTTPVDTCwAJ
+
+  Current functions to be refactored:
+
+    units / inventory            - beancount.core.inventory.Inventory.get_units(), beancount.core.inventory.Inventory.units()
+    units / position             - .units
+    units / posting              - .units
+    cost / inventory             - beancount.core.inventory.Inventory.cost()
+    cost / position              - beancount.core.position.Position.at_cost(), beancount.core.position.Position.get_cost()
+    cost / posting               - beancount.core.interpolate.compute_cost_basis() (list of postings)
+    market / inventory           -
+    market / position            -
+    market / posting             - beancount.ops.holdings.get_pholding_market_value()
+    weight / inventory           -
+    weight / position            -
+    weight / posting             - beancount.core.interpolate.get_posting_weight()
+
+  Desired:
+
+    units / position & posting   - beancount.core.position.get_units()
+    cost / position & posting    - beancount.core.position.get_cost()
+    market / position & posting  - beancount.core.position.get_value()
+    weight / position & posting  - beancount.core.position.get_weight()
+
+    cost / inventory             - beancount.core.inventory.map()
+    # cost / inventory           - beancount.core.inventory.get_cost()
+    # market / inventory         - beancount.core.inventory.get_value()
+    # weight / inventory         - beancount.core.inventory.get_weight()
+
+  - Important: CONVERT() currently converts at the market value. This needs to
+    be documented well, and how to use PRICE() and VALUE() as well. It's poorly
+    documented right now. (See question in May 2016 by redstreet0 on the
+    mailing-list.)
+
+  - Rename Position.get_cost() to Position.get_total_cost(), I've it confusing
+    to myself otherwise.
+
+  - Rename the shell function PRICE() to GETPRICE() in order to avoid confusion
+    as well.

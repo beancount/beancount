@@ -22,23 +22,6 @@ where
 This is meant to accommodate both booked and non-booked amounts. The clever trick that we
 pull to do this is that for positions which aren't booked, we simply leave the 'cost' and
 'lot-date' as None. This is the case for most of the transactions.
-
-- When a position is subtracted from an inventory, the 'currency' has to match. If 'cost'
-  and 'lot-date' are specified, they have to match that position exactly (an error is issued
-  otherwise).
-
-- There are methods to select FIFO and LIFO booking.
-
-- There is a method to book against the average cost of the inventory as well, as is
-  required under Canadian rules. The way we implement this is by converting the inventory of
-  the given currency into a single position entry with an average cost when we subtract.
-
-- There is a method to select an arbitrary (FIFO) position only if the 'cost' and 'lot-date'
-  are left unspecified. Normally, we can imagine that we may want to run under a 'strict'
-  mode where this is not allowed (issuing an error when an explicit matching lot is not
-  specified), or that we may instead provide the convenience for the user not having to
-  match.
-
 """
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
@@ -73,6 +56,7 @@ class Inventory(list):
         Because the lists are always very short, we prefer to avoid using a
         mapping for the sake of simplicity and it should not hurt performance.
     """
+
     def __init__(self, positions=None):
         """Create a new inventory using a list of existing positions.
 
@@ -283,6 +267,17 @@ class Inventory(list):
     #
     # Methods to convert an Inventory into another.
     #
+
+    def map(self, converter, *args):
+        """Return an inventory of units for all position (aggregated).
+
+        Returns:
+          An instance of Inventory.
+        """
+        inventory = Inventory()
+        for position in self:
+            inventory.add_amount(converter(position, *args))
+        return inventory
 
     def units(self):
         """Return an inventory of units for all position (aggregated).
