@@ -4,6 +4,22 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2016-12-??
+
+  - Created and test beancount.core.convert Posting and Position conversion
+    functions.
+
+  - Implemented Inventory.reduce() and test.
+
+  - Removed Inventory.units(); use Inventory.reduce(convert.get_units)
+  - Removed Inventory.cost(); use Inventory.reduce(convert.get_cost)
+
+  - Converted all the old code to these new converted functions.
+
+  - Moved beancount.ops.prices to beancount.core.prices, and added a
+    deprecation warning.
+
+
 2016-12-17
 
   - Added a --title option to upload-to-sheets in order to conveniently set the
