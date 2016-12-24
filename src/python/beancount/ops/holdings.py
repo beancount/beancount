@@ -14,7 +14,7 @@ from beancount.core import account_types
 from beancount.core import data
 from beancount.core import flags
 from beancount.core import getters
-from beancount.ops import prices
+from beancount.core import prices
 from beancount.ops import summarize
 from beancount.utils import misc_utils
 

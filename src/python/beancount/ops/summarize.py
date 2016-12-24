@@ -23,7 +23,7 @@ from beancount.core import data
 from beancount.core import flags
 from beancount.core import interpolate
 from beancount.core import convert as convert
-from beancount.ops import prices
+from beancount.core import prices
 from beancount.ops import balance
 from beancount.utils import bisect_key
 from beancount.parser import options

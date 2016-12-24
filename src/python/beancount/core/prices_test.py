@@ -7,7 +7,7 @@ import datetime
 from beancount.core.number import D
 from beancount.core.amount import A
 from beancount.core import inventory
-from beancount.ops import prices
+from beancount.core import prices
 from beancount.parser import cmptest
 from beancount import loader
 

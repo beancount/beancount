@@ -40,7 +40,7 @@ from beancount.parser import parser
 from beancount.parser import booking
 from beancount.parser import printer
 from beancount.ops import validation
-from beancount.ops import prices
+from beancount.core import prices
 from beancount.scripts import format
 from beancount.core import getters
 from beancount.utils import misc_utils
@@ -631,7 +631,7 @@ def generate_retirement_investments(entries, account, commodities_items, price_m
       entries: A list of directives
       account: The root account for all retirement investment sub-accounts.
       commodities_items: A list of (commodity, fraction to be invested in) items.
-      price_map: A dict of prices, as per beancount.ops.prices.build_price_map().
+      price_map: A dict of prices, as per beancount.core.prices.build_price_map().
     Returns:
       A list of new directives for the given investments. This also generates account
       opening directives for the desired investment commodities.
@@ -731,7 +731,7 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
       date_end: A date instance, the end date.
       entries: A list of entries that contains at least the transfers to the investment
         account's cash account.
-      price_map: A dict of prices, as per beancount.ops.prices.build_price_map().
+      price_map: A dict of prices, as per beancount.core.prices.build_price_map().
       stocks: A list of strings, the list of commodities to invest in.
     Returns:
       A list of directives.

@@ -32,7 +32,7 @@ from beancount import load
 from beancount import parser
 from beancount import utils
 from beancount.utils.bisect_key import bisect_left_withkey
-from beancount.ops import prices
+from beancount.core import prices
 from beancount.core.account import account_type, account_name_sortkey
 
 

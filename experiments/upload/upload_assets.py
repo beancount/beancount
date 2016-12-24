@@ -44,7 +44,7 @@ from beancount.core import account
 from beancount.core import account_types
 from beancount.core import getters
 from beancount.ops import summarize
-from beancount.ops import prices
+from beancount.core import prices
 from beancount.docs import gauth
 from beancount.parser import options
 from beancount import loader

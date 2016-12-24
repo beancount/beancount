@@ -12,7 +12,7 @@ from beancount.core import data
 from beancount.core import flags
 from beancount.parser import options
 from beancount.parser import printer
-from beancount.ops import prices
+from beancount.core import prices
 from beancount.ops import holdings
 from beancount.ops import summarize
 from beancount.reports import table

@@ -14,7 +14,7 @@ from beancount.core.amount import Amount
 from beancount.core.position import Cost
 from beancount.core.position import Position
 
-from beancount.ops import prices
+from beancount.core import prices
 
 
 def get_units(pos):
@@ -115,7 +115,3 @@ def get_value(pos, price_map, date=None):
             value = Amount(units.number * price_fallback, value_currency)
 
     return value
-
-
-# TODO: beancount.ops.prices may need to migrate to core because of the
-# dependency. No problem; do this.

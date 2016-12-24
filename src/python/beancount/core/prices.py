@@ -305,7 +305,7 @@ def get_position_market_value(pos, date, price_map):
       date: A datetime.date instance, the date at which to market the instruments.
         If the date provided is None, the inventory is valued at the latest market
         prices.
-      price_map: A price map, as created by beancount.ops.prices.
+      price_map: A price map, as created by beancount.core.prices.
     Returns:
       An inventory of market values per currency.
 
@@ -334,7 +334,7 @@ def get_inventory_market_value(balance, date, price_map):
       date: A datetime.date instance, the date at which to market the instruments.
         If the date provided is None, the inventory is valued at the latest market
         prices.
-      price_map: A price map, as created by beancount.ops.prices.
+      price_map: A price map, as created by beancount.core.prices.
     Returns:
       An inventory of market values per currency.
     """

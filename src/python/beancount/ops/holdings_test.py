@@ -11,7 +11,7 @@ from beancount.core.amount import A
 from beancount.core import position
 from beancount.core import data
 from beancount.ops import holdings
-from beancount.ops import prices
+from beancount.core import prices
 from beancount import loader
 
 

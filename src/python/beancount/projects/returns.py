@@ -218,7 +218,7 @@ from beancount.core import getters
 from beancount.core import flags
 from beancount.core import interpolate
 from beancount.core import convert
-from beancount.ops import prices
+from beancount.core import prices
 from beancount.utils import misc_utils
 from beancount.utils import date_utils
 

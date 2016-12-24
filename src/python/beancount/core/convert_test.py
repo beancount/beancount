@@ -24,7 +24,7 @@ from beancount.core.amount import Amount
 from beancount.core import display_context
 
 from beancount.core import data
-from beancount.ops import prices
+from beancount.core import prices
 
 
 def build_price_map_util(date_currency_price_tuples):

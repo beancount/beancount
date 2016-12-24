@@ -27,7 +27,7 @@ from beancount.core import account_types
 from beancount.core import compare
 from beancount.core import convert
 from beancount.ops import basicops
-from beancount.ops import prices
+from beancount.core import prices
 from beancount.utils import misc_utils
 from beancount.utils import text_utils
 from beancount.web import bottle_utils
