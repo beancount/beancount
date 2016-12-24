@@ -217,7 +217,7 @@ from beancount.core import inventory
 from beancount.core import getters
 from beancount.core import flags
 from beancount.core import interpolate
-from beancount.core import conversions
+from beancount.core import convert
 from beancount.ops import prices
 from beancount.utils import misc_utils
 from beancount.utils import date_utils
@@ -319,7 +319,7 @@ def segment_periods(entries, accounts_value, accounts_intflows,
 
         logging.debug(",-----------------------------------------------------------")
         logging.debug(" Begin:   %s", period_begin)
-        logging.debug(" Balance: %s", balance_begin.reduce(conversions.get_units))
+        logging.debug(" Balance: %s", balance_begin.reduce(convert.get_units))
         logging.debug("")
 
         # Consume all internal flow entries, simply accumulating the total balance.
@@ -351,7 +351,7 @@ def segment_periods(entries, accounts_value, accounts_intflows,
         ## (period_begin, period_end)
         periods.append((period_begin, period_end, balance_begin, balance_end))
 
-        logging.debug(" Balance: %s", balance_end.reduce(conversions.get_units))
+        logging.debug(" Balance: %s", balance_end.reduce(convert.get_units))
         logging.debug(" End:     %s", period_end)
         logging.debug("`-----------------------------------------------------------")
         logging.debug("")
@@ -665,8 +665,8 @@ def compute_returns(entries, transfer_account,
             annual_returns = 'OVERFLOW'
 
         logging.info("From %s to %s", period_begin, period_end)
-        logging.info("  Begin %s => %s", balance_begin.reduce(conversions.get_units), mktvalue_begin)
-        logging.info("  End   %s => %s", balance_end.reduce(conversions.get_units), mktvalue_end)
+        logging.info("  Begin %s => %s", balance_begin.reduce(convert.get_units), mktvalue_begin)
+        logging.info("  End   %s => %s", balance_end.reduce(convert.get_units), mktvalue_end)
         logging.info("  Returns     %s", period_returns)
         logging.info("  Annualized  %s", annual_returns)
         logging.info("")

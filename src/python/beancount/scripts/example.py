@@ -35,7 +35,7 @@ from beancount.core import amount
 from beancount.core import inventory
 from beancount.core import realization
 from beancount.core import display_context
-from beancount.core import conversions
+from beancount.core import convert
 from beancount.parser import parser
 from beancount.parser import booking
 from beancount.parser import printer
@@ -793,7 +793,7 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
                 total.add_inventory(balances[account_stock])
 
             # Create an entry offering dividends of 1% of the portfolio.
-            portfolio_cost = total.reduce(conversions.get_cost).get_units('CCY').number
+            portfolio_cost = total.reduce(convert.get_cost).get_units('CCY').number
             amount_cash = (frac_dividend * portfolio_cost).quantize(D('0.01'))
             amount_cash_neg = -amount_cash
             dividend = parse("""

@@ -284,11 +284,11 @@ class Inventory(list):
 
     def units(self):
         warnings.warn("Inventory.units() is deprecated")
-        return self.reduce(conversions.get_units)
+        return self.reduce(convert.get_units)
 
     def cost(self):
         warnings.warn("Inventory.cost() is deprecated")
-        return self.reduce(conversions.get_cost)
+        return self.reduce(convert.get_cost)
 
     def average(self):
         """Average all lots of the same currency together.

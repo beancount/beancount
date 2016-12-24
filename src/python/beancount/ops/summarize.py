@@ -22,7 +22,7 @@ from beancount.core import inventory
 from beancount.core import data
 from beancount.core import flags
 from beancount.core import interpolate
-from beancount.core import conversions as conversions_lib
+from beancount.core import convert as convert
 from beancount.ops import prices
 from beancount.ops import balance
 from beancount.utils import bisect_key
@@ -474,7 +474,7 @@ def conversions(entries, conversion_account, conversion_currency, date=None):
     conversion_balance = interpolate.compute_entries_balance(entries, date=date)
 
     # Early exit if there is nothing to do.
-    conversion_cost_balance = conversion_balance.reduce(conversions_lib.get_cost)
+    conversion_cost_balance = conversion_balance.reduce(convert.get_cost)
     if conversion_cost_balance.is_empty():
         return entries
 

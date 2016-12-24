@@ -9,7 +9,7 @@ from beancount.reports import base
 from beancount.reports import tree_table
 from beancount.core import realization
 from beancount.core import display_context
-from beancount.core import conversions
+from beancount.core import convert
 
 
 class BalancesReport(base.HTMLReport,
@@ -46,7 +46,7 @@ class BalancesReport(base.HTMLReport,
                                             self.formatter,
                                             classes=['trial'])
 
-        balance_cost = realization.compute_balance(real_root).reduce(conversions.get_cost)
+        balance_cost = realization.compute_balance(real_root).reduce(convert.get_cost)
         if not balance_cost.is_empty():
             text += """
               Total Balance: <span class="num">{}</span>

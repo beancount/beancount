@@ -10,7 +10,7 @@ import copy
 import random
 from datetime import date
 
-from beancount.core import conversions
+from beancount.core import convert
 from beancount.core.position import Cost
 from beancount.core.position import Position
 from beancount.core.position import from_string
@@ -55,10 +55,10 @@ class TestPositionConversions(unittest.TestCase):
 
     def test_units(self):
         units = A("100 HOOL")
-        self.assertEqual(units, conversions.get_units(
+        self.assertEqual(units, convert.get_units(
             self._pos(units,
                       Cost(D("514.00"), "USD", None, None))))
-        self.assertEqual(units, conversions.get_units(
+        self.assertEqual(units, convert.get_units(
             self._pos(units, None)))
 
     #
@@ -66,16 +66,16 @@ class TestPositionConversions(unittest.TestCase):
     #
 
     def test_cost__empty(self):
-        self.assertEqual(A("100 HOOL"), conversions.get_cost(
+        self.assertEqual(A("100 HOOL"), convert.get_cost(
             self._pos(A("100 HOOL"), None)))
 
     def test_cost__not_empty(self):
-        self.assertEqual(A("51400.00 USD"), conversions.get_cost(
+        self.assertEqual(A("51400.00 USD"), convert.get_cost(
             self._pos(A("100 HOOL"),
                       Cost(D("514.00"), "USD", None, None))))
 
     def test_cost__missing(self):
-        self.assertEqual(A("100 HOOL"), conversions.get_cost(
+        self.assertEqual(A("100 HOOL"), convert.get_cost(
             self._pos(A("100 HOOL"),
                       Cost(MISSING, "USD", None, None))))
 
@@ -84,16 +84,16 @@ class TestPositionConversions(unittest.TestCase):
     #
 
     def test_weight__no_cost(self):
-        self.assertEqual(A("100 HOOL"), conversions.get_weight(
+        self.assertEqual(A("100 HOOL"), convert.get_weight(
             self._pos(A("100 HOOL"), None)))
 
     def test_weight__with_cost(self):
-        self.assertEqual(A("51400.00 USD"), conversions.get_weight(
+        self.assertEqual(A("51400.00 USD"), convert.get_weight(
             self._pos(A("100 HOOL"),
                       Cost(D("514.00"), "USD", None, None))))
 
     def test_weight__with_cost_missing(self):
-        self.assertEqual(A("100 HOOL"), conversions.get_weight(
+        self.assertEqual(A("100 HOOL"), convert.get_weight(
             self._pos(A("100 HOOL"),
                       Cost(MISSING, "USD", None, None))))
 
@@ -112,18 +112,18 @@ class TestPositionConversions(unittest.TestCase):
     def test_value__no_currency(self):
         pos = self._pos(A("100 HOOL"), None)
         self.assertEqual(A("100 HOOL"),
-                         conversions.get_value(pos, self.PRICE_MAP_EMPTY))
+                         convert.get_value(pos, self.PRICE_MAP_EMPTY))
         self.assertEqual(A("100 HOOL"),
-                         conversions.get_value(pos, self.PRICE_MAP_HIT))
+                         convert.get_value(pos, self.PRICE_MAP_HIT))
 
     def test_value__currency_from_cost(self):
         pos = self._pos(A("100 HOOL"), Cost(D("514.00"), "USD", None, None))
         # Fallback on cost.
         self.assertEqual(A("51400.00 USD"),
-                         conversions.get_value(pos, self.PRICE_MAP_EMPTY))
+                         convert.get_value(pos, self.PRICE_MAP_EMPTY))
         # Computed using the db.
         self.assertEqual(A("53000.00 USD"),
-                         conversions.get_value(pos, self.PRICE_MAP_HIT))
+                         convert.get_value(pos, self.PRICE_MAP_HIT))
 
 
 class TestPostingConversions(TestPositionConversions):
@@ -134,19 +134,19 @@ class TestPostingConversions(TestPositionConversions):
         return data.Posting("Assets:AccountA", units, cost, price, None, None)
 
     def test_weight_with_cost_and_price(self):
-        self.assertEqual(A("51400.00 USD"), conversions.get_weight(
+        self.assertEqual(A("51400.00 USD"), convert.get_weight(
             self._pos(A("100 HOOL"),
                       Cost(D("514.00"), "USD", A("530.00 USD"), None))))
 
     def test_weight_with_only_price(self):
-        self.assertEqual(A("53000.00 USD"), conversions.get_weight(
+        self.assertEqual(A("53000.00 USD"), convert.get_weight(
             self._pos(A("100 HOOL"), None, A("530.00 USD"))))
 
     def test_value__currency_from_price(self):
         pos = self._pos(A("100 HOOL"), None, A("520.00 USD"))
         # Fallback on price.
         self.assertEqual(A("52000.00 USD"),
-                         conversions.get_value(pos, self.PRICE_MAP_EMPTY))
+                         convert.get_value(pos, self.PRICE_MAP_EMPTY))
         # Computed using the db.
         self.assertEqual(A("53000.00 USD"),
-                         conversions.get_value(pos, self.PRICE_MAP_HIT))
+                         convert.get_value(pos, self.PRICE_MAP_HIT))

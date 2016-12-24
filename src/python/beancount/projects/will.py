@@ -26,7 +26,7 @@ from beancount.core import getters
 from beancount.core import account_types
 from beancount.core import data
 from beancount.core import account
-from beancount.core import conversions
+from beancount.core import convert
 from beancount.parser import options
 
 
@@ -270,7 +270,7 @@ def format_xhtml_report(report, options_map):
                 fields['name'] = acc.name
                 fields['open_date'] = acc.open_date
                 dcontext = options_map['dcontext']
-                fields['balance'] = acc.balance.reduce(conversions.get_cost).to_string(
+                fields['balance'] = acc.balance.reduce(convert.get_cost).to_string(
                     dcontext.build(), False)
                 oss.write('<tr>\n')
                 for field in fieldnames:
