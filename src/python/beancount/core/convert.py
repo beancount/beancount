@@ -119,5 +119,3 @@ def get_value(pos, price_map, date=None):
 
 # TODO: beancount.ops.prices may need to migrate to core because of the
 # dependency. No problem; do this.
-
-# TODO: You still need to write corresponding tests using Inventory.map().

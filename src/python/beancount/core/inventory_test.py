@@ -454,3 +454,8 @@ class TestInventory(unittest.TestCase):
         inv2.add_amount(A('55 HOOL'))
 
         _ = inv1 + inv2
+
+    def test_reduce(self):
+        inv = I('100.00 USD, 101.00 CAD, 100 HOOL {300.00 USD}')
+        inv_units = inv.reduce(lambda posting: posting.units)
+        self.assertEqual(I('100.00 USD, 101.00 CAD, 100 HOOL'), inv_units)
