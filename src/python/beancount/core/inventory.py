@@ -30,6 +30,7 @@ import copy
 import collections
 import enum
 import re
+import warnings
 
 from beancount.core.number import ZERO
 from beancount.core.number import same_sign
@@ -282,37 +283,12 @@ class Inventory(list):
         return inventory
 
     def units(self):
-        """Return an inventory of units for all position (aggregated).
-
-        Returns:
-          An instance of Inventory.
-        """
-        units_inventory = Inventory()
-        for position in self:
-            units_inventory.add_amount(position.units)
-        return units_inventory
+        warnings.warn("Inventory.units() is deprecated")
+        return self.reduce(conversions.get_units)
 
     def cost(self):
-        """Return an inventory of costs for all positions (aggregated).
-
-        For example, an inventory that contains these lots:
-
-           2 HOOLB
-           3 HOOL {300.00 USD}
-           4 HOOL {310.00 USD / 2014-10-28}
-
-        will provide:
-
-           2 HOOLB
-           2140 USD
-
-        Returns:
-          An instance of Inventory.
-        """
-        cost_inventory = Inventory()
-        for position in self:
-            cost_inventory.add_amount(position.get_cost())
-        return cost_inventory
+        warnings.warn("Inventory.cost() is deprecated")
+        return self.reduce(conversions.get_cost)
 
     def average(self):
         """Average all lots of the same currency together.
