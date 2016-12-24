@@ -11,6 +11,7 @@ import textwrap
 from beancount.core.number import ZERO
 from beancount.core import data
 from beancount.core import realization
+from beancount.core import conversions
 
 
 # Name mappings for text rendering, no more than 5 characters to save space.
@@ -299,9 +300,9 @@ def size_and_render_amounts(postings, at_cost, render_balance):
         # so we'd rather do make the conversion at this level (inventory) than
         # convert the positions or amounts later.)
         if at_cost:
-            change = change.cost()
+            change = change.reduce(conversions.get_cost)
             if render_balance:
-                balance = balance.cost()
+                balance = balance.reduce(conversions.get_cost)
 
         # Compute the amounts and maximum widths for the change column.
         change_amounts = []

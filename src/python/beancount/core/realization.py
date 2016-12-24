@@ -37,6 +37,7 @@ from beancount.core import amount
 from beancount.core import data
 from beancount.core import account
 from beancount.core import flags
+from beancount.core import conversions
 
 
 class RealAccount(dict):
@@ -636,9 +637,9 @@ def dump_balances(real_root, dformat, at_cost=False, fullnames=False, file=None)
     for first_line, cont_line, real_account in dump(real_root):
         if not real_account.balance.is_empty():
             if at_cost:
-                rinv = real_account.balance.cost()
+                rinv = real_account.balance.reduce(conversions.get_cost)
             else:
-                rinv = real_account.balance.units()
+                rinv = real_account.balance.reduce(conversions.get_units)
             amounts = [position.units for position in rinv.get_positions()]
             positions = [amount_.to_string(dformat)
                          for amount_ in sorted(amounts, key=amount.sortkey)]

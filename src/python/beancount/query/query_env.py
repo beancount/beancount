@@ -24,6 +24,7 @@ from beancount.core import account
 from beancount.core import account_types
 from beancount.core import data
 from beancount.core import getters
+from beancount.core import conversions
 from beancount.ops import prices
 from beancount.query import query_compile
 
@@ -327,7 +328,7 @@ class UnitsInventory(query_compile.EvalFunction):
 
     def __call__(self, context):
         args = self.eval_args(context)
-        return args[0].units()
+        return args[0].reduce(conversions.get_units)
 
 class CostPosition(query_compile.EvalFunction):
     "Get the cost of a position."
@@ -349,7 +350,7 @@ class CostInventory(query_compile.EvalFunction):
 
     def __call__(self, context):
         args = self.eval_args(context)
-        return args[0].cost()
+        return args[0].reduce(conversions.get_cost)
 
 class OnlyInventory(query_compile.EvalFunction):
     "Get one currency's amount from the inventory."

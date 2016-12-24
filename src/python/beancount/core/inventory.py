@@ -268,15 +268,17 @@ class Inventory(list):
     # Methods to convert an Inventory into another.
     #
 
-    def map(self, converter, *args):
-        """Return an inventory of units for all position (aggregated).
+    def reduce(self, reducer, *args):
+        """Reduce an inventory using one of the conversion functions.
+
+        See functions in beancount.core.conversions.
 
         Returns:
           An instance of Inventory.
         """
         inventory = Inventory()
         for position in self:
-            inventory.add_amount(converter(position, *args))
+            inventory.add_amount(reducer(position, *args))
         return inventory
 
     def units(self):
