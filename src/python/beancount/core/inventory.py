@@ -233,6 +233,11 @@ class Inventory(list):
         return list(self)
 
     def get_units(self, currency):
+        warnings.warn("Inventory.get_units() is deprecated; "
+                      "use get_currency_units() instead")
+        return self.get_currency_units(currency)
+
+    def get_currency_units(self, currency):
         """Fetch the total amount across all the position in the given currency.
         This may sum multiple lots in the same currency denomination.
 

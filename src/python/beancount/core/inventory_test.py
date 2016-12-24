@@ -41,7 +41,7 @@ class TestInventory(unittest.TestCase):
         if isinstance(number, str):
             number = D(number)
         amount_ = amount.Amount(number, currency)
-        inv_amount = inventory.get_units(amount_.currency)
+        inv_amount = inventory.get_currency_units(amount_.currency)
         self.assertEqual(inv_amount, amount_)
 
     def test_from_string(self):
@@ -223,13 +223,13 @@ class TestInventory(unittest.TestCase):
         inv2 = inv * D('3')
         self.assertEqual(I('30 HOOL {1.11 USD}, 6.66 CAD'), inv2)
 
-    def test_get_units(self):
+    def test_get_currency_units(self):
         inv = I('40.50 JPY, 40.51 USD {1.01 CAD}, 40.52 CAD')
-        self.assertEqual(inv.get_units('JPY'), A('40.50 JPY'))
-        self.assertEqual(inv.get_units('USD'), A('40.51 USD'))
-        self.assertEqual(inv.get_units('CAD'), A('40.52 CAD'))
-        self.assertEqual(inv.get_units('AUD'), A('0 AUD'))
-        self.assertEqual(inv.get_units('NZD'), A('0 NZD'))
+        self.assertEqual(inv.get_currency_units('JPY'), A('40.50 JPY'))
+        self.assertEqual(inv.get_currency_units('USD'), A('40.51 USD'))
+        self.assertEqual(inv.get_currency_units('CAD'), A('40.52 CAD'))
+        self.assertEqual(inv.get_currency_units('AUD'), A('0 AUD'))
+        self.assertEqual(inv.get_currency_units('NZD'), A('0 NZD'))
 
     def test_segregate_units(self):
         inv = I('2.2 HOOL {532.43 USD}, '

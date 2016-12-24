@@ -12,7 +12,11 @@ Note: This file contains only changes in the 'default' branch.
   - Implemented Inventory.reduce() and test.
 
   - Removed Inventory.units(); use Inventory.reduce(convert.get_units)
+
   - Removed Inventory.cost(); use Inventory.reduce(convert.get_cost)
+
+  - Renamed Inventory.get_units() to Inventory.get_currency_units() in order to
+    avoid future name confusion.
 
   - Converted all the old code to these new converted functions.
 

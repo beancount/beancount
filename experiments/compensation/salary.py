@@ -82,7 +82,7 @@ def main():
         if entry.date >= date:
             # At the boundary, save the date and total number.
             try:
-                total = -balance.get_units(args.currency).number
+                total = -balance.get_currency_units(args.currency).number
                 curve.append((date, total))
                 date = next(dateiter).date()
             except StopIteration:
