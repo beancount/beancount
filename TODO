@@ -4656,6 +4656,14 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - Implement beancount.plugins.auto and beancount.plugins.pedantic finally.
+
+  - Interesting idea re. booking branch: Until AVERAGE is done in an automated
+    manner, we could provide a poor man's version by creating a new Nerge
+    directive which explicly merges the contents and cost basis of an entire
+    account at a particular point in time. Try this for fun, this should be easy
+    to implement.
+
   - "numberify" is only made available from run_query(). This is insufficient;
     it needs be made available through the SQL shell output (as an option) and
     even from the Google sheets uploader.
