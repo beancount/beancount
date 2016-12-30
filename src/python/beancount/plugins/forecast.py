@@ -26,6 +26,8 @@ import re
 
 from beancount.core import data
 
+from datetime import datetime, date
+from dateutil.rrule import rrule, MONTHLY, YEARLY
 
 __plugins__ = ('forecast_plugin',)
 
@@ -58,15 +60,26 @@ def forecast_plugin(entries, options_map):
     new_entries = []
     for entry in forecast_entries:
         # Parse the periodicity.
-        match = re.search(r'(.*)\[MONTHLY\]', entry.narration)
-        if match:
-            forecast_narration = match.group(1).strip()
-            for month in range(date_today.month + 1, 13):
-                # Create a new entry at the given datė
-                forecast_date = date_today.replace(month=month)
-                forecast_entry = entry._replace(date=forecast_date,
-                                                narration=forecast_narration)
-                new_entries.append(forecast_entry)
+        match = re.search(r'(^.*)\[(MONTHLY|YEARLY)(\s+REPEAT\s+([1-9][0-9]*)\s+TIMES)?(\s+UNTIL\s+([0-9\-]+))?\]', entry.narration)
+        if not match: 
+            new_entries.append(entry) 
+            continue
+        forecast_narration = match.group(1).strip()
+        forecast_interval = YEARLY if match.group(2).strip() == 'YEARLY' else MONTHLY
+        forecast_periodicity = { 'dtstart': entry.date}
+        if match.group(4):  # e.g., [MONTHLY REPEAT 3 TIMES]:
+            forecast_periodicity['count'] = int(match.group(4))
+        elif match.group(6):  # e.g., [MONTHLY UNTIL 2020-01-01]:
+            forecast_periodicity['until'] = datetime.strptime(match.group(6), '%Y-%m-%d').date()
+        else:  # e.g., [MONTHLY]
+           forecast_periodicity['until'] = date(date.today().year, 12, 31)
+
+        # Generate a new entry for each forecast date.
+        forecast_dates = [dt.date() for dt in rrule(forecast_interval, **forecast_periodicity)]
+        for forecast_date in forecast_dates:
+            forecast_entry = entry._replace(date=forecast_date,
+                                            narration=forecast_narration)
+            new_entries.append(forecast_entry)
 
     # Make sure the new entries inserted are sorted.
     new_entries.sort(key=data.entry_sortkey)
