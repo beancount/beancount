@@ -16,7 +16,25 @@ A user can create a create a transaction like this:
 
 and new transactions will be created monthly for the following year.
 Note the use of the '#' flag and the word 'MONTHLY' which defines the
-periodicity. This needs more expansion, but as an example, it works.
+periodicity. 
+
+The number of recurrences can optionally be specified either by providing an 
+end date or by specifying the number of times that the transaction will be 
+repeated. For example:
+
+  2014-03-08 # "Electricity bill [MONTHLY UNTIL 2019-12-31]""
+    Expenses:Electricity 			50.10 USD
+    Assets:Checking			       -50.10 USD
+
+  2014-03-08 # "Electricity bill [MONTHLY REPEAT 10 TIMES]""
+    Expenses:Electricity 			50.10 USD
+    Assets:Checking			       -50.10 USD
+
+Transactions can be also be repeated at yearly intervals, e.g.:
+
+  2014-03-08 # "Electricity bill [YEARLY REPEAT 10 TIMES]""
+    Expenses:Electricity 			50.10 USD
+    Assets:Checking			       -50.10 USD
 """
 
 __copyright__ = "Copyright (C) 2014-2015  Martin Blais"
