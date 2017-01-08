@@ -4656,6 +4656,13 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - "bean-doctor linked" should list the list of links that were followed. That
+    would go some of the way to explain some of the sometimes surprising
+    results.
+
+  - SQL: OpenMeta is different than Meta; it returns a dict. That's bad. Provide
+    a direct lookup, like Meta.
+
   - Implement beancount.plugins.auto and beancount.plugins.pedantic finally.
 
   - Interesting idea re. booking branch: Until AVERAGE is done in an automated
