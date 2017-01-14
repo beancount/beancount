@@ -22,7 +22,7 @@ from beancount.core import inventory
 from beancount.core import data
 from beancount.core import flags
 from beancount.core import interpolate
-from beancount.core import convert as convert
+from beancount.core import convert
 from beancount.core import prices
 from beancount.ops import balance
 from beancount.utils import bisect_key
@@ -569,8 +569,8 @@ def create_entries_from_balances(balances, date, source_account, direction,
         for position in account_balance.get_positions():
             postings.append(data.Posting(account, position.units, position.cost,
                                          None, None, None))
-            cost_pos = -position.at_cost()
-            postings.append(data.Posting(source_account, cost_pos.units, cost_pos.cost,
+            cost = -convert.get_cost(position)
+            postings.append(data.Posting(source_account, cost, None,
                                          None, None, None))
 
         new_entries.append(new_entry)

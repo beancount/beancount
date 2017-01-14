@@ -288,11 +288,13 @@ class Inventory(list):
         return inventory
 
     def units(self):
-        warnings.warn("Inventory.units() is deprecated")
+        warnings.warn("Inventory.units() is deprecated; "
+                      "use .reduce(convert.get_units) instead")
         return self.reduce(convert.get_units)
 
     def cost(self):
-        warnings.warn("Inventory.cost() is deprecated")
+        warnings.warn("Inventory.cost() is deprecated; "
+                      "use .reduce(convert.get_cost) instead")
         return self.reduce(convert.get_cost)
 
     def average(self):

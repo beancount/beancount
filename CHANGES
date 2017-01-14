@@ -11,16 +11,18 @@ Note: This file contains only changes in the 'default' branch.
 
   - Implemented Inventory.reduce() and test.
 
-  - Removed Inventory.units(); use Inventory.reduce(convert.get_units)
+  - Deprecated Inventory.units(); use Inventory.reduce(convert.get_units)
 
-  - Removed Inventory.cost(); use Inventory.reduce(convert.get_cost)
+  - Deprecated Inventory.cost(); use Inventory.reduce(convert.get_cost)
 
-  - Renamed Inventory.get_units() to Inventory.get_currency_units() in order to
+  - Deprecated Inventory.get_units() to Inventory.get_currency_units() in order to
     avoid future name confusion.
+
+  - Deprecated Position.at_cost(); use convert.get_cost(position) instead.
 
   - Converted all the old code to these new converted functions.
 
-  - Moved beancount.ops.prices to beancount.core.prices, and added a
+  - Moved module beancount.ops.prices to beancount.core.prices, and added a
     deprecation warning.
 
 

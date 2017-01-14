@@ -294,6 +294,8 @@ class Position(_Position):
           immutable and associated operations never modify an existing Position
           instance, it is legit to return this object itself.
         """
+        warnings.warn("Position.at_cost() is deprecated; "
+                      "use convert.get_cost(position) instead")
         cost = self.cost
         if cost is None:
             pos = self

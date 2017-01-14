@@ -5379,7 +5379,8 @@ http://furius.ca/beancount/doc/proposal-query
     units / position           X - .units
     units / posting            X - .units
     cost / inventory           X - beancount.core.inventory.Inventory.cost()
-    cost / position              - beancount.core.position.Position.at_cost(), beancount.core.position.Position.get_cost()
+    cost / position            X - beancount.core.position.Position.at_cost()
+    cost / position              - beancount.core.position.Position.get_cost()
     cost / posting               - beancount.core.interpolate.compute_cost_basis() (list of postings)
     market / inventory           -
     market / position            -
