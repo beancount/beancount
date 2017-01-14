@@ -1,6 +1,6 @@
+"""Unit tests for conversion functions.
 """
-Unit tests for the Position class.
-"""
+
 __copyright__ = "Copyright (C) 2014-2015  Martin Blais"
 __license__ = "GNU GPLv2"
 

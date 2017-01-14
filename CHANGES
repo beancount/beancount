@@ -29,6 +29,9 @@ Note: This file contains only changes in the 'default' branch.
 
   - Deprecated get_posting_weight(); use convert.get_weight() instead.
 
+  - Removed b.ops.holdings.get_pholding_market_value(), which was unused.
+    If you need a market-value function, use convert.get_value() instead.
+
   - Converted all the old code to these new converted functions.
 
   - Moved module beancount.ops.prices to beancount.core.prices, and added a

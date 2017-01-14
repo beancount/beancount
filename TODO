@@ -5385,7 +5385,7 @@ http://furius.ca/beancount/doc/proposal-query
     cost / posting             X - beancount.core.interpolate.compute_cost_basis() (list of postings)
     market / inventory           -
     market / position            -
-    market / posting             - beancount.ops.holdings.get_pholding_market_value()
+    market / posting           X - beancount.ops.holdings.get_pholding_market_value()
     weight / inventory           -
     weight / position            -
     weight / posting           X - beancount.core.interpolate.get_posting_weight()
