@@ -8,8 +8,10 @@ import io
 
 from beancount.core import compare
 from beancount.core import data
+from beancount.core import inventory
 from beancount.core import interpolate
 from beancount.core import getters
+from beancount.core import convert
 from beancount.parser import printer
 
 
@@ -109,7 +111,9 @@ def render_entry_context(entries, options_map, entry):
                           for key, value in sorted(tolerances.items()))), file=oss)
 
         # Compute the total cost basis.
-        cost_basis = interpolate.compute_cost_basis(entry.postings)
+        cost_basis = inventory.Inventory(
+            pos for pos in entry.postings if pos.cost is not None
+        ).reduce(convert.get_cost)
         if not cost_basis.is_empty():
             print('Basis: {}'.format(cost_basis), file=oss)
 

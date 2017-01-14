@@ -147,22 +147,6 @@ class TestBalance(cmptest.TestCase):
         self.assertFalse(residual.is_empty())
         self.assertEqual(inventory.from_string('-0.012375 USD'), residual)
 
-    @loader.load_doc()
-    def test_compute_cost_basis(self, entries, _, __):
-        """
-        2001-01-01 open Assets:Account1
-
-        2014-01-01 *
-          Assets:Account1        20 HOOL {40.00 USD}
-          Assets:Account1        20 HOOL {60.00 USD} @ 70.00 USD
-          Assets:Account1     -2000.00 USD
-          Assets:Account1         3 HOOL {30.00 CAD}
-          Assets:Account1       -90.00 CAD
-        """
-        postings = next(data.filter_txns(entries)).postings
-        self.assertEqual(inventory.from_string('2000.00 USD, 90.00 CAD'),
-                         interpolate.compute_cost_basis(postings))
-
 
 class TestComputeBalance(unittest.TestCase):
 

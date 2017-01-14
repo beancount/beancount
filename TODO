@@ -5365,6 +5365,7 @@ http://furius.ca/beancount/doc/proposal-query
     returns foo in bar, mypy is unable to infer that the return type is a bool.
     I think pytype from Google have better type inference but it's written in
     Python2 and I haven't figure out how to run it against python3 code.
+
 ** Refactoring Conversions
 
   The computation of cost, weight and market value must be uniformized.
@@ -5381,7 +5382,7 @@ http://furius.ca/beancount/doc/proposal-query
     cost / inventory           X - beancount.core.inventory.Inventory.cost()
     cost / position            X - beancount.core.position.Position.at_cost()
     cost / position            X - beancount.core.position.Position.get_cost()
-    cost / posting               - beancount.core.interpolate.compute_cost_basis() (list of postings)
+    cost / posting             X - beancount.core.interpolate.compute_cost_basis() (list of postings)
     market / inventory           -
     market / position            -
     market / posting             - beancount.ops.holdings.get_pholding_market_value()

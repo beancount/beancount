@@ -22,6 +22,11 @@ Note: This file contains only changes in the 'default' branch.
 
   - Deprecated Position.get_cost(); use convert.get_cost(position) instead.
 
+  - Deprecated b.c.interpolation.compute_cost_basis(); use
+    Inventory.(pos for pos in positions if pos.cost is not
+    None).reduce(convert.get_cost)
+    instead.
+
   - Converted all the old code to these new converted functions.
 
   - Moved module beancount.ops.prices to beancount.core.prices, and added a

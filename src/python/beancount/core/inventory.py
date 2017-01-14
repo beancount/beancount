@@ -31,6 +31,7 @@ import collections
 import enum
 import re
 import warnings
+from collections import Iterable
 
 from beancount.core.number import ZERO
 from beancount.core.number import same_sign
@@ -67,7 +68,7 @@ class Inventory(list):
         """
         list.__init__(self)
         if positions:
-            assert isinstance(positions, list), positions
+            assert isinstance(positions, Iterable)
             for position in positions:
                 self.add_position(position)
 

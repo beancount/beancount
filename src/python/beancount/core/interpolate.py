@@ -5,6 +5,7 @@ __license__ = "GNU GPLv2"
 
 import collections
 import copy
+import warnings
 
 from beancount.core.number import D
 from beancount.core.number import ONE
@@ -14,6 +15,7 @@ from beancount.core.amount import mul as amount_mul
 from beancount.core.inventory import Inventory
 from beancount.core import inventory
 from beancount.core import position
+from beancount.core import convert
 from beancount.core.data import Transaction
 from beancount.core.data import Posting
 from beancount.core import getters
@@ -98,13 +100,11 @@ def compute_cost_basis(postings):
     Returns:
       An Inventory instance.
     """
-    cost_basis = Inventory()
-    for posting in postings:
-        if posting.cost is None:
-            continue
-        amount = amount_mul(posting.cost, posting.units.number)
-        cost_basis.add_amount(amount)
-    return cost_basis
+    warnings.warn("compute_cost_basis() is deprecated; "
+                  "use Inventory(positions).reduce(convert.get_cost) instead")
+    return Inventory(pos
+                     for pos in postings
+                     if pos.cost is not None).reduce(convert.get_cost)
 
 
 def has_nontrivial_balance(posting):
