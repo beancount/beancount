@@ -269,6 +269,7 @@ def get_price(price_map, base_quote, date=None):
         return None, None
 
 
+# FIXME: This is going to get refactored w/ b.c.convert().
 def convert_amount(price_map, target_currency, amount_, date=None):
     """Convert commodities held at a cost that differ from the value currency.
 
@@ -294,6 +295,7 @@ def convert_amount(price_map, target_currency, amount_, date=None):
     return converted_amount
 
 
+# FIXME: This is going to get replaced by b.c.convert().
 def get_position_market_value(pos, date, price_map):
     """Compute the market value of the position at a particular date.
 
@@ -323,6 +325,7 @@ def get_position_market_value(pos, date, price_map):
     return position.from_amounts(new_amount)
 
 
+# FIXME: This is going to get replaced by b.c.convert().
 def get_inventory_market_value(balance, date, price_map):
     """Compute the market value of the inventory in a currency at a date.
 

@@ -95,16 +95,22 @@ def get_value(pos, price_map, date=None):
       price_map: A dict of prices, as built by prices.build_price_map().
       date: A datetime.date instance to evaluate the value at, or None.
     Returns:
-      An Amount.
+      An Amount, either with a succesful value currency conversion, or if we
+      could not convert the value, just the amount itself, with no modification.
+      This is designed so that you could reduce an inventory with this and not
+      lose any information silently in case of failure to convert (possibly due
+      to an empty price map). Compare the returned currency to that of the input
+      position if you need to check for success.
     """
     units = pos.units
     cost = pos.cost
 
-    # Try to infer what the cost currency is.
+    # Try to infer what the valuation currency should be.
     value_currency = None
     price_fallback = None
 
     if isinstance(cost, Cost):
+        # Currency is provided by the cost.
         value_currency = cost.currency
         price_fallback = cost.number
         assert value_currency is not None
@@ -112,6 +118,7 @@ def get_value(pos, price_map, date=None):
     if not isinstance(pos, Position):
         price = pos.price
         if price is not None:
+            # Currency is provided by the price.
             value_currency = price.currency
             price_fallback = price.number
             assert value_currency is not None
@@ -120,12 +127,16 @@ def get_value(pos, price_map, date=None):
         # We failed to infer a currency; return the units.
         value = units
     else:
-        # We have a currency; try to hit the price database.
+        # Note: this is the same as convert_amount(); refactor.
+
+        # We have a currency; hit the price database.
         base_quote = (units.currency, value_currency)
         _, price_number = prices.get_price(price_map, base_quote, date)
         if price_number is not None:
             value = Amount(units.number * price_number, value_currency)
         elif price_fallback is not None:
             value = Amount(units.number * price_fallback, value_currency)
+        else:
+            value = units
 
     return value
