@@ -12,6 +12,7 @@ import datetime
 import logging
 import re
 import textwrap
+import warnings
 
 from beancount.core.number import Decimal
 from beancount.core.data import Transaction
@@ -551,6 +552,7 @@ class Price(query_compile.EvalFunction):
         super().__init__(operands, Decimal)
 
     def __call__(self, context):
+        warnings.warn("PRICE() is deprecated; use GETPRICE() instead")
         args = self.eval_args(context)
         base, quote = args
         pair = (base.upper(), quote.upper())
@@ -565,6 +567,7 @@ class PriceWithDate(query_compile.EvalFunction):
         super().__init__(operands, Decimal)
 
     def __call__(self, context):
+        warnings.warn("PRICE() is deprecated; use GETPRICE() instead")
         args = self.eval_args(context)
         base, quote, date = args
         pair = (base.upper(), quote.upper())

@@ -37,6 +37,9 @@ Note: This file contains only changes in the 'default' branch.
   - Moved module beancount.ops.prices to beancount.core.prices, and added a
     deprecation warning.
 
+  - Deprecated shell function PRICE(). Renamed it to GETPRICE() in order to
+    avoid confusion.
+
 
 2017-01-14
 

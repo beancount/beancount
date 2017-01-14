@@ -5386,9 +5386,11 @@ http://furius.ca/beancount/doc/proposal-query
     market / inventory           -
     market / position            -
     market / posting           X - beancount.ops.holdings.get_pholding_market_value()
+    market / amount              - beancount.core.prices.convert_amount()
     weight / inventory           -
     weight / position            -
     weight / posting           X - beancount.core.interpolate.get_posting_weight()
+
 
   Desired:
 
@@ -5402,6 +5404,3 @@ http://furius.ca/beancount/doc/proposal-query
     be documented well, and how to use PRICE() and VALUE() as well. It's poorly
     documented right now. (See question in May 2016 by redstreet0 on the
     mailing-list.)
-
-  - Rename the shell function PRICE() to GETPRICE() in order to avoid confusion
-    as well.
