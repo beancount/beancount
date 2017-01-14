@@ -43,7 +43,20 @@ def get_cost(pos):
 
 
 def get_weight(pos):
-    """Return the market value of a Position or Posting.
+    """Return the weight of a Position or Posting.
+
+    This is the amount that will need to be balanced from a posting of a
+    transaction.
+
+    This is a *key* element of the semantics of transactions in this software. A
+    balance amount is the amount used to check the balance of a transaction.
+    Here are all relevant examples, with the amounts used to balance the
+    postings:
+
+      Assets:Account  5234.50 USD                             ->  5234.50 USD
+      Assets:Account  3877.41 EUR @ 1.35 USD                  ->  5234.50 USD
+      Assets:Account       10 HOOL {523.45 USD}               ->  5234.50 USD
+      Assets:Account       10 HOOL {523.45 USD} @ 545.60 CAD  ->  5234.50 USD
 
     Args:
       pos: An instance of Position or Posting, equivalently.
@@ -64,6 +77,7 @@ def get_weight(pos):
         if not isinstance(pos, Position):
             price = pos.price
             if price is not None:
+                # Note: Here we could assert that price.currency == units.currency.
                 weight = Amount(price.number * units.number, price.currency)
 
     return weight

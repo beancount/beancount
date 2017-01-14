@@ -246,7 +246,7 @@ def get_incomplete_postings(entry, options_map):
             currencies.add(units.currency)
 
             # Compute the amount to balance and update the inventory.
-            weight = interpolate.get_posting_weight(posting)
+            weight = convert.get_weight(posting)
             residual.add_amount(weight)
 
             has_regular_postings = True

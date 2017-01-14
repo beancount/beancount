@@ -5388,7 +5388,7 @@ http://furius.ca/beancount/doc/proposal-query
     market / posting             - beancount.ops.holdings.get_pholding_market_value()
     weight / inventory           -
     weight / position            -
-    weight / posting             - beancount.core.interpolate.get_posting_weight()
+    weight / posting           X - beancount.core.interpolate.get_posting_weight()
 
   Desired:
 

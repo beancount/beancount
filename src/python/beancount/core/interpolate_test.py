@@ -30,28 +30,6 @@ OPTIONS_MAP = {'inferred_tolerance_default': {},
 
 class TestBalance(cmptest.TestCase):
 
-    def test_get_posting_weight(self):
-
-        # Entry without cost, without price.
-        posting = P(None, "Assets:Bank:Checking", "105.50", "USD")
-        self.assertEqual(A("105.50 USD"),
-                         interpolate.get_posting_weight(posting))
-
-        # Entry without cost, with price.
-        posting = posting._replace(price=A("0.90 CAD"))
-        self.assertEqual(A("94.95 CAD"),
-                         interpolate.get_posting_weight(posting))
-
-        # Entry with cost, without price.
-        posting = PCost(None, "Assets:Bank:Checking", "105.50", "USD", "0.80", "EUR")
-        self.assertEqual(A("84.40 EUR"),
-                         interpolate.get_posting_weight(posting))
-
-        # Entry with cost, and with price (the price should be ignored).
-        posting = posting._replace(price=A("2.00 CAD"))
-        self.assertEqual(A("84.40 EUR"),
-                         interpolate.get_posting_weight(posting))
-
     def test_has_nontrivial_balance(self):
 
         # Entry without cost, without price.

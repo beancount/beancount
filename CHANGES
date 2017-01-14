@@ -27,6 +27,8 @@ Note: This file contains only changes in the 'default' branch.
     None).reduce(convert.get_cost)
     instead.
 
+  - Deprecated get_posting_weight(); use convert.get_weight() instead.
+
   - Converted all the old code to these new converted functions.
 
   - Moved module beancount.ops.prices to beancount.core.prices, and added a

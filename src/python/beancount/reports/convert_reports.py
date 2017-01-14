@@ -12,6 +12,7 @@ import io
 from beancount.core.amount import Amount
 from beancount.core import data
 from beancount.core import position
+from beancount.core import convert
 from beancount.core import amount
 from beancount.core import interpolate
 from beancount.core import display_context
@@ -107,7 +108,7 @@ def split_currency_conversions(entry):
         new_entries = []
         replacement_postings = []
         for posting_orig in postings_at_price:
-            weight = interpolate.get_posting_weight(posting_orig)
+            weight = convert.get_weight(posting_orig)
             posting_pos = data.Posting(posting_orig.account, weight, None,
                                        None, None, None)
             posting_neg = data.Posting(posting_orig.account, -weight, None,

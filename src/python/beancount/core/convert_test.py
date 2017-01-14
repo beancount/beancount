@@ -11,6 +11,8 @@ import random
 from datetime import date
 
 from beancount.core import convert
+from beancount.core.data import create_simple_posting as P
+from beancount.core.data import create_simple_posting_with_cost as PCost
 from beancount.core.position import Cost
 from beancount.core.position import Position
 from beancount.core.position import from_string
@@ -96,6 +98,28 @@ class TestPositionConversions(unittest.TestCase):
         self.assertEqual(A("100 HOOL"), convert.get_weight(
             self._pos(A("100 HOOL"),
                       Cost(MISSING, "USD", None, None))))
+
+    def test_old_test(self):
+        # Entry without cost, without price.
+        posting = P(None, "Assets:Bank:Checking", "105.50", "USD")
+        self.assertEqual(A("105.50 USD"),
+                         convert.get_weight(posting))
+
+        # Entry without cost, with price.
+        posting = posting._replace(price=A("0.90 CAD"))
+        self.assertEqual(A("94.95 CAD"),
+                         convert.get_weight(posting))
+
+        # Entry with cost, without price.
+        posting = PCost(None, "Assets:Bank:Checking", "105.50", "USD", "0.80", "EUR")
+        self.assertEqual(A("84.40 EUR"),
+                         convert.get_weight(posting))
+
+        # Entry with cost, and with price (the price should be ignored).
+        posting = posting._replace(price=A("2.00 CAD"))
+        self.assertEqual(A("84.40 EUR"),
+                         convert.get_weight(posting))
+
 
     #
     # Value

@@ -552,7 +552,7 @@ def internalize(entries, transfer_account,
             # Calculate the weight of the balance to transfer.
             balance_transfer = inventory.Inventory()
             for posting in postings_extflows:
-                balance_transfer.add_amount(interpolate.get_posting_weight(posting))
+                balance_transfer.add_amount(convert.get_weight(posting))
 
             prototype_entry = entry._replace(flag=flags.FLAG_RETURNS,
                                              links=(entry.links or set()) | set([link]))

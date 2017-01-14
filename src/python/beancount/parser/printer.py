@@ -12,6 +12,7 @@ import textwrap
 
 from beancount.core.number import Decimal
 from beancount.core import position
+from beancount.core import convert
 from beancount.core import inventory
 from beancount.core import amount
 from beancount.core import account
@@ -225,7 +226,7 @@ class EntryPrinter:
             # Note: we render weights at maximum precision, for debugging.
             if posting.cost is None or (isinstance(posting.cost, position.Cost) and
                                         isinstance(posting.cost.number, Decimal)):
-                weight_str = str(interpolate.get_posting_weight(posting))
+                weight_str = str(convert.get_weight(posting))
         else:
             position_str = ''
 
