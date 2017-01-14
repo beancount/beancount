@@ -869,7 +869,7 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
                 if price == position.cost.number:
                     continue # Skip lots without movement.
                 market_value = position.units.number * price
-                book_value = position.get_cost().number
+                book_value = convert.get_cost(position).number
                 gain = market_value - book_value
                 gains.append((gain, market_value, price, position))
             if not gains:

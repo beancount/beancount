@@ -339,7 +339,7 @@ class CostPosition(query_compile.EvalFunction):
 
     def __call__(self, context):
         args = self.eval_args(context)
-        return args[0].get_cost()
+        return convert.get_cost(args[0])
 
 class CostInventory(query_compile.EvalFunction):
     "Get the cost of an inventory."

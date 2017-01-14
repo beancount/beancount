@@ -38,6 +38,7 @@ from beancount.core.amount import Amount
 from beancount.core.position import Cost
 from beancount.core.position import Position
 from beancount.core.position import from_string as position_from_string
+from beancount.core import convert
 from beancount.core.display_context import DEFAULT_FORMATTER
 
 
@@ -316,7 +317,7 @@ class Inventory(list):
             units_amount = Amount(total_units, currency)
 
             if cost_currency:
-                total_cost = sum(position.get_cost().number
+                total_cost = sum(convert.get_cost(position).number
                                  for position in positions)
                 cost = Cost(total_cost / total_units, cost_currency, None, None)
             else:

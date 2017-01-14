@@ -1869,7 +1869,7 @@ http://furius.ca/beancount/doc/proposal-query
               cost_currency = lot.cost.currency if lot.cost else None
               key = (lot.currency, cost_currency)
               units_map[key] += position.number
-              costs_map[key] += position.get_cost().number
+              pcosts_map[key] += position.get_cost().number
 
           inventory = Inventory()
           for lotcost_currencies, units in units_map.items():
@@ -5380,7 +5380,7 @@ http://furius.ca/beancount/doc/proposal-query
     units / posting            X - .units
     cost / inventory           X - beancount.core.inventory.Inventory.cost()
     cost / position            X - beancount.core.position.Position.at_cost()
-    cost / position              - beancount.core.position.Position.get_cost()
+    cost / position            X - beancount.core.position.Position.get_cost()
     cost / posting               - beancount.core.interpolate.compute_cost_basis() (list of postings)
     market / inventory           -
     market / position            -
@@ -5391,23 +5391,16 @@ http://furius.ca/beancount/doc/proposal-query
 
   Desired:
 
-    units / position & posting   - beancount.core.position.get_units()
-    cost / position & posting    - beancount.core.position.get_cost()
-    market / position & posting  - beancount.core.position.get_value()
-    weight / position & posting  - beancount.core.position.get_weight()
-
-    cost / inventory             - beancount.core.inventory.map()
-    # cost / inventory           - beancount.core.inventory.get_cost()
-    # market / inventory         - beancount.core.inventory.get_value()
-    # weight / inventory         - beancount.core.inventory.get_weight()
+    units / position & posting   - beancount.core.convert.get_units()
+    cost / position & posting    - beancount.core.convert.get_cost()
+    market / position & posting  - beancount.core.convert.get_value()
+    weight / position & posting  - beancount.core.convert.get_weight()
+    cost / inventory             - beancount.core.inventory.reduce()
 
   - Important: CONVERT() currently converts at the market value. This needs to
     be documented well, and how to use PRICE() and VALUE() as well. It's poorly
     documented right now. (See question in May 2016 by redstreet0 on the
     mailing-list.)
-
-  - Rename Position.get_cost() to Position.get_total_cost(), I've it confusing
-    to myself otherwise.
 
   - Rename the shell function PRICE() to GETPRICE() in order to avoid confusion
     as well.

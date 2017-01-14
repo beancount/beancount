@@ -278,6 +278,8 @@ class Position(_Position):
         Returns:
           An instance of Amount.
         """
+        warnings.warn("Position.get_cost() is deprecated; "
+                      "use convert.get_cost(position) instead")
         cost = self.cost
         if cost is None:
             rcost = self.units
@@ -286,7 +288,7 @@ class Position(_Position):
         return rcost
 
     def at_cost(self):
-        """Return a Position representing the cost of this position. See get_cost().
+        """Return a Position representing the cost of this position.
 
         Returns:
           An instance of Position if there is a cost, or itself, if the position

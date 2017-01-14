@@ -9,6 +9,7 @@ from beancount.core.number import ZERO
 from beancount.core import account
 from beancount.core import amount
 from beancount.core import position
+from beancount.core import convert
 from beancount.core import realization
 from beancount.core import account_types
 from beancount.core import data
@@ -488,7 +489,7 @@ def get_pholding_market_value(pholding):
     units = pholding.units
     cost = pholding.cost
     if price is None:
-        return position.Position(units, cost).get_cost()
+        return convert.get_cost(position.Position(units, cost))
     else:
         assert price.currency != units.currency, (
             "Invalid currency: '{}'".format(pholding))
