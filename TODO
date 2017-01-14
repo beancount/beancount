@@ -4656,6 +4656,9 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - Implement IPython/Jupyter notebook support for directly viewing the results
+    of queries.
+
   - "bean-doctor linked" should list the list of links that were followed. That
     would go some of the way to explain some of the sometimes surprising
     results.

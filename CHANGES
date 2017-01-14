@@ -48,6 +48,15 @@ Note: This file contains only changes in the 'default' branch.
     idea why this wasn't deteted earlier, probably by chance.)
 
 
+2017-01-08
+
+  - Completed "Intro to Double-Entry Accounting" doc.
+    http://furius.ca/beancount/doc/intro
+
+  - Added a --reverse/--descending flag to bean-extract to print the extracted
+    entries in reverse order.
+
+
 2016-12-17
 
   - Added a --title option to upload-to-sheets in order to conveniently set the
