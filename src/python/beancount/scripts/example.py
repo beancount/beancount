@@ -377,7 +377,7 @@ def get_minimum_balance(entries, account, currency):
       A Decimal number, the minimum amount throughout the history of this account.
     """
     min_amount = ZERO
-    for _, balances in postings_for(data.sorted(entries), [account]):
+    for _, balances in postings_for(entries, [account]):
         balance = balances[account]
         current = balance.get_currency_units(currency).number
         if current < min_amount:
@@ -688,21 +688,20 @@ def generate_retirement_investments(entries, account, commodities_items, price_m
     return data.sorted(open_entries + new_entries)
 
 
-def generate_banking(date_begin, date_end, amount_initial):
+def generate_banking(entries, date_begin, date_end, amount_initial):
     """Generate a checking account opening.
 
     Args:
+      entries: A list of entries which affect this account.
       date_begin: A date instance, the beginning date.
       date_end: A date instance, the end date.
       amount_initial: A Decimal instance, the amount to initialize the checking
         account with.
     Returns:
       A list of directives.
-
     """
-    date_balance = date_begin + datetime.timedelta(days=1)
     amount_initial_neg = -amount_initial
-    return parse("""
+    new_entries = parse("""
 
       {date_begin} open Assets:CC:Bank1
         institution: "Bank1_Institution"
@@ -718,9 +717,22 @@ def generate_banking(date_begin, date_end, amount_initial):
         Assets:CC:Bank1:Checking   {amount_initial} CCY
         Equity:Opening-Balances    {amount_initial_neg} CCY
 
-      {date_balance} balance Assets:CC:Bank1:Checking   {amount_initial} CCY
+    """, **locals())
+
+    date_balance = date_begin + datetime.timedelta(days=1)
+    account = 'Assets:CC:Bank1:Checking'
+    for txn_posting, balances in postings_for(data.sorted(entries + new_entries),
+                                              [account], before=True):
+        if txn_posting.txn.date >= date_balance:
+            break
+    amount_balance = balances[account].get_currency_units('CCY').number
+    bal_entries = parse("""
+
+      {date_balance} balance Assets:CC:Bank1:Checking   {amount_balance} CCY
 
     """, **locals())
+
+    return new_entries + bal_entries
 
 
 def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks):
@@ -1592,13 +1604,15 @@ def write_example_file(date_birth, date_begin, date_end, reformat, file):
     # Open banking accounts and gift the checking account with a balance that
     # will offset all the amounts to ensure a positive balance throughout its
     # lifetime.
-    minimum = get_minimum_balance(
-        data.sorted(income_entries +
-                    banking_expenses +
-                    credit_entries +
-                    tax_entries),
-        account_checking, 'CCY')
-    banking_entries = generate_banking(date_begin, date_end, max(-minimum, ZERO))
+    entries_for_banking = data.sorted(income_entries +
+                                      banking_expenses +
+                                      credit_entries +
+                                      tax_entries)
+    minimum = get_minimum_balance(entries_for_banking,
+                                  account_checking, 'CCY')
+    banking_entries = generate_banking(entries_for_banking,
+                                       date_begin, date_end,
+                                       max(-minimum, ZERO))
 
     logging.info("Generating Transfers to Investment Account")
     banking_transfers = generate_outgoing_transfers(
