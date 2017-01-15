@@ -375,7 +375,8 @@ class ConvertAmount(query_compile.EvalFunction):
     def __call__(self, context):
         args = self.eval_args(context)
         amount_, currency = args
-        return convert_amount(context.price_map, amount_, currency, None)
+        return convert.convert_amount(amount_, currency, context.price_map, None)
+
 
 class ConvertAmountWithDate(query_compile.EvalFunction):
     "Coerce an amount to a particular currency."
@@ -387,14 +388,7 @@ class ConvertAmountWithDate(query_compile.EvalFunction):
     def __call__(self, context):
         args = self.eval_args(context)
         amount_, currency, date = args
-        return convert_amount(context.price_map, amount_, currency, date)
-
-def convert_amount(price_map, amount_, currency, date):
-    converted = convert.convert_amount(amount_, currency, price_map, date)
-    if converted is None:
-        logging.warning('Could not convert Amount "{}" to USD'.format(amount_))
-        converted = amount_
-    return converted
+        return convert.convert_amount(amount_, currency, context.price_map, date)
 
 
 class ConvertPosition(query_compile.EvalFunction):

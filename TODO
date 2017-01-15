@@ -5389,9 +5389,9 @@ http://furius.ca/beancount/doc/proposal-query
     market / inventory           -
     market / position            -
     market / posting           X - beancount.ops.holdings.get_pholding_market_value()
-    market / amount              - beancount.core.prices.convert_amount()
-    market / position            - beancount.core.prices.get_position_market_value()
-    market / inventory           - beancount.core.prices.get_inventory_market_value()
+    market / amount            X - beancount.core.prices.convert_amount()
+    market / position          X - beancount.core.prices.get_position_market_value()
+    market / inventory         X - beancount.core.prices.get_inventory_market_value()
     market / amount              - beancount.query.query_env.convert_amount()
     market / position            - beancount.query.query_env.convert_position()
     market / inventory           - beancount.query.query_env.convert_inventory()
