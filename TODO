@@ -5392,9 +5392,9 @@ http://furius.ca/beancount/doc/proposal-query
     market / amount            X - beancount.core.prices.convert_amount()
     market / position          X - beancount.core.prices.get_position_market_value()
     market / inventory         X - beancount.core.prices.get_inventory_market_value()
-    market / amount              - beancount.query.query_env.convert_amount()
-    market / position            - beancount.query.query_env.convert_position()
-    market / inventory           - beancount.query.query_env.convert_inventory()
+    market / amount            X - beancount.query.query_env.convert_amount()
+    market / position          X - beancount.query.query_env.convert_position()
+    market / inventory         X - beancount.query.query_env.convert_inventory()
     weight / inventory           -
     weight / position            -
     weight / posting           X - beancount.core.interpolate.get_posting_weight()

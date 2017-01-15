@@ -60,7 +60,8 @@ Note: This file contains only changes in the 'default' branch.
   - Removed private functions
       beancount.query.query_env.convert_amount(),
       beancount.query.query_env.convert_position(), and
-      beancount.query.query_env.convert_inventory().
+      beancount.query.query_env.value_position(),
+      beancount.query.query_env.value_inventory().
     These used to issue warnings if the conversion could not be carried out; now
     they simply keeps the units of the position instead.
 

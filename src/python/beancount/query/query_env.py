@@ -425,7 +425,7 @@ class ValuePosition(query_compile.EvalFunction):
     def __call__(self, context):
         args = self.eval_args(context)
         pos = args[0]
-        return value_position(context.price_map, pos, None)
+        return convert.get_value(pos, context.price_map, None)
 
 class ValuePositionWithDate(query_compile.EvalFunction):
     "Convert a position to its cost currency at the market value of a particular date."
@@ -437,19 +437,7 @@ class ValuePositionWithDate(query_compile.EvalFunction):
     def __call__(self, context):
         args = self.eval_args(context)
         pos, date = args
-        return value_position(context.price_map, pos, date)
-
-def value_position(price_map, pos, date):
-    units = pos.units
-    if pos.cost is None:
-        converted = units
-    else:
-        converted = convert.convert_amount(units, pos.cost.currency, price_map, date)
-        if converted is None:
-            logging.warning('Could not convert Position "{}" to {}'.format(
-                units, pos.cost.currency))
-            converted = units
-    return converted
+        return convert.get_value(pos, context.price_map, date)
 
 
 class ConvertInventory(query_compile.EvalFunction):
@@ -487,7 +475,7 @@ class ValueInventory(query_compile.EvalFunction):
     def __call__(self, context):
         args = self.eval_args(context)
         inv = args[0]
-        return value_inventory(context.price_map, inv, None)
+        return inv.reduce(convert.get_value, context.price_map, None)
 
 class ValueInventoryWithDate(query_compile.EvalFunction):
     "Coerce an inventory to its market value at a particular date."
@@ -499,20 +487,7 @@ class ValueInventoryWithDate(query_compile.EvalFunction):
     def __call__(self, context):
         args = self.eval_args(context)
         inv, date = args
-        return value_inventory(context.price_map, inv, date)
-
-def value_inventory(price_map, inv, date):
-    converted_inventory = inventory.Inventory()
-    for pos in inv:
-        converted_amount = value_position(price_map, pos, date)
-        if converted_amount is None:
-            logging.warning(
-                'Could not convert Inventory position "{}" to {}'.format(
-                    pos, pos.cost.currency))
-            converted_inventory.add_position(pos)
-        else:
-            converted_inventory.add_amount(converted_amount)
-    return converted_inventory
+        return inv.reduce(convert.get_value, context.price_map, date)
 
 
 class Price(query_compile.EvalFunction):
