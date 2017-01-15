@@ -57,9 +57,10 @@ Note: This file contains only changes in the 'default' branch.
   - Removed beancount.core.prices.get_inventory_market_value();
     use Inventory.reduce(convert.get_value, price_map) instead.
 
-  - Removed private function beancount.query.query_env.convert_amount(). This
-    used to issue a warning if the conversion could not be carried out; now it
-    simply keeps the units of the position instead.
+  - Removed private functions beancount.query.query_env.convert_amount() and
+    beancount.query.query_env.convert_position() . These used to issue warnings
+    if the conversion could not be carried out; now they simply keeps the units
+    of the position instead.
 
 
 2017-01-14

@@ -377,7 +377,6 @@ class ConvertAmount(query_compile.EvalFunction):
         amount_, currency = args
         return convert.convert_amount(amount_, currency, context.price_map, None)
 
-
 class ConvertAmountWithDate(query_compile.EvalFunction):
     "Coerce an amount to a particular currency."
     __intypes__ = [amount.Amount, str, datetime.date]
@@ -401,7 +400,7 @@ class ConvertPosition(query_compile.EvalFunction):
     def __call__(self, context):
         args = self.eval_args(context)
         pos, currency = args
-        return convert_position(context.price_map, pos, currency, None)
+        return convert.convert_position(pos, currency, context.price_map, None)
 
 class ConvertPositionWithDate(query_compile.EvalFunction):
     "Coerce an amount to a particular currency."
@@ -413,15 +412,7 @@ class ConvertPositionWithDate(query_compile.EvalFunction):
     def __call__(self, context):
         args = self.eval_args(context)
         pos, currency, date = args
-        return convert_position(context.price_map, pos, currency, date)
-
-def convert_position(price_map, pos, currency, date):
-    amount_ = pos.units
-    converted = convert.convert_amount(amount_, currency, price_map, date)
-    if converted is None:
-        logging.warning('Could not convert Position "{}" to {}'.format(amount_, currency))
-        converted = amount_
-    return converted
+        return convert.convert_position(pos, currency, context.price_map, date)
 
 
 class ValuePosition(query_compile.EvalFunction):
