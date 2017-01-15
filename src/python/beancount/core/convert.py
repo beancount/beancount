@@ -1,4 +1,15 @@
-"""Conversions from Positing or Posting to units, cost, weight, market value.
+"""Conversions from Position (or Posting) to units, cost, weight, market value.
+
+  Units: Just the primary amount of the position.
+  Cost: The cost basis of the position, if available.
+  Weight: The cost basis or price of the position.
+  Market Value: The units converted to a value via a price map.
+
+This module converts equivalently Position and Posting instances.
+(Note that we're specifically avoiding to create an import dependency on
+beancount.core.data in order to keep this module isolatable.)
+
+Functions named convert_* are used to convert to any currency.
 """
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
@@ -13,7 +24,6 @@ from beancount.core.number import D
 from beancount.core.amount import Amount
 from beancount.core.position import Cost
 from beancount.core.position import Position
-
 from beancount.core import prices
 
 
@@ -25,6 +35,7 @@ def get_units(pos):
     Returns:
       An Amount.
     """
+    assert isinstance(pos, Position) or type(pos).__name__ == 'Posting'
     return pos.units
 
 
@@ -36,6 +47,7 @@ def get_cost(pos):
     Returns:
       An Amount.
     """
+    assert isinstance(pos, Position) or type(pos).__name__ == 'Posting'
     cost = pos.cost
     return (Amount(cost.number * pos.units.number, cost.currency)
             if (isinstance(cost, Cost) and isinstance(cost.number, Decimal))
@@ -63,6 +75,7 @@ def get_weight(pos):
     Returns:
       An Amount.
     """
+    assert isinstance(pos, Position) or type(pos).__name__ == 'Posting'
     units = pos.units
     cost = pos.cost
 
@@ -88,7 +101,8 @@ def get_value(pos, price_map, date=None):
 
     Note that if the position is not held at cost, this does not convert
     anything, even if a price is available in the 'price_map'. We don't have a
-    target currency.
+    target currency. If you're attempting to make such a conversion, see
+    get_value_in_currency().
 
     Args:
       pos: An instance of Position or Posting, equivalently.
@@ -102,6 +116,7 @@ def get_value(pos, price_map, date=None):
       to an empty price map). Compare the returned currency to that of the input
       position if you need to check for success.
     """
+    assert isinstance(pos, Position) or type(pos).__name__ == 'Posting'
     units = pos.units
     cost = pos.cost
 
@@ -140,3 +155,67 @@ def get_value(pos, price_map, date=None):
             value = units
 
     return value
+
+
+# FIXME: Remove the price fallback, it doesn't really make sense to do this, the
+# price database ought to be the single source of rates for conversions when
+# this is requested.
+
+
+# def convert_position(pos, target_currency, price_map, date=None):
+#     """Return the market value of a Position or Posting in a particular currency.
+#
+#     In addition, if the rate from units.currency to target_currency isn't
+#     available, an attempt is made to convert from cost.currency to
+#     target.currency, if available.
+#
+#     Args:
+#       pos: An instance of Position or Posting, equivalently.
+#       target_currency: The target currency to convert to.
+#       price_map: A dict of prices, as built by prices.build_price_map().
+#       date: A datetime.date instance to evaluate the value at, or None.
+#     Returns:
+#       An Amount, either with a succesful value currency conversion, or if we
+#       could not convert the value, just the amount itself, with no modification.
+#       (See get_value() above for details.)
+#     """
+#     units = pos.units
+#
+#     # First, attempt to convert directly. This should be the most
+#     # straightforward conversion.
+#     base_quote = (units.currency, target_currency)
+#     _, price_number = prices.get_price(price_map, base_quote, date)
+#     if price_number is not None:
+#         return Amount(units.number * price_number, target_currency)
+#     else:
+#         # If a price is unavailable, attempt to convert to its cost or price
+#         # currency.
+#         value = get_value(pos, price_map, date)
+#         if value.currency == units.currency:
+#             # If this conversion failed, just return the units.
+#             return units
+#         else:
+#             # We managed to convert to the cost/price currency; now this cannot
+#             # be the target currency, otherwise the above attempt would have
+#             # succeeded. Assert this.
+#
+#
+#
+#
+# ### we shouldn't fall back just yet to the static price here.
+#
+#             if value.currency != target_currency, (value.currency, target_currency)
+#
+#             # So now we'll attempt to convert the value currency to the target
+#             # currency.
+#             base_quote = (value.currency, target_currency)
+#             _, price_number = prices.get_price(price_map, base_quote, date)
+#             if price_number is not None:
+#                 return Amount(value.number * price_number, target_currency)
+#
+#     # Give up; don't return None, return units that can still be added to an
+#     # inventory. This is our failure signal.
+#     return units
+
+
+# def convert_amount(amt, target_currency, price_map, date=None):

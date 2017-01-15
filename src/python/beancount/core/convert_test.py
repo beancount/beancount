@@ -150,6 +150,21 @@ class TestPositionConversions(unittest.TestCase):
                          convert.get_value(pos, self.PRICE_MAP_HIT))
 
 
+    #
+    # Value in currency.
+    #
+
+    def test_convert_position__success(self):
+        pos = self._pos(A("100 HOOL"), None)
+        self.assertEqual(A("100 HOOL"),
+                         convert.convert_position(pos, "USD", self.PRICE_MAP_EMPTY))
+
+    def test_convert_position__success_with_cost(self):
+        pos = self._pos(A("100 HOOL"), Cost(D("514.00"), "USD", None, None))
+        self.assertEqual(A("51400.00 USD"),
+                         convert.convert_position(pos, "USD", self.PRICE_MAP_EMPTY))
+
+
 class TestPostingConversions(TestPositionConversions):
     """Test conversions to units, cost, weight and market-value for Posting objects."""
 
