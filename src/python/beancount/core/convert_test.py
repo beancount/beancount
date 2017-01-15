@@ -142,27 +142,70 @@ class TestPositionConversions(unittest.TestCase):
 
     def test_value__currency_from_cost(self):
         pos = self._pos(A("100 HOOL"), Cost(D("514.00"), "USD", None, None))
-        # Fallback on cost.
-        self.assertEqual(A("51400.00 USD"),
-                         convert.get_value(pos, self.PRICE_MAP_EMPTY))
-        # Computed using the db.
         self.assertEqual(A("53000.00 USD"),
                          convert.get_value(pos, self.PRICE_MAP_HIT))
+        self.assertEqual(A("100 HOOL"),
+                         convert.get_value(pos, self.PRICE_MAP_EMPTY))
 
 
     #
-    # Value in currency.
+    # Conversion to another currency.
     #
 
     def test_convert_position__success(self):
-        pos = self._pos(A("100 HOOL"), None)
+        pos = self._pos(A("100 HOOL"), Cost(D("514.00"), "USD", None, None))
+        self.assertEqual(A("53000.00 USD"),
+                         convert.convert_position(pos, "USD", self.PRICE_MAP_HIT))
+
+    def test_convert_position__miss_but_same_currency(self):
+        pos = self._pos(A("100 HOOL"), Cost(D("514.00"), "USD", None, None))
         self.assertEqual(A("100 HOOL"),
                          convert.convert_position(pos, "USD", self.PRICE_MAP_EMPTY))
 
-    def test_convert_position__success_with_cost(self):
+    def test_convert_position__miss_and_miss_rate_to_rate(self):
         pos = self._pos(A("100 HOOL"), Cost(D("514.00"), "USD", None, None))
-        self.assertEqual(A("51400.00 USD"),
-                         convert.convert_position(pos, "USD", self.PRICE_MAP_EMPTY))
+        self.assertEqual(A("100 HOOL"),
+                         convert.convert_position(pos, "JPY", self.PRICE_MAP_HIT))
+
+    PRICE_MAP_RATEONLY = build_price_map_util([
+        (datetime.date(2016, 2, 1), "USD", A("1.2 CAD")),
+    ])
+
+    def test_convert_position__miss_and_miss_value_rate(self):
+        pos = self._pos(A("100 HOOL"), Cost(D("514.00"), "USD", None, None))
+        self.assertEqual(A("100 HOOL"),
+                         convert.convert_position(pos, "CAD", self.PRICE_MAP_RATEONLY))
+
+    def test_convert_position__miss_and_miss_both(self):
+        pos = self._pos(A("100 HOOL"), Cost(D("514.00"), "USD", None, None))
+        self.assertEqual(A("100 HOOL"),
+                         convert.convert_position(pos, "CAD", self.PRICE_MAP_EMPTY))
+
+    def test_convert_position__miss_and_success_on_implieds(self):
+        pos = self._pos(A("100 HOOL"), Cost(D("514.00"), "USD", None, None))
+        self.assertEqual(A("63600.00 CAD"),
+                         convert.convert_position(pos, "CAD", self.PRICE_MAP_HIT))
+
+    #
+    # Conversion of amounts to another currency.
+    #
+
+    def test_convert_position__fail(self):
+        amt = A("127.00 USD")
+        self.assertEqual(amt,
+                         convert.convert_amount(amt, "CAD", self.PRICE_MAP_EMPTY))
+
+    def test_convert_position__success(self):
+        amt = A("127.00 USD")
+        self.assertEqual(A("152.40 CAD"),
+                         convert.convert_amount(amt, "CAD", self.PRICE_MAP_HIT))
+
+    def test_convert_position__noop(self):
+        amt = A("127.00 USD")
+        self.assertEqual(amt,
+                         convert.convert_amount(amt, "USD", self.PRICE_MAP_EMPTY))
+        self.assertEqual(amt,
+                         convert.convert_amount(amt, "USD", self.PRICE_MAP_HIT))
 
 
 class TestPostingConversions(TestPositionConversions):
@@ -183,9 +226,12 @@ class TestPostingConversions(TestPositionConversions):
 
     def test_value__currency_from_price(self):
         pos = self._pos(A("100 HOOL"), None, A("520.00 USD"))
-        # Fallback on price.
-        self.assertEqual(A("52000.00 USD"),
-                         convert.get_value(pos, self.PRICE_MAP_EMPTY))
-        # Computed using the db.
         self.assertEqual(A("53000.00 USD"),
                          convert.get_value(pos, self.PRICE_MAP_HIT))
+        self.assertEqual(A("100 HOOL"),
+                         convert.get_value(pos, self.PRICE_MAP_EMPTY))
+
+    def test_convert_position__currency_from_price(self):
+        pos = self._pos(A("100 HOOL"), None, A("99999 USD"))
+        self.assertEqual(A("63600.00 CAD"),
+                         convert.convert_position(pos, "CAD", self.PRICE_MAP_HIT))

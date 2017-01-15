@@ -7,9 +7,15 @@ Note: This file contains only changes in the 'default' branch.
 2017-01-??
 
   - Created and test beancount.core.convert Posting and Position conversion
-    functions.
+    functions: get_units(), get_cost(), get_weight(), get_value() (for market
+    value).
 
-  - Implemented Inventory.reduce() and test.
+  - Implemented Inventory.reduce() and associated test, which works in
+    conjunction with those.
+
+  - Implemented more straightforward versions of convert_position() and
+    convert_amount() in module beancount.core.convert, to convert positions and
+    amounts to other currencies.
 
   - Deprecated Inventory.units(); use Inventory.reduce(convert.get_units)
 
