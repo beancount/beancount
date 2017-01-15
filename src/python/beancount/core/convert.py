@@ -167,7 +167,7 @@ def convert_position(pos, target_currency, price_map, date=None):
         (hasattr(pos, 'price') and pos.price and pos.price.currency) or
         None)
     return convert_amount(pos.units, target_currency, price_map,
-                          date=date, via=[value_currency])
+                          date=date, via=(value_currency,))
 
 
 def convert_amount(amt, target_currency, price_map, date=None, via=None):

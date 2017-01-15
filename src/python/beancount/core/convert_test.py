@@ -27,6 +27,7 @@ from beancount.core import display_context
 
 from beancount.core import data
 from beancount.core import prices
+from beancount import loader
 
 
 def build_price_map_util(date_currency_price_tuples):
@@ -190,22 +191,42 @@ class TestPositionConversions(unittest.TestCase):
     # Conversion of amounts to another currency.
     #
 
-    def test_convert_position__fail(self):
+    def test_convert_amount__fail(self):
         amt = A("127.00 USD")
         self.assertEqual(amt,
                          convert.convert_amount(amt, "CAD", self.PRICE_MAP_EMPTY))
 
-    def test_convert_position__success(self):
+    def test_convert_amount__success(self):
         amt = A("127.00 USD")
         self.assertEqual(A("152.40 CAD"),
                          convert.convert_amount(amt, "CAD", self.PRICE_MAP_HIT))
 
-    def test_convert_position__noop(self):
+    def test_convert_amount__noop(self):
         amt = A("127.00 USD")
         self.assertEqual(amt,
                          convert.convert_amount(amt, "USD", self.PRICE_MAP_EMPTY))
         self.assertEqual(amt,
                          convert.convert_amount(amt, "USD", self.PRICE_MAP_HIT))
+
+    @loader.load_doc()
+    def test_convert_amount_with_date(self, entries, _, __):
+        """
+        2013-01-01 price  USD  1.20 CAD
+        2014-01-01 price  USD  1.25 CAD
+        2015-01-01 price  USD  1.30 CAD
+        """
+        price_map = prices.build_price_map(entries)
+        for date, exp_amount in [
+                (None, A('130 CAD')),
+                (datetime.date(2015, 1, 1), A('130 CAD')),
+                (datetime.date(2014, 12, 31), A('125 CAD')),
+                (datetime.date(2014, 1, 1), A('125 CAD')),
+                (datetime.date(2013, 12, 31), A('120 CAD')),
+                (datetime.date(2013, 1, 1), A('120 CAD')),
+                (datetime.date(2012, 12, 31), A('100 USD')),
+                ]:
+            self.assertEqual(exp_amount,
+                             convert.convert_amount(A('100 USD'), 'CAD', price_map, date))
 
 
 class TestPostingConversions(TestPositionConversions):

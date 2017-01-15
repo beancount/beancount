@@ -46,6 +46,11 @@ Note: This file contains only changes in the 'default' branch.
   - Deprecated shell function PRICE(). Renamed it to GETPRICE() in order to
     avoid confusion.
 
+  - Removed beancount.core.prices.convert_amount(). Use
+    beancount.core.convert.convert_amount() instead. Note that a failure doesn't
+    return None anymore, but an unmodified amount. Also notice the reordering of
+    parameters to be consistent with the other functions in that module.
+
 
 2017-01-14
 

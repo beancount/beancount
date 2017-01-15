@@ -8,6 +8,7 @@ from beancount.core.number import D
 from beancount.core.amount import A
 from beancount.core import inventory
 from beancount.core import prices
+from beancount.core import convert
 from beancount.parser import cmptest
 from beancount import loader
 
@@ -189,42 +190,6 @@ class TestPriceMap(unittest.TestCase):
         # Test not found.
         result = prices.get_price(price_map, ('EWJ', 'JPY'))
         self.assertEqual((None, None), result)
-
-    @loader.load_doc()
-    def test_convert_amount(self, entries, _, __):
-        """
-        2013-07-01 price  USD  1.20 CAD
-        """
-        price_map = prices.build_price_map(entries)
-        self.assertEqual(A('120 CAD'),
-                         prices.convert_amount(price_map, 'CAD',
-                                               A('100 USD')))
-        self.assertEqual(A('100 CAD'),
-                         prices.convert_amount(price_map, 'CAD',
-                                               A('100 CAD')))
-        self.assertEqual(None,
-                         prices.convert_amount(price_map, 'EUR',
-                                               A('100 USD')))
-
-    @loader.load_doc()
-    def test_convert_amount_with_date(self, entries, _, __):
-        """
-        2013-01-01 price  USD  1.20 CAD
-        2014-01-01 price  USD  1.25 CAD
-        2015-01-01 price  USD  1.30 CAD
-        """
-        price_map = prices.build_price_map(entries)
-        for date, exp_amount in [
-                (None, A('130 CAD')),
-                (datetime.date(2015, 1, 1), A('130 CAD')),
-                (datetime.date(2014, 12, 31), A('125 CAD')),
-                (datetime.date(2014, 1, 1), A('125 CAD')),
-                (datetime.date(2013, 12, 31), A('120 CAD')),
-                (datetime.date(2013, 1, 1), A('120 CAD')),
-                (datetime.date(2012, 12, 31), None),
-                ]:
-            self.assertEqual(exp_amount,
-                             prices.convert_amount(price_map, 'CAD', A('100 USD'), date))
 
     @loader.load_doc()
     def test_ordering_same_date(self, entries, _, __):

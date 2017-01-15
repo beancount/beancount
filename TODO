@@ -5369,7 +5369,7 @@ http://furius.ca/beancount/doc/proposal-query
     I think pytype from Google have better type inference but it's written in
     Python2 and I haven't figure out how to run it against python3 code.
 
-** Refactoring Conversions
+** refactoring Conversions
 
   The computation of cost, weight and market value must be uniformized.
   Moreover, these values should be equally computable over a Posting or a

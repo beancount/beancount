@@ -269,32 +269,6 @@ def get_price(price_map, base_quote, date=None):
         return None, None
 
 
-# FIXME: This is going to get refactored w/ b.c.convert().
-def convert_amount(price_map, target_currency, amount_, date=None):
-    """Convert commodities held at a cost that differ from the value currency.
-
-    Args:
-      price_map: A price map dict, as created by build_price_map.
-      target_currency: A string, the currency to convert to.
-      amount_: An Amount instance, the amount to convert from.
-      date: A datetime.date instance, the date at which to convert.
-    Returns:
-      An instance of Amount, or None, if we could not convert it to the target
-      currency.
-    """
-    if amount_.currency != target_currency:
-        base_quote = (amount_.currency, target_currency)
-        _, rate = get_price(price_map, base_quote, date)
-        if rate is not None:
-            converted_amount = amount.Amount(amount_.number * rate, target_currency)
-        else:
-            # If a rate is not found, simply remove the market value.
-            converted_amount = None
-    else:
-        converted_amount = amount_
-    return converted_amount
-
-
 # FIXME: This is going to get replaced by b.c.convert().
 def get_position_market_value(pos, date, price_map):
     """Compute the market value of the position at a particular date.
