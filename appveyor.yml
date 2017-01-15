@@ -7,8 +7,7 @@ environment:
     # The list here is complete (excluding Python 2.6, which
     # isn't covered by this document) at the time of writing.
 
-    - PYTHON: "C:\\Python36-x64"
-      # DISTUTILS_USE_SDK: "1"
+    - PYTHON: "C:\\Python35-x64"
 
 install:
   # We need wheel installed to build wheels
@@ -31,7 +30,7 @@ after_test:
   # Again, you only need build.cmd if you're building C extensions for
   # 64-bit Python 3.3/3.4. And you need to use %PYTHON% to get the correct
   # interpreter
-  - "%PYTHON%\\python.exe setup.py build_ext"
+  - "%PYTHON%\\python.exe setup.py build_ext --compiler=mingw32"
 
 artifacts:
   # bdist_wheel puts your built wheel in the dist directory
