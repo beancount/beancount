@@ -31,11 +31,11 @@ after_test:
   # Again, you only need build.cmd if you're building C extensions for
   # 64-bit Python 3.3/3.4. And you need to use %PYTHON% to get the correct
   # interpreter
-  - "%PYTHON%\\python.exe setup.py bdist_wheel"
+  - "%PYTHON%\\python.exe setup.py --compiler=mingw32 bdist_wheel"
 
 artifacts:
   # bdist_wheel puts your built wheel in the dist directory
-  - path: dist\*
+  - path: dist\*.whl
 
 #on_success:
 #  You can use this step to upload your artifacts to a public website.
