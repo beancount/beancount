@@ -461,8 +461,8 @@ class ConvertInventory(query_compile.EvalFunction):
 
     def __call__(self, context):
         args = self.eval_args(context)
-        inventory_, currency = args
-        return convert_inventory(context.price_map, inventory_, currency, None)
+        inv, currency = args
+        return inv.reduce(convert.convert_position, currency, context.price_map, None)
 
 class ConvertInventoryWithDate(query_compile.EvalFunction):
     "Coerce an inventory to a particular currency."
@@ -473,21 +473,8 @@ class ConvertInventoryWithDate(query_compile.EvalFunction):
 
     def __call__(self, context):
         args = self.eval_args(context)
-        inventory_, currency, date = args
-        return convert_inventory(context.price_map, inventory_, currency, date)
-
-def convert_inventory(price_map, inv, currency, date):
-    converted_inventory = inventory.Inventory()
-    for pos in inv:
-        amount_ = pos.units
-        converted_amount = convert.convert_amount(amount_, currency, price_map, date)
-        if converted_amount is None:
-            logging.warning(
-                'Could not convert Inventory position "{}" to {}'.format(amount_, currency))
-            converted_inventory.add_amount(amount_)
-        else:
-            converted_inventory.add_amount(converted_amount)
-    return converted_inventory
+        inv, currency, date = args
+        return inv.reduce(convert.convert_position, currency, context.price_map, date)
 
 
 class ValueInventory(query_compile.EvalFunction):
