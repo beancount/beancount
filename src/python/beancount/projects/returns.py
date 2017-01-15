@@ -401,8 +401,8 @@ def compute_period_returns(date_begin, date_end,
           of the period.
     """
     # Evaluate the boundary balances at market value.
-    mktvalue_begin = prices.get_inventory_market_value(balance_begin, date_begin, price_map)
-    mktvalue_end = prices.get_inventory_market_value(balance_end, date_end, price_map)
+    mktvalue_begin = balance_begin.reduce(convert.get_value, price_map, date_begin)
+    mktvalue_end = balance_end.reduce(convert.get_value, price_map, date_end)
 
     # Compute the union of all currencies. At this point, ignore currencies
     # held-at-cost and issue a warning if some are found (if the price database

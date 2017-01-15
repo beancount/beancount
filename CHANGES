@@ -51,6 +51,12 @@ Note: This file contains only changes in the 'default' branch.
     return None anymore, but an unmodified amount. Also notice the reordering of
     parameters to be consistent with the other functions in that module.
 
+  - Removed beancount.core.prices.get_position_market_value();
+    use convert.get_value() instead.
+
+  - Removed beancount.core.prices.get_inventory_market_value();
+    use Inventory.reduce(convert.get_value, price_map) instead.
+
 
 2017-01-14
 
