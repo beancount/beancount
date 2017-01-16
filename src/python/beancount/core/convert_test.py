@@ -1,7 +1,7 @@
 """Unit tests for conversion functions.
 """
 
-__copyright__ = "Copyright (C) 2014-2015  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import datetime

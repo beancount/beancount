@@ -4,7 +4,7 @@
 We generate the dependency order with snakefood.
 In this script, we ensure that the expected set of dependencies aren't violated.
 """
-__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse

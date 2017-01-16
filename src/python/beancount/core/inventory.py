@@ -23,7 +23,7 @@ This is meant to accommodate both booked and non-booked amounts. The clever tric
 pull to do this is that for positions which aren't booked, we simply leave the 'cost' and
 'lot-date' as None. This is the case for most of the transactions.
 """
-__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import copy

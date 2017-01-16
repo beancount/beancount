@@ -5,5 +5,5 @@ enough and that haven't been integrated and yet generalized in the reporting
 infrastructure that you need to write some code to carry them out. This
 directory is intended to contain those as usable scripts or examples.
 """
-__copyright__ = "Copyright (C) 2014  Martin Blais"
+__copyright__ = "Copyright (C) 2014, 2016  Martin Blais"
 __license__ = "GNU GPLv2"

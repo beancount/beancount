@@ -1,6 +1,6 @@
 """Support utillities for testing scripts.
 """
-__copyright__ = "Copyright (C) 2014-2015  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import unittest

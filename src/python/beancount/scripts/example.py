@@ -5,7 +5,7 @@ looks as realistic as possible for a moderately complex mock individual. This
 can also be used as an input generator for a stress test for performance
 evaluation.
 """
-__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse

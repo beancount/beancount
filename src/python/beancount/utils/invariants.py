@@ -17,7 +17,7 @@ function.
       uninstrument_invariants(Inventory)
 
 """
-__copyright__ = "Copyright (C) 2015  Martin Blais"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import types

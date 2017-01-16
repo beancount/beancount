@@ -18,7 +18,7 @@ postings due to duck-typing.
 Function named get_*() are used to compute values from postings to their price currency.
 Functions named convert_*() are used to convert postings and amounts to any currency.
 """
-__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from beancount.core.number import Decimal

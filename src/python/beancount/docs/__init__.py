@@ -3,5 +3,5 @@
 The code in here is not part of Beancount's usage per-se, but rather used to
 automate some of its documentation tasks.
 """
-__copyright__ = "Copyright (C) 2015  Martin Blais"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"

@@ -7,7 +7,7 @@ missing or incomplete. This is used to track progress in test coverage
 and to ensure that the entire software suite is covered by appropriate
 testing code.
 """
-__copyright__ = "Copyright (C) 2014-2015  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import os

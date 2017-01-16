@@ -9,7 +9,7 @@ See discussion here for details:
 https://groups.google.com/d/msg/ledger-cli/N8Slh2t45K0/aAz0i3Be4LYJ
 """
 
-__copyright__ = "Copyright (C) 2014  Martin Blais"
+__copyright__ = "Copyright (C) 2014, 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 __plugins__ = ('exclude_tag',)
 

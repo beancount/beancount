@@ -6,7 +6,7 @@ modification to the invnetory booking algorithm that only ever merge lots for
 lots without cost. This lists all the occurrences where at lot at cost is being
 added to.
 """
-__copyright__ = "Copyright (C) 2015  Martin Blais"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections

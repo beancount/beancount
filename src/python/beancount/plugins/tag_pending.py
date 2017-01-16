@@ -26,7 +26,7 @@ the corresponding view in the web interface, or just find the entries and
 produce a listing of them.
 """
 
-__copyright__ = "Copyright (C) 2014-2015  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from beancount.core import inventory

@@ -8,7 +8,7 @@ better, e.g., "What is my *average* annual compensation over my entire tenure at
 the company?" or "What would be annual compensation like if I were to
 extrapolate the last 3 or 6 months?".
 """
-__copyright__ = "Copyright (C) 2015  Martin Blais"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse

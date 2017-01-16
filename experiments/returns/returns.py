@@ -211,7 +211,7 @@ Notes:
    transactions, it's a bit confusing.).
 
 """
-__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse

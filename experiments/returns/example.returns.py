@@ -11,7 +11,7 @@ Note that you can also invoke beancount.projects.returns directly like this:
   python3 -m beancount.projects.returns <filename> <regexp>
 
 """
-__copyright__ = "Copyright (C) 2014-2015  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2015, 2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse
