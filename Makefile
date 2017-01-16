@@ -215,9 +215,9 @@ check-copyright:
 # To list all messages, call: "pylint --list-msgs"
 LINT_SRCS =					\
   $(SRC)/beancount				\
-  bin/*						\
   examples/ingest/office/importers		\
-  tools
+  bin/*						\
+  tools/*.py
 
 # Note: Keeping to 3.5 because 3.6 pylint raises an exception (as of 2017-01-15).
 #PYLINT = pylint

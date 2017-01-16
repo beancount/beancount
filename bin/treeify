@@ -16,7 +16,6 @@ import argparse
 import collections
 import re
 import sys
-from pprint import pprint
 
 
 # Default regular expressions used for splitting.
@@ -96,6 +95,7 @@ class Node(list):
     (from its parent class).
     """
     def __init__(self, name):
+        list.__init__(self)
         self.name = name
         self.nos = []
 
@@ -307,7 +307,7 @@ def main():
 
     # Open input and output files.
     input_file = open(args.input, 'r') if args.input else sys.stdin
-    output_file = open(args.output,'w') if args.output else sys.stdout
+    output_file = open(args.output, 'w') if args.output else sys.stdout
     lines = list(input_file)
 
     # Find a column in the file. If not found, this will return None.

@@ -183,10 +183,10 @@ bad-names=foo,bar,baz,toto,tutu,tata
 name-group=
 
 # Include a hint for the correct naming format with invalid-name
-include-naming-hint=yes
+include-naming-hint=no
 
 # Regular expression matching correct module names
-module-rgx=(([a-z_][a-z0-9_]*)|([A-Z][a-zA-Z0-9]+))$
+module-rgx=(([a-z_][a-z0-9_\-]*)|([A-Z][a-zA-Z0-9]+))$
 
 # Naming hint for module names
 module-name-hint=(([a-z_][a-z0-9_]*)|([A-Z][a-zA-Z0-9]+))$

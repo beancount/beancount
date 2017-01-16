@@ -11,7 +11,6 @@ import contextlib
 import datetime
 import os
 import re
-import tempfile
 import subprocess
 import unittest
 from os import path
@@ -142,13 +141,13 @@ def main():
 
         new_contents = process(filename, contents)
 
-        if 0:
-            with tempfile.NamedTemporaryFile('w') as file_:
-                file_.write(new_contents)
-                file_.flush()
-                if 0:
-                    print(filename)
-                    subprocess.call(['diff', filename, file_.name])
+        # import tempfile
+        # with tempfile.NamedTemporaryFile('w') as file_:
+        #     file_.write(new_contents)
+        #     file_.flush()
+        #     if 0:
+        #         print(filename)
+        #         subprocess.call(['diff', filename, file_.name])
 
         with open(filename, 'w') as file_:
             file_.write(new_contents)

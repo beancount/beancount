@@ -19,7 +19,7 @@ name, like this:
 If you'd like to upload the sheets in an existing document, provide it as an
 option:
 
-  upload-to-sheets --docid=1xcCjHM-Tjvkwq3R5NuHCv0dGj1ubo0Y09DfGn8HRMLY apples.csv oranges.csv
+  upload-to-sheets --docid="1xcCjHM...j1ubo0Y09DfGn8HRMLY" apples.csv oranges.csv
 
 Note that if you do this and there are existing sheets with the same names, e.g.
 "apples", the contents of these sheets will be replaced by the uploaded
@@ -43,16 +43,11 @@ can override this location with the GOOGLE_APIS environment variable.)
 __author__ = 'Martin Blais <blais@furius.ca>'
 
 import argparse
-import bisect
-import collections
 import csv
-import codecs
 import logging
 import os
 import re
-import sys
 import string
-import unittest
 from os import path
 
 from oauth2client import client
@@ -114,8 +109,7 @@ def pop_alist(items, key, default=None):
         if item[0] == key:
             del items[index]
             return item[1]
-    else:
-        return default
+    return default
 
 
 def sheet_range(title, nrows, ncols):
@@ -158,8 +152,8 @@ class Doc:
 
     def delete_empty_sheets(self):
         """Remove empty sheets created only temporarily."""
-        requests = [{'deleteSheet': {'sheetId': sheetId}}
-                    for title, sheetId in self.get_sheets()
+        requests = [{'deleteSheet': {'sheetId': sheet_id}}
+                    for title, sheet_id in self.get_sheets()
                     if title == EMPTY_SHEET_TITLE]
         self.service.spreadsheets().batchUpdate(
             spreadsheetId=self.docid,
@@ -206,8 +200,8 @@ class Doc:
         resp = self.service.spreadsheets().get(
             spreadsheetId=self.docid,
             ranges=title).execute()
-        gridProperties = resp['sheets'][0]['properties']['gridProperties']
-        return (gridProperties['rowCount'], gridProperties['columnCount'])
+        grid_props = resp['sheets'][0]['properties']['gridProperties']
+        return (grid_props['rowCount'], grid_props['columnCount'])
 
 
     def clear_sheet(self, title, nrowcols=None):
@@ -229,18 +223,18 @@ class Doc:
             body={}).execute()
 
 
-    def resize_sheet(self, sheetId, title, nrows, ncols):
+    def resize_sheet(self, sheet_id, title, nrows, ncols):
         """Update the size of a sheet.
 
         Args:
-          sheetId: An integer, the id of the sheet in the doc.
+          sheet_id: An integer, the id of the sheet in the doc.
           title: A string, the name of the sheet in the doc.
           nrows: An integer, the number of rows to resize to.
           ncols: An integer, the number of columns to resize to.
         """
         requests = [{'updateSheetProperties': {
             'properties': {
-                'sheetId': sheetId,
+                'sheetId': sheet_id,
                 'title': title,  # Required, unfortunately.
                 'gridProperties': {'rowCount': nrows,
                                    'columnCount': ncols}},
@@ -250,25 +244,25 @@ class Doc:
             body={'requests': requests}).execute()
 
 
-    def auto_resize_sheet(self, sheetId):
+    def auto_resize_sheet(self, sheet_id):
         """Auto-resize the spreadsheet based on the current data in it.
 
         Args:
-          sheetId: An integer, the id of the sheet in the doc.
+          sheet_id: An integer, the id of the sheet in the doc.
         """
         requests = [{'autoResizeDimensions': {
-            'dimensions': {'sheetId': sheetId,
+            'dimensions': {'sheetId': sheet_id,
                            'dimension': 'COLUMNS'}}}]
         self.service.spreadsheets().batchUpdate(
             spreadsheetId=self.docid,
             body={'requests': requests}).execute()
 
 
-    def update_sheet(self, sheetId, title, filename):
+    def update_sheet(self, sheet_id, title, filename):
         """Clear and replace the data in a sheet with that of a file.
 
         Args:
-          sheetId: An integer, the id of the sheet in the doc.
+          sheet_id: An integer, the id of the sheet in the doc.
           title: A string, the name of the sheet in the doc.
           filename: A string, the path to the CSV filename to load and upload.
         """
@@ -281,7 +275,7 @@ class Doc:
 
         # Note: Sizing down the sheet also deletes the values from the cells removed
         # automatically.
-        self.resize_sheet(sheetId, title, nrows, ncols)
+        self.resize_sheet(sheet_id, title, nrows, ncols)
 
         # Clear the remaining contents.
         self.clear_sheet(title, (nrows, ncols))
@@ -301,7 +295,7 @@ class Doc:
 
         # Make sure the newly created sheet looks good by default, by sizing the
         # columns to fit the newly updated data.
-        self.auto_resize_sheet(sheetId)
+        self.auto_resize_sheet(sheet_id)
 
     def set_title(self, doctitle):
         """Set the document's title (not the sheet title, the document's).
@@ -346,7 +340,7 @@ def main():
 
     # Discover the service.
     _, http = get_credentials('https://www.googleapis.com/auth/spreadsheets', args)
-    url = discoveryServiceUrl='https://sheets.googleapis.com/$discovery/rest?version=v4'
+    url = 'https://sheets.googleapis.com/$discovery/rest?version=v4'
     service = discovery.build('sheets', 'v4', http=http, discoveryServiceUrl=url)
 
     # Figure out what the name mappings should be, from the filenames (or
@@ -385,16 +379,16 @@ def main():
     sheets_alist = []
     for title, filename in reversed(new_sheets):
         logging.info("Updating sheet '%s'", title)
-        sheetId = pop_alist(existing_sheets, title)
-        if sheetId is None:
-            sheetId = doc.add_sheet(title)
-        sheets_alist.append((sheetId, title, filename))
+        sheet_id = pop_alist(existing_sheets, title)
+        if sheet_id is None:
+            sheet_id = doc.add_sheet(title)
+        sheets_alist.append((sheet_id, title, filename))
     logging.info("Matched sheets: %s", sheets_alist)
 
     # Clear and replace the data in the given sheet with that of the given
     # filename.
-    for sheetId, title, filename in sheets_alist:
-        doc.update_sheet(sheetId, title, filename)
+    for sheet_id, title, filename in sheets_alist:
+        doc.update_sheet(sheet_id, title, filename)
 
     # Clean up temporary sheets created for new documents only.
     if created:
