@@ -7,8 +7,8 @@ __license__ = "GNU GPLv2"
 
 import copy
 import datetime
-import collections
 import re
+import warnings
 
 from typing import NamedTuple, Optional
 

@@ -169,7 +169,7 @@ def extract(importer_config,
             except Exception as exc:
                 logging.error("Importer %s.extract() raised an unexpected error: %s",
                               importer.name(), exc)
-                logging.error("Traceback: %s",traceback.format_exc())
+                logging.error("Traceback: %s", traceback.format_exc())
                 continue
             if not new_entries and not duplicate_entries:
                 continue

@@ -14,10 +14,7 @@ import collections
 from beancount.core.number import ONE
 from beancount.core.number import ZERO
 from beancount.core.data import Price
-from beancount.core import amount
 from beancount.core import data
-from beancount.core import inventory
-from beancount.core import position
 from beancount.utils import misc_utils
 from beancount.utils import bisect_key
 

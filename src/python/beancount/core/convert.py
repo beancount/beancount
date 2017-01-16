@@ -21,13 +21,7 @@ Functions named convert_*() are used to convert postings and amounts to any curr
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import copy
-import datetime
-import collections
-import re
-
 from beancount.core.number import Decimal
-from beancount.core.number import D
 from beancount.core.amount import Amount
 from beancount.core.position import Cost
 from beancount.core.position import Position

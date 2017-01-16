@@ -6,33 +6,18 @@ __license__ = "GNU GPLv2"
 
 import datetime
 import unittest
-import copy
-import random
-from datetime import date
 
-from beancount.core import convert
-from beancount.core import display_context
-from beancount.core import inventory
-from beancount.core import prices
+from beancount.core.number import MISSING
+from beancount.core.number import D
+from beancount.core.amount import A
 from beancount.core.data import create_simple_posting as P
 from beancount.core.data import create_simple_posting_with_cost as PCost
 from beancount.core.position import Cost
 from beancount.core.position import Position
-from beancount.core.position import from_amounts
-from beancount.core.position import from_string
-from beancount.parser import cmptest
-from beancount import loader
-
-from beancount.core.number import ZERO
-from beancount.core.number import MISSING
-from beancount.core.number import D
-from beancount.core.amount import A
-from beancount.core.amount import Amount
-from beancount.core.number import D
-from beancount.core.amount import A
-
-from beancount.core import data
+from beancount.core import convert
+from beancount.core import inventory
 from beancount.core import prices
+from beancount.core import data
 from beancount import loader
 
 

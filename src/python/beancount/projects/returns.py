@@ -216,7 +216,6 @@ from beancount.core import data
 from beancount.core import inventory
 from beancount.core import getters
 from beancount.core import flags
-from beancount.core import interpolate
 from beancount.core import convert
 from beancount.core import prices
 from beancount.utils import misc_utils
@@ -665,8 +664,10 @@ def compute_returns(entries, transfer_account,
             annual_returns = 'OVERFLOW'
 
         logging.info("From %s to %s", period_begin, period_end)
-        logging.info("  Begin %s => %s", balance_begin.reduce(convert.get_units), mktvalue_begin)
-        logging.info("  End   %s => %s", balance_end.reduce(convert.get_units), mktvalue_end)
+        logging.info("  Begin %s => %s",
+                     balance_begin.reduce(convert.get_units), mktvalue_begin)
+        logging.info("  End   %s => %s",
+                     balance_end.reduce(convert.get_units), mktvalue_end)
         logging.info("  Returns     %s", period_returns)
         logging.info("  Annualized  %s", annual_returns)
         logging.info("")

@@ -5,10 +5,7 @@ import unittest
 import datetime
 
 from beancount.core.number import D
-from beancount.core.amount import A
-from beancount.core import inventory
 from beancount.core import prices
-from beancount.core import convert
 from beancount.parser import cmptest
 from beancount import loader
 

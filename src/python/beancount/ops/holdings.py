@@ -4,13 +4,11 @@ __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
-import warnings
 
 from beancount.core.number import ZERO
 from beancount.core import account
 from beancount.core import amount
 from beancount.core import position
-from beancount.core import convert
 from beancount.core import realization
 from beancount.core import account_types
 from beancount.core import data

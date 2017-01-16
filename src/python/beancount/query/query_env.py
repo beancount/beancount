@@ -9,7 +9,6 @@ __license__ = "GNU GPLv2"
 
 import copy
 import datetime
-import logging
 import re
 import textwrap
 import warnings
@@ -17,7 +16,6 @@ import warnings
 from beancount.core.number import Decimal
 from beancount.core.data import Transaction
 from beancount.core.compare import hash_entry
-from beancount.core import interpolate
 from beancount.core import amount
 from beancount.core import position
 from beancount.core import inventory
