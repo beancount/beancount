@@ -188,7 +188,7 @@ sandbox:
 	bean-sandbox $(INPUT)
 
 missing-tests:
-	$(TOOLS)/find-missing-tests.py $(SRC)
+	$(TOOLS)/find_missing_tests.py $(SRC)
 
 fixmes:
 	egrep -srn '\b(FIXME|TODO\()' $(SRC) || true
@@ -205,7 +205,7 @@ sfood-checker:
 
 # Check dependency constraints.
 constraints dep-constraints: build/beancount.deps
-	$(TOOLS)/dependency-constraints.py $<
+	$(TOOLS)/dependency_constraints.py $<
 
 
 # Run the linter on all source code.
