@@ -3,7 +3,7 @@
 This module contains some common basic operations on entries that are complex
 enough not to belong in core/data.py.
 """
-__copyright__ = "Copyright (C) 2014  Martin Blais"
+__copyright__ = "Copyright (C) 2014, 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from collections import defaultdict

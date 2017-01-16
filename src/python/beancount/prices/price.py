@@ -1,6 +1,6 @@
 """Driver code for the price script.
 """
-__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2015-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import datetime
@@ -104,13 +104,15 @@ def setup_cache(cache_filename, clear_cache):
             cache_filename))
 
         global _CACHE
-        _CACHE = shelve.open(cache_filename)
+        _CACHE = shelve.open(cache_filename, 'c')
         _CACHE.expiration = DEFAULT_EXPIRATION
 
 
 def reset_cache():
     """Reset the cache to its uninitialized state."""
     global _CACHE
+    if _CACHE is not None:
+        _CACHE.close()
     _CACHE = None
 
 

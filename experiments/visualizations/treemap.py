@@ -14,6 +14,7 @@ from beancount.parser import options
 from beancount.parser import printer
 from beancount.ops import summarize
 from beancount.core import realization
+from beancount.core import convert
 
 
 
@@ -62,7 +63,7 @@ def main():
 
 def fill(name, real_account):
     result = {"name": name}
-    number = real_account.balance.get_cost().get_amount(opts.currency).number
+    number = real_account.balance.reduce(convert.get_cost).get_amount(opts.currency).number
     # FIXME: TODO - convert all the amounts to a currency.
 
     # Note: For now we don't deal with negative numbers. We should just ignore

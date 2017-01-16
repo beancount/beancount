@@ -1,7 +1,7 @@
 """Algorithms for 'booking' inventory, that is, the process of finding a
 matching lot when reducing the content of an inventory.
 """
-__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2015-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
@@ -14,6 +14,8 @@ from beancount.core.inventory import Inventory
 from beancount.core.number import MISSING
 from beancount.core.number import ZERO
 from beancount.core.position import Cost
+from beancount.core.position import Position
+from beancount.core import convert
 
 from beancount.core import account
 from beancount.core import interpolate
@@ -244,7 +246,7 @@ def get_incomplete_postings(entry, options_map):
             currencies.add(units.currency)
 
             # Compute the amount to balance and update the inventory.
-            weight = interpolate.get_posting_weight(posting)
+            weight = convert.get_weight(posting)
             residual.add_amount(weight)
 
             has_regular_postings = True
@@ -295,21 +297,27 @@ def get_incomplete_postings(entry, options_map):
             # each position.
             for pos in residual_positions:
                 pos = -pos
-                pos.set_units(Amount(
+
+                units = pos.units
+                new_units = Amount(
                     interpolate.quantize_with_tolerance(tolerances,
-                                                        pos.units.currency,
-                                                        pos.units.number),
-                    pos.units.currency))
+                                                        units.currency,
+                                                        units.number),
+                    units.currency)
 
                 meta = copy.copy(old_posting.meta) if old_posting.meta else {}
                 meta[interpolate.AUTOMATIC_META] = True
                 new_postings.append(
-                    Posting(old_posting.account, pos.units, pos.cost,
+                    Posting(old_posting.account, new_units, pos.cost,
                             None, old_posting.flag, meta))
                 has_inserted = True
 
+                # Note/FIXME: This is dumb; refactor cost computation so we can
+                # reuse it directly.
+                new_pos = Position(new_units, pos.cost)
+
                 # Update the residuals inventory.
-                weight = pos.get_cost()
+                weight = convert.get_cost(new_pos)
                 residual.add_amount(weight)
 
         postings[index:index+1] = new_postings

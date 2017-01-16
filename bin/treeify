@@ -10,13 +10,13 @@ Note: If your paths have spaces in them, this will not work. Space is used as a
 delimiter to detect the end of a column. You can customize the delimiter with an
 option.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2017  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import argparse
 import collections
 import re
 import sys
-from pprint import pprint
 
 
 # Default regular expressions used for splitting.
@@ -57,7 +57,6 @@ def find_column(lines, pattern, delimiter):
     beginnings = collections.defaultdict(list)
     pattern_and_whitespace = "({})(?P<ws>{}.|$)".format(pattern, delimiter)
     for no, line in enumerate(lines):
-        #line = line.rstrip('\n')
         for match in re.finditer(pattern_and_whitespace, line):
             beginnings[match.start()].append((no, line, match))
 
@@ -74,7 +73,7 @@ def find_column(lines, pattern, delimiter):
     # Expenses:Food:Restaurant     10,990.74 USD
     # Expenses:Health:Dental:Insurance   208.80 USD
     #
-    for leftmost_column, column_matches in beginnings.items():
+    for leftmost_column, column_matches in sorted(beginnings.items()):
 
         # Compute the location of the rightmost column of text.
         rightmost_column = max(match.end(1) for _, _, match in column_matches)
@@ -97,6 +96,7 @@ class Node(list):
     (from its parent class).
     """
     def __init__(self, name):
+        list.__init__(self)
         self.name = name
         self.nos = []
 
@@ -308,7 +308,7 @@ def main():
 
     # Open input and output files.
     input_file = open(args.input, 'r') if args.input else sys.stdin
-    output_file = open(args.output,'w') if args.output else sys.stdout
+    output_file = open(args.output, 'w') if args.output else sys.stdout
     lines = list(input_file)
 
     # Find a column in the file. If not found, this will return None.

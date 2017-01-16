@@ -23,6 +23,7 @@ from beancount.core import data
 from beancount.core.number import Decimal
 from beancount.core.data import Transaction, Price
 from beancount.core import realization
+from beancount.core import convert
 from beancount.ops import summarize
 from beancount.ops import validation
 from beancount.core.data import render_fileloc, format_entry
@@ -32,7 +33,7 @@ from beancount import load
 from beancount import parser
 from beancount import utils
 from beancount.utils.bisect_key import bisect_left_withkey
-from beancount.ops import prices
+from beancount.core import prices
 from beancount.core.account import account_type, account_name_sortkey
 
 
@@ -66,7 +67,7 @@ def compute_yearly_balances(real_accounts):
         balances = compute_balance_by_type(real_accounts, balance_date)
         rows = []
         for account_type, balance in balances._asdict().items():
-            costs = balance.get_cost().get_amounts()
+            costs = balance.reduce(convert.get_cost).get_amounts()
             index = [cost.currency for cost in costs]
             series = pandas.Series([cost.number for cost in costs], index=index)
             rows.append(series)
@@ -88,18 +89,20 @@ def check_equity_balances(real_accounts):
         balsheet_inventory = balances.Assets + balances.Liabilities + balances.Equity
         income_inventory = balances.Income + balances.Expenses
 
-        print('A+L+E     (cost): {}'.format(balsheet_inventory.get_cost()))
-        print('I+X       (cost): {}'.format(income_inventory.get_cost()))
-        print('A+L+E+I+X (cost): {}'.format((balsheet_inventory + income_inventory).get_cost()))
+        print('A+L+E     (cost): {}'.format(balsheet_inventory.reduce(convert.get_cost)))
+        print('I+X       (cost): {}'.format(income_inventory.reduce(convert.get_cost)))
+        print('A+L+E+I+X (cost): {}'.format((balsheet_inventory +
+                                             income_inventory).reduce(convert.get_cost)))
 
         # We need to synthesize a transaction here instead of doing this.
         conversions = -(balsheet_inventory + income_inventory)
-        print('Conversions:   {}'.format(conversions.get_cost()))
-        balsheet_inventory += conversions.get_cost()
+        print('Conversions:   {}'.format(conversions.reduce(convert.get_cost)))
+        balsheet_inventory += conversions.reduce(convert.get_cost)
 
-        assert (balsheet_inventory + income_inventory).get_cost().is_empty()
+        assert (balsheet_inventory + income_inventory).reduce(convert.get_cost).is_empty()
         # print('A+L+E+I+X (pos) ', (balsheet_inventory + income_inventory))
-        print('A+L+E+I+X (cost)', (balsheet_inventory + income_inventory).get_cost())
+        print('A+L+E+I+X (cost)', (balsheet_inventory +
+                                   income_inventory).reduce(convert.get_cost))
 
         balances_fwd = compute_balance_by_type(real_accounts, balance_date + datetime.timedelta(days=365))
         print('balances_fwd', balances_fwd)
@@ -109,7 +112,8 @@ def check_equity_balances(real_accounts):
                             balances_fwd.Income +
                             balances_fwd.Expenses)
         print('conversions_fwd', conversions_fwd)
-        print('conversions_diff', conversions.get_cost() + (-conversions_fwd).get_cost())
+        print('conversions_diff', (conversions.reduce(convert.get_cost) +
+                                   (-conversions_fwd).reduce(convert.get_cost)))
 
 
 #-------------------------------------------------------------------------------
@@ -153,7 +157,7 @@ def main():
         dump_tree_balances(real_accounts, real_log)
         total_balance = summarize.compute_total_balance(entries)
         # print("TRIAL_BALANCE", total_balance, file=real_log)
-        # print("TRIAL_BALANCE (cost)", total_balance.get_cost(), file=real_log)
+        # print("TRIAL_BALANCE (cost)", total_balance.reduce(convert.get_cost), file=real_log)
 
         with utils.log_time('summarize', logging.info):
             account_opening = data.Account('Equity:OpeningBalances', 'Equity')
@@ -164,7 +168,7 @@ def main():
             dump_tree_balances(sumreal_accounts, sum_log)
             total_balance = summarize.compute_total_balance(sum_entries)
             # print("TRIAL_BALANCE", total_balance, file=sum_log)
-            # print("TRIAL_BALANCE (cost)", total_balance.get_cost(), file=sum_log)
+            # print("TRIAL_BALANCE (cost)", total_balance.reduce(convert.get_cost), file=sum_log)
 
 
     if 0:

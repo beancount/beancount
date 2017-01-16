@@ -1,6 +1,6 @@
 """Convert a Beancount ledger into an SQL database.
 """
-__copyright__ = "Copyright (C) 2014-2015  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import sqlite3 as dbapi

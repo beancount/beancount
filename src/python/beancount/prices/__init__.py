@@ -137,5 +137,5 @@ differ in their support. For example, Google Finance does not support fetching
 historical data for its CURRENCY:* instruments.
 
 """
-__copyright__ = "Copyright (C) 2015  Martin Blais"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"

@@ -1,6 +1,6 @@
 """Basic data structures used to represent the Ledger entries.
 """
-__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import builtins
@@ -460,7 +460,7 @@ def create_simple_posting_with_cost(entry, account,
     return posting
 
 
-NoneType = type(None)  # pylint: disable=invalid-name
+NoneType = type(None)
 
 def sanity_check_types(entry, allow_none_for_tags_and_links=False):
     """Check that the entry and its postings has all correct data types.
@@ -541,10 +541,9 @@ def get_entry(posting_or_entry):
     Returns:
       A datetime instance.
     """
-    if isinstance(posting_or_entry, TxnPosting):
-        return posting_or_entry.txn
-    else:
-        return posting_or_entry
+    return (posting_or_entry.txn
+            if isinstance(posting_or_entry, TxnPosting)
+            else posting_or_entry)
 
 
 # Sorting order of directives on the same day, by type:
@@ -657,6 +656,25 @@ def find_closest(entries, filename, lineno):
                 min_diffline = diffline
                 closest_entry = entry
     return closest_entry
+
+
+def remove_account_postings(account, entries):
+    """Remove all postings with the given account.
+
+    Args:
+      account: A string, the account name whose postings we want to remove.
+    Returns:
+      A list of entries without the rounding postings.
+    """
+    new_entries = []
+    for entry in entries:
+        if isinstance(entry, Transaction) and (
+                any(posting.account == account for posting in entry.postings)):
+            entry = entry._replace(postings=[posting
+                                             for posting in entry.postings
+                                             if posting.account != account])
+        new_entries.append(entry)
+    return new_entries
 
 
 def iter_entry_dates(entries, date_begin, date_end):
