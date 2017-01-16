@@ -10,7 +10,8 @@ Note: If your paths have spaces in them, this will not work. Space is used as a
 delimiter to detect the end of a column. You can customize the delimiter with an
 option.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2017  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import argparse
 import collections

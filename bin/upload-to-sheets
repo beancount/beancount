@@ -29,7 +29,7 @@ with contents derived from another program (e.g. Beancount).
 
 This script only requires the latest and official Google client API libraries
 (it does not need gdata nor Python wrappers for sheets). It uses the v4 Sheets
-API (current as of 2016-12-15). You will need to have an installation of the
+API (current as of 2013-2017-12-15). You will need to have an installation of the
 following libraries for this to work:
 
  * apiclient (Google Python client API)
@@ -40,7 +40,8 @@ Moreover, you will need to enable the Google Sheets API in the developer console
 and download the Client Secrets that Google provides to ~/.google-apis.json. (You
 can override this location with the GOOGLE_APIS environment variable.)
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2013-2017  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import argparse
 import csv
