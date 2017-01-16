@@ -89,6 +89,7 @@ from beancount.core import flags
 from beancount.core import position
 from beancount.core import inventory
 from beancount.core import interpolate
+from beancount.core import convert
 
 
 def book(entries, options_map, booking_methods):
@@ -714,7 +715,7 @@ def handle_ambiguous_matches(entry, posting, matches, booking_method):
             merged_cost = inventory.Inventory()
             for match in matches:
                 merged_units.add_amount(match.units)
-                merged_cost.add_amount(interpolate.get_posting_weight(match))
+                merged_cost.add_amount(convert.get_weight(match))
             if len(merged_units) != 1 or len(merged_cost) != 1:
                 errors.append(
                     ReductionError(

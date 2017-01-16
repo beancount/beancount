@@ -14,6 +14,7 @@ from beancount.core import interpolate
 from beancount.core import data
 from beancount.core import inventory
 from beancount.core import position
+from beancount.core import convert
 from beancount.parser import parser
 from beancount.parser import cmptest
 from beancount.utils import defdict
@@ -28,28 +29,6 @@ OPTIONS_MAP = {'inferred_tolerance_default': {},
 
 
 class TestBalance(cmptest.TestCase):
-
-    def test_get_posting_weight(self):
-
-        # Entry without cost, without price.
-        posting = P(None, "Assets:Bank:Checking", "105.50", "USD")
-        self.assertEqual(A("105.50 USD"),
-                         interpolate.get_posting_weight(posting))
-
-        # Entry without cost, with price.
-        posting = posting._replace(price=A("0.90 CAD"))
-        self.assertEqual(A("94.95 CAD"),
-                         interpolate.get_posting_weight(posting))
-
-        # Entry with cost, without price.
-        posting = PCost(None, "Assets:Bank:Checking", "105.50", "USD", "0.80", "EUR")
-        self.assertEqual(A("84.40 EUR"),
-                         interpolate.get_posting_weight(posting))
-
-        # Entry with cost, and with price (the price should be ignored).
-        posting = posting._replace(price=A("2.00 CAD"))
-        self.assertEqual(A("84.40 EUR"),
-                         interpolate.get_posting_weight(posting))
 
     def test_has_nontrivial_balance(self):
 
@@ -76,7 +55,8 @@ class TestBalance(cmptest.TestCase):
             P(None, "Assets:Bank:Checking", "105.50", "USD"),
             P(None, "Assets:Bank:Checking", "-194.50", "USD"),
             ])
-        self.assertEqual(inventory.from_string("-89 USD"), residual.units())
+        self.assertEqual(inventory.from_string("-89 USD"),
+                         residual.reduce(convert.get_units))
 
         # Try with more accounts.
         residual = interpolate.compute_residual([
@@ -85,7 +65,8 @@ class TestBalance(cmptest.TestCase):
             P(None, "Assets:Bank:Investing", "5", "AAPL"),
             P(None, "Assets:Bank:Savings", "89.00", "USD"),
             ])
-        self.assertEqual(inventory.from_string("5 AAPL"), residual.units())
+        self.assertEqual(inventory.from_string("5 AAPL"),
+                         residual.reduce(convert.get_units))
 
     @loader.load_doc(expect_errors=True)
     def test_fill_residual_posting(self, entries, _, __):
@@ -145,22 +126,6 @@ class TestBalance(cmptest.TestCase):
         # Same as above.
         self.assertFalse(residual.is_empty())
         self.assertEqual(inventory.from_string('-0.012375 USD'), residual)
-
-    @loader.load_doc()
-    def test_compute_cost_basis(self, entries, _, __):
-        """
-        2001-01-01 open Assets:Account1
-
-        2014-01-01 *
-          Assets:Account1        20 HOOL {40.00 USD}
-          Assets:Account1        20 HOOL {60.00 USD} @ 70.00 USD
-          Assets:Account1     -2000.00 USD
-          Assets:Account1         3 HOOL {30.00 CAD}
-          Assets:Account1       -90.00 CAD
-        """
-        postings = next(data.filter_txns(entries)).postings
-        self.assertEqual(inventory.from_string('2000.00 USD, 90.00 CAD'),
-                         interpolate.compute_cost_basis(postings))
 
 
 class TestComputeBalance(unittest.TestCase):

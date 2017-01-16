@@ -5,9 +5,7 @@ import unittest
 import datetime
 
 from beancount.core.number import D
-from beancount.core.amount import A
-from beancount.core import inventory
-from beancount.ops import prices
+from beancount.core import prices
 from beancount.parser import cmptest
 from beancount import loader
 
@@ -191,42 +189,6 @@ class TestPriceMap(unittest.TestCase):
         self.assertEqual((None, None), result)
 
     @loader.load_doc()
-    def test_convert_amount(self, entries, _, __):
-        """
-        2013-07-01 price  USD  1.20 CAD
-        """
-        price_map = prices.build_price_map(entries)
-        self.assertEqual(A('120 CAD'),
-                         prices.convert_amount(price_map, 'CAD',
-                                               A('100 USD')))
-        self.assertEqual(A('100 CAD'),
-                         prices.convert_amount(price_map, 'CAD',
-                                               A('100 CAD')))
-        self.assertEqual(None,
-                         prices.convert_amount(price_map, 'EUR',
-                                               A('100 USD')))
-
-    @loader.load_doc()
-    def test_convert_amount_with_date(self, entries, _, __):
-        """
-        2013-01-01 price  USD  1.20 CAD
-        2014-01-01 price  USD  1.25 CAD
-        2015-01-01 price  USD  1.30 CAD
-        """
-        price_map = prices.build_price_map(entries)
-        for date, exp_amount in [
-                (None, A('130 CAD')),
-                (datetime.date(2015, 1, 1), A('130 CAD')),
-                (datetime.date(2014, 12, 31), A('125 CAD')),
-                (datetime.date(2014, 1, 1), A('125 CAD')),
-                (datetime.date(2013, 12, 31), A('120 CAD')),
-                (datetime.date(2013, 1, 1), A('120 CAD')),
-                (datetime.date(2012, 12, 31), None),
-                ]:
-            self.assertEqual(exp_amount,
-                             prices.convert_amount(price_map, 'CAD', A('100 USD'), date))
-
-    @loader.load_doc()
     def test_ordering_same_date(self, entries, _, __):
         """
         ;; The last one to appear in the file should be selected.
@@ -247,78 +209,3 @@ class TestPriceMap(unittest.TestCase):
             self.assertEqual(exp_value, act_value.quantize(D('0.01')))
 
         self.assertEqual(1, len(price_map[('CAD', 'USD')]))
-
-
-class TestMarketValue(unittest.TestCase):
-
-    @loader.load_doc()
-    def setUp(self, entries, _, __):
-        """
-        2013-06-01 price  USD  1.01 CAD
-        2013-06-05 price  USD  1.05 CAD
-        2013-06-06 price  USD  1.06 CAD
-        2013-06-07 price  USD  1.07 CAD
-        2013-06-10 price  USD  1.10 CAD
-
-        2013-06-01 price  HOOL  101.00 USD
-        2013-06-05 price  HOOL  105.00 USD
-        2013-06-06 price  HOOL  106.00 USD
-        2013-06-07 price  HOOL  107.00 USD
-        2013-06-10 price  HOOL  110.00 USD
-
-        2013-06-01 price  AAPL  91.00 USD
-        2013-06-05 price  AAPL  95.00 USD
-        2013-06-06 price  AAPL  96.00 USD
-        2013-06-07 price  AAPL  97.00 USD
-        2013-06-10 price  AAPL  90.00 USD
-        """
-        self.price_map = prices.build_price_map(entries)
-
-    def test_no_change(self):
-        balances = inventory.from_string('100 USD')
-        market_value = prices.get_inventory_market_value(balances,
-                                                         datetime.date(2013, 6, 6),
-                                                         self.price_map)
-        self.assertEqual(inventory.from_string('100 USD'), market_value)
-
-    def test_other_currency(self):
-        balances = inventory.from_string('100 CAD')
-        market_value = prices.get_inventory_market_value(balances,
-                                                         datetime.date(2013, 6, 6),
-                                                         self.price_map)
-        self.assertEqual(inventory.from_string('100 CAD'), market_value)
-
-    def test_mixed_currencies(self):
-        balances = inventory.from_string('100 USD, 90 CAD')
-        market_value = prices.get_inventory_market_value(balances,
-                                                         datetime.date(2013, 6, 6),
-                                                         self.price_map)
-        self.assertEqual(inventory.from_string('100 USD, 90 CAD'), market_value)
-
-    def test_stock_single(self):
-        balances = inventory.from_string('5 HOOL {0.01 USD}')
-        market_value = prices.get_inventory_market_value(balances,
-                                                         datetime.date(2013, 6, 6),
-                                                         self.price_map)
-        self.assertEqual(inventory.from_string('530 USD'), market_value)
-
-    def test_stock_many_lots(self):
-        balances = inventory.from_string('2 HOOL {0.01 USD}, 3 HOOL {0.02 USD}')
-        market_value = prices.get_inventory_market_value(balances,
-                                                         datetime.date(2013, 6, 6),
-                                                         self.price_map)
-        self.assertEqual(inventory.from_string('530 USD'), market_value)
-
-    def test_stock_different_ones(self):
-        balances = inventory.from_string('2 HOOL {0.01 USD}, 2 AAPL {0.02 USD}')
-        market_value = prices.get_inventory_market_value(balances,
-                                                         datetime.date(2013, 6, 6),
-                                                         self.price_map)
-        self.assertEqual(inventory.from_string('404 USD'), market_value)
-
-    def test_stock_not_found(self):
-        balances = inventory.from_string('2 MSFT {0.01 USD}')
-        market_value = prices.get_inventory_market_value(balances,
-                                                         datetime.date(2013, 6, 6),
-                                                         self.price_map)
-        self.assertEqual(inventory.from_string('2 MSFT {0.01 USD}'), market_value)

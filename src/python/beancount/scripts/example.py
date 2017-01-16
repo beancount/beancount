@@ -35,11 +35,12 @@ from beancount.core import amount
 from beancount.core import inventory
 from beancount.core import realization
 from beancount.core import display_context
+from beancount.core import convert
 from beancount.parser import parser
 from beancount.parser import booking
 from beancount.parser import printer
 from beancount.ops import validation
-from beancount.ops import prices
+from beancount.core import prices
 from beancount.scripts import format
 from beancount.core import getters
 from beancount.utils import misc_utils
@@ -376,9 +377,9 @@ def get_minimum_balance(entries, account, currency):
       A Decimal number, the minimum amount throughout the history of this account.
     """
     min_amount = ZERO
-    for _, balances in postings_for(data.sorted(entries), [account]):
+    for _, balances in postings_for(entries, [account]):
         balance = balances[account]
-        current = balance.get_units(currency).number
+        current = balance.get_currency_units(currency).number
         if current < min_amount:
             min_amount = current
     return min_amount
@@ -630,7 +631,7 @@ def generate_retirement_investments(entries, account, commodities_items, price_m
       entries: A list of directives
       account: The root account for all retirement investment sub-accounts.
       commodities_items: A list of (commodity, fraction to be invested in) items.
-      price_map: A dict of prices, as per beancount.ops.prices.build_price_map().
+      price_map: A dict of prices, as per beancount.core.prices.build_price_map().
     Returns:
       A list of new directives for the given investments. This also generates account
       opening directives for the desired investment commodities.
@@ -658,7 +659,7 @@ def generate_retirement_investments(entries, account, commodities_items, price_m
     new_entries = []
     for txn_posting, balances in postings_for(entries, [account_cash]):
         balance = balances[account_cash]
-        amount_to_invest = balance.get_units('CCY').number
+        amount_to_invest = balance.get_currency_units('CCY').number
 
         # Find the date the following Monday, the date to invest.
         txn_date = txn_posting.txn.date
@@ -687,21 +688,20 @@ def generate_retirement_investments(entries, account, commodities_items, price_m
     return data.sorted(open_entries + new_entries)
 
 
-def generate_banking(date_begin, date_end, amount_initial):
+def generate_banking(entries, date_begin, date_end, amount_initial):
     """Generate a checking account opening.
 
     Args:
+      entries: A list of entries which affect this account.
       date_begin: A date instance, the beginning date.
       date_end: A date instance, the end date.
       amount_initial: A Decimal instance, the amount to initialize the checking
         account with.
     Returns:
       A list of directives.
-
     """
-    date_balance = date_begin + datetime.timedelta(days=1)
     amount_initial_neg = -amount_initial
-    return parse("""
+    new_entries = parse("""
 
       {date_begin} open Assets:CC:Bank1
         institution: "Bank1_Institution"
@@ -717,9 +717,22 @@ def generate_banking(date_begin, date_end, amount_initial):
         Assets:CC:Bank1:Checking   {amount_initial} CCY
         Equity:Opening-Balances    {amount_initial_neg} CCY
 
-      {date_balance} balance Assets:CC:Bank1:Checking   {amount_initial} CCY
+    """, **locals())
+
+    date_balance = date_begin + datetime.timedelta(days=1)
+    account = 'Assets:CC:Bank1:Checking'
+    for txn_posting, balances in postings_for(data.sorted(entries + new_entries),
+                                              [account], before=True):
+        if txn_posting.txn.date >= date_balance:
+            break
+    amount_balance = balances[account].get_currency_units('CCY').number
+    bal_entries = parse("""
+
+      {date_balance} balance Assets:CC:Bank1:Checking   {amount_balance} CCY
 
     """, **locals())
+
+    return new_entries + bal_entries
 
 
 def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks):
@@ -730,7 +743,7 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
       date_end: A date instance, the end date.
       entries: A list of entries that contains at least the transfers to the investment
         account's cash account.
-      price_map: A dict of prices, as per beancount.ops.prices.build_price_map().
+      price_map: A dict of prices, as per beancount.core.prices.build_price_map().
       stocks: A list of strings, the list of commodities to invest in.
     Returns:
       A list of directives.
@@ -792,7 +805,7 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
                 total.add_inventory(balances[account_stock])
 
             # Create an entry offering dividends of 1% of the portfolio.
-            portfolio_cost = total.cost().get_units('CCY').number
+            portfolio_cost = total.reduce(convert.get_cost).get_currency_units('CCY').number
             amount_cash = (frac_dividend * portfolio_cost).quantize(D('0.01'))
             amount_cash_neg = -amount_cash
             dividend = parse("""
@@ -810,7 +823,7 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
 
         # If the balance is high, buy with high probability.
         balance = balances[account_cash]
-        total_cash = balance.get_units('CCY').number
+        total_cash = balance.get_currency_units('CCY').number
         assert total_cash >= ZERO, ('Cash balance is negative: {}'.format(total_cash))
         invest_cash = total_cash * frac_invest - commission
         if invest_cash > min_amount:
@@ -856,7 +869,7 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
                 if price == position.cost.number:
                     continue # Skip lots without movement.
                 market_value = position.units.number * price
-                book_value = position.get_cost().number
+                book_value = convert.get_cost(position).number
                 gain = market_value - book_value
                 gains.append((gain, market_value, price, position))
             if not gains:
@@ -950,7 +963,7 @@ def generate_clearing_entries(date_iter,
 
         # Check if we need to clear.
         if next_date <= txn_posting.txn.date:
-            pos_amount = balance_clear.get_units('CCY')
+            pos_amount = balance_clear.get_currency_units('CCY')
             neg_amount = -pos_amount
             new_entries.extend(parse("""
               {next_date} * "{payee}" "{narration}"
@@ -996,7 +1009,7 @@ def generate_outgoing_transfers(entries,
 
     # Reverse the balance amounts taking into account the minimum balance for
     # all time in the future.
-    amounts = [(balances[account].get_units('CCY').number, txn_posting)
+    amounts = [(balances[account].get_currency_units('CCY').number, txn_posting)
                for txn_posting, balances in postings_for(entries, [account])]
     reversed_amounts = []
     last_amount, _ = amounts[-1]
@@ -1096,7 +1109,7 @@ def generate_balance_checks(entries, account, date_iter):
     with misc_utils.swallow(StopIteration):
         for txn_posting, balance in postings_for(entries, [account], before=True):
             while txn_posting.txn.date >= next_date:
-                amount = balance[account].get_units('CCY').number
+                amount = balance[account].get_currency_units('CCY').number
                 balance_checks.extend(parse("""
                   {next_date} balance {account} {amount} CCY
                 """, **locals()))
@@ -1591,13 +1604,15 @@ def write_example_file(date_birth, date_begin, date_end, reformat, file):
     # Open banking accounts and gift the checking account with a balance that
     # will offset all the amounts to ensure a positive balance throughout its
     # lifetime.
-    minimum = get_minimum_balance(
-        data.sorted(income_entries +
-                    banking_expenses +
-                    credit_entries +
-                    tax_entries),
-        account_checking, 'CCY')
-    banking_entries = generate_banking(date_begin, date_end, max(-minimum, ZERO))
+    entries_for_banking = data.sorted(income_entries +
+                                      banking_expenses +
+                                      credit_entries +
+                                      tax_entries)
+    minimum = get_minimum_balance(entries_for_banking,
+                                  account_checking, 'CCY')
+    banking_entries = generate_banking(entries_for_banking,
+                                       date_begin, date_end,
+                                       max(-minimum, ZERO))
 
     logging.info("Generating Transfers to Investment Account")
     banking_transfers = generate_outgoing_transfers(

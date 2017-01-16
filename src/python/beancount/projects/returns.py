@@ -216,8 +216,8 @@ from beancount.core import data
 from beancount.core import inventory
 from beancount.core import getters
 from beancount.core import flags
-from beancount.core import interpolate
-from beancount.ops import prices
+from beancount.core import convert
+from beancount.core import prices
 from beancount.utils import misc_utils
 from beancount.utils import date_utils
 
@@ -318,7 +318,7 @@ def segment_periods(entries, accounts_value, accounts_intflows,
 
         logging.debug(",-----------------------------------------------------------")
         logging.debug(" Begin:   %s", period_begin)
-        logging.debug(" Balance: %s", balance_begin.units())
+        logging.debug(" Balance: %s", balance_begin.reduce(convert.get_units))
         logging.debug("")
 
         # Consume all internal flow entries, simply accumulating the total balance.
@@ -350,7 +350,7 @@ def segment_periods(entries, accounts_value, accounts_intflows,
         ## (period_begin, period_end)
         periods.append((period_begin, period_end, balance_begin, balance_end))
 
-        logging.debug(" Balance: %s", balance_end.units())
+        logging.debug(" Balance: %s", balance_end.reduce(convert.get_units))
         logging.debug(" End:     %s", period_end)
         logging.debug("`-----------------------------------------------------------")
         logging.debug("")
@@ -400,8 +400,8 @@ def compute_period_returns(date_begin, date_end,
           of the period.
     """
     # Evaluate the boundary balances at market value.
-    mktvalue_begin = prices.get_inventory_market_value(balance_begin, date_begin, price_map)
-    mktvalue_end = prices.get_inventory_market_value(balance_end, date_end, price_map)
+    mktvalue_begin = balance_begin.reduce(convert.get_value, price_map, date_begin)
+    mktvalue_end = balance_end.reduce(convert.get_value, price_map, date_end)
 
     # Compute the union of all currencies. At this point, ignore currencies
     # held-at-cost and issue a warning if some are found (if the price database
@@ -551,7 +551,7 @@ def internalize(entries, transfer_account,
             # Calculate the weight of the balance to transfer.
             balance_transfer = inventory.Inventory()
             for posting in postings_extflows:
-                balance_transfer.add_amount(interpolate.get_posting_weight(posting))
+                balance_transfer.add_amount(convert.get_weight(posting))
 
             prototype_entry = entry._replace(flag=flags.FLAG_RETURNS,
                                              links=(entry.links or set()) | set([link]))
@@ -664,8 +664,10 @@ def compute_returns(entries, transfer_account,
             annual_returns = 'OVERFLOW'
 
         logging.info("From %s to %s", period_begin, period_end)
-        logging.info("  Begin %s => %s", balance_begin.units(), mktvalue_begin)
-        logging.info("  End   %s => %s", balance_end.units(), mktvalue_end)
+        logging.info("  Begin %s => %s",
+                     balance_begin.reduce(convert.get_units), mktvalue_begin)
+        logging.info("  End   %s => %s",
+                     balance_end.reduce(convert.get_units), mktvalue_end)
         logging.info("  Returns     %s", period_returns)
         logging.info("  Annualized  %s", annual_returns)
         logging.info("")

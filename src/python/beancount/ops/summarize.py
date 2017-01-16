@@ -22,7 +22,8 @@ from beancount.core import inventory
 from beancount.core import data
 from beancount.core import flags
 from beancount.core import interpolate
-from beancount.ops import prices
+from beancount.core import convert
+from beancount.core import prices
 from beancount.ops import balance
 from beancount.utils import bisect_key
 from beancount.parser import options
@@ -473,7 +474,7 @@ def conversions(entries, conversion_account, conversion_currency, date=None):
     conversion_balance = interpolate.compute_entries_balance(entries, date=date)
 
     # Early exit if there is nothing to do.
-    conversion_cost_balance = conversion_balance.cost()
+    conversion_cost_balance = conversion_balance.reduce(convert.get_cost)
     if conversion_cost_balance.is_empty():
         return entries
 
@@ -568,8 +569,8 @@ def create_entries_from_balances(balances, date, source_account, direction,
         for position in account_balance.get_positions():
             postings.append(data.Posting(account, position.units, position.cost,
                                          None, None, None))
-            cost_pos = -position.at_cost()
-            postings.append(data.Posting(source_account, cost_pos.units, cost_pos.cost,
+            cost = -convert.get_cost(position)
+            postings.append(data.Posting(source_account, cost, None,
                                          None, None, None))
 
         new_entries.append(new_entry)

@@ -5,15 +5,16 @@ __license__ = "GNU GPLv2"
 
 import collections
 import copy
+import warnings
 
 from beancount.core.number import D
 from beancount.core.number import ONE
 from beancount.core.number import ZERO
 from beancount.core.number import MISSING
-from beancount.core.amount import mul as amount_mul
 from beancount.core.inventory import Inventory
 from beancount.core import inventory
 from beancount.core import position
+from beancount.core import convert
 from beancount.core.data import Transaction
 from beancount.core.data import Posting
 from beancount.core import getters
@@ -53,39 +54,16 @@ BalanceError = collections.namedtuple('BalanceError', 'source message entry')
 def get_posting_weight(posting):
     """Get the amount that will need to be balanced from a posting of a transaction.
 
-    This is a *key* element of the semantics of transactions in this software. A
-    balance amount is the amount used to check the balance of a transaction.
-    Here are all relevant examples, with the amounts used to balance the
-    postings:
-
-      Assets:Account  5234.50 USD                             ->  5234.50 USD
-      Assets:Account  3877.41 EUR @ 1.35 USD                  ->  5234.50 USD
-      Assets:Account       10 HOOL {523.45 USD}               ->  5234.50 USD
-      Assets:Account       10 HOOL {523.45 USD} @ 545.60 CAD  ->  5234.50 USD
+    Deprecated; see convert.get_weight().
 
     Args:
       posting: A Posting instance.
     Returns:
       An amount, required to balance this posting.
     """
-    # It the object has a cost, use that to balance this posting.
-    if posting.cost is not None:
-        amount = amount_mul(posting.cost, posting.units.number)
-
-    else:
-        # If there is a price, use that to balance this posting.
-        price = posting.price
-        if price is not None:
-            assert posting.units.currency != price.currency, (
-                "Invalid currency for price, should be different: {} in {}".format(posting,
-                                                                                   price))
-            amount = amount_mul(price, posting.units.number)
-
-        # Otherwise, just use the units.
-        else:
-            amount = posting.units
-
-    return amount
+    warnings.warn("get_posting_weight() is deprecated; "
+                  "use convert.get_weight() instead")
+    return convert.get_weight(posting)
 
 
 def compute_cost_basis(postings):
@@ -98,13 +76,11 @@ def compute_cost_basis(postings):
     Returns:
       An Inventory instance.
     """
-    cost_basis = Inventory()
-    for posting in postings:
-        if posting.cost is None:
-            continue
-        amount = amount_mul(posting.cost, posting.units.number)
-        cost_basis.add_amount(amount)
-    return cost_basis
+    warnings.warn("compute_cost_basis() is deprecated; "
+                  "use Inventory(positions).reduce(convert.get_cost) instead")
+    return Inventory(pos
+                     for pos in postings
+                     if pos.cost is not None).reduce(convert.get_cost)
 
 
 def has_nontrivial_balance(posting):
@@ -139,7 +115,7 @@ def compute_residual(postings):
         if posting.meta and posting.meta.get(AUTOMATIC_RESIDUAL, False):
             continue
         # Add to total residual balance.
-        inventory.add_amount(get_posting_weight(posting))
+        inventory.add_amount(convert.get_weight(posting))
     return inventory
 
 

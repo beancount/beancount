@@ -4,6 +4,83 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2017-01-15
+
+  (from branch "conversions")
+
+  - Created and test beancount.core.convert Posting and Position conversion
+    functions: get_units(), get_cost(), get_weight(), get_value() (for market
+    value).
+
+  - Implemented Inventory.reduce() and associated test, which works in
+    conjunction with those.
+
+  - Implemented more straightforward versions of convert_position() and
+    convert_amount() in module beancount.core.convert, to convert positions and
+    amounts to other currencies.
+
+  - Deprecated Inventory.units(); use Inventory.reduce(convert.get_units)
+
+  - Deprecated Inventory.cost(); use Inventory.reduce(convert.get_cost)
+
+  - Deprecated Inventory.get_units() to Inventory.get_currency_units() in order to
+    avoid future name confusion.
+
+  - Deprecated Position.at_cost(); use convert.get_cost(position) instead.
+
+  - Deprecated Position.get_cost(); use convert.get_cost(position) instead.
+
+  - Deprecated b.c.interpolation.compute_cost_basis(); use
+    Inventory.(pos for pos in positions if pos.cost is not
+    None).reduce(convert.get_cost)
+    instead.
+
+  - Deprecated get_posting_weight(); use convert.get_weight() instead.
+
+  - Removed b.ops.holdings.get_pholding_market_value(), which was unused.
+    If you need a market-value function, use convert.get_value() instead.
+
+  - Converted all the old code to these new converted functions.
+
+  - Moved module beancount.ops.prices to beancount.core.prices, and added a
+    deprecation warning.
+
+  - Deprecated shell function PRICE(). Renamed it to GETPRICE() in order to
+    avoid confusion.
+
+  - Removed beancount.core.prices.convert_amount(). Use
+    beancount.core.convert.convert_amount() instead. Note that a failure doesn't
+    return None anymore, but an unmodified amount. Also notice the reordering of
+    parameters to be consistent with the other functions in that module.
+
+  - Removed beancount.core.prices.get_position_market_value();
+    use convert.get_value() instead.
+
+  - Removed beancount.core.prices.get_inventory_market_value();
+    use Inventory.reduce(convert.get_value, price_map) instead.
+
+  - Removed private functions
+      beancount.query.query_env.convert_amount(),
+      beancount.query.query_env.convert_position(), and
+      beancount.query.query_env.value_position(),
+      beancount.query.query_env.value_inventory().
+    These used to issue warnings if the conversion could not be carried out; now
+    they simply keeps the units of the position instead.
+
+
+2017-01-15
+
+  - Fixed all tests for Python-3.6.
+    Beancount has not officially been ported to Python-3.6.
+
+
+2017-01-14
+
+  - Fixed bug with generation of example that would produce an incorrect initial
+    balance for banking accounts. The example test should have been broken. (No
+    idea why this wasn't deteted earlier, probably by chance.)
+
+
 2017-01-08
 
   - Completed "Intro to Double-Entry Accounting" doc.

@@ -11,7 +11,7 @@ from beancount.core.amount import A
 from beancount.core import position
 from beancount.core import data
 from beancount.ops import holdings
-from beancount.ops import prices
+from beancount.core import prices
 from beancount import loader
 
 
@@ -522,44 +522,3 @@ class TestHoldings(unittest.TestCase):
 
         expected_price = A('60.00 USD')
         self.assertEqual(expected_price, posting.price)
-
-    def test_get_pholding_market_value(self):
-        posting = data.Posting('Account',
-                               A('100 MSFT'),
-                               position.Cost(D('54.34'), 'USD', None, None),
-                               A('60.00 USD'),
-                               None, None)
-        self.assertEqual(A('6000.00 USD'),
-                         holdings.get_pholding_market_value(posting))
-
-        posting = data.Posting('Account',
-                               A('100 MSFT'),
-                               position.Cost(D('54.34'), 'USD', None, None),
-                               None,
-                               None, None)
-        self.assertEqual(A('5434.00 USD'),
-                         holdings.get_pholding_market_value(posting))
-
-        posting = data.Posting('Account',
-                               A('1000.00 USD'),
-                               None,
-                               None,
-                               None, None)
-        self.assertEqual(A('1000.00 USD'),
-                         holdings.get_pholding_market_value(posting))
-
-        with self.assertRaises(AssertionError):
-            posting = data.Posting('Account',
-                                   A('1000.00 USD'),
-                                   None,
-                                   A('60.00 USD'),
-                                   None, None)
-            holdings.get_pholding_market_value(posting)
-
-        with self.assertRaises(AssertionError):
-            posting = data.Posting('Account',
-                                   A('1000.00 USD'),
-                                   position.Cost(D('1.25'), 'CAD', None, None),
-                                   A('60.00 USD'),
-                                   None, None)
-            holdings.get_pholding_market_value(posting)
