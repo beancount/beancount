@@ -57,7 +57,6 @@ def find_column(lines, pattern, delimiter):
     beginnings = collections.defaultdict(list)
     pattern_and_whitespace = "({})(?P<ws>{}.|$)".format(pattern, delimiter)
     for no, line in enumerate(lines):
-        #line = line.rstrip('\n')
         for match in re.finditer(pattern_and_whitespace, line):
             beginnings[match.start()].append((no, line, match))
 
@@ -74,7 +73,7 @@ def find_column(lines, pattern, delimiter):
     # Expenses:Food:Restaurant     10,990.74 USD
     # Expenses:Health:Dental:Insurance   208.80 USD
     #
-    for leftmost_column, column_matches in beginnings.items():
+    for leftmost_column, column_matches in sorted(beginnings.items()):
 
         # Compute the location of the rightmost column of text.
         rightmost_column = max(match.end(1) for _, _, match in column_matches)

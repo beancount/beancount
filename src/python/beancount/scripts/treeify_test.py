@@ -238,23 +238,23 @@ class TestTreeify(TestTreeifyBase):
           2014-01-01 Expenses:Health:Dental:Insurance     | Expenses:Health:Dental:Insurance   XX
           2014-01-01 Expenses:Health:Life:GroupTermLife   | Expenses:Health:Life:GroupTermLife XX
         """, """\
-                                                            |-- Assets
-                                                            |   `-- US
-                                                            |       `-- Vanguard
-          2014-01-01 Assets:US:Vanguard:Cash              | |           |-- Cash               XX
-          2014-01-01 Assets:US:Vanguard:RGAGX             | |           |-- RGAGX              XX
-          2014-01-01 Assets:US:Vanguard:VBMPX             | |           `-- VBMPX              XX
-                                                            |-- Equity
-          2014-01-01 Equity:Opening-Balances              | |   `-- Opening-Balances           XX
-                                                            `-- Expenses
-                                                                |-- Food
-          2014-01-01 Expenses:Food:Groceries              |     |   |-- Groceries              XX
-          2014-01-01 Expenses:Food:Restaurant             |     |   `-- Restaurant             XX
-                                                                `-- Health
-                                                                    |-- Dental
-          2014-01-01 Expenses:Health:Dental:Insurance     |         |   `-- Insurance          XX
-                                                                    `-- Life
-          2014-01-01 Expenses:Health:Life:GroupTermLife   |             `-- GroupTermLife      XX
+                     |-- Assets
+                     |   `-- US
+                     |       `-- Vanguard
+          2014-01-01 |           |-- Cash                 | Assets:US:Vanguard:Cash            XX
+          2014-01-01 |           |-- RGAGX                | Assets:US:Vanguard:RGAGX           XX
+          2014-01-01 |           `-- VBMPX                | Assets:US:Vanguard:VBMPX           XX
+                     |-- Equity
+          2014-01-01 |   `-- Opening-Balances             | Equity:Opening-Balances            XX
+                     `-- Expenses
+                         |-- Food
+          2014-01-01     |   |-- Groceries                | Expenses:Food:Groceries            XX
+          2014-01-01     |   `-- Restaurant               | Expenses:Food:Restaurant           XX
+                         `-- Health
+                             |-- Dental
+          2014-01-01         |   `-- Insurance            | Expenses:Health:Dental:Insurance   XX
+                             `-- Life
+          2014-01-01             `-- GroupTermLife        | Expenses:Health:Life:GroupTermLife XX
         """, False)
 
     def test_overlapping_column(self):
