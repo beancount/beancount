@@ -53,6 +53,8 @@ import oauth2client.client
 from oauth2client import tools
 from oauth2client.file import Storage
 from oauth2client import service_account
+import httplib2
+
 import gspread
 
 
@@ -355,6 +357,25 @@ def upload_postings_to_sheet(model, doc, name_or_index, min_rows):
     sheet.update_cells(cells)
 
 
+SERVICE_ACCOUNT_FILE = path.join(os.environ['HOME'],
+                                 '.google-apis-service-account.json')
+
+def get_auth_via_service_account(scopes):
+    """Get an authenticated http object via a service account.
+
+    Args:
+      scopes: A string or a list of strings, the scopes to get credentials for.
+    Returns:
+      A pair or (credentials, http) objects, where 'http' is an authenticated
+      http client object, from which you can use the Google APIs.
+    """
+    credentials = service_account.ServiceAccountCredentials.from_json_keyfile_name(
+        SERVICE_ACCOUNT_FILE, scopes)
+    http = httplib2.Http()
+    credentials.authorize(http)
+    return credentials, http
+
+
 def main():
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
     parser = argparse.ArgumentParser(description=__doc__.strip())
@@ -411,7 +432,7 @@ def main():
     if not args.dry_run:
         # Connect to the API.
         scopes = ['https://spreadsheets.google.com/feeds']
-        credentials, _ = gauth.get_auth_via_service_account(scopes)
+        credentials, _ = get_auth_via_service_account(scopes)
         gc = gspread.authorize(credentials)
         doc = gc.open_by_key(args.docid)
         # Note: You have to share the sheet with the "client_email" address.

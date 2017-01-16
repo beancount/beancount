@@ -6,6 +6,9 @@ Note: This file contains only changes in the 'default' branch.
 
 2017-01-16
 
+  - Removed tools/gauth (used to be beancount.docs.gauth). All users of this are
+    slightly different, and they're utility scripts. Unfactoring.
+
   - Removed beancount.docs from Beancount library. These are internal tools used
     to manage documentation, should not be included in the installed codebase.
 
