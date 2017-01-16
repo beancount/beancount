@@ -9,6 +9,7 @@ testing code.
 """
 __copyright__ = "Copyright (C) 2014-2015  Martin Blais"
 __license__ = "GNU GPLv2"
+
 import os
 from os import path
 import re
