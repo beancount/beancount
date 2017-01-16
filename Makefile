@@ -207,9 +207,6 @@ sfood-checker:
 constraints dep-constraints: build/beancount.deps
 	$(TOOLS)/dependency-constraints.py $<
 
-check-copyright:
-	$(TOOLS)/check-copyright.py --root=$(PWD)
-
 
 # Run the linter on all source code.
 # To list all messages, call: "pylint --list-msgs"
@@ -231,4 +228,4 @@ pyflakes:
 
 
 # Check everything.
-status check: pylint pyflakes check-copyright filter-terms missing-tests dep-constraints multi-imports test
+status check: pylint pyflakes filter-terms missing-tests dep-constraints multi-imports test
