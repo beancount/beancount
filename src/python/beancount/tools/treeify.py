@@ -14,6 +14,7 @@ __copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 # IMPORTANT: This should be usable as a standalone script. Do not depend on Beancount.
+
 import argparse
 import collections
 import re
@@ -251,7 +252,7 @@ def enum_tree_by_input_line_num(tree_lines):
         yield (None, pending)
 
 
-def main():
+def _main():
     parser = argparse.ArgumentParser(description=__doc__.strip())
 
     parser.add_argument('input', nargs='?', action='store',
@@ -376,8 +377,12 @@ def main():
         output_file.write(input_line)
 
 
-if __name__ == '__main__':
+def main():
     try:
-        main()
+        _main()
     except BrokenPipeError:
         pass
+
+
+if __name__ == '__main__':
+    main()

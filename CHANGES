@@ -6,6 +6,9 @@ Note: This file contains only changes in the 'default' branch.
 
 2017-01-16
 
+  - Moved bin/upload-to-sheets to src/python/beancount/tools/sheets_upload.py
+    and replaced it with an associated stub for it.
+
   - Moved bin/treeify to src/python/beancount/tools/treeify.py. The script is
     still usable in a standalone form (no new dependencies have been added). To
     have all the source code in one place is more convenient for maintenance.

@@ -3,7 +3,4 @@ __copyright__ = "Copyright (C) 2017  Martin Blais"
 __license__ = "GNU GPLv2"
 import sys
 from beancount.tools.treeify import main
-try:
-    sys.exit(main())
-except BrokenPipeError:
-    pass
+main()
