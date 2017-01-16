@@ -27,6 +27,23 @@ booking_full.py: # FIXME: Refactor compute_cost_number() and convert_costspec_to
 {commodity-required}
 
 
+* Returns (Revision)
+
+  - Fix remaining tests for removal of open/balance entries from segment_periods().
+
+  - Implement per account, with data structures + code to combine them together
+  - Trailing windows
+  - Rolling windows
+  - Calculate pre-tax returns, post-tax returns
+  - Output nice debugging information
+  - Warn when prices aren't within a certain date interval with their usage
+  - Render a graph of the actual values of the assets as well.
+  - There should be a separate web application that handles this, no need to
+    pre-render everything.
+  - You need to merge the external entries when multiple ones occur on the same
+    date.
+  - Handle the various FIXMEs.
+
 * Settlement Dates (Split & Merge)
 
   In http://furius.ca/beancount/doc/proposal-settlement, I describe the problem

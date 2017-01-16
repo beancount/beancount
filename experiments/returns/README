@@ -1,0 +1,6 @@
+This directory contains code which computes returns on a variety of assets, as
+recorded by Beancount, fed directly from a Beancount file.
+
+This is work in progress; it does not work in all cases, and needs some serious
+review. This code used to be in the main repo, but I've decided to remove it
+from the main source code until it's robust enough to work for everyone.

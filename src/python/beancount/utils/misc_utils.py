@@ -505,15 +505,17 @@ class LineFileProxy:
     This may be used for writing data to a logging level without having to worry about
     lines.
     """
-    def __init__(self, line_writer, prefix=None):
+    def __init__(self, line_writer, prefix=None, write_newlines=False):
         """Construct a new line delegator file object proxy.
 
         Args:
           line_writer: A callable function, used to write to the delegated output.
           prefix: An optional string, the prefix to insert before every line.
+          write_newlines: A boolean, true if we should output the newline characters.
         """
         self.line_writer = line_writer
         self.prefix = prefix
+        self.write_newlines = write_newlines
         self.data = []
 
     def write(self, data):
@@ -537,6 +539,8 @@ class LineFileProxy:
             for line in lines:
                 if self.prefix:
                     line = self.prefix + line
+                if self.write_newlines:
+                    line += '\n'
                 self.line_writer(line)
 
     def close(self):
