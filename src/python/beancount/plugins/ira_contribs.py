@@ -60,7 +60,7 @@ matching entries to trigger multiple insertions. For example, the employer may
 also match the employee's retirement contribution by depositing some money in
 the retirement account:
 
-  2013-02-15 * "BUYMF - MATCH" | "Employer match, invested in SaveEasy 2030 fund"
+  2013-02-15 * "BUYMF - MATCH" "Employer match, invested in SaveEasy 2030 fund"
     Assets:US:Fidelity:Match401k:SE2030   34.793 SE2030 {17.834 USD}
     Income:US:Acme:Match401k             -620.50 USD
 
@@ -70,7 +70,7 @@ match against the 'Income:US:Acme:Match401k' account and since it increases its
 value (the normal balance of an Income account is negative), postings would be
 inserted like this:
 
-  2013-02-15 * "BUYMF - MATCH" | "Employer match, invested in SaveEasy 2030 fund"
+  2013-02-15 * "BUYMF - MATCH" "Employer match, invested in SaveEasy 2030 fund"
     Assets:US:Fidelity:Match401k:SE2030              34.793 SE2030 {17.834 USD}
     Income:US:Acme:Match401k                        -620.50 USD
     M Assets:US:Federal:Match401k                   -620.50 IRAUSD
@@ -82,7 +82,8 @@ to mark these postings with.
 
 """
 
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 from beancount.core.number import MISSING
 from beancount.core import data
@@ -97,7 +98,7 @@ __plugins__ = ('add_ira_contribs',)
 DEBUG = 0
 
 
-def add_ira_contribs(entries, options_map, config):
+def add_ira_contribs(entries, options_map, config_str):
     """Add legs for 401k employer match contributions.
 
     See module docstring for an example configuration.
@@ -105,7 +106,7 @@ def add_ira_contribs(entries, options_map, config):
     Args:
       entries: a list of entry instances
       options_map: a dict of options parsed from the file
-      config: A configuration string, which is intended to be a Python dict
+      config_str: A configuration string, which is intended to be a Python dict
         mapping match-accounts to a pair of (negative-account, position-account)
         account names.
     Returns:
@@ -117,7 +118,7 @@ def add_ira_contribs(entries, options_map, config):
     # this for all the plugins.
     # FIXME: This too is temporary.
     # pylint: disable=eval-used
-    config_obj = eval(config, {}, {})
+    config_obj = eval(config_str, {}, {})
     if not isinstance(config_obj, dict):
         raise RuntimeError("Invalid plugin configuration: should be a single dict.")
 

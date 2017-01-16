@@ -57,23 +57,24 @@ Here are all the aspects supported by this module:
   files, and these need to be accommodated when aligning to the right.
 
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
+import enum
 import io
 
 from beancount.core.number import Decimal
 from beancount.core import distribution
-from beancount.utils import misc_utils
 
 
-class Precision(misc_utils.Enum):
+class Precision(enum.Enum):
     """The type of precision required."""
     MOST_COMMON = 1
     MAXIMUM = 2
 
 
-class Align(misc_utils.Enum):
+class Align(enum.Enum):
     """Alignment style for numbers."""
     NATURAL = 1
     DOT = 2

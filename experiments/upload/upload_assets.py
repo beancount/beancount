@@ -17,7 +17,8 @@ The purpose of this is manyfold:
   intends to be a bit of a simplified reboot of the export code.
 
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import argparse
 import bisect
@@ -43,7 +44,7 @@ from beancount.core import account
 from beancount.core import account_types
 from beancount.core import getters
 from beancount.ops import summarize
-from beancount.ops import prices
+from beancount.core import prices
 from beancount.docs import gauth
 from beancount.parser import options
 from beancount import loader

@@ -3,12 +3,14 @@
 Read an import script and a list of downloaded filenames or directories of
 downloaded files, and for each of those files, extract transactions from it.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import itertools
+import logging
 import sys
 import textwrap
-import logging
+import traceback
 
 from beancount.core import data
 from beancount.parser import printer
@@ -28,7 +30,10 @@ HEADER = ';; -*- mode: beancount -*-\n'
 DUPLICATE_META = '__duplicate__'
 
 
-def extract_from_file(filename, importer, existing_entries=None, min_date=None):
+def extract_from_file(filename, importer,
+                      existing_entries=None,
+                      min_date=None,
+                      allow_none_for_tags_and_links=False):
     """Import entries from file 'filename' with the given matches,
 
     Also cross-check against a list of provided 'existing_entries' entries,
@@ -42,6 +47,9 @@ def extract_from_file(filename, importer, existing_entries=None, min_date=None):
       min_date: A date before which entries should be ignored. This is useful
         when an account has a valid check/assert; we could just ignore whatever
         comes before, if desired.
+      allow_none_for_tags_and_links: A boolean, whether to allow plugins to
+        generate Transaction objects with None as value for the 'tags' or 'links'
+        attributes.
     Returns:
       A list of new imported entries and a subset of these which have been
       identified as possible duplicates.
@@ -62,7 +70,7 @@ def extract_from_file(filename, importer, existing_entries=None, min_date=None):
 
     # Ensure that the entries are typed correctly.
     for entry in new_entries:
-        data.sanity_check_types(entry)
+        data.sanity_check_types(entry, allow_none_for_tags_and_links)
 
     # Filter out entries with dates before 'min_date'.
     if min_date:
@@ -122,7 +130,8 @@ def extract(importer_config,
             output,
             entries=None,
             options_map=None,
-            mindate=None):
+            mindate=None,
+            ascending=True):
     """Given an importer configuration, search for files that can be imported in the
     list of files or directories, run the signature checks on them, and if it
     succeeds, run the importer on the file.
@@ -138,7 +147,12 @@ def extract(importer_config,
         extracted entries to be merged in.
       options_map: The options parsed from existing file.
       mindate: Optional minimum date to output transactions for.
+      ascending: A boolean, true to print entries in ascending order, false if
+        descending is desired.
     """
+    allow_none_for_tags_and_links = (
+        options_map and options_map["allow_deprecated_none_for_tags_and_links"])
+
     output.write(HEADER)
     for filename, importers in identify.find_imports(importer_config,
                                                      files_or_directories,
@@ -146,17 +160,22 @@ def extract(importer_config,
         for importer in importers:
             # Import and process the file.
             try:
-                new_entries, duplicate_entries = extract_from_file(filename,
-                                                                   importer,
-                                                                   entries,
-                                                                   mindate)
+                new_entries, duplicate_entries = extract_from_file(
+                    filename,
+                    importer,
+                    existing_entries=entries,
+                    min_date=mindate,
+                    allow_none_for_tags_and_links=allow_none_for_tags_and_links)
             except Exception as exc:
                 logging.error("Importer %s.extract() raised an unexpected error: %s",
                               importer.name(), exc)
+                logging.error("Traceback: %s", traceback.format_exc())
                 continue
             if not new_entries and not duplicate_entries:
                 continue
 
+            if not ascending:
+                new_entries.reverse()
             print_extracted_entries(importer, new_entries, output)
 
 
@@ -167,6 +186,11 @@ def main():
                         default=None,
                         help=('Beancount file or existing entries for de-duplication '
                               '(optional)'))
+
+    parser.add_argument('-r', '--reverse', '--descending',
+                        action='store_const', dest='ascending',
+                        default=True, const=False,
+                        help='Write out the entries in descending order')
 
     args, config, downloads_directories = scripts_utils.parse_arguments(parser)
 
@@ -179,5 +203,5 @@ def main():
 
     extract(config, downloads_directories, sys.stdout,
             entries=entries, options_map=options_map,
-            mindate=None)
+            mindate=None, ascending=args.ascending)
     return 0

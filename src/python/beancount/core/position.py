@@ -2,12 +2,15 @@
 
 See types below for details.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import copy
 import datetime
-import collections
 import re
+import warnings
+
+from typing import NamedTuple, Optional
 
 from beancount.core.number import ZERO
 from beancount.core.number import Decimal
@@ -19,6 +22,10 @@ from beancount.core.amount import CURRENCY_RE
 from beancount.core.display_context import DEFAULT_FORMATTER
 
 
+# Disable lint errors for namedtuples declared here.
+# pylint: disable=invalid-name
+
+
 # A variant of Amount that also includes a date and a label.
 #
 # Attributes:
@@ -27,8 +34,11 @@ from beancount.core.display_context import DEFAULT_FORMATTER
 #   date: A datetime.date for the date that the lot was created at. There
 #      should always be a valid date.
 #   label: A string for the label of this lot, or None, if there is no label.
-Cost = collections.namedtuple(
-    'Cost', 'number currency date label')
+Cost = NamedTuple('Cost', [
+    ('number', Decimal),
+    ('currency', str),
+    ('date', datetime.date),
+    ('label', Optional[str])])
 
 
 # A stand-in for an "incomplete" Cost, that is, a container all the data that
@@ -45,8 +55,14 @@ Cost = collections.namedtuple(
 #   label: A string for the label of this lot, or None if unspecified.
 #   merge: A boolean, true if this specification calls for averaging the units
 #      of this lot's currency, or False if unspecified.
-CostSpec = collections.namedtuple(
-    'CostSpec', 'number_per number_total currency date label merge')
+CostSpec = NamedTuple('CostSpec', [
+    ('number_per', Optional[Decimal]),
+    ('number_total', Optional[Decimal]),
+    ('currency', Optional[str]),
+    ('date', Optional[datetime.date]),
+    ('label', Optional[str]),
+    ('merge', Optional[bool])])
+
 
 
 def cost_to_str(cost, dformat, detail=True):
@@ -139,7 +155,11 @@ def to_string(pos, dformat=DEFAULT_FORMATTER, detail=True):
     return pos_str
 
 
-class Position:
+_Position = NamedTuple('_Position', [
+    ('units', Amount),
+    ('cost', Cost)])
+
+class Position(_Position):
     """A 'Position' is a pair of units and optional cost.
     This is used to track inventories.
 
@@ -147,18 +167,18 @@ class Position:
       units: An Amount, the number of units and its currency.
       cost: A Cost that represents the lot, or None.
     """
-    __slots__ = ('units', 'cost')
+
+    __slots__ = ()  # Prevent the creation of new attributes.
 
     # Allowed data types for lot.cost
     cost_types = (Cost, CostSpec)
 
-    def __init__(self, units, cost=None):
+    def __new__(cls, units, cost=None):
         assert isinstance(units, Amount), (
             "Expected an Amount for units; received '{}'".format(units))
         assert cost is None or isinstance(cost, Position.cost_types), (
             "Expected a Cost for cost; received '{}'".format(cost))
-        self.units = units
-        self.cost = cost
+        return _Position.__new__(cls, units, cost)
 
     def __hash__(self):
         """Compute a hash for this position.
@@ -193,10 +213,9 @@ class Position:
         Returns:
           A boolean, true if the positions are equal.
         """
-        if other is None:
-            return self.units.number == ZERO
-        else:
-            return (self.units == other.units and self.cost == other.cost)
+        return (self.units.number == ZERO
+                if other is None
+                else (self.units == other.units and self.cost == other.cost))
 
     def sortkey(self):
         """Return a key to sort positions by. This key depends on the order of the
@@ -245,7 +264,7 @@ class Position:
           units: An instance of Amount.
         """
         assert isinstance(units, Amount)
-        self.units = units
+        self.units = units  # pylint: disable=assigning-non-slot
 
     def currency_pair(self):
         """Return the currency pair associated with this position.
@@ -263,14 +282,17 @@ class Position:
         Returns:
           An instance of Amount.
         """
+        warnings.warn("Position.get_cost() is deprecated; "
+                      "use convert.get_cost(position) instead")
         cost = self.cost
         if cost is None:
-            return self.units
+            rcost = self.units
         else:
-            return amount_mul(cost, self.units.number)
+            rcost = amount_mul(cost, self.units.number)
+        return rcost
 
     def at_cost(self):
-        """Return a Position representing the cost of this position. See get_cost().
+        """Return a Position representing the cost of this position.
 
         Returns:
           An instance of Position if there is a cost, or itself, if the position
@@ -278,23 +300,15 @@ class Position:
           immutable and associated operations never modify an existing Position
           instance, it is legit to return this object itself.
         """
+        warnings.warn("Position.at_cost() is deprecated; "
+                      "use convert.get_cost(position) instead")
         cost = self.cost
         if cost is None:
-            return self
+            pos = self
         else:
-            return Position(Amount(self.units.number * cost.number, self.cost.currency),
-                            None)
-
-    def add(self, number):
-        """Add a number of units to this position.
-
-        Args:
-          number: A Decimal instance, the number of units to add to this position.
-        """
-        # Note: Checks for positions going negative do not belong here, but
-        # rather belong in the inventory.
-        assert isinstance(number, Decimal)
-        self.units = Amount(self.units.number + number, self.units.currency)
+            pos = Position(Amount(self.units.number * cost.number, self.cost.currency),
+                           None)
+        return pos
 
     def get_negative(self):
         """Get a copy of this position but with a negative number.

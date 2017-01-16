@@ -1,13 +1,13 @@
 """Everything that relates to creating the Document directives.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import re
 import datetime
 from os import path
 from collections import namedtuple
 
-from beancount.core.data import Document
 from beancount.core import account
 from beancount.core import data
 from beancount.core import getters
@@ -65,7 +65,7 @@ def verify_document_files_exist(entries, unused_options_map):
     """
     errors = []
     for entry in entries:
-        if not isinstance(entry, Document):
+        if not isinstance(entry, data.Document):
             continue
         if not path.exists(entry.filename):
             errors.append(
@@ -138,8 +138,16 @@ def find_documents(directory, input_filename, accounts_only=None, strict=False):
 
             # Create a new directive.
             meta = data.new_metadata(input_filename, 0)
-            date = datetime.date(*map(int, match.group(1, 2, 3)))
-            entry = Document(meta, date, account_name, path.join(root, filename))
-            entries.append(entry)
+            try:
+                date = datetime.date(*map(int, match.group(1, 2, 3)))
+            except ValueError as exc:
+                errors.append(DocumentError(
+                    data.new_metadata(input_filename, 0),
+                    "Invalid date on document file '{}': {}".format(
+                        filename, exc), None))
+            else:
+                entry = data.Document(meta, date, account_name, path.join(root, filename),
+                                      data.EMPTY_SET, data.EMPTY_SET)
+                entries.append(entry)
 
     return (entries, errors)

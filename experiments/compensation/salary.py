@@ -8,7 +8,8 @@ better, e.g., "What is my *average* annual compensation over my entire tenure at
 the company?" or "What would be annual compensation like if I were to
 extrapolate the last 3 or 6 months?".
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2015  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import argparse
 import datetime
@@ -81,7 +82,7 @@ def main():
         if entry.date >= date:
             # At the boundary, save the date and total number.
             try:
-                total = -balance.get_units(args.currency).number
+                total = -balance.get_currency_units(args.currency).number
                 curve.append((date, total))
                 date = next(dateiter).date()
             except StopIteration:

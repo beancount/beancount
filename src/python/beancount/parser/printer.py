@@ -1,6 +1,7 @@
 """Conversion from internal data structures to text.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import codecs
 import datetime
@@ -11,6 +12,7 @@ import textwrap
 
 from beancount.core.number import Decimal
 from beancount.core import position
+from beancount.core import convert
 from beancount.core import inventory
 from beancount.core import amount
 from beancount.core import account
@@ -145,7 +147,7 @@ class EntryPrinter:
         # Compute the string for the payee and narration line.
         strings = []
         if entry.payee:
-            strings.append('"{}" |'.format(entry.payee))
+            strings.append('"{}"'.format(entry.payee))
         if entry.narration:
             strings.append('"{}"'.format(entry.narration))
         elif entry.payee:
@@ -224,7 +226,7 @@ class EntryPrinter:
             # Note: we render weights at maximum precision, for debugging.
             if posting.cost is None or (isinstance(posting.cost, position.Cost) and
                                         isinstance(posting.cost.number, Decimal)):
-                weight_str = str(interpolate.get_posting_weight(posting))
+                weight_str = str(convert.get_weight(posting))
         else:
             position_str = ''
 

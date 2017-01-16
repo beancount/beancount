@@ -1,6 +1,7 @@
 """Memoization utilities.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import shelve
 import threading
@@ -28,7 +29,7 @@ def memoize_recent_fileobj(function, cache_filename, expiration=None):
     Returns:
       A memoized version of the function.
     """
-    urlcache = shelve.open(cache_filename)
+    urlcache = shelve.open(cache_filename, 'c')
     urlcache.lock = threading.Lock()  # Note: 'shelve' is not thread-safe.
     @functools.wraps(function)
     def memoized(*args, **kw):

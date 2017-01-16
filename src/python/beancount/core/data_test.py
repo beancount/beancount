@@ -1,4 +1,5 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 from datetime import date
 import unittest
@@ -17,7 +18,8 @@ class TestData(unittest.TestCase):
 
     def create_empty_transaction(self):
         return data.Transaction(META, date(2014, 1, 15), FLAG, None,
-                                "Some example narration", None, None, [])
+                                "Some example narration",
+                                data.EMPTY_SET, data.EMPTY_SET, [])
 
     def test_create_simple_posting(self):
         entry = self.create_empty_transaction()
@@ -310,7 +312,8 @@ class TestPickle(unittest.TestCase):
 
     def test_data_tuples_support_pickle(self):
         txn1 = data.Transaction(META, date(2014, 1, 15), FLAG, None,
-                               "Some example narration", None, None, [])
+                                "Some example narration",
+                                data.EMPTY_SET, data.EMPTY_SET, [])
         pickled_str = pickle.dumps(txn1)
         txn2 = pickle.loads(pickled_str)
         self.assertEqual(txn1, txn2)

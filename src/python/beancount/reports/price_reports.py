@@ -1,6 +1,7 @@
 """Miscellaneous report classes.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import datetime
 import re
@@ -12,7 +13,7 @@ from beancount.parser import printer
 from beancount.core import data
 from beancount.core import amount
 from beancount.core import getters
-from beancount.ops import prices
+from beancount.core import prices
 from beancount.ops import lifetimes
 
 

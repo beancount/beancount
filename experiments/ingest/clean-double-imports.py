@@ -7,7 +7,8 @@ description, such as
 This script attempts to fix this by replacing such strings in a text file.
 Note: It does not parse the input file with Beancount (it does not need to).
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import argparse
 import re

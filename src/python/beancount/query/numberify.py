@@ -55,7 +55,8 @@ Notes:
   recommended that you do that.
 
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2015  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 
@@ -213,9 +214,9 @@ class InventoryConverter:
 
     def __call__(self, drow, dformat):
         inv = drow[self.index]
-        # Note: get_units() returns ZERO and not None when the value isn't
-        # present. This should be fixed to distinguish between the two.
-        number = inv.get_units(self.currency).number
+        # FIXME:: get_currency_units() returns ZERO and not None when the value
+        # isn't present. This should be fixed to distinguish between the two.
+        number = inv.get_currency_units(self.currency).number
         if number and dformat:
             number = dformat.quantize(number, self.currency)
         return number or None

@@ -109,7 +109,11 @@ disable=locally-disabled,
   undefined-loop-variable,
   broad-except,
   logging-format-interpolation,
-  anomalous-backslash-in-string
+  anomalous-backslash-in-string,
+  len-as-condition,
+  no-else-return,
+  invalid-unary-operand-type,
+  no-name-in-module
 
 
 
@@ -179,16 +183,16 @@ bad-names=foo,bar,baz,toto,tutu,tata
 name-group=
 
 # Include a hint for the correct naming format with invalid-name
-include-naming-hint=yes
+include-naming-hint=no
 
 # Regular expression matching correct module names
-module-rgx=(([a-z_][a-z0-9_]*)|([A-Z][a-zA-Z0-9]+))$
+module-rgx=(([a-z_][a-z0-9_\-]*)|([A-Z][a-zA-Z0-9]+))$
 
 # Naming hint for module names
 module-name-hint=(([a-z_][a-z0-9_]*)|([A-Z][a-zA-Z0-9]+))$
 
 # Regular expression matching correct method names
-method-rgx=[a-z_][a-zA-Z0-9_]{2,64}$
+method-rgx=[a-z_][a-zA-Z0-9_]{2,72}$
 
 # Naming hint for method names
 method-name-hint=[a-z_][a-zA-Z0-9_]{2,64}$
@@ -212,7 +216,7 @@ inlinevar-rgx=[A-Za-z_][A-Za-z0-9_]*$
 inlinevar-name-hint=[A-Za-z_][A-Za-z0-9_]*$
 
 # Regular expression matching correct variable names
-variable-rgx=([a-z_][a-z0-9_]{2,30}|_+|mu)$
+variable-rgx=([a-z_][a-z0-9_]{2,30}|_+|mu|no)$
 
 # Naming hint for variable names
 variable-name-hint=[a-z_][a-z0-9_]{2,30}$

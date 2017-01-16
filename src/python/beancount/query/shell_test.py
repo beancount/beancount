@@ -1,9 +1,9 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import re
 import sys
 import unittest
-import textwrap
 from os import path
 
 from beancount.utils import test_utils
@@ -18,7 +18,7 @@ def setUp(self):
     example_filename = path.join(test_utils.find_repository_root(__file__),
                                  'examples', 'example.beancount')
     global entries, errors, options_map  # pylint: disable=invalid-name
-    entries, errors, options_map = loader.load(example_filename)
+    entries, errors, options_map = loader.load_file(example_filename)
     assert not errors
 
 

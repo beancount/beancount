@@ -2,7 +2,8 @@
 Web server for Beancount ledgers.
 This uses the Bottle single-file micro web framework (with no plugins).
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import argparse
 from os import path
@@ -24,8 +25,9 @@ from beancount.core import getters
 from beancount.core import account
 from beancount.core import account_types
 from beancount.core import compare
+from beancount.core import convert
 from beancount.ops import basicops
-from beancount.ops import prices
+from beancount.core import prices
 from beancount.utils import misc_utils
 from beancount.utils import text_utils
 from beancount.web import bottle_utils
@@ -103,7 +105,7 @@ class HTMLFormatter(html_formatter.HTMLFormatter):
 
     def render_inventory(self, inv):
         """Override this formatter to convert the inventory to units only."""
-        return super().render_inventory(inv.units())
+        return super().render_inventory(inv.reduce(convert.get_units))
 
     def render_context(self, entry):
         """See base class."""
@@ -755,7 +757,7 @@ def journal_(account_name=None):
 
 
 @viewapp.route('/conversions', name='conversions')
-def conversions():
+def conversions_():
     "Render the list of transactions with conversions."
     return render_view(
         pagetitle="Conversions",

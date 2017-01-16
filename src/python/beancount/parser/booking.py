@@ -1,7 +1,8 @@
 """Algorithms for 'booking' inventory, that is, the process of finding a
 matching lot when reducing the content of an inventory.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 
@@ -31,7 +32,7 @@ def book(incomplete_entries, options_map):
         'SIMPLE': booking_simple.book,
         'FULL': booking_full.book,
     }
-    method_name = options_map['experiment_booking_algorithm']
+    method_name = options_map['booking_algorithm']
     errors = []
     try:
         booking_fun = booking_algorithms[method_name]

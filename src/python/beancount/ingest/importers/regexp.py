@@ -7,7 +7,8 @@ its full name, its MIME type, and its contents, which looks like this:
 The point is to allow an implementor to specify identification using just a few
 regular expressions.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import re
 

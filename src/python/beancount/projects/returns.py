@@ -211,7 +211,8 @@ Notes:
    transactions, it's a bit confusing.).
 
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import argparse
 import collections
@@ -230,8 +231,8 @@ from beancount.core import data
 from beancount.core import inventory
 from beancount.core import getters
 from beancount.core import flags
-from beancount.core import interpolate
-from beancount.ops import prices
+from beancount.core import convert
+from beancount.core import prices
 from beancount.utils import misc_utils
 from beancount.utils import date_utils
 
@@ -390,8 +391,8 @@ def compute_period_returns(date_begin, date_end,
           of the period.
     """
     # Evaluate the boundary balances at market value.
-    mktvalue_begin = prices.get_inventory_market_value(balance_begin, date_begin, price_map)
-    mktvalue_end = prices.get_inventory_market_value(balance_end, date_end, price_map)
+    mktvalue_begin = balance_begin.reduce(convert.get_value, price_map, date_begin)
+    mktvalue_end = balance_end.reduce(convert.get_value, price_map, date_end)
 
     # Compute the union of all currencies. At this point, ignore currencies
     # held-at-cost and issue a warning if some are found (if the price database
@@ -543,7 +544,7 @@ def internalize(entries, transfer_account,
             # Calculate the weight of the balance to transfer.
             balance_transfer = inventory.Inventory()
             for posting in postings_external:
-                balance_transfer.add_amount(interpolate.get_posting_weight(posting))
+                balance_transfer.add_amount(convert.get_weight(posting))
 
             prototype_entry = entry._replace(flag=flags.FLAG_RETURNS,
                                              links=(entry.links or set()) | set([link]))
@@ -743,8 +744,10 @@ def compute_returns(timeline, price_map, date_begin=None, date_end=None):
             annual_returns = 'OVERFLOW'
 
         logging.info("From %s to %s", period_begin, period_end)
-        logging.info("  Begin %s => %s", balance_begin.units(), mktvalue_begin)
-        logging.info("  End   %s => %s", balance_end.units(), mktvalue_end)
+        logging.info("  Begin %s => %s",
+                     balance_begin.reduce(convert.get_units), mktvalue_begin)
+        logging.info("  End   %s => %s",
+                     balance_end.reduce(convert.get_units), mktvalue_end)
         logging.info("  Returns     %s", period_returns)
         logging.info("  Annualized  %s", annual_returns)
         logging.info("")

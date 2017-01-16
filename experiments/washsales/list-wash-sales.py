@@ -4,11 +4,13 @@
 With this script I'm able to make the numbers reported by MS on the 1099 match
 mine, except for rounding error.
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import argparse
 import collections
 import datetime
+import itertools
 import logging
 import os
 import re
@@ -18,6 +20,7 @@ from os import path
 from beancount.core.number import D
 from beancount.core.number import ZERO
 from beancount.core import data
+from beancount.core import inventory
 from beancount.parser import printer
 from beancount.reports import table
 from beancount.utils import misc_utils
@@ -26,12 +29,16 @@ from beancount import loader
 
 
 LotSale = collections.namedtuple(
-    'LotSale', 'no ref date inst units cost price totcost totprice comm proc pnl wash adj')
+    'LotSale', ('no ref date_buy date_sell days_held term inst units cost price '
+                'totcost totprice comm proc pnl wash adj'))
 
 fieldspec = [
     ('no', 'No'),
     ('ref', 'Reference'),
-    ('date', 'Date of Sale'),
+    ('date_buy', 'Acquisition Date'),
+    ('date_sell', 'Sale Date'),
+    ('days_held', 'Days Held'),
+    ('term', 'Tax Term'),
     ('inst', 'Instrument'),
     ('units', 'Shares'),
     ('cost', 'Share Cost'),
@@ -53,7 +60,34 @@ def aggregate_sales(sublots):
     else:
         agglot = sublots[0]
         for lot in sublots[1:]:
+
+            if (isinstance(agglot.date_buy, datetime.date) and
+                agglot.date_buy == lot.date_buy):
+                date_buy = lot.date_buy
+            else:
+                date_buy = 'VARIOUS'
+
+            if (isinstance(agglot.date_sell, datetime.date) and
+                agglot.date_sell == lot.date_sell):
+                date_sell = lot.date_sell
+            else:
+                date_sell = 'VARIOUS'
+
+            if agglot.days_held == lot.days_held:
+                days_held = lot.days_held
+            else:
+                days_held = 'VARIOUS'
+
+            if agglot.term == lot.term:
+                term = lot.term
+            else:
+                term = 'VARIOUS'
+
             agglot = agglot._replace(
+                date_buy=date_buy,
+                date_sell=date_sell,
+                days_held=days_held,
+                term=term,
                 units=agglot.units + lot.units,
                 totcost=agglot.totcost + lot.totcost,
                 totprice=agglot.totprice + lot.totprice,
@@ -68,8 +102,12 @@ def aggregate_sales(sublots):
 def main():
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
     parser = argparse.ArgumentParser(description=__doc__.strip())
-    parser.add_argument('filename', help='Beancount input file')
-    parser.add_argument('account', help='Account name')
+    parser.add_argument('report', choices=['detail', 'aggregate', 'summary'],
+                        help='Type of report')
+    parser.add_argument('filename',
+                        help='Beancount input file')
+    parser.add_argument('account',
+                        help='Account name')
 
     parser.add_argument('--start', type=date_utils.parse_date_liberally,
                         help="Start date")
@@ -77,7 +115,7 @@ def main():
                         help="End date; if not set, at the end of star'ts year")
 
     parser.add_argument('-o', '--output', action='store',
-                        help="Output directory for the CSV files")
+                        help="Output filename for the CSV file")
 
     args = parser.parse_args()
 
@@ -91,30 +129,47 @@ def main():
 
     entries, errors, options_map = loader.load_file(args.filename)
 
-    # Find transactions with postings matching the account.
-    txns = [txn for txn in entries
-            if (isinstance(txn, data.Transaction) and
-                args.start <= txn.date < args.end and
-                any(re.match(args.account, posting.account)
-                    for posting in txn.postings))]
-
     # Expand each of the sales legs.
+    balances = collections.defaultdict(inventory.Inventory)
     sales = []
-    for txn in txns:
-        if 'ref' not in txn.meta:
+    for txn in data.filter_txns(entries):
+        # If we got to the end of the period, bail out.
+        if txn.date >= args.end:
+            break
+
+        # Accumulate the balances before the start date.
+        if txn.date < args.start:
+            for posting in txn.postings:
+                if re.match(args.account, posting.account):
+                    balance = balances[posting.account]
+                    balance.add_position(posting)
             continue
+
+        # Fallthrough: we're not in the period. Process the matching postings.
 
         # Find reducing postings (i.e., for each lot).
         txn_sales = []
         for posting in txn.postings:
-            if (re.match(args.account, posting.account) and
-                posting.cost and
-                posting.units.number < ZERO):
-                if not posting.price:
-                    logging.error("Missing price on %s", posting)
-                txn_sales.append(data.TxnPosting(txn, posting))
+            if re.match(args.account, posting.account):
+                balance = balances[posting.account]
+                reduced_position, booking = balance.add_position(posting)
+                # Set the cost on the posting from the reduced position.
+                # FIXME: Eventually that'll happen automatically during the full
+                # booking stage.
+                if booking == inventory.Booking.REDUCED:
+                    posting = posting._replace(cost=reduced_position.cost)
 
-        if calculate_commission:
+                # If the postings don't have a reference number, ignore them.
+                if 'ref' not in txn.meta:
+                    continue
+
+                if (posting.cost and
+                    posting.units.number < ZERO):
+                    if not posting.price:
+                        logging.error("Missing price on %s", posting)
+                    txn_sales.append(data.TxnPosting(txn, posting))
+
+        if txn_sales and calculate_commission:
             # Find total commission.
             for posting in txn.postings:
                 if re.search('Commission', posting.account):
@@ -125,11 +180,11 @@ def main():
 
             # Compute total number of units.
             tot_units = sum(sale.posting.units.number
-                            for sale in txn_sales)
+                            for sale, _ in txn_sales)
 
             # Assign a proportion of the commission to each of the sales by
             # inserting it into its posting metadata. This will be processed below.
-            for sale in txn_sales:
+            for sale, _ in txn_sales:
                 fraction = sale.posting.units.number / tot_units
                 sale.posting.meta['commission'] = fraction * commission
 
@@ -141,8 +196,16 @@ def main():
     total_loss = collections.defaultdict(D)
     total_gain = collections.defaultdict(D)
     total_adj = collections.defaultdict(D)
+
+    # If no mssb number has been assigned explicitly, assign a random one. I
+    # need to figure out how to find those numbers again.
+    auto_mssb_number = itertools.count(start=1000000 + 1)
+
     for sale in sales:
-        sale_no = sale.txn.meta['mssb']
+        try:
+            sale_no = sale.txn.meta['mssb']
+        except KeyError:
+            sale_no = next(auto_mssb_number)
         ref = sale.txn.meta['ref']
 
         units = sale.posting.units
@@ -173,9 +236,15 @@ def main():
         else:
             code = ''
             adj = ''
+
+        days_held = (sale.txn.date - sale.posting.cost.date).days
+        term = 'LONG' if days_held >= 365 else 'SHORT'
         lot = LotSale(sale_no,
                       ref,
+                      sale.posting.cost.date,
                       sale.txn.date,
+                      days_held,
+                      term,
                       units.currency,
                       -units.number.quantize(Q),
                       sale.posting.cost.number.quantize(Q),
@@ -216,29 +285,33 @@ def main():
     summary.append(('*', gain, loss, gain + loss, adj))
     tab_summary = table.create_table(summary, summary_fields)
 
-    # Render to the console.
-    print('Detail of all lots')
-    print('=' * 48)
-    table.render_table(tab_detail, sys.stdout, 'txt')
-    print()
+    if args.report == 'detail':
+        # Render to the console.
+        print('Detail of all lots')
+        print('=' * 48)
+        table.render_table(tab_detail, sys.stdout, 'txt')
+        print()
+        if args.output:
+            with open(args.output, 'w') as file:
+                table.render_table(tab_detail, file, 'csv')
 
-    print('Aggregated by trade & Reference Number (to Match 1099/Form8459')
-    print('=' * 48)
-    table.render_table(tab_agg, sys.stdout, 'txt')
-    print()
+    elif args.report == 'aggregate':
+        print('Aggregated by trade & Reference Number (to Match 1099/Form8459)')
+        print('=' * 48)
+        table.render_table(tab_agg, sys.stdout, 'txt')
+        print()
+        if args.output:
+            with open(args.output, 'w') as file:
+                table.render_table(tab_agg, file, 'csv')
 
-    print('Summary')
-    print('=' * 48)
-    table.render_table(tab_summary, sys.stdout, 'txt')
-
-    # Write out CSV files.
-    if args.output:
-        with open(path.join(args.output, 'wash-sales-detail.csv'), 'w') as file:
-            table.render_table(tab_detail, file, 'csv')
-        with open(path.join(args.output, 'wash-sales-aggregate.csv'), 'w') as file:
-            table.render_table(tab_agg, file, 'csv')
-        with open(path.join(args.output, 'wash-sales-summary.csv'), 'w') as file:
-            table.render_table(tab_summary, file, 'csv')
+    elif args.report == 'summary':
+        print('Summary')
+        print('=' * 48)
+        table.render_table(tab_summary, sys.stdout, 'txt')
+        print()
+        if args.output:
+            with open(args.output, 'w') as file:
+                table.render_table(tab_summary, file, 'csv')
 
 
 if __name__ == '__main__':

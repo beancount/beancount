@@ -1,6 +1,7 @@
 """Unit tests for realizations.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import copy
 import datetime
@@ -340,7 +341,7 @@ class TestRealFilter(unittest.TestCase):
                                  ('Assets', '100 USD'),
                                  ('Liabilities:US:Bank', '101 USD')])
         def ge100(ra0):
-            return ra0.balance.get_units('USD').number >= 100
+            return ra0.balance.get_currency_units('USD').number >= 100
         real_copy = realization.filter(real_root, ge100)
         self.assertTrue(real_copy is not None)
         self.assertEqual({'Assets', 'Liabilities:US:Bank'},
@@ -371,7 +372,7 @@ class TestRealFilter(unittest.TestCase):
                                  ('Assets:US', '100 USD'),
                                  ('Assets', '100 USD')])
         def ge100(ra0):
-            return ra0.balance.get_units('USD').number >= 100
+            return ra0.balance.get_currency_units('USD').number >= 100
         real_copy = realization.filter(real_root, ge100)
         self.assertTrue(real_copy is not None)
         self.assertEqual({'Assets:US'},
@@ -390,7 +391,7 @@ class TestRealFilter(unittest.TestCase):
                                  ('Expenses:Food', '10 USD')])
         def even(real_account):
             return (not real_account.balance.is_empty() and
-                    real_account.balance.get_units('NOK').number % 2 == 0)
+                    real_account.balance.get_currency_units('NOK').number % 2 == 0)
         real_even = realization.filter(real_root, even)
         self.assertTrue(all(map(even, realization.iter_children(real_even, True))))
 
@@ -717,6 +718,7 @@ class TestComputeBalance(unittest.TestCase):
         expected_balance.add_amount(A('333.97 USD'))
         expected_balance.add_amount(A('17.23 CAD'))
         expected_balance.add_amount(A('32 HOOL'),
-                                    position.Cost(D('45.203'), 'USD', None, None))
+                                    position.Cost(D('45.203'), 'USD',
+                                                  datetime.date(2014, 5, 30), None))
         expected_balance.add_amount(A('12000 EUR'))
         self.assertEqual(expected_balance, computed_balance)

@@ -1,7 +1,8 @@
 """
 Test various options.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import unittest
 
@@ -102,25 +103,3 @@ class TestValidateOptions(unittest.TestCase):
           option "plugin_processing_mode" "i-dont-exist"
         """
         self.assertTrue(errors)
-
-    def test_validate__use_legacy_fixed_tolerances(self):
-        for input_value, expected_value in [
-                ('TRUE', True),
-                ('True', True),
-                ('true', True),
-                ('1', True),
-                ('42', False),
-                ('FALSE', False),
-                ('False', False),
-                ('false', False),
-                ('0', False),
-                ('something', False),
-                ('other', False),
-             ]:
-            input_str = """
-              option "use_legacy_fixed_tolerances" "{}"
-            """.format(input_value)
-            _, errors, options_map = parser.parse_string(input_str)
-            self.assertFalse(errors)
-            self.assertEqual(expected_value,
-                             options_map['use_legacy_fixed_tolerances'])

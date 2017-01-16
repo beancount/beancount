@@ -1,6 +1,7 @@
 """Execution of interpreter on data rows.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 import datetime
@@ -16,7 +17,7 @@ from beancount.core import display_context
 from beancount.parser import printer
 from beancount.parser import options
 from beancount.ops import summarize
-from beancount.ops import prices
+from beancount.core import prices
 from beancount.utils import misc_utils
 
 

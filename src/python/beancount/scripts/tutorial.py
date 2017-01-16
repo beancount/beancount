@@ -1,6 +1,7 @@
 """Write output files for the tutorial commands.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import argparse
 import logging

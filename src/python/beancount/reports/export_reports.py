@@ -1,6 +1,7 @@
 """Reports to Export to third-party portfolio sites.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 import csv
@@ -18,7 +19,7 @@ from beancount.core.number import D
 from beancount.core.number import ZERO
 from beancount.core import getters
 from beancount.core import amount
-from beancount.ops import prices
+from beancount.core import prices
 from beancount.ops import holdings
 from beancount.reports import base
 from beancount.reports import holdings_reports
@@ -214,7 +215,7 @@ def export_holdings(entries, options_map, promiscuous, aggregate_by_commodity=Fa
         else:
             # The holding is not in terms of one of the money instruments.
             # Find the first available price to convert it into one
-            for money_currency in money_instruments.keys():
+            for money_currency in money_instruments:
                 base_quote = (cost_currency, money_currency)
                 _, rate = prices.get_latest_price(price_map, base_quote)
                 if rate is not None:
