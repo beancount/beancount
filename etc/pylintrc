@@ -112,7 +112,8 @@ disable=locally-disabled,
   anomalous-backslash-in-string,
   len-as-condition,
   no-else-return,
-  invalid-unary-operand-type
+  invalid-unary-operand-type,
+  no-name-in-module
 
 
 

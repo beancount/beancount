@@ -20,6 +20,10 @@ class TestMemoization(unittest.TestCase):
             mem_function()
             mem_function()
             mem_function()
+
+            # Make sure to close before the test directory goes away.
+            del mem_function
+
         self.assertEqual(1, function.call_count)
 
     def test_memoization_expired(self):
@@ -39,3 +43,6 @@ class TestMemoization(unittest.TestCase):
             with mock.patch('beancount.utils.memo.now', return_value=expired_time):
                 mem_function()
             self.assertEqual(2, function.call_count)
+
+            # Make sure to close before the test directory goes away.
+            del mem_function

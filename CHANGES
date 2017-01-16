@@ -66,6 +66,12 @@ Note: This file contains only changes in the 'default' branch.
     they simply keeps the units of the position instead.
 
 
+2017-01-15
+
+  - Fixed all tests for Python-3.6.
+    Beancount has not officially been ported to Python-3.6.
+
+
 2017-01-14
 
   - Fixed bug with generation of example that would produce an incorrect initial
