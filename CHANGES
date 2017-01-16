@@ -4,6 +4,15 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2017-01-16
+
+  - Removed branch "returns2" and moved associated projects script
+    beancount.projects.returns to experiments/returns. This code isn't robust
+    enough to work for everyone, and so therefore I'm moving it back to
+    experiments until I have time to produce something that will work very
+    robustly, and on all my own accounts as well.
+
+
 2017-01-15
 
   (from branch "conversions")
