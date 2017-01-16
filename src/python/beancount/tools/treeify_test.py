@@ -8,7 +8,7 @@ import textwrap
 from os import path
 
 
-PROGRAM = path.join(path.dirname(__file__), 'treeify.py')
+PROGRAM = __file__.replace('_test.py', '.py')
 DEBUG = 0
 
 

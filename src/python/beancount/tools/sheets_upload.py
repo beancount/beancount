@@ -152,7 +152,6 @@ class Doc:
         self.service = service
         self.docid = docid
 
-
     def delete_empty_sheets(self):
         """Remove empty sheets created only temporarily."""
         requests = [{'deleteSheet': {'sheetId': sheet_id}}
@@ -161,7 +160,6 @@ class Doc:
         self.service.spreadsheets().batchUpdate(
             spreadsheetId=self.docid,
             body={'requests': requests}).execute()
-
 
     def get_sheets(self):
         """Get the sheet titles and ids of the given spreadsheet.
@@ -173,7 +171,6 @@ class Doc:
         resp = self.service.spreadsheets().get(spreadsheetId=self.docid).execute()
         return [(sheet['properties']['title'], sheet['properties']['sheetId'])
                 for sheet in resp['sheets']]
-
 
     def add_sheet(self, title):
         """Create a new sheet in an existing doc.
@@ -191,7 +188,6 @@ class Doc:
             body={'requests': requests}).execute()
         return resp['replies'][0]['addSheet']['properties']['sheetId']
 
-
     def get_sheet_size(self, title):
         """Get the size of a spreadsheet.
 
@@ -205,7 +201,6 @@ class Doc:
             ranges=title).execute()
         grid_props = resp['sheets'][0]['properties']['gridProperties']
         return (grid_props['rowCount'], grid_props['columnCount'])
-
 
     def clear_sheet(self, title, nrowcols=None):
         """Clear the sheet.
@@ -224,7 +219,6 @@ class Doc:
             spreadsheetId=self.docid,
             range=srange,
             body={}).execute()
-
 
     def resize_sheet(self, sheet_id, title, nrows, ncols):
         """Update the size of a sheet.
@@ -246,7 +240,6 @@ class Doc:
             spreadsheetId=self.docid,
             body={'requests': requests}).execute()
 
-
     def auto_resize_sheet(self, sheet_id):
         """Auto-resize the spreadsheet based on the current data in it.
 
@@ -259,7 +252,6 @@ class Doc:
         self.service.spreadsheets().batchUpdate(
             spreadsheetId=self.docid,
             body={'requests': requests}).execute()
-
 
     def update_sheet(self, sheet_id, title, filename):
         """Clear and replace the data in a sheet with that of a file.
