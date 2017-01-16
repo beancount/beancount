@@ -16,7 +16,7 @@ from apiclient.http import MediaInMemoryUpload # pylint: disable=import-error
 
 from beancount.parser import options
 from beancount.utils import test_utils
-from beancount.docs import gauth
+import gauth
 
 
 def replace_gdocs_document(http, docid, title, contents):

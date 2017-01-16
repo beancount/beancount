@@ -6,6 +6,9 @@ Note: This file contains only changes in the 'default' branch.
 
 2017-01-16
 
+  - Removed beancount.docs from Beancount library. These are internal tools used
+    to manage documentation, should not be included in the installed codebase.
+
   - Some cleanup of internal tools.
 
   - Added some basic unit tetsts for beancount.tools.sheets_upload.

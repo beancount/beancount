@@ -11,7 +11,7 @@ try:
 except ImportError:
     oauth2client = None
 else:
-    from beancount.docs import gauth
+    import gauth
 
 
 @unittest.skipIf(oauth2client is None, "oauth2client and/or httplib2 not installed")

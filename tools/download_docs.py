@@ -16,7 +16,7 @@ from os import path
 
 from apiclient import discovery
 
-from beancount.docs import gauth
+import gauth
 
 
 def find_index_document(service):
