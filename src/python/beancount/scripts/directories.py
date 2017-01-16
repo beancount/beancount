@@ -1,6 +1,6 @@
 """Check that document directories mirror a list of accounts correctly.
 """
-__copyright__ = "Copyright (C) 2014, 2016  Martin Blais"
+__copyright__ = "Copyright (C) 2014, 2016-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from beancount.core import getters
