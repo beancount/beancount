@@ -6,7 +6,7 @@ currency:
   (number, currency).
 
 """
-__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import re
@@ -23,6 +23,7 @@ from beancount.core.number import D
 # Note: This is kept in sync with "beancount/parser/lexer.l".
 CURRENCY_RE = r'[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]'
 
+# pylint: disable=invalid-name
 _Amount = NamedTuple('_Amount', [
     ('number', Optional[Decimal]),
     ('currency', str)])

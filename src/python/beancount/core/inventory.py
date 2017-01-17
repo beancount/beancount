@@ -22,31 +22,16 @@ where
 This is meant to accommodate both booked and non-booked amounts. The clever trick that we
 pull to do this is that for positions which aren't booked, we simply leave the 'cost' and
 'lot-date' as None. This is the case for most of the transactions.
-
-- When a position is subtracted from an inventory, the 'currency' has to match. If 'cost'
-  and 'lot-date' are specified, they have to match that position exactly (an error is issued
-  otherwise).
-
-- There are methods to select FIFO and LIFO booking.
-
-- There is a method to book against the average cost of the inventory as well, as is
-  required under Canadian rules. The way we implement this is by converting the inventory of
-  the given currency into a single position entry with an average cost when we subtract.
-
-- There is a method to select an arbitrary (FIFO) position only if the 'cost' and 'lot-date'
-  are left unspecified. Normally, we can imagine that we may want to run under a 'strict'
-  mode where this is not allowed (issuing an error when an explicit matching lot is not
-  specified), or that we may instead provide the convenience for the user not having to
-  match.
-
 """
-__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import copy
 import collections
 import enum
 import re
+import warnings
+from collections import Iterable
 
 from beancount.core.number import ZERO
 from beancount.core.number import same_sign
@@ -54,6 +39,7 @@ from beancount.core.amount import Amount
 from beancount.core.position import Cost
 from beancount.core.position import Position
 from beancount.core.position import from_string as position_from_string
+from beancount.core import convert
 from beancount.core.display_context import DEFAULT_FORMATTER
 
 
@@ -73,6 +59,7 @@ class Inventory(list):
         Because the lists are always very short, we prefer to avoid using a
         mapping for the sake of simplicity and it should not hurt performance.
     """
+
     def __init__(self, positions=None):
         """Create a new inventory using a list of existing positions.
 
@@ -81,7 +68,7 @@ class Inventory(list):
         """
         list.__init__(self)
         if positions:
-            assert isinstance(positions, list), positions
+            assert isinstance(positions, Iterable)
             for position in positions:
                 self.add_position(position)
 
@@ -248,6 +235,11 @@ class Inventory(list):
         return list(self)
 
     def get_units(self, currency):
+        warnings.warn("Inventory.get_units() is deprecated; "
+                      "use get_currency_units() instead")
+        return self.get_currency_units(currency)
+
+    def get_currency_units(self, currency):
         """Fetch the total amount across all the position in the given currency.
         This may sum multiple lots in the same currency denomination.
 
@@ -284,38 +276,28 @@ class Inventory(list):
     # Methods to convert an Inventory into another.
     #
 
-    def units(self):
-        """Return an inventory of units for all position (aggregated).
+    def reduce(self, reducer, *args):
+        """Reduce an inventory using one of the conversion functions.
+
+        See functions in beancount.core.conversions.
 
         Returns:
           An instance of Inventory.
         """
-        units_inventory = Inventory()
+        inventory = Inventory()
         for position in self:
-            units_inventory.add_amount(position.units)
-        return units_inventory
+            inventory.add_amount(reducer(position, *args))
+        return inventory
+
+    def units(self):
+        warnings.warn("Inventory.units() is deprecated; "
+                      "use .reduce(convert.get_units) instead")
+        return self.reduce(convert.get_units)
 
     def cost(self):
-        """Return an inventory of costs for all positions (aggregated).
-
-        For example, an inventory that contains these lots:
-
-           2 HOOLB
-           3 HOOL {300.00 USD}
-           4 HOOL {310.00 USD / 2014-10-28}
-
-        will provide:
-
-           2 HOOLB
-           2140 USD
-
-        Returns:
-          An instance of Inventory.
-        """
-        cost_inventory = Inventory()
-        for position in self:
-            cost_inventory.add_amount(position.get_cost())
-        return cost_inventory
+        warnings.warn("Inventory.cost() is deprecated; "
+                      "use .reduce(convert.get_cost) instead")
+        return self.reduce(convert.get_cost)
 
     def average(self):
         """Average all lots of the same currency together.
@@ -336,7 +318,7 @@ class Inventory(list):
             units_amount = Amount(total_units, currency)
 
             if cost_currency:
-                total_cost = sum(position.get_cost().number
+                total_cost = sum(convert.get_cost(position).number
                                  for position in positions)
                 cost = Cost(total_cost / total_units, cost_currency, None, None)
             else:

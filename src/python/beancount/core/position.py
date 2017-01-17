@@ -2,13 +2,13 @@
 
 See types below for details.
 """
-__copyright__ = "Copyright (C) 2013-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import copy
 import datetime
-import collections
 import re
+import warnings
 
 from typing import NamedTuple, Optional
 
@@ -20,6 +20,10 @@ from beancount.core.amount import Amount
 from beancount.core.amount import mul as amount_mul
 from beancount.core.amount import CURRENCY_RE
 from beancount.core.display_context import DEFAULT_FORMATTER
+
+
+# Disable lint errors for namedtuples declared here.
+# pylint: disable=invalid-name
 
 
 # A variant of Amount that also includes a date and a label.
@@ -260,7 +264,7 @@ class Position(_Position):
           units: An instance of Amount.
         """
         assert isinstance(units, Amount)
-        self.units = units
+        self.units = units  # pylint: disable=assigning-non-slot
 
     def currency_pair(self):
         """Return the currency pair associated with this position.
@@ -278,6 +282,8 @@ class Position(_Position):
         Returns:
           An instance of Amount.
         """
+        warnings.warn("Position.get_cost() is deprecated; "
+                      "use convert.get_cost(position) instead")
         cost = self.cost
         if cost is None:
             rcost = self.units
@@ -286,7 +292,7 @@ class Position(_Position):
         return rcost
 
     def at_cost(self):
-        """Return a Position representing the cost of this position. See get_cost().
+        """Return a Position representing the cost of this position.
 
         Returns:
           An instance of Position if there is a cost, or itself, if the position
@@ -294,6 +300,8 @@ class Position(_Position):
           immutable and associated operations never modify an existing Position
           instance, it is legit to return this object itself.
         """
+        warnings.warn("Position.at_cost() is deprecated; "
+                      "use convert.get_cost(position) instead")
         cost = self.cost
         if cost is None:
             pos = self

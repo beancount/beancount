@@ -1,4 +1,4 @@
-__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import unittest
@@ -26,13 +26,14 @@ class TestAmount(unittest.TestCase):
         amount1 = Amount(D('100'), 'USD')
 
         # Test how changing existing attributes should fail.
+        # pylint: disable=assigning-non-slot
         with self.assertRaises(AttributeError) as ctx:
             amount1.currency = 'CAD'
-        self.assertRegexpMatches("can't set attribute", str(ctx.exception))
+        self.assertRegex("can't set attribute", str(ctx.exception))
 
         with self.assertRaises(AttributeError) as ctx:
             amount1.number = D('200')
-        self.assertRegexpMatches("can't set attribute", str(ctx.exception))
+        self.assertRegex("can't set attribute", str(ctx.exception))
 
         # Try setting a new attribute.
         with self.assertRaises(AttributeError):

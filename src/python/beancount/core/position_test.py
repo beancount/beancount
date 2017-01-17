@@ -1,7 +1,7 @@
 """
 Unit tests for the Position class.
 """
-__copyright__ = "Copyright (C) 2014-2015  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import datetime
@@ -11,6 +11,7 @@ import random
 from datetime import date
 
 from beancount.core import position
+from beancount.core import convert
 from beancount.core.position import Cost
 from beancount.core.position import Position
 from beancount.core.position import from_string
@@ -219,21 +220,17 @@ class TestPosition(unittest.TestCase):
     def test_quantities(self):
         pos = Position(A("10 USD"), None)
         self.assertEqual(A('10 USD'), pos.units)
-        self.assertEqual(A('10 USD'), pos.get_cost())
+        self.assertEqual(A('10 USD'), convert.get_cost(pos))
 
         pos = Position(A("10 USD"), Cost(D('1.5'), 'AUD', None, None))
         self.assertEqual(A('10 USD'), pos.units)
-        self.assertEqual(A('15 AUD'), pos.get_cost())
-
-        cost_pos = pos.at_cost()
-        self.assertEqual(A('15 AUD'), cost_pos.units)
-        self.assertEqual(A('15 AUD'), cost_pos.get_cost())
+        self.assertEqual(A('15 AUD'), convert.get_cost(pos))
 
     def test_negative(self):
         pos = Position(A("28372 USD"), Cost(D('10'), 'AUD', None, None))
         negpos = pos.get_negative()
         self.assertEqual(A('-28372 USD'), negpos.units)
-        self.assertEqual(A('-283720 AUD'), negpos.get_cost())
+        self.assertEqual(A('-283720 AUD'), convert.get_cost(negpos))
 
     def test_is_negative_at_cost(self):
         pos1 = Position(A("1 USD"), Cost('10', 'AUD', None, None))

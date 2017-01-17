@@ -207,23 +207,25 @@ sfood-checker:
 constraints dep-constraints: build/beancount.deps
 	$(TOOLS)/dependency-constraints.py $<
 
-check-copyright:
-	$(TOOLS)/check-copyright.py --root=$(PWD)
-
 
 # Run the linter on all source code.
 # To list all messages, call: "pylint --list-msgs"
 LINT_SRCS =					\
   $(SRC)/beancount				\
   examples/ingest/office/importers		\
-  tools
+  bin/*						\
+  tools/*.py
+
+# Note: Keeping to 3.5 because 3.6 pylint raises an exception (as of 2017-01-15).
+#PYLINT = pylint
+PYLINT = python3.5 $(shell which pylint)
 
 pylint lint:
-	pylint --rcfile=$(PWD)/etc/pylintrc $(LINT_SRCS)
+	$(PYLINT) --rcfile=$(PWD)/etc/pylintrc $(LINT_SRCS)
 
 pyflakes:
 	pyflakes $(LINT_SRCS)
 
 
 # Check everything.
-status check: pylint pyflakes check-copyright filter-terms missing-tests dep-constraints multi-imports test
+status check: pylint pyflakes filter-terms missing-tests dep-constraints multi-imports test

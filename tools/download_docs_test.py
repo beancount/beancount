@@ -10,7 +10,7 @@ try:
 except ImportError:
     apiclient = None
 else:
-    from beancount.docs import download_docs
+    import download_docs
 
 
 @unittest.skipIf(apiclient is None, "google-api-python-client not installed")

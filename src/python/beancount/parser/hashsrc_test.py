@@ -1,4 +1,4 @@
-__copyright__ = "Copyright (C) 2015  Martin Blais"
+__copyright__ = "Copyright (C) 2015-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 

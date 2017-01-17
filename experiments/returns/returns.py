@@ -12,39 +12,40 @@ accounts that result in the activity of the portfolio itself.
 
 We consider three sets of accounts:
 
-  "Assets accounts" or "Value accounts": Accounts whose balances are counted
+  "VALUE ACCOUNTS" (also, "asset accounts"): Accounts whose balances are counted
     towards calculating the total value of the portfolio. These are asset
-    accounts that match the regular expression pattern.
+    accounts, including cash accounts.
 
-  "Internal accounts": Accounts which are not valued, but which are used to post
-    internal activity of the account. These are income received as a result of
-    the portfolio activity, such as dividends or realized capital gains, and
-    expenses incurred as a result of carrying out activity related to the
-    investment activity, such as commissions and fees. These are income and
-    expenses accounts.
+  "INTERNAL ACCOUNTS": Accounts which are not included in the value of the
+    account, but which are used to post internal activity of the account, not
+    inflows or outflows. For example, the income account used to book the other
+    side of a dividend receipt, which increases the value accounts, or an
+    expense account used to book a commission paid or a fee, which decreases the
+    value accounts. These are income and expenses accounts.
 
-  "External accounts": Accounts that are considered external to the group of
-    related accounts. These are accounts from which funds will be deposited or
-    withdrawn. These deposits or withdrawals must be excluded from the portfolio
-    returns. Their presence is the reason computing portfolio returns isn't just
-    a trivial exercise!
+  "EXTERNAL ACCOUNTS": Accounts that are considered outside the group of value
+    accounts or internal accounts. These are accounts from which funds will be
+    deposited or withdrawn. These deposits or withdrawals must be excluded from
+    the portfolio returns. Their presence is the reason computing portfolio
+    returns isn't just a trivial exercise of comparing value at two different
+    points in time.
 
 Given this characterization, we can characterize transactions by which accounts
 they have on their postings. Think of it as a Venn diagram with three circles
 and all their possible intersections. We will use the following accounts in our
 examples below:
 
-  ;; Value accounts
+  ;; Value accounts.
   2014-01-01 open Assets:Invest:Cash      USD
   2014-01-01 open Assets:Invest:BOOG      BOOG
 
-  ;; Internal accounts (non-value)
+  ;; Internal accounts.
   2014-01-01 open Income:Invest:PnL       USD
   2014-01-01 open Income:Invest:Dividends USD
   2014-01-01 open Expenses:Commissions    USD
   2014-01-01 open Expenses:Fees           USD
 
-  ;; External accounts
+  ;; External accounts.
   2014-01-01 open Assets:Bank:Checking    USD
   2014-01-01 open Income:Salary           USD
   2014-01-01 open Expenses:Taxes          USD
@@ -93,10 +94,10 @@ Other transactions need special treatment , however:
          Assets:Invest:Cash       -400.00 USD
          Assets:Bank:Checking      400.00 USD
 
-These transactions require special treatment: We need to compute the value of
-the asset accounts before they get applied, book the returns for the previous
-leg, then apply the transaction to its accounts and revalue the value accounts,
-and begin a new piecewise returns segment.
+For these transactions, we need to compute the value of the asset accounts
+before they get applied, book the returns for the previous leg, then apply the
+transaction to its accounts and revalue the value accounts, and begin a new
+piecewise returns segment.
 
 
 Other transactions are a bit more problematic:
@@ -109,11 +110,11 @@ Other transactions are a bit more problematic:
          Assets:Invest:Cash         480.00 USD
          Expenses:Fees               20.00 USD
 
-The question here is whether the postings with interflows should be internalized
-or not, e.g., whether the 20.00 USD wire fee in the transaction above should be
-considered a cost within the portfolio activity or not. We will assume that they
-always are, and in order to keep our algorithm simple, we will internalize the
-postings by splitting the transaction like this:
+The question here is whether the postings with internal flows should be
+internalized or not, e.g., whether the 20.00 USD wire fee in the transaction
+above should be considered a cost within the portfolio activity or not. We will
+assume that they always are, and in order to keep our algorithm simple, we will
+internalize the postings by splitting the transaction like this:
 
        2014-04-01 * "Transferring money by wire" ^internalized-27356
          Assets:Bank:Checking      -500.00 USD
@@ -124,11 +125,11 @@ postings by splitting the transaction like this:
          Assets:Invest:Cash         480.00 USD
          Expenses:Fees               20.00 USD
 
-Here we have created a new "transfer" account called "Equity:Internalized" which
-is automatically added to the set of value accounts. Now we have two
-transactions, one with only VALUE + EXTERNAL accounts and one with VALUE +
-INTERNAL accounts. The 20$ effectively reduces the returns of the segment that
-includes the second transaction.
+Here we have created a "transfer account" called "Equity:Internalized" which is
+automatically added to the set of value accounts. Now we have two transactions,
+one with only VALUE + EXTERNAL accounts and one with VALUE + INTERNAL accounts.
+The 20$ now effectively reduces the returns of the segment that includes the
+second transaction, as it is included in the internal flows.
 
 
 Then, we turn to other groups that don't include value accounts:
@@ -199,14 +200,28 @@ Then, we turn to other groups that don't include value accounts:
      value of the portfolio, so we choose to ignore these transactions safely.
      (Examples of these are rare.)
 
+
+Notes:
+
+ - If you use the "account_rounding" option, the rounding postings will
+   naturally end up being external flows and that's an undesirable effect. If
+   the option is turned on, we automatically ignore those postigs. (Note that
+   another valid solution would have been to insert this account in the list of
+   internal accounts but that creates a more difficult set of resulting
+   transactions, it's a bit confusing.).
+
 """
-__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse
+import collections
 import copy
-import re
 import logging
+import re
+import sys
+
+from dateutil.parser import parse as parse_datetime
 
 from beancount.core.number import ZERO
 from beancount import loader
@@ -216,10 +231,30 @@ from beancount.core import data
 from beancount.core import inventory
 from beancount.core import getters
 from beancount.core import flags
-from beancount.core import interpolate
-from beancount.ops import prices
+from beancount.core import convert
+from beancount.core import prices
 from beancount.utils import misc_utils
 from beancount.utils import date_utils
+
+
+# A snapshot of a particular set of accounts at a point in time. The balances
+# aren't converted to their prices, this is done in a separate step.
+#
+# Attributes:
+#   date: A datetime.date instance, the day of the snapshot.
+#   balance: An Inventory instance, the balance at the given date.
+Snapshot = collections.namedtuple('Snapshot', 'date balance')
+
+# A segment of a returns chain, with no external flows involved.
+#
+# Attributes:
+#   begin: The snapshot at the beginning of the period.
+#   end: The snapshot at the end of the period.
+#   entries: A list of internal entries that occur within the segment, only
+#     transactions.
+#   external_entries: A list of the external entries that immediately follow
+#     this segment.
+Segment = collections.namedtuple('Segment', 'begin end entries external_entries')
 
 
 def sum_balances_for_accounts(balance, entry, accounts):
@@ -230,7 +265,7 @@ def sum_balances_for_accounts(balance, entry, accounts):
       entry: A directive (directives other than Transactions are ignored).
       accounts: A set of strings, the names of accounts whose postings to include.
     Returns:
-      This destructively modifies balance and returns it.
+      WARNING: This destructively modifies balance.
     """
     if isinstance(entry, data.Transaction):
         for posting in entry.postings:
@@ -239,11 +274,10 @@ def sum_balances_for_accounts(balance, entry, accounts):
     return balance
 
 
-def segment_periods(entries, accounts_value, accounts_intflows,
-                    date_begin=None, date_end=None):
+def segment_periods(entries, accounts_value, accounts_internal):
     """Segment entries in terms of piecewise periods of internal flow.
 
-    This function iterated through the given entries and computes balances at
+    This function iterates through the given entries and computes balances at
     the beginning and end of periods without external flow entries. You should be
     able to then compute the returns from these informations.
 
@@ -253,32 +287,14 @@ def segment_periods(entries, accounts_value, accounts_intflows,
         internal flow accounts (the function simply ignores that which is not
         relevant).
       accounts_value: A set of the asset accounts in the related group.
-      accounts_intflows: A set of the internal flow accounts in the related group.
-      date_begin: A datetime.date instance, the beginning date of the period to compute
-        returns over.
-      date_end: A datetime.date instance, the end date of the period to compute returns
-        over.
+      accounts_internal: A set of the internal flow accounts in the related group.
     Returns:
-      A pair of
-        periods: A list of period tuples, each of which contains:
-          period_begin: A datetime.date instance, the first day of the period.
-          period_end: A datetime.date instance, the last day of the period.
-          balance_begin: An Inventory instance, the balance at the beginning of the period.
-          balance_end: An Inventory instance, the balance at the end of the period.
-        portfolio_entries: A list of the entries that we used in computing the portfolio.
+      A timeline, which is a list of Segment instances.
     Raises:
       ValueError: If the dates create an impossible situation, the beginning
         must come before the requested end, if specified.
     """
-    logging.info("Segmenting periods.")
-    logging.info("Date begin: %s", date_begin)
-    logging.info("Date end:   %s", date_end)
-
-    if date_begin and date_end and date_begin >= date_end:
-        raise ValueError("Dates are not ordered correctly: {} >= {}".format(
-            date_begin, date_end))
-
-    accounts_related = accounts_value | accounts_intflows
+    accounts_related = accounts_value | accounts_internal
     is_external_flow_entry = lambda entry: (isinstance(entry, data.Transaction) and
                                             any(posting.account not in accounts_related
                                                 for posting in entry.postings))
@@ -286,90 +302,65 @@ def segment_periods(entries, accounts_value, accounts_intflows,
     # Create an iterator over the entries we care about.
     portfolio_entries = [entry
                          for entry in entries
-                         if getters.get_entry_accounts(entry) & accounts_value]
+                         if (isinstance(entry, data.Transaction) and
+                             getters.get_entry_accounts(entry) & accounts_value)]
     iter_entries = iter(portfolio_entries)
     entry = next(iter_entries)
 
     # If a beginning cut-off has been specified, skip the entries before then
     # (and make sure to accumulate the initial balance correctly).
     balance = inventory.Inventory()
-    if date_begin is not None:
-        period_begin = date_begin
-        try:
-            while True:
-                if entry.date >= date_begin:
-                    break
-                if date_end and entry.date >= date_end:
-                    break
-                balance = sum_balances_for_accounts(balance, entry, accounts_value)
-                entry = next(iter_entries)
-        except StopIteration:
-            # No periods found! Just return an empty list.
-            return [(date_begin, date_end or date_begin, balance, balance)], []
-    else:
-        period_begin = entry.date
+    period_begin = entry.date
 
     # Main loop over the entries.
-    periods = []
-    entry_logger = misc_utils.LineFileProxy(logging.debug, '   ')
+    timeline = []
     done = False
     while True:
         balance_begin = copy.copy(balance)
 
-        logging.debug(",-----------------------------------------------------------")
-        logging.debug(" Begin:   %s", period_begin)
-        logging.debug(" Balance: %s", balance_begin.units())
-        logging.debug("")
-
         # Consume all internal flow entries, simply accumulating the total balance.
+        segment_entries = []
         while True:
             period_end = entry.date
             if is_external_flow_entry(entry):
                 break
-            if date_end and entry.date >= date_end:
-                period_end = date_end
-                done = True
-                break
             if entry:
-                printer.print_entry(entry, file=entry_logger)
-            balance = sum_balances_for_accounts(balance, entry, accounts_value)
+                segment_entries.append(entry)
+            sum_balances_for_accounts(balance, entry, accounts_value)
             try:
                 entry = next(iter_entries)
             except StopIteration:
                 done = True
-                if date_end:
-                    period_end = date_end
+                entry = None
                 break
-        else:
-            done = True
-
         balance_end = copy.copy(balance)
 
         ## FIXME: Bring this back in, this fails for now. Something about the
-        ## initialization fails it. assert period_begin <= period_end,
-        ## (period_begin, period_end)
-        periods.append((period_begin, period_end, balance_begin, balance_end))
+        ## initialization fails it.
+        ## assert period_begin <= period_end, (period_begin, period_end)
 
-        logging.debug(" Balance: %s", balance_end.units())
-        logging.debug(" End:     %s", period_end)
-        logging.debug("`-----------------------------------------------------------")
-        logging.debug("")
+        external_entries = []
+        segment = Segment(Snapshot(period_begin, balance_begin),
+                          Snapshot(period_end, balance_end),
+                          segment_entries, external_entries)
+        timeline.append(segment)
+
+        # Absorb the balance of the external flow entries as long as they're on
+        # the same date (a date change would imply a possible market value
+        # change and we would want to create a segment in such cases, even if
+        # the portfolio contents do not change).
+        if entry is not None:
+            date = entry.date
+            while is_external_flow_entry(entry) and entry.date == date:
+                external_entries.append(entry)
+                sum_balances_for_accounts(balance, entry, accounts_value)
+                try:
+                    entry = next(iter_entries)
+                except StopIteration:
+                    done = True
+                    break
 
         if done:
-            break
-
-        # Absorb the balance of the external flow entry.
-        assert is_external_flow_entry(entry), entry
-        if entry:
-            printer.print_entry(entry, file=entry_logger)
-        balance = sum_balances_for_accounts(balance, entry, accounts_value)
-        try:
-            entry = next(iter_entries)
-        except StopIteration:
-            # If there is an end date, insert that final period to cover the end
-            # date, with no changes.
-            if date_end:
-                periods.append((period_end, date_end, balance, balance))
             break
 
         period_begin = period_end
@@ -377,7 +368,7 @@ def segment_periods(entries, accounts_value, accounts_intflows,
     ## FIXME: Bring this back in, this fails for now.
     # assert all(period_begin <= period_end
     #            for period_begin, period_end, _, _ in periods), periods
-    return periods, portfolio_entries
+    return timeline
 
 
 def compute_period_returns(date_begin, date_end,
@@ -400,8 +391,8 @@ def compute_period_returns(date_begin, date_end,
           of the period.
     """
     # Evaluate the boundary balances at market value.
-    mktvalue_begin = prices.get_inventory_market_value(balance_begin, date_begin, price_map)
-    mktvalue_end = prices.get_inventory_market_value(balance_end, date_end, price_map)
+    mktvalue_begin = balance_begin.reduce(convert.get_value, price_map, date_begin)
+    mktvalue_end = balance_end.reduce(convert.get_value, price_map, date_end)
 
     # Compute the union of all currencies. At this point, ignore currencies
     # held-at-cost and issue a warning if some are found (if the price database
@@ -468,8 +459,9 @@ LINK_FORMAT = 'internalized-{:05d}'
 
 
 def internalize(entries, transfer_account,
-                accounts_value, accounts_intflows, accounts_internalize=None):
-    """Internalize internal flows that would be lost because booked against external
+                accounts_value, accounts_internal,
+                accounts_internalize=None):
+    """Internalize flows that would be lost because booked against external
     flow accounts. This splits up entries that have accounts both in internal
     flows and external flows. A new set of entries are returned, along with a
     list of entries that were split and replaced by a pair of entries.
@@ -481,16 +473,16 @@ def internalize(entries, transfer_account,
         would be an equity account, 'Equity:Internalized' or something like that.
       accounts_value: A set of account name strings, the names of the asset accounts
         included in valuing the portfolio.
-      accounts_intflows: A set of account name strings, the names of internal flow
+      accounts_internal: A set of account name strings, the names of internal flow
         accounts (normally income and expenses) that aren't external flows.
       accounts_internalize: A set of account name strings to trigger explicit
         internalization of transactions with no value account. If a transaction
         is found that has only internal accounts and external accounts, the
-        postings whose accounts are in this set of accounts will be internalize.
-        This is a method that can be used to pull dividends in the portfolio
-        when valueing portfolios without their cash component. See docstring and
-        documentation for details. If specific, this set of accounts must be a
-        subset of the internal flows accounts.
+        postings whose accounts are in this set of accounts will be
+        internalized. This is a method that can be used to pull dividends into
+        the portfolio when valueing portfolios without their cash component. See
+        docstring and documentation for details. If specified, this set of
+        accounts must be a subset of the internal flows accounts.
     Returns:
       A pair of the new list of internalized entries, including all the other entries, and
       a short list of just the original entires that were removed and replaced by pairs of
@@ -508,7 +500,7 @@ def internalize(entries, transfer_account,
     assert(isinstance(transfer_account, str)), (
         "Invalid transfer account: {}".format(transfer_account))
 
-    if accounts_internalize and not (accounts_internalize <= accounts_intflows):
+    if accounts_internalize and not (accounts_internalize <= accounts_internal):
         raise ValueError(
             "Internalization accounts is not a subset of internal flows accounts.")
 
@@ -522,16 +514,17 @@ def internalize(entries, transfer_account,
 
         # Break up postings into the three categories.
         postings_assets = []
-        postings_intflows = []
-        postings_extflows = []
+        postings_internal = []
+        postings_external = []
         postings_internalize = []
+        postings_ignore = []
         for posting in entry.postings:
             if posting.account in accounts_value:
                 postings_list = postings_assets
-            elif posting.account in accounts_intflows:
-                postings_list = postings_intflows
+            elif posting.account in accounts_internal:
+                postings_list = postings_internal
             else:
-                postings_list = postings_extflows
+                postings_list = postings_external
             postings_list.append(posting)
 
             if accounts_internalize and posting.account in accounts_internalize:
@@ -539,7 +532,7 @@ def internalize(entries, transfer_account,
 
         # Check if the entry is to be internalized and split it up in two
         # entries and replace the entrie if that's the case.
-        if (postings_intflows and postings_extflows and
+        if (postings_internal and postings_external and
             (postings_assets or postings_internalize)):
 
             replaced_entries.append(entry)
@@ -550,8 +543,8 @@ def internalize(entries, transfer_account,
 
             # Calculate the weight of the balance to transfer.
             balance_transfer = inventory.Inventory()
-            for posting in postings_extflows:
-                balance_transfer.add_amount(interpolate.get_posting_weight(posting))
+            for posting in postings_external:
+                balance_transfer.add_amount(convert.get_weight(posting))
 
             prototype_entry = entry._replace(flag=flags.FLAG_RETURNS,
                                              links=(entry.links or set()) | set([link]))
@@ -561,14 +554,14 @@ def internalize(entries, transfer_account,
                 data.Posting(transfer_account, pos.units, pos.cost, None, None, None)
                 for pos in balance_transfer.get_positions()]
             new_entries.append(prototype_entry._replace(
-                postings=(postings_assets + postings_intflows + postings_transfer_int)))
+                postings=(postings_assets + postings_internal + postings_transfer_int)))
 
             # Create external flows posting.
             postings_transfer_ext = [
                 data.Posting(transfer_account, -pos.units, pos.cost, None, None, None)
                 for pos in balance_transfer.get_positions()]
             new_entries.append(prototype_entry._replace(
-                postings=(postings_transfer_ext + postings_extflows)))
+                postings=(postings_transfer_ext + postings_external)))
         else:
             new_entries.append(entry)
 
@@ -586,10 +579,9 @@ def internalize(entries, transfer_account,
     return new_entries, replaced_entries
 
 
-def compute_returns(entries, transfer_account,
-                    accounts_value, accounts_intflows, accounts_internalize=None,
-                    price_map=None,
-                    date_begin=None, date_end=None):
+def create_timeline(entries, options_map,
+                    transfer_account,
+                    accounts_value, accounts_internal, accounts_internalize=None):
 
     """Compute the returns of a portfolio of accounts.
 
@@ -600,29 +592,28 @@ def compute_returns(entries, transfer_account,
         would be an equity account, 'Equity:Internalized' or something like that.
       accounts_value: A set of account name strings, the names of the asset accounts
         included in valuing the portfolio.
-      accounts_intflows: A set of account name strings, the names of internal flow
+      accounts_internal: A set of account name strings, the names of internal flow
         accounts (normally income and expenses) that aren't external flows.
       accounts_internalize: A set of account name strings used to force internalization.
         See internalize() for details.
-      price_map: An instance of PriceMap as computed by prices.build_price_map(). If left
-        to its default value of None, we derive the price_map from the entries themselves.
-      date_begin: A datetime.date instance, the beginning date of the period to compute
-        returns over.
-      date_end: A datetime.date instance, the end date of the period to compute returns
-        over.
+      price_map: An instance of PriceMap as computed by prices.build_price_map().
     Returns:
-      A triple of
-        returns: A dict of currency -> float total returns.
-        dates: A pair of (date_first, date_last) datetime.date instances.
-        internalized_entries: A short list of the entries that were required to be split
-          up in order to internalize their flow. (This is mostly returns to be used by
-          tests, you can otherwise safely discard this.)
+      A timeline, which is a list of Segment instances.
     """
     if not accounts_value:
         raise ValueError("Cannot calculate returns without assets accounts to value")
+    if isinstance(accounts_value, list):
+        accounts_value = set(accounts_value)
+    if isinstance(accounts_internal, list):
+        accounts_internal = set(accounts_internal)
+    if accounts_internalize and isinstance(accounts_internalize, list):
+        accounts_internalize = set(accounts_internalize)
+    assert accounts_internalize is None or isinstance(accounts_internalize, set)
 
-    if price_map is None:
-        price_map = prices.build_price_map(entries)
+    # Add the rounding error account to the list of internal flow accounts in
+    # order to avoid causing external flows on these tiny amounts.
+    if options_map["account_rounding"]:
+        entries = data.remove_account_postings(options_map["account_rounding"], entries)
 
     # Remove unrealized entries, if any are found. (Note that unrealized gains
     # only inserted at the end of the list of entries have no effect because
@@ -635,15 +626,104 @@ def compute_returns(entries, transfer_account,
     # Internalize entries with internal/external flows.
     entries, internalized_entries = internalize(
         entries, transfer_account,
-        accounts_value, accounts_intflows, accounts_internalize)
+        accounts_value, accounts_internal,
+        accounts_internalize)
     accounts_value.add(transfer_account)
 
     # Segment the entries, splitting at entries with external flow and computing
     # the balances before and after. This returns all such periods with the
     # balances at their beginning and end.
-    periods, portfolio_entries = segment_periods(entries,
-                                                 accounts_value, accounts_intflows,
-                                                 date_begin, date_end)
+    return segment_periods(entries, accounts_value, accounts_internal)
+
+
+def value_inventory(price_map, date, inv):
+    """Convert a position to its market value at a particular date.
+
+    Args:
+      price_map: A mapping of prices as per build_price_map().
+      date: A datetime.date instance, the date at which to value the inventory.
+      inv: The inventory to convert.
+    Returns:
+      A resulting inventory.
+    """
+    result = inventory.Inventory()
+    for pos in inv:
+        units = pos.units
+        if pos.cost is None:
+            converted_pos = units
+        else:
+            converted_pos = prices.convert_amount(price_map, pos.cost.currency, units, date)
+            if converted_pos is None:
+                logging.warning('Could not convert Position "{}" to {}'.format(
+                    units, pos.cost.currency))
+                converted_pos = units
+        result.add_amount(converted_pos)
+    return result
+
+
+def dump_timeline_brief(timeline, price_map, file):
+    """Dump a text rendering of the timeline to a given file output for debugging.
+
+    Args:
+      timeline: A list of Segment instances.
+      price_map: A mapping of prices as per build_price_map().
+      file: A file object to write to.
+    """
+    pr = lambda *args: print(*args, file=file)
+    str_balances = [(
+        value_inventory(price_map, segment.begin.date, segment.begin.balance).to_string(),
+        value_inventory(price_map, segment.end.date, segment.end.balance).to_string()
+    ) for segment in timeline]
+    max_width = max(max(len(str_begin), len(str_end))
+                    for str_begin, str_end in str_balances)
+    fmt = "   {{}} -> {{}}  {{:>{w}}}  {{:>{w}}}".format(w=max_width)
+    for segment, (str_begin, str_end) in zip(timeline, str_balances):
+        pr(fmt.format(segment.begin.date, segment.end.date, str_begin, str_end))
+    pr("")
+
+
+def dump_timeline(timeline, price_map, file):
+    """Dump a text rendering of the timeline to a given file output for debugging.
+    This provides all, the detail. Useful just for debugging.
+
+    Args:
+      timeline: A list of Segment instances.
+      price_map: A mapping of prices as per build_price_map().
+      file: A file object to write to.
+    """
+    # FIXME: Convert this to make use of the price map.
+    pr = lambda *args: print(*args, file=file)
+    indfile = misc_utils.LineFileProxy(file.write, '   ', write_newlines=True)
+    for segment in timeline:
+        pr(",-----------------------------------------------------------")
+        pr(" Begin:   {}".format(segment.begin.date))
+        pr(" Balance: {}".format(segment.begin.balance.units()))
+        printer.print_entries(segment.entries, file=indfile)
+        pr("")
+        pr(" Balance: {}".format(segment.end.balance.units()))
+        pr(" End:     {}".format(segment.end.date))
+        pr("`-----------------------------------------------------------")
+        printer.print_entries(segment.external_entries, file=indfile)
+        pr("")
+
+
+def compute_returns(timeline, price_map, date_begin=None, date_end=None):
+    """Compute the returns of a portfolio of accounts from the given timeline.
+
+    Args:
+      timeline: A list of Segment instances.
+      price_map: An instance of PriceMap as computed by prices.build_price_map().
+      date_begin: A datetime.date instance, the beginning date of the period to compute
+        returns over.
+      date_end: A datetime.date instance, the end date of the period to compute returns
+        over.
+    Returns:
+      A triple of
+        returns: A dict of currency -> float total returns.
+        dates: A pair of (date_first, date_last) datetime.date instances.
+    """
+    periods = [(s.begin.date, s.end.date, s.begin.balance, s.end.balance)
+               for s in timeline]
 
     # From the period balances, compute the returns.
     logging.info("Calculating period returns.")
@@ -664,8 +744,10 @@ def compute_returns(entries, transfer_account,
             annual_returns = 'OVERFLOW'
 
         logging.info("From %s to %s", period_begin, period_end)
-        logging.info("  Begin %s => %s", balance_begin.units(), mktvalue_begin)
-        logging.info("  End   %s => %s", balance_end.units(), mktvalue_end)
+        logging.info("  Begin %s => %s",
+                     balance_begin.reduce(convert.get_units), mktvalue_begin)
+        logging.info("  End   %s => %s",
+                     balance_end.reduce(convert.get_units), mktvalue_end)
         logging.info("  Returns     %s", period_returns)
         logging.info("  Annualized  %s", annual_returns)
         logging.info("")
@@ -684,124 +766,148 @@ def compute_returns(entries, transfer_account,
 
     date_first = periods[0][0]
     date_last = periods[-1][1]
-    return total_returns, (date_first, date_last), internalized_entries
+    return total_returns, (date_first, date_last)
 
 
-def find_matching(entries, acc_types,
-                  assets_regexp, intflows_regexp, internalize_regexp=None):
-    """Match entries and identify account groups.
-
-    Args:
-      entries: A list of directives.
-      acc_types: An instance of account_types.AccountTypes
-      assets_regexp: A regular expression string that matches names of asset accounts to
-        value for the portfolio.
-      intflows_regexp: A regular expression string that matches names of accounts considered
-        internal flows to the portfolio (typically income and expenses accounts).
-      internalize_regexp: A regular expression string that matches names of accounts
-        to force internalization of. See internalize() for details.
-    Returns:
-      A list of all entries with an account matching the given pattern, and a
-      triplet of account lists:
-        accounts_value: A set of the asset accounts in the related group.
-        accounts_intflows: A set of the internal flow accounts in the related group.
-        accounts_extflows: A set of the external flow accounts.
-        accounts_internalize: A set of the explicitly internalized accounts, or None,
-          if left unspecified.
-    """
-    accounts_value = set()
-    accounts_intflows = set()
-    accounts_extflows = set()
-    accounts_internalize = set()
-    assets_match = re.compile(assets_regexp).match
-    intflows_match = re.compile(intflows_regexp).match
-    internalize_match = re.compile(internalize_regexp).match if internalize_regexp else None
-
-    matching_entries = []
-    for entry in entries:
-        if not isinstance(entry, data.Transaction):
-            continue
-        if any((assets_match(posting.account) or (internalize_match and
-                                                  internalize_match(posting.account)))
-               for posting in entry.postings):
-            matching_entries.append(entry)
-
-            for posting in entry.postings:
-                if assets_match(posting.account):
-                    accounts_value.add(posting.account)
-                elif intflows_match(posting.account):
-                    accounts_intflows.add(posting.account)
-                else:
-                    accounts_extflows.add(posting.account)
-
-                if internalize_match and internalize_match(posting.account):
-                    accounts_internalize.add(posting.account)
-
-    return (matching_entries, (accounts_value,
-                               accounts_intflows,
-                               accounts_extflows,
-                               accounts_internalize or None))
-
-
-def compute_returns_with_regexp(entries, options_map,
-                                transfer_account,
-                                assets_regexp, intflows_regexp, internalize_regexp=None,
-                                date_begin=None, date_end=None):
-    """Compute the returns of a portfolio of accounts defined by a regular expression.
+def compute_timeline_and_returns(entries, options_map,
+                                 transfer_account,
+                                 accounts_value, accounts_internal, accounts_internalize=None,
+                                 date_begin=None, date_end=None):
+    """Compute a timeline and the returns of a portfolio of accounts.
 
     Args:
-      entries: A list of directives.
-      options_map: An options dict as produced by the loader.
+      entries: A list of directives that may affect the account.
       transfer_account: A string, the name of an account to use for internalizing entries
-        which need to be split between internal and external flows.
-      assets_regexp: A regular expression string that matches names of asset accounts to
-        value for the portfolio.
-      intflows_regexp: A regular expression string that matches names of accounts considered
-        internal flows to the portfolio (typically income and expenses accounts).
-      internalize_regexp: A regular expression string that matches names of accounts
-        to force internalization of. See internalize() for details.
+        which need to be split between internal and external flows. A good default value
+        would be an equity account, 'Equity:Internalized' or something like that.
+      accounts_value: A set of account name strings, the names of the asset accounts
+        included in valuing the portfolio.
+      accounts_internal: A set of account name strings, the names of internal flow
+        accounts (normally income and expenses) that aren't external flows.
+      accounts_internalize: A set of account name strings used to force internalization.
+        See internalize() for details.
+      price_map: An instance of PriceMap as computed by prices.build_price_map().
       date_begin: A datetime.date instance, the beginning date of the period to compute
         returns over.
       date_end: A datetime.date instance, the end date of the period to compute returns
         over.
     Returns:
-      See compute_returns().
+      A triple of
+        returns: A dict of currency -> float total returns.
+        dates: A pair of (date_first, date_last) datetime.date instances.
     """
-    acc_types = options.get_account_types(options_map)
+    timeline = create_timeline(entries, options_map,
+                               transfer_account,
+                               accounts_value, accounts_internal, accounts_internalize)
+
     price_map = prices.build_price_map(entries)
 
-    # Fetch the matching entries and figure out account name groups.
-    matching_entries, (accounts_value,
-                       accounts_intflows,
-                       accounts_extflows,
-                       accounts_internalize) = find_matching(entries, acc_types,
-                                                             assets_regexp,
-                                                             intflows_regexp,
-                                                             internalize_regexp)
+    return compute_returns(timeline, price_map, date_begin, date_end)
 
-    logging.info('Asset accounts:')
-    for account in sorted(accounts_value):
-        logging.info('  %s', account)
 
-    logging.info('Internal flows:')
-    for account in sorted(accounts_intflows):
-        logging.info('  %s', account)
+# A simple structure to hold the sets of accounts used to construct a timeline
+# for a particular asset we want to compute the returns for.
+#
+# Attributes:
+#   value: A set of value account strings.
+#   internal: A set of internal account strings.
+#   external: A set of external account strings.
+#   internalize: A set of internalized account strings.
+ReturnAccounts = collections.namedtuple('ReturnAccounts',
+                                        'value internal external internalize')
 
-    logging.info('External flows:')
-    for account in sorted(accounts_extflows):
-        logging.info('  %s', account)
-    logging.info('')
 
-    if accounts_internalize:
-        logging.info('Explicitly internalized accounts:')
-        for account in sorted(accounts_internalize):
-            logging.info('  %s', account)
-        logging.info('')
+def regexps_to_accounts(entries,
+                        regexp_value, regexp_internal, regexp_internalize=None):
+    """Extract account name from a list of entries and value & internal account regexps.
 
-    return compute_returns(entries, transfer_account,
-                           accounts_value, accounts_intflows, accounts_internalize,
-                           price_map,
-                           date_begin, date_end)
+    This function takes two regular expressions: one for value accounts and one
+    for internal accounts, and given the list of entries, extracts the explicit
+    configuration required to create segments for those accounts.
+
+    Args:
+      entries: A list of directives.
+      regexp_value: A regular expression string that matches names of asset accounts to
+        value for the portfolio.
+      regexp_internal: A regular expression string that matches names of accounts considered
+        internal flows to the portfolio (typically income and expenses accounts).
+      regexp_internalize: A regular expression string that matches names of accounts
+        to force internalization of. See internalize() for details.
+    Returns:
+      A list of all entries with an account matching the given pattern, and a
+      triplet of account lists:
+        accounts_value: A set of the asset accounts in the related group.
+        accounts_internal: A set of the internal flow accounts in the related group.
+        accounts_external: A set of the external flow accounts.
+        accounts_internalize: A set of the explicitly internalized accounts, or None,
+          if left unspecified.
+    """
+    accounts_value = set()
+    accounts_internal = set()
+    accounts_external = set()
+    accounts_internalize = set()
+
+    # Precompute regexps for performance.
+    match_value = re.compile(regexp_value).match
+    match_internal = re.compile(regexp_internal).match
+    match_internalize = re.compile(regexp_internalize).match if regexp_internalize else None
+
+    # Run through all the transactions.
+    for entry in entries:
+        if not isinstance(entry, data.Transaction):
+            continue
+
+        # If we have a value account or an explicitly internalized account.
+        if any((match_value(posting.account) or
+                (match_internalize and match_internalize(posting.account)))
+               for posting in entry.postings):
+
+            # Categorize accounts of a matching transaction.
+            for posting in entry.postings:
+                if match_value(posting.account):
+                    accounts_value.add(posting.account)
+                elif match_internal(posting.account):
+                    accounts_internal.add(posting.account)
+                else:
+                    accounts_external.add(posting.account)
+
+                if match_internalize and match_internalize(posting.account):
+                    accounts_internalize.add(posting.account)
+
+    return ReturnAccounts(accounts_value,
+                          accounts_internal,
+                          accounts_external,
+                          accounts_internalize or None)
+
+
+def dump_return_accounts(racc, file):
+    """Render the return accounts.
+
+    Args:
+      racc: A ReturnAccounts instance.
+      file: A file object to write to.
+    """
+    pr = lambda *args: print(*args, file=file)
+    pr('Asset accounts:')
+    for account in sorted(racc.value):
+        pr('  {}'.format(account))
+    pr('')
+
+    pr('Internal flows:')
+    for account in sorted(racc.internal):
+        pr('  {}'.format(account))
+    pr('')
+
+    pr('External flows:')
+    for account in sorted(racc.external):
+        pr('  {}'.format(account))
+    pr('')
+
+    if racc.internalize:
+        pr('Explicitly internalized accounts:')
+        for account in sorted(racc.internalize):
+            pr('  {}'.format(account))
+        pr('')
 
 
 def main():
@@ -809,16 +915,16 @@ def main():
 
     parser.add_argument('filename', help='Ledger filename')
 
-    parser.add_argument('assets_regexp', action='store',
+    parser.add_argument('regexp_value', action='store',
                         help=("A regular expression string that matches names of asset "
                               "accounts to value for the portfolio."))
 
-    parser.add_argument('intflows_regexp', action='store',
+    parser.add_argument('regexp_internal', action='store',
                         help=("A regular expression string that matches names of accounts "
                               "considered internal flows to the portfolio (typically "
                               "income and expenses accounts)."))
 
-    parser.add_argument('--internalize_regexp', action='store',
+    parser.add_argument('--regexp_internalize', '--internalize_regexp', action='store',
                         help=("A regular expression string that matches names of internal "
                               "flow accounts to trigger an internalization."))
 
@@ -848,12 +954,16 @@ def main():
     # Load the input file and build the price database.
     entries, errors, options_map = loader.load_file(args.filename, log_errors=logging.error)
 
-    # Compute the returns.
-    returns, (date_first, date_last), _ = compute_returns_with_regexp(
+    # Extract the account names using the regular expressions.
+    racc = regexps_to_accounts(
+        entries, args.regexp_value, args.regexp_internal, args.regexp_internalize)
+
+    # Compute the returns using the explicit configuration.
+    returns, (date_first, date_last) = compute_timeline_and_returns(
         entries, options_map,
         args.transfer_account,
-        args.assets_regexp, args.intflows_regexp, args.internalize_regexp,
-        date_begin=args.date_begin, date_end=args.date_end)
+        racc.value, racc.internal, racc.internalize,
+        args.date_begin, args.date_end)
 
     # Annualize the returns.
     annual_returns = annualize_returns(returns, date_first, date_last)

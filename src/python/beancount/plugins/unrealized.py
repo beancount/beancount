@@ -21,7 +21,7 @@ from beancount.core import getters
 from beancount.core import amount
 from beancount.core import flags
 from beancount.ops import holdings
-from beancount.ops import prices
+from beancount.core import prices
 from beancount.parser import options
 
 

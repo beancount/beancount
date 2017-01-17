@@ -1,7 +1,7 @@
 """Algorithms for 'booking' inventory, that is, the process of finding a
 matching lot when reducing the content of an inventory.
 """
-__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2015-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
@@ -15,6 +15,7 @@ from beancount.core.number import MISSING
 from beancount.core.number import ZERO
 from beancount.core.position import Cost
 from beancount.core.position import Position
+from beancount.core import convert
 
 from beancount.core import account
 from beancount.core import interpolate
@@ -245,7 +246,7 @@ def get_incomplete_postings(entry, options_map):
             currencies.add(units.currency)
 
             # Compute the amount to balance and update the inventory.
-            weight = interpolate.get_posting_weight(posting)
+            weight = convert.get_weight(posting)
             residual.add_amount(weight)
 
             has_regular_postings = True
@@ -316,7 +317,7 @@ def get_incomplete_postings(entry, options_map):
                 new_pos = Position(new_units, pos.cost)
 
                 # Update the residuals inventory.
-                weight = new_pos.get_cost()
+                weight = convert.get_cost(new_pos)
                 residual.add_amount(weight)
 
         postings[index:index+1] = new_postings

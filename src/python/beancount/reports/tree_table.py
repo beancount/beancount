@@ -10,6 +10,7 @@ from beancount.core import account_types
 from beancount.core import data
 from beancount.core import inventory
 from beancount.core import realization
+from beancount.core import convert
 
 
 # A special enum for the "Totals" line at the bottom of the table.
@@ -158,7 +159,7 @@ def table_of_balances(real_root, operating_currencies, formatter, classes=None):
                 row_classes.append('parent-node')
 
             # For each account line, get the final balance of the account (at cost).
-            line_balance = real_account.balance.cost()
+            line_balance = real_account.balance.reduce(convert.get_cost)
 
             # Update the total balance for the totals line.
             balance_totals += line_balance
@@ -169,7 +170,7 @@ def table_of_balances(real_root, operating_currencies, formatter, classes=None):
 
         # FIXME: This little algorithm is inefficient; rewrite it.
         for currency in operating_currencies:
-            units = ccy_dict[currency].get_units(currency)
+            units = ccy_dict[currency].get_currency_units(currency)
             cells.append(formatter.render_number(units.number, units.currency)
                          if units.number != ZERO
                          else '')

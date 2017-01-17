@@ -1,17 +1,14 @@
 -*- mode: org -*-
 beancount: TODO
-* Types
-
-  - Remove misc_utils.Enum since we're committing to 3.5 with this branch.
-
-
 * Priorities
+
+- Fix #145
 
 booking_full.py: # FIXME: Refactor compute_cost_number() and convert_costspec_to_cost().
 
 - Start versioning very soon. It's desired by users.
-- Pivot report... very useful. I need it.
 
+- Pivot report... very useful. I need it.
 - Pull request for Unicode support: https://bitbucket.org/blais/beancount/pull-requests/13/allow-unicode-in-account-names/diff#comment-20233638
 - Fix #128
 - Fix #130
@@ -26,6 +23,23 @@ booking_full.py: # FIXME: Refactor compute_cost_number() and convert_costspec_to
 {write-intro-doc}
 {commodity-required}
 
+
+* Returns (Revision)
+
+  - Fix remaining tests for removal of open/balance entries from segment_periods().
+
+  - Implement per account, with data structures + code to combine them together
+  - Trailing windows
+  - Rolling windows
+  - Calculate pre-tax returns, post-tax returns
+  - Output nice debugging information
+  - Warn when prices aren't within a certain date interval with their usage
+  - Render a graph of the actual values of the assets as well.
+  - There should be a separate web application that handles this, no need to
+    pre-render everything.
+  - You need to merge the external entries when multiple ones occur on the same
+    date.
+  - Handle the various FIXMEs.
 
 * Settlement Dates (Split & Merge)
 
@@ -1140,7 +1154,7 @@ http://furius.ca/beancount/doc/proposal-query
       "display_context" branch.
 
 
-* SQLite3 Integration
+*** SQLite3 Integration
 
   - Another area of shell experimentation is that I should build some way to
     provide Beancount's input as a virtual table in SQLite3, even if it's not
@@ -1869,7 +1883,7 @@ http://furius.ca/beancount/doc/proposal-query
               cost_currency = lot.cost.currency if lot.cost else None
               key = (lot.currency, cost_currency)
               units_map[key] += position.number
-              costs_map[key] += position.get_cost().number
+              pcosts_map[key] += position.get_cost().number
 
           inventory = Inventory()
           for lotcost_currencies, units in units_map.items():
@@ -1898,7 +1912,7 @@ http://furius.ca/beancount/doc/proposal-query
 
 * Short Sales
 
-  Allow and test short sales in-depth.
+  Test short sales in-depth. (They work now, but  I want more test cases.)
 
   - Allow short sales eventually. This should already work if all that you do is
     selectively suppress the validation check that verifies that a position at
@@ -4690,14 +4704,6 @@ http://furius.ca/beancount/doc/proposal-query
     decent sniffer should be implemented, specifically with credit/debit support
     and balance vs. posting amount support, as well as detecting fees.
 
-  - The computation of cost, weight and market value must be uniformized.
-    Moreover, these values should be equally computable over a Posting or a
-    Position objects. See discussion w/ Jason Chu on thread.
-
-  - Make Amount and other basic classes descendants of tuple because
-    this makes their attributes truly immutable. Do this! You may
-    find bugs.
-
   - Add an AVERAGE function to the SQL shell.
     See related discussion, I would like to compute this for myself too:
     https://groups.google.com/d/msg/ledger-cli/dWuWysV6qZU/cyYNzleTCAAJ
@@ -4791,17 +4797,6 @@ http://furius.ca/beancount/doc/proposal-query
     the fractional digits in the web interface in a severe way.
 
   - Investigate using PrettyTable over my custom one. Is there any point to that?
-
-  - Important: CONVERT() currently converts at the market value. This needs to
-    be documented well, and how to use PRICE() and VALUE() as well. It's poorly
-    documented right now. (See question in May 2016 by redstreet0 on the
-    mailing-list.)
-
-  - Rename Position.get_cost() to Position.get_total_cost(), I've it confusing
-    to myself otherwise.
-
-  - Rename the shell function PRICE() to GETPRICE() in order to avoid confusion
-    as well.
 
   - Put all the contents of experiments/ under their own directories and add
     decent README files for each of these.
@@ -4941,6 +4936,7 @@ http://furius.ca/beancount/doc/proposal-query
   - In Canada, all trading is carried out at average lot! Since when? Adjust my Beancount file.
   - When in foreign land, how much is the base deduction (-93k?) and are you only subject to federal tax rate when you're not there?
   - Q: Can you convert short term gains into long ones via a wash sale?
+
 ** File Entries from TODO file
 *** Urgent-ish
 
