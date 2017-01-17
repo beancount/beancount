@@ -270,7 +270,11 @@ PyMODINIT_FUNC PyInit__parser(void)
     /* Provide the source hash to the parser module for verification that the
      * extension module is up-to-date. */
     /* uint64_t int_source_hash = #PARSER_SOURCE_HASH; */
+    #if _MSC_VER == 1900
     const char *wrap_in_quotes = "PARSER_SOURCE_HASH";
+    #else
+    const char *wrap_in_quotes = PARSER_SOURCE_HASH;
+    #endif
     PyObject* source_hash = PyUnicode_FromString(wrap_in_quotes);
     PyObject_SetAttrString(module, "SOURCE_HASH", source_hash);
 
