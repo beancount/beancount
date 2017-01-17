@@ -31,6 +31,7 @@ after_test:
   # 64-bit Python 3.3/3.4. And you need to use %PYTHON% to get the correct
   # interpreter
   - "%PYTHON%\\python.exe setup.py build_ext --compiler=msvc --define YY_NO_UNISTD_H"
+  - "%PYTHON%\\python.exe setup.py bdist_wheel
 
 artifacts:
   # bdist_wheel puts your built wheel in the dist directory
