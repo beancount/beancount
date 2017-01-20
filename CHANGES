@@ -3,6 +3,10 @@
 ========================
 Note: This file contains only changes in the 'default' branch.
 
+2017-01-19
+
+  - Fixed bug with generation of column names in sheets uploader script.
+
 
 2017-01-16
 

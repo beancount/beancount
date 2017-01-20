@@ -51,6 +51,7 @@ import logging
 import os
 import re
 import string
+import sys
 from os import path
 
 from oauth2client import client
@@ -115,6 +116,37 @@ def pop_alist(items, key, default=None):
     return default
 
 
+def get_alpha_column(column):
+    """Given a numerical column number, return its equivalent letter code.
+
+                               div / mod 26
+    A = 0                  0      0     0
+    Z = 25                 0      0    25
+    AA = 26                0      1     0
+    AZ = 51                0      1    25
+    BA = 52                0      2     0
+    BZ = 77                0      2    25
+    CA = 78                0      3     0
+    ZZ = 701               0     25    25
+    AAA = 702              1      0     0
+
+    1-26 -> A-Z
+    27 -> AA
+    52 -> AZ
+    53 -> BA
+
+    Args:
+      column: An integer, the column number. Note: The first column is "0".
+    Returns:
+      A string. This can possibly be more than one charater, if column > 26.
+    """
+    letters = []
+    while column >= 0:
+        letters.append(string.ascii_uppercase[column % 26])
+        column = column // 26 - 1
+    return ''.join(reversed(letters))
+
+
 def sheet_range(title, nrows, ncols):
     """Build up the full range of a sheet for some size of rows and columns.
 
@@ -123,9 +155,9 @@ def sheet_range(title, nrows, ncols):
       nrows: An integer, the number of rows to resize to.
       ncols: An integer, the number of columns to resize to.
     Returns:
-      A string repreenting the full range of this sheet.
+      A string representing the full range of this sheet.
     """
-    return '{}!A1:{}{}'.format(title, string.ascii_uppercase[ncols-1], nrows)
+    return '{}!A1:{}{}'.format(title, get_alpha_column(ncols-1), nrows)
 
 
 def create_doc(service):
@@ -317,7 +349,7 @@ def _main():
     parser.add_argument('--docid', '--doc', '--id', '-d', dest='docid', action='store',
                         help="Spreadsheets doc id to update")
 
-    parser.add_argument('--title', '-t', action='store',
+    parser.add_argument('--title', '-t', action='store', dest='doctitle',
                         help="Set or update the spreadsheet's title")
 
     parser.add_argument('--verbose', '-v', action='store_true',
@@ -329,9 +361,10 @@ def _main():
                         format='%(levelname)-8s: %(message)s')
 
     # Parse out the doc id, in case the user provided a full URL.
-    match = re.match('https://docs.google.com/spreadsheets/d/([^/]+)(/|$)', args.docid)
-    if match:
-        args.docid = match.group(1)
+    if args.docid:
+        match = re.match('https://docs.google.com/spreadsheets/d/([^/]+)(/|$)', args.docid)
+        if match:
+            args.docid = match.group(1)
 
     # Discover the service.
     _, http = get_credentials('https://www.googleapis.com/auth/spreadsheets', args)
@@ -358,11 +391,25 @@ def _main():
         created = True
         docid = create_doc(service)
         logging.info("Created doc: https://docs.google.com/spreadsheets/d/%s/", docid)
+
+    match_names_and_upload_sheets(service, docid, new_sheets)
+
+    # Clean up temporary sheets created for new documents only.
     doc = Doc(service, docid)
+    if created:
+        doc.delete_empty_sheets()
 
     # Set the document title (if requested).
-    if args.title:
-        doc.set_title(args.title)
+    if args.doctitle:
+        doc.set_title(args.doctitle)
+
+    print("https://docs.google.com/spreadsheets/d/{}/".format(docid))
+
+
+def match_names_and_upload_sheets(service, docid, new_sheets):
+    """Match sheet names and upload their attendant file contents."""
+
+    doc = Doc(service, docid)
 
     # Get the existings sheets within (this also validates the existence of the
     # document).
@@ -384,12 +431,6 @@ def _main():
     # filename.
     for sheet_id, title, filename in sheets_alist:
         doc.update_sheet(sheet_id, title, filename)
-
-    # Clean up temporary sheets created for new documents only.
-    if created:
-        doc.delete_empty_sheets()
-
-    print("https://docs.google.com/spreadsheets/d/{}/".format(docid))
 
 
 def main():
