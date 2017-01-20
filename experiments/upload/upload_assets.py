@@ -36,6 +36,7 @@ from os import path
 from beancount.core.number import ZERO
 from beancount.core.number import ONE
 from beancount.core import data
+from beancount.core import convert
 from beancount.core import flags
 from beancount.core import amount
 from beancount.core import position
@@ -276,13 +277,13 @@ def aggregate_postings(postings):
 
     agg_postings = []
     for (account, currency), balance in balances.items():
-        units = balance.units()
+        units = balance.reduce(convert.get_units)
         if units.is_empty():
             continue
         assert len(units) == 1
         units = units[0].units
 
-        cost = balance.cost()
+        cost = balance.reduce(convert.get_cost)
         assert len(cost) == 1
         total_cost = cost[0].units
 
