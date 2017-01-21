@@ -11,6 +11,7 @@ from os import path
 import runpy
 import sys
 import warnings
+import platform
 
 
 # Check if the version is sufficient.
@@ -23,9 +24,11 @@ setup_extra_kwargs = {}
 if 'BEANCOUNT_DISABLE_SETUPTOOLS' in os.environ:
     # Note: this is used for testing only.
     from distutils.core import setup, Extension
+    has_setuptools = False
 else:
     try:
         from setuptools import setup, Extension
+        has_setuptools = True
         setup_extra_kwargs.update(install_requires = [
             # This is required to parse dates from command-line options in a
             # loose, accepting format.
@@ -86,6 +89,7 @@ else:
         warnings.warn("Setuptools not installed; falling back on distutils. "
                       "You will have to install dependencies explicitly.")
         from distutils.core import setup, Extension
+        has_setuptools = False
 
 
 # Make sure we can import hashsrc in order to create a binary with a checksum of
@@ -100,23 +104,35 @@ hash_parser_source_files = hashsrc['hash_parser_source_files']
 
 
 # Explicitly list the scripts to install.
-install_scripts = [path.join('bin', x) for x in """
-bean-bake
-bean-check
-bean-doctor
-bean-example
-bean-format
-bean-price
-bean-query
-bean-report
-bean-sql
-bean-web
-bean-identify
-bean-extract
-bean-file
-treeify
-upload-to-sheets
-""".split() if x and not x.startswith('#')]
+binaries = [
+    ('bean-bake', 'beancount.scripts.bake'),
+    ('bean-check', 'beancount.scripts.check'),
+    ('bean-doctor', 'beancount.scripts.doctor'),
+    ('bean-example', 'beancount.scripts.example'),
+    ('bean-format', 'beancount.scripts.format'),
+    ('bean-price', 'beancount.prices.price'),
+    ('bean-query', 'beancount.query.shell'),
+    ('bean-report', 'beancount.reports.report'),
+    ('bean-sql', 'beancount.scripts.sql'),
+    ('bean-web', 'beancount.web.web'),
+    ('bean-identify', 'beancount.ingest.identify'),
+    ('bean-extract', 'beancount.ingest.extract'),
+    ('bean-file', 'beancount.ingest.file'),
+    ('treeify', 'beancount.tools.treeify'),
+    ('upload-to-sheets', 'beancount.tools.sheets_upload'),
+]
+
+if not has_setuptools and platform.system() == 'Windows':
+    setup_extra_kwargs.update(entry_points={
+        'console_scripts': [
+            '{} = {}:main'.format(binary, module)
+            for binary, module in binaries]
+    })
+
+else:
+    setup_extra_kwargs.update(scripts=[
+        path.join('bin', binary)
+        for binary, _ in binaries])
 
 
 # Create a setup.
@@ -175,7 +191,14 @@ setup(
         'beancount.parser': ['*.h'], # See note for {63fc8d84d30a} above.
         },
 
-    scripts=install_scripts,
+    entry_points = {
+        'console_scripts': [
+            'bean-check = beancount.scripts.check:main',
+            'bean-report = beancount.reports.report:main',
+            'bean-query = beancount.query.shell:main',
+            'bean-web = beancount.web.web:main',
+        ],
+    },
 
     ext_modules=[
         Extension("beancount.parser._parser",
