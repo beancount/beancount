@@ -13,6 +13,7 @@ import datetime
 import re
 import operator
 
+from beancount.core.number import Decimal
 from beancount.query import query_parser
 
 
@@ -175,6 +176,30 @@ class EvalContains(EvalBinaryOp):
         return self.operator(arg_right, arg_left)
 
 
+# Note: We ought to implement implicit type promotion here,
+# e.g., int -> float -> Decimal.
+
+class EvalMul(EvalBinaryOp):
+
+    def __init__(self, left, right):
+        super().__init__(Decimal.__mul__, left, right, Decimal)
+
+class EvalDiv(EvalBinaryOp):
+
+    def __init__(self, left, right):
+        super().__init__(Decimal.__truediv__, left, right, Decimal)
+
+class EvalAdd(EvalBinaryOp):
+
+    def __init__(self, left, right):
+        super().__init__(Decimal.__add__, left, right, Decimal)
+
+class EvalSub(EvalBinaryOp):
+
+    def __init__(self, left, right):
+        super().__init__(Decimal.__sub__, left, right, Decimal)
+
+
 # Interpreter nodes.
 OPERATORS = {
     query_parser.Constant: EvalConstant,
@@ -188,6 +213,10 @@ OPERATORS = {
     query_parser.Less: EvalLess,
     query_parser.LessEq: EvalLessEq,
     query_parser.Contains: EvalContains,
+    query_parser.Mul: EvalMul,
+    query_parser.Div: EvalDiv,
+    query_parser.Add: EvalAdd,
+    query_parser.Sub: EvalSub,
     }
 
 

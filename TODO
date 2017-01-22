@@ -4531,8 +4531,13 @@ http://furius.ca/beancount/doc/proposal-query
     any date.
 
     * Test negative numbers
-    * Rename WILDCARD token to STAR
     * Test operators without spaces
+
+    IMPORTANT: Some code has been merged for this, but numerical expressions
+    like 2-3 and 2+3 don't work because the INTEGER and DECIMAL tokens include a
+    potential sign. What must be done is to make the processing of those tokens
+    not have a sign for the purpose of parsing expressions and make + and -
+    unary expressions.
 
   - SQL: "IS" and "IS NOT" is not implemented.
 
