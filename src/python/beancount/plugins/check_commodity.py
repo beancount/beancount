@@ -4,7 +4,7 @@ This is useful if you're a bit pedantic and like to make sure that you're
 declared attributes for each of the commodities you use. It's useful if you use
 the portfolio export, for example.
 """
-__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2015-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections

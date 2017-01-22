@@ -4,7 +4,49 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2017-01-21
+
+  - Fixed #155: Use entry_points instead of scripts in setup.py.
+
+  - Added an extra check for Balance directives, verifying that asserted
+    currencies are accepted currencies for that account (if the account's
+    corresponding currencies have been declared explicitly). In other words,
+    this will now fail instead of being silently ignored:
+
+      2017-01-21 open Assets:Checking    CAD
+      2017-01-21 balance Assets:Checking  0.00 USD
+
+  - Fixed bug in sheets_upload.py / upload-to-sheets whereby all the fields of a
+    sheet being updated just in order to resize it was causing the sheet to be
+    reindexed at the front of the list of sheets.
+
+
+2017-01-19
+
+  - Fixed bug with generation of column names in sheets uploader script.
+
+
 2017-01-16
+
+  - Removed tools/gauth (used to be beancount.docs.gauth). All users of this are
+    slightly different, and they're utility scripts. Unfactoring.
+
+  - Removed beancount.docs from Beancount library. These are internal tools used
+    to manage documentation, should not be included in the installed codebase.
+
+  - Some cleanup of internal tools.
+
+  - Added some basic unit tetsts for beancount.tools.sheets_upload.
+
+  - Moved bin/upload-to-sheets to src/python/beancount/tools/sheets_upload.py
+    and replaced it with an associated stub for it.
+
+  - Moved bin/treeify to src/python/beancount/tools/treeify.py. The script is
+    still usable in a standalone form (no new dependencies have been added). To
+    have all the source code in one place is more convenient for maintenance.
+
+  - Created a beancount.tools package to contain all standalone tools which
+    don't depend on Beancount modules or packages.
 
   - Removed branch "returns2" and moved associated projects script
     beancount.projects.returns to experiments/returns. This code isn't robust

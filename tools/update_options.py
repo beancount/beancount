@@ -9,14 +9,16 @@ __license__ = "GNU GPLv2"
 import argparse
 import logging
 import re
+import os
 from os import path
 
 from apiclient import discovery
+import httplib2
 from apiclient.http import MediaInMemoryUpload # pylint: disable=import-error
+from oauth2client import service_account
 
 from beancount.parser import options
 from beancount.utils import test_utils
-from beancount.docs import gauth
 
 
 def replace_gdocs_document(http, docid, title, contents):
@@ -52,6 +54,25 @@ def get_options_docid():
     return list(filter(None, lines[0].group(1).split('/')))[-1]
 
 
+SERVICE_ACCOUNT_FILE = path.join(os.environ['HOME'],
+                                 '.google-apis-service-account.json')
+
+def get_auth_via_service_account(scopes):
+    """Get an authenticated http object via a service account.
+
+    Args:
+      scopes: A string or a list of strings, the scopes to get credentials for.
+    Returns:
+      A pair or (credentials, http) objects, where 'http' is an authenticated
+      http client object, from which you can use the Google APIs.
+    """
+    credentials = service_account.ServiceAccountCredentials.from_json_keyfile_name(
+        SERVICE_ACCOUNT_FILE, scopes)
+    http = httplib2.Http()
+    credentials.authorize(http)
+    return credentials, http
+
+
 def main():
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
     parser = argparse.ArgumentParser(description=__doc__.strip())
@@ -63,7 +84,7 @@ def main():
     # Connect to the service.
     scopes = ['https://www.googleapis.com/auth/drive',
               'https://www.googleapis.com/auth/drive.scripts']
-    _, http = gauth.get_auth_via_service_account(scopes)
+    _, http = get_auth_via_service_account(scopes)
 
     # Replace the document.
     replace_gdocs_document(http,

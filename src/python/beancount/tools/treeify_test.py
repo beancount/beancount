@@ -1,3 +1,4 @@
+"""Unit tests for treeify tool."""
 __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
@@ -6,10 +7,8 @@ import unittest
 import textwrap
 from os import path
 
-from beancount.utils import test_utils
 
-
-PROGRAM = path.join(test_utils.find_repository_root(__file__), 'bin', 'treeify')
+PROGRAM = __file__.replace('_test.py', '.py')
 DEBUG = 0
 
 
