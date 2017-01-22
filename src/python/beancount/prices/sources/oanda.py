@@ -25,71 +25,32 @@ from beancount.prices import source
 from beancount.utils import net_utils
 
 
-class Source(source.Source):
-    "OANDA price source extractor."
+def _get_currencies(ticker):
+    """Parse the base and quote currencies from the ticker.
+
+    Args:
+      ticker: A string, the symbol in XXX_YYY format.
+    Returns:
+      A pair of (base, quote) currencies.
+    """
+    match = re.match("([A-Z]+)_([A-Z]+)$", ticker)
+    if not match:
+        return None, None
+    return match.groups()
 
 
-    def get_latest_price(self, ticker):
-        """See contract in beancount.prices.source.Source."""
-
-        params_dict = {
-            'instrument': ticker,
-            'count': '10',
-            'candleFormat': 'midpoint',
-        }
-        return fetch_candles(params_dict, None)
-
-    def get_historical_price(self, ticker, date):
-        """See contract in beancount.prices.source.Source."""
-
-        # Build the query.
-        time = datetime.datetime(date.year, date.month, date.day, 0, 0, 0,
-                                 tzinfo=tz.tzutc())
-        start = time - datetime.timedelta(days=5)
-        end = time + datetime.timedelta(days=10)
-        params_dict = {
-            'instrument': ticker,
-            'granularity': 'D',
-            'candleFormat': 'midpoint',
-            'start': start.isoformat('T'),
-            'end': end.isoformat('T'),
-        }
-        return fetch_candles(params_dict, date)
-
-
-def fetch_candles(params, date=None):
-    """Fetch the given URL from OANDA and parse the first price returned.
+def _fetch_candles(params):
+    """Fetch the given URL from OANDA and return a list of (utc-time, price).
 
     Args:
       params: A dict of URL params values.
-      date: Desired date. If None, use the latest.
     Returns:
-      A SourcePrice instance, or None on failure.
+      A list of (time, price) points.
     """
-    if date:
-        search_time = datetime.datetime(date.year, date.month, date.day, 0, 0, 0,
-                                        tzinfo=tz.tzlocal())
-    else:
-        search_time = datetime.datetime.now(tz.tzlocal())
-
-        # FIXME: Read the docs and deal with the timezones correctly,
-        # translating found times back to the local datetime.
-
-        # FIXME: Override this for the test.
-        print(search_time)
 
     URL = "https://api-fxtrade.oanda.com/v1/candles"
     url = '?'.join((URL, parse.urlencode(sorted(params.items()))))
     logging.info("Fetching '%s'", url)
-
-    # Parse the base and quote currencies from the ticker, which is always
-    # representative for this price source.
-    match = re.match("([A-Z]+)_([A-Z]+)$", params['instrument'])
-    if not match:
-        logging.error("Invalid price source ticker '%s'; must be like 'EUR_USD'",
-                      params['instrument'])
-        return None
-    base_currency, quote_currency = match.groups()
 
     # Fetch the data.
     response = net_utils.retrying_urlopen(url)
@@ -102,33 +63,96 @@ def fetch_candles(params, date=None):
     try:
         # Find the candle with the latest time before the given time we're searching
         # for.
+        time_prices = []
         candles = sorted(data['candles'], key=lambda candle: candle['time'])
-        ## FIXME: remove
-        for c in candles:
-            print()
-            print(c['time'])
-            dtnaive = datetime.datetime.strptime(c['time'], r"%Y-%m-%dT%H:%M:%S.%fZ")
-            dt = dtnaive.replace(tzinfo=tz.tzutc()).astimezone(tz.tzlocal())
-            print(dt)
-        latest_candle = None
         for candle in candles:
-            print('Z', candle['time'])
-            candle_time = parse_date(candle['time'])
-            print('>', candle_time, search_time)
-            if candle_time > search_time:
-                break
-            latest_candle = candle
-
-        # Get the price out of the chosen candle.
-        if latest_candle is None:
-            logging.error("Could not find a valid candle for %s: %s", date, data)
-            return None
-        candle_price = D(latest_candle['openMid'])
-
+            candle_dt_utc = datetime.datetime.strptime(
+                candle['time'], r"%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=tz.tzutc())
+            candle_price = D(candle['openMid'])
+            time_prices.append((candle_dt_utc, candle_price))
     except KeyError:
         logging.error("Unexpected response data: %s", data)
         return None
+    return time_prices
 
-    # FIXME: You need to invert here as well.
 
-    return source.SourcePrice(candle_price, candle_time, quote_currency)
+class Source(source.Source):
+    "OANDA price source extractor."
+
+    def get_latest_price(self, ticker):
+        """See contract in beancount.prices.source.Source."""
+
+        _, quote_currency = _get_currencies(ticker)
+        if quote_currency is None:
+            logging.error("Invalid price source ticker '%s'; must be like 'EUR_USD'",
+                          ticker)
+            return
+
+        # Query at the current (latest) time.
+        params_dict = {
+            'instrument': ticker,
+            'granularity': 'S5',  # Every two hours.
+            'count': '10',
+            'candleFormat': 'midpoint',
+        }
+        time_prices = _fetch_candles(params_dict)
+        if time_prices is None:
+            return
+
+        # Get the latest price point available.
+        time, price = sorted(time_prices)[-1]
+
+        # Use current local date as the date.
+        current_date = datetime.datetime.now()
+
+        return source.SourcePrice(price, current_date, quote_currency)
+
+    def get_historical_price(self, ticker, date):
+        """See contract in beancount.prices.source.Source."""
+
+        _, quote_currency = _get_currencies(ticker)
+        if quote_currency is None:
+            logging.error("Invalid price source ticker '%s'; must be like 'EUR_USD'",
+                          ticker)
+            return
+
+        # Find the boundary dates to query in UTC timezone.
+        start_utc = datetime.datetime(date.year, date.month, date.day, 0, 0, 0,
+                                      tzinfo=tz.tzlocal()).astimezone(tz.tzutc())
+        end_utc = start_utc + datetime.timedelta(days=1)
+
+        interval_begin_utc = (start_utc - datetime.timedelta(days=5))
+        interval_end_utc = (end_utc + datetime.timedelta(days=5))
+
+        # Build the query.
+        params_dict = {
+            'instrument': ticker,
+            'granularity': 'H2',  # Every two hours.
+            'candleFormat': 'midpoint',
+            'start': interval_begin_utc.isoformat('T'),
+            'end': interval_end_utc.isoformat('T'),
+        }
+        time_prices = _fetch_candles(params_dict)
+
+        # Get all the prices with the same date.
+        same_date = [item
+                     for item in time_prices
+                     if start_utc <= item[0] < end_utc]
+        if same_date:
+            # Find the min/max and return the median of all prices.
+            sorted_prices = sorted(same_date, key=lambda item: item[1])
+            time, price = sorted_prices[len(sorted_prices)//2]
+        else:
+            # No price matching the date were found; use the midpoint of the
+            # last price before the day interval and the first price after the
+            # day interval.
+            before_time, before_price = min(item
+                                            for item in time_prices
+                                            if item[0] < start_utc)
+            after_time, after_price = max(item
+                                          for item in time_prices
+                                          if item[0] >= end_utc)
+            price = (after_price + before_price) / 2
+            time = before_time + (after_time - before_time)/2
+
+        return source.SourcePrice(price, time, quote_currency)
