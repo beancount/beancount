@@ -1,0 +1,32 @@
+* Notes on the G APIs
+** Q: Why is an empty body required in clearing the sheet?
+
+    resp = service.spreadsheets().values().clear(spreadsheetId=docid,
+                                                 range=range,
+                                                 body={}).execute()
+
+
+** Q: Why are both the sheetId and the title required here?
+
+    requests = [{
+        'updateSheetProperties': {
+            'properties': {
+                'sheetId': sheetId,
+                'title': title,  # Required, unfortunately.
+                'gridProperties': {'rowCount': nrows,
+                                   'columnCount': ncols}},
+            'fields': '*'}}]
+    resp = service.spreadsheets().batchUpdate(spreadsheetId=docid,
+                                              body={'requests': requests}).execute()
+
+** Q: The API is inconsistent
+
+Sometimes the sheetId is used, sometimes the title, and sometimes both are
+required. This needs to be fixed.
+
+** Q: Why is there UpdateCellsRequest is there is the spreadsheets.values() API?
+
+** Q: Prepending doesn't work
+
+        # Note: the 'index' options appears not to work. It always prepends at
+        # the beginning of the sheets list.

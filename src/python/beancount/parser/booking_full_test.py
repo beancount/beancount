@@ -1359,11 +1359,11 @@ class _BookingTestBase(unittest.TestCase):
         # Compare them while maintaining their order.
         self.assertEqual(len(expected_postings), len(actual_postings))
         for (posting_expected,
-             actual_postings) in zip(expected_postings,
-                                     actual_postings):
-            self.assertEqual(posting_expected, actual_postings,
+             actual_posting) in zip(expected_postings,
+                                    actual_postings):
+            self.assertEqual(posting_expected, actual_posting,
                              "Postings don't match:\n{} !=\n{}".format(posting_expected,
-                                                                       actual_postings))
+                                                                       actual_posting))
 
 
 class TestBookAugmentations(_BookingTestBase):

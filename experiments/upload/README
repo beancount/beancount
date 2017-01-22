@@ -1,17 +1,8 @@
-Upload balance sheet holdings to a Google Spreadsheet.
+Produce a list of holdings to be uploaded to a Google Sheets doc.
 
-I want to automate the upload of my list of assets and liabilities to a Google
-Sheet. In particular, I want it to update a single sheet in the same,
-pre-existing spreadsheet document so that I can build various types of live
-reports in the spreadsheet by accessing particular columns in the first sheet.
-The update must occur in place.
+This produces a report that is usable for producing various aggregations. It's
+somewhat custom, so not in the main codebase yet. I'll eventually move the
+functions piecemeal and will attempt to replace this by a SQL query in the end.
 
-Another big advantage of this export method is that unlike an OFX export to
-Google Finance, this does not involve any manual steps. It can be fully
-automated via its API.
-
-Note that the ultimate goal is to be able to do this from the SQL shell
-directly. I'll eventually evolve the shell to support joins and to be able to
-flatten directory contents, so that a single expression, albeit large and
-complex, could generate this entire report to a CSV file and perhaps the shell
-itself could support an URI syntax to upload to a sheet directly.
+The automation of the sheets update is carried out using the update-to-sheets
+tool.

@@ -1,6 +1,6 @@
 """Tests for main driver for price fetching.
 """
-__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2015-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import datetime
@@ -35,7 +35,9 @@ class TestSetupCache(unittest.TestCase):
                 filename = path.join(tmpdir, 'cache.db')
                 price.setup_cache(filename, True)
                 self.assertEqual(0, mock_remove.call_count)
-                self.assertTrue(path.exists(filename))
+                self.assertTrue(any(dirfile.startswith('cache.db')
+                                    for dirfile in os.listdir(tmpdir)))
+                price.reset_cache()
 
     def test_clear_cache_present(self):
         mock_remove = mock.MagicMock()
@@ -49,7 +51,9 @@ class TestSetupCache(unittest.TestCase):
                 open(filename, 'w')
                 price.setup_cache(filename, True)
                 self.assertEqual(1, mock_remove.call_count)
-                self.assertTrue(path.exists(filename))
+                self.assertTrue(any(dirfile.startswith('cache.db')
+                                    for dirfile in os.listdir(tmpdir)))
+                price.reset_cache()
 
     def test_leave_cache(self):
         with mock.patch('os.remove') as mock_remove:
@@ -113,9 +117,9 @@ class TestCache(unittest.TestCase):
                 self.assertEqual(1, len(price._CACHE))
                 self.assertEqual(71, result)
         finally:
+            price.reset_cache()
             if path.exists(tmpdir):
                 shutil.rmtree(tmpdir)
-            price.reset_cache()
 
     def test_fetch_cached_price__historical(self):
         tmpdir = tempfile.mkdtemp()
@@ -142,9 +146,9 @@ class TestCache(unittest.TestCase):
             self.assertEqual(1, len(price._CACHE))
             self.assertEqual(42, result)
         finally:
+            price.reset_cache()
             if path.exists(tmpdir):
                 shutil.rmtree(tmpdir)
-            price.reset_cache()
 
 
 class TestProcessArguments(unittest.TestCase):
