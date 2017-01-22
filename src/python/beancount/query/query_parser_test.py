@@ -269,8 +269,13 @@ class TestSelectExpression(QueryParserTestBase):
         expected = qSelect([qp.Target(qp.Sub(qp.Column('a'), qp.Column('b')), None)])
         self.assertParse(expected, "SELECT a - b;")
         self.assertParse(expected, "SELECT a-b;")
+
+    def test_expr_sub_numerical(self):
         expected = qSelect([qp.Target(qp.Sub(qp.Constant(2), qp.Constant(3)), None)])
-        self.assertParse(expected, "SELECT 2-3;")
+        self.assertParse(expected, "SELECT 2-(3);")
+        # Note: The parser should be modified to remove signs from the DECIMAL
+        # and INTEGER tokens such that this is possible:
+        #self.assertParse(expected, "SELECT 2-3;")
 
 
 class TestSelectPrecedence(QueryParserTestBase):

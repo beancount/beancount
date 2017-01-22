@@ -216,7 +216,7 @@ class Lexer:
         'ID', 'INTEGER', 'DECIMAL', 'STRING', 'DATE',
         'COMMA', 'SEMI', 'LPAREN', 'RPAREN', 'TILDE',
         'EQ', 'NE', 'GT', 'GTE', 'LT', 'LTE',
-        'WILDCARD', 'SLASH', 'PLUS', 'MINUS',
+        'ASTERISK', 'SLASH', 'PLUS', 'MINUS',
     ] + list(keywords)
 
     # An identifier, for a column or a dimension or whatever.
@@ -256,7 +256,7 @@ class Lexer:
     t_LTE      = r"<="
     t_LT       = r"<"
     t_TILDE    = r"~"
-    t_WILDCARD = r"\*"
+    t_ASTERISK = r"\*"
     t_SLASH    = r"/"
     t_PLUS     = r"\+"
     t_MINUS    = r"-"
@@ -288,11 +288,13 @@ class SelectParser(Lexer):
 
     def __init__(self, **options):
         self.ply_lexer = ply.lex.lex(module=self,
-                                     optimize=False)
+                                     optimize=False,
+                                     debuglog=None,
+                                     debug=False)
         self.ply_parser = ply.yacc.yacc(module=self,
                                         optimize=False,
                                         write_tables=False,
-                                        debugfile=None,
+                                        debuglog=None,
                                         debug=False,
                                         **options)
 
@@ -350,7 +352,7 @@ class SelectParser(Lexer):
 
     def p_target_spec(self, p):
         """
-        target_spec : WILDCARD
+        target_spec : ASTERISK
                     | target_list
         """
         p[0] = Wildcard() if p[1] == '*' else p[1]
@@ -494,7 +496,7 @@ class SelectParser(Lexer):
         ('left', 'AND'),
         ('left', 'NOT'),
         ('left', 'PLUS', 'MINUS'),
-        ('left', 'WILDCARD', 'SLASH'),
+        ('left', 'ASTERISK', 'SLASH'),
         ('left', 'EQ', 'NE', 'GT', 'GTE', 'LT', 'LTE', 'TILDE'),
         ]
 
@@ -555,7 +557,7 @@ class SelectParser(Lexer):
         p[0] = p[1]
 
     def p_expression_mul(self, p):
-        "expression : expression WILDCARD expression"
+        "expression : expression ASTERISK expression"
         p[0] = Mul(p[1], p[3])
 
     def p_expression_div(self, p):
@@ -707,7 +709,7 @@ class Parser(SelectParser):
         """
         run_statement : RUN ID
                       | RUN STRING
-                      | RUN WILDCARD
+                      | RUN ASTERISK
                       | RUN empty
         """
         p[0] = RunCustom(p[2])
