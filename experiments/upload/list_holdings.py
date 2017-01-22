@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Upload your list of assets to a Google Spreadsheet.
+"""Produce a detailed list of assets & liabilities to a CSV file.
 
 The purpose of this is manyfold:
 
@@ -12,12 +12,10 @@ The purpose of this is manyfold:
   and letting the user recreate the views they need using the GOOGLEFINANCE()
   function can produce an equivalent, or better.
 
-- The 'exportpf' code uses Holding, and I intend on removing this object in
-  favor of a simplified Position object from the 'booking' branch. This code
-  intends to be a bit of a simplified reboot of the export code.
+- The 'exportpf' code uses Holding, which is deprecated. This code doesn't.
 
 """
-__copyright__ = "Copyright (C) 2016  Martin Blais"
+__copyright__ = "Copyright (C) 2016-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse
@@ -25,9 +23,11 @@ import bisect
 import csv
 import collections
 import codecs
+import datetime
 import logging
 import os
 import re
+import sys
 import unittest
 import json
 import pprint
@@ -36,6 +36,7 @@ from os import path
 from beancount.core.number import ZERO
 from beancount.core.number import ONE
 from beancount.core import data
+from beancount.core import convert
 from beancount.core import flags
 from beancount.core import amount
 from beancount.core import position
@@ -45,7 +46,6 @@ from beancount.core import account_types
 from beancount.core import getters
 from beancount.ops import summarize
 from beancount.core import prices
-from beancount.docs import gauth
 from beancount.parser import options
 from beancount import loader
 
@@ -54,8 +54,6 @@ from oauth2client import tools
 from oauth2client.file import Storage
 from oauth2client import service_account
 import httplib2
-
-import gspread
 
 
 def clean_entries_for_balances(entries):
@@ -72,7 +70,7 @@ def clean_entries_for_balances(entries):
                 entry.flag != flags.FLAG_UNREALIZED)]
 
 
-def get_assets(entries, options_map):
+def get_balance_sheet_balances(entries, options_map):
     """Enumerate all the assets and liabilities.
 
     Args:
@@ -232,6 +230,20 @@ class Model:
         return self.tax_map.get(posting.account)
 
 
+def model_to_table(model):
+    """Convert a Model to a 2D table.
+
+    Args:
+      model: An instance of Model.
+    Returns:
+      A list of row lists.
+    """
+    num_rows = model.num_rows()
+    return [[model.get(irow, icol)
+             for icol in range(1, model.num_cols()+1)]
+            for irow in range(1, model.num_rows()+1)]
+
+
 def get_root_accounts(postings):
     """Compute a mapping of accounts to root account name.
 
@@ -259,7 +271,7 @@ def get_root_accounts(postings):
 
 
 def aggregate_postings(postings):
-    """Aggregate postings by account and currency. Handle cash by aggregating by currency.
+    """Aggregate postings by account and currency.
 
     Args:
       postings: A list of Posting instances.
@@ -268,21 +280,18 @@ def aggregate_postings(postings):
     """
     balances = collections.defaultdict(inventory.Inventory)
     for posting in postings:
-        # key = ('Multiple' if posting.cost is None else posting.account,
-        #        posting.units.currency)
-        # balances[key].add_position(posting)
         key = (posting.account, posting.units.currency)
         balances[key].add_position(posting)
 
     agg_postings = []
     for (account, currency), balance in balances.items():
-        units = balance.units()
+        units = balance.reduce(convert.get_units)
         if units.is_empty():
             continue
         assert len(units) == 1
         units = units[0].units
 
-        cost = balance.cost()
+        cost = balance.reduce(convert.get_cost)
         assert len(cost) == 1
         total_cost = cost[0].units
 
@@ -322,65 +331,11 @@ def populate_with_parents(accounts_map, default):
     return new_accounts_map
 
 
-def upload_postings_to_sheet(model, doc, name_or_index, min_rows):
-    """Upload a model to a spreadsheet.
-
-    Args:
-      model: An instance of Model.
-      doc: A gspread.Spreadsheet instance.
-      name_or_index: An index of a sheet in the spreadsheet.
-      min_rows: An integer, the minimum number of rows to create.
-    """
-    # Resize the sheet to the minimum number of required rows.
-    num_rows = max(min_rows, model.num_rows())
-    if isinstance(name_or_index, int):
-        sheet = doc.get_worksheet(name_or_index)
-    else:
-        assert isinstance(name_or_index, str)
-        sheet = doc.worksheet(name_or_index)
-    sheet.resize(num_rows, model.num_cols())
-
-    # Fill up the data.
-    cells = sheet.range(':'.join([
-        sheet.get_addr_int(1, 1),
-        sheet.get_addr_int(model.num_rows(), model.num_cols())]))
-    for cell in cells:
-        cell.value = model.get(cell.row, cell.col)
-    sheet.update_cells(cells)
-
-    # Clear the remainder of the sheet.
-    cells = sheet.range(':'.join([
-        sheet.get_addr_int(model.num_rows()+1, 1),
-        sheet.get_addr_int(num_rows, model.num_cols())]))
-    for cell in cells:
-        cell.value = ''
-    sheet.update_cells(cells)
-
-
-SERVICE_ACCOUNT_FILE = path.join(os.environ['HOME'],
-                                 '.google-apis-service-account.json')
-
-def get_auth_via_service_account(scopes):
-    """Get an authenticated http object via a service account.
-
-    Args:
-      scopes: A string or a list of strings, the scopes to get credentials for.
-    Returns:
-      A pair or (credentials, http) objects, where 'http' is an authenticated
-      http client object, from which you can use the Google APIs.
-    """
-    credentials = service_account.ServiceAccountCredentials.from_json_keyfile_name(
-        SERVICE_ACCOUNT_FILE, scopes)
-    http = httplib2.Http()
-    credentials.authorize(http)
-    return credentials, http
-
-
 def main():
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
     parser = argparse.ArgumentParser(description=__doc__.strip())
     parser.add_argument('filename', help='Beancount input file')
-    parser.add_argument('docid', help="Spreadsheets doc id to update")
+    #parser.add_argument('docid', help="Spreadsheets doc id to update")
     parser.add_argument('-n', '--dry-run', action='store_true')
     args = parser.parse_args()
 
@@ -394,7 +349,8 @@ def main():
         else:
             return (0, posting.account, posting.cost.currency)
 
-    postings = sorted(get_assets(clean_entries_for_balances(entries), options_map),
+    postings = sorted(get_balance_sheet_balances(clean_entries_for_balances(entries),
+                                                 options_map),
                       key=keyfun)
 
     # Simplify the accounts to their root accounts.
@@ -429,16 +385,13 @@ def main():
     price_map = prices.build_price_map(entries)
     model = Model(price_map, list(agg_postings), exports, asset_type, tax_map)
 
-    if not args.dry_run:
-        # Connect to the API.
-        scopes = ['https://spreadsheets.google.com/feeds']
-        credentials, _ = get_auth_via_service_account(scopes)
-        gc = gspread.authorize(credentials)
-        doc = gc.open_by_key(args.docid)
-        # Note: You have to share the sheet with the "client_email" address.
-
-        # Update the sheets.
-        upload_postings_to_sheet(model, doc, "Upload", min_rows=100)
+    # Write out the assets to stdout in CSV format.
+    if args.dry_run:
+        return
+    table = model_to_table(model)
+    table[0][0] += ' ({:%Y-%m-%d %H:%M})'.format(datetime.datetime.now())
+    wr = csv.writer(sys.stdout)
+    wr.writerows(table)
 
 
 if __name__ == '__main__':

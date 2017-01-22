@@ -4,6 +4,31 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2017-01-21
+
+  - Fixed #155: Use entry_points instead of scripts in setup.py.
+
+  - Added an extra check for Balance directives, verifying that asserted
+    currencies are accepted currencies for that account (if the account's
+    corresponding currencies have been declared explicitly). In other words,
+    this will now fail instead of being silently ignored:
+
+      2017-01-21 open Assets:Checking    CAD
+      2017-01-21 balance Assets:Checking  0.00 USD
+
+  - Fixed bug in sheets_upload.py / upload-to-sheets whereby all the fields of a
+    sheet being updated just in order to resize it was causing the sheet to be
+    reindexed at the front of the list of sheets.
+
+  - Merged 'arithmetic_ops' branch with no effect, in order to move all files
+    and release. This will have to be revisited later.
+
+
+2017-01-19
+
+  - Fixed bug with generation of column names in sheets uploader script.
+
+
 2017-01-16
 
   - Removed tools/gauth (used to be beancount.docs.gauth). All users of this are
@@ -807,6 +832,8 @@ Note: This file contains only changes in the 'default' branch.
     now query for "SELECT PRICE('USD', 'CAD', date)", for example.
 
   - Added a boolean renderer for the SQL shell.
+
+  - Added support for arithmetic operations to the bean-query SQL shell.
 
 
 2016-03-26

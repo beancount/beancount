@@ -99,7 +99,7 @@ def new_directive(clsname, fields: List[Tuple]):
 #     Booking below for a selection of valid methods.
 Open = new_directive('Open', [
     ('account', Account),
-    ('currencies', Currency),
+    ('currencies', List[Currency]),
     ('booking', Booking)])
 
 

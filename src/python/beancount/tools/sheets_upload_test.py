@@ -5,6 +5,7 @@ __license__ = "GNU GPLv2"
 import subprocess
 import unittest
 import textwrap
+import string
 from os import path
 
 from beancount.tools import sheets_upload
@@ -41,6 +42,26 @@ class TestPopAlist(unittest.TestCase):
 
 
 class TestSheetsUtils(unittest.TestCase):
+
+    def test_get_alpha_column(self):
+        self.assertEqual("A", sheets_upload.get_alpha_column(0))
+        self.assertEqual("B", sheets_upload.get_alpha_column(1))
+        self.assertEqual("Z", sheets_upload.get_alpha_column(25))
+        self.assertEqual("AA", sheets_upload.get_alpha_column(26))
+        self.assertEqual("AZ", sheets_upload.get_alpha_column(51))
+        self.assertEqual("BA", sheets_upload.get_alpha_column(52))
+        self.assertEqual("BZ", sheets_upload.get_alpha_column(77))
+        self.assertEqual("ZZ", sheets_upload.get_alpha_column(701))
+        self.assertEqual("AAA", sheets_upload.get_alpha_column(702))
+        self.assertEqual("ABA", sheets_upload.get_alpha_column(728))
+        self.assertEqual("AZZ", sheets_upload.get_alpha_column(1377))
+        self.assertEqual("BAA", sheets_upload.get_alpha_column(1378))
+        self.assertEqual("ZZZ", sheets_upload.get_alpha_column(18277))
+        self.assertEqual("AAAA", sheets_upload.get_alpha_column(18278))
+        self.assertEqual("AZZZ", sheets_upload.get_alpha_column(35853))
+        self.assertEqual("BAAA", sheets_upload.get_alpha_column(35854))
+        self.assertEqual("ZZZZ", sheets_upload.get_alpha_column(475253))
+        self.assertEqual("AAAAA", sheets_upload.get_alpha_column(475254))
 
     def test_sheet_range(self):
         self.assertEqual('Balances!A1:T100',
