@@ -111,7 +111,7 @@ def check(entries, options_map):
             expected_amount = entry.amount
             open, _ = open_close_map[entry.account]
             if (expected_amount is not None and
-                open.currencies and
+                open and open.currencies and
                 expected_amount.currency not in open.currencies):
                 check_errors.append(
                     BalanceError(entry.meta,
