@@ -16,6 +16,10 @@ Note: This file contains only changes in the 'default' branch.
       2017-01-21 open Assets:Checking    CAD
       2017-01-21 balance Assets:Checking  0.00 USD
 
+  - Fixed bug in sheets_upload.py / upload-to-sheets whereby all the fields of a
+    sheet being updated just in order to resize it was causing the sheet to be
+    reindexed at the front of the list of sheets.
+
 
 2017-01-19
 

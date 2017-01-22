@@ -267,7 +267,7 @@ class Doc:
                 'title': title,  # Required, unfortunately.
                 'gridProperties': {'rowCount': nrows,
                                    'columnCount': ncols}},
-            'fields': '*'}}]
+            'fields': 'gridProperties(rowCount, columnCount)'}}]
         self.service.spreadsheets().batchUpdate(
             spreadsheetId=self.docid,
             body={'requests': requests}).execute()
@@ -381,7 +381,7 @@ def _main():
         else:
             sheet_name = path.splitext(path.basename(filename))[0]
         new_sheets.append((sheet_name, filename))
-    logging.info("New sheets: %s", new_sheets)
+    logging.info("Sheets to create or update: %s", new_sheets)
 
     # Get or create the spreadsheet.
     if args.docid:
@@ -420,12 +420,13 @@ def match_names_and_upload_sheets(service, docid, new_sheets):
     # pairs up spreadsheets from the input to sheet-ids in the doc.
     sheets_alist = []
     for title, filename in reversed(new_sheets):
-        logging.info("Updating sheet '%s'", title)
         sheet_id = pop_alist(existing_sheets, title)
         if sheet_id is None:
+            logging.info("Creating sheet '%s'", title)
             sheet_id = doc.add_sheet(title)
+        else:
+            logging.info("Reusing sheet '%s' with id '%s'", title, sheet_id)
         sheets_alist.append((sheet_id, title, filename))
-    logging.info("Matched sheets: %s", sheets_alist)
 
     # Clear and replace the data in the given sheet with that of the given
     # filename.
