@@ -99,6 +99,17 @@ class TestBalance(unittest.TestCase):
         """
         self.assertEqual([], list(map(type, errors)))
 
+    @loader.load_doc(expect_errors=True)
+    def test_simple_invalid_currency(self, entries, errors, __):
+        """
+          2013-05-01 open Assets:Bank:Checking      CAD
+          2013-05-01 open Equity:Opening-Balances
+
+          ;; This ought to fail because USD isn't a valid currency.
+          2013-05-03 balance Assets:Bank:Checking   0.00 USD
+        """
+        self.assertEqual([balance.BalanceError], list(map(type, errors)))
+
     @loader.load_doc()
     def test_parents(self, entries, errors, __):
         """

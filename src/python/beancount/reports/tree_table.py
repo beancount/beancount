@@ -10,6 +10,7 @@ from beancount.core import account_types
 from beancount.core import data
 from beancount.core import inventory
 from beancount.core import realization
+from beancount.core import convert
 
 
 # A special enum for the "Totals" line at the bottom of the table.
@@ -81,13 +82,13 @@ def tree_table(oss, real_account, formatter, header=None, classes=None):
     # Yield with a None for the final line.
     lines.append((None, None, TOTALS_LINE))
 
-    for first_line, unused_cont_line, real_account in lines:
+    for first_line, unused_cont_line, real_acc in lines:
         # Let the caller fill in the data to be rendered by adding it to a list
         # objects. The caller may return multiple cell values; this will create
         # multiple columns.
         cells = []
         row_classes = []
-        yield real_account, cells, row_classes
+        yield real_acc, cells, row_classes
 
         # If no cells were added, skip the line. If you want to render empty
         # cells, append empty strings.
@@ -97,12 +98,12 @@ def tree_table(oss, real_account, formatter, header=None, classes=None):
         # Render the row
         write('<tr class="{}">'.format(' '.join(row_classes)))
 
-        if real_account is TOTALS_LINE:
+        if real_acc is TOTALS_LINE:
             label = '<span class="totals-label"></span>'
         else:
-            label = (formatter.render_account(real_account.account)
+            label = (formatter.render_account(real_acc.account)
                      if formatter
-                     else real_account.account)
+                     else real_acc.account)
 
         write('<td class="tree-node-name">{}</td>'.format(label))
 
@@ -158,7 +159,7 @@ def table_of_balances(real_root, operating_currencies, formatter, classes=None):
                 row_classes.append('parent-node')
 
             # For each account line, get the final balance of the account (at cost).
-            line_balance = real_account.balance.cost()
+            line_balance = real_account.balance.reduce(convert.get_cost)
 
             # Update the total balance for the totals line.
             balance_totals += line_balance
@@ -169,7 +170,7 @@ def table_of_balances(real_root, operating_currencies, formatter, classes=None):
 
         # FIXME: This little algorithm is inefficient; rewrite it.
         for currency in operating_currencies:
-            units = ccy_dict[currency].get_units(currency)
+            units = ccy_dict[currency].get_currency_units(currency)
             cells.append(formatter.render_number(units.number, units.currency)
                          if units.number != ZERO
                          else '')

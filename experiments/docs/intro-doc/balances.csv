@@ -1,0 +1,45 @@
+account                        ,units_sum_position
+Assets:US:BofA:Checking        ,   1043.23  USD
+Assets:US:BofA:Savings         ,   7022.02  USD
+Assets:US:ETrade:Cash          ,   5525.09  USD
+Assets:US:ETrade:Invest        ,  72948.01 USD
+Assets:US:ETrade:GLD           ,     51     GLD
+Assets:US:ETrade:ITOT          ,     28     ITOT
+Assets:US:ETrade:VEA           ,    172     VEA
+Assets:US:ETrade:VHT           ,    185     VHT
+Assets:US:Vacation             ,    -26     VACHR
+Assets:US:Fidelity:Cash        ,     -0.12  USD
+Assets:US:Fidelity:RGAGX       ,    281.666 RGAGX
+Assets:US:Fidelity:VBMPX       ,    415.514 VBMPX
+Equity:Opening-Balances        ,  -3219.17  USD
+Equity:Earnings:Current        ,      0.00  USD
+Equity:Earnings:Previous       ,-175909.10  USD
+Expenses:Financial:Commissions ,    510.15  USD
+Expenses:Financial:Fees        ,    144.00  USD
+Expenses:Food:Alcohol          ,     56.56  USD
+Expenses:Food:Coffee           ,    196.66  USD
+Expenses:Food:Groceries        ,   6339.42  USD
+Expenses:Food:Restaurant       ,  13018.56  USD
+Expenses:Dental:Insurance      ,    226.20  USD
+Expenses:Life:GroupTermLife    ,   1896.96  USD
+Expenses:Medical:Insurance     ,   2135.64  USD
+Expenses:Vision:Insurance      ,   3299.40  USD
+Expenses:Home:Electricity      ,   2275.00  USD
+Expenses:Home:Internet         ,   2800.43  USD
+Expenses:Home:Phone            ,   2099.62  USD
+Expenses:Home:Rent             ,  84000.00  USD
+Expenses:Taxes:Federal         ,  28061.60  USD
+Expenses:Taxes:Medicare        ,   2772.12  USD
+Expenses:Taxes:SDI             ,     29.12  USD
+Expenses:Taxes:SocSec          ,   7000.04  USD
+Expenses:Taxes:State           ,   9868.72  USD
+Expenses:Transport:Train       ,   3960.00  USD
+Expenses:Transport:Subway      ,    738.00  USD
+Income:US:ETrade:Dividends     ,   -922.06  USD
+Income:US:ETrade:Gains         ,   -212.38  USD
+Income:US:Salary               ,-228437.64  USD
+Income:US:Charity              ,  10000.00  USD
+Liabilities:AccountsPayable    ,   -234.02  USD
+Liabilities:CreditCard:Amex    ,  -2941.56  USD
+Liabilities:CreditCard:Chase   ,   -274.02  USD
+Liabilities:Mortgage:Loan      ,-178023.98  USD

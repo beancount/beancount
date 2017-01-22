@@ -56,7 +56,7 @@ This provides yet another level of verification and allows you to elide the
 income amounts, knowing that the price is there to provide an extra level of
 error-checking in case you enter a typo.
 """
-__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2015-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
@@ -64,6 +64,7 @@ import collections
 from beancount.core.number import ZERO
 from beancount.core import data
 from beancount.core import amount
+from beancount.core import convert
 from beancount.core import inventory
 from beancount.core import account_types
 from beancount.core import interpolate
@@ -122,8 +123,7 @@ def validate_sell_gains(entries, options_map):
                 # Otherwise, use the weight and ignore postings to Income accounts.
                 atype = account_types.get_account_type(posting.account)
                 if atype in proceed_types:
-                    total_proceeds.add_amount(
-                        interpolate.get_posting_weight(posting))
+                    total_proceeds.add_amount(convert.get_weight(posting))
 
         # Compare inventories, currency by currency.
         dict_price = {pos.units.currency: pos.units.number

@@ -562,7 +562,7 @@ def render_text(result_types, result_rows, dcontext, file,
         results have a lot of rows that render over multiple lines.
     """
     str_rows, renderers = render_rows(result_types, result_rows, dcontext,
-                                      expand=False, spaced=False)
+                                      expand=expand, spaced=spaced)
 
     # Compute a final format strings.
     formats = ['{{:{}}}'.format(max(renderer.width(), 1))
@@ -614,7 +614,7 @@ def render_csv(result_types, result_rows, dcontext, file, expand=False):
       expand: A boolean, if true, expand columns that render to lists on multiple rows.
     """
     str_rows, renderers = render_rows(result_types, result_rows, dcontext,
-                                      expand=False, spaced=False)
+                                      expand=expand, spaced=False)
 
     writer = csv.writer(file)
     header_row = [name for name, _ in result_types]

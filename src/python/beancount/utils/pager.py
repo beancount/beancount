@@ -13,7 +13,7 @@ upon exit we close the file object. This also silences broken pipe errors
 triggered by the user exiting the sub-process, and recovers from a failing pager
 command by just using stdout.
 """
-__copyright__ = "Copyright (C) 2014-2015  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import codecs

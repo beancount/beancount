@@ -1,6 +1,6 @@
 """HTML rendering routines for serving a lists of postings/entries.
 """
-__copyright__ = "Copyright (C) 2014-2015  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
@@ -8,7 +8,7 @@ from os import path
 
 from beancount.core import data
 from beancount.core import position
-from beancount.core import interpolate
+from beancount.core import convert
 from beancount.core import realization
 from beancount.core import flags
 
@@ -91,7 +91,7 @@ def iterate_html_postings(txn_postings, formatter):
                                'expected = {}, balance = {}, difference = {}').format(
                                    formatter.render_account(entry.account),
                                    entry.amount,
-                                   entry_balance.get_units(entry.amount.currency),
+                                   entry_balance.get_currency_units(entry.amount.currency),
                                    entry.diff_amount)
                 extra_class = 'fail'
 
@@ -203,7 +203,7 @@ def html_entries_table_with_balance(oss, txn_postings, formatter, render_posting
                            formatter.render_account(posting.account),
                            position.to_string(posting),
                            posting.price or '',
-                           interpolate.get_posting_weight(posting)))
+                           convert.get_weight(posting)))
 
     write('</table>')
 
@@ -284,7 +284,7 @@ def html_entries_table(oss, txn_postings, formatter, render_postings=True):
                            posting.units or '',
                            posting.cost or '',
                            posting.price or '',
-                           interpolate.get_posting_weight(posting)))
+                           convert.get_weight(posting)))
 
     write('</table>')
 

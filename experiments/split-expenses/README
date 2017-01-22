@@ -1,1 +1,21 @@
 Utility scripts I use in accounting for shared expenses for projects or trips.
+
+
+match_expenses is working and should be moved to the main codebase. Here's what
+I need to do to it:
+
+- Move the SQL shell syntax to v2, whereby a "FROM <filename>" clause is
+  implemented to select an arbitrary subset of transactions.
+
+- A function to easily invoke this selector on a list of entries should be
+  provided.
+
+- match_expenses should be renamed join_transactions.
+
+- It should be modified to accept two FROM... WHERE... clauses as in the above,
+  and these should be how the user provides two subsets of transactions to be
+  paired up together.
+
+- Tests should be added for it.
+
+- It should be moved under src/python/beancount/scripts.

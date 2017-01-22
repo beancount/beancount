@@ -16,6 +16,7 @@ from beancount.core.position import Position
 from beancount.core.position import Cost
 from beancount.core.inventory import Inventory
 from beancount.core.inventory import Booking
+from beancount.core import convert
 from beancount.core import position as position
 from beancount.core import inventory as inventory
 from beancount.utils import invariants
@@ -40,7 +41,7 @@ class TestInventory(unittest.TestCase):
         if isinstance(number, str):
             number = D(number)
         amount_ = amount.Amount(number, currency)
-        inv_amount = inventory.get_units(amount_.currency)
+        inv_amount = inventory.get_currency_units(amount_.currency)
         self.assertEqual(inv_amount, amount_)
 
     def test_from_string(self):
@@ -222,13 +223,13 @@ class TestInventory(unittest.TestCase):
         inv2 = inv * D('3')
         self.assertEqual(I('30 HOOL {1.11 USD}, 6.66 CAD'), inv2)
 
-    def test_get_units(self):
+    def test_get_currency_units(self):
         inv = I('40.50 JPY, 40.51 USD {1.01 CAD}, 40.52 CAD')
-        self.assertEqual(inv.get_units('JPY'), A('40.50 JPY'))
-        self.assertEqual(inv.get_units('USD'), A('40.51 USD'))
-        self.assertEqual(inv.get_units('CAD'), A('40.52 CAD'))
-        self.assertEqual(inv.get_units('AUD'), A('0 AUD'))
-        self.assertEqual(inv.get_units('NZD'), A('0 NZD'))
+        self.assertEqual(inv.get_currency_units('JPY'), A('40.50 JPY'))
+        self.assertEqual(inv.get_currency_units('USD'), A('40.51 USD'))
+        self.assertEqual(inv.get_currency_units('CAD'), A('40.52 CAD'))
+        self.assertEqual(inv.get_currency_units('AUD'), A('0 AUD'))
+        self.assertEqual(inv.get_currency_units('NZD'), A('0 NZD'))
 
     def test_segregate_units(self):
         inv = I('2.2 HOOL {532.43 USD}, '
@@ -244,18 +245,18 @@ class TestInventory(unittest.TestCase):
 
     def test_units1(self):
         inv = Inventory()
-        self.assertEqual(inv.units(), I(''))
+        self.assertEqual(inv.reduce(convert.get_units), I(''))
 
         inv = I('40.50 JPY, 40.51 USD {1.01 CAD}, 40.52 CAD')
-        self.assertEqual(inv.units(),
+        self.assertEqual(inv.reduce(convert.get_units),
                          I('40.50 JPY, 40.51 USD, 40.52 CAD'))
 
         # Check that the same units coalesce.
         inv = I('2 HOOL {400 USD}, 3 HOOL {410 USD}')
-        self.assertEqual(inv.units(), I('5 HOOL'))
+        self.assertEqual(inv.reduce(convert.get_units), I('5 HOOL'))
 
         inv = I('2 HOOL {400 USD}, -3 HOOL {410 USD}')
-        self.assertEqual(inv.units(), I('-1 HOOL'))
+        self.assertEqual(inv.reduce(convert.get_units), I('-1 HOOL'))
 
     POSITIONS_ALL_KINDS = [
         P('40.50 USD'),
@@ -265,13 +266,13 @@ class TestInventory(unittest.TestCase):
     def test_units(self):
         inv = Inventory(self.POSITIONS_ALL_KINDS +
                         [P('50.00 CAD')])
-        inv_cost = inv.units()
+        inv_cost = inv.reduce(convert.get_units)
         self.assertEqual(I('121.50 USD, 50.00 CAD'), inv_cost)
 
     def test_cost(self):
         inv = Inventory(self.POSITIONS_ALL_KINDS +
                         [P('50.00 CAD')])
-        inv_cost = inv.cost()
+        inv_cost = inv.reduce(convert.get_cost)
         self.assertEqual(I('40.50 USD, 139.10 CAD'), inv_cost)
 
     def test_average(self):
@@ -453,3 +454,8 @@ class TestInventory(unittest.TestCase):
         inv2.add_amount(A('55 HOOL'))
 
         _ = inv1 + inv2
+
+    def test_reduce(self):
+        inv = I('100.00 USD, 101.00 CAD, 100 HOOL {300.00 USD}')
+        inv_units = inv.reduce(lambda posting: posting.units)
+        self.assertEqual(I('100.00 USD, 101.00 CAD, 100 HOOL'), inv_units)

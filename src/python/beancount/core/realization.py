@@ -37,6 +37,7 @@ from beancount.core import amount
 from beancount.core import data
 from beancount.core import account
 from beancount.core import flags
+from beancount.core import convert
 
 
 class RealAccount(dict):
@@ -470,8 +471,8 @@ def compute_balance(real_account):
       An Inventory.
     """
     total_balance = inventory.Inventory()
-    for real_account in iter_children(real_account):
-        total_balance += real_account.balance
+    for real_acc in iter_children(real_account):
+        total_balance += real_acc.balance
     return total_balance
 
 
@@ -610,11 +611,11 @@ PREFIX_LEAF_1 = '`-- '
 PREFIX_LEAF_C = '    '
 
 
-def dump_balances(real_account, dformat, at_cost=False, fullnames=False, file=None):
+def dump_balances(real_root, dformat, at_cost=False, fullnames=False, file=None):
     """Dump a realization tree with balances.
 
     Args:
-      real_account: An instance of RealAccount.
+      real_root: An instance of RealAccount.
       dformat: An instance of DisplayFormatter to format the numbers with.
       at_cost: A boolean, if true, render the values at cost.
       fullnames: A boolean, if true, don't render a tree of accounts and
@@ -627,18 +628,18 @@ def dump_balances(real_account, dformat, at_cost=False, fullnames=False, file=No
     if fullnames:
         # Compute the maximum account name length;
         maxlen = max(len(real_child.account)
-                     for real_child in iter_children(real_account, leaf_only=True))
+                     for real_child in iter_children(real_root, leaf_only=True))
         line_format = '{{:{width}}} {{}}\n'.format(width=maxlen)
     else:
         line_format = '{}       {}\n'
 
     output = file or io.StringIO()
-    for first_line, cont_line, real_account in dump(real_account):
+    for first_line, cont_line, real_account in dump(real_root):
         if not real_account.balance.is_empty():
             if at_cost:
-                rinv = real_account.balance.cost()
+                rinv = real_account.balance.reduce(convert.get_cost)
             else:
-                rinv = real_account.balance.units()
+                rinv = real_account.balance.reduce(convert.get_units)
             amounts = [position.units for position in rinv.get_positions()]
             positions = [amount_.to_string(dformat)
                          for amount_ in sorted(amounts, key=amount.sortkey)]
