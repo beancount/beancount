@@ -1,4 +1,4 @@
-__copyright__ = "Copyright (C) 2016  Martin Blais"
+__copyright__ = "Copyright (C) 2016-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from os import path
@@ -294,6 +294,7 @@ class TestScriptFile(scripts_utils.TestScriptsBase, test_utils.TestCase):
         exc = ValueError("Unexpected error!")
         imp.file_date = mock.MagicMock(side_effect=exc)
         imp.file_name = mock.MagicMock(side_effect='ofxdownload.ofx')
+        imp.file_account = mock.MagicMock(side_effect='dir')
         imp.name = mock.MagicMock(return_value="SomeImporter")
         file.file_one_file(path.join(self.downloads, 'ofxdownload.ofx'), [imp],
                            self.documents)
@@ -310,6 +311,7 @@ class TestScriptFile(scripts_utils.TestScriptsBase, test_utils.TestCase):
         exc = ValueError("Unexpected error!")
         imp.file_date = mock.MagicMock(return_value=None)
         imp.file_name = mock.MagicMock(side_effect=exc)
+        imp.file_account = mock.MagicMock(side_effect='dir')
         imp.name = mock.MagicMock(return_value="SomeImporter")
         file.file_one_file(path.join(self.downloads, 'ofxdownload.ofx'), [imp],
                            self.documents)

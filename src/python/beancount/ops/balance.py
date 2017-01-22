@@ -90,6 +90,9 @@ def check(entries, options_map):
             any(match(account_) for match in asserted_match_list)):
             realization.get_or_create(real_root, account_)
 
+    # Get the Open directives for each account.
+    open_close_map = getters.get_account_open_close(entries)
+
     for entry in entries:
         if isinstance(entry, Transaction):
             # For each of the postings' accounts, update the balance inventory.
@@ -103,9 +106,20 @@ def check(entries, options_map):
                     real_account.balance.add_position(posting)
 
         elif isinstance(entry, Balance):
-            # Check the balance against the check entry.
+            # Check that the currency of the balance check is one of the allowed
+            # currencies for that account.
             expected_amount = entry.amount
+            open, _ = open_close_map[entry.account]
+            if (expected_amount is not None and
+                open and open.currencies and
+                expected_amount.currency not in open.currencies):
+                check_errors.append(
+                    BalanceError(entry.meta,
+                                 "Invalid currency '{}' for Balance directive: ".format(
+                                     expected_amount.currency),
+                                 entry))
 
+            # Check the balance against the check entry.
             real_account = realization.get(real_root, entry.account)
             assert real_account is not None, "Missing {}".format(entry.account)
 
@@ -117,7 +131,7 @@ def check(entries, options_map):
                 subtree_balance += real_child.balance
 
             # Get only the amount in the desired currency.
-            balance_amount = subtree_balance.get_units(expected_amount.currency)
+            balance_amount = subtree_balance.get_currency_units(expected_amount.currency)
 
             # Check if the amount is within bounds of the expected amount.
             diff_amount = amount.sub(balance_amount, expected_amount)

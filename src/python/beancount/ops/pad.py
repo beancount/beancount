@@ -94,7 +94,7 @@ def pad(entries, options_map):
                 # does not check a single position, but rather checks that the
                 # total amount for a particular currency (which itself is
                 # distinct from the cost).
-                balance_amount = pad_balance.get_units(check_amount.currency)
+                balance_amount = pad_balance.get_currency_units(check_amount.currency)
                 diff_amount = amount.sub(balance_amount, check_amount)
 
                 # Use the specified tolerance or automatically infer it.
