@@ -8,6 +8,14 @@ Note: This file contains only changes in the 'default' branch.
 
   - Fixed #155: Use entry_points instead of scripts in setup.py.
 
+  - Added an extra check for Balance directives, verifying that asserted
+    currencies are accepted currencies for that account (if the account's
+    corresponding currencies have been declared explicitly). In other words,
+    this will now fail instead of being silently ignored:
+
+      2017-01-21 open Assets:Checking    CAD
+      2017-01-21 balance Assets:Checking  0.00 USD
+
 
 2017-01-19
 
