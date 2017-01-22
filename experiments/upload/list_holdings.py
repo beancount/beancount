@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Upload your list of assets to a Google Spreadsheet.
+"""Produce a detailed list of assets & liabilities to a CSV file.
 
 The purpose of this is manyfold:
 
@@ -12,12 +12,10 @@ The purpose of this is manyfold:
   and letting the user recreate the views they need using the GOOGLEFINANCE()
   function can produce an equivalent, or better.
 
-- The 'exportpf' code uses Holding, and I intend on removing this object in
-  favor of a simplified Position object from the 'booking' branch. This code
-  intends to be a bit of a simplified reboot of the export code.
+- The 'exportpf' code uses Holding, which is deprecated. This code doesn't.
 
 """
-__copyright__ = "Copyright (C) 2016  Martin Blais"
+__copyright__ = "Copyright (C) 2016-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse
