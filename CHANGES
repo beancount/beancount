@@ -20,6 +20,9 @@ Note: This file contains only changes in the 'default' branch.
     sheet being updated just in order to resize it was causing the sheet to be
     reindexed at the front of the list of sheets.
 
+  - Merged 'arithmetic_ops' branch with no effect, in order to move all files
+    and release. This will have to be revisited later.
+
 
 2017-01-19
 
