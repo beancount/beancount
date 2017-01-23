@@ -1,5 +1,7 @@
 """A source fetching currency prices from OANDA.
 
+Valid tickers are in the form "XXX_YYY", such as "EUR_USD".
+
 Here is the API documentation:
 http://developer.oanda.com/rest-live/rates/
 
@@ -97,6 +99,7 @@ class Source(source.Source):
         }
         time_prices = _fetch_candles(params_dict)
         if time_prices is None:
+            logging.error("No prices returned")
             return
 
         # Get the latest price point available.
@@ -133,6 +136,9 @@ class Source(source.Source):
             'end': interval_end_utc.isoformat('T'),
         }
         time_prices = _fetch_candles(params_dict)
+        if time_prices is None:
+            logging.error("No prices returned")
+            return
 
         # Get all the prices with the same date.
         same_date = [item
