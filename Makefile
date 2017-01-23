@@ -229,3 +229,14 @@ pyflakes:
 
 # Check everything.
 status check: pylint pyflakes filter-terms missing-tests dep-constraints multi-imports test
+
+
+# Experimental docs conversion.
+download-pdf:
+	./tools/download_docs.py pdf $(HOME)/p/beancount-downloads/pdf
+
+download-odt:
+	./tools/download_docs.py odt $(HOME)/p/beancount-downloads/odt
+
+sphinx sphinx_odt2rst:
+	./tools/sphinx_odt2rst.py $(HOME)/p/beancount-downloads/odt $(HOME)/p/beancount-docs

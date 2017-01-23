@@ -12,6 +12,9 @@ Note: This file contains only changes in the 'default' branch.
 
       bean-price -e 'USD:oanda/EUR_USD'
 
+  - Began working on the conversion of Google Docs to reStructuredText for
+    inclusion in Dominik Aumayr's docs.
+
 
 2017-01-21
 
