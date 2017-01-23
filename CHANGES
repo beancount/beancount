@@ -4,6 +4,15 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2017-01-22
+
+  - Added new price source fetcher from OANDA's API. It supports a large number
+    of currency pairs with tickers like this "XXX_YYY", such as "EUR_USD". Use
+    it like the other price sources, e.g., like this:
+
+      bean-price -e 'USD:oanda/EUR_USD'
+
+
 2017-01-21
 
   - Fixed #155: Use entry_points instead of scripts in setup.py.
