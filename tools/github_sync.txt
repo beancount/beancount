@@ -1,0 +1,9 @@
+How to push to github (I always forget):
+
+  hg bookmark -r default master
+  hg push github
+
+with
+
+  [paths]
+  github = git+ssh://git@github.com/beancount/beancount.git
