@@ -1,0 +1,14 @@
+Prototype for a new caching mechanism, where all cached files would be under a
+~/.beancount/ directory. This would encompass:
+
+- Caching of the individual files for the parser.
+
+- Caching of the price source lookup tool (bean-price)
+
+- Caching for the shell's commmand-line history.
+
+- Caching for the conversion of downloaded files during ingest.
+
+The goal is to provide a consistent set of caching option which allow the user
+to ignore, clear or specify the cache with similar option names. Right now the
+options are per-tool and with inconsistent names.

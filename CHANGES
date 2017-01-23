@@ -4,6 +4,15 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2017-01-22
+
+  - Added new price source fetcher from OANDA's API. It supports a large number
+    of currency pairs with tickers like this "XXX_YYY", such as "EUR_USD". Use
+    it like the other price sources, e.g., like this:
+
+      bean-price -e 'USD:oanda/EUR_USD'
+
+
 2017-01-21
 
   - Fixed #155: Use entry_points instead of scripts in setup.py.
@@ -19,6 +28,9 @@ Note: This file contains only changes in the 'default' branch.
   - Fixed bug in sheets_upload.py / upload-to-sheets whereby all the fields of a
     sheet being updated just in order to resize it was causing the sheet to be
     reindexed at the front of the list of sheets.
+
+  - Merged 'arithmetic_ops' branch with no effect, in order to move all files
+    and release. This will have to be revisited later.
 
 
 2017-01-19
@@ -829,6 +841,8 @@ Note: This file contains only changes in the 'default' branch.
     now query for "SELECT PRICE('USD', 'CAD', date)", for example.
 
   - Added a boolean renderer for the SQL shell.
+
+  - Added support for arithmetic operations to the bean-query SQL shell.
 
 
 2016-03-26

@@ -184,6 +184,11 @@ class Match(BinaryOp): pass
 # Membership operators.
 class Contains(BinaryOp): pass
 
+# Arithmetic operators.
+class Mul(BinaryOp): pass
+class Div(BinaryOp): pass
+class Add(BinaryOp): pass
+class Sub(BinaryOp): pass
 
 
 class ParseError(Exception):
@@ -209,8 +214,9 @@ class Lexer:
     # List of valid tokens from the lexer.
     tokens = [
         'ID', 'INTEGER', 'DECIMAL', 'STRING', 'DATE',
-        'WILDCARD', 'COMMA', 'SEMI', 'LPAREN', 'RPAREN', 'TILDE',
+        'COMMA', 'SEMI', 'LPAREN', 'RPAREN', 'TILDE',
         'EQ', 'NE', 'GT', 'GTE', 'LT', 'LTE',
+        'ASTERISK', 'SLASH', 'PLUS', 'MINUS',
     ] + list(keywords)
 
     # An identifier, for a column or a dimension or whatever.
@@ -239,7 +245,6 @@ class Lexer:
 
     # Constant tokens.
     # pylint: disable=bad-whitespace
-    t_WILDCARD = r"\*"
     t_COMMA    = r","
     t_SEMI     = r";"
     t_LPAREN   = r"\("
@@ -251,6 +256,10 @@ class Lexer:
     t_LTE      = r"<="
     t_LT       = r"<"
     t_TILDE    = r"~"
+    t_ASTERISK = r"\*"
+    t_SLASH    = r"/"
+    t_PLUS     = r"\+"
+    t_MINUS    = r"-"
 
     # Numbers.
     def t_DECIMAL(self, token):
@@ -279,11 +288,13 @@ class SelectParser(Lexer):
 
     def __init__(self, **options):
         self.ply_lexer = ply.lex.lex(module=self,
-                                     optimize=False)
+                                     optimize=False,
+                                     debuglog=None,
+                                     debug=False)
         self.ply_parser = ply.yacc.yacc(module=self,
                                         optimize=False,
                                         write_tables=False,
-                                        debugfile=None,
+                                        debuglog=None,
                                         debug=False,
                                         **options)
 
@@ -292,7 +303,7 @@ class SelectParser(Lexer):
 
     def tokenize(self, line):
         self.ply_lexer.input(line)
-        while 1:
+        while True:
             tok = self.ply_lexer.token()
             if not tok:
                 break
@@ -341,7 +352,7 @@ class SelectParser(Lexer):
 
     def p_target_spec(self, p):
         """
-        target_spec : WILDCARD
+        target_spec : ASTERISK
                     | target_list
         """
         p[0] = Wildcard() if p[1] == '*' else p[1]
@@ -484,6 +495,8 @@ class SelectParser(Lexer):
         ('left', 'OR'),
         ('left', 'AND'),
         ('left', 'NOT'),
+        ('left', 'PLUS', 'MINUS'),
+        ('left', 'ASTERISK', 'SLASH'),
         ('left', 'EQ', 'NE', 'GT', 'GTE', 'LT', 'LTE', 'TILDE'),
         ]
 
@@ -542,6 +555,22 @@ class SelectParser(Lexer):
     def p_expression_constant(self, p):
         "expression : constant"
         p[0] = p[1]
+
+    def p_expression_mul(self, p):
+        "expression : expression ASTERISK expression"
+        p[0] = Mul(p[1], p[3])
+
+    def p_expression_div(self, p):
+        "expression : expression SLASH expression"
+        p[0] = Div(p[1], p[3])
+
+    def p_expression_add(self, p):
+        "expression : expression PLUS expression"
+        p[0] = Add(p[1], p[3])
+
+    def p_expression_sub(self, p):
+        "expression : expression MINUS expression"
+        p[0] = Sub(p[1], p[3])
 
     def p_expression_function(self, p):
         "expression : ID LPAREN expression_list_opt RPAREN"
@@ -680,7 +709,7 @@ class Parser(SelectParser):
         """
         run_statement : RUN ID
                       | RUN STRING
-                      | RUN WILDCARD
+                      | RUN ASTERISK
                       | RUN empty
         """
         p[0] = RunCustom(p[2])
