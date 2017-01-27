@@ -2,11 +2,7 @@
 __copyright__ = "Copyright (C) 2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import subprocess
 import unittest
-import textwrap
-import string
-from os import path
 
 from beancount.tools import sheets_upload
 

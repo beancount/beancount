@@ -8,4 +8,5 @@ covering all the possible branches.
 __copyright__ = "Copyright (C) 2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
+# pylint: disable=unused-import
 from beancount.parser import booking_method as bm

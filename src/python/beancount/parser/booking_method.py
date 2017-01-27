@@ -5,25 +5,16 @@ __copyright__ = "Copyright (C) 2015-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
-import copy
-import enum
 
-from beancount.core.number import MISSING
 from beancount.core.number import ZERO
 from beancount.core.number import Decimal
-from beancount.core.data import Transaction
 from beancount.core.data import Booking
 from beancount.core.amount import Amount
-from beancount.core.position import Position
 from beancount.core.position import Cost
-from beancount.core.position import CostSpec
 from beancount.core import flags
 from beancount.core import position
 from beancount.core import inventory
-from beancount.core import interpolate
 from beancount.core import convert
-from beancount.parser import printer
-from beancount.utils import misc_utils
 
 
 # An error raised if we failed to reduce the inventory balance unambiguously.
@@ -176,11 +167,12 @@ def booking_method_NONE(entry, posting, matches):
 
 def booking_method_AVERAGE(entry, posting, matches):
     """AVERAGE booking method implementation."""
-
-    errors.append(AmbiguousMatchError(entry.meta, "AVERAGE method is not supported", entry))
-    return [], [], False
+    postings = []
+    errors = [AmbiguousMatchError(entry.meta, "AVERAGE method is not supported", entry)]
+    return postings, errors, False
 
     # FIXME: Future implementation here.
+    # pylint: disable=unreachable
     if False: # pylint: disable=using-constant-test
         # DISABLED - This is the code for AVERAGE, which is currently disabled.
 

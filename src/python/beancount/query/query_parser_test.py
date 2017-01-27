@@ -317,8 +317,10 @@ class TestSelectPrecedence(QueryParserTestBase):
     def test_expr_function__mul_div_plus_minus(self):
         self.assertParse(
             qSelect(qp.Wildcard(),
-                    where_clause=qp.Sub(qp.Add(qp.Mul(qp.Column(name='a'), qp.Column(name='b')),
-                                               qp.Div(qp.Column(name='c'), qp.Column(name='d'))),
+                    where_clause=qp.Sub(qp.Add(qp.Mul(qp.Column(name='a'),
+                                                      qp.Column(name='b')),
+                                               qp.Div(qp.Column(name='c'),
+                                                      qp.Column(name='d'))),
                                         qp.Constant(value=3))),
             "SELECT * WHERE a * b + c / d - 3;")
 

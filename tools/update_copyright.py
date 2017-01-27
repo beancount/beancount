@@ -151,6 +151,7 @@ def process(filename, contents):
     """Process the copyright on a single file, return the modified contents."""
     logging.info('Processing {:60}'.format(filename))
 
+    # pylint: disable=unbalanced-tuple-unpacking
     lines = contents.splitlines()
     copyright_index, license_index, author_index = find_existing_copyright(lines)
 
@@ -158,7 +159,7 @@ def process(filename, contents):
     for index, updated_line in [
             (copyright_index, get_copyright(filename, lines[copyright_index],
                                             cwd=path.dirname(filename))),
-            (license_index, LICENSE)
+            (license_index, LICENSE),
     ]:
         if index is None:
             logging.error("Line not found in file: {}".format(updated_line))
@@ -167,13 +168,14 @@ def process(filename, contents):
         else:
             existing_line = lines[index]
             if existing_line != updated_line:
-                logging.warning('Replacing line:\n{}\n{}'.format(existing_line, updated_line))
+                logging.warning('Replacing line:\n{}\n{}'.format(existing_line,
+                                                                 updated_line))
                 lines[index] = updated_line
 
     # Remove author line, if present.
     if author_index is not None:
         logging.info("Removing author line at {}:{}".format(filename, author_index))
-        del lines[author_line]
+        del lines[author_index]
 
     return ''.join(line + os.linesep for line in lines)
 

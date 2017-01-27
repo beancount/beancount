@@ -86,11 +86,9 @@ from beancount.core.position import Position
 from beancount.core.position import Cost
 from beancount.core.position import CostSpec
 from beancount.parser import booking_method
-from beancount.core import flags
 from beancount.core import position
 from beancount.core import inventory
 from beancount.core import interpolate
-from beancount.core import convert
 
 
 def book(entries, options_map, methods):
