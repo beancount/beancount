@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2017-01-26
+
+  - (internal) Moved the implementation of booking methods to its own
+    beancount.parser.booking_methods module.
+
+
 2017-01-22
 
   - Added new price source fetcher from OANDA's API. It supports a large number
