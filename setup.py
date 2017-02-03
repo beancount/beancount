@@ -191,15 +191,6 @@ setup(
         'beancount.parser': ['*.h'], # See note for {63fc8d84d30a} above.
         },
 
-    entry_points = {
-        'console_scripts': [
-            'bean-check = beancount.scripts.check:main',
-            'bean-report = beancount.reports.report:main',
-            'bean-query = beancount.query.shell:main',
-            'bean-web = beancount.web.web:main',
-        ],
-    },
-
     ext_modules=[
         Extension("beancount.parser._parser",
                   sources=[

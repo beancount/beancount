@@ -48,8 +48,11 @@ SOURCES =					\
 compile: $(SOURCES)
 	$(PYTHON) setup.py build_ext -i
 
+compile35: $(SOURCES)
+	python3.5 setup.py build_ext -i
+
 .PHONY: build
-build: compile
+build: compile compile35
 
 
 # Dump the lexer parsed output. This can be used to check across languages.
