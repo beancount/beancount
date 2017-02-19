@@ -5,7 +5,6 @@ __license__ = "GNU GPLv2"
 import subprocess
 import unittest
 import textwrap
-from os import path
 
 
 PROGRAM = __file__.replace('_test.py', '.py')

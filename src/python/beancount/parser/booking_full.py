@@ -85,7 +85,7 @@ from beancount.core.amount import Amount
 from beancount.core.position import Position
 from beancount.core.position import Cost
 from beancount.core.position import CostSpec
-from beancount.core import flags
+from beancount.parser import booking_method
 from beancount.core import position
 from beancount.core import inventory
 from beancount.core import interpolate
@@ -94,25 +94,25 @@ from beancount.parser import printer
 from beancount.utils import misc_utils
 
 
-def book(entries, options_map, booking_methods):
+def book(entries, options_map, methods):
     """Interpolate missing data from the entries using the full historical algorithm.
     See the internal implementation _book() for details.
     This method only stripes some of the return values.
 
     See _book() for arguments and return values.
     """
-    entries, errors, _ = _book(entries, options_map, booking_methods)
+    entries, errors, _ = _book(entries, options_map, methods)
     return entries, errors
 
 
-def _book(entries, options_map, booking_methods):
+def _book(entries, options_map, methods):
     """Interpolate missing data from the entries using the full historical algorithm.
 
     Args:
       incomplete_entries: A list of directives, with some postings possibly left
         with incomplete amounts as produced by the parser.
       options_map: An options dict as produced by the parser.
-      booking_methods: A mapping of account name to their corresponding booking
+      methods: A mapping of account name to their corresponding booking
         method.
     Returns:
       A triple of
@@ -177,7 +177,7 @@ def _book(entries, options_map, booking_methods):
                 # CostSpec instances below.
                 (booked_postings,
                  booking_errors) = book_reductions(entry, group_postings, balances,
-                                                   booking_methods)
+                                                   methods)
 
                 # If there were any errors, skip this group of postings.
                 if booking_errors:
@@ -499,7 +499,7 @@ def has_self_reduction(postings):
 
 
 def book_reductions(entry, group_postings, balances,
-                    booking_methods):
+                    methods):
     """Book inventory reductions against the ante-balances.
 
     This function accepts a dict of (account, Inventory balance) and for each
@@ -517,7 +517,7 @@ def book_reductions(entry, group_postings, balances,
         logging errors.
       group_postings: A list of Posting instances for the group.
       balances: A dict of account name to inventory contents.
-      booking_methods: A mapping of account name to their corresponding booking
+      methods: A mapping of account name to their corresponding booking
         method enum.
     Returns:
       A pair of
@@ -566,8 +566,8 @@ def book_reductions(entry, group_postings, balances,
         else:
             # This posting is held at cost; figure out if it's a reduction or an
             # augmentation.
-            booking_method = booking_methods[account]
-            if (booking_method is not Booking.NONE and
+            method = methods[account]
+            if (method is not Booking.NONE and
                 balance is not None and
                 balance.is_reduced_by(units)):
 
@@ -611,8 +611,8 @@ def book_reductions(entry, group_postings, balances,
         previous_balance = balances.get(account, None)
         balance = local_balances.setdefault(account, copy.copy(previous_balance))
 
-        booking_method = booking_methods[account]
-        if (booking_method is not Booking.NONE and
+        method = methods[account]
+        if (method is not Booking.NONE and
             balance is not None and
             balance.is_reduced_by(units)):
 
@@ -650,8 +650,8 @@ def book_reductions(entry, group_postings, balances,
                                    entry))
                 return [], errors  # This is irreconcilable, remove these postings.
 
-            reduction_postings, ambi_errors = handle_ambiguous_matches(
-                entry, posting, matches, booking_method)
+            reduction_postings, ambi_errors = booking_method.handle_ambiguous_matches(
+                entry, posting, matches, method)
             if ambi_errors:
                 errors.extend(ambi_errors)
                 return [], errors
@@ -668,170 +668,6 @@ def book_reductions(entry, group_postings, balances,
                 balance.add_position(reduction_posting)
 
     return booked_postings, errors
-
-
-def handle_ambiguous_matches(entry, posting, matches, booking_method):
-    """Handle ambiguous matches.
-
-    Args:
-      entry: The parent Transaction instance.
-      posting: An instance of Posting, the reducing posting which we're
-        attempting to match.
-      matches: A list of matching Position instances from the ante-inventory.
-        Those positions are known to already match the 'posting' spec.
-      booking_methods: A mapping of account name to their corresponding booking
-        method.
-    Returns:
-      A pair of
-        booked_postings: A list of matched Posting instances, whose 'cost'
-          attributes are ensured to be of type Cost.
-        errors: A list of errors to be generated.
-    """
-    assert isinstance(booking_method, Booking), (
-        "Invalid type: {}".format(booking_method))
-    assert matches, "Internal error: Invalid call with no matches"
-
-    postings = []
-    errors = []
-    insufficient = False
-    if booking_method is Booking.STRICT:
-        # In strict mode, we require at most a single matching posting.
-        if len(matches) > 1:
-            # If the total requested to reduce matches the sum of all the
-            # ambiguous postings, match against all of them.
-            sum_matches = sum(p.units.number for p in matches)
-            if sum_matches == -posting.units.number:
-                postings.extend(
-                    posting._replace(units=-match.units, cost=match.cost)
-                    for match in matches)
-            else:
-                errors.append(
-                    ReductionError(entry.meta,
-                                   'Ambiguous matches for "{}": {}'.format(
-                                       position.to_string(posting),
-                                       ', '.join(position.to_string(match_posting)
-                                                 for match_posting in matches)),
-                                   entry))
-        else:
-            # Replace the posting's units and cost values.
-            match = matches[0]
-            sign = -1 if posting.units.number < ZERO else 1
-            number = min(abs(match.units.number), abs(posting.units.number))
-            match_units = Amount(number * sign, match.units.currency)
-            postings.append(posting._replace(units=match_units, cost=match.cost))
-            insufficient = (match_units.number != posting.units.number)
-
-    elif booking_method in (Booking.FIFO, Booking.LIFO):
-        # Each up the positions.
-        sign = -1 if posting.units.number < ZERO else 1
-        remaining = abs(posting.units.number)
-        for match in sorted(matches, key=lambda p: p.cost and p.cost.date,
-                            reverse=(booking_method == Booking.LIFO)):
-            if remaining <= ZERO:
-                break
-
-            # If the inventory somehow ended up with mixed lots, skip this one.
-            if match.units.number * sign > ZERO:
-                continue
-
-            # Compute the amount of units we can reduce from this leg.
-            size = min(abs(match.units.number), remaining)
-            postings.append(
-                posting._replace(units=Amount(size * sign, match.units.currency),
-                                 cost=match.cost))
-            remaining -= size
-
-        # If we couldn't eat up all the requested reduction, return an error.
-        insufficient = (remaining > ZERO)
-
-    elif booking_method is Booking.NONE:
-        # This never needs to match against any existing positions... we
-        # disregard the matches, there's never any error. Note that this never
-        # gets called in practice, we want to treat NONE postings as
-        # augmentations. Default behaviour is to return them with their original
-        # CostSpec, and the augmentation code will handle signaling an error if
-        # there is insufficient detail to carry out the conversion to an
-        # instance of Cost.
-        postings.append(posting)
-
-        # Note that it's an interesting question whether a reduction on an
-        # account with NONE method which happens to match a single position
-        # ought to be matched against it. We don't allow it for now.
-
-    elif booking_method is Booking.AVERAGE:
-        errors.append(ReductionError(entry.meta, "AVERAGE method is not supported", entry))
-
-    elif False: # pylint: disable=using-constant-test
-        # DISABLED - This is the code for AVERAGE, which is currently disabled.
-
-        # If there is more than a single match we need to ultimately merge the
-        # postings. Also, if the reducing posting provides a specific cost, we
-        # need to update the cost basis as well. Both of these cases are carried
-        # out by removing all the matches and readding them later on.
-        if len(matches) == 1 and (
-                not isinstance(posting.cost.number_per, Decimal) and
-                not isinstance(posting.cost.number_total, Decimal)):
-            # There is no cost. Just reduce the one leg. This should be the
-            # normal case if we always merge augmentations and the user lets
-            # Beancount deal with the cost.
-            match = matches[0]
-            sign = -1 if posting.units.number < ZERO else 1
-            number = min(abs(match.units.number), abs(posting.units.number))
-            match_units = Amount(number * sign, match.units.currency)
-            postings.append(posting._replace(units=match_units, cost=match.cost))
-            insufficient = (match_units.number != posting.units.number)
-        else:
-            # Merge the matching postings to a single one.
-            merged_units = inventory.Inventory()
-            merged_cost = inventory.Inventory()
-            for match in matches:
-                merged_units.add_amount(match.units)
-                merged_cost.add_amount(convert.get_weight(match))
-            if len(merged_units) != 1 or len(merged_cost) != 1:
-                errors.append(
-                    ReductionError(
-                        entry.meta,
-                        'Cannot merge positions in multiple currencies: {}'.format(
-                            ', '.join(position.to_string(match_posting)
-                                      for match_posting in matches)), entry))
-            else:
-                if (isinstance(posting.cost.number_per, Decimal) or
-                    isinstance(posting.cost.number_total, Decimal)):
-                    errors.append(
-                        ReductionError(
-                            entry.meta,
-                            "Explicit cost reductions aren't supported yet: {}".format(
-                                position.to_string(posting)), entry))
-                else:
-                    # Insert postings to remove all the matches.
-                    postings.extend(posting._replace(units=-match.units, cost=match.cost,
-                                                     flag=flags.FLAG_MERGING)
-                                    for match in matches)
-                    units = merged_units[0].units
-                    date = matches[0].cost.date  ## FIXME: Select which one,
-                                                 ## oldest or latest.
-                    cost_units = merged_cost[0].units
-                    cost = Cost(cost_units.number/units.number, cost_units.currency,
-                                date, None)
-
-                    # Insert a posting to refill those with a replacement match.
-                    postings.append(posting._replace(units=units, cost=cost,
-                                                     flag=flags.FLAG_MERGING))
-
-                    # Now, match the reducing request against this lot.
-                    postings.append(posting._replace(units=posting.units, cost=cost))
-                    insufficient = abs(posting.units.number) > abs(units.number)
-
-    if insufficient:
-        errors.append(
-            ReductionError(entry.meta,
-                           'Not enough lots to reduce "{}": {}'.format(
-                               position.to_string(posting),
-                               ', '.join(position.to_string(match_posting)
-                                         for match_posting in matches)),
-                           entry))
-
-    return postings, errors
 
 
 def compute_cost_number(costspec, units):
