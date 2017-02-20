@@ -139,7 +139,7 @@ else:
 # Please read: http://furius.ca/beancount/doc/install about version numbers.
 setup(
     name="beancount",
-    version='2.0b13',
+    version='2.0b14',
     description="Command-line Double-Entry Accounting",
 
     long_description=
