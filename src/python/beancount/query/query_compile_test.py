@@ -379,6 +379,12 @@ class TestCompileSelect(CompileSelectBase):
               SELECT account, sum(number) GROUP BY account HAVING sum(number) > 0;
             """)
 
+    def test_compile_group_by_inventory(self):
+        with self.assertRaises(qc.CompilationError):
+            self.compile("""
+              SELECT sum(number), balance GROUP BY balance;
+            """)
+
 
 class TestCompileSelectGroupBy(CompileSelectBase):
 
