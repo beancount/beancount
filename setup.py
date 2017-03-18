@@ -139,7 +139,7 @@ else:
 # Please read: http://furius.ca/beancount/doc/install about version numbers.
 setup(
     name="beancount",
-    version='2.0b13',
+    version='2.0b15',
     description="Command-line Double-Entry Accounting",
 
     long_description=
@@ -190,15 +190,6 @@ setup(
         'beancount.utils.file_type': ['*'],
         'beancount.parser': ['*.h'], # See note for {63fc8d84d30a} above.
         },
-
-    entry_points = {
-        'console_scripts': [
-            'bean-check = beancount.scripts.check:main',
-            'bean-report = beancount.reports.report:main',
-            'bean-query = beancount.query.shell:main',
-            'bean-web = beancount.web.web:main',
-        ],
-    },
 
     ext_modules=[
         Extension("beancount.parser._parser",

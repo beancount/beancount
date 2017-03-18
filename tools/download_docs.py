@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 """Download all the Beancount docs from Google Drive and bake a nice PDF with it.
 """
 __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
@@ -57,18 +57,23 @@ def enumerate_linked_documents(service, indexid):
     return docids
 
 
-def download_docs(service, docids, tempdir):
+def download_docs(service, docids, outdir, mime_type):
     """Download all the Beancount documents to a temporary directory.
 
     Args:
       service: A googleapiclient Service stub.
       docids: A list of string, the document ids to download.
-      tempdir: A string, the name of the directory where to store the PDFs.
+      outdir: A string, the name of the directory where to store the filess.
+      mime_type: A string, the MIME format of the requested documents.
     Returns:
-      A list of string, the names of the downloaded PDF files.
+      A list of string, the names of the downloaded files.
     """
+    extension = {
+        'application/pdf': 'pdf',
+        'application/vnd.oasis.opendocument.text': 'odt',
+    }[mime_type]
+
     filenames = []
-    mime_type = 'application/pdf'
     for index, docid in enumerate(docids, 1):
         # Get the document metadata.
         metadata = service.files().get(fileId=docid).execute()
@@ -78,17 +83,18 @@ def download_docs(service, docids, tempdir):
         clean_name = re.sub('_-_', '-',
                             re.sub('_+', '_',
                                    re.sub('[^A-Za-z0-9=-]', '_', name)))
-        filename = path.join(tempdir, '{}.pdf'.format(clean_name))
-        logging.info('Exporting "{}" ({}) to {}'.format(name, docid, filename))
-        with open(filename, 'wb') as outfile:
-            exported = service.files().export(fileId=docid,
-                                              mimeType='application/pdf').execute()
-            outfile.write(exported)
+        filename = path.join(outdir, '{}.{}'.format(clean_name, extension))
+        if path.exists(filename):
+            logging.info('File "{}" already downloaded'.format(filename))
+        else:
+            logging.info('Exporting "{}" ({}) to {}'.format(name, docid, filename))
+            with open(filename, 'wb') as outfile:
+                exported = service.files().export(fileId=docid,
+                                                  mimeType=mime_type).execute()
+                outfile.write(exported)
 
         # Check if the downloaded succeeded.
-        contents = open(filename, 'rb').read(1024).decode('utf-8', 'ignore')
-        is_error = re.search('<html', contents)
-        if is_error:
+        if path.getsize(filename) == 0:
             logging.error("Invalid download, skipping file for '{}'.".format(docid))
             continue
         filenames.append(filename)
@@ -96,8 +102,18 @@ def download_docs(service, docids, tempdir):
     return filenames
 
 
-def collate_filenames(filenames, output_filename):
-    """Put the list of PDF filenames together into a single file.
+def convert_pdf(filenames, output):
+    """Process downloaded PDF files.
+
+    Args:
+      filenames: A list of filename strings.
+      output_filename: A string, the name of the output file.
+    """
+    collate_pdf_filenames(filenames, output)
+
+
+def collate_pdf_filenames(filenames, output_filename):
+    """Combine the list of PDF filenames together into a single file.
 
     Args:
       filenames: A list of filename strings.
@@ -138,13 +154,18 @@ def main():
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
     parser = argparse.ArgumentParser(description=__doc__.strip())
 
-    default_path = path.abspath(datetime.date.today().strftime('beancount.%Y-%m-%d.pdf'))
-    parser.add_argument('-o', '--output', action='store',
-                        default=default_path,
-                        help="Where to write out the collated PDF file")
+    conversion_map = {
+        'pdf': ('application/pdf', convert_pdf),
+        'odt': ('application/vnd.oasis.opendocument.text', None),
+    }
+    parser.add_argument('conversion', action='store',
+                        default='pdf', choices=list(conversion_map.keys()),
+                        help="The format of the desired output.")
 
-    parser.add_argument('-x', '--dont-delete', action='store_true',
-                        help="Don't delete the temporary files. Use this for debugging.")
+    #default_path = path.abspath(datetime.date.today().strftime('beancount.%Y-%m-%d.pdf'))
+    parser.add_argument('output', action='store',
+                        default=None,
+                        help="Where to write out the output files")
 
     args = parser.parse_args()
 
@@ -153,25 +174,23 @@ def main():
     _, http = get_auth_via_service_account(scopes)
     service = discovery.build('drive', 'v3', http=http)
 
-    # Get the list of documents.
+    # Get the ids of the documents listed in the index page.
     indexid = find_index_document(service)
     assert indexid
     docids = enumerate_linked_documents(service, indexid)
 
-    try:
-        # Allocate a temporary directory.
-        tempdir = path.join(tempfile.gettempdir(), 'beancount-docs')
-        os.makedirs(tempdir, exist_ok=True)
+    # Figure out which format to download.
+    mime_type, convert = conversion_map[args.conversion]
 
-        # Download the docs.
-        filenames = download_docs(service, docids, tempdir)
+    # Allocate a temporary directory.
+    os.makedirs(args.output, exist_ok=True)
 
-        # Collate the files together.
-        collate_filenames(filenames, args.output)
-    finally:
-        # Cleanup.
-        if not args.dont_delete:
-            shutil.rmtree(tempdir)
+    # Download the docs.
+    filenames = download_docs(service, docids, args.output, mime_type)
+
+    # Post-process the files.
+    if convert is not None:
+        convert(filenames, args.output)
 
     logging.info("Output produced in {}".format(args.output))
 

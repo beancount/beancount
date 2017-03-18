@@ -2,20 +2,15 @@
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import textwrap
 import datetime
 import unittest
-import time
 from unittest import mock
-from urllib import request
-from urllib import error
 
 from dateutil import tz
 
 from beancount.prices.sources import oanda
 from beancount.prices import source
 from beancount.core.number import D
-from beancount.core.number import Decimal
 from beancount.utils import net_utils
 
 
@@ -128,6 +123,7 @@ class TestOandaGetHistorical(unittest.TestCase):
             self.assertEqual(None, self.fetcher.get_latest_price('USD_CAD'))
 
     def _check_valid(self, query_date, out_time, out_price):
+        # pylint: disable=bad-whitespace
         candles = [
             (datetime.datetime(2017, 1, 21,  0, 0, 0, tzinfo=tz.tzutc()), D('1.3100')),
             (datetime.datetime(2017, 1, 21,  8, 0, 0, tzinfo=tz.tzutc()), D('1.3300')),

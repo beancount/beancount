@@ -39,6 +39,7 @@ def csv_clean_header(header_row):
         field = re.sub(r'\bp/l\b', 'pnl', field)
         field = re.sub('[^a-z0-9]', '_', field)
         field = field.strip(' _')
+        field = re.sub('__+', '_', field)
         if not field:
             field = 'col{}'.format(index)
         assert field not in fieldnames, field

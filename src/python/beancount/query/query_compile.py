@@ -14,6 +14,7 @@ import re
 import operator
 
 from beancount.core.number import Decimal
+from beancount.core import inventory
 from beancount.query import query_parser
 
 
@@ -463,6 +464,17 @@ def is_aggregate(node):
     return bool(aggregates)
 
 
+def is_hashable_type(node):
+    """Return true if the node is of a hashable type.
+
+    Args:
+      node: An instance of EvalNode.
+    Returns:
+      A boolean.
+    """
+    return not issubclass(node.dtype, inventory.Inventory)
+
+
 def find_unique_name(name, allocated_set):
     """Come up with a unique name for 'name' amongst 'allocated_set'.
 
@@ -625,6 +637,13 @@ def compile_group_by(group_by, c_targets, environ):
                 raise CompilationError(
                     "GROUP-BY expressions may not reference aggregates: '{}'".format(
                         column))
+
+            # Check that the group-by column has a supported hashable type.
+            if not is_hashable_type(c_expr):
+                raise CompilationError(
+                    "GROUP-BY a non-hashable type is not supported: '{}'".format(
+                        column))
+
 
     else:
         # If it does not have a GROUP-BY clause...
@@ -818,7 +837,7 @@ def compile_select(select, targets_environ, postings_environ, entries_environ):
         # NOTE: This should never trigger if the compilation environment does not
         # contain any aggregate. Just being manic and safe here.
         if is_aggregate(c_where):
-            raise CompilationError("Aggregates are disallowed in WHERE clause.")
+            raise CompilationError("Aggregates are disallowed in WHERE clause")
     else:
         c_where = None
 

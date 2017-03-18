@@ -27,6 +27,7 @@ from beancount.core import interpolate
 from beancount.parser import parser
 from beancount.parser import printer
 from beancount.parser import booking_full as bf
+from beancount.parser import booking_method as bm
 from beancount.parser import booking_simple as bs
 from beancount.parser import cmptest
 from beancount import loader
@@ -1094,20 +1095,20 @@ def find_first_with_tag(tag, entries, default=_UNSET):
 
 
 @test_utils.nottest
-def book_test(booking_method):
+def book_test(method):
     "A decorator factory for all booking tests. This calls _book() below."
     def decorator(func):
         @parser.parse_doc(allow_incomplete=True)
         @functools.wraps(func)
         def wrapper(self, entries, unused_errors, options_map):
-            self._book(entries, options_map, booking_method)
+            self._book(entries, options_map, method)
             return func(self, entries, options_map)
         return wrapper
     return decorator
 
 
-def _BM(booking_method):
-    return collections.defaultdict(lambda: booking_method)
+def _BM(method):
+    return collections.defaultdict(lambda: method)
 
 
 class _BookingTestBase(unittest.TestCase):
@@ -1130,7 +1131,7 @@ class _BookingTestBase(unittest.TestCase):
                   'reduced',
                   'print'}
 
-    def _book(self, entries, options_map, booking_method):
+    def _book(self, entries, options_map, method):
         """Test a call to book a particular scenario.
 
         This method will call 'book' with a subset of the entries provided to
@@ -1177,7 +1178,7 @@ class _BookingTestBase(unittest.TestCase):
             crafting a new test.
 
           options_map: An options dict. The default booking method is consulted.
-          booking_method: A data.Booking enum value.
+          method: A data.Booking enum value.
 
         In order to assert errors, create an 'error' metadata field with a
         regular expression as value. If will be checked against the list of
@@ -1212,16 +1213,16 @@ class _BookingTestBase(unittest.TestCase):
 
         # Dispatch all the entries.
         for entry_apply in entries_apply:
-            self._book_one(entry_apply, entries_other, options_map, booking_method)
+            self._book_one(entry_apply, entries_other, options_map, method)
 
-    def _book_one(self, entry_apply, entries, options_map, booking_method):
+    def _book_one(self, entry_apply, entries, options_map, method):
         """See _book(). This is the same but with a single #apply entry."""
 
         all_entries = [entry_apply] + entries
 
         # Override the booking method.
         options_map = options_map.copy()
-        options_map['booking_method'] = booking_method
+        options_map['booking_method'] = method
         input_entries = []
 
         # Fetch the 'ante' entry.
@@ -1238,9 +1239,9 @@ class _BookingTestBase(unittest.TestCase):
         input_entries.append(entry_apply)
 
         # Call the booking routine.
-        methods = collections.defaultdict(lambda: booking_method)
-        handle_patch = mock.patch.object(bf, 'handle_ambiguous_matches',
-                                         test_utils.record(bf.handle_ambiguous_matches))
+        methods = collections.defaultdict(lambda: method)
+        handle_patch = mock.patch.object(bm, 'handle_ambiguous_matches',
+                                         test_utils.record(bm.handle_ambiguous_matches))
         reduce_patch = mock.patch.object(bf, 'book_reductions',
                                          test_utils.record(bf.book_reductions))
         with handle_patch as handle_mock, reduce_patch as reduce_mock:
@@ -2536,13 +2537,13 @@ class TestBook(unittest.TestCase):
 
     def book_reductions(self, entries, currency='USD'):
         balances = collections.defaultdict(inventory.Inventory)
-        booking_methods = collections.defaultdict(lambda: Booking.STRICT)
+        methods = collections.defaultdict(lambda: Booking.STRICT)
         for entry in entries:
             (booked_postings,
              booked_errors) = bf.book_reductions(entry,
                                                  entry.postings,
                                                  balances,
-                                                 booking_methods)
+                                                 methods)
             tolerances = {}
             (inter_postings,
              inter_errors,

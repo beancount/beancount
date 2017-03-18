@@ -11,20 +11,19 @@ https://api-fxtrade.oanda.com/v1/candles?instrument=EUR_USD&granularity=D&start=
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import re
-import sys
 import datetime
 import json
 import logging
 from urllib import parse
-from urllib import error
 
-from dateutil.parser import parse as parse_date
 from dateutil import tz
 
 from beancount.core.number import D
-from beancount.core.number import Decimal
 from beancount.prices import source
 from beancount.utils import net_utils
+
+
+URL = "https://api-fxtrade.oanda.com/v1/candles"
 
 
 def _get_currencies(ticker):
@@ -50,7 +49,6 @@ def _fetch_candles(params):
       A list of (time, price) points.
     """
 
-    URL = "https://api-fxtrade.oanda.com/v1/candles"
     url = '?'.join((URL, parse.urlencode(sorted(params.items()))))
     logging.info("Fetching '%s'", url)
 

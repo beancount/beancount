@@ -4,6 +4,15 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2017-01-26
+
+  - (internal) Moved the implementation of booking methods to its own
+    beancount.parser.booking_methods module.
+
+  - (internal) Split up the booking methods to functions for exhaustive testing
+    and allowing others to implement new methods more easily if desired.
+
+
 2017-01-22
 
   - Added new price source fetcher from OANDA's API. It supports a large number
@@ -11,6 +20,9 @@ Note: This file contains only changes in the 'default' branch.
     it like the other price sources, e.g., like this:
 
       bean-price -e 'USD:oanda/EUR_USD'
+
+  - Began working on the conversion of Google Docs to reStructuredText for
+    inclusion in Dominik Aumayr's docs.
 
 
 2017-01-21
