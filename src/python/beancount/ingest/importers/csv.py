@@ -208,13 +208,13 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
                 txn.postings.append(
                     data.Posting(self.account, units, None, None, None, None))
 
-        # Figure out if the file is in ascending or descending order.
-        first_date = parse_date_liberally(get(first_row, Col.DATE))
-        last_date = parse_date_liberally(get(last_row, Col.DATE))
-        is_ascending = first_date < last_date
-
         # Parse the final balance.
-        if Col.BALANCE in iconfig:
+        if Col.BALANCE in iconfig and first_row and last_row:
+            # Figure out if the file is in ascending or descending order.
+            first_date = parse_date_liberally(get(first_row, Col.DATE))
+            last_date = parse_date_liberally(get(last_row, Col.DATE))
+            is_ascending = first_date < last_date
+
             # Choose between the first or the last row based on the date.
             row = last_row if is_ascending else first_row
             date = parse_date_liberally(get(row, Col.DATE)) + datetime.timedelta(days=1)

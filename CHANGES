@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2017-03-19
+
+  - Fixed minor bug with CSV importer that would occur when the file has no
+    valid columns.
+
+
 2017-01-26
 
   - (internal) Moved the implementation of booking methods to its own
