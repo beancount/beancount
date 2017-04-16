@@ -4872,6 +4872,17 @@ http://furius.ca/beancount/doc/proposal-query
     because the error removes the transaction and it cascades to more errors.
     Fixing this would help usability a fair amount.
 
+  - This type of interpolation with per-account currency constraints should just work:
+
+      YYYY-MM-DD open Expenses:Communications:Internet  USD
+      YYYY-MM-DD open Assets:US:Points:Verizon          VERIPTS
+
+      2017-03-12 * "VERIZON ONETIMEPAY  VERIZON.COM         FL" "PHONE SRV"
+        Liabilities:US:CreditCard  -178.37 USD
+        Expenses:Communications:Internet
+        Income:US:Rewards                -650 VERIPTS
+        Assets:US:Points:Verizon
+
 
 ** Google Keep Tickets
 
