@@ -4773,6 +4773,104 @@ http://furius.ca/beancount/doc/proposal-query
     revision of Beancount has been updated. This could avoid some potentially
     confusing user interpretation of errors.
 
+  - A number like this should fail to parse: 1,245,449,72.00 USD
+    Add a simple unit test and tighten the parser. It's easy and will avoid
+    input errors.
+
+  - Idea to deal with #145: Add all augmenting postings, THEN book all reducing
+    ones against that.
+
+  - Full booking: We need an example of two reducing bookings competing for the
+    same lot.
+
+  - Implement IPython/Jupyter notebook support for directly viewing the results
+    of queries.
+
+  - "bean-doctor linked" should list the list of links that were followed. That
+    would go some of the way to explain some of the sometimes surprising
+    results.
+
+  - SQL: OpenMeta is different than Meta; it returns a dict. That's bad. Provide
+    a direct lookup, like Meta.
+
+  - Implement beancount.plugins.auto and beancount.plugins.pedantic finally.
+
+  - Interesting idea re. booking branch: Until AVERAGE is done in an automated
+    manner, we could provide a poor man's version by creating a new Nerge
+    directive which explicly merges the contents and cost basis of an entire
+    account at a particular point in time. Try this for fun, this should be easy
+    to implement.
+
+  - "numberify" is only made available from run_query(). This is insufficient;
+    it needs be made available through the SQL shell output (as an option) and
+    even from the Google sheets uploader.
+
+    In addition, this ought to work as a standalone tool, whereby a CSV file's
+    column types (including Beancount-specific ones like Amount, Position and
+    Inventory) should be inferred automatically, and the transformations can be
+    applied to them.
+
+    Make a nice library, plug this in many places, and make a standalone script
+    as well.
+
+  - Complete tests for csv importer; it should be tested frantically, and a
+    decent sniffer should be implemented, specifically with credit/debit support
+    and balance vs. posting amount support, as well as detecting fees.
+
+  - Add an AVERAGE function to the SQL shell.
+    See related discussion, I would like to compute this for myself too:
+    https://groups.google.com/d/msg/ledger-cli/dWuWysV6qZU/cyYNzleTCAAJ
+
+  - There ought to be some unit tests for all the custom metadata added to
+    Posting instances. I think this is undertested at the moment.
+
+  - Implement a new plugin to convert metadata-fields to Document directives.
+
+      Scan all transactions that have the invoice-metadata field (or any other
+    suiting field-name of your choice), and create a Document directive for
+    each, with a link to the transaction it comes from.
+
+    In doing so, add support for "fuzzy-matching":  When only a relative
+    filename is specified in the metadata-field (and Document directive), search
+    different locations based on the Account this is on/in.
+
+    See https://github.com/aumayr/fava/issues/386#issuecomment-256895713.
+
+
+  - Core: Some problems occur (with the new method) if you mix at-cost and
+    without-cost for the same currency, like this:
+
+      2015-09-15 * "Buy"
+        Assets:Investments:HOOL   50.795 HOOL {14.63 USD} @ 14.63 USD
+        Assets:Investments:Cash   -743.13 USD
+        Equity:Vanguard:Rounding
+
+      2015-09-24 * "Dividend Received"
+        Assets:Investments:HOOL           0.252 HOOL {14.11 USD} @ 14.11 USD
+        Income:Vanguard:Retire:AfterTax:HOOL:Dividend  -3.56 USD
+        Equity:Vanguard:Rounding
+
+      2016-05-09 * "Conversion From"
+        Assets:Investments:HOOL      -51.047 HOOL @ 14.33 USD
+        Assets:Investments:Cash       731.50 USD
+        Income:Vanguard:Retire:AfterTax:HOOL:Pnl
+
+      2016-05-10 balance Assets:Investments:HOOL 0 HOOL
+
+      2016-05-10 * "Buy"
+        Assets:Investments:HOOL   292.285 HOOL {14.33 USD} @ 14.33 USD
+        Assets:Investments:Cash   -4188.44 USD
+        Equity:Vanguard:Rounding
+
+    The better way to deal with this would be not to allow it to happen. Because
+    this needs to be applied during matching, we cannot implement this in a
+    plugin, this needs to become an option (to allow it, and to make it
+    disallowed by default) in the parser itself.
+
+  - The Beancount loader cache should be automatically invalidated if the
+    revision of Beancount has been updated. This could avoid some potentially
+    confusing user interpretation of errors.
+
   - You need to add options to provide the precision to use for prices,
     otherwise something like this:
 
