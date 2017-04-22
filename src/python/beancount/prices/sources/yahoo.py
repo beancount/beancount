@@ -122,7 +122,8 @@ JSON but it requires a key, so that's why we're using the CSV API here, for
 simplicity's sake. In any case, the YQL API docs is located here:
 http://finance.yahoo.com/webservice/v1/symbols/allcurrencies/quote
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import datetime
 import logging

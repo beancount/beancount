@@ -1,4 +1,5 @@
 """
 Parser module for beancount input files.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2017  Martin Blais"
+__license__ = "GNU GPLv2"

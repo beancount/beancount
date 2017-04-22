@@ -5,4 +5,5 @@ identifying which importer to run on an externally downloaded file, extract
 transactions from them and file away these files under a clean and rigidly named
 hierarchy for preservation.
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"

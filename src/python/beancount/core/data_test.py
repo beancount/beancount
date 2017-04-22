@@ -1,4 +1,5 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2017  Martin Blais"
+__license__ = "GNU GPLv2"
 
 from datetime import date
 import unittest
@@ -17,7 +18,8 @@ class TestData(unittest.TestCase):
 
     def create_empty_transaction(self):
         return data.Transaction(META, date(2014, 1, 15), FLAG, None,
-                                "Some example narration", None, None, [])
+                                "Some example narration",
+                                data.EMPTY_SET, data.EMPTY_SET, [])
 
     def test_create_simple_posting(self):
         entry = self.create_empty_transaction()
@@ -213,6 +215,27 @@ class TestData(unittest.TestCase):
         self.assertTrue(
             data.find_closest(entries, "/tmp/apples.beancount", 99) is None)
 
+    def test_remove_account_postings(self):
+        meta = data.new_metadata(".", 0)
+        date = datetime.date.today()
+        entry1 = data.Open(meta, date, 'Liabilities:US:CreditCard', None, None)
+        entry2 = data.Open(meta, date, 'Equity:Rounding', None, None)
+
+        entry3 = data.Transaction(meta, date, FLAG,
+                                  None, "Something", None, None, [])
+        data.create_simple_posting(entry3, 'Liabilities:US:CreditCard', '-50', 'USD')
+        data.create_simple_posting(entry3, 'Equity:Rounding', '0.00123', 'USD')
+        data.create_simple_posting(entry3, 'Expenses:Food:Restaurant', '50', 'USD')
+
+        entry4 = data.Price(meta, date, 'HOOL', A('23 USD'))
+
+        in_entries = [entry1, entry2, entry3, entry4]
+
+        out_entries = data.remove_account_postings('Equity:Rounding', in_entries)
+        self.assertEqual(4, len(out_entries))
+        self.assertEqual(['Liabilities:US:CreditCard', 'Expenses:Food:Restaurant'],
+                         [posting.account for posting in out_entries[2].postings])
+
     def test_iter_entry_dates(self):
         prototype = data.Transaction(data.new_metadata("misc", 200),
                                      None, '*', None, "", None, None, [])
@@ -289,7 +312,8 @@ class TestPickle(unittest.TestCase):
 
     def test_data_tuples_support_pickle(self):
         txn1 = data.Transaction(META, date(2014, 1, 15), FLAG, None,
-                               "Some example narration", None, None, [])
+                                "Some example narration",
+                                data.EMPTY_SET, data.EMPTY_SET, [])
         pickled_str = pickle.dumps(txn1)
         txn2 = pickle.loads(pickled_str)
         self.assertEqual(txn1, txn2)

@@ -1,4 +1,5 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import datetime
 
@@ -385,8 +386,7 @@ class TestPadding(cmptest.TestCase):
         for txn_posting in txn_postings:
             if isinstance(txn_posting, data.TxnPosting):
                 position_, _ = pad_balance.add_position(txn_posting.posting)
-                self.assertFalse(position_.is_negative_at_cost())
-            balances.append((type(txn_posting), pad_balance.get_units('USD')))
+            balances.append((type(txn_posting), pad_balance.get_currency_units('USD')))
 
         self.assertEqual(balances, [(data.Open, A('0.00 USD')),
                                     (data.Pad, A('0.00 USD')),
@@ -450,8 +450,6 @@ class TestPadding(cmptest.TestCase):
     @loader.load_doc(expect_errors=True)
     def test_pad_tolerance(self, entries, errors, __):
         """
-          option "experiment_explicit_tolerances" "TRUE"
-
           1998-01-01 open Assets:CA:Bank:Checking
           1998-01-01 open Income:CA:Something
           1998-01-01 open Equity:Beginning-Balances

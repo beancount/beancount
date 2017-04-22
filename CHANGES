@@ -4,6 +4,550 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2017-03-19
+
+  - Fixed minor bug with CSV importer that would occur when the file has no
+    valid columns.
+
+
+2017-01-26
+
+  - (internal) Moved the implementation of booking methods to its own
+    beancount.parser.booking_methods module.
+
+  - (internal) Split up the booking methods to functions for exhaustive testing
+    and allowing others to implement new methods more easily if desired.
+
+
+2017-01-22
+
+  - Added new price source fetcher from OANDA's API. It supports a large number
+    of currency pairs with tickers like this "XXX_YYY", such as "EUR_USD". Use
+    it like the other price sources, e.g., like this:
+
+      bean-price -e 'USD:oanda/EUR_USD'
+
+  - Began working on the conversion of Google Docs to reStructuredText for
+    inclusion in Dominik Aumayr's docs.
+
+
+2017-01-21
+
+  - Fixed #155: Use entry_points instead of scripts in setup.py.
+
+  - Added an extra check for Balance directives, verifying that asserted
+    currencies are accepted currencies for that account (if the account's
+    corresponding currencies have been declared explicitly). In other words,
+    this will now fail instead of being silently ignored:
+
+      2017-01-21 open Assets:Checking    CAD
+      2017-01-21 balance Assets:Checking  0.00 USD
+
+  - Fixed bug in sheets_upload.py / upload-to-sheets whereby all the fields of a
+    sheet being updated just in order to resize it was causing the sheet to be
+    reindexed at the front of the list of sheets.
+
+  - Merged 'arithmetic_ops' branch with no effect, in order to move all files
+    and release. This will have to be revisited later.
+
+
+2017-01-19
+
+  - Fixed bug with generation of column names in sheets uploader script.
+
+
+2017-01-16
+
+  - Removed tools/gauth (used to be beancount.docs.gauth). All users of this are
+    slightly different, and they're utility scripts. Unfactoring.
+
+  - Removed beancount.docs from Beancount library. These are internal tools used
+    to manage documentation, should not be included in the installed codebase.
+
+  - Some cleanup of internal tools.
+
+  - Added some basic unit tetsts for beancount.tools.sheets_upload.
+
+  - Moved bin/upload-to-sheets to src/python/beancount/tools/sheets_upload.py
+    and replaced it with an associated stub for it.
+
+  - Moved bin/treeify to src/python/beancount/tools/treeify.py. The script is
+    still usable in a standalone form (no new dependencies have been added). To
+    have all the source code in one place is more convenient for maintenance.
+
+  - Created a beancount.tools package to contain all standalone tools which
+    don't depend on Beancount modules or packages.
+
+  - Removed branch "returns2" and moved associated projects script
+    beancount.projects.returns to experiments/returns. This code isn't robust
+    enough to work for everyone, and so therefore I'm moving it back to
+    experiments until I have time to produce something that will work very
+    robustly, and on all my own accounts as well.
+
+
+2017-01-15
+
+  (from branch "conversions")
+
+  - Created and test beancount.core.convert Posting and Position conversion
+    functions: get_units(), get_cost(), get_weight(), get_value() (for market
+    value).
+
+  - Implemented Inventory.reduce() and associated test, which works in
+    conjunction with those.
+
+  - Implemented more straightforward versions of convert_position() and
+    convert_amount() in module beancount.core.convert, to convert positions and
+    amounts to other currencies.
+
+  - Deprecated Inventory.units(); use Inventory.reduce(convert.get_units)
+
+  - Deprecated Inventory.cost(); use Inventory.reduce(convert.get_cost)
+
+  - Deprecated Inventory.get_units() to Inventory.get_currency_units() in order to
+    avoid future name confusion.
+
+  - Deprecated Position.at_cost(); use convert.get_cost(position) instead.
+
+  - Deprecated Position.get_cost(); use convert.get_cost(position) instead.
+
+  - Deprecated b.c.interpolation.compute_cost_basis(); use
+    Inventory.(pos for pos in positions if pos.cost is not
+    None).reduce(convert.get_cost)
+    instead.
+
+  - Deprecated get_posting_weight(); use convert.get_weight() instead.
+
+  - Removed b.ops.holdings.get_pholding_market_value(), which was unused.
+    If you need a market-value function, use convert.get_value() instead.
+
+  - Converted all the old code to these new converted functions.
+
+  - Moved module beancount.ops.prices to beancount.core.prices, and added a
+    deprecation warning.
+
+  - Deprecated shell function PRICE(). Renamed it to GETPRICE() in order to
+    avoid confusion.
+
+  - Removed beancount.core.prices.convert_amount(). Use
+    beancount.core.convert.convert_amount() instead. Note that a failure doesn't
+    return None anymore, but an unmodified amount. Also notice the reordering of
+    parameters to be consistent with the other functions in that module.
+
+  - Removed beancount.core.prices.get_position_market_value();
+    use convert.get_value() instead.
+
+  - Removed beancount.core.prices.get_inventory_market_value();
+    use Inventory.reduce(convert.get_value, price_map) instead.
+
+  - Removed private functions
+      beancount.query.query_env.convert_amount(),
+      beancount.query.query_env.convert_position(), and
+      beancount.query.query_env.value_position(),
+      beancount.query.query_env.value_inventory().
+    These used to issue warnings if the conversion could not be carried out; now
+    they simply keeps the units of the position instead.
+
+
+2017-01-15
+
+  - Fixed all tests for Python-3.6.
+    Beancount has not officially been ported to Python-3.6.
+
+
+2017-01-14
+
+  - Fixed bug with generation of example that would produce an incorrect initial
+    balance for banking accounts. The example test should have been broken. (No
+    idea why this wasn't deteted earlier, probably by chance.)
+
+
+2017-01-08
+
+  - Completed "Intro to Double-Entry Accounting" doc.
+    http://furius.ca/beancount/doc/intro
+
+  - Added a --reverse/--descending flag to bean-extract to print the extracted
+    entries in reverse order.
+
+
+2016-12-17
+
+  - Added a --title option to upload-to-sheets in order to conveniently set the
+    document's title.
+
+  - Removed obsolete variable LEGACY_DEFAULT_TOLERANCES which had been
+    forgotten.
+
+
+2016-12-15
+
+  - Made beancount.ingest.extract print out a stack trace when an unexpected
+    exception is raised.
+
+  - Fixed bugs in beancount.query.query_render where expand wasn't being passed
+    through the rendering functions.
+
+  - Deprecated bin/upload-csv-to-google-sheet; I moved the last version to
+    beancount/experiments/gapis in case you've come to be dependent on its
+    particularities. It doesn't need any of the Beancount libraries, so you can
+    just copy it somewhere and keep using it if so desired.
+
+  - Replaced "bin/upload-csv-to-google-sheet" to "bin/upload-to-sheets". The
+    newer script is a complete rewrite which does not require the antiquated
+    gdata library, and which uses the latest and greatest version of the Google
+    Sheets API (v4). You don't need gdata anymore. Moreover, this one runs in
+    Python3 instead of depending on Python2.
+
+    The script has slightly improved invocation semantics, and I'll using it
+    regularly to share CSV files with others, most often CSV files produced by
+    bean-query.
+
+
+2016-12-11
+
+  - Changed b.p.split_expenses outputs to be more useful.
+
+
+2016-12-10
+
+  - Made Amount, Posting, Cost and CostSpec all immutable classes that inherit
+    from typing.NamedTuple.
+
+  - Removed mutable method Posting.add().
+
+
+2016-12-05
+
+  - Merged changes made for calculating wash sales a long time ago. I had
+    implemnted a temporary kludge to carry dates on all augmenting postings,
+    left it in a branch so I could use it there for taxes every year. Now that
+    the booking branch is merged, this is supported by default, so I could undo
+    that kludge. Some changes remained:
+
+    * The Inventory.add_amount() method used to return the modified position.
+      Now it returns the position before being modified, which is more useful.
+
+    * The list-wash-sales.py script has been updated. It now works on 'default'.
+
+    * The 'carry_date_and_book_cost' branch has been merged away.
+
+
+2016-12-04
+
+  - Made .tags and .links attributes of b.data.Transaction and b.data.Document
+    directives ensured to always be a set when they're empty. If there are no
+    tags (or links), those attributes are set to b.data.EMPTY_SET, whose value
+    is a frozenset(). This should make the processing of those attributes a bit
+    simpler.
+
+    Note that if you create transactions from plugins and their tags and/or
+    links attributes are set None, they will now fail. The right thing to do is
+    to set their value to an empty set, or reuse the immutable
+    beancount.core.data.EMPTY_SET object.
+
+    If you need to circumvent this temporarily, set the following option in your
+    file, which will allow None again:
+
+      option "allow_deprecated_none_for_tags_and_links" "TRUE"
+
+    See {1989ba9e0e79} for details.
+
+  - Updated all copyright and license notices on all files.
+
+  - Added a script to automatically verify that all source files include a
+    copyright notice.
+
+  - Removed ancestral Beancount documentation from eons ago. These notes and
+    conversationsa are now wildly irrelevant to the current state of Beancount,
+    and all the documentation from Google Docs is vastly more recent and
+    obsoletes all these old snippets and notes.
+
+  - Moved all development tools under tools/, from etc/ and
+    experiments/code-health/.
+
+
+2016-12-03
+
+  - Fixed fava bug #429, avoid empty conversion entries if the cost of the
+    conversion balance is zero. See:
+    https://github.com/beancount/fava/issues/429.
+
+
+2016-11-20
+
+  - Fixed bugs in bean-format; in order to do this properly I made bean-format
+    reuse the globally defined regular expressions for currency and account in
+    the rest of Beancount's code. This makes bean-format depend on the Beancount
+    installation. Bah, it's reasonable. This issue is related to issue #146.
+
+  - Added ANY_META() function to the SQL shell's environment; ANY_META() allows
+    you to query a posting's metadata, falling back on the parent entry's
+    metadata. This idea was suggested by Stefano Zacchiroli in
+    https://groups.google.com/d/msg/beancount/jh-n4rvbQAI/Hz5Mmd60BAAJ. I also
+    added the first unit tests for environment functions--I'll have to write all
+    of those at some point.
+
+  - Made unsupported cost specifications in the SIMPLE booking algorithm issue
+    an appropriate error. For example, instead of just ignoring the cost spec in
+    this:
+
+          2014-10-15 * "buy widgets"
+            Assets:Inventory     10 WIDGET {} ;; Not supported.
+            Assets:Cash         -80 GBP
+
+    It will issue an error. See
+    https://groups.google.com/d/msg/beancount/9NBcT-SXZMQ/sy7Z3dIdBQAJ for
+    context.
+
+
+2016-11-12
+
+  - Made the Emacs prefix key configurable via a new beancount-mode-map-prefix
+    variable. See discussion here:
+    https://groups.google.com/d/msg/beancount/_7TscZ9phNE/K8PkcRMpBAAJ
+
+
+2016-11-06
+
+  - Fixed #139: Full booking parsing had been more liberal than the old SIMPLE
+    booking algorithm can interpret. In the old code, explicitly disallow some
+    interpolation cases which cannot be handled.
+
+  - Fixed #129: Ignore custom directives for Ledger and HLedger conversion.
+
+
+2016-11-05
+
+  - Fixed #142: bean-check should return non-zero exit code upon failure.
+
+
+2016-10-30
+
+  - Merge the current version of the 'booking' branch and made the "FULL" booking
+    algorithm the default one.
+
+    * The "experiment_booking_algorithm" option has been renamed to
+      "booking_algorithm". Its default value is now "FULL"; everyone will be
+      using the new booking code. If for some reason you have a transitional
+      need to revert to the older booking method use this option.
+
+        option "booking_algorithm" "SIMPLE"
+
+    * The new booking algorithm is _MUCH_ more powerful than the one old. I'll
+      describe it soon in a new document, but briefly:
+
+      - It supports many more interpolation capabilities; try omitting amounts
+        or currencies which you think it ought be able to figure out
+        automatically and you might find it does.
+
+      - All positions carry a date. This means that if you have transactions
+        that would merge because they weren't specified with a date, like this
+        you may face a problem:
+
+          2016-01-15 *
+            Assets:Investments          70 UUG {10.00 USD}
+            ...
+
+          2016-02-16 *
+            Assets:Investments          25 UUG {10.00 USD}
+            ...
+
+          2016-03-30 *
+            Assets:Investments         -80 UUG {10.00 USD}
+            ...
+
+        Those used to resolve automatically because both augmenting lots would
+        merge into a single one without a date. Now that all positions have an
+        acquisition date, the -80 reducing posting is ambiguous, because it
+        matches against these:
+
+            Assets:Investments          70 UUG {10.00 USD, 2016-01-15}
+            Assets:Investments          25 UUG {10.00 USD, 2016-02-16}
+
+        Either you'll have to disambiguate, or let Beancount do so. One way to
+        do this is to add more specific matching data, and split the posting.
+        An even easier way to do this is to make the default booking method of
+        this account to "FIFO" or "LIFO", which will automatically select the
+        oldest (newest) postings without issuing a warning.
+
+        If you find yourself in a bind, please email the mailing-list with a
+        specific and as small as possible data input that reproduces the
+        problem.
+
+
+  - Removed parsing of the pipe (|) symbol as a separator for strings on
+    transaction description lines. This was vestigial from the days long long
+    ago when Beancount was attempting to be compatible with Ledger syntax; this
+    is wholly unnecessary how.
+
+    You will have to convert transactions like this:
+
+      2015-08-25 * "Tunnel" | "Coffees"
+        Expenses:Food:Coffee           15 CAD
+        Assets:Cash
+
+    Into transactions like this:
+
+      2015-08-25 * "Tunnel" "Coffees"
+        Expenses:Food:Coffee           15 CAD
+        Assets:Cash
+
+    This can be done using a sed script, or as a macro in your favorite text editor.
+    If you need a temporary respite, you can use the following option, which
+    will replace all the error messages by a single warning:
+
+      option "allow_pipe_separator" "TRUE"
+
+    Support for this option will be removed eventually.
+
+
+  - Moved the {{...}}} total cost syntax from a legacy support with only "/"
+    separator and a date, no label, to full support. Previously, only these syntaxes
+    were supported for total cost:
+
+      Assets:Account     100 MSFT {{2000.00 USD}}
+      Assets:Account     100 MSFT {{2000.00 USD / 2016-10-30}}
+
+    Changes:
+
+    * The "/" separator support has been removed, you must now use a comma, like
+      for the {...} full booking syntax.
+
+    * The same syntax as for the regular {...} compound cost is supported;
+      however, specifying a compound amount will raise an error, and the
+      per-unit cost is interpreted as a total cost.
+
+    For example, this:
+
+      Assets:Account     100 MSFT {{2000.00 USD}}
+
+    is interpreted as:
+
+      Assets:Account     100 MSFT {0 # 2000.00 USD}
+
+    which is equivalent to:
+
+      Assets:Account     100 MSFT {20.00 USD}
+
+    And the following will raise an error, it is not legal syntax:
+
+      Assets:Account     100 MSFT {{0 # 2000.00 USD}}
+
+    Finally, specifying a date and a label can be done, just like for {...}:
+
+      Assets:Account     100 MSFT {{2000.00 USD, 2011-10-30, "ref32"}}
+
+    The intention here is to deprecate the older limited syntax while keeping
+    support for total cost input using {{...}}. Based on previous questions, I
+    suspect that many users are still using {{...}} instead of {{# ...}}, so I
+    won't remove it just yet.
+
+  - Removed very old compatibility code in beancount.core.amount that lived
+    since I cleaned up the definition of the D() constructor and moved it to
+    beancount.core.number.
+
+  - Removed built-in aliases for auto_accounts and implicit_prices modules, from
+    beancount.ops to beancount.plugins.
+
+  - Removed deprecated option "default_tolerance" (which had been renamed to
+    "inferred_tolerance_default").
+
+  - Removed deprecated option "tolerance".
+
+  - Remove deprecated use of 'plugin' as an option. The directive ought to be
+    the only way.
+
+  - Removed deprecated option "experiment_explicit_tolerances".
+
+  - Renamed "experiment_booking_algorithm" to "booking_algorithm", and changed
+    the default value to "FULL". The old "SIMPLE" algorithm will be deprecated
+    eventually.
+
+  - Removed old code that would warn if the user set account_rounding to a full
+    account name; it just needs be a subaccount.
+
+  - Commit to Python 3.5. 3.5.0 released more than a year ago. You need to
+    update or stick with the 2.0b13 release.
+
+  - Remove old code to dispatch between an external Enum class and the built-in
+    one that's included in 3.5 (commit to 3.5).
+
+  - Added type annotations to beancount.core.data. This will grow more over
+    time. (I also need to add rules to use those.)
+
+
+2016-10-23
+
+  - Modified parsing of transaction strings and links and tags. I did this to
+    factor out the parsing of tags and links in order to add it to other
+    transactions and minimize grammar code. There is user-visible impact to this
+    change: all of a transaction's strings must appear before tags or links. You
+    cannot place tags or links before or in-between strings anymore. This is a
+    reasonable restriction and I doubt anybody did anyway.
+
+  - Added support for tags and links to the Document directive. This works just
+    as for Transactions, e.g.
+
+      2016-10-23 document Assets:Checking "/statements/oct.pdf" #banking ^9fed846348c2
+
+    The current tags on the tag stack are also included, like for transactions.
+
+
+2016-10-10
+
+  - Removed "experiment_explicit_tolerances" flag; made this supported by
+    default permanently.
+
+
+2016-10-08
+
+  - Documented a subtle problem reported about balances against inventory of
+    mixed at-cost and no-cost, added more context to the error and a unit test
+    for balance checks with mixed at-cost and no-cost positions.
+
+  - Fixed a bug in the full booking matching code whereby an existing position
+    not held at cost would trip up the matching code. (Credits to Son Nguyen for
+    finding and reporting.)
+
+  - During ingest, when multiple extractors match a particular file, select the
+    first matching account instead of raising an error.
+
+  - Fixed accidentally colliding key-binding for invoking bean-price from Emacs,
+    to C-c p.
+
+
+2016-09-25
+
+  - Fixed typo in grammar that was parsing a transaction flag as '#' into '*'.
+
+  - Added "cost_date" and "cost_label" columns in the SQL shell.
+
+
+2016-09-04
+
+  - Implemented new "run" shell command that allows you to run a named query.
+    For example, if an input file has a Query directive like this:
+
+      2016-09-01 query "home" "select account, sum(position) where account ~ 'Home' group by 1"
+
+    And you input this command:
+
+      run home
+
+    The entries will be closed at tue query date (2016-09-01) and the query
+    automatically run. If you want to always include all the transactions, set a
+    date far into the future.
+
+    This works from the command-line and from the shell, equally. You can also
+    run all the queries in an input file, like this:
+
+      run *
+
+    To view the list of available queries, just type the "run" command without
+    an argument.
+
+
 2016-08-21
 
   - Fixed a SQL shell bug with extracting UNITS() from a Position column.
@@ -315,6 +859,8 @@ Note: This file contains only changes in the 'default' branch.
     now query for "SELECT PRICE('USD', 'CAD', date)", for example.
 
   - Added a boolean renderer for the SQL shell.
+
+  - Added support for arithmetic operations to the bean-query SQL shell.
 
 
 2016-03-26

@@ -1,6 +1,7 @@
 """Generate reports no holdings.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2017  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import csv
 
@@ -11,7 +12,8 @@ from beancount.core import data
 from beancount.core import flags
 from beancount.parser import options
 from beancount.parser import printer
-from beancount.ops import prices
+from beancount.core import prices
+from beancount.core import convert
 from beancount.ops import holdings
 from beancount.ops import summarize
 from beancount.reports import table
@@ -104,9 +106,9 @@ def get_holdings_entries(entries, options_map):
         entry.postings.append(
             data.Posting(holding.account, pos.units, pos.cost, None, None, None))
 
-        pos_cost = -pos.at_cost()
+        cost = -convert.get_cost(pos)
         entry.postings.append(
-            data.Posting(equity_account, pos_cost.units, pos_cost.cost, None, None, None))
+            data.Posting(equity_account, cost, None, None, None, None))
 
         holdings_entries.append(entry)
 

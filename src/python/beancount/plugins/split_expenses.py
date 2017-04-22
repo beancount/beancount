@@ -23,7 +23,8 @@ After these transformations, all account names should include the name of a
 member. You can generate reports for a particular person by filtering postings
 to accounts with a component by their name.
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 from os import path
 import argparse
@@ -172,21 +173,29 @@ def save_query(title, participant, entries, options_map, sql_query, *format_args
                                     numberify=True)
 
     # The base of all filenames.
-    filebase = '-'.join(filter(None, [title.replace(' ', '-'), participant]))
+    filebase = title.replace(' ', '_')
 
     fmtopts = dict(boxed=boxed,
                    spaced=spaced)
 
     # Output the text files.
     if args.output_text:
-        filename = path.join(args.output_text, filebase + '.txt')
+        basedir = (path.join(args.output_text, participant)
+                   if participant
+                   else args.output_text)
+        os.makedirs(basedir, exist_ok=True)
+        filename = path.join(basedir, filebase + '.txt')
         with open(filename, 'w') as file:
             query_render.render_text(rtypes, rrows, options_map['dcontext'],
                                      file, **fmtopts)
 
     # Output the CSV files.
     if args.output_csv:
-        filename = path.join(args.output_csv, filebase + '.csv')
+        basedir = (path.join(args.output_csv, participant)
+                   if participant
+                   else args.output_csv)
+        os.makedirs(basedir, exist_ok=True)
+        filename = path.join(basedir, filebase + '.csv')
         with open(filename, 'w') as file:
             query_render.render_csv(rtypes, rrows, options_map['dcontext'],
                                     file, expand=False)
@@ -255,16 +264,16 @@ def main():
     for participant in participants:
         print("Participant: {}".format(participant))
 
-        save_query("Expenses Aggregate", participant, entries, options_map, r"""
+        save_query("balances", participant, entries, options_map, r"""
           SELECT
             PARENT(account) AS account,
             CONV[SUM(position)] AS amount
-          WHERE account ~ 'Expenses.*\b{}'
+          WHERE account ~ ':\b{}'
           GROUP BY 1
           ORDER BY 2 DESC
         """, participant, boxed=False, args=args)
 
-        save_query("Expenses Detail", participant, entries, options_map, r"""
+        save_query("expenses", participant, entries, options_map, r"""
           SELECT
             date, flag, description,
             PARENT(account) AS account,
@@ -274,7 +283,7 @@ def main():
           WHERE account ~ 'Expenses.*\b{}'
         """, participant, args=args)
 
-        save_query("Income Detail", participant, entries, options_map, r"""
+        save_query("income", participant, entries, options_map, r"""
           SELECT
             date, flag, description,
             account,
@@ -284,7 +293,7 @@ def main():
           WHERE account ~ 'Income.*\b{}'
         """, participant, args=args)
 
-    save_query("Final Balances", None, entries, options_map, r"""
+    save_query("final", None, entries, options_map, r"""
       SELECT
         GREP('\b({})\b', account) AS participant,
         CONV[SUM(position)] AS balance

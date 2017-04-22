@@ -1,6 +1,7 @@
 """An interactive command-line shell interpreter for the Beancount Query Language.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import argparse
 import atexit
@@ -237,13 +238,23 @@ class DispatchingShell(cmd.Cmd):
             return method(statement)
 
     def default(self, line):
-        """Handle statements via our parser instance and dispatch to appropriate methods.
+        """Default handling of lines which aren't recognized as native shell commands.
 
         Args:
           line: The string to be parsed.
         """
+        self.run_parser(line)
+
+    def run_parser(self, line, default_close_date=None):
+        """Handle statements via our parser instance and dispatch to appropriate methods.
+
+        Args:
+          line: The string to be parsed.
+          default_close_date: A datetimed.date instance, the default close date.
+        """
         try:
-            statement = self.parser.parse(line)
+            statement = self.parser.parse(line,
+                                          default_close_date=default_close_date)
             self.dispatch(statement)
         except query_parser.ParseError as exc:
             print(exc, file=self.outfile)
@@ -486,6 +497,40 @@ class BQLShell(DispatchingShell):
                 c_target.c_expr.dtype.__name__))
         pr()
 
+    def on_RunCustom(self, run_stmt):
+        """
+        Run a custom query instead of a SQL command.
+
+           RUN <custom-query-name>
+
+        Where:
+
+          custom-query-name: Should be the name of a custom query to be defined
+            in the Beancount input file.
+
+        """
+        custom_query_map = create_custom_query_map(self.entries)
+        name = run_stmt.query_name
+        if name is None:
+            # List the available queries.
+            for name in sorted(custom_query_map):
+                print(name)
+        elif name == "*":
+            for name, query in sorted(custom_query_map.items()):
+                print('{}:'.format(name))
+                self.run_parser(query.query_string, default_close_date=query.date)
+                print()
+                print()
+        else:
+            try:
+                query = custom_query_map[name]
+            except KeyError:
+                print("ERROR: Query '{}' not found".format(name))
+            else:
+                statement = self.parser.parse(query.query_string)
+                self.dispatch(statement)
+
+
     def help_targets(self):
         template = textwrap.dedent("""
 
@@ -680,6 +725,24 @@ def print_statistics(entries, options_map, outfile):
     print("Ready with {} directives ({} postings in {} transactions).".format(
         num_directives, num_postings, num_transactions),
           file=outfile)
+
+
+def create_custom_query_map(entries):
+    """Extract a mapping of the custom queries from the list of entries.
+
+    Args:
+      entries: A list of entries.
+    Returns:
+      A map of query-name strings to Query directives.
+    """
+    query_map = {}
+    for entry in entries:
+        if not isinstance(entry, data.Query):
+            continue
+        if entry.name in query_map:
+            logging.warning("Duplicate query: %s", entry.name)
+        query_map[entry.name] = entry
+    return query_map
 
 
 _SUPPORTED_FORMATS = ('text', 'csv')

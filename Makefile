@@ -6,6 +6,7 @@ DOWNLOADS = $(HOME)/u/Downloads
 
 GREP="grep --include="*.py" -srnE"
 SRC=src/python
+TOOLS=./etc
 
 PYTHON=python3
 #PYTHON=$(HOME)/src/python/vginstall/bin/python3
@@ -47,8 +48,11 @@ SOURCES =					\
 compile: $(SOURCES)
 	$(PYTHON) setup.py build_ext -i
 
+compile35: $(SOURCES)
+	python3.5 setup.py build_ext -i
+
 .PHONY: build
-build: compile
+build: compile compile35
 
 
 # Dump the lexer parsed output. This can be used to check across languages.
@@ -145,7 +149,6 @@ test-failed:
 nakedtests:
 	PATH=/bin:/usr/bin PYTHONPATH= /usr/local/bin/$(NOSE) -x $(SRC)
 
-
 # Run the parser and measure its performance.
 .PHONY: check
 check:
@@ -188,7 +191,7 @@ sandbox:
 	bean-sandbox $(INPUT)
 
 missing-tests:
-	./etc/find-missing-tests.py $(SRC)
+	$(TOOLS)/find_missing_tests.py $(SRC)
 
 fixmes:
 	egrep -srn '\b(FIXME|TODO\()' $(SRC) || true
@@ -197,7 +200,7 @@ filter-terms:
 	egrep --exclude-dir='.hg' --exclude-dir='__pycache__' -srn 'GOOGL?\b' $(PWD) | grep -v GOOGLE_APIS || true
 
 multi-imports:
-	egrep -srn '^(from.*)?import.*,' $(SRC) || true
+	(egrep -srn '^(from.*)?import.*,' $(SRC) | grep -v 'from typing') || true
 
 # Check for unused imports.
 sfood-checker:
@@ -205,33 +208,38 @@ sfood-checker:
 
 # Check dependency constraints.
 constraints dep-constraints: build/beancount.deps
-	./etc/dependency-constraints.py $<
+	$(TOOLS)/dependency_constraints.py $<
 
-check-author:
-	find src/python/beancount -type f -name '*.py' ! -exec grep -q '__author__' {} \; -print
 
 # Run the linter on all source code.
 # To list all messages, call: "pylint --list-msgs"
 LINT_SRCS =					\
   $(SRC)/beancount				\
   examples/ingest/office/importers		\
+  bin/*						\
+  tools/*.py
+
+# Note: Keeping to 3.5 because 3.6 pylint raises an exception (as of 2017-01-15).
+#PYLINT = pylint
+PYLINT = python3.5 $(shell which pylint)
 
 pylint lint:
-	pylint --rcfile=$(PWD)/etc/pylintrc $(LINT_SRCS)
+	$(PYLINT) --rcfile=$(PWD)/etc/pylintrc $(LINT_SRCS)
 
 pyflakes:
 	pyflakes $(LINT_SRCS)
 
 
 # Check everything.
-status check: pylint pyflakes filter-terms missing-tests dep-constraints multi-imports tests-quiet
-# fixmes: For later.
+status check: pylint pyflakes filter-terms missing-tests dep-constraints multi-imports test
 
 
+# Experimental docs conversion.
+download-pdf:
+	./tools/download_docs.py pdf $(HOME)/p/beancount-downloads/pdf
 
-# FIXME: Remove
-grep-import:
-	grep --include='*.py' --exclude='*/beancount/parser/*' -srn  'from beancount.parser import parser'  ~/p/beancount/src/python/beancount
+download-odt:
+	./tools/download_docs.py odt $(HOME)/p/beancount-downloads/odt
 
-grep-uses:
-	grep --include='*.py' --exclude='*/beancount/parser/*' -srn  'parser.parse'  ~/p/beancount/src/python/beancount
+sphinx sphinx_odt2rst:
+	./tools/sphinx_odt2rst.py $(HOME)/p/beancount-downloads/odt $(HOME)/p/beancount-docs

@@ -4,7 +4,8 @@ This code accepts the abstract syntax tree produced by the query parser,
 resolves the column and function names, compiles and interpreter and prepares a
 query to be run against a list of entries.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 import copy
@@ -12,6 +13,8 @@ import datetime
 import re
 import operator
 
+from beancount.core.number import Decimal
+from beancount.core import inventory
 from beancount.query import query_parser
 
 
@@ -174,6 +177,30 @@ class EvalContains(EvalBinaryOp):
         return self.operator(arg_right, arg_left)
 
 
+# Note: We ought to implement implicit type promotion here,
+# e.g., int -> float -> Decimal.
+
+class EvalMul(EvalBinaryOp):
+
+    def __init__(self, left, right):
+        super().__init__(Decimal.__mul__, left, right, Decimal)
+
+class EvalDiv(EvalBinaryOp):
+
+    def __init__(self, left, right):
+        super().__init__(Decimal.__truediv__, left, right, Decimal)
+
+class EvalAdd(EvalBinaryOp):
+
+    def __init__(self, left, right):
+        super().__init__(Decimal.__add__, left, right, Decimal)
+
+class EvalSub(EvalBinaryOp):
+
+    def __init__(self, left, right):
+        super().__init__(Decimal.__sub__, left, right, Decimal)
+
+
 # Interpreter nodes.
 OPERATORS = {
     query_parser.Constant: EvalConstant,
@@ -187,6 +214,10 @@ OPERATORS = {
     query_parser.Less: EvalLess,
     query_parser.LessEq: EvalLessEq,
     query_parser.Contains: EvalContains,
+    query_parser.Mul: EvalMul,
+    query_parser.Div: EvalDiv,
+    query_parser.Add: EvalAdd,
+    query_parser.Sub: EvalSub,
     }
 
 
@@ -433,6 +464,17 @@ def is_aggregate(node):
     return bool(aggregates)
 
 
+def is_hashable_type(node):
+    """Return true if the node is of a hashable type.
+
+    Args:
+      node: An instance of EvalNode.
+    Returns:
+      A boolean.
+    """
+    return not issubclass(node.dtype, inventory.Inventory)
+
+
 def find_unique_name(name, allocated_set):
     """Come up with a unique name for 'name' amongst 'allocated_set'.
 
@@ -595,6 +637,13 @@ def compile_group_by(group_by, c_targets, environ):
                 raise CompilationError(
                     "GROUP-BY expressions may not reference aggregates: '{}'".format(
                         column))
+
+            # Check that the group-by column has a supported hashable type.
+            if not is_hashable_type(c_expr):
+                raise CompilationError(
+                    "GROUP-BY a non-hashable type is not supported: '{}'".format(
+                        column))
+
 
     else:
         # If it does not have a GROUP-BY clause...
@@ -788,7 +837,7 @@ def compile_select(select, targets_environ, postings_environ, entries_environ):
         # NOTE: This should never trigger if the compilation environment does not
         # contain any aggregate. Just being manic and safe here.
         if is_aggregate(c_where):
-            raise CompilationError("Aggregates are disallowed in WHERE clause.")
+            raise CompilationError("Aggregates are disallowed in WHERE clause")
     else:
         c_where = None
 

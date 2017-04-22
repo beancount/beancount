@@ -1,7 +1,8 @@
 """
 Utilities for reading and writing CSV files.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2014, 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import itertools
 import collections
@@ -38,6 +39,7 @@ def csv_clean_header(header_row):
         field = re.sub(r'\bp/l\b', 'pnl', field)
         field = re.sub('[^a-z0-9]', '_', field)
         field = field.strip(' _')
+        field = re.sub('__+', '_', field)
         if not field:
             field = 'col{}'.format(index)
         assert field not in fieldnames, field

@@ -1,0 +1,7 @@
+This directory contains internal tools used for development of Beancount itself.
+These are strictly developer tools and should never be installed nor packaged.
+These tools operate on the source code either to make automated adjustments or
+apply constraints or verifications. Invoked from the root Makefile.
+
+For the Beancount binaries, see bin/.
+For Beancount source code, look under src/.

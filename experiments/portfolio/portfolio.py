@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """A dashboard for portfolio composition and changes.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import argparse
 import functools
@@ -9,7 +10,7 @@ import logging
 
 from beancount.core.number import D
 from beancount import loader
-from beancount.ops import prices
+from beancount.core import prices
 from beancount.ops import holdings
 from beancount.reports import holdings_reports
 from beancount.parser import options

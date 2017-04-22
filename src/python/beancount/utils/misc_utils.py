@@ -1,7 +1,8 @@
 """
 Generic utility packages and functions.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2017  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 import io
@@ -10,16 +11,6 @@ import sys
 from time import time
 import contextlib
 from collections import defaultdict
-
-
-# Provide an Enum that will work across all of Python 3.x. Enum was introduced
-# at Python 3.4 only. This will eventually be deprecated.
-# pylint: disable=invalid-name
-try:
-    import enum
-    Enum = enum.Enum
-except ImportError:
-    Enum = object
 
 
 @contextlib.contextmanager
@@ -265,9 +256,9 @@ def idify(string):
     Returns:
       The input string, with offending characters replaced.
     """
-    for from_, to in [(r'[ \(\)]+', '_'),
+    for sfrom, sto in [(r'[ \(\)]+', '_'),
                       (r'_*\._*', '.')]:
-        string = re.sub(from_, to, string)
+        string = re.sub(sfrom, sto, string)
     string = string.strip('_')
     return string
 
@@ -500,9 +491,9 @@ def is_sorted(iterable, key=lambda x: x, cmp=lambda x, y: x <= y):
     Returns:
       A boolean, true if the sequence is sorted.
     """
-    it = map(key, iterable)
-    prev = next(it)
-    for element in it:
+    iterator = map(key, iterable)
+    prev = next(iterator)
+    for element in iterator:
         if not cmp(prev, element):
             return False
         prev = element
@@ -514,15 +505,17 @@ class LineFileProxy:
     This may be used for writing data to a logging level without having to worry about
     lines.
     """
-    def __init__(self, line_writer, prefix=None):
+    def __init__(self, line_writer, prefix=None, write_newlines=False):
         """Construct a new line delegator file object proxy.
 
         Args:
           line_writer: A callable function, used to write to the delegated output.
           prefix: An optional string, the prefix to insert before every line.
+          write_newlines: A boolean, true if we should output the newline characters.
         """
         self.line_writer = line_writer
         self.prefix = prefix
+        self.write_newlines = write_newlines
         self.data = []
 
     def write(self, data):
@@ -546,6 +539,8 @@ class LineFileProxy:
             for line in lines:
                 if self.prefix:
                     line = self.prefix + line
+                if self.write_newlines:
+                    line += '\n'
                 self.line_writer(line)
 
     def close(self):

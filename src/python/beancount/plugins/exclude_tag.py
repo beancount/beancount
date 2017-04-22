@@ -9,7 +9,8 @@ See discussion here for details:
 https://groups.google.com/d/msg/ledger-cli/N8Slh2t45K0/aAz0i3Be4LYJ
 """
 
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2014, 2016-2017  Martin Blais"
+__license__ = "GNU GPLv2"
 __plugins__ = ('exclude_tag',)
 
 from beancount.core import data
@@ -29,6 +30,6 @@ def exclude_tag(entries, options_map):
     filtered_entries = [entry
                         for entry in entries
                         if (not isinstance(entry, data.Transaction) or
-                            entry.tags is None or
+                            not entry.tags or
                             EXCLUDED_TAG not in entry.tags)]
     return (filtered_entries, [])

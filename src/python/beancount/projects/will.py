@@ -10,7 +10,8 @@ output that should be readable by a layperson.
 A special field 'institution' is detected to identify root accounts that should
 be included in the document rendered by this script.
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import argparse
 import collections
@@ -25,6 +26,7 @@ from beancount.core import getters
 from beancount.core import account_types
 from beancount.core import data
 from beancount.core import account
+from beancount.core import convert
 from beancount.parser import options
 
 
@@ -268,8 +270,8 @@ def format_xhtml_report(report, options_map):
                 fields['name'] = acc.name
                 fields['open_date'] = acc.open_date
                 dcontext = options_map['dcontext']
-                fields['balance'] = acc.balance.cost().to_string(dcontext.build(),
-                                                                 False)
+                fields['balance'] = acc.balance.reduce(convert.get_cost).to_string(
+                    dcontext.build(), False)
                 oss.write('<tr>\n')
                 for field in fieldnames:
                     oss.write('<td class="{}">{}</td>\n'.format(field,

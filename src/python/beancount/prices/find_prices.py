@@ -1,6 +1,7 @@
 """A library of codes create price fetching jobs from strings and files.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 import logging
@@ -10,7 +11,7 @@ import sys
 from beancount.core import data
 from beancount.core import amount
 from beancount.ops import summarize
-from beancount.prices.sources import yahoo
+from beancount.prices.sources import yahoo as default_source
 
 
 # A dated price source description.
@@ -380,7 +381,7 @@ def get_price_jobs_at_date(entries, date=None, inactive=False, undeclared=False)
 
         # If there are no sources, create a default one.
         if not psources:
-            psources = [PriceSource(yahoo, base, False)]
+            psources = [PriceSource(default_source, base, False)]
 
         jobs.append(DatedPrice(base, quote, date, psources))
     return sorted(jobs)

@@ -56,13 +56,15 @@ This provides yet another level of verification and allows you to elide the
 income amounts, knowing that the price is there to provide an extra level of
 error-checking in case you enter a typo.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2015-2017  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 
 from beancount.core.number import ZERO
 from beancount.core import data
 from beancount.core import amount
+from beancount.core import convert
 from beancount.core import inventory
 from beancount.core import account_types
 from beancount.core import interpolate
@@ -95,8 +97,6 @@ def validate_sell_gains(entries, options_map):
                          acc_types.equity,
                          acc_types.expenses])
 
-    default_tolerances = options_map['inferred_tolerance_default']
-
     for entry in entries:
         if not isinstance(entry, data.Transaction):
             continue
@@ -123,8 +123,7 @@ def validate_sell_gains(entries, options_map):
                 # Otherwise, use the weight and ignore postings to Income accounts.
                 atype = account_types.get_account_type(posting.account)
                 if atype in proceed_types:
-                    total_proceeds.add_amount(
-                        interpolate.get_posting_weight(posting))
+                    total_proceeds.add_amount(convert.get_weight(posting))
 
         # Compare inventories, currency by currency.
         dict_price = {pos.units.currency: pos.units.number
@@ -138,9 +137,7 @@ def validate_sell_gains(entries, options_map):
             # Accept a looser than usual tolerance because rounding occurs
             # differently. Also, it would be difficult for the user to satisfy
             # two sets of constraints manually.
-            tolerance = inventory.get_tolerance(tolerances,
-                                                default_tolerances,
-                                                currency) * EXTRA_TOLERANCE_MULTIPLIER
+            tolerance = tolerances.get(currency) * EXTRA_TOLERANCE_MULTIPLIER
 
             proceeds_number = dict_proceeds.pop(currency, ZERO)
             diff = abs(price_number - proceeds_number)

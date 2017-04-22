@@ -1,4 +1,5 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 from beancount import loader
 from beancount.parser import cmptest
@@ -37,11 +38,11 @@ class TestMerge(cmptest.TestCase):
             plugin "beancount.plugins.auto_accounts"
 
             2011-05-17 * "Something"
-              Expenses:Restaurant   1.11 USD {100 ECUS}
+              Expenses:Restaurant   1.11 USD {100 ECUS, 2011-02-01}
               Assets:Other
 
             2011-05-18 * "Something Else"
-              Expenses:Restaurant   1.22 USD {100 ECUS}
+              Expenses:Restaurant   1.22 USD {100 ECUS, 2011-02-01}
               Assets:Other
         """
         txn = next(data.filter_txns(entries))
@@ -49,7 +50,7 @@ class TestMerge(cmptest.TestCase):
         self.assertEqualEntries("""
 
             2011-05-17 * "Something"
-              Expenses:Restaurant   2.33 USD {100 ECUS}
+              Expenses:Restaurant   2.33 USD {100 ECUS, 2011-02-01}
               Assets:Other       -233.00 ECUS
 
         """, [merged_entry])
@@ -109,17 +110,18 @@ class TestMerge(cmptest.TestCase):
         """
         txn = next(data.filter_txns(entries))
         merged_entry = compress.merge(entries, txn)
+
         self.assertEqualEntries("""
 
-            2015-01-01 *
-              Expenses:Grocery       1.11 USD
-              Expenses:Restaurant    1.11 CAD
-              Expenses:Restaurant    1.11 USD {5 ECUS}
-              Expenses:Restaurant    1.11 USD
-              ! Expenses:Restaurant  1.11 USD
-              Expenses:Restaurant    1.11 USD @ 10 ECUS
-              Equity:Other          -3.33 USD
-              Equity:Other          -1.11 CAD
-              Equity:Other         -16.65 ECUS
+          2015-01-01 *
+            Equity:Other            -1.11 CAD
+            Equity:Other           -16.65 ECUS
+            Equity:Other            -3.33 USD
+            Expenses:Grocery         1.11 USD
+            Expenses:Restaurant      1.11 CAD
+            Expenses:Restaurant      1.11 USD @ 10 ECUS
+            Expenses:Restaurant      1.11 USD {5 ECUS, 2015-01-04}
+            Expenses:Restaurant      1.11 USD
+            ! Expenses:Restaurant    1.11 USD
 
         """, [merged_entry])

@@ -1,6 +1,7 @@
 """A library to run queries. This glues together all the parts of the query engine.
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2015-2017  Martin Blais"
+__license__ = "GNU GPLv2"
 
 from beancount.query import query_parser
 from beancount.query import query_compile

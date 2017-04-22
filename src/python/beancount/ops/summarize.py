@@ -6,7 +6,8 @@ a specific time period: we don't want to see the entries from before some period
 of time, so we fold them into a single transaction per account that has the sum
 total amount of that account.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2017  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import datetime
 import collections
@@ -21,7 +22,8 @@ from beancount.core import inventory
 from beancount.core import data
 from beancount.core import flags
 from beancount.core import interpolate
-from beancount.ops import prices
+from beancount.core import convert
+from beancount.core import prices
 from beancount.ops import balance
 from beancount.utils import bisect_key
 from beancount.parser import options
@@ -472,7 +474,8 @@ def conversions(entries, conversion_account, conversion_currency, date=None):
     conversion_balance = interpolate.compute_entries_balance(entries, date=date)
 
     # Early exit if there is nothing to do.
-    if conversion_balance.is_empty():
+    conversion_cost_balance = conversion_balance.reduce(convert.get_cost)
+    if conversion_cost_balance.is_empty():
         return entries
 
     # Calculate the index and the date for the new entry. We want to store it as
@@ -487,8 +490,8 @@ def conversions(entries, conversion_account, conversion_currency, date=None):
     meta = data.new_metadata('<conversions>', -1)
     narration = 'Conversion for {}'.format(conversion_balance)
     conversion_entry = Transaction(meta, last_date, flags.FLAG_CONVERSIONS,
-                                   None, narration, None, None, [])
-    for position in conversion_balance.cost().get_positions():
+                                   None, narration, data.EMPTY_SET, data.EMPTY_SET, [])
+    for position in conversion_cost_balance.get_positions():
         # Important note: Set the cost to zero here to maintain the balance
         # invariant. (This is the only single place we cheat on the balance rule
         # in the entire system and this is necessary; see documentation on
@@ -561,13 +564,13 @@ def create_entries_from_balances(balances, date, source_account, direction,
 
         postings = []
         new_entry = Transaction(
-            meta, date, flag, None, narration, None, None, postings)
+            meta, date, flag, None, narration, data.EMPTY_SET, data.EMPTY_SET, postings)
 
         for position in account_balance.get_positions():
             postings.append(data.Posting(account, position.units, position.cost,
                                          None, None, None))
-            cost_pos = -position.at_cost()
-            postings.append(data.Posting(source_account, cost_pos.units, cost_pos.cost,
+            cost = -convert.get_cost(position)
+            postings.append(data.Posting(source_account, cost, None,
                                          None, None, None))
 
         new_entries.append(new_entry)

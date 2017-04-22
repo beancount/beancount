@@ -1,6 +1,8 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014, 2016-2017  Martin Blais"
+__license__ = "GNU GPLv2"
 
 from beancount import loader
+from beancount.core import data
 from beancount.plugins import tag_pending
 from beancount.utils import test_utils
 
@@ -32,6 +34,6 @@ class TestExampleTrackPending(test_utils.TestCase):
         self.assertFalse(errors)
         entries = tag_pending.tag_pending_transactions(original_entries, 'PENDING')
         self.assertEqual(len(original_entries), len(entries))
-        self.assertEqual(None, entries[4].tags)
+        self.assertEqual(data.EMPTY_SET, entries[4].tags)
         self.assertEqual(set(['PENDING']), entries[5].tags)
-        self.assertEqual(None, entries[6].tags)
+        self.assertEqual(data.EMPTY_SET, entries[6].tags)

@@ -1,4 +1,5 @@
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import datetime
 import unittest
@@ -168,6 +169,22 @@ class TestCompileDataTypes(unittest.TestCase):
     def test_compile_EvalOr(self):
         c_or = qc.EvalOr(qc.EvalConstant(17), qc.EvalConstant(18))
         self.assertEqual(bool, c_or.dtype)
+
+    def test_compile_EvalMul(self):
+        c_plus = qc.EvalMul(qc.EvalConstant(17), qc.EvalConstant(18))
+        self.assertEqual(Decimal, c_plus.dtype)
+
+    def test_compile_EvalDiv(self):
+        c_plus = qc.EvalDiv(qc.EvalConstant(17), qc.EvalConstant(18))
+        self.assertEqual(Decimal, c_plus.dtype)
+
+    def test_compile_EvalAdd(self):
+        c_plus = qc.EvalAdd(qc.EvalConstant(17), qc.EvalConstant(18))
+        self.assertEqual(Decimal, c_plus.dtype)
+
+    def test_compile_EvalSub(self):
+        c_plus = qc.EvalSub(qc.EvalConstant(17), qc.EvalConstant(18))
+        self.assertEqual(Decimal, c_plus.dtype)
 
 
 class TestCompileMisc(unittest.TestCase):
@@ -360,6 +377,12 @@ class TestCompileSelect(CompileSelectBase):
         with self.assertRaises(qc.CompilationError):
             self.compile("""
               SELECT account, sum(number) GROUP BY account HAVING sum(number) > 0;
+            """)
+
+    def test_compile_group_by_inventory(self):
+        with self.assertRaises(qc.CompilationError):
+            self.compile("""
+              SELECT sum(number), balance GROUP BY balance;
             """)
 
 

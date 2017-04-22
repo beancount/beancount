@@ -1,6 +1,7 @@
 """A plugin that issues errors when more than one commodity is used in an account.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2014-2017  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import collections
 

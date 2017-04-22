@@ -2,9 +2,13 @@
 beancount: TODO
 * Priorities
 
-- Start versioning very soon. It's desired by users.
-- Pivot report... very useful. I need it.
+- Fix #145
 
+booking_full.py: # FIXME: Refactor compute_cost_number() and convert_costspec_to_cost().
+
+- Start versioning very soon. It's desired by users.
+
+- Pivot report... very useful. I need it.
 - Pull request for Unicode support: https://bitbucket.org/blais/beancount/pull-requests/13/allow-unicode-in-account-names/diff#comment-20233638
 - Fix #128
 - Fix #130
@@ -15,11 +19,27 @@ beancount: TODO
 {holding}
 {balance-where}
 {autogroup}
-{deprecation}
 {review-dcontext}
 {write-intro-doc}
 {commodity-required}
 
+
+* Returns (Revision)
+
+  - Fix remaining tests for removal of open/balance entries from segment_periods().
+
+  - Implement per account, with data structures + code to combine them together
+  - Trailing windows
+  - Rolling windows
+  - Calculate pre-tax returns, post-tax returns
+  - Output nice debugging information
+  - Warn when prices aren't within a certain date interval with their usage
+  - Render a graph of the actual values of the assets as well.
+  - There should be a separate web application that handles this, no need to
+    pre-render everything.
+  - You need to merge the external entries when multiple ones occur on the same
+    date.
+  - Handle the various FIXMEs.
 
 * Settlement Dates (Split & Merge)
 
@@ -378,9 +398,9 @@ beancount: TODO
 
 Improve this bit:
 
-    >   But the detailed explanation cannot be found. There's only one phrase: „Think
+    >   But the detailed explanation cannot be found. There's only one phrase: ?Think
     >   of the Equity account as something from the past that you had to give up in
-    >   order to obtain the beginning snapshot of the Assets + Liabilities balance.“
+    >   order to obtain the beginning snapshot of the Assets + Liabilities balance.?
     >
     > Great comment. I'll improve this.
 
@@ -572,62 +592,9 @@ Improve this bit:
     modules provide a import_link() function on the associated PDF files?
     (This is related to ^64647f10b2fd)
 
-  - Adding the ability for links on document directives was also requested on
-    the ledger-cli mailing list.
-
-        On Sat, Apr 26, 2014 at 6:18 AM, Esben Stien <b0ef@esben-stien.name> wrote:
-
-        "Craig Earls" <enderw88@gmail.com> writes:
-         The first use in ledger-cli is to link each transaction to a document,
-        which is pretty important in accounting;)
-
-        Well no, not exactly. The thing you do in importing financial data is basically
-        to funnel transactions from all of your statements from all your institutions
-        in a single place in a single format with a single set of accounts, so that you
-        can do reporting with a view of everything you have. Having support for a
-        per-transaction link to a particular document is generally unnecessary--you can
-        easily find the corresponding document by date if you need to.
-
-        In order to associate a unique ID with a particular transaction, in Beancount
-        you can use a "link" which is like a special kind of tag. I think Ledger has a
-        similar feature, per-post ("tag"?). It looks like this in Beancount:
-
-          2013-04-06 * "Invoice to Metropolis for job well done, waiting for payment."
-          ^metropolis-invoice-103
-             ...
-             ...
-
-        The "^...." bit is a link. You can have multiple links per transactions. The
-        web interface can show you all transactions with the same link in a separate
-        list (under the /link/.... URL).
-
-        Separately, there is a "document" directive that allows you to associate a
-        document with an account, e.g.
-
-          2014-01-01 document  Expenses:Electricity
-          "/path/to/filename/ConEdison-2013-12.pdf"
-
-        Documents don't have to be declared that way explicitly: you can also tell
-        Beancount about a root directory where it will find documents automatically and
-        create the document entries for you. The files just have to be organized in a
-        directory hierarchy mirrorring the account names exactly, and files must begin
-        with "YYYY-MM-DD" to provide a date for the document. That's a simple
-        convention. LedgerHub is able to move files that it recognizes to such a file
-        hierarchy, so after you import the data, you file the files into e.g. a local
-        git repo with all your statemetns, and your document entries show up in the
-        registers. It's also a nice way to organize all your statements, so if you need
-        to bring something up for e.g. a tax audit, you quickly know where to find it.
-
-        Those two features are not related at the moment... but I think I'll add the
-        ability to have links on document directives. That seems like an effective way
-        one could associate a particular pdf document (given a declaration) with a list
-        of transactions. You click on the link, see all the transactions + the
-        document, and you can click on the document itself to see the detail. Seems
-        like a legit idea.
-
-  - Auto-doc from directories of files should ignore files already associated
-    via an explicit documents directive; just ignore files with the same
-    absolute name.
+  - Document directives created automatically from directories of files should
+    ignore documents already associated via an explicit documents directive;
+    just ignore files with the same absolute name.
 
   - Documents found in parent directories don't end up creating a directive
     because we skip them because we only restrict to accounts which have had an
@@ -792,9 +759,16 @@ Improve this bit:
   - Wouldn't it be nice if running a bean-query could automatically upload to a
     new Google Doc and bring up the web browser interface? Do this.
 
-  - Make BALANCES command support a WHERE clause. It’s dumb not to. {balance-where}
+  - Make BALANCES command support a WHERE clause. It?s dumb not to. {balance-where}
 
   - Make auto-group work. {autogroup}
+
+  - When you run a query like this:
+
+      "select ..., position, balance where ... order by date desc"
+
+    The balances appear in the wrong order! Compute the balances after
+    reordering.
 
 ** Query Language
 http://furius.ca/beancount/doc/proposal-query
@@ -1035,8 +1009,8 @@ http://furius.ca/beancount/doc/proposal-query
 
     Although MySQL treats it differently: "If you use a group function in a
     statement containing no GROUP BY clause, it is equivalent to grouping on all
-    rows. For more information, see Section 12.17.3, “MySQL Handling of GROUP
-    BY”."
+    rows. For more information, see Section 12.17.3, ?MySQL Handling of GROUP
+    BY?."
 
 
 
@@ -1161,7 +1135,26 @@ http://furius.ca/beancount/doc/proposal-query
     Also, there should be an option to bean-query (or less likely, a dedicated
     command) to generate all the queries defined in an input file.
 
-* SQLite3 Integration
+** SQL Shell (saved notes from 'shell' branch)
+
+  - Rewrite the shell code from scratch to be independent of Beancount:
+
+    * Compilation should generate a Python AST and that should get compiled by
+      the Python compiler and executed directly.
+
+    * Data sources should be abstracted away to provide rows of any type. This
+      should include support for dotted notation. The main data source type
+      should be "beancount.postings" as in
+
+        "from beancount.postings:/path/to/filename"
+
+    * It should be possible to provide the schema separately, in the SQL.
+
+    * The new rendering code should use the DisplayContext. This would close the
+      "display_context" branch.
+
+
+*** SQLite3 Integration
 
   - Another area of shell experimentation is that I should build some way to
     provide Beancount's input as a virtual table in SQLite3, even if it's not
@@ -1890,7 +1883,7 @@ http://furius.ca/beancount/doc/proposal-query
               cost_currency = lot.cost.currency if lot.cost else None
               key = (lot.currency, cost_currency)
               units_map[key] += position.number
-              costs_map[key] += position.get_cost().number
+              pcosts_map[key] += position.get_cost().number
 
           inventory = Inventory()
           for lotcost_currencies, units in units_map.items():
@@ -1919,7 +1912,7 @@ http://furius.ca/beancount/doc/proposal-query
 
 * Short Sales
 
-  Allow and test short sales in-depth.
+  Test short sales in-depth. (They work now, but  I want more test cases.)
 
   - Allow short sales eventually. This should already work if all that you do is
     selectively suppress the validation check that verifies that a position at
@@ -2075,37 +2068,6 @@ http://furius.ca/beancount/doc/proposal-query
     negative amounts for prices. This will match Ledger semantics and will
     remove one degree of freedom that wasn't necessary.
 
-** Deprecation
-
-  Just some old things that are marked as not supported anymore; finally remove
-  them all at once. {deprecation}
-
-  - Remove the parsing of "CHECK" at some point, that was just there for
-    compatibility.
-
-  - Remove the "use_legacy_fixed_tolerances" option.
-
-  - Remove legacy support for PIPE character in syntax, update cheatsheet.
-
-  - Remove negative number warning and __ setting
-
-  - In 'beancount.core.number' and 'beancount.core.amount', there are deprecated
-    sections; remove them.
-
-  - Remove support for DEPRECATED_MODULES module names.
-
-  - Remove deprecated options, 'tolerance'.
-
-  - Remove deprecated options, 'plugin' (replaced by a directive).
-
-  - Remove support for deprecated variants in all option names.
-
-  - Remove Enum from misc_utils and commit to 3.5 and above.
-  - When you do this, also add @enum.unique to beancount.core.data.BookingMethod.
-
-  - When the 'booking' branch is complete, remove deprecated support for total
-    cost (e.g., {{ ... }}), we won't need it anymore.
-
 ** Parser Cleanup & Improvements
 
   - You need to validate the account name options (empty, or no :, use regex to
@@ -2156,14 +2118,14 @@ http://furius.ca/beancount/doc/proposal-query
   - BUG: This input file without currencies does not currently fail! This is due
     to the parser accepting incomplete input. It should fail!
 
-      2014-01-01 * "Buy Google"
-        Assets:US:Broker:GOOGL      120.00  {1212.5100 USD}
+      2014-01-01 * "Buy Hooli"
+        Assets:US:Broker:HOOL      120.00  {1212.5100 USD}
         Assets:US:Broker:Cash
 
-      2014-04-08 * "GOOGLE INC CL C SPINOFF   ON"
-        Assets:US:Broker:GOOGL     -120.00  {1212.5100 USD}
-        Assets:US:Broker:GOOGL      120.00  {1212.5100 * 0.4992 USD}
-        Assets:US:Broker:GOOG       120.00  {1212.5100 * 0.5008 USD}
+      2014-04-08 * "HOOLI INC CL C SPINOFF   ON"
+        Assets:US:Broker:HOOLA     -120.00  {1212.5100 USD}
+        Assets:US:Broker:HOOLA      120.00  {1212.5100 * 0.4992 USD}
+        Assets:US:Broker:HOOL       120.00  {1212.5100 * 0.5008 USD}
 
   - When an error occurs while parsing a directive/transaction, add the ability
     to let the parser skip until the next directive and ignore the parsed
@@ -2403,25 +2365,6 @@ http://furius.ca/beancount/doc/proposal-query
     could have a dramatic effect on performance.
 
 * Python Types & Namedtuple
-
-  I've been using namedtuple types a lot so far, in order to represent immutable
-  records. These aren't perfect, however, they could stand to be improved. I
-  discovered I could subclass them and customize their behavior. I think I
-  should do this and review the type mechanism I'm using.
-
-  - COOL! I can subclass the namedtuples!  Do this to make printing the
-    postings and entries much easier.
-
-      class Posting(_Posting):
-          def __str__(self):
-              return _Posting.__str__(self._replace(entry=None))
-
-  - Also derive from namedtuple to provide a stable hash function instead of
-    code in beancount.core.compare.
-
-  - Try creating a "Record" class to replace namedtuple using a class decorator
-    and properties.
-
 ** Typed Data Types
 
   - Install proto3 and try to represent all the data using it; measure the
@@ -2429,8 +2372,7 @@ http://furius.ca/beancount/doc/proposal-query
 
 ** Hashing
 
-  - Make Position into a namedtuple with hashing instead of just an object. See
-    if we can remove its __hash__ method.
+  - See if we can remove Position's __hash__ method now that it's a namedtuple.
 
   - Also, look at all the objects in b.core.data, and see if you can override
     the hash function on them automatically in order to ignore the entry in
@@ -4588,6 +4530,15 @@ http://furius.ca/beancount/doc/proposal-query
     example. Then add a PRICE(ccy, ccycost, date) function to pull the price at
     any date.
 
+    * Test negative numbers
+    * Test operators without spaces
+
+    IMPORTANT: Some code has been merged for this, but numerical expressions
+    like 2-3 and 2+3 don't work because the INTEGER and DECIMAL tokens include a
+    potential sign. What must be done is to make the processing of those tokens
+    not have a sign for the purpose of parsing expressions and make + and -
+    unary expressions.
+
   - SQL: "IS" and "IS NOT" is not implemented.
 
   - Idea: The "HELP" command of the SQL shell should be made analogous to the
@@ -4733,6 +4684,104 @@ http://furius.ca/beancount/doc/proposal-query
         Income:Rewards  -150
 
 
+  - A number like this should fail to parse: 1,245,449,72.00 USD
+    Add a simple unit test and tighten the parser. It's easy and will avoid
+    input errors.
+
+  - Idea to deal with #145: Add all augmenting postings, THEN book all reducing
+    ones against that.
+
+  - Full booking: We need an example of two reducing bookings competing for the
+    same lot.
+
+  - Implement IPython/Jupyter notebook support for directly viewing the results
+    of queries.
+
+  - "bean-doctor linked" should list the list of links that were followed. That
+    would go some of the way to explain some of the sometimes surprising
+    results.
+
+  - SQL: OpenMeta is different than Meta; it returns a dict. That's bad. Provide
+    a direct lookup, like Meta.
+
+  - Implement beancount.plugins.auto and beancount.plugins.pedantic finally.
+
+  - Interesting idea re. booking branch: Until AVERAGE is done in an automated
+    manner, we could provide a poor man's version by creating a new Nerge
+    directive which explicly merges the contents and cost basis of an entire
+    account at a particular point in time. Try this for fun, this should be easy
+    to implement.
+
+  - "numberify" is only made available from run_query(). This is insufficient;
+    it needs be made available through the SQL shell output (as an option) and
+    even from the Google sheets uploader.
+
+    In addition, this ought to work as a standalone tool, whereby a CSV file's
+    column types (including Beancount-specific ones like Amount, Position and
+    Inventory) should be inferred automatically, and the transformations can be
+    applied to them.
+
+    Make a nice library, plug this in many places, and make a standalone script
+    as well.
+
+  - Complete tests for csv importer; it should be tested frantically, and a
+    decent sniffer should be implemented, specifically with credit/debit support
+    and balance vs. posting amount support, as well as detecting fees.
+
+  - Add an AVERAGE function to the SQL shell.
+    See related discussion, I would like to compute this for myself too:
+    https://groups.google.com/d/msg/ledger-cli/dWuWysV6qZU/cyYNzleTCAAJ
+
+  - There ought to be some unit tests for all the custom metadata added to
+    Posting instances. I think this is undertested at the moment.
+
+  - Implement a new plugin to convert metadata-fields to Document directives.
+
+      Scan all transactions that have the invoice-metadata field (or any other
+    suiting field-name of your choice), and create a Document directive for
+    each, with a link to the transaction it comes from.
+
+    In doing so, add support for "fuzzy-matching":  When only a relative
+    filename is specified in the metadata-field (and Document directive), search
+    different locations based on the Account this is on/in.
+
+    See https://github.com/aumayr/fava/issues/386#issuecomment-256895713.
+
+
+  - Core: Some problems occur (with the new method) if you mix at-cost and
+    without-cost for the same currency, like this:
+
+      2015-09-15 * "Buy"
+        Assets:Investments:HOOL   50.795 HOOL {14.63 USD} @ 14.63 USD
+        Assets:Investments:Cash   -743.13 USD
+        Equity:Vanguard:Rounding
+
+      2015-09-24 * "Dividend Received"
+        Assets:Investments:HOOL           0.252 HOOL {14.11 USD} @ 14.11 USD
+        Income:Vanguard:Retire:AfterTax:HOOL:Dividend  -3.56 USD
+        Equity:Vanguard:Rounding
+
+      2016-05-09 * "Conversion From"
+        Assets:Investments:HOOL      -51.047 HOOL @ 14.33 USD
+        Assets:Investments:Cash       731.50 USD
+        Income:Vanguard:Retire:AfterTax:HOOL:Pnl
+
+      2016-05-10 balance Assets:Investments:HOOL 0 HOOL
+
+      2016-05-10 * "Buy"
+        Assets:Investments:HOOL   292.285 HOOL {14.33 USD} @ 14.33 USD
+        Assets:Investments:Cash   -4188.44 USD
+        Equity:Vanguard:Rounding
+
+    The better way to deal with this would be not to allow it to happen. Because
+    this needs to be applied during matching, we cannot implement this in a
+    plugin, this needs to become an option (to allow it, and to make it
+    disallowed by default) in the parser itself.
+
+  - The Beancount loader cache should be automatically invalidated if the
+    revision of Beancount has been updated. This could avoid some potentially
+    confusing user interpretation of errors.
+
   - You need to add options to provide the precision to use for prices,
     otherwise something like this:
 
@@ -4773,17 +4822,6 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Investigate using PrettyTable over my custom one. Is there any point to that?
 
-  - Important: CONVERT() currently converts at the market value. This needs to
-    be documented well, and how to use PRICE() and VALUE() as well. It's poorly
-    documented right now. (See question in May 2016 by redstreet0 on the
-    mailing-list.)
-
-  - Rename Position.get_cost() to Position.get_total_cost(), I've it confusing
-    to myself otherwise.
-
-  - Rename the shell function PRICE() to GETPRICE() in order to avoid confusion
-    as well.
-
   - Put all the contents of experiments/ under their own directories and add
     decent README files for each of these.
 
@@ -4812,10 +4850,6 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Port all my wash sales scripts to use the new booking method. This ought to
     be working now, with the new booking method.
-
-  - The printer should not output the | separator anymore, that's just
-    deprecated. Do this now, make sure all the tests still work. This may affect
-    some of the importers.
 
   - Create an explicit license for my documentation, one that is compatible to
     publishing this as a book later on.
@@ -4850,6 +4884,18 @@ http://furius.ca/beancount/doc/proposal-query
     This problem occurs rarely, but when it does, it's annoying to deal with
     because the error removes the transaction and it cascades to more errors.
     Fixing this would help usability a fair amount.
+
+  - This type of interpolation with per-account currency constraints should just work:
+
+      YYYY-MM-DD open Expenses:Communications:Internet  USD
+      YYYY-MM-DD open Assets:US:Points:Verizon          VERIPTS
+
+      2017-03-12 * "VERIZON ONETIMEPAY  VERIZON.COM         FL" "PHONE SRV"
+        Liabilities:US:CreditCard  -178.37 USD
+        Expenses:Communications:Internet
+        Income:US:Rewards                -650 VERIPTS
+        Assets:US:Points:Verizon
+
 
 ** Google Keep Tickets
 
@@ -4925,13 +4971,14 @@ http://furius.ca/beancount/doc/proposal-query
   - In Canada, all trading is carried out at average lot! Since when? Adjust my Beancount file.
   - When in foreign land, how much is the base deduction (-93k?) and are you only subject to federal tax rate when you're not there?
   - Q: Can you convert short term gains into long ones via a wash sale?
+
 ** File Entries from TODO file
 *** Urgent-ish
 
   - Unify bean-doctor linked and bean-doctor context; make it one, and C-u
     prefix triggers links, perhaps ask for which link
 
-  - Create a demo video about “context” and “linked” command-line tools.
+  - Create a demo video about ?context? and ?linked? command-line tools.
 
   - Add a function to fetch a particular subset of tags with a regular
     expression, e.g. FIRST_REGEXP('award'). Use this on the imported
@@ -4957,15 +5004,13 @@ http://furius.ca/beancount/doc/proposal-query
 
 *** Small Tasks
 
-  - A large imbalance will appear as a RoundingError, which it shouldn’t!
-    RoundingError’s should only be inserted when a transaction balances! Run a
-    context on a non-balancing transaction and you’ll see what I mean.
+  - A large imbalance will appear as a RoundingError, which it shouldn?t!
+    RoundingError?s should only be inserted when a transaction balances! Run a
+    context on a non-balancing transaction and you?ll see what I mean.
 
   - Build a script that can run the reports found in Query and output them
     either into files or all at once. This is probably TBD as part of bean-query
     itself, with some options.
-
-  - Use Query directive, add “run ___” command + “run all”.
 
   - Build a script that can list all my cap. gains for tax-loss harvesting.
 
@@ -4990,12 +5035,12 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Define a way to specify output format for rendering many queries, and
     perhaps that should include a Google doc directly that makes an upload, even
-    if that has to call out to a Python2 subprocess (that’s fine). Use that
+    if that has to call out to a Python2 subprocess (that?s fine). Use that
     everywhere.
 
-  - Add “display_tolerances” rendering override to fix bug with rendering HKD in
+  - Add ?display_tolerances? rendering override to fix bug with rendering HKD in
     trips, should be mirroring tolerances input syntax. Bug with Beancount:
-    journal ‘Assets:Caroline:Octopus’ does not render with correct precision.
+    journal ?Assets:Caroline:Octopus? does not render with correct precision.
 
   - Remove unused auto-postings, they distract from the reporting.
 
@@ -5005,7 +5050,7 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Implement implicit GROUP-BY now.
 
-  - Move “bean-doctor missing-open” to “bean-reports missing-open”, this really
+  - Move ?bean-doctor missing-open? to ?bean-reports missing-open?, this really
     is a report type.
 
   - Merge 3 newer monnier beancount.el patches.
@@ -5036,7 +5081,7 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Conversions: Document how open close clear works. This is really important.
     Use as an important the desire to pre-enter transactions from the future
-    (e.g., Jon Stahl’s vesting events).
+    (e.g., Jon Stahl?s vesting events).
 
   - Write Intro with an explanation of open/close/clear.
 
@@ -5044,11 +5089,11 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Store residual in metadata, print it out in context
 
-  - “Transaction does not balance” message should include the tolerance value
+  - ?Transaction does not balance? message should include the tolerance value
     allowed.
 
-  - Complete “legacy” doc generation (merge assets.asc into that doc, we
-    shouldn’t need assets.asc once that’s done, and schematize its contents) And
+  - Complete ?legacy? doc generation (merge assets.asc into that doc, we
+    shouldn?t need assets.asc once that?s done, and schematize its contents) And
     start using this.
 
   - Plugins doc: Add documentation for sellgains plugin in the rest of the docs
@@ -5058,15 +5103,13 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Implement year close via command-line.
 
-  - Implement bean-query to CSV output (easy).
-
   - Convert dividends to per-stock returns.
 
   - Wrap up docs? Use the framedocs script?
 
   - This should be the goto/ project, it should be able to do that.
 
-  - Definitely make a teaching video… this will be useful for applications to
+  - Definitely make a teaching video? this will be useful for applications to
     other things!
 
   - Implement currency trading accounts as a prototype; see Conversions doc.
@@ -5080,11 +5123,11 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Convert blais.portfolio to a number of SQL scripts.
 
-  - Why doesn’t ^c2fbec103d99 generate an error?!?
-    Ha! It’s because it’s NOT a mixed result… only negatives. Maybe allow only
+  - Why doesn?t ^c2fbec103d99 generate an error?!?
+    Ha! It?s because it?s NOT a mixed result? only negatives. Maybe allow only
     positive totals with a different mode, somehow. A constraint on
     dictionaries, another booking method. Maybe that should be the default:
-    don’t allow negatives at all.
+    don?t allow negatives at all.
 
 *** Accounting
 
@@ -5099,7 +5142,7 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Load them into SQLite tables, or make sources as adapters to virtual tables
 
-  - Add a first step that’s a conversion
+  - Add a first step that?s a conversion
 
 *** SQLite
 
@@ -5114,7 +5157,7 @@ http://furius.ca/beancount/doc/proposal-query
   - Then put down the realization: (work to do all of these separately) >>>
     (work to represent all inputs)
 
-  - Black box in the middle of >>>, *THAT*’s what Beancount does
+  - Black box in the middle of >>>, *THAT*?s what Beancount does
 
 *** Contributor agreement
 
@@ -5124,7 +5167,7 @@ http://furius.ca/beancount/doc/proposal-query
 *** Idea
 
   - Implement a feature that generates a closing + opening transaction to be
-    able to split one’s file to multiple files. This should include the currency
+    able to split one?s file to multiple files. This should include the currency
     conversions as well.
 
   - Create a script that splits up a file at a particular date and output two
@@ -5133,7 +5176,7 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Provide a plugin that summarizes all the balances from transactions marked
     with a particular tag, and replaces those with a single transaction. If all
-    the balances are zero, don’t output anything. This could be used to remove
+    the balances are zero, don?t output anything. This could be used to remove
     the opening + closing transactions when including multiple files!
 
 *** Annuities
@@ -5282,8 +5325,8 @@ http://furius.ca/beancount/doc/proposal-query
   - Look into TAB problem:
     https://mail.google.com/mail/u/0/#inbox/14fdc82a04d90565
 
-      "Ben, en fait j'attendais de résoudre le problème du TAB, et pour ça j'ai
-      besoin d'un "recipe" vu que ce que j'ai essayé fonctionne."
+      "Ben, en fait j'attendais de r�soudre le probl�me du TAB, et pour �a j'ai
+      besoin d'un "recipe" vu que ce que j'ai essay� fonctionne."
 
 ** Open Tickets - TODO
 
@@ -5321,15 +5364,15 @@ http://furius.ca/beancount/doc/proposal-query
       delayed if recent deposits are made until they are clear of the 30 day wash sale
       window.
 
-      You can find much more information in both our White Paper (see “Parallel
-      Position Management”) and FAQ below:
+      You can find much more information in both our White Paper (see ?Parallel
+      Position Management?) and FAQ below:
 
       TLH White Paper:
       https://www.betterment.com/resources/tax-loss-harvesting-white-paper/
       TLH FAQ:
       http://support.betterment.com/customer/portal/topics/670337-tax-loss-harvesting
 
-      In general, you’ll want to avoid investing in any passive ETFs or mutual funds
+      In general, you?ll want to avoid investing in any passive ETFs or mutual funds
       that track the same index as the funds in our portfolios. You can check the
       indexes of our investments here.
 
@@ -5341,9 +5384,37 @@ http://furius.ca/beancount/doc/proposal-query
       TLH+ with external accounts, please see our guide here.
 
       Thank you for the feedback regarding exporting data to CSV format, your friend
-      is correct. My apologies for the earlier miscommunication; I’ll certainly pass
+      is correct. My apologies for the earlier miscommunication; I?ll certainly pass
       your suggestion to our product team.
 
       Please let us know if you have any additional questions or if we can be of any
       further assistance. Thank you for being a Betterment customer, have a wonderful
       day."
+
+
+** Adding Types
+
+  Comments from YYing re. adding types:
+  https://bitbucket.org/blais/beancount/issues/140/add-type-annotation-to-beancount-codebase
+
+  - typing.NamedTuple is a good drop-in replacement for namedtuple. See
+    https://github.com/yegle/beancount-type-stubs/blob/master/beancount/core/data.pyi
+    for example
+
+  - There should be an abc for all directives, thus the signatures of many
+    functions can expressed more accurately. E.g.
+    https://github.com/yegle/beancount-type-stubs/blob/master/beancount/core/data.pyi#L149
+    without a proper abc, the argument can only be List[Any]
+
+  - Some bad design choice is more obvious when adding type annotation. E.g.
+    https://github.com/yegle/beancount-type-stubs/blob/master/beancount/core/data.pyi#L67
+    the tags field of Transcation type is an Optional[Set[str]]. I think it should
+    be a Set[str] since an empty set should be sufficient to express "there's no
+    tags for this transaction". I'm not sure if there's any difference in turns of
+    performance
+
+  - mypy has very limited ability to infer function return types. E.g. functions
+    like is_balance_sheet_account in beancount/core/account_types.py, which
+    returns foo in bar, mypy is unable to infer that the return type is a bool.
+    I think pytype from Google have better type inference but it's written in
+    Python2 and I haven't figure out how to run it against python3 code.

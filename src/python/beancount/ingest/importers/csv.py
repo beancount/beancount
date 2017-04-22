@@ -1,10 +1,11 @@
 """CSV importer.
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2016  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import csv
 import datetime
-import re
+import enum
 import io
 from os import path
 
@@ -13,15 +14,11 @@ from beancount.core.amount import Amount
 from beancount.utils.date_utils import parse_date_liberally
 from beancount.core import data
 from beancount.ingest import importer
-from beancount.ingest import regression
 from beancount.ingest.importers import regexp
-from beancount.utils import csv_utils
-from beancount.parser import printer
-from beancount.utils import misc_utils
 
 
 # The set of interpretable columns.
-class Col(misc_utils.Enum):
+class Col(enum.Enum):
     # The settlement date, the date we should create the posting at.
     DATE = '[DATE]'
 
@@ -183,17 +180,24 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
             # Extract the data we need from the row, based on the configuration.
             date = get(row, Col.DATE)
             txn_date = get(row, Col.TXN_DATE)
+
             payee = get(row, Col.PAYEE)
-            narration = get(row, Col.NARRATION)
+            fields = filter(None, [get(row, field)
+                                   for field in (Col.NARRATION1,
+                                                 Col.NARRATION2,
+                                                 Col.NARRATION3)])
+            narration = ' -- '.join(fields)
+
             tag = get(row, Col.TAG)
-            tags = {tag} if tag is not None else None
+            tags = {tag} if tag is not None else data.EMPTY_SET
 
             # Create a transaction and add it to the list of new entries.
             meta = data.new_metadata(file.name, index)
             if txn_date is not None:
                 meta['txndate'] = parse_date_liberally(txn_date)
             date = parse_date_liberally(date)
-            txn = data.Transaction(meta, date, self.FLAG, payee, narration, tags, None, [])
+            txn = data.Transaction(meta, date, self.FLAG, payee, narration,
+                                   tags, data.EMPTY_SET, [])
             entries.append(txn)
 
             amount_debit, amount_credit = get_amounts(iconfig, row)
@@ -204,13 +208,13 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
                 txn.postings.append(
                     data.Posting(self.account, units, None, None, None, None))
 
-        # Figure out if the file is in ascending or descending order.
-        first_date = parse_date_liberally(get(first_row, Col.DATE))
-        last_date = parse_date_liberally(get(last_row, Col.DATE))
-        is_ascending = first_date < last_date
-
         # Parse the final balance.
-        if Col.BALANCE in iconfig:
+        if Col.BALANCE in iconfig and first_row and last_row:
+            # Figure out if the file is in ascending or descending order.
+            first_date = parse_date_liberally(get(first_row, Col.DATE))
+            last_date = parse_date_liberally(get(last_row, Col.DATE))
+            is_ascending = first_date < last_date
+
             # Choose between the first or the last row based on the date.
             row = last_row if is_ascending else first_row
             date = parse_date_liberally(get(row, Col.DATE)) + datetime.timedelta(days=1)

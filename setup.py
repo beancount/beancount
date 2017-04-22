@@ -2,18 +2,21 @@
 """
 Install script for beancount.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2008-2011, 2013-2016  Martin Blais"
+__license__ = "GNU GPLv2"
+
 
 import os
 from os import path
 import runpy
 import sys
 import warnings
+import platform
 
 
 # Check if the version is sufficient.
-if sys.version_info[:2] < (3,3):
-    raise SystemExit("ERROR: Insufficient Python version; you need v3.3 or higher.")
+if sys.version_info[:2] < (3,5):
+    raise SystemExit("ERROR: Insufficient Python version; you need v3.5 or higher.")
 
 
 # Import setup().
@@ -21,9 +24,11 @@ setup_extra_kwargs = {}
 if 'BEANCOUNT_DISABLE_SETUPTOOLS' in os.environ:
     # Note: this is used for testing only.
     from distutils.core import setup, Extension
+    has_setuptools = False
 else:
     try:
         from setuptools import setup, Extension
+        has_setuptools = True
         setup_extra_kwargs.update(install_requires = [
             # This is required to parse dates from command-line options in a
             # loose, accepting format.
@@ -84,6 +89,7 @@ else:
         warnings.warn("Setuptools not installed; falling back on distutils. "
                       "You will have to install dependencies explicitly.")
         from distutils.core import setup, Extension
+        has_setuptools = False
 
 
 # Make sure we can import hashsrc in order to create a binary with a checksum of
@@ -98,30 +104,42 @@ hash_parser_source_files = hashsrc['hash_parser_source_files']
 
 
 # Explicitly list the scripts to install.
-install_scripts = [path.join('bin', x) for x in """
-bean-bake
-bean-check
-bean-doctor
-bean-example
-bean-format
-bean-price
-bean-query
-bean-report
-bean-sql
-bean-web
-bean-identify
-bean-extract
-bean-file
-treeify
-upload-csv-to-google-sheet
-""".split() if x and not x.startswith('#')]
+binaries = [
+    ('bean-bake', 'beancount.scripts.bake'),
+    ('bean-check', 'beancount.scripts.check'),
+    ('bean-doctor', 'beancount.scripts.doctor'),
+    ('bean-example', 'beancount.scripts.example'),
+    ('bean-format', 'beancount.scripts.format'),
+    ('bean-price', 'beancount.prices.price'),
+    ('bean-query', 'beancount.query.shell'),
+    ('bean-report', 'beancount.reports.report'),
+    ('bean-sql', 'beancount.scripts.sql'),
+    ('bean-web', 'beancount.web.web'),
+    ('bean-identify', 'beancount.ingest.identify'),
+    ('bean-extract', 'beancount.ingest.extract'),
+    ('bean-file', 'beancount.ingest.file'),
+    ('treeify', 'beancount.tools.treeify'),
+    ('upload-to-sheets', 'beancount.tools.sheets_upload'),
+]
+
+if not has_setuptools and platform.system() == 'Windows':
+    setup_extra_kwargs.update(entry_points={
+        'console_scripts': [
+            '{} = {}:main'.format(binary, module)
+            for binary, module in binaries]
+    })
+
+else:
+    setup_extra_kwargs.update(scripts=[
+        path.join('bin', binary)
+        for binary, _ in binaries])
 
 
 # Create a setup.
 # Please read: http://furius.ca/beancount/doc/install about version numbers.
 setup(
     name="beancount",
-    version='2.0b11',
+    version='2.0b15',
     description="Command-line Double-Entry Accounting",
 
     long_description=
@@ -138,28 +156,30 @@ setup(
       Beancount syntax.
     """,
 
-    license="GPL",
+    license="GNU GPLv2 only",
     author="Martin Blais",
     author_email="blais@furius.ca",
     url="http://furius.ca/beancount",
     download_url="http://bitbucket.org/blais/beancount",
 
     package_dir = {'': 'src/python',},
-    packages = ['beancount',
-                'beancount.parser',
-                'beancount.core',
-                'beancount.ops',
-                'beancount.plugins',
-                'beancount.query',
-                'beancount.reports',
-                'beancount.scripts',
-                'beancount.prices',
-                'beancount.prices.sources',
-                'beancount.web',
-                'beancount.docs',
-                'beancount.ingest',
-                'beancount.ingest.importers',
-                'beancount.utils'],
+    packages = [
+        'beancount',
+        'beancount.parser',
+        'beancount.core',
+        'beancount.ops',
+        'beancount.plugins',
+        'beancount.query',
+        'beancount.reports',
+        'beancount.scripts',
+        'beancount.prices',
+        'beancount.prices.sources',
+        'beancount.web',
+        'beancount.ingest',
+        'beancount.ingest.importers',
+        'beancount.utils',
+        'beancount.tools',
+    ],
 
     package_data = {
         'beancount.web': ['*.ico',
@@ -171,9 +191,7 @@ setup(
         'beancount.parser': ['*.h'], # See note for {63fc8d84d30a} above.
         },
 
-    scripts=install_scripts,
-
-    ext_modules=[
+    ext_modules = [
         Extension("beancount.parser._parser",
                   sources=[
                       "src/python/beancount/parser/lexer.c",
@@ -182,6 +200,12 @@ setup(
                   ],
                   define_macros=[('PARSER_SOURCE_HASH',
                                   '"{}"'.format(hash_parser_source_files()))]),
+    ],
+
+    # Include the Emacs support for completeness, for packagers not to have to
+    # check out from the repository.
+    data_files = [
+        ('elisp', ['src/elisp/beancount.el']),
     ],
 
     # Add optional arguments that only work with some variants of setup().
