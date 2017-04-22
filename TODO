@@ -4724,6 +4724,15 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - This triggers a bug! Fix it now.
+
+      2017-04-01 * "Train tickets"
+        Liabilities:CreditCard     -230.00 USD
+        Expenses:Trains       230.00 USD
+        Assets:Points     150 AMTKPTS
+        Income:Rewards  -150
+
+
   - You need to add options to provide the precision to use for prices,
     otherwise something like this:
 
@@ -4841,7 +4850,6 @@ http://furius.ca/beancount/doc/proposal-query
     This problem occurs rarely, but when it does, it's annoying to deal with
     because the error removes the transaction and it cascades to more errors.
     Fixing this would help usability a fair amount.
-
 
 ** Google Keep Tickets
 
