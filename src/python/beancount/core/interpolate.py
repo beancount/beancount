@@ -204,7 +204,7 @@ def infer_tolerances(postings, options_map, use_cost=None):
                     assert isinstance(cost, position.CostSpec)
                     cost_tolerance = MAXIMUM_TOLERANCE
                     for cost_number in cost.number_total, cost.number_per:
-                        if cost_number is None:
+                        if cost_number is None or cost_number is MISSING:
                             continue
                         cost_tolerance = min(tolerance * cost_number, cost_tolerance)
                 cost_tolerances[cost_currency] += cost_tolerance

@@ -139,7 +139,7 @@ else:
 # Please read: http://furius.ca/beancount/doc/install about version numbers.
 setup(
     name="beancount",
-    version='2.0b14',
+    version='2.0b15',
     description="Command-line Double-Entry Accounting",
 
     long_description=
@@ -191,7 +191,7 @@ setup(
         'beancount.parser': ['*.h'], # See note for {63fc8d84d30a} above.
         },
 
-    ext_modules=[
+    ext_modules = [
         Extension("beancount.parser._parser",
                   sources=[
                       "src/python/beancount/parser/lexer.c",
@@ -200,6 +200,12 @@ setup(
                   ],
                   define_macros=[('PARSER_SOURCE_HASH',
                                   '"{}"'.format(hash_parser_source_files()))]),
+    ],
+
+    # Include the Emacs support for completeness, for packagers not to have to
+    # check out from the repository.
+    data_files = [
+        ('elisp', ['src/elisp/beancount.el']),
     ],
 
     # Add optional arguments that only work with some variants of setup().
