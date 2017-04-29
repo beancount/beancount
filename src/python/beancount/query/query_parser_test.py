@@ -324,6 +324,15 @@ class TestSelectPrecedence(QueryParserTestBase):
                                         qp.Constant(value=3))),
             "SELECT * WHERE a * b + c / d - 3;")
 
+    def test_expr_function__membership_precedence(self):
+        self.assertParse(
+            qSelect(qp.Wildcard(),
+                    where_clause=qp.And(qp.Contains(qp.Constant('orange'),
+                                                    qp.Column('tags')),
+                                        qp.Contains(qp.Constant('bananas'),
+                                                    qp.Column('tags')))),
+            "SELECT * WHERE 'orange' IN tags AND 'bananas' IN tags;")
+
 
 class TestSelectFromBase(QueryParserTestBase):
 

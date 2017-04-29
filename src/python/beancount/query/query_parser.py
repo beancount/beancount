@@ -497,7 +497,7 @@ class SelectParser(Lexer):
         ('left', 'NOT'),
         ('left', 'PLUS', 'MINUS'),
         ('left', 'ASTERISK', 'SLASH'),
-        ('left', 'EQ', 'NE', 'GT', 'GTE', 'LT', 'LTE', 'TILDE'),
+        ('left', 'EQ', 'NE', 'GT', 'GTE', 'LT', 'LTE', 'TILDE', 'IN'),
         ]
 
     def p_expression_and(self, p):

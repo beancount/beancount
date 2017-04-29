@@ -4,6 +4,11 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2017-04-29
+
+  - Fixed #27: IN membership operator did not have a proper precedence definition.
+
+
 2017-03-19
 
   - Fixed minor bug with CSV importer that would occur when the file has no

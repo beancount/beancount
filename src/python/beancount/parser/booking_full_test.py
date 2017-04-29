@@ -1248,12 +1248,6 @@ class _BookingTestBase(unittest.TestCase):
             book_entries, book_errors, balances = bf._book(input_entries, options_map,
                                                            methods)
 
-        ## FIXME: remove
-        # print('-------------------------------- input_entries')
-        # printer.print_entries(input_entries)
-        # print('-------------------------------- book_entries')
-        # printer.print_entries(book_entries)
-
         # If requested, check the result of booking.
         entry_booked = find_first_with_tag('booked', all_entries, None)
         if entry_booked:
@@ -2557,8 +2551,8 @@ class TestBook(unittest.TestCase):
         return inter_postings, balances
 
     def assertPostingsEqual(self, postings1, postings2):
-        postings1 = [posting._replace(meta=None) for posting in postings1]
-        postings2 = [posting._replace(meta=None) for posting in postings2]
+        postings1 = sorted([posting._replace(meta=None) for posting in postings1])
+        postings2 = sorted([posting._replace(meta=None) for posting in postings2])
         self.assertEqual(postings1, postings2)
 
     @parser.parse_doc(allow_incomplete=True)
