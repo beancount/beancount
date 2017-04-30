@@ -534,11 +534,6 @@ def book_reductions(entry, group_postings, balances,
     # cumulative effect of all the postings inferred here
     local_balances = {}
 
-    # Postings held at cost will be classified as either augmentations or
-    # reductions. Augmentations will be processed first. The application of
-    # reductions is delayed until after.
-    reductions = []
-
     empty = inventory.Inventory()
     booked_postings = []
     for posting in group_postings:
@@ -568,11 +563,58 @@ def book_reductions(entry, group_postings, balances,
             if (method is not Booking.NONE and
                 balance is not None and
                 balance.is_reduced_by(units)):
+                # This posting is a reduction.
 
-                # This posting is a reduction. Delay processing until all the
-                # augmentations have been processed.
-                reductions.append(posting)
+                # Match the positions.
+                cost_number = compute_cost_number(costspec, units)
+                matches = []
+                for position in balance:
+                    # Skip inventory contents of a different currency.
+                    if (units.currency and
+                        position.units.currency != units.currency):
+                        continue
+                    # Skip balance positions not held at cost.
+                    if position.cost is None:
+                        continue
+                    if (cost_number is not None and
+                        position.cost.number != cost_number):
+                        continue
+                    if (isinstance(costspec.currency, str) and
+                        position.cost.currency != costspec.currency):
+                        continue
+                    if (costspec.date and
+                        position.cost.date != costspec.date):
+                        continue
+                    if (costspec.label and
+                        position.cost.label != costspec.label):
+                        continue
+                    matches.append(position)
 
+                # Check for ambiguous matches.
+                if len(matches) == 0:
+                    errors.append(
+                        ReductionError(entry.meta,
+                                       'No position matches "{}" against balance {}'.format(
+                                           posting, balance),
+                                       entry))
+                    return [], errors  # This is irreconcilable, remove these postings.
+
+                reduction_postings, ambi_errors = booking_method.handle_ambiguous_matches(
+                    entry, posting, matches, method)
+                if ambi_errors:
+                    errors.extend(ambi_errors)
+                    return [], errors
+
+                # Add the reductions to the resulting list of booked postings.
+                booked_postings.extend(reduction_postings)
+
+                # Update the local balance in order to avoid matching against
+                # the same postings twice when processing multiple postings in
+                # the same transaction. Note that we only do this for postings
+                # held at cost because the other postings may need interpolation
+                # in order to be resolved properly.
+                for posting in reduction_postings:
+                    balance.add_position(posting)
             else:
                 # This posting is an augmentation.
                 #
@@ -587,73 +629,6 @@ def book_reductions(entry, group_postings, balances,
                     dated_costspec = costspec._replace(date=entry.date)
                     posting = posting._replace(cost=dated_costspec)
                 booked_postings.append(posting)
-
-    # Process all the reductions.
-    for posting in reductions:
-        # Process a single posting.
-        units = posting.units
-        costspec = posting.cost
-        account = posting.account
-
-        # See note above.
-        previous_balance = balances.get(account, None)
-        balance = local_balances.setdefault(account, copy.copy(previous_balance))
-
-        method = methods[account]
-        if (method is not Booking.NONE and
-            balance is not None and
-            balance.is_reduced_by(units)):
-
-            # Match the positions.
-            cost_number = compute_cost_number(costspec, units)
-            matches = []
-            for position in balance:
-                # Skip inventory contents of a different currency.
-                if (units.currency and
-                    position.units.currency != units.currency):
-                    continue
-                # Skip balance positions not held at cost.
-                if position.cost is None:
-                    continue
-                if (cost_number is not None and
-                    position.cost.number != cost_number):
-                    continue
-                if (isinstance(costspec.currency, str) and
-                    position.cost.currency != costspec.currency):
-                    continue
-                if (costspec.date and
-                    position.cost.date != costspec.date):
-                    continue
-                if (costspec.label and
-                    position.cost.label != costspec.label):
-                    continue
-                matches.append(position)
-
-            # Check for ambiguous matches.
-            if len(matches) == 0:
-                errors.append(
-                    ReductionError(entry.meta,
-                                   'No position matches "{}" against balance {}'.format(
-                                       posting, balance),
-                                   entry))
-                return [], errors  # This is irreconcilable, remove these postings.
-
-            reduction_postings, ambi_errors = booking_method.handle_ambiguous_matches(
-                entry, posting, matches, method)
-            if ambi_errors:
-                errors.extend(ambi_errors)
-                return [], errors
-
-            # Add the reductions to the resulting list of booked postings.
-            booked_postings.extend(reduction_postings)
-
-            # Update the local balance in order to avoid matching against
-            # the same postings twice when processing multiple postings in
-            # the same transaction. Note that we only do this for postings
-            # held at cost because the other postings may need interpolation
-            # in order to be resolved properly.
-            for reduction_posting in reduction_postings:
-                balance.add_position(reduction_posting)
 
     return booked_postings, errors
 
