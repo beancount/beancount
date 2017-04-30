@@ -4,6 +4,20 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2017-04-30
+
+  - Merged incomplete changes from booking branch to "default." The work on
+    supporting self-reduction (see
+    http://furius.ca/benacount/doc/self-reductions) won't be carried during 2.0,
+    it will be subject of a subsequent release.
+
+  - This concludes the merging of all the branches, which I've done in order to
+    move the source to a more regular project directory (under /beancount).
+
+  - Moved src/elisp/beancount.el to editors/emacs/beancount.el and made
+    necessary adjustments.
+
+
 2017-04-29
 
   - Fixed #27: IN membership operator did not have a proper precedence definition.

@@ -205,7 +205,7 @@ setup(
     # Include the Emacs support for completeness, for packagers not to have to
     # check out from the repository.
     data_files = [
-        ('elisp', ['src/elisp/beancount.el']),
+        ('elisp', ['editors/emacs/beancount.el']),
     ],
 
     # Add optional arguments that only work with some variants of setup().

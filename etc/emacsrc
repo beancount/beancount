@@ -4,7 +4,7 @@
 ;;
 
 ;; Add local emacs-lisp extension to load-path and load it.
-(add-to-list 'load-path (concat project-current "/src/elisp"))
+(add-to-list 'load-path (concat project-current "/editors/emacs"))
 (require 'beancount)
 
 ;; Automatically open .beancount files in beancount-mode.
