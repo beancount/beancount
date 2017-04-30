@@ -478,7 +478,7 @@ ReductionError = collections.namedtuple('ReductionError', 'source message entry'
 
 
 def has_self_reduction(postings):
-    """Return true if the postings potentially reduce each other.
+    """Return true if the postings potentially reduce each other at cost.
 
     Args:
       postings: A list of postings with uninterpolated CostSpec cost instances.
@@ -491,7 +491,7 @@ def has_self_reduction(postings):
         cost = posting.cost
         if cost is None:
             continue
-        key = (posting.units.currency, posting.cost.currency)
+        key = (posting.account, posting.units.currency, posting.cost.currency)
         sign = 1 if posting.units.number > ZERO else -1
         if cost_changes.setdefault(key, sign) != sign:
             return True
