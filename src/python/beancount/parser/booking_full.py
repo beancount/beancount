@@ -94,6 +94,10 @@ from beancount.parser import printer
 from beancount.utils import misc_utils
 
 
+# An error of disallowed self-reduction.
+SelfReduxError = collections.namedtuple('SelfReduxError', 'source message entry')
+
+
 def book(entries, options_map, methods):
     """Interpolate missing data from the entries using the full historical algorithm.
     See the internal implementation _book() for details.
@@ -147,6 +151,10 @@ def _book(entries, options_map, methods):
                 # group in this block; Summary: We will need to run the
                 # reductions prior to the augmentations in order to support
                 # reductions between the postings of a single transaction.)
+                if False: ## Disabled.
+                    if has_self_reduction(group_postings, methods):
+                        errors.append(SelfReduxError(
+                            entry.meta, "Self-reduction is not allowed", entry))
 
                 # Perform booking reductions, that is, match postings which
                 # reduce the ante-inventory of their accounts to an existing
@@ -463,11 +471,13 @@ def replace_currencies(postings, refer_groups):
 ReductionError = collections.namedtuple('ReductionError', 'source message entry')
 
 
-def has_self_reduction(postings):
+def has_self_reduction(postings, methods):
     """Return true if the postings potentially reduce each other at cost.
 
     Args:
       postings: A list of postings with uninterpolated CostSpec cost instances.
+      methods: A mapping of account name to their corresponding booking
+        method.
     Returns:
       A boolean, true if there's a potential for self-reduction.
     """
@@ -477,7 +487,9 @@ def has_self_reduction(postings):
         cost = posting.cost
         if cost is None:
             continue
-        key = (posting.account, posting.units.currency, posting.cost.currency)
+        if methods[posting.account] is Booking.NONE:
+            continue
+        key = (posting.account, posting.units.currency)
         sign = 1 if posting.units.number > ZERO else -1
         if cost_changes.setdefault(key, sign) != sign:
             return True
@@ -575,16 +587,6 @@ def book_reductions(entry, group_postings, balances,
                     dated_costspec = costspec._replace(date=entry.date)
                     posting = posting._replace(cost=dated_costspec)
                 booked_postings.append(posting)
-
-                if 0:
-                    # FIXME: There is a problem here... I need to apply the
-                    # augmentations in order for the classifications of the
-                    # reductions to apply right, but I can't interpolate them this
-                    # early. Not sure how to resolve this.
-
-                    # Update the local balance so that postings reducing off
-                    # balances added within the same transaction will match.
-                    balance.add_position(posting)
 
     # Process all the reductions.
     for posting in reductions:
