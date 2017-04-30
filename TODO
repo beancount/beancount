@@ -1546,6 +1546,19 @@ http://furius.ca/beancount/doc/proposal-query
     * Move balance_incomplete_postings & get_incomplete_postings to beancount.parser.booking_simple.
     * Move the corresponding unit tests to beancount.parser.booking_simple_test.
 
+  - An important question: on an empty inventory, does the following transaction
+    work?
+
+      2016-04-23 * "Buy and sell on the same transaction"
+        Assets:Investments:HOOL    1 HOOL {100.00 USD}
+        Assets:Investments:HOOL   -1 HOOL {}
+
+    One way to handle this would be to process all account augmentations before
+    reductions. But that's not really possible, because the augmentation may
+    require interpolation first. Hmmm. Difficult question. {f89b5b01e568}
+
+    [This is being handled in the "booking" branch.]
+
   - Add an option "merge_lots" whose default value is TRUE, and which can be set
     to FALSE in order to avoid merging augmenting lots in the Inventory. It this
     is false, there's the possibillity of an inventory owning two lots which
