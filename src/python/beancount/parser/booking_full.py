@@ -142,25 +142,11 @@ def _book(entries, options_map, methods):
                 # that from entry.postings, and may include replicated
                 # auto-postings. Never use entry.postings going forward.
 
-                # See http://furius.ca/beancount/doc/self-reductions for an
-                # explanation of how we treat each currency group in this block.
-
-                if has_self_reduction(group_postings):
-                    # If there's an augmentation and a reduction of the same
-                    # commodity in the same currency group, don't allow
-                    # interpolation, convert CostSpec to Cost for augmentations,
-                    # apply them, and then book reduction. This allows us to reduce
-                    # an augmentation that occurs in the same transaction.
-
-                    pass  ## FIXME: TODO
-
-                else:
-                    # Otherwise, we can first match the reductions against the
-                    # ante-inventory and let the interpolation process take
-                    # advantage of any information acquired in doing that.
-
-                    pass  ## FIXME: TODO
-
+                # (See http://furius.ca/beancount/doc/self-reductions for an
+                # explanation of how we will eventually treat each currency
+                # group in this block; Summary: We will need to run the
+                # reductions prior to the augmentations in order to support
+                # reductions between the postings of a single transaction.)
 
                 # Perform booking reductions, that is, match postings which
                 # reduce the ante-inventory of their accounts to an existing

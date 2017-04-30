@@ -1069,6 +1069,82 @@ class TestParseBookingOptions(cmptest.TestCase):
                          options_map["booking_method"])
 
 
+class TestSelfReductions(cmptest.TestCase):
+
+    @loader.load_doc()
+    def test_has_self_reductions__simple(self, entries, _, __):
+        """
+        2017-01-01 open Assets:Account
+        2017-01-01 * "test-positive"
+          Assets:Account       30 GOOGL {300.00 USD}
+          Assets:Account      -10 GOOGL {}
+        """
+        self.assertTrue(bf.has_self_reduction(entries[-1].postings))
+
+    @loader.load_doc()
+    def test_has_self_reductions__inverted_signs(self, entries, _, __):
+        """
+        2017-01-01 open Assets:Account
+        2017-01-01 * "test-inverted-signs"
+          Assets:Account      -30 GOOGL {300.00 USD}
+          Assets:Account       10 GOOGL {}
+        """
+        self.assertTrue(bf.has_self_reduction(entries[-1].postings))
+
+    @loader.load_doc()
+    def test_has_self_reductions__multiple(self, entries, _, __):
+        """
+        2017-01-01 open Assets:Account
+        2017-01-01 * "test-multiple"
+          Assets:Account      -30 GOOGL {300.00 USD}
+          Assets:Account       10 GOOGL {}
+        """
+        self.assertTrue(bf.has_self_reduction(entries[-1].postings))
+
+    @loader.load_doc()
+    def test_has_self_reductions__reducing_without_cost(self, entries, _, __):
+        """
+        2017-01-01 open Assets:Account
+        2017-01-01 open Assets:Account2
+
+        2017-01-01 * "test-reducing-without-cost"
+          Assets:Account       30 GOOGL {300.00 USD}
+          Assets:Account      -9000 USD
+        """
+        self.assertFalse(bf.has_self_reduction(entries[-1].postings))
+
+    @loader.load_doc()
+    def test_has_self_reductions__augmenting_without_cost(self, entries, _, __):
+        """
+        2017-01-01 open Assets:Account
+        2017-01-01 * "test-augmenting-without-cost"
+          Assets:Account       9000 USD
+          Assets:Account      -10 GOOGL {900 USD}
+        """
+        self.assertFalse(bf.has_self_reduction(entries[-1].postings))
+
+    @loader.load_doc()
+    def test_has_self_reductions__different_currency(self, entries, _, __):
+        """
+        2017-01-01 open Assets:Account
+        2017-01-01 * "test-different-currency"
+          Assets:Account       30 GOOGL {300.00 USD}
+          Assets:Account      -10 AAPL {}
+        """
+        self.assertFalse(bf.has_self_reduction(entries[-1].postings))
+
+    @loader.load_doc()
+    def test_has_self_reductions__different_account(self, entries, _, __):
+        """
+        2017-01-01 open Assets:Account
+        2017-01-01 open Assets:Account2
+        2017-01-01 * "test-different-account"
+          Assets:Account        30 GOOGL {300.00 USD}
+          Assets:Account2      -10 GOOGL {}
+        """
+        self.assertFalse(bf.has_self_reduction(entries[-1].postings))
+
+
 # Base class and helpers for writing booking tests.
 #
 # Booking involves a large number of scenarios, and because of this we leverage
