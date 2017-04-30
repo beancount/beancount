@@ -1557,6 +1557,8 @@ http://furius.ca/beancount/doc/proposal-query
     reductions. But that's not really possible, because the augmentation may
     require interpolation first. Hmmm. Difficult question. {f89b5b01e568}
 
+    [This is being handled in the "booking" branch.]
+
   - Add an option "merge_lots" whose default value is TRUE, and which can be set
     to FALSE in order to avoid merging augmenting lots in the Inventory. It this
     is false, there's the possibillity of an inventory owning two lots which
