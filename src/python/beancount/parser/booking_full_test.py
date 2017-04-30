@@ -1647,8 +1647,22 @@ class TestBookReductions(_BookingTestBase):
           Assets:Account           25 HOOL {116.00 USD, 2016-01-16}
         """
 
+    @book_test(Booking.STRICT)
+    def test_reduce__multiple_reductions__competing__with_error(self, _, __):
+        """
+        2016-01-01 * #ante
+          Assets:Account            5 HOOL {115.00 USD, 2016-01-15}
+
+        2016-05-02 * #apply
+          Assets:Account           -4 HOOL {115.00 USD}
+          Assets:Account           -4 HOOL {2016-01-15}
+
+        2016-05-02 * #booked
+          error: "Not enough lots to reduce"
+        """
+
     @book_test(Booking.FIFO)
-    def test_reduce__multiple_reductions__with_error(self, _, __):
+    def test_reduce__multiple_reductions__overflowing__with_error(self, _, __):
         """
         2016-01-01 * #ante
           Assets:Account           50 HOOL {115.00 USD, 2016-01-15}
@@ -1686,13 +1700,189 @@ class TestBookReductions(_BookingTestBase):
     def test_reduce__reduction_with_same_currency_not_at_cost(self, _, __):
         """
         2016-01-01 * #ante
-          Assets:Vanguard:Retire:AfterTax:HOOL   50 HOOL @ 14.33 USD
+          Assets:Account   50 HOOL @ 14.33 USD
 
         2016-05-02 * #apply
-          Assets:Vanguard:Retire:AfterTax:HOOL  -40 HOOL {14.33 USD} @ 14.33 USD
+          Assets:Account  -40 HOOL {14.33 USD} @ 14.33 USD
 
         2016-05-02 * #booked
           error: "No position matches"
+        """
+
+
+class TestHasSelfReductions(cmptest.TestCase):
+
+    BM = collections.defaultdict(lambda: Booking.STRICT)
+
+    @loader.load_doc()
+    def test_has_self_reductions__simple(self, entries, _, __):
+        """
+        2017-01-01 open Assets:Account
+        2017-01-01 * "test-positive"
+          Assets:Account       30 GOOGL {300.00 USD}
+          Assets:Account      -10 GOOGL {}
+        """
+        self.assertTrue(bf.has_self_reduction(entries[-1].postings, self.BM))
+
+    @loader.load_doc()
+    def test_has_self_reductions__inverted_signs(self, entries, _, __):
+        """
+        2017-01-01 open Assets:Account
+        2017-01-01 * "test-inverted-signs"
+          Assets:Account      -30 GOOGL {300.00 USD}
+          Assets:Account       10 GOOGL {}
+        """
+        self.assertTrue(bf.has_self_reduction(entries[-1].postings, self.BM))
+
+    @loader.load_doc()
+    def test_has_self_reductions__multiple(self, entries, _, __):
+        """
+        2017-01-01 open Assets:Account
+        2017-01-01 * "test-multiple"
+          Assets:Account      -30 GOOGL {300.00 USD}
+          Assets:Account       10 GOOGL {}
+        """
+        self.assertTrue(bf.has_self_reduction(entries[-1].postings, self.BM))
+
+    @loader.load_doc()
+    def test_has_self_reductions__reducing_without_cost(self, entries, _, __):
+        """
+        2017-01-01 open Assets:Account
+        2017-01-01 open Assets:Account2
+
+        2017-01-01 * "test-reducing-without-cost"
+          Assets:Account       30 GOOGL {300.00 USD}
+          Assets:Account      -9000 USD
+        """
+        self.assertFalse(bf.has_self_reduction(entries[-1].postings, self.BM))
+
+    @loader.load_doc()
+    def test_has_self_reductions__augmenting_without_cost(self, entries, _, __):
+        """
+        2017-01-01 open Assets:Account
+        2017-01-01 * "test-augmenting-without-cost"
+          Assets:Account       9000 USD
+          Assets:Account      -10 GOOGL {900 USD}
+        """
+        self.assertFalse(bf.has_self_reduction(entries[-1].postings, self.BM))
+
+    @loader.load_doc()
+    def test_has_self_reductions__different_currency(self, entries, _, __):
+        """
+        2017-01-01 open Assets:Account
+        2017-01-01 * "test-different-currency"
+          Assets:Account       30 GOOGL {300.00 USD}
+          Assets:Account      -10 AAPL {}
+        """
+        self.assertFalse(bf.has_self_reduction(entries[-1].postings, self.BM))
+
+    @loader.load_doc()
+    def test_has_self_reductions__different_account(self, entries, _, __):
+        """
+        2017-01-01 open Assets:Account
+        2017-01-01 open Assets:Account2
+        2017-01-01 * "test-different-account"
+          Assets:Account        30 GOOGL {300.00 USD}
+          Assets:Account2      -10 GOOGL {}
+        """
+        self.assertFalse(bf.has_self_reduction(entries[-1].postings, self.BM))
+
+    @unittest.skip('Disabled until we can support total self-redux with replacement')
+    @loader.load_doc()
+    def test_has_self_reductions__total_replacement(self, entries, _, __):
+        """
+        2017-01-01 open Assets:Account
+        2017-01-01 open Assets:Account2
+        2017-01-01 * "test-total-replacement"
+          Assets:Account       -30 GOOGL {300.00 USD}
+          Assets:Account        30 GOOGL {301.00 USD}
+          Assets:Account2      -30 USD
+        """
+        self.assertFalse(bf.has_self_reduction(entries[-1].postings, self.BM))
+
+    @loader.load_doc()
+    def test_has_self_reductions__booking_method_allowed(self, entries, _, __):
+        """
+        2017-01-01 open Assets:Account  "NONE"
+        2017-01-01 * "test-booking-method-allowed"
+          Assets:Account       30 GOOGL {300.00 USD}
+          Assets:Account      -10 GOOGL {}
+        """
+        methods = self.BM.copy()
+        methods['Assets:Account'] = Booking.NONE
+        self.assertFalse(bf.has_self_reduction(entries[-1].postings, methods))
+
+
+class TestBookReductionsSelf(_BookingTestBase):
+
+    @book_test(Booking.STRICT)
+    def test_reduce__augment_and_reduce_with_empty_balance(self, _, errors):
+        """
+        2016-01-01 * #ante
+
+        2016-05-02 * #apply
+          Assets:Account            2 HOOL {115.00 USD}
+          Assets:Account           -2 HOOL {116.00 USD}
+
+        2016-05-02 * #booked
+          Assets:Account            2 HOOL {115.00 USD, 2016-05-02}
+          Assets:Account           -2 HOOL {116.00 USD, 2016-05-02}
+        """
+        # FIXME: This needs to be handled properly; what's problematic here is
+        # that both postings will be detected as augmentations. The matching
+        # code should be modified for this to trigger an error.
+
+    @unittest.skip('Disabled until self-reduction is supported')
+    @book_test(Booking.STRICT)
+    def test_reduce__augment_and_reduce_with_empty_balance__matching_pos(self, _, __):
+        """
+        2016-01-01 * #ante
+
+        2016-05-02 * #apply
+          Assets:Account            2 HOOL {115.00 USD}
+          Assets:Account           -2 HOOL {}
+
+        2016-01-01 * #ambi-matches
+          Assets:Account            2 HOOL {115.00 USD}
+
+        2016-01-01 * #ambi-resolved #booked
+          Assets:Account            2 HOOL {115.00 USD}
+        """
+
+    @unittest.skip('Disabled until self-reduction is supported')
+    @book_test(Booking.STRICT)
+    def test_reduce__augment_and_reduce_with_empty_balance__matching_neg(self, _, __):
+        """
+        2016-01-01 * #ante
+
+        2016-05-02 * #apply
+          Assets:Account           -2 HOOL {115.00 USD}
+          Assets:Account            2 HOOL {}
+
+        2016-01-01 * #ambi-matches
+          Assets:Account           -2 HOOL {115.00 USD}
+
+        2016-01-01 * #ambi-resolved #booked
+          Assets:Account           -2 HOOL {115.00 USD}
+        """
+
+    @unittest.skip('Disabled until self-reduction is supported')
+    @book_test(Booking.STRICT)
+    def test_reduce__augment_and_reduce_with_non_empty_balance(self, _, __):
+        """
+        2016-02-01 * #ante
+          Assets:Account            1 HOOL {5 USD}
+
+        ;; Acquiring an asset and selling it in the same transaction.
+        2016-03-01 * #apply
+          Assets:Account            2 HOOL {6 USD}
+          Assets:Account           -2 HOOL {6 USD} @ 7 USD
+
+        2016-05-02 * #ambi-matches
+          Assets:Account            2 HOOL {6 USD}
+
+        2016-05-02 * #ambi-resolved #booked
+          Assets:Account            2 HOOL {6 USD}
         """
 
 
