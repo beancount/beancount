@@ -6,6 +6,16 @@ Note: This file contains only changes in the 'default' branch.
 
 2017-04-30
 
+  - Moved src/python/beancount/... to beancount/...
+    The purpose is to structure this project in the most common way
+    people expect it (most Python OSS projects have this structure, with the
+    package name directory at the root). I've had this other structure for a
+    while mainly for historical reasons. I wanted to make this clean before
+    baking a final 2.0 release and switching to numbered releases.
+
+  - Moved src/elisp/beancount.el to editors/emacs/beancount.el and made
+    necessary adjustments.
+
   - Merged incomplete changes from booking branch to "default." The work on
     supporting self-reduction (see
     http://furius.ca/benacount/doc/self-reductions) won't be carried during 2.0,
@@ -13,9 +23,6 @@ Note: This file contains only changes in the 'default' branch.
 
   - This concludes the merging of all the branches, which I've done in order to
     move the source to a more regular project directory (under /beancount).
-
-  - Moved src/elisp/beancount.el to editors/emacs/beancount.el and made
-    necessary adjustments.
 
 
 2017-04-29

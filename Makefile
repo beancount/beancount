@@ -5,11 +5,9 @@ INPUT = $(HOME)/q/office/accounting/blais.beancount
 DOWNLOADS = $(HOME)/u/Downloads
 
 GREP="grep --include="*.py" -srnE"
-SRC=src/python
 TOOLS=./etc
 
 PYTHON=python3
-#PYTHON=$(HOME)/src/python/vginstall/bin/python3
 
 all: compile
 
@@ -25,7 +23,7 @@ clean:
 
 
 # Targets to generate and compile the C parser.
-CROOT = $(SRC)/beancount/parser
+CROOT = beancount/parser
 LEX = flex
 YACC = bison --report=itemset --verbose
 FILTERYACC = sed -e 's@/\*[ \t]yacc\.c:.*\*/@@'
@@ -70,7 +68,7 @@ html docs:
 # We want to insure a really strict set of relationships between the modules,
 # and this is the high-level picture.
 build/beancount.deps:
-	sfood -i bin src/python > $@
+	sfood -i bin beancount > $@
 
 CLUSTERS_REGEXPS =							\
 	beancount/core/.*_test\.py	 	core/tests		\
@@ -117,7 +115,7 @@ build/beancount_tests.pdf: build/beancount.deps
 # We are considering a separation of the basic data structure and the basic operations.
 # This provides the detail of the relationships between these sets of fils.
 build/beancount-core.pdf: build/beancount-core.deps
-	sfood -ii $(SRC)/beancount/core/*.py | sfood-graph | $(GRAPHER) -Tps | ps2pdf - $@
+	sfood -ii beancount/core/*.py | sfood-graph | $(GRAPHER) -Tps | ps2pdf - $@
 
 showdeps-core: build/beancount-core.pdf
 	evince $<
@@ -136,16 +134,16 @@ release:
 # Run the unittests.
 NOSE = nosetests3
 vtest vtests verbose-test verbose-tests:
-	$(NOSE) -v -s $(SRC)
+	$(NOSE) -v -s beancount
 
 qtest qtests quiet-test quiet-tests test tests:
-	$(NOSE) $(SRC)
+	$(NOSE) beancount
 
 test-failed:
-	$(NOSE) --failed $(SRC)
+	$(NOSE) --failed beancount
 
 nakedtests:
-	PATH=/bin:/usr/bin PYTHONPATH= /usr/local/bin/$(NOSE) -x $(SRC)
+	PATH=/bin:/usr/bin PYTHONPATH= /usr/local/bin/$(NOSE) -x beancount
 
 # Run the parser and measure its performance.
 .PHONY: check
@@ -165,7 +163,7 @@ example $(EXAMPLE):
 
 TUTORIAL=examples/tutorial
 tutorial: $(EXAMPLE)
-	$(PYTHON) src/python/beancount/scripts/tutorial.py $(EXAMPLE) $(TUTORIAL)
+	$(PYTHON) beancount/scripts/tutorial.py $(EXAMPLE) $(TUTORIAL)
 
 
 # Run the web server.
@@ -189,20 +187,20 @@ sandbox:
 	bean-sandbox $(INPUT)
 
 missing-tests:
-	$(TOOLS)/find_missing_tests.py $(SRC)
+	$(TOOLS)/find_missing_tests.py beancount
 
 fixmes:
-	egrep -srn '\b(FIXME|TODO\()' $(SRC) || true
+	egrep -srn '\b(FIXME|TODO\()' beancount || true
 
 filter-terms:
 	egrep --exclude-dir='.hg' --exclude-dir='__pycache__' -srn 'GOOGL?\b' $(PWD) | grep -v GOOGLE_APIS || true
 
 multi-imports:
-	(egrep -srn '^(from.*)?import.*,' $(SRC) | grep -v 'from typing') || true
+	(egrep -srn '^(from.*)?import.*,' beancount | grep -v 'from typing') || true
 
 # Check for unused imports.
 sfood-checker:
-	sfood-checker bin src/python
+	sfood-checker bin beancount
 
 # Check dependency constraints.
 constraints dep-constraints: build/beancount.deps
@@ -212,7 +210,7 @@ constraints dep-constraints: build/beancount.deps
 # Run the linter on all source code.
 # To list all messages, call: "pylint --list-msgs"
 LINT_SRCS =					\
-  $(SRC)/beancount				\
+  beancount					\
   examples/ingest/office/importers		\
   bin/*						\
   tools/*.py

@@ -44,7 +44,7 @@ class TestSetup(test_utils.TestCase):
         # Setuptools will leave some crud in the installation source. Clean this
         # up so as not to be annoying.
         rootdir = test_utils.find_repository_root(__file__)
-        egg_info = path.join(rootdir, 'src/python/beancount.egg-info')
+        egg_info = path.join(rootdir, 'beancount.egg-info')
         if path.exists(egg_info):
             shutil.rmtree(egg_info)
 
@@ -153,7 +153,7 @@ class TestSetup(test_utils.TestCase):
 
         # Find the set of expected header & C files.
         exp_filenames = set()
-        for root, dirs, files in os.walk(path.join(rootdir, 'src/python/beancount')):
+        for root, dirs, files in os.walk(path.join(rootdir, 'beancount')):
             for filename in files:
                 if re.match(r'.*\.[hc]$', filename):
                     exp_filenames.add(path.join(root[len(rootdir)+1:], filename))

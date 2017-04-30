@@ -30,8 +30,8 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-#ifndef YY_YY_SRC_PYTHON_BEANCOUNT_PARSER_GRAMMAR_H_INCLUDED
-# define YY_YY_SRC_PYTHON_BEANCOUNT_PARSER_GRAMMAR_H_INCLUDED
+#ifndef YY_YY_BEANCOUNT_PARSER_GRAMMAR_H_INCLUDED
+# define YY_YY_BEANCOUNT_PARSER_GRAMMAR_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 1
@@ -106,7 +106,7 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 126 "src/python/beancount/parser/grammar.y" 
+#line 126 "beancount/parser/grammar.y" 
 
     char character;
     const char* string;
@@ -116,7 +116,7 @@ union YYSTYPE
         PyObject* pyobj2;
     } pairobj;
 
-#line 120 "src/python/beancount/parser/grammar.h" 
+#line 120 "beancount/parser/grammar.h" 
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -142,4 +142,4 @@ struct YYLTYPE
 
 int yyparse (void);
 
-#endif /* !YY_YY_SRC_PYTHON_BEANCOUNT_PARSER_GRAMMAR_H_INCLUDED  */
+#endif /* !YY_YY_BEANCOUNT_PARSER_GRAMMAR_H_INCLUDED  */

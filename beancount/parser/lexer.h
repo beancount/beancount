@@ -2,8 +2,8 @@
 #define yyHEADER_H 1
 #define yyIN_HEADER 1
 
-#line 6 "src/python/beancount/parser/lexer.h"
-#line 23 "src/python/beancount/parser/lexer.l"
+#line 6 "beancount/parser/lexer.h"
+#line 23 "beancount/parser/lexer.l"
 
 /* Includes. */
 #include <math.h>
@@ -89,7 +89,7 @@ int strtonl(const char* buf, size_t nchars);
 
 
 
-#line 93 "src/python/beancount/parser/lexer.h"
+#line 93 "beancount/parser/lexer.h"
 
 #define  YY_INT_ALIGNED short int
 
@@ -427,9 +427,9 @@ extern int yylex \
 #undef YY_DECL
 #endif
 
-#line 382 "src/python/beancount/parser/lexer.l"
+#line 382 "beancount/parser/lexer.l"
 
 
-#line 434 "src/python/beancount/parser/lexer.h"
+#line 434 "beancount/parser/lexer.h"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */

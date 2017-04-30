@@ -73,7 +73,7 @@
 
 (defconst beancount-option-names
   ;; This list is kept in sync with the options defined in
-  ;; src/python/beancount/parser/options.py.
+  ;; beancount/parser/options.py.
   ;; Note: We should eventually build a tool that spits out the current list
   ;; automatically.
   '("title"
@@ -581,12 +581,11 @@ Only useful if you have not installed Beancount properly in your PATH.")
 (defun beancount--run (prog &rest args)
   (let ((process-environment
          (if beancount-install-dir
-             `(,(concat "PYTHONPATH="
-                        (expand-file-name "src/python"
-                                          beancount-install-dir))
+             `(,(concat "PYTHONPATH=" beancount-install-dir)
                ,(concat "PATH="
                         (expand-file-name "bin" beancount-install-dir)
-                        ":" (getenv "PATH"))
+                        ":"
+                        (getenv "PATH"))
                ,@process-environment)
            process-environment))
         (compile-command (mapconcat (lambda (arg)
