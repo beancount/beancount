@@ -142,8 +142,8 @@ def _book(entries, options_map, methods):
                 # that from entry.postings, and may include replicated
                 # auto-postings. Never use entry.postings going forward.
 
-                # See booking_full.txt for an explanation of how we treat each
-                # currency group in this block.
+                # See http://furius.ca/beancount/doc/self-reductions for an
+                # explanation of how we treat each currency group in this block.
 
                 if has_self_reduction(group_postings):
                     # If there's an augmentation and a reduction of the same
