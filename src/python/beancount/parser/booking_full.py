@@ -25,7 +25,7 @@ On the other hand, consider this transaction:
       Assets:Cash               1000 USD
       Income:Gains
 
-Now the interpolation cannot succeed. If the Assets:Investments accoujnt is
+Now the interpolation cannot succeed. If the Assets:Investments account is
 configured to use the FIFO method, the 10 oldest shares would be selected for
 the cost, and we could then interpolate the capital gains correctly.
 
@@ -89,6 +89,13 @@ from beancount.parser import booking_method
 from beancount.core import position
 from beancount.core import inventory
 from beancount.core import interpolate
+from beancount.core import convert
+from beancount.parser import printer
+from beancount.utils import misc_utils
+
+
+# An error of disallowed self-reduction.
+SelfReduxError = collections.namedtuple('SelfReduxError', 'source message entry')
 
 
 def book(entries, options_map, methods):
@@ -137,7 +144,17 @@ def _book(entries, options_map, methods):
             for currency, group_postings in posting_groups:
                 # Important note: the group of 'postings' here is a subset of
                 # that from entry.postings, and may include replicated
-                # auto-postings. Never use entry.postings further on.
+                # auto-postings. Never use entry.postings going forward.
+
+                # (See http://furius.ca/beancount/doc/self-reductions for an
+                # explanation of how we will eventually treat each currency
+                # group in this block; Summary: We will need to run the
+                # reductions prior to the augmentations in order to support
+                # reductions between the postings of a single transaction.)
+                if False: ## Disabled.
+                    if has_self_reduction(group_postings, methods):
+                        errors.append(SelfReduxError(
+                            entry.meta, "Self-reduction is not allowed", entry))
 
                 # Perform booking reductions, that is, match postings which
                 # reduce the ante-inventory of their accounts to an existing
@@ -454,6 +471,31 @@ def replace_currencies(postings, refer_groups):
 ReductionError = collections.namedtuple('ReductionError', 'source message entry')
 
 
+def has_self_reduction(postings, methods):
+    """Return true if the postings potentially reduce each other at cost.
+
+    Args:
+      postings: A list of postings with uninterpolated CostSpec cost instances.
+      methods: A mapping of account name to their corresponding booking
+        method.
+    Returns:
+      A boolean, true if there's a potential for self-reduction.
+    """
+    # A mapping of (currency, cost-currency) and sign.
+    cost_changes = {}
+    for posting in postings:
+        cost = posting.cost
+        if cost is None:
+            continue
+        if methods[posting.account] is Booking.NONE:
+            continue
+        key = (posting.account, posting.units.currency)
+        sign = 1 if posting.units.number > ZERO else -1
+        if cost_changes.setdefault(key, sign) != sign:
+            return True
+    return False
+
+
 def book_reductions(entry, group_postings, balances,
                     methods):
     """Book inventory reductions against the ante-balances.
@@ -507,7 +549,7 @@ def book_reductions(entry, group_postings, balances,
         # Also note that if there is no existing balance, then won't be any lot
         # reduction because none of the postings will be able to match against
         # any currencies of the balance.
-        previous_balance = balances.get(account, None)
+        previous_balance = balances.get(account, empty)
         balance = local_balances.setdefault(account, copy.copy(previous_balance))
 
         # Check if this is a lot held at cost.
@@ -517,12 +559,10 @@ def book_reductions(entry, group_postings, balances,
         else:
             # This posting is held at cost; figure out if it's a reduction or an
             # augmentation.
-            #
-            # FIXME: Remove the call to is_reduced_by() and do this in the
-            # following loop itself.
             method = methods[account]
             if (method is not Booking.NONE and
-                balance is not None and balance.is_reduced_by(units)):
+                balance is not None and
+                balance.is_reduced_by(units)):
                 # This posting is a reduction.
 
                 # Match the positions.
@@ -589,11 +629,6 @@ def book_reductions(entry, group_postings, balances,
                     dated_costspec = costspec._replace(date=entry.date)
                     posting = posting._replace(cost=dated_costspec)
                 booked_postings.append(posting)
-
-        # FIXME: Do we need to update the balances here in the case it's not a
-        # reduction? What if we want to reduce off of positions added on other
-        # legs of this transaction itself? See {f89b5b01e568}.
-        # At the very least, document this.
 
     return booked_postings, errors
 
