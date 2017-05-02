@@ -9,7 +9,7 @@ TOOLS=./etc
 
 PYTHON=python3
 
-all: compile
+all: build
 
 
 # Clean everything up.
