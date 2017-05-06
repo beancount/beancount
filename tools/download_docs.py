@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 """Download all the Beancount docs from Google Drive and bake a nice PDF with it.
+
+TODO: Convert all the documentation using Pandoc to its native format, and write
+a custom filter to make the native nicer, identify the code blocks, etc. and
+write it out to Markdown and others.
 """
 __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
@@ -124,6 +128,7 @@ def download_docs(files, docids, outdir, mime_type):
     extension = {
         'application/pdf': 'pdf',
         'application/vnd.oasis.opendocument.text': 'odt',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
     }[mime_type]
 
     filenames = []
@@ -207,6 +212,7 @@ def main():
     conversion_map = {
         'pdf': ('application/pdf', convert_pdf),
         'odt': ('application/vnd.oasis.opendocument.text', None),
+        'docx': ('application/vnd.openxmlformats-officedocument.wordprocessingml.document', None),
     }
     parser.add_argument('conversion', action='store',
                         default='pdf', choices=list(conversion_map.keys()),
