@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 """Download all the Beancount docs from Google Drive and bake a nice PDF with it.
 """
 __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
@@ -12,6 +12,9 @@ import shutil
 import tempfile
 import subprocess
 import re
+import pickle
+import hashlib
+import shelve
 from os import path
 
 from apiclient import discovery
@@ -19,16 +22,66 @@ import httplib2
 from oauth2client import service_account
 
 
-def find_index_document(service):
+class _Cache:
+    """A cache for a service method for the Google Client API, like
+    "serivce.files()". This is useful when working remotely, to avoid
+    downloading the same document multiple times.
+    """
+    def __init__(self, filename, delegate_factory):
+        self._filename = filename
+        self._delegate = None
+        self._delegate_factory = delegate_factory
+        self._shelve = shelve.open(self._filename)
+
+    @property
+    def delegate(self):
+        if self._delegate is None:
+            self._delegate = self._delegate_factory()
+        return self._delegate
+
+    def __getattr__(self, name):
+        return _Cache.Method(self, name)
+
+    class Method:
+
+        def __init__(self, cache, name):
+            self._cache = cache
+            self._name = name
+
+        def __call__(self, *args, **kwargs):
+            key = (self._name, args, sorted(kwargs.items()))
+            pickled_key = pickle.dumps(key)
+            md5 = hashlib.md5()
+            md5.update(pickled_key)
+            digest = md5.hexdigest()
+            try:
+                value = self._cache._shelve[digest]
+            except KeyError:
+                logging.info("Cache miss for %s", digest)
+                function = getattr(self.cache.delegate, self._name)
+                value = function(*args, **kwargs).execute()
+                self._cache._shelve[digest] = value
+            return _Cache.ExecuteWrapper(value)
+
+    class ExecuteWrapper:
+
+        def __init__(self, return_value):
+            self._return_value = return_value
+
+        def execute(self):
+            return self._return_value
+
+
+def find_index_document(files):
     """Find the the document of Beancount index.
 
     Args:
-      service: An API client object with Google Drive scope.
+      files: A Cached API client object with Google Drive scope.
     Returns:
       A string, the document id.
     """
     query = "name = 'Beancount - Index'"
-    listing = service.files().list(q=query).execute()
+    listing = files.list(q=query).execute()
     files = listing['files']
     if len(files) != 1:
         raise ValueError("Could not find the index file: "
@@ -37,17 +90,17 @@ def find_index_document(service):
         return file['id']
 
 
-def enumerate_linked_documents(service, indexid):
+def enumerate_linked_documents(files, indexid):
     """Given a document id, enumerate the links within it.
 
     Args:
-      service: An API client object with Google Drive scope.
+      files: A Cached API client object with Google Drive scope.
       indexid: A string, a document id.
     Returns:
       A list of link strins.
     """
-    doc = service.files().export(fileId=indexid,
-                                 mimeType='text/html').execute()
+    doc = files.export(fileId=indexid,
+                       mimeType='text/html').execute()
     contents = doc.decode('utf8')
     docids = [indexid]
     for match in re.finditer('https?://docs.google.com/document/d/([^/";&]+)', contents):
@@ -57,11 +110,11 @@ def enumerate_linked_documents(service, indexid):
     return docids
 
 
-def download_docs(service, docids, outdir, mime_type):
+def download_docs(files, docids, outdir, mime_type):
     """Download all the Beancount documents to a temporary directory.
 
     Args:
-      service: A googleapiclient Service stub.
+      files: A Cached API client object with Google Drive scope.
       docids: A list of string, the document ids to download.
       outdir: A string, the name of the directory where to store the filess.
       mime_type: A string, the MIME format of the requested documents.
@@ -76,7 +129,7 @@ def download_docs(service, docids, outdir, mime_type):
     filenames = []
     for index, docid in enumerate(docids, 1):
         # Get the document metadata.
-        metadata = service.files().get(fileId=docid).execute()
+        metadata = files.get(fileId=docid).execute()
         name = metadata['name']
 
         # Retrieve to a file.
@@ -84,14 +137,11 @@ def download_docs(service, docids, outdir, mime_type):
                             re.sub('_+', '_',
                                    re.sub('[^A-Za-z0-9=-]', '_', name)))
         filename = path.join(outdir, '{}.{}'.format(clean_name, extension))
-        if path.exists(filename):
-            logging.info('File "{}" already downloaded'.format(filename))
-        else:
-            logging.info('Exporting "{}" ({}) to {}'.format(name, docid, filename))
-            with open(filename, 'wb') as outfile:
-                exported = service.files().export(fileId=docid,
-                                                  mimeType=mime_type).execute()
-                outfile.write(exported)
+        logging.info('Exporting "{}" ({}) to {}'.format(name, docid, filename))
+        with open(filename, 'wb') as outfile:
+            exported = files.export(fileId=docid,
+                                    mimeType=mime_type).execute()
+            outfile.write(exported)
 
         # Check if the downloaded succeeded.
         if path.getsize(filename) == 0:
@@ -167,26 +217,34 @@ def main():
                         default=None,
                         help="Where to write out the output files")
 
+    parser.add_argument('--cache', action='store',
+                        help="Service cache, to work offline.")
+
     args = parser.parse_args()
 
     # Connect, with authentication.
-    scopes = ['https://www.googleapis.com/auth/drive']
-    _, http = get_auth_via_service_account(scopes)
-    service = discovery.build('drive', 'v3', http=http)
+    def get_service():
+        scopes = ['https://www.googleapis.com/auth/drive']
+        _, http = get_auth_via_service_account(scopes)
+        service = discovery.build('drive', 'v3', http=http)
+        return service.files()
+    files = (_Cache(args.cache, get_service)
+             if args.cache
+             else get_service())
 
     # Get the ids of the documents listed in the index page.
-    indexid = find_index_document(service)
+    indexid = find_index_document(files)
     assert indexid
-    docids = enumerate_linked_documents(service, indexid)
+    docids = enumerate_linked_documents(files, indexid)
 
     # Figure out which format to download.
     mime_type, convert = conversion_map[args.conversion]
 
-    # Allocate a temporary directory.
+    # Allocate a temporary directory for the output.
     os.makedirs(args.output, exist_ok=True)
 
     # Download the docs.
-    filenames = download_docs(service, docids, args.output, mime_type)
+    filenames = download_docs(files, docids, args.output, mime_type)
 
     # Post-process the files.
     if convert is not None:
