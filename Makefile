@@ -126,6 +126,11 @@ debug:
 	gdb --args $(PYTHON) /home/blais/p/beancount/bin/bean-sandbox $(INPUT)
 
 
+# Push to github.
+github:
+	hg bookmark -r default master
+	hg push github
+
 # Bake a release.
 release:
 	$(PYTHON) setup.py register sdist upload
