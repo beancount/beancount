@@ -1,0 +1,71 @@
+// -*- mode: protobuf -*-
+// A schema for declaring institutions and accounts information.
+
+syntax = "proto3";
+
+
+// Top-level container object for the database.
+message Details {
+
+  // A list of available institutions to pull details from.
+  repeated Institution institution = 1;
+}
+
+// Details about an institution.
+message Institution {
+
+  // The name of the institution.
+  string name = 1;
+
+  // Client number at the institution.
+  string client_number = 5;
+
+  // The corresponding Beancount parent account name, if any.
+  string beancount = 2;
+
+  // A list of the addresses related to this institution. The first one
+  // is considered the canonical one. For instance, an institution may
+  // have a mailing address which is a PO box, and a headquarters address.
+  // This allows you to put both.
+  repeated Contact contact = 3;
+
+  // A list of accounts in this institution.
+  repeated Account account = 4;
+}
+
+// Contact information.
+message Contact {
+
+  // A street address.
+  repeated string address = 1;
+
+  // A website.
+  repeated string website = 2;
+
+  // A phone number.
+  repeated string phone = 3;
+
+  // An email address.
+  repeated string email = 4;
+
+}
+
+// Information about an account.
+message Account {
+
+  // The corresponding Beancount account name.
+  string beancount = 5;
+
+  // The account type.
+  string type = 1;
+
+  // The account number.
+  string number = 2;
+
+  // The balance amount and currency.
+  double balance = 3;
+  string currency = 4;
+}
+
+
+// Note: Institution could have a country added to it. Default should be USA.
