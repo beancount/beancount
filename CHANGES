@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2017-05-08
+
+  - Made the open/close map return by the getters not a defaultdict by default,
+    so that accidentally looking up elements won't mutate it.
+
+
 2017-04-30
 
   - Moved src/python/beancount/... to beancount/...

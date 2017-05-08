@@ -41,7 +41,10 @@ def validate_leaf_only(entries, unused_options_map):
             if open_close_map is None:
                 open_close_map = getters.get_account_open_close(entries)
 
-            open_entry = open_close_map[real_account.account][0]
+            try:
+                open_entry = open_close_map[real_account.account][0]
+            except KeyError:
+                open_entry = None
             errors.append(LeafOnlyError(
                 open_entry.meta if open_entry else default_meta,
                 "Non-leaf account '{}' has postings on it".format(real_account.account),
