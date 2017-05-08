@@ -5,6 +5,7 @@ __license__ = "GNU GPLv2"
 
 import re
 import subprocess
+import os
 from os import path
 
 
@@ -49,7 +50,7 @@ def read_encrypted_file(filename):
     Raises:
       OSError: If we could not properly decrypt the file.
     """
-    command = ('gpg', '--decrypt', filename)
+    command = ['gpg', '--batch', '--decrypt', path.realpath(filename)]
     pipe = subprocess.Popen(command,
                             shell=False,
                             stdout=subprocess.PIPE,
