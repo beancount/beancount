@@ -286,7 +286,7 @@ def get_account_open_close(entries):
                 entry = previous_entry
         open_close[index] = entry
 
-    return open_close_map
+    return dict(open_close_map)
 
 
 def get_commodity_map(entries, create_missing=True):
