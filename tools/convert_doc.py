@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Download all the Beancount docs from Google Drive and bake a nice PDF with it.
+"""Download and convert a single Google Docs to a nice Markdown doc.
 
-TODO: Convert all the documentation using Pandoc to its native format, and write
-a custom filter to make the native nicer, identify the code blocks, etc. and
-write it out to Markdown and others.
+This downloads one or more exports of a Google Docs document and converts it
+through Pandoc and possibly other tools in order to produce the most faithful
+conversion to Markdown. Unfortunately, Google's Markdown export is insufficient.
 """
-__copyright__ = "Copyright (C) 2015-2016  Martin Blais"
+__copyright__ = "Copyright (C) 2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse
@@ -19,6 +19,7 @@ import re
 import pickle
 import hashlib
 import shelve
+import tempfile
 from os import path
 
 from apiclient import discovery
@@ -33,11 +34,10 @@ def main():
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
     parser = argparse.ArgumentParser(description=__doc__.strip())
 
-    parser.add_argument('extension', action='store',
-                        default='pdf', choices=list(docs.CONVERSION_MAP.keys()),
-                        help="The format of the desired output.")
+    parser.add_argument('docid', action='store',
+                        default=None,
+                        help="The Google doc id of the input document")
 
-    #default_path = path.abspath(datetime.date.today().strftime('beancount.%Y-%m-%d.pdf'))
     parser.add_argument('output', action='store',
                         default=None,
                         help="Where to write out the output files")
@@ -57,25 +57,19 @@ def main():
              if args.cache
              else get_service())
 
-    # Get the ids of the documents listed in the index page.
-    indexid = docs.find_index_document(files)
-    assert indexid
-    docids = docs.enumerate_linked_documents(files, indexid)
-
-    # Figure out which format to download.
-    _, convert = docs.CONVERSION_MAP[args.extension]
-
     # Allocate a temporary directory for the output.
     os.makedirs(args.output, exist_ok=True)
+    tmpdir = path.join(tempfile.gettempdir(), 'convert_doc')
+    os.makedirs(tmpdir, exist_ok=True)
 
     # Download the docs.
-    filenames = docs.download_docs(files, docids, args.output, args.extension)
+    filenames = docs.download_docs(files, {args.docid}, tmpdir, 'docx')
+    print(filenames)
 
-    # Post-process the files.
-    if convert is not None:
-        convert(filenames, args.output)
+    filenames = docs.download_docs(files, {args.docid}, tmpdir, 'odt')
+    print(filenames)
 
-    logging.info("Output produced in {}".format(args.output))
+    ##logging.info("Output produced in {}".format(args.output))
 
 
 if __name__ == '__main__':

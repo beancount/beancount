@@ -22,7 +22,7 @@ import httplib2
 from oauth2client import service_account
 
 
-class _Cache:
+class Cache:
     """A cache for a service method for the Google Client API, like
     "serivce.files()". This is useful when working remotely, to avoid
     downloading the same document multiple times.
@@ -40,7 +40,7 @@ class _Cache:
         return self._delegate
 
     def __getattr__(self, name):
-        return _Cache.Method(self, name)
+        return Cache.Method(self, name)
 
     class Method:
 
@@ -58,10 +58,10 @@ class _Cache:
                 value = self._cache._shelve[digest]
             except KeyError:
                 logging.info("Cache miss for %s", digest)
-                function = getattr(self.cache.delegate, self._name)
+                function = getattr(self._cache.delegate, self._name)
                 value = function(*args, **kwargs).execute()
                 self._cache._shelve[digest] = value
-            return _Cache.ExecuteWrapper(value)
+            return Cache.ExecuteWrapper(value)
 
     class ExecuteWrapper:
 
@@ -110,23 +110,18 @@ def enumerate_linked_documents(files, indexid):
     return docids
 
 
-def download_docs(files, docids, outdir, mime_type):
+def download_docs(files, docids, outdir, extension):
     """Download all the Beancount documents to a temporary directory.
 
     Args:
       files: A Cached API client object with Google Drive scope.
       docids: A list of string, the document ids to download.
       outdir: A string, the name of the directory where to store the filess.
-      mime_type: A string, the MIME format of the requested documents.
+      extension: A string, the extension of the requested documents.
     Returns:
       A list of string, the names of the downloaded files.
     """
-    extension = {
-        'application/pdf': 'pdf',
-        'application/vnd.oasis.opendocument.text': 'odt',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
-    }[mime_type]
-
+    mime_type, _ = CONVERSION_MAP[extension]
     filenames = []
     for index, docid in enumerate(docids, 1):
         # Get the document metadata.

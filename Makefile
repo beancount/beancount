@@ -244,3 +244,6 @@ download-odt:
 
 sphinx sphinx_odt2rst:
 	./tools/sphinx_odt2rst.py $(HOME)/p/beancount-downloads/odt $(HOME)/p/beancount-docs
+
+convert_test:
+	./tools/convert_doc.py --cache=/tmp/convert_test.cache '1WjARst_cSxNE-Lq6JnJ5CC41T3WndEsiMw4d46r2694' /tmp/trading.md
