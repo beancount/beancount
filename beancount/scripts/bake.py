@@ -136,7 +136,7 @@ def bake_to_directory(webargs, output_dir, quiet=False, full_mode=True):
     else:
         regexps = [
             # Skip the context pages, too slow.
-            r'/contents/',
+            r'/context/',
             # Skip the component pages... too many.
             r'/view/component/',
             # Skip served documents.
