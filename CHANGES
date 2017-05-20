@@ -4,6 +4,11 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2017-05-20
+
+  - Clarified error message for price format specified on the command-line.
+
+
 2017-05-08
 
   - Made the open/close map return by the getters not a defaultdict by default,
