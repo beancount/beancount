@@ -197,6 +197,9 @@ def get_auth_via_service_account(scopes):
 
 
 CONVERSION_MAP = {
+    'html': ('text/html', None),
+    'txt': ('text/plain', None),
+    'rtf': ('application/rtf', None),
     'pdf': ('application/pdf', convert_pdf),
     'odt': ('application/vnd.oasis.opendocument.text', None),
     'docx': ('application/vnd.openxmlformats-officedocument.wordprocessingml.document', None),

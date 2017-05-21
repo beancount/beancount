@@ -4677,6 +4677,8 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - Integrate the docs from here: https://bitbucket.org/aumayr/beancount
+
   - A number like this should fail to parse: 1,245,449,72.00 USD
     Add a simple unit test and tighten the parser. It's easy and will avoid
     input errors.

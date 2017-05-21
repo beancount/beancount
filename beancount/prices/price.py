@@ -282,10 +282,9 @@ def process_args():
             try:
                 psource_map = find_prices.parse_source_map(source_str)
             except ValueError:
-                if path.exists(source_str):
-                    msg = 'Invalid source "{}"; did you provide a filename?'
-                else:
-                    msg = 'Invalid source "{}"'
+                extra = "; did you provide a filename?" if path.exists(source_str) else ''
+                msg = ('Invalid source "{{}}"{}. '.format(extra) +
+                       'Supported format is "CCY:module/SYMBOL"'.format(extra))
                 parser.error(msg.format(source_str))
             else:
                 for currency, psources in psource_map.items():
