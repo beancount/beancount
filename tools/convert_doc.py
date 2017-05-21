@@ -20,6 +20,7 @@ import pickle
 import hashlib
 import shelve
 import tempfile
+import io
 from os import path
 
 from apiclient import discovery
@@ -28,6 +29,16 @@ from oauth2client import service_account
 
 # Local imports
 import docs
+
+
+def pandoc(filename, informat):
+    cwd = path.dirname(path.abspath(__file__))
+    command = [
+        'pandoc', '-f', informat, '-t', 'markdown',
+        '--filter', path.join(cwd, 'convert_filter_docx.py'),
+        filename]
+    print(' '.join(command))
+    return subprocess.check_output(command).decode('utf8')
 
 
 def main():
@@ -64,10 +75,12 @@ def main():
 
     # Download the docs.
     filenames = docs.download_docs(files, {args.docid}, tmpdir, 'docx')
-    print(filenames)
-
+    #native = pandoc(filenames[0], 'docx')
     filenames = docs.download_docs(files, {args.docid}, tmpdir, 'odt')
-    print(filenames)
+    filenames = docs.download_docs(files, {args.docid}, tmpdir, 'txt')
+    filenames = docs.download_docs(files, {args.docid}, tmpdir, 'pdf')
+    filenames = docs.download_docs(files, {args.docid}, tmpdir, 'html')
+    filenames = docs.download_docs(files, {args.docid}, tmpdir, 'rtf')
 
     ##logging.info("Output produced in {}".format(args.output))
 
