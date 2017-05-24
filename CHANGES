@@ -6,6 +6,17 @@ Note: This file contains only changes in the 'default' branch.
 
 2017-05-24
 
+  - Implemented beancount.plugins.auto and beancount.plugins.pedantic. I've been
+    wanting to do this for a while. When writing quick-and-dirty little tests,
+    inserting 'plugin "beancount.plugins.auto"' is quick and does the job, and
+    if you want absolutely all the verifications and to make Beancount as
+    pedantic as possible, you should be able to adopt 'plugin
+    "beancount.plugins.pedantic"'.
+
+    In order to do that I had to make the loader support plugin definitions
+    whose __plugins__ attribute is a function reference, not just a string. It
+    supports both now.
+
   - A number like this now fails to parse: 1,245,449,72.00 USD. I added a test
     in the lexer to tighten the parser. This has been brought up before and will
     potentially avoid input errors.

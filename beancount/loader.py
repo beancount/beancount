@@ -513,7 +513,12 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
 
                 # Run each transformer function in the plugin.
                 for function_name in module.__plugins__:
-                    callback = getattr(module, function_name)
+                    if isinstance(function_name, str):
+                        # Support plugin functions provided by name.
+                        callback = getattr(module, function_name)
+                    else:
+                        # Support function types directly, not just names.
+                        callback = function_name
 
                     if plugin_config is not None:
                         entries, plugin_errors = callback(entries, options_map,
@@ -533,6 +538,22 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
                                         plugin_name, str(exc)), None))
 
     return entries, errors
+
+
+def combine_plugins(*plugin_modules):
+    """Combine the plugins from the given plugin modules.
+
+    This is used to create plugins of plugins.
+    Args:
+      *plugins_modules: A sequence of module objects.
+    Returns:
+      A list that can be assigned to the new module's __plugins__ attribute.
+    """
+    modules = []
+    for module in plugin_modules:
+        modules.extend([getattr(module, name)
+                        for name in module.__plugins__])
+    return modules
 
 
 def load_doc(expect_errors=False):

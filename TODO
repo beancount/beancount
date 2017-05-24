@@ -4695,8 +4695,6 @@ http://furius.ca/beancount/doc/proposal-query
   - SQL: OpenMeta is different than Meta; it returns a dict. That's bad. Provide
     a direct lookup, like Meta.
 
-  - Implement beancount.plugins.auto and beancount.plugins.pedantic finally.
-
   - Interesting idea re. booking branch: Until AVERAGE is done in an automated
     manner, we could provide a poor man's version by creating a new Nerge
     directive which explicly merges the contents and cost basis of an entire
