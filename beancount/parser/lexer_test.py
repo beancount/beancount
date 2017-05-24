@@ -594,7 +594,6 @@ class TestLexerErrors(unittest.TestCase):
              ('EOL', 1, '\x00', None)])
 
 
-
 class TestLexerUnicode(unittest.TestCase):
 
     test_utf8_string = textwrap.dedent("""
@@ -646,3 +645,47 @@ class TestLexerUnicode(unittest.TestCase):
         # Check that the lexer correctly parsed the latin1 string.
         str_tokens = [token for token in tokens if token[0] == 'STRING']
         self.assertEqual(self.expected_latin1_string, str_tokens[0][3])
+
+
+class TestLexerMisc(unittest.TestCase):
+
+    @lex_tokens
+    def test_valid_commas_in_number(self, tokens, errors):
+        """\
+          45,234.00
+        """
+        self.assertEqual([
+            ('NUMBER', 1, '45,234.00', D('45234.00')),
+            ('EOL', 2, '\n', None),
+            ('EOL', 2, '\x00', None),
+        ], tokens)
+        self.assertEqual(0, len(errors))
+
+    @lex_tokens
+    def test_invalid_commas_in_integral(self, tokens, errors):
+        """\
+          452,34.00
+        """
+        self.assertEqual(1, len(errors))
+        self.assertEqual([
+            ('NUMBER', 1, '452,34.00', D('45234.00')),
+            ('EOL', 2, '\n', None),
+            ('EOL', 2, '\x00', None),
+        ], tokens)
+
+    @lex_tokens
+    def test_invalid_commas_in_fractional(self, tokens, errors):
+        """\
+          45234.000,000
+        """
+        # Unfortunately this is going to get parsed as two numbers but that will
+        # cause an error downstream in the parser. Nevertheless, keep this test
+        # case here in case eventually we improve the lexer.
+        self.assertEqual(0, len(errors))
+        self.assertEqual([
+            ('NUMBER', 1, '45234.000', D('45234.000')),
+            ('COMMA', 1, ',', None),
+            ('NUMBER', 1, '000', D('0')),
+            ('EOL', 2, '\n', None),
+            ('EOL', 2, '\x00', None)
+        ], tokens)

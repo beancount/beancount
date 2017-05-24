@@ -151,6 +151,24 @@ class LexBuilder(object):
         # Note: We don't use D() for efficiency here.
         # The lexer will only yield valid number strings.
         if ',' in number:
+            # Extract the integer part and check the commas match the
+            # locale-aware formatted version. This
+            match = re.match(r"([\d,]*)(\.\d*)?$", number)
+            if not match:
+                # This path is never taken because the lexer will parse a comma
+                # in the fractional part as two NUMBERs with a COMMA token in
+                # between.
+                self.errors.append(
+                    LexerError(self.get_lexer_location(),
+                               "Invalid number format: '{}'".format(number), None))
+            else:
+                int_string, float_string = match.groups()
+                reformatted_number = r"{:,.0f}".format(int(int_string.replace(",", "")))
+                if int_string != reformatted_number:
+                    self.errors.append(
+                        LexerError(self.get_lexer_location(),
+                                   "Invalid commas: '{}'".format(number), None))
+
             number = number.replace(',', '')
         return Decimal(number)
 

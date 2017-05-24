@@ -4,6 +4,13 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2017-05-24
+
+  - A number like this now fails to parse: 1,245,449,72.00 USD. I added a test
+    in the lexer to tighten the parser. This has been brought up before and will
+    potentially avoid input errors.
+
+
 2017-05-20
 
   - Clarified error message for price format specified on the command-line.
