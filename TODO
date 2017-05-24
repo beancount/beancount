@@ -4771,10 +4771,6 @@ http://furius.ca/beancount/doc/proposal-query
     revision of Beancount has been updated. This could avoid some potentially
     confusing user interpretation of errors.
 
-  - A number like this should fail to parse: 1,245,449,72.00 USD
-    Add a simple unit test and tighten the parser. It's easy and will avoid
-    input errors.
-
   - Idea to deal with #145: Add all augmenting postings, THEN book all reducing
     ones against that.
 
