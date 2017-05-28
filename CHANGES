@@ -4,6 +4,14 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2017-05-28
+
+  - Merged patch from Felix Eckhofer that adds an option to bean-format to make
+    it use a fixed width. I've been wanting this myself for a while actually, I
+    think a fixed value makes more sense than what I'd done previously and
+    should eventually be made the default.
+
+
 2017-05-24
 
   - Implemented beancount.plugins.auto and beancount.plugins.pedantic. I've been

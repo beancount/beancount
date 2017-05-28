@@ -19,15 +19,22 @@ from beancount.core import amount
 from beancount.core import account
 
 
-def align_beancount(contents, default_prefix_width=-1, default_num_width=-1):
+def align_beancount(contents, prefix_width=None, num_width=None):
     """Reformat Beancount input to align all the numbers at the same column.
 
     Args:
       contents: A string, Beancount input syntax to reformat.
+      prefix_width: An integer, the width in characters to render the account
+        name to. If this is not specified, a good value is selected
+        automatically from the contents of the file.
+      num_width: An integer, the width to render each number. If this is not
+        specified, a good value is selected automatically from the contents of
+        the file.
     Returns:
       A string, reformatted Beancount input with all the number aligned.
       No other changes than whitespace changes should be present between that
       return value and the input contents.
+
     """
     # Find all lines that have a number in them and calculate the maximum length
     # of the stripped prefix and the number.
@@ -59,10 +66,10 @@ def align_beancount(contents, default_prefix_width=-1, default_num_width=-1):
         max_num_width = 0
 
     # Use user-supplied overrides, if available
-    if default_prefix_width > 0:
-        max_prefix_width = default_prefix_width
-    if default_num_width > 0:
-        max_num_width = default_num_width
+    if prefix_width:
+        max_prefix_width = prefix_width
+    if num_width:
+        max_num_width = num_width
 
     # Create a format that will admit the maximum width of all prefixes equally.
     line_format = '{{:<{prefix_width}}}  {{:>{num_width}}} {{}}'.format(
@@ -148,15 +155,16 @@ def main():
 
     parser.add_argument('filename', nargs='?', help='Beancount filename')
 
-
     parser.add_argument('-o', '--output', action='store',
                         help="Output file (stdout if not specified)")
 
-    parser.add_argument('--prefix-width', default=-1, type=int,
-                        help="Use this prefix width instead of determining an optimal value")
+    parser.add_argument('-w', '--prefix-width', action='store', type=int,
+                        help=("Use this prefix width instead of determining an optimal "
+                              "value automatically"))
 
-    parser.add_argument('--num-width', default=-1, type=int,
-                        help="Use this number width instead of determining an optimal value")
+    parser.add_argument('-W', '--num-width', action='store', type=int,
+                        help=("Use this width to render numbers instead of determining "
+                              "an optimal value"))
 
     opts = parser.parse_args()
 
