@@ -19,7 +19,7 @@ from beancount.core import amount
 from beancount.core import account
 
 
-def align_beancount(contents):
+def align_beancount(contents, default_prefix_width=-1, default_num_width=-1):
     """Reformat Beancount input to align all the numbers at the same column.
 
     Args:
@@ -57,6 +57,12 @@ def align_beancount(contents):
     else:
         max_prefix_width = 0
         max_num_width = 0
+
+    # Use user-supplied overrides, if available
+    if default_prefix_width > 0:
+        max_prefix_width = default_prefix_width
+    if default_num_width > 0:
+        max_num_width = default_num_width
 
     # Create a format that will admit the maximum width of all prefixes equally.
     line_format = '{{:<{prefix_width}}}  {{:>{num_width}}} {{}}'.format(
@@ -142,8 +148,15 @@ def main():
 
     parser.add_argument('filename', nargs='?', help='Beancount filename')
 
+
     parser.add_argument('-o', '--output', action='store',
                         help="Output file (stdout if not specified)")
+
+    parser.add_argument('--prefix-width', default=-1, type=int,
+                        help="Use this prefix width instead of determining an optimal value")
+
+    parser.add_argument('--num-width', default=-1, type=int,
+                        help="Use this number width instead of determining an optimal value")
 
     opts = parser.parse_args()
 
@@ -152,7 +165,7 @@ def main():
     contents = file.read()
 
     # Align the contents.
-    formatted_contents = align_beancount(contents)
+    formatted_contents = align_beancount(contents, opts.prefix_width, opts.num_width)
 
     # Make sure not to open the output file until we've passed out sanity
     # checks. We want to allow overwriting the input file, but want to avoid
