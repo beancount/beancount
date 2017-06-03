@@ -139,7 +139,7 @@ class Model:
             ('Asset Type', self._asset_type),
             ('Taxation', self._taxation),
             # ('Label', self._cost_label),
-            # ('Date', self._cost_date),
+            ('Date', self._cost_date),
             # ('Price Currency', self._price_currency),
         ]
         self.columns = {index: head_fun
@@ -283,6 +283,8 @@ def aggregate_postings(postings):
         key = (posting.account, posting.units.currency)
         balances[key].add_position(posting)
 
+    default_date = datetime.date.today() + datetime.timedelta(days=1)
+
     agg_postings = []
     for (account, currency), balance in balances.items():
         units = balance.reduce(convert.get_units)
@@ -291,6 +293,11 @@ def aggregate_postings(postings):
         assert len(units) == 1
         units = units[0].units
 
+        min_date = default_date
+        for pos in balance:
+            if pos.cost:
+                min_date = min(min_date, pos.cost.date)
+
         cost = balance.reduce(convert.get_cost)
         assert len(cost) == 1
         total_cost = cost[0].units
@@ -298,7 +305,7 @@ def aggregate_postings(postings):
         if total_cost.currency != units.currency:
             average_cost = position.Cost(total_cost.number/units.number,
                                          total_cost.currency,
-                                         None, None)
+                                         min_date, None)
         else:
             average_cost = None
         posting = data.Posting(account, units, average_cost, None, None, None)
