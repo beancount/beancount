@@ -122,6 +122,9 @@ def _booking_method_xifo(entry, posting, matches, reverse_order):
     errors = []
     insufficient = False
 
+    # raise ValueError
+    # print('XXX')
+
     # Each up the positions.
     sign = -1 if posting.units.number < ZERO else 1
     remaining = abs(posting.units.number)

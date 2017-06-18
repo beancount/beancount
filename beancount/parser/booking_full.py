@@ -441,6 +441,7 @@ def replace_currencies(postings, refer_groups):
     """
     new_groups = []
     for currency, refers in refer_groups:
+        ##print('R', currency, refers)
         new_postings = []
         for refer in sorted(refers, key=lambda r: r.index):
             posting = postings[refer.index]
@@ -554,7 +555,8 @@ def book_reductions(entry, group_postings, balances,
 
         # Check if this is a lot held at cost.
         if costspec is None:
-            # This posting is not held at cost; we do nothing.
+            # This posting is not held at cost. Just check that it's not
+            # incompatible with the sign of the inventory
             booked_postings.append(posting)
         else:
             # This posting is held at cost; figure out if it's a reduction or an

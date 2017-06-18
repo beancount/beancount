@@ -507,6 +507,26 @@ class TestReplaceCurrenciesInGroup(unittest.TestCase):
         self.check({'USD': [('Assets:Account', 'HOOL', 'USD', 'USD'),
                             ('Assets:Another', 'USD', None, None)]}, entries[4])
 
+    #@unittest.skip('Disabled; needs fix')
+    @parser.parse_doc(allow_incomplete=True)
+    def test_infer_from_inventory__issue168(self, entries, errors, options_map):
+        """
+        2013-11-27 open Assets:AU:Coinjar:BTC     BTC    "FIFO"
+        2013-11-27 open Assets:AU:Coinjar:Cash    AUD
+        2013-11-27 open Assets:AU:ColdStorage:BTC BTC
+
+        2013-11-27 * "Buy BTC"
+          Assets:AU:Coinjar:BTC                         1.14161 BTC {1059.247228303085940258456324 AUD}
+          Assets:AU:Coinjar:Cash                     -150.00 AUD
+
+        2014-01-05 * "Deposit Cold storage"
+          Assets:AU:ColdStorage:BTC                     1.0 BTC
+          Assets:AU:Coinjar:BTC                        -1.0 BTC {}
+        """
+        self.check({'USD': [('Assets:AU:ColdStorage:BTC', 'AUD', None, None),
+                            ('Assets:AU:Coinjar:BTC', 'AUD', None, None)]}, entries[-1])
+
+
 
 def normalize_postings(postings):
     """Normalize a list of postings ready for direct comparison, for testing.
@@ -1697,7 +1717,7 @@ class TestBookReductions(_BookingTestBase):
         """
 
     @book_test(Booking.FIFO)
-    def test_reduce__reduction_with_same_currency_not_at_cost(self, _, __):
+    def test_reduce__reduction_with_same_currency_at_cost(self, _, __):
         """
         2016-01-01 * #ante
           Assets:Account   50 HOOL @ 14.33 USD
@@ -1707,6 +1727,48 @@ class TestBookReductions(_BookingTestBase):
 
         2016-05-02 * #booked
           error: "No position matches"
+        """
+
+    @book_test(Booking.FIFO)
+    def test_reduce__reduction_with_same_currency_not_at_cost__issue167(self, _, __):
+        """
+        2016-01-01 * #ante
+          Assets:Account   50 HOOL {14.33 USD}
+
+        2016-05-02 * #apply
+          Assets:Account  -40 HOOL
+
+        2016-05-02 * #booked
+          error: "No position matches"
+        """
+
+    # @book_test(Booking.FIFO)
+    # def test_reduce__reduction_with_same_currency_not_at_cost_matches(self, _, __):
+    #     """
+    #     2016-01-01 * #ante
+    #       Assets:Account   50 HOOL {14.33 USD}
+    #       Assets:Account   50 HOOL
+
+    #     2016-05-02 * #apply
+    #       Assets:Account  -40 HOOL
+
+    #     2016-05-02 * #booked
+    #       Assets:Account  -40 HOOL
+    #     """
+
+    # @book_test(Booking.FIFO)
+    # def test_reduce__reduction_with_same_currency_not_at_cost_mixed(self, _, __):
+    #     """
+    #     2016-01-01 * #ante
+    #       Assets:Account   50 HOOL {14.33 USD}
+    #       Assets:Account   50 HOOL
+
+    #     2016-05-02 * #apply
+    #       Assets:Account  -60 HOOL
+
+    #     ;; Should fail because it results in a mixed inventory.
+    #     2016-05-02 * #booked
+    #       error: "No position matches"
         """
 
 
