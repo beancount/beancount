@@ -23,6 +23,7 @@ from beancount.query import query_compile
 from beancount.query import query_env
 from beancount.query import query_execute
 from beancount.query import query_render
+from beancount.query import numberify
 from beancount.parser import printer
 from beancount.core import data
 from beancount.utils import misc_utils
@@ -93,7 +94,7 @@ class DispatchingShell(cmd.Cmd):
     doc_header = "Shell utility commands (type help <topic>):"
     misc_header = "Beancount query commands:"
 
-    def __init__(self, is_interactive, parser, outfile, default_format):
+    def __init__(self, is_interactive, parser, outfile, default_format, do_numberify):
         """Create a shell with history.
 
         Args:
@@ -107,11 +108,11 @@ class DispatchingShell(cmd.Cmd):
             load_history(path.expanduser(HISTORY_FILENAME))
         self.is_interactive = is_interactive
         self.parser = parser
-        self.initialize_vars(default_format)
+        self.initialize_vars(default_format, do_numberify)
         self.add_help()
         self.outfile = outfile
 
-    def initialize_vars(self, default_format):
+    def initialize_vars(self, default_format, do_numberify):
         """Initialize the setting variables of the interactive shell."""
         self.vars_types = {
             'pager': str,
@@ -119,6 +120,7 @@ class DispatchingShell(cmd.Cmd):
             'boxed': convert_bool,
             'spaced': convert_bool,
             'expand': convert_bool,
+            'numberify': convert_bool,
             }
         self.vars = {
             'pager': os.environ.get('PAGER', None),
@@ -126,6 +128,7 @@ class DispatchingShell(cmd.Cmd):
             'boxed': False,
             'spaced': False,
             'expand': False,
+            'numberify': do_numberify,
             }
 
     def add_help(self):
@@ -281,8 +284,10 @@ class BQLShell(DispatchingShell):
     """
     prompt = 'beancount> '
 
-    def __init__(self, is_interactive, loadfun, outfile, default_format='text'):
-        super().__init__(is_interactive, query_parser.Parser(), outfile, default_format)
+    def __init__(self, is_interactive, loadfun, outfile,
+                 default_format='text', do_numberify=False):
+        super().__init__(is_interactive, query_parser.Parser(), outfile,
+                         default_format, do_numberify)
 
         self.loadfun = loadfun
         self.entries = None
@@ -399,12 +404,12 @@ class BQLShell(DispatchingShell):
             return
 
         # Execute it to obtain the result rows.
-        result_types, result_rows = query_execute.execute_query(c_query,
-                                                                self.entries,
-                                                                self.options_map)
+        rtypes, rrows = query_execute.execute_query(c_query,
+                                                    self.entries,
+                                                    self.options_map)
 
         # Output the resulting rows.
-        if not result_rows:
+        if not rrows:
             print("(empty)", file=self.outfile)
         else:
             output_format = self.vars['format']
@@ -414,18 +419,23 @@ class BQLShell(DispatchingShell):
                             expand=self.vars['expand'])
                 if self.outfile is sys.stdout:
                     with self.get_pager() as file:
-                        query_render.render_text(result_types, result_rows,
+                        query_render.render_text(rtypes, rrows,
                                                  self.options_map['dcontext'],
                                                  file,
                                                  **kwds)
                 else:
-                    query_render.render_text(result_types, result_rows,
+                    query_render.render_text(rtypes, rrows,
                                              self.options_map['dcontext'],
                                              self.outfile,
                                              **kwds)
 
             elif output_format == 'csv':
-                query_render.render_csv(result_types, result_rows,
+                # Numberify CSV output if requested.
+                if self.vars['numberify']:
+                    dformat = self.options_map['dcontext'].build()
+                    rtypes, rrows = numberify.numberify_results(rtypes, rrows, dformat)
+
+                query_render.render_csv(rtypes, rrows,
                                         self.options_map['dcontext'],
                                         self.outfile,
                                         expand=self.vars['expand'])
@@ -755,6 +765,9 @@ def main():
                         choices=_SUPPORTED_FORMATS, # 'html', 'htmldiv', 'beancount', 'xls',
                         help="Output format.")
 
+    parser.add_argument('-m', '--numberify', action='store_true', default=False,
+                        help="Numberify the output, removing the currencies.")
+
     parser.add_argument('-o', '--output', action='store',
                         help=("Output filename. If not specified, the output goes "
                               "to stdout. The filename is inspected to select a "
@@ -784,7 +797,7 @@ def main():
 
     # Create the shell.
     is_interactive = os.isatty(sys.stdin.fileno()) and not args.query
-    shell_obj = BQLShell(is_interactive, load, outfile, args.format)
+    shell_obj = BQLShell(is_interactive, load, outfile, args.format, args.numberify)
     shell_obj.on_Reload()
 
     # Run interactively if we're a TTY and no query is supplied.

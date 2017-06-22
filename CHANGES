@@ -4,6 +4,13 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2017-06-22
+
+  - Added --numberify option to bean-query, which for CSV output will remove the
+    currencies of any Amount column. This is great for then uploading to a
+    spreadsheet.
+
+
 2017-05-28
 
   - Merged patch from Felix Eckhofer that adds an option to bean-format to make
