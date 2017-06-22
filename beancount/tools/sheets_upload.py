@@ -340,6 +340,7 @@ class Doc:
 
 def _main():
     parser = argparse.ArgumentParser(description=__doc__.strip(),
+                                     formatter_class=argparse.RawTextHelpFormatter,
                                      parents=[tools.argparser])
 
     parser.add_argument('filenames', nargs='*', action='store',
