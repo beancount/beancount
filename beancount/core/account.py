@@ -190,3 +190,28 @@ def parents(account_name):
     while account_name:
         yield account_name
         account_name = parent(account_name)
+
+
+class AccountTransformer:
+    """Account name transformer.
+
+    This is used to support Win... huh, filesystems and platforms which do not
+    support colon characters.
+
+    Attributes:
+      rsep: A character string, the new separator to use in link names.
+    """
+    def __init__(self, rsep=None):
+        self.rsep = rsep
+
+    def render(self, account_name):
+        "Convert the account name to a transformed account name."
+        return (account_name
+                if self.rsep is None
+                else account_name.replace(sep, self.rsep))
+
+    def parse(self, transformed_name):
+        "Convert the transform account name to an account name."
+        return (transformed_name
+                if self.rsep is None
+                else transformed_name.replace(self.rsep, sep))

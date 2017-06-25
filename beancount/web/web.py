@@ -61,11 +61,12 @@ class HTMLFormatter(html_formatter.HTMLFormatter):
       build_url: A function used to render links to a Bottle application.
       leafonly: a boolean, if true, render only the name of the leaf nodes.
     """
-    def __init__(self, dcontext, build_url, leaf_only, view_links=True):
+    def __init__(self, dcontext, build_url, leaf_only, account_xform, view_links=True):
         super().__init__(dcontext)
         self.build_url = build_url
         self.leaf_only = leaf_only
         self.view_links = view_links
+        self.account_xform = account_xform
 
     def build_global(self, *args, **kwds):
         "Render to global application."
@@ -82,13 +83,15 @@ class HTMLFormatter(html_formatter.HTMLFormatter):
                 components = account.split(account_name)
                 indent = '{:.1f}'.format(len(components) * self.EMS_PER_COMPONENT)
                 anchor = '<a href="{}" class="account">{}</a>'.format(
-                    self.build_url('journal', account_name=account_name),
+                    self.build_url('journal',
+                                   account_name=self.account_xform.render(account_name)),
                     account.leaf(account_name))
                 return '<span "account" style="padding-left: {}em">{}</span>'.format(
                     indent, anchor)
             else:
                 anchor = '<a href="{}" class="account">{}</a>'.format(
-                    self.build_url('journal', account_name=account_name),
+                    self.build_url('journal',
+                                   account_name=self.account_xform.render(account_name)),
                     account_name)
                 return '<span "account">{}</span>'.format(anchor)
         else:
@@ -157,7 +160,7 @@ def render_report(report_class, entries, args=None,
       A string, the rendered report.
     """
     formatter = HTMLFormatter(app.options['dcontext'],
-                              request.app.get_url, leaf_only)
+                              request.app.get_url, leaf_only, app.account_xform)
     oss = io.StringIO()
     if center:
         oss.write('<center>\n')
@@ -186,7 +189,7 @@ def render_real_report(report_class, real_root, args=None, leaf_only=False):
       A string, the rendered report.
     """
     formatter = HTMLFormatter(app.options['dcontext'],
-                              request.app.get_url, leaf_only)
+                              request.app.get_url, leaf_only, app.account_xform)
     oss = io.StringIO()
     report_ = report_class.from_args(args, formatter=formatter)
     report_.render_real_htmldiv(real_root, app.options, oss)
@@ -365,7 +368,8 @@ def link(link=None):
 
     oss = io.StringIO()
     formatter = HTMLFormatter(app.options['dcontext'],
-                              request.app.get_url, False, view_links=False)
+                              request.app.get_url, False, app.account_xform,
+                              view_links=False)
     journal_html.html_entries_table_with_balance(oss, linked_entries, formatter)
     return render_global(
         pagetitle="Link: {}".format(link),
@@ -722,10 +726,7 @@ def journal_all():
 @viewapp.route('/journal/<account_name:re:.*>', name='journal')
 def journal_(account_name=None):
     "A list of all the entries for this account realization."
-
-    # Ensure we support slashes and colons equally.
-    # Old style used to be slashes; now we're using colons, it works everywhere.
-    account_name = account_name.strip('/').replace('/', account.sep)
+    account_name = app.account_xform.parse(account_name)
 
     # Figure out which account to render this from.
     real_accounts = request.view.real_accounts
@@ -1094,6 +1095,9 @@ def run_app(args, quiet=None):
 
     app.options = None
 
+    # Add an account transformer.
+    app.account_xform = account.AccountTransformer('__' if args.no_colons else None)
+
     # Load templates.
     with open(path.join(path.dirname(__file__), 'web.html')) as f:
         global template
@@ -1169,6 +1173,9 @@ def add_web_arguments(argparser):
 
     group.add_argument('--no-source', action='store_true',
                        help=("Don't render the source."))
+
+    group.add_argument('--no-colons', action='store_true',
+                       help=("Don't render colons in filenames (for Windows)."))
 
     group.add_argument('--view', action='store',
                        help="Render only the specified view (identify by URL)")

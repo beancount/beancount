@@ -198,3 +198,22 @@ class TestWalk(TmpFilesTestBase):
              [],
              []),
             ], actual_data)
+
+
+class TestAccountTransformer(unittest.TestCase):
+
+    def test_render(self):
+        xfr = account.AccountTransformer('__')
+        self.assertEqual('Assets__US__BofA__Checking',
+                         xfr.render('Assets:US:BofA:Checking'))
+
+    def test_parse(self):
+        xfr = account.AccountTransformer('__')
+        self.assertEqual('Assets:US:BofA:Checking',
+                         xfr.parse('Assets__US__BofA__Checking'))
+
+    def test_noop(self):
+        xfr = account.AccountTransformer()
+        acc = 'Assets:US:BofA:Checking'
+        self.assertEqual(acc, xfr.render(acc))
+        self.assertEqual(acc, xfr.parse(acc))
