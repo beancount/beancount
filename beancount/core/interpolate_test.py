@@ -574,6 +574,16 @@ class TestInferTolerances(cmptest.TestCase):
         # default tolerance.
         pass
 
+    @loader.load_doc()
+    def test_tolerances__missing_units_only(self, entries, errors, options_map):
+        """
+        2017-01-01 open Assets:Checking USD
+        2017-01-01 open Assets:Cash     CAD
+
+        2017-06-23 * "Taking out cash from RBC machine"
+          Assets:Checking     USD @ 1.32 CAD
+          Assets:Cash     400 CAD
+        """
 
 class TestQuantize(unittest.TestCase):
 

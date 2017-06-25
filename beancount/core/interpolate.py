@@ -8,9 +8,13 @@ import copy
 import warnings
 
 from beancount.core.number import D
+from beancount.core.number import Decimal
 from beancount.core.number import ONE
 from beancount.core.number import ZERO
 from beancount.core.number import MISSING
+from beancount.core.amount import Amount
+from beancount.core.position import CostSpec
+from beancount.core.position import Cost
 from beancount.core.inventory import Inventory
 from beancount.core import inventory
 from beancount.core import position
@@ -180,7 +184,7 @@ def infer_tolerances(postings, options_map, use_cost=None):
         if posting.meta and AUTOMATIC_META in posting.meta:
             continue
         units = posting.units
-        if units is MISSING or units is None:
+        if not (isinstance(units, Amount) and isinstance(units.number, Decimal)):
             continue
 
         # Compute bounds on the number.
@@ -191,6 +195,7 @@ def infer_tolerances(postings, options_map, use_cost=None):
             tolerance = ONE.scaleb(expo) * inferred_tolerance_multiplier
             tolerances[currency] = max(tolerance,
                                        tolerances.get(currency, -1024))
+
             if not use_cost:
                 continue
 
@@ -211,7 +216,7 @@ def infer_tolerances(postings, options_map, use_cost=None):
 
             # Compute bounds on the smallest digit of the number implied as cost.
             price = posting.price
-            if price is not None:
+            if isinstance(price, Amount) and isinstance(price.number, Decimal):
                 price_currency = price.currency
                 price_tolerance = min(tolerance * price.number, MAXIMUM_TOLERANCE)
                 cost_tolerances[price_currency] += price_tolerance
