@@ -14,6 +14,7 @@ __license__ = "GNU GPLv2"
 
 import collections
 
+from beancount.core.data import EMPTY_SET
 from beancount.core.number import ZERO
 from beancount.core import data
 from beancount.core import account
@@ -133,7 +134,7 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
                          gain_loss_str, h=holding)
         entry = data.Transaction(data.new_metadata(meta["filename"], lineno=1000 + index),
                                  latest_date, flags.FLAG_UNREALIZED,
-                                 None, narration, None, None, [])
+                                 None, narration, EMPTY_SET, EMPTY_SET, [])
 
         # Book this as income, converting the account name to be the same, but as income.
         # Note: this is a rather convenient but arbitraty choice--maybe it would be best to
