@@ -4,6 +4,11 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2017-07-02
+
+  - Fixed minor bug with rendering postings with missing numbers.
+
+
 2017-06-25
 
   - Fixed a minor bug in the tolerance inference code that wouldn't accept a

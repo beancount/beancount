@@ -22,6 +22,7 @@ __copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from beancount.core.number import Decimal
+from beancount.core.number import MISSING
 from beancount.core.amount import Amount
 from beancount.core.position import Cost
 from beancount.core.position import Position
@@ -92,7 +93,11 @@ def get_weight(pos):
             price = pos.price
             if price is not None:
                 # Note: Here we could assert that price.currency == units.currency.
-                weight = Amount(price.number * units.number, price.currency)
+                if price.number is MISSING or units.number is MISSING:
+                    converted_number = MISSING
+                else:
+                    converted_number = price.number * units.number
+                weight = Amount(converted_number, price.currency)
 
     return weight
 
