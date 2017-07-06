@@ -1,0 +1,41 @@
+Findings:
+
+- We can download the following formats:
+
+    html
+    txt
+    rtf
+    odt
+    pdf
+    docx
+    epub
+
+- Pandoc only supports reading from
+
+    html
+    odt
+    docx
+    epub
+
+- Inspecting and comparing the native conversion, here are some observations:
+
+  * Both the HTML and epub outputs similarly produce crappy representation that
+    incorporates a lot of stylistic elements. This leaves odt and docx.
+
+  * Surprisingly, odt parsing does not yield a whole lot of useful structure.
+    For instance, the section headers aren't even parsed as such, but rather
+    contain anchor markers. Not great.
+
+  * So docx is the most useful here.
+
+    * It does not produce a title. We may have to download multiple formats in
+      order to extract different parts from different formats.
+
+    * It has extraneous blockquotes.
+
+    * The code blocks aren't detected as such and whitespace in front of account
+      names is lost.
+
+Converting out to HTML, we see
+
+- That the output needs to be spliced in an HTML wrapper with a UTF-8 encoding.

@@ -1,0 +1,19 @@
+#!/usr/bin/env python3
+"""Filter to process docx input.
+"""
+__copyright__ = "Copyright (C) 2017  Martin Blais"
+__license__ = "GNU GPLv2"
+
+import sys
+
+import pandocfilters
+from pandocfilters import Str
+
+
+def caps(key, value, format, meta):
+    if key == 'BlockQuote':
+        print(value, file=sys.stderr)
+
+
+if __name__ == "__main__":
+    pandocfilters.toJSONFilter(caps)

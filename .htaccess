@@ -177,6 +177,11 @@ RedirectMatch /doc/import$                /beancount/doc/ingest
 RedirectMatch /doc/ingesting$             /beancount/doc/ingest
 RedirectMatch /doc/importing$             /beancount/doc/ingest
 
+RedirectMatch /doc/self-reductions        https://docs.google.com/document/d/16dKnXJ7KZhemPs5NPHmSTNCV7LUPrMD9jFgiV79Npb8/
+RedirectMatch /doc/selfreductions         /doc/ledgerhub/self-reductions
+RedirectMatch /doc/self-redux             /doc/ledgerhub/self-reductions
+RedirectMatch /doc/selfredux              /doc/ledgerhub/self-reductions
+
 # Old LedgerHub documents now redirected from here.
 
 RedirectMatch /doc/ledgerhub/design-doc   https://docs.google.com/document/d/11u1sWv7H7Ykbc7ayS4M9V3yKqcuTY7LJ3n1tgnEN2Hk/

@@ -4,6 +4,100 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2017-06-25
+
+  - Fixed a minor bug in the tolerance inference code that wouldn't accept a
+    posting with a missing number only, e.g. Assets:Checking  USD @ 1.32 CAD.
+
+  - Added a "--no-colon" option to both bean-web and bean-bake in order to
+    support Windows filesystems which do not allow colons in filenames.
+
+
+2017-06-22
+
+  - Added --numberify option to bean-query, which for CSV output will remove the
+    currencies of any Amount column. This is great for then uploading to a
+    spreadsheet.
+
+
+2017-05-28
+
+  - Merged patch from Felix Eckhofer that adds an option to bean-format to make
+    it use a fixed width. I've been wanting this myself for a while actually, I
+    think a fixed value makes more sense than what I'd done previously and
+    should eventually be made the default.
+
+
+2017-05-24
+
+  - Implemented beancount.plugins.auto and beancount.plugins.pedantic. I've been
+    wanting to do this for a while. When writing quick-and-dirty little tests,
+    inserting 'plugin "beancount.plugins.auto"' is quick and does the job, and
+    if you want absolutely all the verifications and to make Beancount as
+    pedantic as possible, you should be able to adopt 'plugin
+    "beancount.plugins.pedantic"'.
+
+    In order to do that I had to make the loader support plugin definitions
+    whose __plugins__ attribute is a function reference, not just a string. It
+    supports both now.
+
+  - A number like this now fails to parse: 1,245,449,72.00 USD. I added a test
+    in the lexer to tighten the parser. This has been brought up before and will
+    potentially avoid input errors.
+
+
+2017-05-20
+
+  - Clarified error message for price format specified on the command-line.
+
+
+2017-05-08
+
+  - Made the open/close map return by the getters not a defaultdict by default,
+    so that accidentally looking up elements won't mutate it.
+
+
+2017-04-30
+
+  - Moved src/python/beancount/... to beancount/...
+    The purpose is to structure this project in the most common way
+    people expect it (most Python OSS projects have this structure, with the
+    package name directory at the root). I've had this other structure for a
+    while mainly for historical reasons. I wanted to make this clean before
+    baking a final 2.0 release and switching to numbered releases.
+
+  - Moved src/elisp/beancount.el to editors/emacs/beancount.el and made
+    necessary adjustments.
+
+  - Merged incomplete changes from booking branch to "default." The work on
+    supporting self-reduction (see
+    http://furius.ca/benacount/doc/self-reductions) won't be carried during 2.0,
+    it will be subject of a subsequent release.
+
+  - This concludes the merging of all the branches, which I've done in order to
+    move the source to a more regular project directory (under /beancount).
+
+
+2017-04-29
+
+  - Fixed #27: IN membership operator did not have a proper precedence definition.
+
+
+2017-03-19
+
+  - Fixed minor bug with CSV importer that would occur when the file has no
+    valid columns.
+
+
+2017-01-26
+
+  - (internal) Moved the implementation of booking methods to its own
+    beancount.parser.booking_methods module.
+
+  - (internal) Split up the booking methods to functions for exhaustive testing
+    and allowing others to implement new methods more easily if desired.
+
+
 2017-01-22
 
   - Added new price source fetcher from OANDA's API. It supports a large number
@@ -11,6 +105,9 @@ Note: This file contains only changes in the 'default' branch.
     it like the other price sources, e.g., like this:
 
       bean-price -e 'USD:oanda/EUR_USD'
+
+  - Began working on the conversion of Google Docs to reStructuredText for
+    inclusion in Dominik Aumayr's docs.
 
 
 2017-01-21

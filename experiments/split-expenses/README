@@ -18,4 +18,4 @@ I need to do to it:
 
 - Tests should be added for it.
 
-- It should be moved under src/python/beancount/scripts.
+- It should be moved under beancount/scripts.

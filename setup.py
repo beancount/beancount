@@ -83,7 +83,7 @@ else:
         #
         # If you think I'm a lunatic, fix it and make sure you can make this
         # command succeed:
-        #   nosetests3 -s .../src/python/beancount/scripts/setup_test.py
+        #   nosetests3 -s beancount/scripts/setup_test.py
         #
     except ImportError:
         warnings.warn("Setuptools not installed; falling back on distutils. "
@@ -99,7 +99,7 @@ else:
 # overrides the stdlib 'parser' module which is used by setuptools, and causes a
 # subtle bug. That's why I import this utility directly from path).
 hashsrc = runpy.run_path(path.join(path.dirname(__file__),
-                                   'src/python/beancount/parser/hashsrc.py'))
+                                   'beancount/parser/hashsrc.py'))
 hash_parser_source_files = hashsrc['hash_parser_source_files']
 
 
@@ -139,7 +139,7 @@ else:
 # Please read: http://furius.ca/beancount/doc/install about version numbers.
 setup(
     name="beancount",
-    version='2.0b13',
+    version='2.0rc1',
     description="Command-line Double-Entry Accounting",
 
     long_description=
@@ -162,7 +162,6 @@ setup(
     url="http://furius.ca/beancount",
     download_url="http://bitbucket.org/blais/beancount",
 
-    package_dir = {'': 'src/python',},
     packages = [
         'beancount',
         'beancount.parser',
@@ -191,24 +190,21 @@ setup(
         'beancount.parser': ['*.h'], # See note for {63fc8d84d30a} above.
         },
 
-    entry_points = {
-        'console_scripts': [
-            'bean-check = beancount.scripts.check:main',
-            'bean-report = beancount.reports.report:main',
-            'bean-query = beancount.query.shell:main',
-            'bean-web = beancount.web.web:main',
-        ],
-    },
-
-    ext_modules=[
+    ext_modules = [
         Extension("beancount.parser._parser",
                   sources=[
-                      "src/python/beancount/parser/lexer.c",
-                      "src/python/beancount/parser/grammar.c",
-                      "src/python/beancount/parser/parser.c",
+                      "beancount/parser/lexer.c",
+                      "beancount/parser/grammar.c",
+                      "beancount/parser/parser.c",
                   ],
                   define_macros=[('PARSER_SOURCE_HASH',
                                   '"{}"'.format(hash_parser_source_files()))]),
+    ],
+
+    # Include the Emacs support for completeness, for packagers not to have to
+    # check out from the repository.
+    data_files = [
+        ('elisp', ['editors/emacs/beancount.el']),
     ],
 
     # Add optional arguments that only work with some variants of setup().
