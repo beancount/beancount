@@ -156,6 +156,7 @@ def main():
     # Output the plot.
     if args.output:
         pyplot.savefig(args.output, figsize=(11,8), dpi=600)
+    logging.info("Showing graph")
     pyplot.show()
 
 
