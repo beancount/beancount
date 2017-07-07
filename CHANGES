@@ -4,6 +4,13 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2017-07-06
+
+  - More changes on #173: use a stringify two-level macro in order to place the
+    parser source hash as a string in the source file. Hopefully this should
+    also work under MSDEV.
+
+
 2017-07-05
 
   - Fixed #173: Added a potential fix for building under MSDEV. Thanks to Alan

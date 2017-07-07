@@ -208,7 +208,7 @@ setup(
                       "beancount/parser/parser.c",
                   ],
                   define_macros=[('PARSER_SOURCE_HASH',
-                                  '"{}"'.format(hash_parser_source_files()))],
+                                  hash_parser_source_files())],
                   extra_compile_args=get_cflags()),
     ],
 

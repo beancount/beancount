@@ -39,7 +39,7 @@ def hash_parser_source_files():
     # Note: Prepend a character in front of the hash because under Windows MSDEV
     # removes escapes, and if the hash starts with a number it fails to
     # recognize this is a string. A small compromise for portability.
-    return "H" + md5.hexdigest()
+    return md5.hexdigest()
 
 
 def check_parser_source_files():
