@@ -147,8 +147,8 @@ class Source(source.Source):
         # Make the query.
         params = parse.urlencode(sorted({
             'q': ticker,
-            'startdate': begin_date.strftime('%b+%d,%Y'),
-            'enddate': end_date.strftime('%b+%d,%Y'),
+            'startdate': begin_date.strftime('%b %d, %Y'),
+            'enddate': end_date.strftime('%b %d, %Y'),
             'num': 5,
             'output': 'csv',
         }.items()))
