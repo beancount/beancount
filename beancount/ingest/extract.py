@@ -65,9 +65,6 @@ def extract_from_file(filename, importer,
     if not new_entries:
         return [], []
 
-    # Make sure the newly imported entries are sorted; don't trust the importer.
-    new_entries.sort(key=data.entry_sortkey)
-
     # Ensure that the entries are typed correctly.
     for entry in new_entries:
         data.sanity_check_types(entry, allow_none_for_tags_and_links)
