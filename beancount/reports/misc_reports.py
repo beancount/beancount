@@ -90,7 +90,7 @@ class AccountsReport(base.Report):
         open_close = getters.get_account_open_close(entries)
 
         # Render to stdout.
-        maxlen = max(len(account) for account in open_close)
+        maxlen = (max(len(account) for account in open_close) if open_close else 0)
         sortkey_fun = functools.partial(account_types.get_account_sort_key,
                                         options.get_account_types(options_map))
         for account, (open, close) in sorted(open_close.items(),
