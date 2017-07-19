@@ -3,7 +3,6 @@
 #define yyIN_HEADER 1
 
 #line 6 "beancount/parser/lexer.h"
-#line 23 "beancount/parser/lexer.l"
 
 /* Includes. */
 #include <math.h>
@@ -12,15 +11,12 @@
 #include "parser.h"
 #include "grammar.h"
 
-
 /* Build and accumulate an error on the builder object. */
 void build_lexer_error(const char* string, size_t length);
 
 /* Build and accumulate an error on the builder object using the current
  * exception state. */
 void build_lexer_error_from_exception(void);
-
-
 
 /* Callback call site with error handling. */
 #define BUILD_LEX(method_name, format, ...)                                             \
@@ -37,12 +33,10 @@ void build_lexer_error_from_exception(void);
         return LEX_ERROR;                                                               \
     }
 
-
 /* Initialization/finalization methods. These are separate from the yylex_init()
  * and yylex_destroy() and they call them. */
 void yylex_initialize(const char* filename, const char* encoding);
 void yylex_finalize(void);
-
 
 /* Global declarations; defined below. */
 extern int yy_eof_times;
@@ -57,8 +51,6 @@ extern char* strbuf_end;   /* Current buffer sentinel (points to the final nul).
 extern char* strbuf_ptr;   /* Current insertion point in buffer. */
 void strbuf_realloc(size_t num_new_chars);
 
-
-
 /* Handle detecting the beginning of line. */
 extern int yy_line_tokens; /* Number of tokens since the bol. */
 
@@ -70,14 +62,11 @@ extern int yy_line_tokens; /* Number of tokens since the bol. */
     yycolumn += yyleng;                                 \
   }
 
-
 /* Skip the rest of the input line. */
 int yy_skip_line(void);
 
-
 /* Utility functions. */
 int strtonl(const char* buf, size_t nchars);
-
 
 /* Append characters to the static string buffer and verify. */
 #define SAFE_COPY_CHAR(value)                    \
@@ -86,10 +75,7 @@ int strtonl(const char* buf, size_t nchars);
 	}                                       \
         *strbuf_ptr++ = value;
 
-
-
-
-#line 93 "beancount/parser/lexer.h"
+#line 79 "beancount/parser/lexer.h"
 
 #define  YY_INT_ALIGNED short int
 
@@ -98,7 +84,7 @@ int strtonl(const char* buf, size_t nchars);
 #define FLEX_SCANNER
 #define YY_FLEX_MAJOR_VERSION 2
 #define YY_FLEX_MINOR_VERSION 6
-#define YY_FLEX_SUBMINOR_VERSION 0
+#define YY_FLEX_SUBMINOR_VERSION 1
 #if YY_FLEX_SUBMINOR_VERSION > 0
 #define FLEX_BETA
 #endif
@@ -177,25 +163,13 @@ typedef unsigned int flex_uint32_t;
 
 #endif /* ! FLEXINT_H */
 
-#ifdef __cplusplus
-
-/* The "const" storage-class-modifier is valid. */
-#define YY_USE_CONST
-
-#else	/* ! __cplusplus */
-
-/* C99 requires __STDC__ to be defined as 1. */
-#if defined (__STDC__)
-
-#define YY_USE_CONST
-
-#endif	/* defined (__STDC__) */
-#endif	/* ! __cplusplus */
-
-#ifdef YY_USE_CONST
+/* TODO: this is always defined, so inline it */
 #define yyconst const
+
+#if defined(__GNUC__) && __GNUC__ >= 3
+#define yynoreturn __attribute__((__noreturn__))
 #else
-#define yyconst
+#define yynoreturn
 #endif
 
 /* Size of default input buffer. */
@@ -221,7 +195,7 @@ typedef struct yy_buffer_state *YY_BUFFER_STATE;
 typedef size_t yy_size_t;
 #endif
 
-extern yy_size_t yyleng;
+extern int yyleng;
 
 extern FILE *yyin, *yyout;
 
@@ -237,12 +211,12 @@ struct yy_buffer_state
 	/* Size of input buffer in bytes, not including room for EOB
 	 * characters.
 	 */
-	yy_size_t yy_buf_size;
+	int yy_buf_size;
 
 	/* Number of characters read into yy_ch_buf, not including EOB
 	 * characters.
 	 */
-	yy_size_t yy_n_chars;
+	int yy_n_chars;
 
 	/* Whether we "own" the buffer - i.e., we know we created it,
 	 * and can realloc() it to grow it, and should free() it to
@@ -286,7 +260,7 @@ void yypop_buffer_state (void );
 
 YY_BUFFER_STATE yy_scan_buffer (char *base,yy_size_t size  );
 YY_BUFFER_STATE yy_scan_string (yyconst char *yy_str  );
-YY_BUFFER_STATE yy_scan_bytes (yyconst char *bytes,yy_size_t len  );
+YY_BUFFER_STATE yy_scan_bytes (yyconst char *bytes,int len  );
 
 void *yyalloc (yy_size_t  );
 void *yyrealloc (void *,yy_size_t  );
@@ -345,7 +319,7 @@ FILE *yyget_out (void );
 
 void yyset_out  (FILE * _out_str  );
 
-yy_size_t yyget_leng (void );
+			int yyget_leng (void );
 
 char *yyget_text (void );
 
@@ -430,6 +404,6 @@ extern int yylex \
 #line 382 "beancount/parser/lexer.l"
 
 
-#line 434 "beancount/parser/lexer.h"
+#line 408 "beancount/parser/lexer.h"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */
