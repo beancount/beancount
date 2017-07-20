@@ -118,6 +118,8 @@ def check_python_magic():
         # Check that python-magic and not filemagic is installed.
         if hasattr(magic, 'from_file'):
             return ('python-magic', 'OK', True)
+        else:
+            return ('python-magic', 'BAD: missing from_file.  Install python-magic instead of filemagic', False)
     except ImportError:
         return ('python-magic', None, False)
 
