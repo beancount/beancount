@@ -111,15 +111,14 @@ def check_python_magic():
     Returns:
       A triple of (package-name, version-number, sufficient) as per
       check_dependencies().
-
     """
     try:
         import magic
         # Check that python-magic and not filemagic is installed.
-        if hasattr(magic, 'from_file'):
-            return ('python-magic', 'OK', True)
-        else:
-            return ('python-magic', 'BAD: missing from_file.  Install python-magic instead of filemagic', False)
+        if not hasattr(magic, 'from_file'):
+            # 'filemagic' is installed; install python-magic.
+            raise ImportError
+        return ('python-magic', 'OK', True)
     except ImportError:
         return ('python-magic', None, False)
 
