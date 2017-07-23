@@ -135,6 +135,16 @@ else:
         for binary, _ in binaries])
 
 
+def get_cflags():
+    "Returns suitable CFLAGS for the platform."
+    if platform.system() == "Windows":
+        # unistd.h is not available with MSDEV.
+        # See https://bitbucket.org/blais/beancount/issues/173/
+        return ["-DYY_NO_UNISTD_H"]
+    else:
+        return None
+
+
 # Create a setup.
 # Please read: http://furius.ca/beancount/doc/install about version numbers.
 setup(
@@ -198,7 +208,8 @@ setup(
                       "beancount/parser/parser.c",
                   ],
                   define_macros=[('PARSER_SOURCE_HASH',
-                                  '"{}"'.format(hash_parser_source_files()))]),
+                                  hash_parser_source_files())],
+                  extra_compile_args=get_cflags()),
     ],
 
     # Include the Emacs support for completeness, for packagers not to have to

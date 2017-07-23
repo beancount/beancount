@@ -36,6 +36,9 @@ def hash_parser_source_files():
             return None
         with open(fullname, 'rb') as file:
             md5.update(file.read())
+    # Note: Prepend a character in front of the hash because under Windows MSDEV
+    # removes escapes, and if the hash starts with a number it fails to
+    # recognize this is a string. A small compromise for portability.
     return md5.hexdigest()
 
 

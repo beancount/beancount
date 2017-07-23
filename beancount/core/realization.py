@@ -32,6 +32,7 @@ from beancount.core.data import Close
 from beancount.core.data import Pad
 from beancount.core.data import Note
 from beancount.core.data import Document
+from beancount.core.data import Custom
 from beancount.core import inventory
 from beancount.core import amount
 from beancount.core import data
@@ -304,6 +305,12 @@ def postings_by_account(entries):
             # Insert the pad entry in both realized accounts.
             txn_postings_map[entry.account].append(entry)
             txn_postings_map[entry.source_account].append(entry)
+
+        elif isinstance(entry, Custom):
+            # Insert custom entry for each account in its values.
+            for custom_value in entry.values:
+                if custom_value.dtype == account.TYPE:
+                    txn_postings_map[custom_value.value].append(entry)
 
     return txn_postings_map
 

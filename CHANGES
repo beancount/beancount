@@ -14,6 +14,19 @@ Note: This file contains only changes in the 'default' branch.
   - Fixed minor bug with rendering postings with missing numbers.
 
 
+2017-07-06
+
+  - More changes on #173: use a stringify two-level macro in order to place the
+    parser source hash as a string in the source file. Hopefully this should
+    also work under MSDEV.
+
+
+2017-07-05
+
+  - Fixed #173: Added a potential fix for building under MSDEV. Thanks to Alan
+    Ray for pointing out a method to build with MSDEV under Windows.
+
+
 2017-06-25
 
   - Fixed a minor bug in the tolerance inference code that wouldn't accept a
