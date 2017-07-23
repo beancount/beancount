@@ -484,3 +484,24 @@ class TestPrinterMisc(test_utils.TestCase):
         oss = io.StringIO()
         printer.print_entries(entries, file=oss)
         self.assertLines(input_string, oss.getvalue())
+
+    def test_very_small_number(self):
+        # We want to make sure we never render with scientific notation.
+        input_string = textwrap.dedent("""
+
+          2016-11-05 open Expenses:Bank:Conversion
+          2016-11-05 open Expenses:Gifts
+          2016-11-05 open Expenses:Entertainment:Travel
+          2016-11-05 open Assets:Current:Bank:SomeBank
+
+          2016-11-05 * "Aquarium"
+              Expenses:Gifts                               435 DKK
+              Expenses:Entertainment:Travel                340 DKK
+              Expenses:Bank:Conversion
+              Assets:Current:Bank:SomeBank            -204.17 BGN @@ 775.00 DKK
+        """)
+        entries, errors, options_map = loader.load_string(input_string)
+        self.assertFalse(errors)
+        oss = io.StringIO()
+        printer.print_entries(entries, file=oss)
+        self.assertRegex(oss.getvalue(), '0.0000000000000000000000001 DKK')
