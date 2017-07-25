@@ -4677,6 +4677,9 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - Idea: Limit the absolute value that can be posted to rounding accounts. The
+    limits could be automatically derived from the tolerance values.
+
   - Integrate the docs from here: https://bitbucket.org/aumayr/beancount
 
   - Idea to deal with #145: Add all augmenting postings, THEN book all reducing
