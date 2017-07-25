@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2017-07-25
+
+  - Fixed #181: Support underscores in Python module names for price sources
+    (thanks to Stephan Mueller for reporting).
+
+
 2017-07-06
 
   - More changes on #173: use a stringify two-level macro in order to place the
