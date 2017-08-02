@@ -78,7 +78,10 @@ def get_amounts(iconfig, row, allow_zero_amounts=False):
                          for col in [Col.AMOUNT_DEBIT, Col.AMOUNT_CREDIT]]
 
     # D(None) == ZERO. Nasty!
-    is_zero_amount = credit is not None and D(credit) == ZERO
+    is_zero_amount = (
+        credit is not None and D(credit) == ZERO) and (
+        debit is not None and D(debit) == ZERO
+    )
     if not allow_zero_amounts and is_zero_amount:
         return (None, None)
 
