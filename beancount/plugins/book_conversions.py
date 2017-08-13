@@ -71,6 +71,14 @@ Implementation notes:
   is not strictly true; however, we would need an Inventory in order to figrue
   this out. This will be done in the future and is not difficult to do.
 
+
+IMPORTANT:
+
+  This plugin was developed before the booking methods (FIFO, LIFO, and others)
+  were fully implemented in Beancount. It was built to answer a question on the
+  mailing-list about FIFO booking. You probably don't need to use them anymore.
+  Always prefer to use the native syntax instead of this.
+
 """
 
 __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
