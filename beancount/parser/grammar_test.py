@@ -46,7 +46,7 @@ def check_list(test, objlist, explist):
     elif isinstance(explist, (tuple, list)):
         test.assertEqual(len(explist), len(objlist))
         for obj, exp in zip(objlist, explist):
-            test.assertTrue(isinstance(type(obj), type(exp)))
+            test.assertIsInstance(obj, exp)
 
 
 def raise_exception(*args, **kwargs):
@@ -842,7 +842,7 @@ class TestTransactions(unittest.TestCase):
             Assets:US:Cash             -100 USD
         """
         check_list(self, entries, [])
-        check_list(self, errors, [parser.ParserError])
+        check_list(self, errors, [parser.ParserSyntaxError])
 
     @parser.parse_doc()
     def test_zero_prices(self, entries, errors, _):
