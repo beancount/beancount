@@ -2427,6 +2427,20 @@ class TestIncompleteInputs(cmptest.TestCase):
                          posting.cost)
 
 
+class TestMisc(cmptest.TestCase):
+
+    @parser.parse_doc(expect_errors=True)
+    def test_comment_in_postings(self, entries, errors, options_map):
+        """
+          2017-06-27 * "Bitcoin network fee"
+            ; Account: Pocket money
+            Expenses:Crypto:NetworkFees           0.00082487 BTC
+            Assets:Crypto:Bitcoin
+        """
+        self.assertEqual(1, len(errors))
+        self.assertRegex(errors[0].message, 'syntax error')
+
+
 class TestDocument(unittest.TestCase):
 
     @parser.parse_doc()
