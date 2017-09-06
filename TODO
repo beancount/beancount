@@ -4681,6 +4681,9 @@ http://furius.ca/beancount/doc/proposal-query
     transaction, record it without any postings. This will allow "bean-doctor
     context" to at least find the offending transaction.
 
+  - Idea: Limit the absolute value that can be posted to rounding accounts. The
+    limits could be automatically derived from the tolerance values.
+
   - Integrate the docs from here: https://bitbucket.org/aumayr/beancount
 
   - Idea to deal with #145: Add all augmenting postings, THEN book all reducing
@@ -5412,8 +5415,8 @@ http://furius.ca/beancount/doc/proposal-query
   - Look into TAB problem:
     https://mail.google.com/mail/u/0/#inbox/14fdc82a04d90565
 
-      "Ben, en fait j'attendais de résoudre le problème du TAB, et pour ça j'ai
-      besoin d'un "recipe" vu que ce que j'ai essayé fonctionne."
+      "Ben, en fait j'attendais de r?soudre le probl?me du TAB, et pour ?a j'ai
+      besoin d'un "recipe" vu que ce que j'ai essay? fonctionne."
 
 ** Open Tickets - TODO
 

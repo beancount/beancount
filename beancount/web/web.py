@@ -1199,7 +1199,8 @@ def main():
     run_app(args)
 
 
-def scrape_webapp(filename, callback, port, ignore_regexp, quiet=True, extra_args=None):
+def scrape_webapp(filename, callback, port, ignore_regexp,
+                  quiet=True, no_colons=False, extra_args=None):
     """Run a web server on a Beancount file and scrape it.
 
     This is the main entry point of this module.
@@ -1212,6 +1213,7 @@ def scrape_webapp(filename, callback, port, ignore_regexp, quiet=True, extra_arg
       port: An integer, a free port to use for serving the pages.
       ignore_regexp: A regular expression string, the urls to ignore.
       quiet: True if we shouldn't log the web server pages.
+      no_colons: True if we should avoid rendering colons in URLs (for Windows).
       extra_args: Extra arguments to bean-web that we want to start the
         server with.
     Returns:
@@ -1224,6 +1226,7 @@ def scrape_webapp(filename, callback, port, ignore_regexp, quiet=True, extra_arg
     group = add_web_arguments(argparser)
     group.set_defaults(filename=filename,
                        port=port,
+                       no_colons=no_colons,
                        quiet=quiet)
 
     all_args = [filename]

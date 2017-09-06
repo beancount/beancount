@@ -150,7 +150,8 @@ def bake_to_directory(webargs, output_dir, quiet=False, full_mode=True):
                                                      callback,
                                                      webargs.port,
                                                      ignore_regexps,
-                                                     quiet)
+                                                     quiet,
+                                                     webargs.no_colons)
 
 
 def archive(command_template, directory, archive, quiet=False):

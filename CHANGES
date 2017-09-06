@@ -10,6 +10,22 @@ Note: This file contains only changes in the 'default' branch.
     See https://groups.google.com/d/msg/beancount/0i4w98LmS6E/JJGOKSB8CQAJ
 
 
+2017-08-08
+
+  - Accept account name components as numbers only. The grammar safely supports
+    this because of the leading semi-colon, all the tests pass, and everything
+    runs on my own very large input files.
+
+  - Fixed a failing test with MIME mis-categorization which occurred under
+    Ubuntu.
+
+
+2017-07-25
+
+  - Fixed #181: Support underscores in Python module names for price sources
+    (thanks to Stephan Mueller for reporting).
+
+
 2017-07-23
 
   - Fixed #179: Scientific notation should never appear in rendered output.
