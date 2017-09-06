@@ -4677,6 +4677,10 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - Idea: Upon an irrecoverable error in the postings, instead of skipping a
+    transaction, record it without any postings. This will allow "bean-doctor
+    context" to at least find the offending transaction.
+
   - Integrate the docs from here: https://bitbucket.org/aumayr/beancount
 
   - Idea to deal with #145: Add all augmenting postings, THEN book all reducing
