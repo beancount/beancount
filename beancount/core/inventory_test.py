@@ -218,6 +218,10 @@ class TestInventory(unittest.TestCase):
         ninv = I('-1.50 JPY, -1.51 USD, -1.52 CAD')
         self.assertEqual(pinv, -ninv)
 
+    def test_op_abs(self):
+        inv = I('1.50 USD, 2.00 USD, -1.52 CAD')
+        self.assertEqual(abs(inv), I('3.50 USD, 1.52 CAD'))
+
     def test_op_mul(self):
         inv = I('10 HOOL {1.11 USD}, 2.22 CAD')
         inv2 = inv * D('3')

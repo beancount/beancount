@@ -186,6 +186,14 @@ class Inventory(list):
         """
         return Inventory([-position for position in self])
 
+    def __abs__(self):
+        """Return an inventory with the absolute value of each position.
+
+        Returns:
+          An instance of Inventory.
+        """
+        return Inventory([abs(position) for position in self])
+
     def __mul__(self, scalar):
         """Scale/multiply the contents of the inventory.
 

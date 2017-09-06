@@ -171,6 +171,12 @@ class TestPosition(unittest.TestCase):
         self.assertEqual('CAD', npos.units.currency)
         self.assertEqual(pos.cost, npos.cost)
 
+    def test_abs(self):
+        pos = Position(A("7 CAD"), None)
+        self.assertEqual(D('7'), abs(pos).units.number)
+        pos = Position(A("-7 CAD"), None)
+        self.assertEqual(D('7'), abs(pos).units.number)
+
     def test_mul(self):
         pos = position.from_string("2 HOOL {100.00 USD}")
         pos2 = pos * D('3')
