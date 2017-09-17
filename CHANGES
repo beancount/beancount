@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2017-09-17
+
+  - Added bean-difference script, used to reconcile transactions in multiple
+    files after a long trip.
+
+
 2017-08-08
 
   - Accept account name components as numbers only. The grammar safely supports
