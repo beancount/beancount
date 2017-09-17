@@ -305,6 +305,16 @@ class TestBalance(unittest.TestCase):
         """
         self.assertEqual([], list(map(type, errors)))
 
+    @loader.load_doc(expect_errors=True)
+    def test_balance_account_does_not_exist(self, entries, errors, __):
+        """
+          2013-05-01 open Assets:Invest
+          2013-05-01 open Equity:Opening-Balances
+
+          2013-05-10 balance Assets:Invest:Invalid   0 HOOL
+        """
+        self.assertEqual([balance.BalanceError], list(map(type, errors)))
+
 
 class TestBalancePrecision(unittest.TestCase):
 

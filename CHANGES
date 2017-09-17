@@ -6,6 +6,9 @@ Note: This file contains only changes in the 'default' branch.
 
 2017-09-17
 
+  - Fixed bug in Balance check, detect when an account does not exist and handle
+    it properly.
+
   - Added bean-difference script, used to reconcile transactions in multiple
     files after a long trip.
 

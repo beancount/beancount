@@ -109,7 +109,15 @@ def check(entries, options_map):
             # Check that the currency of the balance check is one of the allowed
             # currencies for that account.
             expected_amount = entry.amount
-            open, _ = open_close_map[entry.account]
+            try:
+                open, _ = open_close_map[entry.account]
+            except KeyError:
+                check_errors.append(
+                    BalanceError(entry.meta,
+                                 "Account '{}' does not exist: ".format(entry.account),
+                                 entry))
+                continue
+
             if (expected_amount is not None and
                 open and open.currencies and
                 expected_amount.currency not in open.currencies):
