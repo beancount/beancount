@@ -11,6 +11,7 @@ import time
 
 from dateutil import rrule
 from dateutil.parser import parse
+import matplotlib; matplotlib.use("Qt5Agg")
 from matplotlib import pyplot
 import numpy
 
