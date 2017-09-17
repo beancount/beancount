@@ -158,7 +158,7 @@ def find_input_files(directory):
     """
     for sroot, dirs, files in os.walk(directory):
         for filename in files:
-            if re.match(r'.*\.(extract|file_date|file_name|py|pyc)$', filename):
+            if re.match(r'.*\.(extract|file_date|file_name|py|pyc|DS_Store)$', filename):
                 continue
             yield path.join(sroot, filename)
 

@@ -10,6 +10,12 @@ Note: This file contains only changes in the 'default' branch.
     files after a long trip.
 
 
+2017-09-06
+
+  - Added ABS() implementation to SQL shell for Position and Inventory types.
+    See https://groups.google.com/d/msg/beancount/0i4w98LmS6E/JJGOKSB8CQAJ
+
+
 2017-08-08
 
   - Accept account name components as numbers only. The grammar safely supports

@@ -12,3 +12,5 @@ examples/generated/*
 beancount/parser/grammar.output
 *.picklecache
 *.DS_Store
+.idea
+beancount.egg-info

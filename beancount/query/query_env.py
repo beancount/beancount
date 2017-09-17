@@ -30,12 +30,34 @@ from beancount.query import query_compile
 
 # Non-agreggating functions. These functionals maintain no state.
 
-class Abs(query_compile.EvalFunction):
+class AbsDecimal(query_compile.EvalFunction):
     "Compute the length of the argument. This works on sequences."
     __intypes__ = [Decimal]
 
     def __init__(self, operands):
         super().__init__(operands, Decimal)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        return abs(args[0])
+
+class AbsPosition(query_compile.EvalFunction):
+    "Compute the length of the argument. This works on sequences."
+    __intypes__ = [position.Position]
+
+    def __init__(self, operands):
+        super().__init__(operands, position.Position)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        return abs(args[0])
+
+class AbsInventory(query_compile.EvalFunction):
+    "Compute the length of the argument. This works on sequences."
+    __intypes__ = [inventory.Inventory]
+
+    def __init__(self, operands):
+        super().__init__(operands, inventory.Inventory)
 
     def __call__(self, context):
         args = self.eval_args(context)
@@ -585,11 +607,39 @@ class JoinStr(query_compile.EvalFunction):
         values = args[0]
         return ','.join(values)
 
+class FilterCurrencyPosition(query_compile.EvalFunction):
+    "Filter an inventory to just the specified currency."
+    __intypes__ = [position.Position, str]
+
+    def __init__(self, operands):
+        super().__init__(operands, position.Position)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        pos, currency = args
+        return pos if pos.units.currency == currency else None
+
+class FilterCurrencyInventory(query_compile.EvalFunction):
+    "Filter an inventory to just the specified currency."
+    __intypes__ = [inventory.Inventory, str]
+
+    def __init__(self, operands):
+        super().__init__(operands, inventory.Inventory)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        inv, currency = args
+        return inventory.Inventory(pos
+                                   for pos in inv
+                                   if pos.units.currency == currency)
+
 
 # FIXME: Why do I need to specify the arguments here? They are already derived
 # from the functions. Just fetch them from instead. Make the compiler better.
 SIMPLE_FUNCTIONS = {
-    'abs'                                                : Abs,
+    ('abs', Decimal)                                     : AbsDecimal,
+    ('abs', position.Position)                           : AbsPosition,
+    ('abs', inventory.Inventory)                         : AbsInventory,
     'length'                                             : Length,
     'str'                                                : Str,
     'maxwidth'                                           : MaxWidth,
@@ -636,6 +686,8 @@ SIMPLE_FUNCTIONS = {
     'getitem'                                            : GetItemStr,
     'findfirst'                                          : FindFirst,
     'joinstr'                                            : JoinStr,
+    ('filter_currency', position.Position, str)          : FilterCurrencyPosition,
+    ('filter_currency', inventory.Inventory, str)        : FilterCurrencyInventory,
     }
 
 

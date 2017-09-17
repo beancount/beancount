@@ -18,6 +18,7 @@ from beancount.core.number import NUMBER_RE
 from beancount.core.number import D
 from beancount.core.amount import Amount
 from beancount.core.amount import mul as amount_mul
+from beancount.core.amount import abs as amount_abs
 from beancount.core.amount import CURRENCY_RE
 from beancount.core.display_context import DEFAULT_FORMATTER
 
@@ -320,6 +321,14 @@ class Position(_Position):
         return Position(-self.units, self.cost)
 
     __neg__ = get_negative
+
+    def __abs__(self):
+        """Return the absolute value of the position.
+
+        Returns:
+          An instance of Position with the absolute units.
+        """
+        return Position(amount_abs(self.units), self.cost)
 
     def __mul__(self, scalar):
         """Scale/multiply the contents of the position.
