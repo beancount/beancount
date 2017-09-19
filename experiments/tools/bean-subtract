@@ -10,6 +10,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import argparse
 import collections
+import logging
 import re
 
 from beancount import loader
@@ -29,8 +30,10 @@ def main():
     args = optparser.parse_args()
 
     # Parse the ledger files.
-    entries, errors, options = loader.load_file(args.filename)
-    entries_diff, errors_diff, options_diff = loader.load_file(args.filename)
+    entries, errors, options = loader.load_file(args.filename,
+                                                log_errors=logging.error)
+    entries_diff, errors_diff, options_diff = loader.load_file(args.filename_diff,
+                                                               log_errors=logging.error)
 
     # Create a mapping from links to lists of transactions to find.
     link_map = collections.defaultdict(list)
@@ -40,13 +43,10 @@ def main():
 
     # Filter out the transactions.
     filtered_entries = []
-    for entry in entries:
-        if isinstance(entry, data.Transaction):
-            for link in entry.links:
-                if link in link_map:
-                    break
-            else:
-                filtered_entries.append(entry)
+    for entry in data.filter_txns(entries):
+        for link in entry.links:
+            if link in link_map:
+                break
         else:
             filtered_entries.append(entry)
 
