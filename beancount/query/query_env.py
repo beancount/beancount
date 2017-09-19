@@ -373,17 +373,6 @@ class CostInventory(query_compile.EvalFunction):
         args = self.eval_args(context)
         return args[0].reduce(convert.get_cost)
 
-class OnlyInventory(query_compile.EvalFunction):
-    "Get one currency's amount from the inventory."
-    __intypes__ = [str, inventory.Inventory]
-
-    def __init__(self, operands):
-        super().__init__(operands, position.Position)
-
-    def __call__(self, context):
-        currency, inventory_ = self.eval_args(context)
-        return inventory_.get_currency_units(currency)
-
 
 class ConvertAmount(query_compile.EvalFunction):
     "Coerce an amount to a particular currency."
@@ -607,6 +596,18 @@ class JoinStr(query_compile.EvalFunction):
         values = args[0]
         return ','.join(values)
 
+
+class OnlyInventory(query_compile.EvalFunction):
+    "Get one currency's amount from the inventory."
+    __intypes__ = [str, inventory.Inventory]
+
+    def __init__(self, operands):
+        super().__init__(operands, amount.Amount)
+
+    def __call__(self, context):
+        currency, inventory_ = self.eval_args(context)
+        return inventory_.get_currency_units(currency)
+
 class FilterCurrencyPosition(query_compile.EvalFunction):
     "Filter an inventory to just the specified currency."
     __intypes__ = [position.Position, str]
@@ -659,7 +660,6 @@ SIMPLE_FUNCTIONS = {
     ('units', inventory.Inventory)                       : UnitsInventory,
     ('cost', position.Position)                          : CostPosition,
     ('cost', inventory.Inventory)                        : CostInventory,
-    'only'                                               : OnlyInventory,
     'year'                                               : Year,
     'month'                                              : Month,
     'ymonth'                                             : YearMonth,
@@ -686,6 +686,9 @@ SIMPLE_FUNCTIONS = {
     'getitem'                                            : GetItemStr,
     'findfirst'                                          : FindFirst,
     'joinstr'                                            : JoinStr,
+
+    # FIXME: 'only' should be removed.
+    'only'                                               : OnlyInventory,
     ('filter_currency', position.Position, str)          : FilterCurrencyPosition,
     ('filter_currency', inventory.Inventory, str)        : FilterCurrencyInventory,
     }
