@@ -7,6 +7,7 @@ import unittest
 from unittest import mock
 
 from beancount.ingest import cache
+from beancount.utils import file_type
 
 
 class TestFileMemo(unittest.TestCase):
@@ -26,6 +27,7 @@ class TestFileMemo(unittest.TestCase):
             self.assertEqual('abc', wrap.convert(converter))
             self.assertEqual(1, converter.call_count)
 
+    @unittest.skipIf(not file_type.magic, 'python-magic is not installed')
     def test_cache_head_and_contents(self):
         with tempfile.NamedTemporaryFile() as tmpfile:
             shutil.copy(__file__, tmpfile.name)

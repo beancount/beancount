@@ -796,7 +796,7 @@ def main():
     outfile = sys.stdout if args.output is None else open(args.output, 'w')
 
     # Create the shell.
-    is_interactive = os.isatty(sys.stdin.fileno()) and not args.query
+    is_interactive = sys.stdin.isatty() and not args.query
     shell_obj = BQLShell(is_interactive, load, outfile, args.format, args.numberify)
     shell_obj.on_Reload()
 

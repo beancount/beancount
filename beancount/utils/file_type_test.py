@@ -22,7 +22,8 @@ class TestFileType(unittest.TestCase):
         self.check_mime_type('example.csv', 'text/csv')
 
     def test_xls(self):
-        self.check_mime_type('example.xls', 'application/vnd.ms-excel')
+        self.check_mime_type('example.xls', ['application/excel',
+                                             'application/vnd.ms-excel'])
 
     def test_ods(self):
         self.check_mime_type('example.ods',
@@ -71,10 +72,13 @@ class TestFileType(unittest.TestCase):
         self.check_mime_type('example.xhtml', 'application/xhtml+xml')
 
     def test_zip(self):
-        self.check_mime_type('example.zip', 'application/zip')
+        self.check_mime_type('example.zip', ['application/zip',
+                                             'application/x-zip-compressed'])
 
+    @unittest.skipIf(not file_type.magic, 'python-magic is not installed')
     def test_gz(self):
         self.check_mime_type('example.gz', ['application/gzip', 'application/x-gzip'])
 
+    @unittest.skipIf(not file_type.magic, 'python-magic is not installed')
     def test_bz2(self):
         self.check_mime_type('example.bz2', 'application/x-bzip2')
