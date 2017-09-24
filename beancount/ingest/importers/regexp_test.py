@@ -7,6 +7,7 @@ import re
 from beancount.ingest.importers import regexp
 from beancount.ingest import importer
 from beancount.ingest import cache
+from beancount.utils import file_type
 from beancount.utils import test_utils
 
 
@@ -27,6 +28,7 @@ class TestRegexpMixin(unittest.TestCase):
         SimpleTestImporter([r'Filename: .*\.csv',
                             r'MimeType: text/plain'])
 
+    @unittest.skipIf(not file_type.magic, 'python-magic is not installed')
     @test_utils.docfile
     def test_match(self, filename):
         """\

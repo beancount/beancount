@@ -1,6 +1,7 @@
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import functools
 import re
 import sys
 import unittest
@@ -14,7 +15,8 @@ from beancount import loader
 # pylint: disable=invalid-name
 entries, errors, options_map = None, None, None
 
-def setUp(self):
+
+def setup_module():
     example_filename = path.join(test_utils.find_repository_root(__file__),
                                  'examples', 'example.beancount')
     global entries, errors, options_map  # pylint: disable=invalid-name
@@ -24,6 +26,7 @@ def setUp(self):
 
 def runshell(function):
     """Decorate a function to run the shell and return the output."""
+    @functools.wraps(function)
     def test_function(self):
         def loadfun():
             return entries, errors, options_map
@@ -32,7 +35,6 @@ def runshell(function):
             shell_obj.on_Reload()
             shell_obj.onecmd(function.__doc__)
         return function(self, stdout.getvalue())
-    test_function.__name__ = function.__name__
     return test_function
 
 
