@@ -414,7 +414,7 @@ class Builder(lexer.LexBuilder):
         """
         # Update the mapping that stores the parsed precisions.
         # Note: This is relatively slow, adds about 70ms because of number.as_tuple().
-        if isinstance(number, Decimal) and currency:
+        if isinstance(number, Decimal) and currency and currency != MISSING:
             self.dcupdate(number, currency)
         return Amount(number, currency)
 
