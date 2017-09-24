@@ -14,3 +14,4 @@ beancount/parser/grammar.output
 *.DS_Store
 .idea
 beancount.egg-info
+.cache
