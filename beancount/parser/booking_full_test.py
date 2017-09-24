@@ -2363,6 +2363,7 @@ class TestBookAmbiguousLIFO(_BookingTestBase):
         """
 
 
+@unittest.skip('Booking.AVERAGE is disabled.')
 class _TestBookAmbiguousAVERAGE(_BookingTestBase):
 
     @book_test(Booking.AVERAGE)

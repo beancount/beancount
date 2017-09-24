@@ -5,6 +5,7 @@ import unittest
 
 from beancount.ingest.importers import fileonly
 from beancount.ingest import cache
+from beancount.utils import file_type
 from beancount.utils import test_utils
 
 
@@ -16,6 +17,7 @@ class TestFileOnly(unittest.TestCase):
                           'Assets:BofA:Checking',
                           basename='bofa')
 
+    @unittest.skipIf(not file_type.magic, 'python-magic is not installed')
     @test_utils.docfile
     def test_match(self, filename):
         """\
