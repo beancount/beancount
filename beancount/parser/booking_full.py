@@ -553,7 +553,7 @@ def book_reductions(entry, group_postings, balances,
         balance = local_balances.setdefault(account, copy.copy(previous_balance))
 
         # Check if this is a lot held at cost.
-        if costspec is None:
+        if costspec is None or units.number is MISSING:
             # This posting is not held at cost; we do nothing.
             booked_postings.append(posting)
         else:

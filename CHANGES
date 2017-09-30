@@ -4,6 +4,11 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2017-09-30
+
+  - Fixed a bug in reduction booking that would fail when the units are omitted.
+
+
 2017-09-17
 
   - Fixed bug in Balance check, detect when an account does not exist and handle

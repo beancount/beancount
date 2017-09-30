@@ -1709,6 +1709,18 @@ class TestBookReductions(_BookingTestBase):
           error: "No position matches"
         """
 
+    @book_test(Booking.STRICT)
+    def test_reduce__missing_units_number(self, _, __):
+        """
+        2016-01-01 * #ante
+
+        2016-05-02 * #apply
+          Assets:Account              HOOL {115.00 USD}
+
+        2016-01-01 * #booked
+        """
+
+
 
 class TestHasSelfReductions(cmptest.TestCase):
 
