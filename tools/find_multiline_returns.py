@@ -15,7 +15,7 @@ import textwrap
 from os import path
 
 
-ROOT = path.join(path.dirname(path.dirname(__file__)), 'src/python/beancount')
+ROOT = path.join(path.dirname(path.dirname(__file__)), 'beancount')
 
 
 def find_python_files(directory):

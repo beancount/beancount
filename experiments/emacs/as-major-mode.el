@@ -1,9 +1,9 @@
-diff -r 90472db4ef14 src/elisp/beancount.el
---- a/src/elisp/beancount.el	Sun Nov 20 14:18:59 2016 -0500
-+++ b/src/elisp/beancount.el	Sun Nov 20 14:58:24 2016 -0500
+diff -r 90472db4ef14 editors/emacs/beancount.el
+--- a/editors/emacs/beancount.el	Sun Nov 20 14:18:59 2016 -0500
++++ b/editors/emacs/beancount.el	Sun Nov 20 14:58:24 2016 -0500
 @@ -155,10 +155,11 @@
  (defun beancount--goto-bob () (goto-char (point-min)))
- 
+
  ;;;###autoload
 -(define-minor-mode beancount-mode
 -  "A minor mode to help editing Beancount files.
@@ -14,7 +14,7 @@ diff -r 90472db4ef14 src/elisp/beancount.el
 +
 +org-mode style fold/outline capability can be added by turning on
 +orgstruct-mode minor mode.
- 
+
  \\{beancount-mode-map}"
    :init-value nil
 @@ -200,15 +201,12 @@
@@ -28,10 +28,10 @@ diff -r 90472db4ef14 src/elisp/beancount.el
    (if (fboundp 'font-lock-flush)
        (font-lock-flush)
      (with-no-warnings (font-lock-fontify-buffer)))
- 
+
 -  (when beancount-mode
 -    (beancount-init-accounts))
 +  (beancount-init-accounts)
    )
- 
+
  (defvar beancount-accounts nil

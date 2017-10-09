@@ -4,6 +4,150 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2017-09-30
+
+  - Fixed a bug in reduction booking that would fail when the units are omitted.
+
+
+2017-09-17
+
+  - Fixed bug in Balance check, detect when an account does not exist and handle
+    it properly.
+
+  - Added bean-difference script, used to reconcile transactions in multiple
+    files after a long trip.
+
+
+2017-09-06
+
+  - Added ABS() implementation to SQL shell for Position and Inventory types.
+    See https://groups.google.com/d/msg/beancount/0i4w98LmS6E/JJGOKSB8CQAJ
+
+
+2017-08-08
+
+  - Accept account name components as numbers only. The grammar safely supports
+    this because of the leading semi-colon, all the tests pass, and everything
+    runs on my own very large input files.
+
+  - Fixed a failing test with MIME mis-categorization which occurred under
+    Ubuntu.
+
+
+2017-07-25
+
+  - Fixed #181: Support underscores in Python module names for price sources
+    (thanks to Stephan Mueller for reporting).
+
+
+2017-07-23
+
+  - Fixed #179: Scientific notation should never appear in rendered output.
+
+
+2017-07-02
+
+  - Fixed minor bug with rendering postings with missing numbers.
+
+
+2017-07-06
+
+  - More changes on #173: use a stringify two-level macro in order to place the
+    parser source hash as a string in the source file. Hopefully this should
+    also work under MSDEV.
+
+
+2017-07-05
+
+  - Fixed #173: Added a potential fix for building under MSDEV. Thanks to Alan
+    Ray for pointing out a method to build with MSDEV under Windows.
+
+
+2017-06-25
+
+  - Fixed a minor bug in the tolerance inference code that wouldn't accept a
+    posting with a missing number only, e.g. Assets:Checking  USD @ 1.32 CAD.
+
+  - Added a "--no-colon" option to both bean-web and bean-bake in order to
+    support Windows filesystems which do not allow colons in filenames.
+
+
+2017-06-22
+
+  - Added --numberify option to bean-query, which for CSV output will remove the
+    currencies of any Amount column. This is great for then uploading to a
+    spreadsheet.
+
+
+2017-05-28
+
+  - Merged patch from Felix Eckhofer that adds an option to bean-format to make
+    it use a fixed width. I've been wanting this myself for a while actually, I
+    think a fixed value makes more sense than what I'd done previously and
+    should eventually be made the default.
+
+
+2017-05-24
+
+  - Implemented beancount.plugins.auto and beancount.plugins.pedantic. I've been
+    wanting to do this for a while. When writing quick-and-dirty little tests,
+    inserting 'plugin "beancount.plugins.auto"' is quick and does the job, and
+    if you want absolutely all the verifications and to make Beancount as
+    pedantic as possible, you should be able to adopt 'plugin
+    "beancount.plugins.pedantic"'.
+
+    In order to do that I had to make the loader support plugin definitions
+    whose __plugins__ attribute is a function reference, not just a string. It
+    supports both now.
+
+  - A number like this now fails to parse: 1,245,449,72.00 USD. I added a test
+    in the lexer to tighten the parser. This has been brought up before and will
+    potentially avoid input errors.
+
+
+2017-05-20
+
+  - Clarified error message for price format specified on the command-line.
+
+
+2017-05-08
+
+  - Made the open/close map return by the getters not a defaultdict by default,
+    so that accidentally looking up elements won't mutate it.
+
+
+2017-04-30
+
+  - Moved src/python/beancount/... to beancount/...
+    The purpose is to structure this project in the most common way
+    people expect it (most Python OSS projects have this structure, with the
+    package name directory at the root). I've had this other structure for a
+    while mainly for historical reasons. I wanted to make this clean before
+    baking a final 2.0 release and switching to numbered releases.
+
+  - Moved src/elisp/beancount.el to editors/emacs/beancount.el and made
+    necessary adjustments.
+
+  - Merged incomplete changes from booking branch to "default." The work on
+    supporting self-reduction (see
+    http://furius.ca/benacount/doc/self-reductions) won't be carried during 2.0,
+    it will be subject of a subsequent release.
+
+  - This concludes the merging of all the branches, which I've done in order to
+    move the source to a more regular project directory (under /beancount).
+
+
+2017-04-29
+
+  - Fixed #27: IN membership operator did not have a proper precedence definition.
+
+
+2017-03-19
+
+  - Fixed minor bug with CSV importer that would occur when the file has no
+    valid columns.
+
+
 2017-01-26
 
   - (internal) Moved the implementation of booking methods to its own

@@ -7,12 +7,11 @@ build
 dist
 *.a
 *.so
-rewrite/golang/bin
-rewrite/golang/y.output
-rewrite/golang/src/beancount/grammar.go
-lib/python/_beancount.cpython-33m.so
 .noseids
 examples/generated/*
-src/python/beancount/parser/grammar.output
+beancount/parser/grammar.output
 *.picklecache
 *.DS_Store
+.idea
+beancount.egg-info
+.cache

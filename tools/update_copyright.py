@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Process all source code and update the license and copyright headers to be current.
 
-hg log --template '{date|isodate} {desc}\n' src/python/beancount/core/inventory.py
+hg log --template '{date|isodate} {desc}\n' beancount/core/inventory.py
 """
 __copyright__ = "Copyright (C) 2016-2017  Martin Blais"
 __license__ = "GNU GPLv2"

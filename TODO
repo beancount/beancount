@@ -1557,6 +1557,8 @@ http://furius.ca/beancount/doc/proposal-query
     reductions. But that's not really possible, because the augmentation may
     require interpolation first. Hmmm. Difficult question. {f89b5b01e568}
 
+    [This is being handled in the "booking" branch.]
+
   - Add an option "merge_lots" whose default value is TRUE, and which can be set
     to FALSE in order to avoid merging augmenting lots in the Inventory. It this
     is false, there's the possibillity of an inventory owning two lots which
@@ -4675,6 +4677,110 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - In the account name completion function in Emacs, don't include the name of
+    closed accounts.
+
+  - Idea: Upon an irrecoverable error in the postings, instead of skipping a
+    transaction, record it without any postings. This will allow "bean-doctor
+    context" to at least find the offending transaction.
+
+  - Idea: Limit the absolute value that can be posted to rounding accounts. The
+    limits could be automatically derived from the tolerance values.
+
+  - Integrate the docs from here: https://bitbucket.org/aumayr/beancount
+
+  - Idea to deal with #145: Add all augmenting postings, THEN book all reducing
+    ones against that.
+
+  - Full booking: We need an example of two reducing bookings competing for the
+    same lot.
+
+  - Implement IPython/Jupyter notebook support for directly viewing the results
+    of queries.
+
+  - "bean-doctor linked" should list the list of links that were followed. That
+    would go some of the way to explain some of the sometimes surprising
+    results.
+
+  - SQL: OpenMeta is different than Meta; it returns a dict. That's bad. Provide
+    a direct lookup, like Meta.
+
+  - Interesting idea re. booking branch: Until AVERAGE is done in an automated
+    manner, we could provide a poor man's version by creating a new Nerge
+    directive which explicly merges the contents and cost basis of an entire
+    account at a particular point in time. Try this for fun, this should be easy
+    to implement.
+
+  - "numberify" is only made available from run_query(). This is insufficient;
+    it needs be made available through the SQL shell output (as an option) and
+    even from the Google sheets uploader.
+
+    In addition, this ought to work as a standalone tool, whereby a CSV file's
+    column types (including Beancount-specific ones like Amount, Position and
+    Inventory) should be inferred automatically, and the transformations can be
+    applied to them.
+
+    Make a nice library, plug this in many places, and make a standalone script
+    as well.
+
+  - Complete tests for csv importer; it should be tested frantically, and a
+    decent sniffer should be implemented, specifically with credit/debit support
+    and balance vs. posting amount support, as well as detecting fees.
+
+  - Add an AVERAGE function to the SQL shell.
+    See related discussion, I would like to compute this for myself too:
+    https://groups.google.com/d/msg/ledger-cli/dWuWysV6qZU/cyYNzleTCAAJ
+
+  - There ought to be some unit tests for all the custom metadata added to
+    Posting instances. I think this is undertested at the moment.
+
+  - Implement a new plugin to convert metadata-fields to Document directives.
+
+      Scan all transactions that have the invoice-metadata field (or any other
+    suiting field-name of your choice), and create a Document directive for
+    each, with a link to the transaction it comes from.
+
+    In doing so, add support for "fuzzy-matching":  When only a relative
+    filename is specified in the metadata-field (and Document directive), search
+    different locations based on the Account this is on/in.
+
+    See https://github.com/aumayr/fava/issues/386#issuecomment-256895713.
+
+
+  - Core: Some problems occur (with the new method) if you mix at-cost and
+    without-cost for the same currency, like this:
+
+      2015-09-15 * "Buy"
+        Assets:Investments:HOOL   50.795 HOOL {14.63 USD} @ 14.63 USD
+        Assets:Investments:Cash   -743.13 USD
+        Equity:Vanguard:Rounding
+
+      2015-09-24 * "Dividend Received"
+        Assets:Investments:HOOL           0.252 HOOL {14.11 USD} @ 14.11 USD
+        Income:Vanguard:Retire:AfterTax:HOOL:Dividend  -3.56 USD
+        Equity:Vanguard:Rounding
+
+      2016-05-09 * "Conversion From"
+        Assets:Investments:HOOL      -51.047 HOOL @ 14.33 USD
+        Assets:Investments:Cash       731.50 USD
+        Income:Vanguard:Retire:AfterTax:HOOL:Pnl
+
+      2016-05-10 balance Assets:Investments:HOOL 0 HOOL
+
+      2016-05-10 * "Buy"
+        Assets:Investments:HOOL   292.285 HOOL {14.33 USD} @ 14.33 USD
+        Assets:Investments:Cash   -4188.44 USD
+        Equity:Vanguard:Rounding
+
+    The better way to deal with this would be not to allow it to happen. Because
+    this needs to be applied during matching, we cannot implement this in a
+    plugin, this needs to become an option (to allow it, and to make it
+    disallowed by default) in the parser itself.
+
+  - The Beancount loader cache should be automatically invalidated if the
+    revision of Beancount has been updated. This could avoid some potentially
+    confusing user interpretation of errors.
+
   - Idea to deal with #145: Add all augmenting postings, THEN book all reducing
     ones against that.
 
@@ -4871,6 +4977,17 @@ http://furius.ca/beancount/doc/proposal-query
     This problem occurs rarely, but when it does, it's annoying to deal with
     because the error removes the transaction and it cascades to more errors.
     Fixing this would help usability a fair amount.
+
+  - This type of interpolation with per-account currency constraints should just work:
+
+      YYYY-MM-DD open Expenses:Communications:Internet  USD
+      YYYY-MM-DD open Assets:US:Points:Verizon          VERIPTS
+
+      2017-03-12 * "VERIZON ONETIMEPAY  VERIZON.COM         FL" "PHONE SRV"
+        Liabilities:US:CreditCard  -178.37 USD
+        Expenses:Communications:Internet
+        Income:US:Rewards                -650 VERIPTS
+        Assets:US:Points:Verizon
 
 
 ** Google Keep Tickets
@@ -5301,8 +5418,8 @@ http://furius.ca/beancount/doc/proposal-query
   - Look into TAB problem:
     https://mail.google.com/mail/u/0/#inbox/14fdc82a04d90565
 
-      "Ben, en fait j'attendais de résoudre le problème du TAB, et pour ça j'ai
-      besoin d'un "recipe" vu que ce que j'ai essayé fonctionne."
+      "Ben, en fait j'attendais de r?soudre le probl?me du TAB, et pour ?a j'ai
+      besoin d'un "recipe" vu que ce que j'ai essay? fonctionne."
 
 ** Open Tickets - TODO
 

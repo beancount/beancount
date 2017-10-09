@@ -11,6 +11,7 @@ import time
 
 from dateutil import rrule
 from dateutil.parser import parse
+import matplotlib; matplotlib.use("Qt5Agg")
 from matplotlib import pyplot
 import numpy
 
@@ -156,6 +157,7 @@ def main():
     # Output the plot.
     if args.output:
         pyplot.savefig(args.output, figsize=(11,8), dpi=600)
+    logging.info("Showing graph")
     pyplot.show()
 
 

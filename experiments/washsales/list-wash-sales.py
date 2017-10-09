@@ -263,7 +263,7 @@ def main():
     # 1099 forms.
     agglots = [aggregate_sales(lots)
                for _, lots in misc_utils.groupby(
-                       lambda lot: (lot.no, lot.ref), lots).items()]
+                       lambda lot: (lot.ref), lots).items()]
     tab_agg = table.create_table(sorted(agglots, key=lambda lot: (lot.ref, lot.no)),
                                  fieldspec)
 
