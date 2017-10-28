@@ -4,6 +4,11 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2017-10-28
+
+  - Fixed bug with 'context' on a directive that's not a transaction.
+
+
 2017-09-30
 
   - Fixed a bug in reduction booking that would fail when the units are omitted.
