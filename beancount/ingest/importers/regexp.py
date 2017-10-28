@@ -53,7 +53,7 @@ class RegexpImporterMixin:
         match_text = '\n'.join([
             "Filename: {}".format(file.name),
             "MimeType: {}".format(file.mimetype()),
-            "Contents: {}".format(self.get_text(file)),
+            "Contents:\n{}".format(self.get_text(file)),
         ])
         return all(compre.search(match_text)
                    for regexp, compre in self.regexps)

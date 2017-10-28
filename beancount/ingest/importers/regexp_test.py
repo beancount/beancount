@@ -40,7 +40,7 @@ class TestRegexpMixin(unittest.TestCase):
         """
         importer = SimpleTestImporter(['Filename: .*te?mp.*',
                                        'MimeType: text/plain',
-                                       'Contents: .*DATE,TYPE'])
+                                       'Contents:\n.*DATE,TYPE'])
         file = cache._FileMemo(filename)
         self.assertTrue(importer.identify(file))
 
