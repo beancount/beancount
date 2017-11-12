@@ -8,6 +8,7 @@ import datetime
 import enum
 import io
 from os import path
+from typing import Union
 
 from beancount.core.number import D
 from beancount.core.amount import Amount
@@ -75,7 +76,8 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
 
     def __init__(self, config, account, currency, regexps,
                  institution=None,
-                 debug=False):
+                 debug=False,
+                 csv_dialect : Union[str, csv.Dialect] ='excel'):
         """Constructor.
 
         Args:
@@ -84,7 +86,8 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
           currency: A currency string, the currenty of this account.
           regexps: A list of regular expression strings.
           institution: An optional name of an institution to rename the files to.
-          header:
+          debug: Whether or not to print debug information
+          csv_dialect: a `csv` dialect given either as string or as instance or subclass of `csv.Dialect`
         """
         if isinstance(regexps, str):
             regexps = [regexps]
@@ -97,6 +100,8 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
         self.account = account
         self.currency = currency
         self.debug = debug
+
+        self.csv_dialect = csv_dialect
 
         # FIXME: This probably belongs to a mixin, not here.
         self.institution = institution
@@ -118,7 +123,7 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
         "Get the maximum date from the file."
         iconfig, has_header = normalize_config(self.config, file.head())
         if Col.DATE in iconfig:
-            reader = iter(csv.reader(open(file.name)))
+            reader = iter(csv.reader(open(file.name), self.csv_dialect))
             if has_header:
                 next(reader)
             max_date = None
@@ -158,7 +163,7 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
         iconfig, has_header = normalize_config(self.config, file.head())
 
         # Skip header, if one was detected.
-        reader = iter(csv.reader(open(file.name)))
+        reader = iter(csv.reader(open(file.name), dialect=self.csv_dialect))
         if has_header:
             next(reader)
         def get(row, ftype):
