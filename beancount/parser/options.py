@@ -313,7 +313,7 @@ PUBLIC_OPTION_GROUPS = [
 
       By default, the tolerance used for currencies without an inferred value is
       zero (which means infinite precision). As a special case, this value, that
-      is, the fallabck value used for all currencies without an explicit default
+      is, the fallback value used for all currencies without an explicit default
       can be overridden using the '*' currency, like this:  '*:0.5'. Used by
       itself, this last example sets the fallabck tolerance as '0.5' for all
       currencies.
