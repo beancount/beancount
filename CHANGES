@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2017-11-24
+
+  - Silenced annoying warning about file_cache version incompatibility in
+    upload-to-sheets.
+
+
 2017-10-28
 
   - Fixed bug with identification based on the first line of a file.

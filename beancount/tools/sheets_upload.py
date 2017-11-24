@@ -358,6 +358,10 @@ def _main():
 
     args = parser.parse_args()
 
+    # Silence annoying error about file_cache version.
+    # See, for example, this: https://github.com/google/google-api-python-client/issues/299
+    logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
+
     logging.basicConfig(level=logging.INFO if args.verbose else logging.WARNING,
                         format='%(levelname)-8s: %(message)s')
 
