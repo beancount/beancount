@@ -4677,6 +4677,9 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - Ingest should sort the transaction using a secondary "txndate:" metadata
+    field and document this somewhere.
+
   - Idea: Upon an irrecoverable error in the postings, instead of skipping a
     transaction, record it without any postings. This will allow "bean-doctor
     context" to at least find the offending transaction.
