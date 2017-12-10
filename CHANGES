@@ -4,6 +4,11 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2017-12-09
+
+  - Fixed rendering of price directives to use the display context precision.
+
+
 2017-11-24
 
   - Silenced annoying warning about file_cache version incompatibility in
