@@ -79,6 +79,81 @@ class TestCost(unittest.TestCase):
                          position.cost_to_str(cost, self.dformat, False))
 
 
+class TestCostSpec(unittest.TestCase):
+
+    dformat = display_context.DisplayContext().build()
+
+    def test_cost_to_str__detail(self):
+        cost = position.CostSpec(
+            D('101.23'), D('202.46'), 'USD', datetime.date(2015, 9, 6), "f4412439c31b", True)
+        self.assertEqual('101.23 # 202.46 USD, 2015-09-06, "f4412439c31b", *',
+                         position.cost_to_str(cost, self.dformat))
+
+        cost = position.CostSpec(
+            D('101.23'), D('202.46'), 'USD', datetime.date(2015, 9, 6), "f4412439c31b", False)
+        self.assertEqual('101.23 # 202.46 USD, 2015-09-06, "f4412439c31b"',
+                         position.cost_to_str(cost, self.dformat))
+
+        cost = position.CostSpec(D('101.23'), None, 'USD', datetime.date(2015, 9, 6), None, True)
+        self.assertEqual('101.23 USD, 2015-09-06, *',
+                         position.cost_to_str(cost, self.dformat))
+
+        cost = position.CostSpec(D('101.23'), D('202.46'), 'USD', None, None, False)
+        self.assertEqual('101.23 # 202.46 USD',
+                         position.cost_to_str(cost, self.dformat))
+
+        cost = position.CostSpec(None, D('202.46'), 'USD', None, None, False)
+        self.assertEqual('# 202.46 USD',
+                         position.cost_to_str(cost, self.dformat))
+
+        cost = position.CostSpec(D('101.23'), None, 'USD', None, "f4412439c31b", True)
+        self.assertEqual('101.23 USD, "f4412439c31b", *',
+                         position.cost_to_str(cost, self.dformat))
+
+        cost = position.CostSpec(None, None, None, None, "f4412439c31b", False)
+        self.assertEqual('"f4412439c31b"',
+                         position.cost_to_str(cost, self.dformat))
+
+        cost = position.CostSpec(None, None, 'USD', None, "f4412439c31b", True)
+        self.assertEqual('"f4412439c31b", *',
+                         position.cost_to_str(cost, self.dformat))
+
+    def test_cost_to_str__simple(self):
+        cost = position.CostSpec(
+            D('101.23'), D('202.46'), 'USD', datetime.date(2015, 9, 6), "f4412439c31b", True)
+        self.assertEqual('101.23 # 202.46 USD',
+                         position.cost_to_str(cost, self.dformat, False))
+
+        cost = position.CostSpec(
+            D('101.23'), D('202.46'), 'USD', datetime.date(2015, 9, 6), "f4412439c31b", False)
+        self.assertEqual('101.23 # 202.46 USD',
+                         position.cost_to_str(cost, self.dformat, False))
+
+        cost = position.CostSpec(D('101.23'), None, 'USD', datetime.date(2015, 9, 6), None, True)
+        self.assertEqual('101.23 USD',
+                         position.cost_to_str(cost, self.dformat, False))
+
+        cost = position.CostSpec(D('101.23'), D('202.46'), 'USD', None, None, False)
+        self.assertEqual('101.23 # 202.46 USD',
+                         position.cost_to_str(cost, self.dformat, False))
+
+        cost = position.CostSpec(None, D('202.46'), 'USD', None, None, False)
+        self.assertEqual('# 202.46 USD',
+                         position.cost_to_str(cost, self.dformat, False))
+
+        cost = position.CostSpec(D('101.23'), None, 'USD', None, "f4412439c31b", True)
+        self.assertEqual('101.23 USD',
+                         position.cost_to_str(cost, self.dformat, False))
+
+        cost = position.CostSpec(None, None, None, None, "f4412439c31b", False)
+        self.assertEqual('',
+                         position.cost_to_str(cost, self.dformat, False))
+
+        cost = position.CostSpec(None, None, 'USD', None, "f4412439c31b", True)
+        self.assertEqual('',
+                         position.cost_to_str(cost, self.dformat, False))
+
+
 class TestPosition(unittest.TestCase):
 
     def test_from_string__empty(self):
