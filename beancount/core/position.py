@@ -88,7 +88,7 @@ def cost_to_str(cost, dformat, detail=True):
                 strlist.append('"{}"'.format(cost.label))
 
     elif isinstance(cost, CostSpec):
-        if isinstance(cost.number_per, Decimal):
+        if isinstance(cost.number_per, Decimal) or isinstance(cost.number_total, Decimal):
             amountlist = []
             if isinstance(cost.number_per, Decimal):
                 amountlist.append(dformat.format(cost.number_per))
