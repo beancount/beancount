@@ -1,6 +1,6 @@
 """Conversion from internal data structures to text.
 """
-__copyright__ = "Copyright (C) 2014-2017  Martin Blais"
+__copyright__ = "Copyright (C) 2014-2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import codecs
@@ -19,7 +19,7 @@ from beancount.core import account
 from beancount.core import data
 from beancount.core import interpolate
 from beancount.core import display_context
-from beancount.utils.misc_utils import escape_string
+from beancount.utils import misc_utils
 
 
 def align_position_strings(strings):
@@ -148,9 +148,9 @@ class EntryPrinter:
         # Compute the string for the payee and narration line.
         strings = []
         if entry.payee:
-            strings.append('"{}"'.format(escape_string(entry.payee)))
+            strings.append('"{}"'.format(misc_utils.escape_string(entry.payee)))
         if entry.narration:
-            strings.append('"{}"'.format(escape_string(entry.narration)))
+            strings.append('"{}"'.format(misc_utils.escape_string(entry.narration)))
         elif entry.payee:
             # Ensure we append an empty string for narration if we have a payee.
             strings.append('""')

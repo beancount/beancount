@@ -202,6 +202,10 @@ class TestMiscUtils(unittest.TestCase):
         self.assertFalse(misc_utils.is_sorted([3, 2, 6, 7]))
         self.assertTrue(misc_utils.is_sorted([7, 6, 3, 1], cmp=operator.gt))
 
+    def test_escape_string(self):
+        self.assertEqual('Entry with escaped \\"symbols\\" \\\\ \r \n',
+                         misc_utils.escape_string("Entry with escaped \"symbols\" \ \r \n"))
+
 
 class TestUniquify(unittest.TestCase):
 
