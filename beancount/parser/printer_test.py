@@ -117,6 +117,10 @@ class TestEntryPrinter(cmptest.TestCase):
           Assets:Account1         1 USD @ 0 OTHER
           Assets:Account2         1 CAD @ 0 OTHER
 
+        2014-06-10 * "Entry with escaped \\"symbols\\" \\ \\r \\n"
+          Assets:Account1       111.00 BEAN
+          Assets:Cash          -111.00 BEAN
+
         2014-06-20 custom "budget" Assets:Account2 "balance < 200.00 USD" 200.00 10.00 USD
         """
         self.assertRoundTrip(entries, errors)
