@@ -70,10 +70,11 @@ class TestCSVImporter(cmptest.TestCase):
                                  Col.AMOUNT: 'Amount',
                                  Col.BALANCE: 'Balance',
                                  Col.DRCR: 'Details'},
-                                'Assets:Bank', 'USD',
+                                'Assets:Bank',
+                                'USD',
                                 ('Details,Posting Date,"Description",Amount,'
                                  'Type,Balance,Check or Slip #,'),
-                                'chafe')
+                                institution='chafe')
         entries = importer.extract(file)
         self.assertEqualEntries("""
 

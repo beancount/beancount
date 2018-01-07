@@ -7,10 +7,13 @@ import csv
 import datetime
 import enum
 import io
+import collections
 from os import path
-from typing import Union
+from typing import Union, Dict, Callable, Optional
 
+import dateutil.parser
 from beancount.core.number import D
+from beancount.core.number import ZERO
 from beancount.core.amount import Amount
 from beancount.utils.date_utils import parse_date_liberally
 from beancount.core import data
@@ -25,6 +28,10 @@ class Col(enum.Enum):
 
     # The date at which the transaction took place.
     TXN_DATE = '[TXN_DATE]'
+
+    # The time at which the transaction took place.
+    # Beancount does not support time field -- just add it to metadata.
+    TXN_TIME = '[TXN_TIME]'
 
     # The payee field.
     PAYEE = '[PAYEE]'
@@ -50,13 +57,18 @@ class Col(enum.Enum):
     # A column which says DEBIT or CREDIT (generally ignored).
     DRCR = '[DRCR]'
 
+    # Last 4 digits of the card.
+    LAST4 = '[LAST4]'
 
-def get_amounts(iconfig, row):
+
+def get_amounts(iconfig, row, allow_zero_amounts=False):
     """Get the amount columns of a row.
 
     Args:
       iconfig: A dict of Col to row index.
       row: A row array containing the values of the given row.
+      allow_zero_amounts: Is a transaction with amount D('0.00') okay? If not,
+        return (None, None).
     Returns:
       A pair of (debit-amount, credit-amount), both of which are either an
       instance of Decimal or None, or not available.
@@ -67,17 +79,27 @@ def get_amounts(iconfig, row):
     else:
         debit, credit = [row[iconfig[col]] if col in iconfig else None
                          for col in [Col.AMOUNT_DEBIT, Col.AMOUNT_CREDIT]]
+
+    # If zero amounts aren't allowed, return null value.
+    is_zero_amount = ((credit is not None and D(credit) == ZERO) and
+                      (debit is not None and D(debit) == ZERO))
+    if not allow_zero_amounts and is_zero_amount:
+        return (None, None)
+
     return (-D(debit) if debit else None,
             D(credit) if credit else None)
 
 
 class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
-    """Importer for Chase credit card accounts."""
+    """Importer for CSV files."""
 
     def __init__(self, config, account, currency, regexps,
-                 institution=None,
-                 debug=False,
-                 csv_dialect : Union[str, csv.Dialect] ='excel'):
+                 skip_lines: int=0,
+                 last4_map: Optional[Dict]=None,
+                 categorizer: Optional[Callable]=None,
+                 institution: Optional[str]=None,
+                 debug: bool=False,
+                 csv_dialect: Union[str, csv.Dialect] ='excel'):
         """Constructor.
 
         Args:
@@ -85,6 +107,10 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
           account: An account string, the account to post this to.
           currency: A currency string, the currenty of this account.
           regexps: A list of regular expression strings.
+          skip_lines: Skip first x (garbage) lines of file.
+          last4_map: A dict that maps last 4 digits of the card to a friendly string.
+          categorizer: A callable that attaches the other posting (usually expenses)
+                       to a transaction with only single posting.
           institution: An optional name of an institution to rename the files to.
           debug: Whether or not to print debug information
           csv_dialect: a `csv` dialect given either as string or as instance or subclass of `csv.Dialect`
@@ -99,16 +125,24 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
 
         self.account = account
         self.currency = currency
+        self.skip_lines = skip_lines
+        self.last4_map = last4_map or {}
         self.debug = debug
 
         self.csv_dialect = csv_dialect
 
         # FIXME: This probably belongs to a mixin, not here.
         self.institution = institution
+        self.categorizer = categorizer
 
     def name(self):
         name = self.name or super().name()
-        return '{}: "{}"'.format(super().name(), self.file_account(None))
+        return '{}: "{}"'.format(name, self.file_account(None))
+
+    def identify(self, file):
+        if file.mimetype() != 'text/csv':
+            return False
+        return super().identify(file)
 
     def file_account(self, _):
         return self.account
@@ -123,12 +157,16 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
         "Get the maximum date from the file."
         iconfig, has_header = normalize_config(self.config, file.head())
         if Col.DATE in iconfig:
-            reader = iter(csv.reader(open(file.name), self.csv_dialect))
+            reader = iter(csv.reader(open(file.name)))
+            for _ in range(self.skip_lines):
+                next(reader)
             if has_header:
                 next(reader)
             max_date = None
             for row in reader:
                 if not row:
+                    continue
+                if row[0].startswith('#'):
                     continue
                 date_str = row[iconfig[Col.DATE]]
                 date = parse_date_liberally(date_str)
@@ -136,47 +174,39 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
                     max_date = date
             return max_date
 
-
-    # def get_description(self, row):
-    #     """Extract the payee and narration from the row.
-
-    #     This is a place where you can customize and combine multiple fields
-    #     together.
-
-    #     Args:
-    #       row: A collections.namedtuple object representing the row.
-    #     Returns:
-    #       A pair of (payee, narration) string, either of which may be None.
-    #     """
-    #     payee = ({getattr(row, self.config[Col.PAYEE])}
-    #              if Col.PAYEE in self.config else
-    #              None)
-    #     narration = ({getattr(row, self.config[Col.NARRATION])}
-    #                  if Col.NARRATION in self.config else
-    #                  None)
-    #     return payee, narration
-
     def extract(self, file):
         entries = []
 
         # Normalize the configuration to fetch by index.
         iconfig, has_header = normalize_config(self.config, file.head())
 
-        # Skip header, if one was detected.
         reader = iter(csv.reader(open(file.name), dialect=self.csv_dialect))
+
+        # Skip garbage lines
+        for _ in range(self.skip_lines):
+            next(reader)
+
+        # Skip header, if one was detected.
         if has_header:
             next(reader)
+
         def get(row, ftype):
-            return row[iconfig[ftype]] if ftype in iconfig else None
+            try:
+                return row[iconfig[ftype]] if ftype in iconfig else None
+            except IndexError:  # FIXME: this should not happen
+                return None
 
         # Parse all the transactions.
         first_row = last_row = None
         for index, row in enumerate(reader, 1):
             if not row:
                 continue
+            if row[0].startswith('#'):
+                continue
 
             # If debugging, print out the rows.
-            if self.debug: print(row)
+            if self.debug:
+                print(row)
 
             if first_row is None:
                 first_row = row
@@ -185,27 +215,47 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
             # Extract the data we need from the row, based on the configuration.
             date = get(row, Col.DATE)
             txn_date = get(row, Col.TXN_DATE)
+            txn_time = get(row, Col.TXN_TIME)
 
             payee = get(row, Col.PAYEE)
+            if payee:
+                payee = payee.strip()
+
             fields = filter(None, [get(row, field)
                                    for field in (Col.NARRATION1,
                                                  Col.NARRATION2,
                                                  Col.NARRATION3)])
-            narration = ' -- '.join(fields)
+            narration = ' '.join(field.strip() for field in fields)
 
             tag = get(row, Col.TAG)
             tags = {tag} if tag is not None else data.EMPTY_SET
 
-            # Create a transaction and add it to the list of new entries.
+            last4 = get(row, Col.LAST4)
+
+            balance = get(row, Col.BALANCE)
+
+            # Create a transaction
             meta = data.new_metadata(file.name, index)
             if txn_date is not None:
-                meta['txndate'] = parse_date_liberally(txn_date)
+                meta['date'] = parse_date_liberally(txn_date)
+            if txn_time is not None:
+                meta['time'] = str(dateutil.parser.parse(txn_time).time())
+            if balance is not None:
+                meta['balance'] = D(balance)
+            if last4:
+                last4_friendly = self.last4_map.get(last4.strip())
+                meta['card'] = last4_friendly if last4_friendly else last4
             date = parse_date_liberally(date)
             txn = data.Transaction(meta, date, self.FLAG, payee, narration,
                                    tags, data.EMPTY_SET, [])
-            entries.append(txn)
 
+            # Attach one posting to the transaction
             amount_debit, amount_credit = get_amounts(iconfig, row)
+
+            # Skip empty transactions
+            if amount_debit is None and amount_credit is None:
+                continue
+
             for amount in [amount_debit, amount_credit]:
                 if amount is None:
                     continue
@@ -213,17 +263,27 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
                 txn.postings.append(
                     data.Posting(self.account, units, None, None, None, None))
 
-        # Parse the final balance.
-        if Col.BALANCE in iconfig and first_row and last_row:
-            # Figure out if the file is in ascending or descending order.
-            first_date = parse_date_liberally(get(first_row, Col.DATE))
-            last_date = parse_date_liberally(get(last_row, Col.DATE))
-            is_ascending = first_date < last_date
+            # Attach the other posting(s) to the transaction
+            if isinstance(self.categorizer, collections.Callable):
+                txn = self.categorizer(txn)
 
-            # Choose between the first or the last row based on the date.
-            row = last_row if is_ascending else first_row
-            date = parse_date_liberally(get(row, Col.DATE)) + datetime.timedelta(days=1)
-            balance = D(get(row, Col.BALANCE))
+            # Add the transaction to the output list
+            entries.append(txn)
+
+        # Figure out if the file is in ascending or descending order.
+        first_date = parse_date_liberally(get(first_row, Col.DATE))
+        last_date = parse_date_liberally(get(last_row, Col.DATE))
+        is_ascending = first_date < last_date
+
+        # Revese the list if the file is in descending order
+        if not is_ascending:
+            entries = list(reversed(entries))
+
+        # Add a balance entry if possible
+        if Col.BALANCE in iconfig and entries:
+            entry = entries[-1]
+            date = entry.date + datetime.timedelta(days=1)
+            balance = entry.meta['balance']
             meta = data.new_metadata(file.name, index)
             entries.append(
                 data.Balance(meta, date,
