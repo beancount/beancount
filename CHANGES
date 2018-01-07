@@ -4,6 +4,14 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2018-01-07
+
+  - Merged https://bitbucket.org/blais/beancount/pull-requests/28/allow-one-character-top-level-account,
+    allowing one character top-level account names in the syntax. This doesn't
+    mess with the flag token generateion because the account name is required to
+    have at least two components.
+
+
 2017-12-09
 
   - Fixed rendering of price directives to use the display context precision.
