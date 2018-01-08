@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2018-01-08
+
+  - Fixed #209: Don't require 'ido. User will have to make sure that
+    beancount-use-ido is false.
+
+
 2018-01-07
 
   - Merged https://bitbucket.org/blais/beancount/pull-requests/28/allow-one-character-top-level-account,

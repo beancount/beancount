@@ -28,8 +28,7 @@
 
 ;;; Code:
 
-;; FIXME: AFAIK, both of those `require's aren't needed.
-(require 'ido) ;; For completing read.
+(autoload 'ido-completing-read "ido")
 (require 'font-lock)
 
 (defgroup beancount ()
