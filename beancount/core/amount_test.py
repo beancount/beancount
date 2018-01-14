@@ -44,6 +44,10 @@ class TestAmount(unittest.TestCase):
         amount1 = Amount(D('100'), 'USD')
         amount2 = Amount.from_string('100 USD')
         self.assertEqual(amount1, amount2)
+        
+        amount3 = Amount(D('0.00000001'), 'BTC')
+        amount4 = Amount.from_string('0.00000001 BTC')
+        self.assertEqual(amount3, amount4)
 
         Amount.from_string('  100.00 USD  ')
 
