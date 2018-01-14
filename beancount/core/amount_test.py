@@ -61,9 +61,11 @@ class TestAmount(unittest.TestCase):
             Amount.from_string('100.00 U')
 
     def test_tostring(self):
-        amount = Amount(D('100034.023'), 'USD')
-
-        self.assertEqual('100034.023 USD', str(amount))
+        amount1 = Amount(D('100034.023'), 'USD')
+        self.assertEqual('100034.023 USD', str(amount1))
+        
+        amount2 = Amount(D('0.00000001'), 'BTC')
+        self.assertEqual('0.00000001 BTC', str(amount2))
 
         dcontext = display_context.DisplayContext()
         dformat = dcontext.build(commas=True)
