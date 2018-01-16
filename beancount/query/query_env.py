@@ -1153,8 +1153,8 @@ class FileLocationColumn(query_compile.EvalColumn):
 
     def __call__(self, context):
         if context.posting.meta is not None:
-            return '{}:{:d}:'.format(context.posting.meta["filename"],
-                                     context.posting.meta["lineno"])
+            return '{}:{:d}:'.format(context.posting.meta.get("filename", "N/A"),
+                                     context.posting.meta.get("lineno", 0))
         else:
             return '' # Unknown.
 

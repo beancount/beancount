@@ -9,6 +9,8 @@ Note: This file contains only changes in the 'default' branch.
   - CSV importer: Added an option not to add balance metadata to output.
   - CSV importer: Also, fixed a bug I introduced in the recent PR merge with
     rendering the name of the importer.
+  - SQL importer: Made "location" field support transactions with metadata with
+    missing filename and line no. Some plugins might be doing that.
 
 
 2018-01-08
