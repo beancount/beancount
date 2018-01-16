@@ -99,7 +99,8 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
                  categorizer: Optional[Callable]=None,
                  institution: Optional[str]=None,
                  debug: bool=False,
-                 csv_dialect: Union[str, csv.Dialect] ='excel'):
+                 csv_dialect: Union[str, csv.Dialect] ='excel',
+                 add_balance: bool=False):
         """Constructor.
 
         Args:
@@ -113,7 +114,10 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
                        to a transaction with only single posting.
           institution: An optional name of an institution to rename the files to.
           debug: Whether or not to print debug information
-          csv_dialect: a `csv` dialect given either as string or as instance or subclass of `csv.Dialect`
+          csv_dialect: A `csv` dialect given either as string or as instance or
+            subclass of `csv.Dialect`.
+          add_balance: True if the extractor should add the balance as metadata to
+            extracted transactions.
         """
         if isinstance(regexps, str):
             regexps = [regexps]
@@ -125,6 +129,7 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
 
         self.account = account
         self.currency = currency
+        assert isinstance(skip_lines, int)
         self.skip_lines = skip_lines
         self.last4_map = last4_map or {}
         self.debug = debug
@@ -136,8 +141,7 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
         self.categorizer = categorizer
 
     def name(self):
-        name = self.name or super().name()
-        return '{}: "{}"'.format(name, self.file_account(None))
+        return '{}: "{}"'.format(super().name(), self.file_account(None))
 
     def identify(self, file):
         if file.mimetype() != 'text/csv':
