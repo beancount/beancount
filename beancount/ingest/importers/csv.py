@@ -133,8 +133,8 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
         self.skip_lines = skip_lines
         self.last4_map = last4_map or {}
         self.debug = debug
-
         self.csv_dialect = csv_dialect
+        self.add_balance = add_balance
 
         # FIXME: This probably belongs to a mixin, not here.
         self.institution = institution
@@ -244,7 +244,7 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
                 meta['date'] = parse_date_liberally(txn_date)
             if txn_time is not None:
                 meta['time'] = str(dateutil.parser.parse(txn_time).time())
-            if balance is not None:
+            if self.add_balance and balance is not None:
                 meta['balance'] = D(balance)
             if last4:
                 last4_friendly = self.last4_map.get(last4.strip())
