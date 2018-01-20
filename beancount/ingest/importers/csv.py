@@ -287,12 +287,13 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
         if Col.BALANCE in iconfig and entries:
             entry = entries[-1]
             date = entry.date + datetime.timedelta(days=1)
-            balance = entry.meta['balance']
-            meta = data.new_metadata(file.name, index)
-            entries.append(
-                data.Balance(meta, date,
-                             self.account, Amount(balance, self.currency),
-                             None, None))
+            balance = entry.meta.get('balance', None)
+            if balance:
+                meta = data.new_metadata(file.name, index)
+                entries.append(
+                    data.Balance(meta, date,
+                                 self.account, Amount(balance, self.currency),
+                                 None, None))
 
         return entries
 
