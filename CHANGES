@@ -4,6 +4,14 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2018-01-23
+
+  - Added an error on using explicit merge cost syntax (this one: {..., *}).
+    It's not supported yet, like AVERAGE cost booking (I probably should not
+    have enabled the syntax until it was done. I was hopeful and moving fast at
+    the time).
+
+
 2018-01-16
 
   - CSV importer: Added an option not to add balance metadata to output.

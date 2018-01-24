@@ -486,6 +486,9 @@ class Builder(lexer.LexBuilder):
             elif comp is MERGE_COST:
                 if merge is None:
                     merge = True
+                    self.errors.append(
+                        ParserError(self.get_lexer_location(),
+                                    "Cost merging is not supported yet", None))
                 else:
                     self.errors.append(
                         ParserError(self.get_lexer_location(),

@@ -967,7 +967,7 @@ class TestParseLots(unittest.TestCase):
         self.assertEqual(CostSpec(MISSING, None, MISSING, None, "d82d55a0dbe8", False),
                          posting.cost)
 
-    @parser.parse_doc(allow_incomplete=True)
+    @parser.parse_doc(allow_incomplete=True, expect_errors=True)
     def test_cost_merge(self, entries, errors, _):
         """
           2014-01-01 *
@@ -1045,7 +1045,7 @@ class TestParseLots(unittest.TestCase):
             Assets:Invest:Cash  -45.23 USD
         """
         self.assertTrue(parser.is_entry_incomplete(entries[0]))
-        self.assertEqual(1, len(errors))
+        self.assertEqual(2, len(errors))
         self.assertTrue(any(re.search("Duplicate merge", error.message)
                             for error in errors))
 
@@ -2391,7 +2391,7 @@ class TestIncompleteInputs(cmptest.TestCase):
                                   datetime.date(2015, 9, 21), "blablabla", False),
                          posting.cost)
 
-    @parser.parse_doc(allow_incomplete=True)
+    @parser.parse_doc(allow_incomplete=True, expect_errors=True)
     def test_cost_average(self, entries, _, options_map):
         """
           2010-05-28 *
@@ -2402,7 +2402,7 @@ class TestIncompleteInputs(cmptest.TestCase):
         self.assertEqual(CostSpec(MISSING, None, MISSING, None, None, True),
                          posting.cost)
 
-    @parser.parse_doc(allow_incomplete=True)
+    @parser.parse_doc(allow_incomplete=True, expect_errors=True)
     def test_cost_average_missing_basis(self, entries, _, options_map):
         """
           2010-05-28 *
@@ -2414,7 +2414,7 @@ class TestIncompleteInputs(cmptest.TestCase):
                                   datetime.date(2015, 9, 21), "blablabla", True),
                          posting.cost)
 
-    @parser.parse_doc(allow_incomplete=True)
+    @parser.parse_doc(allow_incomplete=True, expect_errors=True)
     def test_cost_average_with_other(self, entries, _, options_map):
         """
           2010-05-28 *
