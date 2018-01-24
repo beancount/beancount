@@ -279,7 +279,7 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
         last_date = parse_date_liberally(get(last_row, Col.DATE))
         is_ascending = first_date < last_date
 
-        # Revese the list if the file is in descending order
+        # Reverse the list if the file is in descending order
         if not is_ascending:
             entries = list(reversed(entries))
 

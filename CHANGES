@@ -6,6 +6,11 @@ Note: This file contains only changes in the 'default' branch.
 
 2018-01-23
 
+  - Disabled Balance insertion CSV test;
+    03d9a5c3b2784a6f6a05c12eaeb7776f0478a96d broke the insertion of Balance
+    entries without inserting 'balance' metadata. We'll probably have to revert the
+    sorting changes and that. For now, fix the test.
+
   - Fixed #210: Changed the bean-price option --undeclared to accept a string
     value, the name of the Python source module to use for fetching undeclared
     commodities.
