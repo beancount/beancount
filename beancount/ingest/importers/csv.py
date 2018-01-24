@@ -99,8 +99,7 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
                  categorizer: Optional[Callable]=None,
                  institution: Optional[str]=None,
                  debug: bool=False,
-                 csv_dialect: Union[str, csv.Dialect] ='excel',
-                 add_balance: bool=False):
+                 csv_dialect: Union[str, csv.Dialect] ='excel'):
         """Constructor.
 
         Args:
@@ -116,8 +115,6 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
           debug: Whether or not to print debug information
           csv_dialect: A `csv` dialect given either as string or as instance or
             subclass of `csv.Dialect`.
-          add_balance: True if the extractor should add the balance as metadata to
-            extracted transactions.
         """
         if isinstance(regexps, str):
             regexps = [regexps]
@@ -134,7 +131,6 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
         self.last4_map = last4_map or {}
         self.debug = debug
         self.csv_dialect = csv_dialect
-        self.add_balance = add_balance
 
         # FIXME: This probably belongs to a mixin, not here.
         self.institution = institution
@@ -244,7 +240,7 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
                 meta['date'] = parse_date_liberally(txn_date)
             if txn_time is not None:
                 meta['time'] = str(dateutil.parser.parse(txn_time).time())
-            if self.add_balance and balance is not None:
+            if balance is not None:
                 meta['balance'] = D(balance)
             if last4:
                 last4_friendly = self.last4_map.get(last4.strip())
@@ -294,6 +290,10 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
                     data.Balance(meta, date,
                                  self.account, Amount(balance, self.currency),
                                  None, None))
+
+        # Remove the 'balance' metadta.
+        for entry in entries:
+            entry.meta.pop('balance', None)
 
         return entries
 

@@ -96,12 +96,10 @@ class TestCSVImporter(cmptest.TestCase):
           2016-03-04 * "BOOGLE           WALLET     US000NEI9T      WEB ID: C234567890"
             Assets:Bank  -1300.00 USD
 
+          2016-03-19 balance Assets:Bank                                     3409.86 USD
+
         """, entries)
 
-        ## FIXME: Bring this back ASAP. The insertion of Balance entries has
-        ## been broken by 03d9a5c3b2784a6f6a05c12eaeb7776f0478a96d.
-        ##
-        ## 2016-03-19 balance Assets:Bank                                     3409.86 USD
 
 
 # TODO: Support credit and debit columns (capitalone).
