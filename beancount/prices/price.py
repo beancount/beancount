@@ -222,10 +222,10 @@ def process_args():
     parser.add_argument('-i', '--inactive', action='store_true', help=(
         "Select all commodities from input files, not just the ones active on the date"))
 
-    parser.add_argument('-u', '--undeclared', action='store_true', help=(
+    parser.add_argument('-u', '--undeclared', action='store', help=(
         "Include commodities viewed in the file even without a "
-        "corresponding Commodity directive. The currency name itself is "
-        "used as the lookup symbol in the default sources."))
+        "corresponding Commodity directive, from this default source. "
+        "The currency name itself is used as the lookup symbol in this default source."))
 
     parser.add_argument('-c', '--clobber', action='store_true', help=(
         "Do not skip prices which are already present in input files; fetch them anyway."))

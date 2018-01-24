@@ -6,6 +6,10 @@ Note: This file contains only changes in the 'default' branch.
 
 2018-01-23
 
+  - Fixed #210: Changed the bean-price option --undeclared to accept a string
+    value, the name of the Python source module to use for fetching undeclared
+    commodities.
+
   - Added an error on using explicit merge cost syntax (this one: {..., *}).
     It's not supported yet, like AVERAGE cost booking (I probably should not
     have enabled the syntax until it was done. I was hopeful and moving fast at

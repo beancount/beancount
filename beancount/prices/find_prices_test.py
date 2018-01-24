@@ -250,20 +250,20 @@ class TestFilters(unittest.TestCase):
           Assets:US:Invest:Margin
         """
         jobs = find_prices.get_price_jobs_at_date(entries, datetime.date(2014, 1, 1),
-                                                  False, False)
+                                                  False, None)
         self.assertEqual(set(), {(job.base, job.quote) for job in jobs})
 
         jobs = find_prices.get_price_jobs_at_date(entries, datetime.date(2014, 6, 1),
-                                                  False, False)
+                                                  False, None)
         self.assertEqual({('QQQ', 'USD'), ('VEA', 'USD')},
                          {(job.base, job.quote) for job in jobs})
 
         jobs = find_prices.get_price_jobs_at_date(entries, datetime.date(2014, 10, 1),
-                                                  False, False)
+                                                  False, None)
         self.assertEqual({('VEA', 'USD')},
                          {(job.base, job.quote) for job in jobs})
 
-        jobs = find_prices.get_price_jobs_at_date(entries, None, False, False)
+        jobs = find_prices.get_price_jobs_at_date(entries, None, False, None)
         self.assertEqual({('QQQ', 'USD')}, {(job.base, job.quote) for job in jobs})
 
     @loader.load_doc()
@@ -288,10 +288,10 @@ class TestFilters(unittest.TestCase):
           Assets:US:Invest:QQQ            -100 QQQ {86.23 USD} @ 91.23 USD
           Assets:US:Invest:Margin
         """
-        jobs = find_prices.get_price_jobs_at_date(entries, None, False, False)
+        jobs = find_prices.get_price_jobs_at_date(entries, None, False, None)
         self.assertEqual({('VEA', 'USD')}, {(job.base, job.quote) for job in jobs})
 
-        jobs = find_prices.get_price_jobs_at_date(entries, None, True, False)
+        jobs = find_prices.get_price_jobs_at_date(entries, None, True, None)
         self.assertEqual({('VEA', 'USD'), ('QQQ', 'USD')},
                          {(job.base, job.quote) for job in jobs})
 
@@ -310,9 +310,26 @@ class TestFilters(unittest.TestCase):
           Assets:US:Invest:VEA             200 VEA {43.22 USD}
           Assets:US:Invest:Margin
         """
-        jobs = find_prices.get_price_jobs_at_date(entries, None, False, False)
+        jobs = find_prices.get_price_jobs_at_date(entries, None, False, None)
         self.assertEqual({('QQQ', 'USD')}, {(job.base, job.quote) for job in jobs})
 
-        jobs = find_prices.get_price_jobs_at_date(entries, None, False, True)
+        jobs = find_prices.get_price_jobs_at_date(entries, None, False, 'yahoo')
         self.assertEqual({('QQQ', 'USD'), ('VEA', 'USD')},
                          {(job.base, job.quote) for job in jobs})
+
+    @loader.load_doc()
+    def test_get_price_jobs__default_source(self, entries, _, __):
+        """
+        2000-01-10 open Assets:US:Invest:QQQ
+        2000-01-10 open Assets:US:Invest:Margin
+
+        2014-01-01 commodity QQQ
+          price: "NASDAQ:QQQ"
+
+        2014-02-06 *
+          Assets:US:Invest:QQQ             100 QQQ {86.23 USD}
+          Assets:US:Invest:Margin
+        """
+        jobs = find_prices.get_price_jobs_at_date(entries, None, False, 'yahoo')
+        self.assertEqual(1, len(jobs[0].sources))
+        self.assertIsInstance(jobs[0].sources[0], find_prices.PriceSource)
