@@ -60,6 +60,9 @@ class Col(enum.Enum):
     # Last 4 digits of the card.
     LAST4 = '[LAST4]'
 
+    # An account name.
+    ACCOUNT = '[ACCOUNT]'
+
 
 def get_amounts(iconfig, row, allow_zero_amounts=False):
     """Get the amount columns of a row.
