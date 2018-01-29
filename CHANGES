@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2018-01-29
+
+  - Added account_types.is_account_type() function, which should be used above
+    account_types.get_account_type().
+
+
 2018-01-23
 
   - Removed the insertion of 'balance' metadata from the importer. We use it for

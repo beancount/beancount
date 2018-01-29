@@ -62,6 +62,21 @@ def get_account_type(account_name):
     return account.split(account_name)[0]
 
 
+def is_account_type(account_type, account_name):
+    """Return the type of this account's name.
+
+    Warning: No check is made on the validity of the account type. This merely
+    returns the root account of the corresponding account name.
+
+    Args:
+      account_type: A string, the prefix type of the account.
+      account_name: A string, the name of the account whose type is to return.
+    Returns:
+      A boolean, true if the account is of the given type.
+    """
+    return bool(re.match('^{}{}'.format(account_type, account.sep), account_name))
+
+
 def is_root_account(account_name, account_types=None):
     """Return true if the account name is a root account.
     This function does not verify whether the account root is a valid
