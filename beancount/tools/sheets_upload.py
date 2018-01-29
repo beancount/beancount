@@ -62,16 +62,6 @@ from apiclient import discovery
 from apiclient import errors
 
 
-# Location of your secrets file.
-SECRETS_FILENAME = os.environ.get('GOOGLE_APIS',
-                                  path.expanduser('~/.google-apis.json'))
-
-
-# Location to store credentials for reuse between invocations.
-STORAGE_FILENAME = os.environ.get('GOOGLE_STORAGE',
-                                  path.expanduser('~/.google-storage.json'))
-
-
 # The name of a sheet left as the unique sheet temporarily, while creating a new
 # spreadsheet.
 EMPTY_SHEET_TITLE = '__EMPTY__'
@@ -86,8 +76,19 @@ def get_credentials(scopes, args):
     Returns:
       An authenticated http client object.
     """
-    flow = client.flow_from_clientsecrets(SECRETS_FILENAME, scope=scopes)
-    storage = file.Storage(STORAGE_FILENAME)
+    # Silence annoying error about file_cache version.
+    # See, for example, this: https://github.com/google/google-api-python-client/issues/299
+    logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
+
+    # Location of your secrets file.
+    secrets_filename = os.environ.get('GOOGLE_APIS',
+                                      path.expanduser('~/.google-apis.json'))
+    # Location to store credentials for reuse between invocations.
+    storage_filename = os.environ.get('GOOGLE_STORAGE',
+                                      path.expanduser('~/.google-storage.json'))
+
+    flow = client.flow_from_clientsecrets(secrets_filename, scope=scopes)
+    storage = file.Storage(storage_filename)
     credentials = storage.get()
     if not credentials or credentials.invalid:
         credentials = tools.run_flow(flow, storage, args)
@@ -147,7 +148,7 @@ def get_alpha_column(column):
     return ''.join(reversed(letters))
 
 
-def sheet_range(title, nrows, ncols):
+def sheet_range(nrows, ncols, title=None):
     """Build up the full range of a sheet for some size of rows and columns.
 
     Args:
@@ -157,7 +158,10 @@ def sheet_range(title, nrows, ncols):
     Returns:
       A string representing the full range of this sheet.
     """
-    return '{}!A1:{}{}'.format(title, get_alpha_column(ncols-1), nrows)
+    if title is None:
+        return 'A1:{}{}'.format(get_alpha_column(ncols-1), nrows)
+    else:
+        return '{}!A1:{}{}'.format(title, get_alpha_column(ncols-1), nrows)
 
 
 def create_doc(service):
@@ -246,7 +250,7 @@ class Doc:
             nrows, ncols = self.get_sheet_size(title)
         else:
             nrows, ncols = nrowcols
-        srange = sheet_range(title, nrows, ncols)
+        srange = sheet_range(nrows, ncols, title)
         resp = self.service.spreadsheets().values().clear(
             spreadsheetId=self.docid,
             range=srange,
@@ -312,7 +316,7 @@ class Doc:
         # FIXME: Using an "updateCells" request in order to be able to set not only
         # the values would be an improvement and allow for much more control over
         # the formatting of numbers. It would be better not to use USER_ENTERED.
-        srange = sheet_range(title, nrows, ncols)
+        srange = sheet_range(nrows, ncols, title)
         resp = self.service.spreadsheets().values().update(
             spreadsheetId=self.docid,
             range=srange,
@@ -357,10 +361,6 @@ def _main():
                         help="Print out the log")
 
     args = parser.parse_args()
-
-    # Silence annoying error about file_cache version.
-    # See, for example, this: https://github.com/google/google-api-python-client/issues/299
-    logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
 
     logging.basicConfig(level=logging.INFO if args.verbose else logging.WARNING,
                         format='%(levelname)-8s: %(message)s')
@@ -446,6 +446,7 @@ def main():
     except errors.Error as exc:
         logging.fatal(str(exc))
         sys.exit(1)
+
 
 if __name__ == '__main__':
     main()
