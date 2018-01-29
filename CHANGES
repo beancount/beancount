@@ -6,6 +6,11 @@ Note: This file contains only changes in the 'default' branch.
 
 2018-01-29
 
+  - Created a new 'divert_expenses' plugin to redirect Expenses postings from
+    transactions tagged with a particular tag to another account. See this
+    thread for details:
+    https://docs.google.com/drawings/d/18fTrrGlmz0jFbfcGGHTffbdRwbmST8r9_3O26Dd1Xww/edit?usp=sharing
+
   - Added account_types.is_account_type() function, which should be used above
     account_types.get_account_type().
 
