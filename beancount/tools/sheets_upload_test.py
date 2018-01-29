@@ -61,4 +61,6 @@ class TestSheetsUtils(unittest.TestCase):
 
     def test_sheet_range(self):
         self.assertEqual('Balances!A1:T100',
-                         sheets_upload.sheet_range('Balances', 100, 20))
+                         sheets_upload.sheet_range(100, 20, 'Balances'))
+        self.assertEqual('A1:T100',
+                         sheets_upload.sheet_range(100, 20))
