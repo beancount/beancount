@@ -24,7 +24,7 @@ def iter_dates(start_date, end_date):
         date += oneday
 
 
-def parse_date_liberally(string):
+def parse_date_liberally(string, parse_kwargs=None):
     """Parse arbitrary strings to dates.
 
     This function is intended to support liberal inputs, so that we can use it
@@ -36,6 +36,8 @@ def parse_date_liberally(string):
       A datetime.date object.
     """
     # At the moment, rely on the most excellent dateutil.
+    if parse_kwargs:
+        return dateutil.parser.parse(string, **parse_kwargs).date()
     return dateutil.parser.parse(string).date()
 
 
