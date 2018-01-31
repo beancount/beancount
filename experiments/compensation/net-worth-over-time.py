@@ -33,6 +33,9 @@ def main():
                         type=lambda string: parse(string).date(),
                         help="Minimum date")
 
+    parser.add_argument('--days-interp', action='store', type=int, default=365,
+                        help="Number of days to interpolate the future")
+
     parser.add_argument('-o', '--output', action='store',
                         help="Save the figure to the given file")
 
@@ -105,7 +108,7 @@ def main():
             net_worths_dict[currency].append((date, holdings_list[0].market_value))
 
     # Extrapolate milestones in various currencies.
-    days_interp = 365
+    days_interp = args.days_interp
     if args.period == 'weekly':
         num_points = int(days_interp / 7)
     elif args.period == 'monthly':
@@ -135,6 +138,13 @@ def main():
                 pass
         logging.info("Time to save 1M %s: %.1f years",
                      currency, (1000000 / poly.c[0]) / (365*24*60*60))
+
+        last_date = dates[-1]
+        one_month_ago = last_date - (30 * 24 * 60 * 60)
+        one_week_ago = last_date - (7 * 24 * 60 * 60)
+        logging.info("Increase in net-worth per month: %.2f %s  ; per week: %.2f %s",
+                     poly(last_date) - poly(one_month_ago), currency,
+                     poly(last_date) - poly(one_week_ago), currency)
 
         dates = [today - datetime.timedelta(days=days_interp), today]
         amounts = [time.mktime(date.timetuple()) * poly.c[0] + poly.c[1] for date in dates]
