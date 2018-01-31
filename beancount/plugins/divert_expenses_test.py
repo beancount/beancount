@@ -44,5 +44,5 @@ class TestDivertExpenses(cmptest.TestCase):
         2013-02-15 * "Stroller" #kai
           Liabilities:CreditCard           -900.00 USD
           Expenses:Kai                      900.00 USD
-
+            diverted_account: "Expenses:Baby:Gear"
         """, entries)

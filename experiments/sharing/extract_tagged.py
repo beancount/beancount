@@ -15,12 +15,14 @@ from beancount.parser import printer
 
 
 def adjust_entry(entry: data.Transaction, account: str, tag: str):
-    new_postings = [
-        (posting._replace(account=account)
-         if not re.match('Expenses:', posting.account)
-         else posting)
-        for posting in entry.postings
-    ]
+    new_postings = []
+    for posting in entry.postings:
+        new_account = posting.account
+        if re.match('Expenses:', posting.account):
+            new_account = posting.meta.get('diverted_account', account)
+        else:
+            new_account = account
+        new_postings.append(posting._replace(account=new_account, meta=None))
     new_tags = entry.tags.difference(set(tag))
     return entry._replace(postings=new_postings,
                           tags=new_tags)

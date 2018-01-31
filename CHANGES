@@ -4,6 +4,13 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2018-01-31
+
+  - Modified 'divert_expenses' plugin to store the original account name as
+    metadata of diverted postings, so that they can be picked up by the
+    extract_tagged script and brought back into the extract file.
+
+
 2018-01-29
 
   - Created a new 'divert_expenses' plugin to redirect Expenses postings from

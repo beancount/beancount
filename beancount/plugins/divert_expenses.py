@@ -80,6 +80,7 @@ def replace_expenses_accounts(entry, replacement_account, acctypes):
     new_postings = []
     for posting in entry.postings:
         if account_types.is_account_type(acctypes.expenses, posting.account):
-            posting = posting._replace(account=replacement_account)
+            posting = posting._replace(account=replacement_account,
+                                       meta={'diverted_account': posting.account})
         new_postings.append(posting)
     return entry._replace(postings=new_postings)
