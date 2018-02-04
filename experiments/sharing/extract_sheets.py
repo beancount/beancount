@@ -189,8 +189,11 @@ def create_entry(row: List[str], coltypes: Dict[int,int], inflows_account: str,
                  currency: str, docid: str, index: int,
                  default_account: str='Expenses:Uncategorized'):
     "Create a new entry based on the row contents and inferred types."
-    date = parse_date(row[coltypes[csv.Col.DATE]])
-    number_str = row[coltypes[csv.Col.AMOUNT]].strip('$')
+    date = parse_date(list_get(row, coltypes[csv.Col.DATE], ''))
+    number_str = list_get(row, coltypes[csv.Col.AMOUNT], '').strip('$')
+    if not date or not number_str:
+        logging.error("Invalid row: {r}", row)
+        return
     number = (D(number_str)
               if re.match(r'\$?[0-9,]+(\.[0-9]+)', number_str)
               else ZERO)
@@ -256,9 +259,12 @@ def main():
     next(rowiter)
     entries = []
     for index, row in enumerate(rowiter):
+        if not list(filter(None, row)):
+            continue
         entry = create_entry(row, coltypes, args.inflows_account, 'USD', args.docid, index,
                              args.uncategorized_account)
-        entries.append(entry)
+        if entry is not None:
+            entries.append(entry)
 
     printer.print_entries(entries)
 
