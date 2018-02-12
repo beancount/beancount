@@ -6,6 +6,9 @@ Note: This file contains only changes in the 'default' branch.
 
 2018-02-12
 
+  - Fixed #212: Clarified error message for error in covering non-aggregate
+    targets.
+
   - The Importer.extract() method now accepts a new parameters with the prior
     entries (or None, if not specified) as 'existing_entries'. It's free to use
     that as it pleases in order to flag entries as duplicates. The entries

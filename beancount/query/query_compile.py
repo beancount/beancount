@@ -866,12 +866,15 @@ def compile_select(select, targets_environ, postings_environ, entries_environ):
     # targets to the list of group-by expressions and should have resolved all
     # the indexes.
     if group_indexes is not None:
-        non_aggregate_indexes = [index
-                                 for index, c_target in enumerate(c_targets)
-                                 if not c_target.is_aggregate]
-        if set(non_aggregate_indexes) != set(group_indexes):
+        non_aggregate_indexes = set(index
+                                    for index, c_target in enumerate(c_targets)
+                                    if not c_target.is_aggregate)
+        if non_aggregate_indexes != set(group_indexes):
+            missing_names = ['"{}"'.format(c_targets[index].name)
+                             for index in non_aggregate_indexes - set(group_indexes)]
             raise CompilationError(
-                "All non-aggregates must be covered by GROUP-BY clause in aggregate query")
+                "All non-aggregates must be covered by GROUP-BY clause in aggregate query; "
+                "the following targets are missing: {}".format(",".join(missing_names)))
 
     # Check that PIVOT-BY is not supported yet.
     if select.pivot_by is not None:
