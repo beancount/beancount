@@ -4,6 +4,21 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2018-02-12
+
+  - The Importer.extract() method now accepts a new parameters with the prior
+    entries (or None, if not specified) as 'existing_entries'. It's free to use
+    that as it pleases in order to flag entries as duplicates. The entries
+    returned by Importer.extract() will be checked for __duplicate__ metadata
+    and automatically inserted to that set if it is present. This allows the
+    importer to return some duplicate entries for context - which will be
+    rendered as such in the output, e.g. commented out - without having to
+    necessarily throw them away.
+
+    (The previous signature is still supported in order to avoid breaking
+    everyone's importers.)
+
+
 2018-01-31
 
   - Modified 'divert_expenses' plugin to store the original account name as

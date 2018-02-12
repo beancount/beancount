@@ -131,6 +131,30 @@ class TestScriptExtractFromFile(test_utils.TestCase):
                           if extract.DUPLICATE_META in entry.meta]
         self.assertEqual(dup_entries, marked_entries)
 
+    def test_extract_from_file__explicitly_marked_duplicates_entries(self):
+        entries, _, __ = loader.load_string("""
+
+          2016-02-01 * "A"
+            Assets:Account1    10.00 USD
+            Assets:Account2   -10.00 USD
+
+          2016-02-02 * "B"
+            Assets:Account1    10.00 USD
+            Assets:Account2   -10.00 USD
+
+        """)
+        entries[1].meta[extract.DUPLICATE_META] = True
+        imp = mock.MagicMock()
+        imp.identify = mock.MagicMock(return_value=True)
+        imp.extract = mock.MagicMock(return_value=entries)
+
+        new_entries, dup_entries = extract.extract_from_file('/tmp/blabla.ofx', imp, [])
+        self.assertEqual(1, len(dup_entries))
+        self.assertEqual([datetime.date(2016, 2, 1), datetime.date(2016, 2, 2)],
+                         [entry.date for entry in new_entries])
+        self.assertEqual([datetime.date(2016, 2, 2)],
+                         [entry.date for entry in dup_entries])
+
     def test_extract_from_file__raises_exception(self):
         imp = mock.MagicMock()
         imp.identify = mock.MagicMock(return_value=True)
