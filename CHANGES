@@ -6,6 +6,8 @@ Note: This file contains only changes in the 'default' branch.
 
 2018-02-12
 
+  - Added a side-effects local variable saver utility for writing importers.
+
   - Fixed #212: Clarified error message for error in covering non-aggregate
     targets.
 
