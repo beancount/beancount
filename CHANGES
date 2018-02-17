@@ -6,6 +6,10 @@ Note: This file contains only changes in the 'default' branch.
 
 2018-02-17
 
+  - Merged a change submitted by @droogmic to add options for the dateutils
+    parser, in order to disambiguate between day-first (DD-MM-YYYY) vs.
+    month-first (MM-DD-YYYY) date representations.
+
   - Created a new plugin "check_closing" that automatically inserts a zero
     balance check after postings which are known - and flagged, using metadata -
     to be closing trades.

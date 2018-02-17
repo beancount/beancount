@@ -115,8 +115,7 @@ class TestCSVImporter(cmptest.TestCase):
                                  Col.NARRATION: 'Description',
                                  Col.AMOUNT: 'Amount'},
                                 'Assets:Bank', 'EUR', [],
-                                dateutil_parse={'dayfirst': True}
-                               )
+                                dateutil_kwds={'dayfirst': True})
         entries = importer.extract(file)
         self.assertEqualEntries(r"""
 

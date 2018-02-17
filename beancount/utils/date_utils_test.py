@@ -36,7 +36,6 @@ class TestDateUtils(unittest.TestCase):
                 parse_date = date_utils.parse_date_liberally(case[0])
             self.assertEqual(const_date, parse_date)
 
-
     def test_next_month(self):
         self.assertEqual(datetime.date(2015, 11, 1),
                          date_utils.next_month(datetime.date(2015, 10, 1)))
