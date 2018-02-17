@@ -103,7 +103,8 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
                  institution: Optional[str]=None,
                  debug: bool=False,
                  csv_dialect: Union[str, csv.Dialect] ='excel',
-                 dateutil_kwds: Optional[Dict]=None):
+                 dateutil_kwds: Optional[Dict]=None,
+                 narration_sep: str='; '):
         """Constructor.
 
         Args:
@@ -137,6 +138,7 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
         self.debug = debug
         self.dateutil_kwds = dateutil_kwds
         self.csv_dialect = csv_dialect
+        self.narration_sep = narration_sep
 
         # FIXME: This probably belongs to a mixin, not here.
         self.institution = institution
@@ -231,7 +233,7 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
                                    for field in (Col.NARRATION1,
                                                  Col.NARRATION2,
                                                  Col.NARRATION3)])
-            narration = ' '.join(field.strip() for field in fields)
+            narration = self.narration_sep.join(field.strip() for field in fields)
 
             tag = get(row, Col.TAG)
             tags = {tag} if tag is not None else data.EMPTY_SET

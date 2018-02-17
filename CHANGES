@@ -6,6 +6,9 @@ Note: This file contains only changes in the 'default' branch.
 
 2018-02-17
 
+  - Added an option to the CSV importer for the string separating the narration
+    (default: "; ").
+
   - Merged a change submitted by @droogmic to add options for the dateutils
     parser, in order to disambiguate between day-first (DD-MM-YYYY) vs.
     month-first (MM-DD-YYYY) date representations.
