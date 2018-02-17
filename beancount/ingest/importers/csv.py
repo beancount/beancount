@@ -102,6 +102,7 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
                  categorizer: Optional[Callable]=None,
                  institution: Optional[str]=None,
                  debug: bool=False,
+                 dateutil_parse: Optional[Dict]=None,
                  csv_dialect: Union[str, csv.Dialect] ='excel'):
         """Constructor.
 
@@ -116,6 +117,7 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
                        to a transaction with only single posting.
           institution: An optional name of an institution to rename the files to.
           debug: Whether or not to print debug information
+          dateutil_parse: An optional dict defining the dateutil parser kwargs
           csv_dialect: A `csv` dialect given either as string or as instance or
             subclass of `csv.Dialect`.
         """
@@ -133,6 +135,7 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
         self.skip_lines = skip_lines
         self.last4_map = last4_map or {}
         self.debug = debug
+        self.dateutil_parse = dateutil_parse
         self.csv_dialect = csv_dialect
 
         # FIXME: This probably belongs to a mixin, not here.
@@ -172,7 +175,7 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
                 if row[0].startswith('#'):
                     continue
                 date_str = row[iconfig[Col.DATE]]
-                date = parse_date_liberally(date_str)
+                date = parse_date_liberally(date_str, self.dateutil_parse)
                 if max_date is None or date > max_date:
                     max_date = date
             return max_date
@@ -240,7 +243,8 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
             # Create a transaction
             meta = data.new_metadata(file.name, index)
             if txn_date is not None:
-                meta['date'] = parse_date_liberally(txn_date)
+                meta['date'] = parse_date_liberally(txn_date,
+                                                    self.dateutil_parse)
             if txn_time is not None:
                 meta['time'] = str(dateutil.parser.parse(txn_time).time())
             if balance is not None:
@@ -248,7 +252,7 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
             if last4:
                 last4_friendly = self.last4_map.get(last4.strip())
                 meta['card'] = last4_friendly if last4_friendly else last4
-            date = parse_date_liberally(date)
+            date = parse_date_liberally(date, self.dateutil_parse)
             txn = data.Transaction(meta, date, self.FLAG, payee, narration,
                                    tags, data.EMPTY_SET, [])
 
@@ -274,8 +278,10 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
             entries.append(txn)
 
         # Figure out if the file is in ascending or descending order.
-        first_date = parse_date_liberally(get(first_row, Col.DATE))
-        last_date = parse_date_liberally(get(last_row, Col.DATE))
+        first_date = parse_date_liberally(get(first_row, Col.DATE),
+                                          self.dateutil_parse)
+        last_date = parse_date_liberally(get(last_row, Col.DATE),
+                                         self.dateutil_parse)
         is_ascending = first_date < last_date
 
         # Reverse the list if the file is in descending order
