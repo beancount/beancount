@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2018-02-17
+
+  - Fixed bug in "sellgains" plugin whereby a price of zero units failed an
+    assertion. Added a test.
+
+
 2018-02-12
 
   - Added a side-effects local variable saver utility for writing importers.

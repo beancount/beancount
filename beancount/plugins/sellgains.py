@@ -116,7 +116,7 @@ def validate_sell_gains(entries, options_map):
         for posting in entry.postings:
             # If the posting is held at cost, add the priced value to the balance.
             if posting.cost is not None:
-                assert posting.price
+                assert posting.price is not None
                 price = posting.price
                 total_price.add_amount(amount.mul(price, -posting.units.number))
             else:
