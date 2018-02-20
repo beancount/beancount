@@ -4,6 +4,11 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2018-02-19
+
+  - Removed deprecated beancount.ops.prices module.
+
+
 2018-02-17
 
   - Added an option to the CSV importer for the string separating the narration
