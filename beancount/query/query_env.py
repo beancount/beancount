@@ -507,7 +507,6 @@ class Price(query_compile.EvalFunction):
         super().__init__(operands, Decimal)
 
     def __call__(self, context):
-        warnings.warn("PRICE() is deprecated; use GETPRICE() instead")
         args = self.eval_args(context)
         base, quote = args
         pair = (base.upper(), quote.upper())
@@ -522,7 +521,6 @@ class PriceWithDate(query_compile.EvalFunction):
         super().__init__(operands, Decimal)
 
     def __call__(self, context):
-        warnings.warn("PRICE() is deprecated; use GETPRICE() instead")
         args = self.eval_args(context)
         base, quote, date = args
         pair = (base.upper(), quote.upper())
@@ -676,9 +674,6 @@ SIMPLE_FUNCTIONS = {
     ('value', position.Position, datetime.date)          : ValuePositionWithDate,
     ('value', inventory.Inventory)                       : ValueInventory,
     ('value', inventory.Inventory, datetime.date)        : ValueInventoryWithDate,
-    # Note: Remove PRICE() at some point, GETPRICE() is less confusing.
-    ('price', str, str)                                  : Price,
-    ('price', str, str, datetime.date)                   : PriceWithDate,
     ('getprice', str, str)                               : Price,
     ('getprice', str, str, datetime.date)                : PriceWithDate,
     'number'                                             : Number,
