@@ -4,6 +4,13 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2018-02-23
+
+  - Fixed #219: Restored sorting of the entries in the extractor. File order
+    will have to be maintained by extracting the line no, which is used as a
+    secondary key.
+
+
 2018-02-19
 
   - Added prototype for converting Google Docs doc from docx and rst
