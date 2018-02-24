@@ -122,7 +122,7 @@ binaries = [
     ('upload-to-sheets', 'beancount.tools.sheets_upload'),
 ]
 
-if not has_setuptools and platform.system() == 'Windows':
+if has_setuptools and platform.system() == 'Windows':
     setup_extra_kwargs.update(entry_points={
         'console_scripts': [
             '{} = {}:main'.format(binary, module)
