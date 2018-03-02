@@ -115,7 +115,7 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
           skip_lines: Skip first x (garbage) lines of file.
           last4_map: A dict that maps last 4 digits of the card to a friendly string.
           categorizer: A callable that attaches the other posting (usually expenses)
-                       to a transaction with only single posting.
+            to a transaction with only single posting.
           institution: An optional name of an institution to rename the files to.
           debug: Whether or not to print debug information
           dateutil_kwds: An optional dict defining the dateutil parser kwargs.
@@ -272,7 +272,7 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
                 txn.postings.append(
                     data.Posting(self.account, units, None, None, None, None))
 
-            # Attach the other posting(s) to the transaction
+            # Attach the other posting(s) to the transaction.
             if isinstance(self.categorizer, collections.Callable):
                 txn = self.categorizer(txn)
 
