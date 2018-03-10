@@ -162,7 +162,7 @@ Pad = new_directive('Pad', [
 Balance = new_directive('Balance', [
     ('account', Account),
     ('amount', Amount),
-    ('tolerance', Decimal),
+    ('tolerance', Optional[Decimal]),
     ('diff_amount', Optional[Amount])])
 
 
@@ -195,10 +195,10 @@ Balance = new_directive('Balance', [
 Posting = NamedTuple('Posting', [
     ('account', Account),
     ('units', Amount),
-    ('cost', Union[Cost, CostSpec]),
+    ('cost', Optional[Union[Cost, CostSpec]]),
     ('price', Optional[Amount]),
-    ('flag', Flag),
-    ('meta', Meta)])
+    ('flag', Optional[Flag]),
+    ('meta', Optional[Meta])])
 
 # A transaction! This is the main type of object that we manipulate, and the
 # entire reason this whole project exists in the first place, because
@@ -215,16 +215,16 @@ Posting = NamedTuple('Posting', [
 #   payee: A free-form string that identifies the payee, or None, if absent.
 #   narration: A free-form string that provides a description for the transaction.
 #     All transactions have at least a narration string, this is never None.
-#   tags: A set of tag strings (without the '#'), or None, if an empty set.
-#   links: A set of link strings (without the '^'), or None, if an empty set.
+#   tags: A set of tag strings (without the '#'), or EMPTY_SET.
+#   links: A set of link strings (without the '^'), or EMPTY_SET.
 #   postings: A list of Posting instances, the legs of this transaction. See the
 #     doc under Posting below.
 Transaction = new_directive('Transaction', [
     ('flag', Flag),
-    ('payee', str),
+    ('payee', Optional[str]),
     ('narration', str),
-    ('tags', Optional[Set]),
-    ('links', Optional[Set]),
+    ('tags', Set),
+    ('links', Set),
     ('postings', List[Posting])])
 
 # A pair of a Posting and its parent Transaction. This is inserted as
