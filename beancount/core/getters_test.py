@@ -111,6 +111,31 @@ class TestGetters(unittest.TestCase):
         levels = getters.get_leveln_parent_accounts(account_names, 2, 0)
         self.assertEqual({'Cash', 'Credit-Card'}, set(levels))
 
+    def test_get_dict_accounts(self):
+        account_names = ['Assets:US:Cash',
+                         'Assets:US:Credit-Card',
+                         'Expenses:Grocery',
+                         'Expenses:Coffee',
+                         'Expenses:Restaurant']
+
+        LABEL = getters.get_dict_accounts.ACCOUNT_LABEL
+        self.assertEqual(
+            getters.get_dict_accounts(account_names),
+            {
+                'Assets': {
+                    'US': {
+                        'Cash': {LABEL: True},
+                        'Credit-Card': {LABEL: True},
+                    },
+                },
+                'Expenses': {
+                    'Grocery': {LABEL: True},
+                    'Coffee': {LABEL: True},
+                    'Restaurant': {LABEL: True},
+                },
+            }
+        )
+
     def test_get_min_max_dates(self):
         entries = loader.load_string(TEST_INPUT)[0]
         mindate, maxdate = getters.get_min_max_dates(entries)
