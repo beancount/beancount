@@ -115,6 +115,7 @@ class TestGetters(unittest.TestCase):
         account_names = ['Assets:US:Cash',
                          'Assets:US:Credit-Card',
                          'Expenses:Grocery',
+                         'Expenses:Grocery:Bean',
                          'Expenses:Coffee',
                          'Expenses:Restaurant']
 
@@ -129,7 +130,12 @@ class TestGetters(unittest.TestCase):
                     },
                 },
                 'Expenses': {
-                    'Grocery': {LABEL: True},
+                    'Grocery': {
+                        'Bean': {
+                            LABEL: True,
+                        },
+                        LABEL: True,
+                    },
                     'Coffee': {LABEL: True},
                     'Restaurant': {LABEL: True},
                 },
