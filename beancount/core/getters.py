@@ -222,7 +222,7 @@ def get_dict_accounts(account_names):
     Args:
       account_names: An iterable of account names (strings)
     Returns:
-      A nested dict
+      A nested OrderedDict of account leafs
     """
     leveldict = OrderedDict()
     for account_name in account_names:
