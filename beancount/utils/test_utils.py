@@ -206,7 +206,7 @@ def patch(obj, attributes, replacement_type):
         setattr(obj, attribute, saved_attr)
 
 
-def docfile(function):
+def docfile(function, **kwargs):
     """A decorator that write the function's docstring to a temporary file
     and calls the decorated function with the temporary filename.  This is
     useful for writing tests.
@@ -218,12 +218,31 @@ def docfile(function):
     """
     @functools.wraps(function)
     def new_function(self):
-        with tempfile.NamedTemporaryFile('w') as file:
-            file.write(textwrap.dedent(function.__doc__))
+        allowed = ('buffering', 'encoding', 'newline', 'dir', 'prefix', 'suffix')
+        if any([key not in allowed for key in kwargs]):
+            raise TypeError("Invalid kwarg to docfile_extra")
+        with tempfile.NamedTemporaryFile('w', **kwargs) as file:
+            text = function.__doc__
+            # Strip first empty line
+            if not text.split('\n', 1)[0]:
+                text = text.split('\n', 1)[1]
+            file.write(textwrap.dedent(text))
             file.flush()
             return function(self, file.name)
     new_function.__doc__ = None
     return new_function
+
+
+def docfile_extra(**kwargs):
+    """
+    A decorator identical to @docfile,
+    but it also takes kwargs for the temporaryfile,
+    Kwargs:
+      e.g. buffering, encoding, newline, dir, prefix, and suffix.
+    Returns:
+      docfile
+    """
+    return functools.partial(docfile, **kwargs)
 
 
 def search_words(words, line):
