@@ -97,14 +97,14 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
     """Importer for CSV files."""
 
     def __init__(self, config, account, currency, regexps,
-                 skip_lines: int=0,
-                 last4_map: Optional[Dict]=None,
-                 categorizer: Optional[Callable]=None,
-                 institution: Optional[str]=None,
-                 debug: bool=False,
-                 csv_dialect: Union[str, csv.Dialect] ='excel',
-                 dateutil_kwds: Optional[Dict]=None,
-                 narration_sep: str='; '):
+                 skip_lines: int = 0,
+                 last4_map: Optional[Dict] = None,
+                 categorizer: Optional[Callable] = None,
+                 institution: Optional[str] = None,
+                 debug: bool = False,
+                 csv_dialect: Union[str, csv.Dialect] = 'excel',
+                 dateutil_kwds: Optional[Dict] = None,
+                 narration_sep: str = '; '):
         """Constructor.
 
         Args:
@@ -181,6 +181,7 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
                 if max_date is None or date > max_date:
                     max_date = date
             return max_date
+        return None
 
     def extract(self, file):
         entries = []

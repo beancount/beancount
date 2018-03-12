@@ -222,7 +222,7 @@ def file(importer_config,
     # If there are any errors, just don't do anything at all. This is a nicer
     # behaviour than moving just *some* files.
     if dry_run or has_errors:
-        return
+        return None
 
     # Actually carry out the moving job.
     for old_filename, new_filename in jobs:

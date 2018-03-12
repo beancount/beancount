@@ -103,7 +103,6 @@ class TestCSVImporter(cmptest.TestCase):
 
     @test_utils.docfile
     def test_date_formats(self, filename):
-        # pylint: disable=line-too-long
         """\
           Posting,Description,Amount
           11/7/2016,A,2

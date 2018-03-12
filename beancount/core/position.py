@@ -23,10 +23,6 @@ from beancount.core.amount import CURRENCY_RE
 from beancount.core.display_context import DEFAULT_FORMATTER
 
 
-# Disable lint errors for namedtuples declared here.
-# pylint: disable=invalid-name
-
-
 # A variant of Amount that also includes a date and a label.
 #
 # Attributes:
@@ -265,7 +261,7 @@ class Position(_Position):
           units: An instance of Amount.
         """
         assert isinstance(units, Amount)
-        self.units = units  # pylint: disable=assigning-non-slot
+        self.units = units
 
     def currency_pair(self):
         """Return the currency pair associated with this position.

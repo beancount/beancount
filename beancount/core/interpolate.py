@@ -13,8 +13,6 @@ from beancount.core.number import ONE
 from beancount.core.number import ZERO
 from beancount.core.number import MISSING
 from beancount.core.amount import Amount
-from beancount.core.position import CostSpec
-from beancount.core.position import Cost
 from beancount.core.inventory import Inventory
 from beancount.core import inventory
 from beancount.core import position

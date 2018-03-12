@@ -72,6 +72,7 @@ enable=all
 # --disable=W"
 
 disable=locally-disabled,
+  not-callable,
   suppressed-message,
   missing-docstring,
   too-many-lines,

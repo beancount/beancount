@@ -62,7 +62,8 @@ class TestAccountTypes(unittest.TestCase):
 
     def test_is_account_type(self):
         self.assertTrue(account_types.is_account_type("Assets", "Assets:US:RBS:Checking"))
-        self.assertFalse(account_types.is_account_type("Expenses", "Assets:US:RBS:Checking"))
+        self.assertFalse(
+            account_types.is_account_type("Expenses", "Assets:US:RBS:Checking"))
         self.assertFalse(account_types.is_account_type("Assets", "AssetsUS:RBS:Checking"))
 
     def test_is_root_account(self):

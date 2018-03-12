@@ -220,9 +220,7 @@ LINT_SRCS =					\
   bin/*						\
   tools/*.py
 
-# Note: Keeping to 3.5 because 3.6 pylint raises an exception (as of 2017-01-15).
-#PYLINT = pylint
-PYLINT = python3.5 $(shell which pylint)
+PYLINT = pylint
 
 pylint lint:
 	$(PYLINT) --rcfile=$(PWD)/etc/pylintrc $(LINT_SRCS)

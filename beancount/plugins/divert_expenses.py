@@ -21,12 +21,7 @@ https://docs.google.com/drawings/d/18fTrrGlmz0jFbfcGGHTffbdRwbmST8r9_3O26Dd1Xww/
 __copyright__ = "Copyright (C) 2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import collections
-
 from beancount.core.data import Transaction
-from beancount.core import data
-from beancount.core import amount
-from beancount.core import inventory
 from beancount.core import account_types
 from beancount.parser import options
 

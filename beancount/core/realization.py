@@ -344,6 +344,7 @@ def filter(real_account, predicate):
 
     if len(real_copy) > 0 or predicate(real_account):
         return real_copy
+    return None
 
 
 def get_postings(real_account):
@@ -524,7 +525,7 @@ def index_key(sequence, value, key, cmp):
     for index, element in enumerate(sequence):
         if cmp(key(element), value):
             return index
-    return
+    return None
 
 
 def dump(root_account):
@@ -666,6 +667,7 @@ def dump_balances(real_root, dformat, at_cost=False, fullnames=False, file=None)
 
     if file is None:
         return output.getvalue()
+    return None
 
 
 def compute_postings_balance(txn_postings):
