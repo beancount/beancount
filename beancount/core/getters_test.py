@@ -3,6 +3,7 @@ __license__ = "GNU GPLv2"
 
 import unittest
 import datetime
+from collections import OrderedDict
 
 from beancount.core import getters
 from beancount.core import data
@@ -110,6 +111,41 @@ class TestGetters(unittest.TestCase):
 
         levels = getters.get_leveln_parent_accounts(account_names, 2, 0)
         self.assertEqual({'Cash', 'Credit-Card'}, set(levels))
+
+    def test_get_dict_accounts(self):
+        account_names = ['Assets:US:Cash',
+                         'Assets:US:Credit-Card',
+                         'Expenses:Grocery',
+                         'Expenses:Grocery:Bean',
+                         'Expenses:Coffee',
+                         'Expenses:Restaurant']
+
+        LABEL = getters.get_dict_accounts.ACCOUNT_LABEL
+        root = OrderedDict([(LABEL, True)])
+        account_dict = OrderedDict([
+            ('Assets', OrderedDict([
+                ('US', OrderedDict([
+                    ('Cash', root),
+                    ('Credit-Card', root),
+                ])),
+            ])),
+            ('Expenses', OrderedDict([
+                ('Grocery', OrderedDict([
+                    ('Bean', root), # Wrong order here
+                    (LABEL, True),
+                ])),
+                ('Coffee', root),
+                ('Restaurant', root),
+            ])),
+        ])
+        self.assertNotEqual(
+            getters.get_dict_accounts(account_names),
+            account_dict
+        )
+        account_dict['Expenses']['Grocery'] = OrderedDict([
+            (LABEL, True),
+            ('Bean', root),
+        ])
 
     def test_get_min_max_dates(self):
         entries = loader.load_string(TEST_INPUT)[0]

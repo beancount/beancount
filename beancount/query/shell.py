@@ -11,12 +11,16 @@ import io
 import logging
 import os
 import re
-import readline
 import sys
 import shlex
 import textwrap
 import traceback
 from os import path
+
+try:
+    import readline
+except ImportError:
+    readline = None
 
 from beancount.query import query_parser
 from beancount.query import query_compile
@@ -104,7 +108,7 @@ class DispatchingShell(cmd.Cmd):
           default_format: A string, the default output format.
         """
         super().__init__()
-        if is_interactive:
+        if is_interactive and readline is not None:
             load_history(path.expanduser(HISTORY_FILENAME))
         self.is_interactive = is_interactive
         self.parser = parser
@@ -169,8 +173,9 @@ class DispatchingShell(cmd.Cmd):
 
     def do_history(self, _):
         "Print the command-line history statement."
-        for index, line in enumerate(get_history(self.max_entries)):
-            print(line, file=self.outfile)
+        if readline is not None:
+            for index, line in enumerate(get_history(self.max_entries)):
+                print(line, file=self.outfile)
 
     def do_clear(self, _):
         "Clear the history."
