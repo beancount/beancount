@@ -4,7 +4,8 @@ things that they reference, accounts, tags, links, currencies, etc.
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-from collections import defaultdict, OrderedDict
+from collections import defaultdict
+from collections import OrderedDict
 
 from beancount.core.data import Transaction
 from beancount.core.data import Open
