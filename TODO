@@ -4677,6 +4677,17 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - Create a new "AssertQuery" directive to assert that the result of a
+    particular query produces a particular Inventory. For example, you could
+    check your total contributions to an account over a period of time like
+    this:
+
+       2018-03-11 assert_query "
+         select sum(position)
+         where year = 2018
+           and account ~ 'Assets:US:Vanguard:Retire:AfterTax:Cash'
+           and number > 0" == 27250 USD
+
   - In the account name completion function in Emacs, don't include the name of
     closed accounts.
 
