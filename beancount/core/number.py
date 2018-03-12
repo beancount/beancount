@@ -98,7 +98,6 @@ def D(strord=None):
             return Decimal(strord)
         else:
             assert strord is None, "Invalid value to convert: {}".format(strord)
-            return None
     except Exception as exc:
         raise ValueError("Impossible to create Decimal instance from {!s}: {}".format(
                          strord, exc))

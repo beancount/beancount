@@ -23,6 +23,7 @@ from beancount.core.number import D
 # Note: This is kept in sync with "beancount/parser/lexer.l".
 CURRENCY_RE = r'[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]'
 
+# pylint: disable=invalid-name
 _Amount = NamedTuple('_Amount', [
     ('number', Optional[Decimal]),
     ('currency', str)])
