@@ -1,0 +1,8 @@
+Scripts to automatically download and convert all the Google Docs documents to
+markdown. The ultimate purpose is to integrate this output in Beancount itself,
+with the converted documents:
+
+https://aumayr.github.io/beancount-docs-static/users/index.html
+
+The pristine source will remain Google Docs, and the conversion should be done
+automatically, before each release.

@@ -220,12 +220,9 @@ def docfile(function, **kwargs):
     def new_function(self):
         allowed = ('buffering', 'encoding', 'newline', 'dir', 'prefix', 'suffix')
         if any([key not in allowed for key in kwargs]):
-            raise TypeError("Invalid kwarg to docfile_extra")
+            raise ValueError("Invalid kwarg to docfile_extra")
         with tempfile.NamedTemporaryFile('w', **kwargs) as file:
             text = function.__doc__
-            # Strip first empty line
-            if not text.split('\n', 1)[0]:
-                text = text.split('\n', 1)[1]
             file.write(textwrap.dedent(text))
             file.flush()
             return function(self, file.name)

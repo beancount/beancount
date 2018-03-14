@@ -26,7 +26,6 @@ from beancount.core import interpolate
 from beancount.utils import test_utils
 from beancount.parser import grammar
 from beancount.parser import cmptest
-from beancount.parser import booking_simple_test
 
 
 def check_list(test, objlist, explist):
@@ -249,7 +248,7 @@ class TestParserComplete(unittest.TestCase):
             Expenses:Restaurant         100 USD
         """
         check_list(self, entries, [data.Transaction])
-        check_list(self, errors, 1 if booking_simple_test.ERRORS_ON_RESIDUAL else 0)
+        check_list(self, errors, 0)
         entry = entries[0]
         self.assertEqual(1, len(entry.postings))
 
@@ -884,9 +883,7 @@ class TestTransactions(unittest.TestCase):
             Assets:Checking         -99 USD
         """
         check_list(self, entries, [data.Transaction])
-        check_list(self, errors,
-                   [interpolate.BalanceError]
-                   if booking_simple_test.ERRORS_ON_RESIDUAL else [])
+        check_list(self, errors, [])
 
     @parser.parse_doc()
     def test_no_postings(self, entries, errors, _):

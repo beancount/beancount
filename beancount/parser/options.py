@@ -409,52 +409,6 @@ PUBLIC_OPTION_GROUPS = [
     """, [Opt("long_string_maxlines", 64)]),
 
     OptGroup("""
-      The booking algorithm implementation, new (FULL) or old (SIMPLE).
-
-      By default Beancount matches using a powerful matching algorithm ("FULL"):
-      the cost specification (e.g., {...}) in reducing postings is interpreted
-      as a filter to match against existing position in the inventory of the
-      account prior to the transaction taking place. Whatever information you
-      provide:  cost amount, lot-date, label, will be used to reduce the set of
-      valid positions to reduce, and if the resulting set has more than one
-      position, a booking_method is applied.
-
-      Note: Don't confuse this with the booking "method". Beancount also has
-      global and per-account booking methods, which provides instructions on
-      what to do in case a reducing posting matches multiple lots. The default
-      booking "method" is STRICT, which raises an error on ambiguous matching
-      positions, but you can set the booking method default to FIFO or LIFO (see
-      "booking_method" option) to choose which positions to reduce to
-      automatically resolve the ambiguity, either globally (for all accounts),
-      or per account (see the Open directive).
-
-      Interpolation is also significantly more powerful than previously and many
-      parts of a posting can often be elided and automatically inferred.
-
-      For a limited time, you will be able to revert Beancount to use its older
-      algorithm ("SIMPLE") which merges together all positions at cost with an
-      exact match on the cost basis pair defined by (cost-amount, lot-date).
-      Lots without a lot-date will match against each other; controversely, if
-      you provide a lot-date in an augmenting posting, the reducing posting must
-      also provide the same lot-date in order to match. This old method is
-      inferior, and only supported in order to ease the transition to the newer,
-      more powerful method. It will be removed eventually, and correspondingly
-      this option will be deprecated.
-
-      If you find yourself experiencing errors while making the transition, it
-      is possible that previous lots matched each other that don't match
-      anymore; to resolve this, inspect the specific error and consider whether
-      it is appropriate to set the corresponding account's booking method to
-      "FIFO", which will automatically resolve the ambiguous matches. One
-      provides the booking method by inserting a string in the Open directive,
-      like this:
-
-         2016-10-11 open Assets:Invest:MoneyMarket   VIIIX   "FIFO"
-
-      See the Open directive for details.
-    """, [Opt("booking_algorithm", "FULL", "SIMPLE")]),
-
-    OptGroup("""
       The booking method to apply to ambiguous reductions of inventory lots.
       When a posting is matched against the contents of an account's inventory
       to reduce its contents and multiple lots match, the method dictates how

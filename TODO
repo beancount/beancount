@@ -1536,15 +1536,7 @@ http://furius.ca/beancount/doc/proposal-query
     unique throughout the entire file, not just on the inventory the lot is
     being inserted into.
 
-  - Consider whether beancount.core.interpolate.balance_incomplete_postings()
-    and beancount.core.interpolate.get_incomplete_postings() still deserve to be
-    in beancount.core.interpolate. I believe we may be able to remove them along
-    with the "SIMPLE" booking method, and if anything, to move them to
-    beancount.parser.booking_simple. I think you could probably
-
-    * Rename beancount.core.interpolate to beancount.core.tolerances
-    * Move balance_incomplete_postings & get_incomplete_postings to beancount.parser.booking_simple.
-    * Move the corresponding unit tests to beancount.parser.booking_simple_test.
+  - Rename beancount.core.interpolate to beancount.core.tolerances
 
   - An important question: on an empty inventory, does the following transaction
     work?

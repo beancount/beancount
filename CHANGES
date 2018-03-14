@@ -4,6 +4,22 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2018-03-13
+
+  - Removed SIMPLE booking method and all traces of it, including the
+    'booking_algorithm' option. Only the later (I hesitate to say "newer"
+    because it's been around for years) FULL booking method is supported
+    onwards.
+
+  - Fixed #35: Implemented implicit group-by syntax. That is, if you omit the
+    GROUP BY clause, it is automatically inferred to be the non-aggregate
+    columns. This make writing the type of simple queries we do much more
+    convenient and allows you to be a little sloppy.
+
+  - Fixed bug with unit test util for docutil, which was stripping the first
+    empty line of the docstring (and failing).
+
+
 2018-03-02
 
   - Made the 'readline' library conditional, for Windows support.
