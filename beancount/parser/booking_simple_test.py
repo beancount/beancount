@@ -14,10 +14,6 @@ from beancount.parser import parser
 from beancount.parser import booking_simple
 
 
-# True if errors are generated on residual by get_incomplete_postings().
-ERRORS_ON_RESIDUAL = False
-
-
 class TestGetIncompletePostings(cmptest.TestCase):
 
     OPTIONS_MAP = {'inferred_tolerance_default': {},
@@ -47,7 +43,7 @@ class TestGetIncompletePostings(cmptest.TestCase):
             entry, self.OPTIONS_MAP)
         self.assertFalse(has_inserted)
         self.assertEqual(1, len(new_postings))
-        self.assertEqual(1 if ERRORS_ON_RESIDUAL else 0, len(errors))
+        self.assertEqual(0, len(errors))
         self.assertIsInstance(tolerances, dict)
 
         # Test with two legs that balance.
@@ -72,7 +68,7 @@ class TestGetIncompletePostings(cmptest.TestCase):
             entry, self.OPTIONS_MAP)
         self.assertFalse(has_inserted)
         self.assertEqual(2, len(new_postings))
-        self.assertEqual(1 if ERRORS_ON_RESIDUAL else 0, len(errors))
+        self.assertEqual(0, len(errors))
 
         # Test with only one auto-posting.
         entry = data.Transaction(
@@ -167,7 +163,7 @@ class TestGetIncompletePostings(cmptest.TestCase):
             entry, self.OPTIONS_MAP)
         self.assertFalse(has_inserted)
         self.assertEqual(3, len(new_postings))
-        self.assertEqual(1 if ERRORS_ON_RESIDUAL else 0, len(errors))
+        self.assertEqual(0, len(errors))
 
     def test_balance_with_zero_posting(self):
         meta = data.new_metadata(__file__, 0)
