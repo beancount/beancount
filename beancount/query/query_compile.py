@@ -18,6 +18,11 @@ from beancount.core import inventory
 from beancount.query import query_parser
 
 
+# A global constant which sets whether we support inferred/implicit group-by
+# semantics.
+SUPPORT_IMPLICIT_GROUPBY = True
+
+
 class CompilationError(Exception):
     """A compiler/interpreter error."""
 
@@ -651,10 +656,20 @@ def compile_group_by(group_by, c_targets, environ):
         if any(aggregate_bools):
             # If the query is an aggregate query, check that all the targets are
             # aggregates.
-            if not all(aggregate_bools):
-                raise CompilationError(
-                    "Aggregate query without a GROUP-BY should have only aggregates")
-            assert group_indexes == []
+            if all(aggregate_bools):
+                assert group_indexes == []
+            else:
+                # If some of the targets aren't aggregates, automatically infer
+                # that they are to be implicit group by targets. This makes for
+                # a much more convenient syntax for our lightweight SQL, where
+                # grouping is optional.
+                if SUPPORT_IMPLICIT_GROUPBY:
+                    group_indexes = [index
+                                     for index, c_target in enumerate(c_targets)
+                                     if not c_target.is_aggregate]
+                else:
+                    raise CompilationError(
+                        "Aggregate query without a GROUP-BY should have only aggregates")
         else:
             # This is not an aggregate query; don't set group_indexes to
             # anything useful, we won't need it.
