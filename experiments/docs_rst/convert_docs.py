@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Re-insert indentation from blockquotes in Markdown converted from docx file.
+"""Re-insert indentation from blockquotes in RST converted from docx file.
 """
 
 import argparse
@@ -7,7 +7,10 @@ import logging
 import zipfile
 import io
 import re
+import os
 import threading
+import subprocess
+from os import path
 from typing import List
 from typing import Tuple
 from pprint import pprint
@@ -16,6 +19,7 @@ import bs4
 
 
 class _Save(threading.local):
+    """Funcall return saver for regexp matching."""
     def __call__(self, value):
         self.value = value
         return value
@@ -36,7 +40,7 @@ def ConvertToMarkdown(text: str, isbold: bool, isitalic: bool):
         text = '*{}*'.format(text)
     return text
 
-    
+
 def ConvertToRst(text: str, isbold: bool, isitalic: bool):
     text = text.replace('*', r'\*')
     if isbold:
@@ -88,7 +92,7 @@ def GetDocxBlocks(filename: str, convert: callable=None) -> List[str]:
 
 
 def GetMarkdownBlocks(lines: List[str]) -> List[Tuple[int, int, str]]:
-    """Get the list of blockquotes from the markdown file (and 
+    """Get the list of blockquotes from the markdown file (and
     their positions)."""
     blocks = []
     block = []
@@ -109,7 +113,7 @@ def GetMarkdownBlocks(lines: List[str]) -> List[Tuple[int, int, str]]:
 
 
 def GetRstBlocks(lines: List[str]) -> List[Tuple[int, int, str]]:
-    """Get the list of blockquotes from the markdown file (and 
+    """Get the list of blockquotes from the markdown file (and
     their positions)."""
 
     # Preprocess the rst text so that one-line blocks are prefixed with pipes
@@ -148,7 +152,7 @@ def GetRstBlocks(lines: List[str]) -> List[Tuple[int, int, str]]:
     return blocks
 
 
-def compute_key(lines: List[str], remove_matching_stars: bool=True) -> str:
+def ComputeKey(lines: List[str], remove_matching_stars: bool=True) -> str:
     """Reduce a snippet to a comparable key."""
     newlines = []
     for line in lines:
@@ -168,22 +172,22 @@ def compute_key(lines: List[str], remove_matching_stars: bool=True) -> str:
     return ''.join(newlines)
 
 
-def main():
-    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
-    parser = argparse.ArgumentParser(description=__doc__.strip())
-    parser.add_argument('docx', help='Docx filename')
-    parser.add_argument('markdown', help='Markdown filename')
-    parser.add_argument('output', help='Output Markdown filename with replaced blocks')
-    args = parser.parse_args()
+def PandocDocxToRst(filename: str) -> str:
+    rst_string = subprocess.check_output(
+        ['pandoc', '-f', 'docx', '-t', 'rst', filename],
+        shell=False, encoding='utf8')
+    return [s.rstrip() for s in rst_string.splitlines()]
 
-    blocks_docx = GetDocxBlocks(args.docx, ConvertToRst)
-    lines_txt = open(args.markdown).readlines()
+
+def ConvertDocx(filename: str) -> str:
+    blocks_docx = GetDocxBlocks(filename, ConvertToRst)
+    lines_txt = PandocDocxToRst(filename)
     blocks_txt = GetRstBlocks(lines_txt)
 
-    docx = [(compute_key(block, True), block)
+    docx = [(ComputeKey(block, True), block)
             for block in blocks_docx]
     map_docx = dict(docx)
-    map_txt = {compute_key(block, True): (minline, maxline, block)
+    map_txt = {ComputeKey(block, True): (minline, maxline, block)
                for minline, maxline, block in blocks_txt}
 
     # print('BLOCKS_DOCX')
@@ -199,7 +203,7 @@ def main():
     #     for line in block:
     #         print(repr(line))
     # print()
-    
+
     matches = []
     for key, block in docx:
         # print('-' * 80)
@@ -222,20 +226,21 @@ def main():
             print('TXT')
             for line in block_txt:
                 print(repr(line))
-            
-    #print('=' * 120)
-    if map_docx:
-        print('NOTFOUND DOCX:')
-        for key, block in map_docx.items():
-            print('-' * 120)
-            for line in block:
-                print(repr(line))
-    if map_txt:
-        print('NOTFOUND TXT:')
-        for key, (minline, maxline, block) in map_txt.items():
-            print('-' * 120)
-            for line in block:
-                print(repr(line))
+
+        #print('=' * 120)
+        if map_docx:
+            print('NOTFOUND DOCX:')
+            for key, block in map_docx.items():
+                print('-' * 120)
+                for line in block:
+                    print(repr(line))
+
+        if map_txt:
+            print('NOTFOUND TXT:')
+            for key, (minline, maxline, block) in map_txt.items():
+                print('-' * 120)
+                for line in block:
+                    print(repr(line))
 
     # Replace blocks in the original md file.
     offset = 0
@@ -243,14 +248,35 @@ def main():
         minline += offset
         maxline += offset
         del lines_txt[minline:maxline+1]
-        new_lines = ['    | {}\n'.format(line) for line in block_docx]
+        new_lines = ['    | {}'.format(line) for line in block_docx]
         lines_txt[minline:minline] = new_lines
         offset += len(new_lines) - (maxline + 1 - minline)
-        
-    # Output the result.
-    with open(args.output, 'w') as outfile:
-        for line in lines_txt:
-            outfile.write(line)
+
+    return os.linesep.join(lines_txt)
+
+
+def FindDocxFiles(root: str):
+    if path.isdir(root):
+        for root, _, files in os.walk(root):
+            for filename in files:
+                if re.search(r'.docx$', filename):
+                    yield path.join(root, filename)
+    elif re.search(r'.docx$', root):
+        yield root
+
+
+def main():
+    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
+    parser = argparse.ArgumentParser(description=__doc__.strip())
+    parser.add_argument('root', help='Root directory where to look for .docx files')
+    args = parser.parse_args()
+
+    for filename in FindDocxFiles(args.root):
+        rst_contents = ConvertDocx(filename)
+        outfilename = filename.replace('.docx', '.rst')
+        logging.info("Writing %s", outfilename)
+        with open(outfilename, 'w') as outfile:
+            outfile.write(rst_contents)
 
 
 if __name__ == '__main__':
