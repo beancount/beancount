@@ -28,7 +28,7 @@ from beancount.parser import parser
 from beancount.parser import printer
 from beancount.parser import booking_full as bf
 from beancount.parser import booking_method as bm
-from beancount.parser import booking_simple as bs
+from beancount.parser import booking_test
 from beancount.parser import cmptest
 from beancount import loader
 
@@ -577,7 +577,7 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
             # Check the expected postings.
             if exp_string is not None:
                 exp_entries, err1, _ = parser.parse_string(exp_string, dedent=True)
-                exp_entries, err2 = bs.convert_lot_specs_to_lots(exp_entries)
+                exp_entries, err2 = booking_test.convert_lot_specs_to_lots(exp_entries)
                 self.assertFalse(err1 or err2, "Internal error in test")
                 self.assertEqual(1, len(exp_entries),
                                  "Internal error, expected one entry")
@@ -930,7 +930,6 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
     @parser.parse_doc(allow_incomplete=True)
     def test_auto_posting__quantize_with_tolerances(self, entries, errors, options_map):
         """
-          option "booking_algorithm" "FULL"
           option "inferred_tolerance_default" "USD:0.00005"
           option "inferred_tolerance_default" "JPY:0.5"
 
@@ -1023,27 +1022,6 @@ class TestComputeCostNumber(unittest.TestCase):
 
 
 class TestParseBookingOptions(cmptest.TestCase):
-
-    @loader.load_doc()
-    def test_booking_algorithm__simple(self, entries, _, options_map):
-        """
-          option "booking_algorithm" "SIMPLE"
-        """
-        self.assertEqual("SIMPLE", options_map["booking_algorithm"])
-
-    @loader.load_doc()
-    def test_booking_algorithm__full(self, entries, _, options_map):
-        """
-          option "booking_algorithm" "FULL"
-        """
-        self.assertEqual("FULL", options_map["booking_algorithm"])
-
-    @loader.load_doc(expect_errors=True)
-    def test_booking_algorithm__invalid(self, entries, errors, options_map):
-        """
-          option "booking_algorithm" "XXX"
-        """
-        self.assertEqual(1, len(errors))
 
     @loader.load_doc()
     def test_booking_method__strict(self, entries, _, options_map):
@@ -1264,8 +1242,8 @@ class _BookingTestBase(unittest.TestCase):
             inv_expected = inventory.Inventory()
             for posting in entry_ex.postings:
                 inv_expected.add_amount(posting.units,
-                                        bs.convert_spec_to_cost(posting.units,
-                                                                posting.cost))
+                                        booking_test.convert_spec_to_cost(
+                                            posting.units, posting.cost))
             self.assertEqual(inv_expected, balances[account])
 
         # If requested, check the output values to the last call to
@@ -1293,8 +1271,8 @@ class _BookingTestBase(unittest.TestCase):
             if entry_matches:
                 actual_matches = call.args[2]
                 expected_matches = [Position(posting.units,
-                                             bs.convert_spec_to_cost(posting.units,
-                                                                     posting.cost))
+                                             booking_test.convert_spec_to_cost(
+                                                 posting.units, posting.cost))
                                     for posting in entry_matches.postings]
                 self.assertEqual(sorted(expected_matches), sorted(actual_matches))
 
@@ -1342,8 +1320,8 @@ class _BookingTestBase(unittest.TestCase):
                              flag=None,
                              cost=(posting.cost
                                    if posting.flag == 'S' else
-                                   bs.convert_spec_to_cost(posting.units,
-                                                           posting.cost)))
+                                   booking_test.convert_spec_to_cost(
+                                       posting.units, posting.cost)))
             for posting in expected_postings]
 
         actual_postings = [
