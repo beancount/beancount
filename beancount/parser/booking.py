@@ -51,17 +51,10 @@ def book(incomplete_entries, options_map):
     entries, booking_errors = booking_fun(incomplete_entries, options_map,
                                           booking_methods)
 
-    if method_name == 'SIMPLE':
-        # Check that the inventory reductions are normal-looking.
-        validation_errors = validate_inventory_booking(entries, options_map,
-                                                       booking_methods)
-    else:
-        validation_errors = []
-
     # Check for MISSING elements remaining.
     missing_errors = validate_missing_eliminated(entries, options_map)
 
-    return entries, (errors + booking_errors + validation_errors + missing_errors)
+    return entries, (errors + booking_errors + missing_errors)
 
 
 def validate_missing_eliminated(entries, unused_options_map):

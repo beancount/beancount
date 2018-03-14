@@ -1024,13 +1024,6 @@ class TestComputeCostNumber(unittest.TestCase):
 
 class TestParseBookingOptions(cmptest.TestCase):
 
-    @loader.load_doc(expect_errors=True)
-    def test_booking_algorithm__simple(self, entries, _, options_map):
-        """
-          option "booking_algorithm" "SIMPLE"
-        """
-        self.assertEqual("SIMPLE", options_map["booking_algorithm"])
-
     @loader.load_doc()
     def test_booking_algorithm__full(self, entries, _, options_map):
         """
