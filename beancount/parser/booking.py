@@ -27,20 +27,6 @@ def book(incomplete_entries, options_map):
         entries: A list of completed entries with all their postings completed.
         errors: New errors produced during interpolation.
     """
-    booking_algorithms = {
-        'FULL': booking_full.book,
-    }
-    method_name = options_map['booking_algorithm']
-    errors = []
-    try:
-        booking_fun = booking_algorithms[method_name]
-    except KeyError:
-        meta = data.new_metadata(options_map['filename'], 1)
-        booking_fun = booking_full.book
-        errors.append(
-            BookingError(meta, ("Unsupported booking algorithm: '{}'; "
-                                "falling back on FULL method".format(method_name)), None))
-
     # Get the list of booking methods for each account.
     booking_methods = collections.defaultdict(lambda: options_map["booking_method"])
     for entry in incomplete_entries:
@@ -48,13 +34,13 @@ def book(incomplete_entries, options_map):
             booking_methods[entry.account] = entry.booking
 
     # Do the booking here!
-    entries, booking_errors = booking_fun(incomplete_entries, options_map,
-                                          booking_methods)
+    entries, booking_errors = booking_full.book(incomplete_entries, options_map,
+                                                booking_methods)
 
     # Check for MISSING elements remaining.
     missing_errors = validate_missing_eliminated(entries, options_map)
 
-    return entries, (errors + booking_errors + missing_errors)
+    return entries, (booking_errors + missing_errors)
 
 
 def validate_missing_eliminated(entries, unused_options_map):

@@ -288,8 +288,6 @@ class TestBalance(unittest.TestCase):
     @loader.load_doc()
     def test_balance_mixed_cost_and_no_cost(self, entries, errors, __):
         """
-          option "booking_algorithm" "FULL"
-
           2013-05-01 open Assets:Invest
           2013-05-01 open Equity:Opening-Balances
 

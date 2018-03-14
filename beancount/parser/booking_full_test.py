@@ -930,7 +930,6 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
     @parser.parse_doc(allow_incomplete=True)
     def test_auto_posting__quantize_with_tolerances(self, entries, errors, options_map):
         """
-          option "booking_algorithm" "FULL"
           option "inferred_tolerance_default" "USD:0.00005"
           option "inferred_tolerance_default" "JPY:0.5"
 
@@ -1023,20 +1022,6 @@ class TestComputeCostNumber(unittest.TestCase):
 
 
 class TestParseBookingOptions(cmptest.TestCase):
-
-    @loader.load_doc()
-    def test_booking_algorithm__full(self, entries, _, options_map):
-        """
-          option "booking_algorithm" "FULL"
-        """
-        self.assertEqual("FULL", options_map["booking_algorithm"])
-
-    @loader.load_doc(expect_errors=True)
-    def test_booking_algorithm__invalid(self, entries, errors, options_map):
-        """
-          option "booking_algorithm" "XXX"
-        """
-        self.assertEqual(1, len(errors))
 
     @loader.load_doc()
     def test_booking_method__strict(self, entries, _, options_map):
