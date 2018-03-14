@@ -7,7 +7,6 @@ __license__ = "GNU GPLv2"
 import collections
 
 from beancount.core.number import MISSING
-from beancount.parser import booking_simple
 from beancount.parser import booking_full
 from beancount.core import data
 from beancount.core import inventory
@@ -29,7 +28,6 @@ def book(incomplete_entries, options_map):
         errors: New errors produced during interpolation.
     """
     booking_algorithms = {
-        'SIMPLE': booking_simple.book,
         'FULL': booking_full.book,
     }
     method_name = options_map['booking_algorithm']
@@ -38,10 +36,10 @@ def book(incomplete_entries, options_map):
         booking_fun = booking_algorithms[method_name]
     except KeyError:
         meta = data.new_metadata(options_map['filename'], 1)
-        booking_fun = booking_simple.book
+        booking_fun = booking_full.book
         errors.append(
             BookingError(meta, ("Unsupported booking algorithm: '{}'; "
-                                "falling back on SIMPLE method".format(method_name)), None))
+                                "falling back on FULL method".format(method_name)), None))
 
     # Get the list of booking methods for each account.
     booking_methods = collections.defaultdict(lambda: options_map["booking_method"])

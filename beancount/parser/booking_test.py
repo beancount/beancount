@@ -5,12 +5,108 @@ import collections
 import re
 import textwrap
 
+from beancount.core.number import MISSING
+from beancount.core.number import ZERO
+from beancount.core.amount import Amount
 from beancount.core.data import Booking
+from beancount.core.data import Transaction
+from beancount.core.position import Cost
 from beancount.parser import parser
 from beancount.parser import cmptest
 from beancount.parser import booking
-from beancount.parser import booking_simple
 from beancount import loader
+
+
+BookingTestError = collections.namedtuple('BookingTestError', 'source message entry')
+
+
+def convert_lot_specs_to_lots(entries):
+    """For all the entries, convert the posting's position's CostSpec to Cost
+    instances. In the simple method, the data provided in the CostSpec must
+    unambiguously provide a way to compute the cost amount.
+
+    This essentially replicates the way the old parser used to work, but
+    allowing positions to have the fuzzy lot specifications instead of the
+    resolved ones. We used to simply compute the costs locally, and this gets
+    rid of the CostSpec to produce the Cost without fuzzy matching. This is only
+    there for the sake of transition to the new matching logic.
+
+    Args:
+      entries: A list of incomplete directives as per the parser.
+    Returns:
+      A list of entries whose postings's position costs have been converted to
+      Cost instances but that may still be incomplete.
+    Raises:
+      ValueError: If there's a unacceptable number.
+    """
+    new_entries = []
+    errors = []
+    for entry in entries:
+        if not isinstance(entry, Transaction):
+            new_entries.append(entry)
+            continue
+
+        new_postings = []
+        for posting in entry.postings:
+            try:
+                units = posting.units
+                cost_spec = posting.cost
+                cost = convert_spec_to_cost(units, cost_spec)
+                if cost_spec is not None and cost is None:
+                    errors.append(
+                        BookingTestError(entry.meta,
+                                         "Cost syntax not supported; cost spec ignored",
+                                         None))
+
+                if cost and isinstance(units, Amount):
+                    # If there is a cost, we don't allow either a cost value of
+                    # zero, nor a zero number of units. Note that we allow a price
+                    # of zero as the only special case (for conversion entries), but
+                    # never for costs.
+                    if units.number == ZERO:
+                        raise ValueError('Amount is zero: "{}"'.format(units))
+                    if cost.number is not None and cost.number < ZERO:
+                        raise ValueError('Cost is negative: "{}"'.format(cost))
+            except ValueError as exc:
+                errors.append(BookingTestError(entry.meta, str(exc), None))
+                cost = None
+            new_postings.append(posting._replace(cost=cost))
+        new_entries.append(entry._replace(postings=new_postings))
+    return new_entries, errors
+
+
+def convert_spec_to_cost(units, cost_spec):
+    """Convert a posting's CostSpec instance to a Cost.
+
+    Args:
+      units: An instance of Amount.
+      cost_spec: An instance of CostSpec.
+    Returns:
+      An instance of Cost.
+    """
+    cost = cost_spec
+    errors = []
+    if isinstance(units, Amount):
+        currency = units.currency
+        if cost_spec is not None:
+            number_per, number_total, cost_currency, date, label, merge = cost_spec
+
+            # Compute the cost.
+            if number_per is not MISSING or number_total is not None:
+                if number_total is not None:
+                    # Compute the per-unit cost if there is some total cost
+                    # component involved.
+                    units_num = units.number
+                    cost_total = number_total
+                    if number_per is not MISSING:
+                        cost_total += number_per * units_num
+                    unit_cost = cost_total / abs(units_num)
+                else:
+                    unit_cost = number_per
+                cost = Cost(unit_cost, cost_currency, date, label)
+            else:
+                cost = None
+    return cost
 
 
 class TestInvalidAmountsErrors(cmptest.TestCase):
@@ -92,7 +188,7 @@ class TestBookingValidation(cmptest.TestCase):
     BOOKMETH = collections.defaultdict(lambda: Booking.STRICT)
 
     def convert_and_validate(self, entries, options_map):
-        entries, _ = booking_simple.convert_lot_specs_to_lots(entries)
+        entries, _ = convert_lot_specs_to_lots(entries)
         return booking.validate_inventory_booking(entries, options_map, self.BOOKMETH)
 
     def do_validate_inventory_booking(self, input_str):
@@ -170,23 +266,3 @@ class TestBookingValidation(cmptest.TestCase):
         """
         validation_errors = self.convert_and_validate(entries, options_map)
         self.assertEqual([booking.BookingError], list(map(type, validation_errors)))
-
-
-class TestMissingEliminated(cmptest.TestCase):
-
-    @loader.load_doc(expect_errors=True)
-    def test_missing_data(self, entries, errors, options_map):
-        """
-          option "booking_algorithm" "SIMPLE"
-
-          2013-05-01 open Assets:Test
-          2013-05-01 open Expenses:Test
-
-          2016-06-10 * "" ""
-            Expenses:Test       10.00
-            Assets:Test
-        """
-        self.assertEqual(1, len(errors))
-        self.assertTrue(
-            all(re.search('Missing number or currency.*not handled', error.message)
-                for error in errors))
