@@ -133,3 +133,8 @@ def get_file(filename):
     return _CACHE[filename]
 
 _CACHE = defdict.DefaultDictWithKey(_FileMemo)
+
+
+class File(_FileMemo):
+    def convert(self, converter_func):
+        return converter_func(self.name)
