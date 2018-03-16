@@ -10,13 +10,13 @@ from os import path
 
 
 def is_gpg_installed():
-    """Return true if GPG 1.4.x is installed, which is what we use and support."""
+    """Return true if GPG 1.4.x or 2.x are installed, which is what we use and support."""
     try:
         pipe = subprocess.Popen(['gpg', '--version'], shell=0,
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = pipe.communicate()
         version_text = out.decode('utf8')
-        return pipe.returncode == 0 and re.match(r'gpg \(GnuPG\) 1.4.', version_text)
+        return pipe.returncode == 0 and re.match(r'gpg \(GnuPG\) (1\.4|2)\.', version_text)
     except OSError:
         return False
 
