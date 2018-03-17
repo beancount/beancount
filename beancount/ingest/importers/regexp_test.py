@@ -39,7 +39,7 @@ class TestRegexpMixin(unittest.TestCase):
         2014-05-22,DIV,54857517,ORDINARY DIVIDEND~HOOL,0,28.56,9418.42
         """
         importer = SimpleTestImporter(['Filename: .*te?mp.*',
-                                       'MimeType: text/plain',
+                                       'MimeType: text/',
                                        'Contents:\n.*DATE,TYPE'])
         file = cache._FileMemo(filename)
         self.assertTrue(importer.identify(file))
