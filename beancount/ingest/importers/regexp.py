@@ -19,7 +19,7 @@ class RegexpImporterMixin:
     Mix this into the implementation of a importer.ImporterProtocol.
     """
 
-    def __init__(self, regexps=None):
+    def __init__(self, regexps=None, **kwargs):
         """Provide regular expressions for identifying a file.
 
         Args:
@@ -27,9 +27,8 @@ class RegexpImporterMixin:
         Raises:
           re.error: If some of the regular expressions are invalid.
         """
-        super().__init__()
+        super().__init__(**kwargs)
         assert isinstance(regexps, (list, type(None)))
-
         self.regexps = [(regexp, re.compile(regexp, re.DOTALL|re.IGNORECASE|re.MULTILINE))
                         for regexp in regexps]
 
