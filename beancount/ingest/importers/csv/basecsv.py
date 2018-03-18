@@ -111,7 +111,6 @@ class BeanConfig(object):
     """
     def __init__(self, bean_class, config):
         super().__init__()
-        self.config = config
         self.bean_class = bean_class
         self.iconfig = self.recursive_parse(bean_class, config)
 
@@ -199,7 +198,7 @@ class BeanConfig(object):
             dateutil_kwds:
             row: csv row item.
             param_name: the parameter name for kwarg instatiation
-            param_name: the parameter value, argument, for kwarg instatiation}
+            arg: the parameter value, argument, for kwarg instatiation}
         """
         if isinstance(arg, BeanConfig):
             return arg.recursive_construct(field_map, meta, dateutil_kwds, row, arg)
@@ -296,7 +295,6 @@ class BeanConfig(object):
                 ret_dict = {}
                 for key_content, val_content in config_val.items():
                     key_type, val_type = type_val.__args__
-                    # key_obj = cls.parse_simple(key_content, key_type)
                     key_obj = key_content
                     new_param_name = f"{param_name}[{key_content}]"
                     val_obj = cls.parse_keyval(bean_type, val_content, new_param_name, val_type)
@@ -483,7 +481,6 @@ class CSVFile:
                     header = csv.Sniffer().has_header(csvfile.read())
                 except csv.Error:
                     # TODO check if config contains any fieldname strings
-                    header = True
                     raise Exception("The existence of a CSV header line could not be determined, please set the 'header' key in the CSVImporter csv_options")
         # Get header
         if header:
@@ -559,6 +556,7 @@ class CSVImporter(importer.ImporterProtocol):
                 defining the dateutil parser kwargs.
             debug: Whether or not to print debug information
         """
+        self.csvconfig = CSVConfig(config, dateutil_kwds)
         if isinstance(csv_options, CSVOptions):
             self.csv_options = csv_options
         elif isinstance(csv_options, dict):
@@ -567,9 +565,7 @@ class CSVImporter(importer.ImporterProtocol):
             self.csv_options = CSVOptions()
         else:
             raise TypeError(str(csv_options))
-        self.dateutil_kwds = dateutil_kwds
         self.debug = debug
-        self.csvconfig = CSVConfig(config, self.dateutil_kwds)
 
     def identify(self, file):
         if file.mimetype() != 'text/csv':
@@ -580,7 +576,7 @@ class CSVImporter(importer.ImporterProtocol):
     def file_account(self, file):
         csvfile = CSVFile(file, self.csv_options)
         return self.csvconfig.get_account(
-            field_map=csvfile.get_fieldmap(),
+            field_map=csvfile.fieldmap,
             row=next(csvfile.reader()),
         )
 
@@ -596,7 +592,7 @@ class CSVImporter(importer.ImporterProtocol):
         max_date = None
         for row in csvfile.reader():
             date = self.csvconfig.get_date(
-                field_map=csvfile.get_fieldmap(),
+                field_map=csvfile.fieldmap,
                 row=row,
             )
             if max_date is None or date > max_date:
@@ -608,7 +604,7 @@ class CSVImporter(importer.ImporterProtocol):
         entries = []
         Row = collections.namedtuple('Row', ("index", "row"))
         first_row = last_row = None
-        field_map = csvfile.get_fieldmap()
+        field_map = csvfile.fieldmap
         for index, row in enumerate(csvfile.reader(), 1):
             # If debugging, print out the rows.
             if self.debug:
