@@ -449,7 +449,6 @@ class TestCSVImporter(cmptest.TestCase):
             }},
             csv_options=csv_options,
         )
-        print(importer.get_fieldmap(file))
         self.assertTrue(importer.identify(file))
         self.assertEqual(importer.file_account(file), "Assets:Bank")
         self.assertEqual(importer.file_date(file), datetime.date(2016,7,13))
@@ -523,7 +522,6 @@ class TestCSVImporter(cmptest.TestCase):
         self.assertIn(".csv", importer.file_name(file))
 
         entries = importer.extract(file)
-        #print(entries[3].postings[0])
         self.assertEqualEntries(r"""
 
             2016-11-09 * "JOHAN SCHMIDT" "KIWI MUSEUM              KIWILAND     NZL"

@@ -4,7 +4,7 @@ CSV importer.
 __copyright__ = "Copyright (C) 2016 Martin Blais, 2018 Michael Droogleever"
 __license__ = "GNU GPLv2"
 
-import csv as python_csv
+import csv
 import datetime
 import enum
 import collections
@@ -60,11 +60,7 @@ class RowIdx:
         self.val = val
         if val is None:
             raise Exception(f"RowIdx cannot be None: {val}")
-    def _get_fieldmap(ifile):
-        _, _, _, header = self.sniff(ifile)
-        if header:
-            return {field_name.strip(): index
-                    for index, field_name in enumerate(header)}
+
     def get_val(self, field_map, row, dateutil_kwds=None):
         """
         Checks if functuple, const, fieldname or field index
@@ -121,9 +117,7 @@ class BeanConfig(object):
         self.iconfig = self.recursive_parse(bean_class, config)
 
     class Const(str):
-        """
-        Use to pass a constant str, instead of a csv fieldname or index
-        """
+        """Use to pass a constant str, instead of a csv fieldname or index."""
         pass
 
     class Error(ValueError):
@@ -438,49 +432,148 @@ class CSVConfig:
                 self.transaction_config.iconfig))
 
 
+class CSVOptions(typing.NamedTuple):
+    dialect: typing.Optional[csv.Dialect] = None
+    comment: tuple = ('#',)
+    skip_lines: int = 0
+    header: typing.Optional[typing.Union[bool, typing.List[str]]] = None
+    truncate_lines: int = 0
+
+
+class CSVFile:
+    """docstring for _CSVFile."""
+    def __init__(self, ifile, csv_options):
+        self.file = ifile
+        # self.options = csv_options
+        vals = self.sniff(csv_options)
+        self.dialect, self.delimiter, self.skip_lines, self.header = vals
+        self.comment = csv_options.comment
+        self.truncate_lines = csv_options.truncate_lines
+        self.fieldmap = self.get_fieldmap()
+
+    def sniff(self, options):
+        """
+        Parses file to look for header and dialect.
+        Returns:
+            dialect: csv.Dialect subclass
+            skip_lines
+            header: False or list of fieldnames
+        """
+        dialect = options.dialect
+        delimiter = None
+        skip_lines = options.skip_lines
+        header = options.header
+        # Sniff delimeter
+        with StringIO(self.file.contents(), newline='') as csvfile:
+            # Skip garbage lines, pylint: disable=R1708,C0321
+            for _ in range(skip_lines): csvfile.readline()
+            sep = csvfile.readline()
+            if sep.startswith("sep="):
+                skip_lines += 1
+                delimiter = sep[4]
+        # Sniff dialect
+        with StringIO(self.file.contents(), newline='') as csvfile:
+            # Skip garbage lines, pylint: disable=R1708,C0321
+            for _ in range(skip_lines): csvfile.readline()
+            try:
+                dialect = csv.Sniffer().sniff(csvfile.read())
+            except csv.Error:
+                pass
+        # Sniffs for header
+        if header is None:
+            with StringIO(self.file.contents(), newline='') as csvfile:
+                # Skip garbage lines, pylint: disable=R1708,C0321
+                for _ in range(skip_lines): csvfile.readline()
+                reader = csv.reader(csvfile, dialect=dialect)
+                try:
+                    header = csv.Sniffer().has_header(csvfile.read())
+                except csv.Error:
+                    # TODO check if config contains any fieldname strings
+                    header = True
+                    raise Exception("The existence of a CSV header line could not be determined, please set the 'header' key in the CSVImporter csv_options")
+        # Get header
+        if header:
+            with StringIO(self.file.contents(), newline='') as csvfile:
+                # Skip garbage lines, pylint: disable=R1708,C0321
+                for _ in range(skip_lines): csvfile.readline()
+                reader = csv.reader(csvfile, dialect=dialect)
+                header = next(reader)
+        return dialect, delimiter, skip_lines, header
+
+    def get_fieldmap(self):
+        """
+        Returns fieldmap from file's header, map of fieldname to field index
+        """
+        if self.header:
+            return {field_name.strip(): index
+                    for index, field_name in enumerate(self.header)}
+        return None
+
+    def reader(self):
+        """
+        Returns a csv.reader having skipped to the first line of content
+        """
+        with StringIO(self.file.contents(), newline='') as csvfile:
+            # Skip garbage lines, pylint: disable=R1708,C0321
+            for _ in range(self.skip_lines): csvfile.readline()
+            if self.delimiter is None:
+                reader = csv.reader(csvfile, dialect=self.dialect)
+            else:
+                reader = csv.reader(csvfile,
+                                    dialect=self.dialect,
+                                    delimiter=self.delimiter)
+            # Skip header, if one was detected.
+            if self.header:
+                next(reader) # pylint: disable=R1708
+            # A deque is used to truncate lines:
+            # when the end is reached,
+            # the deque will have witheld the lines which need to be truncated
+            row_deque = collections.deque(
+                (next(reader) for _ in range(self.truncate_lines)))
+            for row in reader:
+                row_deque.append(row)
+                _row = row_deque.popleft()
+                if not _row:
+                    continue
+                # Skip comments
+                if _row[0].startswith(self.comment):
+                    continue
+                yield _row
+
+
 class CSVImporter(importer.ImporterProtocol):
     """Importer for CSV files."""
-
     def __init__(
             self,
             config: typing.Dict, *,
+            csv_options: typing.Optional[typing.Union[CSVOptions, typing.Dict]] = None,
             dateutil_kwds: typing.Optional[typing.Dict] = None,
-            csv_options: typing.Optional[typing.Dict] = None,
             debug: bool = False,
         ):
         """
         Constructor
         Args:
             config: dict containing config
-            dateutil_kwds: An optional dict
-                defining the dateutil parser kwargs.
             csv_options: A dict with the following optional keys:
                 dialect: a csv.Dialect
                 comment: string that comments out lines
                 skip_lines: number of lines to skip at the start of the file
                 header: the fieldnames of the csv, will not attempt to Sniff
                 truncate_lines: number of lines to stop short of at the end
+            dateutil_kwds: An optional dict
+                defining the dateutil parser kwargs.
             debug: Whether or not to print debug information
         """
+        if isinstance(csv_options, CSVOptions):
+            self.csv_options = csv_options
+        elif isinstance(csv_options, dict):
+            self.csv_options = CSVOptions(**csv_options)
+        elif csv_options is None:
+            self.csv_options = CSVOptions()
+        else:
+            raise TypeError(str(csv_options))
         self.dateutil_kwds = dateutil_kwds
-        csv_options = {} if csv_options is None else csv_options
-        self.csv_dialect = csv_options.get('dialect', None)
-        if isinstance(self.csv_dialect, str):
-            self.csv_dialect = getattr(python_csv, self.csv_dialect)
-        if self.csv_dialect is not None and not issubclass(self.csv_dialect, python_csv.Dialect):
-            raise ValueError(
-                f"CSVImporter csv_options['dialect'] type must be subclass of csv.Dialect, not {self.csv_dialect}")
-        self.comment = csv_options.get('comment', ('#',))
-        self.skip_lines = csv_options.get('skip_lines', 0)
-        self.header = csv_options.get('header', None)
-        self.truncate_lines = csv_options.get('truncate_lines', 0)
-        for name, item in zip(("skip_lines", "truncate_lines"),
-                              (self.skip_lines, self.truncate_lines)):
-            if not isinstance(item, int):
-                raise ValueError(
-                    f"CSVImporter csv_options['{name}'] type must be int, not {type(item)}")
         self.debug = debug
-
         self.csvconfig = CSVConfig(config, self.dateutil_kwds)
 
     def identify(self, file):
@@ -490,9 +583,10 @@ class CSVImporter(importer.ImporterProtocol):
         return super_identify if super_identify is not None else True
 
     def file_account(self, file):
+        csvfile = CSVFile(file, self.csv_options)
         return self.csvconfig.get_account(
-            field_map=self.get_fieldmap(file),
-            row=next(self.csv_reader(file)),
+            field_map=csvfile.get_fieldmap(),
+            row=next(csvfile.reader()),
         )
 
     def file_name(self, file):
@@ -503,10 +597,11 @@ class CSVImporter(importer.ImporterProtocol):
         """
         Get the maximum date from the file.
         """
+        csvfile = CSVFile(file, self.csv_options)
         max_date = None
-        for row in self.csv_reader(file):
+        for row in csvfile.reader():
             date = self.csvconfig.get_date(
-                field_map=self.get_fieldmap(file),
+                field_map=csvfile.get_fieldmap(),
                 row=row,
             )
             if max_date is None or date > max_date:
@@ -514,11 +609,12 @@ class CSVImporter(importer.ImporterProtocol):
         return max_date
 
     def extract(self, file, existing_entries=None):
+        csvfile = CSVFile(file, self.csv_options)
         entries = []
         Row = collections.namedtuple('Row', ("index", "row"))
         first_row = last_row = None
-        field_map = self.get_fieldmap(file)
-        for index, row in enumerate(self.csv_reader(file), 1):
+        field_map = csvfile.get_fieldmap()
+        for index, row in enumerate(csvfile.reader(), 1):
             # If debugging, print out the rows.
             if self.debug:
                 print(row)
@@ -565,99 +661,3 @@ class CSVImporter(importer.ImporterProtocol):
                 entries.insert(idx, balance)
 
         return entries
-
-    def sniff(self, ifile):
-        """
-        Parses file to look for header and dialect.
-        Args:
-            ifile: FileMemo
-        Returns:
-            csv_dialect: csv.Dialect subclass
-            skip_lines
-            header: False or list of fieldnames
-        """
-        csv_dialect = self.csv_dialect
-        delimiter = None
-        skip_lines = self.skip_lines
-        header = self.header
-        # Sniff delimeter
-        with StringIO(ifile.contents(), newline='') as csvfile:
-            # Skip garbage lines, pylint: disable=R1708,C0321
-            for _ in range(skip_lines): csvfile.readline()
-            sep = csvfile.readline()
-            if sep.startswith("sep="):
-                skip_lines += 1
-                delimiter = sep[4]
-        # Sniff dialect
-        with StringIO(ifile.contents(), newline='') as csvfile:
-            # Skip garbage lines, pylint: disable=R1708,C0321
-            for _ in range(skip_lines): csvfile.readline()
-            try:
-                csv_dialect = python_csv.Sniffer().sniff(csvfile.read())
-            except python_csv.Error:
-                pass
-        # Sniffs for header
-        if header is None:
-            with StringIO(ifile.contents(), newline='') as csvfile:
-                # Skip garbage lines, pylint: disable=R1708,C0321
-                for _ in range(skip_lines): csvfile.readline()
-                reader = python_csv.reader(csvfile, dialect=csv_dialect)
-                try:
-                    header = python_csv.Sniffer().has_header(csvfile.read())
-                except python_csv.Error:
-                    # TODO check if config contains any fieldname strings
-                    header = True
-                    raise Exception("The existence of a CSV header line could not be determined, please set the 'header' key in the CSVImporter csv_options")
-        # Get header
-        if header:
-            with StringIO(ifile.contents(), newline='') as csvfile:
-                # Skip garbage lines, pylint: disable=R1708,C0321
-                for _ in range(skip_lines): csvfile.readline()
-                reader = python_csv.reader(csvfile, dialect=csv_dialect)
-                header = next(reader)
-        return csv_dialect, delimiter, skip_lines, header
-
-    def get_fieldmap(self, ifile):
-        """
-        Returns fieldmap from file's header, map of fieldname to field index
-        """
-        _, _, _, header = self.sniff(ifile)
-        if header:
-            return {field_name.strip(): index
-                    for index, field_name in enumerate(header)}
-        # TODO: push this up into RowIdx and RowFunc, pass around references to file instead
-        # so this can raise an Error imediately when getting fieldmap from file without a header
-        # Maybe subclass FileMemo into a special CSVFile
-        return None
-
-    def csv_reader(self, ifile):
-        """
-        Returns a csv.reader having skipped to the first line of content
-        """
-        csv_dialect, delimiter, skip_lines, header = self.sniff(ifile)
-        with StringIO(ifile.contents(), newline='') as csvfile:
-            # Skip garbage lines, pylint: disable=R1708,C0321
-            for _ in range(skip_lines): csvfile.readline()
-            if delimiter is None:
-                reader = python_csv.reader(csvfile, dialect=csv_dialect)
-            else:
-                reader = python_csv.reader(csvfile,
-                                           dialect=csv_dialect,
-                                           delimiter=delimiter)
-            # Skip header, if one was detected.
-            if header:
-                next(reader) # pylint: disable=R1708
-            # A deque is used to truncate lines:
-            # when the end is reached,
-            # the deque will have witheld the lines which need to be truncated
-            row_deque = collections.deque(
-                (next(reader) for _ in range(self.truncate_lines)))
-            for row in reader:
-                row_deque.append(row)
-                _row = row_deque.popleft()
-                if not _row:
-                    continue
-                # Skip comments
-                if _row[0].startswith(self.comment):
-                    continue
-                yield _row
