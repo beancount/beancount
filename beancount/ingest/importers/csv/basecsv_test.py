@@ -159,6 +159,24 @@ class TestCSVImporterIter(cmptest.TestCase):
                     ],
                 }}, {}
             ),
+            'posting-amountlist': CaseConf(
+                ["date", "payee text", "narration text",
+                 "posting amount neg num", "posting currency"],
+                {'header': ['Tnx Date', 'Name', 'Description',
+                            'Amount', 'Currency'],
+                 'posting_kwargs': {'account': "Assets:Bank"}},
+                {P.TRANSACTIONS: {
+                    P.Transaction.DATE: "Tnx Date",
+                    P.Transaction.PAYEE: "Name",
+                    P.Transaction.NARRATION: "Description",
+                    P.Transaction.POSTINGS: [
+                        {
+                            P.Posting.ACCOUNT: csv.Const("Assets:Bank"),
+                            P.Posting.UNITS: ("Amount", "Currency"),
+                        },
+                    ],
+                }}, {}
+            ),
             'func': CaseConf(
                 ["date", "payee text", "narration text", "narration+ text"],
                 {'header': ['Tnx Date', 'Name', 'Description1', 'Description2']},
@@ -231,7 +249,7 @@ class TestCSVImporterConfigFail(cmptest.TestCase):
             })
 
     def test_error_config_dictval(self):
-        with self.assertRaises(BeanConfig.BeanConfigError):
+        with self.assertRaises(BeanConfig.Error):
             importer = csv.CSVImporter({csv.Props.TRANSACTIONS: {
                 csv.Props.Transaction.DATE: "A",
                 csv.Props.Transaction.NARRATION: None,
@@ -239,7 +257,7 @@ class TestCSVImporterConfigFail(cmptest.TestCase):
 
     def test_error_config_nodate(self):
         with self.assertRaises(
-            BeanConfig.BeanConfigError, msg="Date required in config"):
+            BeanConfig.Error, msg="Date required in config"):
             importer = csv.CSVImporter({csv.Props.TRANSACTIONS: {
                 csv.Props.Transaction.NARRATION: "A",
             }})
@@ -263,7 +281,7 @@ class TestCSVImporterExtractFailIter(cmptest.TestCase):
                 }}, {}
             ),
             'basic': CaseConf(
-                BeanConfig.BeanConfigError, None,
+                BeanConfig.Error, None,
                 ["date", "narration text"],
                 {'header': ['10-Jul-2016', 'N']},
                 {P.TRANSACTIONS: {
@@ -307,10 +325,11 @@ class TestCSVImporter(cmptest.TestCase):
 
     @test_utils.docfile_extra(suffix='.csv')
     def test_simple(self, filename):
-        r"""Posting,Description,Amount
-          11.Jul.2016,A,2
-          12.Jul.2016,B,3
-          13.Jul.2016,C,4
+        r"""
+        Posting,Description,Amount
+        11.Jul.2016,A,2
+        12.Jul.2016,B,3
+        13.Jul.2016,C,4
         """
         file = cache.get_file(filename)
 
@@ -354,10 +373,11 @@ class TestCSVImporter(cmptest.TestCase):
 
     @test_utils.docfile_extra(suffix='.csv', encoding='iso-8859-1')
     def test_encoding_8859(self, filename):
-        r"""Posting,Description,Amount
-          11.Jul.2016,A,2
-          12.Jul.2016,B,3
-          13.Jul.2016,Ç,4
+        r"""
+        Posting,Description,Amount
+        11.Jul.2016,A,2
+        12.Jul.2016,B,3
+        13.Jul.2016,Ç,4
         """
         file = cache.get_file(filename)
 
@@ -400,7 +420,56 @@ class TestCSVImporter(cmptest.TestCase):
         """, entries)
 
     @test_utils.docfile_extra(suffix='.csv')
-    def test_full(self, filename):
+    def test_full_price(self, filename):
+        r"""
+        Posting,Description,Amount,Price
+        11.Jul.2016,A,2,1.1 USD
+        12.Jul.2016,B,3,1.2 USD
+        13.Jul.2016,C,4,1.3 USD
+        """
+        file = cache.get_file(filename)
+
+        csv_options = {
+            'header': True,
+        }
+
+        P = csv.Props
+        importer = csv.CSVImporter(
+            {P.TRANSACTIONS: {
+                P.Transaction.DATE: "Posting",
+                P.Transaction.NARRATION: "Description",
+                P.Transaction.POSTINGS: [{
+                    P.Posting.ACCOUNT: csv.Const("Assets:Bank"),
+                    P.Posting.UNITS: {
+                        P.Amount.NUMBER: "Amount",
+                        P.Amount.CURRENCY: csv.Const("EUR"),
+                    },
+                    P.Posting.PRICE: "Price"
+                }],
+            }},
+            csv_options=csv_options,
+        )
+        print(importer.get_fieldmap(file))
+        self.assertTrue(importer.identify(file))
+        self.assertEqual(importer.file_account(file), "Assets:Bank")
+        self.assertEqual(importer.file_date(file), datetime.date(2016,7,13))
+        self.assertIn(".csv", importer.file_name(file))
+        entries = importer.extract(file)
+        self.assertEqualEntries(r"""
+
+          2016-07-11 * "A"
+            Assets:Bank  2 EUR @ 1.1 USD
+
+          2016-07-12 * "B"
+            Assets:Bank  3 EUR @ 1.2 USD
+
+          2016-07-13 * "C"
+            Assets:Bank  4 EUR @ 1.3 USD
+
+        """, entries)
+
+    @test_utils.docfile_extra(suffix='.csv')
+    def test_real(self, filename):
         # pylint: disable=line-too-long
         r"""
         sep=;
@@ -525,7 +594,7 @@ class TestCSVImporter(cmptest.TestCase):
             }],
         }}
         importer = csv.CSVImporter(csv_config)
-        with self.assertRaises(BeanConfig.BeanConfigError):
+        with self.assertRaises(BeanConfig.Error):
             _ = importer.extract(file)
         importer = csv.CSVImporter(csv_config, csv_options={'header': True})
         _ = importer.extract(file)

@@ -15,17 +15,8 @@ from os import path
 
 from beancount.utils.date_utils import parse_date_liberally
 from beancount.core import data
-from beancount.ingest import importer
+from beancount.ingest import importer, cache
 
-# def create_enum(namedtuple):
-#     """
-#     Create Enum based on namedtuple
-#     """
-#     return enum.Enum(
-#         namedtuple.__name__,
-#         {key.upper(): f"[{key.upper()}]"
-#          for key in namedtuple.__annotations__.keys()}
-#     )
 
 def create_enum(nt):
     """
@@ -37,6 +28,7 @@ def create_enum(nt):
     )
 
 
+#pylint: disable=R0903
 # The set of Transaction properties.
 class Props:
     """
@@ -59,48 +51,60 @@ class Props:
     Amount = create_enum(data.Amount)
 
 
-class RowFunc:
-    """
-    Store a value in a CSVConfig that is returned by a given function
-    """
-    def __init__(self, val):
-        self.func, self.fieldnames = val
-    def get_val(self, field_map, row):
-        args = []
-        for fieldname in self.fieldnames:
-            if isinstance(fieldname, int):
-                args.append(row[fieldname])
-            else:
-                args.append(row[field_map[fieldname]])
-        return self.func(args)
-
-
 class RowIdx:
     """
-    Store a value in a CSVConfig that needs to be looked up in a csv row
+    Store a value in a CSVConfig that may need to be looked up in a csv row
     """
     def __init__(self, val, parse_type=None):
         self.parse_type = parse_type
         self.val = val
         if val is None:
             raise Exception(f"RowIdx cannot be None: {val}")
+    def _get_fieldmap(ifile):
+        _, _, _, header = self.sniff(ifile)
+        if header:
+            return {field_name.strip(): index
+                    for index, field_name in enumerate(header)}
     def get_val(self, field_map, row, dateutil_kwds=None):
+        """
+        Checks if functuple, const, fieldname or field index
+        Then converts Decimals, Amounts and Dates
+        """
+        try:
+            func, fieldnames = self.val
+            if not callable(func) or not isinstance(fieldnames, (list, tuple)):
+                raise TypeError
+            args = []
+            for fieldname in fieldnames:
+                if isinstance(fieldname, int):
+                    args.append(row[fieldname])
+                else:
+                    args.append(row[field_map[fieldname]])
+            return func(args)
+        except (ValueError, TypeError):
+            pass
         if isinstance(self.val, BeanConfig.Const):
             val = str(self.val)
         elif isinstance(self.val, str):
             if field_map is None:
-                raise BeanConfig.BeanConfigError("CSVConfig config uses strings to index the header, but no header line was detected. Try setting csv_options['header'] = True")
+                raise BeanConfigError("CSVConfig config uses strings to index the header, but no header line was detected. Try setting csv_options['header'] = True")
             if self.val not in field_map:
                 raise KeyError(f"{self.val} not in CSV header")
             val = row[field_map[self.val]]
         elif isinstance(self.val, int):
             val = row[self.val]
+        else:
+            #TODO
+            raise Exception()
         if self.parse_type == data.Decimal:
             if isinstance(val, str):
                 val = data.D(val)
+        elif self.parse_type == data.Amount:
+            if isinstance(val, str):
+                val = data.Amount.from_string(val)
         elif self.parse_type == datetime.date:
             if not isinstance(val, str):
-                raise BeanConfig.BeanConfigError(f"Cannot parse {type(val)} as date")
+                raise BeanConfigError(f"Cannot parse {type(val)} as date")
             val = parse_date_liberally(val, dateutil_kwds)
         return val
 
@@ -114,7 +118,7 @@ class BeanConfig(object):
         super().__init__()
         self.config = config
         self.bean_class = bean_class
-        self.iconfig = self.rec_parse(bean_class, config)
+        self.iconfig = self.recursive_parse(bean_class, config)
 
     class Const(str):
         """
@@ -122,20 +126,20 @@ class BeanConfig(object):
         """
         pass
 
-    class BeanConfigError(ValueError):
+    class Error(ValueError):
         pass
 
     def items(self):
         return self.iconfig.items()
 
     @classmethod
-    def rec_parse(cls, bean_type, config):
+    def recursive_parse(cls, bean_type, config):
         """
         Parses the provided config into an iconfig
-        rec_parse -> parse_keyval -> (parse_typing, parse_simple)
+        recursive_parse -> parse_keyval -> (parse_typing, parse_simple)
         Args:
-            bean_type:
-            config:
+            bean_type: The bean data type
+            config: The bean datatype's csvconfig dict
         Returns: iconfig dict
             dict with the same structure as the config argument,
             but containing only kwarg parameter names as keys and
@@ -206,8 +210,9 @@ class BeanConfig(object):
         """
         if isinstance(arg, BeanConfig):
             return arg.recursive_construct(field_map, meta, dateutil_kwds, row, arg)
-        elif isinstance(arg, RowFunc):
-            return arg.get_val(field_map, row)
+        # TODO
+        # elif isinstance(arg, RowFunc):
+        #     return arg.get_val(field_map, row)
         elif isinstance(arg, RowIdx):
             return arg.get_val(field_map, row, dateutil_kwds)
         elif isinstance(arg, dict):
@@ -232,7 +237,7 @@ class BeanConfig(object):
             return arg
         elif not arg:
             return arg
-        raise cls.BeanConfigError(f"Unknown {param_name}: {arg}\n")
+        raise cls.Error(f"Unknown {param_name}: {arg}\n")
 
     @classmethod
     def parse_keyval(cls, bean_type, config_val, param_name, type_val):
@@ -247,8 +252,10 @@ class BeanConfig(object):
         try:
             if callable(config_val[0]) and isinstance(config_val[1],
                                                       (list, tuple)):
-                return RowFunc(config_val)
-        except (KeyError, TypeError):
+                # return RowFunc(config_val)
+                return RowIdx(config_val)
+        #TODO IndexError
+        except (IndexError, KeyError, TypeError):
             pass
 
         ## Amount type
@@ -263,13 +270,8 @@ class BeanConfig(object):
                     Props.Amount.CURRENCY: config_val[1],
                 })
             # String formatting e.g. "13.69 USD"
-            #TODO use Amount.from_string
             elif isinstance(config_val, str):
-                *num, cur = config_val.split(' ')
-                return BeanConfig(type_val, {
-                    Props.Amount.NUMBER: ' '.join(num),
-                    Props.Amount.CURRENCY: cur,
-                })
+                return RowIdx(config_val, parse_type=data.Amount)
 
         ## Bean type
         try:
@@ -278,7 +280,7 @@ class BeanConfig(object):
             enum_name = None
         if enum_name and hasattr(Props, enum_name):
             if config_val is None:
-                raise cls.BeanConfigError("{} requires a {}: {}".format(
+                raise cls.Error("{} requires a {}: {}".format(
                     bean_type.__name__,
                     param_name.upper(),
                     type_val.__name__))
@@ -312,7 +314,7 @@ class BeanConfig(object):
                     ret_dict[key_obj] = val_obj
                 return ret_dict
         # list, set, tuple
-            if super_type in (list, set, tuple):
+            elif super_type in (list, set, tuple):
                 if config_val is None:
                     return super_type()
                 try:
@@ -324,6 +326,9 @@ class BeanConfig(object):
                 if super_type is set:
                     return set(seq)
                 return seq
+            else:
+                #TODO
+                raise Exception()
         # typing.Union
         except AttributeError:
             if config_val is None and type(None) in type_val.__args__:
@@ -347,7 +352,7 @@ class BeanConfig(object):
         # date
         elif type_val == datetime.date:
             if config_val is None:
-                raise cls.BeanConfigError("Date required in config")
+                raise cls.Error("Date required in config")
             return RowIdx(config_val, parse_type=datetime.date)
         # static string
         elif isinstance(config_val, cls.Const):
@@ -382,13 +387,14 @@ class BeanConfig(object):
                 if param_name == "flag":
                     return "*"
                 else:
-                    raise cls.BeanConfigError(f"{param_name}:{type_val} not optional")
+                    raise cls.Error(f"{param_name}:{type_val} not optional")
             return RowIdx(config_val)
-        raise cls.BeanConfigError(f"Unknown type: {type_val}")
+        raise cls.Error(f"Unknown type: {type_val}")
 
 
-# Make Const a module level import
+# Make module level imports
 Const = BeanConfig.Const
+BeanConfigError = BeanConfig.Error
 
 class CSVConfig:
     """docstring for CSVConfig."""
@@ -507,7 +513,7 @@ class CSVImporter(importer.ImporterProtocol):
                 max_date = date
         return max_date
 
-    def extract(self, file):
+    def extract(self, file, existing_entries=None):
         entries = []
         Row = collections.namedtuple('Row', ("index", "row"))
         first_row = last_row = None

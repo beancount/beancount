@@ -173,8 +173,8 @@ class Importer(RegexpImporterMixin, InstitutionMixin, CSVImporter):
             debug=debug,
         )
 
-    def extract(self, file):
-        entries = super().extract(file)
+    def extract(self, file, existing_entries=None):
+        entries = super().extract(file, existing_entries)
         # Attach the other posting(s) to the transaction
         if callable(self.categorizer):
             entries = [self.categorizer(txn) for txn in entries]
