@@ -85,13 +85,12 @@ class RowIdx:
             if field_map is None:
                 raise BeanConfigError("CSVConfig config uses strings to index the header, but no header line was detected. Try setting csv_options['header'] = True")
             if self.val not in field_map:
-                raise KeyError(f"{self.val} not in CSV header")
+                raise KeyError(f"{self.val} not in CSV fieldnames: {list(field_map.keys())}")
             val = row[field_map[self.val]]
         elif isinstance(self.val, int):
             val = row[self.val]
         else:
-            #TODO
-            raise Exception()
+            raise KeyError
         if self.parse_type == data.Decimal:
             if isinstance(val, str):
                 val = data.D(val)
@@ -204,9 +203,6 @@ class BeanConfig(object):
         """
         if isinstance(arg, BeanConfig):
             return arg.recursive_construct(field_map, meta, dateutil_kwds, row, arg)
-        # TODO
-        # elif isinstance(arg, RowFunc):
-        #     return arg.get_val(field_map, row)
         elif isinstance(arg, RowIdx):
             return arg.get_val(field_map, row, dateutil_kwds)
         elif isinstance(arg, dict):
@@ -248,8 +244,7 @@ class BeanConfig(object):
                                                       (list, tuple)):
                 # return RowFunc(config_val)
                 return RowIdx(config_val)
-        #TODO IndexError
-        except (IndexError, KeyError, TypeError):
+        except (KeyError, TypeError):
             pass
 
         ## Amount type
@@ -321,8 +316,7 @@ class BeanConfig(object):
                     return set(seq)
                 return seq
             else:
-                #TODO
-                raise Exception()
+                raise TypeError()
         # typing.Union
         except AttributeError:
             if config_val is None and type(None) in type_val.__args__:
@@ -377,7 +371,7 @@ class BeanConfig(object):
         # typing.Any we assume to be a string if it has passed all other checks
         elif type_val in (str, typing.Any):
             if config_val is None:
-                # FIXME, remove hard coded flag
+                # TODO, remove hard coded flag
                 if param_name == "flag":
                     return "*"
                 else:
@@ -434,7 +428,7 @@ class CSVConfig:
 
 class CSVOptions(typing.NamedTuple):
     dialect: typing.Optional[csv.Dialect] = None
-    comment: tuple = ('#',)
+    comments: typing.Union[tuple, str] = '#'
     skip_lines: int = 0
     header: typing.Optional[typing.Union[bool, typing.List[str]]] = None
     truncate_lines: int = 0
@@ -447,7 +441,7 @@ class CSVFile:
         # self.options = csv_options
         vals = self.sniff(csv_options)
         self.dialect, self.delimiter, self.skip_lines, self.header = vals
-        self.comment = csv_options.comment
+        self.comments = csv_options.comments
         self.truncate_lines = csv_options.truncate_lines
         self.fieldmap = self.get_fieldmap()
 
@@ -536,7 +530,8 @@ class CSVFile:
                 if not _row:
                     continue
                 # Skip comments
-                if _row[0].startswith(self.comment):
+                # TODO this might need to happen during sniff too
+                if _row[0].startswith(self.comments):
                     continue
                 yield _row
 
@@ -556,7 +551,7 @@ class CSVImporter(importer.ImporterProtocol):
             config: dict containing config
             csv_options: A dict with the following optional keys:
                 dialect: a csv.Dialect
-                comment: string that comments out lines
+                comments: tuple of string or string that comments out lines
                 skip_lines: number of lines to skip at the start of the file
                 header: the fieldnames of the csv, will not attempt to Sniff
                 truncate_lines: number of lines to stop short of at the end

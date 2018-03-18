@@ -371,6 +371,64 @@ class TestCSVImporter(cmptest.TestCase):
 
         """, entries)
 
+    @test_utils.docfile_extra(suffix='.csv')
+    def test_options(self, filename):
+        r"""
+        Skip1
+        Skip2
+        sep=,
+        Posting,Description,Amount
+        ;Ignored1
+        11.Jul.2016,A,2
+        12.Jul.2016,B,3
+        #,Ignored,2
+        13.Jul.2016,C,4
+        Skip1
+        Skip2
+        """
+        file = cache.get_file(filename)
+
+        csv_options = {
+            'header': True,
+            'comments': ('#', ';'),
+            'skip_lines': 2,
+            'truncate_lines': 2,
+        }
+
+        P = csv.Props
+        importer = csv.CSVImporter(
+            {P.TRANSACTIONS: {
+                P.Transaction.DATE: "Posting",
+                P.Transaction.NARRATION: "Description",
+                P.Transaction.POSTINGS: [{
+                    P.Posting.ACCOUNT: csv.Const("Assets:Bank"),
+                    P.Posting.UNITS: {
+                        P.Amount.NUMBER: "Amount",
+                        P.Amount.CURRENCY: csv.Const("EUR"),
+                    },
+                }],
+            }},
+            csv_options=csv_options,
+        )
+
+        self.assertTrue(importer.identify(file))
+        self.assertEqual(importer.file_account(file), "Assets:Bank")
+        self.assertEqual(importer.file_date(file), datetime.date(2016,7,13))
+        self.assertIn(".csv", importer.file_name(file))
+        entries = importer.extract(file)
+        self.assertEqualEntries(r"""
+
+          2016-07-11 * "A"
+            Assets:Bank  2 EUR
+
+          2016-07-12 * "B"
+            Assets:Bank  3 EUR
+
+          2016-07-13 * "C"
+            Assets:Bank  4 EUR
+
+        """, entries)
+
     @test_utils.docfile_extra(suffix='.csv', encoding='iso-8859-1')
     def test_encoding_8859(self, filename):
         r"""
