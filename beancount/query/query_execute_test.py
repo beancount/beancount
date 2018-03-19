@@ -2,6 +2,7 @@ __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import datetime
+import decimal
 import io
 import unittest
 import textwrap
@@ -313,9 +314,6 @@ class TestBalanceColumn(unittest.TestCase):
 
         c_subexpr_not = qc.EvalEqual(qe.AccountColumn(), qc.EvalConstant('Assets'))
         self.assertFalse(qx.uses_balance_column(c_subexpr_not))
-
-
-
 
 
 class TestExecuteNonAggregatedQuery(QueryBase):
@@ -816,6 +814,87 @@ class TestExecuteOptions(QueryBase):
                 ('Assets:AssetE', D('1.00')),
                 ('Assets:AssetD', D('2.00')),
                 ])
+
+
+class TestArithmeticFunctions(QueryBase):
+
+    # You need some transactions in order to eval a simple arithmetic op.
+    # This also properly sets the data type to Decimal.
+    # In v2, revise this so that this works like a regular DB and support integers.
+
+    def test_add(self):
+        self.check_query(
+            """
+              2010-02-23 *
+                Assets:Something       5.00 USD
+            """,
+            """
+              SELECT number + 3 as result;
+            """,
+            [('result', Decimal)],
+            [(D("8"),)])
+
+    def test_sub(self):
+        self.check_query(
+            """
+              2010-02-23 *
+                Assets:Something       5.00 USD
+            """,
+            """
+              SELECT number - 3 as result;
+            """,
+            [('result', Decimal)],
+            [(D("2"),)])
+
+    def test_mul(self):
+        self.check_query(
+            """
+              2010-02-23 *
+                Assets:Something       5.00 USD
+            """,
+            """
+              SELECT number * 1.2 as result;
+            """,
+            [('result', Decimal)],
+            [(D("6"),)])
+
+    def test_div(self):
+        self.check_query(
+            """
+              2010-02-23 *
+                Assets:Something       5.00 USD
+            """,
+            """
+              SELECT number / 2 as result;
+            """,
+            [('result', Decimal)],
+            [(D("2.50"),)])
+
+        # Test dbz, should fail result query.
+        with self.assertRaises(decimal.DivisionByZero):
+            self.check_query(
+                """
+                  2010-02-23 *
+                    Assets:Something       5.00 USD
+                """,
+                """
+                  SELECT number / 0 as result;
+                """,
+                [('result', Decimal)],
+                [(D("2.50"),)])
+
+    def test_safe_div(self):
+        self.check_query(
+            """
+              2010-02-23 *
+                Assets:Something       5.00 USD
+            """,
+            """
+              SELECT SAFEDIV(number, 0) as result;
+            """,
+            [('result', Decimal)],
+            [(D("0"),)])
+
 
 
 class TestExecuteFlatten(QueryBase):
