@@ -5,6 +5,7 @@ __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
+import functools
 import io
 import re
 import sys
@@ -258,6 +259,15 @@ def escape_string(string):
 
     return string.replace('\\', r'\\')\
                  .replace('"', r'\"')
+
+
+def tuplify(func):
+    """Decorator to make generator function return a tuple."""
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        # pylint: disable=missing-docstring
+        return tuple(func(*args, **kwargs))
+    return wrapper
 
 
 def idify(string):

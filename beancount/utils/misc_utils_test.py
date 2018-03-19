@@ -90,6 +90,14 @@ class TestMiscUtils(unittest.TestCase):
         data = [(1,), (2, 3, 4, 5), (2, 3)]
         self.assertEqual((2, 3, 4, 5), misc_utils.longest(data))
 
+    def test_tuplify(self):
+        @misc_utils.tuplify
+        def fun():
+            for i in [1, 2, 3]:
+                yield i
+
+        self.assertEqual(fun(), (1, 2, 3))
+
     def test_skipiter(self):
         self.assertEqual([0, 3, 6, 9], list(misc_utils.skipiter(range(10), 3)))
 
