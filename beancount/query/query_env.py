@@ -9,11 +9,13 @@ __license__ = "GNU GPLv2"
 
 import copy
 import datetime
+import decimal
 import re
 import textwrap
 import warnings
 
 from beancount.core.number import Decimal
+from beancount.core.number import ZERO
 from beancount.core.data import Transaction
 from beancount.core.compare import hash_entry
 from beancount.core import amount
@@ -62,6 +64,23 @@ class AbsInventory(query_compile.EvalFunction):
     def __call__(self, context):
         args = self.eval_args(context)
         return abs(args[0])
+
+class SafeDiv(query_compile.EvalFunction):
+    "A division operation that swallows dbz exceptions and outputs 0 instead."
+    __intypes__ = [Decimal, Decimal]
+
+    def __init__(self, operands):
+        super().__init__(operands, Decimal)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        try:
+            return args[0] / args[1]
+        except decimal.DivisionByZero:
+            return ZERO
+
+class SafeDivInt(SafeDiv):
+    __intypes__ = [Decimal, int]
 
 class Length(query_compile.EvalFunction):
     "Compute the length of the argument. This works on sequences."
@@ -639,6 +658,8 @@ SIMPLE_FUNCTIONS = {
     ('abs', Decimal)                                     : AbsDecimal,
     ('abs', position.Position)                           : AbsPosition,
     ('abs', inventory.Inventory)                         : AbsInventory,
+    ('safediv', Decimal, Decimal)                        : SafeDiv,
+    ('safediv', Decimal, int)                            : SafeDivInt,
     'length'                                             : Length,
     'str'                                                : Str,
     'maxwidth'                                           : MaxWidth,

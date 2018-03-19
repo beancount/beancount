@@ -6,6 +6,8 @@ Note: This file contains only changes in the 'default' branch.
 
 2018-03-19
 
+  - Fixed #218, added a SAFEDIV function to the shell language.
+
   - Fixed #239, HELP command should tolerate semicolons and whitespace.
     (Also, don't print shell commands in test (remove docstrings), we want the
     name of the tests to list, not the input.)
