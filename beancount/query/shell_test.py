@@ -26,7 +26,6 @@ def setup_module():
 
 def runshell(function):
     """Decorate a function to run the shell and return the output."""
-    @functools.wraps(function)
     def test_function(self):
         def loadfun():
             return entries, errors, options_map

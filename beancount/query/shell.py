@@ -171,6 +171,10 @@ class DispatchingShell(cmd.Cmd):
             except KeyboardInterrupt:
                 print('\n(Interrupted)', file=self.outfile)
 
+    def do_help(self, command):
+        """Strip superfluous semicolon."""
+        super().do_help(command.rstrip('; \t'))
+
     def do_history(self, _):
         "Print the command-line history statement."
         if readline is not None:
