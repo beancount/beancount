@@ -1117,6 +1117,14 @@ class TestCurrencies(unittest.TestCase):
         """
         self.assertFalse(errors)
 
+    @parser.parse_doc(expect_errors=True)
+    def test_different_cost_and_price_currency(self, entries, errors, _):
+        """
+          2018-03-21 * "Convert MR to KrisFlyer"
+            Assets:Test                -100 MR {0.0075 USD} @ 1 KRISFLYER
+            Assets:Krisflyer            100 KRISFLYER
+        """
+
 
 class TestTotalsAndSigns(unittest.TestCase):
 

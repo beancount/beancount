@@ -4,6 +4,13 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2018-03-22
+
+  - Removed the ability to explicitly set a different price currency than a cost
+    currency. I'm stunned my test for this is gone, I must have removed this by
+    accident? No idea. It should not be allowed.
+
+
 2018-03-19
 
   - Fixed #218, added a SAFEDIV function to the shell language.

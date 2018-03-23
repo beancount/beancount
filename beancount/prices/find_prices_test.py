@@ -154,7 +154,7 @@ class TestFromFile(unittest.TestCase):
           Assets:Cash
 
         2015-12-02 *
-          Assets:CA:Investments:XSP            -2 XSP {24.28 CAD} @ 27.00 USD
+          Assets:CA:Investments:XSP            -2 XSP {24.28 CAD} @ 27.00 CAD
           Assets:Cash
 
         2015-12-03 price XSP   27.32 USD
