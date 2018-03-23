@@ -6,6 +6,9 @@ Note: This file contains only changes in the 'default' branch.
 
 2018-03-22
 
+  - Fixed #249: Error messages involving postings should start counting at 1
+    instead of 0. (I agree.)
+
   - Added aliases for COMMODITY_META() vs. CURRENCY_META() and CURRENCY() and
     COMMODITY(). These terms are used interchangeably. In the next version of
     the shell, only one of them will be available.
