@@ -6,6 +6,10 @@ Note: This file contains only changes in the 'default' branch.
 
 2018-03-22
 
+  - Added aliases for COMMODITY_META() vs. CURRENCY_META() and CURRENCY() and
+    COMMODITY(). These terms are used interchangeably. In the next version of
+    the shell, only one of them will be available.
+
   - Removed the ability to explicitly set a different price currency than a cost
     currency. I'm stunned my test for this is gone, I must have removed this by
     accident? No idea. It should not be allowed.
