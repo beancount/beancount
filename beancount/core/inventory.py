@@ -242,11 +242,6 @@ class Inventory(list):
         """
         return list(self)
 
-    def get_units(self, currency):
-        warnings.warn("Inventory.get_units() is deprecated; "
-                      "use get_currency_units() instead")
-        return self.get_currency_units(currency)
-
     def get_currency_units(self, currency):
         """Fetch the total amount across all the position in the given currency.
         This may sum multiple lots in the same currency denomination.
@@ -296,16 +291,6 @@ class Inventory(list):
         for position in self:
             inventory.add_amount(reducer(position, *args))
         return inventory
-
-    def units(self):
-        warnings.warn("Inventory.units() is deprecated; "
-                      "use .reduce(convert.get_units) instead")
-        return self.reduce(convert.get_units)
-
-    def cost(self):
-        warnings.warn("Inventory.cost() is deprecated; "
-                      "use .reduce(convert.get_cost) instead")
-        return self.reduce(convert.get_cost)
 
     def average(self):
         """Average all lots of the same currency together.

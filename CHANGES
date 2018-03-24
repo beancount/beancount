@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2018-03-23
+
+  - Removed deprecated methods from beancount.core (position, inventory,
+    interpolation).
+
+
 2018-03-22
 
   - Fixed #249: Error messages involving postings should start counting at 1

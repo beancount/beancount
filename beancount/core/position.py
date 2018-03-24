@@ -275,42 +275,6 @@ class Position(_Position):
         """
         return (self.units.currency, self.cost.currency if self.cost else None)
 
-    def get_cost(self):
-        """Return the cost associated with this position. The cost is the number of
-        units of the lot times the cost of the lot. If the lot has no associated
-        cost, the amount of the position is returned as its cost.
-
-        Returns:
-          An instance of Amount.
-        """
-        warnings.warn("Position.get_cost() is deprecated; "
-                      "use convert.get_cost(position) instead")
-        cost = self.cost
-        if cost is None:
-            rcost = self.units
-        else:
-            rcost = amount_mul(cost, self.units.number)
-        return rcost
-
-    def at_cost(self):
-        """Return a Position representing the cost of this position.
-
-        Returns:
-          An instance of Position if there is a cost, or itself, if the position
-          has no associated cost. Since we consider the Position object to be
-          immutable and associated operations never modify an existing Position
-          instance, it is legit to return this object itself.
-        """
-        warnings.warn("Position.at_cost() is deprecated; "
-                      "use convert.get_cost(position) instead")
-        cost = self.cost
-        if cost is None:
-            pos = self
-        else:
-            pos = Position(Amount(self.units.number * cost.number, self.cost.currency),
-                           None)
-        return pos
-
     def get_negative(self):
         """Get a copy of this position but with a negative number.
 
