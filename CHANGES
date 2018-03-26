@@ -4,6 +4,14 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2018-03-26
+
+  - Fixed #245: Synchronized the definition of a valid account regular
+    expression between the lexer and the later enhanced version (in Python)
+    which checks the configured prefixes. A valid subaccount name may start with
+    either a capital letter or a number.
+
+
 2018-03-23
 
   - Removed deprecated methods from beancount.core (position, inventory,

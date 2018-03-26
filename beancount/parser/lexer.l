@@ -264,7 +264,7 @@ FALSE		{
 }
 
  /* Account names. */
-([A-Z][A-Za-z0-9\-]*)(:[A-Za-z0-9\-]+)+		{
+([A-Z][A-Za-z0-9\-]*)(:[A-Z0-9][A-Za-z0-9\-]*)+		{
     BUILD_LEX("ACCOUNT", "s", yytext);
     return ACCOUNT;
 }
