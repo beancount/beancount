@@ -27,6 +27,7 @@ from beancount.parser import options
 from beancount.parser import printer
 from beancount.ops import validation
 from beancount.utils import encryption
+from beancount.utils import file_utils
 
 
 LoadError = collections.namedtuple('LoadError', 'source message entry')
@@ -372,13 +373,19 @@ def _parse_recursive(sources, log_timings, encoding=None):
             else:
                 aggregate_options_map(options_map, src_options_map)
 
-            # Add includes to the list of sources to process.
+            # Add includes to the list of sources to process. chdir() for glob,
+            # which uses it indirectly.
             include_expanded = []
-            for include_filename in src_options_map['include']:
-                if '*' in include_filename:
-                    include_expanded += glob.glob(include_filename, recursive=True)
-                else:
-                    include_expanded += [include_filename]
+            with file_utils.chdir(cwd):
+                for include_filename in src_options_map['include']:
+                    matched_filenames = glob.glob(include_filename, recursive=True)
+                    if matched_filenames:
+                        include_expanded.extend(matched_filenames)
+                    else:
+                        parse_errors.append(
+                            LoadError(data.new_metadata("<load>", 0),
+                                      'File glob "{}" does not match any files'.format(
+                                          include_filename), None))
             for include_filename in include_expanded:
                 if not path.isabs(include_filename):
                     include_filename = path.join(cwd, include_filename)

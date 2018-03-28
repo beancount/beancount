@@ -153,7 +153,7 @@ class TestLoadIncludes(unittest.TestCase):
             entries, errors, options_map = loader.load_file(
                 path.join(tmp, 'root.beancount'))
             self.assertEqual(1, len(errors))
-            self.assertRegex(errors[0].message, 'does not exist')
+            self.assertRegex(errors[0].message, 'does not (match any|exist)')
         self.assertEqual(['root.beancount'],
                          list(map(path.basename, options_map['include'])))
 
