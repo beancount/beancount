@@ -194,6 +194,23 @@ def get_all_payees(entries):
     return sorted(all_payees)
 
 
+def get_all_links(entries):
+    """Return a list of all the links seen in the given entries.
+
+    Args:
+      entries: A list of directive instances.
+    Returns:
+      A set of links strings.
+    """
+    all_links = set()
+    for entry in entries:
+        if not isinstance(entry, Transaction):
+            continue
+        if entry.links:
+            all_links.update(entry.links)
+    return sorted(all_links)
+
+
 def get_leveln_parent_accounts(account_names, level, nrepeats=0):
     """Return a list of all the unique leaf names are level N in an account hierarchy.
 

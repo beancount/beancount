@@ -96,6 +96,11 @@ class TestGetters(unittest.TestCase):
         payees = getters.get_all_payees(entries)
         self.assertEqual(['La Colombe', 'Whole Foods Market'], payees)
 
+    def test_get_all_links(self):
+        entries = loader.load_string(TEST_INPUT)[0]
+        links = getters.get_all_links(entries)
+        self.assertEqual(['ee89ada94a39'], links)
+
     def test_get_leveln_parent_accounts(self):
         account_names = ['Assets:US:Cash',
                          'Assets:US:Credit-Card',
