@@ -6,6 +6,14 @@ Note: This file contains only changes in the 'default' branch.
 
 2018-03-27
 
+  - Completed PR #59 which adds support for globbing patterns in includes,
+    inserting a chdir() around glob.glob() to handle expansion of relative
+    filenames. (Credits to Martin Michlmayr for submitting the patch in the
+    first place.)
+
+
+2018-03-27
+
   - Released 2.0.0. Today we're starting versioning Beancount. Many people have
     been waiting for this in order to manage their dependencies (e.g. Fava
     users).
