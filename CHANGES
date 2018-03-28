@@ -4,6 +4,26 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2018-03-27
+
+  - Released 2.0.0. Today we're starting versioning Beancount. Many people have
+    been waiting for this in order to manage their dependencies (e.g. Fava
+    users).
+
+    We're loosely adopting semantic versioning (https://semver.org/) where bug
+    fixes will be posted as 0.0.x releases, and new features that don't break
+    existing functionality (nor change it too much) will be posted as 0.x.0
+    releases.
+
+    Note: There's nothing special about this particular point in time, other
+    than I haven't added much features in the last six months and have mainly
+    been fixing bugs and accepting bug reports in order to make sure things are
+    stable. There are plenty remaining bug reports and it's not perfect.
+    Addressing some of these will involve making changes that could break
+    existing functionality. For this reason, I prefer to release now and make
+    those changes as part of point releases later on.
+
+
 2018-03-26
 
   - Fixed #245: Synchronized the definition of a valid account regular
