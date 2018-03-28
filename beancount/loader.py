@@ -5,7 +5,6 @@ __license__ = "GNU GPLv2"
 
 import collections
 import functools
-import glob
 import hashlib
 import importlib
 import io
@@ -373,13 +372,7 @@ def _parse_recursive(sources, log_timings, encoding=None):
                 aggregate_options_map(options_map, src_options_map)
 
             # Add includes to the list of sources to process.
-            include_expanded = []
             for include_filename in src_options_map['include']:
-                if '*' in include_filename:
-                    include_expanded += glob.glob(include_filename, recursive=True)
-                else:
-                    include_expanded += [include_filename]
-            for include_filename in include_expanded:
                 if not path.isabs(include_filename):
                     include_filename = path.join(cwd, include_filename)
                 include_filename = path.normpath(include_filename)
