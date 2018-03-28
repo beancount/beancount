@@ -96,7 +96,11 @@ def valid_account_regexp(options):
                                       'name_equity',
                                       'name_income',
                                       'name_expenses'))
-    return re.compile('({})(:[A-Z][A-Za-z0-9\-]*)*$'.format('|'.join(names)))
+    # Replace the first term of the account regular expression with the specific
+    # names allowed under the options configuration.
+    regexp = re.sub(r'\(.*?\)', '({})'.format('|'.join(names)),
+                    account.ACCOUNT_RE + '$', count=1)
+    return re.compile(regexp)
 
 
 # A temporary data structure used during parsing to hold and accumulate the
@@ -133,7 +137,7 @@ class Builder(lexer.LexBuilder):
         self.options['filename'] = filename
 
         # Make the account regexp more restrictive than the default: check
-        # types.
+        # types. Warning: This overrides the value in the base class.
         self.account_regexp = valid_account_regexp(self.options)
 
         # A display context builder.
@@ -785,7 +789,8 @@ class Builder(lexer.LexBuilder):
           filename: the current filename.
           lineno: the current line number.
           account: A string, the account of the posting.
-          position: An instance of Position from the grammar rule.
+          units: An instance of Amount for the units.
+          cost: An instance of CostSpec for the cost.
           price: Either None, or an instance of Amount that is the cost of the position.
           istotal: A bool, True if the price is for the total amount being parsed, or
                    False if the price is for each lot of the position.
@@ -793,10 +798,11 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Posting object, with no parent entry.
         """
+        meta = new_metadata(filename, lineno)
+
         # Prices may not be negative.
         if not __allow_negative_prices__:
             if price and isinstance(price.number, Decimal) and price.number < ZERO:
-                meta = new_metadata(filename, lineno)
                 self.errors.append(
                     ParserError(meta, (
                         "Negative prices are not allowed: {} "
@@ -825,7 +831,18 @@ class Builder(lexer.LexBuilder):
         #     self.errors.append(
         #         ParserError(meta, "Price is zero: {}".format(price), None))
 
-        meta = new_metadata(filename, lineno)
+        # If both cost and price are specified, the currencies must match, or
+        # that is an error.
+        if (cost is not None and
+            price is not None and
+            isinstance(cost.currency, str) and
+            isinstance(price.currency, str) and
+            cost.currency != price.currency):
+            self.errors.append(
+                ParserError(meta,
+                            "Cost and price currencies must match: {} != {}".format(
+                                cost.currency, price.currency), None))
+
         return Posting(account, units, cost, price, chr(flag) if flag else None, meta)
 
     def tag_link_new(self, _):

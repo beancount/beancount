@@ -4,6 +4,62 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2018-03-27
+
+  - Completed PR #59 which adds support for globbing patterns in includes,
+    inserting a chdir() around glob.glob() to handle expansion of relative
+    filenames. (Credits to Martin Michlmayr for submitting the patch in the
+    first place.)
+
+
+2018-03-27
+
+  - Released 2.0.0. Today we're starting versioning Beancount. Many people have
+    been waiting for this in order to manage their dependencies (e.g. Fava
+    users).
+
+    We're loosely adopting semantic versioning (https://semver.org/) where bug
+    fixes will be posted as 0.0.x releases, and new features that don't break
+    existing functionality (nor change it too much) will be posted as 0.x.0
+    releases.
+
+    Note: There's nothing special about this particular point in time, other
+    than I haven't added much features in the last six months and have mainly
+    been fixing bugs and accepting bug reports in order to make sure things are
+    stable. There are plenty remaining bug reports and it's not perfect.
+    Addressing some of these will involve making changes that could break
+    existing functionality. For this reason, I prefer to release now and make
+    those changes as part of point releases later on.
+
+
+2018-03-26
+
+  - Fixed #245: Synchronized the definition of a valid account regular
+    expression between the lexer and the later enhanced version (in Python)
+    which checks the configured prefixes. A valid subaccount name may start with
+    either a capital letter or a number.
+
+
+2018-03-23
+
+  - Removed deprecated methods from beancount.core (position, inventory,
+    interpolation).
+
+
+2018-03-22
+
+  - Fixed #249: Error messages involving postings should start counting at 1
+    instead of 0. (I agree.)
+
+  - Added aliases for COMMODITY_META() vs. CURRENCY_META() and CURRENCY() and
+    COMMODITY(). These terms are used interchangeably. In the next version of
+    the shell, only one of them will be available.
+
+  - Removed the ability to explicitly set a different price currency than a cost
+    currency. I'm stunned my test for this is gone, I must have removed this by
+    accident? No idea. It should not be allowed.
+
+
 2018-03-19
 
   - Fixed #218, added a SAFEDIV function to the shell language.

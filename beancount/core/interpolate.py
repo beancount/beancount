@@ -55,38 +55,6 @@ def is_tolerance_user_specified(tolerance):
 BalanceError = collections.namedtuple('BalanceError', 'source message entry')
 
 
-def get_posting_weight(posting):
-    """Get the amount that will need to be balanced from a posting of a transaction.
-
-    Deprecated; see convert.get_weight().
-
-    Args:
-      posting: A Posting instance.
-    Returns:
-      An amount, required to balance this posting.
-    """
-    warnings.warn("get_posting_weight() is deprecated; "
-                  "use convert.get_weight() instead")
-    return convert.get_weight(posting)
-
-
-def compute_cost_basis(postings):
-    """Compute the sum of the cost basis from all the given postings.
-
-    This only includes legs which have a cost on them.
-
-    Args:
-      postings: A list of Posting instances.
-    Returns:
-      An Inventory instance.
-    """
-    warnings.warn("compute_cost_basis() is deprecated; "
-                  "use Inventory(positions).reduce(convert.get_cost) instead")
-    return Inventory(pos
-                     for pos in postings
-                     if pos.cost is not None).reduce(convert.get_cost)
-
-
 def has_nontrivial_balance(posting):
     """Return True if a Posting has a balance amount that would have to be calculated.
 

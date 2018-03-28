@@ -19,19 +19,12 @@ __copyright__ = "Copyright (C) 2016-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse
-import bisect
 import csv
 import collections
-import codecs
 import datetime
 import logging
-import os
 import re
 import sys
-import unittest
-import json
-import pprint
-from os import path
 
 from beancount.core.number import ZERO
 from beancount.core.number import ONE
@@ -48,12 +41,6 @@ from beancount.ops import summarize
 from beancount.core import prices
 from beancount.parser import options
 from beancount import loader
-
-import oauth2client.client
-from oauth2client import tools
-from oauth2client.file import Storage
-from oauth2client import service_account
-import httplib2
 
 
 def clean_entries_for_balances(entries):

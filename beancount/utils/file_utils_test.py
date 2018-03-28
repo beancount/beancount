@@ -7,6 +7,7 @@ from os import path
 import os
 import re
 import unittest
+import tempfile
 
 from beancount.utils import test_utils
 from beancount.utils import file_utils
@@ -73,3 +74,8 @@ class TestMiscFileUtils(unittest.TestCase):
                          file_utils.path_greedy_split('/tmp/tmp.ju3h4h/bla.tgz'))
         self.assertEqual(('/tmp/tmp.ju3h4h/bla', '.tar.gz'),
                          file_utils.path_greedy_split('/tmp/tmp.ju3h4h/bla.tar.gz'))
+
+    def test_chdir_contextmanager(self):
+        with file_utils.chdir(tempfile.gettempdir()) as tmpdir:
+            self.assertIsInstance(tmpdir, str)
+            self.assertEqual(tempfile.gettempdir(), os.getcwd())

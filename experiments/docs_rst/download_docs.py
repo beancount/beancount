@@ -7,7 +7,7 @@ Markdown format for inclusion in the repo. Ultimately, we'd like to convert all
 the Google Docs to Markdown or some other text format the open source community
 finds most friendly.
 """
-__copyright__ = "Copyright (C) 2017  Martin Blais"
+__copyright__ = "Copyright (C) 2017-2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
 

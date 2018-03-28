@@ -377,7 +377,7 @@ def categorize_by_currency(entry, balances):
         else:
             errors.append(
                 CategorizationError(posting.meta,
-                                    "Failed to categorize posting {}".format(index),
+                                    "Failed to categorize posting {}".format(index + 1),
                                     entry))
 
     # Fill in missing units currencies if some remain as missing. This may occur

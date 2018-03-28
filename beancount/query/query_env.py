@@ -333,7 +333,7 @@ class AccountSortKey(query_compile.EvalFunction):
         index, name = account_types.get_account_sort_key(context.account_types, args[0])
         return '{}-{}'.format(index, name)
 
-class CommodityMeta(query_compile.EvalFunction):
+class CurrencyMeta(query_compile.EvalFunction):
     "Get the metadata dict of the commodity directive of the currency."
     __intypes__ = [str]
 
@@ -673,7 +673,8 @@ SIMPLE_FUNCTIONS = {
     'entry_meta'                                         : EntryMeta,
     'any_meta'                                           : AnyMeta,
     'open_meta'                                          : OpenMeta,
-    'commodity_meta'                                     : CommodityMeta,
+    'currency_meta'                                      : CurrencyMeta,
+    'commodity_meta'                                     : CurrencyMeta,  # Redundant.
     'account_sortkey'                                    : AccountSortKey,
     ('units', position.Position)                         : UnitsPosition,
     ('units', inventory.Inventory)                       : UnitsInventory,
@@ -699,6 +700,7 @@ SIMPLE_FUNCTIONS = {
     ('getprice', str, str, datetime.date)                : PriceWithDate,
     'number'                                             : Number,
     'currency'                                           : Currency,
+    'commodity'                                          : Currency,  # Redundant.
     'getitem'                                            : GetItemStr,
     'findfirst'                                          : FindFirst,
     'joinstr'                                            : JoinStr,

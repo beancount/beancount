@@ -18,7 +18,8 @@ sep = ':'
 
 
 # Regular expression string that matchs a valid account.
-ACCOUNT_RE = '[A-Z][A-Za-z0-9\-]+(?:{}[A-Z][A-Za-z0-9\-]*)+'.format(sep)
+# (Also see valid_account_regexp() which is coupled to this value.)
+ACCOUNT_RE = '(?:[A-Z][A-Za-z0-9\-]*)(?:{}[A-Z0-9][A-Za-z0-9\-]*)+'.format(sep)
 
 
 # A dummy object which stands for the account type. Values in custom directives

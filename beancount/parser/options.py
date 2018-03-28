@@ -417,8 +417,6 @@ PUBLIC_OPTION_GROUPS = [
       reduction to be added to the inventory despite the absence of a match
       (resulting in mixed inventories).
 
-      (Note that this is only used with the new "FULL" booking algorithm.)
-
       See the following documents for details:
         http://furius.ca/beancount/doc/inventories
         http://furius.ca/beancount/doc/proposal-booking
