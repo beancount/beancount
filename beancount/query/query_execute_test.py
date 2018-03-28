@@ -385,6 +385,34 @@ class TestExecuteNonAggregatedQuery(QueryBase):
                 ('Assets:Bank:Checking',),
                 ])
 
+    def test_non_aggregated_order_by_none_date(self):
+        self.check_query(
+            self.INPUT,
+            """
+            SELECT account ORDER BY cost_date;
+            """,
+            [
+                ('account', str),
+                ],
+            [
+                ('Assets:Bank:Checking',),
+                ('Expenses:Restaurant',),
+                ])
+
+    def test_non_aggregated_order_by_none_str(self):
+        self.check_query(
+            self.INPUT,
+            """
+            SELECT account ORDER BY posting_flag;
+            """,
+            [
+                ('account', str),
+                ],
+            [
+                ('Assets:Bank:Checking',),
+                ('Expenses:Restaurant',),
+                ])
+
 
 class TestExecuteAggregatedQuery(QueryBase):
 
