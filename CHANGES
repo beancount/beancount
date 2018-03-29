@@ -4,6 +4,11 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2018-03-28
+
+  - Fixed failing test in amount_test probably due to some recent merges.
+
+
 2018-03-27
 
   - Completed PR #59 which adds support for globbing patterns in includes,
