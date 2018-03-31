@@ -247,3 +247,11 @@ sphinx sphinx_odt2rst:
 
 convert_test:
 	./tools/convert_doc.py --cache=/tmp/convert_test.cache '1WjARst_cSxNE-Lq6JnJ5CC41T3WndEsiMw4d46r2694' /tmp/trading.md
+
+# This does not work well; import errors just won't go away, it's slow, and it
+# seems you have to pregenerate all .pyi to do anything useful.
+pytype:
+	find $(PWD)/beancount -name '*.py' | parallel -j16  pytype --pythonpath=$(PWD) -o {}i {}
+
+pytype1:
+	pytype --pythonpath=$(PWD) beancount/utils/net_utils.py
