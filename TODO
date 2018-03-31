@@ -1153,6 +1153,9 @@ http://furius.ca/beancount/doc/proposal-query
     * The new rendering code should use the DisplayContext. This would close the
       "display_context" branch.
 
+    * Type checking should be implemented using type annotations, but it should
+      also be implemented on the basic operators (see #6, for instance).
+
 
 *** SQLite3 Integration
 

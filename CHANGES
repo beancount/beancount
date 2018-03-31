@@ -6,6 +6,16 @@ Note: This file contains only changes in the 'default' branch.
 
 2018-03-31
 
+  - Fixed #10: "print from close_date" causes problems on account open. This was
+    stemming from a bug in the implementation of the FROM clause execution. I
+    changed the "entry" context functions to also accept a RowContext object, as
+    the simple functions may be called in either entry or posting context.
+
+    (The SQL shell remains the part of Beancount which is severely undertested
+    and wading into that code once again has convinced me I need to rewrite the
+    shell from scratch, it'll be simpler and better. The distinction between
+    entry and posting context will go away in the next version.)
+
   - Fixed #120: Documents directive with a trailing slash fails.
 
 

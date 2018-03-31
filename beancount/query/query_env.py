@@ -902,8 +902,8 @@ class IdEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(str)
 
-    def __call__(self, entry):
-        return hash_entry(entry)
+    def __call__(self, context):
+        return hash_entry(context.entry)
 
 class TypeEntryColumn(query_compile.EvalColumn):
     "The data type of the directive."
@@ -912,8 +912,8 @@ class TypeEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(str)
 
-    def __call__(self, entry):
-        return type(entry).__name__.lower()
+    def __call__(self, context):
+        return type(context.entry).__name__.lower()
 
 class FilenameEntryColumn(query_compile.EvalColumn):
     "The filename where the directive was parsed from or created."
@@ -923,8 +923,8 @@ class FilenameEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(str)
 
-    def __call__(self, entry):
-        return entry.meta["filename"]
+    def __call__(self, context):
+        return context.entry.meta["filename"]
 
 class LineNoEntryColumn(query_compile.EvalColumn):
     "The line number from the file the directive was parsed from."
@@ -934,8 +934,8 @@ class LineNoEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(int)
 
-    def __call__(self, entry):
-        return entry.meta["lineno"]
+    def __call__(self, context):
+        return context.entry.meta["lineno"]
 
 class DateEntryColumn(query_compile.EvalColumn):
     "The date of the directive."
@@ -945,8 +945,8 @@ class DateEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(datetime.date)
 
-    def __call__(self, entry):
-        return entry.date
+    def __call__(self, context):
+        return context.entry.date
 
 class YearEntryColumn(query_compile.EvalColumn):
     "The year of the date of the directive."
@@ -956,8 +956,8 @@ class YearEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(int)
 
-    def __call__(self, entry):
-        return entry.date.year
+    def __call__(self, context):
+        return context.entry.date.year
 
 class MonthEntryColumn(query_compile.EvalColumn):
     "The month of the date of the directive."
@@ -967,8 +967,8 @@ class MonthEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(int)
 
-    def __call__(self, entry):
-        return entry.date.month
+    def __call__(self, context):
+        return context.entry.date.month
 
 class DayEntryColumn(query_compile.EvalColumn):
     "The day of the date of the directive."
@@ -978,8 +978,8 @@ class DayEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(int)
 
-    def __call__(self, entry):
-        return entry.date.day
+    def __call__(self, context):
+        return context.entry.date.day
 
 class FlagEntryColumn(query_compile.EvalColumn):
     "The flag the transaction."
@@ -989,9 +989,9 @@ class FlagEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(str)
 
-    def __call__(self, entry):
-        return (entry.flag
-                if isinstance(entry, Transaction)
+    def __call__(self, context):
+        return (context.entry.flag
+                if isinstance(context.entry, Transaction)
                 else None)
 
 class PayeeEntryColumn(query_compile.EvalColumn):
@@ -1002,9 +1002,9 @@ class PayeeEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(str)
 
-    def __call__(self, entry):
-        return (entry.payee or ''
-                if isinstance(entry, Transaction)
+    def __call__(self, context):
+        return (context.entry.payee or ''
+                if isinstance(context.entry, Transaction)
                 else None)
 
 class NarrationEntryColumn(query_compile.EvalColumn):
@@ -1015,9 +1015,9 @@ class NarrationEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(str)
 
-    def __call__(self, entry):
-        return (entry.narration or ''
-                if isinstance(entry, Transaction)
+    def __call__(self, context):
+        return (context.entry.narration or ''
+                if isinstance(context.entry, Transaction)
                 else None)
 
 # This is convenient, because many times the payee is empty and using a
@@ -1029,8 +1029,9 @@ class DescriptionEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(str)
 
-    def __call__(self, entry):
-        return (' | '.join(filter(None, [entry.payee, entry.narration]))
+    def __call__(self, context):
+        return (' | '.join(filter(None, [context.entry.payee,
+                                         context.entry.narration]))
                 if isinstance(entry, Transaction)
                 else None)
 
@@ -1046,9 +1047,9 @@ class TagsEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(set)
 
-    def __call__(self, entry):
-        return (entry.tags or EMPTY_SET
-                if isinstance(entry, Transaction)
+    def __call__(self, context):
+        return (context.entry.tags or EMPTY_SET
+                if isinstance(context.entry, Transaction)
                 else EMPTY_SET)
 
 class LinksEntryColumn(query_compile.EvalColumn):
@@ -1059,9 +1060,9 @@ class LinksEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(set)
 
-    def __call__(self, entry):
-        return (entry.links or EMPTY_SET
-                if isinstance(entry, Transaction)
+    def __call__(self, context):
+        return (context.entry.links or EMPTY_SET
+                if isinstance(context.entry, Transaction)
                 else EMPTY_SET)
 
 
@@ -1074,10 +1075,10 @@ class MatchAccount(query_compile.EvalFunction):
     def __init__(self, operands):
         super().__init__(operands, bool)
 
-    def __call__(self, entry):
-        pattern = self.eval_args(entry)[0]
+    def __call__(self, context):
+        pattern = self.eval_args(context)[0]
         search = re.compile(pattern, re.IGNORECASE).search
-        return any(search(account) for account in getters.get_entry_accounts(entry))
+        return any(search(account) for account in getters.get_entry_accounts(context.entry))
 
 
 # Functions defined only on entries.
