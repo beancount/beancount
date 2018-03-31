@@ -42,7 +42,7 @@ def process_documents(entries, options_map):
         accounts = getters.get_accounts(entries)
 
         # Accumulate all the entries.
-        for directory in document_dirs:
+        for directory in map(path.normpath, document_dirs):
             new_entries, new_errors = find_documents(directory, filename, accounts)
             autodoc_entries.extend(new_entries)
             autodoc_errors.extend(new_errors)

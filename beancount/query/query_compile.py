@@ -825,7 +825,7 @@ def compile_select(select, targets_environ, postings_environ, entries_environ):
     # targets and the where clause.
     from_clause = select.from_clause
     if isinstance(from_clause, query_parser.Select):
-        c_from = compile_select(from_clause) if from_clause is not None else None
+        c_from = None
         environ_target = ResultSetEnvironment()
         environ_where = ResultSetEnvironment()
 
