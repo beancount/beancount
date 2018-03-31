@@ -4,6 +4,11 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2018-03-31
+
+  - Fixed #120: Documents directive with a trailing slash fails.
+
+
 2018-03-28
 
   - Fixed failing test in amount_test probably due to some recent merges.
