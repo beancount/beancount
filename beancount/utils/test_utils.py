@@ -356,7 +356,8 @@ def environ(varname, newvalue):
     oldvalue = os.environ.get(varname)
     os.environ[varname] = newvalue
     yield
-    os.environ[varname] = oldvalue
+    if oldvalue:
+        os.environ[varname] = oldvalue
 
 
 # A function call's arguments, including its return value.
