@@ -257,16 +257,6 @@ class Position(_Position):
         # Note: We use Decimal() for efficiency.
         return Position(copy.copy(self.units), copy.copy(self.cost))
 
-    def set_units(self, units):
-        """Set the units. This is required to abstract over the old and the new position
-        object.
-
-        Args:
-          units: An instance of Amount.
-        """
-        assert isinstance(units, Amount)
-        self.units = units  # pylint: disable=assigning-non-slot
-
     def currency_pair(self):
         """Return the currency pair associated with this position.
 

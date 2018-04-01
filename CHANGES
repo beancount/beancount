@@ -10,6 +10,9 @@ Note: This file contains only changes in the 'default' branch.
     rely on the fact that Position is immutable in order to avoid unnecessary
     copies. This yields an 18% speedup with no difference.
 
+  - Removed unused and invalid mutating method Position.set_units(). Amazing
+    obsolete stuff like this can still be found.
+
 
 2018-03-31
 
