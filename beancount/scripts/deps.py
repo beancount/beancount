@@ -7,6 +7,7 @@ __license__ = "GNU GPLv2"
 
 import sys
 import types
+from pkg_resources import parse_version
 
 
 def list_dependencies(file=sys.stderr):
@@ -20,7 +21,8 @@ def list_dependencies(file=sys.stderr):
         print("   {:16}: {} {}".format(
             package,
             version or 'NOT INSTALLED',
-            "(INSUFFICIENT)" if version and not sufficient else ""),
+            "(INSUFFICIENT)" if version and not sufficient and
+              'pkg_resources' in sys.modules else ""),
               file=file)
 
 
@@ -145,7 +147,8 @@ def check_import(package_name, min_version=None, module_name=None):
         module = sys.modules[module_name]
         version = module.__version__
         assert isinstance(version, str)
-        is_sufficient = version >= min_version if min_version else True
+        is_sufficient = (parse_version(version) >= parse_version(min_version)
+                         if min_version else True)
     except ImportError:
         version, is_sufficient = None, False
     return (package_name, version, is_sufficient)
