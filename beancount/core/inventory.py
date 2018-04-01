@@ -49,13 +49,11 @@ class Booking(enum.Enum):
     IGNORED = 4
 
 
-class Inventory(list):
+class Inventory(dict):
     """An Inventory is a set of positions.
 
     Attributes:
       positions: A list of Position instances, held in this Inventory object.
-        Because the lists are always very short, we prefer to avoid using a
-        mapping for the sake of simplicity and it should not hurt performance.
     """
 
     def __init__(self, positions=None):
@@ -66,13 +64,20 @@ class Inventory(list):
             instance.
         """
         if isinstance(positions, Inventory):
-            list.__init__(self, positions)
+            dict.__init__(self, positions)
         else:
-            list.__init__(self)
+            dict.__init__(self)
             if positions:
                 assert isinstance(positions, Iterable)
                 for position in positions:
                     self.add_position(position)
+
+    def __iter__(self):
+        return iter(self.values())
+
+    def __getitem__(self, index):
+        """For compatibility with the previous list-based implementation."""
+        return list(self.values())[index]
 
     def to_string(self, dformat=DEFAULT_FORMATTER, parens=True):
         """Convert an Inventory instance to a printable string.
@@ -349,32 +354,32 @@ class Inventory(list):
             "Internal error: {!r} (type: {})".format(cost, type(cost).__name__))
 
         # Find the position.
-        for index, pos in enumerate(self):
-            if (pos.units.currency == units.currency and
-                pos.cost == cost):
-                # Note: In order to augment or reduce, all the fields have to match.
+        key = (units.currency, cost)
+        pos = self.get(key)
 
-                # Check if reducing.
-                booking = (Booking.REDUCED
-                           if not same_sign(pos.units.number, units.number) else
-                           Booking.AUGMENTED)
+        if pos is not None:
+            # Note: In order to augment or reduce, all the fields have to match.
 
-                # Compute the new number of units.
-                number = pos.units.number + units.number
-                if number == ZERO:
-                    # If empty, delete the position.
-                    del self[index]
-                else:
-                    # Otherwise update it.
-                    self[index] = Position(Amount(number, units.currency), cost)
-                break
+            # Check if reducing.
+            booking = (Booking.REDUCED
+                       if not same_sign(pos.units.number, units.number)
+                       else Booking.AUGMENTED)
+
+            # Compute the new number of units.
+            number = pos.units.number + units.number
+            if number == ZERO:
+                # If empty, delete the position.
+                del self[key]
+            else:
+                # Otherwise update it.
+                self[key] = Position(Amount(number, units.currency), cost)
         else:
             # If not found, create a new one.
             pos = None
             if units.number == ZERO:
                 booking = Booking.IGNORED
             else:
-                self.append(Position(units, cost))
+                self[key] = Position(units, cost)
                 booking = Booking.CREATED
 
         return pos, booking
