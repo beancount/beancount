@@ -6,6 +6,9 @@ Note: This file contains only changes in the 'default' branch.
 
 2018-04-01
 
+  - Merged PR54 & Fixed #232: Align quoted commodities correctly in ledger price
+    statements (from Martin Michlmayr).
+
   - Merged PR57: query_execute: Allow ordering by columns which may be None
     (from Jakob Schnitzer). Made some adjustments to generalize on all
     datatypes.
