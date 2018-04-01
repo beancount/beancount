@@ -64,13 +64,17 @@ class Inventory(list):
         """Create a new inventory using a list of existing positions.
 
         Args:
-          positions: A list of Position instances.
+          positions: A list of Position instances or an existing Inventory
+            instance.
         """
-        list.__init__(self)
-        if positions:
-            assert isinstance(positions, Iterable)
-            for position in positions:
-                self.add_position(position)
+        if isinstance(positions, Inventory):
+            list.__init__(self, positions)
+        else:
+            list.__init__(self)
+            if positions:
+                assert isinstance(positions, Iterable)
+                for position in positions:
+                    self.add_position(position)
 
     def to_string(self, dformat=DEFAULT_FORMATTER, parens=True):
         """Convert an Inventory instance to a printable string.
@@ -114,7 +118,7 @@ class Inventory(list):
         Returns:
           An instance of Inventory, equal to this one.
         """
-        return Inventory(list(map(copy.copy, self)))
+        return Inventory(self)
 
     def __eq__(self, other):
         """Equality predicate.
