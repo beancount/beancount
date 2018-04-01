@@ -6,6 +6,14 @@ Note: This file contains only changes in the 'default' branch.
 
 2018-04-01
 
+  - Merged PR15 by Johannes Harms:
+    Added the following features to the forecasting plugin:
+    - Yearly repetition of recurring transactions (instead of just monthly)
+    - Users may optionally specify an end date
+    - Users may optionally specify the number of repetitions
+    "I used this code to calculate scenarios for a possible real estate purchase
+    and I contribute a cleaned-up version as an example file."
+
   - Merged PR54 & Fixed #232: Align quoted commodities correctly in ledger price
     statements (from Martin Michlmayr).
 
