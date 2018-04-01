@@ -1,37 +1,31 @@
 """A container for an inventory of positions.
 
-This module provides a container class that can hold positions. An inventory is an
-association list of positions, where each position is defined as
+This module provides a container class that can hold positions. An inventory is
+an association list of positions, where each position is understood as
 
-  (currency, cost, lot-date, label) -> number
+    (currency: str, cost: Cost) -> number: Decimal
 
 where
 
-  'currency': The commodity under consideration, USD, CAD, or stock units such as HOOL,
-    MSFT, AAPL, etc.;
+  'currency': The commodity under consideration, USD, CAD, or stock units such
+     as HOOL, MSFT, AAPL, etc.;
 
-  'cost': The amount (as a pair of (number, currency)) that the position is held under,
-    otherwise known as the "book value";
-
-  'lot-date': The date at which the position was acquired.
-
-  'label': A unique string provided by the user to explicitly disambiguate a lot.
+  'cost': None or a Cost instance existing of cost currency, number, date, and
+     label;
 
   'number': The amount of units of 'currency' that the position represents.
 
-This is meant to accommodate both booked and non-booked amounts. The clever trick that we
-pull to do this is that for positions which aren't booked, we simply leave the 'cost' and
-'lot-date' as None. This is the case for most of the transactions.
+This is meant to accommodate both booked and non-booked amounts. The clever
+trick that we pull to do this is that for positions which aren't booked, we
+simply leave the 'cost' as None. This is the case for most of the transactions.
 """
 __copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import copy
 import collections
+from collections import Iterable
 import enum
 import re
-import warnings
-from collections import Iterable
 
 from beancount.core.number import ZERO
 from beancount.core.number import same_sign
@@ -45,10 +39,14 @@ from beancount.core.display_context import DEFAULT_FORMATTER
 
 class Booking(enum.Enum):
     """Result of booking a new lot to an existing inventory."""
-    CREATED = 1   # A new lot was created.
-    REDUCED = 2   # An existing lot was reduced.
-    AUGMENTED = 3 # An existing lot was augmented.
-    IGNORED = 4   # No change was applied.
+    # A new lot was created.
+    CREATED = 1
+    # An existing lot was reduced.
+    REDUCED = 2
+    # An existing lot was augmented.
+    AUGMENTED = 3
+    # No change was applied.
+    IGNORED = 4
 
 
 class Inventory(list):
