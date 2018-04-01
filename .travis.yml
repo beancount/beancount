@@ -1,0 +1,13 @@
+language: python
+python:
+  - "3.6"
+addons:
+  apt:
+    packages:
+      - gnupg
+      - zip
+install:
+  - python setup.py install
+script:
+  - make build
+  - NOSE=nosetests make test
