@@ -60,10 +60,10 @@ class Inventory(dict):
         """Create a new inventory using a list of existing positions.
 
         Args:
-          positions: A list of Position instances or an existing Inventory
-            instance.
+          positions: A list of Position instances or an existing dict or
+            Inventory instance.
         """
-        if isinstance(positions, Inventory):
+        if isinstance(positions, (dict, Inventory)):
             dict.__init__(self, positions)
         else:
             dict.__init__(self)
@@ -180,7 +180,7 @@ class Inventory(dict):
         Returns:
           An instance of Inventory.
         """
-        return Inventory([-position for position in self])
+        return Inventory({key: -pos for key, pos in self.items()})
 
     def __abs__(self):
         """Return an inventory with the absolute value of each position.
@@ -188,7 +188,7 @@ class Inventory(dict):
         Returns:
           An instance of Inventory.
         """
-        return Inventory([abs(position) for position in self])
+        return Inventory({key: abs(pos) for key, pos in self.items()})
 
     def __mul__(self, scalar):
         """Scale/multiply the contents of the inventory.
@@ -198,7 +198,7 @@ class Inventory(dict):
         Returns:
           An instance of Inventory.
         """
-        return Inventory([position * scalar for position in self])
+        return Inventory({key: pos * scalar for key, pos in self.items()})
 
     #
     # Methods to access portions of an inventory.
@@ -210,23 +210,23 @@ class Inventory(dict):
         Returns:
           A list of currency strings.
         """
-        return set(position.units.currency for position in self)
+        return set(currency for currency, _ in self.keys())
 
     def cost_currencies(self):
         """Return the list of unit currencies held in this inventory.
 
         Returns:
-          A list of currency strings.
+          A set of currency strings.
         """
-        return set(position.cost.currency
-                   for position in self
-                   if position.cost is not None)
+        return set(cost.currency
+                   for _, cost in self.keys()
+                   if cost is not None)
 
     def currency_pairs(self):
         """Return the commodities held in this inventory.
 
         Returns:
-          A list of currency strings.
+          A set of currency strings.
         """
         return set(position.currency_pair() for position in self)
 
