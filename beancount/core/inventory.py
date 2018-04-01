@@ -115,23 +115,12 @@ class Inventory(dict):
         raise NotImplementedError
 
     def __copy__(self):
-        """A shallow copy of this inventory object. All the positions contained
-        are also copied shallow.
+        """A shallow copy of this inventory object.
 
         Returns:
           An instance of Inventory, equal to this one.
         """
         return Inventory(self)
-
-    def __eq__(self, other):
-        """Equality predicate.
-
-        Args:
-          other: Ano ther instance of Inventory.
-        Returns:
-          True if the two inventories have the same position contents.
-        """
-        return sorted(self) == sorted(other)
 
     def is_small(self, tolerances):
         """Return true if all the positions in the inventory are small.
@@ -247,7 +236,7 @@ class Inventory(dict):
         Returns:
           A shallow copy of the list of positions.
         """
-        return list(self)
+        return list(iter(self))
 
     def get_currency_units(self, currency):
         """Fetch the total amount across all the position in the given currency.
@@ -355,7 +344,7 @@ class Inventory(dict):
 
         # Find the position.
         key = (units.currency, cost)
-        pos = self.get(key)
+        pos = self.get(key, None)
 
         if pos is not None:
             # Note: In order to augment or reduce, all the fields have to match.
@@ -375,7 +364,6 @@ class Inventory(dict):
                 self[key] = Position(Amount(number, units.currency), cost)
         else:
             # If not found, create a new one.
-            pos = None
             if units.number == ZERO:
                 booking = Booking.IGNORED
             else:
