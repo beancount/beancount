@@ -895,6 +895,18 @@ class TestArithmeticFunctions(QueryBase):
             [('result', Decimal)],
             [(D("0"),)])
 
+    def test_safe_div2(self):
+        self.check_query(
+            """
+              2010-02-23 *
+                Assets:Something       5.00 USD
+            """,
+            """
+              SELECT SAFEDIV(0.0, 0) as result;
+            """,
+            [('result', Decimal)],
+            [(D("0"),)])
+
 
 
 class TestExecuteFlatten(QueryBase):
