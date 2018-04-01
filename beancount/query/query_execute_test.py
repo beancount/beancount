@@ -385,6 +385,34 @@ class TestExecuteNonAggregatedQuery(QueryBase):
                 ('Assets:Bank:Checking',),
                 ])
 
+    def test_non_aggregated_order_by_none_date(self):
+        self.check_query(
+            self.INPUT,
+            """
+            SELECT account ORDER BY cost_date;
+            """,
+            [
+                ('account', str),
+                ],
+            [
+                ('Assets:Bank:Checking',),
+                ('Expenses:Restaurant',),
+                ])
+
+    def test_non_aggregated_order_by_none_str(self):
+        self.check_query(
+            self.INPUT,
+            """
+            SELECT account ORDER BY posting_flag;
+            """,
+            [
+                ('account', str),
+                ],
+            [
+                ('Assets:Bank:Checking',),
+                ('Expenses:Restaurant',),
+                ])
+
 
 class TestExecuteAggregatedQuery(QueryBase):
 
@@ -891,6 +919,18 @@ class TestArithmeticFunctions(QueryBase):
             """,
             """
               SELECT SAFEDIV(number, 0) as result;
+            """,
+            [('result', Decimal)],
+            [(D("0"),)])
+
+    def test_safe_div_zerobyzero(self):
+        self.check_query(
+            """
+              2010-02-23 *
+                Assets:Something       5.00 USD
+            """,
+            """
+              SELECT SAFEDIV(0.0, 0) as result;
             """,
             [('result', Decimal)],
             [(D("0"),)])

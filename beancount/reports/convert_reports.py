@@ -258,10 +258,9 @@ class LedgerPrinter:
         oss.write(';; Close: {e.date:%Y/%m/%d} close {e.account}\n'.format(e=entry))
 
     def Price(_, entry, oss):
-        price_directive = (
-            'P {e.date:%Y/%m/%d} 00:00:00 {e.currency:<16} {amount:>16}\n'.format(
-            e=entry, amount=str(entry.amount)))
-        oss.write(quote_currency(price_directive))
+        oss.write(
+            'P {:%Y/%m/%d} 00:00:00 {:<16} {:>16}\n'.format(
+            entry.date, quote_currency(entry.currency), str(entry.amount)))
 
     def Event(_, entry, oss):
         oss.write(
