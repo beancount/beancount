@@ -17,7 +17,7 @@ class TestExampleForecast(cmptest.TestCase):
             2011-01-01 open Expenses:Restaurant
             2011-01-01 open Assets:Cash
 
-            2011-05-17 # "Something [MONTHLY]"
+            2011-05-17 # "Something [MONTHLY UNTIL 2011-12-31]"
               Expenses:Restaurant   50.02 USD
               Assets:Cash
 
@@ -28,6 +28,10 @@ class TestExampleForecast(cmptest.TestCase):
 
             2011-01-01 open Expenses:Restaurant
             2011-01-01 open Assets:Cash
+
+            2011-05-17 # "Something"
+              Expenses:Restaurant           50.02 USD
+              Assets:Cash                  -50.02 USD
 
             2011-06-17 # "Something"
               Expenses:Restaurant           50.02 USD
