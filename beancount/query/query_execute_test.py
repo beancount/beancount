@@ -895,7 +895,7 @@ class TestArithmeticFunctions(QueryBase):
             [('result', Decimal)],
             [(D("0"),)])
 
-    def test_safe_div2(self):
+    def test_safe_div_zerobyzero(self):
         self.check_query(
             """
               2010-02-23 *

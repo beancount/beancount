@@ -76,7 +76,7 @@ class SafeDiv(query_compile.EvalFunction):
         args = self.eval_args(context)
         try:
             return args[0] / args[1]
-        except decimal.DecimalException:
+        except (decimal.DivisionByZero, decimal.InvalidOperation):
             return ZERO
 
 class SafeDivInt(SafeDiv):

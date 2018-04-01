@@ -6,7 +6,10 @@ Note: This file contains only changes in the 'default' branch.
 
 2018-04-01
 
-  - Merged PR64 from yagebu@ (Jacob Schnitzer), which makes the Inventory class
+  - Merged PR62: Also allow 0/0 in SAFEDIV() (from Jakob Schnitzer), with small
+    adjustments to catch only the specific invalid operations on Decimal.
+
+  - Merged PR64 from yagebu@ (Jakob Schnitzer), which makes the Inventory class
     rely on the fact that Position is immutable in order to avoid unnecessary
     copies. This yields an 18% speedup with no difference.
 
