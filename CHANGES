@@ -4,7 +4,24 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2018-04-02
+
+  - Fixed #193: Removed the broken Google Finance price source importer. Google
+    has removed this service in the favor of a special Search page and this has
+    been broken for the recent little while.
+
+  - Fixed #203: Updated the Yahoo price source implementation to use the
+    undocumented v7 and v8 APIs; moved away from the "ichart" and "download"
+    APIs. The Yahoo importer is back in function.
+
+    This introduced a new dependency on the awesome 'requests' library, which
+    really, was quite inevitable).
+
+
 2018-04-01
+
+  - Merged PR65: Use parse_version to compare versions; then replicated
+    parse_version() locally to avoid the dependency on setuptools.
 
   - Merged PR15 by Johannes Harms:
     Added the following features to the forecasting plugin:

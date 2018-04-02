@@ -6,84 +6,140 @@ import datetime
 import unittest
 from unittest import mock
 from urllib import error
+import pprint
 
+import requests
 
 from beancount.prices.sources import yahoo
 from beancount.core.number import D
 from beancount.core.number import Decimal
 
 
+
+class MockResponse:
+    """A mock requests.Models.Response object for testing."""
+
+    def __init__(self, contents, status_code=requests.codes.ok):
+        self.status_code = status_code
+        self.contents = contents
+
+    def json(self):
+        return self.contents
+
+
 class YahooFinancePriceFetcher(unittest.TestCase):
 
-    def setUp(self):
-        self.fetcher = yahoo.Source()
-        self.url_object = mock.MagicMock()
-        self.url_object.read = mock.MagicMock()
-        self.url_object.getcode = mock.MagicMock(return_value=200)
-        mock.patch('urllib.request.urlopen', return_value=self.url_object).start()
-        self.addCleanup(mock.patch.stopall)
-
     def test_get_latest_price(self):
-        # Test all four possible URL fetches.
-
-        # c4l1d1
-        self.url_object.read.side_effect = [b'USD,553.37,"12/7/2015"\r\n']
-        srcprice = self.fetcher.get_latest_price('HOOL')
+        response = MockResponse(
+            {'quoteResponse':
+             {'error': None,
+              'result': [{'esgPopulated': False,
+                          'exchange': 'TOR',
+                          'exchangeDataDelayedBy': 15,
+                          'exchangeTimezoneName': 'America/Toronto',
+                          'exchangeTimezoneShortName': 'EDT',
+                          'fullExchangeName': 'Toronto',
+                          'gmtOffSetMilliseconds': -14400000,
+                          'language': 'en-US',
+                          'market': 'ca_market',
+                          'marketState': 'CLOSED',
+                          'quoteType': 'ETF',
+                          'regularMarketPrice': 29.99,
+                          'regularMarketTime': 1522353589,
+                          'sourceInterval': 15,
+                          'symbol': 'XSP.TO',
+                          'tradeable': False}]}})
+        with mock.patch('requests.get', return_value=response):
+            srcprice = yahoo.Source().get_latest_price('XSP.TO')
         self.assertTrue(isinstance(srcprice.price, Decimal))
-        self.assertEqual(D('553.37'), srcprice.price)
-
-        # c4b3b2d2
-        self.url_object.read.side_effect = [b'N/A,N/A\r\n',
-                                            b'USD,553.37,556.70,"12/7/2015"\r\n']
-        srcprice = self.fetcher.get_latest_price('HOOL')
-        self.assertTrue(isinstance(srcprice.price, Decimal))
-        self.assertEqual(D('555.035'), srcprice.price)
-
-        # c4b0a0d2
-        self.url_object.read.side_effect = [b'N/A,N/A\r\n',
-                                            b'N/A,N/A\r\n',
-                                            b'USD,553.37,556.70,"12/7/2015"\r\n']
-        srcprice = self.fetcher.get_latest_price('HOOL')
-        self.assertTrue(isinstance(srcprice.price, Decimal))
-        self.assertEqual(D('555.035'), srcprice.price)
-
-        # c4p0d2
-        self.url_object.read.side_effect = [b'N/A,N/A\r\n',
-                                            b'N/A,N/A\r\n',
-                                            b'N/A,N/A\r\n',
-                                            b'USD,553.37,"12/7/2015"\r\n']
-        srcprice = self.fetcher.get_latest_price('HOOL')
-        self.assertTrue(isinstance(srcprice.price, Decimal))
-        self.assertEqual(D('553.37'), srcprice.price)
-
-        # None is valid.
-        self.url_object.read.side_effect = [b'N/A,N/A\r\n',
-                                            b'N/A,N/A\r\n',
-                                            b'N/A,N/A\r\n',
-                                            b'N/A,N/A\r\n']
-        srcprice = self.fetcher.get_latest_price('HOOL')
-        self.assertIsNone(srcprice)
-
-    def test_get_latest_price__invalid(self):
-        self.url_object.read.return_value = b'N/A,N/A\r\n'
-        srcprice = self.fetcher.get_latest_price('INVALID')
-        self.assertIsNone(srcprice)
+        self.assertAlmostEqual(D('29.99'), srcprice.price)
+        timezone = datetime.timezone(datetime.timedelta(hours=-4), 'America/Toronto')
+        self.assertEqual(datetime.datetime(2018, 3, 29, 15, 59, 49, tzinfo=timezone),
+                         srcprice.time)
+        self.assertEqual('CAD', srcprice.quote_currency)
 
     def test_get_historical_price(self):
-        self.url_object.read.return_value = textwrap.dedent("""
-           Date,Open,High,Low,Close,Volume,Adj Close
-           2014-05-06,525.23,526.81,515.06,515.14,1684400,515.14
-           2014-05-05,524.82,528.90,521.32,527.81,1021300,527.81
-           2014-05-02,533.76,534.00,525.61,527.93,1683900,527.93
-        """).encode('utf-8')
-        request_date = datetime.date(2014, 5, 7)
-        expected_date = datetime.date(2014, 5, 6)
-        srcprice = self.fetcher.get_historical_price('HOOL', request_date)
+        response = MockResponse(
+            {'chart':
+             {'error': None,
+              'result': [{'indicators': {'adjclose': [{'adjclose': [29.236251831054688,
+                                                                    29.16683006286621,
+                                                                    29.196582794189453,
+                                                                    29.226333618164062]}],
+                                         'quote': [{'close': [29.479999542236328,
+                                                              29.40999984741211,
+                                                              29.440000534057617,
+                                                              29.469999313354492],
+                                                    'high': [29.510000228881836,
+                                                             29.489999771118164,
+                                                             29.469999313354492,
+                                                             29.579999923706055],
+                                                    'low': [29.34000015258789,
+                                                            29.350000381469727,
+                                                            29.399999618530273,
+                                                            29.43000030517578],
+                                                    'open': [29.360000610351562,
+                                                             29.43000030517578,
+                                                             29.43000030517578,
+                                                             29.530000686645508],
+                                                    'volume': [160800,
+                                                               118700,
+                                                               98500,
+                                                               227800]}]},
+                          'meta': {'chartPreviousClose': 29.25,
+                                   'currency': 'CAD',
+                                   'currentTradingPeriod': {'post': {'end': 1522702800,
+                                                                     'gmtoffset': -14400,
+                                                                     'start': 1522699200,
+                                                                     'timezone': 'EDT'},
+                                                            'pre': {'end': 1522675800,
+                                                                    'gmtoffset': -14400,
+                                                                    'start': 1522670400,
+                                                                    'timezone': 'EDT'},
+                                                            'regular': {'end': 1522699200,
+                                                                        'gmtoffset': -14400,
+                                                                        'start': 1522675800,
+                                                                        'timezone': 'EDT'}},
+                                   'dataGranularity': '1d',
+                                   'exchangeName': 'TOR',
+                                   'exchangeTimezoneName': 'America/Toronto',
+                                   'firstTradeDate': 1018872000,
+                                   'gmtoffset': -14400,
+                                   'instrumentType': 'ETF',
+                                   'symbol': 'XSP.TO',
+                                   'timezone': 'EDT',
+                                   'validRanges': ['1d', '5d', '1mo', '3mo', '6mo', '1y',
+                                                   '2y', '5y', '10y', 'ytd', 'max']},
+                          'timestamp': [1509111000,
+                                        1509370200,
+                                        1509456600,
+                                        1509543000]}]}})
+        with mock.patch('requests.get', return_value=response):
+            srcprice = yahoo.Source().get_historical_price(
+                'XSP.TO', datetime.date(2017, 11, 1))
         self.assertTrue(isinstance(srcprice.price, Decimal))
-        self.assertEqual(D('515.14'), srcprice.price)
-        self.assertEqual(expected_date, srcprice.time.date())
+        self.assertAlmostEqual(D('29.47'), srcprice.price, 3)
+        timezone = datetime.timezone(datetime.timedelta(hours=-4), 'America/Toronto')
+        self.assertEqual(datetime.datetime(2017, 11, 1, 9, 30, tzinfo=timezone),
+                         srcprice.time)
+        self.assertEqual('CAD', srcprice.quote_currency)
 
-    def test_get_historical_price__invalid(self):
-        self.url_object.read.side_effect = error.HTTPError('url', 'code', '404', {}, None)
-        srcprice = self.fetcher.get_historical_price('INVALID', datetime.date(2014, 5, 7))
-        self.assertIsNone(srcprice)
+    def test_parse_response_error_status_code(self):
+        response = MockResponse(
+            {'quoteResponse': {'error': 'Not supported', 'result': [{}]}},
+            status_code=400)
+        with self.assertRaises(yahoo.YahooError):
+            yahoo.parse_response(response)
+
+    def test_parse_response_error_invalid_format(self):
+        response = MockResponse(
+            {'quoteResponse': {'error': None, 'result': [{}]},
+             'chart': {'error': None, 'result': [{}]}})
+        with self.assertRaises(yahoo.YahooError):
+            yahoo.parse_response(response)
+
+    def test_parse_response_error_not_none(self):
+        response = MockResponse(
+            {'quoteResponse': {'error': 'Non-zero error', 'result': [{}]}})
+        with self.assertRaises(yahoo.YahooError):
+            yahoo.parse_response(response)
