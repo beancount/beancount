@@ -51,6 +51,9 @@ else:
             # This library is needed to parse XML files (for the OFX examples).
             'beautifulsoup4',
 
+            # This library is needed to make requests for price sources.
+            'requests',
+
             # This library is needed to identify the character set of a file for
             # import, in order to read its contents and match expressions
             # against it.
