@@ -145,6 +145,24 @@ class TestInventory(unittest.TestCase):
         inv5 = I('100 JPY, 100 USD')
         self.assertEqual(inv4, inv5)
 
+    def test_op_lt(self):
+        inv1 = I('100 USD, 100 CAD')
+        inv2 = I('100 CAD, 100 USD')
+        self.assertFalse(inv1 < inv2)
+        self.assertFalse(inv2 < inv1)
+
+        inv3 = I('200 USD, 100 CAD')
+        self.assertTrue(inv1 < inv3)
+        self.assertTrue(inv2 < inv3)
+        self.assertFalse(inv3 < inv1)
+
+        inv4 = I('100 USD, 100 JPY')
+        self.assertTrue(inv1 > inv4)
+
+        inv5 = I('100 JPY, 100 USD')
+        self.assertTrue(inv1 > inv5)
+        self.assertFalse(inv4 < inv5)
+
     def test_is_small__value(self):
         test_inv = I('1.50 JPY, 1.51 USD, 1.52 CAD')
         for inv in test_inv, -test_inv:

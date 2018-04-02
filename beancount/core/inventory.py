@@ -75,6 +75,9 @@ class Inventory(dict):
     def __iter__(self):
         return iter(self.values())
 
+    def __lt__(self, other):
+        return sorted(self) < sorted(other)
+
     def __getitem__(self, index):
         """For compatibility with the previous list-based implementation."""
         return list(self.values())[index]
