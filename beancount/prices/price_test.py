@@ -14,7 +14,7 @@ from unittest import mock
 from beancount.prices import price
 from beancount.prices import find_prices
 from beancount.prices import source
-from beancount.prices.sources import google
+from beancount.prices.sources import yahoo
 from beancount.core.number import D
 from beancount.utils import test_utils
 from beancount.parser import cmptest
@@ -180,11 +180,11 @@ class TestProcessArguments(unittest.TestCase):
     def test_expressions(self):
         with test_utils.capture('stderr'):
             args, jobs, _, __ = test_utils.run_with_args(
-                price.process_args, ['--no-cache', '-e', 'USD:google/NASDAQ:AAPL'])
+                price.process_args, ['--no-cache', '-e', 'USD:yahoo/AAPL'])
             self.assertEqual(
                 [find_prices.DatedPrice(
-                    'NASDAQ:AAPL', 'USD', None,
-                    [find_prices.PriceSource(google, 'NASDAQ:AAPL', False)])], jobs)
+                    'AAPL', 'USD', None,
+                    [find_prices.PriceSource(yahoo, 'AAPL', False)])], jobs)
 
 
 class TestClobber(cmptest.TestCase):
@@ -254,18 +254,18 @@ class TestInverted(cmptest.TestCase):
 
     def test_fetch_price__normal(self):
         entry = price.fetch_price(self.dprice._replace(sources=[
-            find_prices.PriceSource(google, 'CURRENCY:USDJPY', False)]), False)
+            find_prices.PriceSource(yahoo, 'USDJPY', False)]), False)
         self.assertEqual(('JPY', 'USD'), (entry.currency, entry.amount.currency))
         self.assertEqual(D('125.00'), entry.amount.number)
 
     def test_fetch_price__inverted(self):
         entry = price.fetch_price(self.dprice._replace(sources=[
-            find_prices.PriceSource(google, 'CURRENCY:USDJPY', True)]), False)
+            find_prices.PriceSource(yahoo, 'USDJPY', True)]), False)
         self.assertEqual(('JPY', 'USD'), (entry.currency, entry.amount.currency))
         self.assertEqual(D('0.008'), entry.amount.number)
 
     def test_fetch_price__swapped(self):
         entry = price.fetch_price(self.dprice._replace(sources=[
-            find_prices.PriceSource(google, 'CURRENCY:USDJPY', True)]), True)
+            find_prices.PriceSource(yahoo, 'USDJPY', True)]), True)
         self.assertEqual(('USD', 'JPY'), (entry.currency, entry.amount.currency))
         self.assertEqual(D('125.00'), entry.amount.number)

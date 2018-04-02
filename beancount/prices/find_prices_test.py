@@ -8,7 +8,6 @@ import types
 import unittest
 
 from beancount.prices import find_prices
-from beancount.prices.sources import google
 from beancount.prices.sources import yahoo
 from beancount import loader
 
@@ -18,10 +17,10 @@ PS = find_prices.PriceSource
 class TestImportSource(unittest.TestCase):
 
     def test_import_source_valid(self):
-        for name in 'google', 'yahoo':
+        for name in 'oanda', 'yahoo':
             module = find_prices.import_source(name)
             self.assertIsInstance(module, types.ModuleType)
-        module = find_prices.import_source('beancount.prices.sources.google')
+        module = find_prices.import_source('beancount.prices.sources.yahoo')
         self.assertIsInstance(module, types.ModuleType)
 
     def test_import_source_invalid(self):
@@ -42,9 +41,6 @@ class TestParseSource(unittest.TestCase):
             find_prices.parse_single_source('invalid.module.name/NASDAQ:AAPL')
 
     def test_source_valid(self):
-        psource = find_prices.parse_single_source('google/NASDAQ:AAPL')
-        self.assertEqual(PS(google, 'NASDAQ:AAPL', False), psource)
-
         psource = find_prices.parse_single_source('yahoo/CNYUSD=X')
         self.assertEqual(PS(yahoo, 'CNYUSD=X', False), psource)
 
@@ -68,40 +64,39 @@ class TestParseSourceMap(unittest.TestCase):
                 find_prices.parse_source_map(expr)
 
     def test_source_map_onecur_single(self):
-        smap = find_prices.parse_source_map('USD:google/NASDAQ:AAPL')
+        smap = find_prices.parse_source_map('USD:yahoo/AAPL')
         self.assertEqual(
-            {'USD': [PS('beancount.prices.sources.google', 'NASDAQ:AAPL', False)]},
+            {'USD': [PS('beancount.prices.sources.yahoo', 'AAPL', False)]},
             self._clean_source_map(smap))
 
     def test_source_map_onecur_multiple(self):
-        smap = find_prices.parse_source_map('USD:google/NASDAQ:AAPL,yahoo/AAPL')
+        smap = find_prices.parse_source_map('USD:oanda/USDCAD,yahoo/CAD=X')
         self.assertEqual(
-            {'USD': [PS('beancount.prices.sources.google', 'NASDAQ:AAPL', False),
-                     PS('beancount.prices.sources.yahoo', 'AAPL', False)]},
+            {'USD': [PS('beancount.prices.sources.oanda', 'USDCAD', False),
+                     PS('beancount.prices.sources.yahoo', 'CAD=X', False)]},
             self._clean_source_map(smap))
 
     def test_source_map_manycur_single(self):
-        smap = find_prices.parse_source_map('USD:google/CURRENCY:GBPUSD '
-                                            'CAD:google/CURRENCY:GBPCAD')
+        smap = find_prices.parse_source_map('USD:yahoo/USDCAD '
+                                            'CAD:yahoo/CAD=X')
         self.assertEqual(
-            {'USD': [PS('beancount.prices.sources.google', 'CURRENCY:GBPUSD', False)],
-             'CAD': [PS('beancount.prices.sources.google', 'CURRENCY:GBPCAD', False)]},
+            {'USD': [PS('beancount.prices.sources.yahoo', 'USDCAD', False)],
+             'CAD': [PS('beancount.prices.sources.yahoo', 'CAD=X', False)]},
             self._clean_source_map(smap))
 
     def test_source_map_manycur_multiple(self):
-        smap = find_prices.parse_source_map('USD:google/CURRENCY:GBPUSD,yahoo/GBPUSD '
-                                            'CAD:google/CURRENCY:GBPCAD')
+        smap = find_prices.parse_source_map('USD:yahoo/GBPUSD,oanda/GBPUSD '
+                                            'CAD:yahoo/GBPCAD')
         self.assertEqual(
-            {'USD': [PS('beancount.prices.sources.google', 'CURRENCY:GBPUSD', False),
-                     PS('beancount.prices.sources.yahoo', 'GBPUSD', False)],
-             'CAD': [PS('beancount.prices.sources.google', 'CURRENCY:GBPCAD', False)]},
+            {'USD': [PS('beancount.prices.sources.yahoo', 'GBPUSD', False),
+                     PS('beancount.prices.sources.oanda', 'GBPUSD', False)],
+             'CAD': [PS('beancount.prices.sources.yahoo', 'GBPCAD', False)]},
             self._clean_source_map(smap))
 
     def test_source_map_inverse(self):
-        smap = find_prices.parse_source_map('USD:google/^CURRENCY:GBPUSD,yahoo/^GBPUSD')
+        smap = find_prices.parse_source_map('USD:yahoo/^GBPUSD')
         self.assertEqual(
-            {'USD': [PS('beancount.prices.sources.google', 'CURRENCY:GBPUSD', True),
-                     PS('beancount.prices.sources.yahoo', 'GBPUSD', True)]},
+            {'USD': [PS('beancount.prices.sources.yahoo', 'GBPUSD', True)]},
             self._clean_source_map(smap))
 
 
@@ -120,7 +115,7 @@ class TestFromFile(unittest.TestCase):
 
         2010-01-01 commodity QQQ
           name: "PowerShares QQQ Trust, Series 1 (ETF)"
-          price: "USD:google/NASDAQ:QQQ"
+          price: "USD:yahoo/NASDAQ:QQQ"
 
         2010-01-01 commodity XSP
           name: "iShares S&P 500 Index Fund (CAD Hedged)"
@@ -230,10 +225,10 @@ class TestFilters(unittest.TestCase):
         2000-01-10 open Assets:US:Invest:Margin
 
         2014-01-01 commodity QQQ
-          price: "USD:google/NASDAQ:QQQ"
+          price: "USD:yahoo/NASDAQ:QQQ"
 
         2014-01-01 commodity VEA
-          price: "USD:google/NASDAQ:VEA"
+          price: "USD:yahoo/NASDAQ:VEA"
 
         2014-02-06 *
           Assets:US:Invest:QQQ             100 QQQ {86.23 USD}
@@ -274,10 +269,10 @@ class TestFilters(unittest.TestCase):
         2000-01-10 open Assets:US:Invest:Margin
 
         2014-01-01 commodity QQQ
-          price: "USD:google/NASDAQ:QQQ"
+          price: "USD:yahoo/NASDAQ:QQQ"
 
         2014-01-01 commodity VEA
-          price: "USD:google/NASDAQ:VEA"
+          price: "USD:yahoo/NASDAQ:VEA"
 
         2014-02-06 *
           Assets:US:Invest:QQQ             100 QQQ {86.23 USD}
@@ -303,7 +298,7 @@ class TestFilters(unittest.TestCase):
         2000-01-10 open Assets:US:Invest:Margin
 
         2014-01-01 commodity QQQ
-          price: "USD:google/NASDAQ:QQQ"
+          price: "USD:yahoo/NASDAQ:QQQ"
 
         2014-02-06 *
           Assets:US:Invest:QQQ             100 QQQ {86.23 USD}
