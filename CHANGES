@@ -6,6 +6,8 @@ Note: This file contains only changes in the 'default' branch.
 
 2018-04-03
 
+  - Merged PR68 from Martin Michlmayr, added Travis Yaml support file.
+
   - Fixed Emacs functionality to uncomment regions (change submitted by Stefan
     Monnier on the list).
 
