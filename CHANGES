@@ -4,6 +4,11 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2018-04-04
+
+  - Fixed #267: Implemented a price source from the IEX exchange.
+
+
 2018-04-03
 
   - Implemented Quandl importer on its REST API. Another implementation, based

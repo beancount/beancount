@@ -60,9 +60,9 @@ def fetch_time_series(ticker, date=None):
 
     # Fetch and process errors.
     response = requests.get(url, params=payload)
-    if response.status_code != 200:
-        raise QuandlError("Invalid response {}: {}".format(response.status_code,
-                                                           response.text))
+    if response.status_code != requests.codes.ok:
+        raise QuandlError("Invalid response ({}): {}".format(response.status_code,
+                                                             response.text))
     result = response.json()
     if 'quandl_error' in result:
         raise QuandlError(result['quandl_error']['message'])

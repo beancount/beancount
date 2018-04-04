@@ -5,12 +5,14 @@ import datetime
 import unittest
 from unittest import mock
 
+import requests
+
 from beancount.prices import source
 from beancount.prices.sources import quandl
 from beancount.core.number import D
 
 
-def response(contents, status_code=200):
+def response(contents, status_code=requests.codes.ok):
     """Produce a context manager to patch a JSON response."""
     response = mock.Mock()
     response.status_code = status_code
@@ -108,5 +110,9 @@ class QuandlPriceFetcher(unittest.TestCase):
         with response(contents):
             srcprice = quandl.fetch_time_series('WIKI:FB', None)
             self.assertIsInstance(srcprice, source.SourcePrice)
-            self.assertEqual(source.SourcePrice(
-                D('1006.94'), datetime.datetime(2018, 3, 27, 0, 0), None), srcprice)
+
+            self.assertEqual(D('1006.94'), srcprice.price)
+            self.assertEqual(datetime.datetime(2018, 3, 27, 4, 0, 0,
+                                               tzinfo=datetime.timezone.utc),
+                             srcprice.time.astimezone(datetime.timezone.utc))
+            self.assertEqual(None, srcprice.quote_currency)
