@@ -88,13 +88,17 @@ class Source(source.Source):
         payload.update(_DEFAULT_PARAMS)
         response = requests.get(url, params=payload)
         result = parse_response(response)
-        price = D(result['regularMarketPrice'])
+        try:
+            price = D(result['regularMarketPrice'])
 
-        timezone = datetime.timezone(
-            datetime.timedelta(hours=result['gmtOffSetMilliseconds'] / 3600000),
-            result['exchangeTimezoneName'])
-        trade_date = datetime.datetime.fromtimestamp(result['regularMarketTime'],
-                                                     tz=timezone)
+            timezone = datetime.timezone(
+                datetime.timedelta(hours=result['gmtOffSetMilliseconds'] / 3600000),
+                result['exchangeTimezoneName'])
+            trade_date = datetime.datetime.fromtimestamp(result['regularMarketTime'],
+                                                         tz=timezone)
+        except KeyError:
+            raise YahooError("Invalid response from Yahoo: {}".format(repr(result)))
+
         currency = parse_currency(result)
 
         return source.SourcePrice(price, trade_date, currency)
