@@ -6,6 +6,10 @@ Note: This file contains only changes in the 'default' branch.
 
 2018-04-04
 
+  - Handle error on an invalid implementation of a price source (e.g., in this
+    case an obsoleted price source string of 'google' imports something else and
+    referenceing .Source fails).
+
   - Bubble up error from Yahoo price source.
 
   - Fixed #267: Implemented a price source from the IEX exchange.

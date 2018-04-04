@@ -128,7 +128,10 @@ def fetch_price(dprice, swap_inverted=False):
 
     """
     for psource in dprice.sources:
-        source = psource.module.Source()
+        try:
+            source = psource.module.Source()
+        except AttributeError:
+            continue
         srcprice = fetch_cached_price(source, psource.symbol, dprice.date)
         if srcprice is not None:
             break
