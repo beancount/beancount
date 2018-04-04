@@ -7,6 +7,7 @@ __copyright__ = "Copyright (C) 2016-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import itertools
+import inspect
 import logging
 import sys
 import textwrap
@@ -61,7 +62,12 @@ def extract_from_file(filename, importer,
 
     # Note: Let the exception through on purpose. This makes developing
     # importers much easier by rendering the details of the exceptions.
-    new_entries = importer.extract(file)
+    #
+    # Note: For legacy support, support calling without the existing entries.
+    kwargs = {}
+    if 'existing_entries' in inspect.signature(importer.extract).parameters:
+        kwargs['existing_entries'] = existing_entries
+    new_entries = importer.extract(file, **kwargs)
     if not new_entries:
         return [], []
 
@@ -86,7 +92,9 @@ def extract_from_file(filename, importer,
         # Add a metadata marker to the extracted entries for duplicates.
         mod_entries = []
         for entry in new_entries:
-            if id(entry) in duplicate_set:
+            if entry.meta.get(DUPLICATE_META, False):
+                duplicate_entries.append(entry)
+            elif id(entry) in duplicate_set:
                 marked_meta = entry.meta.copy()
                 marked_meta[DUPLICATE_META] = True
                 entry = entry._replace(meta=marked_meta)

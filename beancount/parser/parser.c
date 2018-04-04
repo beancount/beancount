@@ -271,8 +271,12 @@ PyMODINIT_FUNC PyInit__parser(void)
 
     /* Provide the source hash to the parser module for verification that the
      * extension module is up-to-date. */
-    /* uint64_t int_source_hash = #PARSER_SOURCE_HASH; */
-    PyObject* source_hash = PyUnicode_FromString(XSTRINGIFY(PARSER_SOURCE_HASH));
+#if _MSC_VER == 1900
+    static const char* quoted_hash = "PARSER_SOURCE_HASH";
+#else
+    static const char* quoted_hash = XSTRINGIFY(PARSER_SOURCE_HASH);
+#endif
+    PyObject* source_hash = PyUnicode_FromString(quoted_hash);
     PyObject_SetAttrString(module, "SOURCE_HASH", source_hash);
 
     /* Import the module that defines the missing object constant. */

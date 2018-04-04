@@ -26,7 +26,6 @@ from beancount.core import interpolate
 from beancount.utils import test_utils
 from beancount.parser import grammar
 from beancount.parser import cmptest
-from beancount.parser import booking_simple_test
 
 
 def check_list(test, objlist, explist):
@@ -46,7 +45,7 @@ def check_list(test, objlist, explist):
     elif isinstance(explist, (tuple, list)):
         test.assertEqual(len(explist), len(objlist))
         for obj, exp in zip(objlist, explist):
-            test.assertTrue(isinstance(type(obj), type(exp)))
+            test.assertIsInstance(obj, exp)
 
 
 def raise_exception(*args, **kwargs):
@@ -249,7 +248,7 @@ class TestParserComplete(unittest.TestCase):
             Expenses:Restaurant         100 USD
         """
         check_list(self, entries, [data.Transaction])
-        check_list(self, errors, 1 if booking_simple_test.ERRORS_ON_RESIDUAL else 0)
+        check_list(self, errors, 0)
         entry = entries[0]
         self.assertEqual(1, len(entry.postings))
 
@@ -842,7 +841,7 @@ class TestTransactions(unittest.TestCase):
             Assets:US:Cash             -100 USD
         """
         check_list(self, entries, [])
-        check_list(self, errors, [parser.ParserError])
+        check_list(self, errors, [parser.ParserSyntaxError])
 
     @parser.parse_doc()
     def test_zero_prices(self, entries, errors, _):
@@ -884,9 +883,7 @@ class TestTransactions(unittest.TestCase):
             Assets:Checking         -99 USD
         """
         check_list(self, entries, [data.Transaction])
-        check_list(self, errors,
-                   [interpolate.BalanceError]
-                   if booking_simple_test.ERRORS_ON_RESIDUAL else [])
+        check_list(self, errors, [])
 
     @parser.parse_doc()
     def test_no_postings(self, entries, errors, _):
@@ -967,7 +964,7 @@ class TestParseLots(unittest.TestCase):
         self.assertEqual(CostSpec(MISSING, None, MISSING, None, "d82d55a0dbe8", False),
                          posting.cost)
 
-    @parser.parse_doc(allow_incomplete=True)
+    @parser.parse_doc(allow_incomplete=True, expect_errors=True)
     def test_cost_merge(self, entries, errors, _):
         """
           2014-01-01 *
@@ -1045,7 +1042,7 @@ class TestParseLots(unittest.TestCase):
             Assets:Invest:Cash  -45.23 USD
         """
         self.assertTrue(parser.is_entry_incomplete(entries[0]))
-        self.assertEqual(1, len(errors))
+        self.assertEqual(2, len(errors))
         self.assertTrue(any(re.search("Duplicate merge", error.message)
                             for error in errors))
 
@@ -1119,6 +1116,14 @@ class TestCurrencies(unittest.TestCase):
           2014-01-19 open Assets:Numbers       EURO123
         """
         self.assertFalse(errors)
+
+    @parser.parse_doc(expect_errors=True)
+    def test_different_cost_and_price_currency(self, entries, errors, _):
+        """
+          2018-03-21 * "Convert MR to KrisFlyer"
+            Assets:Test                -100 MR {0.0075 USD} @ 1 KRISFLYER
+            Assets:Krisflyer            100 KRISFLYER
+        """
 
 
 class TestTotalsAndSigns(unittest.TestCase):
@@ -2391,7 +2396,7 @@ class TestIncompleteInputs(cmptest.TestCase):
                                   datetime.date(2015, 9, 21), "blablabla", False),
                          posting.cost)
 
-    @parser.parse_doc(allow_incomplete=True)
+    @parser.parse_doc(allow_incomplete=True, expect_errors=True)
     def test_cost_average(self, entries, _, options_map):
         """
           2010-05-28 *
@@ -2402,7 +2407,7 @@ class TestIncompleteInputs(cmptest.TestCase):
         self.assertEqual(CostSpec(MISSING, None, MISSING, None, None, True),
                          posting.cost)
 
-    @parser.parse_doc(allow_incomplete=True)
+    @parser.parse_doc(allow_incomplete=True, expect_errors=True)
     def test_cost_average_missing_basis(self, entries, _, options_map):
         """
           2010-05-28 *
@@ -2414,7 +2419,7 @@ class TestIncompleteInputs(cmptest.TestCase):
                                   datetime.date(2015, 9, 21), "blablabla", True),
                          posting.cost)
 
-    @parser.parse_doc(allow_incomplete=True)
+    @parser.parse_doc(allow_incomplete=True, expect_errors=True)
     def test_cost_average_with_other(self, entries, _, options_map):
         """
           2010-05-28 *

@@ -20,11 +20,12 @@ sep = ':'
 
 # Regular expression string that matches a valid account name.
 ACCOUNT_NAME_RE = regexp_utils.re_replace_unicode(r"\P{Lu}[\p{L}\p{Nd}\-]*")
+SUBACCOUNT_NAME_RE = regexp_utils.re_replace_unicode(r"[\p{Lu}\p{Nd}][\p{L}\p{Nd}\-]*")
 
 
 # Regular expression string that matches a valid account.
-ACCOUNT_RE = "{}(?:{}{})+".format(
-        ACCOUNT_NAME_RE, sep, ACCOUNT_NAME_RE)
+ACCOUNT_RE = "(?:{})(?:{}{})+".format(
+        ACCOUNT_NAME_RE, sep, SUBACCOUNT_NAME_RE)
 
 
 # A dummy object which stands for the account type. Values in custom directives

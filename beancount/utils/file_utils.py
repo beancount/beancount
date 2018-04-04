@@ -4,6 +4,7 @@ __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from os import path
+import contextlib
 import logging
 import os
 import time
@@ -99,3 +100,20 @@ def touch_file(filename, *otherfiles):
         new_stat = os.stat(filename)
         if new_stat.st_mtime_ns > orig_mtime_ns:
             break
+
+
+@contextlib.contextmanager
+def chdir(directory):
+    """Temporarily chdir to the given directory.
+
+    Args:
+      directory: The directory to switch do.
+    Returns:
+      A context manager which restores the cwd after running.
+    """
+    cwd = os.getcwd()
+    os.chdir(directory)
+    try:
+        yield cwd
+    finally:
+        os.chdir(cwd)

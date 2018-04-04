@@ -43,3 +43,11 @@ class TestSnoop(unittest.TestCase):
             self.assertTrue(re.match.value is match)
         finally:
             re.match = original_match
+
+
+class TestSaver(unittest.TestCase):
+
+    def test_saver(self):
+        save = snoop.save
+        if save(re.match(r'(\d+)', 'bla277232bla')):
+            self.assertEqual('277232', save.value)

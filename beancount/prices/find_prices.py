@@ -11,7 +11,6 @@ import sys
 from beancount.core import data
 from beancount.core import amount
 from beancount.ops import summarize
-from beancount.prices.sources import yahoo as default_source
 
 
 # A dated price source description.
@@ -34,6 +33,10 @@ DatedPrice = collections.namedtuple('DatedPrice', 'base quote date sources')
 #   symbol: A ticker symbol in the universe of the source.
 #   invert: A boolean, true if we need to invert the currency.
 PriceSource = collections.namedtuple('PriceSource', 'module symbol invert')
+
+
+# The Python package where the default sources are found.
+DEFAULT_PACKAGE = 'beancount.prices.sources'
 
 
 def format_dated_price_str(dprice):
@@ -126,10 +129,6 @@ def parse_single_source(source):
     return PriceSource(module, symbol, bool(invert))
 
 
-# The Python package where the default sources are found.
-DEFAULT_SOURCE_PACKAGE = 'beancount.prices.sources'
-
-
 def import_source(module_name):
     """Import the source module defined by the given name.
 
@@ -143,7 +142,7 @@ def import_source(module_name):
     Raises:
       ImportError: If the module cannot be imported.
     """
-    default_name = '{}.{}'.format(DEFAULT_SOURCE_PACKAGE, module_name)
+    default_name = '{}.{}'.format(DEFAULT_PACKAGE, module_name)
     try:
         __import__(default_name)
         return sys.modules[default_name]
@@ -330,7 +329,7 @@ def log_currency_list(message, currencies):
         logging.debug("  {:>32}".format('{} /{}'.format(base, quote)))
 
 
-def get_price_jobs_at_date(entries, date=None, inactive=False, undeclared=False):
+def get_price_jobs_at_date(entries, date=None, inactive=False, undeclared_source=None):
     """Get a list of prices to fetch from a stream of entries.
 
     The active holdings held on the given date are included.
@@ -338,8 +337,14 @@ def get_price_jobs_at_date(entries, date=None, inactive=False, undeclared=False)
     Args:
       filename: A string, the name of a file to process.
       date: A datetime.date instance.
+      inactive: Include currencies with no balance at the given date. The default
+        is to only include those currencies which have a non-zero balance.
+      undeclared_source: A string, the name of the default source module to use to
+        pull prices for commodities without a price source metadata on their
+        Commodity directive declaration.
     Returns:
       A list of DatedPrice instances.
+
     """
     # Find the list of declared currencies, and from it build a mapping for
     # tickers for each (base, quote) pair. This is the only place tickers
@@ -349,7 +354,7 @@ def get_price_jobs_at_date(entries, date=None, inactive=False, undeclared=False)
                     for base, quote, psources in declared_triples}
 
     # Compute the initial list of currencies to consider.
-    if undeclared:
+    if undeclared_source:
         # Use the full set of possible currencies.
         cur_at_cost = find_currencies_at_cost(entries)
         cur_converted = find_currencies_converted(entries, date)
@@ -358,9 +363,11 @@ def get_price_jobs_at_date(entries, date=None, inactive=False, undeclared=False)
         log_currency_list("Currency held at cost", cur_at_cost)
         log_currency_list("Currency converted", cur_converted)
         log_currency_list("Currency priced", cur_priced)
+        default_source = import_source(undeclared_source)
     else:
         # Use the currencies from the Commodity directives.
         currencies = set(currency_map.keys())
+        default_source = None
 
     log_currency_list("Currencies in primary list", currencies)
 

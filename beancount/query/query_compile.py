@@ -18,6 +18,11 @@ from beancount.core import inventory
 from beancount.query import query_parser
 
 
+# A global constant which sets whether we support inferred/implicit group-by
+# semantics.
+SUPPORT_IMPLICIT_GROUPBY = True
+
+
 class CompilationError(Exception):
     """A compiler/interpreter error."""
 
@@ -651,10 +656,20 @@ def compile_group_by(group_by, c_targets, environ):
         if any(aggregate_bools):
             # If the query is an aggregate query, check that all the targets are
             # aggregates.
-            if not all(aggregate_bools):
-                raise CompilationError(
-                    "Aggregate query without a GROUP-BY should have only aggregates")
-            assert group_indexes == []
+            if all(aggregate_bools):
+                assert group_indexes == []
+            else:
+                # If some of the targets aren't aggregates, automatically infer
+                # that they are to be implicit group by targets. This makes for
+                # a much more convenient syntax for our lightweight SQL, where
+                # grouping is optional.
+                if SUPPORT_IMPLICIT_GROUPBY:
+                    group_indexes = [index
+                                     for index, c_target in enumerate(c_targets)
+                                     if not c_target.is_aggregate]
+                else:
+                    raise CompilationError(
+                        "Aggregate query without a GROUP-BY should have only aggregates")
         else:
             # This is not an aggregate query; don't set group_indexes to
             # anything useful, we won't need it.
@@ -810,7 +825,7 @@ def compile_select(select, targets_environ, postings_environ, entries_environ):
     # targets and the where clause.
     from_clause = select.from_clause
     if isinstance(from_clause, query_parser.Select):
-        c_from = compile_select(from_clause) if from_clause is not None else None
+        c_from = None
         environ_target = ResultSetEnvironment()
         environ_where = ResultSetEnvironment()
 
@@ -866,12 +881,15 @@ def compile_select(select, targets_environ, postings_environ, entries_environ):
     # targets to the list of group-by expressions and should have resolved all
     # the indexes.
     if group_indexes is not None:
-        non_aggregate_indexes = [index
-                                 for index, c_target in enumerate(c_targets)
-                                 if not c_target.is_aggregate]
-        if set(non_aggregate_indexes) != set(group_indexes):
+        non_aggregate_indexes = set(index
+                                    for index, c_target in enumerate(c_targets)
+                                    if not c_target.is_aggregate)
+        if non_aggregate_indexes != set(group_indexes):
+            missing_names = ['"{}"'.format(c_targets[index].name)
+                             for index in non_aggregate_indexes - set(group_indexes)]
             raise CompilationError(
-                "All non-aggregates must be covered by GROUP-BY clause in aggregate query")
+                "All non-aggregates must be covered by GROUP-BY clause in aggregate query; "
+                "the following targets are missing: {}".format(",".join(missing_names)))
 
     # Check that PIVOT-BY is not supported yet.
     if select.pivot_by is not None:

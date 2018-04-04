@@ -28,8 +28,7 @@
 
 ;;; Code:
 
-;; FIXME: AFAIK, both of those `require's aren't needed.
-(require 'ido) ;; For completing read.
+(autoload 'ido-completing-read "ido")
 (require 'font-lock)
 
 (defgroup beancount ()
@@ -181,6 +180,11 @@ is great for sectioning large files with many transactions.
   (set (make-local-variable 'font-lock-comment-start-skip) ";+ *")
   ;; Default to `;;' in comment-region.
   (set (make-local-variable 'comment-add) 1)
+
+  ;; Org-mode sets both of these to `org-comment-or-uncomment-region',
+  ;; which doesn't know about our ";" comments.
+  (kill-local-variable 'comment-region-function)
+  (kill-local-variable 'uncomment-region-function)
 
   ;; No tabs by default.
   (set (make-local-variable 'indent-tabs-mode) nil)

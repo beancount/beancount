@@ -145,7 +145,13 @@ def check_import(package_name, min_version=None, module_name=None):
         module = sys.modules[module_name]
         version = module.__version__
         assert isinstance(version, str)
-        is_sufficient = version >= min_version if min_version else True
+        is_sufficient = (parse_version(version) >= parse_version(min_version)
+                         if min_version else True)
     except ImportError:
         version, is_sufficient = None, False
     return (package_name, version, is_sufficient)
+
+
+def parse_version(version_str: str) -> str:
+    """Parse the version string into a comparable tuple."""
+    return [int(v) for v in version_str.split('.')]

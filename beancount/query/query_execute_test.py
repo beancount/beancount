@@ -2,6 +2,7 @@ __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import datetime
+import decimal
 import io
 import unittest
 import textwrap
@@ -118,7 +119,7 @@ class CommonInputBase:
     def setUp(self):
         super().setUp()
         self.entries, _, self.options_map = loader.load_string(textwrap.dedent(self.INPUT))
-
+        self.context = qx.create_row_context(self.entries, self.options_map)
 
 class TestFilterEntries(CommonInputBase, QueryBase):
 
@@ -126,13 +127,13 @@ class TestFilterEntries(CommonInputBase, QueryBase):
         # Check that no filter outputs the very same thing.
         filtered_entries = qx.filter_entries(self.compile("""
           SELECT * ;
-        """).c_from, self.entries, self.options_map)
+        """).c_from, self.entries, self.options_map, self.context)
         self.assertEqualEntries(self.entries, filtered_entries)
 
     def test_filter_by_year(self):
         filtered_entries = qx.filter_entries(self.compile("""
           SELECT date, type FROM year(date) = 2012;
-        """).c_from, self.entries, self.options_map)
+        """).c_from, self.entries, self.options_map, self.context)
         self.assertEqualEntries("""
 
           2012-02-02 * "Dinner with Dos"
@@ -146,7 +147,7 @@ class TestFilterEntries(CommonInputBase, QueryBase):
           SELECT date, type
           FROM NOT (type = 'transaction' AND
                     (year(date) = 2012 OR year(date) = 2013));
-        """).c_from, self.entries, self.options_map)
+        """).c_from, self.entries, self.options_map, self.context)
         self.assertEqualEntries("""
 
           2010-01-01 open Assets:Bank:Checking
@@ -171,7 +172,7 @@ class TestFilterEntries(CommonInputBase, QueryBase):
     def test_filter_by_expr2(self):
         filtered_entries = qx.filter_entries(self.compile("""
           SELECT date, type FROM date < 2012-06-01;
-        """).c_from, self.entries, self.options_map)
+        """).c_from, self.entries, self.options_map, self.context)
         self.assertEqualEntries("""
 
           2010-01-01 open Assets:Bank:Checking
@@ -196,7 +197,7 @@ class TestFilterEntries(CommonInputBase, QueryBase):
     def test_filter_close_undated(self):
         filtered_entries = qx.filter_entries(self.compile("""
           SELECT date, type FROM CLOSE;
-        """).c_from, self.entries, self.options_map)
+        """).c_from, self.entries, self.options_map, self.context)
 
         self.assertEqualEntries(self.INPUT + textwrap.dedent("""
 
@@ -209,13 +210,13 @@ class TestFilterEntries(CommonInputBase, QueryBase):
     def test_filter_close_dated(self):
         filtered_entries = qx.filter_entries(self.compile("""
           SELECT date, type FROM CLOSE ON 2013-06-01;
-        """).c_from, self.entries, self.options_map)
+        """).c_from, self.entries, self.options_map, self.context)
         self.assertEqualEntries(self.entries[:-2], filtered_entries)
 
     def test_filter_open_dated(self):
         filtered_entries = qx.filter_entries(self.compile("""
           SELECT date, type FROM OPEN ON 2013-01-01;
-        """).c_from, self.entries, self.options_map)
+        """).c_from, self.entries, self.options_map, self.context)
 
         self.assertEqualEntries("""
 
@@ -249,7 +250,7 @@ class TestFilterEntries(CommonInputBase, QueryBase):
     def test_filter_clear(self):
         filtered_entries = qx.filter_entries(self.compile("""
           SELECT date, type FROM CLEAR;
-        """).c_from, self.entries, self.options_map)
+        """).c_from, self.entries, self.options_map, self.context)
 
         self.assertEqualEntries(self.INPUT + textwrap.dedent("""
 
@@ -313,9 +314,6 @@ class TestBalanceColumn(unittest.TestCase):
 
         c_subexpr_not = qc.EvalEqual(qe.AccountColumn(), qc.EvalConstant('Assets'))
         self.assertFalse(qx.uses_balance_column(c_subexpr_not))
-
-
-
 
 
 class TestExecuteNonAggregatedQuery(QueryBase):
@@ -385,6 +383,34 @@ class TestExecuteNonAggregatedQuery(QueryBase):
             [
                 ('Expenses:Restaurant',),
                 ('Assets:Bank:Checking',),
+                ])
+
+    def test_non_aggregated_order_by_none_date(self):
+        self.check_query(
+            self.INPUT,
+            """
+            SELECT account ORDER BY cost_date;
+            """,
+            [
+                ('account', str),
+                ],
+            [
+                ('Assets:Bank:Checking',),
+                ('Expenses:Restaurant',),
+                ])
+
+    def test_non_aggregated_order_by_none_str(self):
+        self.check_query(
+            self.INPUT,
+            """
+            SELECT account ORDER BY posting_flag;
+            """,
+            [
+                ('account', str),
+                ],
+            [
+                ('Assets:Bank:Checking',),
+                ('Expenses:Restaurant',),
                 ])
 
 
@@ -816,6 +842,99 @@ class TestExecuteOptions(QueryBase):
                 ('Assets:AssetE', D('1.00')),
                 ('Assets:AssetD', D('2.00')),
                 ])
+
+
+class TestArithmeticFunctions(QueryBase):
+
+    # You need some transactions in order to eval a simple arithmetic op.
+    # This also properly sets the data type to Decimal.
+    # In v2, revise this so that this works like a regular DB and support integers.
+
+    def test_add(self):
+        self.check_query(
+            """
+              2010-02-23 *
+                Assets:Something       5.00 USD
+            """,
+            """
+              SELECT number + 3 as result;
+            """,
+            [('result', Decimal)],
+            [(D("8"),)])
+
+    def test_sub(self):
+        self.check_query(
+            """
+              2010-02-23 *
+                Assets:Something       5.00 USD
+            """,
+            """
+              SELECT number - 3 as result;
+            """,
+            [('result', Decimal)],
+            [(D("2"),)])
+
+    def test_mul(self):
+        self.check_query(
+            """
+              2010-02-23 *
+                Assets:Something       5.00 USD
+            """,
+            """
+              SELECT number * 1.2 as result;
+            """,
+            [('result', Decimal)],
+            [(D("6"),)])
+
+    def test_div(self):
+        self.check_query(
+            """
+              2010-02-23 *
+                Assets:Something       5.00 USD
+            """,
+            """
+              SELECT number / 2 as result;
+            """,
+            [('result', Decimal)],
+            [(D("2.50"),)])
+
+        # Test dbz, should fail result query.
+        with self.assertRaises(decimal.DivisionByZero):
+            self.check_query(
+                """
+                  2010-02-23 *
+                    Assets:Something       5.00 USD
+                """,
+                """
+                  SELECT number / 0 as result;
+                """,
+                [('result', Decimal)],
+                [(D("2.50"),)])
+
+    def test_safe_div(self):
+        self.check_query(
+            """
+              2010-02-23 *
+                Assets:Something       5.00 USD
+            """,
+            """
+              SELECT SAFEDIV(number, 0) as result;
+            """,
+            [('result', Decimal)],
+            [(D("0"),)])
+
+    def test_safe_div_zerobyzero(self):
+        self.check_query(
+            """
+              2010-02-23 *
+                Assets:Something       5.00 USD
+            """,
+            """
+              SELECT SAFEDIV(0.0, 0) as result;
+            """,
+            [('result', Decimal)],
+            [(D("0"),)])
+
 
 
 class TestExecuteFlatten(QueryBase):

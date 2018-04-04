@@ -222,10 +222,10 @@ def process_args():
     parser.add_argument('-i', '--inactive', action='store_true', help=(
         "Select all commodities from input files, not just the ones active on the date"))
 
-    parser.add_argument('-u', '--undeclared', action='store_true', help=(
+    parser.add_argument('-u', '--undeclared', action='store', help=(
         "Include commodities viewed in the file even without a "
-        "corresponding Commodity directive. The currency name itself is "
-        "used as the lookup symbol in the default sources."))
+        "corresponding Commodity directive, from this default source. "
+        "The currency name itself is used as the lookup symbol in this default source."))
 
     parser.add_argument('-c', '--clobber', action='store_true', help=(
         "Do not skip prices which are already present in input files; fetch them anyway."))
@@ -275,6 +275,7 @@ def process_args():
     logging.info("Processing at date: %s", args.date or datetime.date.today())
     jobs = []
     all_entries = []
+    dcontext = None
     if args.expressions:
         # Interpret the arguments as price sources.
         for source_str in args.sources:
@@ -299,16 +300,18 @@ def process_args():
                 continue
             logging.info('Loading "%s"', filename)
             entries, errors, options_map = loader.load_file(filename, log_errors=sys.stderr)
+            if dcontext is None:
+                dcontext = options_map['dcontext']
             jobs.extend(
                 find_prices.get_price_jobs_at_date(
                     entries, args.date, args.inactive, args.undeclared))
             all_entries.extend(entries)
 
-    return args, jobs, data.sorted(all_entries)
+    return args, jobs, data.sorted(all_entries), dcontext
 
 
 def main():
-    args, jobs, entries = process_args()
+    args, jobs, entries, dcontext = process_args()
 
     # If we're just being asked to list the jobs, do this here.
     if args.dry_run:
@@ -332,4 +335,4 @@ def main():
             logging.info("Ignored to avoid clobber: %s %s", entry.date, entry.currency)
 
     # Print out the entries.
-    printer.print_entries(price_entries)
+    printer.print_entries(price_entries, dcontext=dcontext)

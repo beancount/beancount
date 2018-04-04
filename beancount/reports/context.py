@@ -63,7 +63,8 @@ def render_entry_context(entries, options_map, entry):
     if isinstance(entry, data.Transaction):
         order = {posting.account: index
                  for index, posting in enumerate(entry.postings)}
-    accounts = sorted(getters.get_entry_accounts(entry), key=order.get)
+    accounts = sorted(getters.get_entry_accounts(entry),
+                      key=lambda account: order.get(account, 10000))
 
     # Accumulate the balances of these accounts up to the entry.
     balance_before, balance_after = interpolate.compute_entry_context(entries,

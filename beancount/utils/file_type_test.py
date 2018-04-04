@@ -63,7 +63,8 @@ class TestFileType(unittest.TestCase):
                                              'application/vnd.lotus-organizer'])
 
     def test_xml(self):
-        self.check_mime_type('example.xml', 'application/xml')
+        self.check_mime_type('example.xml', ['text/xml',
+                                             'application/xml'])
 
     def test_html(self):
         self.check_mime_type('example.html', 'text/html')

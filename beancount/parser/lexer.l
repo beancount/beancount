@@ -120,7 +120,7 @@ UTF-8-ONLY      {UTF-8-2}|{UTF-8-3}|{UTF-8-4}
 UTF-8           {ASCII}|{UTF-8-ONLY}
 
 ACCOUNTNAME     ([A-Z]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})+
-SUBACCOUNTNAME  ([A-Za-z0-9\-]|{UTF-8-ONLY})+
+SUBACCOUNTNAME  ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
 
 
 /*--------------------------------------------------------------------------------------*/

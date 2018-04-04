@@ -5,6 +5,7 @@ __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from collections import defaultdict
+from collections import OrderedDict
 
 from beancount.core.data import Transaction
 from beancount.core.data import Open
@@ -193,6 +194,23 @@ def get_all_payees(entries):
     return sorted(all_payees)
 
 
+def get_all_links(entries):
+    """Return a list of all the links seen in the given entries.
+
+    Args:
+      entries: A list of directive instances.
+    Returns:
+      A set of links strings.
+    """
+    all_links = set()
+    for entry in entries:
+        if not isinstance(entry, Transaction):
+            continue
+        if entry.links:
+            all_links.update(entry.links)
+    return sorted(all_links)
+
+
 def get_leveln_parent_accounts(account_names, level, nrepeats=0):
     """Return a list of all the unique leaf names are level N in an account hierarchy.
 
@@ -213,6 +231,25 @@ def get_leveln_parent_accounts(account_names, level, nrepeats=0):
               for level_, count in leveldict.items()
               if count > nrepeats}
     return sorted(levels)
+
+
+def get_dict_accounts(account_names):
+    """Return a nested dict of all the unique leaf names.
+    account names are labelled with LABEL=True
+
+    Args:
+      account_names: An iterable of account names (strings)
+    Returns:
+      A nested OrderedDict of account leafs
+    """
+    leveldict = OrderedDict()
+    for account_name in account_names:
+        nested_dict = leveldict
+        for component in account.split(account_name):
+            nested_dict = nested_dict.setdefault(component, OrderedDict())
+        nested_dict[get_dict_accounts.ACCOUNT_LABEL] = True
+    return leveldict
+get_dict_accounts.ACCOUNT_LABEL = '__root__'
 
 
 def get_min_max_dates(entries, types=None):

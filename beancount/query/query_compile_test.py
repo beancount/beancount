@@ -452,10 +452,9 @@ class TestCompileSelectGroupBy(CompileSelectBase):
             """)
 
     def test_compile_group_by_implicit(self):
-        with self.assertRaises(qc.CompilationError):
-            self.compile("""
-              SELECT payee, last(account);
-            """)
+        self.compile("""
+          SELECT payee, last(account);
+        """)
 
         self.compile("""
           SELECT first(account), last(account);

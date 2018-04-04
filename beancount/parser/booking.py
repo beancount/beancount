@@ -7,7 +7,6 @@ __license__ = "GNU GPLv2"
 import collections
 
 from beancount.core.number import MISSING
-from beancount.parser import booking_simple
 from beancount.parser import booking_full
 from beancount.core import data
 from beancount.core import inventory
@@ -28,21 +27,6 @@ def book(incomplete_entries, options_map):
         entries: A list of completed entries with all their postings completed.
         errors: New errors produced during interpolation.
     """
-    booking_algorithms = {
-        'SIMPLE': booking_simple.book,
-        'FULL': booking_full.book,
-    }
-    method_name = options_map['booking_algorithm']
-    errors = []
-    try:
-        booking_fun = booking_algorithms[method_name]
-    except KeyError:
-        meta = data.new_metadata(options_map['filename'], 1)
-        booking_fun = booking_simple.book
-        errors.append(
-            BookingError(meta, ("Unsupported booking algorithm: '{}'; "
-                                "falling back on SIMPLE method".format(method_name)), None))
-
     # Get the list of booking methods for each account.
     booking_methods = collections.defaultdict(lambda: options_map["booking_method"])
     for entry in incomplete_entries:
@@ -50,20 +34,13 @@ def book(incomplete_entries, options_map):
             booking_methods[entry.account] = entry.booking
 
     # Do the booking here!
-    entries, booking_errors = booking_fun(incomplete_entries, options_map,
-                                          booking_methods)
-
-    if method_name == 'SIMPLE':
-        # Check that the inventory reductions are normal-looking.
-        validation_errors = validate_inventory_booking(entries, options_map,
-                                                       booking_methods)
-    else:
-        validation_errors = []
+    entries, booking_errors = booking_full.book(incomplete_entries, options_map,
+                                                booking_methods)
 
     # Check for MISSING elements remaining.
     missing_errors = validate_missing_eliminated(entries, options_map)
 
-    return entries, (errors + booking_errors + validation_errors + missing_errors)
+    return entries, (booking_errors + missing_errors)
 
 
 def validate_missing_eliminated(entries, unused_options_map):

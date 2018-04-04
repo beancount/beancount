@@ -64,6 +64,22 @@ class TestDocuments(account_test.TmpFilesTestBase, cmptest.TestCase):
 
         self.assertEqual(0, len(errors))
 
+    def test_process_documents_trailing_slash(self):
+        input_filename = path.join(self.root, 'input.beancount')
+        open(input_filename, 'w').write(textwrap.dedent("""
+
+          option "plugin_processing_mode" "raw"
+          option "documents" "ROOT/"
+
+          2014-01-01 open Assets:US:Bank:Checking
+          2014-01-01 open Liabilities:US:Bank
+
+        """).replace('ROOT', self.root))
+        entries, _, options_map = loader.load_file(input_filename)
+        entries, errors = documents.process_documents(entries, options_map)
+        doc_entries = [entry for entry in entries if isinstance(entry, data.Document)]
+        self.assertEqual(1, len(doc_entries))
+
     def test_verify_document_files_exist(self):
         entries, _, options_map = loader.load_string(textwrap.dedent("""
           option "plugin_processing_mode" "raw"

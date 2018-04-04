@@ -51,6 +51,9 @@ else:
             # This library is needed to parse XML files (for the OFX examples).
             'beautifulsoup4',
 
+            # This library is needed to make requests for price sources.
+            'requests',
+
             # This library is needed to identify the character set of a file for
             # import, in order to read its contents and match expressions
             # against it.
@@ -122,7 +125,7 @@ binaries = [
     ('upload-to-sheets', 'beancount.tools.sheets_upload'),
 ]
 
-if not has_setuptools and platform.system() == 'Windows':
+if has_setuptools and platform.system() == 'Windows':
     setup_extra_kwargs.update(entry_points={
         'console_scripts': [
             '{} = {}:main'.format(binary, module)
@@ -149,7 +152,7 @@ def get_cflags():
 # Please read: http://furius.ca/beancount/doc/install about version numbers.
 setup(
     name="beancount",
-    version='2.0rc1',
+    version="2.0.0",
     description="Command-line Double-Entry Accounting",
 
     long_description=

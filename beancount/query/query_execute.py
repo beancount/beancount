@@ -3,12 +3,15 @@
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import copy
 import collections
 import datetime
 import itertools
+import operator
 
 from beancount.query import query_compile
 from beancount.query import query_env
+from beancount.core import number
 from beancount.core import data
 from beancount.core import position
 from beancount.core import inventory
@@ -21,18 +24,21 @@ from beancount.core import prices
 from beancount.utils import misc_utils
 
 
-def filter_entries(c_from, entries, options_map):
+def filter_entries(c_from, entries, options_map, context):
     """Filter the entries by the given compiled FROM clause.
 
     Args:
       c_from: A compiled From clause instance.
       entries: A list of directives.
       options_map: A parser's option_map.
+      context: A prototype of RowContext to use for evaluation.
     Returns:
       A list of filtered entries.
     """
     assert c_from is None or isinstance(c_from, query_compile.EvalFrom)
     assert isinstance(entries, list)
+
+    context = copy.copy(context)
 
     if c_from is None:
         return entries
@@ -58,9 +64,14 @@ def filter_entries(c_from, entries, options_map):
     # Filter the entries with the FROM clause's expression.
     c_expr = c_from.c_expr
     if c_expr is not None:
-        entries = [entry
-                   for entry in entries
-                   if c_expr(entry)]
+        # A simple function receives a context; how come close_date() is
+        # accepted in the context of a FROM clause? It shouldn't be.
+        new_entries = []
+        for entry in entries:
+            context.entry = entry
+            if c_expr(context):
+                new_entries.append(entry)
+        entries = new_entries
 
     return entries
 
@@ -75,7 +86,8 @@ def execute_print(c_print, entries, options_map, file):
       file: The output file to print to.
     """
     if c_print and c_print.c_from is not None:
-        entries = filter_entries(c_print.c_from, entries, options_map)
+        context = create_row_context(entries, options_map)
+        entries = filter_entries(c_print.c_from, entries, options_map, context)
 
     # Create a context that renders all numbers with their natural
     # precision, but honors the commas option. This is kept in sync with
@@ -152,6 +164,50 @@ def uses_balance_column(c_expr):
             any(uses_balance_column(c_node) for c_node in c_expr.childnodes()))
 
 
+_MIN_VALUES = {
+    int: 0,
+    float: 0.0,
+    str: '',
+    number.Decimal: number.ZERO,
+    datetime.date: datetime.date.min,
+}
+
+def row_sortkey(order_indexes, values, c_exprs):
+    """Generate a sortkey for the given values.
+
+    Args:
+      order_indexes: The indexes by which the rows should be sorted.
+      values: The computed values in the row.
+      c_exprs: The matching c_expr's.
+    Returns:
+      A tuple, the sortkey.
+    """
+    if order_indexes is None:
+        return None
+    key = []
+    for index in order_indexes:
+        value = values[index]
+        key.append(_MIN_VALUES.get(c_exprs[index].dtype, None)
+                   if value is None
+                   else value)
+    return tuple(key)
+
+
+def create_row_context(entries, options_map):
+    """Create the context container which we will use to evaluate rows."""
+    context = RowContext()
+    context.balance = inventory.Inventory()
+
+    # Initialize some global properties for use by some of the accessors.
+    context.options_map = options_map
+    context.account_types = options.get_account_types(options_map)
+    context.open_close_map = getters.get_account_open_close(entries)
+    context.commodity_map = getters.get_commodity_map(entries)
+    context.price_map = prices.build_price_map(entries)
+
+    return context
+
+
 def execute_query(query, entries, options_map):
     """Given a compiled select statement, execute the query.
 
@@ -165,11 +221,6 @@ def execute_query(query, entries, options_map):
         result_rows: A list of ResultRow tuples of length and types described by
           'result_types'.
     """
-    # Filter the entries using the FROM clause.
-    filt_entries = (filter_entries(query.c_from, entries, options_map)
-                    if query.c_from is not None else
-                    entries)
-
     # Figure out the result types that describe what we return.
     result_types = [(target.name, target.c_expr.dtype)
                     for target in query.c_targets
@@ -194,56 +245,46 @@ def execute_query(query, entries, options_map):
     order_indexes = query.order_indexes
 
     # Figure out if we need to compute balance.
-    balance = None
-    if any(uses_balance_column(c_expr)
-           for c_expr in itertools.chain(
-               [c_target.c_expr for c_target in query.c_targets],
-               [query.c_where] if query.c_where else [])):
-        balance = inventory.Inventory()
+    uses_balance = any(uses_balance_column(c_expr)
+                       for c_expr in itertools.chain(
+                               [c_target.c_expr for c_target in query.c_targets],
+                               [query.c_where] if query.c_where else []))
 
-    # Create the context container which we will use to evaluate rows.
-    context = RowContext()
-    context.balance = balance
+    context = create_row_context(entries, options_map)
 
-    # Initialize some global properties for use by some of the accessors.
-    context.options_map = options_map
-    context.account_types = options.get_account_types(options_map)
-    context.open_close_map = getters.get_account_open_close(entries)
-    context.commodity_map = getters.get_commodity_map(entries)
-    context.price_map = prices.build_price_map(entries)
+    # Filter the entries using the FROM clause.
+    filt_entries = (filter_entries(query.c_from, entries, options_map, context)
+                    if query.c_from is not None else
+                    entries)
 
     # Dispatch between the non-aggregated queries and aggregated queries.
     c_where = query.c_where
     schwartz_rows = []
+
+    # Precompute a list of expressions to be evaluated.
+    c_target_exprs = [c_target.c_expr for c_target in query.c_targets]
+
     if query.group_indexes is None:
         # This is a non-aggregated query.
 
-        # Precompute a list of expressions to be evaluated, and of indexes
-        # within it for the result rows and the order keys.
-        c_target_exprs = [c_target.c_expr
-                          for c_target in query.c_targets]
-
         # Iterate over all the postings once and produce schwartzian rows.
-        for entry in filt_entries:
-            if isinstance(entry, data.Transaction):
-                context.entry = entry
-                for posting in entry.postings:
-                    context.posting = posting
-                    if c_where is None or c_where(context):
-                        # Compute the balance.
-                        if balance is not None:
-                            balance.add_position(posting)
+        for entry in misc_utils.filter_type(filt_entries, data.Transaction):
+            context.entry = entry
+            for posting in entry.postings:
+                context.posting = posting
+                if c_where is None or c_where(context):
+                    # Compute the balance.
+                    if uses_balance:
+                        context.balance.add_position(posting)
 
-                        # Evaluate all the values.
-                        values = [c_expr(context) for c_expr in c_target_exprs]
+                    # Evaluate all the values.
+                    values = [c_expr(context) for c_expr in c_target_exprs]
 
-                        # Compute result and sort-key objects.
-                        result = ResultRow._make(values[index]
-                                                 for index in result_indexes)
-                        sortkey = (tuple(values[index] for index in order_indexes)
-                                   if order_indexes is not None
-                                   else None)
-                        schwartz_rows.append((sortkey, result))
+                    # Compute result and sort-key objects.
+                    result = ResultRow._make(values[index]
+                                             for index in result_indexes)
+                    sortkey = row_sortkey(order_indexes, values, c_target_exprs)
+                    schwartz_rows.append((sortkey, result))
     else:
         # This is an aggregated query.
 
@@ -252,8 +293,7 @@ def execute_query(query, entries, options_map):
         # sub-expressions to evaluate, to avoid recursion during iteration.
         c_nonaggregate_exprs = []
         c_aggregate_exprs = []
-        for index, c_target in enumerate(query.c_targets):
-            c_expr = c_target.c_expr
+        for index, c_expr in enumerate(c_target_exprs):
             if index in group_indexes:
                 c_nonaggregate_exprs.append(c_expr)
             else:
@@ -269,33 +309,32 @@ def execute_query(query, entries, options_map):
 
         # Iterate over all the postings to evaluate the aggregates.
         agg_store = {}
-        for entry in filt_entries:
-            if isinstance(entry, data.Transaction):
-                context.entry = entry
-                for posting in entry.postings:
-                    context.posting = posting
-                    if c_where is None or c_where(context):
-                        # Compute the balance.
-                        if balance is not None:
-                            balance.add_position(posting)
+        for entry in misc_utils.filter_type(filt_entries, data.Transaction):
+            context.entry = entry
+            for posting in entry.postings:
+                context.posting = posting
+                if c_where is None or c_where(context):
+                    # Compute the balance.
+                    if uses_balance:
+                        context.balance.add_position(posting)
 
-                        # Compute the non-aggregate expressions.
-                        row_key = tuple(c_expr(context)
-                                        for c_expr in c_nonaggregate_exprs)
+                    # Compute the non-aggregate expressions.
+                    row_key = tuple(c_expr(context)
+                                    for c_expr in c_nonaggregate_exprs)
 
-                        # Get an appropriate store for the unique key of this row.
-                        try:
-                            store = agg_store[row_key]
-                        except KeyError:
-                            # This is a row; create a new store.
-                            store = allocator.create_store()
-                            for c_expr in c_aggregate_exprs:
-                                c_expr.initialize(store)
-                            agg_store[row_key] = store
-
-                        # Update the aggregate expressions.
+                    # Get an appropriate store for the unique key of this row.
+                    try:
+                        store = agg_store[row_key]
+                    except KeyError:
+                        # This is a row; create a new store.
+                        store = allocator.create_store()
                         for c_expr in c_aggregate_exprs:
-                            c_expr.update(store, context)
+                            c_expr.initialize(store)
+                        agg_store[row_key] = store
+
+                    # Update the aggregate expressions.
+                    for c_expr in c_aggregate_exprs:
+                        c_expr.update(store, context)
 
         # Iterate over all the aggregations to produce the schwartzian rows.
         for key, store in agg_store.items():
@@ -307,24 +346,22 @@ def execute_query(query, entries, options_map):
                 c_expr.finalize(store)
             context.store = store
 
-            for index, c_target in enumerate(query.c_targets):
+            for index, c_expr in enumerate(c_target_exprs):
                 if index in group_indexes:
                     value = next(key_iter)
                 else:
-                    value = c_target.c_expr(context)
+                    value = c_expr(context)
                 values.append(value)
 
             # Compute result and sort-key objects.
             result = ResultRow._make(values[index]
                                      for index in result_indexes)
-            sortkey = (tuple(values[index] for index in order_indexes)
-                       if order_indexes is not None
-                       else None)
+            sortkey = row_sortkey(order_indexes, values, c_target_exprs)
             schwartz_rows.append((sortkey, result))
 
     # Order results if requested.
     if order_indexes is not None:
-        schwartz_rows.sort(key=lambda x: x[0],
+        schwartz_rows.sort(key=operator.itemgetter(0),
                            reverse=(query.ordering == 'DESC'))
 
     # Extract final results, in sorted order at this point.

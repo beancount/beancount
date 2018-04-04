@@ -4,6 +4,310 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2018-04-04
+
+  - Fixed #267: Implemented a price source from the IEX exchange.
+
+
+2018-04-03
+
+  - Implemented Quandl importer on its REST API. Another implementation, based
+    on the Quandl Python client API was proposed by Hugo Ideler (see PR34), but
+    I didn't want to add a dependency on the client library (nor on Pandas), and
+    after reading the description on Quandl API's website, I figured the library
+    was simple enough the output could be parsed directly. I wrote a new
+    implementation from scratch, parsing just the time-series datasets.
+
+  - Merged PR68 from Martin Michlmayr, added Travis Yaml support file.
+
+  - Fixed Emacs functionality to uncomment regions (change submitted by Stefan
+    Monnier on the list).
+
+
+2018-04-02
+
+  - Fixed #193: Removed the broken Google Finance price source importer. Google
+    has removed this service in the favor of a special Search page and this has
+    been broken for the recent little while.
+
+  - Fixed #203: Updated the Yahoo price source implementation to use the
+    undocumented v7 and v8 APIs; moved away from the "ichart" and "download"
+    APIs. The Yahoo importer is back in function.
+
+    This introduced a new dependency on the awesome 'requests' library, which
+    really, was quite inevitable).
+
+
+2018-04-01
+
+  - Merged PR65: Use parse_version to compare versions; then replicated
+    parse_version() locally to avoid the dependency on setuptools.
+
+  - Merged PR15 by Johannes Harms:
+    Added the following features to the forecasting plugin:
+    - Yearly repetition of recurring transactions (instead of just monthly)
+    - Users may optionally specify an end date
+    - Users may optionally specify the number of repetitions
+    "I used this code to calculate scenarios for a possible real estate purchase
+    and I contribute a cleaned-up version as an example file."
+
+  - Merged PR54 & Fixed #232: Align quoted commodities correctly in ledger price
+    statements (from Martin Michlmayr).
+
+  - Merged PR57: query_execute: Allow ordering by columns which may be None
+    (from Jakob Schnitzer). Made some adjustments to generalize on all
+    datatypes.
+
+  - Merged PR62: Also allow 0/0 in SAFEDIV() (from Jakob Schnitzer), with small
+    adjustments to catch only the specific invalid operations on Decimal.
+
+  - Merged PR64 from yagebu@ (Jakob Schnitzer), which makes the Inventory class
+    rely on the fact that Position is immutable in order to avoid unnecessary
+    copies. This yields an 18% speedup with no difference.
+
+  - Removed unused and invalid mutating method Position.set_units(). Amazing
+    obsolete stuff like this can still be found.
+
+
+2018-03-31
+
+  - Fixed #10: "print from close_date" causes problems on account open. This was
+    stemming from a bug in the implementation of the FROM clause execution. I
+    changed the "entry" context functions to also accept a RowContext object, as
+    the simple functions may be called in either entry or posting context.
+
+    (The SQL shell remains the part of Beancount which is severely undertested
+    and wading into that code once again has convinced me I need to rewrite the
+    shell from scratch, it'll be simpler and better. The distinction between
+    entry and posting context will go away in the next version.)
+
+  - Fixed #120: Documents directive with a trailing slash fails.
+
+
+2018-03-28
+
+  - Fixed failing test in amount_test probably due to some recent merges.
+
+
+2018-03-27
+
+  - Completed PR #59 which adds support for globbing patterns in includes,
+    inserting a chdir() around glob.glob() to handle expansion of relative
+    filenames. (Credits to Martin Michlmayr for submitting the patch in the
+    first place.)
+
+
+2018-03-27
+
+  - Released 2.0.0. Today we're starting versioning Beancount. Many people have
+    been waiting for this in order to manage their dependencies (e.g. Fava
+    users).
+
+    We're loosely adopting semantic versioning (https://semver.org/) where bug
+    fixes will be posted as 0.0.x releases, and new features that don't break
+    existing functionality (nor change it too much) will be posted as 0.x.0
+    releases.
+
+    Note: There's nothing special about this particular point in time, other
+    than I haven't added much features in the last six months and have mainly
+    been fixing bugs and accepting bug reports in order to make sure things are
+    stable. There are plenty remaining bug reports and it's not perfect.
+    Addressing some of these will involve making changes that could break
+    existing functionality. For this reason, I prefer to release now and make
+    those changes as part of point releases later on.
+
+
+2018-03-26
+
+  - Fixed #245: Synchronized the definition of a valid account regular
+    expression between the lexer and the later enhanced version (in Python)
+    which checks the configured prefixes. A valid subaccount name may start with
+    either a capital letter or a number.
+
+
+2018-03-23
+
+  - Removed deprecated methods from beancount.core (position, inventory,
+    interpolation).
+
+
+2018-03-22
+
+  - Fixed #249: Error messages involving postings should start counting at 1
+    instead of 0. (I agree.)
+
+  - Added aliases for COMMODITY_META() vs. CURRENCY_META() and CURRENCY() and
+    COMMODITY(). These terms are used interchangeably. In the next version of
+    the shell, only one of them will be available.
+
+  - Removed the ability to explicitly set a different price currency than a cost
+    currency. I'm stunned my test for this is gone, I must have removed this by
+    accident? No idea. It should not be allowed.
+
+
+2018-03-19
+
+  - Fixed #218, added a SAFEDIV function to the shell language.
+
+  - Fixed #239, HELP command should tolerate semicolons and whitespace.
+    (Also, don't print shell commands in test (remove docstrings), we want the
+    name of the tests to list, not the input.)
+
+
+2018-03-13
+
+  - Removed SIMPLE booking method and all traces of it, including the
+    'booking_algorithm' option. Only the later (I hesitate to say "newer"
+    because it's been around for years) FULL booking method is supported
+    onwards.
+
+  - Fixed #35: Implemented implicit group-by syntax. That is, if you omit the
+    GROUP BY clause, it is automatically inferred to be the non-aggregate
+    columns. This make writing the type of simple queries we do much more
+    convenient and allows you to be a little sloppy.
+
+  - Fixed bug with unit test util for docutil, which was stripping the first
+    empty line of the docstring (and failing).
+
+
+2018-03-02
+
+  - Made the 'readline' library conditional, for Windows support.
+    See PR46.
+
+
+2018-02-23
+
+  - Fixed #219: Restored sorting of the entries in the extractor. File order
+    will have to be maintained by extracting the line no, which is used as a
+    secondary key.
+
+
+2018-02-19
+
+  - Added prototype for converting Google Docs doc from docx and rst
+    conversions, using the docx blocks to insert indented versions in the rst
+    file.
+
+  - Removed deprecated beancount.ops.prices module.
+
+
+2018-02-17
+
+  - Added an option to the CSV importer for the string separating the narration
+    (default: "; ").
+
+  - Merged a change submitted by @droogmic to add options for the dateutils
+    parser, in order to disambiguate between day-first (DD-MM-YYYY) vs.
+    month-first (MM-DD-YYYY) date representations.
+
+  - Created a new plugin "check_closing" that automatically inserts a zero
+    balance check after postings which are known - and flagged, using metadata -
+    to be closing trades.
+
+  - Fixed bug in "sellgains" plugin whereby a price of zero units failed an
+    assertion. Added a test.
+
+
+2018-02-12
+
+  - Added a side-effects local variable saver utility for writing importers.
+
+  - Fixed #212: Clarified error message for error in covering non-aggregate
+    targets.
+
+  - The Importer.extract() method now accepts a new parameters with the prior
+    entries (or None, if not specified) as 'existing_entries'. It's free to use
+    that as it pleases in order to flag entries as duplicates. The entries
+    returned by Importer.extract() will be checked for __duplicate__ metadata
+    and automatically inserted to that set if it is present. This allows the
+    importer to return some duplicate entries for context - which will be
+    rendered as such in the output, e.g. commented out - without having to
+    necessarily throw them away.
+
+    (The previous signature is still supported in order to avoid breaking
+    everyone's importers.)
+
+
+2018-01-31
+
+  - Modified 'divert_expenses' plugin to store the original account name as
+    metadata of diverted postings, so that they can be picked up by the
+    extract_tagged script and brought back into the extract file.
+
+
+2018-01-29
+
+  - Created a new 'divert_expenses' plugin to redirect Expenses postings from
+    transactions tagged with a particular tag to another account. See this
+    thread for details:
+    https://docs.google.com/drawings/d/18fTrrGlmz0jFbfcGGHTffbdRwbmST8r9_3O26Dd1Xww/edit?usp=sharing
+
+  - Added account_types.is_account_type() function, which should be used above
+    account_types.get_account_type().
+
+
+2018-01-23
+
+  - Removed the insertion of 'balance' metadata from the importer. We use it for
+    inserting Balance entries, not attach as metadata.
+
+  - Disabled Balance insertion CSV test;
+    03d9a5c3b2784a6f6a05c12eaeb7776f0478a96d broke the insertion of Balance
+    entries without inserting 'balance' metadata. We'll probably have to revert the
+    sorting changes and that. For now, fix the test.
+
+  - Fixed #210: Changed the bean-price option --undeclared to accept a string
+    value, the name of the Python source module to use for fetching undeclared
+    commodities.
+
+  - Added an error on using explicit merge cost syntax (this one: {..., *}).
+    It's not supported yet, like AVERAGE cost booking (I probably should not
+    have enabled the syntax until it was done. I was hopeful and moving fast at
+    the time).
+
+
+2018-01-16
+
+  - CSV importer: Added an option not to add balance metadata to output.
+  - CSV importer: Also, fixed a bug I introduced in the recent PR merge with
+    rendering the name of the importer.
+  - SQL importer: Made "location" field support transactions with metadata with
+    missing filename and line no. Some plugins might be doing that.
+
+
+2018-01-08
+
+  - Fixed #209: Don't require 'ido. User will have to make sure that
+    beancount-use-ido is false.
+
+
+2018-01-07
+
+  - Merged https://bitbucket.org/blais/beancount/pull-requests/28/allow-one-character-top-level-account,
+    allowing one character top-level account names in the syntax. This doesn't
+    mess with the flag token generateion because the account name is required to
+    have at least two components.
+
+
+2017-12-09
+
+  - Fixed rendering of price directives to use the display context precision.
+
+
+2017-11-24
+
+  - Silenced annoying warning about file_cache version incompatibility in
+    upload-to-sheets.
+
+
+2017-10-28
+
+  - Fixed bug with identification based on the first line of a file.
+
+  - Fixed bug with 'context' on a directive that's not a transaction.
+
+
 2017-09-30
 
   - Fixed a bug in reduction booking that would fail when the units are omitted.

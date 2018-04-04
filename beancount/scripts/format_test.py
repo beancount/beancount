@@ -186,6 +186,31 @@ class TestScriptFormat(test_utils.TestCase):
           Assets:Test
         """), stdout.getvalue())
 
+    @test_utils.docfile
+    def test_fixed_column(self, filename):
+        """
+        2016-08-01 open Expenses:Test
+        2016-08-01 open Assets:Test
+        2016-08-01 balance Assets:Test  0.00 USD
+
+        2016-08-02 * "" ""
+          Expenses:Test     10.00 USD
+          Assets:Test
+        """
+        with test_utils.capture() as stdout:
+            result = test_utils.run_with_args(
+                format.main, [filename, '--currency-column=50'])
+        self.assertEqual(0, result)
+        self.assertEqual(textwrap.dedent("""
+        2016-08-01 open Expenses:Test
+        2016-08-01 open Assets:Test
+        2016-08-01 balance Assets:Test              0.00 USD
+
+        2016-08-02 * "" ""
+          Expenses:Test                            10.00 USD
+          Assets:Test
+        """), stdout.getvalue())
+
     @unittest.skip("Eventually we will want to support arithmetic expressions. "
                    "It will require to invoke the expression parser because "
                    "expressions are not guaranteed to be surrounded by matching "

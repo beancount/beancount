@@ -9,11 +9,13 @@ __license__ = "GNU GPLv2"
 
 import copy
 import datetime
+import decimal
 import re
 import textwrap
 import warnings
 
 from beancount.core.number import Decimal
+from beancount.core.number import ZERO
 from beancount.core.data import Transaction
 from beancount.core.compare import hash_entry
 from beancount.core import amount
@@ -62,6 +64,23 @@ class AbsInventory(query_compile.EvalFunction):
     def __call__(self, context):
         args = self.eval_args(context)
         return abs(args[0])
+
+class SafeDiv(query_compile.EvalFunction):
+    "A division operation that swallows dbz exceptions and outputs 0 instead."
+    __intypes__ = [Decimal, Decimal]
+
+    def __init__(self, operands):
+        super().__init__(operands, Decimal)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        try:
+            return args[0] / args[1]
+        except (decimal.DivisionByZero, decimal.InvalidOperation):
+            return ZERO
+
+class SafeDivInt(SafeDiv):
+    __intypes__ = [Decimal, int]
 
 class Length(query_compile.EvalFunction):
     "Compute the length of the argument. This works on sequences."
@@ -314,7 +333,7 @@ class AccountSortKey(query_compile.EvalFunction):
         index, name = account_types.get_account_sort_key(context.account_types, args[0])
         return '{}-{}'.format(index, name)
 
-class CommodityMeta(query_compile.EvalFunction):
+class CurrencyMeta(query_compile.EvalFunction):
     "Get the metadata dict of the commodity directive of the currency."
     __intypes__ = [str]
 
@@ -507,7 +526,6 @@ class Price(query_compile.EvalFunction):
         super().__init__(operands, Decimal)
 
     def __call__(self, context):
-        warnings.warn("PRICE() is deprecated; use GETPRICE() instead")
         args = self.eval_args(context)
         base, quote = args
         pair = (base.upper(), quote.upper())
@@ -522,7 +540,6 @@ class PriceWithDate(query_compile.EvalFunction):
         super().__init__(operands, Decimal)
 
     def __call__(self, context):
-        warnings.warn("PRICE() is deprecated; use GETPRICE() instead")
         args = self.eval_args(context)
         base, quote, date = args
         pair = (base.upper(), quote.upper())
@@ -641,6 +658,8 @@ SIMPLE_FUNCTIONS = {
     ('abs', Decimal)                                     : AbsDecimal,
     ('abs', position.Position)                           : AbsPosition,
     ('abs', inventory.Inventory)                         : AbsInventory,
+    ('safediv', Decimal, Decimal)                        : SafeDiv,
+    ('safediv', Decimal, int)                            : SafeDivInt,
     'length'                                             : Length,
     'str'                                                : Str,
     'maxwidth'                                           : MaxWidth,
@@ -654,7 +673,8 @@ SIMPLE_FUNCTIONS = {
     'entry_meta'                                         : EntryMeta,
     'any_meta'                                           : AnyMeta,
     'open_meta'                                          : OpenMeta,
-    'commodity_meta'                                     : CommodityMeta,
+    'currency_meta'                                      : CurrencyMeta,
+    'commodity_meta'                                     : CurrencyMeta,  # Redundant.
     'account_sortkey'                                    : AccountSortKey,
     ('units', position.Position)                         : UnitsPosition,
     ('units', inventory.Inventory)                       : UnitsInventory,
@@ -676,13 +696,11 @@ SIMPLE_FUNCTIONS = {
     ('value', position.Position, datetime.date)          : ValuePositionWithDate,
     ('value', inventory.Inventory)                       : ValueInventory,
     ('value', inventory.Inventory, datetime.date)        : ValueInventoryWithDate,
-    # Note: Remove PRICE() at some point, GETPRICE() is less confusing.
-    ('price', str, str)                                  : Price,
-    ('price', str, str, datetime.date)                   : PriceWithDate,
     ('getprice', str, str)                               : Price,
     ('getprice', str, str, datetime.date)                : PriceWithDate,
     'number'                                             : Number,
     'currency'                                           : Currency,
+    'commodity'                                          : Currency,  # Redundant.
     'getitem'                                            : GetItemStr,
     'findfirst'                                          : FindFirst,
     'joinstr'                                            : JoinStr,
@@ -884,8 +902,8 @@ class IdEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(str)
 
-    def __call__(self, entry):
-        return hash_entry(entry)
+    def __call__(self, context):
+        return hash_entry(context.entry)
 
 class TypeEntryColumn(query_compile.EvalColumn):
     "The data type of the directive."
@@ -894,8 +912,8 @@ class TypeEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(str)
 
-    def __call__(self, entry):
-        return type(entry).__name__.lower()
+    def __call__(self, context):
+        return type(context.entry).__name__.lower()
 
 class FilenameEntryColumn(query_compile.EvalColumn):
     "The filename where the directive was parsed from or created."
@@ -905,8 +923,8 @@ class FilenameEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(str)
 
-    def __call__(self, entry):
-        return entry.meta["filename"]
+    def __call__(self, context):
+        return context.entry.meta["filename"]
 
 class LineNoEntryColumn(query_compile.EvalColumn):
     "The line number from the file the directive was parsed from."
@@ -916,8 +934,8 @@ class LineNoEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(int)
 
-    def __call__(self, entry):
-        return entry.meta["lineno"]
+    def __call__(self, context):
+        return context.entry.meta["lineno"]
 
 class DateEntryColumn(query_compile.EvalColumn):
     "The date of the directive."
@@ -927,8 +945,8 @@ class DateEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(datetime.date)
 
-    def __call__(self, entry):
-        return entry.date
+    def __call__(self, context):
+        return context.entry.date
 
 class YearEntryColumn(query_compile.EvalColumn):
     "The year of the date of the directive."
@@ -938,8 +956,8 @@ class YearEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(int)
 
-    def __call__(self, entry):
-        return entry.date.year
+    def __call__(self, context):
+        return context.entry.date.year
 
 class MonthEntryColumn(query_compile.EvalColumn):
     "The month of the date of the directive."
@@ -949,8 +967,8 @@ class MonthEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(int)
 
-    def __call__(self, entry):
-        return entry.date.month
+    def __call__(self, context):
+        return context.entry.date.month
 
 class DayEntryColumn(query_compile.EvalColumn):
     "The day of the date of the directive."
@@ -960,8 +978,8 @@ class DayEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(int)
 
-    def __call__(self, entry):
-        return entry.date.day
+    def __call__(self, context):
+        return context.entry.date.day
 
 class FlagEntryColumn(query_compile.EvalColumn):
     "The flag the transaction."
@@ -971,9 +989,9 @@ class FlagEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(str)
 
-    def __call__(self, entry):
-        return (entry.flag
-                if isinstance(entry, Transaction)
+    def __call__(self, context):
+        return (context.entry.flag
+                if isinstance(context.entry, Transaction)
                 else None)
 
 class PayeeEntryColumn(query_compile.EvalColumn):
@@ -984,9 +1002,9 @@ class PayeeEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(str)
 
-    def __call__(self, entry):
-        return (entry.payee or ''
-                if isinstance(entry, Transaction)
+    def __call__(self, context):
+        return (context.entry.payee or ''
+                if isinstance(context.entry, Transaction)
                 else None)
 
 class NarrationEntryColumn(query_compile.EvalColumn):
@@ -997,9 +1015,9 @@ class NarrationEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(str)
 
-    def __call__(self, entry):
-        return (entry.narration or ''
-                if isinstance(entry, Transaction)
+    def __call__(self, context):
+        return (context.entry.narration or ''
+                if isinstance(context.entry, Transaction)
                 else None)
 
 # This is convenient, because many times the payee is empty and using a
@@ -1011,8 +1029,9 @@ class DescriptionEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(str)
 
-    def __call__(self, entry):
-        return (' | '.join(filter(None, [entry.payee, entry.narration]))
+    def __call__(self, context):
+        return (' | '.join(filter(None, [context.entry.payee,
+                                         context.entry.narration]))
                 if isinstance(entry, Transaction)
                 else None)
 
@@ -1028,9 +1047,9 @@ class TagsEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(set)
 
-    def __call__(self, entry):
-        return (entry.tags or EMPTY_SET
-                if isinstance(entry, Transaction)
+    def __call__(self, context):
+        return (context.entry.tags or EMPTY_SET
+                if isinstance(context.entry, Transaction)
                 else EMPTY_SET)
 
 class LinksEntryColumn(query_compile.EvalColumn):
@@ -1041,9 +1060,9 @@ class LinksEntryColumn(query_compile.EvalColumn):
     def __init__(self):
         super().__init__(set)
 
-    def __call__(self, entry):
-        return (entry.links or EMPTY_SET
-                if isinstance(entry, Transaction)
+    def __call__(self, context):
+        return (context.entry.links or EMPTY_SET
+                if isinstance(context.entry, Transaction)
                 else EMPTY_SET)
 
 
@@ -1056,10 +1075,10 @@ class MatchAccount(query_compile.EvalFunction):
     def __init__(self, operands):
         super().__init__(operands, bool)
 
-    def __call__(self, entry):
-        pattern = self.eval_args(entry)[0]
+    def __call__(self, context):
+        pattern = self.eval_args(context)[0]
         search = re.compile(pattern, re.IGNORECASE).search
-        return any(search(account) for account in getters.get_entry_accounts(entry))
+        return any(search(account) for account in getters.get_entry_accounts(context.entry))
 
 
 # Functions defined only on entries.
@@ -1153,8 +1172,8 @@ class FileLocationColumn(query_compile.EvalColumn):
 
     def __call__(self, context):
         if context.posting.meta is not None:
-            return '{}:{:d}:'.format(context.posting.meta["filename"],
-                                     context.posting.meta["lineno"])
+            return '{}:{:d}:'.format(context.posting.meta.get("filename", "N/A"),
+                                     context.posting.meta.get("lineno", 0))
         else:
             return '' # Unknown.
 

@@ -58,14 +58,28 @@ class ImporterProtocol:
           A boolean, true if this importer can handle this file.
         """
 
-    def extract(self, file):
+    def extract(self, file, existing_entries=None):
         """Extract transactions from a file.
+
+        If the importer would like to flag a returned transaction as a known
+        duplicate, it may opt to set the special flag "__duplicate__" to True,
+        and the transaction should be treated as a duplicate by the extraction
+        code. This is a way to let the importer use particular information about
+        previously imported transactions in order to flag them as duplicates.
+        For example, if an importer has a way to get a persistent unique id for
+        each of the imported transactions. (See this discussion for context:
+        https://groups.google.com/d/msg/beancount/0iV-ipBJb8g/-uk4wsH2AgAJ)
 
         Args:
           file: A cache.FileMemo instance.
+          existing_entries: An optional list of existing directives loaded from
+            the ledger which is intended to contain the extracted entries. This
+            is only provided if the user provides them via a flag in the
+            extractor program.
         Returns:
           A list of new, imported directives (usually mostly Transactions)
           extracted from the file.
+
         """
 
     def file_account(self, file):

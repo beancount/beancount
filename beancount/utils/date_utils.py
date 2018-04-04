@@ -4,7 +4,6 @@ __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import datetime
-
 import dateutil.parser
 
 
@@ -24,7 +23,7 @@ def iter_dates(start_date, end_date):
         date += oneday
 
 
-def parse_date_liberally(string):
+def parse_date_liberally(string, parse_kwargs_dict=None):
     """Parse arbitrary strings to dates.
 
     This function is intended to support liberal inputs, so that we can use it
@@ -32,11 +31,14 @@ def parse_date_liberally(string):
 
     Args:
       string: A string to parse.
+      parse_kwargs_dict: Dict of kwargs to pass to dateutil parser.
     Returns:
       A datetime.date object.
     """
     # At the moment, rely on the most excellent dateutil.
-    return dateutil.parser.parse(string).date()
+    if parse_kwargs_dict is None:
+        parse_kwargs_dict = {}
+    return dateutil.parser.parse(string, **parse_kwargs_dict).date()
 
 
 def render_ofx_date(dtime):

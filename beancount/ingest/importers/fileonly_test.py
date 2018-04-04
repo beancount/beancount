@@ -27,8 +27,8 @@ class TestFileOnly(unittest.TestCase):
         """
         importer = fileonly.Importer(
             ['Filename: .*te?mp.*',
-             'MimeType: text/plain',
-             'Contents: .*DATE,TYPE,REF #,DESCRIPTION,FEES,AMOUNT'],
+             'MimeType: text/',
+             'Contents:\n.*DATE,TYPE,REF #,DESCRIPTION,FEES,AMOUNT'],
             'Assets:BofA:Checking',
             basename='bofa')
         file = cache._FileMemo(filename)
