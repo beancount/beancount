@@ -137,7 +137,9 @@ release:
 
 
 # Run the unittests.
+ifeq ($(NOSE),)
 NOSE = nosetests3
+endif
 vtest vtests verbose-test verbose-tests:
 	$(NOSE) -v -s beancount
 
