@@ -6,6 +6,13 @@ Note: This file contains only changes in the 'default' branch.
 
 2018-04-03
 
+  - Implemented Quandl importer on its REST API. Another implementation, based
+    on the Quandl Python client API was proposed by Hugo Ideler (see PR34), but
+    I didn't want to add a dependency on the client library (nor on Pandas), and
+    after reading the description on Quandl API's website, I figured the library
+    was simple enough the output could be parsed directly. I wrote a new
+    implementation from scratch, parsing just the time-series datasets.
+
   - Merged PR68 from Martin Michlmayr, added Travis Yaml support file.
 
   - Fixed Emacs functionality to uncomment regions (change submitted by Stefan

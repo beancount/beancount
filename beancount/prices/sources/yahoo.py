@@ -21,11 +21,8 @@ import re
 from urllib import parse
 from urllib import error
 from typing import Dict, Any
-try:
-    import requests
-except ImportError:
-    logging.fatal("You have to install the 'requests' library.")
-    requests = None
+
+import requests
 
 from beancount.core.number import D
 from beancount.prices import source
@@ -80,8 +77,7 @@ class Source(source.Source):
 
     def get_latest_price(self, ticker):
         """See contract in beancount.prices.source.Source."""
-        if requests is None:
-            raise YahooError("You must install the 'requests' library.")
+
         url = "https://query1.finance.yahoo.com/v7/finance/quote"
         fields = ['symbol', 'regularMarketPrice', 'regularMarketTime']
         payload = {
