@@ -5,4 +5,4 @@ pipelines:
         script:
           - pip3 install -r requirements.txt
           - pip3 install nose
-          - nosetests3 beancount
+          - nosetests -v beancount
