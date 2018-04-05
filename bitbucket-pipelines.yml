@@ -1,8 +1,9 @@
-image: python:3.6.5
+image: atlassian/default-image:2 python:3.6.5
 pipelines:
   default:
     - step:
         script:
           - pip3 install -r requirements.txt
           - pip3 install nose
+          - python3 setup.py build_ext -i
           - nosetests -v beancount
