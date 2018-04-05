@@ -50,6 +50,9 @@ def check_dependencies():
         check_import('oauth2client'),
         check_import('httplib2'),
 
+        # Optionally required to support various price source fetchers.
+        check_import('requests', min_version='2.0'),
+
         # Optionally required to support imports (identify, extract, file) code.
         check_python_magic(),
         check_import('beautifulsoup4', module_name='bs4', min_version='4'),
