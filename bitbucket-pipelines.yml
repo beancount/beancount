@@ -3,7 +3,8 @@ pipelines:
   default:
     - step:
         script:
-          - apt-get -y install python3 python3-pip python3-nose
+          - apt-get -y install python3
           - pip3 install -r requirements.txt
+          - pip3 install nose
           - python3 setup.py build_ext -i
           - nosetests -v beancount
