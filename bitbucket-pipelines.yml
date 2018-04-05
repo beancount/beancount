@@ -1,0 +1,8 @@
+image: python:3.6.5
+pipelines:
+  default:
+    - step:
+        script:
+          - pip3 install -r requirements.txt
+          - pip3 install nose
+          - nosetests3 beancount
