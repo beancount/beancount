@@ -1,8 +1,9 @@
-image: atlassian/default-image:2 python:3.6.5
+image: atlassian/default-image:2 
 pipelines:
   default:
     - step:
         script:
+          - apt-get -y install python
           - pip3 install -r requirements.txt
           - pip3 install nose
           - python3 setup.py build_ext -i
