@@ -19,8 +19,8 @@ sep = ':'
 
 
 # Regular expression string that matches a valid account name.
-ACCOUNT_NAME_RE = regexp_utils.re_replace_unicode(r"\P{Lu}[\p{L}\p{Nd}\-]*")
-SUBACCOUNT_NAME_RE = regexp_utils.re_replace_unicode(r"[\p{Lu}\p{Nd}][\p{L}\p{Nd}\-]*")
+ACCOUNT_NAME_RE = regexp_utils.re_replace_unicode(r"\P{L}[\p{L}\p{N}\-]*")
+SUBACCOUNT_NAME_RE = regexp_utils.re_replace_unicode(r"[\p{L}\p{N}][\p{L}\p{N}\-]*")
 
 
 # Regular expression string that matches a valid account.

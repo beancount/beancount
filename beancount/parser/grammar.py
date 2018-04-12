@@ -98,7 +98,7 @@ def valid_account_regexp(options):
                                       'name_expenses'))
     # Replace the first term of the account regular expression with the specific
     # names allowed under the options configuration.
-    regexp = re.sub(r'\(.*?\)', '(:?{})'.format('|'.join(names)),
+    regexp = re.sub(r'\(.*?\)', '(?:{})'.format('|'.join(names)),
                     account.ACCOUNT_RE + '$', count=1)
     return re.compile(regexp)
 
