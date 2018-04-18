@@ -6,6 +6,9 @@ Note: This file contains only changes in the 'default' branch.
 
 2018-04-18
 
+  - Fixed #157: Building a price map with zero prices should not fail,
+    especially when done accidentally.
+
   - Fixed #264: Converted zip compression in bake from using an external zip
     tool to using the 'zipfile' module packaged with Python. I'm doing this to
     fix the CI build as well.

@@ -86,6 +86,17 @@ class TestPriceMap(unittest.TestCase):
         self.assertEqual(5, len(price_map[('CAD', 'USD')]))
 
     @loader.load_doc()
+    def test_build_price_map_zero_prices(self, entries, _, __):
+        """
+        1999-12-27 commodity EFA
+        2010-10-01 price EFA                                 57.53 EFA
+        2010-11-01 price EFA                                     0 EFA
+        2011-03-01 price EFA                                 60.69 EFA
+        """
+        price_map = prices.build_price_map(entries)
+        self.assertIsNotNone(price_map)
+
+    @loader.load_doc()
     def test_lookup_price_and_inverse(self, entries, _, __):
         """
         2013-06-01 price  USD  1.01 CAD

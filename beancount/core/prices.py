@@ -110,7 +110,8 @@ def build_price_map(entries):
         del price_map[remove]
 
         inverted_list = [(date, ONE/rate)
-                         for (date, rate) in remove_list]
+                         for (date, rate) in remove_list
+                         if rate != ZERO]
         insert_list.extend(inverted_list)
 
     # Unzip and sort each of the entries and eliminate duplicates on the date.
