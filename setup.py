@@ -31,7 +31,16 @@ else:
         has_setuptools = True
         setup_extra_kwargs.update(install_requires = [
             # This is required to parse dates from command-line options in a
-            # loose, accepting format.
+            # loose, accepting format. Note that we use dateutil for timezone
+            # database definitions as well, although it is inferior to pytz, but
+            # because it can use the OS timezone database in the Windows
+            # registry. See this article for context:
+            # http://www.assert.cc/2014/05/25/which-python-time-zone-library.html
+            # However, for creating offset timezones, we use the datetime.timezone
+            # helper class because it is built-in.
+            # Where this matters is for price source fetchers.
+            # (Note: If pytz supported the Windows registry timezone information,
+            # I would switch to that.)
             'python-dateutil',
 
             # The SQL parser uses PLY in order to parse the input syntax.

@@ -7,6 +7,9 @@ http://developer.oanda.com/rest-live/rates/
 
 For example:
 https://api-fxtrade.oanda.com/v1/candles?instrument=EUR_USD&granularity=D&start=2016-03-27T00%3A00%3A00Z&end=2016-04-04T00%3A00%3A00Z&candleFormat=midpoint
+
+Timezone information: Input and output datetimes are specified via UTC
+timestamps.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
@@ -46,7 +49,7 @@ def _fetch_candles(params):
     Args:
       params: A dict of URL params values.
     Returns:
-      A list of (time, price) points.
+      A sorted list of (time, price) points.
     """
 
     url = '?'.join((URL, parse.urlencode(sorted(params.items()))))
@@ -73,7 +76,31 @@ def _fetch_candles(params):
     except KeyError:
         logging.error("Unexpected response data: %s", data)
         return None
-    return time_prices
+    return sorted(time_prices)
+
+
+def _fetch_price(params_dict, time):
+    """Fetch a price from OANDA using the given parameters."""
+    ticker = params_dict['instrument']
+    _, quote_currency = _get_currencies(ticker)
+    if quote_currency is None:
+        logging.error("Invalid price source ticker '%s'; must be like 'EUR_USD'",
+                      ticker)
+        return
+
+    time_prices = _fetch_candles(params_dict)
+    if not time_prices:
+        logging.error("No prices returned.")
+        return
+
+    # Get all the prices before and on the same date and find the latest.
+    sorted_prices = [item for item in time_prices if item[0] <= time]
+    if not sorted_prices:
+        logging.error("No prices matched.")
+        return
+
+    time, price = sorted_prices[-1]
+    return source.SourcePrice(price, time, quote_currency)
 
 
 class Source(source.Source):
@@ -81,82 +108,25 @@ class Source(source.Source):
 
     def get_latest_price(self, ticker):
         """See contract in beancount.prices.source.Source."""
-
-        _, quote_currency = _get_currencies(ticker)
-        if quote_currency is None:
-            logging.error("Invalid price source ticker '%s'; must be like 'EUR_USD'",
-                          ticker)
-            return
-
-        # Query at the current (latest) time.
+        time = datetime.datetime.now(tz.tzutc())
         params_dict = {
             'instrument': ticker,
             'granularity': 'S5',  # Every two hours.
             'count': '10',
             'candleFormat': 'midpoint',
         }
-        time_prices = _fetch_candles(params_dict)
-        if time_prices is None:
-            logging.error("No prices returned")
-            return
+        return _fetch_price(params_dict, time)
 
-        # Get the latest price point available.
-        time, price = sorted(time_prices)[-1]
-
-        # Use current local date as the date.
-        current_date = datetime.datetime.now()
-
-        return source.SourcePrice(price, current_date, quote_currency)
-
-    def get_historical_price(self, ticker, date):
+    def get_historical_price(self, ticker, time):
         """See contract in beancount.prices.source.Source."""
-
-        _, quote_currency = _get_currencies(ticker)
-        if quote_currency is None:
-            logging.error("Invalid price source ticker '%s'; must be like 'EUR_USD'",
-                          ticker)
-            return
-
-        # Find the boundary dates to query in UTC timezone.
-        start_utc = datetime.datetime(date.year, date.month, date.day, 0, 0, 0,
-                                      tzinfo=tz.tzlocal()).astimezone(tz.tzutc())
-        end_utc = start_utc + datetime.timedelta(days=1)
-
-        interval_begin_utc = (start_utc - datetime.timedelta(days=5))
-        interval_end_utc = (end_utc + datetime.timedelta(days=5))
-
-        # Build the query.
+        time = time.astimezone(tz.tzutc())
+        query_interval_begin = (time - datetime.timedelta(days=5))
+        query_interval_end = (time + datetime.timedelta(days=1))
         params_dict = {
             'instrument': ticker,
             'granularity': 'H2',  # Every two hours.
             'candleFormat': 'midpoint',
-            'start': interval_begin_utc.isoformat('T'),
-            'end': interval_end_utc.isoformat('T'),
+            'start': query_interval_begin.isoformat('T'),
+            'end': query_interval_end.isoformat('T'),
         }
-        time_prices = _fetch_candles(params_dict)
-        if time_prices is None:
-            logging.error("No prices returned")
-            return
-
-        # Get all the prices with the same date.
-        same_date = [item
-                     for item in time_prices
-                     if start_utc <= item[0] < end_utc]
-        if same_date:
-            # Find the min/max and return the median of all prices.
-            sorted_prices = sorted(same_date, key=lambda item: item[1])
-            time, price = sorted_prices[len(sorted_prices)//2]
-        else:
-            # No price matching the date were found; use the midpoint of the
-            # last price before the day interval and the first price after the
-            # day interval.
-            before_time, before_price = min(item
-                                            for item in time_prices
-                                            if item[0] < start_utc)
-            after_time, after_price = max(item
-                                          for item in time_prices
-                                          if item[0] >= end_utc)
-            price = (after_price + before_price) / 2
-            time = before_time + (after_time - before_time)/2
-
-        return source.SourcePrice(price, time, quote_currency)
+        return _fetch_price(params_dict, time)

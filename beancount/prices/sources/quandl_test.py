@@ -5,11 +5,13 @@ import datetime
 import unittest
 from unittest import mock
 
+from dateutil import tz
 import requests
 
 from beancount.prices import source
 from beancount.prices.sources import quandl
 from beancount.core.number import D
+from beancount.utils import date_utils
 
 
 def response(contents, status_code=requests.codes.ok):
@@ -59,7 +61,7 @@ class QuandlPriceFetcher(unittest.TestCase):
                 quandl.fetch_time_series('WIKI:FB', None)
                 self.assertRegex(exc.message, 'premium')
 
-    def test_valid_response(self):
+    def _test_valid_response(self):
         contents = {
             'dataset': {'collapse': None,
                         'column_index': None,
@@ -112,7 +114,12 @@ class QuandlPriceFetcher(unittest.TestCase):
             self.assertIsInstance(srcprice, source.SourcePrice)
 
             self.assertEqual(D('1006.94'), srcprice.price)
-            self.assertEqual(datetime.datetime(2018, 3, 27, 4, 0, 0,
-                                               tzinfo=datetime.timezone.utc),
-                             srcprice.time.astimezone(datetime.timezone.utc))
+            self.assertEqual(datetime.datetime(2018, 3, 27, 0, 0, 0,
+                                               tzinfo=tz.tzutc()),
+                             srcprice.time.astimezone(tz.tzutc()))
             self.assertEqual(None, srcprice.quote_currency)
+
+    def test_valid_response(self):
+        for tzname in "America/New_York", "Europe/Berlin", "Asia/Tokyo":
+            with date_utils.intimezone(tzname):
+                self._test_valid_response()

@@ -7,16 +7,25 @@ __copyright__ = "Copyright (C) 2015-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
+import datetime
+from typing import Optional, NamedTuple
+
+from beancount.core.number import Decimal
 
 
 # A record that contains data for a price fetched from a source.
 #
 # A triple of
-#   price: A Decimal instance.
-#   time: A datetime instance, if available.
+#   price: A Decimal instance, the price or rate.
+#   time: A datetime.time instance at which that price or rate was available.
+#     Note that this instance is REQUIRED to be timezone aware, as this is
+#     used to compute a corresponding date in the user's timezone.
 #   quote-currency: A string, the quote currency of the given price, if
 #     available.
-SourcePrice = collections.namedtuple('SourcePrice', 'price time quote_currency')
+SourcePrice = NamedTuple('SourcePrice',
+                         [('price', Decimal),
+                          ('time', Optional[datetime.datetime]),
+                          ('quote_currency', Optional[str])])
 
 
 class Source:
@@ -38,10 +47,11 @@ class Source:
           A SourcePrice instance. If the price could not be fetched, None is
           returned and another source should be consulted. There is never any
           guarantee that a price source will be able to fetch its value; client
-          code must be able to handle this.
+          code must be able to handle this. Also note that the price's returned
+          time must be timezone-aware.
         """
 
-    def get_historical_price(self, ticker, date):
+    def get_historical_price(self, ticker, time):
         """Return the historical price found for the symbol at the given date.
 
         This could be the price of the close of the day, for instance. We assume
@@ -52,9 +62,14 @@ class Source:
             may include structure, such as the exchange code. Also note that
             this ticker is source-specified, and is not necessarily the same
             value as the commodity symbol used in the Beancount file.
+          time: The timestamp at which to query for the price. This is a
+            timezone-aware timestamp you can convert to any timezone. For past
+            dates we query for a time that is equivalent to 4pm in the user's
+            timezone.
         Returns:
           A SourcePrice instance. If the price could not be fetched, None is
           returned and another source should be consulted. There is never any
           guarantee that a price source will be able to fetch its value; client
-          code must be able to handle this.
+          code must be able to handle this. Also note that the price's returned
+          time must be timezone-aware.
         """

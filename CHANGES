@@ -6,6 +6,13 @@ Note: This file contains only changes in the 'default' branch.
 
 2018-04-17
 
+  - Fixed #265: Refined the timezone specification of the price sources. In
+    doing this, I documented it in the beancount.prices.source module and now
+    pass in a timezone-aware datetime instance instead of a date, and the source
+    is now required to also require a timezone-aware datetime instance. I fixed
+    all the tests, and added a utility to simulate running them from different
+    timezones.
+
   - Implemented multi-file support for bean-doctor context command. Use it like
     this:
 

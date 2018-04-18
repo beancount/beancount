@@ -8,11 +8,13 @@ from unittest import mock
 from urllib import error
 import pprint
 
+from dateutil import tz
 import requests
 
 from beancount.prices.sources import yahoo
 from beancount.core.number import D
 from beancount.core.number import Decimal
+from beancount.utils import date_utils
 
 
 
@@ -29,7 +31,7 @@ class MockResponse:
 
 class YahooFinancePriceFetcher(unittest.TestCase):
 
-    def test_get_latest_price(self):
+    def _test_get_latest_price(self):
         response = MockResponse(
             {'quoteResponse':
              {'error': None,
@@ -58,7 +60,12 @@ class YahooFinancePriceFetcher(unittest.TestCase):
                          srcprice.time)
         self.assertEqual('CAD', srcprice.quote_currency)
 
-    def test_get_historical_price(self):
+    def test_get_latest_price(self):
+        for tzname in "America/New_York", "Europe/Berlin", "Asia/Tokyo":
+            with date_utils.intimezone(tzname):
+                self._test_get_latest_price()
+
+    def _test_get_historical_price(self):
         response = MockResponse(
             {'chart':
              {'error': None,
@@ -116,13 +123,18 @@ class YahooFinancePriceFetcher(unittest.TestCase):
                                         1509543000]}]}})
         with mock.patch('requests.get', return_value=response):
             srcprice = yahoo.Source().get_historical_price(
-                'XSP.TO', datetime.date(2017, 11, 1))
+                'XSP.TO', datetime.datetime(2017, 11, 1, 16, 0, 0, tzinfo=tz.tzutc()))
         self.assertTrue(isinstance(srcprice.price, Decimal))
         self.assertAlmostEqual(D('29.47'), srcprice.price, 3)
         timezone = datetime.timezone(datetime.timedelta(hours=-4), 'America/Toronto')
         self.assertEqual(datetime.datetime(2017, 11, 1, 9, 30, tzinfo=timezone),
                          srcprice.time)
         self.assertEqual('CAD', srcprice.quote_currency)
+
+    def test_get_historical_price(self):
+        for tzname in "America/New_York", "Europe/Berlin", "Asia/Tokyo":
+            with date_utils.intimezone(tzname):
+                self._test_get_historical_price()
 
     def test_parse_response_error_status_code(self):
         response = MockResponse(

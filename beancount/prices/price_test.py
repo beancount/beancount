@@ -11,6 +11,8 @@ import os
 from os import path
 from unittest import mock
 
+from dateutil import tz
+
 from beancount.prices import price
 from beancount.prices import find_prices
 from beancount.prices import source
@@ -242,12 +244,25 @@ class TestClobber(cmptest.TestCase):
         """, new_price_entries)
 
 
-class TestInverted(cmptest.TestCase):
+class TestTimezone(unittest.TestCase):
+
+    @mock.patch.object(price, 'fetch_cached_price')
+    def test_fetch_price__naive_time_no_timeozne(self, fetch_cached):
+        fetch_cached.return_value = source.SourcePrice(
+            D('125.00'), datetime.datetime(2015, 11, 22, 16, 0, 0), 'JPY')
+        dprice = find_prices.DatedPrice('JPY', 'USD', datetime.date(2015, 11, 22), None)
+        with self.assertRaises(ValueError):
+            price.fetch_price(dprice._replace(sources=[
+                find_prices.PriceSource(yahoo, 'USDJPY', False)]), False)
+
+
+class TestInverted(unittest.TestCase):
 
     def setUp(self):
         fetch_cached = mock.patch('beancount.prices.price.fetch_cached_price').start()
         fetch_cached.return_value = source.SourcePrice(
-            D('125.00'), datetime.datetime(2015, 11, 22, 16, 0, 0), 'JPY')
+            D('125.00'), datetime.datetime(2015, 11, 22, 16, 0, 0, tzinfo=tz.tzlocal()),
+            'JPY')
         self.dprice = find_prices.DatedPrice('JPY', 'USD', datetime.date(2015, 11, 22),
                                              None)
         self.addCleanup(mock.patch.stopall)

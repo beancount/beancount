@@ -15,6 +15,8 @@ import argparse
 import logging
 from concurrent import futures
 
+from dateutil import tz
+
 from beancount.core.number import ONE
 import beancount.prices
 from beancount import loader
@@ -38,7 +40,7 @@ DEFAULT_EXPIRATION = datetime.timedelta(seconds=30*60)  # 30 mins.
 
 def now():
     "Indirection in order to be able to mock it out in the tests."
-    return datetime.datetime.now()
+    return datetime.datetime.now(datetime.timezone.utc)
 
 
 def fetch_cached_price(source, symbol, date):
@@ -55,36 +57,38 @@ def fetch_cached_price(source, symbol, date):
     Returns:
       A SourcePrice instance.
     """
-    time_now = now()
+    # Compute a suitable timestamp from the date, if specified.
+    if date is not None:
+        # We query as for 4pm for the given date of the current timezone, if
+        # specified.
+        query_time = datetime.time(16, 0, 0)
+        time_local = datetime.datetime.combine(date, query_time, tzinfo=tz.tzlocal())
+        time = time_local.astimezone(tz.tzutc())
+    else:
+        time = None
+
     if _CACHE is None:
         # The cache is disabled; just call and return.
         result = (source.get_latest_price(symbol)
-                  if date is None else
-                  source.get_historical_price(symbol, date))
-    elif date is None or date >= time_now.date():
-        # The cache is enabled and we have to compute the current/latest price.
-        # Fetch from the cache but miss if the price is too old.
-        md5 = hashlib.md5()
-        md5.update(str((type(source).__module__, symbol)).encode('utf-8'))
-        key = md5.hexdigest()
-        try:
-            time_created, result = _CACHE[key]
-            if (time_now - time_created) > _CACHE.expiration:
-                raise KeyError
-        except KeyError:
-            result = source.get_latest_price(symbol)
-            _CACHE[key] = (time_now, result)
+                  if time is None else
+                  source.get_historical_price(symbol, time))
+
     else:
-        # The cache is enabled and we are asked to provide an old price. Assume
-        # it doesn't change and return the cached value if at all available.
+        # The cache is enabled and we have to compute the current/latest price.
+        # Try to fetch from the cache but miss if the price is too old.
         md5 = hashlib.md5()
         md5.update(str((type(source).__module__, symbol, date)).encode('utf-8'))
         key = md5.hexdigest()
+        timestamp_now = int(now().timestamp())
         try:
-            _, result = _CACHE[key]
+            timestamp_created, result = _CACHE[key]
+            if (timestamp_now - timestamp_created) > _CACHE.expiration.total_seconds():
+                raise KeyError
         except KeyError:
-            result = source.get_historical_price(symbol, date)
-            _CACHE[key] = (None, result)
+            result = (source.get_latest_price(symbol)
+                      if time is None else
+                      source.get_historical_price(symbol, time))
+            _CACHE[key] = (timestamp_now, result)
     return result
 
 
@@ -153,7 +157,20 @@ def fetch_price(dprice, swap_inverted=False):
 
     assert base is not None
     fileloc = data.new_metadata('<{}>'.format(type(psource.module).__name__), 0)
-    return data.Price(fileloc, srcprice.time.date(), base,
+
+    # The datetime instance is required to be aware. We always convert to the
+    # user's timezone before extracting the date. This means that if the market
+    # returns a timestamp for a particular date, once we convert to the user's
+    # timezone the returned date may be different by a day. The intent is that
+    # whatever we print is assumed coherent with the user's timezone. See
+    # discussion at
+    # https://groups.google.com/d/msg/beancount/9j1E_HLEMBQ/fYRuCQK_BwAJ
+    srctime = srcprice.time
+    if srctime.tzinfo is None:
+        raise ValueError("Time returned by the price source is not timezone aware.")
+    date = srctime.astimezone(tz.tzlocal()).date()
+
+    return data.Price(fileloc, date, base,
                       amount.Amount(price, quote or UNKNOWN_CURRENCY))
 
 

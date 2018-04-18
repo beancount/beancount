@@ -5,11 +5,13 @@ import datetime
 import unittest
 from unittest import mock
 
+from dateutil import tz
 import requests
 
 from beancount.prices import source
 from beancount.prices.sources import iex
 from beancount.core.number import D
+from beancount.utils import date_utils
 
 
 def response(contents, status_code=requests.codes.ok):
@@ -29,7 +31,7 @@ class IEXPriceFetcher(unittest.TestCase):
                 iex.fetch_quote('AAPL')
                 self.assertRegex(exc.message, 'premium')
 
-    def test_valid_response(self):
+    def _test_valid_response(self):
         contents = {'avgTotalVolume': 34740512,
                     'calculationPrice': 'close',
                     'change': 1.71,
@@ -71,6 +73,11 @@ class IEXPriceFetcher(unittest.TestCase):
             self.assertIsInstance(srcprice, source.SourcePrice)
             self.assertEqual(D('168.39'), srcprice.price)
             self.assertEqual(datetime.datetime(2018, 4, 3, 20, 0, 0, 477000,
-                                               tzinfo=datetime.timezone.utc),
-                             srcprice.time.astimezone(datetime.timezone.utc))
+                                               tzinfo=tz.tzutc()),
+                             srcprice.time.astimezone(tz.tzutc()))
             self.assertEqual('USD', srcprice.quote_currency)
+
+    def test_valid_response(self):
+        for tzname in "America/New_York", "Europe/Berlin", "Asia/Tokyo":
+            with date_utils.intimezone(tzname):
+                self._test_valid_response()

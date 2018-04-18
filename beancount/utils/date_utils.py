@@ -3,8 +3,11 @@
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import contextlib
 import datetime
 import dateutil.parser
+import os
+import time
 
 
 def iter_dates(start_date, end_date):
@@ -68,3 +71,27 @@ def next_month(date):
         year += 1
         month = 1
     return datetime.date(year, month, 1)
+
+
+@contextlib.contextmanager
+def intimezone(tz_value: str):
+    """Temporarily reset the value of TZ.
+
+    This is used for testing.
+
+    Args:
+      tz_value: The value of TZ to set for the duration of this context.
+    Returns:
+      A contextmanager in the given timezone locale.
+    """
+    tz_old = os.environ.get('TZ', None)
+    os.environ['TZ'] = tz_value
+    time.tzset()
+    try:
+        yield
+    finally:
+        if tz_old is None:
+            del os.environ['TZ']
+        else:
+            os.environ['TZ'] = tz_old
+        time.tzset()

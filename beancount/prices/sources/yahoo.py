@@ -11,6 +11,8 @@ tell, undocumented:
 https://query1.finance.yahoo.com/v7/finance/quote
 https://query1.finance.yahoo.com/v8/finance/chart/SYMBOL
 
+Timezone information: Input and output datetimes are specified via UNIX
+timestamps, but the timezone of the particular market is included in the output.
 """
 __copyright__ = "Copyright (C) 2015-2018  Martin Blais"
 __license__ = "GNU GPLv2"
@@ -22,6 +24,7 @@ from urllib import parse
 from urllib import error
 from typing import Dict, Any
 
+from dateutil import tz
 import requests
 
 from beancount.core.number import D
@@ -94,23 +97,22 @@ class Source(source.Source):
             timezone = datetime.timezone(
                 datetime.timedelta(hours=result['gmtOffSetMilliseconds'] / 3600000),
                 result['exchangeTimezoneName'])
-            trade_date = datetime.datetime.fromtimestamp(result['regularMarketTime'],
+            trade_time = datetime.datetime.fromtimestamp(result['regularMarketTime'],
                                                          tz=timezone)
         except KeyError:
             raise YahooError("Invalid response from Yahoo: {}".format(repr(result)))
 
         currency = parse_currency(result)
 
-        return source.SourcePrice(price, trade_date, currency)
+        return source.SourcePrice(price, trade_time, currency)
 
-    def get_historical_price(self, ticker, date):
+    def get_historical_price(self, ticker, time):
         """See contract in beancount.prices.source.Source."""
         if requests is None:
             raise YahooError("You must install the 'requests' library.")
         url = "https://query1.finance.yahoo.com/v8/finance/chart/{}".format(ticker)
-        dt = datetime.datetime.combine(date, datetime.time())
-        dt_start = dt - datetime.timedelta(days=5)
-        dt_end = dt
+        dt_start = time - datetime.timedelta(days=5)
+        dt_end = time
         payload = {
             'period1': int(dt_start.timestamp()),
             'period2': int(dt_end.timestamp()),
@@ -131,13 +133,12 @@ class Source(source.Source):
 
         # Get the latest data returned.
         latest = None
-        dt = dt.astimezone(timezone)
         for data_dt, price in sorted(series):
-            if data_dt >= dt:
+            if data_dt >= time:
                 break
             latest = data_dt, price
         if latest is None:
-            raise YahooError("Could not find price before {} in {}".format(dt, series))
+            raise YahooError("Could not find price before {} in {}".format(time, series))
 
         currency = result['meta']['currency']
         return source.SourcePrice(price, data_dt, currency)

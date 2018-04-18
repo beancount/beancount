@@ -19,6 +19,9 @@ Note that their symbols are usually identified by "<DATABASE_CODE>/<DATASET_CODE
 which could easily get integrated. We would just have to encode the
 'datatable_code' and 'format' and perhaps other fields in the ticker name.)
 
+Timezone information: Input and output datetimes are limited to dates, and I
+believe the dates are presumed to live in the timezone of each particular data
+source. (It's unclear, not documented.)
 """
 __copyright__ = "Copyright (C) 2018  Martin Blais"
 __license__ = "GNU GPLv2"
@@ -26,6 +29,8 @@ __license__ = "GNU GPLv2"
 import datetime
 import re
 import os
+
+from dateutil import tz
 
 import requests
 
@@ -44,13 +49,14 @@ def parse_ticker(ticker):
     return tuple(ticker.split(":"))
 
 
-def fetch_time_series(ticker, date=None):
+def fetch_time_series(ticker, time=None):
     """Fetch"""
     # Create request payload.
     database, dataset = parse_ticker(ticker)
     url = f"https://www.quandl.com/api/v3/datasets/{database}/{dataset}.json"
     payload = {"limit": 1}
-    if date is not None:
+    if time is not None:
+        date = time.date()
         payload["start_date"] = (date - datetime.timedelta(days=10)).isoformat()
         payload["end_date"] = date.isoformat()
 
@@ -77,8 +83,10 @@ def fetch_time_series(ticker, date=None):
         data_index = column_naems.index('Close')
     data = dataset['data'][0]
 
-    # Gather time.
+    # Gather time and assume it's in UTC timezone (Quandl does not provide the
+    # market's timezone).
     time = datetime.datetime.strptime(data[date_index], '%Y-%m-%d')
+    time = time.replace(tzinfo=tz.tzutc())
 
     # Gather price.
     # Quantize with the same precision default rendering of floats occur.
@@ -89,7 +97,6 @@ def fetch_time_series(ticker, date=None):
         price = price.quantize(D(match.group(1)))
 
     # Note: There is no currency information in the response (surprising).
-
     return source.SourcePrice(price, time, None)
 
 
@@ -100,6 +107,6 @@ class Source(source.Source):
         """See contract in beancount.prices.source.Source."""
         return fetch_time_series(ticker)
 
-    def get_historical_price(self, ticker, date):
+    def get_historical_price(self, ticker, time):
         """See contract in beancount.prices.source.Source."""
-        return fetch_time_series(ticker, date)
+        return fetch_time_series(ticker, time)
