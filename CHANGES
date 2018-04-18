@@ -4,6 +4,18 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2018-04-17
+
+  - Implemented multi-file support for bean-doctor context command. Use it like
+    this:
+
+      bean-doctor context <toplevel.beancount> <file.beancount>:<lineno>
+
+    The previous syntax is still supported; like this:
+
+      bean-doctor context <toplevel.beancount> <lineno>
+
+
 2018-04-05
 
   - Since I added a dependency on 'requests', forgot to add to checkdeps. Done.

@@ -196,23 +196,34 @@ def do_context(filename, args):
     Args:
       filename: A string, which consists in the filename.
       args: A tuple of the rest of arguments. We're expecting the first argument
-        to be an integer as a string.
+        to be a string which contains either a lineno integer or a filename:lineno
+        combination (which can be used if the location is not in the top-level file).
     """
     from beancount.reports import context
     from beancount import loader
 
-    # Parse the arguments, get the line number.
+    # Check we have the required number of arguments.
     if len(args) != 1:
         raise SystemExit("Missing line number argument.")
-    lineno = int(args[0])
 
-    # Load the input file.
+    # Load the input files.
     entries, errors, options_map = loader.load_file(filename)
 
-    # Note: Make sure to use the absolute filename used by the parser to resolve
-    # the file.
+    # Parse the arguments, get the line number.
+    match = re.match(r"(.+):(\d+)$", args[0])
+    if match:
+        search_filename = path.abspath(match.group(1))
+        lineno = int(match.group(2))
+    elif re.match(r"(\d+)$", args[0]):
+        # Note: Make sure to use the absolute filename used by the parser to
+        # resolve the file.
+        search_filename = options_map['filename']
+        lineno = int(args[0])
+    else:
+        raise SystemExit("Invalid format for location.")
+
     str_context = context.render_file_context(entries, options_map,
-                                              options_map['filename'], lineno)
+                                              search_filename, lineno)
     sys.stdout.write(str_context)
 
 
