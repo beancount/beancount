@@ -3,7 +3,6 @@ pipelines:
   default:
     - step:
         script:
-          - apt-get -y install zip
           - python3 -m pip install -r requirements.txt
           - python3 -m pip install nose
           - python3 setup.py build_ext -i
