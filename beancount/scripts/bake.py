@@ -17,6 +17,7 @@ import shutil
 import shlex
 import re
 from os import path
+import zipfile
 
 import lxml.html
 
@@ -192,11 +193,25 @@ def archive(command_template, directory, archive, quiet=False):
         raise OSError("Archive failure")
 
 
+def archive_zip(directory, archive):
+    """Archive the directory to the given tar/gz archive filename.
+
+    Args:
+      directory: A string, the name of the directory to archive.
+      archive: A string, the name of the file to output.
+    """
+    with file_utils.chdir(directory), zipfile.ZipFile(archive, 'w') as archfile:
+        for root, dirs, files in os.walk(directory):
+            for filename in files:
+                relpath = path.relpath(path.join(root, filename), directory)
+                archfile.write(relpath)
+
+
 ARCHIVERS = {
     '.tar.gz'  : 'tar -C {dirname} -zcvf {archive} {basename}',
     '.tgz'     : 'tar -C {dirname} -zcvf {archive} {basename}',
     '.tar.bz2' : 'tar -C {dirname} -jcvf {archive} {basename}',
-    '.zip'     : 'zip -r {archive} {basename}',
+    '.zip'     : archive_zip,
     }
 
 
@@ -258,8 +273,24 @@ def main():
         logging.error("Validation error: Empty '%s'", target)
 
     # Archive if requested.
-    if archival_command:
-        archive(archival_command, output_directory, opts.output, True)
+    if archival_command is not None:
+        # Normalize the paths and ensure sanity before we start compression.
+        output_directory = path.abspath(output_directory)
+        archive_filename = path.abspath(opts.output)
+        if not path.exists(output_directory):
+            raise IOError("Directory to archive '{}' does not exist".format(
+                output_directory))
+        if path.exists(archive_filename):
+            raise IOError("Output archive name '{}' already exists".format(
+                archive_filename))
+
+        # Dispatch to a particular compressor.
+        if isinstance(archival_command, str):
+            archive(archival_command, output_directory, archive_filename, True)
+        elif callable(archival_command):
+            archival_command(output_directory, archive_filename)
+
+        # Delete the output directory.
         shutil.rmtree(output_directory)
 
     print("Output in '{}'".format(opts.output))
