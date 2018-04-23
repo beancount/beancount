@@ -182,7 +182,7 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
                     max_date = date
             return max_date
 
-    def extract(self, file):
+    def extract(self, file, existing_entries=None):
         entries = []
 
         # Normalize the configuration to fetch by index.
