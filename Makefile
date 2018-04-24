@@ -129,7 +129,7 @@ debug:
 # Push to github.
 github:
 	hg bookmark -r default master
-	hg push github
+	hg push git+ssh://git@github.com/blais/beancount
 
 # Bake a release.
 release:
