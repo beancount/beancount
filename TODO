@@ -4672,6 +4672,18 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - It might be interesting to support some sort of transfer syntax that would
+    allow the movement of Position's across accounts, without converting to the
+    cost, something like this:
+
+      2000-01-01 * "Transfer shares from BrokerOne to BrokerTwo to sell at BrokerTwo"
+        Assets:BrokerOne     -10 HOOL {}
+        Assets:BrokerTwo
+
+    While this example is simple enough, a fully general version of this might
+    not be, but it's worth prototyping. This would require some sort of new
+    syntax for these "transfers."
+
   - Rationalize the strategy for reporting errors.
 
   - Rendering idea: If a posting moved the balance in the unusual direction
