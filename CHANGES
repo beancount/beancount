@@ -4,6 +4,13 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2018-04-28
+
+  - Updated version of flex on Ubuntu (2.6.1) generates warnings. Fixed a few.
+    But Beancount now fails on account names with a dash inthyem; added a test
+    for those. (The lexer is not the issue; I suspect a bison update from 4/17.)
+
+
 2018-04-18
 
   - Fixed #157: Building a price map with zero prices should not fail,

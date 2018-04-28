@@ -314,10 +314,10 @@ FALSE		{
 
     /* All other characters. */
     [^\\\"]+        {
-        if ( yyleng > (yy_size_t)(strbuf_end - strbuf_ptr) ) {
+        if ( yyleng > (strbuf_end - strbuf_ptr) ) {
             strbuf_realloc(yyleng);
         }
-        size_t i;
+        ssize_t i;
         for (i = 0; i < yyleng; ++i) {
             *strbuf_ptr++ = yytext[i];
         }

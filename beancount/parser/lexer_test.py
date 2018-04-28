@@ -253,6 +253,18 @@ class TestLexer(unittest.TestCase):
         self.assertFalse(errors)
 
     @lex_tokens
+    def test_account_names_with_dash(self, tokens, errors):
+        """\
+          Equity:Beginning-Balances
+        """
+        self.assertEqual([
+            ('ACCOUNT', 1, 'Equity:Beginning-Balances', 'Equity:Beginning-Balances'),
+            ('EOL', 2, '\n', None),
+            ('EOL', 2, '\x00', None),
+        ], tokens)
+        self.assertFalse(errors)
+
+    @lex_tokens
     def test_invalid_directive(self, tokens, errors):
         """\
           2008-03-01 check Assets:BestBank:Savings 2340.19 USD
