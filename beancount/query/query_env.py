@@ -152,6 +152,18 @@ class YearMonth(query_compile.EvalFunction):
         date = args[0]
         return datetime.date(date.year, date.month, 1)
 
+class Quarter(query_compile.EvalFunction):
+    "Extract the quarter from a date."
+    __intypes__ = [datetime.date]
+
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        date = args[0]
+        return '{:04d}-Q{:1d}'.format(date.year, (date.month-1)//3+1)
+
 class Day(query_compile.EvalFunction):
     "Extract the day from a date."
     __intypes__ = [datetime.date]
@@ -683,6 +695,7 @@ SIMPLE_FUNCTIONS = {
     'year'                                               : Year,
     'month'                                              : Month,
     'ymonth'                                             : YearMonth,
+    'quarter'                                            : Quarter,
     'day'                                                : Day,
     'weekday'                                            : Weekday,
     'today'                                              : Today,
