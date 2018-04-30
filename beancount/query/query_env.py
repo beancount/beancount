@@ -32,6 +32,30 @@ from beancount.query import query_compile
 
 # Non-agreggating functions. These functionals maintain no state.
 
+class _Neg(query_compile.EvalFunction):
+    "Compute the negative value of the argument. This works on various types."
+    __intypes__ = None
+
+    def __init__(self, operands):
+        super().__init__(operands, self.__intypes__[0])
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        return -args[0]
+
+class NegDecimal(_Neg):
+    __intypes__ = [Decimal]
+
+class NegAmount(_Neg):
+    __intypes__ = [amount.Amount]
+
+class NegPosition(_Neg):
+    __intypes__ = [position.Position]
+
+class NegInventory(_Neg):
+    __intypes__ = [inventory.Inventory]
+
+
 class AbsDecimal(query_compile.EvalFunction):
     "Compute the length of the argument. This works on sequences."
     __intypes__ = [Decimal]
@@ -667,6 +691,10 @@ class FilterCurrencyInventory(query_compile.EvalFunction):
 # FIXME: Why do I need to specify the arguments here? They are already derived
 # from the functions. Just fetch them from instead. Make the compiler better.
 SIMPLE_FUNCTIONS = {
+    ('neg', Decimal)                                     : NegDecimal,
+    ('neg', amount.Amount)                               : NegAmount,
+    ('neg', position.Position)                           : NegPosition,
+    ('neg', inventory.Inventory)                         : NegInventory,
     ('abs', Decimal)                                     : AbsDecimal,
     ('abs', position.Position)                           : AbsPosition,
     ('abs', inventory.Inventory)                         : AbsInventory,
