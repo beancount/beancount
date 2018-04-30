@@ -188,22 +188,26 @@ class EvalContains(EvalBinaryOp):
 class EvalMul(EvalBinaryOp):
 
     def __init__(self, left, right):
-        super().__init__(Decimal.__mul__, left, right, Decimal)
+        f = lambda x, y: Decimal(x * y)
+        super().__init__(f, left, right, Decimal)
 
 class EvalDiv(EvalBinaryOp):
 
     def __init__(self, left, right):
-        super().__init__(Decimal.__truediv__, left, right, Decimal)
+        f = lambda x, y: Decimal(x / y)
+        super().__init__(f, left, right, Decimal)
 
 class EvalAdd(EvalBinaryOp):
 
     def __init__(self, left, right):
-        super().__init__(Decimal.__add__, left, right, Decimal)
+        f = lambda x, y: Decimal(x + y)
+        super().__init__(f, left, right, Decimal)
 
 class EvalSub(EvalBinaryOp):
 
     def __init__(self, left, right):
-        super().__init__(Decimal.__sub__, left, right, Decimal)
+        f = lambda x, y: Decimal(x - y)
+        super().__init__(f, left, right, Decimal)
 
 
 # Interpreter nodes.

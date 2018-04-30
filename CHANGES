@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2018-04-29
+
+  - Changed the SQL shell's operators to dispatch to Python's default operator
+    selection instead of coercing to Decimal instances.
+
+
 2018-04-28
 
   - Added QUARTER() function to the SQL shell.
