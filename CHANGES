@@ -6,6 +6,9 @@ Note: This file contains only changes in the 'default' branch.
 
 2018-04-29
 
+  - Added polymorphic POSSIGN(_, account) function to the SQL shell in order to
+    support correcting for per-account sign.
+
   - Implemented polymorphic NEG() function in the SQL shell, which works on
     instances of Decimal, Amount, Position, Inventory.
 

@@ -185,6 +185,10 @@ class EvalContains(EvalBinaryOp):
 # Note: We ought to implement implicit type promotion here,
 # e.g., int -> float -> Decimal.
 
+# Note(2): This does not support multiplication on Amount, Position, Inventory.
+# We need to rewrite the evaluator to support types in order to do this
+# properly.
+
 class EvalMul(EvalBinaryOp):
 
     def __init__(self, left, right):

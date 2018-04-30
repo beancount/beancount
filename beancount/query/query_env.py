@@ -369,6 +369,20 @@ class AccountSortKey(query_compile.EvalFunction):
         index, name = account_types.get_account_sort_key(context.account_types, args[0])
         return '{}-{}'.format(index, name)
 
+# Note: Don't provide this, because polymorphic multiplication on Amount,
+# Position, Inventory isn't supported yet.
+#
+# class AccountSign(query_compile.EvalFunction):
+#     "Produce a +1 / -1 signed value to multiply with to correct balances."
+#     __intypes__ = [str]
+#
+#     def __init__(self, operands):
+#         super().__init__(operands, Decimal)
+#
+#     def __call__(self, context):
+#         args = self.eval_args(context)
+#         return Decimal(account_types.get_account_sign(args[0], context.account_types))
+
 class CurrencyMeta(query_compile.EvalFunction):
     "Get the metadata dict of the commodity directive of the currency."
     __intypes__ = [str]
@@ -688,6 +702,60 @@ class FilterCurrencyInventory(query_compile.EvalFunction):
                                    if pos.units.currency == currency)
 
 
+class PosSignDecimal(query_compile.EvalFunction):
+    "Correct sign of an Amount based on the usual balance of associated account."
+    __intypes__ = [Decimal, str]
+
+    def __init__(self, operands):
+        super().__init__(operands, Decimal)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        num, account = args
+        sign = account_types.get_account_sign(account, context.account_types)
+        return num if sign >= 0  else -num
+
+class PosSignAmount(query_compile.EvalFunction):
+    "Correct sign of an Amount based on the usual balance of associated account."
+    __intypes__ = [amount.Amount, str]
+
+    def __init__(self, operands):
+        super().__init__(operands, amount.Amount)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        amt, account = args
+        sign = account_types.get_account_sign(account, context.account_types)
+        return amt if sign >= 0  else -amt
+
+class PosSignPosition(query_compile.EvalFunction):
+    "Correct sign of an Amount based on the usual balance of associated account."
+    __intypes__ = [position.Position, str]
+
+    def __init__(self, operands):
+        super().__init__(operands, position.Position)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        pos, account = args
+        sign = account_types.get_account_sign(account, context.account_types)
+        return pos if sign >= 0  else -pos
+
+class PosSignInventory(query_compile.EvalFunction):
+    "Correct sign of an Amount based on the usual balance of associated account."
+    __intypes__ = [inventory.Inventory, str]
+
+    def __init__(self, operands):
+        super().__init__(operands, inventory.Inventory)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        inv, account = args
+        sign = account_types.get_account_sign(account, context.account_types)
+        return inv if sign >= 0  else -inv
+
+
+
 # FIXME: Why do I need to specify the arguments here? They are already derived
 # from the functions. Just fetch them from instead. Make the compiler better.
 SIMPLE_FUNCTIONS = {
@@ -745,6 +813,10 @@ SIMPLE_FUNCTIONS = {
     'getitem'                                            : GetItemStr,
     'findfirst'                                          : FindFirst,
     'joinstr'                                            : JoinStr,
+    ('possign', Decimal, str)                            : PosSignDecimal,
+    ('possign', amount.Amount, str)                      : PosSignAmount,
+    ('possign', position.Position, str)                  : PosSignPosition,
+    ('possign', inventory.Inventory, str)                : PosSignInventory,
 
     # FIXME: 'only' should be removed.
     'only'                                               : OnlyInventory,
