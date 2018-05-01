@@ -87,7 +87,7 @@ class Importer(importer.ImporterProtocol):
         """Return the optional renamed account filename."""
         return find_max_date(file.contents())
 
-    def extract(self, file):
+    def extract(self, file, existing_entries=None):
         """Extract a list of partially complete transactions from the file."""
         soup = bs4.BeautifulSoup(file.contents(), 'lxml')
         return extract(soup, file.name, self.acctid_regexp, self.account, self.FLAG,
