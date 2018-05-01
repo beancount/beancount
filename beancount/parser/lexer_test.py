@@ -427,7 +427,7 @@ class TestIgnoredLines(unittest.TestCase):
             ('STRING', 2, '"', 'title'),
             ('STRING', 2, '"', 'The Title'),
             ('EOL', 3, '\n', None),
-            ('SKIPPED', 3, '  ', None),
+            ('INDENT', 3, '  ', None),
             ('COMMENT', 3, ';; Something something.', None),
             ('EOL', 4, '\n', None),
             ('EOL', 4, '\x00', None),

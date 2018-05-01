@@ -123,16 +123,16 @@ int strtonl(const char* buf, size_t nchars);
     return EOL;
 }
 
- /* Ignore whitespace, except when found at the beginning of a line and followed
-    by a non-comment regular character. This is how we detect an initial indent
-    and thus group postings together in the grammar. */
+ /* Ignore whitespace, except when found at the beginning of a line
+    and followed by a regular character. This is how we detect an
+    initial indent and thus group postings and comments together in
+    the grammar. */
 [ \t\r]+	{
     if ( yy_line_tokens == 1 ) {
         /* If the next character completes the line, skip it. */
         if ( yy_hold_char == '\n' ||
              yy_hold_char == '\r' ||
-             yy_hold_char == '\0' ||
-             yy_hold_char == ';' ) {
+             yy_hold_char == '\0' ) {
             return SKIPPED;
         }
         else {

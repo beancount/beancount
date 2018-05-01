@@ -249,7 +249,7 @@ const char* getTokenName(int token);
 %start file
 
 /* We have some number of expected shift/reduce conflicts at 'eol'. */
-%expect 21
+%expect 19
 
 
 /*--------------------------------------------------------------------------------*/
@@ -444,11 +444,7 @@ posting_or_kv_list : empty
                        Py_INCREF(Py_None);
                        $$ = Py_None;
                    }
-                   | posting_or_kv_list SKIPPED
-                   {
-                       $$ = $1;
-                   }
-                   | posting_or_kv_list COMMENT EOL
+                   | posting_or_kv_list INDENT COMMENT EOL
                    {
                        $$ = $1;
                    }

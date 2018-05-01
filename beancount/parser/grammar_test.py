@@ -969,11 +969,12 @@ class TestTransactions(unittest.TestCase):
         input_ = '\n'.join([
             '2014-04-20 * "Busted!"',
             '  Assets:Checking         100 USD',
-            '  ',
+            '  ',  # This cuts off the transaction
             '  Assets:Checking         -99 USD'
         ])
         entries, errors, _ = parser.parse_string(input_)
-        check_list(self, entries, [])
+        check_list(self, entries, [data.Transaction])
+        check_list(self, entries[0].postings, [data.Posting])
         check_list(self, errors, [parser.ParserSyntaxError])
 
 
@@ -2530,7 +2531,7 @@ class TestMisc(cmptest.TestCase):
 
     # FIXME(blais): Ideally this unindented should generate an error.
     # It would be nicer if only indented comments would be allowed.
-    @parser.parse_doc(expect_errors=False)
+    @parser.parse_doc(expect_errors=True)
     def test_comment_in_postings_invalid(self, entries, errors, options_map):
         """
           2017-06-27 * "Bitcoin network fee"
@@ -2538,7 +2539,8 @@ class TestMisc(cmptest.TestCase):
           ; Account: Pocket money
             Assets:Crypto:Bitcoin                -0.00082487 BTC
         """
-        self.assertEqual(0, len(errors))
+        self.assertEqual(1, len(errors))
+        self.assertRegex(errors[0].message, "unexpected ACCOUNT")
 
 
 class TestDocument(unittest.TestCase):
