@@ -340,6 +340,67 @@ class TestUglyBugs(unittest.TestCase):
         self.assertEqual([], errors)
 
 
+class TestComment(unittest.TestCase):
+
+    @parser.parse_doc()
+    def test_comment_before_transaction(self, entries, errors, _):
+        """
+        ; Hi
+        2015-06-07 *
+          Assets:Cash   1 USD
+          Assets:Cash   -1 USD
+        """
+        self.assertEqual(1, len(entries))
+        self.assertEqual(2, len(entries[0].postings))
+        self.assertEqual(0, len(errors))
+
+    @parser.parse_doc()
+    def test_comment_after_transaction(self, entries, errors, _):
+        """
+        2015-06-07 *
+          Assets:Cash   1 USD
+          Assets:Cash   -1 USD
+        ; Hi
+        """
+        self.assertEqual(1, len(entries))
+        self.assertEqual(2, len(entries[0].postings))
+        self.assertEqual(0, len(errors))
+
+    @parser.parse_doc()
+    def test_comment_between_postings(self, entries, errors, _):
+        """
+        2015-06-07 *
+          Assets:Cash   1 USD
+          ; Hi
+          Assets:Cash   -1 USD
+        """
+        self.assertEqual(1, len(entries))
+        self.assertEqual(2, len(entries[0].postings))
+        self.assertEqual(0, len(errors))
+
+    @parser.parse_doc()
+    def test_comment_after_posting(self, entries, errors, _):
+        """
+        2015-06-07 *
+          Assets:Cash   1 USD    ; Hi
+          Assets:Cash   -1 USD
+        """
+        self.assertEqual(1, len(entries))
+        self.assertEqual(2, len(entries[0].postings))
+        self.assertEqual(0, len(errors))
+
+    @parser.parse_doc()
+    def test_comment_after_transaction_start(self, entries, errors, _):
+        """
+        2015-06-07 *     ; Hi
+          Assets:Cash   1 USD
+          Assets:Cash   -1 USD
+        """
+        self.assertEqual(1, len(entries))
+        self.assertEqual(2, len(entries[0].postings))
+        self.assertEqual(0, len(errors))
+
+
 class TestPushPopTag(unittest.TestCase):
 
     @parser.parse_doc(expect_errors=True)
@@ -891,6 +952,19 @@ class TestTransactions(unittest.TestCase):
           2014-07-17 * "(JRN) INTRA-ACCOUNT TRANSFER" ^795422780
         """
         self.assertTrue(isinstance(entries[0].postings, list))
+
+    @parser.parse_doc(expect_errors=True)
+    def test_blank_line_not_allowed(self, entries, errors, _):
+        """
+          2014-04-20 * "Busted!"
+            Assets:Checking         100 USD
+
+            Assets:Checking         -99 USD
+        """
+        check_list(self, entries, [data.Transaction])
+        check_list(self, entries[0].postings, [data.Posting])
+        check_list(self, errors, [parser.ParserSyntaxError])
+
 
 
 class TestParseLots(unittest.TestCase):
