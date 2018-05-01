@@ -249,7 +249,7 @@ const char* getTokenName(int token);
 %start file
 
 /* We have some number of expected shift/reduce conflicts at 'eol'. */
-%expect 19
+%expect 17
 
 
 /*--------------------------------------------------------------------------------*/
@@ -282,10 +282,9 @@ eol : EOL
 /* Note: Technically we could have the lexer yield EOF and handle INDENT EOF and
    COMMENT EOF. However this is not necessary. */
 empty_line : EOL
-           | COMMENT EOL
-           | INDENT EOL
-           | INDENT
            | COMMENT
+           | INDENT
+           | SKIPPED
 
 /* FIXME: This needs be made more general, dealing with precedence.
    I just need this right now, so I'm putting it in, in a way that will.
@@ -794,8 +793,7 @@ plugin : PLUGIN STRING eol
                   $$, "plugin", "siOO", FILE_LINE_ARGS, $2, $3);
        }
 
-directive : SKIPPED
-          | empty_line
+directive : empty_line
           | pushtag
           | poptag
           | pushmeta
