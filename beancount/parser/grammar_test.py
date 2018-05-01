@@ -965,6 +965,16 @@ class TestTransactions(unittest.TestCase):
         check_list(self, entries[0].postings, [data.Posting])
         check_list(self, errors, [parser.ParserSyntaxError])
 
+    def test_blank_line_with_spaces_not_allowed(self):
+        input_ = '\n'.join([
+            '2014-04-20 * "Busted!"',
+            '  Assets:Checking         100 USD',
+            '  ',
+            '  Assets:Checking         -99 USD'
+        ])
+        entries, errors, _ = parser.parse_string(input_)
+        check_list(self, entries, [])
+        check_list(self, errors, [parser.ParserSyntaxError])
 
 
 class TestParseLots(unittest.TestCase):
