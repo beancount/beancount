@@ -218,7 +218,7 @@ class _LoaderImporter(importer.ImporterProtocol):
     def identify(self, file):
         return path.basename(file.name) == path.basename(self.filename)
 
-    def extract(self, file):
+    def extract(self, file, existing_entries=None):
         entries, _, __ = loader.load_file(file.name)
         return entries
 
