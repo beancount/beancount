@@ -2508,16 +2508,27 @@ class TestIncompleteInputs(cmptest.TestCase):
 
 class TestMisc(cmptest.TestCase):
 
-    @parser.parse_doc(expect_errors=True)
+    @parser.parse_doc(expect_errors=False)
     def test_comment_in_postings(self, entries, errors, options_map):
         """
           2017-06-27 * "Bitcoin network fee"
             ; Account: Pocket money
             Expenses:Crypto:NetworkFees           0.00082487 BTC
-            Assets:Crypto:Bitcoin
+            Assets:Crypto:Bitcoin                -0.00082487 BTC
         """
-        self.assertEqual(1, len(errors))
-        self.assertRegex(errors[0].message, 'syntax error')
+        self.assertEqual(0, len(errors))
+
+    # FIXME(blais): Ideally this unindented should generate an error.
+    # It would be nicer if only indented comments would be allowed.
+    @parser.parse_doc(expect_errors=False)
+    def test_comment_in_postings(self, entries, errors, options_map):
+        """
+          2017-06-27 * "Bitcoin network fee"
+            Expenses:Crypto:NetworkFees           0.00082487 BTC
+          ; Account: Pocket money
+            Assets:Crypto:Bitcoin                -0.00082487 BTC
+        """
+        self.assertEqual(0, len(errors))
 
 
 class TestDocument(unittest.TestCase):

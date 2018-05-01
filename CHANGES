@@ -4,6 +4,17 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2018-05-01
+
+  - Fixed failing test re. new grammar.
+
+  - Merged PR29: Update grammar to allow comments in the middle of transactions
+    (Ethan Glasser-Camp).
+
+  - Merged PR71: Use enhanced extract method which passes existing entries
+    (Patrick Ruckstuhl).
+
+
 2018-04-29
 
   - Added polymorphic POSSIGN(_, account) function to the SQL shell in order to
