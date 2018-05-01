@@ -2531,7 +2531,7 @@ class TestMisc(cmptest.TestCase):
     # FIXME(blais): Ideally this unindented should generate an error.
     # It would be nicer if only indented comments would be allowed.
     @parser.parse_doc(expect_errors=False)
-    def test_comment_in_postings(self, entries, errors, options_map):
+    def test_comment_in_postings_invalid(self, entries, errors, options_map):
         """
           2017-06-27 * "Bitcoin network fee"
             Expenses:Crypto:NetworkFees           0.00082487 BTC
