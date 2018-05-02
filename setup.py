@@ -233,3 +233,13 @@ setup(
     # Add optional arguments that only work with some variants of setup().
     **setup_extra_kwargs
 )
+
+
+# Development setup requires two tools IFF you need to change the grammar:
+#
+# - flex-2.6.1
+# - bison-3.0.4
+#
+# These versions are related to what's on a recent Ubuntu. If you don't change
+# the grammar nor the tokenizer, the C sources are checked in so you won't need
+# those tools.
