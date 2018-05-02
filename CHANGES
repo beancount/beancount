@@ -6,6 +6,9 @@ Note: This file contains only changes in the 'default' branch.
 
 2018-05-01
 
+  - Merged PR73 (Ethan Glasser-Camp) - Cleanups to lexer and more restrictive
+    syntax for comments within a transaction's indented block.
+
   - Fixed failing test re. new grammar.
 
   - Merged PR29: Update grammar to allow comments in the middle of transactions
