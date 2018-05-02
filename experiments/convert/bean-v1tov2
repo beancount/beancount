@@ -7,7 +7,8 @@ possible so that it is compatible with Beancount V2. I'm pretty sure almost
 noone will have to use that--I have no idea how many people were using Beancount
 V1.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2018  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import sys
 import re

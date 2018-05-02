@@ -4,6 +4,12 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2018-05-02
+
+  - Removed a few accidental __author__ metadatas from files, normalized to
+    __copyright__ as all other files.
+
+
 2018-05-01
 
   - Added patch for clean build for lexer. 2.6.1 results in a build warning.

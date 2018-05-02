@@ -2,7 +2,8 @@
 """Load up a ledger and match against various parts of the entries in a way
 that one can iterate with Emacs.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2018  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import re
 

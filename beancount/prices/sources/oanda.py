@@ -11,7 +11,8 @@ https://api-fxtrade.oanda.com/v1/candles?instrument=EUR_USD&granularity=D&start=
 Timezone information: Input and output datetimes are specified via UTC
 timestamps.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2018  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import re
 import datetime
