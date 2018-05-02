@@ -977,6 +977,28 @@ class TestTransactions(unittest.TestCase):
         check_list(self, entries[0].postings, [data.Posting])
         check_list(self, errors, [parser.ParserSyntaxError])
 
+    @parser.parse_doc()
+    def test_tags_after_first_line(self, entries, errors, _):
+        """
+          2014-04-20 * "Links and tags on subsequent lines" #basetag ^baselink
+            #tag #tag2
+            ^link #tag3
+            #tag4 ^link2
+            ^link3 ^link4
+            #tag6
+            ^link5
+            Assets:Checking         100 USD
+            Assets:Checking         -99 USD
+        """
+        check_list(self, entries, [data.Transaction])
+        check_list(self, entries[0].postings, [data.Posting, data.Posting])
+        check_list(self, errors, [])
+        self.assertEqual({"basetag", "tag", "tag2", "tag3", "tag4", "tag6"},
+                         entries[0].tags)
+        self.assertEqual({"baselink", "link", "link2",
+                          "link3", "link4", "link5"},
+                         entries[0].links)
+
 
 class TestParseLots(unittest.TestCase):
 

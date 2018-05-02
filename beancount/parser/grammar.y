@@ -447,6 +447,11 @@ posting_or_kv_list : empty
                    {
                        $$ = $1;
                    }
+                   | posting_or_kv_list INDENT tags_links EOL
+                   {
+                       BUILDY(DECREF2($1, $3),
+                              $$, "handle_list", "OO", $1, $3);
+                   }
                    | posting_or_kv_list key_value_line
                    {
                        BUILDY(DECREF2($1, $2),
