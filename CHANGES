@@ -6,6 +6,8 @@ Note: This file contains only changes in the 'default' branch.
 
 2018-05-01
 
+  - Added patch for clean build for lexer. 2.6.1 results in a build warning.
+
   - Merged PR73 (Ethan Glasser-Camp) - Cleanups to lexer and more restrictive
     syntax for comments within a transaction's indented block.
 
