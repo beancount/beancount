@@ -1,13 +1,30 @@
-Martin Blais (blais at furius dot ca)
+Martin Blais (original author).
 
-  Original author of Beancount v1 and v2.
+Contributors (in alphabetical order):
 
+- Adrián Medraño Calvo (support for UTF-8)
+- Alex Johnstone (bug fix)
+- Alok Parlikar (bug fix)
+- Daniel Clemente (early adoption and tickets)
+- Dominik Aumayr (web-related bug fixes, static documentation, author of Fava)
+- Ethan Glasser-Camp (improvements to grammar)
+- Felix Eckhofer (bug fix)
+- Hugo Ideler (bug fix price source0
+- Jakob Schnitzer (bug fixes in plugins and SQL, co-author/maintainer of Fava)
+- Jason Chu (bug fixes, plugins, lots of comments)
+- Jeff Brantley (windows installation improvements)
+- Johannes Harms (bug fixes, forecast plugin improvement)
+- Mark Hansen (docs)
+- Markus Teufelberger (bug fix / testing)
+- Martin Michlmayr (numerous tickets, CI setup, bug fixes and improvements)
+- Michael Droogleever (importer-related improvements)
+- Mikhail Gusarov (parser / improvement for short account names)
+- Patrick Ruckstuhl (bug fix importers)
+- Robert Sesek (bug fix)
+- Zhuoyun Wei (importers improvements)
+- dave_stephens (web-related improvement)
+- rkhwaja (windows installation improvement)
+- Сергей Трофимов (bug fix, parser)
 
-Daniel Clemente (n142857 at gmail dot com)
-
-  Was an early and patient user of an incomplete Beancount v2, reported a large
-  numbers of bugs and discussed many of the design ideas from the perspective of
-  a user. This helped motivate the completion and polishing of this new version,
-  as well as understand what aspects needed more explanations and documentation.
-
-
+And all the other users on the mailing-list asking important questions, making
+useful suggestions and engaging in productive discussions. Thank you!
