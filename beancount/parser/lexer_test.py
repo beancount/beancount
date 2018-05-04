@@ -245,13 +245,19 @@ class TestLexer(unittest.TestCase):
     def test_account_names_with_numbers(self, tokens, errors):
         """\
           Assets:Vouchers:99Ranch
+          Assets:99Test
+          Assets:signals
         """
         self.assertEqual([
             ('ACCOUNT', 1, 'Assets:Vouchers:99Ranch', 'Assets:Vouchers:99Ranch'),
             ('EOL', 2, '\n', None),
-            ('EOL', 2, '\x00', None),
+            ('ACCOUNT', 2, 'Assets:99Test', 'Assets:99Test'),
+            ('EOL', 3, '\n', None),
+            ('LEX_ERROR', 3, 'Assets:signals', None),
+            ('EOL', 4, '\n', None),
+            ('EOL', 4, '\x00', None)
         ], tokens)
-        self.assertFalse(errors)
+        self.assertEqual(1, len(errors))
 
     @lex_tokens
     def test_account_names_with_dash(self, tokens, errors):
