@@ -119,7 +119,8 @@ UTF-8-4         \xf0[\x90-\xbf]{UTF-8-1}{UTF-8-1}|[\xf1-\xf3]{UTF-8-1}{UTF-8-1}{
 UTF-8-ONLY      {UTF-8-2}|{UTF-8-3}|{UTF-8-4}
 UTF-8           {ASCII}|{UTF-8-ONLY}
 
-ACCOUNTNAME     ([A-Z]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
+ACCOUNTTYPE     ([A-Z]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
+ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
 
 
 /*--------------------------------------------------------------------------------------*/
@@ -275,7 +276,7 @@ FALSE		{
 }
 
  /* Account names. */
-{ACCOUNTNAME}(:{ACCOUNTNAME})+		{
+{ACCOUNTTYPE}(:{ACCOUNTNAME})+		{
     BUILD_LEX("ACCOUNT", "s", yytext);
     return ACCOUNT;
 }

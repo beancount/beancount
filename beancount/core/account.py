@@ -10,6 +10,7 @@ __license__ = "GNU GPLv2"
 import re
 import os
 from os import path
+
 from beancount.utils import regexp_utils
 
 
@@ -18,13 +19,16 @@ from beancount.utils import regexp_utils
 sep = ':'
 
 
-# Regular expression string that matches a valid account name.
-ACCOUNT_NAME_RE = regexp_utils.re_replace_unicode(r"\P{Lu}[\p{L}\p{Nd}\-]*")
+# Regular expression string that matches valid account name components.
+# Categories are:
+#   Lu: Uppercase letters.
+#   L: All letters.
+#   Nd: Decimal numbers.
+ACC_COMP_TYPE_RE = regexp_utils.re_replace_unicode(r"[\p{Lu}\p{Nd}][\p{L}\p{Nd}\-]*")
+ACC_COMP_NAME_RE = regexp_utils.re_replace_unicode(r"[\p{Lu}][\p{L}\p{Nd}\-]*")
 
-
-# Regular expression string that matches a valid account.
-ACCOUNT_RE = "{}(?:{}{})+".format(
-        ACCOUNT_NAME_RE, sep, ACCOUNT_NAME_RE)
+# Regular expression string that matches a valid account. {5672c7270e1e}
+ACCOUNT_RE = "(?:{})(?:{}{})+".format(ACC_COMP_TYPE_RE, sep, ACC_COMP_NAME_RE)
 
 
 # A dummy object which stands for the account type. Values in custom directives

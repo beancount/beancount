@@ -4,6 +4,14 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2018-05-03
+
+  - Amended PR14: added simple unit testing for regexp, changes in parsing UTF-8
+    account type to match changes in Beancount head.
+
+  - Merged PR14 by Adrian Medrano Calvo: Support account names to consist of
+    Unicode letters and numbers.
+
 2018-05-01
 
   - Added patch for clean build for lexer. 2.6.1 results in a build warning.

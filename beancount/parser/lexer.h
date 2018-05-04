@@ -401,7 +401,7 @@ extern int yylex \
 #undef YY_DECL
 #endif
 
-#line 382 "beancount/parser/lexer.l"
+#line 394 "beancount/parser/lexer.l"
 
 
 #line 408 "beancount/parser/lexer.h"
