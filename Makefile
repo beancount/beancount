@@ -5,7 +5,7 @@ INPUT = $(HOME)/q/office/accounting/blais.beancount
 DOWNLOADS = $(HOME)/u/Downloads
 
 GREP="grep --include="*.py" -srnE"
-TOOLS=./etc
+TOOLS=./tools
 
 PYTHON=python3
 
@@ -24,7 +24,12 @@ clean:
 
 # Targets to generate and compile the C parser.
 CROOT = beancount/parser
+
+# See
+# https://www.owlfolio.org/possibly-useful/flex-input-scanner-rules-are-too-complicated/
+#LEX = flex -Ca
 LEX = flex
+
 YACC = bison --report=itemset --verbose
 FILTERYACC = sed -e 's@/\*[ \t]yacc\.c:.*\*/@@'
 TMP=/tmp
@@ -34,6 +39,19 @@ $(CROOT)/grammar.c $(CROOT)/grammar.h: $(CROOT)/grammar.y
 	(cat $(CROOT)/grammar.c | $(FILTERYACC) > $(TMP)/grammar.c ; mv $(TMP)/grammar.c $(CROOT)/grammar.c )
 	(cat $(CROOT)/grammar.h | $(FILTERYACC) > $(TMP)/grammar.h ; mv $(TMP)/grammar.h $(CROOT)/grammar.h )
 
+UNICODE_CATEGORY_RANGES_GENERATOR=$(TOOLS)/generate_unicode_category_regexps.py
+UNICODE_CATEGORY_DIR = $(CROOT)/lexer
+UNICODE_CATEGORIES = Lu Ll Lt Lo Nd Nl No
+UNICODE_CATEGORY_SOURCES = $(patsubst %, $(UNICODE_CATEGORY_DIR)/%.l, $(UNICODE_CATEGORIES))
+$(UNICODE_CATEGORY_SOURCES): $(UNICODE_CATEGORY_DIR)/%.l :
+	$(PYTHON) $(UNICODE_CATEGORY_RANGES_GENERATOR) \
+		--format=lex --name=UTF-8-$* --categories=$* >$@
+
+# Note that flex parses the files in the given order.
+#LEXER_SOURCES = $(UNICODE_CATEGORY_SOURCES) $(CROOT)/lexer.l
+#$(CROOT)/lexer.c $(CROOT)/lexer.h: $(LEXER_SOURCES) $(CROOT)/grammar.h
+#	$(LEX) --outfile=$(CROOT)/lexer.c --header-file=$(CROOT)/lexer.h $(LEXER_SOURCES)
+#	patch -p1 < $(CROOT)/lexer.patch
 $(CROOT)/lexer.c $(CROOT)/lexer.h: $(CROOT)/lexer.l $(CROOT)/grammar.h
 	$(LEX) --outfile=$(CROOT)/lexer.c --header-file=$(CROOT)/lexer.h $<
 	patch -p1 < $(CROOT)/lexer.patch
