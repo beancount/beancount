@@ -967,6 +967,8 @@ class Builder(lexer.LexBuilder):
         """
         meta = new_metadata(filename, lineno)
 
+        tags, links = self.process_tags_links(tags_links)
+
         # Separate postings and key-values.
         explicit_meta = {}
         postings = []
@@ -976,6 +978,11 @@ class Builder(lexer.LexBuilder):
                 if isinstance(posting_or_kv, Posting):
                     postings.append(posting_or_kv)
                     last_posting = posting_or_kv
+                elif isinstance(posting_or_kv, TagsLinks):
+                    tags = tags.union(posting_or_kv.tags)
+                    tags = frozenset(tags) if tags else EMPTY_SET
+                    links = links.union(posting_or_kv.links)
+                    links = frozenset(links) if links else EMPTY_SET
                 else:
                     if last_posting is None:
                         value = explicit_meta.setdefault(posting_or_kv.key,
@@ -1029,8 +1036,6 @@ class Builder(lexer.LexBuilder):
         # If there are no postings, make sure we insert a list object.
         if postings is None:
             postings = []
-
-        tags, links = self.process_tags_links(tags_links)
 
         # Create the transaction.
         return Transaction(meta, date, chr(flag),
