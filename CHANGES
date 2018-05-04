@@ -7,7 +7,8 @@ Note: This file contains only changes in the 'default' branch.
 2018-05-03
 
   - Amended PR74: Adding a new unit test, fail if tags / link appear after the
-    first posting.
+    first posting. Performance amendment to tags/links and clarification to the
+    freezing of tags & links and their default values.
 
   - Merged PR74 / Fixed #99: Allow tags and links to be spread over several
     lines.

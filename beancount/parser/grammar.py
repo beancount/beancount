@@ -738,7 +738,7 @@ class Builder(lexer.LexBuilder):
         if not path.isabs(document_filename):
             document_filename = path.abspath(path.join(path.dirname(filename),
                                                        document_filename))
-        tags, links = self.process_tags_links(tags_links)
+        tags, links = self.finalize_tags_links(tags_links.tags, tags_links.links)
         return Document(meta, date, account, document_filename, tags, links)
 
     def custom(self, filename, lineno, date, dir_type, custom_values, kvlist):
@@ -916,30 +916,19 @@ class Builder(lexer.LexBuilder):
             return None
         return payee, narration
 
-    def process_tags_links(self, tags_links):
-        """Process tags and links, include tags from the tag stack if present.
+    def finalize_tags_links(self, tags, links):
+        """Finally amend tags and links and return final objects to be inserted.
 
         Args:
-          tags_links: The current TagsLinks accumulator.
+          tags: A set of tag strings (warning: this gets mutated in-place).
+          links: A set of link strings.
         Returns:
           A sanitized pair of (tags, links).
         """
-        if tags_links is None:
-            return None, None
-
-        # Merge the tags from the stack with the explicit tags of this
-        # transaction, or make None.
-        tags = tags_links.tags
-        assert isinstance(tags, (set, frozenset)), "Tags is not a set: {}".format(tags)
         if self.tags:
             tags.update(self.tags)
-        tags = frozenset(tags) if tags else EMPTY_SET
-
-        # Make links to None if empty.
-        links = tags_links.links
-        links = frozenset(links) if links else EMPTY_SET
-
-        return tags, links
+        return (frozenset(tags) if tags else EMPTY_SET,
+                frozenset(links) if links else EMPTY_SET)
 
     def transaction(self, filename, lineno, date, flag, txn_strings, tags_links,
                     posting_or_kv_list):
@@ -967,11 +956,11 @@ class Builder(lexer.LexBuilder):
         """
         meta = new_metadata(filename, lineno)
 
-        tags, links = self.process_tags_links(tags_links)
 
         # Separate postings and key-values.
         explicit_meta = {}
         postings = []
+        tags, links = tags_links.tags, tags_links.links
         if posting_or_kv_list:
             last_posting = None
             for posting_or_kv in posting_or_kv_list:
@@ -984,10 +973,8 @@ class Builder(lexer.LexBuilder):
                             meta, "Tags or links not allowed after first Posting".format(
                                 posting_or_kv), None))
                     else:
-                        tags = tags.union(posting_or_kv.tags)
-                        tags = frozenset(tags) if tags else EMPTY_SET
-                        links = links.union(posting_or_kv.links)
-                        links = frozenset(links) if links else EMPTY_SET
+                        tags.update(posting_or_kv.tags)
+                        links.update(posting_or_kv.links)
                 else:
                     if last_posting is None:
                         value = explicit_meta.setdefault(posting_or_kv.key,
@@ -1008,6 +995,9 @@ class Builder(lexer.LexBuilder):
                             self.errors.append(ParserError(
                                 meta, "Duplicate posting metadata field: {}".format(
                                     posting_or_kv), None))
+
+        # Freeze the tags & links or set to default empty values.
+        tags, links = self.finalize_tags_links(tags, links)
 
         # Initialize the metadata fields from the set of active values.
         if self.meta:
