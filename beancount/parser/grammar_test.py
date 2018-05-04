@@ -981,8 +981,8 @@ class TestTransactions(unittest.TestCase):
     def test_tags_after_first_line(self, entries, errors, _):
         """
           2014-04-20 * "Links and tags on subsequent lines" #basetag ^baselink
-            #tag #tag2
-            ^link #tag3
+            #tag1 #tag2
+            ^link1 #tag3
             #tag4 ^link2
             ^link3 ^link4
             #tag6
@@ -993,11 +993,24 @@ class TestTransactions(unittest.TestCase):
         check_list(self, entries, [data.Transaction])
         check_list(self, entries[0].postings, [data.Posting, data.Posting])
         check_list(self, errors, [])
-        self.assertEqual({"basetag", "tag", "tag2", "tag3", "tag4", "tag6"},
+        self.assertEqual({"basetag", "tag1", "tag2", "tag3", "tag4", "tag6"},
                          entries[0].tags)
-        self.assertEqual({"baselink", "link", "link2",
-                          "link3", "link4", "link5"},
+        self.assertEqual({"baselink", "link1", "link2", "link3", "link4", "link5"},
                          entries[0].links)
+
+    @parser.parse_doc(expect_errors=True)
+    def test_tags_after_first_posting(self, entries, errors, _):
+        """
+          2014-04-20 * "Links and tags on subsequent lines" #basetag ^baselink
+            Assets:Checking         100 USD
+            #tag1 ^link1
+            Assets:Checking         -99 USD
+        """
+        check_list(self, entries, [data.Transaction])
+        check_list(self, entries[0].postings, [data.Posting, data.Posting])
+        check_list(self, errors, [parser.ParserError])
+        self.assertEqual({"basetag"}, entries[0].tags)
+        self.assertEqual({"baselink"}, entries[0].links)
 
 
 class TestParseLots(unittest.TestCase):

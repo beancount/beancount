@@ -979,10 +979,15 @@ class Builder(lexer.LexBuilder):
                     postings.append(posting_or_kv)
                     last_posting = posting_or_kv
                 elif isinstance(posting_or_kv, TagsLinks):
-                    tags = tags.union(posting_or_kv.tags)
-                    tags = frozenset(tags) if tags else EMPTY_SET
-                    links = links.union(posting_or_kv.links)
-                    links = frozenset(links) if links else EMPTY_SET
+                    if postings:
+                        self.errors.append(ParserError(
+                            meta, "Tags or links not allowed after first Posting".format(
+                                posting_or_kv), None))
+                    else:
+                        tags = tags.union(posting_or_kv.tags)
+                        tags = frozenset(tags) if tags else EMPTY_SET
+                        links = links.union(posting_or_kv.links)
+                        links = frozenset(links) if links else EMPTY_SET
                 else:
                     if last_posting is None:
                         value = explicit_meta.setdefault(posting_or_kv.key,
@@ -1003,8 +1008,6 @@ class Builder(lexer.LexBuilder):
                             self.errors.append(ParserError(
                                 meta, "Duplicate posting metadata field: {}".format(
                                     posting_or_kv), None))
-
-
 
         # Initialize the metadata fields from the set of active values.
         if self.meta:
