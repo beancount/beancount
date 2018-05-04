@@ -96,11 +96,11 @@ def valid_account_regexp(options):
                                       'name_equity',
                                       'name_income',
                                       'name_expenses'))
-    # Replace the first term of the account regular expression with the specific
-    # names allowed under the options configuration.
-    regexp = re.sub(r'\(.*?\)', '({})'.format('|'.join(names)),
-                    account.ACCOUNT_RE + '$', count=1)
-    return re.compile(regexp)
+    rx = r'(?:{}(?:{}{})+)'.format(
+            '|'.join(names),
+            account.sep,
+            account.ACCOUNT_NAME_RE)
+    return re.compile(rx)
 
 
 # A temporary data structure used during parsing to hold and accumulate the

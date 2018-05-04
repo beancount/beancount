@@ -111,6 +111,17 @@ int strtonl(const char* buf, size_t nchars);
 %x STRLIT
 
 
+ASCII           [\x00-\x7f]
+UTF-8-1         [\x80-\xbf]
+UTF-8-2         [\xc2-\xdf]{UTF-8-1}
+UTF-8-3         \xe0[\xa0-\xbf]{UTF-8-1}|[\xe1-\xec]{UTF-8-1}{UTF-8-1}|\xed[\x80-\x9f]{UTF-8-1}|[\xee-\xef]{UTF-8-1}{UTF-8-1}
+UTF-8-4         \xf0[\x90-\xbf]{UTF-8-1}{UTF-8-1}|[\xf1-\xf3]{UTF-8-1}{UTF-8-1}{UTF-8-1}|\xf4[\x80-\x8f]{UTF-8-1}{UTF-8-1}
+UTF-8-ONLY      {UTF-8-2}|{UTF-8-3}|{UTF-8-4}
+UTF-8           {ASCII}|{UTF-8-ONLY}
+
+ACCOUNTNAME     ([A-Z]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
+
+
 /*--------------------------------------------------------------------------------------*/
 /* Rules */
 %%
@@ -264,7 +275,7 @@ FALSE		{
 }
 
  /* Account names. */
-([A-Z][A-Za-z0-9\-]*)(:[A-Z0-9][A-Za-z0-9\-]*)+		{
+{ACCOUNTNAME}(:{ACCOUNTNAME})+		{
     BUILD_LEX("ACCOUNT", "s", yytext);
     return ACCOUNT;
 }

@@ -58,7 +58,7 @@ class TestLexer(unittest.TestCase):
           2013-05-18 2014-01-02 2014/01/02
           Assets:US:Bank:Checking
           Liabilities:US:Bank:Credit
-          Other:Bank
+          Other:Bank Óthяr:Bあnk
           USD HOOL TEST_D TEST_3 TEST-D TEST-3 NT
           "Nice dinner at Mermaid Inn"
           ""
@@ -77,6 +77,7 @@ class TestLexer(unittest.TestCase):
             ('ACCOUNT', 3, 'Liabilities:US:Bank:Credit', 'Liabilities:US:Bank:Credit'),
             ('EOL', 4, '\n', None),
             ('ACCOUNT', 4, 'Other:Bank', 'Other:Bank'),
+            ('ACCOUNT', 4, 'Óthяr:Bあnk', 'Óthяr:Bあnk'),
             ('EOL', 5, '\n', None),
             ('CURRENCY', 5, 'USD', 'USD'),
             ('CURRENCY', 5, 'HOOL', 'HOOL'),
