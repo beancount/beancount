@@ -3,7 +3,8 @@
 print a few of each of these entries as templates. This is used on my personal
 ledger and identify all the types of transactions to discuss in the cookbook.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2018  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import re
 import collections

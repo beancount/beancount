@@ -15,7 +15,8 @@ default under a single directory. In particular, this is used for:
     times. Even without problems, we run them at least twice: Once for
     extraction and once for filing.
 """
-__author__ = 'Martin Blais <blais@furius.ca>'
+__copyright__ = "Copyright (C) 2013-2018  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import os
 import re

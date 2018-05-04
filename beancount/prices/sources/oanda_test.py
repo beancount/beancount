@@ -1,6 +1,7 @@
 """Test for price extractor of OANDA.
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2018  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import os
 import time

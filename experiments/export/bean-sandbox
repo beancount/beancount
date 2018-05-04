@@ -3,7 +3,8 @@
 
 (This is the main test program I fiddle with during development.)
 """
-__author__ = "Martin Blais <blais@furius.ca>"
+__copyright__ = "Copyright (C) 2013-2018  Martin Blais"
+__license__ = "GNU GPLv2"
 
 import datetime
 import argparse
