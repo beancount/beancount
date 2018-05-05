@@ -400,7 +400,7 @@ class TestInventory(unittest.TestCase):
 
         position_, _ = inv.add_amount(A('-12 HOOL'),
                                       Cost(D('700'), 'USD', None, None))
-        self.assertTrue(inv[0].is_negative_at_cost())
+        self.assertTrue(next(iter(inv)).is_negative_at_cost())
 
         # Testing the strict case where everything matches, a cost and a lot-date.
         inv = Inventory()
@@ -412,7 +412,7 @@ class TestInventory(unittest.TestCase):
 
         position_, _ = inv.add_amount(A('-12 HOOL'), Cost(D('700'), 'USD',
                                                           date(2000, 1, 1), None))
-        self.assertTrue(inv[0].is_negative_at_cost())
+        self.assertTrue(next(iter(inv)).is_negative_at_cost())
 
     def test_add_amount__allow_negative(self):
         inv = Inventory()
@@ -428,8 +428,9 @@ class TestInventory(unittest.TestCase):
         self.assertIsNone(position_)
 
         # Check for reductions.
-        self.assertTrue(inv[1].is_negative_at_cost())
-        self.assertTrue(inv[2].is_negative_at_cost())
+        invlist = list(inv)
+        self.assertTrue(invlist[1].is_negative_at_cost())
+        self.assertTrue(invlist[2].is_negative_at_cost())
         inv.add_amount(A('-11 USD'), Cost(D('1.10'), 'CAD', None, None))
         inv.add_amount(A('-11 USD'), Cost(D('1.10'), 'CAD', date(2012, 1, 1), None))
         self.assertEqual(3, len(inv))

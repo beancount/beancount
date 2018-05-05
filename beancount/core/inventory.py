@@ -1,9 +1,9 @@
 """A container for an inventory of positions.
 
 This module provides a container class that can hold positions. An inventory is
-an association list of positions, where each position is understood as
+a mapping ofpositions, where each position is keyed by
 
-    (currency: str, cost: Cost) -> number: Decimal
+  (currency: str, cost: Cost) -> position: Position
 
 where
 
@@ -13,11 +13,14 @@ where
   'cost': None or a Cost instance existing of cost currency, number, date, and
      label;
 
-  'number': The amount of units of 'currency' that the position represents.
+  'position': A Position object, whose 'units' attribute is guaranteed to have
+    the same currency as 'currency' and whose 'cost' attribute is equal to the
+    'cost' key. It basically stores the number of units.
 
 This is meant to accommodate both booked and non-booked amounts. The clever
 trick that we pull to do this is that for positions which aren't booked, we
 simply leave the 'cost' as None. This is the case for most of the transactions.
+
 """
 __copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
@@ -73,14 +76,12 @@ class Inventory(dict):
                     self.add_position(position)
 
     def __iter__(self):
+        """Iterate over the positions. Note that there is no guaranteed order."""
         return iter(self.values())
 
     def __lt__(self, other):
+        """Inequality comparison operator."""
         return sorted(self) < sorted(other)
-
-    def __getitem__(self, index):
-        """For compatibility with the previous list-based implementation."""
-        return list(self.values())[index]
 
     def to_string(self, dformat=DEFAULT_FORMATTER, parens=True):
         """Convert an Inventory instance to a printable string.

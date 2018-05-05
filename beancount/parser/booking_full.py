@@ -798,7 +798,7 @@ def interpolate_group(postings, balances, currency, tolerances):
                                                 if posting is not incomplete_posting)
         assert len(residual) < 2, "Internal error in grouping postings by currencies."
         if not residual.is_empty():
-            respos = residual[0]
+            respos = next(iter(residual))
             assert respos.cost is None, (
                 "Internal error; cost appears in weight calculation.")
             assert respos.units.currency == currency, (

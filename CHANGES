@@ -1,7 +1,17 @@
 ========================
    beancount: CHANGES
 ========================
-Note: This file contains only changes in the 'default' branch.
+Note: This file contains a list changes in the 'default' branch.
+
+
+* Version: default
+
+2018-05-05
+
+  - Amended PR64 to remove the need for __getitem__(). Clarified docstring.
+
+  - Merged PR64 from Jakob Schnitzer: Inventory: use dict instead of list as a
+    base.
 
 
 2018-05-04
@@ -200,6 +210,8 @@ Note: This file contains only changes in the 'default' branch.
     filenames. (Credits to Martin Michlmayr for submitting the patch in the
     first place.)
 
+
+* Version 2.0.0
 
 2018-03-27
 
