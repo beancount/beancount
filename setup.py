@@ -165,9 +165,9 @@ version = version_module['__version__']
 assert isinstance(version, str)
 
 # Bake changeset in the binary.
-hg_changeset, hg_timestamp = subprocess.check_output(
-    ['hg', 'parent', '--template', '{node} {date}'],
-    shell=False, encoding='utf8').split()
+output = subprocess.check_output(['hg', 'parent', '--template', '{node} {date}'],
+                                 shell=False)
+hg_changeset, hg_timestamp = output.decode('utf-8').split()
 
 # Create a setup.
 # Please read: http://furius.ca/beancount/doc/install about version numbers.
