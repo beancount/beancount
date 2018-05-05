@@ -8,9 +8,10 @@ import unittest
 import argparse
 import runpy
 
-from beancount.utils import test_utils
 from beancount.ingest import importer
 from beancount.ingest import cache
+from beancount.utils import test_utils
+from beancount.utils import version
 
 
 def create_arguments_parser(description):
@@ -20,7 +21,7 @@ def create_arguments_parser(description):
       A partially initialized argparse.ArgumentParser instance.
       You may add on new arguments to this.
     """
-    parser = argparse.ArgumentParser(description=description)
+    parser = version.ArgumentParser(description=description)
 
     parser.add_argument('config', action='store', metavar='CONFIG_FILENAME',
                         help=('Importer configuration file. '

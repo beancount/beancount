@@ -30,6 +30,7 @@ from beancount.ops import basicops
 from beancount.core import prices
 from beancount.utils import misc_utils
 from beancount.utils import text_utils
+from beancount.utils import version
 from beancount.web import bottle_utils
 from beancount.parser import options
 from beancount.parser import printer
@@ -1192,7 +1193,7 @@ def add_web_arguments(argparser):
 def main():
     """Main web service runner. This runs the event loop and blocks indefinitely."""
 
-    argparser = argparse.ArgumentParser(description=__doc__.strip())
+    argparser = version.ArgumentParser(description=__doc__.strip())
     add_web_arguments(argparser)
     args = argparser.parse_args()
 
@@ -1222,7 +1223,7 @@ def scrape_webapp(filename, callback, port, ignore_regexp,
     url_format = 'http://localhost:{}{{}}'.format(port)
 
     # Create a set of valid arguments to run the app.
-    argparser = argparse.ArgumentParser()
+    argparser = version.ArgumentParser()
     group = add_web_arguments(argparser)
     group.set_defaults(filename=filename,
                        port=port,

@@ -24,6 +24,7 @@ import lxml.html
 from beancount.web import scrape
 from beancount.web import web
 from beancount.utils import file_utils
+from beancount.utils import version
 
 
 # Directories where binary files are allowed.
@@ -216,7 +217,7 @@ ARCHIVERS = {
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = version.ArgumentParser(description=__doc__)
 
     web_group = web.add_web_arguments(parser)
     web_group.set_defaults(port=9475)

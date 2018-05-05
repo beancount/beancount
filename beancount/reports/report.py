@@ -25,6 +25,7 @@ from beancount.reports import price_reports
 from beancount.reports import convert_reports
 from beancount.utils import file_utils
 from beancount.utils import misc_utils
+from beancount.utils import version
 
 
 def get_all_reports():
@@ -69,7 +70,7 @@ def get_list_report_string(only_report=None):
             width=80)
 
         # Get the report's arguments.
-        parser = argparse.ArgumentParser()
+        parser = version.ArgumentParser()
         report_ = report_class
         report_class.add_args(parser)
 
@@ -142,7 +143,7 @@ class ListFormatsAction(argparse.Action):
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = version.ArgumentParser(description=__doc__)
 
     parser.add_argument('--help-reports', '--list-reports',
                         nargs='?',

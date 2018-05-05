@@ -17,6 +17,7 @@ from beancount.reports import html_formatter
 from beancount.parser import options
 from beancount.core import realization
 from beancount.core import display_context
+from beancount.utils import version
 
 
 class ReportError(Exception):
@@ -59,7 +60,7 @@ class Report:
         Returns:
           A new instace of the report.
         """
-        parser = argparse.ArgumentParser()
+        parser = version.ArgumentParser()
         cls.add_args(parser)
         return cls(parser.parse_args(argv or []), parser, **kwds)
 

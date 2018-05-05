@@ -262,13 +262,7 @@ static struct PyModuleDef moduledef = {
     NULL,                                 /* m_free */
 };
 
-PyMODINIT_FUNC PyInit__parser(void)
-{
-    PyObject* module = PyModule_Create(&moduledef);
-    if ( module == NULL ) {
-        Py_RETURN_NONE;
-    }
-
+void initialize_metadata(PyObject* module) {
     /* Provide the source hash to the parser module for verification that the
      * extension module is up-to-date. */
 #if _MSC_VER == 1900
@@ -278,6 +272,40 @@ PyMODINIT_FUNC PyInit__parser(void)
 #endif
     PyObject* source_hash = PyUnicode_FromString(quoted_hash);
     PyObject_SetAttrString(module, "SOURCE_HASH", source_hash);
+
+    /* Provide the release version from the build, as it can be propagated there
+     * from setup.py. */
+#if _MSC_VER == 1900
+    static const char* release_version_str = "RELEASE_VERSION";
+#else
+    static const char* release_version_str = XSTRINGIFY(RELEASE_VERSION);
+#endif
+    PyObject* release_version = PyUnicode_FromString(release_version_str);
+    PyObject_SetAttrString(module, "__version__", release_version);
+
+    /* Provide the Mercurial changeset from the build. */
+#if _MSC_VER == 1900
+    static const char* hg_changeset_str = "HG_CHANGESET";
+#else
+    static const char* hg_changeset_str = XSTRINGIFY(HG_CHANGESET);
+#endif
+    PyObject* hg_changeset = PyUnicode_FromString(hg_changeset_str);
+    PyObject_SetAttrString(module, "__hg_changeset__", hg_changeset);
+
+    /* Provide the date of the last changeset. */
+    static const int hg_timestamp_int = HG_TIMESTAMP;
+    PyObject* hg_timestamp = PyLong_FromLong(hg_timestamp_int);
+    PyObject_SetAttrString(module, "__hg_timestamp__", hg_timestamp);
+}
+
+PyMODINIT_FUNC PyInit__parser(void)
+{
+    PyObject* module = PyModule_Create(&moduledef);
+    if ( module == NULL ) {
+        Py_RETURN_NONE;
+    }
+
+    initialize_metadata(module);
 
     /* Import the module that defines the missing object constant. */
     PyObject* number_module = PyImport_ImportModule("beancount.core.number");

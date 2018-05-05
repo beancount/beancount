@@ -8,6 +8,9 @@ Note: This file contains a list changes in the 'default' branch.
 
 2018-05-05
 
+  - Fixed #289: Add option to find beancount version. All scripts now support
+    --version.
+
   - Amended PR64 to remove the need for __getitem__(). Clarified docstring.
 
   - Merged PR64 from Jakob Schnitzer: Inventory: use dict instead of list as a

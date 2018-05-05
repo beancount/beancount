@@ -10,12 +10,13 @@ import logging
 import sys
 
 from beancount import loader
-from beancount.utils import misc_utils
 from beancount.ops import validation
+from beancount.utils import misc_utils
+from beancount.utils import version
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = version.ArgumentParser(description=__doc__)
 
     parser.add_argument('filename',
                         help='Beancount input filename.')

@@ -43,6 +43,7 @@ from beancount.core import interpolate
 from beancount.parser import options
 from beancount.query import query
 from beancount.query import query_render
+from beancount.utils import version
 
 
 __plugins__ = ('split_expenses',)
@@ -235,7 +236,7 @@ def main():
     """
 
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
-    parser = argparse.ArgumentParser(description=__doc__.strip())
+    parser = version.ArgumentParser(description=__doc__.strip())
     parser.add_argument('filename', help='Beancount input filename')
 
     parser.add_argument('-c', '--currency', action='store',

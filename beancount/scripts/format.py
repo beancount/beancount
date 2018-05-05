@@ -10,6 +10,7 @@ expressions and text manipulations to do its work.
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import argparse
 import collections
 import io
 import re
@@ -17,6 +18,7 @@ import sys
 
 from beancount.core import amount
 from beancount.core import account
+from beancount.utils import version
 
 
 def align_beancount(contents, prefix_width=None, num_width=None, currency_column=None):
@@ -162,8 +164,7 @@ def normalize_indent_whitespace(match_pairs):
 
 
 def main():
-    import argparse
-    parser = argparse.ArgumentParser(description=__doc__.strip())
+    parser = version.ArgumentParser(description=__doc__.strip())
 
     parser.add_argument('filename', nargs='?', help='Beancount filename')
 

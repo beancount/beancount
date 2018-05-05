@@ -32,6 +32,7 @@ from beancount.parser import printer
 from beancount.core import data
 from beancount.utils import misc_utils
 from beancount.utils import pager
+from beancount.utils import version
 from beancount import loader
 
 
@@ -768,7 +769,7 @@ _SUPPORTED_FORMATS = ('text', 'csv')
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = version.ArgumentParser(description=__doc__)
 
     parser.add_argument('-f', '--format', action='store', default=_SUPPORTED_FORMATS[0],
                         choices=_SUPPORTED_FORMATS, # 'html', 'htmldiv', 'beancount', 'xls',

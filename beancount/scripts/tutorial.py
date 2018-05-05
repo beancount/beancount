@@ -10,6 +10,7 @@ import os
 from os import path
 
 from beancount.utils import test_utils
+from beancount.utils import version
 
 
 # pylint: disable=bad-whitespace
@@ -49,7 +50,7 @@ COMMANDS = [
 
 def main():
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
-    parser = argparse.ArgumentParser(description=__doc__.strip())
+    parser = version.ArgumentParser(description=__doc__.strip())
     parser.add_argument('filename', help='Beancount filename')
     parser.add_argument('output_directory', help='Output directory for the tutorial files')
     args = parser.parse_args()

@@ -15,6 +15,7 @@ from decimal import Decimal
 from beancount import loader
 from beancount.core import data
 from beancount.utils import misc_utils
+from beancount.utils import version
 
 
 def output_common(connection, unused_entries):
@@ -333,7 +334,7 @@ def setup_decimal_support():
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = version.ArgumentParser(description=__doc__)
     parser.add_argument('filename',
                         help='Beancount input filename')
     parser.add_argument('database',

@@ -6,12 +6,13 @@ __copyright__ = "Copyright (C) 2008-2011, 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 
-import os
 from os import path
+import os
+import platform
 import runpy
+import subprocess
 import sys
 import warnings
-import platform
 
 
 # Check if the version is sufficient.
@@ -157,11 +158,22 @@ def get_cflags():
         return None
 
 
+# Read the version.
+version_module = runpy.run_path(path.join(path.dirname(__file__),
+                                          'beancount/__init__.py'))
+version = version_module['__version__']
+assert isinstance(version, str)
+
+# Bake changeset in the binary.
+hg_changeset, hg_timestamp = subprocess.check_output(
+    ['hg', 'parent', '--template', '{node} {date}'],
+    shell=False, encoding='utf8').split()
+
 # Create a setup.
 # Please read: http://furius.ca/beancount/doc/install about version numbers.
 setup(
     name="beancount",
-    version="2.0.0",
+    version=version,
     description="Command-line Double-Entry Accounting",
 
     long_description=
@@ -219,8 +231,11 @@ setup(
                       "beancount/parser/grammar.c",
                       "beancount/parser/parser.c",
                   ],
-                  define_macros=[('PARSER_SOURCE_HASH',
-                                  hash_parser_source_files())],
+                  define_macros=[
+                      ('RELEASE_VERSION', version),
+                      ('HG_CHANGESET', hg_changeset),
+                      ('HG_TIMESTAMP', int(float(hg_timestamp))),
+                      ('PARSER_SOURCE_HASH', hash_parser_source_files())],
                   extra_compile_args=get_cflags()),
     ],
 

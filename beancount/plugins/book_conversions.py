@@ -101,6 +101,7 @@ from beancount.core import account
 from beancount.core import data
 from beancount import loader
 from beancount.reports import table
+from beancount.utils import version
 
 
 # The name of the metadata field used to link matched postings.
@@ -420,7 +421,7 @@ def main():
     """Extract trades from metadata-annotated postings and report on them.
     """
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
-    parser = argparse.ArgumentParser(description=__doc__.strip())
+    parser = version.ArgumentParser(description=__doc__.strip())
     parser.add_argument('filename', help='Beancount input filename')
 
     oparser = parser.add_argument_group('Outputs')

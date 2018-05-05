@@ -18,6 +18,7 @@ from os import path
 # under the assumption that not all third-party dependencies are installed.
 # Import what you need as late as possible.
 from beancount.utils import misc_utils
+from beancount.utils import version
 from beancount.core import display_context
 
 
@@ -384,9 +385,9 @@ def do_validate_html(directory, args):
 def main():
     commands_doc = ('Available Commands:\n' +
                     '\n'.join('  {:24}: {}'.format(*x) for x in get_commands()))
-    argparser = argparse.ArgumentParser(description=__doc__,
-                                        formatter_class=argparse.RawTextHelpFormatter,
-                                        epilog=commands_doc)
+    argparser = version.ArgumentParser(description=__doc__,
+                                       formatter_class=argparse.RawTextHelpFormatter,
+                                       epilog=commands_doc)
     argparser.add_argument('command', action='store',
                            help="The command to run.")
     argparser.add_argument('filename', nargs='?', help='Beancount input filename.')

@@ -25,6 +25,7 @@ from beancount.core import amount
 from beancount.parser import printer
 from beancount.prices import find_prices
 from beancount.utils import date_utils
+from beancount.utils import version
 
 
 # Stand-in currency name for unknown currencies.
@@ -221,7 +222,7 @@ def process_args():
         jobs: A list of DatedPrice job objects.
         entries: A list of all the parsed entries.
     """
-    parser = argparse.ArgumentParser(description=beancount.prices.__doc__.splitlines()[0])
+    parser = version.ArgumentParser(description=beancount.prices.__doc__.splitlines()[0])
 
     # Input sources or filenames.
     parser.add_argument('sources', nargs='+', help=(

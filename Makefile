@@ -54,7 +54,7 @@ $(UNICODE_CATEGORY_SOURCES): $(UNICODE_CATEGORY_DIR)/%.l :
 #	patch -p1 < $(CROOT)/lexer.patch
 $(CROOT)/lexer.c $(CROOT)/lexer.h: $(CROOT)/lexer.l $(CROOT)/grammar.h
 	$(LEX) --outfile=$(CROOT)/lexer.c --header-file=$(CROOT)/lexer.h $<
-	patch -p1 < $(CROOT)/lexer.patch
+	patch --no-backup-if-mismatch -p1 < $(CROOT)/lexer.patch
 
 SOURCES =					\
 	$(CROOT)/lexer.c			\

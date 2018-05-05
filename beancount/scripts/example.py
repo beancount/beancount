@@ -45,6 +45,7 @@ from beancount.scripts import format
 from beancount.core import getters
 from beancount.utils import misc_utils
 from beancount.utils import date_utils
+from beancount.utils import version
 from beancount import loader
 
 
@@ -1734,7 +1735,7 @@ def write_example_file(date_birth, date_begin, date_end, reformat, file):
 def main():
     today = datetime.date.today()
 
-    argparser = argparse.ArgumentParser(description=__doc__.strip())
+    argparser = version.ArgumentParser(description=__doc__.strip())
 
     default_years = 2
     argparser.add_argument('--date-begin', '--begin-date',
