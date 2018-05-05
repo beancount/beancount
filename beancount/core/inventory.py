@@ -1,37 +1,31 @@
 """A container for an inventory of positions.
 
-This module provides a container class that can hold positions. An inventory is an
-association list of positions, where each position is defined as
+This module provides a container class that can hold positions. An inventory is
+an association list of positions, where each position is understood as
 
-  (currency, cost, lot-date, label) -> number
+    (currency: str, cost: Cost) -> number: Decimal
 
 where
 
-  'currency': The commodity under consideration, USD, CAD, or stock units such as HOOL,
-    MSFT, AAPL, etc.;
+  'currency': The commodity under consideration, USD, CAD, or stock units such
+     as HOOL, MSFT, AAPL, etc.;
 
-  'cost': The amount (as a pair of (number, currency)) that the position is held under,
-    otherwise known as the "book value";
-
-  'lot-date': The date at which the position was acquired.
-
-  'label': A unique string provided by the user to explicitly disambiguate a lot.
+  'cost': None or a Cost instance existing of cost currency, number, date, and
+     label;
 
   'number': The amount of units of 'currency' that the position represents.
 
-This is meant to accommodate both booked and non-booked amounts. The clever trick that we
-pull to do this is that for positions which aren't booked, we simply leave the 'cost' and
-'lot-date' as None. This is the case for most of the transactions.
+This is meant to accommodate both booked and non-booked amounts. The clever
+trick that we pull to do this is that for positions which aren't booked, we
+simply leave the 'cost' as None. This is the case for most of the transactions.
 """
 __copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import copy
 import collections
+from collections import Iterable
 import enum
 import re
-import warnings
-from collections import Iterable
 
 from beancount.core.number import ZERO
 from beancount.core.number import same_sign
@@ -45,36 +39,48 @@ from beancount.core.display_context import DEFAULT_FORMATTER
 
 class Booking(enum.Enum):
     """Result of booking a new lot to an existing inventory."""
-    CREATED = 1   # A new lot was created.
-    REDUCED = 2   # An existing lot was reduced.
-    AUGMENTED = 3 # An existing lot was augmented.
-    IGNORED = 4   # No change was applied.
+    # A new lot was created.
+    CREATED = 1
+    # An existing lot was reduced.
+    REDUCED = 2
+    # An existing lot was augmented.
+    AUGMENTED = 3
+    # No change was applied.
+    IGNORED = 4
 
 
-class Inventory(list):
+class Inventory(dict):
     """An Inventory is a set of positions.
 
     Attributes:
       positions: A list of Position instances, held in this Inventory object.
-        Because the lists are always very short, we prefer to avoid using a
-        mapping for the sake of simplicity and it should not hurt performance.
     """
 
     def __init__(self, positions=None):
         """Create a new inventory using a list of existing positions.
 
         Args:
-          positions: A list of Position instances or an existing Inventory
-            instance.
+          positions: A list of Position instances or an existing dict or
+            Inventory instance.
         """
-        if isinstance(positions, Inventory):
-            list.__init__(self, positions)
+        if isinstance(positions, (dict, Inventory)):
+            dict.__init__(self, positions)
         else:
-            list.__init__(self)
+            dict.__init__(self)
             if positions:
                 assert isinstance(positions, Iterable)
                 for position in positions:
                     self.add_position(position)
+
+    def __iter__(self):
+        return iter(self.values())
+
+    def __lt__(self, other):
+        return sorted(self) < sorted(other)
+
+    def __getitem__(self, index):
+        """For compatibility with the previous list-based implementation."""
+        return list(self.values())[index]
 
     def to_string(self, dformat=DEFAULT_FORMATTER, parens=True):
         """Convert an Inventory instance to a printable string.
@@ -112,23 +118,12 @@ class Inventory(list):
         raise NotImplementedError
 
     def __copy__(self):
-        """A shallow copy of this inventory object. All the positions contained
-        are also copied shallow.
+        """A shallow copy of this inventory object.
 
         Returns:
           An instance of Inventory, equal to this one.
         """
         return Inventory(self)
-
-    def __eq__(self, other):
-        """Equality predicate.
-
-        Args:
-          other: Ano ther instance of Inventory.
-        Returns:
-          True if the two inventories have the same position contents.
-        """
-        return sorted(self) == sorted(other)
 
     def is_small(self, tolerances):
         """Return true if all the positions in the inventory are small.
@@ -188,7 +183,7 @@ class Inventory(list):
         Returns:
           An instance of Inventory.
         """
-        return Inventory([-position for position in self])
+        return Inventory({key: -pos for key, pos in self.items()})
 
     def __abs__(self):
         """Return an inventory with the absolute value of each position.
@@ -196,7 +191,7 @@ class Inventory(list):
         Returns:
           An instance of Inventory.
         """
-        return Inventory([abs(position) for position in self])
+        return Inventory({key: abs(pos) for key, pos in self.items()})
 
     def __mul__(self, scalar):
         """Scale/multiply the contents of the inventory.
@@ -206,7 +201,7 @@ class Inventory(list):
         Returns:
           An instance of Inventory.
         """
-        return Inventory([position * scalar for position in self])
+        return Inventory({key: pos * scalar for key, pos in self.items()})
 
     #
     # Methods to access portions of an inventory.
@@ -218,23 +213,23 @@ class Inventory(list):
         Returns:
           A list of currency strings.
         """
-        return set(position.units.currency for position in self)
+        return set(currency for currency, _ in self.keys())
 
     def cost_currencies(self):
         """Return the list of unit currencies held in this inventory.
 
         Returns:
-          A list of currency strings.
+          A set of currency strings.
         """
-        return set(position.cost.currency
-                   for position in self
-                   if position.cost is not None)
+        return set(cost.currency
+                   for _, cost in self.keys()
+                   if cost is not None)
 
     def currency_pairs(self):
         """Return the commodities held in this inventory.
 
         Returns:
-          A list of currency strings.
+          A set of currency strings.
         """
         return set(position.currency_pair() for position in self)
 
@@ -244,7 +239,7 @@ class Inventory(list):
         Returns:
           A shallow copy of the list of positions.
         """
-        return list(self)
+        return list(iter(self))
 
     def get_currency_units(self, currency):
         """Fetch the total amount across all the position in the given currency.
@@ -351,32 +346,31 @@ class Inventory(list):
             "Internal error: {!r} (type: {})".format(cost, type(cost).__name__))
 
         # Find the position.
-        for index, pos in enumerate(self):
-            if (pos.units.currency == units.currency and
-                pos.cost == cost):
-                # Note: In order to augment or reduce, all the fields have to match.
+        key = (units.currency, cost)
+        pos = self.get(key, None)
 
-                # Check if reducing.
-                booking = (Booking.REDUCED
-                           if not same_sign(pos.units.number, units.number) else
-                           Booking.AUGMENTED)
+        if pos is not None:
+            # Note: In order to augment or reduce, all the fields have to match.
 
-                # Compute the new number of units.
-                number = pos.units.number + units.number
-                if number == ZERO:
-                    # If empty, delete the position.
-                    del self[index]
-                else:
-                    # Otherwise update it.
-                    self[index] = Position(Amount(number, units.currency), cost)
-                break
+            # Check if reducing.
+            booking = (Booking.REDUCED
+                       if not same_sign(pos.units.number, units.number)
+                       else Booking.AUGMENTED)
+
+            # Compute the new number of units.
+            number = pos.units.number + units.number
+            if number == ZERO:
+                # If empty, delete the position.
+                del self[key]
+            else:
+                # Otherwise update it.
+                self[key] = Position(Amount(number, units.currency), cost)
         else:
             # If not found, create a new one.
-            pos = None
             if units.number == ZERO:
                 booking = Booking.IGNORED
             else:
-                self.append(Position(units, cost))
+                self[key] = Position(units, cost)
                 booking = Booking.CREATED
 
         return pos, booking
