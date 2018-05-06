@@ -7,8 +7,10 @@ __license__ = "GNU GPLv2"
 
 
 from os import path
+import datetime
 import os
 import platform
+import re
 import runpy
 import subprocess
 import sys
@@ -165,9 +167,21 @@ version = version_module['__version__']
 assert isinstance(version, str)
 
 # Bake changeset in the binary.
-output = subprocess.check_output(['hg', 'parent', '--template', '{node} {date}'],
-                                 shell=False)
-hg_changeset, hg_timestamp = output.decode('utf-8').split()
+try:
+    output = subprocess.check_output(['hg', 'parent', '--template', '{node} {date}'],
+                                     shell=False)
+    vc_changeset, vc_timestamp = output.decode('utf-8').split()
+    vc_changeset = 'hg:{}'.format(vc_changeset)
+except subprocess.CalledProcessError:
+    output = subprocess.check_output(['git', 'log', '--pretty=%H %ct', '-1'],
+                                     shell=False)
+    match = re.match(r'([0-9a-f]+) ([0-9]+)$', output.decode('utf-8').strip())
+    if match:
+        vc_changeset = 'git:{}'.format(match.group(1))
+        vc_timestamp = match.group(2)
+    else:
+        vc_changeset = 'unknown'
+        vc_timestamp = '0'
 
 # Create a setup.
 # Please read: http://furius.ca/beancount/doc/install about version numbers.
@@ -233,8 +247,8 @@ setup(
                   ],
                   define_macros=[
                       ('RELEASE_VERSION', version),
-                      ('HG_CHANGESET', hg_changeset),
-                      ('HG_TIMESTAMP', int(float(hg_timestamp))),
+                      ('VC_CHANGESET', vc_changeset),
+                      ('VC_TIMESTAMP', int(float(vc_timestamp))),
                       ('PARSER_SOURCE_HASH', hash_parser_source_files())],
                   extra_compile_args=get_cflags()),
     ],

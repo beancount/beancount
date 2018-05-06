@@ -6,6 +6,11 @@ Note: This file contains a list changes in the 'default' branch.
 
 * Version: default
 
+2018-05-06
+
+  - Changes to support git versioning if hg versioning is not available.
+
+
 2018-05-05
 
   - Fixed #289: Add option to find beancount version. All scripts now support

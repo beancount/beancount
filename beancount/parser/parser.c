@@ -283,19 +283,19 @@ void initialize_metadata(PyObject* module) {
     PyObject* release_version = PyUnicode_FromString(release_version_str);
     PyObject_SetAttrString(module, "__version__", release_version);
 
-    /* Provide the Mercurial changeset from the build. */
+    /* Provide the Mercurial (or Git mirror) changeset from the build. */
 #if _MSC_VER == 1900
-    static const char* hg_changeset_str = "HG_CHANGESET";
+    static const char* vc_changeset_str = "VC_CHANGESET";
 #else
-    static const char* hg_changeset_str = XSTRINGIFY(HG_CHANGESET);
+    static const char* vc_changeset_str = XSTRINGIFY(VC_CHANGESET);
 #endif
-    PyObject* hg_changeset = PyUnicode_FromString(hg_changeset_str);
-    PyObject_SetAttrString(module, "__hg_changeset__", hg_changeset);
+    PyObject* vc_changeset = PyUnicode_FromString(vc_changeset_str);
+    PyObject_SetAttrString(module, "__vc_changeset__", vc_changeset);
 
     /* Provide the date of the last changeset. */
-    static const int hg_timestamp_int = HG_TIMESTAMP;
-    PyObject* hg_timestamp = PyLong_FromLong(hg_timestamp_int);
-    PyObject_SetAttrString(module, "__hg_timestamp__", hg_timestamp);
+    static const int vc_timestamp_int = VC_TIMESTAMP;
+    PyObject* vc_timestamp = PyLong_FromLong(vc_timestamp_int);
+    PyObject_SetAttrString(module, "__vc_timestamp__", vc_timestamp);
 }
 
 PyMODINIT_FUNC PyInit__parser(void)

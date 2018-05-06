@@ -5,6 +5,7 @@ __license__ = "GNU GPLv2"
 
 import argparse
 import datetime
+import re
 
 import beancount
 from beancount.parser import _parser
@@ -21,11 +22,16 @@ def ArgumentParser(*args, **kwargs):
     """
     parser = argparse.ArgumentParser(*args, **kwargs)
 
-    hg_date = datetime.datetime.fromtimestamp(_parser.__hg_timestamp__).date()
+    # Shorten changeset.
+    changeset = _parser.__vc_changeset__[:12]
+    if re.match(changeset, 'hg:'):
+        changeset = changeset[:15]
+    elif re.match(changeset, 'git:'):
+        changeset = changeset[:12]
+
+    vc_date = datetime.datetime.fromtimestamp(_parser.__vc_timestamp__).date()
     parser.add_argument('--version', '-V', action='version',
                         version='Beancount {} (changeset: {}; {})'.format(
-                            beancount.__version__,
-                            _parser.__hg_changeset__[:12],
-                            hg_date))
+                            beancount.__version__, changeset, vc_date))
 
     return parser
