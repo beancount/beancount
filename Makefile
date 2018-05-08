@@ -7,7 +7,7 @@ DOWNLOADS = $(HOME)/u/Downloads
 GREP="grep --include="*.py" -srnE"
 TOOLS=./tools
 
-PYTHON=python3
+PYTHON?=python3
 
 all: build
 

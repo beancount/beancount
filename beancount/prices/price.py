@@ -82,14 +82,34 @@ def fetch_cached_price(source, symbol, date):
         key = md5.hexdigest()
         timestamp_now = int(now().timestamp())
         try:
-            timestamp_created, result = _CACHE[key]
+            timestamp_created, result_naive = _CACHE[key]
+
+            # Convert naive timezone to UTC, which is what the cache is always
+            # assumed to store. (The reason for this is that timezones from
+            # aware datetime objects cannot be serialized properly due to bug.)
+            if result_naive.time is not None:
+                result = result_naive._replace(
+                    time=result_naive.time.replace(tzinfo=tz.tzutc()))
+            else:
+                result = result_naive
+
             if (timestamp_now - timestamp_created) > _CACHE.expiration.total_seconds():
                 raise KeyError
         except KeyError:
+            logging.info("Fetching: %s (time: %s)", symbol, time)
             result = (source.get_latest_price(symbol)
                       if time is None else
                       source.get_historical_price(symbol, time))
-            _CACHE[key] = (timestamp_now, result)
+
+            # Make sure the timezone is UTC and make naive before serialization.
+            if result.time is not None:
+                time_utc = result.time.astimezone(tz.tzutc())
+                time_naive = time_utc.replace(tzinfo=None)
+                result_naive = result._replace(time=time_naive)
+            else:
+                result_naive = result
+
+            _CACHE[key] = (timestamp_now, result_naive)
     return result
 
 
@@ -105,8 +125,8 @@ def setup_cache(cache_filename, clear_cache):
         os.remove(cache_filename)
 
     if cache_filename:
-        logging.info('Using price cache at "{}" (with indefinite expiration)'.format(
-            cache_filename))
+        logging.info('Using price cache at "%s" (with indefinite expiration)',
+                     cache_filename)
 
         global _CACHE
         _CACHE = shelve.open(cache_filename, 'c')

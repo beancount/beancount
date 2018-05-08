@@ -13,6 +13,7 @@ from unittest import mock
 
 from dateutil import tz
 
+from beancount.prices.source import SourcePrice
 from beancount.prices import price
 from beancount.prices import find_prices
 from beancount.prices import source
@@ -90,15 +91,16 @@ class TestCache(unittest.TestCase):
         try:
             price.setup_cache(tmpfile, False)
 
+            srcprice = SourcePrice(D('1.723'), datetime.datetime.now(tz.tzutc()), 'USD')
             source = mock.MagicMock()
-            source.get_latest_price.return_value = 42
+            source.get_latest_price.return_value = srcprice
             source.__file__ = '<module>'
 
             # Cache miss.
             result = price.fetch_cached_price(source, 'HOOL', None)
             self.assertTrue(source.get_latest_price.called)
             self.assertEqual(1, len(price._CACHE))
-            self.assertEqual(42, result)
+            self.assertEqual(srcprice, result)
 
             source.get_latest_price.reset_mock()
 
@@ -106,10 +108,12 @@ class TestCache(unittest.TestCase):
             result = price.fetch_cached_price(source, 'HOOL', None)
             self.assertFalse(source.get_latest_price.called)
             self.assertEqual(1, len(price._CACHE))
-            self.assertEqual(42, result)
+            self.assertEqual(srcprice, result)
 
+            srcprice2 = SourcePrice(
+                D('1.894'), datetime.datetime.now(tz.tzutc()), 'USD')
             source.get_latest_price.reset_mock()
-            source.get_latest_price.return_value = 71
+            source.get_latest_price.return_value = srcprice2
 
             # Cache expired.
             time_beyond = datetime.datetime.now() + price._CACHE.expiration * 2
@@ -117,7 +121,7 @@ class TestCache(unittest.TestCase):
                 result = price.fetch_cached_price(source, 'HOOL', None)
                 self.assertTrue(source.get_latest_price.called)
                 self.assertEqual(1, len(price._CACHE))
-                self.assertEqual(71, result)
+                self.assertEqual(srcprice2, result)
         finally:
             price.reset_cache()
             if path.exists(tmpdir):
@@ -129,8 +133,10 @@ class TestCache(unittest.TestCase):
         try:
             price.setup_cache(tmpfile, False)
 
+            srcprice = SourcePrice(
+                D('1.723'), datetime.datetime.now(tz.tzutc()), 'USD')
             source = mock.MagicMock()
-            source.get_historical_price.return_value = 42
+            source.get_historical_price.return_value = srcprice
             source.__file__ = '<module>'
 
             # Cache miss.
@@ -138,7 +144,7 @@ class TestCache(unittest.TestCase):
             result = price.fetch_cached_price(source, 'HOOL', day)
             self.assertTrue(source.get_historical_price.called)
             self.assertEqual(1, len(price._CACHE))
-            self.assertEqual(42, result)
+            self.assertEqual(srcprice, result)
 
             source.get_historical_price.reset_mock()
 
@@ -146,7 +152,7 @@ class TestCache(unittest.TestCase):
             result = price.fetch_cached_price(source, 'HOOL', day)
             self.assertFalse(source.get_historical_price.called)
             self.assertEqual(1, len(price._CACHE))
-            self.assertEqual(42, result)
+            self.assertEqual(srcprice, result)
         finally:
             price.reset_cache()
             if path.exists(tmpdir):
@@ -248,7 +254,7 @@ class TestTimezone(unittest.TestCase):
 
     @mock.patch.object(price, 'fetch_cached_price')
     def test_fetch_price__naive_time_no_timeozne(self, fetch_cached):
-        fetch_cached.return_value = source.SourcePrice(
+        fetch_cached.return_value = SourcePrice(
             D('125.00'), datetime.datetime(2015, 11, 22, 16, 0, 0), 'JPY')
         dprice = find_prices.DatedPrice('JPY', 'USD', datetime.date(2015, 11, 22), None)
         with self.assertRaises(ValueError):
@@ -260,7 +266,7 @@ class TestInverted(unittest.TestCase):
 
     def setUp(self):
         fetch_cached = mock.patch('beancount.prices.price.fetch_cached_price').start()
-        fetch_cached.return_value = source.SourcePrice(
+        fetch_cached.return_value = SourcePrice(
             D('125.00'), datetime.datetime(2015, 11, 22, 16, 0, 0, tzinfo=tz.tzlocal()),
             'JPY')
         self.dprice = find_prices.DatedPrice('JPY', 'USD', datetime.date(2015, 11, 22),

@@ -6,6 +6,13 @@ Note: This file contains a list changes in the 'default' branch.
 
 * Version: default
 
+2018-05-08
+
+  - Fixed #287: In the price fecher, store the datetime instances as
+    naive-in-UTC in order to avoid a serialization problem with older Python
+    versions.
+
+
 2018-05-06
 
   - Changes to support git versioning if hg versioning is not available.
