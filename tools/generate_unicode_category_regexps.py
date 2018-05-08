@@ -146,9 +146,15 @@ def lex_unicode_ranges(name, chars):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.strip())
-    parser.add_argument('--name', required=True, help='name to assign the result')
-    parser.add_argument('--categories', required=True, help='unicode categories to print, separated by commas (e.g. Lu,Ll)')
-    parser.add_argument('--format', required=True, choices=['py', 'lex'], help='output format')
+    parser.add_argument(
+        '--name', required=True,
+        help='name to assign the result')
+    parser.add_argument(
+        '--categories', required=True,
+        help='unicode categories to print, separated by commas (e.g. Lu,Ll)')
+    parser.add_argument(
+        '--format', required=True, choices=['py', 'lex'],
+        help='output format')
     args = parser.parse_args()
 
     bycategory = categorize_unicode()

@@ -112,4 +112,6 @@ class _Saver(threading.local):
         self.value = value
         return value
 
+
+# pylint: disable=invalid-name
 save = _Saver()

@@ -113,8 +113,10 @@ disable=locally-disabled,
   len-as-condition,
   no-else-return,
   invalid-unary-operand-type,
-  no-name-in-module
-
+  no-name-in-module,
+  inconsistent-return-statements,
+  not-callable,
+  stop-iteration-return
 
 
 
