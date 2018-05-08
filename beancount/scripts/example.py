@@ -8,7 +8,6 @@ evaluation.
 __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import argparse
 import calendar
 import collections
 import datetime

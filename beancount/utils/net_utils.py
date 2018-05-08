@@ -3,7 +3,6 @@
 __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import urllib.error
 import logging
 from urllib import request
 from urllib import error

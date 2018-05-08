@@ -5,7 +5,6 @@ __license__ = "GNU GPLv2"
 
 import re
 import subprocess
-import os
 from os import path
 
 

@@ -1,12 +1,9 @@
 __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import textwrap
 import datetime
 import unittest
 from unittest import mock
-from urllib import error
-import pprint
 
 from dateutil import tz
 import requests

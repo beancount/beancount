@@ -3,10 +3,7 @@
 __copyright__ = "Copyright (C) 2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import re
 
-
-# FIXME: This needs to be
 UNICODE_RANGES = {
     # Letters.
     'L': (r'\u0041-\u005A'

@@ -54,7 +54,7 @@ class Booking(enum.Enum):
     LIFO = 'LIFO'
 
 
-def new_directive(clsname, fields: List[Tuple]):
+def new_directive(clsname, fields: List[Tuple]) -> NamedTuple:
     """Create a directive class. Do not include default fields.
     This should probably be carried out through inheritance.
 

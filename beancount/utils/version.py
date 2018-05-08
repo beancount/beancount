@@ -11,6 +11,7 @@ import beancount
 from beancount.parser import _parser
 
 
+# pylint: disable=invalid-name
 def ArgumentParser(*args, **kwargs):
     """Add a standard --version option to an ArgumentParser.
 

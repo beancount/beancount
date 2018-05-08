@@ -7,7 +7,6 @@ __license__ = "GNU GPLv2"
 import sys
 
 import pandocfilters
-from pandocfilters import Str
 
 
 def caps(key, value, format, meta):

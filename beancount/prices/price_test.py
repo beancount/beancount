@@ -16,7 +16,6 @@ from dateutil import tz
 from beancount.prices.source import SourcePrice
 from beancount.prices import price
 from beancount.prices import find_prices
-from beancount.prices import source
 from beancount.prices.sources import yahoo
 from beancount.core.number import D
 from beancount.utils import test_utils

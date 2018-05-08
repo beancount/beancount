@@ -18,18 +18,12 @@ __copyright__ = "Copyright (C) 2015-2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import datetime
-import logging
-import re
-from urllib import parse
-from urllib import error
 from typing import Dict, Any
 
-from dateutil import tz
 import requests
 
 from beancount.core.number import D
 from beancount.prices import source
-from beancount.utils import net_utils
 
 
 class YahooError(ValueError):

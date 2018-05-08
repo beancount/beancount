@@ -3,7 +3,6 @@
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import argparse
 import atexit
 import cmd
 import codecs

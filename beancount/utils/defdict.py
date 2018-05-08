@@ -28,7 +28,7 @@ class ImmutableDictWithDefault(dict):
     value when one is materialized (from a missing fetch), and furtheremore, the
     set method is make unavailable to prevent mutation beyond construction.
     """
-    def __init__(self, default=None, *args):
+    def __init__(self, *args, default=None):
         super(ImmutableDictWithDefault, self).__init__(*args)
         self.default = default
 

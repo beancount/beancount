@@ -80,7 +80,7 @@ def fetch_time_series(ticker, time=None):
     try:
         data_index = column_names.index('Adj. Close')
     except ValueError:
-        data_index = column_naems.index('Close')
+        data_index = column_names.index('Close')
     data = dataset['data'][0]
 
     # Gather time and assume it's in UTC timezone (Quandl does not provide the

@@ -5,7 +5,6 @@ This also measures the time it takes to run all these steps.
 __copyright__ = "Copyright (C) 2014, 2016-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import argparse
 import logging
 import sys
 

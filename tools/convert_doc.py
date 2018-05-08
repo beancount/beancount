@@ -9,23 +9,14 @@ __copyright__ = "Copyright (C) 2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import argparse
-import datetime
 import logging
 import os
-import shutil
 import tempfile
 import subprocess
-import re
-import pickle
-import hashlib
-import shelve
 import tempfile
-import io
 from os import path
 
 from apiclient import discovery
-import httplib2
-from oauth2client import service_account
 
 # Local imports
 import docs

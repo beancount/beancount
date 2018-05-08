@@ -6,7 +6,6 @@ price sources.
 __copyright__ = "Copyright (C) 2015-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import collections
 import datetime
 from typing import Optional, NamedTuple
 

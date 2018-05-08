@@ -588,7 +588,8 @@ class TestInferTolerances(cmptest.TestCase):
 class TestQuantize(unittest.TestCase):
 
     def test_quantize_with_tolerance(self):
-        tolerances = defdict.ImmutableDictWithDefault(D('0.000005'), {'USD': D('0.01')})
+        tolerances = defdict.ImmutableDictWithDefault({'USD': D('0.01')},
+                                                      default=D('0.000005'))
         self.assertEqual(
             D('100.12'),
             interpolate.quantize_with_tolerance(tolerances, 'USD', D('100.123123123')))
@@ -596,7 +597,7 @@ class TestQuantize(unittest.TestCase):
             D('100.12312'),
             interpolate.quantize_with_tolerance(tolerances, 'CAD', D('100.123123123')))
 
-        tolerances = defdict.ImmutableDictWithDefault(ZERO, {'USD': D('0.01')})
+        tolerances = defdict.ImmutableDictWithDefault({'USD': D('0.01')}, default=ZERO)
         self.assertEqual(
             D('100.12'),
             interpolate.quantize_with_tolerance(tolerances, 'USD', D('100.123123123')))

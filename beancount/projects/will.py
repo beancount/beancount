@@ -13,7 +13,6 @@ be included in the document rendered by this script.
 __copyright__ = "Copyright (C) 2015-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import argparse
 import collections
 import logging
 import io

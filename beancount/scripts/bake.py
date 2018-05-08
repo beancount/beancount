@@ -8,7 +8,6 @@ fetched directory contents to the archive and delete them.
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import argparse
 import functools
 import logging
 import os

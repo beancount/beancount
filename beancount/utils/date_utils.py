@@ -5,9 +5,10 @@ __license__ = "GNU GPLv2"
 
 import contextlib
 import datetime
-import dateutil.parser
 import os
 import time
+
+import dateutil.parser
 
 
 def iter_dates(start_date, end_date):

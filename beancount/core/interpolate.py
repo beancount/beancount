@@ -5,7 +5,6 @@ __license__ = "GNU GPLv2"
 
 import collections
 import copy
-import warnings
 
 from beancount.core.number import D
 from beancount.core.number import Decimal
@@ -17,7 +16,6 @@ from beancount.core.position import CostSpec
 from beancount.core.position import Cost
 from beancount.core.inventory import Inventory
 from beancount.core import inventory
-from beancount.core import position
 from beancount.core import convert
 from beancount.core.data import Transaction
 from beancount.core.data import Posting
@@ -171,10 +169,10 @@ def infer_tolerances(postings, options_map, use_cost=None):
             cost = posting.cost
             if cost is not None:
                 cost_currency = cost.currency
-                if isinstance(cost, position.Cost):
+                if isinstance(cost, Cost):
                     cost_tolerance = min(tolerance * cost.number, MAXIMUM_TOLERANCE)
                 else:
-                    assert isinstance(cost, position.CostSpec)
+                    assert isinstance(cost, CostSpec)
                     cost_tolerance = MAXIMUM_TOLERANCE
                     for cost_number in cost.number_total, cost.number_per:
                         if cost_number is None or cost_number is MISSING:
@@ -193,7 +191,7 @@ def infer_tolerances(postings, options_map, use_cost=None):
         tolerances[currency] = max(tolerance, tolerances.get(currency, -1024))
 
     default = tolerances.pop('*', ZERO)
-    return defdict.ImmutableDictWithDefault(default, tolerances)
+    return defdict.ImmutableDictWithDefault(tolerances, default=default)
 
 
 # Meta-data field appended to automatically inserted postings.

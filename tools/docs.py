@@ -4,12 +4,8 @@
 __copyright__ = "Copyright (C) 2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import argparse
-import datetime
 import logging
 import os
-import shutil
-import tempfile
 import subprocess
 import re
 import pickle
@@ -17,7 +13,6 @@ import hashlib
 import shelve
 from os import path
 
-from apiclient import discovery
 import httplib2
 from oauth2client import service_account
 
@@ -202,5 +197,6 @@ CONVERSION_MAP = {
     'rtf': ('application/rtf', None),
     'pdf': ('application/pdf', convert_pdf),
     'odt': ('application/vnd.oasis.opendocument.text', None),
-    'docx': ('application/vnd.openxmlformats-officedocument.wordprocessingml.document', None),
+    'docx': ('application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+             None),
 }

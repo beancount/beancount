@@ -5,7 +5,6 @@ import tempfile
 from os import path
 
 from beancount.utils import test_utils
-from beancount.utils import version
 from beancount.scripts import sql
 
 

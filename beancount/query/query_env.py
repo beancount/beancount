@@ -12,7 +12,6 @@ import datetime
 import decimal
 import re
 import textwrap
-import warnings
 
 from beancount.core.number import Decimal
 from beancount.core.number import ZERO

@@ -85,16 +85,19 @@ class TestCostSpec(unittest.TestCase):
 
     def test_cost_to_str__detail(self):
         cost = position.CostSpec(
-            D('101.23'), D('202.46'), 'USD', datetime.date(2015, 9, 6), "f4412439c31b", True)
+            D('101.23'), D('202.46'), 'USD', datetime.date(2015, 9, 6), "f4412439c31b",
+            True)
         self.assertEqual('101.23 # 202.46 USD, 2015-09-06, "f4412439c31b", *',
                          position.cost_to_str(cost, self.dformat))
 
         cost = position.CostSpec(
-            D('101.23'), D('202.46'), 'USD', datetime.date(2015, 9, 6), "f4412439c31b", False)
+            D('101.23'), D('202.46'), 'USD', datetime.date(2015, 9, 6), "f4412439c31b",
+            False)
         self.assertEqual('101.23 # 202.46 USD, 2015-09-06, "f4412439c31b"',
                          position.cost_to_str(cost, self.dformat))
 
-        cost = position.CostSpec(D('101.23'), None, 'USD', datetime.date(2015, 9, 6), None, True)
+        cost = position.CostSpec(D('101.23'), None, 'USD', datetime.date(2015, 9, 6),
+                                 None, True)
         self.assertEqual('101.23 USD, 2015-09-06, *',
                          position.cost_to_str(cost, self.dformat))
 
@@ -120,16 +123,19 @@ class TestCostSpec(unittest.TestCase):
 
     def test_cost_to_str__simple(self):
         cost = position.CostSpec(
-            D('101.23'), D('202.46'), 'USD', datetime.date(2015, 9, 6), "f4412439c31b", True)
+            D('101.23'), D('202.46'), 'USD', datetime.date(2015, 9, 6), "f4412439c31b",
+            True)
         self.assertEqual('101.23 # 202.46 USD',
                          position.cost_to_str(cost, self.dformat, False))
 
         cost = position.CostSpec(
-            D('101.23'), D('202.46'), 'USD', datetime.date(2015, 9, 6), "f4412439c31b", False)
+            D('101.23'), D('202.46'), 'USD', datetime.date(2015, 9, 6), "f4412439c31b",
+            False)
         self.assertEqual('101.23 # 202.46 USD',
                          position.cost_to_str(cost, self.dformat, False))
 
-        cost = position.CostSpec(D('101.23'), None, 'USD', datetime.date(2015, 9, 6), None, True)
+        cost = position.CostSpec(D('101.23'), None, 'USD', datetime.date(2015, 9, 6), None,
+                                 True)
         self.assertEqual('101.23 USD',
                          position.cost_to_str(cost, self.dformat, False))
 

@@ -196,7 +196,7 @@ def replace_namedtuple_values(ntuple, predicate, mapper, memo=None):
         memo = set()
     id_ntuple = id(ntuple)
     if id_ntuple in memo:
-        return
+        return None
     memo.add(id_ntuple)
 
     # pylint: disable=unidiomatic-typecheck
@@ -243,7 +243,7 @@ def compute_unique_clean_ids(strings):
         else:
             break
     else:
-        return # Could not find a unique mapping.
+        return None # Could not find a unique mapping.
 
     return idmap
 

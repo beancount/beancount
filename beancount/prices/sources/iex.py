@@ -9,8 +9,6 @@ __copyright__ = "Copyright (C) 2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import datetime
-import re
-import os
 
 from dateutil import tz
 import requests

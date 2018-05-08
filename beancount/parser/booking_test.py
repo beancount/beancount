@@ -14,7 +14,6 @@ from beancount.core.position import Cost
 from beancount.parser import parser
 from beancount.parser import cmptest
 from beancount.parser import booking
-from beancount import loader
 
 
 BookingTestError = collections.namedtuple('BookingTestError', 'source message entry')

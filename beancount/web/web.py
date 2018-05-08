@@ -5,7 +5,6 @@ This uses the Bottle single-file micro web framework (with no plugins).
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import argparse
 from os import path
 import io
 import logging

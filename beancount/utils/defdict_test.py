@@ -23,7 +23,7 @@ class TestImmutableDictWithDefault(unittest.TestCase):
 
     def test_dict_with_default(self):
         init_value = {'a': 1, 'b': 2}
-        dwd = defdict.ImmutableDictWithDefault(100, init_value)
+        dwd = defdict.ImmutableDictWithDefault(init_value, default=100)
         self.assertEqual(init_value, dwd)
 
         self.assertEqual(1, dwd['a'])
@@ -39,7 +39,7 @@ class TestImmutableDictWithDefault(unittest.TestCase):
             dwd['c'] = 17
 
     def test_pickle_defdict(self):
-        dwd = defdict.ImmutableDictWithDefault(100, {'a': 1, 'b': 2})
+        dwd = defdict.ImmutableDictWithDefault({'a': 1, 'b': 2}, default=100)
         pick = pickle.dumps(dwd)
         dwd2 = pickle.loads(pick)
         self.assertEqual(dwd, dwd2)

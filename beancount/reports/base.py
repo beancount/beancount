@@ -7,7 +7,6 @@ supports some subset of formats.
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import argparse
 import io
 import re
 from os import path

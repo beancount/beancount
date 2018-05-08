@@ -83,7 +83,7 @@ def py_unicode_ranges(chars):
         end = seq[-1]
         ranges.append(py_unicode_range_literal(beg, end))
     return "r'" + "".join(ranges) + "'"
-        
+
 def lex_byte_literal(b):
     """
     Convert a byte into a byte literal, as supported by lex (e.g., "\x40").
@@ -108,7 +108,7 @@ def lex_byte_range_literal(prefix, beg, end):
         pat += lex_byte_literal(end)
         pat += "]"
     return pat
-    
+
 def lex_unicode_ranges(name, chars):
     """
     Convert a set of characters into a string to be used in a lex regular

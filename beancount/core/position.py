@@ -8,7 +8,6 @@ __license__ = "GNU GPLv2"
 import copy
 import datetime
 import re
-import warnings
 
 from typing import NamedTuple, Optional
 

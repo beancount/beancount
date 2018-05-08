@@ -5,7 +5,6 @@ from os import path
 import re
 import os
 import unittest
-import argparse
 import runpy
 
 from beancount.ingest import importer
