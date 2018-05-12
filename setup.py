@@ -172,7 +172,7 @@ try:
                                      shell=False)
     vc_changeset, vc_timestamp = output.decode('utf-8').split()
     vc_changeset = 'hg:{}'.format(vc_changeset)
-except subprocess.CalledProcessError:
+except (subprocess.CalledProcessError, FileNotFoundError):
     output = subprocess.check_output(['git', 'log', '--pretty=%H %ct', '-1'],
                                      shell=False)
     match = re.match(r'([0-9a-f]+) ([0-9]+)$', output.decode('utf-8').strip())
@@ -180,8 +180,8 @@ except subprocess.CalledProcessError:
         vc_changeset = 'git:{}'.format(match.group(1))
         vc_timestamp = match.group(2)
     else:
-        vc_changeset = 'unknown'
-        vc_timestamp = '0'
+        vc_changeset = ''
+        vc_timestamp = ''
 
 # Create a setup.
 # Please read: http://furius.ca/beancount/doc/install about version numbers.

@@ -23,16 +23,40 @@ def ArgumentParser(*args, **kwargs):
     """
     parser = argparse.ArgumentParser(*args, **kwargs)
 
-    # Shorten changeset.
-    changeset = _parser.__vc_changeset__[:12]
-    if re.match(changeset, 'hg:'):
-        changeset = changeset[:15]
-    elif re.match(changeset, 'git:'):
-        changeset = changeset[:12]
-
-    vc_date = datetime.datetime.fromtimestamp(_parser.__vc_timestamp__).date()
     parser.add_argument('--version', '-V', action='version',
-                        version='Beancount {} (changeset: {}; {})'.format(
-                            beancount.__version__, changeset, vc_date))
+                        version=compute_version_string(
+                            beancount.__version__,
+                            _parser.__vc_changeset__,
+                            _parser.__vc_timestamp__))
 
     return parser
+
+
+def compute_version_string(version, changeset, timestamp):
+    """Compute a version string from the changeset and timestamp baked in the parser.
+
+    Args:
+      version: A string, the version number.
+      changeset: A string, a version control string identifying the commit of the version.
+      timestamp: An integer, the UNIX epoch timestamp of the changeset.
+    Returns:
+      A human-readable string for the version.
+    """
+    # Shorten changeset.
+    if changeset:
+        if re.match('hg:', changeset):
+            changeset = changeset[:15]
+        elif re.match('git:', changeset):
+            changeset = changeset[:12]
+
+    # Convert timestamp to a date.
+    date = None
+    if timestamp > 0:
+        date = datetime.datetime.utcfromtimestamp(timestamp).date()
+
+    version = 'Beancount {}'.format(version)
+    if changeset or date:
+        version = '{} ({})'.format(
+            version, '; '.join(map(str, filter(None, [changeset, date]))))
+
+    return version

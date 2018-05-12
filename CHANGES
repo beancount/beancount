@@ -6,6 +6,10 @@ Note: This file contains a list changes in the 'default' branch.
 
 * Version: 2.1.0-devel
 
+2018-05-12
+
+  - Fixed installation with missing version string.
+
 
 * Version: 2.1.0
 
