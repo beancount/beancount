@@ -166,22 +166,41 @@ version_module = runpy.run_path(path.join(path.dirname(__file__),
 version = version_module['__version__']
 assert isinstance(version, str)
 
-# Bake changeset in the binary.
-try:
-    output = subprocess.check_output(['hg', 'parent', '--template', '{node} {date}'],
-                                     shell=False)
-    vc_changeset, vc_timestamp = output.decode('utf-8').split()
-    vc_changeset = 'hg:{}'.format(vc_changeset)
-except (subprocess.CalledProcessError, FileNotFoundError):
-    output = subprocess.check_output(['git', 'log', '--pretty=%H %ct', '-1'],
-                                     shell=False)
-    match = re.match(r'([0-9a-f]+) ([0-9]+)$', output.decode('utf-8').strip())
-    if match:
-        vc_changeset = 'git:{}'.format(match.group(1))
-        vc_timestamp = match.group(2)
-    else:
-        vc_changeset = ''
-        vc_timestamp = ''
+def get_hg_changeset():
+    """Get the Mercurial changeset id."""
+    try:
+        output = subprocess.check_output(['hg', 'parent', '--template', '{node} {date}'],
+                                         shell=False)
+        vc_changeset, vc_timestamp = output.decode('utf-8').split()
+        vc_changeset = 'hg:{}'.format(vc_changeset)
+        return vc_changeset, vc_timestamp
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return None
+
+def get_git_changeset():
+    """Get the Git changeset id."""
+    try:
+        output = subprocess.check_output(['git', 'log', '--pretty=%H %ct', '-1'],
+                                         shell=False)
+        match = re.match(r'([0-9a-f]+) ([0-9]+)$', output.decode('utf-8').strip())
+        if match:
+            vc_changeset = 'git:{}'.format(match.group(1))
+            vc_timestamp = match.group(2)
+            return vc_changeset, vc_timestamp
+        else:
+            return None
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return None
+
+# Get the changeset to bake into the binary.
+for get_changeset in get_hg_changeset, get_git_changeset:
+    changeset_timestamp = get_changeset()
+    if changeset_timestamp is not None:
+        vc_changeset, vc_timestamp = changeset_timestamp
+        break
+else:
+    vc_changeset, vc_timestamp = '', 0
+
 
 # Create a setup.
 # Please read: http://furius.ca/beancount/doc/install about version numbers.
