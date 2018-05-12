@@ -58,7 +58,7 @@ class TestLexer(unittest.TestCase):
           2013-05-18 2014-01-02 2014/01/02
           Assets:US:Bank:Checking
           Liabilities:US:Bank:Credit
-          Other:Bank Óthяr:Bあnk
+          Other:Bank
           USD HOOL TEST_D TEST_3 TEST-D TEST-3 NT
           "Nice dinner at Mermaid Inn"
           ""
@@ -77,7 +77,6 @@ class TestLexer(unittest.TestCase):
             ('ACCOUNT', 3, 'Liabilities:US:Bank:Credit', 'Liabilities:US:Bank:Credit'),
             ('EOL', 4, '\n', None),
             ('ACCOUNT', 4, 'Other:Bank', 'Other:Bank'),
-            ('ACCOUNT', 4, 'Óthяr:Bあnk', 'Óthяr:Bあnk'),
             ('EOL', 5, '\n', None),
             ('CURRENCY', 5, 'USD', 'USD'),
             ('CURRENCY', 5, 'HOOL', 'HOOL'),
@@ -107,6 +106,25 @@ class TestLexer(unittest.TestCase):
             ('COLON', 11, ':', None),
             ('EOL', 12, '\n', None),
             ('EOL', 12, '\x00', None)
+            ], tokens)
+
+    @lex_tokens
+    def test_lex_unicode_account(self, tokens, errors):
+        """\
+          Other:Bank Óthяr:Bあnk
+          abc1:abc1 ΑβγⅠ:ΑβγⅠ ابجا:ابجا
+        """
+        self.assertEqual([
+            ('ACCOUNT', 1, 'Other:Bank', 'Other:Bank'),
+            ('ACCOUNT', 1, 'Óthяr:Bあnk', 'Óthяr:Bあnk'),
+            ('EOL', 2, '\n', None),
+            ('KEY', 2, 'abc1:', 'abc1'),
+            ('COLON', 2, ':', None),
+            ('LEX_ERROR', 2, 'abc1', None),
+            ('ACCOUNT', 2, 'ΑβγⅠ:ΑβγⅠ', 'ΑβγⅠ:ΑβγⅠ'),
+            ('LEX_ERROR', 2, 'ابجا:ابجا', None),
+            ('EOL', 3, '\n', None),
+            ('EOL', 3, '\x00', None)
             ], tokens)
 
     @lex_tokens
@@ -651,7 +669,7 @@ class TestLexerUnicode(unittest.TestCase):
         self.assertEqual(self.expected_utf8_string, str_tokens[0][3])
 
     # Test providing latin1 bytes to the lexer when it is expecting utf8.
-    def test_bytes_encoded_invalid(self):
+    def test_bytes_encoded_latin1_invalid(self):
         latin1_bytes = self.test_utf8_string.encode('latin1')
         builder = lexer.LexBuilder()
         tokens = list(lexer.lex_iter_string(latin1_bytes, builder))
@@ -676,6 +694,20 @@ class TestLexerUnicode(unittest.TestCase):
         # Check that the lexer correctly parsed the latin1 string.
         str_tokens = [token for token in tokens if token[0] == 'STRING']
         self.assertEqual(self.expected_latin1_string, str_tokens[0][3])
+
+    # Test providing utf16 bytes to the lexer when it is expecting utf8.
+    def test_bytes_encoded_utf16_invalid(self):
+        utf16_bytes = self.test_utf8_string.encode('utf16')
+        builder = lexer.LexBuilder()
+        with self.assertRaises(SystemError):
+            tokens = list(lexer.lex_iter_string(utf16_bytes, builder))
+
+    # Test providing utf16 bytes to the lexer with an encoding.
+    def test_bytes_encoded_utf16(self):
+        utf16_bytes = self.test_utf8_string.encode('utf16')
+        builder = lexer.LexBuilder()
+        with self.assertRaises(SystemError):
+            tokens = list(lexer.lex_iter_string(utf16_bytes, builder))
 
 
 class TestLexerMisc(unittest.TestCase):

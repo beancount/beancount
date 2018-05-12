@@ -225,12 +225,14 @@ def lex_iter(file, builder=None, encoding=None):
     if builder is None:
         builder = LexBuilder()
     _parser.lexer_initialize(filename, builder, encoding)
-    while 1:
-        token_tuple = _parser.lexer_next()
-        if token_tuple is None:
-            break
-        yield token_tuple
-    _parser.lexer_finalize()
+    try:
+        while 1:
+            token_tuple = _parser.lexer_next()
+            if token_tuple is None:
+                break
+            yield token_tuple
+    finally:
+        _parser.lexer_finalize()
 
 
 def lex_iter_string(string, builder=None, encoding=None):

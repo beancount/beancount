@@ -6,6 +6,11 @@ Note: This file contains a list changes in the 'default' branch.
 
 * Version: default
 
+2018-05-12
+
+  - Added back lexer test from Adrian Medrano Calvo's UTF8 changes to head.
+
+
 2018-05-08
 
   - Fixed #287: In the price fecher, store the datetime instances as
