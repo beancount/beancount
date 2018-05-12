@@ -13,4 +13,4 @@ if (sys.version_info.major, sys.version_info.minor) < (3, 3):
     raise ImportError("Python 3.3 or above is required")
 
 
-__version__ = '2.1.0-devel'
+__version__ = '2.1.1'
