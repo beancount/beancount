@@ -15,6 +15,16 @@ It will output:
     Liabilities:CreditCard      -10.27 USD
     Expenses:Child               10.27 USD
 
+You can limit the diversion to one posting only, like this:
+
+  2018-05-05 * "CVS/PHARMACY" "" #kai
+    Liabilities:CreditCard        -66.38 USD
+    Expenses:Pharmacy              21.00 USD  ;; Vitamins for Kai
+    Expenses:Pharmacy              45.38 USD
+      divert: FALSE
+
+See unit test for details.
+
 See this thread for context:
 https://docs.google.com/drawings/d/18fTrrGlmz0jFbfcGGHTffbdRwbmST8r9_3O26Dd1Xww/edit?usp=sharing
 """
@@ -74,7 +84,8 @@ def replace_expenses_accounts(entry, replacement_account, acctypes):
     """
     new_postings = []
     for posting in entry.postings:
-        if account_types.is_account_type(acctypes.expenses, posting.account):
+        if (account_types.is_account_type(acctypes.expenses, posting.account) and
+            posting.meta.get('divert', True)):
             posting = posting._replace(account=replacement_account,
                                        meta={'diverted_account': posting.account})
         new_postings.append(posting)

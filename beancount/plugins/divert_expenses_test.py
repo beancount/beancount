@@ -46,3 +46,37 @@ class TestDivertExpenses(cmptest.TestCase):
           Expenses:Kai                      900.00 USD
             diverted_account: "Expenses:Baby:Gear"
         """, entries)
+
+    @loader.load_doc()
+    def test_divert_some_postings(self, entries, errors, __):
+        """
+        plugin "beancount.plugins.divert_expenses" "{
+          'tag': 'kai',
+          'account': 'Expenses:Kai',
+        }"
+
+        2012-01-01 open Expenses:Pharmacy
+        2012-01-01 open Liabilities:CreditCard
+        2012-01-01 open Expenses:Kai
+
+        2018-05-05 * "CVS/PHARMACY" "" #kai
+          Liabilities:CreditCard        -66.38 USD
+          Expenses:Pharmacy              21.00 USD  ;; Vitamins for Kai
+          Expenses:Pharmacy              45.38 USD
+            divert: FALSE
+
+        """
+        self.assertFalse(errors)
+        self.assertEqualEntries("""
+
+        2012-01-01 open Expenses:Pharmacy
+        2012-01-01 open Liabilities:CreditCard
+        2012-01-01 open Expenses:Kai
+
+        2018-05-05 * "CVS/PHARMACY" "" #kai
+          Liabilities:CreditCard        -66.38 USD
+          Expenses:Kai                   21.00 USD
+            diverted_account: "Expenses:Pharmacy"
+          Expenses:Pharmacy              45.38 USD
+            divert: FALSE
+        """, entries)

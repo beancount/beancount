@@ -6,6 +6,8 @@ Note: This file contains a list changes in the 'default' branch.
 
 * Version: 2.1.2-devel
 
+  - In 'divert_expenses' plugin, allow limiting diversions to one posting only.
+
   - Fixed unit test for git checkouts. This should fix the Travis-CI build.
 
 
