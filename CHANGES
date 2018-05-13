@@ -4,6 +4,11 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+* Version: 2.1.2-devel
+
+  - Fixed unit test for git checkouts. This should fix the Travis-CI build.
+
+
 * Version: 2.1.2
 
 2018-05-12
