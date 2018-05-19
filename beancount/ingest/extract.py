@@ -84,25 +84,32 @@ def extract_from_file(filename, importer,
                                                new_entries))
 
     # Find potential matching entries.
-    duplicate_entries = []
     if existing_entries is not None:
-        duplicate_pairs = similar.find_similar_entries(new_entries, existing_entries)
-        duplicate_set = set(id(entry) for entry, _ in duplicate_pairs)
-
-        # Add a metadata marker to the extracted entries for duplicates.
-        mod_entries = []
-        for entry in new_entries:
-            if entry.meta.get(DUPLICATE_META, False):
-                duplicate_entries.append(entry)
-            elif id(entry) in duplicate_set:
-                marked_meta = entry.meta.copy()
-                marked_meta[DUPLICATE_META] = True
-                entry = entry._replace(meta=marked_meta)
-                duplicate_entries.append(entry)
-            mod_entries.append(entry)
-        new_entries = mod_entries
+        new_entries, duplicate_entries = find_duplicate_entries(
+            new_entries, existing_entries)
+    else:
+        duplicate_entries = []
 
     return new_entries, duplicate_entries
+
+
+def find_duplicate_entries(new_entries, existing_entries):
+    duplicate_pairs = similar.find_similar_entries(new_entries, existing_entries)
+    duplicate_set = set(id(entry) for entry, _ in duplicate_pairs)
+
+    # Add a metadata marker to the extracted entries for duplicates.
+    mod_entries = []
+    duplicate_entries = []
+    for entry in new_entries:
+        if entry.meta.get(DUPLICATE_META, False):
+            duplicate_entries.append(entry)
+        elif id(entry) in duplicate_set:
+            marked_meta = entry.meta.copy()
+            marked_meta[DUPLICATE_META] = True
+            entry = entry._replace(meta=marked_meta)
+            duplicate_entries.append(entry)
+        mod_entries.append(entry)
+    return mod_entries, duplicate_entries
 
 
 def print_extracted_entries(importer, entries, file):
