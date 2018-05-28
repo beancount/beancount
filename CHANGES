@@ -4,6 +4,11 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2018-05-28
+
+  - Minor bug fix: don't fail on rendering a MISSING instnace.
+
+
 * Version: 2.1.2-devel
 
   - In 'divert_expenses' plugin, allow limiting diversions to one posting only.

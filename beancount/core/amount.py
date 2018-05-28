@@ -58,8 +58,10 @@ class Amount(_Amount):
         Returns:
           A formatted string of the quantized amount and symbol.
         """
-        return "{} {}".format(dformat.format(self.number, self.currency),
-                              self.currency)
+        number_fmt = (dformat.format(self.number, self.currency)
+                      if isinstance(self.number, Decimal)
+                      else str(self.number))
+        return "{} {}".format(number_fmt, self.currency)
 
     def __str__(self):
         """Convert an Amount instance to a printable string with the defaults.
