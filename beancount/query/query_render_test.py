@@ -5,6 +5,7 @@ import datetime
 import io
 import unittest
 import collections
+from itertools import zip_longest
 
 from beancount.core.number import D
 from beancount.core.number import Decimal
@@ -217,6 +218,10 @@ class TestInventoryRenderer(ColumnRendererBase):
 
 class TestQueryRender(unittest.TestCase):
 
+    def assertMultiLineEqualNoWS(self, expected, actual):
+        for left, right in zip_longest(expected.strip().splitlines(), actual.strip().splitlines()):
+            self.assertEqual(left.strip(), right.strip())
+
     def setUp(self):
         self.dcontext = display_context.DisplayContext()
         self.dcontext.update(D('1.00'), 'USD')
@@ -246,12 +251,37 @@ class TestQueryRender(unittest.TestCase):
             Row(D('234.12')),
             Row(D('345.123')),
             Row(D('456.1234')),
+            Row(D('3456.1234')),
         ]
         oss = io.StringIO()
         query_render.render_text(types, rows, self.dcontext, oss)
-        # FIXME:
-        # with box():
-        #     print(oss.getvalue())
+        self.assertMultiLineEqualNoWS("""
+           number
+           ---------
+            123.1
+            234.12
+            345.123
+            456.1234
+           3456.1234
+        """, oss.getvalue())
+
+        # Test it with commas too.
+        # FIXME: This should ideally render with commas, but the renderers don't
+        # support that yet. I wrote the test to show it.  See discussion at
+        # https://groups.google.com/d/msgid/beancount/CAK21%2BhMdq4KtZrm7pX9EZ1-tRWi7THMWzybS5B%3Dumb6OSK03Qw%40mail.gmail.com
+        self.dcontext.set_commas(True)
+        oss = io.StringIO()
+        query_render.render_text(types, rows, self.dcontext, oss)
+        self.assertMultiLineEqualNoWS("""
+            number
+            ---------
+             123.1
+             234.12
+             345.123
+             456.1234
+           3456.1234
+        """, oss.getvalue())
+
 
 
 # Add a test like this, where the column's result ends up being zero wide.
