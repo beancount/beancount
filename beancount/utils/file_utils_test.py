@@ -78,4 +78,4 @@ class TestMiscFileUtils(unittest.TestCase):
     def test_chdir_contextmanager(self):
         with file_utils.chdir(tempfile.gettempdir()) as tmpdir:
             self.assertIsInstance(tmpdir, str)
-            self.assertEqual(tempfile.gettempdir(), os.getcwd())
+            self.assertEqual(path.realpath(tempfile.gettempdir()), os.getcwd())

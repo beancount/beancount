@@ -6,6 +6,9 @@ Note: This file contains a list changes in the 'default' branch.
 
 2018-05-28
 
+  - Fixed bug with tempdir being a symlink on Mac, which was making one test
+    fail.
+
   - Fixed unit tests which failed due to timestamps getting rendered with an
     offset on a Mac while on a train in Japan.
 
