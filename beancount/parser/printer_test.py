@@ -148,6 +148,9 @@ class TestEntryPrinter(cmptest.TestCase):
         2014-06-01 open Assets:Account1
         2014-06-08 document Assets:Account1 "/path/to/document.pdf"
         2014-06-08 document Assets:Account1 "path/to/document.csv"
+        2014-06-08 document Assets:Account1 "path/to/document2.csv" #tag1 #tag2 ^link1 ^link2
+        2014-06-08 document Assets:Account1 "path/to/document2.csv" #tag1
+        2014-06-08 document Assets:Account1 "path/to/document2.csv" ^link1
         """
         self.assertRoundTrip(entries, errors)
 

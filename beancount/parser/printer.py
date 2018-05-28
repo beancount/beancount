@@ -260,7 +260,14 @@ class EntryPrinter:
         self.write_metadata(entry.meta, oss)
 
     def Document(self, entry, oss):
-        oss.write('{e.date} document {e.account} "{e.filename}"\n'.format(e=entry))
+        oss.write('{e.date} document {e.account} "{e.filename}"'.format(e=entry))
+        if entry.tags or entry.links:
+            oss.write(' ')
+            for tag in sorted(entry.tags):
+                oss.write('#{}'.format(tag))
+            for link in sorted(entry.links):
+                oss.write('^{}'.format(link))
+        oss.write('\n')
         self.write_metadata(entry.meta, oss)
 
     def Pad(self, entry, oss):
