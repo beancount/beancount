@@ -6,6 +6,11 @@ Note: This file contains a list changes in the 'default' branch.
 
 2018-05-28
 
+  - Fixed unit tests which failed due to timestamps getting rendered with an
+    offset on a Mac while on a train in Japan.
+
+  - Render tags and links on Document directive.
+
   - Minor bug fix: don't fail on rendering a MISSING instnace.
 
 

@@ -169,8 +169,8 @@ assert isinstance(version, str)
 def get_hg_changeset():
     """Get the Mercurial changeset id."""
     try:
-        output = subprocess.check_output(['hg', 'parent', '--template', '{node} {date}'],
-                                         shell=False)
+        output = subprocess.check_output(
+            ['hg', 'parent', '--template', '{node} {date|short}'], shell=False)
         vc_changeset, vc_timestamp = output.decode('utf-8').split()
         vc_changeset = 'hg:{}'.format(vc_changeset)
         return vc_changeset, vc_timestamp
