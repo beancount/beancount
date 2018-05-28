@@ -52,9 +52,12 @@ $(UNICODE_CATEGORY_SOURCES): $(UNICODE_CATEGORY_DIR)/%.l :
 #$(CROOT)/lexer.c $(CROOT)/lexer.h: $(LEXER_SOURCES) $(CROOT)/grammar.h
 #	$(LEX) --outfile=$(CROOT)/lexer.c --header-file=$(CROOT)/lexer.h $(LEXER_SOURCES)
 #	patch -p1 < $(CROOT)/lexer.patch
+# TODO(blais): Make patch conditional on flex-2.6.1. Fails with 2.6.4.
+FLEX_VERSION=$(shell $(LEX) -V)
 $(CROOT)/lexer.c $(CROOT)/lexer.h: $(CROOT)/lexer.l $(CROOT)/grammar.h
 	$(LEX) --outfile=$(CROOT)/lexer.c --header-file=$(CROOT)/lexer.h $<
-	patch --no-backup-if-mismatch -p1 < $(CROOT)/lexer.patch
+	if [[ "$(FLEX_VERSION)" < "flex 2.6.4" ]]; then patch --no-backup-if-mismatch -p1 < $(CROOT)/lexer.patch ; fi
+
 
 SOURCES =					\
 	$(CROOT)/lexer.c			\
