@@ -3,6 +3,15 @@
 ========================
 Note: This file contains a list changes in the 'default' branch.
 
+2018-05-29
+
+  - Refactored the call to find duplicates in imported files so that it can be
+    called only once with all the results from all the importers. This should
+    eventually allow a user-provided function that can merge entries between
+    importers. Existing behavior should be unaffected (though there may be a
+    small delay until everything gets printed out; all the importers are invoked
+    before any output is written). See #298.
+
 
 2018-05-28
 

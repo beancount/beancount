@@ -52,8 +52,7 @@ def extract_from_file(filename, importer,
         generate Transaction objects with None as value for the 'tags' or 'links'
         attributes.
     Returns:
-      A list of new imported entries and a subset of these which have been
-      identified as possible duplicates.
+      A list of new imported entries.
     Raises:
       Exception: If there is an error in the importer's extract() method.
     """
@@ -69,7 +68,7 @@ def extract_from_file(filename, importer,
         kwargs['existing_entries'] = existing_entries
     new_entries = importer.extract(file, **kwargs)
     if not new_entries:
-        return [], []
+        return []
 
     # Make sure the newly imported entries are sorted; don't trust the importer.
     new_entries.sort(key=data.entry_sortkey)
@@ -83,33 +82,37 @@ def extract_from_file(filename, importer,
         new_entries = list(itertools.dropwhile(lambda x: x.date < min_date,
                                                new_entries))
 
-    # Find potential matching entries.
-    if existing_entries is not None:
-        new_entries, duplicate_entries = find_duplicate_entries(
-            new_entries, existing_entries)
-    else:
-        duplicate_entries = []
-
-    return new_entries, duplicate_entries
+    return new_entries
 
 
-def find_duplicate_entries(new_entries, existing_entries):
-    duplicate_pairs = similar.find_similar_entries(new_entries, existing_entries)
-    duplicate_set = set(id(entry) for entry, _ in duplicate_pairs)
+def find_duplicate_entries(new_entries_list, existing_entries):
+    """Flag potentially duplicate entries.
 
-    # Add a metadata marker to the extracted entries for duplicates.
-    mod_entries = []
-    duplicate_entries = []
-    for entry in new_entries:
-        if entry.meta.get(DUPLICATE_META, False):
-            duplicate_entries.append(entry)
-        elif id(entry) in duplicate_set:
-            marked_meta = entry.meta.copy()
-            marked_meta[DUPLICATE_META] = True
-            entry = entry._replace(meta=marked_meta)
-            duplicate_entries.append(entry)
-        mod_entries.append(entry)
-    return mod_entries, duplicate_entries
+    Args:
+      new_entries_list: A list of lists of imported entries, one for each
+        importer.
+      existing_entries: A list of previously existing entries from the target
+        ledger.
+    Returns:
+      A list of lists of modified new entries (like new_entries_list),
+      potentially with modified metadata to indicate those which are duplicated.
+    """
+    mod_entries_list = []
+    for new_entries in new_entries_list:
+        # Find similar entries against the existing ledger only.
+        duplicate_pairs = similar.find_similar_entries(new_entries, existing_entries)
+
+        # Add a metadata marker to the extracted entries for duplicates.
+        duplicate_set = set(id(entry) for entry, _ in duplicate_pairs)
+        mod_entries = []
+        for entry in new_entries:
+            if id(entry) in duplicate_set:
+                marked_meta = entry.meta.copy()
+                marked_meta[DUPLICATE_META] = True
+                entry = entry._replace(meta=marked_meta)
+            mod_entries.append(entry)
+        mod_entries_list.append(mod_entries)
+    return mod_entries_list
 
 
 def print_extracted_entries(importer, entries, file):
@@ -168,30 +171,42 @@ def extract(importer_config,
     allow_none_for_tags_and_links = (
         options_map and options_map["allow_deprecated_none_for_tags_and_links"])
 
-    output.write(HEADER)
+    # Run all the importers and gather their result sets.
+    new_entries_list = []
     for filename, importers in identify.find_imports(importer_config,
                                                      files_or_directories,
                                                      output):
         for importer in importers:
             # Import and process the file.
             try:
-                new_entries, duplicate_entries = extract_from_file(
+                new_entries = extract_from_file(
                     filename,
                     importer,
                     existing_entries=entries,
                     min_date=mindate,
                     allow_none_for_tags_and_links=allow_none_for_tags_and_links)
+                new_entries_list.append(new_entries)
             except Exception as exc:
                 logging.error("Importer %s.extract() raised an unexpected error: %s",
                               importer.name(), exc)
                 logging.error("Traceback: %s", traceback.format_exc())
                 continue
-            if not new_entries and not duplicate_entries:
-                continue
 
-            if not ascending:
-                new_entries.reverse()
-            print_extracted_entries(importer, new_entries, output)
+    # Find potential duplicate entries in the result sets, either against the
+    # list of existing ones, or against each other. A single call to this
+    # function is made on purpose, so that the function be able to merge
+    # entries.
+    new_entries_list = find_duplicate_entries(
+        new_entries_list, entries)
+    assert isinstance(new_entries_list, list)
+    assert all(isinstance(new_entries, list) for new_entries in new_entries_list)
+
+    # Print out the results.
+    output.write(HEADER)
+    for new_entries in new_entries_list:
+        if not ascending:
+            new_entries.reverse()
+        print_extracted_entries(importer, new_entries, output)
 
 
 def main():

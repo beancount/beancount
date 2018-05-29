@@ -47,7 +47,7 @@ class TestImporterTests(test_utils.TestTempdirMixin, unittest.TestCase):
             imp_meth.return_value = []
 
             # Test actual working import.
-            extract_mock.return_value = [entry], []
+            extract_mock.return_value = [entry]
             for method, *args in regression.compare_sample_files(importer, self.tempdir):
                 try:
                     method(*args)

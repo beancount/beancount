@@ -64,8 +64,7 @@ class ImportFileTestCase(unittest.TestCase):
 
         """
         # Import the file.
-        entries, duplicate_entries = extract.extract_from_file(filename, self.importer,
-                                                               None, None)
+        entries = extract.extract_from_file(filename, self.importer, None, None)
 
         # Render the entries to a string.
         oss = io.StringIO()
