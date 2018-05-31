@@ -3,6 +3,14 @@
 ========================
 Note: This file contains a list changes in the 'default' branch.
 
+
+2018-05-31
+
+  - Changed template for version number from {date|short} to {date(date, "%s%)}
+    as per discussion on #304 (thanks to Jason Chu for looking up the detail for
+    this).
+
+
 2018-05-29
 
   - Refactored the call to find duplicates in imported files so that it can be
