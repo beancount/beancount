@@ -6,6 +6,11 @@ Note: This file contains a list changes in the 'default' branch.
 
 2018-05-31
 
+  - Created a new plugin: "fill_account" to automatically insert a posting with
+    a default account name where there's a single posting. Will use this while
+    traveling as a lot of the expenses come from cash; this should significantly
+    shorten such files.
+
   - Changed template for version number from {date|short} to {date(date, "%s%)}
     as per discussion on #304 (thanks to Jason Chu for looking up the detail for
     this).
