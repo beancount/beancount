@@ -4672,6 +4672,11 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - Here's another way to implement an intra-day balance: define a new balance
+    directive type, whose semantic is tp sort all the entries, but the entries
+    on the same day of the balance are sorted in file order. I think this would
+    handle the most common use case. Try it (experiment).
+
   - It might be interesting to support some sort of transfer syntax that would
     allow the movement of Position's across accounts, without converting to the
     cost, something like this:
