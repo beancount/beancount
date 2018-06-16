@@ -52,6 +52,8 @@ class Booking(enum.Enum):
     IGNORED = 4
 
 
+# FIXME: You should disallow __getitem__, __delitem__ and __setitem__.
+# Move the dict inside the container.
 class Inventory(dict):
     """An Inventory is a set of positions.
 

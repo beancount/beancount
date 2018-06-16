@@ -278,7 +278,7 @@ def aggregate_postings(postings):
         if units.is_empty():
             continue
         assert len(units) == 1
-        units = units[0].units
+        units = next(iter(units)).units
 
         min_date = default_date
         for pos in balance:
@@ -287,7 +287,7 @@ def aggregate_postings(postings):
 
         cost = balance.reduce(convert.get_cost)
         assert len(cost) == 1
-        total_cost = cost[0].units
+        total_cost = next(iter(cost)).units
 
         if total_cost.currency != units.currency:
             average_cost = position.Cost(total_cost.number/units.number,
