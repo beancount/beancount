@@ -215,7 +215,10 @@ def find_statement_transactions(soup):
 
             # Extract ACCTID account information.
             acctid_node = stmtrs.find('acctid')
-            acctid = next(acctid_node.children).strip()
+            if acctid_node:
+                acctid = next(acctid_node.children).strip()
+            else:
+                acctid = ''
 
             # Get the LEDGERBAL node. There appears to be a single one for all
             # transaction lists.
