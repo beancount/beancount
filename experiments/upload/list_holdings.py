@@ -104,7 +104,7 @@ def add_prices_to_postings(entries, postings):
 class Model:
     """A model of the spreadsheet that makes it easy to configure the output."""
 
-    def __init__(self, price_map, postings, exports, asset_type, tax_map,
+    def __init__(self, price_map, postings, exports, asset_type, taxation, liquidity,
                  cash_currency='USD'):
         self.price_map = price_map
 
@@ -112,7 +112,8 @@ class Model:
         self.postings = postings
         self.exports = exports
         self.asset_type = asset_type
-        self.tax_map = tax_map
+        self.taxation = taxation
+        self.liquidity = liquidity
 
         columns = [
             ('Account', self._account),
@@ -125,6 +126,7 @@ class Model:
             ('Conversion Factor', self._conversion),
             ('Asset Type', self._asset_type),
             ('Taxation', self._taxation),
+            # ('Liquidity', self._liquidity),
             # ('Label', self._cost_label),
             ('Date', self._cost_date),
             # ('Price Currency', self._price_currency),
@@ -214,7 +216,10 @@ class Model:
         return self.asset_type.get(posting.units.currency)
 
     def _taxation(self, posting):
-        return self.tax_map.get(posting.account)
+        return self.taxation.get(posting.account)
+
+    def _liquidity(self, posting):
+        return self.liquidity.get(posting.account)
 
 
 def model_to_table(model):
@@ -306,7 +311,7 @@ def populate_with_parents(accounts_map, default):
     """For each account key, propagate the values from their parent account.
 
     Args:
-      tax_map: A dict of account name string to some value or None.
+      taxation: A dict of account name string to some value or None.
       default: The default value to assign to those accounts for which we cannot resolve
         a non-null value.
     Returns:
@@ -368,7 +373,8 @@ def main():
     accounts_map = {
         account: open
         for account, (open, _) in getters.get_account_open_close(entries).items()}
-    tax_map = populate_with_parents(getters.get_values_meta(accounts_map, 'tax'), 'TAXABLE')
+    taxation = populate_with_parents(getters.get_values_meta(accounts_map, 'tax'), 'TAXABLE')
+    liquidity = populate_with_parents(getters.get_values_meta(accounts_map, 'liquid'), False)
 
     # Filter out postings to be ignored.
     agg_postings = [posting
@@ -377,7 +383,7 @@ def main():
 
     # Realize the model.
     price_map = prices.build_price_map(entries)
-    model = Model(price_map, list(agg_postings), exports, asset_type, tax_map)
+    model = Model(price_map, list(agg_postings), exports, asset_type, taxation, liquidity)
 
     # Write out the assets to stdout in CSV format.
     if args.dry_run:
