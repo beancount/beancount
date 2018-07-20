@@ -4,6 +4,11 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2018-07-19
+
+  * Fixed #319: Incorrect version number from 2.1.2-devel to 2.1.3-devel.
+
+
 2018-05-31
 
   - Created a new plugin: "fill_account" to automatically insert a posting with
@@ -39,7 +44,7 @@ Note: This file contains a list changes in the 'default' branch.
   - Minor bug fix: don't fail on rendering a MISSING instnace.
 
 
-* Version: 2.1.2-devel
+* Version: 2.1.3-devel
 
   - In 'divert_expenses' plugin, allow limiting diversions to one posting only.
 
