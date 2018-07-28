@@ -50,8 +50,22 @@ class ImportFileTestCase(unittest.TestCase):
         self.importer = importer
 
     @test_utils.skipIfRaises(ToolNotInstalled)
+    def test_expect_identify(self, filename, msg):
+        """Attempt to identify a file and expect results to be true.
+
+        Args:
+          filename: A string, the name of the file to import using self.importer.
+        Raises:
+          AssertionError: If the contents differ from the expected file.
+        """
+        # Import the date.
+        file = cache.get_file(filename)
+        matched = self.importer.identify(file)
+        self.assertTrue(matched)
+
+    @test_utils.skipIfRaises(ToolNotInstalled)
     def test_expect_extract(self, filename, msg):
-        """Import a test file compare its contents against an expected output.
+        """Extract entries from a test file and compare against expected output.
 
         If an expected file (as <filename>.extract) is not present, we issue a
         warning. Missing expected files can be written out by removing them
@@ -83,7 +97,7 @@ class ImportFileTestCase(unittest.TestCase):
 
     @test_utils.skipIfRaises(ToolNotInstalled)
     def test_expect_file_date(self, filename, msg):
-        """Import a test file compare its contents against an expected output.
+        """Compute the imported file date and compare to an expected output.
 
         If an expected file (as <filename>.file_date) is not present, we issue a
         warning. Missing expected files can be written out by removing them
@@ -114,7 +128,7 @@ class ImportFileTestCase(unittest.TestCase):
 
     @test_utils.skipIfRaises(ToolNotInstalled)
     def test_expect_file_name(self, filename, msg):
-        """Import a test file compare its contents against an expected output.
+        """Compute the imported file name and compare to an expected output.
 
         If an expected file (as <filename>.file_name) is not present, we issue a
         warning. Missing expected files can be written out by removing them
@@ -190,7 +204,8 @@ def compare_sample_files(importer, directory=None, ignore_cls=None):
     for filename in find_input_files(directory):
         # For each of the methods to be tested, check if there is an actual
         # implementation and if so, run a comparison with an expected file.
-        for name in ['extract',
+        for name in ['identify',
+                     'extract',
                      'file_date',
                      'file_name']:
             # Check if the method has been overrriden from the protocol
@@ -198,7 +213,7 @@ def compare_sample_files(importer, directory=None, ignore_cls=None):
             # method, we want to require a test against that method.
             func = getattr(importer, name).__func__
             if (func is not getattr(ImporterProtocol, name) and
-                (ignore_cls is None or (func is not getattr(ignore_cls, name)))):
+                (ignore_cls is None or (func is not getattr(ignore_cls, name, None)))):
                 method = getattr(ImportFileTestCase(importer),
                                  'test_expect_{}'.format(name))
                 yield (method, filename, name)

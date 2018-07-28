@@ -4,6 +4,12 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2018-07-28
+
+  - Added automated unit test for calling identify() from the importers test
+    suite, expecting True, always.
+
+
 2018-05-31
 
   - Created a new plugin: "fill_account" to automatically insert a posting with
