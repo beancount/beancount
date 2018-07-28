@@ -4,6 +4,11 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2018-07-28
+
+  - Added a utility to import modules by dotted string name.
+
+
 2018-05-31
 
   - Created a new plugin: "fill_account" to automatically insert a posting with
