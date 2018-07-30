@@ -174,7 +174,7 @@ def render_report(report_class, entries, args=None,
     return oss.getvalue()
 
 
-def render_real_report(report_class, real_root, args=None, leaf_only=False):
+def render_real_report(report_class, real_root, price_map, price_date, args=None, leaf_only=False):
     """Instantiate a report and rendering it to a string.
 
     This is intended to be called in the context of a Bottle view app request
@@ -183,6 +183,8 @@ def render_real_report(report_class, real_root, args=None, leaf_only=False):
     Args:
       report_class: A class, the type of the report to render.
       real_root: An instance of RealAccount to render.
+      price_map: A price map as built by build_price_map().
+      price_date: The date at which to evaluate the prices.
       args: A list of strings, the arguments to initialize the report with.
       leaf_only: A boolean, whether to render the leaf names only.
     Returns:
@@ -192,7 +194,7 @@ def render_real_report(report_class, real_root, args=None, leaf_only=False):
                               request.app.get_url, leaf_only, app.account_xform)
     oss = io.StringIO()
     report_ = report_class.from_args(args, formatter=formatter)
-    report_.render_real_htmldiv(real_root, app.options, oss)
+    report_.render_real_htmldiv(real_root, price_map, price_date, app.options, oss)
     return oss.getvalue()
 
 
@@ -617,6 +619,8 @@ def trial():
         pagetitle="Trial Balance",
         contents=render_real_report(balance_reports.BalancesReport,
                                     request.view.real_accounts,
+                                    app.price_map,
+                                    request.view.price_date,
                                     leaf_only=True))
 
 
@@ -626,6 +630,8 @@ def balsheet():
     return render_view(pagetitle="Balance Sheet",
                        contents=render_real_report(balance_reports.BalanceSheetReport,
                                                    request.view.closing_real_accounts,
+                                                   app.price_map,
+                                                   request.view.price_date,
                                                    leaf_only=True))
 
 
@@ -635,6 +641,8 @@ def openbal():
     return render_view(pagetitle="Opening Balances",
                        contents=render_real_report(balance_reports.BalanceSheetReport,
                                                    request.view.opening_real_accounts,
+                                                   app.price_map,
+                                                   request.view.price_date,
                                                    leaf_only=True))
 
 
@@ -644,6 +652,8 @@ def income():
     return render_view(pagetitle="Income Statement",
                        contents=render_real_report(balance_reports.IncomeStatementReport,
                                                    request.view.real_accounts,
+                                                   app.price_map,
+                                                   request.view.price_date,
                                                    leaf_only=True))
 
 
@@ -748,7 +758,10 @@ def journal_(account_name=None):
 
     try:
         html_journal = render_real_report(journal_reports.JournalReport,
-                                          real_accounts, args, leaf_only=False)
+                                          real_accounts,
+                                          app.price_map,
+                                          request.view.price_date,
+                                          args, leaf_only=False)
     except KeyError as e:
         raise bottle.HTTPError(404, '{}'.format(e))
 
@@ -836,6 +849,8 @@ def activity():
         pagetitle="Update Activity",
         contents=render_real_report(misc_reports.ActivityReport,
                                     request.view.real_accounts,
+                                    app.price_map,
+                                    request.view.price_date,
                                     leaf_only=False))
 
 @viewapp.route('/stats_types', name='stats_types')

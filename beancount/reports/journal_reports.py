@@ -87,13 +87,13 @@ class JournalReport(base.HTMLReport,
         except ValueError as exc:
             raise base.ReportError(exc)
 
-    def render_real_text(self, real_root, options_map, file):
+    def render_real_text(self, real_root, price_map, price_date, options_map, file):
         self._render_text_formats(real_root, options_map, file, journal_text.FORMAT_TEXT)
 
-    def render_real_csv(self, real_root, options_map, file):
+    def render_real_csv(self, real_root, price_map, price_date, options_map, file):
         self._render_text_formats(real_root, options_map, file, journal_text.FORMAT_CSV)
 
-    def render_real_htmldiv(self, real_root, options_map, file):
+    def render_real_htmldiv(self, real_root, price_map, price_date, options_map, file):
         postings = self.get_postings(real_root)
         render_postings = self.args.verbosity == journal_text.VERBOSE
         journal_html.html_entries_table_with_balance(file, postings, self.formatter,

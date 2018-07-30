@@ -79,7 +79,6 @@ class ImporterProtocol:
         Returns:
           A list of new, imported directives (usually mostly Transactions)
           extracted from the file.
-
         """
 
     def file_account(self, file):

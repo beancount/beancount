@@ -28,7 +28,7 @@ class BalancesReport(base.HTMLReport,
         parser.add_argument('-c', '--at-cost', '--cost', action='store_true',
                             help="Render values at cost, convert the units to cost value")
 
-    def render_real_text(self, real_root, options_map, file):
+    def render_real_text(self, real_root, price_map, price_date, options_map, file):
         if self.args.filter_expression:
             regexp = re.compile(self.args.filter_expression)
             real_root = realization.filter(
@@ -40,8 +40,9 @@ class BalancesReport(base.HTMLReport,
             realization.dump_balances(real_root, dformat,
                                       self.args.at_cost, True, file=file)
 
-    def render_real_htmldiv(self, real_root, options_map, file):
+    def render_real_htmldiv(self, real_root, price_map, price_date, options_map, file):
         text = tree_table.table_of_balances(real_root,
+                                            price_map, price_date,
                                             options_map['operating_currency'],
                                             self.formatter,
                                             classes=['trial'])
@@ -62,18 +63,21 @@ class BalanceSheetReport(base.HTMLReport,
     names = ['balsheet']
     default_format = 'html'
 
-    def render_real_htmldiv(self, real_root, options_map, file):
+    def render_real_htmldiv(self, real_root, price_map, price_date, options_map, file):
         operating_currencies = options_map['operating_currency']
         assets = tree_table.table_of_balances(
             realization.get(real_root, options_map['name_assets']),
+            price_map, price_date,
             operating_currencies,
             self.formatter)
         liabilities = tree_table.table_of_balances(
             realization.get(real_root, options_map['name_liabilities']),
+            price_map, price_date,
             operating_currencies,
             self.formatter)
         equity = tree_table.table_of_balances(
             realization.get(real_root, options_map['name_equity']),
+            price_map, price_date,
             operating_currencies,
             self.formatter)
 
@@ -110,15 +114,17 @@ class IncomeStatementReport(base.HTMLReport,
     names = ['income']
     default_format = 'html'
 
-    def render_real_htmldiv(self, real_root, options_map, file):
+    def render_real_htmldiv(self, real_root, price_map, price_date, options_map, file):
         # Render the income statement tables.
         operating_currencies = options_map['operating_currency']
         income = tree_table.table_of_balances(
             realization.get(real_root, options_map['name_income']),
+            price_map, price_date,
             operating_currencies,
             self.formatter)
         expenses = tree_table.table_of_balances(
             realization.get(real_root, options_map['name_expenses']),
+            price_map, price_date,
             operating_currencies,
             self.formatter)
 

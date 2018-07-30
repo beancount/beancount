@@ -15,6 +15,7 @@ from beancount.reports import table
 from beancount.reports import html_formatter
 from beancount.parser import options
 from beancount.core import realization
+from beancount.core import prices
 from beancount.core import display_context
 from beancount.utils import version
 
@@ -217,7 +218,9 @@ class RealizationMeta(type):
             def forward_method(self, entries, errors, options_map, file, fwdfunc=value):
                 account_types = options.get_account_types(options_map)
                 real_root = realization.realize(entries, account_types)
-                return fwdfunc(self, real_root, options_map, file)
+                price_map = prices.build_price_map(entries)
+                # Note: When we forward, use the latest date (None).
+                return fwdfunc(self, real_root, price_map, None, options_map, file)
             forward_method.__name__ = render_function_name
             new_methods[render_function_name] = forward_method
 
@@ -231,17 +234,19 @@ class RealizationMeta(type):
 
         return new_type
 
-    def render_real_html(cls, real_root, options_map, file):
+    def render_real_html(cls, real_root, price_map, price_date, options_map, file):
         """Wrap an htmldiv into our standard HTML template.
 
         Args:
           real_root: An instance of RealAccount.
+          price_map: A price database.
+          price_date: A date for evaluating prices.
           options_map: A dict, options as produced by the parser.
           file: A file object to write the output to.
         """
         template = get_html_template()
         oss = io.StringIO()
-        cls.render_real_htmldiv(real_root, options_map, oss)
+        cls.render_real_htmldiv(real_root, price_map, price_date, options_map, oss)
         file.write(template.format(body=oss.getvalue(),
                                    title=''))
 
