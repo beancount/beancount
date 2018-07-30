@@ -212,8 +212,8 @@ def extract(importer_config,
 DESCRIPTION = "Extract transactions from downloads"
 
 
-def main():
-    parser = scripts_utils.create_arguments_parser(DESCRIPTION)
+def add_arguments(parser):
+    """Add arguments for the extract command."""
 
     parser.add_argument('-e', '-f', '--existing', '--previous', metavar='BEANCOUNT_FILE',
                         default=None,
@@ -225,16 +225,21 @@ def main():
                         default=True, const=False,
                         help='Write out the entries in descending order')
 
-    args, config, downloads_directories = scripts_utils.parse_arguments(parser)
+
+def run(args, importers_list, files_or_directories):
+    """Run the subcommand."""
 
     # Load the ledger, if one is specified.
     if args.existing:
         entries, _, options_map = loader.load_file(args.existing)
     else:
-        entries = None
-        options_map = None
+        entries, options_map = None, None
 
-    extract(config, downloads_directories, sys.stdout,
+    extract(importers_list, files_or_directories, sys.stdout,
             entries=entries, options_map=options_map,
             mindate=None, ascending=args.ascending)
     return 0
+
+
+def main():
+    return scripts_utils.trampoline_to_ingest('extract', DESCRIPTION)

@@ -322,7 +322,7 @@ class TestScriptFile(scripts_utils.TestScriptsBase, test_utils.TestCase):
         self.assertEqual(args[2], exc)
 
     def test_file(self):
-        with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
+        if 1: #with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
             test_utils.run_with_args(file.main, [
                 '--output', self.documents,
                 path.join(self.tempdir, 'test.import'),

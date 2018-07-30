@@ -373,7 +373,8 @@ class TestScriptExtract(test_utils.TestTempdirMixin, unittest.TestCase):
         with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
             result = test_utils.run_with_args(extract.main, [
                 '--existing={}'.format(path.join(example_dir, 'example.beancount')),
-                config_filename, path.join(example_dir, 'Downloads')])
+                config_filename,
+                path.join(example_dir, 'Downloads')])
         self.assertEqual(0, result)
         errors = stderr.getvalue()
         self.assertTrue(not errors or re.search('ERROR.*pdf2txt.py', errors))

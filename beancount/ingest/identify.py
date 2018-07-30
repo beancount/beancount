@@ -91,8 +91,14 @@ def identify(importers_list, files_or_directories):
 DESCRIPTION = "Identify files for import"
 
 
+def add_arguments(parser):
+    """Add arguments for the identify command."""
+
+
+def run(_, importers_list, files_or_directories):
+    """Run the subcommand."""
+    return identify(importers_list, files_or_directories)
+
+
 def main():
-    parser = scripts_utils.create_arguments_parser(DESCRIPTION)
-    _, importers_list, downloads_directories = scripts_utils.parse_arguments(parser)
-    identify(importers_list, downloads_directories)
-    return 0
+    return scripts_utils.trampoline_to_ingest('identify', DESCRIPTION)

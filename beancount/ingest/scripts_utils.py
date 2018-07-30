@@ -10,6 +10,7 @@ import sys
 import stat
 import unittest
 import runpy
+import argparse
 
 from beancount.ingest import importer
 from beancount.ingest import cache
@@ -54,55 +55,80 @@ def ingest(importers_list, detect_duplicates_func=None):
         the user's ledger. See function find_duplicate_entries(), which is the
         default implementation for this.
     """
+    # Mark this function as called, so that if it is called from an import
+    # triggered by one of the ingestion tools, it won't be called again
+    # afterwards.
+    ingest_is_called = True
+
     parser = version.ArgumentParser(description=DESCRIPTION)
 
+    # Use required on subparsers.
     # FIXME: Remove this when we require version 3.7 or above.
     kw = {}
     if sys.version_info > (3, 7):
         kw['required'] = True
     subparsers = parser.add_subparsers(**kw)
 
-    parser.add_argument('--downloads', '-d', nargs=1, metavar='DIR-OR-FILE',
-                        action='append', default=[],
+    parser.add_argument('--downloads', '-d', metavar='DIR-OR-FILE',
+                        action='append',
                         help='Filenames or directories to search for files to import')
 
-    parser_identify = subparsers.add_parser('identify', help=identify.DESCRIPTION)
-    parser_identify.set_defaults(func=identify.identify)
+    for cmdname, module in [('identify', identify),
+                            ('extract', extract),
+                            ('file', file)]:
+        parser_cmd = subparsers.add_parser(cmdname, help=module.DESCRIPTION)
+        parser_cmd.set_defaults(func=module.run)
+        module.add_arguments(parser_cmd)
 
-    parser_extract = subparsers.add_parser('extract', help=extract.DESCRIPTION)
-    parser_extract.set_defaults(func=extract.main)
+    args = parser.parse_args()
 
-    parser_file = subparsers.add_parser('file', help=file.DESCRIPTION)
-    parser_file.set_defaults(func=file.main)
-
-    # # Figure out which command is being invoked.
-    # import __main__
-    # script_name = path.basename(__main__.__file__)
-    # main_func = {'bean-identify': main_identify,
-    #              'bean-extract': main_extract,
-    #              'bean-file': main_file}
-    # main_func()
-
-    argv = None
-    args = parser.parse_args(args=argv)
-
+    # Implement required ourselves.
+    # FIXME: Remove this when we require version 3.7 or above.
     if not (sys.version_info > (3, 7)):
         if not hasattr(args, 'func'):
             parser.error("Subcommand is required.")
 
-    args.func(importers_list, args.downloads)
+    args.func(args, importers_list, args.downloads)
+    return 0
 
 
+# A global sentinel to mark whether ingest() has been called at least once.
+ingest_is_called = False
 
 
+def trampoline_to_ingest(command: str, description: str) -> int:
+    """Parse the tools command line and redirect to a call to ingest().
 
+    This is used to support the bean-identify, bean-extract and bean-file
+    ingestion tools. The original design for these tools has been for them to
+    eval the Python configuration in a module in order to provide an importers
+    list. The new model calls for the user to insert a call to the ingest()
+    function above instead. This is more straightforward--the user just writes a
+    script and Beancount provides just a helper library function to create the
+    main program--an emphasizes that the configuration really is at the end of
+    the day, a Python script.
 
-def create_arguments_parser(description):
-    """Create an arguments parser for common options.
+    However, in order to support the older model, we want to bounce the main
+    program of those tools into a single point of execution, the call to
+    ingest(). This is what this function does.
 
+    Args:
+      command: The name of the command/tool to run, e.g., 'extract'.
+      description: The program description string.
     Returns:
-      A partially initialized argparse.ArgumentParser instance.
-      You may add on new arguments to this.
+      The execution code of the program.
+    """
+    parser, args, rest = parse_args_for_tools(description)
+    return run_import_script_and_ingest(args, rest, command, parser)
+
+
+def parse_args_for_tools(description: string):
+    """Create an arguments parser for all the ingestion bean-tools.
+
+    Args:
+      description: The program description string.
+    Returns:
+      An argparse.Namespace instance with the rest of arguments in 'rest'.
     """
     parser = version.ArgumentParser(description=description)
 
@@ -115,39 +141,57 @@ def create_arguments_parser(description):
                         default=[],
                         help='Filenames or directories to search for files to import')
 
-    return parser
+    args, rest = parser.parse_known_args()
+    return parser, args, rest
 
 
-def parse_arguments(parser, argv=None, importers_attr_name='CONFIG'):
-    """Parse the arguments, validate them and return a file iterator.
+def run_import_script_and_ingest(args, rest, command, parser, importers_attr_name='CONFIG'):
+    """Run the import script and optionally call ingest().
 
     Args:
-      parser: An initialized argparse.ArgumentParser instance.
-      argv: An optional list of arguments to process (used only for testing).
-      importers_attr_name: A string, the name of the module attribute containing
-        the list of importers.
+      args: An argparse.Namespace instance, with the tools-style invocation parsed
+        arguments. We expect 'config', 'files_or_directories', and 'rest' attributes.
+      rest: A list of unknown args.
+      command: The name of a command to run.
+      parser: The parser instance, used only to report errors.
+      importers_attr_name: The name of the special attribute in the module which
+        defines the importers list.
     Returns:
-      A tuple of
-        An argparse.Namespace instance containing the parsed command-line args.
-        A list of importers.
-        A list of files or directories to process.
+      An execution return code.
     """
-    args = parser.parse_args(args=argv)
 
     # Check the existence of the config.
     if not path.exists(args.config) or path.isdir(args.config):
         parser.error("File does not exist: '{}'".format(args.config))
-
-    # Import the configuration.
-    mod = runpy.run_path(args.config)
-    config = mod[importers_attr_name]
 
     # Check the existence of all specified files.
     for filename in args.files_or_directories:
         if not path.exists(filename):
             parser.error("File does not exist: '{}'".format(filename))
 
-    return args, config, list(map(path.abspath, args.files_or_directories))
+    # Setup the arguments so that if the user invokes ingest, the arguments can
+    # be parsed by it and we can have a single path of execution for all
+    # argument parsing. We basically trampoline the argument format from the
+    # bean-identify, bean-extract and bean-file tools to the ingest() function.
+    sys.argv[:] = ([args.config] +
+                   ['--downloads={}'.format(d) for d in args.files_or_directories] +
+                   [command] +
+                   rest)
+
+    # Evaluate the importer script/module.
+    mod = runpy.run_path(args.config)
+
+    # If the importer script has already called ingest() within it, don't call
+    # it again. This allows the use to insert an explicit call to ingest() but
+    # still run bean-XXX tools on the file.
+    if ingest_is_called:
+        return 0
+    else:
+        # Otherwise, we now run the ingestion by ourselves calling ingest.
+        importers_list = mod[importers_attr_name]
+        abs_downloads = list(map(path.abspath, args.files_or_directories))
+        return ingest(importers_list, abs_downloads)
+
 
 
 class _TestFileImporter(importer.ImporterProtocol):
@@ -223,8 +267,11 @@ Some random text file.
 class TestScriptsBase(test_utils.TestTempdirMixin, unittest.TestCase):
 
     FILES = {
+        # Old style configuration which provides importers as a module attribute.
         'test.import': IMPORT_FILE,
+        # New style configuration, which is just a script calling ingest() itself.
         'testimport.py': IMPORT_FILE + INGEST_MAIN,
+        # Example input files.
         'Downloads/ofxdownload.ofx': OFX_FILE,
         'Downloads/Subdir/bank.csv': CSV_FILE,
         'Downloads/Subdir/readme.txt': TXT_FILE,
