@@ -4,6 +4,16 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+Scenarios to test:
+- calling the script with a subcommand
+- calling the old tools without a call ingest() present
+- calling the old tools with a call to ingest() present
+
+    either I make ingest() a noop, save its values, and call it explicitly later
+    either I make it invoke right away, and avoid calling it later
+
+
+
 2018-07-28
 
   - Added a utility to import modules by dotted string name.

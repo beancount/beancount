@@ -1,9 +1,13 @@
-__copyright__ = "Copyright (C) 2016  Martin Blais"
+"""Common front-end to all ingestion tools.
+"""
+__copyright__ = "Copyright (C) 2016,2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from os import path
 import re
 import os
+import sys
+import stat
 import unittest
 import runpy
 
@@ -11,6 +15,86 @@ from beancount.ingest import importer
 from beancount.ingest import cache
 from beancount.utils import test_utils
 from beancount.utils import version
+from beancount.ingest import identify
+from beancount.ingest import extract
+from beancount.ingest import file
+
+
+DESCRIPTION = ("Identify, extract or file away data downloaded from "
+               "financial institutions.")
+
+
+def ingest(importers_list, detect_duplicates_func=None):
+    """Driver function that calls all the ingestion tools.
+
+    Put this at the end of your importer configuration to make your import
+    script; this should be its main function.. This more explicit way of
+    invoking the ingestion is now the preferred way to invoke the various tools,
+    and replaces calling the bean-identify, bean-extract, bean-file tools with a
+    --config argument. When you call this function it will parse the arguments,
+    expecting a subcommand ('identify', 'extract' or 'file') and corresponding
+    subcommand-specific arguments.
+
+    Here you can override some importer values, such as installing a custom
+    duplicate finding hook. This is optional and if it is not present, a call to
+    it is inserted implicitly. Future configurable customization of the
+    ingestion process should be implemented by inserting new arguments to this
+    function.
+
+    Note that invocation via the tools is still supported, and calling ingest()
+    explicitly from your import configuration file will not break these tools if
+    you invoke them on it; the values you provide to this function will be used
+    by those tools.
+
+    Args:
+      importers_list: A list of importer instances. This is used as a
+        chain-of-responsibility, called on each file.
+      detect_duplicates_func: An optional function which accepts a list of
+        lists of imported entries and a list of entries already existing in
+        the user's ledger. See function find_duplicate_entries(), which is the
+        default implementation for this.
+    """
+    parser = version.ArgumentParser(description=DESCRIPTION)
+
+    # FIXME: Remove this when we require version 3.7 or above.
+    kw = {}
+    if sys.version_info > (3, 7):
+        kw['required'] = True
+    subparsers = parser.add_subparsers(**kw)
+
+    parser.add_argument('--downloads', '-d', nargs=1, metavar='DIR-OR-FILE',
+                        action='append', default=[],
+                        help='Filenames or directories to search for files to import')
+
+    parser_identify = subparsers.add_parser('identify', help=identify.DESCRIPTION)
+    parser_identify.set_defaults(func=identify.identify)
+
+    parser_extract = subparsers.add_parser('extract', help=extract.DESCRIPTION)
+    parser_extract.set_defaults(func=extract.main)
+
+    parser_file = subparsers.add_parser('file', help=file.DESCRIPTION)
+    parser_file.set_defaults(func=file.main)
+
+    # # Figure out which command is being invoked.
+    # import __main__
+    # script_name = path.basename(__main__.__file__)
+    # main_func = {'bean-identify': main_identify,
+    #              'bean-extract': main_extract,
+    #              'bean-file': main_file}
+    # main_func()
+
+    argv = None
+    args = parser.parse_args(args=argv)
+
+    if not (sys.version_info > (3, 7)):
+        if not hasattr(args, 'func'):
+            parser.error("Subcommand is required.")
+
+    args.func(importers_list, args.downloads)
+
+
+
+
 
 
 def create_arguments_parser(description):
@@ -34,12 +118,14 @@ def create_arguments_parser(description):
     return parser
 
 
-def parse_arguments(parser, argv=None):
+def parse_arguments(parser, argv=None, importers_attr_name='CONFIG'):
     """Parse the arguments, validate them and return a file iterator.
 
     Args:
       parser: An initialized argparse.ArgumentParser instance.
       argv: An optional list of arguments to process (used only for testing).
+      importers_attr_name: A string, the name of the module attribute containing
+        the list of importers.
     Returns:
       A tuple of
         An argparse.Namespace instance containing the parsed command-line args.
@@ -54,7 +140,7 @@ def parse_arguments(parser, argv=None):
 
     # Import the configuration.
     mod = runpy.run_path(args.config)
-    config = mod['CONFIG']
+    config = mod[importers_attr_name]
 
     # Check the existence of all specified files.
     for filename in args.files_or_directories:
@@ -92,15 +178,17 @@ IMPORT_FILE = """\
 from beancount.ingest import scripts_utils
 
 CONFIG = [
-
     scripts_utils._TestFileImporter(
         'mybank-checking-ofx', 'Assets:Checking',
         'application/x-ofx', '<FID>3011'),
     scripts_utils._TestFileImporter(
         'mybank-credit-csv', 'Liabilities:CreditCard',
         'text/csv', '.*DATE,TRANSACTION ID,DESCRIPTION,QUANTITY,SYMBOL'),
-
 ]
+"""
+
+INGEST_MAIN = """\
+scripts_utils.ingest(CONFIG)
 """
 
 OFX_FILE = """\
@@ -136,6 +224,7 @@ class TestScriptsBase(test_utils.TestTempdirMixin, unittest.TestCase):
 
     FILES = {
         'test.import': IMPORT_FILE,
+        'testimport.py': IMPORT_FILE + INGEST_MAIN,
         'Downloads/ofxdownload.ofx': OFX_FILE,
         'Downloads/Subdir/bank.csv': CSV_FILE,
         'Downloads/Subdir/readme.txt': TXT_FILE,
@@ -148,3 +237,5 @@ class TestScriptsBase(test_utils.TestTempdirMixin, unittest.TestCase):
             os.makedirs(path.dirname(absname), exist_ok=True)
             with open(absname, 'w') as file:
                 file.write(contents)
+            if filename.endswith('.py') or filename.endswith('.sh'):
+                os.chmod(absname, stat.S_IRUSR|stat.S_IXUSR)

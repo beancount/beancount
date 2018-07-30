@@ -209,8 +209,11 @@ def extract(importer_config,
         print_extracted_entries(importer, new_entries, output)
 
 
+DESCRIPTION = "Extract transactions from downloads"
+
+
 def main():
-    parser = scripts_utils.create_arguments_parser("Extract transactions from downloads")
+    parser = scripts_utils.create_arguments_parser(DESCRIPTION)
 
     parser.add_argument('-e', '-f', '--existing', '--previous', metavar='BEANCOUNT_FILE',
                         default=None,

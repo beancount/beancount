@@ -24,7 +24,7 @@ from beancount.ingest import cache
 
 
 def file_one_file(filename, importers, destination, idify=False, logfile=None):
-    """File a single filename with its matched importers.
+    """Move a single filename using its matched importers.
 
     Args:
       filename: A string, the name of the downloaded file to be processed.
@@ -257,10 +257,12 @@ def move_xdev_file(src_filename, dst_filename, mkdirs=False):
     os.remove(src_filename)
 
 
+DESCRIPTION = ("Move and rename downloaded files to a documents tree "
+               "mirrorring the chart of accounts")
+
+
 def main():
-    parser = scripts_utils.create_arguments_parser(
-        "Move and rename downloaded files to a documents tree "
-        "mirrorring the chart of accounts")
+    parser = scripts_utils.create_arguments_parser(DESCRIPTION)
 
     parser.add_argument('-o', '--output', '--output-dir', '--destination',
                         dest='output_dir', action='store',
