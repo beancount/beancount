@@ -14,6 +14,11 @@ Scenarios to test:
 
 
 
+2018-07-29
+
+  - Updated to flex-2.6.4.
+
+
 2018-07-28
 
   - Added a utility to import modules by dotted string name.
