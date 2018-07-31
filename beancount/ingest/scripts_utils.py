@@ -129,7 +129,7 @@ def trampoline_to_ingest(module):
     return run_import_script_and_ingest(parser)
 
 
-def create_arguments_parser(description: string, run_func: callable):
+def create_arguments_parser(description: str, run_func: callable):
     """Create an arguments parser for all the ingestion bean-tools.
 
     Args:

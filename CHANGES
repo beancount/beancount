@@ -6,6 +6,9 @@ Note: This file contains a list changes in the 'default' branch.
 
 2018-07-31
 
+  - Fixed bug with previous commit containing stray 'string' reference. (My
+    environment has autoimports by default.)
+
   - Implemented a beancount.ingest.scripts_utils.ingest() function that will act
     as a main program, so you can write your own importer scripts from top to
     bottom without having to rely on bean-identiy, bean-extract or bean-file.
