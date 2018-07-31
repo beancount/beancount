@@ -277,7 +277,7 @@ def add_arguments(parser):
                         help="Don't overwrite destination files with the same name.")
 
 
-def run(args, importers_list, files_or_directories):
+def run(args, parser, importers_list, files_or_directories):
     """Run the subcommand."""
 
     # If the output directory is not specified, move the files at the root of
@@ -300,4 +300,4 @@ def run(args, importers_list, files_or_directories):
 
 
 def main():
-    return scripts_utils.trampoline_to_ingest('file', DESCRIPTION)
+    return scripts_utils.trampoline_to_ingest(sys.modules[__name__])

@@ -321,8 +321,10 @@ class TestScriptFile(scripts_utils.TestScriptsBase, test_utils.TestCase):
         self.assertEqual(args[1], 'SomeImporter')
         self.assertEqual(args[2], exc)
 
+    def tearDown(self): pass ## FIXME: remove
+
     def test_file(self):
-        if 1: #with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
+        with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
             test_utils.run_with_args(file.main, [
                 '--output', self.documents,
                 path.join(self.tempdir, 'test.import'),
@@ -349,8 +351,9 @@ class TestScriptFile(scripts_utils.TestScriptsBase, test_utils.TestCase):
         filed_files = []
         for root, dirs, files in os.walk(self.tempdir):
             filed_files.extend(files)
-        self.assertEqual(4, len(filed_files))
+        self.assertEqual(5, len(filed_files))
         self.assertEqual(set(filed_files), set(['test.import',
                                                 'ofxdownload.ofx',
                                                 'bank.csv',
-                                                'readme.txt']))
+                                                'readme.txt',
+                                                'testimport.py']))

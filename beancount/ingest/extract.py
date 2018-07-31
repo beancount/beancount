@@ -226,7 +226,7 @@ def add_arguments(parser):
                         help='Write out the entries in descending order')
 
 
-def run(args, importers_list, files_or_directories):
+def run(args, _, importers_list, files_or_directories):
     """Run the subcommand."""
 
     # Load the ledger, if one is specified.
@@ -242,4 +242,4 @@ def run(args, importers_list, files_or_directories):
 
 
 def main():
-    return scripts_utils.trampoline_to_ingest('extract', DESCRIPTION)
+    return scripts_utils.trampoline_to_ingest(sys.modules[__name__])

@@ -95,10 +95,10 @@ def add_arguments(parser):
     """Add arguments for the identify command."""
 
 
-def run(_, importers_list, files_or_directories):
+def run(_, __, importers_list, files_or_directories):
     """Run the subcommand."""
     return identify(importers_list, files_or_directories)
 
 
 def main():
-    return scripts_utils.trampoline_to_ingest('identify', DESCRIPTION)
+    return scripts_utils.trampoline_to_ingest(sys.modules[__name__])

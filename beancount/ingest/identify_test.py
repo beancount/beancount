@@ -84,7 +84,7 @@ class TestScriptIdentify(scripts_utils.TestScriptsBase):
 
             """).strip()
 
-        # Invoke with new-style imports as script, with an ingest() call.
+        # Invoke with new-style imports as script, with an ingest() call in the script.
         with test_utils.capture('stdout', 'stderr') as (stdout, stderr):
             output = subprocess.check_output(
                 [path.join(self.tempdir, 'testimport.py'),

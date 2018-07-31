@@ -129,7 +129,7 @@ class TestScriptExtractFromFile(test_utils.TestCase):
                           if extract.DUPLICATE_META in entry.meta]
         self.assertEqual(dup_entries, marked_entries)
 
-    @unittest.skip("FIXME: more this to call extract()")
+    @unittest.skip("FIXME: Change this to call extract()")
     def test_extract_from_file__explicitly_marked_duplicates_entries(self):
         entries, _, __ = loader.load_string("""
 
