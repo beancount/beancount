@@ -89,7 +89,7 @@ class TestScriptIdentify(scripts_utils.TestScriptsBase):
             output = subprocess.check_output(
                 [path.join(self.tempdir, 'testimport.py'),
                  '--downloads', path.join(self.tempdir, 'Downloads'),
-                 'identify'], shell=False)
+                 'identify'], shell=False, cwd=test_utils.find_repository_root(__file__))
         self.assertTrue(re.match(regexp, output.decode().strip()))
 
         # Invoke with old-style imports script via tool (with no ingest() call).

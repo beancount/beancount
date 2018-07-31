@@ -6,6 +6,9 @@ Note: This file contains a list changes in the 'default' branch.
 
 2018-07-31
 
+  - Fixed bug with the pipeline making sure to set the CWD of the subprocess
+    when we run an import test.
+
   - Fixed bug with previous commit containing stray 'string' reference. (My
     environment has autoimports by default.)
 
