@@ -4,13 +4,14 @@ __copyright__ = "Copyright (C) 2016,2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from os import path
-import re
-import os
-import sys
-import stat
-import unittest
-import runpy
 import argparse
+import logging
+import os
+import re
+import runpy
+import stat
+import sys
+import unittest
 
 from beancount.ingest import importer
 from beancount.ingest import cache
@@ -119,6 +120,10 @@ def trampoline_to_ingest(module):
     Returns:
       An execution return code.
     """
+    # Disable debugging logging which is turned on by default in chardet.
+    logging.getLogger('chardet.charsetprober').setLevel(logging.INFO)
+    logging.getLogger('chardet.universaldetector').setLevel(logging.INFO)
+
     parser = create_arguments_parser(module.DESCRIPTION, module.run)
     module.add_arguments(parser)
     return run_import_script_and_ingest(parser)
