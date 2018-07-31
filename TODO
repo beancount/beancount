@@ -4687,6 +4687,16 @@ http://furius.ca/beancount/doc/proposal-query
     while traveling, because the split_expenses plugin doubles up a lot of the
     postings (that's what it does...).
 
+  - Document the "{ <num> # <num> <ccy> }" syntax properly, in a dedicated place.
+
+  - New currency sources:
+    https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html
+    https://news.ycombinator.com/item?id=15616880
+
+  - Idea: Add "contra" as a new column, when the sign posted in the wrong
+    direction based on the account type. Or add a boolean "contra" virtual
+    column (or function, from account name).
+
   - Here's another way to implement an intra-day balance: define a new balance
     directive type, whose semantic is tp sort all the entries, but the entries
     on the same day of the balance are sorted in file order. I think this would
