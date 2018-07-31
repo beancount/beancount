@@ -2,11 +2,12 @@ __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from os import path
+from unittest import mock
+import os
 import re
+import subprocess
 import textwrap
 import unittest
-import subprocess
-from unittest import mock
 
 from beancount.utils import test_utils
 from beancount.ingest.importer import ImporterProtocol
