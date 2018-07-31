@@ -6,6 +6,7 @@ from unittest import mock
 import os
 import re
 import subprocess
+import sys
 import textwrap
 import unittest
 
