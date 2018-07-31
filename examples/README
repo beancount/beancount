@@ -7,9 +7,6 @@ Files:
   example.beancount : The most interesting input file, which has been generated
                       using a script (bean-doctor example).
 
-  example.returns   : An example script that calculates investment returns from
-                      example.beancount.
-
   simple/           : Some simpler example input files, with commentary. You
                       might want to read through these.
 
@@ -24,3 +21,6 @@ Files:
                       track the vesting of restricted stock units, see
                       http://furius.ca/beancount/doc/vesting
 
+  forecast/         : Example using the forecasting plugin.
+
+  ingest/           : Example using importers and their configuration.
