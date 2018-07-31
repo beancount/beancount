@@ -24,7 +24,7 @@ from beancount.ingest import cache
 
 
 def file_one_file(filename, importers, destination, idify=False, logfile=None):
-    """File a single filename with its matched importers.
+    """Move a single filename using its matched importers.
 
     Args:
       filename: A string, the name of the downloaded file to be processed.
@@ -257,10 +257,12 @@ def move_xdev_file(src_filename, dst_filename, mkdirs=False):
     os.remove(src_filename)
 
 
-def main():
-    parser = scripts_utils.create_arguments_parser(
-        "Move and rename downloaded files to a documents tree "
-        "mirrorring the chart of accounts")
+DESCRIPTION = ("Move and rename downloaded files to a documents tree "
+               "mirrorring the chart of accounts")
+
+
+def add_arguments(parser):
+    """Add arguments for the extract command."""
 
     parser.add_argument('-o', '--output', '--output-dir', '--destination',
                         dest='output_dir', action='store',
@@ -274,7 +276,9 @@ def main():
                         action='store_false', default=True,
                         help="Don't overwrite destination files with the same name.")
 
-    args, config, downloads_directories = scripts_utils.parse_arguments(parser)
+
+def run(args, parser, importers_list, files_or_directories):
+    """Run the subcommand."""
 
     # If the output directory is not specified, move the files at the root of
     # the configuration file. (Providing this default seems better than using a
@@ -286,10 +290,14 @@ def main():
     if not path.exists(args.output_dir):
         parser.error('Output directory "{}" does not exist.'.format(args.output_dir))
 
-    file(config, downloads_directories, args.output_dir,
+    file(importers_list, files_or_directories, args.output_dir,
          dry_run=args.dry_run,
          mkdirs=True,
          overwrite=args.overwrite,
          idify=True,
          logfile=sys.stdout)
     return 0
+
+
+def main():
+    return scripts_utils.trampoline_to_ingest(sys.modules[__name__])

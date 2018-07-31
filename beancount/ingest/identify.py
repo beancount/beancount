@@ -71,15 +71,15 @@ def find_imports(importer_config, files_or_directories, logfile=None):
         yield (filename, matching_importers)
 
 
-def identify(importer_config, files_or_directories):
+def identify(importers_list, files_or_directories):
     """Run the identification loop.
 
     Args:
-      importer_config: A list of importer instances.
+      importers_list: A list of importer instances.
       files_or_directories: A list of strings, files or directories.
     """
     logfile = sys.stdout
-    for filename, importers in find_imports(importer_config, files_or_directories,
+    for filename, importers in find_imports(importers_list, files_or_directories,
                                             logfile=logfile):
         file = cache.get_file(filename)
         for importer in importers:
@@ -88,8 +88,17 @@ def identify(importer_config, files_or_directories):
             logfile.write('\n')
 
 
+DESCRIPTION = "Identify files for import"
+
+
+def add_arguments(parser):
+    """Add arguments for the identify command."""
+
+
+def run(_, __, importers_list, files_or_directories):
+    """Run the subcommand."""
+    return identify(importers_list, files_or_directories)
+
+
 def main():
-    parser = scripts_utils.create_arguments_parser("Identify files for import")
-    _, config, downloads_directories = scripts_utils.parse_arguments(parser)
-    identify(config, downloads_directories)
-    return 0
+    return scripts_utils.trampoline_to_ingest(sys.modules[__name__])
