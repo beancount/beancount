@@ -4,6 +4,63 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2018-07-31
+
+  - Fixed bug with the pipeline making sure to set the CWD of the subprocess
+    when we run an import test.
+
+  - Fixed bug with previous commit containing stray 'string' reference. (My
+    environment has autoimports by default.)
+
+  - Implemented a beancount.ingest.scripts_utils.ingest() function that will act
+    as a main program, so you can write your own importer scripts from top to
+    bottom without having to rely on bean-identiy, bean-extract or bean-file.
+
+    The purpose of this change was to allow the user to insert an optional
+    argument 'detect_duplicates_func' in order to implement their own duplicates
+    detection. See discussion under
+    https://bitbucket.org/blais/beancount/pull-requests/75/. In order to install
+    your duplicates detector, just call ingest at the end of your importer
+    script, like this:
+
+      my_importers = [ ... ]
+      ingest(my_importers, my_duplicates_func)
+
+    I could have chosen to add a "hook" option and such to Beancount, but I
+    preferred moving the whole import framework one level closer to code. I also
+    like that it's not just an imported module; it's really just your script,
+    with three subcommands. You could add more custom import-level stuff in
+    there. The ingest() function is a main program, and commands like
+
+      bean-extract myimporters.py ~/Downloads --reverse -e myledger.beancount
+
+    are invoked similarly by calling the Python script directly, like this:
+
+      ./myimporters.py -d ~/Downloads extract --reverse -e myledger.beancount
+
+    These two should be equivalent.
+
+    The older way of doing things--that is, calling bean-identify, bean-extract
+    and bean-file--are still supported regardless of whether you've inserted a
+    call to ingest() in your importers configuration or not. This is made to
+    work via a rather labyrinthine trampoline of functions calls (in particular,
+    getting the arguments setup right was surprisingly tricky).
+
+    I'm still debating whether this should be "the new way", or just for those
+    wishing to build their own duplicate detection heuristic. Feedback (on the
+    list) would be interesting.
+
+
+2018-07-29
+
+  - Updated to flex-2.6.4.
+
+
+2018-07-28
+
+  - Added a utility to import modules by dotted string name.
+
+
 2018-07-19
 
   * Fixed #319: Incorrect version number from 2.1.2-devel to 2.1.3-devel.

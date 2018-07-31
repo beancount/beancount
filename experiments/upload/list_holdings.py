@@ -277,7 +277,7 @@ def aggregate_postings(postings):
         units = balance.reduce(convert.get_units)
         if units.is_empty():
             continue
-        assert len(units) == 1
+        assert len(units) == 1, units
         units = next(iter(units)).units
 
         min_date = default_date

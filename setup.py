@@ -285,7 +285,7 @@ setup(
 
 # Development setup requires two tools IFF you need to change the grammar:
 #
-# - flex-2.6.1
+# - flex-2.6.4
 # - bison-3.0.4
 #
 # These versions are related to what's on a recent Ubuntu. If you don't change

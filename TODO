@@ -4672,6 +4672,21 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - Sometimes it might be useful to end the stream of useful transactions at a
+    particular point in the input file. Normally this is best done by filtering
+    in the queries themselves, but there are times where having an End
+    directives specified temporarily in the input file would have been useful
+    (e.g. when traveling and running temporary balances while editing the input
+    file). Consider adding this facility, it might be a convenience, especially
+    to get around some of the absence of time issues.
+
+  - In the new SQL shell, allow the plugins to define new subsets of postings
+    (transactions), so that they can be queries separately. For instance, when
+    I'm traveling, it should be possible to query the set of transactions before
+    or after the split_expenses plugin ran. This would actually have been useful
+    while traveling, because the split_expenses plugin doubles up a lot of the
+    postings (that's what it does...).
+
   - Here's another way to implement an intra-day balance: define a new balance
     directive type, whose semantic is tp sort all the entries, but the entries
     on the same day of the balance are sorted in file order. I think this would
