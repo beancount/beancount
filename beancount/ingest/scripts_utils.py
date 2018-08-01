@@ -73,30 +73,33 @@ def ingest(importers_list, detect_duplicates_func=None):
         # Use required on subparsers.
         # FIXME: Remove this when we require version 3.7 or above.
         kw = {}
-        if sys.version_info > (3, 7):
+        if sys.version_info >= (3, 7):
             kw['required'] = True
-        subparsers = parser.add_subparsers(**kw)
+        subparsers = parser.add_subparsers(dest='command', **kw)
 
         parser.add_argument('--downloads', '-d', metavar='DIR-OR-FILE',
-                            action='append',
+                            action='append', default=[],
                             help='Filenames or directories to search for files to import')
 
         for cmdname, module in [('identify', identify),
                                 ('extract', extract),
                                 ('file', file)]:
             parser_cmd = subparsers.add_parser(cmdname, help=module.DESCRIPTION)
-            parser_cmd.set_defaults(func=module.run)
+            parser_cmd.set_defaults(command=module.run)
             module.add_arguments(parser_cmd)
 
         args = parser.parse_args()
 
+        if not args.downloads:
+            args.downloads.append(os.getcwd())
+
         # Implement required ourselves.
         # FIXME: Remove this when we require version 3.7 or above.
-        if not (sys.version_info > (3, 7)):
-            if not hasattr(args, 'func'):
+        if not (sys.version_info >= (3, 7)):
+            if not hasattr(args, 'command'):
                 parser.error("Subcommand is required.")
 
-    args.func(args, parser, importers_list, args.downloads)
+    args.command(args, parser, importers_list, args.downloads)
     return 0
 
 
@@ -149,7 +152,7 @@ def create_arguments_parser(description: str, run_func: callable):
                         default=[],
                         help='Filenames or directories to search for files to import')
 
-    parser.set_defaults(func=run_func)
+    parser.set_defaults(command=run_func)
 
     return parser
 

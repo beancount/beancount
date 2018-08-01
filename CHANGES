@@ -6,6 +6,8 @@ Note: This file contains a list changes in the 'default' branch.
 
 2018-07-31
 
+  - Fixed bug in new ingest() function found as I refactored my importers.
+
   - Fixed bug with the pipeline making sure to set the CWD of the subprocess
     when we run an import test.
 
