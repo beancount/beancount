@@ -4,6 +4,16 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2018-08-02
+
+  - Created a new 'commodity_attr' plugin to asset the presence and validity
+    (in a set, like an enum) of metadata attributes on Commodity directives.
+
+    I export my holdings joined to a table of per-Commodity attributes and I've
+    made a mistake this week that ended up showing up as an overestimated
+    portfolio value on my portfolio tracking Google Sheets doc.
+
+
 2018-07-31
 
   - Fixed bug in new ingest() function found as I refactored my importers.
