@@ -15,7 +15,7 @@ class TestMatchAverageCost(unittest.TestCase):
 
     def test_match_average_cost(self):
         setup = """
-          plugin "beancount.plugins.average_cost"
+          plugin "beancount.plugins.check_average_cost"
           plugin "beancount.plugins.auto_accounts"
 
           2018-01-01 open Assets:US:Cash

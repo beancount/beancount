@@ -68,12 +68,6 @@ def validate_average_cost(entries, options_map, config_str=None):
     for entry in entries:
         if isinstance(entry, Transaction):
             for posting in entry.postings:
-
-
-                if posting.account != 'Assets:US:Vanguard:Retire:PreTax:VIIIX': break
-
-
-
                 dopen = ocmap.get(posting.account, None)
                 # Only process accounts with a NONE booking value.
                 if dopen and dopen[0] and dopen[0].booking == Booking.NONE:
