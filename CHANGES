@@ -6,6 +6,9 @@ Note: This file contains a list changes in the 'default' branch.
 
 2018-08-05
 
+  - Fixed #322: Adjustments to StopIteration treatment from within generators
+    were breaking bean-example generation code.
+
   - Implemented a new plugin which asserts that on accounts with 'NONE' booking
     method reducing postings' cost basis is within the vicinity of the average
     cost basis in the account. This allows you to approximate the 'AVERAGE'
