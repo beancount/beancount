@@ -158,7 +158,8 @@ def get_postings_table(entries: data.Entries, options_map: Dict,
         dopen = accounts_map.get(acc, None)
         if dopen is not None and dopen.booking is data.Booking.NONE:
             average_balance = balance.average()
-            balance = inventory.Inventory(pos for pos in average_balance
+            balance = inventory.Inventory(pos
+                                          for pos in average_balance
                                           if pos.units.number >= threshold)
 
         # Create a posting for each of the positions.

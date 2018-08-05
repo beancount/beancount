@@ -306,6 +306,8 @@ class Inventory(dict):
     def average(self):
         """Average all lots of the same currency together.
 
+        Use the minimum date from each aggregated set of lots.
+
         Returns:
           An instance of Inventory.
         """
@@ -327,7 +329,14 @@ class Inventory(dict):
                 cost_number = (Decimal('Infinity')
                                if total_units == ZERO
                                else (total_cost / total_units))
-                cost = Cost(cost_number, cost_currency, None, None)
+                min_date = None
+                for pos in positions:
+                    pos_date = pos.cost.date if pos.cost else None
+                    if pos_date is not None:
+                        min_date = (pos_date
+                                    if min_date is None
+                                    else min(min_date, pos_date))
+                cost = Cost(cost_number, cost_currency, min_date, None)
             else:
                 cost = None
 
