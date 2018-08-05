@@ -386,6 +386,25 @@ ALL_DIRECTIVES = (
     Custom
 )
 
+# Type for any of the directives.
+Directive = Union[
+    Open,
+    Close,
+    Commodity,
+    Pad,
+    Balance,
+    Transaction,
+    Note,
+    Event,
+    Query,
+    Price,
+    Document,
+    Custom
+]
+
+# Type for the list of entries.
+Entries = List[Directive]
+
 
 def new_metadata(filename, lineno, kvlist=None):
     """Create a new metadata container from the filename and line number.

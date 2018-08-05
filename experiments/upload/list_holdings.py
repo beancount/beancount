@@ -104,14 +104,17 @@ def add_prices_to_postings(entries, postings):
 class Model:
     """A model of the spreadsheet that makes it easy to configure the output."""
 
-    def __init__(self, price_map, postings, exports, asset_type, taxation, liquidity,
+    def __init__(self, price_map, postings,
+                 exports, assetcls, strategy,
+                 taxation, liquidity,
                  cash_currency='USD'):
         self.price_map = price_map
 
         self.cash_currency = cash_currency
         self.postings = postings
         self.exports = exports
-        self.asset_type = asset_type
+        self.assetcls = assetcls
+        self.strategy = strategy
         self.taxation = taxation
         self.liquidity = liquidity
 
@@ -124,11 +127,12 @@ class Model:
             ('Unit Cost', self._cost_number),
             ('Unit Price', self._price_number),
             ('Conversion Factor', self._conversion),
-            ('Asset Type', self._asset_type),
+            ('Asset Class', self._assetcls),
             ('Taxation', self._taxation),
-            # ('Liquidity', self._liquidity),
+            ('Liquidity', self._liquidity),
             # ('Label', self._cost_label),
             ('Date', self._cost_date),
+            ('Strategy', self._strategy),
             # ('Price Currency', self._price_currency),
         ]
         self.columns = {index: head_fun
@@ -212,8 +216,11 @@ class Model:
                                                  None)
             return str(price_number)
 
-    def _asset_type(self, posting):
-        return self.asset_type.get(posting.units.currency)
+    def _assetcls(self, posting):
+        return self.assetcls.get(posting.units.currency)
+
+    def _strategy(self, posting):
+        return self.strategy.get(posting.units.currency)
 
     def _taxation(self, posting):
         return self.taxation.get(posting.account)
@@ -282,7 +289,7 @@ def aggregate_postings(postings):
         units = balance.reduce(convert.get_units)
         if units.is_empty():
             continue
-        assert len(units) == 1
+        assert len(units) == 1, units
         units = next(iter(units)).units
 
         min_date = default_date
@@ -367,7 +374,8 @@ def main():
     # Get the map of commodities to export meta tags.
     commodities_map = getters.get_commodity_map(entries)
     exports = getters.get_values_meta(commodities_map, 'export')
-    asset_type = getters.get_values_meta(commodities_map, 'assets')
+    assetcls = getters.get_values_meta(commodities_map, 'assetcls')
+    strategy = getters.get_values_meta(commodities_map, 'strategy')
 
     # Get the map of accounts to export meta tags.
     accounts_map = {
@@ -383,7 +391,9 @@ def main():
 
     # Realize the model.
     price_map = prices.build_price_map(entries)
-    model = Model(price_map, list(agg_postings), exports, asset_type, taxation, liquidity)
+    model = Model(price_map, list(agg_postings),
+                  exports, assetcls, strategy,
+                  taxation, liquidity)
 
     # Write out the assets to stdout in CSV format.
     if args.dry_run:
