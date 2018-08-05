@@ -129,7 +129,7 @@ class Model:
             ('Conversion Factor', self._conversion),
             ('Asset Class', self._assetcls),
             ('Taxation', self._taxation),
-            # ('Liquidity', self._liquidity),
+            ('Liquidity', self._liquidity),
             # ('Label', self._cost_label),
             ('Date', self._cost_date),
             ('Strategy', self._strategy),
@@ -374,7 +374,7 @@ def main():
     # Get the map of commodities to export meta tags.
     commodities_map = getters.get_commodity_map(entries)
     exports = getters.get_values_meta(commodities_map, 'export')
-    assetcls = getters.get_values_meta(commodities_map, 'assetscls')
+    assetcls = getters.get_values_meta(commodities_map, 'assetcls')
     strategy = getters.get_values_meta(commodities_map, 'strategy')
 
     # Get the map of accounts to export meta tags.
