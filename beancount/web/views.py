@@ -66,7 +66,8 @@ class View:
         """Compute the list of filtered entries and realization trees."""
 
         # Get the filtered list of entries.
-        self.entries, self.begin_index = self.apply_filter(self.all_entries, options_map)
+        self.entries, self.begin_index, self.price_date = self.apply_filter(
+            self.all_entries, options_map)
 
         # Compute the list of entries for the opening balances sheet.
         self.opening_entries = (self.entries[:self.begin_index]
@@ -109,6 +110,8 @@ class View:
             2. an integer, the index at which the beginning of the entries for
               the period begin, one directive past the opening
               balances/initialization entries.
+            3. a datetime.date instance, the date at which to evaluate the value
+              of assets held at cost.
         """
         raise NotImplementedError
 
@@ -130,14 +133,14 @@ class EmptyView(View):
 
     def apply_filter(self, _, __):
         "Return the list of entries unmodified."
-        return ([], None)
+        return ([], None, None)
 
 
 class AllView(View):
     """A view that includes all the entries, unmodified."""
 
     def apply_filter(self, entries, options_map):
-        return (entries, None)
+        return (entries, None, None)
 
 
 class YearView(View):
@@ -170,9 +173,9 @@ class YearView(View):
         end_date = datetime.date(self.year+1, self.first_month, 1)
         with misc_utils.log_time('clamp', logging.info):
             entries, index = summarize.clamp_opt(entries,
-                                                          begin_date, end_date,
-                                                          options_map)
-        return entries, index
+                                                 begin_date, end_date,
+                                                 options_map)
+        return entries, index, end_date
 
 
 class MonthView(View):
@@ -201,9 +204,9 @@ class MonthView(View):
 
         with misc_utils.log_time('clamp', logging.info):
             entries, index = summarize.clamp_opt(entries,
-                                                          begin_date, end_date,
-                                                          options_map)
-        return entries, index
+                                                 begin_date, end_date,
+                                                 options_map)
+        return entries, index, end_date
 
 
 class TagView(View):
@@ -233,7 +236,7 @@ class TagView(View):
             for entry in entries
             if isinstance(entry, data.Transaction) and entry.tags and (entry.tags & tags)]
 
-        return tagged_entries, None
+        return tagged_entries, None, None
 
 
 class PayeeView(View):
@@ -261,7 +264,7 @@ class PayeeView(View):
                          for entry in entries
                          if isinstance(entry, data.Transaction) and (entry.payee == payee)]
 
-        return payee_entries, None
+        return payee_entries, None, None
 
 
 class ComponentView(View):
@@ -290,4 +293,4 @@ class ComponentView(View):
                              for entry in entries
                              if data.has_entry_account_component(entry, component)]
 
-        return component_entries, None
+        return component_entries, None, None

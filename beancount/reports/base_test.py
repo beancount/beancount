@@ -149,14 +149,17 @@ class TestRealizationMeta(unittest.TestCase):
 
             default_format = 'html'
 
-            def render_real_text(self, real_account, options_map, file):
+            def render_real_text(self, real_account, price_map, price_date, options_map,
+                                 file):
                 dformat = options_map['dcontext'].build(
                     alignment=display_context.Align.DOT,
                     reserved=2)
                 realization.dump_balances(real_account, dformat, file=file)
 
-            def render_real_html(self, real_account, options_map, file):
-                self.render_real_text(real_account, options_map, file)
+            def render_real_html(self, real_account, price_map, price_date, options_map,
+                                 file):
+                self.render_real_text(real_account, price_map, price_date, options_map,
+                                      file)
 
         self.assertEqual({'html', 'text'}, set(MyReport.get_supported_formats()))
 

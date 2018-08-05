@@ -158,7 +158,7 @@ class ActivityReport(base.HTMLReport,
                             type=date_utils.parse_date_liberally,
                             help="Cutoff date where we ignore whatever comes after.")
 
-    def render_real_text(self, real_root, options_map, file):
+    def render_real_text(self, real_root, price_map, price_date, options_map, file):
         rows = []
         account_types = options.get_account_types(options_map)
         for root in (account_types.assets,
@@ -185,7 +185,7 @@ class ActivityReport(base.HTMLReport,
         table_ = table.create_table(rows, [(0, 'Account'), (1, 'Last Date', '{}'.format)])
         table.render_table(table_, file, 'text')
 
-    def render_real_htmldiv(self, real_root, options_map, file):
+    def render_real_htmldiv(self, real_root, price_map, price_date, options_map, file):
         account_types = options.get_account_types(options_map)
         for root in (account_types.assets,
                      account_types.liabilities):

@@ -140,10 +140,16 @@ def skipiter(iterable, num_skip):
     assert num_skip > 0
     sit = iter(iterable)
     while 1:
-        value = next(sit)
+        try:
+            value = next(sit)
+        except StopIteration:
+            return
         yield value
         for _ in range(num_skip-1):
-            next(sit)
+            try:
+                next(sit)
+            except StopIteration:
+                return
 
 
 def get_tuple_values(ntuple, predicate, memo=None):

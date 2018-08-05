@@ -455,8 +455,9 @@ def generate_employment_income(employer_name,
         vacation_hrs = (ANNUAL_VACATION_DAYS * D('8')) / D('26')
 
     transactions = []
-    for dtime in misc_utils.skipiter(rrule.rrule(rrule.WEEKLY, byweekday=rrule.TH,
-                                      dtstart=date_begin, until=date_end), 2):
+    for dtime in misc_utils.skipiter(
+            rrule.rrule(rrule.WEEKLY, byweekday=rrule.TH,
+                        dtstart=date_begin, until=date_end), 2):
         date = dtime.date()
         year = date.year
 
