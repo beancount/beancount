@@ -31,6 +31,7 @@ import enum
 import re
 
 from beancount.core.number import ZERO
+from beancount.core.number import Decimal
 from beancount.core.number import same_sign
 from beancount.core.amount import Amount
 from beancount.core.position import Cost
@@ -244,6 +245,14 @@ class Inventory(dict):
         """
         return list(iter(self))
 
+    def get_only_position(self):
+        """Return the first position and assert there are no more.
+        If the inventory is empty, return None.
+        """
+        if len(self) > 0:
+            assert len(self) <= 1
+            return next(iter(self))
+
     def get_currency_units(self, currency):
         """Fetch the total amount across all the position in the given currency.
         This may sum multiple lots in the same currency denomination.
@@ -315,7 +324,10 @@ class Inventory(dict):
             if cost_currency:
                 total_cost = sum(convert.get_cost(position).number
                                  for position in positions)
-                cost = Cost(total_cost / total_units, cost_currency, None, None)
+                cost_number = (Decimal('Infinity')
+                               if total_units == ZERO
+                               else (total_cost / total_units))
+                cost = Cost(cost_number, cost_currency, None, None)
             else:
                 cost = None
 

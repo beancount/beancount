@@ -245,6 +245,15 @@ class TestInventory(unittest.TestCase):
         inv2 = inv * D('3')
         self.assertEqual(I('30 HOOL {1.11 USD}, 6.66 CAD'), inv2)
 
+    def test_get_only_position(self):
+        inv = I('10 HOOL {1.11 USD}, 2.22 CAD')
+        with self.assertRaises(AssertionError):
+            inv.get_only_position()
+        inv = I('10 HOOL {1.11 USD}')
+        self.assertEqual(A('10 HOOL'), inv.get_only_position().units)
+        inv = I('')
+        self.assertIsNone(inv.get_only_position())
+
     def test_get_currency_units(self):
         inv = I('40.50 JPY, 40.51 USD {1.01 CAD}, 40.52 CAD')
         self.assertEqual(inv.get_currency_units('JPY'), A('40.50 JPY'))
@@ -313,6 +322,10 @@ class TestInventory(unittest.TestCase):
         # Aggregation, more units.
         inv = I('2 HOOL {500 USD}, 3 HOOL {520 USD}, 4 HOOL {530 USD}')
         self.assertEqual(inv.average(), I('9 HOOL {520 USD}'))
+
+        # Test DBZ case
+        inv = I('2 HOOL {100 USD}, -2 HOOL {102 USD}')
+        inv.average()
 
     def test_currencies(self):
         inv = Inventory()

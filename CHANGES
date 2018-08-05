@@ -4,6 +4,15 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2018-08-05
+
+  - Implemented a new plugin which asserts that on accounts with 'NONE' booking
+    method reducing postings' cost basis is within the vicinity of the average
+    cost basis in the account. This allows you to approximate the 'AVERAGE'
+    booking method avoid too much cost basis leakage until it's implemented
+    properly.
+
+
 2018-08-02
 
   - Created a new 'commodity_attr' plugin to asset the presence and validity

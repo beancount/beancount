@@ -545,7 +545,7 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
             # themselves.
             entries.sort(key=data.entry_sortkey)
 
-        except ImportError as exc:
+        except (ImportError, TypeError) as exc:
             # Upon failure, just issue an error.
             errors.append(LoadError(data.new_metadata("<load>", 0),
                                     'Error importing "{}": {}'.format(
