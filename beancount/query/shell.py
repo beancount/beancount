@@ -73,8 +73,9 @@ def get_history(max_entries):
     """
     num_entries = readline.get_current_history_length()
     assert num_entries >= 0
+    start = max(0, num_entries - max_entries)
     return [readline.get_history_item(index+1)
-            for index in range(min(num_entries, max_entries))]
+            for index in range(start, num_entries)]
 
 
 def convert_bool(string):
