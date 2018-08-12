@@ -52,7 +52,7 @@ class TmpFilesTestBase(unittest.TestCase):
                 parent_dir = path.dirname(abs_filename)
                 if not path.exists(parent_dir):
                     os.makedirs(parent_dir)
-                open(abs_filename, 'w')
+                with open(abs_filename, 'w'): pass
         return tempdir, root
 
 

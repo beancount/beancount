@@ -50,7 +50,7 @@ class TestSetupCache(unittest.TestCase):
         with mock.patch('os.remove', remove):
             with tempfile.TemporaryDirectory() as tmpdir:
                 filename = path.join(tmpdir, 'cache.db')
-                open(filename, 'w')
+                with open(filename, 'w'): pass
                 price.setup_cache(filename, True)
                 self.assertEqual(1, mock_remove.call_count)
                 self.assertTrue(any(dirfile.startswith('cache.db')
@@ -61,7 +61,7 @@ class TestSetupCache(unittest.TestCase):
         with mock.patch('os.remove') as mock_remove:
             with tempfile.TemporaryDirectory() as tmpdir:
                 filename = path.join(tmpdir, 'cache.db')
-                open(filename, 'w')
+                with open(filename, 'w'): pass
                 price.setup_cache(None, False)
                 self.assertEqual(0, mock_remove.call_count)
                 self.assertTrue(path.exists(filename))

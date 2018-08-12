@@ -29,17 +29,18 @@ class TestDocuments(account_test.TmpFilesTestBase, cmptest.TestCase):
 
     def test_process_documents(self):
         input_filename = path.join(self.root, 'input.beancount')
-        open(input_filename, 'w').write(textwrap.dedent("""
+        with open(input_filename, 'w') as f:
+            f.write(textwrap.dedent("""
 
-          option "plugin_processing_mode" "raw"
-          option "documents" "ROOT"
+              option "plugin_processing_mode" "raw"
+              option "documents" "ROOT"
 
-          2014-01-01 open Assets:US:Bank:Checking
-          2014-01-01 open Liabilities:US:Bank
+              2014-01-01 open Assets:US:Bank:Checking
+              2014-01-01 open Liabilities:US:Bank
 
-          2014-07-10 document Liabilities:US:Bank  "does-not-exist.pdf"
+              2014-07-10 document Liabilities:US:Bank  "does-not-exist.pdf"
 
-        """).replace('ROOT', self.root))
+            """).replace('ROOT', self.root))
         entries, _, options_map = loader.load_file(input_filename)
 
         # In this test we set the root to the directory root, but only the
@@ -66,15 +67,16 @@ class TestDocuments(account_test.TmpFilesTestBase, cmptest.TestCase):
 
     def test_process_documents_trailing_slash(self):
         input_filename = path.join(self.root, 'input.beancount')
-        open(input_filename, 'w').write(textwrap.dedent("""
+        with open(input_filename, 'w') as f:
+            f.write(textwrap.dedent("""
 
-          option "plugin_processing_mode" "raw"
-          option "documents" "ROOT/"
+              option "plugin_processing_mode" "raw"
+              option "documents" "ROOT/"
 
-          2014-01-01 open Assets:US:Bank:Checking
-          2014-01-01 open Liabilities:US:Bank
+              2014-01-01 open Assets:US:Bank:Checking
+              2014-01-01 open Liabilities:US:Bank
 
-        """).replace('ROOT', self.root))
+            """).replace('ROOT', self.root))
         entries, _, options_map = loader.load_file(input_filename)
         entries, errors = documents.process_documents(entries, options_map)
         doc_entries = [entry for entry in entries if isinstance(entry, data.Document)]
