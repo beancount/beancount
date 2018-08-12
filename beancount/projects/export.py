@@ -9,16 +9,13 @@ The purpose of this script is
 - Join these tables
 - Output them to a CSV file.
 
-The purpose of this script is to then invoke upload-to-sheets to update a Google
-Sheets doc from which various reports to track one's portfolio can be produced,
-and updated with live market data using the =GOOGLEFINANCE() function.
+The purpose of this script is to then invoke upload-to-sheets to replace the
+contents of an existing sheet inside a Google Sheets doc from which various
+reports to track one's portfolio can be produced, and updated with live market
+data using the =GOOGLEFINANCE() function.
 
-This is the second, more straightforward version of the script (the prior one
-was called list_holdings.py and it output aggregated results; we keep it
-detailed here to keep it simpler) and is intended as a clean prototype for
-including in the scripts or reports. (In theory, this script eventually be
-replaceable with the SQL shell.)
-
+(In theory, this script eventually be replaceable with an SQL shell query; in
+practice, the shell is not quite there yet, so we maintain this script.)
 """
 __copyright__ = "Copyright (C) 2018  Martin Blais"
 __license__ = "GNU GPLv2"

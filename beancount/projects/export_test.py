@@ -4,7 +4,7 @@ __license__ = "GNU GPLv2"
 from os import path
 
 from beancount.utils import test_utils
-import export
+from beancount.projects import export
 
 
 class TestExport(test_utils.TestCase):

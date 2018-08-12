@@ -4,6 +4,14 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2018-08-12
+
+  - After many years of using something like it to track my investment portfolio
+    using a Google Sheets doc, I cleaned up, rewrote and move the asset list
+    exporting script to beancount.projects.export and deleted the old version
+    under experiments/upload.
+
+
 2018-08-05
 
   - Fixed #322: Adjustments to StopIteration treatment from within generators
