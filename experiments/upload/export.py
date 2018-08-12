@@ -339,6 +339,8 @@ def main():
         table[0][0] += ' ({:%Y-%m-%d %H:%M})'.format(datetime.datetime.now())
         write_table(table, args.output)
 
+    return 0
+
 
 if __name__ == '__main__':
     main()
