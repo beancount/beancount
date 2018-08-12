@@ -293,7 +293,7 @@ def main():
 
     # Initialize main output currency.
     main_currency = args.currency or options_map['operating_currency'][0]
-    logging.info("Operating currency: %s", args.currency)
+    logging.info("Operating currency: %s", main_currency)
 
     # Get the map of commodities to their meta tags.
     commodities_table = get_commodities_table(
