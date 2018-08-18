@@ -4672,6 +4672,9 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - Add support for this data source: https://www.alphavantage.co/documentation/
+
+
   - Sometimes it might be useful to end the stream of useful transactions at a
     particular point in the input file. Normally this is best done by filtering
     in the queries themselves, but there are times where having an End

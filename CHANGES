@@ -4,6 +4,12 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2018-08-17
+
+  - Added 'issuer' column to the export script. I'm going to use this to produce
+    a deaggregated list of exposure to individual stocks from a list of ETFs.
+
+
 2018-08-12
 
   - After many years of using something like it to track my investment portfolio
