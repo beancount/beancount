@@ -110,10 +110,11 @@ def file_one_file(filename, importers, destination, idify=False, logfile=None):
                       importer.name(), exc)
         clean_filename = None
     if clean_filename is None:
-        clean_filename = file.name
+        # If no filename has been provided, use the basename.
+        clean_filename = path.basename(file.name)
     elif re.match('\d\d\d\d-\d\d-\d\d', clean_filename):
         logging.error("The importer '%s' file_name() method should not date the "
-                      "returned filename.")
+                      "returned filename. Implement file_date() instead.")
 
     # We need a simple filename; remove the directory part if there is one.
     clean_basename = path.basename(clean_filename)

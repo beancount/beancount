@@ -99,9 +99,10 @@ class ImporterProtocol:
     def file_name(self, file):
         """A filter that optionally renames a file before filing.
 
-        This is used to make tidy filenames for filed/stored document files. The
-        default implementation just returns the same filename. Note that a
-        simple RELATIVE filename must be returned, not an absolute filename.
+        This is used to make tidy filenames for filed/stored document files. If
+        you don't implement this and return None, the same filename is used.
+        Note that if you return a filename, a simple, RELATIVE filename must be
+        returned, not an absolute filename.
 
         Args:
           file: A cache.FileMemo instance.
