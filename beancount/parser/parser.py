@@ -198,12 +198,15 @@ def parse_file(filename, **kw):
     return builder.finalize()
 
 
-def parse_string(string, **kw):
+def parse_string(string, report_filename=None, **kw):
     """Parse a beancount input file and return Ledger with the list of
     transactions and tree of accounts.
 
     Args:
-      string: a str, the contents to be parsed instead of a file's.
+      string: A string, the contents to be parsed instead of a file's.
+      report_filename: A string, the source filename from which this string
+        has been extracted, if any. This is stored in the metadata of the
+        parsed entries.
       **kw: See parse.c. This function parses out 'dedent' which removes
         whitespace from the front of the text (default is False).
     Return:
@@ -211,9 +214,8 @@ def parse_string(string, **kw):
     """
     if kw.pop('dedent', None):
         string = textwrap.dedent(string)
-    builder = grammar.Builder(None)
-    _parser.parse_string(string, builder, **kw)
-    builder.options['filename'] = '<string>'
+    builder = grammar.Builder(report_filename or '<string>')
+    _parser.parse_string(string, builder, report_filename=report_filename, **kw)
     return builder.finalize()
 
 

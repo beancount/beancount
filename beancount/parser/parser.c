@@ -67,7 +67,7 @@ PyObject* parse_file(PyObject *self, PyObject *args, PyObject* kwds)
     static char *kwlist[] = {"filename", "builder",
                              "report_filename", "report_firstline",
                              "encoding", "yydebug", NULL};
-    if ( !PyArg_ParseTupleAndKeywords(args, kwds, "sO|sizp", kwlist,
+    if ( !PyArg_ParseTupleAndKeywords(args, kwds, "sO|zizp", kwlist,
                                       &filename, &builder,
                                       &report_filename, &report_firstline,
                                       &encoding, &yydebug) ) {
@@ -124,7 +124,7 @@ PyObject* parse_string(PyObject *self, PyObject *args, PyObject* kwds)
     static char *kwlist[] = {"input_string", "builder",
                              "report_filename", "report_firstline",
                              "encoding", "yydebug", NULL};
-    if ( !PyArg_ParseTupleAndKeywords(args, kwds, "s#O|sizp", kwlist,
+    if ( !PyArg_ParseTupleAndKeywords(args, kwds, "s#O|zizp", kwlist,
                                       &input_string, &input_length, &builder,
                                       &report_filename, &report_firstline,
                                       &encoding, &yydebug) ) {
