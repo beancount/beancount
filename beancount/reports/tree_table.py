@@ -173,24 +173,6 @@ def table_of_balances(real_root, price_map, price_date,
         # currencies to their own subinventories.
         ccy_dict = line_balance.segregate_units(operating_currencies)
 
-
-
-
-        # FIXME: Remove.
-        if hasattr(real_account, 'account'):
-            inv_value = real_account.balance.reduce(convert.get_value, price_map, price_date)
-            inv_cost = real_account.balance.reduce(convert.get_cost)
-            if inv_value != inv_cost:
-                print(real_account.account)
-                print(real_account.balance)
-                print(inv_value)
-                print(inv_cost)
-                print()
-
-
-
-
-
         # FIXME: This little algorithm is inefficient; rewrite it.
         for currency in operating_currencies:
             units = ccy_dict[currency].get_currency_units(currency)

@@ -5,6 +5,8 @@ Note: This file contains a list changes in the 'default' branch.
 
 2018-08-23
 
+  - Oops... removing forgotten trace in bean-web.
+
   - Fixed #325: Implemented support for including encrypted files (for Milind Kamble
     and using some of this changes).
 
