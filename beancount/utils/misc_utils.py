@@ -4,13 +4,29 @@ Generic utility packages and functions.
 __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
+from collections import defaultdict
+from time import time
 import collections
+import contextlib
+import functools
 import io
 import re
 import sys
-from time import time
-import contextlib
-from collections import defaultdict
+import warnings
+
+
+def deprecated(message):
+    """A decorator generator to mark functions as deprecated and log a warning."""
+    def decorator(func):
+        @functools.wraps(func)
+        def new_func(*args, **kwargs):
+            warnings.warn("Call to deprecated function {}: {}".format(func.__name__,
+                                                                      message),
+                          category=DeprecationWarning,
+                          stacklevel=2)
+            return func(*args, **kwargs)
+        return new_func
+    return decorator
 
 
 @contextlib.contextmanager

@@ -27,6 +27,14 @@ def raise_import_error(*args, **kw):
 
 class TestMiscUtils(unittest.TestCase):
 
+    @mock.patch('warnings.warn')
+    def test_deprecated(self, warn):
+        @misc_utils.deprecated("This is old!")
+        def foo():
+            pass
+        foo()
+        warn.assert_called_once()
+
     def test_log_time(self):
         with test_utils.capture() as stdout:
             with misc_utils.log_time('test-op', None):
