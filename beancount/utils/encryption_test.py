@@ -85,7 +85,7 @@ INPUT = """\
 """
 
 
-class TestEncryptedFiles(unittest.TestCase):
+class TestEncryptedBase(unittest.TestCase):
 
     def setUp(self):
         self.tmpdir = tempfile.mkdtemp()
@@ -93,11 +93,15 @@ class TestEncryptedFiles(unittest.TestCase):
         os.makedirs(self.ringdir)
         os.chmod(self.ringdir, 0o700)
 
+        # Import secret and public keys.
+        self.run_gpg('--import', stdin=TEST_PUBLIC_KEY.encode('ascii'))
+        self.run_gpg('--import', stdin=TEST_SECRET_KEY.encode('ascii'))
+
     def tearDown(self):
         if path.exists(self.ringdir):
             shutil.rmtree(self.ringdir)
 
-    def _run_gpg(self, *args, **kw):
+    def run_gpg(self, *args, **kw):
         command = ('gpg',
                    '--batch',
                    '--armor',
@@ -114,22 +118,28 @@ class TestEncryptedFiles(unittest.TestCase):
                                                                   err.decode('utf8')))
         return out.decode('utf8'), err.decode('utf8')
 
+    def encrypt_as_file(self, string, encrypted_filename):
+        # Encrypt the Beancount plaintext file with it.
+        out, err = self.run_gpg('--recipient', 'beancount-test', '--encrypt', '--output=-',
+                                stdin=string.encode('utf8'))
+        with open(encrypted_filename, 'w') as encfile:
+            encfile.write(out)
+
+
+class TestEncryptedFiles(TestEncryptedBase):
+
     @unittest.skipIf(not encryption.is_gpg_installed(), "gpg is not installed")
     def test_read_encrypted_file(self):
-        # Import secret and public keys.
-        self._run_gpg('--import', stdin=TEST_PUBLIC_KEY.encode('ascii'))
-        self._run_gpg('--import', stdin=TEST_SECRET_KEY.encode('ascii'))
-
-        # Encrypt the Beancount plaintext file with it.
-        out, err = self._run_gpg('--recipient', 'beancount-test', '--encrypt', '--output=-',
-                                 stdin=INPUT.encode('utf8'))
         encrypted_file = path.join(self.tmpdir, 'test.beancount.asc')
-        with open(encrypted_file, 'w') as encfile:
-            encfile.write(out)
+        self.encrypt_as_file(INPUT, encrypted_file)
 
         with test_utils.environ('GNUPGHOME', self.ringdir):
             plaintext = encryption.read_encrypted_file(encrypted_file)
             self.assertEqual(INPUT, plaintext)
+
+
+
+class TestEncryptedFilesCheck(unittest.TestCase):
 
     def test_is_encrypted_file(self):
         with tempfile.NamedTemporaryFile(suffix='.txt') as file:

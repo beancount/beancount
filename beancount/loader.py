@@ -262,7 +262,7 @@ def load_string(string, log_timings=None, log_errors=None, extra_validations=Non
       extra_validations: A list of extra validation functions to run after loading
         this list of entries.
       dedent: A boolean, if set, remove the whitespace in front of the lines.
-      encoding: A string or None, the encoding to decode the input filename with.
+      encoding: A string or None, the encoding to decode the input string with.
     Returns:
       A triple of (entries, errors, option_map) where "entries" is a date-sorted
       list of entries from the string, "errors" a list of error objects
@@ -314,6 +314,19 @@ def _parse_recursive(sources, log_timings, encoding=None):
             source, is_file = source_stack.pop(0)
             is_top_level = options_map is None
 
+            # If the file is encrypted, read it in and process it as a string.
+            if is_file:
+                cwd = path.dirname(source)
+                source_filename = source
+                if encryption.is_encrypted_file(source):
+                    source = encryption.read_encrypted_file(source)
+                    is_file = False
+            else:
+                # If we're parsing a string, the CWD is the current process
+                # working directory.
+                cwd = os.getcwd()
+                source_filename = None
+
             if is_file:
                 # All filenames here must be absolute.
                 assert path.isabs(source)
@@ -355,11 +368,7 @@ def _parse_recursive(sources, log_timings, encoding=None):
                                          log_timings, indent=2):
                     (src_entries,
                      src_errors,
-                     src_options_map) = parser.parse_string(source)
-
-                # If we're parsing a string, the CWD is the current process
-                # working directory.
-                cwd = os.getcwd()
+                     src_options_map) = parser.parse_string(source, source_filename)
 
             # Merge the entries resulting from the parsed file.
             entries.extend(src_entries)

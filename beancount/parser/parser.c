@@ -67,7 +67,7 @@ PyObject* parse_file(PyObject *self, PyObject *args, PyObject* kwds)
     static char *kwlist[] = {"filename", "builder",
                              "report_filename", "report_firstline",
                              "encoding", "yydebug", NULL};
-    if ( !PyArg_ParseTupleAndKeywords(args, kwds, "sO|sizp", kwlist,
+    if ( !PyArg_ParseTupleAndKeywords(args, kwds, "sO|zizp", kwlist,
                                       &filename, &builder,
                                       &report_filename, &report_firstline,
                                       &encoding, &yydebug) ) {
@@ -124,7 +124,7 @@ PyObject* parse_string(PyObject *self, PyObject *args, PyObject* kwds)
     static char *kwlist[] = {"input_string", "builder",
                              "report_filename", "report_firstline",
                              "encoding", "yydebug", NULL};
-    if ( !PyArg_ParseTupleAndKeywords(args, kwds, "s#O|sizp", kwlist,
+    if ( !PyArg_ParseTupleAndKeywords(args, kwds, "s#O|zizp", kwlist,
                                       &input_string, &input_length, &builder,
                                       &report_filename, &report_firstline,
                                       &encoding, &yydebug) ) {
@@ -265,8 +265,8 @@ static struct PyModuleDef moduledef = {
 void initialize_metadata(PyObject* module) {
     /* Provide the source hash to the parser module for verification that the
      * extension module is up-to-date. */
-#if _MSC_VER == 1900
-    static const char* quoted_hash = "PARSER_SOURCE_HASH";
+#if _MSC_VER
+    static const char* quoted_hash = "" XSTRINGIFY(PARSER_SOURCE_HASH);
 #else
     static const char* quoted_hash = XSTRINGIFY(PARSER_SOURCE_HASH);
 #endif
@@ -275,8 +275,8 @@ void initialize_metadata(PyObject* module) {
 
     /* Provide the release version from the build, as it can be propagated there
      * from setup.py. */
-#if _MSC_VER == 1900
-    static const char* release_version_str = "RELEASE_VERSION";
+#if _MSC_VER
+    static const char* release_version_str = "" XSTRINGIFY(RELEASE_VERSION);
 #else
     static const char* release_version_str = XSTRINGIFY(RELEASE_VERSION);
 #endif
@@ -284,8 +284,8 @@ void initialize_metadata(PyObject* module) {
     PyObject_SetAttrString(module, "__version__", release_version);
 
     /* Provide the Mercurial (or Git mirror) changeset from the build. */
-#if _MSC_VER == 1900
-    static const char* vc_changeset_str = "VC_CHANGESET";
+#ifdef _MSC_VER
+    static const char* vc_changeset_str = "" XSTRINGIFY(VC_CHANGESET);
 #else
     static const char* vc_changeset_str = XSTRINGIFY(VC_CHANGESET);
 #endif

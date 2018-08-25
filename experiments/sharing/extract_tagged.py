@@ -8,24 +8,44 @@ rewrites them to convert its inflows to a single account.
 import argparse
 import logging
 import re
+from typing import Dict
 
 from beancount import loader
 from beancount.core import data
+from beancount.core.account import ACCOUNT_RE
 from beancount.parser import printer
 
 
-def adjust_entry(entry: data.Transaction, account: str, tag: str):
+def adjust_entry(entry: data.Transaction, account: str, tag: str,
+                 translate_map: Dict[str, str]):
     new_postings = []
     for posting in entry.postings:
         new_account = posting.account
+
+        # Use the diverted account.
         if re.match('Expenses:', posting.account):
             new_account = posting.meta.get('diverted_account', account)
         else:
             new_account = account
+
+        # Apply translations.
+        new_account = translate_map.get(new_account, new_account)
+
         new_postings.append(posting._replace(account=new_account, meta=None))
     new_tags = entry.tags.difference(set(tag))
     return entry._replace(postings=new_postings,
                           tags=new_tags)
+
+
+def parse_translate_map(translate_options):
+    """Convert the --translate option to a dict."""
+    translate_map = {}
+    for translate in translate_options:
+        match = re.match('({})=({})$'.format(ACCOUNT_RE, ACCOUNT_RE), translate)
+        assert match
+        tfrom, tto = match.groups()
+        translate_map[tfrom] = tto
+    return translate_map
 
 
 def main():
@@ -41,15 +61,18 @@ def main():
     parser.add_argument('inflows_account', action='store',
                         help="Inflows account to use for the rewritten transactions")
 
+    parser.add_argument('-t', '--translate', action='append',
+                        help=("Explicit account translations. This can be used to make "
+                              "transfers be treated specially."))
+
     args = parser.parse_args()
-
+    translate_map = parse_translate_map(args.translate)
     entries, _, options_map = loader.load_file(args.filename)
-
     imported_entries = []
     tag = args.tag.lstrip('#')
     for entry in data.filter_txns(entries):
         if tag in entry.tags:
-            entry = adjust_entry(entry, args.inflows_account, args.tag)
+            entry = adjust_entry(entry, args.inflows_account, args.tag, translate_map)
             imported_entries.append(entry)
 
     printer.print_entries(imported_entries)

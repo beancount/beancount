@@ -1,4 +1,4 @@
-#line 1 "beancount/parser/lexer.c"
+#line 2 "beancount/parser/lexer.c"
 
 /* Includes. */
 #include <math.h>
@@ -71,7 +71,7 @@ int strtonl(const char* buf, size_t nchars);
 	}                                       \
         *strbuf_ptr++ = value;
 
-#line 74 "beancount/parser/lexer.c"
+#line 75 "beancount/parser/lexer.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -1046,7 +1046,7 @@ char *yytext;
 
 /*--------------------------------------------------------------------------------------*/
 /* Rules */
-#line 1049 "beancount/parser/lexer.c"
+#line 1050 "beancount/parser/lexer.c"
 
 #define INITIAL 0
 #define INVALID 1
@@ -1289,7 +1289,7 @@ YY_DECL
 
 #line 132 "beancount/parser/lexer.l"
  /* Newlines are output as explicit tokens, because lines matter in the syntax. */
-#line 1292 "beancount/parser/lexer.c"
+#line 1293 "beancount/parser/lexer.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1841,7 +1841,7 @@ YY_RULE_SETUP
 #line 395 "beancount/parser/lexer.l"
 ECHO;
 	YY_BREAK
-#line 1844 "beancount/parser/lexer.c"
+#line 1845 "beancount/parser/lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
