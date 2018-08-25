@@ -4672,6 +4672,12 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - Allow plugins to run before and after booking; this would make it possible
+    for plugins to run on CostSpec and fill in more information. In fact, maybe
+    the booking process itself could be moved to a plugin. This coudl be a
+    powerful idea, in that it would clarify the distinction between the two
+    streams of transactions.
+
   - Sometimes it might be useful to end the stream of useful transactions at a
     particular point in the input file. Normally this is best done by filtering
     in the queries themselves, but there are times where having an End
