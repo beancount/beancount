@@ -1,4 +1,4 @@
-"""Helpers to automate regression testing of a custom importer.
+"""Support for implementing regression tests on sample files using nose.
 
 NOTE: This itself is not a regression test. It's a library used to create
 regression tests for your importers. Use it like this in your own importer code:
@@ -9,6 +9,9 @@ regression tests for your importers. Use it like this in your own importer code:
        })
        yield from regression.compare_sample_files(importer, __file__)
 
+WARNING: This is deprecated. Nose itself has been deprecated for a while and
+Beancount is now using only pytest. Ignore this and use
+beancount.ingest.regression_ptest instead.
 """
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
@@ -161,31 +164,6 @@ class ImportFileTestCase(unittest.TestCase):
                 expect_filename))
 
 
-# class ImporterRegressionTestCase(unittest.TestCase):
-#     """Regression test case for importer methods on a sample file."""
-
-#     # Allow for large diff output size.
-#     maxDiff = None
-
-#     # def __str__(self):
-#     #     base = super(ImporterRegressionTestCase, self).__str__()
-#     #     return "{}({})".format(base, self.filename)
-
-#     def __init__(self, importer, filename):
-#         #super(ImporterRegressionTestCase, self).__init__()
-#         self.importer = importer
-#         self.filename = filename
-
-#     def test_identify(self):
-#         file = cache.get_file(self.filename)
-#         matched = self.importer.identify(file)
-#         self.assertTrue(matched)
-
-#     def test_extract(self):
-#         file = cache.get_file(self.filename)
-#         matched = self.importer.extract(file)
-
-
 def find_input_files(directory):
     """Find the input files in the module where the class is defined.
 
@@ -196,13 +174,12 @@ def find_input_files(directory):
     """
     for sroot, dirs, files in os.walk(directory):
         for filename in files:
-            if re.match(r'.*\.(extract|file_date|file_name|file_account|py|pyc|DS_Store)$',
-                        filename):
+            if re.match(r'.*\.(extract|file_date|file_name|py|pyc|DS_Store)$', filename):
                 continue
             yield path.join(sroot, filename)
 
 
-@deprecated("Use test_sample_files() instead")
+@deprecated("Use beancount.ingest.regression_pytest instead")
 def compare_sample_files(importer, directory=None, ignore_cls=None):
     """Compare the sample files under a directory.
 
@@ -244,90 +221,3 @@ def compare_sample_files(importer, directory=None, ignore_cls=None):
                 method = getattr(ImportFileTestCase(importer),
                                  'test_expect_{}'.format(name))
                 yield (method, filename, name)
-
-
-def test_sample_files(importer, directory):
-    """Compare expected values of importer methods on sample files under a directory.
-
-    This function yield test cases which will call each of the importer methods
-    for each sample files found in a directory, and compare (or generate) their
-    contents with that which is returned from the importer methods. This
-    provides an easy way to implement tests on importers: you write an importer
-    with a unit test which calls this method, place a real downloaded file in a
-    directory, and the first time this runs the expected files will be
-    generated. You obtain a directory with files like this:
-
-         transactions.ofx
-         transactions.extract
-         transactions.file_account
-         transactions.file_date
-         transactions.file_name
-
-    Note that the identify() method is ignored (it is expected to always return
-    True). You inspect them for correctness, and thereafter if you make changes
-    to your importer the contents of those files will be compared to the return
-    values of the importer.
-
-    Note: This is the newer variant of the compare_sample_files() method above,
-    with a simpler, more predictable behavior. The older version made
-    assumptions about inheritance was trying to be too clever. It's kept here
-    temporarily in order to avoid breaking old code. In this new version, files
-    with expected content are expected to exist for all importer methods (except
-    identify()), and all importer methods are called unconditionally. In the
-    older version, only those methods which were overridden were called
-
-    Args:
-      importer: An instance of an Importer.
-      directory: A string, the directory to scour for sample files or a filename
-          in that directory.
-    Yields:
-      Generated tests as per nose's requirements (a callable and arguments for
-      it).
-    """
-    for filename in find_input_files(directory):
-        case = ImporterRegressionTestCase(importer, filename)
-        yield case.test_identify
-
-
-def test_sample_files_suite(importer, directory):
-    suite = unittest.TestSuite()
-    for filename in find_input_files(directory):
-        suite.addTest(ImporterRegressionTestCase(importer, filename, 'test_identify'))
-    return suite
-
-
-#class BaseImporter(unittest.TestCase):
-class BaseImporter:
-
-    def test_identify(self, importer, filename):
-        pass
-
-    def test_extract(self, importer, filename):
-        pass
-
-    def test_file_date(self, importer, filename):
-        pass
-
-    def test_file_name(self, importer, filename):
-        pass
-
-    def test_file_account(self, importer, filename):
-        pass
-
-
-def generate_tests(importer, directory, metafunc):
-    filenames = list(find_input_files(directory))
-    argnames = ['importer', 'filename']
-    argvalues = [[importer, filename] for filename in filenames]
-    idlist = [path.basename(filename) for filename in filenames]
-    metafunc.parametrize(argnames, argvalues, ids=idlist, scope="class")
-
-
-def make_generate(importer, directory):
-    def generate_tests(metafunc):
-        filenames = list(find_input_files(directory))
-        argnames = ['importer', 'filename']
-        argvalues = [[importer, filename] for filename in filenames]
-        idlist = [path.basename(filename) for filename in filenames]
-        metafunc.parametrize(argnames, argvalues, ids=idlist, scope="class")
-    return generate_tests
