@@ -157,7 +157,7 @@ release:
 
 
 vtest vtests verbose-test verbose-tests:
-	$(PYTHON) -m pytest -v -s beancount
+	$(PYTHON) -m pytest -v -s beancount examples
 
 qtest qtests quiet-test quiet-tests test tests:
 	$(PYTHON) -m pytest beancount

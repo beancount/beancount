@@ -33,6 +33,9 @@ else:
         from setuptools import setup, Extension
         has_setuptools = True
         setup_extra_kwargs.update(install_requires = [
+            # Testing support now uses the pytest module.
+            'pytest',
+
             # This is required to parse dates from command-line options in a
             # loose, accepting format. Note that we use dateutil for timezone
             # database definitions as well, although it is inferior to pytz, but

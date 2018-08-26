@@ -1,4 +1,4 @@
-"""Helpers to automate regression testing of a custom importer.
+"""Support for implementing regression tests on sample files using nose.
 
 NOTE: This itself is not a regression test. It's a library used to create
 regression tests for your importers. Use it like this in your own importer code:
@@ -9,6 +9,9 @@ regression tests for your importers. Use it like this in your own importer code:
        })
        yield from regression.compare_sample_files(importer, __file__)
 
+WARNING: This is deprecated. Nose itself has been deprecated for a while and
+Beancount is now using only pytest. Ignore this and use
+beancount.ingest.regression_ptest instead.
 """
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
@@ -24,6 +27,7 @@ from os import path
 from beancount.ingest.importer import ImporterProtocol
 from beancount.parser import printer
 from beancount.utils import test_utils
+from beancount.utils.misc_utils import deprecated
 from beancount.ingest import extract
 from beancount.ingest import cache
 
@@ -58,7 +62,6 @@ class ImportFileTestCase(unittest.TestCase):
         Raises:
           AssertionError: If the contents differ from the expected file.
         """
-        # Import the date.
         file = cache.get_file(filename)
         matched = self.importer.identify(file)
         self.assertTrue(matched)
@@ -176,6 +179,7 @@ def find_input_files(directory):
             yield path.join(sroot, filename)
 
 
+@deprecated("Use beancount.ingest.regression_pytest instead")
 def compare_sample_files(importer, directory=None, ignore_cls=None):
     """Compare the sample files under a directory.
 

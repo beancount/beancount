@@ -4,6 +4,20 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2018-08-26
+
+  - Implementation of beancount.ingest.regression_pytest, a pytest replacement
+    for beancount.ingest.regression, which was for nose. This is simpler and
+    better and more straightforward (no conditionals; all regression files must
+    have all accompanying expect files and all must pass). See the module
+    docstring for new instructions on how to use this.
+
+    This should not break the older tests, as I haven't changed the older
+    support. It (beancount.ingest.regression) will be removed eventually.
+
+    (This completes porting Beancount to use pytest instead of nosetests.)
+
+
 2018-08-25
 
   - Today we're switching to pytest as the official test runner. All the tests
