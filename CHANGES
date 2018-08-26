@@ -3,6 +3,15 @@
 ========================
 Note: This file contains a list changes in the 'default' branch.
 
+
+2018-08-25
+
+  - Today we're switching to pytest as the official test runner. All the tests
+    pass, and it even runs faster. It's about time!
+
+  - Removed all references and workaround to nose.
+
+
 2018-08-23
 
   - Oops... removing forgotten trace in bean-web.

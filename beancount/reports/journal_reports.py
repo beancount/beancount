@@ -22,7 +22,7 @@ class JournalReport(base.HTMLReport,
     default_width = 80
 
     # For the tests we specify the width to render to to avoid having to invoke
-    # the terminal functions which fail under nose without capture mode.
+    # the terminal functions which fail in the test runner without capture mode.
     test_args = ['--width={}'.format(default_width)]
 
     @classmethod

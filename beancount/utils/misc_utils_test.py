@@ -173,7 +173,7 @@ class TestMiscUtils(unittest.TestCase):
     def test_get_screen_width(self):
         max_width = misc_utils.get_screen_width()
         self.assertTrue(type(int), max_width)
-        # Note: Allow zero because the console function fails in nose when
+        # Note: Allow zero because the console function fails in test when
         # capture is disabled.
         self.assertLess(-1, max_width)
 
@@ -190,7 +190,7 @@ class TestMiscUtils(unittest.TestCase):
     def test_get_screen_height(self):
         max_height = misc_utils.get_screen_height()
         self.assertTrue(type(int), max_height)
-        # Note: Allow zero because the console function fails in nose when
+        # Note: Allow zero because the console function fails in test when
         # capture is disabled.
         self.assertLess(-1, max_height)
 

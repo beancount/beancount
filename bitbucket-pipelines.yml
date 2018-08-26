@@ -4,6 +4,6 @@ pipelines:
     - step:
         script:
           - python3 -m pip install -r requirements.txt
-          - python3 -m pip install nose
+          - python3 -m pip install pytest
           - python3 setup.py build_ext -i
-          - nosetests -v beancount
+          - python3 -m pytest -v beancount

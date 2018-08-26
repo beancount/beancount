@@ -15,3 +15,4 @@ beancount/parser/grammar.output
 .idea
 beancount.egg-info
 .cache
+.pytest_cache/*

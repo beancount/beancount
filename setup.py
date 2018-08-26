@@ -98,7 +98,7 @@ else:
         #
         # If you think I'm a lunatic, fix it and make sure you can make this
         # command succeed:
-        #   nosetests3 -s beancount/scripts/setup_test.py
+        #   pytest -s beancount/scripts/setup_test.py
         #
     except ImportError:
         warnings.warn("Setuptools not installed; falling back on distutils. "

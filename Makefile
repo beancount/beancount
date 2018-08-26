@@ -156,20 +156,17 @@ release:
 	$(PYTHON) setup.py register sdist upload
 
 
-# Run the unittests.
-NOSE ?= nosetests3
-
 vtest vtests verbose-test verbose-tests:
-	$(NOSE) -v -s beancount
+	$(PYTHON) -m pytest -v -s beancount
 
 qtest qtests quiet-test quiet-tests test tests:
-	$(NOSE) beancount
+	$(PYTHON) -m pytest beancount
 
-test-failed:
-	$(NOSE) --failed beancount
+test-last test-last-failed test-failed:
+	$(PYTHON) -m pytest --last-failed beancount
 
-nakedtests:
-	PATH=/bin:/usr/bin PYTHONPATH= /usr/local/bin/$(NOSE) -x beancount
+test-naked:
+	PATH=/bin:/usr/bin PYTHONPATH= $(PYTHON) -m pytest -x beancount
 
 # Run the parser and measure its performance.
 .PHONY: check
