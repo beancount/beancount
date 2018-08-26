@@ -98,7 +98,7 @@ def compare_contents_or_generate(actual_string, expect_fn, generate):
     if generate:
         with open(expect_fn, 'w', encoding='utf-8') as expect_file:
             expect_file.write(actual_string)
-            if not actual_string.endswith('\n'):
+            if actual_string and not actual_string.endswith('\n'):
                 expect_file.write('\n')
         pytest.skip("Generated '{}'".format(expect_fn))
     else:
@@ -138,12 +138,12 @@ class ImporterTestBase:
 
     def test_file_name(self, importer, file, pytestconfig):
         """Compute the imported file name and compare to an expected output."""
-        filename = importer.file_name(file)
+        filename = importer.file_name(file) or ''
         compare_contents_or_generate(filename, '{}.file_name'.format(file.name),
                                      pytestconfig.getoption("generate", False))
 
     def test_file_account(self, importer, file, pytestconfig):
         """Compute the selected filing account and compare to an expected output."""
-        account = importer.file_account(file)
+        account = importer.file_account(file) or ''
         compare_contents_or_generate(account, '{}.file_account'.format(file.name),
                                      pytestconfig.getoption("generate", False))
