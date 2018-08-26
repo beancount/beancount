@@ -98,7 +98,7 @@ else:
         #
         # If you think I'm a lunatic, fix it and make sure you can make this
         # command succeed:
-        #   nosetests3 -s beancount/scripts/setup_test.py
+        #   pytest -s beancount/scripts/setup_test.py
         #
     except ImportError:
         warnings.warn("Setuptools not installed; falling back on distutils. "
@@ -170,8 +170,8 @@ def get_hg_changeset():
     """Get the Mercurial changeset id."""
     try:
         output = subprocess.check_output(
-            ['hg', 'parent', '--template', '{node} {date(date, "%s")}'], shell=False)
-        vc_changeset, vc_timestamp = output.decode('utf-8').split()
+            ['hg', 'parent', '--template', '{node} {date|hgdate}'], shell=False)
+        vc_changeset, vc_timestamp = output.decode('utf-8').split()[:2]
         vc_changeset = 'hg:{}'.format(vc_changeset)
         return vc_changeset, vc_timestamp
     except (subprocess.CalledProcessError, FileNotFoundError):

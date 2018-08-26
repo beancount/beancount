@@ -249,6 +249,15 @@ def join(main_table: Table, *col_tables: Tuple[Tuple[Tuple[str], Table]]) -> Tab
     return Table(new_header, rows)
 
 
+def reorder_columns(table: Table, new_headers: List[str]) -> Table:
+    """Reorder the columns of a table to a desired new headers."""
+    assert len(table.header) == len(new_headers)
+    indexes = [table.header.index(header) for header in new_headers]
+    rows = [[row[index] for index in indexes]
+            for row in table.rows]
+    return Table(new_headers, rows)
+
+
 def write_table(table: Table, outfile: str):
     """Write a table to a CSV file."""
     with outfile:
@@ -294,7 +303,7 @@ def main():
 
     # Get the map of commodities to their meta tags.
     commodities_table = get_commodities_table(
-        entries, ['export', 'assetcls', 'strategy'])
+        entries, ['export', 'assetcls', 'strategy', 'issuer'])
     if args.output_commodities is not None:
         write_table(commodities_table, args.output_commodities)
 
@@ -328,9 +337,16 @@ def main():
                         (('currency', 'cost_currency'), prices_table),
                         (('cost_currency',), rates_table))
 
+    # Reorder columns.
+    # We do this in order to avoid having to change the spreadsheet when we add new columns.
+    headers = list(joined_table.header)
+    headers.remove('issuer')
+    headers.append('issuer')
+    final_table = reorder_columns(joined_table, headers)
+
     # Filter table.
-    rows = [row for row in joined_table.rows if row[7] != 'IGNORE']
-    table = Table(joined_table.header, rows)
+    rows = [row for row in final_table.rows if row[7] != 'IGNORE']
+    table = Table(final_table.header, rows)
 
     if args.output is not None:
         table[0][0] += ' ({:%Y-%m-%d %H:%M})'.format(datetime.datetime.now())

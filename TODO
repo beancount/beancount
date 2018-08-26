@@ -4678,6 +4678,9 @@ http://furius.ca/beancount/doc/proposal-query
     powerful idea, in that it would clarify the distinction between the two
     streams of transactions.
 
+  - Add support for this data source: https://www.alphavantage.co/documentation/
+
+
   - Sometimes it might be useful to end the stream of useful transactions at a
     particular point in the input file. Normally this is best done by filtering
     in the queries themselves, but there are times where having an End

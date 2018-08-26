@@ -12,6 +12,7 @@ from os import path
 from beancount import loader
 from beancount.parser import parser
 from beancount.utils import test_utils
+from beancount.utils import encryption_test
 
 
 TEST_INPUT = """
@@ -288,6 +289,36 @@ class TestLoadIncludes(unittest.TestCase):
                             for filename in options_map['include']))
         self.assertEqual(['apples.beancount', 'bananas.beancount', 'oranges.beancount'],
                          list(map(path.basename, options_map['include'])))
+
+
+class TestLoadIncludesEncrypted(encryption_test.TestEncryptedBase):
+
+    def test_include_encrypted(self):
+        with test_utils.tempdir() as tmpdir:
+            test_utils.create_temporary_files(tmpdir, {
+                'apples.beancount': """
+                  include "oranges.beancount.asc"
+                  2014-01-01 open Assets:Apples
+                """,
+                'oranges.beancount': """
+                  2014-01-02 open Assets:Oranges
+                """})
+
+            # Encrypt the oranges file and remove the unencrypted file.
+            with open(path.join(tmpdir, 'oranges.beancount')) as infile:
+                self.encrypt_as_file(infile.read(),
+                                     path.join(tmpdir, 'oranges.beancount.asc'))
+            os.remove(path.join(tmpdir, 'oranges.beancount'))
+
+            # Load the top-level file which includes the encrypted file.
+            with test_utils.environ('GNUPGHOME', self.ringdir):
+                entries, errors, options_map = loader.load_file(
+                    path.join(tmpdir, 'apples.beancount'))
+
+        self.assertFalse(errors)
+        self.assertEqual(2, len(entries))
+        self.assertRegex(entries[0].meta['filename'], 'apples.beancount')
+        self.assertRegex(entries[1].meta['filename'], 'oranges.+count.asc')
 
 
 class TestLoadCache(unittest.TestCase):

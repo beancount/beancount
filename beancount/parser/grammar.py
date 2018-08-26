@@ -956,7 +956,6 @@ class Builder(lexer.LexBuilder):
         """
         meta = new_metadata(filename, lineno)
 
-
         # Separate postings and key-values.
         explicit_meta = {}
         postings = []

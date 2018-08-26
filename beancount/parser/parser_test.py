@@ -10,6 +10,8 @@ import textwrap
 import sys
 import subprocess
 
+from pytest import mark
+
 from beancount.core.number import D
 from beancount.core import data
 from beancount.parser import parser
@@ -45,37 +47,23 @@ class TestParserDoc(unittest.TestCase):
         """
         self.assertTrue(errors)
 
-    # Note: nose does not honor expectedFailure as of 1.3.4. We would use it
-    # here instead of doing this manually.
-    def test_parse_doc__errors(self):
-        @parser.parse_doc(expect_errors=True)
-        def test_function(self, entries, errors, options_map):
-            """
-            2013-05-40 * "Nice dinner at Mermaid Inn"
-              Expenses:Restaurant         100 USD
-              Assets:US:Cash
-            """
-        try:
-            test_function(unittest.TestCase())
-            self.fail("Test should have failed.")
-        except AssertionError:
-            pass
+    @mark.xfail
+    @parser.parse_doc(expect_errors=False)
+    def test_parse_doc__errors(self, _, __, ___):
+        """
+        2013-05-40 * "Invalid date for parser"
+          Expenses:Restaurant         100 USD
+          Assets:US:Cash             -100 USD
+        """
 
-    # Note: nose does not honor expectedFailure as of 1.3.4. We would use it
-    # here instead of doing this manually.
-    def test_parse_doc__noerrors(self):
-        @parser.parse_doc(expect_errors=False)
-        def test_function(self, entries, errors, options_map):
-            """
-            2013-05-40 * "Nice dinner at Mermaid Inn"
-              Expenses:Restaurant         100 USD
-              Assets:US:Cash
-            """
-        try:
-            test_function(unittest.TestCase())
-            self.fail("Test should have failed.")
-        except AssertionError:
-            pass
+    @mark.xfail
+    @parser.parse_doc(expect_errors=True)
+    def test_parse_doc__noerrors(self, _, __, ___):
+        """
+        2013-05-01 * "Valid date for parser"
+          Expenses:Restaurant         100 USD
+          Assets:US:Cash             -100 USD
+        """
 
 
 class TestParserInputs(unittest.TestCase):
