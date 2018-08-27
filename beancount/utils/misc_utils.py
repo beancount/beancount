@@ -380,6 +380,21 @@ def import_curses():
     return curses
 
 
+def _get_screen_value(attrname, default=0):
+    """Return the width or height of the terminal that runs this program."""
+    try:
+        curses = import_curses()
+    except ImportError:
+        value = default
+    else:
+        try:
+            curses.setupterm()
+            value = curses.tigetnum(attrname)
+        except (io.UnsupportedOperation, curses.error):
+            value = default
+    return value
+
+
 def get_screen_width():
     """Return the width of the terminal that runs this program.
 
@@ -387,13 +402,7 @@ def get_screen_width():
       An integer, the number of characters the screen is wide.
       Return 0 if the terminal cannot be initialized.
     """
-    try:
-        curses = import_curses()
-        curses.setupterm()
-        columns = curses.tigetnum('cols')
-    except (io.UnsupportedOperation, ImportError, curses.error):
-        columns = 0
-    return columns
+    return _get_screen_value('cols', 0)
 
 
 def get_screen_height():
@@ -403,13 +412,7 @@ def get_screen_height():
       An integer, the number of characters the screen is high.
       Return 0 if the terminal cannot be initialized.
     """
-    try:
-        curses = import_curses()
-        lines = curses.setupterm()
-        lines = curses.tigetnum('lines')
-    except (io.UnsupportedOperation, ImportError, curses.error):
-        lines = 0
-    return lines
+    return _get_screen_value('lines', 0)
 
 
 class TypeComparable:
