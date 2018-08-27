@@ -19,7 +19,7 @@ auto-generated using the --generate option). You use it like this:
   # Create a test case using the base in this class.
 
   @regression_pytest.with_importer(importer)
-  @regression_pytest.with_testfiles(directory)
+  @regression_pytest.with_testdir(directory)
   class TestImporter(regtest.ImporterTestBase):
       pass
 
@@ -61,10 +61,12 @@ def pytest_addoption(parser):
 
 
 def with_importer(importer):
+    """Parametrizing fixture that provides the importer to test."""
     return pytest.mark.parametrize("importer", [importer])
 
 
-def with_testfiles(directory):
+def with_testdir(directory):
+    """Parametrizing fixture that provides files from a directory."""
     return pytest.mark.parametrize(
         "file", [cache.get_file(fn) for fn in find_input_files(directory)])
 
