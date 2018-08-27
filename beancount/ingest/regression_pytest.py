@@ -56,7 +56,7 @@ from beancount.parser import printer
 def pytest_addoption(parser):
     """Add an option to generate the expected files for the tests."""
     group = parser.getgroup("beancount")
-    group.addoption("--generate", action="store_true",
+    group.addoption("--generate", "--gen", action="store_true",
                     help="Don't test; rather, generate the expected files")
 
 
@@ -105,7 +105,8 @@ def compare_contents_or_generate(actual_string, expect_fn, generate):
         pytest.skip("Generated '{}'".format(expect_fn))
     else:
         # Run the test on an existing expected file.
-        assert path.exists(expect_fn)
+        assert path.exists(expect_fn), (
+            "Expected file '{}' is missing. Generate it?".format(expect_fn))
         with open(expect_fn, encoding='utf-8') as infile:
             expect_string = infile.read()
         assert expect_string.strip() == actual_string.strip()

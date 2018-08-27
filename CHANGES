@@ -6,6 +6,9 @@ Note: This file contains a list changes in the 'default' branch.
 
 2018-08-26
 
+  - Fixed tests for pipeline running pytest (somehow the curses functions fail,
+    probably due to better environment isolation from pytest).
+
   - Implementation of beancount.ingest.regression_pytest, a pytest replacement
     for beancount.ingest.regression, which was for nose. This is simpler and
     better and more straightforward (no conditionals; all regression files must

@@ -391,7 +391,7 @@ def get_screen_width():
         curses = import_curses()
         curses.setupterm()
         columns = curses.tigetnum('cols')
-    except (io.UnsupportedOperation, ImportError):
+    except (io.UnsupportedOperation, ImportError, curses.error):
         columns = 0
     return columns
 
@@ -407,7 +407,7 @@ def get_screen_height():
         curses = import_curses()
         lines = curses.setupterm()
         lines = curses.tigetnum('lines')
-    except (io.UnsupportedOperation, ImportError):
+    except (io.UnsupportedOperation, ImportError, curses.error):
         lines = 0
     return lines
 
