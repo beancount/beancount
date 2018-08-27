@@ -25,6 +25,6 @@ importer = utrade_csv.Importer(
 
 
 @regtest.with_importer(importer)
-@regtest.with_testfiles(path.dirname(__file__))
+@regtest.with_testdir(path.dirname(__file__))
 class TestImporter(regtest.ImporterTestBase):
     pass

@@ -94,10 +94,3 @@ class Importer(importer.ImporterProtocol):
         match = re.search('Date: ([^\n]*)', text)
         if match:
             return parse_datetime(match.group(1)).date()
-
-
-@unittest.skipIf(not is_pdfminer_installed(), "PDFMiner2 is not installed")
-def test():
-    # Create an importer instance for running the regression tests.
-    importer = Importer("Assets:US:AcmeBank")
-    yield from regression.compare_sample_files(importer, __file__)
