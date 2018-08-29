@@ -89,16 +89,18 @@ def find_duplicate_entries(new_entries_list, existing_entries):
     """Flag potentially duplicate entries.
 
     Args:
-      new_entries_list: A list of lists of imported entries, one for each
-        importer.
+      new_entries_list: A list of pairs of (key, lists of imported entries), one
+        for each importer. The key identifies the filename and/or importer that
+        yielded those new entries.
       existing_entries: A list of previously existing entries from the target
         ledger.
     Returns:
       A list of lists of modified new entries (like new_entries_list),
       potentially with modified metadata to indicate those which are duplicated.
+
     """
     mod_entries_list = []
-    for new_entries in new_entries_list:
+    for key, new_entries in new_entries_list:
         # Find similar entries against the existing ledger only.
         duplicate_pairs = similar.find_similar_entries(new_entries, existing_entries)
 
@@ -111,7 +113,7 @@ def find_duplicate_entries(new_entries_list, existing_entries):
                 marked_meta[DUPLICATE_META] = True
                 entry = entry._replace(meta=marked_meta)
             mod_entries.append(entry)
-        mod_entries_list.append(mod_entries)
+        mod_entries_list.append((key, mod_entries))
     return mod_entries_list
 
 
@@ -174,8 +176,7 @@ def extract(importer_config,
     # Run all the importers and gather their result sets.
     new_entries_list = []
     for filename, importers in identify.find_imports(importer_config,
-                                                     files_or_directories,
-                                                     output):
+                                                     files_or_directories):
         for importer in importers:
             # Import and process the file.
             try:
@@ -185,7 +186,7 @@ def extract(importer_config,
                     existing_entries=entries,
                     min_date=mindate,
                     allow_none_for_tags_and_links=allow_none_for_tags_and_links)
-                new_entries_list.append(new_entries)
+                new_entries_list.append((filename, new_entries))
             except Exception as exc:
                 logging.error("Importer %s.extract() raised an unexpected error: %s",
                               importer.name(), exc)
@@ -199,11 +200,15 @@ def extract(importer_config,
     new_entries_list = find_duplicate_entries(
         new_entries_list, entries)
     assert isinstance(new_entries_list, list)
-    assert all(isinstance(new_entries, list) for new_entries in new_entries_list)
+    assert all(isinstance(new_entries, tuple) for new_entries in new_entries_list)
+    assert all(isinstance(new_entries[0], str) for new_entries in new_entries_list)
+    assert all(isinstance(new_entries[1], list) for new_entries in new_entries_list)
 
     # Print out the results.
     output.write(HEADER)
-    for new_entries in new_entries_list:
+    for key, new_entries in new_entries_list:
+        output.write(identify.SECTION.format(key))
+        output.write('\n')
         if not ascending:
             new_entries.reverse()
         print_extracted_entries(importer, new_entries, output)
