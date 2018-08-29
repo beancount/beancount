@@ -4672,6 +4672,25 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - Three interesting ideas for extending booking further here:
+    https://groups.google.com/d/msgid/beancount/9c9dcc5f-72bf-44b2-aaf9-4e0c07cbff77%40googlegroups.com?utm_medium=email&utm_source=footer
+
+    1. When you apply the partial booking specification, it could be applied
+       against the booked legs of the transaction in order to select cost bases.
+       I'm not sure if this generalizes.
+
+        "Finally, the partial specification, say, just specifying the date, is
+         used to narrow down the lot against the list of possible lots in the
+         Inventory of the account before applying the transaction, but NOT against
+         the list of other postings. That would be an interesting power to add to
+         the booking system, as it could disambiguate this case."
+
+    2. One could assume a single currency group in each transaction when there's
+       at least one posting at cost.
+
+    3. One could also assume that in that account a commodity is never priced in
+       terms of two different currencies.
+
   - Allow plugins to run before and after booking; this would make it possible
     for plugins to run on CostSpec and fill in more information. In fact, maybe
     the booking process itself could be moved to a plugin. This coudl be a
