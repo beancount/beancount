@@ -4,6 +4,12 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2018-08-30
+
+  - Made assertions on entries off of the TestCase class, as free functions (so
+    that they can be used in another project).
+
+
 2018-08-26
 
   - Fixed tests for pipeline running pytest (somehow the curses functions fail,
