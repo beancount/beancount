@@ -74,6 +74,7 @@ def assertEqualEntries(expected_entries, actual_entries, failfunc=DEFAULT_FAILFU
         list is used.
       actual_entries: Same treatment as expected_entries, the other list of
         directives to compare to.
+      failfunc: A function to call on failure.
     Raises:
       AssertionError: If the exception fails.
     """
@@ -108,6 +109,7 @@ def assertIncludesEntries(subset_entries, entries, failfunc=DEFAULT_FAILFUNC):
         list is used.
       entries: Same treatment as subset_entries, the other list of
         directives to compare to.
+      failfunc: A function to call on failure.
     Raises:
       AssertionError: If the exception fails.
     """
@@ -135,6 +137,7 @@ def assertExcludesEntries(subset_entries, entries, failfunc=DEFAULT_FAILFUNC):
         list is used.
       entries: Same treatment as subset_entries, the other list of
         directives to compare to.
+      failfunc: A function to call on failure.
     Raises:
       AssertionError: If the exception fails.
     """
