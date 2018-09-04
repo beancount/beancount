@@ -4,13 +4,19 @@ Tests for cmptest base test class.
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import textwrap
+import datetime
 import re
+import textwrap
 import unittest
 
-from beancount.parser import parser
-from beancount.parser import cmptest
+from beancount.core import amount
+from beancount.core import data
+from beancount.core import position
+from beancount.core.number import MISSING
+from beancount.core.number import ZERO
 from beancount.parser import booking
+from beancount.parser import cmptest
+from beancount.parser import parser
 
 
 class TestCompareTestFunctions(unittest.TestCase):
@@ -25,6 +31,42 @@ class TestCompareTestFunctions(unittest.TestCase):
 
             """)
         self.assertRegex(str(assctxt.exception), "may not use interpolation")
+
+    def test_local_booking(self):
+        fileloc = data.new_metadata('<ameritrade>', 0)
+        date = datetime.date.today()
+        txn = data.Transaction(
+            fileloc, date, '*', None, "Narration", data.EMPTY_SET, data.EMPTY_SET, [
+                data.Posting(
+                    'Assets:Something',
+                    MISSING,
+                    position.CostSpec(MISSING, None, MISSING, MISSING, MISSING, MISSING),
+                    MISSING, None, None)])
+        expected_txn = data.Transaction(
+            fileloc, date, '*', None, "Narration", data.EMPTY_SET, data.EMPTY_SET, [
+                data.Posting(
+                    'Assets:Something', None,
+                    position.Cost(None, None, None, None),
+                    None, None, None)])
+        actual_txn = cmptest._local_booking(txn)
+        self.assertEqual(actual_txn, expected_txn)
+
+        txn = data.Transaction(
+            fileloc, date, '*', None, "Narration", data.EMPTY_SET, data.EMPTY_SET, [
+                data.Posting(
+                    'Assets:Something',
+                    amount.Amount(MISSING, MISSING),
+                    position.CostSpec(MISSING, None, MISSING, MISSING, MISSING, MISSING),
+                    amount.Amount(MISSING, MISSING), None, None)])
+        expected_txn = data.Transaction(
+            fileloc, date, '*', None, "Narration", data.EMPTY_SET, data.EMPTY_SET, [
+                data.Posting(
+                    'Assets:Something',
+                    amount.Amount(None, None),
+                    position.Cost(None, None, None, None),
+                    amount.Amount(None, None), None, None)])
+        actual_txn = cmptest._local_booking(txn)
+        self.assertEqual(actual_txn, expected_txn)
 
 
 class TestTestCase(cmptest.TestCase):

@@ -4,6 +4,13 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2018-09-03
+
+  - Added a parameter to the cmptest assertions to disable real booking and
+    allow a weak local form of booking conversion that allows interpolation.
+    (I'm using this in another project to assert some incomplete transactions.)
+
+
 2018-08-30
 
   - Made assertions on entries off of the TestCase class, as free functions (so
