@@ -309,7 +309,7 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
         return entries
 
 
-def normalize_config(config, head, dialect):
+def normalize_config(config, head, dialect='excel'):
     """Using the header line, convert the configuration field name lookups to int indexes.
 
     Args:
