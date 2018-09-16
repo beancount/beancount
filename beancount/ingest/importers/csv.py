@@ -163,9 +163,9 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
 
     def file_date(self, file):
         "Get the maximum date from the file."
-        iconfig, has_header = normalize_config(self.config, file.head())
+        iconfig, has_header = normalize_config(self.config, file.head(), self.csv_dialect)
         if Col.DATE in iconfig:
-            reader = iter(csv.reader(open(file.name)))
+            reader = iter(csv.reader(open(file.name), dialect=self.csv_dialect))
             for _ in range(self.skip_lines):
                 next(reader)
             if has_header:
@@ -186,7 +186,7 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
         entries = []
 
         # Normalize the configuration to fetch by index.
-        iconfig, has_header = normalize_config(self.config, file.head())
+        iconfig, has_header = normalize_config(self.config, file.head(), self.csv_dialect)
 
         reader = iter(csv.reader(open(file.name), dialect=self.csv_dialect))
 
@@ -309,12 +309,13 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
         return entries
 
 
-def normalize_config(config, head):
+def normalize_config(config, head, dialect):
     """Using the header line, convert the configuration field name lookups to int indexes.
 
     Args:
       config: A dict of Col types to string or indexes.
       head: A string, some decent number of bytes of the head of the file.
+      dialect: A dialect definition to parse the header
     Returns:
       A pair of
         A dict of Col types to integer indexes of the fields, and
@@ -325,7 +326,7 @@ def normalize_config(config, head):
     """
     has_header = csv.Sniffer().has_header(head)
     if has_header:
-        header = next(csv.reader(io.StringIO(head)))
+        header = next(csv.reader(io.StringIO(head), dialect=dialect))
         field_map = {field_name.strip(): index
                      for index, field_name in enumerate(header)}
         index_config = {}
