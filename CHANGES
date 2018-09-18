@@ -4,6 +4,11 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2018-09-18
+
+  - Added TRUNCATE() function to SQL shell for Vikas Rawal.
+
+
 2018-09-03
 
   - Added a parameter to the cmptest assertions to disable real booking and

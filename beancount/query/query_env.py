@@ -256,6 +256,19 @@ class Leaf(query_compile.EvalFunction):
         args = self.eval_args(context)
         return account.leaf(args[0])
 
+class Truncate(query_compile.EvalFunction):
+    "Truncate the length of an account name."
+    __intypes__ = [str, int]
+
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        assert args[1] > 0
+        comps = account.split(args[0])
+        return account.sep.join(comps[:args[1]])
+
 class Grep(query_compile.EvalFunction):
     "Match a group against a string and return only the matched portion."
     __intypes__ = [str, str]
@@ -773,6 +786,7 @@ SIMPLE_FUNCTIONS = {
     'root'                                               : Root,
     'parent'                                             : Parent,
     'leaf'                                               : Leaf,
+    'truncate'                                           : Truncate,
     'grep'                                               : Grep,
     'open_date'                                          : OpenDate,
     'close_date'                                         : CloseDate,
