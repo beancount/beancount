@@ -46,13 +46,13 @@ def validate_config(config, schema, importer):
 # context, making it easier to have symbols in account names.
 
 
-class ConfigBase(importer.ImporterProtocol):
-    
+class ConfigMixin(importer.ImporterProtocol):
+
     # Override this with the configuration.
     CONFIG_SCHEMA = None
 
     def __init__(self, **kwds):
-        """Pull 'config' from kwds.""" 
+        """Pull 'config' from kwds."""
 
         config = kwds.pop('config', None)
         schema = self.CONFIG_SCHEMA
@@ -62,5 +62,5 @@ class ConfigBase(importer.ImporterProtocol):
             self.config = validate_config(config, config, self)
         else:
             self.config = None
-            
+
         super().__init__(**kwds)

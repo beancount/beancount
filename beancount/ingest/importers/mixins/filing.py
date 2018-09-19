@@ -12,21 +12,22 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import logging
 import collections
 import re
+from os import path
 from typing import List, Tuple
 
 from beancount.core import account
 from beancount.ingest import importer
 
 
-class FilingBase(importer.ImporterProtocol):
-    
+class FilingMixin(importer.ImporterProtocol):
+
     def __init__(self, **kwds):
-        """Pull 'filing' and 'basename' from kwds.""" 
+        """Pull 'filing' and 'prefix' from kwds."""
 
         self.filing_account = kwds.pop('filing', None)
         assert account.is_valid(self.filing_account)
 
-        self.basename = kwds.pop('basename', None)
+        self.prefix = kwds.pop('prefix', None)
         assert account.is_valid(self.filing_account)
 
         super().__init__(**kwds)
@@ -40,6 +41,9 @@ class FilingBase(importer.ImporterProtocol):
 
     def file_name(self, file):
         """Return the optional renamed account filename."""
-        return (self.basename + path.splitext(file.name)[1]
-                if self.basename else
-                super().file_name(file))
+        supername = super().file_name(file)
+        if not self.prefix:
+            return supername
+        else:
+            return '.'.join(filter(None, [self.prefix,
+                                          supername or path.basename(file.name)]))
