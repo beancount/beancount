@@ -39,7 +39,7 @@ def identify(remap, converter, file):
     if remap.get('content', None):
         # If this is a text file, read the whole thing in memory.
         text = file.convert(converter or cache.contents)
-        if not all(regexp.search(text, re.DOTALL)
+        if not all(regexp.search(text)
                    for regexp in remap['content']):
             return False
 
