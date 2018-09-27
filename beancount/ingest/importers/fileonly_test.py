@@ -12,10 +12,10 @@ from beancount.utils import test_utils
 class TestFileOnly(unittest.TestCase):
 
     def test_constructors(self):
-        fileonly.Importer([r'Filename: .*\.csv',
-                           r'MimeType: text/plain'],
-                          'Assets:BofA:Checking',
-                          basename='bofa')
+        fileonly.Importer(matchers=[('filename', '.csv'),
+                                    ('mime', 'text/plain')],
+                          filing='Assets:BofA:Checking',
+                          prefix='bofa')
 
     @unittest.skipIf(not file_type.magic, 'python-magic is not installed')
     @test_utils.docfile
@@ -26,12 +26,12 @@ class TestFileOnly(unittest.TestCase):
         2014-05-08,BUY,12040838,BOUGHT +HOOL 121 @79.11,7.95,-9580.26,16094.37
         """
         importer = fileonly.Importer(
-            ['Filename: .*te?mp.*',
-             'MimeType: text/',
-             'Contents:\n.*DATE,TYPE,REF #,DESCRIPTION,FEES,AMOUNT'],
-            'Assets:BofA:Checking',
-            basename='bofa')
+            matchers=[('filename', 'te?mp'),
+                      ('mime', 'text/'),
+                      ('content', 'DATE,TYPE,REF #,DESCRIPTION,FEES,AMOUNT')],
+            filing='Assets:BofA:Checking',
+            prefix='bofa')
         file = cache._FileMemo(filename)
         self.assertTrue(importer.identify(file))
 
-        self.assertEqual('bofa', importer.file_name(file))
+        assert importer.file_name(file).startswith('bofa.')
