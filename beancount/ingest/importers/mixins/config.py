@@ -49,13 +49,13 @@ def validate_config(config, schema, importer):
 class ConfigMixin(importer.ImporterProtocol):
 
     # Override this with the configuration.
-    CONFIG_SCHEMA = None
+    REQUIRED_CONFIG = None
 
     def __init__(self, **kwds):
         """Pull 'config' from kwds."""
 
         config = kwds.pop('config', None)
-        schema = self.CONFIG_SCHEMA
+        schema = self.REQUIRED_CONFIG
         if config or schema:
             assert config is not None
             assert schema is not None

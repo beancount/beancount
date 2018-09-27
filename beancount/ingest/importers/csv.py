@@ -12,16 +12,14 @@ from os import path
 from typing import Union, Dict, Callable, Optional
 
 import dateutil.parser
+
+from beancount.core import data
+from beancount.core.amount import Amount
 from beancount.core.number import D
 from beancount.core.number import ZERO
-from beancount.core.amount import Amount
-from beancount.utils.date_utils import parse_date_liberally
-from beancount.core import data
-
-# from beancount.ingest import importer
-# from beancount.ingest.importers import regexp
-from beancount.ingest.importers.mixins import identifier
 from beancount.ingest.importers.mixins import filing
+from beancount.ingest.importers.mixins import identifier
+from beancount.utils.date_utils import parse_date_liberally
 
 
 # The set of interpretable columns.
