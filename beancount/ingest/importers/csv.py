@@ -97,7 +97,8 @@ def get_amounts(iconfig, row, allow_zero_amounts=False):
 class Importer(identifier.IdentifyMixin, filing.FilingMixin):
     """Importer for CSV files."""
 
-    def __init__(self, config, account, currency, regexps,
+    def __init__(self, config, account, currency,
+                 regexps=None,
                  skip_lines: int=0,
                  last4_map: Optional[Dict]=None,
                  categorizer: Optional[Callable]=None,
@@ -112,7 +113,7 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
         Args:
           config: A dict of Col enum types to the names or indexes of the columns.
           account: An account string, the account to post this to.
-          currency: A currency string, the currenty of this account.
+          currency: A currency string, the currency of this account.
           regexps: A list of regular expression strings.
           skip_lines: Skip first x (garbage) lines of file.
           last4_map: A dict that maps last 4 digits of the card to a friendly string.
@@ -124,9 +125,6 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
           csv_dialect: A `csv` dialect given either as string or as instance or
             subclass of `csv.Dialect`.
         """
-        #assert isinstance(regexps, list)
-        #regexp.RegexpImporterMixin.__init__(self, regexps)
-
         assert isinstance(config, dict)
         self.config = config
 
@@ -153,8 +151,9 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
             regexps = [regexps]
         matchers = kwds.setdefault('matchers', [])
         matchers.append(('mime', 'text/csv'))
-        for regexp in regexps:
-            matchers.append(('content', regexp))
+        if regexps:
+            for regexp in regexps:
+                matchers.append(('content', regexp))
 
         super().__init__(**kwds)
 
@@ -271,7 +270,7 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
                     data.Posting(account, units, None, None, None, None))
 
             # Attach the other posting(s) to the transaction.
-            if isinstance(self.categorizer, collections.Callable):
+            if isinstance(self.categorizer, collections.abc.Callable):
                 txn = self.categorizer(txn)
 
             # Add the transaction to the output list
