@@ -4,6 +4,11 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2018-10-04
+
+  - Minor bug fix for beancount.prices.price on null result.
+
+
 2018-09-19
 
   - Removed TRUNCATE(), after realizing ROOT() can already do the same thing.
