@@ -101,7 +101,7 @@ def fetch_cached_price(source, symbol, date):
                       source.get_historical_price(symbol, time))
 
             # Make sure the timezone is UTC and make naive before serialization.
-            if result.time is not None:
+            if result and result.time is not None:
                 time_utc = result.time.astimezone(tz.tzutc())
                 time_naive = time_utc.replace(tzinfo=None)
                 result_naive = result._replace(time=time_naive)

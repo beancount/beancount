@@ -98,7 +98,7 @@ def is_root_account(account_name, account_types=None):
         return account_name in account_types
     else:
         return (account_name and
-                bool(re.match('([A-Z][A-Za-z0-9\-]+)$', account_name)))
+                bool(re.match(r'([A-Z][A-Za-z0-9\-]+)$', account_name)))
 
 
 
