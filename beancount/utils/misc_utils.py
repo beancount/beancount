@@ -269,6 +269,7 @@ def compute_unique_clean_ids(strings):
 
     return idmap
 
+
 def escape_string(string):
     """Escape quotes and backslashes in payee and narration.
 
@@ -277,7 +278,6 @@ def escape_string(string):
     Returns.
       The input string, with offending characters replaced.
     """
-
     return string.replace('\\', r'\\')\
                  .replace('"', r'\"')
 

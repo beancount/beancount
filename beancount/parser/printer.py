@@ -132,7 +132,7 @@ class EntryPrinter:
             if key not in self.META_IGNORE:
                 value_str = None
                 if isinstance(value, str):
-                    value_str = '"{}"'.format(value)
+                    value_str = '"{}"'.format(misc_utils.escape_string(value))
                 elif isinstance(value, (Decimal, datetime.date, amount.Amount)):
                     value_str = str(value)
                 elif isinstance(value, bool):

@@ -6,6 +6,8 @@ Note: This file contains a list changes in the 'default' branch.
 
 2018-10-04
 
+  - Fixed #323: Escape strings in printer.
+
   - Minor bug fix for beancount.prices.price on null result.
 
 
