@@ -3,7 +3,7 @@
 This is v2, a complete rewrite of Beancount v1, simplified and improved
 drastically.
 """
-__copyright__ = "Copyright (C) 2013-2014, 2016  Martin Blais"
+__copyright__ = "Copyright (C) 2013-2014, 2016-2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
 
@@ -13,4 +13,4 @@ if (sys.version_info.major, sys.version_info.minor) < (3, 3):
     raise ImportError("Python 3.3 or above is required")
 
 
-__version__ = '2.1.3-devel'
+__version__ = '2.2.0-devel'
