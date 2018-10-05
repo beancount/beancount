@@ -33,7 +33,7 @@ class TestCompareTestFunctions(unittest.TestCase):
         self.assertRegex(str(assctxt.exception), "may not use interpolation")
 
     def test_local_booking(self):
-        fileloc = data.new_metadata('<ameritrade>', 0)
+        fileloc = data.new_metadata('<local>', 0)
         date = datetime.date.today()
         txn = data.Transaction(
             fileloc, date, '*', None, "Narration", data.EMPTY_SET, data.EMPTY_SET, [
