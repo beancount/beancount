@@ -12,13 +12,14 @@ from os import path
 from typing import Union, Dict, Callable, Optional
 
 import dateutil.parser
+
+from beancount.core import data
+from beancount.core.amount import Amount
 from beancount.core.number import D
 from beancount.core.number import ZERO
-from beancount.core.amount import Amount
+from beancount.ingest.importers.mixins import filing
+from beancount.ingest.importers.mixins import identifier
 from beancount.utils.date_utils import parse_date_liberally
-from beancount.core import data
-from beancount.ingest import importer
-from beancount.ingest.importers import regexp
 
 
 # The set of interpretable columns.
@@ -93,10 +94,11 @@ def get_amounts(iconfig, row, allow_zero_amounts=False):
             D(credit) if credit else None)
 
 
-class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
+class Importer(identifier.IdentifyMixin, filing.FilingMixin):
     """Importer for CSV files."""
 
-    def __init__(self, config, account, currency, regexps,
+    def __init__(self, config, account, currency,
+                 regexps=None,
                  skip_lines: int=0,
                  last4_map: Optional[Dict]=None,
                  categorizer: Optional[Callable]=None,
@@ -104,13 +106,14 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
                  debug: bool=False,
                  csv_dialect: Union[str, csv.Dialect] ='excel',
                  dateutil_kwds: Optional[Dict]=None,
-                 narration_sep: str='; '):
+                 narration_sep: str='; ',
+                 **kwds):
         """Constructor.
 
         Args:
           config: A dict of Col enum types to the names or indexes of the columns.
           account: An account string, the account to post this to.
-          currency: A currency string, the currenty of this account.
+          currency: A currency string, the currency of this account.
           regexps: A list of regular expression strings.
           skip_lines: Skip first x (garbage) lines of file.
           last4_map: A dict that maps last 4 digits of the card to a friendly string.
@@ -122,15 +125,9 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
           csv_dialect: A `csv` dialect given either as string or as instance or
             subclass of `csv.Dialect`.
         """
-        if isinstance(regexps, str):
-            regexps = [regexps]
-        assert isinstance(regexps, list)
-        regexp.RegexpImporterMixin.__init__(self, regexps)
-
         assert isinstance(config, dict)
         self.config = config
 
-        self.account = account
         self.currency = currency
         assert isinstance(skip_lines, int)
         self.skip_lines = skip_lines
@@ -140,26 +137,25 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
         self.csv_dialect = csv_dialect
         self.narration_sep = narration_sep
 
-        # FIXME: This probably belongs to a mixin, not here.
-        self.institution = institution
         self.categorizer = categorizer
 
-    def name(self):
-        return '{}: "{}"'.format(super().name(), self.file_account(None))
+        # Prepare kwds for filing mixin.
+        kwds['filing'] = account
+        if institution:
+            prefix = kwds.get('prefix', None)
+            assert prefix is None
+            kwds['prefix'] = institution
 
-    def identify(self, file):
-        if file.mimetype() != 'text/csv':
-            return False
-        return super().identify(file)
+        # Prepare kwds for identifier mixin.
+        if isinstance(regexps, str):
+            regexps = [regexps]
+        matchers = kwds.setdefault('matchers', [])
+        matchers.append(('mime', 'text/csv'))
+        if regexps:
+            for regexp in regexps:
+                matchers.append(('content', regexp))
 
-    def file_account(self, _):
-        return self.account
-
-    def file_name(self, file):
-        filename = path.splitext(path.basename(file.name))[0]
-        if self.institution:
-            filename = '{}.{}'.format(self.institution, filename)
-        return '{}.csv'.format(filename)
+        super().__init__(**kwds)
 
     def file_date(self, file):
         "Get the maximum date from the file."
@@ -183,6 +179,7 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
             return max_date
 
     def extract(self, file, existing_entries=None):
+        account = self.file_account(file)
         entries = []
 
         # Normalize the configuration to fetch by index.
@@ -270,10 +267,10 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
                     continue
                 units = Amount(amount, self.currency)
                 txn.postings.append(
-                    data.Posting(self.account, units, None, None, None, None))
+                    data.Posting(account, units, None, None, None, None))
 
             # Attach the other posting(s) to the transaction.
-            if isinstance(self.categorizer, collections.Callable):
+            if isinstance(self.categorizer, collections.abc.Callable):
                 txn = self.categorizer(txn)
 
             # Add the transaction to the output list
@@ -299,7 +296,7 @@ class Importer(regexp.RegexpImporterMixin, importer.ImporterProtocol):
                 meta = data.new_metadata(file.name, index)
                 entries.append(
                     data.Balance(meta, date,
-                                 self.account, Amount(balance, self.currency),
+                                 account, Amount(balance, self.currency),
                                  None, None))
 
         # Remove the 'balance' metadta.

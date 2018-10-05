@@ -4,6 +4,22 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2018-10-04
+
+  - Merged new_ingest_mixins: Added new implementations of mixins for ingestion:
+
+    * beancount.ingest.importers.mixins.identifier which implements identify().
+    * beancount.ingest.importers.mixins.filing which implements file_account()
+      and file_name().
+    * beancount.ingest.importers.mixins.config which implement a simple schema
+      with a configuration.
+
+    These new mixins are intended to be more independent and more easily
+    composable than the older ones. The beancount.ingest.importers.regexp has
+    been removed. If you need it in interim, I made a copy under
+    experiments/ingest/regexp.py.
+
+
 * Version: 2.1.3
 
 2018-10-04
