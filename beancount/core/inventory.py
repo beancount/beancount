@@ -456,7 +456,7 @@ class Inventory(dict):
         # We need to split the comma-separated positions but ignore commas
         # occurring within a {...cost...} specification.
         position_strs = re.split(
-            '([-+]?[0-9,.]+\s+[A-Z]+\s*(?:{[^}]*})?)\s*,?\s*', string)[1::2]
+            r'([-+]?[0-9,.]+\s+[A-Z]+\s*(?:{[^}]*})?)\s*,?\s*', string)[1::2]
         for position_str in position_strs:
             new_inventory.add_position(position_from_string(position_str))
         return new_inventory
