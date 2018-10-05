@@ -4,6 +4,8 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+* Version: 2.1.3
+
 2018-10-04
 
   - Fixed #323: Escape strings in printer.
@@ -211,9 +213,6 @@ Note: This file contains a list changes in the 'default' branch.
   - Render tags and links on Document directive.
 
   - Minor bug fix: don't fail on rendering a MISSING instnace.
-
-
-* Version: 2.1.3-devel
 
   - In 'divert_expenses' plugin, allow limiting diversions to one posting only.
 
@@ -461,7 +460,7 @@ Note: This file contains a list changes in the 'default' branch.
     first place.)
 
 
-* Version 2.0.0
+* Version: 2.0.0
 
 2018-03-27
 
