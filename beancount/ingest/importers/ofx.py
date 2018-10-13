@@ -66,8 +66,9 @@ class Importer(importer.ImporterProtocol):
 
     def identify(self, file):
         # Match for a compatible MIME type.
-        if (file.mimetype() != 'application/x-ofx' and
-            file.mimetype() != 'application/vnd.intu.qbo'):
+        if file.mimetype() not in {'application/x-ofx',
+                                   'application/vnd.intu.qbo',
+                                   'application/vnd.intu.qfx'}:
             return False
 
         # Match the account id.

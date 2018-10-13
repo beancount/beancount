@@ -4,6 +4,11 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2018-10-13
+
+  - Fixed #158: Missing MIME type for QFX files.
+
+
 2018-10-04
 
   - Merged new_ingest_mixins: Added new implementations of mixins for ingestion:
