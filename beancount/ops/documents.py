@@ -116,7 +116,7 @@ def find_documents(directory, input_filename, accounts_only=None, strict=False):
 
         # Look for files that have a dated filename.
         for filename in files:
-            match = re.match('(\d\d\d\d)-(\d\d)-(\d\d).(.*)', filename)
+            match = re.match(r'(\d\d\d\d)-(\d\d)-(\d\d).(.*)', filename)
             if not match:
                 continue
 
