@@ -246,6 +246,7 @@ setup(
         'beancount.web',
         'beancount.ingest',
         'beancount.ingest.importers',
+        'beancount.ingest.importers.mixins',
         'beancount.utils',
         'beancount.tools',
     ],
