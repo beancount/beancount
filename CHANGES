@@ -4,6 +4,12 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2018-10-25
+
+  - Fixed #302: beancount.el does not fontify account names with single letter
+    components (based on bug report by arianaut@).
+
+
 2018-10-13
 
   - Fixed #158: Missing MIME type for QFX files.
