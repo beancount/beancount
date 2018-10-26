@@ -67,7 +67,6 @@ class TestParseArguments(scripts_utils.TestScriptsBase):
 
 
 INGEST_MAIN_WITH_DUPS = """\
-#from beancount.ingest import scripts_utils_test
 def find_duplicates(new_entries_list, existing_entries):
     print('{60248d66-f3f2-41c2-96af-039341eafd25}')
     return new_entries_list
