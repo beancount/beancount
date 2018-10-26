@@ -29,24 +29,31 @@ DESCRIPTION = ("Identify, extract or file away data downloaded from "
 def ingest(importers_list, detect_duplicates_func=None):
     """Driver function that calls all the ingestion tools.
 
-    Put this at the end of your importer configuration to make your import
-    script; this should be its main function.. This more explicit way of
-    invoking the ingestion is now the preferred way to invoke the various tools,
-    and replaces calling the bean-identify, bean-extract, bean-file tools with a
-    --config argument. When you call this function it will parse the arguments,
-    expecting a subcommand ('identify', 'extract' or 'file') and corresponding
+    Put a call to this function at the end of your importer configuration to
+    make your import script; this should be its main function, like this:
+
+      from beancount.ingest.scripts_utils import ingest
+      my_importers = [ ... ]
+      ingest(my_importers)
+
+    This more explicit way of invoking the ingestion is now the preferred way to
+    invoke the various tools, and replaces calling the bean-identify,
+    bean-extract, bean-file tools with a --config argument. When you call the
+    import script itself (as as program) it will parse the arguments, expecting
+    a subcommand ('identify', 'extract' or 'file') and corresponding
     subcommand-specific arguments.
 
     Here you can override some importer values, such as installing a custom
-    duplicate finding hook. This is optional and if it is not present, a call to
-    it is inserted implicitly. Future configurable customization of the
-    ingestion process should be implemented by inserting new arguments to this
-    function.
+    duplicate finding hook, and eventually more. Note that this newer invocation
+    method is optional and if it is not present, a call to ingest() is generated
+    implicitly, and it functions as it used to. Future configurable
+    customization of the ingestion process will be implemented by inserting new
+    arguments to this function, this is the motivation behind doing this.
 
-    Note that invocation via the tools is still supported, and calling ingest()
-    explicitly from your import configuration file will not break these tools if
-    you invoke them on it; the values you provide to this function will be used
-    by those tools.
+    Note that invocation by the three bean-* ingestion tools is still supported,
+    and calling ingest() explicitly from your import configuration file will not
+    break these tools either, if you invoke them on it; the values you provide
+    to this function will be used by those tools.
 
     Args:
       importers_list: A list of importer instances. This is used as a
@@ -57,17 +64,22 @@ def ingest(importers_list, detect_duplicates_func=None):
         default implementation for this.
     """
     if ingest_args is not None:
+        # The script has been called from one of the bean-* ingestion tools.
+        # 'ingest_args' is only set when we're being invoked from one of the
+        # bean-xxx tools (see below).
+
         # Mark this function as called, so that if it is called from an import
         # triggered by one of the ingestion tools, it won't be called again
         # afterwards.
-        global ingest_is_called
-        ingest_is_called = True
+        global ingest_was_called
+        ingest_was_called = True
 
-        # 'ingest_args' is set when we're being invokved from one of the
-        # bean-xxx tools. Use those args rather than to try to parse the
-        # command-line arguments from a naked ingest() call as a script.
+        # Use those args rather than to try to parse the command-line arguments
+        # from a naked ingest() call as a script. {39c7af4f6af5}
         args, parser = ingest_args
     else:
+        # The script is called directly. This is the main program of the import
+        # script itself. This is the new invocation method.
         parser = version.ArgumentParser(description=DESCRIPTION)
 
         # Use required on subparsers.
@@ -99,40 +111,25 @@ def ingest(importers_list, detect_duplicates_func=None):
             if not hasattr(args, 'command'):
                 parser.error("Subcommand is required.")
 
-    args.command(args, parser, importers_list, args.downloads)
+    abs_downloads = list(map(path.abspath, args.downloads))
+    args.command(args, parser, importers_list, abs_downloads,
+                 detect_duplicates_func=detect_duplicates_func)
     return 0
 
 
 # A global sentinel to mark whether ingest() has been called at least once.
-ingest_is_called = False
+ingest_was_called = False
 
 # A global value of program args for the ingest subcommand. If the command is
-# being trampolined, and the arguments from the bean-xxx tool have already been
-# parsed, save them here for reuse by ingest() instead of attempting to convert
-# the per-command arguments into generic ingest() arguments (which is impossible
-# to do without parsing in the first place due to the support for --argument
-# value).
+# being trampolined (that is, called by one of the bean-* ingestion tools), and
+# the arguments from the bean-xxx tool have already been parsed, save them here
+# for reuse by ingest() instead of attempting to convert the per-command
+# arguments into generic ingest() arguments (which is impossible to do without
+# parsing in the first place due to the support for --argument value).
 ingest_args = None
 
 
-def trampoline_to_ingest(module):
-    """Parse arguments for bean tool, import config script and ingest.
-
-    Args:
-      module: One of the identify, extract or file module objects.
-    Returns:
-      An execution return code.
-    """
-    # Disable debugging logging which is turned on by default in chardet.
-    logging.getLogger('chardet.charsetprober').setLevel(logging.INFO)
-    logging.getLogger('chardet.universaldetector').setLevel(logging.INFO)
-
-    parser = create_arguments_parser(module.DESCRIPTION, module.run)
-    module.add_arguments(parser)
-    return run_import_script_and_ingest(parser)
-
-
-def create_arguments_parser(description: str, run_func: callable):
+def create_legacy_arguments_parser(description: str, run_func: callable):
     """Create an arguments parser for all the ingestion bean-tools.
 
     Args:
@@ -157,8 +154,31 @@ def create_arguments_parser(description: str, run_func: callable):
     return parser
 
 
+def trampoline_to_ingest(module):
+    """Parse arguments for bean tool, import config script and ingest.
+
+    This function is called by the three bean-* tools to support the older
+    import files, which only required a CONFIG object to be defined in them.
+
+    Args:
+      module: One of the identify, extract or file module objects.
+    Returns:
+      An execution return code.
+    """
+    # Disable debugging logging which is turned on by default in chardet.
+    logging.getLogger('chardet.charsetprober').setLevel(logging.INFO)
+    logging.getLogger('chardet.universaldetector').setLevel(logging.INFO)
+
+    parser = create_legacy_arguments_parser(module.DESCRIPTION, module.run)
+    module.add_arguments(parser)
+    return run_import_script_and_ingest(parser)
+
+
 def run_import_script_and_ingest(parser, argv=None, importers_attr_name='CONFIG'):
     """Run the import script and optionally call ingest().
+
+    This path is only called when trampolined by one of the bean-* ingestion
+    tools.
 
     Args:
       parser: The parser instance, used only to report errors.
@@ -180,27 +200,28 @@ def run_import_script_and_ingest(parser, argv=None, importers_attr_name='CONFIG'
 
     # Reset the state of ingest() being called (for unit tests, which use the
     # same runtime with run_with_args).
-    global ingest_is_called
-    ingest_is_called = False
+    global ingest_was_called
+    ingest_was_called = False
 
-    # Set the parsed arguments.
+    # Save the arguments parsed from the command-line as default for
+    # {39c7af4f6af5}.
     global ingest_args
     ingest_args = args, parser
 
     # Evaluate the importer script/module.
     mod = runpy.run_path(args.config)
 
-    # If the importer script has already called ingest() within it, don't call
-    # it again. This allows the use to insert an explicit call to ingest() but
-    # still run bean-XXX tools on the file.
-    if ingest_is_called:
+    # If the importer script has already called ingest() within itself, don't
+    # call it again. We're done. This allows the use to insert an explicit call
+    # to ingest() while still running the bean-* ingestion tools on the file.
+    if ingest_was_called:
         return 0
     else:
-        # Otherwise, we now run the ingestion by ourselves calling ingest.
+        # ingest() hasn't been called by the script so we assume it isn't
+        # present in it. So we now run the ingestion by ourselves here, without
+        # specifying any of the newer optional arguments.
         importers_list = mod[importers_attr_name]
-        abs_downloads = list(map(path.abspath, args.downloads))
-        return ingest(importers_list, abs_downloads)
-
+        return ingest(importers_list)
 
 
 class _TestFileImporter(importer.ImporterProtocol):
