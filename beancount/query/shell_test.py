@@ -106,7 +106,7 @@ class TestUseCases(unittest.TestCase):
         BALANCES AT cost
         FROM OPEN ON 2014-01-01 CLOSE ON 2015-01-01 CLEAR;
         """
-        self.assertRegex(output, 'Assets:US:ETrade:Cash * \d+\.\d+ USD')
+        self.assertRegex(output, r'Assets:US:ETrade:Cash * \d+\.\d+ USD')
 
     @runshell
     def test_income_statement(self, output):

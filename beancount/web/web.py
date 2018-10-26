@@ -1,5 +1,4 @@
-"""
-Web server for Beancount ledgers.
+"""Web server for Beancount ledgers.
 This uses the Bottle single-file micro web framework (with no plugins).
 """
 __copyright__ = "Copyright (C) 2013-2016  Martin Blais"
@@ -799,8 +798,8 @@ def documents():
 
 
 @viewapp.route('/prices'
-               '/<base:re:[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]>'
-               '/<quote:re:[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]>', name='prices')
+               r'/<base:re:[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]>'
+               r'/<quote:re:[A-Z][A-Z0-9\'\.\_\-]{0,22}[A-Z0-9]>', name='prices')
 def prices_values(base=None, quote=None):
     "Render all the values for a particular price pair."
     html_table = render_report(price_reports.CommodityPricesReport, request.view.entries,
@@ -822,7 +821,7 @@ def commodities():
         contents=html_table)
 
 
-@viewapp.route('/event/<event:re:([A-Za-z0-9\-_/.]+)?>', name='event')
+@viewapp.route(r'/event/<event:re:([A-Za-z0-9\-_/.]+)?>', name='event')
 def event(event=None):
     "Render all values of a particular event."
     if not event:
