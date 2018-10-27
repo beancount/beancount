@@ -112,7 +112,7 @@
     ("[0-9][0-9][0-9][0-9][-/][0-9][0-9][-/][0-9][0-9]" . font-lock-constant-face)
 
     ;; Account
-    ("\\([A-Z][A-Za-z0-9\-]+:\\)+\\([A-Z][A-Za-z0-9\-]*\\)" . font-lock-builtin-face)
+    ("\\([A-Z][A-Za-z0-9\-]+:\\)+\\([A-Z0-9][A-Za-z0-9\-]*\\)" . font-lock-builtin-face)
 
     ;; Txn Flags
     ("! " . font-lock-warning-face)
