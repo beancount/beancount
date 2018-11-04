@@ -186,9 +186,8 @@ class TestPrintExtractedEntries(scripts_utils.TestScriptsBase, unittest.TestCase
 
         entries[-2].meta[extract.DUPLICATE_META] = True
 
-        importer = TestPrintExtractedEntries.ExtractTestImporter()
         oss = io.StringIO()
-        extract.print_extracted_entries(importer, entries, oss)
+        extract.print_extracted_entries(entries, oss)
 
         self.assertEqual(textwrap.dedent("""\
 

@@ -117,11 +117,10 @@ def find_duplicate_entries(new_entries_list, existing_entries):
     return mod_entries_list
 
 
-def print_extracted_entries(importer, entries, file):
-    """Print the entries for the given importer.
+def print_extracted_entries(entries, file):
+    """Print a list of entries.
 
     Args:
-      importer: An importer object that matched the file.
       entries: A list of extracted entries.
       file: A file object to write to.
     """
@@ -211,7 +210,7 @@ def extract(importer_config,
         output.write('\n')
         if not ascending:
             new_entries.reverse()
-        print_extracted_entries(importer, new_entries, output)
+        print_extracted_entries(new_entries, output)
 
 
 DESCRIPTION = "Extract transactions from downloads"
