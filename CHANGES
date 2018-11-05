@@ -4,6 +4,30 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2018-10-26
+
+  - Fixed #302: Fixed second bug with font-locking for account names (starting
+    with digit).
+
+  - Fixed bug ingest that would cause relative filenames to fail.
+    See this thread for details:
+    https://groups.google.com/d/msgid/beancount/709141d5-88a4-444a-acef-94bf43a9b388%40googlegroups.com?utm_medium=email&utm_source=footer
+
+  - Fixed bug in ingest whereby the custom duplicates detection function wasn't
+    being called.
+
+
+2018-10-25
+
+  - Fixed unit test failure on BitBucket pipelines using a temp directory
+    context manager.
+
+  - Applied PR by Richard W to install the mixins package (install was broken).
+
+  - Fixed #302: beancount.el does not fontify account names with single letter
+    components (based on bug report by arianaut@).
+
+
 2018-10-13
 
   - Fixed #158: Missing MIME type for QFX files.

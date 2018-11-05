@@ -88,8 +88,8 @@ INPUT = """\
 class TestEncryptedBase(unittest.TestCase):
 
     def setUp(self):
-        self.tmpdir = tempfile.mkdtemp()
-        self.ringdir = path.join(self.tmpdir, 'keyring')
+        self.tmpdir = tempfile.TemporaryDirectory(prefix='beancount.')
+        self.ringdir = path.join(self.tmpdir.name, 'keyring')
         os.makedirs(self.ringdir)
         os.chmod(self.ringdir, 0o700)
 
@@ -98,8 +98,7 @@ class TestEncryptedBase(unittest.TestCase):
         self.run_gpg('--import', stdin=TEST_SECRET_KEY.encode('ascii'))
 
     def tearDown(self):
-        if path.exists(self.ringdir):
-            shutil.rmtree(self.ringdir)
+        self.tmpdir.cleanup()
 
     def run_gpg(self, *args, **kw):
         command = ('gpg',
@@ -130,7 +129,7 @@ class TestEncryptedFiles(TestEncryptedBase):
 
     @unittest.skipIf(not encryption.is_gpg_installed(), "gpg is not installed")
     def test_read_encrypted_file(self):
-        encrypted_file = path.join(self.tmpdir, 'test.beancount.asc')
+        encrypted_file = path.join(self.tmpdir.name, 'test.beancount.asc')
         self.encrypt_as_file(INPUT, encrypted_file)
 
         with test_utils.environ('GNUPGHOME', self.ringdir):
