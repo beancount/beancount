@@ -269,6 +269,19 @@ class Grep(query_compile.EvalFunction):
         if match:
             return match.group(0)
 
+class GrepN(query_compile.EvalFunction):
+    "Match a pattern with subgroups against a string and return the subgroup at the index"
+    __intypes__ = [str, str, int]
+
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        match = re.search(args[0], args[1])
+        if match:
+            return match.group(args[2])
+
 class OpenDate(query_compile.EvalFunction):
     "Get the date of the open directive of the account."
     __intypes__ = [str]
@@ -774,6 +787,7 @@ SIMPLE_FUNCTIONS = {
     'parent'                                             : Parent,
     'leaf'                                               : Leaf,
     'grep'                                               : Grep,
+    'grepn'                                              : GrepN,
     'open_date'                                          : OpenDate,
     'close_date'                                         : CloseDate,
     'meta'                                               : Meta,
