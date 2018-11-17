@@ -459,18 +459,21 @@ def _load(sources, log_timings, extra_validations, encoding):
     if hasattr(log_timings, 'write'):
         log_timings = log_timings.write
 
-    # Parse all the files recursively.
-    entries, parse_errors, options_map = _parse_recursive(sources, log_timings, encoding)
-
-    # Ensure that the entries are sorted before running any processes on them.
-    entries.sort(key=data.entry_sortkey)
+    # Parse all the files recursively. Ensure that the entries are sorted before
+    # running any processes on them.
+    with misc_utils.log_time('parse', log_timings, indent=1):
+        entries, parse_errors, options_map = _parse_recursive(sources, log_timings, encoding)
+        entries.sort(key=data.entry_sortkey)
 
     # Run interpolation on incomplete entries.
-    entries, balance_errors = booking.book(entries, options_map)
-    parse_errors.extend(balance_errors)
+    with misc_utils.log_time('booking', log_timings, indent=1):
+        entries, balance_errors = booking.book(entries, options_map)
+        parse_errors.extend(balance_errors)
 
     # Transform the entries.
-    entries, errors = run_transformations(entries, parse_errors, options_map, log_timings)
+    with misc_utils.log_time('run_transformations', log_timings, indent=1):
+        entries, errors = run_transformations(entries, parse_errors, options_map,
+                                              log_timings)
 
     # Validate the list of entries.
     with misc_utils.log_time('beancount.ops.validate', log_timings, indent=1):
@@ -532,7 +535,7 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
             if not hasattr(module, '__plugins__'):
                 continue
 
-            with misc_utils.log_time(plugin_name, log_timings, indent=1):
+            with misc_utils.log_time(plugin_name, log_timings, indent=2):
 
                 # Run each transformer function in the plugin.
                 for function_name in module.__plugins__:
