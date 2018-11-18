@@ -27,6 +27,7 @@ from beancount.core import getters
 from beancount.core import convert
 from beancount.core import prices
 from beancount.query import query_compile
+from beancount.utils.date_utils import parse_date_liberally
 
 
 # Non-agreggating functions. These functionals maintain no state.
@@ -754,6 +755,29 @@ class PosSignInventory(query_compile.EvalFunction):
         return inv if sign >= 0  else -inv
 
 
+class Date(query_compile.EvalFunction):
+    "Construct a date with year, month, day arguments"
+    __intypes__ = [int, int, int]
+
+    def __init__(self, operands):
+        super().__init__(operands, inventory.Inventory)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        year, month, day = args
+        return datetime.date(year, month, day)
+
+class ParseDate(query_compile.EvalFunction):
+    "Construct a date with year, month, day arguments"
+    __intypes__ = [str]
+
+    def __init__(self, operands):
+        super().__init__(operands, inventory.Inventory)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        return parse_date_liberally(args[0])
+
 
 # FIXME: Why do I need to specify the arguments here? They are already derived
 # from the functions. Just fetch them from instead. Make the compiler better.
@@ -794,6 +818,8 @@ SIMPLE_FUNCTIONS = {
     'day'                                                : Day,
     'weekday'                                            : Weekday,
     'today'                                              : Today,
+    ('date', int, int, int)                              : Date,
+    ('date', str)                                        : ParseDate,
     ('convert', amount.Amount, str)                      : ConvertAmount,
     ('convert', amount.Amount, str, datetime.date)       : ConvertAmountWithDate,
     ('convert', position.Position, str)                  : ConvertPosition,
