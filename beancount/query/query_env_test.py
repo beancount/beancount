@@ -118,6 +118,7 @@ class TestEnv(unittest.TestCase):
     def test_AnyMeta(self, entries, _, options_map):
         """
         2016-11-20 *
+          key: "name"
           name: "TheName"
           address: "1 Wrong Way"
           empty: "NotEmpty"
@@ -141,3 +142,7 @@ class TestEnv(unittest.TestCase):
         rtypes, rrows = query.run_query(entries, options_map,
                                         'SELECT ANY_META("empty") as m')
         self.assertEqual([(None,)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT ANY_META(ANY_META("key")) as m')
+        self.assertEqual([("TheName",)], rrows)

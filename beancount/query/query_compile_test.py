@@ -311,6 +311,9 @@ class CompileSelectBase(unittest.TestCase):
 
 class TestCompileSelect(CompileSelectBase):
 
+    def test_compile_nested_functions(self):
+        query = self.compile("SELECT META(META('t'))")
+
     def test_compile_from(self):
         # Test the compilation of from.
         query = self.compile("SELECT account;")
