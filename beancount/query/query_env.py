@@ -779,6 +779,34 @@ class ParseDate(query_compile.EvalFunction):
         return parse_date_liberally(args[0])
 
 
+class DateDiff(query_compile.EvalFunction):
+    "Calculates the difference (in days) between two dates"
+    __intypes__ = [datetime.date, datetime.date]
+
+    def __init__(self, operands):
+        super().__init__(operands, int)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        if args[0] is None or args[1] is None:
+            return None
+        return (args[0] - args[1]).days
+
+
+class DateAdjust(query_compile.EvalFunction):
+    "Adds/subtracts number of days from the given date"
+    __intypes__ = [datetime.date, int]
+
+    def __init__(self, operands):
+        super().__init__(operands, datetime.date)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        if args[0] is None or args[1] is None:
+            return None
+        return args[0] + datetime.timedelta(days=args[1])
+
+
 # FIXME: Why do I need to specify the arguments here? They are already derived
 # from the functions. Just fetch them from instead. Make the compiler better.
 SIMPLE_FUNCTIONS = {
@@ -820,6 +848,8 @@ SIMPLE_FUNCTIONS = {
     'today'                                              : Today,
     ('date', int, int, int)                              : Date,
     ('date', str)                                        : ParseDate,
+    'date_diff'                                          : DateDiff,
+    'date_adjust'                                        : DateAdjust,
     ('convert', amount.Amount, str)                      : ConvertAmount,
     ('convert', amount.Amount, str, datetime.date)       : ConvertAmountWithDate,
     ('convert', position.Position, str)                  : ConvertPosition,
