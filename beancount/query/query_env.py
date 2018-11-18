@@ -269,6 +269,19 @@ class Grep(query_compile.EvalFunction):
         if match:
             return match.group(0)
 
+class Sub(query_compile.EvalFunction):
+    "Substitute the leftmost non-overlapping occurrences of pattern by replacement in string"
+    __intypes__ = [str, str, str]
+
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        if any([arg is None for arg in args]):
+            return None
+        return re.sub(args[0], args[1], args[2])
+
 class OpenDate(query_compile.EvalFunction):
     "Get the date of the open directive of the account."
     __intypes__ = [str]
@@ -774,6 +787,7 @@ SIMPLE_FUNCTIONS = {
     'parent'                                             : Parent,
     'leaf'                                               : Leaf,
     'grep'                                               : Grep,
+    'sub'                                                : Sub,
     'open_date'                                          : OpenDate,
     'close_date'                                         : CloseDate,
     'meta'                                               : Meta,

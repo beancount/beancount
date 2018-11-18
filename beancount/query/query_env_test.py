@@ -141,3 +141,32 @@ class TestEnv(unittest.TestCase):
         rtypes, rrows = query.run_query(entries, options_map,
                                         'SELECT ANY_META("empty") as m')
         self.assertEqual([(None,)], rrows)
+
+    @parser.parse_doc()
+    def test_Sub(self, entries, _, options_map):
+        """
+        2016-11-20 * "I love candy"
+          Assets:Banking       -1 USD
+
+        2016-11-21 * "Buy thing thing"
+          Assets:Cash          -1 USD
+        """
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT SUB("[Cc]andy", "carrots", narration) as m where date = 2016-11-20')
+        self.assertEqual([('I love carrots',)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT sub("thing", "t", narration) as m where date = 2016-11-21')
+        self.assertEqual([('Buy t t',)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT sub("random", "t", narration) as m where date = 2016-11-21')
+        self.assertEqual([('Buy thing thing',)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT sub("(love)", "\\1 \\1", narration) as m where date = 2016-11-20')
+        self.assertEqual([('I love love candy',)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT SUB("Assets:.*", "Savings", account) as a, str(sum(position)) as p')
+        self.assertEqual([('Savings', '(-2 USD)')], rrows)
