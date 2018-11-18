@@ -753,7 +753,19 @@ class PosSignInventory(query_compile.EvalFunction):
         sign = account_types.get_account_sign(account, context.account_types)
         return inv if sign >= 0  else -inv
 
+class Coalesce(query_compile.EvalFunction):
+    "Return the first non-null argument"
+    __intypes__ = [object, object]
 
+    def __init__(self, operands):
+        super().__init__(operands, object)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        for arg in args:
+            if arg is not None:
+                return arg
+        return None
 
 # FIXME: Why do I need to specify the arguments here? They are already derived
 # from the functions. Just fetch them from instead. Make the compiler better.
@@ -816,6 +828,7 @@ SIMPLE_FUNCTIONS = {
     ('possign', amount.Amount, str)                      : PosSignAmount,
     ('possign', position.Position, str)                  : PosSignPosition,
     ('possign', inventory.Inventory, str)                : PosSignInventory,
+    'coalesce'                                           : Coalesce,
 
     # FIXME: 'only' should be removed.
     'only'                                               : OnlyInventory,
