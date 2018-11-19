@@ -122,6 +122,7 @@ class TestEnv(unittest.TestCase):
           name: "TheName"
           address: "1 Wrong Way"
           empty: "NotEmpty"
+          tag_date: 2018-01-01
           Assets:Banking          1 USD
             color: "Green"
             address: "1 Right Way"
@@ -146,3 +147,7 @@ class TestEnv(unittest.TestCase):
         rtypes, rrows = query.run_query(entries, options_map,
                                         'SELECT ANY_META(ANY_META("key")) as m')
         self.assertEqual([("TheName",)], rrows)
+
+        with self.assertRaises(AttributeError):
+            rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT number(ANY_META("tag_date")) as m')

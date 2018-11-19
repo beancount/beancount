@@ -257,7 +257,7 @@ class EvalFunction(EvalNode):
 
         # Check each of the types.
         for index, (operand, intype) in enumerate(zip(operands, self.__intypes__)):
-            if not issubclass(operand.dtype, intype) and not issubclass(type(operand), EvalFunction):
+            if not (operand.dtype == object or issubclass(operand.dtype, intype)):
                 raise CompilationError(
                     "Invalid type for argument {} of {}: found {} expected {}".format(
                         index, type(self).__name__, operand.dtype, intype))
