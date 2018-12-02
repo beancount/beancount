@@ -18,7 +18,7 @@ class TestWeb(unittest.TestCase):
     ignore_regexp = r'^({})'.format('|'.join([
         '/context/',
         '/view/component/[^A]',
-        '/view/year/\d+/month/[^1][^0]',
+        r'/view/year/\d+/month/[^1][^0]',
         '.*/doc/']))
 
     def check_page_okay(self, url, response, _, __, ___):

@@ -135,7 +135,7 @@ class TestScriptFile(scripts_utils.TestScriptsBase, test_utils.TestCase):
         self.assertEqual(1, move_mock.call_count)
         self.assertEqual(1, imp.file_date.call_count)
         dest_filename = path.basename(move_mock.mock_calls[0][1][1])
-        self.assertRegex(dest_filename, '{}\.ofxdownload\.ofx'.format(date))
+        self.assertRegex(dest_filename, r'{}\.ofxdownload\.ofx'.format(date))
 
     @mock.patch.object(logging, 'error')
     @mock.patch.object(file, 'move_xdev_file')
@@ -150,7 +150,7 @@ class TestScriptFile(scripts_utils.TestScriptsBase, test_utils.TestCase):
         self.assertEqual(1, move_mock.call_count)
         self.assertEqual(1, imp.file_date.call_count)
         dest_filename = path.basename(move_mock.mock_calls[0][1][1])
-        self.assertRegex(dest_filename, '\d\d\d\d-\d\d-\d\d\.final\.ofx')
+        self.assertRegex(dest_filename, r'\d\d\d\d-\d\d-\d\d\.final\.ofx')
 
     @mock.patch.object(logging, 'error')
     @mock.patch.object(file, 'move_xdev_file')
