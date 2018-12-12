@@ -14,3 +14,22 @@ if (sys.version_info.major, sys.version_info.minor) < (3, 3):
 
 
 __version__ = '2.2.0-devel'
+
+
+# Remove annoying warnings in third-party modules.
+import warnings
+warnings.filterwarnings(
+    'ignore', module='lxml', category=DeprecationWarning,
+    message='Using or importing the ABCs from')
+warnings.filterwarnings(
+    'ignore', module='html5lib', category=DeprecationWarning,
+    message='Using or importing the ABCs from')
+warnings.filterwarnings(
+    'ignore', module='bs4', category=DeprecationWarning,
+    message='Using or importing the ABCs from')
+warnings.filterwarnings(
+    'ignore', module='bottle', category=DeprecationWarning,
+    message='Flags not at the start of the expression')
+warnings.filterwarnings(
+    'ignore', module='bottle', category=DeprecationWarning,
+    message='invalid escape sequence')
