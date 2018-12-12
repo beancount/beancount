@@ -1078,6 +1078,14 @@ http://furius.ca/beancount/doc/proposal-query
     https://groups.google.com/d/msg/ledger-cli/4d9ZYVLnCGQ/ZyAqwZE-TBoJ
     Try to reproduce this specific use case.
 
+  - Generate balance auto-columns by referencing existing columns in the query,
+    not as a hard-coded column. Something like this:
+
+      SELECT position, SUM(convert(position, "USD", date)) as usd_amount, BALANCE(usd_amount) as usd_balance WHERE ...
+
+    For a compelling example, see
+    https://groups.google.com/d/msgid/beancount/20181207161308.56ivkgujculalx7g%40jirafa.cyrius.com.
+
 
 ** V2
 
