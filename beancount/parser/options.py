@@ -445,6 +445,11 @@ PUBLIC_OPTION_GROUPS = [
               converter=options_validate_boolean,
               deprecated=('Allowing None for tags and link '
                           'will go away eventually.'))]),
+
+    OptGroup("""
+      A boolean, if true, prepend the directory name of the top-level file to
+      the PYTHONPATH.
+    """, [Opt("insert_pythonpath", False, "TRUE")]),
     ]
 
 

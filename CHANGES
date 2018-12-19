@@ -6,6 +6,15 @@ Note: This file contains a list changes in the 'default' branch.
 
 2018-12-18
 
+  - Fixed #214: Add directory of current filename to sys.path with new option
+    "insert_pythonpath". When this option is encountered in a file, we prepend
+    the path of the file in which it is encountered at the front of the
+    PYTHONPATH for the rest of the duration of the problem (we could consider
+    resetting this after parsing and processing the plugins; not doing it now).
+
+  - Added detection of hitting the root if the search for the repository root
+    failed.
+
   - Fixed #341: find_repository_root() fails on source tarball. Renamed PKGINFO
     to PKG-INFO to match what pip sdist produces.
 
