@@ -44,7 +44,7 @@ def find_repository_root(filename=None):
     if filename is None:
         filename = __file__
     while not all(path.exists(path.join(filename, sigfile))
-                  for sigfile in ('PKGINFO', 'COPYING', 'README')):
+                  for sigfile in ('PKG-INFO', 'COPYING', 'README')):
         filename = path.dirname(filename)
     return filename
 

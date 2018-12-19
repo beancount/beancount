@@ -6,6 +6,9 @@ Note: This file contains a list changes in the 'default' branch.
 
 2018-12-18
 
+  - Fixed #341: find_repository_root() fails on source tarball. Renamed PKGINFO
+    to PKG-INFO to match what pip sdist produces.
+
   - Change version number from 2.2.0-devel to 2.2.0-dev which apparently is
     recognized by pip (thanks Jakob Schnitzer).
     https://bitbucket.org/blais/beancount/pull-requests/91/default/diff#comment-85707662
