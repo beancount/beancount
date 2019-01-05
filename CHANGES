@@ -6,6 +6,10 @@ Note: This file contains a list changes in the 'default' branch.
 
 2019-01-05
 
+  - Merged pull request #85
+    (https://bitbucket.org/blais/beancount/pull-requests/85) from hardikar,
+    adding function grepn() to the shell.
+
   - Merged pull request #86
     (https://bitbucket.org/blais/beancount/pull-requests/86) from hardikar,
     adding function subst() to the shell.

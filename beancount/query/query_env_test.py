@@ -143,6 +143,32 @@ class TestEnv(unittest.TestCase):
         self.assertEqual([(None,)], rrows)
 
     @parser.parse_doc()
+    def test_GrepN(self, entries, _, options_map):
+        """
+        2016-11-20 * "prev match in context next"
+          Assets:Banking          1 USD
+        """
+        rtypes, rrows = query.run_query(entries, options_map, '''
+          SELECT GREPN("in", narration, 0) as m
+        ''')
+        self.assertEqual([('in',)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map, '''
+          SELECT GREPN("match (.*) context", narration, 1) as m
+        ''')
+        self.assertEqual([('in',)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map, '''
+          SELECT GREPN("(.*) in (.*)", narration, 2) as m
+        ''')
+        self.assertEqual([('context next',)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map, '''
+          SELECT GREPN("ab(at)hing", "abathing", 1) as m
+        ''')
+        self.assertEqual([('at',)], rrows)
+
+    @parser.parse_doc()
     def test_Subst(self, entries, _, options_map):
         """
         2016-11-20 * "I love candy"
