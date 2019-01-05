@@ -4,6 +4,13 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2019-01-05
+
+  - Implemented best compression for zipfile in bean-bake as per Justus
+    Pendleton's suggestion. For context, see this:
+    https://groups.google.com/d/msgid/beancount/de75671d-532a-4deb-bd0f-fd9377e63753%40googlegroups.com?utm_medium=email&utm_source=footer
+
+
 2018-12-18
 
   - Fixed #214: Add directory of current filename to sys.path with new option
