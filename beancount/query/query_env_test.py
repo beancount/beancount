@@ -164,3 +164,51 @@ class TestEnv(unittest.TestCase):
                                         'SELECT COALESCE(narration, account) as m')
         self.assertEqual([('',)], rrows)
 
+
+    @parser.parse_doc()
+    def test_Date(self, entries, _, options_map):
+        """
+        2016-11-20 * "ok"
+          Assets:Banking          1 USD
+        """
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT date(2020, 1, 2) as m')
+        self.assertEqual([(datetime.date(2020, 1, 2),)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT date(year, month, 1) as m')
+        self.assertEqual([(datetime.date(2016, 11, 1),)], rrows)
+
+        with self.assertRaisesRegex(ValueError, "day is out of range for month"):
+            rtypes, rrows = query.run_query(entries, options_map,
+                                            'SELECT date(2020, 2, 32) as m')
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT date("2020-01-02") as m')
+        self.assertEqual([(datetime.date(2020, 1, 2),)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT date("2016/11/1") as m')
+        self.assertEqual([(datetime.date(2016, 11, 1),)], rrows)
+
+    @parser.parse_doc()
+    def test_DateDiffAdjust(self, entries, _, options_map):
+        """
+        2016-11-20 * "ok"
+          Assets:Banking          -1 STOCK { 5 USD, 2016-10-30 }
+        """
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT date_diff(date, cost_date) as m')
+        self.assertEqual([(21,)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT date_diff(cost_date, date) as m')
+        self.assertEqual([(-21,)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT date_add(date, 1) as m')
+        self.assertEqual([(datetime.date(2016, 11, 21),)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT date_add(date, -1) as m')
+        self.assertEqual([(datetime.date(2016, 11, 19),)], rrows)
