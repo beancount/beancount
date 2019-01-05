@@ -7,6 +7,7 @@ import collections
 import copy
 import os
 import re
+import sys
 import traceback
 from os import path
 from datetime import date
@@ -385,7 +386,10 @@ class Builder(lexer.LexBuilder):
             if key.startswith('name_'):
                 # Update the set of valid account types.
                 self.account_regexp = valid_account_regexp(self.options)
-
+            elif key == 'insert_pythonpath':
+                # Insert the PYTHONPATH to this file when and only if you
+                # encounter this option.
+                sys.path.insert(0, path.dirname(filename))
 
     def include(self, filename, lineno, include_filename):
         """Process an include directive.

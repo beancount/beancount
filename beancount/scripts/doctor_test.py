@@ -248,5 +248,5 @@ class TestScriptContextualCommands(cmptest.TestCase):
             test_utils.run_with_args(doctor.main, ['linked', filename, '6'])
         self.assertRegex(stdout.getvalue(), 'Apples')
         self.assertRegex(stdout.getvalue(), 'Oranges')
-        self.assertEqual(2, len(list(re.finditer('/(tmp|var/folders)/.*:\d+:',
+        self.assertEqual(2, len(list(re.finditer(r'/(tmp|var/folders)/.*:\d+:',
                                                  stdout.getvalue()))))

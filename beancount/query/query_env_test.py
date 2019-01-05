@@ -163,3 +163,108 @@ class TestEnv(unittest.TestCase):
         rtypes, rrows = query.run_query(entries, options_map,
                                         'SELECT GREPN("ab(at)hing", "abathing", 1) as m')
         self.assertEqual([('at',)], rrows)
+
+    @parser.parse_doc()
+    def test_Subst(self, entries, _, options_map):
+        """
+        2016-11-20 * "I love candy"
+          Assets:Banking       -1 USD
+
+        2016-11-21 * "Buy thing thing"
+          Assets:Cash          -1 USD
+        """
+        rtypes, rrows = query.run_query(entries, options_map, '''
+          SELECT SUBST("[Cc]andy", "carrots", narration) as m where date = 2016-11-20
+        ''')
+        self.assertEqual([('I love carrots',)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map, '''
+          SELECT SUBST("thing", "t", narration) as m where date = 2016-11-21
+        ''')
+        self.assertEqual([('Buy t t',)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map, '''
+          SELECT SUBST("random", "t", narration) as m where date = 2016-11-21
+        ''')
+        self.assertEqual([('Buy thing thing',)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map, '''
+          SELECT SUBST("(love)", "\\1 \\1", narration) as m where date = 2016-11-20
+        ''')
+        self.assertEqual([('I love love candy',)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map, '''
+          SELECT SUBST("Assets:.*", "Savings", account) as a, str(sum(position)) as p
+        ''')
+        self.assertEqual([('Savings', '(-2 USD)')], rrows)
+
+    @parser.parse_doc()
+    def test_Coalesce(self, entries, _, options_map):
+        """
+        2016-11-20 *
+          Assets:Banking          1 USD
+        """
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT COALESCE(account, price) as m')
+        self.assertEqual([('Assets:Banking',)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT COALESCE(price, account) as m')
+        self.assertEqual([('Assets:Banking',)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT COALESCE(price, cost_number) as m')
+        self.assertEqual([(None,)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT COALESCE(narration, account) as m')
+        self.assertEqual([('',)], rrows)
+
+
+    @parser.parse_doc()
+    def test_Date(self, entries, _, options_map):
+        """
+        2016-11-20 * "ok"
+          Assets:Banking          1 USD
+        """
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT date(2020, 1, 2) as m')
+        self.assertEqual([(datetime.date(2020, 1, 2),)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT date(year, month, 1) as m')
+        self.assertEqual([(datetime.date(2016, 11, 1),)], rrows)
+
+        with self.assertRaisesRegex(ValueError, "day is out of range for month"):
+            rtypes, rrows = query.run_query(entries, options_map,
+                                            'SELECT date(2020, 2, 32) as m')
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT date("2020-01-02") as m')
+        self.assertEqual([(datetime.date(2020, 1, 2),)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT date("2016/11/1") as m')
+        self.assertEqual([(datetime.date(2016, 11, 1),)], rrows)
+
+    @parser.parse_doc()
+    def test_DateDiffAdjust(self, entries, _, options_map):
+        """
+        2016-11-20 * "ok"
+          Assets:Banking          -1 STOCK { 5 USD, 2016-10-30 }
+        """
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT date_diff(date, cost_date) as m')
+        self.assertEqual([(21,)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT date_diff(cost_date, date) as m')
+        self.assertEqual([(-21,)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT date_add(date, 1) as m')
+        self.assertEqual([(datetime.date(2016, 11, 21),)], rrows)
+
+        rtypes, rrows = query.run_query(entries, options_map,
+                                        'SELECT date_add(date, -1) as m')
+        self.assertEqual([(datetime.date(2016, 11, 19),)], rrows)

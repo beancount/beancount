@@ -113,6 +113,7 @@ class TestLoadDoc(unittest.TestCase):
         """
         self.assertTrue(isinstance(entries, list))
         self.assertTrue(isinstance(errors, list))
+        self.assertFalse(errors)
         self.assertTrue(isinstance(options_map, dict))
 
     @loader.load_doc(expect_errors=True)
@@ -123,6 +124,24 @@ class TestLoadDoc(unittest.TestCase):
         self.assertTrue(isinstance(entries, list))
         self.assertTrue(isinstance(options_map, dict))
         self.assertTrue([loader.LoadError], list(map(type, errors)))
+
+    def test_load_doc_plugin_auto_pythonpath(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ledger_fn = path.join(tmpdir, 'my.beancount')
+            with open(ledger_fn, 'w') as ledger_file:
+                ledger_file.write('option "insert_pythonpath" "TRUE"\n')
+                ledger_file.write('plugin "localplugin"\n')
+
+            plugin_fn = path.join(tmpdir, 'localplugin.py')
+            with open(plugin_fn, 'w') as plugin_file:
+                plugin_file.write(textwrap.dedent("""\
+                  __plugins__ = ()
+                """))
+            entries, errors, options_map = loader.load_file(ledger_fn)
+            self.assertTrue(isinstance(entries, list))
+            self.assertTrue(isinstance(errors, list))
+            self.assertTrue(isinstance(options_map, dict))
+            self.assertFalse(errors)
 
 
 class TestLoadIncludes(unittest.TestCase):

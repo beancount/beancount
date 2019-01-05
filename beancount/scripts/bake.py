@@ -8,14 +8,15 @@ fetched directory contents to the archive and delete them.
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
+from os import path
 import functools
+import importlib
 import logging
 import os
-import subprocess
-import shutil
-import shlex
 import re
-from os import path
+import shlex
+import shutil
+import subprocess
 import zipfile
 
 import lxml.html
@@ -200,7 +201,21 @@ def archive_zip(directory, archive):
       directory: A string, the name of the directory to archive.
       archive: A string, the name of the file to output.
     """
-    with file_utils.chdir(directory), zipfile.ZipFile(archive, 'w') as archfile:
+    # Figure out optimal level of compression among the supported ones in this
+    # installation.
+    for spec, compression in [
+            ('lzma', zipfile.ZIP_LZMA),
+            ('bz2', zipfile.ZIP_BZIP2),
+            ('zlib', zipfile.ZIP_DEFLATED)]:
+        if importlib.util.find_spec(spec):
+            zip_compression = compression
+            break
+    else:
+        # Default is no compression.
+        zip_compression = zipfile.ZIP_STORED
+
+    with file_utils.chdir(directory), zipfile.ZipFile(
+            archive, 'w', compression=zip_compression) as archfile:
         for root, dirs, files in os.walk(directory):
             for filename in files:
                 relpath = path.relpath(path.join(root, filename), directory)

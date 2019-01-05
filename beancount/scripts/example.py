@@ -1592,7 +1592,7 @@ def write_example_file(date_birth, date_begin, date_end, reformat, file):
     # Figure out all the years we need tax accounts for.
     years = set()
     for account_name in getters.get_accounts(income_entries):
-        match = re.match('Expenses:Taxes:Y(\d\d\d\d)', account_name)
+        match = re.match(r'Expenses:Taxes:Y(\d\d\d\d)', account_name)
         if match:
             years.add(int(match.group(1)))
 

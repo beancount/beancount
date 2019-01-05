@@ -4,6 +4,45 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2019-01-05
+
+  - Merged pull request #86
+    (https://bitbucket.org/blais/beancount/pull-requests/86) from hardikar,
+    adding function subst() to the shell.
+
+  - Merged pull request #89
+    (https://bitbucket.org/blais/beancount/pull-requests/89) from hardikar,
+    adding functions date_diff(), date_add() to the shell.
+
+  - Implemented best compression for zipfile in bean-bake as per Justus
+    Pendleton's suggestion. For context, see this:
+    https://groups.google.com/d/msgid/beancount/de75671d-532a-4deb-bd0f-fd9377e63753%40googlegroups.com?utm_medium=email&utm_source=footer
+
+
+2018-12-18
+
+  - Fixed #214: Add directory of current filename to sys.path with new option
+    "insert_pythonpath". When this option is encountered in a file, we prepend
+    the path of the file in which it is encountered at the front of the
+    PYTHONPATH for the rest of the duration of the problem (we could consider
+    resetting this after parsing and processing the plugins; not doing it now).
+
+  - Added detection of hitting the root if the search for the repository root
+    failed.
+
+  - Fixed #341: find_repository_root() fails on source tarball. Renamed PKGINFO
+    to PKG-INFO to match what pip sdist produces.
+
+  - Change version number from 2.2.0-devel to 2.2.0-dev which apparently is
+    recognized by pip (thanks Jakob Schnitzer).
+    https://bitbucket.org/blais/beancount/pull-requests/91/default/diff#comment-85707662
+
+
+2018-12-12
+
+  - Suppressed almost all the Python 3.8 warnings.
+
+
 2018-11-16
 
   - Added more logging in loader (done while debugging something else).
