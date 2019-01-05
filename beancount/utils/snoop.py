@@ -15,7 +15,7 @@ class Snoop:
 
       snoop = Snoop()
       ...
-      if snoop(re.match("(\d+)-(\d+)-(\d+)", text)):
+      if snoop(re.match(r"(\\d+)-(\\d+)-(\\d+)", text)):
         year, month, date = snoop.value.group(1, 2, 3)
 
     Attributes:

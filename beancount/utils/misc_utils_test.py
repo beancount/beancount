@@ -212,7 +212,7 @@ class TestMiscUtils(unittest.TestCase):
 
     def test_escape_string(self):
         self.assertEqual('Entry with escaped \\"symbols\\" \\\\ \r \n',
-                         misc_utils.escape_string("Entry with escaped \"symbols\" \ \r \n"))
+                         misc_utils.escape_string("Entry with escaped \"symbols\" \\ \r \n"))
 
 
 class TestUniquify(unittest.TestCase):

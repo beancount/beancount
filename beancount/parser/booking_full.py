@@ -442,7 +442,7 @@ def replace_currencies(postings, refer_groups):
         for refer in sorted(refers, key=lambda r: r.index):
             posting = postings[refer.index]
             units = posting.units
-            if units is MISSING:
+            if units is MISSING or units is None:
                 posting = posting._replace(units=Amount(MISSING, refer.units_currency))
             else:
                 replace = False
@@ -891,6 +891,8 @@ def interpolate_group(postings, balances, currency, tolerances):
         # Replace the number in the posting.
         if new_posting is not None:
             # Set meta-data on the new posting to indicate it was interpolated.
+            if new_posting.meta is None:
+                new_posting = new_posting._replace(meta={})
             new_posting.meta[interpolate.AUTOMATIC_META] = True
 
             # Convert augmenting posting costs from CostSpec to a corresponding

@@ -30,6 +30,7 @@ from beancount.parser import booking_full as bf
 from beancount.parser import booking_method as bm
 from beancount.parser import booking_test
 from beancount.parser import cmptest
+from beancount.parser import options
 from beancount import loader
 
 
@@ -2705,6 +2706,31 @@ class TestBasicBooking(_BookingTestBase):
           Assets:Account          1 HOOL {100.00 USD, 2015-10-01}
           Assets:Account          2 HOOL {101.00 USD, 2015-10-01}
         """
+
+class TestBookingApi(unittest.TestCase):
+    def test_book_single(self):
+        txn = data.Transaction(data.new_metadata(__file__, 0),
+                               datetime.date(2018, 12, 31),
+                               '*',
+                               'Payee',
+                               'Narration',
+                               None,
+                               None,
+                               [])
+        data.create_simple_posting(txn, 'Assets:Cash', 100.00, 'USD')
+        data.create_simple_posting(txn, 'Expenses:Stuff', None, None)
+        for method in Booking:
+            methods = collections.defaultdict(lambda: method)
+            entries, errors = bf.book([txn], options.OPTIONS_DEFAULTS.copy(), methods)
+            self.assertEqual(len(entries), 1)
+            self.assertEqual(len(errors), 0)
+
+            entry = entries[0]
+            self.assertEqual(len(entry.postings), 2)
+            self.assertEqual(entry.postings[0], txn.postings[0])
+            self.assertNotEqual(entry.postings[1], txn.postings[1])
+            self.assertEqual(entry.postings[1].account, 'Expenses:Stuff')
+            self.assertEqual(entry.postings[1].units, A('-100.00 USD'))
 
 
 # FIXME: TODO - Rewrite these tests. See average_test.py.

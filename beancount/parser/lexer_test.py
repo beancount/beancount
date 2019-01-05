@@ -564,7 +564,7 @@ class TestLexerErrors(unittest.TestCase):
         # This modification is similar to what the options do, and will cause a
         # ValueError exception to be raised in the lexer.
         builder.account_regexp = re.compile('(Assets|Liabilities|Equity)'
-                                            '(:[A-Z][A-Za-z0-9\-]*)*$')
+                                            '(:[A-Z][A-Za-z0-9-]*)*$')
         tokens = list(lexer.lex_iter_string(textwrap.dedent(test_input), builder))
         self.assertEqual([('EOL', 2, '\n', None),
                           ('LEX_ERROR', 2, 'Invalid:Something', None),

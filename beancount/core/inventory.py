@@ -26,7 +26,7 @@ __copyright__ = "Copyright (C) 2013-2017  Martin Blais"
 __license__ = "GNU GPLv2"
 
 import collections
-from collections import Iterable
+from collections.abc import Iterable
 import enum
 import re
 

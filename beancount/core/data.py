@@ -280,7 +280,7 @@ Note = new_directive('Note', [
 # Attributes:
 #   meta: See above.
 #   date: See above.
-#   type: A short string, typically a single lowercase word, that defines a
+#   "type": A short string, typically a single lowercase word, that defines a
 #     unique variable whose value changes over time. For example, 'location'.
 #   description: A free-form string, the value of the variable as of the date
 #     of the transaction.

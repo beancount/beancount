@@ -27,6 +27,7 @@ from beancount.core import getters
 from beancount.core import convert
 from beancount.core import prices
 from beancount.query import query_compile
+from beancount.utils.date_utils import parse_date_liberally
 
 
 # Non-agreggating functions. These functionals maintain no state.
@@ -766,6 +767,70 @@ class PosSignInventory(query_compile.EvalFunction):
         sign = account_types.get_account_sign(account, context.account_types)
         return inv if sign >= 0  else -inv
 
+class Coalesce(query_compile.EvalFunction):
+    "Return the first non-null argument"
+    __intypes__ = [object, object]
+
+    def __init__(self, operands):
+        super().__init__(operands, object)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        for arg in args:
+            if arg is not None:
+                return arg
+        return None
+
+class Date(query_compile.EvalFunction):
+    "Construct a date with year, month, day arguments"
+    __intypes__ = [int, int, int]
+
+    def __init__(self, operands):
+        super().__init__(operands, inventory.Inventory)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        year, month, day = args
+        return datetime.date(year, month, day)
+
+class ParseDate(query_compile.EvalFunction):
+    "Construct a date with year, month, day arguments"
+    __intypes__ = [str]
+
+    def __init__(self, operands):
+        super().__init__(operands, inventory.Inventory)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        return parse_date_liberally(args[0])
+
+
+class DateDiff(query_compile.EvalFunction):
+    "Calculates the difference (in days) between two dates"
+    __intypes__ = [datetime.date, datetime.date]
+
+    def __init__(self, operands):
+        super().__init__(operands, int)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        if args[0] is None or args[1] is None:
+            return None
+        return (args[0] - args[1]).days
+
+
+class DateAdd(query_compile.EvalFunction):
+    "Adds/subtracts number of days from the given date"
+    __intypes__ = [datetime.date, int]
+
+    def __init__(self, operands):
+        super().__init__(operands, datetime.date)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        if args[0] is None or args[1] is None:
+            return None
+        return args[0] + datetime.timedelta(days=args[1])
 
 
 # FIXME: Why do I need to specify the arguments here? They are already derived
@@ -808,6 +873,10 @@ SIMPLE_FUNCTIONS = {
     'day'                                                : Day,
     'weekday'                                            : Weekday,
     'today'                                              : Today,
+    ('date', int, int, int)                              : Date,
+    ('date', str)                                        : ParseDate,
+    'date_diff'                                          : DateDiff,
+    'date_add'                                           : DateAdd,
     ('convert', amount.Amount, str)                      : ConvertAmount,
     ('convert', amount.Amount, str, datetime.date)       : ConvertAmountWithDate,
     ('convert', position.Position, str)                  : ConvertPosition,
@@ -830,6 +899,7 @@ SIMPLE_FUNCTIONS = {
     ('possign', amount.Amount, str)                      : PosSignAmount,
     ('possign', position.Position, str)                  : PosSignPosition,
     ('possign', inventory.Inventory, str)                : PosSignInventory,
+    'coalesce'                                           : Coalesce,
 
     # FIXME: 'only' should be removed.
     'only'                                               : OnlyInventory,
