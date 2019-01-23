@@ -145,7 +145,12 @@ class Builder(lexer.LexBuilder):
 
         # A display context builder.
         self.dcontext = display_context.DisplayContext()
-        self.dcupdate = self.dcontext.update
+        self._dcupdate = self.dcontext.update
+
+    def dcupdate(self, number, currency):
+        """Update the display context."""
+        if isinstance(number, Decimal) and currency and currency is not MISSING:
+            self._dcupdate(number, currency)
 
     def finalize(self):
         """Finalize the parser, check for final errors and return the triple.
@@ -424,8 +429,7 @@ class Builder(lexer.LexBuilder):
         """
         # Update the mapping that stores the parsed precisions.
         # Note: This is relatively slow, adds about 70ms because of number.as_tuple().
-        if isinstance(number, Decimal) and currency and currency is not MISSING:
-            self.dcupdate(number, currency)
+        self.dcupdate(number, currency)
         return Amount(number, currency)
 
     def compound_amount(self, number_per, number_total, currency):
@@ -441,10 +445,8 @@ class Builder(lexer.LexBuilder):
         """
         # Update the mapping that stores the parsed precisions.
         # Note: This is relatively slow, adds about 70ms because of number.as_tuple().
-        if isinstance(number_per, Decimal):
-            self.dcupdate(number_per, currency)
-        if isinstance(number_total, Decimal):
-            self.dcupdate(number_total, currency)
+        self.dcupdate(number_per, currency)
+        self.dcupdate(number_total, currency)
 
         # Note that we are not able to reduce the value to a number per-share
         # here because we only get the number of units in the full lot spec.
