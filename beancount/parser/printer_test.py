@@ -520,3 +520,17 @@ class TestPrinterMisc(test_utils.TestCase):
         oss = io.StringIO()
         printer.print_entries(entries, file=oss)
         self.assertRegex(oss.getvalue(), '0.0000000000000000000000001 DKK')
+
+    def test_render_missing(self):
+        # We want to make sure we never render with scientific notation.
+        input_string = textwrap.dedent("""
+
+          2019-01-19 * "Fitness First" "Last training session"
+            Expenses:Sports:Gym:Martin
+            Assets:Martin:Cash
+
+        """)
+        entries, errors, options_map = loader.load_string(input_string)
+        txn = errors[0].entry
+        oss = io.StringIO()
+        printer.print_entry(txn, file=oss)

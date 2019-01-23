@@ -193,7 +193,7 @@ class EntryPrinter:
                 if posting.meta:
                     self.write_metadata(posting.meta, oss, '    ')
         else:
-            fmt_str = "  {{:{0}}}  {{:{1}}}\n".format(width_account, width_position)
+            fmt_str = "  {{:{0}}}  {{:{1}}}\n".format(width_account, max(1, width_position))
             fmt = fmt_str.format
             for posting, account, position_str in zip(entry.postings,
                                                       strs_account,

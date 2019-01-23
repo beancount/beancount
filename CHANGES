@@ -4,6 +4,12 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2019-01-22
+
+  - Fixed problem with invalid format strings with 0-width field when rendering
+    MISSING.
+
+
 2019-01-05
 
   - Merged pull request #85
