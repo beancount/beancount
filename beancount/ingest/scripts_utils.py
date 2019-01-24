@@ -62,20 +62,19 @@ def ingest(importers_list, detect_duplicates_func=None):
         the user's ledger. See function find_duplicate_entries(), which is the
         default implementation for this.
     """
-    if ingest_args is not None:
+    if ingest.args is not None:
         # The script has been called from one of the bean-* ingestion tools.
-        # 'ingest_args' is only set when we're being invoked from one of the
+        # 'ingest.args' is only set when we're being invoked from one of the
         # bean-xxx tools (see below).
 
         # Mark this function as called, so that if it is called from an import
         # triggered by one of the ingestion tools, it won't be called again
         # afterwards.
-        global ingest_was_called
-        ingest_was_called = True
+        ingest.was_called = True
 
         # Use those args rather than to try to parse the command-line arguments
         # from a naked ingest() call as a script. {39c7af4f6af5}
-        args, parser = ingest_args
+        args, parser = ingest.args
     else:
         # The script is called directly. This is the main program of the import
         # script itself. This is the new invocation method.
@@ -117,7 +116,7 @@ def ingest(importers_list, detect_duplicates_func=None):
 
 
 # A global sentinel to mark whether ingest() has been called at least once.
-ingest_was_called = False
+ingest.was_called = False
 
 # A global value of program args for the ingest subcommand. If the command is
 # being trampolined (that is, called by one of the bean-* ingestion tools), and
@@ -125,7 +124,7 @@ ingest_was_called = False
 # for reuse by ingest() instead of attempting to convert the per-command
 # arguments into generic ingest() arguments (which is impossible to do without
 # parsing in the first place due to the support for --argument value).
-ingest_args = None
+ingest.args = None
 
 
 def create_legacy_arguments_parser(description: str, run_func: callable):
@@ -199,13 +198,11 @@ def run_import_script_and_ingest(parser, argv=None, importers_attr_name='CONFIG'
 
     # Reset the state of ingest() being called (for unit tests, which use the
     # same runtime with run_with_args).
-    global ingest_was_called
-    ingest_was_called = False
+    ingest.was_called = False
 
     # Save the arguments parsed from the command-line as default for
     # {39c7af4f6af5}.
-    global ingest_args
-    ingest_args = args, parser
+    ingest.args = args, parser
 
     # Evaluate the importer script/module.
     mod = runpy.run_path(args.config)
@@ -213,14 +210,14 @@ def run_import_script_and_ingest(parser, argv=None, importers_attr_name='CONFIG'
     # If the importer script has already called ingest() within itself, don't
     # call it again. We're done. This allows the use to insert an explicit call
     # to ingest() while still running the bean-* ingestion tools on the file.
-    if ingest_was_called:
+    if ingest.was_called:
         return 0
-    else:
-        # ingest() hasn't been called by the script so we assume it isn't
-        # present in it. So we now run the ingestion by ourselves here, without
-        # specifying any of the newer optional arguments.
-        importers_list = mod[importers_attr_name]
-        return ingest(importers_list)
+
+    # ingest() hasn't been called by the script so we assume it isn't
+    # present in it. So we now run the ingestion by ourselves here, without
+    # specifying any of the newer optional arguments.
+    importers_list = mod[importers_attr_name]
+    return ingest(importers_list)
 
 
 class _TestFileImporter(importer.ImporterProtocol):

@@ -7,4 +7,4 @@ pipelines:
           - python -m pip install pytest pylint
           - python setup.py build_ext -i
           - python -m pytest -v beancount
-          - pylint beancount
+          - make lint
