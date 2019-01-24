@@ -2,12 +2,14 @@
 __copyright__ = "Copyright (C) 2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
+from os import path
+
 from beancount.ingest import regression_pytest as regtest
 from . import utrade_csv
 
 
 # Create an importer instance for running the regression tests.
-importer = utrade_csv.Importer(
+IMPORTER = utrade_csv.Importer(
     "USD",
     "Assets:US:UTrade",
     "Assets:US:UTrade:Cash",
@@ -17,7 +19,7 @@ importer = utrade_csv.Importer(
     "Assets:US:BofA:Checking")
 
 
-@regtest.with_importer(importer)
+@regtest.with_importer(IMPORTER)
 @regtest.with_testdir(path.dirname(__file__))
 class TestImporter(regtest.ImporterTestBase):
     pass

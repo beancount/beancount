@@ -54,6 +54,7 @@ def divert_expenses(entries, options_map, config_str):
     Returns:
       A modified list of entries.
     """
+    # pylint: disable=eval-used
     config_obj = eval(config_str, {}, {})
     if not isinstance(config_obj, dict):
         raise RuntimeError("Invalid plugin configuration: should be a single dict.")

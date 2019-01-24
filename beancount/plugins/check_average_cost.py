@@ -46,6 +46,7 @@ def validate_average_cost(entries, options_map, config_str=None):
     """
     # Initialize tolerance bounds.
     if config_str and config_str.strip():
+        # pylint: disable=eval-used
         config_obj = eval(config_str, {}, {})
         if not isinstance(config_obj, float):
             raise RuntimeError("Invalid configuration for check_average_cost: "

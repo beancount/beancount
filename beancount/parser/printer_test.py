@@ -143,6 +143,7 @@ class TestEntryPrinter(cmptest.TestCase):
 
     @loader.load_doc()
     def test_Document(self, entries, errors, __):
+        # pylint: disable=line-too-long
         """
         option "plugin_processing_mode" "raw"
         2014-06-01 open Assets:Account1

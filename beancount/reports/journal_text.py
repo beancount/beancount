@@ -147,6 +147,7 @@ def text_entries_table(oss, postings,
             "Width not sufficient to render text report ({} chars)".format(width))
 
     # Establish a format string for the final format of all lines.
+    # pylint: disable=duplicate-string-formatting-argument
     line_format = '{{date:10}} {{dirtype:5}} {{description:{:d}.{:d}}}  {}'.format(
         description_width, description_width,
         change_sizer.get_generic_format(precision))

@@ -79,7 +79,7 @@ def py_unicode_ranges(chars):
     regular expression's bracket expression (e.g. \u0062\u0064-\u006f).
     """
     ranges = []
-    for _, seq in groupby_sequences(chars, lambda c: ord(c)):
+    for _, seq in groupby_sequences(chars, ord):
         seq = list(seq)
         beg = seq[0]
         end = seq[-1]

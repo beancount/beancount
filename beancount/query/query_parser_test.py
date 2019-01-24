@@ -52,11 +52,8 @@ class QueryParserTestBase(unittest.TestCase):
             print()
             print(actual)
             print()
-        try:
-            self.assertEqual(expected, actual)
-            return actual
-        except AssertionError:
-            raise
+        self.assertEqual(expected, actual)
+        return actual
 
 
 class TestSelectTarget(QueryParserTestBase):

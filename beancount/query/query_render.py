@@ -258,7 +258,7 @@ class DecimalRenderer(ColumnRenderer):
                 if width > total_width:
                     total_width = width
 
-            self.fmt = '{{:<{}.{}}}'.format(total_width, total_width)
+            self.fmt = '{{:<{total_width}.{total_width}}}'.format(total_width=total_width)
 
         self.total_width = total_width
         self.empty = ' ' * total_width

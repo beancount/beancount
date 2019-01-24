@@ -298,7 +298,7 @@ def format_xhtml_table(items, klass='fields'):
     oss.write('<table class="{}">\n'.format(klass))
     for key, value in items:
         if re.match('[a-z]+://', value):
-            value = '<a href="{}">{}</a>'.format(value, value)
+            value = '<a href="{value}">{value}</a>'.format(value=value)
         oss.write('<tr><td>{}:</td><td>{}</td></tr>'.format(key.capitalize(), value))
     oss.write('</table>\n')
     return oss.getvalue()

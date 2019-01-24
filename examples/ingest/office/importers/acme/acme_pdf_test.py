@@ -9,11 +9,11 @@ from beancount.ingest import regression_pytest as regtest
 from . import acme_pdf
 
 
-importer = acme_pdf.Importer("Assets:US:AcmeBank")
+IMPORTER = acme_pdf.Importer("Assets:US:AcmeBank")
 
 @pytest.mark.skipif(not acme_pdf.is_pdfminer_installed(),
                     reason="PDFMiner2 is not installed")
-@regtest.with_importer(importer)
+@regtest.with_importer(IMPORTER)
 @regtest.with_testdir(path.dirname(__file__))
 class TestImporter(regtest.ImporterTestBase):
     pass

@@ -21,8 +21,9 @@ from beancount.ingest.importers.mixins import identifier
 from beancount.utils.date_utils import parse_date_liberally
 
 
-# The set of interpretable columns.
 class Col(enum.Enum):
+    """The set of interpretable columns."""
+
     # The settlement date, the date we should create the posting at.
     DATE = '[DATE]'
 

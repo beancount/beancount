@@ -116,7 +116,9 @@ disable=locally-disabled,
   no-name-in-module,
   inconsistent-return-statements,
   not-callable,
-  stop-iteration-return
+  stop-iteration-return,
+  assignment-from-no-return,
+  c-extension-no-member
 
 
 

@@ -30,9 +30,9 @@ class TestMiscUtils(unittest.TestCase):
     @mock.patch('warnings.warn')
     def test_deprecated(self, warn):
         @misc_utils.deprecated("This is old!")
-        def foo():
+        def func():
             pass
-        foo()
+        func()
         warn.assert_called_once()
 
     def test_log_time(self):
@@ -207,8 +207,8 @@ class TestMiscUtils(unittest.TestCase):
         self.assertTrue(misc_utils.is_sorted([7, 6, 3, 1], cmp=operator.gt))
 
     def test_escape_string(self):
-        self.assertEqual('Entry with escaped \\"symbols\\" \\\\ \r \n',
-                         misc_utils.escape_string("Entry with escaped \"symbols\" \\ \r \n"))
+        assert misc_utils.escape_string("Entry with escaped \"symbols\" \\ \r \n") == \
+            'Entry with escaped \\"symbols\\" \\\\ \r \n'
 
 
 class TestUniquify(unittest.TestCase):
