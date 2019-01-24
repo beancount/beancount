@@ -148,7 +148,8 @@ def _book(entries, options_map, methods):
                 # group in this block; Summary: We will need to run the
                 # reductions prior to the augmentations in order to support
                 # reductions between the postings of a single transaction.)
-                if False: ## Disabled.
+                # Disabled.
+                if False:  # pylint: disable=using-constant-test
                     if has_self_reduction(group_postings, methods):
                         errors.append(SelfReduxError(
                             entry.meta, "Self-reduction is not allowed", entry))

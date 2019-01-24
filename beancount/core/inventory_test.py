@@ -17,8 +17,8 @@ from beancount.core.position import Cost
 from beancount.core.inventory import Inventory
 from beancount.core.inventory import Booking
 from beancount.core import convert
-from beancount.core import position as position
-from beancount.core import inventory as inventory
+from beancount.core import position
+from beancount.core import inventory
 from beancount.utils import invariants
 
 

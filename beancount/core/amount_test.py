@@ -26,7 +26,6 @@ class TestAmount(unittest.TestCase):
         amount1 = Amount(D('100'), 'USD')
 
         # Test how changing existing attributes should fail.
-        # pylint: disable=assigning-non-slot
         with self.assertRaises(AttributeError) as ctx:
             amount1.currency = 'CAD'
         self.assertRegex("can't set attribute", str(ctx.exception))

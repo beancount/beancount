@@ -42,11 +42,10 @@ __copyright__ = "Copyright (C) 2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from os import path
-import logging
 import os
-import pytest
 import re
 import io
+import pytest
 
 from beancount.ingest import cache
 from beancount.ingest import extract

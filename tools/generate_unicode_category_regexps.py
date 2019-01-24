@@ -12,6 +12,8 @@ import argparse
 from itertools import count, groupby
 from collections import defaultdict
 
+# pylint: disable=invalid-name
+
 def list_chunks(l, n):
     """Split list in chunks of size n."""
     for it in range(0, len(l), n):
@@ -158,7 +160,7 @@ def main():
     args = parser.parse_args()
 
     bycategory = categorize_unicode()
-    chars = [];
+    chars = []
     for cat in args.categories.split(","):
         chars += bycategory[cat]
     chars.sort()

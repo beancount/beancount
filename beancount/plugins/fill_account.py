@@ -11,7 +11,6 @@ import collections
 from beancount.core import account
 from beancount.core import convert
 from beancount.core import data
-from beancount.core import getters
 from beancount.core import inventory
 
 __plugins__ = ('fill_account',)

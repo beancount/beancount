@@ -208,9 +208,8 @@ class TestEntryPrinter(cmptest.TestCase):
     def test_metadata(self):
         meta = data.new_metadata('beancount/core/testing.beancount', 12345)
         meta['something'] = r'a"\c'
-        pr = printer.EntryPrinter()
         oss = io.StringIO()
-        pr.write_metadata(meta, oss)
+        printer.EntryPrinter().write_metadata(meta, oss)
         self.assertEqual('  something: "a\\"\\\\c"\n', oss.getvalue())
 
 

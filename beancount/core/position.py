@@ -22,10 +22,6 @@ from beancount.core.amount import CURRENCY_RE
 from beancount.core.display_context import DEFAULT_FORMATTER
 
 
-# Disable lint errors for namedtuples declared here.
-# pylint: disable=invalid-name
-
-
 # A variant of Amount that also includes a date and a label.
 #
 # Attributes:

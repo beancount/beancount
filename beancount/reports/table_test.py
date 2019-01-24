@@ -17,7 +17,6 @@ class TestTable(unittest.TestCase):
         self.assertEqual(['A', 'A B', 'Aa Bb Cc'], attributes)
 
     def test_create_table(self):
-        # pylint: disable=invalid-name
         Tup = collections.namedtuple('Tup', 'country capital currency amount')
 
         tuples = [

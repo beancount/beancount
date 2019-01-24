@@ -5,13 +5,6 @@ __license__ = "GNU GPLv2"
 from beancount.ingest import regression_pytest as regtest
 from . import utrade_csv
 
-from os import path
-import os
-import pytest
-import re
-
-
-
 
 # Create an importer instance for running the regression tests.
 importer = utrade_csv.Importer(

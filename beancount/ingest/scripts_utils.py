@@ -4,7 +4,6 @@ __copyright__ = "Copyright (C) 2016,2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
 from os import path
-import argparse
 import logging
 import os
 import re
@@ -84,10 +83,10 @@ def ingest(importers_list, detect_duplicates_func=None):
 
         # Use required on subparsers.
         # FIXME: Remove this when we require version 3.7 or above.
-        kw = {}
+        kwargs = {}
         if sys.version_info >= (3, 7):
-            kw['required'] = True
-        subparsers = parser.add_subparsers(dest='command', **kw)
+            kwargs['required'] = True
+        subparsers = parser.add_subparsers(dest='command', **kwargs)
 
         parser.add_argument('--downloads', '-d', metavar='DIR-OR-FILE',
                             action='append', default=[],

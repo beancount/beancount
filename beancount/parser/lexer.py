@@ -17,7 +17,7 @@ from beancount.parser import _parser
 LexerError = collections.namedtuple('LexerError', 'source message entry')
 
 
-class LexBuilder(object):
+class LexBuilder:
     """A builder used only for building lexer objects.
 
     Attributes:

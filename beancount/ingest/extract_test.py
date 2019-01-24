@@ -17,7 +17,6 @@ from beancount import loader
 from beancount.ingest import extract
 from beancount.ingest import importer
 from beancount.ingest import scripts_utils
-from beancount.ingest import similar
 
 
 class TestScriptExtractFromFile(test_utils.TestCase):
@@ -118,7 +117,9 @@ class TestScriptExtractFromFile(test_utils.TestCase):
         imp.identify = mock.MagicMock(return_value=True)
         imp.extract = mock.MagicMock(return_value=[entries[1], entries[3]])
 
-        new_entries = extract.extract_from_file('/tmp/blabla.ofx', imp, entries)
+        new_entries, dup_entries = extract.extract_from_file(
+            '/tmp/blabla.ofx', imp, entries
+        )
         self.assertEqual(2, len(dup_entries))
         self.assertEqual([datetime.date(2016, 2, 2), datetime.date(2016, 2, 4)],
                          [entry.date for entry in new_entries])

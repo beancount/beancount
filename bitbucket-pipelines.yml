@@ -1,9 +1,10 @@
-image: python:3.6.5
+image: python:3.6
 pipelines:
   default:
     - step:
         script:
-          - python3 -m pip install -r requirements.txt
-          - python3 -m pip install pytest
-          - python3 setup.py build_ext -i
-          - python3 -m pytest -v beancount
+          - python -m pip install -r requirements.txt
+          - python -m pip install pytest pylint
+          - python setup.py build_ext -i
+          - python -m pytest -v beancount
+          - pylint beancount

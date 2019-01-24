@@ -4,7 +4,6 @@ __license__ = "GNU GPLv2"
 import os
 import unittest
 import subprocess
-import shutil
 import tempfile
 from os import path
 

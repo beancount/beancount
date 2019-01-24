@@ -12,27 +12,12 @@ automatically when an external tool isn't installed.
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import csv
-import datetime
 import re
-import pprint
-import logging
 import subprocess
-import unittest
-from os import path
 
 from dateutil.parser import parse as parse_datetime
 
-from beancount.core.number import D
-from beancount.core.number import ZERO
-from beancount.core.number import MISSING
-from beancount.core import data
-from beancount.core import account
-from beancount.core import amount
-from beancount.core import position
-from beancount.core import inventory
 from beancount.ingest import importer
-from beancount.ingest import regression
 
 
 def is_pdfminer_installed():

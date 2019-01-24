@@ -86,7 +86,7 @@ def convert_bool(string):
     Returns:
       The corresponding boolean.
     """
-    return not (string.lower() in ('f', 'false', '0'))
+    return not string.lower() in ('f', 'false', '0')
 
 
 class DispatchingShell(cmd.Cmd):
@@ -276,7 +276,6 @@ class DispatchingShell(cmd.Cmd):
 
     def emptyline(self):
         """Do nothing on an empty line."""
-        pass
 
     def exit(self, _):
         """Exit the parser."""

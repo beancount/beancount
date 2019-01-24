@@ -1,14 +1,10 @@
 __copyright__ = "Copyright (C) 2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import datetime
 import unittest
 import textwrap
 
 from beancount import loader
-from beancount.plugins import sellgains
-from beancount.ops import validation
-from beancount.parser import printer
 
 
 class TestMatchAverageCost(unittest.TestCase):

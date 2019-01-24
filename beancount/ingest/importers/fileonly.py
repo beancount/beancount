@@ -5,9 +5,6 @@ Sometimes you just want to save and accumulate data
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-from os import path
-
-from beancount.ingest import importer
 from beancount.ingest.importers.mixins import filing
 from beancount.ingest.importers.mixins import identifier
 

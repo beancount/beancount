@@ -671,7 +671,7 @@ def find_closest(entries, filename, lineno):
         emeta = entry.meta
         if emeta["filename"] == filename and emeta["lineno"] > 0:
             diffline = lineno - emeta["lineno"]
-            if diffline >= 0 and diffline < min_diffline:
+            if 0 <= diffline < min_diffline:
                 min_diffline = diffline
                 closest_entry = entry
     return closest_entry

@@ -2,11 +2,9 @@
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import logging
 import collections
 import itertools
 import re
-from typing import List, Tuple
 
 from beancount.ingest import cache
 from beancount.ingest import importer

@@ -1242,7 +1242,7 @@ class DescriptionEntryColumn(query_compile.EvalColumn):
     def __call__(self, context):
         return (' | '.join(filter(None, [context.entry.payee,
                                          context.entry.narration]))
-                if isinstance(entry, Transaction)
+                if isinstance(context.entry, Transaction)
                 else None)
 
 

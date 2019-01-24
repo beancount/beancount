@@ -97,7 +97,6 @@ class ExampleTableReport(base.TableReport):
     names = ['example']
 
     def generate_table(self, entries, errors, options_map):
-        # pylint: disable=invalid-name
         ABC = collections.namedtuple('ABC', 'account balance')
         return table.create_table([ABC('account1', D(2000)),
                                    ABC('account2', D(5000))])

@@ -2,13 +2,11 @@
 __copyright__ = "Copyright (C) 2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
+from os import path
+import pytest
+
 from beancount.ingest import regression_pytest as regtest
 from . import acme_pdf
-
-from os import path
-import os
-import pytest
-import re
 
 
 importer = acme_pdf.Importer("Assets:US:AcmeBank")
