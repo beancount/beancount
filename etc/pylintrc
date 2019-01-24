@@ -118,7 +118,8 @@ disable=locally-disabled,
   not-callable,
   stop-iteration-return,
   assignment-from-no-return,
-  c-extension-no-member
+  c-extension-no-member,
+  cyclic-import
 
 
 

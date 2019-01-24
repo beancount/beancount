@@ -173,7 +173,8 @@ def render_report(report_class, entries, args=None,
     return oss.getvalue()
 
 
-def render_real_report(report_class, real_root, price_map, price_date, args=None, leaf_only=False):
+def render_real_report(report_class, real_root, price_map, price_date,
+                       args=None, leaf_only=False):
     # pylint: disable=too-many-arguments
     """Instantiate a report and rendering it to a string.
 
