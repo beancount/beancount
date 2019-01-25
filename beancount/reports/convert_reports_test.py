@@ -202,6 +202,31 @@ class TestLedgerConversion(test_utils.TestCase):
 
         """, stdout.getvalue())
 
+    @test_utils.docfile
+    def test_tags_links(self, filename):
+        """
+          2019-01-25 open Assets:A
+          2019-01-25 open Assets:B
+
+          2019-01-25 * "Test tags" #foo ^link2 #bar #baz ^link1
+            Assets:A                       10.00 EUR
+            Assets:B                      -10.00 EUR
+        """
+        with test_utils.capture() as stdout:
+            result = test_utils.run_with_args(report.main, [filename, 'ledger'])
+        self.assertEqual(0, result)
+        self.assertLines("""
+          account Assets:A
+
+          account Assets:B
+
+          2019/01/25 * Test tags
+            ; :bar:baz:foo:
+            ; Link: link1, link2
+            Assets:A                       10.00 EUR
+            Assets:B                      -10.00 EUR
+        """, stdout.getvalue())
+
     def test_example(self):
         with tempfile.NamedTemporaryFile('w',
                                          suffix='.beancount',
@@ -226,6 +251,31 @@ class TestLedgerConversion(test_utils.TestCase):
 
 
 class TestHLedgerConversion(test_utils.TestCase):
+
+    @test_utils.docfile
+    def test_tags_links(self, filename):
+        """
+          2019-01-25 open Assets:A
+          2019-01-25 open Assets:B
+
+          2019-01-25 * "Test tags" #foo ^link2 #bar #baz ^link1
+            Assets:A                       10.00 EUR
+            Assets:B                      -10.00 EUR
+        """
+        with test_utils.capture() as stdout:
+            result = test_utils.run_with_args(report.main, [filename, 'hledger'])
+        self.assertEqual(0, result)
+        self.assertLines("""
+          ;; Open: 2019/01/25 close Assets:A
+
+          ;; Open: 2019/01/25 close Assets:B
+
+          2019/01/25 * Test tags
+            ; bar:, baz:, foo:
+            ; Link: link1 link2
+            Assets:A                       10.00 EUR
+            Assets:B                      -10.00 EUR
+        """, stdout.getvalue())
 
     def test_example(self):
         with tempfile.NamedTemporaryFile('w',

@@ -4,6 +4,11 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2019-01-25
+
+  - Improve output of tags and links for bean-report ledger and hledger.
+
+
 2019-01-22
 
   - Fixed problem with invalid format strings with 0-width field when rendering
