@@ -975,8 +975,9 @@ class Builder(lexer.LexBuilder):
                 elif isinstance(posting_or_kv, TagsLinks):
                     if postings:
                         self.errors.append(ParserError(
-                            meta, "Tags or links not allowed after first Posting: {}"
-                            .format(posting_or_kv), None))
+                            meta,
+                            "Tags or links not allowed after first " +
+                            "Posting: {}".format(posting_or_kv), None))
                     else:
                         tags.update(posting_or_kv.tags)
                         links.update(posting_or_kv.links)

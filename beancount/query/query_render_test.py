@@ -220,8 +220,7 @@ class TestQueryRender(unittest.TestCase):
 
     def assertMultiLineEqualNoWS(self, expected, actual):
         for left, right in zip_longest(
-            expected.strip().splitlines(), actual.strip().splitlines()
-        ):
+                expected.strip().splitlines(), actual.strip().splitlines()):
             self.assertEqual(left.strip(), right.strip())
 
     def setUp(self):

@@ -463,8 +463,7 @@ def _load(sources, log_timings, extra_validations, encoding):
     # running any processes on them.
     with misc_utils.log_time('parse', log_timings, indent=1):
         entries, parse_errors, options_map = _parse_recursive(
-            sources, log_timings, encoding
-        )
+            sources, log_timings, encoding)
         entries.sort(key=data.entry_sortkey)
 
     # Run interpolation on incomplete entries.
