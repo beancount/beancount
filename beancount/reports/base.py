@@ -38,7 +38,7 @@ class Report:
     # The names of this report. Must be overridden by derived classes.
     names = None
 
-    # The defaault format to use.
+    # The default format to use.
     default_format = None
 
     def __init__(self, args, parser):

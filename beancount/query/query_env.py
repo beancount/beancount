@@ -30,7 +30,7 @@ from beancount.query import query_compile
 from beancount.utils.date_utils import parse_date_liberally
 
 
-# Non-agreggating functions. These functionals maintain no state.
+# Non-aggregating functions. These functionals maintain no state.
 
 class _Neg(query_compile.EvalFunction):
     "Compute the negative value of the argument. This works on various types."

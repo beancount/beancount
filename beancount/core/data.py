@@ -130,13 +130,13 @@ Commodity = new_directive('Commodity', [
 # automatically inserts transactions that will make the next chronological
 # balance directive succeeds. It can be used to fill in missing date ranges of
 # transactions, as a convenience. You don't have to use this, it's sugar coating
-# in case you need it, while you're enterering past history into your Ledger.
+# in case you need it, while you're entering past history into your Ledger.
 #
 # Attributes:
 #   meta: See above.
 #   date: See above.
 #   account: A string, the name of the account which needs to be filled.
-#   source_account: A string, the anem of the account which is used to debit from
+#   source_account: A string, the name of the account which is used to debit from
 #     in order to fill 'account'.
 Pad = new_directive('Pad', [
     ('account', Account),
@@ -251,7 +251,7 @@ TxnPosting = NamedTuple('TxnPosting', [
 #   date: See above.
 #   account: A string, the account which the note is to be attached to. This is
 #     never None, notes always have an account they correspond to.
-#   comment: A free-form string, the text of the note. This can be logn if you
+#   comment: A free-form string, the text of the note. This can be long if you
 #     want it to.
 Note = new_directive('Note', [
     ('account', Account),
@@ -270,7 +270,7 @@ Note = new_directive('Note', [
 # present in the country for 183 days or more, excluding trips of less than 30
 # days. There is a similar test to be done in the US by aliens to figure out if
 # they need to be considered as residents for tax purposes (the so-called
-# "subtantial presence test"). By integrating these directives into your
+# "substantial presence test"). By integrating these directives into your
 # bookkeeping, you can easily have a little program that computes the tests for
 # you. This is, of course, entirely optional and somewhat auxiliary to the main
 # purpose of double-entry bookkeeping, but correlates strongly with the
@@ -298,7 +298,7 @@ Event = new_directive('Event', [
 #   date: The date at which this query should be run. All directives following
 #     this date will be ignored automatically. This is essentially equivalent to
 #     the CLOSE modifier in the shell syntax.
-#   name: A string, the unique idenfitier for the query.
+#   name: A string, the unique identifier for the query.
 #   query_string: The SQL query string to be run or made available.
 Query = new_directive('Query', [
     ('name', str),
@@ -328,7 +328,7 @@ Price = new_directive('Price', [
 # render PDF files or scans of your bank statements into the account's journal.
 # While you can explicitly create those directives in the input syntax, it is
 # much more convenient to provide Beancount with a root directory to search for
-# filenames in a hirerarchy mirroring the chart of accounts, filenames which
+# filenames in a hierarchy mirroring the chart of accounts, filenames which
 # should match the following dated format: "YYYY-MM-DD.*". See options for
 # detail. Beancount will automatically create these documents directives based
 # on the file hierarchy, and you can get them by parsing the list of entries.
@@ -364,7 +364,7 @@ Document = new_directive('Document', [
 #   dir_type: A string that represents the type of the directive.
 #   values: A list of values of various simple types supported by the grammar.
 #     (Note that this list is not enforced to be consistent for all directives
-#     of hte same type by the parser.)
+#     of the same type by the parser.)
 Custom = new_directive('Custom', [
     ('type', str),
     ('values', List)])

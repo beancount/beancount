@@ -137,7 +137,7 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
                                  None, narration, EMPTY_SET, EMPTY_SET, [])
 
         # Book this as income, converting the account name to be the same, but as income.
-        # Note: this is a rather convenient but arbitraty choice--maybe it would be best to
+        # Note: this is a rather convenient but arbitrary choice--maybe it would be best to
         # let the user decide to what account to book it, but I don't a nice way to let the
         # user specify this.
         #

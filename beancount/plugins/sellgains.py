@@ -101,7 +101,7 @@ def validate_sell_gains(entries, options_map):
         if not isinstance(entry, data.Transaction):
             continue
 
-        # Find transactins whose lots at cost all have a price.
+        # Find transactions whose lots at cost all have a price.
         postings_at_cost = [posting
                             for posting in entry.postings
                             if posting.cost is not None]

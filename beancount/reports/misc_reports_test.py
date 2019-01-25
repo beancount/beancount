@@ -13,7 +13,7 @@ from beancount import loader
 class TestMiscReports(unittest.TestCase):
 
     def test_all_reports_empty(self):
-        # Test rendering all reports from empty liss of entries.
+        # Test rendering all reports from empty list of entries.
         entries = []
         errors = []
         options_map = options.OPTIONS_DEFAULTS.copy()

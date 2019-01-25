@@ -10,7 +10,7 @@ auto-generated using the --generate option). You use it like this:
   import mymodule
   ...
 
-  # Create your importer instance used for tsting.
+  # Create your importer instance used for testing.
   importer = mymodule.Importer(...)
 
   # Select a directory where your test files are to be located.

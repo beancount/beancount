@@ -49,7 +49,7 @@ def align_position_strings(strings):
     max_before = 0
     # Maximum length after the alignment character.
     max_after = 0
-    # Maxmimum length of unknown strings.
+    # Maximum length of unknown strings.
     max_unknown = 0
 
     string_items = []
@@ -215,7 +215,7 @@ class EntryPrinter:
             position_str: A string, the rendered position string.
             weight_str: A string, the rendered weight of the posting.
         """
-        # Render a string of the flag and hte account.
+        # Render a string of the flag and the account.
         flag = '{} '.format(posting.flag) if posting.flag else ''
         flag_account = flag + posting.account
 

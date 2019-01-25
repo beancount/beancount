@@ -560,7 +560,7 @@ def dump(root_account):
             # For the root node, we don't want to render any prefix.
             first = cont = ''
         else:
-            # Compute the string that precedes the name directly and the one belwo
+            # Compute the string that precedes the name directly and the one below
             # that for the continuation lines.
             #  |
             #  @@@ Bank1    <----------------

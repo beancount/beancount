@@ -299,7 +299,7 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
                                  account, Amount(balance, self.currency),
                                  None, None))
 
-        # Remove the 'balance' metadta.
+        # Remove the 'balance' metadata.
         for entry in entries:
             entry.meta.pop('balance', None)
 

@@ -82,7 +82,7 @@ class Importer(importer.ImporterProtocol):
             return re.match('ACME Bank', text) is not None
 
     def file_name(self, file):
-        # Noramlize the name to something meaningful.
+        # Normalize the name to something meaningful.
         return 'acmebank.pdf'
 
     def file_account(self, _):

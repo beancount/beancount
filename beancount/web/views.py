@@ -39,7 +39,7 @@ class View:
         # A reference to the full list of padded entries.
         self.all_entries = all_entries
 
-        # List of filterered entries for this view, and index at the beginning
+        # List of filtered entries for this view, and index at the beginning
         # of the period transactions, past the opening balances. These are
         # computed in _initialize().
         self.entries = None

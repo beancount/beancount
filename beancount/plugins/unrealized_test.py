@@ -252,7 +252,7 @@ class TestUnrealized(unittest.TestCase):
                           if isinstance(entry, data.Open)})
 
         # Test it with a subaccount; we should observe new open directives for
-        # th esubaccounts as well.
+        # the subaccounts as well.
         new_entries, _ = unrealized.add_unrealized_gains(entries, options_map, 'Gains')
 
         self.assertEqual({'Income:Misc',

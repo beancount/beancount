@@ -172,7 +172,7 @@ def text_entries_table(oss, postings,
         description = get_entry_text_description(entry)
         description_lines = textwrap.wrap(description, width=description_width)
 
-        # Ensure at least one line is rendered (for zip_longuest).
+        # Ensure at least one line is rendered (for zip_longest).
         if not description_lines:
             description_lines.append('')
 

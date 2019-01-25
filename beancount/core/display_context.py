@@ -373,6 +373,6 @@ class DisplayFormatter:
     __call__ = format
 
 
-# Default instance of DisplayContext to use if None is spcified.
+# Default instance of DisplayContext to use if None is specified.
 DEFAULT_DISPLAY_CONTEXT = DisplayContext()
 DEFAULT_FORMATTER = DEFAULT_DISPLAY_CONTEXT.build()
