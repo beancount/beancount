@@ -341,7 +341,7 @@ class TestCompileSelect(CompileSelectBase):
             """)
 
     def test_compile_targets_wildcard(self):
-        # Test the wildcard expandion.
+        # Test the wildcard expansion.
         query = self.compile("SELECT *;")
         self.assertTrue(list, type(query.c_targets))
         self.assertGreater(len(query.c_targets), 3)
@@ -349,7 +349,7 @@ class TestCompileSelect(CompileSelectBase):
                             for target in query.c_targets))
 
     def test_compile_targets_named(self):
-        # Test the wildcard expandion.
+        # Test the wildcard expansion.
         query = self.compile("SELECT length(account), account as a, date;")
         self.assertEqual(
             [qc.EvalTarget(qe.Length([qe.AccountColumn()]), 'length_account', False),

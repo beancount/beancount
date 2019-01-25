@@ -1834,7 +1834,7 @@ class TestLexerAndParserErrors(cmptest.TestCase):
       build_grammar_error() to register the error. Error recovery proceeds
       similarly to what was described previously.
 
-    * Grammar Builder Exception: A grammar rule is reduced succesfully, a
+    * Grammar Builder Exception: A grammar rule is reduced successfully, a
       builder method is invoked and raises a Python exception. A macro in the
       code that invokes this method is used to catch this error and calls
       build_grammar_error_from_exception() to register an error and makes the

@@ -25,7 +25,7 @@ def as_rows(string):
 
 def csv_clean_header(header_row):
     """Create a new class for the following rows from the header line.
-    This both normalizes hte header line and assign
+    This both normalizes the header line and assign
 
     Args:
       header_row: A list of strings, the row with header titles.

@@ -1268,7 +1268,7 @@ def compute_trip_dates(date_begin, date_end):
     # Length of trip.
     days_trip = (8, 22)
 
-    # Number of days to ensure no trip at the beginning and the ned.
+    # Number of days to ensure no trip at the beginning and the end.
     days_buffer = 21
 
     date_begin += datetime.timedelta(days=days_buffer)

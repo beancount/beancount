@@ -25,7 +25,7 @@ class TestSetup(test_utils.TestCase):
             shutil.rmtree(self.installdir)
 
     def test_setup_with_distutils(self):
-        # We disbale setuptools in the subprocess by passing an environment
+        # We disable setuptools in the subprocess by passing an environment
         # variable.
         self.run_setup(self.installdir, {'BEANCOUNT_DISABLE_SETUPTOOLS': '1'})
 
@@ -33,7 +33,7 @@ class TestSetup(test_utils.TestCase):
         # We need to create the installation target directory and have our
         # PYTHONPATH set on it in order for setuptools to work properly in a
         # temporary installation directory. Otherwise it fails and spits out a
-        # large error message with instructions on how to work with setuptoolss.
+        # large error message with instructions on how to work with setuptools.
         site_packages_path = path.join(
             self.installdir,
             'lib/python{vi.major:d}.{vi.minor:d}/site-packages'.format(

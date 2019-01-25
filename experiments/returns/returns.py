@@ -396,7 +396,7 @@ def compute_period_returns(date_begin, date_end,
 
     # Compute the union of all currencies. At this point, ignore currencies
     # held-at-cost and issue a warning if some are found (if the price database
-    # covers all the currencies held at cost, this shuold not occur).
+    # covers all the currencies held at cost, this should not occur).
     currencies = set()
     single_begin = {}
     single_end = {}
@@ -496,7 +496,7 @@ def internalize(entries, transfer_account,
     # should diminish the returns of the related accounts. To fix this, we split
     # the entry into two entries, one without external flows against an transfer
     # account that we consider an assets account, and just the external flows
-    # against this same tranfer account.
+    # against this same transfer account.
     assert(isinstance(transfer_account, str)), (
         "Invalid transfer account: {}".format(transfer_account))
 
@@ -531,7 +531,7 @@ def internalize(entries, transfer_account,
                 postings_internalize.append(posting)
 
         # Check if the entry is to be internalized and split it up in two
-        # entries and replace the entrie if that's the case.
+        # entries and replace the entry if that's the case.
         if (postings_internal and postings_external and
             (postings_assets or postings_internalize)):
 

@@ -190,7 +190,7 @@ class TestReturnsFunctions(test_utils.TestCase):
 
 class TestReturnsPeriods(test_utils.TestCase):
 
-    # Ensure that prelude and epiloge periods are correctly found and returned.
+    # Ensure that prelude and epilogue periods are correctly found and returned.
     @loader.load_doc()
     def test_segment_periods(self, entries, errors, options_map):
         """

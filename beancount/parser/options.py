@@ -130,7 +130,7 @@ OptGroup = collections.namedtuple('OptGroup',
 #    example string for the user to model itself on.
 #  converter: A function object to be called to convert or validate the
 #    option during parsing, or None, if no conversion is necessary. The
-#    callable must either succesfully return with the parsed value, or
+#    callable must either successfully return with the parsed value, or
 #    raise a ValueError for the handler to report an error to the parser.
 #  deprecated: A string, a message set if the option is deprecated. This is
 #    used to issue suitable warnings when options aren't honored or about

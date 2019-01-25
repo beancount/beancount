@@ -118,7 +118,7 @@ class TestDocuments(account_test.TmpFilesTestBase, cmptest.TestCase):
         self.assertEqual(datetime.date(2014, 7, 1), entry.date)
 
         # Test with a relative directory name, the entries should be the same,
-        # as all the filenames attached to document directivesa are absolute
+        # as all the filenames attached to document directives are absolute
         # paths.
         entries2, errors2 = documents.find_documents(
             'root', path.join(self.tempdir, 'input.beancount'))

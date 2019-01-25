@@ -419,7 +419,7 @@ class TestLoadCache(unittest.TestCase):
             # Make sure the cache was created.
             self.assertTrue(path.exists(path.join(tmp, '.apples.beancount.picklecache')))
 
-            # CHeck that it doesn't need refresh
+            # Check that it doesn't need refresh
             self.assertFalse(loader.needs_refresh(options_map))
 
             # Move the input file.

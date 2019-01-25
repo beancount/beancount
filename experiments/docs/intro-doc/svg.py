@@ -55,7 +55,7 @@ class Params:
 
     #x_inter_distance = post_radius + x_txn_offset + txn_radius + x_margin # Horizontal distance between transactions.
     x_inter_distance = post_radius * 0.9
-    x_clear_distance = 2                                                  # Horizontal distance between clearning transactions
+    x_clear_distance = 2                                                  # Horizontal distance between clearing transactions
 
     # Horizontally, we have
     # | acctype account | timeline | balances |

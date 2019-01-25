@@ -533,7 +533,7 @@ Improve this bit:
   - In the EntryPrinter(), figure out the maximum width of accounts and set it up.
   - Add a "target num columns" instead of a "min_width_account" to the
     EntryPrinter and figure out the min_width_account automatically from it,
-    depending on whether we've got render_weights on or not. Use hte longest
+    depending on whether we've got render_weights on or not. Use the longest
     possible number of integral digits required from the DisplayContext in
     order to make this tight.
 
@@ -1474,7 +1474,7 @@ http://furius.ca/beancount/doc/proposal-query
     - This causes a problem because a tag is parsed in '#9.95':
       10 AAPL {45.23#9.95 USD}
 
-    - Make sure parsing {3.00 # USD} does not produce the smae CostSpec as {3.00 USD}.
+    - Make sure parsing {3.00 # USD} does not produce the same CostSpec as {3.00 USD}.
 
     - Remove OLD comments from parser.py and update the description to use the
       xposition class.

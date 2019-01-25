@@ -356,7 +356,7 @@ def transfer_balances(entries, date, account_pred, transfer_account):
     creating new entries.
 
     Note that inserting transfers breaks any following balance checks that are
-    in the tranferred accounts. For this reason, all balance assertion entries
+    in the transferred accounts. For this reason, all balance assertion entries
     following the cutoff date for those accounts are removed from the list in
     output.
 
@@ -642,7 +642,7 @@ def get_open_entries(entries, date):
                 open_entries[entry.account] = (index, entry)
 
         elif isinstance(entry, Close):
-            # If there is no coresponding open, don't raise an error.
+            # If there is no corresponding open, don't raise an error.
             open_entries.pop(entry.account, None)
 
     return [entry for (index, entry) in sorted(open_entries.values())]

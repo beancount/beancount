@@ -62,7 +62,7 @@ def get_list_report_string(only_report=None):
         if only_report and only_report not in report_class.names:
             continue
 
-        # Get the texttual description.
+        # Get the textual description.
         description = textwrap.fill(
             re.sub(' +', ' ', ' '.join(report_class.__doc__.splitlines())),
             initial_indent="    ",
@@ -124,14 +124,14 @@ class ListFormatsAction(argparse.Action):
                              key=lambda fmt: self.format_order.get(fmt,
                                                                    self.format_order_last))
 
-        # Bulid a list of rows.
+        # Build a list of rows.
         rows = []
         for name, formats in matrix:
             xes = ['X' if fmt in formats else ''
                    for fmt in all_formats]
             rows.append([name] + xes)
 
-        # Build a description of the rows, a field specificaiton.
+        # Build a description of the rows, a field specification.
         header = ['Name'] + all_formats
         field_spec = [(index, name) for index, name in enumerate(header)]
 

@@ -52,7 +52,7 @@ __plugins__ = ('fix_payees',)
 FixPayeesError = collections.namedtuple('FixPayeesError', 'source message entry')
 
 
-# Set this to true to dump debug outpout.
+# Set this to true to dump debug output.
 _DEBUG = False
 
 

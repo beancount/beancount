@@ -416,7 +416,7 @@ def match_names_and_upload_sheets(service, docid, new_sheets):
 
     doc = Doc(service, docid)
 
-    # Get the existings sheets within (this also validates the existence of the
+    # Get the existing sheets within (this also validates the existence of the
     # document).
     existing_sheets = doc.get_sheets()
     logging.info("Existing sheets: %s", existing_sheets)

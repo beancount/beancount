@@ -212,7 +212,7 @@ def compare_sample_files(importer, directory=None, ignore_cls=None):
                      'extract',
                      'file_date',
                      'file_name']:
-            # Check if the method has been overrriden from the protocol
+            # Check if the method has been overridden from the protocol
             # interface. If so, even if it's provided by concretely inherited
             # method, we want to require a test against that method.
             func = getattr(importer, name).__func__

@@ -27,7 +27,7 @@ FLAG_ROWTYPES = {
 #   entry: The parent entry we are rendering postings for. This can be of
 #     any valid directive type, not just Transaction instances.
 #   leg_postings: A list of postings that apply to this row.
-#   rowtype: A renderable string that dscribes the type of this row's directive.
+#   rowtype: A renderable string that describes the type of this row's directive.
 #   extra_class: A CSS class to be add to the row. This is used for marking some
 #     rows as warning rows.
 #   flag: The flag attached to this row, if Transaction, or an empty string.

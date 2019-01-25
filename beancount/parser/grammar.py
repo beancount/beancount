@@ -175,7 +175,7 @@ class Builder(lexer.LexBuilder):
                     "Unbalanced metadata key '{}'; leftover metadata '{}'").format(
                         key, ', '.join(value_list)), None))
 
-        # Weave the commas option in the DisplayContext itself, so it propagages
+        # Weave the commas option in the DisplayContext itself, so it propagates
         # everywhere it is used automatically.
         self.dcontext.set_commas(self.options['render_commas'])
 
@@ -531,7 +531,7 @@ class Builder(lexer.LexBuilder):
                             ("Per-unit cost may not be specified using total cost "
                              "syntax: '{}'; ignoring per-unit cost").format(compound_cost),
                             None))
-                    # Ignore per-unit numbrer.
+                    # Ignore per-unit number.
                     number_per = ZERO
                 else:
                     # There's a single number specified; interpret it as a total cost.
