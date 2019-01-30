@@ -150,6 +150,7 @@ class TestAccount(unittest.TestCase):
         self.assertTrue(is_child('Assets:Bank:Checking'))
         self.assertTrue(is_child('Assets:Bank:Checking:SubAccount'))
         self.assertFalse(is_child('Assets:Bank:CheckingOld'))
+        self.assertFalse(is_child('Assets:Bank:Checking-Old'))
 
     def test_parents(self):
         iterator = account.parents('Assets:Bank:Checking')
