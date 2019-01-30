@@ -186,7 +186,7 @@ def parent_matcher(account_name):
       A callable, which, when called, will return true if the given account is a
       child of 'account_name'.
     """
-    return re.compile(r'{}\b'.format(re.escape(account_name))).match
+    return re.compile(r'{}($|{})'.format(re.escape(account_name), sep)).match
 
 
 def parents(account_name):

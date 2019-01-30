@@ -4,6 +4,18 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2019-01-29
+
+  - Fixed #362: Predicate matching a parent account was matching accounts with
+    word breaks but not at the boundary of an account name. This was causing
+    a rare (but important) failure in how Pad balances were calculated.
+
+
+2019-01-28
+
+  - Released 2.2.1 for bug fixes.
+
+
 2019-01-22
 
   - Fixed problem with invalid format strings with 0-width field when rendering

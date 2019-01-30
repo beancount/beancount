@@ -534,3 +534,37 @@ class TestPadding(cmptest.TestCase):
 
         self.assertRegex(errors[0].message, "Balance failed")
         self.assertEqual(datetime.date(2015, 9, 15), errors[0].entry.date)
+
+    @loader.load_doc()
+    def test_pad_issue362(self, entries, errors, __):
+        """
+        1970-01-01 open Assets:Bank
+        1970-01-01 open Assets:Bank-Two
+        1970-01-01 open Equity:Opening-Balance
+        1970-01-01 open Equity:Adjustments
+        1970-01-01 open Expenses:Food
+
+        2019-01-01 * "Opening balance"
+          Assets:Bank                  20.00 GBP
+          Equity:Opening-Balance      -20.00 GBP
+
+        2019-01-03 * "Tesco" "Buy food"
+          Expenses:Food                30.00 GBP
+          Assets:Bank                 -30.00 GBP
+
+        2019-01-04 balance Assets:Bank -10.00 GBP
+
+        2019-01-03 * "Tesco" "Buy food"
+          Expenses:Food                 6.00 GBP
+          Assets:Bank-Two              -6.00 GBP
+
+        ; Get rid of overdraft somehow and get a £50 balance
+
+        2019-01-04 pad Assets:Bank Equity:Adjustments
+        2019-01-05 balance Assets:Bank 50.00 GBP
+        """
+        # self.assertTrue(any(isinstance(entry, data.Transaction)
+        #                     for entry in entries))
+        # self.assertEqual(1, len(errors))
+        # self.assertRegex(errors[0].message, "Balance failed")
+        # self.assertEqual(datetime.date(2015, 9, 15), errors[0].entry.date)
