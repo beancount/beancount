@@ -125,7 +125,7 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
           csv_dialect: A `csv` dialect given either as string or as instance or
             subclass of `csv.Dialect`.
         """
-        assert isinstance(config, dict)
+        assert isinstance(config, dict), "Invalid type: {}".format(config)
         self.config = config
 
         self.currency = currency
