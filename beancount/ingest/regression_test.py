@@ -3,7 +3,6 @@
 __copyright__ = "Copyright (C) 2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
-import contextlib
 import os
 import datetime
 import unittest

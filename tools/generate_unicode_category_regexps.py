@@ -12,6 +12,8 @@ import argparse
 from itertools import count, groupby
 from collections import defaultdict
 
+# pylint: disable=invalid-name
+
 def list_chunks(l, n):
     """Split list in chunks of size n."""
     for it in range(0, len(l), n):
@@ -77,7 +79,7 @@ def py_unicode_ranges(chars):
     regular expression's bracket expression (e.g. \u0062\u0064-\u006f).
     """
     ranges = []
-    for _, seq in groupby_sequences(chars, lambda c: ord(c)):
+    for _, seq in groupby_sequences(chars, ord):
         seq = list(seq)
         beg = seq[0]
         end = seq[-1]
@@ -158,7 +160,7 @@ def main():
     args = parser.parse_args()
 
     bycategory = categorize_unicode()
-    chars = [];
+    chars = []
     for cat in args.categories.split(","):
         chars += bycategory[cat]
     chars.sort()

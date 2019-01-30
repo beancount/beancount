@@ -22,10 +22,6 @@ from beancount.core.amount import CURRENCY_RE
 from beancount.core.display_context import DEFAULT_FORMATTER
 
 
-# Disable lint errors for namedtuples declared here.
-# pylint: disable=invalid-name
-
-
 # A variant of Amount that also includes a date and a label.
 #
 # Attributes:
@@ -335,8 +331,11 @@ class Position(_Position):
             for expr in expressions:
 
                 # Match a compound number.
-                match = re.match(r'({})\s*(?:#\s*({}))?\s+({})$'.format(
-                    NUMBER_RE, NUMBER_RE, CURRENCY_RE), expr)
+                match = re.match(
+                    r'({NUMBER_RE})\s*(?:#\s*({NUMBER_RE}))?\s+({CURRENCY_RE})$'
+                    .format(NUMBER_RE=NUMBER_RE, CURRENCY_RE=CURRENCY_RE),
+                    expr
+                )
                 if match:
                     per_number, total_number, cost_currency = match.group(1, 2, 3)
                     per_number = D(per_number) if per_number else ZERO

@@ -1703,6 +1703,7 @@ class TestBookReductions(_BookingTestBase):
 
 class TestHasSelfReductions(cmptest.TestCase):
 
+    # pylint: disable=invalid-name
     BM = collections.defaultdict(lambda: Booking.STRICT)
 
     @loader.load_doc()
@@ -2720,7 +2721,7 @@ class TestBookingApi(unittest.TestCase):
         data.create_simple_posting(txn, 'Assets:Cash', 100.00, 'USD')
         data.create_simple_posting(txn, 'Expenses:Stuff', None, None)
         for method in Booking:
-            methods = collections.defaultdict(lambda: method)
+            methods = collections.defaultdict(lambda m=method: m)
             entries, errors = bf.book([txn], options.OPTIONS_DEFAULTS.copy(), methods)
             self.assertEqual(len(entries), 1)
             self.assertEqual(len(errors), 0)

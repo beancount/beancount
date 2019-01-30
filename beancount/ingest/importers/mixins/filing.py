@@ -9,11 +9,7 @@ like this:
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import logging
-import collections
-import re
 from os import path
-from typing import List, Tuple
 
 from beancount.core import account
 from beancount.ingest import importer

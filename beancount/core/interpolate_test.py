@@ -572,7 +572,6 @@ class TestInferTolerances(cmptest.TestCase):
         # also marked as automatic, so if cannot use inference there either. So
         # all legs end up being automatic... and we have to fall back on the
         # default tolerance.
-        pass
 
     @loader.load_doc()
     def test_tolerances__missing_units_only(self, entries, errors, options_map):

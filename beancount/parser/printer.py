@@ -198,6 +198,7 @@ class EntryPrinter:
             for posting, account, position_str in zip(entry.postings,
                                                       strs_account,
                                                       strs_position):
+                # pylint: disable=too-many-format-args
                 oss.write(fmt(account, position_str))
                 if posting.meta:
                     self.write_metadata(posting.meta, oss, '    ')

@@ -173,7 +173,9 @@ def render_report(report_class, entries, args=None,
     return oss.getvalue()
 
 
-def render_real_report(report_class, real_root, price_map, price_date, args=None, leaf_only=False):
+def render_real_report(report_class, real_root, price_map, price_date,
+                       args=None, leaf_only=False):
+    # pylint: disable=too-many-arguments
     """Instantiate a report and rendering it to a string.
 
     This is intended to be called in the context of a Bottle view app request
@@ -351,8 +353,8 @@ def source():
         for i, line in enumerate(app.source.splitlines()):
             lineno = i+1
             contents.write(
-                '<pre id="{}">{}  {}</pre>\n'.format(
-                    lineno, lineno, line.rstrip()))
+                '<pre id="{lineno}">{lineno}  {line}</pre>\n'.format(
+                    lineno=lineno, line=line.rstrip()))
         contents.write('</div>')
 
     return render_global(
@@ -1031,6 +1033,7 @@ def auto_reload_input_file(callback):
 
             # Print out the list of errors.
             if errors:
+                # pylint: disable=unsupported-assignment-operation
                 request.params['render_overlay'] = True
                 print(',----------------------------------------------------------------')
                 printer.print_errors(errors, file=sys.stdout)
@@ -1055,6 +1058,7 @@ def auto_reload_input_file(callback):
             # For now, the overlay is a link to the errors page. Always render
             # it on the right when there are errors.
             if app.errors:
+                # pylint: disable=unsupported-assignment-operation
                 request.params['render_overlay'] = True
 
         return callback(*posargs, **kwargs)

@@ -325,7 +325,7 @@ def process_args():
             except ValueError:
                 extra = "; did you provide a filename?" if path.exists(source_str) else ''
                 msg = ('Invalid source "{{}}"{}. '.format(extra) +
-                       'Supported format is "CCY:module/SYMBOL"'.format(extra))
+                       'Supported format is "CCY:module/SYMBOL"')
                 parser.error(msg.format(source_str))
             else:
                 for currency, psources in psource_map.items():

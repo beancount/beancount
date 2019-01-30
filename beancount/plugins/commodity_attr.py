@@ -40,6 +40,7 @@ def validate_commodity_attr(entries, unused_options_map, config_str):
     """
     errors = []
 
+    # pylint: disable=eval-used
     config_obj = eval(config_str, {}, {})
     if not isinstance(config_obj, dict):
         errors.append(ConfigError(
@@ -63,7 +64,8 @@ def validate_commodity_attr(entries, unused_options_map, config_str):
             if values and value not in values:
                 errors.append(CommodityError(
                     entry.meta,
-                    "Invalid attribute '{}' for Commodity directive {}; valid options: {}".format(
-                        value, entry.currency, ', '.join(values)), None))
+                    "Invalid attribute '{}' for Commodity".format(value) +
+                    " directive {}; valid options: {}".format(
+                        entry.currency, ', '.join(values)), None))
 
     return entries, errors

@@ -125,8 +125,8 @@ class TestGetters(unittest.TestCase):
                          'Expenses:Coffee',
                          'Expenses:Restaurant']
 
-        LABEL = getters.get_dict_accounts.ACCOUNT_LABEL
-        root = OrderedDict([(LABEL, True)])
+        label = getters.get_dict_accounts.ACCOUNT_LABEL
+        root = OrderedDict([(label, True)])
         account_dict = OrderedDict([
             ('Assets', OrderedDict([
                 ('US', OrderedDict([
@@ -137,7 +137,7 @@ class TestGetters(unittest.TestCase):
             ('Expenses', OrderedDict([
                 ('Grocery', OrderedDict([
                     ('Bean', root), # Wrong order here
-                    (LABEL, True),
+                    (label, True),
                 ])),
                 ('Coffee', root),
                 ('Restaurant', root),
@@ -148,7 +148,7 @@ class TestGetters(unittest.TestCase):
             account_dict
         )
         account_dict['Expenses']['Grocery'] = OrderedDict([
-            (LABEL, True),
+            (label, True),
             ('Bean', root),
         ])
 

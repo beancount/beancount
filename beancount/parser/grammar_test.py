@@ -1254,7 +1254,7 @@ class TestTotalsAndSigns(unittest.TestCase):
             Assets:Investments:MSFT      0 MSFT {200.00 USD}
             Assets:Investments:Cash      0 USD
         """
-        pass # Should produce no errors.
+        # Should produce no errors.
 
     @parser.parse_doc(expect_errors=False)
     def test_zero_cost(self, entries, errors, _):
@@ -1263,7 +1263,7 @@ class TestTotalsAndSigns(unittest.TestCase):
             Assets:Investments:MSFT      -10 MSFT {0.00 USD}
             Assets:Investments:Cash     0.00 USD
         """
-        pass # Should produce no errors.
+        # Should produce no errors.
 
     @parser.parse_doc(expect_errors=False)
     def test_cost_negative(self, entries, errors, _):
@@ -1272,7 +1272,7 @@ class TestTotalsAndSigns(unittest.TestCase):
             Assets:Investments:MSFT      -10 MSFT {-200.00 USD}
             Assets:Investments:Cash  2000.00 USD
         """
-        pass # Should produce no errors.
+        # Should produce no errors.
         # Note: This error is caught only at booking time.
 
     @parser.parse_doc()
@@ -1320,7 +1320,7 @@ class TestTotalsAndSigns(unittest.TestCase):
             Assets:Investments:MSFT      -10 MSFT {{-200.00 USD}}
             Assets:Investments:Cash   200.00 USD
         """
-        pass # Should produce no errors.
+        # Should produce no errors.
         # Note: This error is caught only at booking time.
 
     @parser.parse_doc(expect_errors=True)

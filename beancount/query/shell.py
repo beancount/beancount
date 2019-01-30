@@ -86,7 +86,7 @@ def convert_bool(string):
     Returns:
       The corresponding boolean.
     """
-    return not (string.lower() in ('f', 'false', '0'))
+    return not string.lower() in ('f', 'false', '0')
 
 
 class DispatchingShell(cmd.Cmd):
@@ -276,7 +276,6 @@ class DispatchingShell(cmd.Cmd):
 
     def emptyline(self):
         """Do nothing on an empty line."""
-        pass
 
     def exit(self, _):
         """Exit the parser."""
@@ -625,6 +624,7 @@ class BQLShell(DispatchingShell):
             (getattr(column_cls, '__equivalent__', '-'), name)
             for name, column_cls in sorted(self.env_postings.columns.items()))
 
+        # pylint: disable=possibly-unused-variable
         entry_attributes = ''.join(
             "  {:40}: {}\n".format(*pair) for pair in entry_pairs)
         posting_attributes = ''.join(

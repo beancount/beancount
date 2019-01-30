@@ -163,7 +163,7 @@ class TestProcessArguments(unittest.TestCase):
     def test_filename_not_exists(self):
         with test_utils.capture('stderr'):
             with self.assertRaises(SystemExit):
-                args, jobs, _ = test_utils.run_with_args(
+                test_utils.run_with_args(
                     price.process_args, ['--no-cache', '/some/file.beancount'])
 
     @test_utils.docfile

@@ -13,7 +13,6 @@ from beancount.core import amount
 from beancount.core import data
 from beancount.core import position
 from beancount.core.number import MISSING
-from beancount.core.number import ZERO
 from beancount.parser import booking
 from beancount.parser import cmptest
 from beancount.parser import parser

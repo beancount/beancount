@@ -85,7 +85,8 @@ class ImporterProtocol:
         """Return an account associated with the given file.
 
         Note: If you don't implement this method you won't be able to move the
-        files into its preservation hierarchy; the bean-file command won't work.
+        files into its preservation hierarchy; the bean-file command won't
+        work.
 
         Also, normally the returned account is not a function of the input
         file--just of the importer--but it is provided anyhow.

@@ -30,9 +30,9 @@ class TestMiscUtils(unittest.TestCase):
     @mock.patch('warnings.warn')
     def test_deprecated(self, warn):
         @misc_utils.deprecated("This is old!")
-        def foo():
+        def func():
             pass
-        foo()
+        func()
         warn.assert_called_once()
 
     def test_log_time(self):
@@ -102,7 +102,6 @@ class TestMiscUtils(unittest.TestCase):
         self.assertEqual([0, 3, 6, 9], list(misc_utils.skipiter(range(10), 3)))
 
     def test_get_tuple_values(self):
-        # pylint: disable=invalid-name
         Something = namedtuple('Something', 'a b c d e')
         SomethingElse = namedtuple('SomethingElse', 'f g h')
         class Dummy(str): pass
@@ -111,7 +110,6 @@ class TestMiscUtils(unittest.TestCase):
         self.assertEqual([Dummy('a'), Dummy('b')], list(values))
 
     def test_replace_tuple_values(self):
-        # pylint: disable=invalid-name
         Something = namedtuple('Something', 'a b c d e')
         SomethingElse = namedtuple('SomethingElse', 'f g')
 
@@ -145,7 +143,6 @@ class TestMiscUtils(unittest.TestCase):
                          misc_utils.idify('A____B_._pdf'))
 
     def test_map_namedtuple_attributes(self):
-        # pylint: disable=invalid-name
         Test = namedtuple('Test', 'a b c d')
         test = Test(None, None, 1, 2)
         new_test = misc_utils.map_namedtuple_attributes(
@@ -195,7 +192,6 @@ class TestMiscUtils(unittest.TestCase):
         self.assertLess(-1, max_height)
 
     def test_cmptuple(self):
-        # pylint: disable=invalid-name
         One = misc_utils.cmptuple('Bla', 'a b c')
         Two = misc_utils.cmptuple('Bli', 'd e f')
 
@@ -211,8 +207,8 @@ class TestMiscUtils(unittest.TestCase):
         self.assertTrue(misc_utils.is_sorted([7, 6, 3, 1], cmp=operator.gt))
 
     def test_escape_string(self):
-        self.assertEqual('Entry with escaped \\"symbols\\" \\\\ \r \n',
-                         misc_utils.escape_string("Entry with escaped \"symbols\" \\ \r \n"))
+        assert misc_utils.escape_string("Entry with escaped \"symbols\" \\ \r \n") == \
+            'Entry with escaped \\"symbols\\" \\\\ \r \n'
 
 
 class TestUniquify(unittest.TestCase):
