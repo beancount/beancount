@@ -53,7 +53,7 @@ def fetch_time_series(ticker, time=None):
     """Fetch"""
     # Create request payload.
     database, dataset = parse_ticker(ticker)
-    url = f"https://www.quandl.com/api/v3/datasets/{database}/{dataset}.json"
+    url = "https://www.quandl.com/api/v3/datasets/{}/{}.json".format(database, dataset)
     payload = {"limit": 1}
     if time is not None:
         date = time.date()

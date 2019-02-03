@@ -4,6 +4,11 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2019-02-03
+
+  - Fixed #372: Removed formatted string literal to keep compat with Python 3.5.
+
+
 2019-01-29
 
   - Fixed #362: Predicate matching a parent account was matching accounts with
