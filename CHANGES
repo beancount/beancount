@@ -4,6 +4,12 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2019-02-10
+
+  - Fixed #374: Option --all treatment was broken in #210. Also catch and print
+    errors.
+
+
 2019-02-03
 
   - Fixed #372: Removed formatted string literal to keep compat with Python 3.5.

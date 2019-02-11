@@ -38,6 +38,10 @@ _CACHE = None
 DEFAULT_EXPIRATION = datetime.timedelta(seconds=30*60)  # 30 mins.
 
 
+# The default source parser is back.
+DEFAULT_SOURCE = 'beancount.prices.sources.yahoo'
+
+
 def now():
     "Indirection in order to be able to mock it out in the tests."
     return datetime.datetime.now(datetime.timezone.utc)
@@ -96,9 +100,13 @@ def fetch_cached_price(source, symbol, date):
                 raise KeyError
         except KeyError:
             logging.info("Fetching: %s (time: %s)", symbol, time)
-            result = (source.get_latest_price(symbol)
-                      if time is None else
-                      source.get_historical_price(symbol, time))
+            try:
+                result = (source.get_latest_price(symbol)
+                          if time is None else
+                          source.get_historical_price(symbol, time))
+            except ValueError as exc:
+                logging.error("Error fetching %s: %s", symbol, exc)
+                result = None
 
             # Make sure the timezone is UTC and make naive before serialization.
             if result and result.time is not None:
@@ -108,7 +116,8 @@ def fetch_cached_price(source, symbol, date):
             else:
                 result_naive = result
 
-            _CACHE[key] = (timestamp_now, result_naive)
+            if result_naive is not None:
+                _CACHE[key] = (timestamp_now, result_naive)
     return result
 
 
@@ -307,6 +316,7 @@ def process_args():
 
     if args.all:
         args.inactive = args.undeclared = args.clobber = True
+        args.undeclared = DEFAULT_SOURCE
 
     # Setup for processing.
     setup_cache(args.cache_filename, args.clear_cache)
