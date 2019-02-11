@@ -97,7 +97,10 @@ class TestEncryptedBase(unittest.TestCase):
         self.run_gpg('--import', stdin=TEST_SECRET_KEY.encode('ascii'))
 
     def tearDown(self):
-        self.tmpdir.cleanup()
+        try:
+            self.tmpdir.cleanup()
+        except FileNotFoundError:
+            pass  # Ignore those, GPG agent sometimes causes this problem.
 
     def run_gpg(self, *args, **kw):
         command = ('gpg',

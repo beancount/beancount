@@ -9,6 +9,8 @@ Note: This file contains a list changes in the 'default' branch.
   - Fixed #374: Option --all treatment was broken in #210. Also catch and print
     errors.
 
+  - Fixed rare failure of shutil.rmtree() in encryption cleanup test.
+
 
 2019-02-03
 
