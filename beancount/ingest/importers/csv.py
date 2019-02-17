@@ -122,9 +122,12 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
             to a transaction with only single posting.
           institution: An optional name of an institution to rename the files to.
           debug: Whether or not to print debug information
-          dateutil_kwds: An optional dict defining the dateutil parser kwargs.
           csv_dialect: A `csv` dialect given either as string or as instance or
             subclass of `csv.Dialect`.
+          dateutil_kwds: An optional dict defining the dateutil parser kwargs.
+          narration_sep: A string, a separator to use for splitting up the payee and
+            narration fields of a source field.
+          **kwds: Extra keyword arguments to provide to the base mixins.
         """
         assert isinstance(config, dict), "Invalid type: {}".format(config)
         self.config = config
