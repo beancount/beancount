@@ -11,19 +11,20 @@ __copyright__ = "Copyright (C) 2017-2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
 
+from os import path
 import argparse
 import datetime
+import hashlib
+import json
 import logging
 import os
-import shutil
-import tempfile
-import subprocess
-import re
 import pickle
-import hashlib
+import re
 import shelve
+import shutil
+import subprocess
+import tempfile
 import urllib.parse
-from os import path
 
 from typing import List
 
@@ -114,6 +115,11 @@ def main():
                         default=None,
                         help="The document id of the doc to download")
 
+    parser.add_argument('-J', '--download-jsons', action='store_true',
+                        help="Download the internal representations in JSON")
+    parser.add_argument('-C', '--download-conversions', action='store_true',
+                        help="Download the docs converted by Google Docs")
+
     parser.add_argument('output', action='store',
                         default=None,
                         help="Where to write out the output files")
@@ -122,11 +128,13 @@ def main():
 
     # Connect, with authentication.
     def get_service():
-        scopes = ['https://www.googleapis.com/auth/drive']
+        scopes = ['https://www.googleapis.com/auth/drive',
+                  'https://www.googleapis.com/auth/documents.readonly']
         _, http = get_auth_via_service_account(scopes)
-        service = discovery.build('drive', 'v3', http=http, cache_discovery=False)
-        return service.files()
-    files = get_service()
+        files = discovery.build('drive', 'v3', http=http, cache_discovery=False).files()
+        documents = discovery.build('docs', 'v1', http=http, cache_discovery=False).documents()
+        return files, documents
+    files, documents = get_service()
 
     if args.docid:
         docids = [args.docid]
@@ -134,23 +142,36 @@ def main():
         docids = sorted(set(get_docids_from_index(files)))
 
     # Download the docs.
-    for docid in docids:
-        logging.info("-------------------- Document: %s", docid)
-        os.makedirs(args.output, exist_ok=True)
-        for extension, mime_type, pandoc_format in FORMATS:
-            logging.info("Downloading to %s (%s)", extension, mime_type)
-            filename = download_doc(files, docid, extension, mime_type, args.output)
-            logging.info("File: %s", filename)
+    os.makedirs(args.output, exist_ok=True)
+    if args.download_conversions:
+        for docid in docids:
+            logging.info("-------------------- Document: %s", docid)
+            for extension, mime_type, pandoc_format in FORMATS:
+                logging.info("Downloading to %s (%s)", extension, mime_type)
+                filename = download_doc(files, docid, extension, mime_type, args.output)
+                logging.info("File: %s", filename)
 
-            if pandoc_format:
-                native_filename = filename + '.pandoc'
-                logging.info("Calling pandoc for %s", native_filename)
-                try:
-                    subprocess.check_call([
-                        'pandoc', '--from={}'.format(pandoc_format), '--to=native',
-                        filename, '--output={}'.format(native_filename)])
-                except subprocess.CalledProcessError as exc:
-                    logging.error("Skipping; error in Pandoc conversion: %s", exc)
+                if pandoc_format:
+                    native_filename = filename + '.pandoc'
+                    logging.info("Calling pandoc for %s", native_filename)
+                    try:
+                        subprocess.check_call([
+                            'pandoc', '--from={}'.format(pandoc_format), '--to=native',
+                            filename, '--output={}'.format(native_filename)])
+                    except subprocess.CalledProcessError as exc:
+                        logging.error("Skipping; error in Pandoc conversion: %s", exc)
+
+    # Download the JSON API files.
+    if args.download_jsons:
+        for docid in docids:
+            logging.info("-------------------- Document: %s", docid)
+            document = documents.get(documentId=docid).execute()
+            title = re.sub('_-_', '-',
+                                re.sub('_+', '_',
+                                       re.sub('[^A-Za-z0-9=-]', '_', document['title'])))
+            filename = path.join(args.output, '{}.json'.format(title))
+            json.dump(document, open(filename, 'w'))
+
     logging.info("Done.")
 
 
