@@ -143,7 +143,8 @@ def get_value(pos, price_map, date=None):
     return units
 
 
-def convert_position(pos, target_currency, price_map, date=None):
+def convert_position(pos, target_currency, price_map,
+                     date=None, use_price_annotation=False):
     """Return the market value of a Position or Posting in a particular currency.
 
     In addition, if the rate from the position's currency to target_currency
@@ -155,18 +156,28 @@ def convert_position(pos, target_currency, price_map, date=None):
       target_currency: The target currency to convert to.
       price_map: A dict of prices, as built by prices.build_price_map().
       date: A datetime.date instance to evaluate the value at, or None.
+      use_price_annotation: A boolean, true if 'pos' is an instance of Posting
+        and we should make use of the price annotation if it is present.
     Returns:
       An Amount, either with a succesful value currency conversion, or if we
       could not convert the value, just the units, unmodified. (See get_value()
       above for details.)
+
     """
     cost = pos.cost
     value_currency = (
         (isinstance(cost, Cost) and cost.currency) or
         (hasattr(pos, 'price') and pos.price and pos.price.currency) or
         None)
-    return convert_amount(pos.units, target_currency, price_map,
-                          date=date, via=(value_currency,))
+    if (use_price_annotation and
+        hasattr(pos, 'price') and pos.price and
+        isinstance(pos.price.number, Decimal) and
+        pos.price.currency == target_currency):
+        return convert_amount(pos.units, target_currency, price_map,
+                              date=date, via=(value_currency,))
+    else:
+        return convert_amount(pos.units, target_currency, price_map,
+                              date=date, via=(value_currency,))
 
 
 def convert_amount(amt, target_currency, price_map, date=None, via=None):
@@ -185,7 +196,6 @@ def convert_amount(amt, target_currency, price_map, date=None, via=None):
     Returns:
       An Amount, either with a succesful value currency conversion, or if we
       could not convert the value, the amount itself, unmodified.
-
     """
     # First, attempt to convert directly. This should be the most
     # straightforward conversion.

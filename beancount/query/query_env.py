@@ -457,6 +457,9 @@ class CostPosition(query_compile.EvalFunction):
         args = self.eval_args(context)
         return convert.get_cost(args[0])
 
+class CostPosting(CostPosition):
+    __intypes__ = [data.Posting]
+
 class CostInventory(query_compile.EvalFunction):
     "Get the cost of an inventory."
     __intypes__ = [inventory.Inventory]
@@ -517,6 +520,31 @@ class ConvertPositionWithDate(query_compile.EvalFunction):
         args = self.eval_args(context)
         pos, currency, date = args
         return convert.convert_position(pos, currency, context.price_map, date)
+
+
+class ConvertPosting(query_compile.EvalFunction):
+    "Coerce an amount to a particular currency."
+    __intypes__ = [data.Posting, str]
+
+    def __init__(self, operands):
+        super().__init__(operands, amount.Amount)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        posting, currency = args
+        return convert.convert_position(posting, currency, context.price_map, None)
+
+class ConvertPostingWithDate(query_compile.EvalFunction):
+    "Coerce an amount to a particular currency."
+    __intypes__ = [data.Posting, str, datetime.date]
+
+    def __init__(self, operands):
+        super().__init__(operands, amount.Amount)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        posting, currency, date = args
+        return convert.convert_position(posting, currency, context.price_map, date)
 
 
 class ValuePosition(query_compile.EvalFunction):
@@ -879,6 +907,7 @@ SIMPLE_FUNCTIONS = {
     ('units', position.Position)                         : UnitsPosition,
     ('units', inventory.Inventory)                       : UnitsInventory,
     ('cost', position.Position)                          : CostPosition,
+    ('cost', data.Posting)                               : CostPosting,
     ('cost', inventory.Inventory)                        : CostInventory,
     'year'                                               : Year,
     'month'                                              : Month,
@@ -895,6 +924,8 @@ SIMPLE_FUNCTIONS = {
     ('convert', amount.Amount, str, datetime.date)       : ConvertAmountWithDate,
     ('convert', position.Position, str)                  : ConvertPosition,
     ('convert', position.Position, str, datetime.date)   : ConvertPositionWithDate,
+    ('convert', data.Posting, str)                       : ConvertPosting,
+    ('convert', data.Posting, str, datetime.date)        : ConvertPostingWithDate,
     ('convert', inventory.Inventory, str)                : ConvertInventory,
     ('convert', inventory.Inventory, str, datetime.date) : ConvertInventoryWithDate,
     ('value', position.Position)                         : ValuePosition,
@@ -1618,6 +1649,17 @@ class PositionColumn(query_compile.EvalColumn):
         posting = context.posting
         return position.Position(posting.units, posting.cost)
 
+class PostingColumn(query_compile.EvalColumn):
+    "The posting. One can convert with the price using this."
+    __equivalent__ = 'posting'
+    __intypes__ = [data.Posting]
+
+    def __init__(self):
+        super().__init__(data.Posting)
+
+    def __call__(self, context):
+        return context.posting
+
 class PriceColumn(query_compile.EvalColumn):
     "The price attached to the posting."
     __equivalent__ = 'posting.price'
@@ -1680,6 +1722,7 @@ class FilterPostingsEnvironment(query_compile.CompilationEnvironment):
         'cost_date'      : CostDateColumn,
         'cost_label'     : CostLabelColumn,
         'position'       : PositionColumn,
+        'posting'        : PostingColumn,
         'change'         : PositionColumn,  # Backwards compatible.
         'price'          : PriceColumn,
         'weight'         : WeightColumn,

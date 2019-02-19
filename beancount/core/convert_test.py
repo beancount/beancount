@@ -230,7 +230,7 @@ class TestPostingConversions(TestPositionConversions):
     def test_weight_with_cost_and_price(self):
         self.assertEqual(A("51400.00 USD"), convert.get_weight(
             self._pos(A("100 HOOL"),
-                      Cost(D("514.00"), "USD", A("530.00 USD"), None))))
+                      Cost(D("514.00"), "USD", None, None))))
 
     def test_weight_with_only_price(self):
         self.assertEqual(A("53000.00 USD"), convert.get_weight(
@@ -247,6 +247,19 @@ class TestPostingConversions(TestPositionConversions):
         pos = self._pos(A("100 HOOL"), None, A("99999 USD"))
         self.assertEqual(A("63600.00 CAD"),
                          convert.convert_position(pos, "CAD", self.PRICE_MAP_HIT))
+
+    def test_convert_position__not_using_cost(self):
+        pos = self._pos(A("100 HOOL"),
+                        Cost(D("514.00"), "USD", None, None),
+                        A("2.0 USD"))  # This gets ignored.
+        self.assertEqual(A("63600.00 CAD"),
+                         convert.convert_position(pos, "CAD", self.PRICE_MAP_HIT))
+
+    def test_convert_position__using_price_annotation(self):
+        pos = self._pos(A("100 HOOL"), None, A("1.3 CAD"))
+        self.assertEqual(A("63600.00 CAD"),
+                         convert.convert_position(pos, "CAD", self.PRICE_MAP_HIT,
+                                                  use_price_annotation=True))
 
 
 class TestMarketValue(unittest.TestCase):
