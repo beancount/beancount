@@ -627,6 +627,45 @@ class TestInterpolateCurrencyGroup(unittest.TestCase):
         self.check(entries[0], {
             'USD': (False, None, ["Too many missing numbers for currency group"])})
 
+
+
+
+
+
+    # FIXME: Do fix this now.
+
+    @parser.parse_doc(allow_incomplete=True)
+    def test_incomplete_missing_number_per_issue366(self, entries, _, options_map):
+        """
+        2015-10-01 *
+          Assets:Account            10 HOOL {5.00 USD}
+          Assets:Other
+
+        ;; 2015-10-02 *
+        ;;   Assets:Account            10 HOOL {5.00 # USD}
+        ;;   Assets:Other
+        ;;
+        ;; 2015-10-03 *
+        ;;   Assets:Account            10 HOOL {# 50.00 USD}
+        ;;   Assets:Other
+        """
+        # 'expected' is a mapping of currency to tuples of
+        #   interpolated: A boolean, asserting the return value of interpolate_group().
+        #   string: A string, to be parsed to obtain the resulting Posting instances.
+        #   errors: A list of error strings to check against the interpolation for that group.
+        self.check(entries[0], {'USD': (True, """
+          2015-10-01 *
+            Assets:Account            10 HOOL {5.00 USD}
+            Assets:Other
+        """, [])})
+
+
+
+
+
+
+
+
     @parser.parse_doc(allow_incomplete=True)
     def test_incomplete_units(self, entries, _, options_map):
         """
