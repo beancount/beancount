@@ -58,9 +58,7 @@ def fetch_quote(ticker):
 
     price = D(ft_find_price(url, currency)).quantize(D('0.01'))
 
-    london_timezone = tz.gettz("Europe/London")
-    time = datetime.datetime.now()
-    time = time.astimezone(london_timezone)
+    time = datetime.datetime.now(tz.tzutc())
 
     return source.SourcePrice(price, time, currency)
 

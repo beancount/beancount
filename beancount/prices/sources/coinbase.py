@@ -38,9 +38,7 @@ def fetch_quote(ticker):
 
     price = D(result['data']['amount']).quantize(D('0.01'))
 
-    london_timezone = tz.gettz("Europe/London")
-    time = datetime.datetime.now()
-    time = time.astimezone(london_timezone)
+    time = datetime.datetime.now(tz.tzutc())
 
     currency = result['data']['currency']
 
