@@ -1,4 +1,4 @@
-"""A source fetching currency prices from Coinbase.
+"""A source fetching cryptocurrency prices from Coinbase.
 
 Valid tickers are in the form "XXX-YYY", such as "BTC-USD".
 
@@ -14,6 +14,7 @@ timestamps.
 import datetime
 
 import requests
+from dateutil.tz import tz
 
 from beancount.core.number import D
 from beancount.prices import source
@@ -37,7 +38,9 @@ def fetch_quote(ticker):
 
     price = D(result['data']['amount']).quantize(D('0.01'))
 
+    london_timezone = tz.gettz("Europe/London")
     time = datetime.datetime.now()
+    time = time.astimezone(london_timezone)
 
     currency = result['data']['currency']
 
