@@ -173,7 +173,7 @@ def div(amount, number):
     assert isinstance(amount.number, Decimal), (
         "Amount's number is not a Decimal instance: {}".format(amount.number))
     assert isinstance(number, Decimal), (
-        "Number is not a Decimal instance: {}".format(amount.number))
+        "Number is not a Decimal instance: {}".format(number))
     return Amount(amount.number / number, amount.currency)
 
 def add(amount1, amount2):
