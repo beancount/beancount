@@ -4,6 +4,11 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2019-02-26
+
+  - Fixed #376: Coerce implicit boolean to true boolean.
+
+
 2019-02-10
 
   - Fixed #374: Option --all treatment was broken in #210. Also catch and print

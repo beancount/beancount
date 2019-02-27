@@ -137,7 +137,7 @@ def has_component(account_name, component):
       A boolean, true if the component is in the account. Note that a component
       name must be whole, that is 'NY' is not in Expenses:Taxes:StateNY'.
     """
-    return re.search('(^|:){}(:|$)'.format(component), account_name)
+    return bool(re.search('(^|:){}(:|$)'.format(component), account_name))
 
 
 def commonprefix(accounts):
