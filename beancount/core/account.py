@@ -102,7 +102,7 @@ def leaf(account_name):
 def sans_root(account_name):
     """Get the name of the account without the root.
 
-    For example, an in put of 'Assets:BofA:Checking' will produce 'BofA:Checking'.
+    For example, an input of 'Assets:BofA:Checking' will produce 'BofA:Checking'.
 
     Args:
       account_name: A string, the name of the account whose leaf name to return.
