@@ -1069,8 +1069,7 @@ def find_first_with_tag(tag, entries, default=_UNSET):
         return found_entry
     if default is _UNSET:
         raise KeyError("Entry with tag #{} is missing".format(tag))
-    else:
-        return default
+    return default
 
 
 @test_utils.nottest

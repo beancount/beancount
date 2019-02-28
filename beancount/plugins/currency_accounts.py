@@ -37,11 +37,9 @@ from beancount.core.data import Posting
 from beancount.core.data import Transaction
 
 from beancount.core import account
-from beancount.core import amount
 from beancount.core import convert
 from beancount.core import data
 from beancount.core import inventory
-from beancount.parser import printer
 
 
 __plugins__ = ('insert_currency_trading_postings',)

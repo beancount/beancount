@@ -840,7 +840,7 @@ def compile_select(select, targets_environ, postings_environ, entries_environ):
         # Remove this when we add support for nested queries.
         raise CompilationError("Queries from nested SELECT are not supported yet")
 
-    elif from_clause is None or isinstance(from_clause, query_parser.From):
+    if from_clause is None or isinstance(from_clause, query_parser.From):
         # Bind the from clause contents.
         c_from = compile_from(from_clause, entries_environ)
         environ_target = targets_environ

@@ -46,8 +46,7 @@ def pdf_to_text(filename):
     stdout, stderr = pipe.communicate()
     if stderr:
         raise ValueError(stderr.decode())
-    else:
-        return stdout.decode()
+    return stdout.decode()
 
 
 class Importer(importer.ImporterProtocol):

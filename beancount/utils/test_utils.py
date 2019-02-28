@@ -343,8 +343,7 @@ def make_failing_importer(*removed_module_names):
     def failing_import(name, *args, **kwargs):
         if name in removed_module_names:
             raise ImportError("Could not import {}".format(name))
-        else:
-            return builtins.__import__(name, *args, **kwargs)
+        return builtins.__import__(name, *args, **kwargs)
     return failing_import
 
 
