@@ -2698,47 +2698,8 @@ http://furius.ca/beancount/doc/proposal-query
   - In the balance sheet and income statement, we need to render the amounts
     inverted (and in a slightly different style).
 
-* Trading Accounts (over Conversions)
 
-  Beancount deals with exact balances by inserting a special "conversion"
-  entries for the particular subset of transactions under consideration. The
-  goal is to make the balance sheet sum up to zero exactly. It turns out it's a
-  bit of a kludge and it's not obvious to explain. A better method would be to
-  automatically insert postings to "Trading Accounts" as has been described
-  somewhere else. This obviates the need to insert conversion entries. However,
-  our first implementation should simply add the feature as optional and keep
-  the conversion entries insertion behavior, we want to introduce this better
-  alternative mechanism gradually.
-
-  - Implement the Trading Accounts method, it should work entirely
-    automatically. You'll have to insert a new option for specifying the root of
-    the trading accounts. This is a better solution than my current
-    reporting-dependent auto-insertion of a special conversion transaction. With
-    the "trading accounts" solution, any subset of transactions will naturally
-    balance to zero because each transaction is coerced to balance to zero.
-
-  - Write a document to explain how conversion entries work.
-
-  - Idea for a plugin: Create a new plugin that automatically inserts legs for
-    the "Trading Accounts" methods described here:
-    http://wiki.gnucash.org/wiki/Trading_Accounts
-    http://www.mscs.dal.ca/~selinger/accounting/tutorial.html
-    http://www.mscs.dal.ca/~selinger/accounting/gnucash.html
-    This should be implementable via a plugin.
-    The resulting Conversions entry should be empty...
-
-  - Make the conversions report sum up to zero by adding a similar conversion
-    entry as for the balance sheet.
-
-  - This is an older idea, which is related but which becomes obsolete if we
-    implement the Trading Accounts method: In order to zero out the "trial
-    balance" report perfectly, you could insert a conversion entry at the end of
-    it, in the same way that I do for the balance sheet. There is no reason that
-    this is any different; this should be done the same as for the balance
-    sheet.
-
-
-** Sanity Check For Conversions
+* Sanity Check For Conversions
 
   - Insert a validation check when transferring amounts to the balance sheet
     that the implied rate of the conversion entries is within certain bounds of
@@ -5084,6 +5045,13 @@ http://furius.ca/beancount/doc/proposal-query
         Income:US:Rewards                -650 VERIPTS
         Assets:US:Points:Verizon
 
+  - You should definitely do some anomaly detection on the list of prices, when
+    prices go out of whack with the rest of the time series. I had this happen
+    with a rewritten and buggy new price source. This could be done in a plugin
+    and would be useful, as invalid prices can manifest in some wildly incorrect
+    totals, and this is a common error. Easy with good payoff on correctness.
+    Make this part of the pedantic list as well.
+
 
 ** Google Keep Tickets
 
@@ -5299,8 +5267,6 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Definitely make a teaching video? this will be useful for applications to
     other things!
-
-  - Implement currency trading accounts as a prototype; see Conversions doc.
 
   - Write a doc specifically on handling the vesting of shares, including the
     tracking of unvested shares.
