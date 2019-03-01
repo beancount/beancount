@@ -309,6 +309,7 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
 
         return entries
 
+
 def normalize_config(config, head, dialect='excel'):
     """Using the header line, convert the configuration field name lookups to int indexes.
 
@@ -341,6 +342,7 @@ def normalize_config(config, head, dialect='excel'):
                              "{}".format(config))
         index_config = config
     return index_config, has_header
+
 
 def skip_lines_to_find_header(file, skip_lines):
     """Skip the first skip_lines of the file and return a string that can be sniffed for a CSV header.
