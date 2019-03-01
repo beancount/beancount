@@ -163,7 +163,7 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
 
     def file_date(self, file):
         "Get the maximum date from the file."
-        iconfig, has_header = normalize_config(self.config, file, self.skip_lines, self.csv_dialect)
+        iconfig, has_header = normalize_config(self.config, skip_lines_to_find_header(file, self.skip_lines), self.csv_dialect)
         if Col.DATE in iconfig:
             reader = iter(csv.reader(open(file.name), dialect=self.csv_dialect))
             for _ in range(self.skip_lines):
@@ -187,7 +187,7 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
         entries = []
 
         # Normalize the configuration to fetch by index.
-        iconfig, has_header = normalize_config(self.config, file, self.skip_lines, self.csv_dialect)
+        iconfig, has_header = normalize_config(self.config, skip_lines_to_find_header(file, self.skip_lines), self.csv_dialect)
 
         reader = iter(csv.reader(open(file.name), dialect=self.csv_dialect))
 
@@ -309,14 +309,12 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
 
         return entries
 
-
-def normalize_config(config, file, skip_lines, dialect='excel'):
+def normalize_config(config, head, dialect='excel'):
     """Using the header line, convert the configuration field name lookups to int indexes.
 
     Args:
       config: A dict of Col types to string or indexes.
-      file: The CSV file to parse.
-      skip_lines: Skip first x (garbage) lines of file.
+      head: A string, some decent number of bytes of the head of the file.
       dialect: A dialect definition to parse the header
     Returns:
       A pair of
@@ -326,13 +324,6 @@ def normalize_config(config, file, skip_lines, dialect='excel'):
       ValueError: If there is no header and the configuration does not consist
         entirely of integer indexes.
     """
-    # Skip garbage lines before sniffing the header
-    head = file.head()
-    with open(file.name, 'r') as f:
-        for _ in range(skip_lines):
-            f.readline()
-        head = f.read(len(head))
-
     has_header = csv.Sniffer().has_header(head)
     if has_header:
         header = next(csv.reader(io.StringIO(head), dialect=dialect))
@@ -350,3 +341,20 @@ def normalize_config(config, file, skip_lines, dialect='excel'):
                              "{}".format(config))
         index_config = config
     return index_config, has_header
+
+def skip_lines_to_find_header(file, skip_lines):
+    """Skip the first skip_lines of the file and return a string that can be sniffed for a CSV header.
+
+    Args:
+      file: The CSV file to parse.
+      skip_lines: Skip first x (garbage) lines of file.
+    Returns:
+      A string, some decent number of bytes of the head of the file after the lines specified by skip-lines.
+    """
+    # Skip garbage lines before sniffing the header
+    head = file.head()
+    with open(file.name, 'r') as f:
+        for _ in range(skip_lines):
+            f.readline()
+        head = f.read(len(head))
+    return head
