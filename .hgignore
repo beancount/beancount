@@ -16,3 +16,5 @@ beancount/parser/grammar.output
 beancount.egg-info
 .cache
 .pytest_cache/*
+
+experiments/protos/bazel-*
