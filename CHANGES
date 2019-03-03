@@ -4,6 +4,12 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2019-03-03
+
+  - Fixed #309: Catch PermissionError to work around
+    https://bugs.python.org/issue25481.
+
+
 2019-02-27
 
   - Implemented a quick prototype of the current trading accounts method of

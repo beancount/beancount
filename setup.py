@@ -177,7 +177,7 @@ def get_hg_changeset():
         vc_changeset, vc_timestamp = output.decode('utf-8').split()[:2]
         vc_changeset = 'hg:{}'.format(vc_changeset)
         return vc_changeset, vc_timestamp
-    except (subprocess.CalledProcessError, FileNotFoundError):
+    except (subprocess.CalledProcessError, FileNotFoundError, PermissionError):
         return None
 
 def get_git_changeset():
@@ -192,7 +192,7 @@ def get_git_changeset():
             return vc_changeset, vc_timestamp
         else:
             return None
-    except (subprocess.CalledProcessError, FileNotFoundError):
+    except (subprocess.CalledProcessError, FileNotFoundError, PermissionError):
         return None
 
 # Get the changeset to bake into the binary.

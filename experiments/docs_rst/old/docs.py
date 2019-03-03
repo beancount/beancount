@@ -166,7 +166,7 @@ def collate_pdf_filenames(filenames, output_filename):
     try:
         pipe = subprocess.Popen(command, shell=False)
         pipe.communicate()
-    except FileNotFoundError as exc:
+    except (FileNotFoundError, PermissionError) as exc:
         raise SystemExit('pdftk is probably not installed: {}'.format(exc))
     if pipe.returncode != 0:
         raise IOError("Could not produce output '{}'".format(output_filename))
