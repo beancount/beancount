@@ -177,6 +177,7 @@ const char* getTokenName(int token);
 %token OPTION              /* 'option' keyword */
 %token INCLUDE             /* 'include' keyword */
 %token PLUGIN              /* 'plugin' keyword */
+%token <pyobj> NONE        /* A None value (parsed as NULL) */
 %token <pyobj> BOOL        /* A boolean, true or false */
 %token <pyobj> DATE        /* A date object */
 %token <pyobj> ACCOUNT     /* The name of an account */
@@ -427,6 +428,7 @@ key_value_value : STRING
                 | CURRENCY
                 | TAG
                 | BOOL
+                | NONE
                 | number_expr
                 | amount
                 {
@@ -895,6 +897,7 @@ const char* getTokenName(int token)
         case PUSHMETA  : return "PUSHMETA";
         case POPMETA   : return "POPMETA";
         case OPTION    : return "OPTION";
+        case PLUGIN    : return "PLUGIN";
         case DATE      : return "DATE";
         case ACCOUNT   : return "ACCOUNT";
         case CURRENCY  : return "CURRENCY";
@@ -903,6 +906,8 @@ const char* getTokenName(int token)
         case TAG       : return "TAG";
         case LINK      : return "LINK";
         case KEY       : return "KEY";
+        case BOOL      : return "BOOL";
+        case NONE      : return "NULL";
     }
-    return "INVALID_TOKEN";
+    return "<NO_STRING_TRANSLATION>";
 }

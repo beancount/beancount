@@ -253,6 +253,12 @@ FALSE		{
     return BOOL;
 }
 
+NULL		{
+    yylval->pyobj = Py_None;
+    Py_INCREF(Py_None);
+    return NONE;
+}
+
  /* Dates. */
 [0-9]{4,}[\-/][0-9]+[\-/][0-9]+	{
     const char* year_str;

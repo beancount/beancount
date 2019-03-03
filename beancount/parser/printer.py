@@ -139,6 +139,8 @@ class EntryPrinter:
                     value_str = 'TRUE' if value else 'FALSE'
                 elif isinstance(value, (dict, inventory.Inventory)):
                     pass # Ignore dicts, don't print them out.
+                elif value is None:
+                    value_str = ''  # Render null metadata as empty, on purpose.
                 else:
                     raise ValueError("Unexpected value: '{!r}'".format(value))
                 if value_str is not None:

@@ -6,6 +6,9 @@ Note: This file contains a list changes in the 'default' branch.
 
 2019-03-03
 
+  - Fixed #378: Rendering metadata with null values wasn't properly implemented.
+    In the process, I explicit parsing of None values by allowing "NULL".
+
   - Fixed #309: Catch PermissionError to work around
     https://bugs.python.org/issue25481.
 

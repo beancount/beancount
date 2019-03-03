@@ -424,6 +424,23 @@ class TestLexer(unittest.TestCase):
         ], tokens)
         self.assertFalse(errors)
 
+    @lex_tokens
+    def test_null_true_false(self, tokens, errors):
+        '''
+        TRUE FALSE NULL
+        '''
+        # Note that this test contains an _actual_ newline, not an escape one as
+        # in the previous test. This should allow us to parse multiline strings.
+        self.assertEqual([
+            ('EOL', 2, '\n', None),
+            ('BOOL', 2, 'TRUE', None),
+            ('BOOL', 2, 'FALSE', None),
+            ('NULL', 2, 'NULL', None),
+            ('EOL', 3, '\n', None),
+            ('EOL', 3, '\x00', None),
+        ], tokens)
+        self.assertFalse(errors)
+
 
 class TestIgnoredLines(unittest.TestCase):
 

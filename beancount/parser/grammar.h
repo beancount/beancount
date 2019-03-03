@@ -88,16 +88,17 @@ extern int yydebug;
     OPTION = 298,
     INCLUDE = 299,
     PLUGIN = 300,
-    BOOL = 301,
-    DATE = 302,
-    ACCOUNT = 303,
-    CURRENCY = 304,
-    STRING = 305,
-    NUMBER = 306,
-    TAG = 307,
-    LINK = 308,
-    KEY = 309,
-    NEGATIVE = 310
+    NONE = 301,
+    BOOL = 302,
+    DATE = 303,
+    ACCOUNT = 304,
+    CURRENCY = 305,
+    STRING = 306,
+    NUMBER = 307,
+    TAG = 308,
+    LINK = 309,
+    KEY = 310,
+    NEGATIVE = 311
   };
 #endif
 
@@ -116,7 +117,7 @@ union YYSTYPE
         PyObject* pyobj2;
     } pairobj;
 
-#line 120 "beancount/parser/grammar.h" 
+#line 121 "beancount/parser/grammar.h" 
 };
 
 typedef union YYSTYPE YYSTYPE;

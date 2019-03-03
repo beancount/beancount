@@ -534,3 +534,20 @@ class TestPrinterMisc(test_utils.TestCase):
         txn = errors[0].entry
         oss = io.StringIO()
         printer.print_entry(txn, file=oss)
+
+    def test_render_meta_with_None(self):
+        # Issue 378.
+        input_string = textwrap.dedent("""
+
+          2019-01-01 open Assets:A
+          2019-01-01 open Assets:B
+
+          2019-02-28 txn "Test"
+            Assets:A                       10.00 USD
+            Assets:B                      -10.00 USD
+            foo:
+
+        """)
+        entries, errors, options_map = loader.load_string(input_string)
+        self.assertFalse(errors)
+        self.assertIs(entries[-1].postings[-1].meta['foo'], None)
