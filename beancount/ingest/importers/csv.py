@@ -163,7 +163,7 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
 
     def file_date(self, file):
         "Get the maximum date from the file."
-        iconfig, has_header = normalize_config(self.config, file.head(), self.csv_dialect)
+        iconfig, has_header = normalize_config(self.config, file.head(), self.csv_dialect, self.skip_lines)
         if Col.DATE in iconfig:
             reader = iter(csv.reader(open(file.name), dialect=self.csv_dialect))
             for _ in range(self.skip_lines):
@@ -187,7 +187,7 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
         entries = []
 
         # Normalize the configuration to fetch by index.
-        iconfig, has_header = normalize_config(self.config, file.head(), self.csv_dialect)
+        iconfig, has_header = normalize_config(self.config, file.head(), self.csv_dialect, self.skip_lines)
 
         reader = iter(csv.reader(open(file.name), dialect=self.csv_dialect))
 
@@ -310,13 +310,14 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
         return entries
 
 
-def normalize_config(config, head, dialect='excel'):
+def normalize_config(config, head, dialect='excel', skip_lines: int = 0):
     """Using the header line, convert the configuration field name lookups to int indexes.
 
     Args:
       config: A dict of Col types to string or indexes.
       head: A string, some decent number of bytes of the head of the file.
       dialect: A dialect definition to parse the header
+      skip_lines: Skip first x (garbage) lines of file.
     Returns:
       A pair of
         A dict of Col types to integer indexes of the fields, and
@@ -325,6 +326,12 @@ def normalize_config(config, head, dialect='excel'):
       ValueError: If there is no header and the configuration does not consist
         entirely of integer indexes.
     """
+    # Skip garbage lines before sniffing the header
+    assert isinstance(skip_lines, int)
+    assert skip_lines >= 0
+    for _ in range(skip_lines):
+        head = head[head.find('\n')+1:]
+
     has_header = csv.Sniffer().has_header(head)
     if has_header:
         header = next(csv.reader(io.StringIO(head), dialect=dialect))
