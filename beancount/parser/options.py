@@ -304,21 +304,20 @@ PUBLIC_OPTION_GROUPS = [
       Mappings of currency to the tolerance used when it cannot be inferred
       automatically. The tolerance at hand is the one used for verifying (1)
       that transactions balance, (2) explicit balance checks from 'balance'
-      directives balance, and (3) in the precision used for padding (from the
+      directives balance, and (3) in the tolerance used for padding (from the
       'pad' directive).
 
       The values must be strings in the following format:
         <currency>:<tolerance>
       for example, 'USD:0.005'.
 
-      By default, the tolerance used for currencies without an inferred value is
-      zero (which means infinite precision). As a special case, this value, that
-      is, the fallback value used for all currencies without an explicit default
-      can be overridden using the '*' currency, like this:  '*:0.5'. Used by
-      itself, this last example sets the fallabck tolerance as '0.5' for all
-      currencies.
+      By default, the tolerance allowed for currencies without an inferred value
+      is zero. As a special case, this value, that is, the fallback value used
+      for all currencies without an explicit default can be overridden using the
+      '*' currency, like this:  '*:0.5'. Used by itself, this last example sets
+      the fallabck tolerance as '0.5' for all currencies.
 
-      For detailed documentation about how precision is handled, see this doc:
+      For detailed documentation about how tolerances are handled, see this doc:
       http://furius.ca/beancount/doc/tolerances
     """, [Opt("inferred_tolerance_default", {}, "CHF:0.01",
               converter=options_validate_tolerance_map)]),
@@ -341,7 +340,7 @@ PUBLIC_OPTION_GROUPS = [
       for example, if you deal with institutions with bad of unexpected rounding
       behaviour.
 
-      For detailed documentation about how precision is handled, see this doc:
+      For detailed documentation about how tolerances are handled, see this doc:
       http://furius.ca/beancount/doc/tolerances
     """, [Opt("inferred_tolerance_multiplier", D("0.5"), "1.1",
               converter=D)]),
