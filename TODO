@@ -4641,6 +4641,25 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - Idea! Add original conversion rate on an augmenting leg with cost basis, in
+    order to be able to partition profits due to appreciate vs. currency drift.
+    See https://groups.google.com/d/msgid/beancount/939fe47e-382a-4272-94e6-dd29f660d519%40googlegroups.com?utm_medium=email&utm_source=footer
+
+    "This brings up an interesting point, one which I had never given much
+    though before: if we wanted to solve this problem - and I think it may be
+    worthwhile to do so - couldn't we just (optionally) store the original
+    exchange rate at the time the lot was converted, with the lot (i.e.,
+    Position object) itself? That is, each lot would store:
+    - units (amount, currency)
+    - cost (amount, currency, acquistion-date, label, rate*)
+    (*) This being the new bit.
+
+    Given those rates, we should be able to compute the current value of the
+    cost basis in the local currency, and that against how much it cost us
+    originally, should tell us the proportion of gain/loss due solely to
+    currency appreciation/depreciation (ignore the effect relative interest
+    differences between the two currencies)."
+
   - Three interesting ideas for extending booking further here:
     https://groups.google.com/d/msgid/beancount/9c9dcc5f-72bf-44b2-aaf9-4e0c07cbff77%40googlegroups.com?utm_medium=email&utm_source=footer
 
