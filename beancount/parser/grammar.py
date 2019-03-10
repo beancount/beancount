@@ -41,14 +41,6 @@ from beancount.core import account
 from beancount.core import data
 
 
-# FIXME: This environment variable enables temporary support for negative
-# prices. If you've updated across 2015-01-10 and you're getting a lot of
-# errors, you need to fix all the signs on your @@ total price values (they are
-# to be positive only). Just set this environment variable to disable this
-# change if you need to post-pone this.
-__allow_negative_prices__ = os.environ.get('BEANCOUNT_ALLOW_NEGATIVE_PRICES', False)
-
-
 ParserError = collections.namedtuple('ParserError', 'source message entry')
 ParserSyntaxError = collections.namedtuple('ParserSyntaxError', 'source message entry')
 DeprecatedError = collections.namedtuple('DeprecatedError', 'source message entry')
@@ -809,16 +801,15 @@ class Builder(lexer.LexBuilder):
         meta = new_metadata(filename, lineno)
 
         # Prices may not be negative.
-        if not __allow_negative_prices__:
-            if price and isinstance(price.number, Decimal) and price.number < ZERO:
-                self.errors.append(
-                    ParserError(meta, (
-                        "Negative prices are not allowed: {} "
-                        "(see http://furius.ca/beancount/doc/bug-negative-prices "
-                        "for workaround)"
-                    ).format(price), None))
-                # Fix it and continue.
-                price = Amount(abs(price.number), price.currency)
+        if price and isinstance(price.number, Decimal) and price.number < ZERO:
+            self.errors.append(
+                ParserError(meta, (
+                    "Negative prices are not allowed: {} "
+                    "(see http://furius.ca/beancount/doc/bug-negative-prices "
+                    "for workaround)"
+                ).format(price), None))
+            # Fix it and continue.
+            price = Amount(abs(price.number), price.currency)
 
         # If the price is specified for the entire amount, compute the effective
         # price here and forget about that detail of the input syntax.
@@ -826,10 +817,7 @@ class Builder(lexer.LexBuilder):
             if units.number == ZERO:
                 number = ZERO
             else:
-                if __allow_negative_prices__:
-                    number = price.number/units.number
-                else:
-                    number = price.number/abs(units.number)
+                number = price.number/abs(units.number)
             price = Amount(number, price.currency)
 
         # Note: Allow zero prices because we need them for round-trips for
