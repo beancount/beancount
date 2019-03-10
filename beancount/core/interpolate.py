@@ -141,7 +141,7 @@ def infer_tolerances(postings, options_map, use_cost=None):
 
     inferred_tolerance_multiplier = options_map["inferred_tolerance_multiplier"]
 
-    default_tolerances = options_map['inferred_tolerance_default']
+    default_tolerances = options_map["inferred_tolerance_default"]
     tolerances = default_tolerances.copy()
 
     cost_tolerances = collections.defaultdict(D)
