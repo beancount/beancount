@@ -75,6 +75,8 @@ __license__ = "GNU GPLv2"
 import collections
 import copy
 import enum
+from typing import Text
+import uuid
 
 from beancount.core.number import MISSING
 from beancount.core.number import ZERO
@@ -89,6 +91,11 @@ from beancount.parser import booking_method
 from beancount.core import position
 from beancount.core import inventory
 from beancount.core import interpolate
+
+
+def unique_label() -> Text:
+    "Return a globally unique label for cost entries."
+    return str(uuid.uuid4())
 
 
 # An error of disallowed self-reduction.
@@ -597,8 +604,8 @@ def book_reductions(entry, group_postings, balances,
                                        entry))
                     return [], errors  # This is irreconcilable, remove these postings.
 
-                reduction_postings, ambi_errors = booking_method.handle_ambiguous_matches(
-                    entry, posting, matches, method)
+                reduction_postings, matched_postings, ambi_errors = (
+                    booking_method.handle_ambiguous_matches(entry, posting, matches, method))
                 if ambi_errors:
                     errors.extend(ambi_errors)
                     return [], errors
@@ -626,6 +633,14 @@ def book_reductions(entry, group_postings, balances,
                 if costspec.date is None:
                     dated_costspec = costspec._replace(date=entry.date)
                     posting = posting._replace(cost=dated_costspec)
+
+                # FIXME: Insert unique ids for trade tracking; right now this
+                # creates ambiguous matches errors (and it shouldn't).
+                # # Insert a unique label if there isn't one.
+                # if posting.cost is not None and posting.cost.label is None:
+                #     posting = posting._replace(
+                #         cost=posting.cost._replace(label=unique_label()))
+
                 booked_postings.append(posting)
 
     return booked_postings, errors

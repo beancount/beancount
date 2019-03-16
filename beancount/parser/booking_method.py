@@ -34,7 +34,7 @@ def handle_ambiguous_matches(entry, posting, matches, method):
         method.
     Returns:
       A pair of
-        booked_postings: A list of matched Posting instances, whose 'cost'
+        booked_reductions: A list of matched Posting instances, whose 'cost'
           attributes are ensured to be of type Cost.
         errors: A list of errors to be generated.
     """
@@ -44,7 +44,8 @@ def handle_ambiguous_matches(entry, posting, matches, method):
 
     #method = globals()['booking_method_{}'.format(method.name)]
     method = _BOOKING_METHODS[method]
-    postings, errors, insufficient = method(entry, posting, matches)
+    (booked_reductions,
+     booked_matches, errors, insufficient) = method(entry, posting, matches)
     if insufficient:
         errors.append(
             AmbiguousMatchError(entry.meta,
@@ -54,7 +55,7 @@ def handle_ambiguous_matches(entry, posting, matches, method):
                                          for match_posting in matches)),
                            entry))
 
-    return postings, errors
+    return booked_reductions, booked_matches, errors
 
 
 def booking_method_STRICT(entry, posting, matches):
@@ -68,13 +69,14 @@ def booking_method_STRICT(entry, posting, matches):
         Those positions are known to already match the 'posting' spec.
     Returns:
       A triple of
-        booked_postings: A list of matched Posting instances, whose 'cost'
+        booked_reductions: A list of matched Posting instances, whose 'cost'
           attributes are ensured to be of type Cost.
         errors: A list of errors to be generated.
         insufficient: A boolean, true if we could not find enough matches
           to fulfill the reduction.
     """
-    postings = []
+    booked_reductions = []
+    booked_matches = []
     errors = []
     insufficient = False
     # In strict mode, we require at most a single matching posting.
@@ -83,7 +85,7 @@ def booking_method_STRICT(entry, posting, matches):
         # ambiguous postings, match against all of them.
         sum_matches = sum(p.units.number for p in matches)
         if sum_matches == -posting.units.number:
-            postings.extend(
+            booked_reductions.extend(
                 posting._replace(units=-match.units, cost=match.cost)
                 for match in matches)
         else:
@@ -100,10 +102,11 @@ def booking_method_STRICT(entry, posting, matches):
         sign = -1 if posting.units.number < ZERO else 1
         number = min(abs(match.units.number), abs(posting.units.number))
         match_units = Amount(number * sign, match.units.currency)
-        postings.append(posting._replace(units=match_units, cost=match.cost))
+        booked_reductions.append(posting._replace(units=match_units, cost=match.cost))
+        booked_matches.append(match)
         insufficient = (match_units.number != posting.units.number)
 
-    return postings, errors, insufficient
+    return booked_reductions, booked_matches, errors, insufficient
 
 
 def booking_method_FIFO(entry, posting, matches):
@@ -118,7 +121,8 @@ def booking_method_LIFO(entry, posting, matches):
 
 def _booking_method_xifo(entry, posting, matches, reverse_order):
     """FIFO and LIFO booking method implementations."""
-    postings = []
+    booked_reductions = []
+    booked_matches = []
     errors = []
     insufficient = False
 
@@ -136,15 +140,16 @@ def _booking_method_xifo(entry, posting, matches, reverse_order):
 
         # Compute the amount of units we can reduce from this leg.
         size = min(abs(match.units.number), remaining)
-        postings.append(
+        booked_reductions.append(
             posting._replace(units=Amount(size * sign, match.units.currency),
                              cost=match.cost))
+        booked_matches.append(match)
         remaining -= size
 
     # If we couldn't eat up all the requested reduction, return an error.
     insufficient = (remaining > ZERO)
 
-    return postings, errors, insufficient
+    return booked_reductions, booked_matches, errors, insufficient
 
 
 def booking_method_NONE(entry, posting, matches):
@@ -167,9 +172,10 @@ def booking_method_NONE(entry, posting, matches):
 
 def booking_method_AVERAGE(entry, posting, matches):
     """AVERAGE booking method implementation."""
-    postings = []
+    booked_reductions = []
+    booked_matches = []
     errors = [AmbiguousMatchError(entry.meta, "AVERAGE method is not supported", entry)]
-    return postings, errors, False
+    return booked_reductions, booked_matches, errors, False
 
     # FIXME: Future implementation here.
     # pylint: disable=unreachable
@@ -190,7 +196,7 @@ def booking_method_AVERAGE(entry, posting, matches):
             sign = -1 if posting.units.number < ZERO else 1
             number = min(abs(match.units.number), abs(posting.units.number))
             match_units = Amount(number * sign, match.units.currency)
-            postings.append(posting._replace(units=match_units, cost=match.cost))
+            booked_reductions.append(posting._replace(units=match_units, cost=match.cost))
             insufficient = (match_units.number != posting.units.number)
         else:
             # Merge the matching postings to a single one.
@@ -216,9 +222,10 @@ def booking_method_AVERAGE(entry, posting, matches):
                                 position.to_string(posting)), entry))
                 else:
                     # Insert postings to remove all the matches.
-                    postings.extend(posting._replace(units=-match.units, cost=match.cost,
-                                                     flag=flags.FLAG_MERGING)
-                                    for match in matches)
+                    booked_reductions.extend(
+                        posting._replace(units=-match.units, cost=match.cost,
+                                         flag=flags.FLAG_MERGING)
+                        for match in matches)
                     units = merged_units[0].units
                     date = matches[0].cost.date  ## FIXME: Select which one,
                                                  ## oldest or latest.
@@ -227,11 +234,12 @@ def booking_method_AVERAGE(entry, posting, matches):
                                 date, None)
 
                     # Insert a posting to refill those with a replacement match.
-                    postings.append(posting._replace(units=units, cost=cost,
-                                                     flag=flags.FLAG_MERGING))
+                    booked_reductions.append(
+                        posting._replace(units=units, cost=cost, flag=flags.FLAG_MERGING))
 
                     # Now, match the reducing request against this lot.
-                    postings.append(posting._replace(units=posting.units, cost=cost))
+                    booked_reductions.append(
+                        posting._replace(units=posting.units, cost=cost))
                     insufficient = abs(posting.units.number) > abs(units.number)
 
 

@@ -1279,7 +1279,7 @@ class _BookingTestBase(unittest.TestCase):
             # Convert the list of expected resolved postings to those returned
             # by handle_ambiguous_matches().
             if entry_resolved:
-                resolved_actual, resolved_errors = call.return_value
+                resolved_actual, resolved_matches, resolved_errors = call.return_value
                 self.assertPostings(entry_resolved.postings, resolved_actual)
 
     def assertErrors(self, entry, errors):

@@ -4,6 +4,14 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2019-03-16
+
+  - Had a very quick shot at implementing trade tracking, added the list of
+    matches positions from the booking methods. This doesn't work yet, I need to
+    make changes to b.c.Inventory in order to make this work. Partial
+    changelist.
+
+
 2019-03-03
 
   - Fixed #378: Rendering metadata with null values wasn't properly implemented.
