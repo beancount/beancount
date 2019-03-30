@@ -1,7 +1,7 @@
 """A container for an inventory of positions.
 
 This module provides a container class that can hold positions. An inventory is
-a mapping ofpositions, where each position is keyed by
+a mapping of positions, where each position is keyed by
 
   (currency: str, cost: Cost) -> position: Position
 

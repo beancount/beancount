@@ -109,7 +109,7 @@ def compare_entries(entries1, entries2):
       entries2: Another list of directives of any type.
     Returns:
       A tuple of (success, not_found1, not_found2), where the fields are:
-        success: A booelan, true if all the values are equal.
+        success: A boolean, true if all the values are equal.
         missing1: A list of directives from 'entries1' not found in
           'entries2'.
         missing2: A list of directives from 'entries2' not found in

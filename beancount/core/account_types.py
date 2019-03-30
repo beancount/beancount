@@ -146,7 +146,7 @@ def is_equity_account(account_name, account_types):
       account_name: A string, an account name.
       account_types: An instance of AccountTypes.
     Returns:
-      A boolean, true if the account is an equityaccount.
+      A boolean, true if the account is an equity account.
     """
     assert isinstance(account_name, str), "Account is not a string: {}".format(account_name)
     assert isinstance(account_types, AccountTypes), (
