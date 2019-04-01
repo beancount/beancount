@@ -1,4 +1,4 @@
-;;; beancount.el --- A minor mode that can be used to edit beancount input files.
+;;; beancount.el --- A major mode to edit Beancount input files. -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2013 Martin Blais <blais@furius.ca>
 ;; Copyright (C) 2015 Free Software Foundation, Inc.
@@ -29,7 +29,7 @@
 ;;; Code:
 
 (autoload 'ido-completing-read "ido")
-(require 'font-lock)
+(require 'subr-x)
 
 (defgroup beancount ()
   "Editing mode for Beancount files."
@@ -151,20 +151,13 @@
     (modify-syntax-entry ?\n ">" st)
     st))
 
-(defun beancount--goto-bob () (goto-char (point-min)))
-
 ;;;###autoload
-(define-minor-mode beancount-mode
-  "A minor mode to help editing Beancount files.
-This can be used within other text modes, in particular, org-mode
-is great for sectioning large files with many transactions.
+(define-derived-mode beancount-mode fundamental-mode "Beancount"
+  "A mode for Beancount files.
 
 \\{beancount-mode-map}"
-  :init-value nil
-  :lighter " Beancount"
   :group 'beancount
-
-  ;; The following is mostly lifted from lisp-mode.
+  :syntax-table beancount-mode-syntax-table
 
   (set (make-local-variable 'paragraph-ignore-fill-prefix) t)
   (set (make-local-variable 'fill-paragraph-function) #'lisp-fill-paragraph)
@@ -181,15 +174,6 @@ is great for sectioning large files with many transactions.
   ;; Default to `;;' in comment-region.
   (set (make-local-variable 'comment-add) 1)
 
-  ;; Org-mode sets up its own comment handling because of its unusual comment
-  ;; syntax. Beancount doesn't use org's comments, though, so revert to the
-  ;; normal Emacs comment handlers.
-  (kill-local-variable 'comment-region-function)
-  (kill-local-variable 'uncomment-region-function)
-  (kill-local-variable 'comment-insert-comment-function)
-  (kill-local-variable 'comment-use-syntax)
-  (kill-local-variable 'comment-start-skip)
-
   ;; No tabs by default.
   (set (make-local-variable 'indent-tabs-mode) nil)
 
@@ -197,26 +181,10 @@ is great for sectioning large files with many transactions.
             #'beancount-completion-at-point nil t)
   (set (make-local-variable 'completion-ignore-case) t)
 
-  ;; Customize font-lock for beancount.
-  ;;
-  (set-syntax-table beancount-mode-syntax-table)
-  (when (fboundp 'syntax-ppss-flush-cache)
-    (syntax-ppss-flush-cache (point-min))
-    (set (make-local-variable 'syntax-begin-function) #'beancount--goto-bob))
-  ;; Force font-lock to use the syntax-table to find strings-and-comments,
-  ;; regardless of what the "host major mode" decided.
-  (set (make-local-variable 'font-lock-keywords-only) nil)
-  ;; Important: you have to use 'nil for the mode here because in certain major
-  ;; modes (e.g. org-mode) the font-lock-keywords is a buffer-local variable.
-  (if beancount-mode
-      (font-lock-add-keywords nil beancount-font-lock-keywords)
-    (font-lock-remove-keywords nil beancount-font-lock-keywords))
-  (if (fboundp 'font-lock-flush)
-      (font-lock-flush)
-    (with-no-warnings (font-lock-fontify-buffer)))
+  (setq-local font-lock-defaults '(beancount-font-lock-keywords))
+  (setq-local font-lock-syntax-table t)
 
-  (when beancount-mode
-    (beancount-init-accounts))
+  (beancount-init-accounts)
   )
 
 (defvar beancount-accounts nil
