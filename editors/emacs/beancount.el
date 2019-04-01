@@ -161,33 +161,23 @@
   :group 'beancount
   :syntax-table beancount-mode-syntax-table
 
-  (set (make-local-variable 'paragraph-ignore-fill-prefix) t)
-  (set (make-local-variable 'fill-paragraph-function) #'lisp-fill-paragraph)
+  (setq-local paragraph-ignore-fill-prefix t)
+  (setq-local fill-paragraph-function #'lisp-fill-paragraph)
 
-  (set (make-local-variable 'comment-start) ";; ")
+  (setq-local comment-start ";")
+  (setq-local comment-start-skip ";+\\s-*")
+  (setq-local comment-add 1)
 
-  ;; Look within the line for a ; following an even number of backslashes
-  ;; after either a non-backslash or the line beginning.
-  (set (make-local-variable 'comment-start-skip)
-       "\\(\\(^\\|[^\\\\\n]\\)\\(\\\\\\\\\\)*\\);+ *")
-  ;; Font lock mode uses this only when it KNOWS a comment is starting.
-  ;; FIXME: Why bother?
-  (set (make-local-variable 'font-lock-comment-start-skip) ";+ *")
-  ;; Default to `;;' in comment-region.
-  (set (make-local-variable 'comment-add) 1)
+  (setq-local indent-tabs-mode nil)
 
-  ;; No tabs by default.
-  (set (make-local-variable 'indent-tabs-mode) nil)
+  (add-hook 'completion-at-point-functions #'beancount-completion-at-point nil t)
 
-  (add-hook 'completion-at-point-functions
-            #'beancount-completion-at-point nil t)
-  (set (make-local-variable 'completion-ignore-case) t)
+  (setq-local completion-ignore-case t)
 
   (setq-local font-lock-defaults '(beancount-font-lock-keywords))
   (setq-local font-lock-syntax-table t)
 
-  (beancount-init-accounts)
-  )
+  (beancount-init-accounts))
 
 (defvar beancount-accounts nil
   "A list of the accounts available in this buffer.
