@@ -36,7 +36,7 @@ import re
 #   pip3 install m3-cdecimal
 #
 def is_fast_decimal(decimal_module):
-    "Return true if a fast C decimal implementattion is installed."
+    "Return true if a fast C decimal implementation is installed."
     return isinstance(decimal_module.Decimal().sqrt, types.BuiltinFunctionType)
 
 # Attempt to import a fast C decimal implementation.
@@ -82,7 +82,7 @@ def D(strord=None):
     system manipulates (never use floating-point in an accounting system)..
 
     Args:
-      stdord: A string or Decimal instance.
+      strord: A string or Decimal instance.
     Returns:
       A Decimal instance.
     """

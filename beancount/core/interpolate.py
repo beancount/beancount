@@ -228,7 +228,7 @@ def fill_residual_posting(entry, account_rounding):
 
     Note: This was developed in order to tweak transactions before exporting
     them to Ledger. A better method would be to enable the feature that
-    autoamtically inserts these rounding postings on all transactions, and so
+    automatically inserts these rounding postings on all transactions, and so
     maybe this method can be deprecated if we do so.
 
     Args:
@@ -325,7 +325,7 @@ def quantize_with_tolerance(tolerances, currency, number):
     Args:
       tolerances: A dict of currency to tolerance Decimalvalues.
       number: A number to quantize.
-      currency: A string currecy.
+      currency: A string currency.
     Returns:
       A Decimal, the number possibly quantized.
     """

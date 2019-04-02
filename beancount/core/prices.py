@@ -47,7 +47,7 @@ class PriceMap(dict):
     inverse. In order to determine which are the forward pairs, access the
     'forward_pairs' attribute
 
-    Atttributes:
+    Attributes:
       forward_pairs: A list of (base, quote) keys for the forward pairs.
     """
     __slots__ = ('forward_pairs',)
@@ -161,9 +161,9 @@ def _lookup_price_and_inverse(price_map, base_quote):
       price_map: A price map, which is a dict of (base, quote) -> list of (date,
         number) tuples, as created by build_price_map.
       base_quote: A pair of strings, (base, quote) currencies.
-        No normalizatin is done.
+        No normalization is done.
     Returns:
-      A list of price-dates, if succesful.
+      A list of price-dates, if successful.
     Raises:
       KeyError: If the base_quote and its inverse both weren't able to be looked
         up.
@@ -198,7 +198,7 @@ def get_all_prices(price_map, base_quote):
 
 
 def get_latest_price(price_map, base_quote):
-    """Return the latest price/rate from a prica map for the given base/quote pair.
+    """Return the latest price/rate from a price map for the given base/quote pair.
     This is often used to just get the 'current' price if you're looking at the
     entire set of entries.
 
@@ -206,7 +206,7 @@ def get_latest_price(price_map, base_quote):
       price_map: A price map, which is a dict of (base, quote) -> list of (date,
         number) tuples, as created by build_price_map.
     Returns:
-      A pair of (date, number), where 'date' is a datetime.date instancea dn
+      A pair of (date, number), where 'date' is a datetime.date instance and
       'number' is a Decimal of the price, or rate, at that date. The date is the
       latest date which we have an available price for in the price map.
     """
