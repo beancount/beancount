@@ -256,6 +256,9 @@ def main():
     else:
         print(get_list_report_string())
 
+    if errors:
+        sys.exit(1)
+
     return 0
 
 
