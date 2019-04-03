@@ -181,10 +181,14 @@ is great for sectioning large files with many transactions.
   ;; Default to `;;' in comment-region.
   (set (make-local-variable 'comment-add) 1)
 
-  ;; Org-mode sets both of these to `org-comment-or-uncomment-region',
-  ;; which doesn't know about our ";" comments.
+  ;; Org-mode sets up its own comment handling because of its unusual comment
+  ;; syntax. Beancount doesn't use org's comments, though, so revert to the
+  ;; normal Emacs comment handlers.
   (kill-local-variable 'comment-region-function)
   (kill-local-variable 'uncomment-region-function)
+  (kill-local-variable 'comment-insert-comment-function)
+  (kill-local-variable 'comment-use-syntax)
+  (kill-local-variable 'comment-start-skip)
 
   ;; No tabs by default.
   (set (make-local-variable 'indent-tabs-mode) nil)
