@@ -53,8 +53,13 @@ fieldspec = [
 ]
 
 
-def aggregate_sales(sublots):
-    """Agreggate a list of LotSale instances."""
+def aggregate_sales(lots):
+    return [aggregate_lot_sales(glots)
+            for _, glots in misc_utils.groupby(
+                    lambda lot: (lot.ref, lot.term), lots).items()]
+
+def aggregate_lot_sales(sublots):
+    """Agreggate a list of LotSale instances, matching the 1099's."""
     if len(sublots) == 1:
         agglot = sublots[0]
     else:
@@ -297,9 +302,7 @@ def main():
 
     # Aggregate by transaction in order to be able to cross-check against the
     # 1099 forms.
-    agglots = [aggregate_sales(glots)
-               for _, glots in misc_utils.groupby(
-                       lambda lot: (lot.ref), lots).items()]
+    agglots = aggregate_sales(lots)
     tab_agg = table.create_table(sorted(agglots, key=lambda lot: (lot.ref, lot.no)),
                                  fieldspec)
 
