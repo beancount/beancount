@@ -262,7 +262,7 @@ empty :
 /* A transaction declaration can be either 'txn' or one of the special character flags. */
 txn : TXN
     {
-        $$ = '*';
+        $$ = '\0';
     }
     | FLAG
     {

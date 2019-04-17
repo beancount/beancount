@@ -220,7 +220,7 @@ Posting = NamedTuple('Posting', [
 #   postings: A list of Posting instances, the legs of this transaction. See the
 #     doc under Posting above.
 Transaction = new_directive('Transaction', [
-    ('flag', Flag),
+    ('flag', Optional[Flag]),
     ('payee', Optional[str]),
     ('narration', str),
     ('tags', Set),
