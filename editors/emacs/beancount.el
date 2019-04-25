@@ -37,6 +37,58 @@
   "Editing mode for Beancount files."
   :group 'beancount)
 
+(defgroup beancount-faces nil "Beancount mode highlighting" :group 'beancount)
+
+(defface beancount-directive
+  `((t :inherit font-lock-keyword-face))
+  "Face for Beancount directives."
+  :group 'beancount-faces)
+
+(defface beancount-tag
+  `((t :inherit font-lock-type-face))
+  "Face for Beancount tags."
+  :group 'beancount-faces)
+
+(defface beancount-link
+  `((t :inherit font-lock-type-face))
+  "Face for Beancount links."
+  :group 'beancount-faces)
+
+(defface beancount-date
+  `((t :inherit font-lock-constant-face))
+  "Face for Beancount dates."
+  :group 'beancount-faces)
+
+(defface beancount-account
+  `((t :inherit font-lock-builtin-face))
+  "Face for Beancount account names."
+  :group 'beancount-faces)
+
+(defface beancount-amount
+  `((t :inherit font-lock-default-face))
+  "Face for Beancount amounts."
+  :group 'beancount-faces)
+
+(defface beancount-narrative
+  `((t :inherit font-lock-builtin-face))
+  "Face for Beancount transactions narrative."
+  :group 'beancount-faces)
+
+(defface beancount-narrative-cleared
+  `((t :inherit font-lock-string-face))
+  "Face for Beancount cleared transactions narrative."
+  :group 'beancount-faces)
+
+(defface beancount-narrative-pending
+  `((t :inherit font-lock-keyword-face))
+  "Face for Beancount pending transactions narrative."
+  :group 'beancount-faces)
+
+(defface beancount-metadata
+  `((t :inherit font-lock-type-face))
+  "Face for Beancount metadata."
+  :group 'beancount-faces)
+
 (defconst beancount-account-directive-names
   '("balance"
     "close"
@@ -150,26 +202,30 @@
 (defconst beancount-metadata-regexp
   "^\\s-+\\([a-z][A-Za-z0-9]+:\\)\\s-+\\(.+\\)")
 
+(defun beancount-face-by-state (state)
+  (cond ((string-equal state "*") 'beancount-narrative-cleared)
+        ((string-equal state "!") 'beancount-narrative-pending)
+        (t 'beancount-narrative)))
+
 (defvar beancount-font-lock-keywords
-  `(;; Reserved keywords
-    (,(regexp-opt beancount-directive-names) . font-lock-keyword-face)
-
-    ;; Tags & Links
-    ("[#\\^][A-Za-z0-9\-_/.]+" . font-lock-type-face)
-
-    ;; Date
-    ("[0-9][0-9][0-9][0-9][-/][0-9][0-9][-/][0-9][0-9]" . font-lock-constant-face)
-
-    ;; Account
-    ("\\([A-Z][A-Za-z0-9\-]+:\\)+\\([A-Z0-9][A-Za-z0-9\-]*\\)" . font-lock-builtin-face)
-
-    ;; Txn Flags
-    ("! " . font-lock-warning-face)
-
-    ;; Number + Currency
-    ;;; ("\\([\\-+]?[0-9,]+\\(\\.[0-9]+\\)?\\)\\s-+\\([A-Z][A-Z0-9'\.]\\{1,10\\}\\)" . )
-    ))
-
+  `((,beancount-transaction-regexp (1 'beancount-date)
+                                   (2 (beancount-face-by-state (match-string 2)) t)
+                                   (3 (beancount-face-by-state (match-string 2)) t))
+    (,beancount-posting-regexp (1 'beancount-account)
+                               (2 'beancount-amount nil :lax))
+    (,beancount-metadata-regexp (1 'beancount-metadata)
+                                (2 'beancount-metadata t))
+    (,beancount-directive-regexp (1 'beancount-directive))
+    (,beancount-timestamped-directive-regexp (1 'beancount-date)
+                                             (2 'beancount-directive))
+    ;; Tags and links.
+    (,(concat "\\#[" beancount-tag-chars "]*") . 'beancount-tag)
+    (,(concat "\\^[" beancount-tag-chars "]*") . 'beancount-link)
+    ;; Number followed by currency not covered by previous rules.
+    (,(concat beancount-number-regexp
+	      "\\s-+" beancount-currency-regexp) . 'beancount-amount)
+    ;; Accounts not covered by previous rules.
+    (,beancount-account-regexp . 'beancount-account) ))
 
 (defvar beancount-mode-map-prefix [(control c)]
   "The prefix key used to bind Beancount commands in Emacs")
