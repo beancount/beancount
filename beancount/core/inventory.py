@@ -250,7 +250,9 @@ class Inventory(dict):
         If the inventory is empty, return None.
         """
         if len(self) > 0:
-            assert len(self) <= 1
+            if len(self) > 1:
+                raise AssertionError("Inventory has more than one expected "
+                                     "position: {}".format(self))
             return next(iter(self))
 
     def get_currency_units(self, currency):
