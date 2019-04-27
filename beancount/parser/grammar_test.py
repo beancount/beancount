@@ -23,7 +23,6 @@ from beancount.parser import lexer
 from beancount.core import data
 from beancount.core import amount
 from beancount.utils import test_utils
-from beancount.parser import grammar
 from beancount.parser import cmptest
 
 

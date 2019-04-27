@@ -41,17 +41,19 @@ class TestCSVFunctions(unittest.TestCase):
           Lorem ipsum dolor sit amet, consectetur adipiscing elit.
           Aliquam lorem erat, bibendum sed arcu at, tempor commodo tortor.
           Phasellus consectetur, nisl quis vestibulum ornare, mi velit imperdiet arcu, eu mattis nulla augue nec ex.
-          
+
           Details,Posting Date,"Description",Amount,Type,Balance,Check or Slip #,
           DEBIT,3/18/2016,"Payment to Chafe card ending in 1234 03/18",-2680.89,ACCT_XFER,3409.86,,
           CREDIT,3/15/2016,"EMPLOYER INC    DIRECT DEP                 PPD ID: 1111111111",2590.73,ACH_CREDIT,6090.75,,
           DEBIT,3/14/2016,"INVESTMENT SEC   TRANSFER   A5144608        WEB ID: 1234456789",-150.00,ACH_DEBIT,3500.02,,
         """)
-        iconfig, has_header = csv.normalize_config({Col.DATE: 'Posting Date'}, head, skip_lines=4)
+        iconfig, has_header = csv.normalize_config({Col.DATE: 'Posting Date'}, head,
+                                                   skip_lines=4)
         self.assertEqual({Col.DATE: 1}, iconfig)
         self.assertTrue(has_header)
 
-        iconfig, _ = csv.normalize_config({Col.NARRATION: 'Description'}, head, skip_lines=4)
+        iconfig, _ = csv.normalize_config({Col.NARRATION: 'Description'}, head,
+                                          skip_lines=4)
         self.assertEqual({Col.NARRATION: 2}, iconfig)
 
         iconfig, _ = csv.normalize_config({Col.DATE: 1,
@@ -79,7 +81,7 @@ class TestCSVFunctions(unittest.TestCase):
           Lorem ipsum dolor sit amet, consectetur adipiscing elit.
           Aliquam lorem erat, bibendum sed arcu at, tempor commodo tortor.
           Phasellus consectetur, nisl quis vestibulum ornare, mi velit imperdiet arcu, eu mattis nulla augue nec ex.
-          
+
           DEBIT,3/18/2016,"Payment to Chafe card ending in 1234 03/18",-2680.89,ACCT_XFER,3409.86,,
           CREDIT,3/15/2016,"EMPLOYER INC    DIRECT DEP                 PPD ID: 1111111111",2590.73,ACH_CREDIT,6090.75,,
           DEBIT,3/14/2016,"INVESTMENT SEC   TRANSFER   A5144608        WEB ID: 1234456789",-150.00,ACH_DEBIT,3500.02,,

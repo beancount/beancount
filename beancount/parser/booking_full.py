@@ -605,7 +605,8 @@ def book_reductions(entry, group_postings, balances,
                     return [], errors  # This is irreconcilable, remove these postings.
 
                 reduction_postings, matched_postings, ambi_errors = (
-                    booking_method.handle_ambiguous_matches(entry, posting, matches, method))
+                    booking_method.handle_ambiguous_matches(entry, posting, matches,
+                                                            method))
                 if ambi_errors:
                     errors.extend(ambi_errors)
                     return [], errors
