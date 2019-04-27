@@ -74,12 +74,14 @@ _CLEAN_NUMBER_RE = re.compile('[, ]')
 
 # pylint: disable=invalid-name
 def D(strord=None):
-    """Convert a string, possibly with commas, into a Decimal object.
+    """Convert a string into a Decimal object.
 
-    This function just returns the argument if it is already a Decimal object,
-    for convenience. This is used in parsing amounts from files in the
-    importers. This is the main function you should use to build all numbers the
-    system manipulates (never use floating-point in an accounting system)..
+    This is used in parsing amounts from files in the importers. This is the
+    main function you should use to build all numbers the system manipulates
+    (never use floating-point in an accounting system). Commas are stripped and
+    ignored, as they are assumed to be thousands separators (the French comma
+    separator as decimal is not supported). This function just returns the
+    argument if it is already a Decimal object, for convenience.
 
     Args:
       strord: A string or Decimal instance.
