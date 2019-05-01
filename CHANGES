@@ -4,6 +4,13 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2019-04-17
+
+  - Fixed #295: Make sure entry.flag is None when no transaction flag is
+    given (i.e. when "txn" is used).  This brings the behaviour in line
+    with the documentation in beancount/core/data.py which says that flag
+    can be a "single-character string or None."
+
 2019-03-16
 
   - Had a very quick shot at implementing trade tracking, added the list of
