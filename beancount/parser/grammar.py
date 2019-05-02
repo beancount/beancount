@@ -1024,5 +1024,5 @@ class Builder(lexer.LexBuilder):
             postings = []
 
         # Create the transaction.
-        return Transaction(meta, date, chr(flag) if flag else None,
+        return Transaction(meta, date, chr(flag),
                            payee, narration, tags, links, postings)

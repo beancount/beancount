@@ -165,7 +165,7 @@ class TestPadding(cmptest.TestCase):
 
           2013-05-03 balance Assets:Checking                                 172.45 USD
 
-          2013-05-15 txn "Add 20$"
+          2013-05-15 * "Add 20$"
             Assets:Checking                                                         20 USD
             Assets:Cash                                                            -20 USD
 

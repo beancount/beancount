@@ -164,8 +164,7 @@ class EntryPrinter:
             for link in sorted(entry.links):
                 strings.append('^{}'.format(link))
 
-        oss.write('{} {} {}\n'.format(entry.date, entry.flag if
-            entry.flag else 'txn', ' '.join(strings)))
+        oss.write('{e.date} {e.flag} {}\n'.format(' '.join(strings), e=entry))
         self.write_metadata(entry.meta, oss)
 
         rows = [self.render_posting_strings(posting)
