@@ -4,6 +4,14 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2019-05-01
+
+ - Fixed #389: Patch for b.p.forecast improvements.
+
+ - Added rolled back change to default value of flag used when using the 'txn'
+   syntax. See issue #295 for a discussion.
+
+
 2019-03-16
 
   - Had a very quick shot at implementing trade tracking, added the list of

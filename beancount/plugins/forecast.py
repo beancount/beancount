@@ -35,6 +35,16 @@ Transactions can be also be repeated at yearly intervals, e.g.:
   2014-03-08 # "Electricity bill [YEARLY REPEAT 10 TIMES]""
     Expenses:Electricity 			50.10 USD
     Assets:Checking			       -50.10 USD
+
+Other examples:
+
+  2014-03-08 # "Electricity bill [WEEKLY SKIP 1 TIME REPEAT 10 TIMES]""
+    Expenses:Electricity 			50.10 USD
+    Assets:Checking			       -50.10 USD
+
+  2014-03-08 # "Electricity bill [DAILY SKIP 3 TIMES REPEAT 1 TIME]""
+    Expenses:Electricity 			50.10 USD
+    Assets:Checking			       -50.10 USD
 """
 
 __copyright__ = "Copyright (C) 2014-2017  Martin Blais"
@@ -78,32 +88,33 @@ def forecast_plugin(entries, options_map):
     new_entries = []
     for entry in forecast_entries:
         # Parse the periodicity.
-        match = re.search(r'(^.*)\[(MONTHLY|YEARLY)'
-                          r'(\s+REPEAT\s+([1-9][0-9]*)\s+TIMES)'
+        match = re.search(r'(^.*)\[(MONTHLY|YEARLY|WEEKLY|DAILY)'
+                          r'(\s+SKIP\s+([1-9][0-9]*)\s+TIME.?)'
+                          r'?(\s+REPEAT\s+([1-9][0-9]*)\s+TIME.?)'
                           r'?(\s+UNTIL\s+([0-9\-]+))?\]', entry.narration)
         if not match:
             new_entries.append(entry)
             continue
         forecast_narration = match.group(1).strip()
-        forecast_interval = (rrule.YEARLY
-                             if match.group(2).strip() == 'YEARLY'
-                             else rrule.MONTHLY)
+        forecast_interval = (rrule.YEARLY if match.group(2).strip() == 'YEARLY'
+                            else rrule.WEEKLY if match.group(2).strip() == 'WEEKLY'
+                            else rrule.DAILY if match.group(2).strip() == 'DAILY'
+                            else rrule.MONTHLY)
         forecast_periodicity = {'dtstart': entry.date}
-        if match.group(4):  # e.g., [MONTHLY REPEAT 3 TIMES]:
-            forecast_periodicity['count'] = int(match.group(4))
-        elif match.group(6):  # e.g., [MONTHLY UNTIL 2020-01-01]:
-            forecast_periodicity['until'] = datetime.datetime.strptime(match.group(6),
-                                                                       '%Y-%m-%d').date()
+        if match.group(6):  # e.g., [MONTHLY REPEAT 3 TIMES]:
+            forecast_periodicity['count'] = int(match.group(6))
+        elif match.group(8):  # e.g., [MONTHLY UNTIL 2020-01-01]:
+            forecast_periodicity['until'] = datetime.datetime.strptime(match.group(8),'%Y-%m-%d').date()
         else:  # e.g., [MONTHLY]
-            forecast_periodicity['until'] = datetime.date(datetime.date.today().year,
-                                                          12, 31)
+            forecast_periodicity['until'] = datetime.date(datetime.date.today().year,12, 31)
+
+        if match.group(4): # SKIP
+            forecast_periodicity['interval'] = int(match.group(4)) + 1
 
         # Generate a new entry for each forecast date.
-        forecast_dates = [dt.date() for dt in rrule.rrule(forecast_interval,
-                                                          **forecast_periodicity)]
+        forecast_dates = [dt.date() for dt in rrule.rrule(forecast_interval,**forecast_periodicity)]
         for forecast_date in forecast_dates:
-            forecast_entry = entry._replace(date=forecast_date,
-                                            narration=forecast_narration)
+            forecast_entry = entry._replace(date=forecast_date,narration=forecast_narration)
             new_entries.append(forecast_entry)
 
     # Make sure the new entries inserted are sorted.
