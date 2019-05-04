@@ -1,0 +1,186 @@
+workspace(name="beanquick")
+
+#-------------------------------------------------------------------------------------------
+# Bazel tools.
+
+# Add http_archive (not build-in anymore).
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+# This is required for some definitions.
+http_archive(
+    name = "bazel_skylib",
+    sha256 = "bbccf674aa441c266df9894182d80de104cabd19be98be002f6d478aaa31574d",
+    strip_prefix = "bazel-skylib-2169ae1c374aab4a09aa90e65efe1a3aad4e279b",
+    urls = ["https://github.com/bazelbuild/bazel-skylib/archive/2169ae1c374aab4a09aa90e65efe1a3aad4e279b.tar.gz"],
+)
+
+# Bazel toolchains
+http_archive(
+  name = "bazel_toolchains",
+  urls = [
+    "https://mirror.bazel.build/github.com/bazelbuild/bazel-toolchains/archive/bc09b995c137df042bb80a395b73d7ce6f26afbe.tar.gz",
+    "https://github.com/bazelbuild/bazel-toolchains/archive/bc09b995c137df042bb80a395b73d7ce6f26afbe.tar.gz",
+  ],
+  strip_prefix = "bazel-toolchains-bc09b995c137df042bb80a395b73d7ce6f26afbe",
+  sha256 = "4329663fe6c523425ad4d3c989a8ac026b04e1acedeceb56aa4b190fa7f3973c",
+)
+
+#-------------------------------------------------------------------------------------------
+# Python libraries.
+
+# six is required by protobuf.
+http_archive(
+    name = "six_archive",
+    build_file = "@com_google_protobuf//:six.BUILD",
+    sha256 = "105f8d68616f8248e24bf0e9372ef04d3cc10104f1980f54d57b2ce73a5ad56a",
+    urls = ["https://pypi.python.org/packages/source/s/six/six-1.10.0.tar.gz#md5=34eed507548117b2ab523ab14b2f8b55"],
+)
+
+# TODO(blais): Replace by alias().
+bind(
+    name = "six",
+    actual = "@six_archive//:six",
+)
+
+#-------------------------------------------------------------------------------------------
+# Protocol buffer support.
+
+# proto_library, cc_proto_library, and java_proto_library rules implicitly
+# depend on @com_google_protobuf for protoc and proto runtimes.
+# This statement defines the @com_google_protobuf repo.
+http_archive(
+    name = "com_google_protobuf",
+    #sha256 = "b50be32ea806bdb948c22595ba0742c75dc2f8799865def414cf27ea5706f2b7",
+    strip_prefix = "protobuf-3e1bd5b81e6d3d806c8b7e1282face57ef7bb0be",
+    urls = ["https://github.com/protocolbuffers/protobuf/archive/3e1bd5b81e6d3d806c8b7e1282face57ef7bb0be.zip"],
+)
+
+# Note: Need version beyond 3.7.0 for this.
+load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
+protobuf_deps()
+
+# We don't really need tensorflow, but we use their trick to find the python
+# headers. (This is unfortunate, I wish there will be a better way at some
+# point).
+http_archive(
+    name = "org_tensorflow",
+    sha256 = "902a6d90bb69549fe241377210aa459773459820da1333b67dcfdef37836f25f",
+    strip_prefix = "tensorflow-1.13.1",
+    urls = [
+        "https://github.com/tensorflow/tensorflow/archive/v1.13.1.zip",
+    ],
+)
+
+load("@org_tensorflow//third_party/py:python_configure.bzl", "python_configure")
+python_configure(name="local_config_python")
+
+# TODO(blais): Replace by alias().
+bind(
+    name = "python_headers",
+    actual = "@org_tensorflow//third_party/python_runtime:headers",
+)
+
+#-------------------------------------------------------------------------------------------
+# ABSL and testing libraries.
+
+# Import Abseil (2019-03-01).
+http_archive(
+    name = "com_google_absl",
+    #sha256 = "27e58be2b631836e4ac38375dfb475fae53b7d39c299a299b4da092e1187f2da",
+    strip_prefix = "abseil-cpp-b312c3cb53a0aad75a85ac2bf57c4a614fbd48d4",
+    urls = [
+        "https://github.com/abseil/abseil-cpp/archive/b312c3cb53a0aad75a85ac2bf57c4a614fbd48d4.zip",
+    ],
+)
+
+# GoogleTest/GoogleMock framework. Used by most unit-tests.
+http_archive(
+     name = "com_google_googletest",
+     urls = ["https://github.com/google/googletest/archive/b6cd405286ed8635ece71c72f118e659f4ade3fb.zip"],  # 2019-01-07
+     strip_prefix = "googletest-b6cd405286ed8635ece71c72f118e659f4ade3fb",
+     sha256 = "ff7a82736e158c077e76188232eac77913a15dac0b22508c390ab3f88e6d6d86",
+)
+
+# Google benchmark.
+http_archive(
+    name = "com_github_google_benchmark",
+    urls = ["https://github.com/google/benchmark/archive/16703ff83c1ae6d53e5155df3bb3ab0bc96083be.zip"],
+    strip_prefix = "benchmark-16703ff83c1ae6d53e5155df3bb3ab0bc96083be",
+    sha256 = "59f918c8ccd4d74b6ac43484467b500f1d64b40cc1010daa055375b322a43ba3",
+)
+
+#-------------------------------------------------------------------------------------------
+# File formats.
+
+# Import Riegeli (2019-02-28).
+http_archive(
+    name = "com_google_riegeli",
+    sha256 = "474087e55404bdc86fdcbb93bb6bb6bfc1abc964b2517813b3736782341b9ff5",
+    strip_prefix = "riegeli-e5574b9fbeaa266593bfa6396d439601cdde7614",
+    urls = [
+        "https://github.com/google/riegeli/archive/e5574b9fbeaa266593bfa6396d439601cdde7614.zip",
+    ],
+)
+
+# Import HighwayHash (2019-01-29).
+http_archive(
+    name = "highwayhash",
+    build_file = "@com_google_riegeli//:highwayhash.BUILD",
+    sha256 = "017d766fa5f130702eafcc2c9807582c67bdf99614f702d68edb510213428a23",
+    strip_prefix = "highwayhash-e96ab3b409eb0cdec19c066aef1fd7e60e74eae3",
+    urls = [
+        "https://mirror.bazel.build/github.com/google/highwayhash/archive/e96ab3b409eb0cdec19c066aef1fd7e60e74eae3.zip",
+        "https://github.com/google/highwayhash/archive/e96ab3b409eb0cdec19c066aef1fd7e60e74eae3.zip",
+    ],
+)
+
+# Import Brotli (2018-10-23).
+http_archive(
+    name = "org_brotli",
+    sha256 = "6e69be238ff61cef589a3fa88da11b649c7ff7a5932cb12d1e6251c8c2e17a2f",
+    strip_prefix = "brotli-1.0.7",
+    urls = [
+        "https://mirror.bazel.build/github.com/google/brotli/archive/v1.0.7.zip",
+        "https://github.com/google/brotli/archive/v1.0.7.zip",
+    ],
+)
+
+# Import Zstd (2018-10-17).
+http_archive(
+    name = "net_zstd",
+    build_file = "@com_google_riegeli//:net_zstd.BUILD",
+    sha256 = "00cf0539c61373f1450f5a09b2e3704e5cc6396404dffe248816732510d692ec",
+    strip_prefix = "zstd-1.3.7/lib",
+    urls = [
+        "https://mirror.bazel.build/github.com/facebook/zstd/archive/v1.3.7.zip",
+        "https://github.com/facebook/zstd/archive/v1.3.7.zip",
+    ],
+)
+
+# Import zlib (2017-01-15).
+http_archive(
+    name = "zlib_archive",
+    build_file = "@com_google_riegeli//:zlib.BUILD",
+    sha256 = "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1",
+    strip_prefix = "zlib-1.2.11",
+    urls = [
+        "http://mirror.bazel.build/zlib.net/fossils/zlib-1.2.11.tar.gz",
+        "http://zlib.net/fossils/zlib-1.2.11.tar.gz",
+    ],
+)
+
+
+# http_archive(
+#     name = "io_bazel_rules_closure",
+#     sha256 = "013b820c64874dae78f3dbb561f1f6ee2b3367bbdc10f086534c0acddbd434e7",
+#     strip_prefix = "rules_closure-0.8.0",
+#     urls = [
+#         "https://mirror.bazel.build/github.com/bazelbuild/rules_closure/archive/0.8.0.zip",
+#         "https://github.com/bazelbuild/rules_closure/archive/0.8.0.zip",  # 2018-06-23
+#     ],
+# )
+#
+# load("@org_tensorflow//tensorflow:workspace.bzl", "tf_workspace")
+#
+# tf_workspace("", "@org_tensorflow")
+#
