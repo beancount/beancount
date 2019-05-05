@@ -157,9 +157,9 @@ class TestLedgerConversion(test_utils.TestCase):
           account Assets:Cash
             assert commodity == "USD" | commodity == "CAD"
 
-          P 2014/02/15 00:00:00 HOOL                   500.00 USD
+          P 2014-02-15 00:00:00 HOOL                   500.00 USD
 
-          2014/03/02 * Something
+          2014-03-02 * Something
             Expenses:Restaurant                                                     50.02 USD
             Assets:Cash                                                            -50.02 USD
 
@@ -190,15 +190,15 @@ class TestLedgerConversion(test_utils.TestCase):
 
           account Assets:CA:Investment:Cash
 
-          2014/11/02 * Buy some stock with foreign currency funds
+          2014-11-02 * Buy some stock with foreign currency funds
             Assets:CA:Investment:HOOL           5 HOOL {520.0 USD} @ 520.0 USD
             Expenses:Commissions             9.95 USD
             Assets:CA:Investment:Cash    -2939.46 CAD @ 0.8879 USD
             Equity:Rounding             -0.003466 USD
 
-          P 2014/11/02 00:00:00 HOOL    520.0 USD
+          P 2014-11-02 00:00:00 HOOL    520.0 USD
 
-          P 2014/11/02 00:00:00 CAD    0.8879 USD
+          P 2014-11-02 00:00:00 CAD    0.8879 USD
 
         """, stdout.getvalue())
 
@@ -220,7 +220,7 @@ class TestLedgerConversion(test_utils.TestCase):
 
           account Assets:B
 
-          2019/01/25 * Test tags
+          2019-01-25 * Test tags
             ; :bar:baz:foo:
             ; Link: link1, link2
             Assets:A                       10.00 EUR
