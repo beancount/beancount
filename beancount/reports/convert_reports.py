@@ -174,7 +174,7 @@ class LedgerPrinter:
         if entry.narration:
             strings.append(entry.narration)
 
-        oss.write('{e.date:%Y/%m/%d} {flag} {}\n'.format(' '.join(strings),
+        oss.write('{e.date:%Y-%m-%d} {flag} {}\n'.format(' '.join(strings),
                                                          flag=entry.flag or '',
                                                          e=entry))
 
