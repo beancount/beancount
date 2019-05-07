@@ -266,11 +266,11 @@ class TestHLedgerConversion(test_utils.TestCase):
             result = test_utils.run_with_args(report.main, [filename, 'hledger'])
         self.assertEqual(0, result)
         self.assertLines("""
-          ;; Open: 2019/01/25 close Assets:A
+          ;; Open: 2019-01-25 close Assets:A
 
-          ;; Open: 2019/01/25 close Assets:B
+          ;; Open: 2019-01-25 close Assets:B
 
-          2019/01/25 * Test tags
+          2019-01-25 * Test tags
             ; bar:, baz:, foo:
             ; Link: link1 link2
             Assets:A                       10.00 EUR
