@@ -111,3 +111,24 @@ Return a list of substrings each followed by its face."
      "Expenses:Example" beancount-account
      "1.00 USD"         beancount-amount
      "Assets:Checking"  beancount-account)))
+
+(ert-deftest beancount/indent-001 ()
+  :tags '(indent regress)
+  (with-temp-buffer
+    (insert "
+2019-01-01 * \"Example\"
+  #foo
+    ^bar
+  Expenses:Example  1.00 USD
+    Assets:Checking           1.00 USD
+")
+    (beancount-mode)
+    (previous-line)
+    (beancount-indent-transaction)
+    (should (equal (buffer-string) "
+2019-01-01 * \"Example\"
+  #foo
+  ^bar
+  Expenses:Example                              1.00 USD
+  Assets:Checking                               1.00 USD
+"))))
