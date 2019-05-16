@@ -37,6 +37,19 @@
   "Editing mode for Beancount files."
   :group 'beancount)
 
+(defcustom beancount-transaction-indent 2
+  "Transaction indent."
+  :type 'integer
+  :group 'beancount)
+
+(defcustom beancount-number-alignment-column 52
+  "Column to which align numbers in postinng definitions. Set to
+0 to automatically determine the minimum column that will allow
+to align all amounts."
+  :type 'integer
+  :group 'beancount)
+
+
 (defgroup beancount-faces nil "Beancount mode highlighting" :group 'beancount)
 
 (defface beancount-directive
@@ -222,8 +235,7 @@
     (,(concat "\\#[" beancount-tag-chars "]*") . 'beancount-tag)
     (,(concat "\\^[" beancount-tag-chars "]*") . 'beancount-link)
     ;; Number followed by currency not covered by previous rules.
-    (,(concat beancount-number-regexp
-	      "\\s-+" beancount-currency-regexp) . 'beancount-amount)
+    (,(concat beancount-number-regexp "\\s-+" beancount-currency-regexp) . 'beancount-amount)
     ;; Accounts not covered by previous rules.
     (,beancount-account-regexp . 'beancount-account) ))
 
@@ -260,18 +272,19 @@
   :syntax-table beancount-mode-syntax-table
 
   (setq-local paragraph-ignore-fill-prefix t)
-  (setq-local fill-paragraph-function #'lisp-fill-paragraph)
+  (setq-local fill-paragraph-function #'beancount-indent-transaction)
 
   (setq-local comment-start ";")
   (setq-local comment-start-skip ";+\\s-*")
   (setq-local comment-add 1)
 
+  (setq-local indent-line-function #'beancount-indent-line-function)
+  (setq-local indent-region-function #'beancount-indent-region)
   (setq-local indent-tabs-mode nil)
-
-  (add-hook 'completion-at-point-functions #'beancount-completion-at-point nil t)
 
   (setq-local tab-always-indent 'complete)
   (setq-local completion-ignore-case t)
+  (add-hook 'completion-at-point-functions #'beancount-completion-at-point nil t)
 
   (setq-local font-lock-defaults '(beancount-font-lock-keywords))
   (setq-local font-lock-syntax-table t))
@@ -438,6 +451,92 @@ With an argument move to the next non cleared transaction."
 (defconst beancount--completion-overrides
   '(beancount-account (styles basic partial-completion substring)))
 (add-to-list 'completion-category-defaults beancount--completion-overrides)
+
+(defun beancount-number-alignment-column ()
+  "Return the column to which postings amounts should be aligned to.
+Returns `beancount-number-alignment-column' unless it is 0. In
+that case, scan the buffer to determine the minimum column that
+will allow to align all numbers."
+  (if (> beancount-number-alignment-column 0)
+      beancount-number-alignment-column
+    (save-excursion
+      (save-match-data
+        (let ((account-width 0)
+              (number-width 0))
+          (goto-char (point-min))
+          (while (re-search-forward beancount-posting-regexp nil t)
+            (if (match-string 2)
+                (let ((accw (- (match-end 1) (line-beginning-position)))
+                      (numw (- (match-end 3) (match-beginning 3))))
+                  (setq account-width (max account-width accw)
+                        number-width (max number-width numw)))))
+          (+ account-width 2 number-width))))))
+
+(defun beancount-compute-indentation ()
+  "Return the column to which the current line should be indented."
+  (save-excursion
+    (beginning-of-line)
+    (cond
+     ;; Only timestamped directives start with a digit.
+     ((looking-at-p "[0-9]") 0)
+     ;; Otherwise look at the previous line.
+     ((and (= (forward-line -1) 0)
+           (or (looking-at-p "[ \t].+")
+               (looking-at-p beancount-timestamped-directive-regexp)
+               (looking-at-p beancount-transaction-regexp)))
+      beancount-transaction-indent)
+     ;; Default.
+     (t 0))))
+
+(defun beancount-align-number (target-column)
+  (save-excursion
+    (beginning-of-line)
+    ;; Check if the current line is a posting with a number to align.
+    (when (and (looking-at beancount-posting-regexp)
+               (match-string 2))
+      (let* ((account-end-column (- (match-end 1) (line-beginning-position)))
+             (number-width (- (match-end 3) (match-beginning 3)))
+             (account-end (match-end 1))
+             (number-beginning (match-beginning 3))
+             (spaces (max 2 (- target-column account-end-column number-width))))
+        (goto-char account-end)
+        (delete-region account-end number-beginning)
+        (insert (make-string spaces ? ))))))
+
+(defun beancount-indent-line ()
+  (let ((indent (beancount-compute-indentation))
+        (savep (> (current-column) (current-indentation))))
+    (if (eq last-command 'beancount-indent-line)
+        (setq indent 0))
+    (unless (eq indent (current-indentation))
+      (if savep (save-excursion (indent-line-to indent))
+        (indent-line-to indent))))
+  (beancount-align-number (beancount-number-alignment-column)))
+
+(defun beancount-indent-line-function ()
+  (beancount-indent-line)
+  (setq this-command 'beancount-indent-line))
+
+(defun beancount-indent-region (start end)
+  "Indent a region automagically. START and END specify the region to indent."
+  (let ((deactivate-mark nil)
+        (beancount-number-alignment-column (beancount-number-alignment-column)))
+    (save-excursion
+      (setq end (copy-marker end))
+      (goto-char start)
+      (or (bolp) (forward-line 1))
+      (while (< (point) end)
+        (unless (looking-at-p "\\s-*$")
+          (beancount-indent-line))
+        (forward-line 1))
+      (move-marker end nil))))
+
+(defun beancount-indent-transaction (&optional justify region)
+  "Indent Beancount transaction at point."
+  (interactive)
+  (save-excursion
+    (let ((bounds (beancount-find-transaction-extents (point))))
+      (beancount-indent-region (car bounds) (cadr bounds)))))
 
 (defcustom beancount-use-ido t
   "If non-nil, use ido-style completion rather than the standard completion."
