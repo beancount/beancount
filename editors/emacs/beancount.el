@@ -266,7 +266,7 @@ to align all amounts."
         (p beancount-mode-map-prefix))
     (define-key map (kbd "TAB") #'beancount-tab-dwim)
     (define-key map (vconcat p [(\')]) #'beancount-insert-account)
-    (define-key map (vconcat p [(control g)]) #'beancount-transaction-set-flag)
+    (define-key map (vconcat p [(control g)]) #'beancount-transaction-clear)
     (define-key map (vconcat p [(l)]) #'beancount-check)
     (define-key map (vconcat p [(q)]) #'beancount-query)
     (define-key map (vconcat p [(x)]) #'beancount-context)
@@ -562,6 +562,17 @@ will allow to align all numbers."
     (let ((bounds (beancount-find-transaction-extents (point))))
       (beancount-indent-region (car bounds) (cadr bounds)))))
 
+(defun beancount-transaction-clear (&optional arg)
+  "Clear transaction at point. With a prefix argument set the
+transaction as pending."
+  (interactive "P")
+  (save-excursion
+    (save-match-data
+      (let ((flag (if arg "!" "*")))
+        (beancount-goto-transaction-begin)
+        (if (looking-at beancount-transaction-regexp)
+            (replace-match flag t t nil 2))))))
+
 (defcustom beancount-use-ido t
   "If non-nil, use ido-style completion rather than the standard completion."
   :type 'boolean)
@@ -582,14 +593,6 @@ Uses ido niceness according to `beancount-use-ido'."
     (when bounds
       (delete-region (car bounds) (cdr bounds))))
   (insert account-name))
-
-(defun beancount-transaction-set-flag ()
-  (interactive)
-  (save-excursion
-    (backward-paragraph 1)
-    (forward-line 1)
-    (while (search-forward "!" (line-end-position) t)
-      (replace-match "*"))))
 
 (defmacro beancount-for-line-in-region (begin end &rest exprs)
   "Iterate over each line in region until an empty line is encountered."
