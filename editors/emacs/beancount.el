@@ -50,6 +50,10 @@ to align all amounts."
   :type 'integer
   :group 'beancount)
 
+(defcustom beancount-highlight-transaction-at-point nil
+  "If t highlight transaction under point."
+  :type 'boolean
+  :group 'beancount)
 
 (defgroup beancount-faces nil "Beancount mode highlighting" :group 'beancount)
 
@@ -101,6 +105,11 @@ to align all amounts."
 (defface beancount-metadata
   `((t :inherit font-lock-type-face))
   "Face for Beancount metadata."
+  :group 'beancount-faces)
+
+(defface beancount-highlight
+  `((t :inherit highlight))
+  "Face to highlight Beancount transaction at point."
   :group 'beancount-faces)
 
 (defconst beancount-account-directive-names
@@ -295,8 +304,10 @@ to align all amounts."
 
   (setq-local tab-always-indent 'complete)
   (setq-local completion-ignore-case t)
+  
   (add-hook 'completion-at-point-functions #'beancount-completion-at-point nil t)
-
+  (add-hook 'post-command-hook #'beancount-highlight-transaction-at-point nil t)
+  
   (setq-local font-lock-defaults '(beancount-font-lock-keywords))
   (setq-local font-lock-syntax-table t)
 
@@ -802,6 +813,29 @@ Only useful if you have not installed Beancount properly in your PATH.")
   (interactive)
   (call-process beancount-price-program nil t nil
                 (file-relative-name buffer-file-name)))
+
+;;; Transaction highligh
+
+(defvar beancount-highlight-overlay (list))
+(make-variable-buffer-local 'beancount-highlight-overlay)
+
+(defun beancount-highlight-overlay-make ()
+  (let ((overlay (make-overlay 1 1)))
+    (overlay-put overlay 'face 'beancount-highlight)
+    (overlay-put overlay 'priority '(nil . 99))
+    overlay))
+
+(defun beancount-highlight-transaction-at-point ()
+  "Move the highlight overlay to the current transaction."
+  (when beancount-highlight-transaction-at-point
+    (unless beancount-highlight-overlay
+      (setq beancount-highlight-overlay (beancount-highlight-overlay-make)))
+    (let* ((bounds (beancount-find-transaction-extents (point)))
+           (begin (car bounds))
+           (end (cadr bounds)))
+      (if (> (- end begin) 0)
+          (move-overlay beancount-highlight-overlay begin end)
+        (move-overlay beancount-highlight-overlay 1 1)))))
 
 ;;; Outline minor mode support.
 
