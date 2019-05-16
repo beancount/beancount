@@ -604,18 +604,6 @@ Uses ido niceness according to `beancount-use-ido'."
          (forward-line 1)
          ))))
 
-(defun beancount-max-accounts-width (begin end)
-  "Return the minimum widths of a list of account names on a list
-of lines. Initial whitespace is ignored."
-  (let* (widths)
-    (beancount-for-line-in-region
-     begin end
-     (let* ((line (thing-at-point 'line)))
-       (when (string-match
-              (concat "^[ \t]*\\(" beancount-account-regexp "\\)") line)
-         (push (length (match-string 1 line)) widths))))
-    (apply 'max widths)))
-
 (defun beancount-align-numbers (begin end &optional requested-currency-column)
   "Align all numbers in the given region. CURRENCY-COLUMN is the character
 at which to align the beginning of the amount's currency. If not specified, use
