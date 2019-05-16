@@ -55,6 +55,11 @@ to align all amounts."
   :type 'boolean
   :group 'beancount)
 
+(defcustom beancount-use-ido t
+  "If non-nil, use ido-style completion rather than the standard."
+  :type 'boolean
+  :group 'beancount)
+
 (defgroup beancount-faces nil "Beancount mode highlighting" :group 'beancount)
 
 (defface beancount-directive
@@ -572,10 +577,6 @@ transaction as pending."
         (beancount-goto-transaction-begin)
         (if (looking-at beancount-transaction-regexp)
             (replace-match flag t t nil 2))))))
-
-(defcustom beancount-use-ido t
-  "If non-nil, use ido-style completion rather than the standard completion."
-  :type 'boolean)
 
 (defun beancount-insert-account (account-name)
   "Insert one of the valid account names in this file.
