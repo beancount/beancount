@@ -32,6 +32,7 @@
 
 (autoload 'ido-completing-read "ido")
 (require 'subr-x)
+(require 'outline)
 
 (defgroup beancount ()
   "Editing mode for Beancount files."
@@ -215,6 +216,8 @@ to align all amounts."
 (defconst beancount-metadata-regexp
   "^\\s-+\\([a-z][A-Za-z0-9]+:\\)\\s-+\\(.+\\)")
 
+(defvar beancount-outline-regexp "\\(;;;+\\|\\*+\\)")
+
 (defun beancount-face-by-state (state)
   (cond ((string-equal state "*") 'beancount-narrative-cleared)
         ((string-equal state "!") 'beancount-narrative-pending)
@@ -239,12 +242,20 @@ to align all amounts."
     ;; Accounts not covered by previous rules.
     (,beancount-account-regexp . 'beancount-account) ))
 
+(defun beancount-tab-dwim (&optional arg)
+  (interactive "P")
+  (if (and outline-minor-mode
+           (or arg (outline-on-heading-p)))
+      (beancount-outline-cycle arg)
+    (indent-for-tab-command)))
+
 (defvar beancount-mode-map-prefix [(control c)]
   "The prefix key used to bind Beancount commands in Emacs")
 
 (defvar beancount-mode-map
   (let ((map (make-sparse-keymap))
         (p beancount-mode-map-prefix))
+    (define-key map (kbd "TAB") #'beancount-tab-dwim)
     (define-key map (vconcat p [(\')]) #'beancount-insert-account)
     (define-key map (vconcat p [(control g)]) #'beancount-transaction-set-flag)
     (define-key map (vconcat p [(l)]) #'beancount-check)
@@ -287,7 +298,9 @@ to align all amounts."
   (add-hook 'completion-at-point-functions #'beancount-completion-at-point nil t)
 
   (setq-local font-lock-defaults '(beancount-font-lock-keywords))
-  (setq-local font-lock-syntax-table t))
+  (setq-local font-lock-syntax-table t)
+
+  (setq-local outline-regexp beancount-outline-regexp))
 
 (defun beancount-collect-pushed-tags (begin end)
   "Return list of all pushed (and not popped) tags in the region."
@@ -790,6 +803,139 @@ Only useful if you have not installed Beancount properly in your PATH.")
   (call-process beancount-price-program nil t nil
                 (file-relative-name buffer-file-name)))
 
+;;; Outline minor mode support.
+
+(defun beancount-outline-cycle (&optional arg)
+  "Implement visibility cycling a la `org-mode'.
+
+The behavior of this command is determined by the first matching
+condition among the following:
+
+ 1. When point is at the beginning of the buffer, or when called
+    with a `\\[universal-argument]' universal argument, rotate the entire buffer
+    through 3 states:
+
+   - OVERVIEW: Show only top-level headlines.
+   - CONTENTS: Show all headlines of all levels, but no body text.
+   - SHOW ALL: Show everything.
+
+ 2. When point is at the beginning of a headline, rotate the
+    subtree starting at this line through 3 different states:
+
+   - FOLDED:   Only the main headline is shown.
+   - CHILDREN: The main headline and its direct children are shown.
+               From this state, you can move to one of the children
+               and zoom in further.
+
+   - SUBTREE:  Show the entire subtree, including body text."
+  (interactive "P")
+  (setq deactivate-mark t)
+  (cond
+   ;; Beginning of buffer or called with C-u: Global cycling
+   ((or (equal arg '(4))
+        (and (bobp)
+             ;; org-mode style behaviour - only cycle if not on a heading
+             (not (outline-on-heading-p))))
+    (beancount-cycle-buffer))
+
+   ;; At a heading: rotate between three different views
+   ((save-excursion (beginning-of-line 1) (looking-at outline-regexp))
+    (outline-back-to-heading)
+    (let ((goal-column 0) eoh eol eos)
+      ;; First, some boundaries
+      (save-excursion
+        (save-excursion (beancount-next-line) (setq eol (point)))
+        (outline-end-of-heading)              (setq eoh (point))
+        (outline-end-of-subtree)              (setq eos (point)))
+      ;; Find out what to do next and set `this-command'
+      (cond
+       ((= eos eoh)
+        ;; Nothing is hidden behind this heading
+        (beancount-message "EMPTY ENTRY"))
+       ((>= eol eos)
+        ;; Entire subtree is hidden in one line: open it
+        (outline-show-entry)
+        (outline-show-children)
+        (beancount-message "CHILDREN")
+        (setq
+         this-command 'beancount-cycle-children))
+       ((eq last-command 'beancount-cycle-children)
+        ;; We just showed the children, now show everything.
+        (outline-show-subtree)
+        (beancount-message "SUBTREE"))
+       (t
+        ;; Default action: hide the subtree.
+        (outline-hide-subtree)
+        (beancount-message "FOLDED")))))))
+
+(defvar beancount-current-buffer-visibility-state nil
+  "Current visibility state of buffer.")
+(make-variable-buffer-local 'beancount-current-buffer-visibility-state)
+
+(defvar beancount-current-buffer-visibility-state)
+
+(defun beancount-cycle-buffer (&optional arg)
+  "Rotate the visibility state of the buffer through 3 states:
+  - OVERVIEW: Show only top-level headlines.
+  - CONTENTS: Show all headlines of all levels, but no body text.
+  - SHOW ALL: Show everything.
+
+With a numeric prefix ARG, show all headlines up to that level."
+  (interactive "P")
+  (save-excursion
+    (cond
+     ((integerp arg)
+      (outline-show-all)
+      (outline-hide-sublevels arg))
+     ((eq last-command 'beancount-cycle-overview)
+      ;; We just created the overview - now do table of contents
+      ;; This can be slow in very large buffers, so indicate action
+      ;; Visit all headings and show their offspring
+      (goto-char (point-max))
+      (while (not (bobp))
+        (condition-case nil
+            (progn
+              (outline-previous-visible-heading 1)
+              (outline-show-branches))
+          (error (goto-char (point-min)))))
+      (beancount-message "CONTENTS")
+      (setq this-command 'beancount-cycle-toc
+            beancount-current-buffer-visibility-state 'contents))
+     ((eq last-command 'beancount-cycle-toc)
+      ;; We just showed the table of contents - now show everything
+      (outline-show-all)
+      (beancount-message "SHOW ALL")
+      (setq this-command 'beancount-cycle-showall
+            beancount-current-buffer-visibility-state 'all))
+     (t
+      ;; Default action: go to overview
+      (let ((toplevel
+             (cond
+              (current-prefix-arg
+               (prefix-numeric-value current-prefix-arg))
+              ((save-excursion
+                 (beginning-of-line)
+                 (looking-at outline-regexp))
+               (max 1 (funcall outline-level)))
+              (t 1))))
+        (outline-hide-sublevels toplevel))
+      (beancount-message "OVERVIEW")
+      (setq this-command 'beancount-cycle-overview
+            beancount-current-buffer-visibility-state 'overview)))))
+
+(defun beancount-message (msg)
+  "Display MSG, but avoid logging it in the *Messages* buffer."
+  (let ((message-log-max nil))
+    (message msg)))
+
+(defun beancount-next-line ()
+  "Forward line, but mover over invisible line ends.
+Essentially a much simplified version of `next-line'."
+  (interactive)
+  (beginning-of-line 2)
+  (while (and (not (eobp))
+              (get-char-property (1- (point)) 'invisible))
+    (beginning-of-line 2)))
 
 (provide 'beancount)
 ;;; beancount.el ends here
