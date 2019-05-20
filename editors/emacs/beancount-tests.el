@@ -132,3 +132,16 @@ Return a list of substrings each followed by its face."
   Expenses:Example                              1.00 USD
   Assets:Checking                               1.00 USD
 "))))
+
+(ert-deftest beancount/options-001 ()
+  "Verify that beancount-mode recognises all options implemented
+in beancount. Use the output of bean-doctor to get a list of
+known option nmaes."
+  :tags '(options)
+  (let (options)
+    (with-temp-buffer    
+      (shell-command "bean-doctor list_options" t)
+      (goto-char (point-min))
+      (while (re-search-forward "^option\\s-+\"\\([a-z_]*\\)\"" nil t)
+        (setq options (cons (match-string-no-properties 1) options))))
+    (should (equal (sort options #'string<) beancount-option-names))))
