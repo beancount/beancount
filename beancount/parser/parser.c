@@ -80,9 +80,6 @@ PyObject* parse_file(PyObject *self, PyObject *args, PyObject* kwds)
     }
     else {
       fp = fopen(filename, "r");
-      struct stat statbuf;
-      fstat(fileno(fp), &statbuf);
-      printf("%s: %lu bytes\n", filename, statbuf.st_size);
       if ( fp == NULL ) {
         return PyErr_Format(PyExc_IOError, "Cannot open file '%s'", filename);
       }
