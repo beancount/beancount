@@ -166,7 +166,6 @@ ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
 \+		{ return PLUS; }
 \-		{ return MINUS; }
 \/		{ return SLASH; }
-\:		{ return COLON; }
 \(		{ return LPAREN; }
 \)		{ return RPAREN; }
 
@@ -192,6 +191,17 @@ ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
         yy_skip_line();
         return SKIPPED;
     }
+}
+
+\:		{
+  if (yy_line_tokens != 1) {
+    return COLON;
+  }
+  else {
+    /* Allow org-mode drawers. */
+    yy_skip_line();
+    return SKIPPED;
+  }
 }
 
  /* Skip commented output (but not the accompanying newline). */
