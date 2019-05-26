@@ -315,7 +315,7 @@ def process_args():
                         format='%(levelname)-8s: %(message)s')
 
     if args.all:
-        args.inactive = args.undeclared = args.clobber = True
+        args.inactive = args.clobber = True
         args.undeclared = DEFAULT_SOURCE
 
     # Setup for processing.
