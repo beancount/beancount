@@ -4,6 +4,11 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2019-06-01
+
+  - Upgraded Bison to 3.4 (built from source). Silenced warnings.
+
+
 2019-05-01
 
  - Fixed #389: Patch for b.p.forecast improvements.

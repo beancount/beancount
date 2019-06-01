@@ -30,7 +30,8 @@ CROOT = beancount/parser
 #LEX = flex -Ca
 LEX = flex
 
-YACC = bison --report=itemset --verbose
+# Note: -Wno-deprecated silences warnings about old directives from upgrading to 3.4.
+YACC = bison -Wno-deprecated --report=itemset --verbose
 FILTERYACC = sed -e 's@/\*[ \t]yacc\.c:.*\*/@@'
 TMP=/tmp
 

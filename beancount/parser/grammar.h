@@ -1,4 +1,4 @@
-/* A Bison parser, made by GNU Bison 3.3.2.  */
+/* A Bison parser, made by GNU Bison 3.4.  */
 
 /* Bison interface for Yacc-like parsers in C
 
@@ -108,10 +108,9 @@ extern int yydebug;
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-
 union YYSTYPE
 {
-#line 126 "beancount/parser/grammar.y" 
+#line 126 "beancount/parser/grammar.y"
 
     char character;
     const char* string;
@@ -121,9 +120,9 @@ union YYSTYPE
         PyObject* pyobj2;
     } pairobj;
 
-#line 125 "beancount/parser/grammar.h" 
-};
+#line 124 "beancount/parser/grammar.h"
 
+};
 typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
