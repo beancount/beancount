@@ -240,7 +240,7 @@ const char* getTokenName(int token);
 
 /* Operator precedence.
  * This is pulled straight out of the textbook example:
- * http://www.gnu.org/software/bison/manual/html_node/Infix-Calc.html#Infix-Calc
+ * https://www.gnu.org/software/bison/manual/html_node/Infix-Calc.html#Infix-Calc
  */
 %left MINUS PLUS
 %left ASTERISK SLASH

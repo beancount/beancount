@@ -27,7 +27,7 @@ def gviz_timeline(time_array, data_array_map, css_id='chart'):
     # Write preamble.
     oss = io.StringIO()
 
-    oss.write('<script src="http://www.google.com/jsapi" type="text/javascript">'
+    oss.write('<script src="https://www.google.com/jsapi" type="text/javascript">'
               '</script>\n')
     oss.write('<script type="text/javascript">\n')
 
