@@ -145,3 +145,28 @@ known option nmaes."
       (while (re-search-forward "^option\\s-+\"\\([a-z_]*\\)\"" nil t)
         (setq options (cons (match-string-no-properties 1) options))))
     (should (equal (sort options #'string<) beancount-option-names))))
+
+(ert-deftest beancount/completion-001 ()
+  :tags '(completion regress)
+  (with-temp-buffer
+    (insert "
+2019-01-01 * \"Example\"
+  Expenses:Test    1.00 USD
+  Assets:Checking
+
+2019-01-01 * \"Example\"
+  Expenses:T
+")
+    (beancount-mode)
+    (previous-line)
+    (move-end-of-line 1)
+    (completion-at-point)
+    (should (equal (buffer-string) "
+2019-01-01 * \"Example\"
+  Expenses:Test    1.00 USD
+  Assets:Checking
+
+2019-01-01 * \"Example\"
+  Expenses:Test
+"))
+    (should (equal beancount-accounts '("Assets:Checking" "Expenses:Test")))))
