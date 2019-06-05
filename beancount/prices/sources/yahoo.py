@@ -36,7 +36,7 @@ def parse_response(response: requests.models.Response) -> Dict:
     Raises:
       YahooError: If there is an error in the response.
     """
-    json = response.json()
+    json = response.json(parse_float=D)
     content = next(iter(json.values()))
     if response.status_code != requests.codes.ok:
         raise YahooError("Status {}: {}".format(response.status_code, content['error']))
