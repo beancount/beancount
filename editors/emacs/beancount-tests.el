@@ -170,3 +170,49 @@ known option nmaes."
   Expenses:Test
 "))
     (should (equal beancount-accounts '("Assets:Checking" "Expenses:Test")))))
+
+(ert-deftest beancount/outline-001 ()
+  :tags '(outline)
+  (with-temp-buffer
+    (insert "
+* A
+** B
+*** C
+")
+    (beancount-mode)
+    (outline-minor-mode)
+    (forward-line -1)
+    (should (looking-at beancount-outline-regexp))
+    (should (equal (beancount-outline-level) 3))))
+
+(ert-deftest beancount/outline-002 ()
+  :tags '(outline)
+  (with-temp-buffer
+    (insert "
+;;; A
+;;;; B
+;;;;; C
+")
+    (beancount-mode)
+    (outline-minor-mode)
+    (forward-line -1)
+    (should (looking-at beancount-outline-regexp))
+    (should (equal (beancount-outline-level) 3))))
+
+(ert-deftest beancount/outline-fontify-001 ()
+  :tags '(outline)
+  (let ((fontified
+         (with-temp-buffer
+           (insert "
+* A
+** B
+*** C
+")
+           (beancount-mode)
+           (outline-minor-mode)
+           (font-lock-ensure)
+           (buffer-string))))
+    (should (equal (beancount-test-face-groups fontified)
+                   '("* A"   org-level-1
+                     "** B"  org-level-2
+                     "*** C" org-level-3)))))
