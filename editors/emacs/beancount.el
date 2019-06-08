@@ -230,10 +230,28 @@ to align all amounts."
 
 (defvar beancount-outline-regexp "\\(;;;+\\|\\*+\\)")
 
+(defun beancount-outline-level ()
+  (let ((len (- (match-end 1) (match-beginning 1))))
+    (if (equal (substring (match-string 1) 0 1) ";")
+        (- len 2)
+      len)))
+
 (defun beancount-face-by-state (state)
   (cond ((string-equal state "*") 'beancount-narrative-cleared)
         ((string-equal state "!") 'beancount-narrative-pending)
         (t 'beancount-narrative)))
+
+(defun beancount-outline-face ()
+  (if outline-minor-mode
+      (cl-case (funcall outline-level)
+      (1 'org-level-1)
+      (2 'org-level-2)
+      (3 'org-level-3)
+      (4 'org-level-4)
+      (5 'org-level-5)
+      (6 'org-level-6)
+      (otherwise nil))
+    nil))
 
 (defvar beancount-font-lock-keywords
   `((,beancount-transaction-regexp (1 'beancount-date)
@@ -252,7 +270,10 @@ to align all amounts."
     ;; Number followed by currency not covered by previous rules.
     (,(concat beancount-number-regexp "\\s-+" beancount-currency-regexp) . 'beancount-amount)
     ;; Accounts not covered by previous rules.
-    (,beancount-account-regexp . 'beancount-account) ))
+    (,beancount-account-regexp . 'beancount-account)
+    ;; Fontify section headers when composed with outline-minor-mode.
+    (,(concat "^\\(" beancount-outline-regexp "\\).*") . (0 (beancount-outline-face)))
+    ))
 
 (defun beancount-tab-dwim (&optional arg)
   (interactive "P")
@@ -314,7 +335,8 @@ to align all amounts."
   (setq-local font-lock-defaults '(beancount-font-lock-keywords))
   (setq-local font-lock-syntax-table t)
 
-  (setq-local outline-regexp beancount-outline-regexp))
+  (setq-local outline-regexp beancount-outline-regexp)
+  (setq-local outline-level #'beancount-outline-level))
 
 (defun beancount-collect-pushed-tags (begin end)
   "Return list of all pushed (and not popped) tags in the region."
