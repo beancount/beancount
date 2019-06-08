@@ -580,7 +580,7 @@ will allow to align all numbers."
         (forward-line 1))
       (move-marker end nil))))
 
-(defun beancount-indent-transaction (&optional justify region)
+(defun beancount-indent-transaction (&optional _justify _region)
   "Indent Beancount transaction at point."
   (interactive)
   (save-excursion
