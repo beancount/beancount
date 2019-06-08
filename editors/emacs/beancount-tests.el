@@ -1,4 +1,4 @@
-;;; beancount-test.el --- ERT for beancount-mode
+;;; beancount-test.el --- ERT for beancount-mode -*- lexical-binding: t -*-
 
 ;; Copyright 2019 Daniele Nicolodi <daniele@grinta.net>
 
@@ -123,7 +123,7 @@ Return a list of substrings each followed by its face."
     Assets:Checking           1.00 USD
 ")
     (beancount-mode)
-    (previous-line)
+    (forward-line -1)
     (beancount-indent-transaction)
     (should (equal (buffer-string) "
 2019-01-01 * \"Example\"
@@ -139,7 +139,7 @@ in beancount. Use the output of bean-doctor to get a list of
 known option nmaes."
   :tags '(options)
   (let (options)
-    (with-temp-buffer    
+    (with-temp-buffer
       (shell-command "bean-doctor list_options" t)
       (goto-char (point-min))
       (while (re-search-forward "^option\\s-+\"\\([a-z_]*\\)\"" nil t)
@@ -158,7 +158,7 @@ known option nmaes."
   Expenses:T
 ")
     (beancount-mode)
-    (previous-line)
+    (forward-line -1)
     (move-end-of-line 1)
     (completion-at-point)
     (should (equal (buffer-string) "
