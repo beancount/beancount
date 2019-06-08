@@ -373,7 +373,7 @@ def import_curses():
     """
     # Note: There's a recipe for getting terminal size on Windows here, without
     # curses, I should probably implement that at some point:
-    # http://stackoverflow.com/questions/263890/how-do-i-find-the-width-height-of-a-terminal-window
+    # https://stackoverflow.com/questions/263890/how-do-i-find-the-width-height-of-a-terminal-window
     # Also, consider just using 'blessings' instead, which provides this across
     # multiple platforms.
     import curses

@@ -2,7 +2,7 @@
 """Parse and/or convert option names given on the command-line.
 
 This requires the Ameritrade package.
-http://bitbucket.org/blais/ameritrade/
+https://bitbucket.org/blais/ameritrade/
 """
 __copyright__ = "Copyright (C) 2018  Martin Blais"
 __license__ = "GNU GPLv2"

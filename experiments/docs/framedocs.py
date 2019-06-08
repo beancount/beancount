@@ -28,7 +28,7 @@ TEMPLATE = """
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html>
   <head>
-    <link href='http://fonts.googleapis.com/css?family=Bree+Serif' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Bree+Serif' rel='stylesheet' type='text/css'>
     <style>
 html, body {{ min-height:100%; padding:0; margin:0; }}
 #wrapper {{ padding-top: 24px; position:absolute; top:0; bottom:0; left:0; right:0; }}

@@ -3862,7 +3862,7 @@ http://furius.ca/beancount/doc/proposal-query
   - Make the parser reentrant [2014-08-02]. This is _not_ a difficult task.
 
     * Follow this:
-      http://www.lemoda.net/c/reentrant-parser/
+      https://www.lemoda.net/c/reentrant-parser/
       http://flex.sourceforge.net/manual/Extra-Data.html
       to remove all globals from my lexer and make it truly reentrant and free of globals.
 
@@ -3877,7 +3877,7 @@ http://furius.ca/beancount/doc/proposal-query
 
       You also need to redefine yyerror() accordingly. I've done it and it
       works, it's simple, it's a 20 minute change:
-      http://www.gnu.org/software/bison/manual/html_node/Parser-Function.html
+      https://www.gnu.org/software/bison/manual/html_node/Parser-Function.html
 
     * You also need to make the lexer reentrant:
       http://flex.sourceforge.net/manual/Reentrant-Overview.html#Reentrant-Overview
@@ -4037,7 +4037,7 @@ http://furius.ca/beancount/doc/proposal-query
 
 ** Financial Ratio Analysis
 
-  - Add these: http://www.csun.edu/~bjc20362/Controlling-2.pdf
+  - Add these: https://www.csun.edu/~bjc20362/Controlling-2.pdf
 
 ** Trades
 
@@ -4229,7 +4229,7 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Move the TreeMaps experimental script for Expenses and Assets subtrees into
     the bean-web codebase:
-    http://bost.ocks.org/mike/treemap/
+    https://bost.ocks.org/mike/treemap/
     (Or maybe that would just be left for fava.)
 
 ** Rendering Documents
