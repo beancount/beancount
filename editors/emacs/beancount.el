@@ -604,10 +604,13 @@ Uses ido niceness according to `beancount-use-ido'."
   (interactive
    (list
     (if beancount-use-ido
-        ;; `ido-completing-read' is too dumb to understand functional
-        ;; completion tables!
-        (ido-completing-read "Account: " beancount-accounts
-                             nil nil (thing-at-point 'word))
+        ;; `ido-completing-read' does not understand functional
+        ;; completion tables thus directly build a list of the
+        ;; accounts in the buffer
+        (let ((beancount-accounts
+               (sort (beancount-collect beancount-account-regexp 0) #'string<)))
+          (ido-completing-read "Account: " beancount-accounts
+                               nil nil (thing-at-point 'word)))
       (completing-read "Account: " #'beancount-account-completion-table
                        nil t (thing-at-point 'word)))))
   (let ((bounds (bounds-of-thing-at-point 'word)))
