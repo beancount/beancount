@@ -24,6 +24,23 @@
     (beancount-mode)
     (font-lock-ensure)))
 
+(ert-deftest beancount/number-regexp-001 ()
+  :tags '(regexp regress)
+  (let ((r (concat "\\`" beancount-number-regexp "\\'")))
+    (should (string-match r "1"))
+    (should (string-match r "1."))
+    (should (string-match r "1.0"))
+    (should (string-match r "10000.00"))
+    (should (string-match r "1,234.56"))
+    (should (string-match r "10,000.00"))
+    (should (string-match r "1,000,000.00"))
+    (should-not (string-match r "1.00.00"))
+    (should-not (string-match r "1,00.00"))
+    (should-not (string-match r ",000.00"))
+    (should-not (string-match r ".00"))
+    (should-not (string-match r "."))
+    (should-not (string-match r ","))))
+
 (defun beancount-test-fontify-string (string)
   "Fontify STRING in beancount-mode."
   (with-temp-buffer

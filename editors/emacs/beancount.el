@@ -188,7 +188,7 @@ to align all amounts."
     "render_commas"
     "title"))
 
-(defconst beancount-date-regexp "[0-9][0-9][0-9][0-9][-/][0-9][0-9][-/][0-9][0-9]"
+(defconst beancount-date-regexp "[0-9]\\{4\\}[-/][0-9]\\{2\\}[-/][0-9]\\{2\\}"
   "A regular expression to match dates.")
 
 (defconst beancount-account-regexp
@@ -196,7 +196,7 @@ to align all amounts."
           "\\(?::[[:upper:]][[:alnum:]-_]+\\)+")
   "A regular expression to match account names.")
 
-(defconst beancount-number-regexp "[-+]?[0-9,]+\\(?:\\.[0-9]*\\)?"
+(defconst beancount-number-regexp "[-+]?[0-9]+\\(?:,[0-9]\\{3\\}\\)*\\(?:\\.[0-9]*\\)?"
   "A regular expression to match decimal numbers.")
 
 (defconst beancount-currency-regexp "[A-Z][A-Z-_'.]*"
