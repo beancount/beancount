@@ -264,6 +264,8 @@ to align all amounts."
     (,beancount-directive-regexp (1 'beancount-directive))
     (,beancount-timestamped-directive-regexp (1 'beancount-date)
                                              (2 'beancount-directive))
+    ;; Fontify section headers when composed with outline-minor-mode.
+    (,(concat "^\\(" beancount-outline-regexp "\\).*") . (0 (beancount-outline-face)))
     ;; Tags and links.
     (,(concat "\\#[" beancount-tag-chars "]*") . 'beancount-tag)
     (,(concat "\\^[" beancount-tag-chars "]*") . 'beancount-link)
@@ -271,8 +273,6 @@ to align all amounts."
     (,(concat beancount-number-regexp "\\s-+" beancount-currency-regexp) . 'beancount-amount)
     ;; Accounts not covered by previous rules.
     (,beancount-account-regexp . 'beancount-account)
-    ;; Fontify section headers when composed with outline-minor-mode.
-    (,(concat "^\\(" beancount-outline-regexp "\\).*") . (0 (beancount-outline-face)))
     ))
 
 (defun beancount-tab-dwim (&optional arg)
