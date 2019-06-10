@@ -188,7 +188,7 @@ to align all amounts."
     "render_commas"
     "title"))
 
-(defconst beancount-date-regexp "[0-9][0-9][0-9][0-9][-/][0-9][0-9][-/][0-9][0-9]"
+(defconst beancount-date-regexp "[0-9]\\{4\\}[-/][0-9]\\{2\\}[-/][0-9]\\{2\\}"
   "A regular expression to match dates.")
 
 (defconst beancount-account-regexp
@@ -196,7 +196,7 @@ to align all amounts."
           "\\(?::[[:upper:]][[:alnum:]-_]+\\)+")
   "A regular expression to match account names.")
 
-(defconst beancount-number-regexp "[-+]?[0-9,]+\\(?:\\.[0-9]*\\)?"
+(defconst beancount-number-regexp "[-+]?[0-9]+\\(?:,[0-9]\\{3\\}\\)*\\(?:\\.[0-9]*\\)?"
   "A regular expression to match decimal numbers.")
 
 (defconst beancount-currency-regexp "[A-Z][A-Z-_'.]*"
@@ -264,6 +264,8 @@ to align all amounts."
     (,beancount-directive-regexp (1 'beancount-directive))
     (,beancount-timestamped-directive-regexp (1 'beancount-date)
                                              (2 'beancount-directive))
+    ;; Fontify section headers when composed with outline-minor-mode.
+    (,(concat "^\\(" beancount-outline-regexp "\\).*") . (0 (beancount-outline-face)))
     ;; Tags and links.
     (,(concat "\\#[" beancount-tag-chars "]*") . 'beancount-tag)
     (,(concat "\\^[" beancount-tag-chars "]*") . 'beancount-link)
@@ -271,8 +273,6 @@ to align all amounts."
     (,(concat beancount-number-regexp "\\s-+" beancount-currency-regexp) . 'beancount-amount)
     ;; Accounts not covered by previous rules.
     (,beancount-account-regexp . 'beancount-account)
-    ;; Fontify section headers when composed with outline-minor-mode.
-    (,(concat "^\\(" beancount-outline-regexp "\\).*") . (0 (beancount-outline-face)))
     ))
 
 (defun beancount-tab-dwim (&optional arg)
@@ -580,7 +580,7 @@ will allow to align all numbers."
         (forward-line 1))
       (move-marker end nil))))
 
-(defun beancount-indent-transaction (&optional justify region)
+(defun beancount-indent-transaction (&optional _justify _region)
   "Indent Beancount transaction at point."
   (interactive)
   (save-excursion
@@ -604,10 +604,13 @@ Uses ido niceness according to `beancount-use-ido'."
   (interactive
    (list
     (if beancount-use-ido
-        ;; `ido-completing-read' is too dumb to understand functional
-        ;; completion tables!
-        (ido-completing-read "Account: " beancount-accounts
-                             nil nil (thing-at-point 'word))
+        ;; `ido-completing-read' does not understand functional
+        ;; completion tables thus directly build a list of the
+        ;; accounts in the buffer
+        (let ((beancount-accounts
+               (sort (beancount-collect beancount-account-regexp 0) #'string<)))
+          (ido-completing-read "Account: " beancount-accounts
+                               nil nil (thing-at-point 'word)))
       (completing-read "Account: " #'beancount-account-completion-table
                        nil t (thing-at-point 'word)))))
   (let ((bounds (bounds-of-thing-at-point 'word)))
