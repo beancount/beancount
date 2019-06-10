@@ -33,4 +33,24 @@
       (recenter)
       ))
 
-(define-key* beancount-mode-map [(control c)(F)] 'beancount-format-file)
+;(define-key* beancount-mode-map [(control c)(F)] 'beancount-format-file)
+
+;; Make sure we don't accidentally pick up ;;; as headers. Use org section headers only.
+(setq beancount-outline-regexp "\\(\\*+\\)")
+
+;; Automatically enable outline-mode.
+(add-hook 'beancount-mode-hook #'outline-minor-mode)
+
+;; Add movement between sections.
+(define-key* beancount-mode-map [(control c)(control n)] #'outline-next-visible-heading)
+(define-key* beancount-mode-map [(control c)(control p)] #'outline-previous-visible-heading)
+
+;; Disable auto-indent.
+
+(defun disable-electric-indent ()
+  (setq-local electric-indent-chars nil))
+(add-hook 'beancount-mode-hook #'disable-electric-indent)
+
+;; `beancount-number-alignment-column`. Setting it to 0 will cause the
+;; alignment column to be determined from file content.  Postings in
+;; transactions are indented with `beancount-transaction-indent` spaces.
