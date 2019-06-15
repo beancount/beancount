@@ -15,6 +15,7 @@ import os
 import shutil
 import sys
 import re
+import click
 
 from beancount.core import account
 from beancount.utils import misc_utils
@@ -258,47 +259,31 @@ def move_xdev_file(src_filename, dst_filename, mkdirs=False):
     os.remove(src_filename)
 
 
-DESCRIPTION = ("Move and rename downloaded files to a documents tree "
-               "mirrorring the chart of accounts")
-
-
-def add_arguments(parser):
-    """Add arguments for the extract command."""
-
-    parser.add_argument('-o', '--output', '--output-dir', '--destination',
-                        dest='output_dir', action='store',
-                        help="The root of the documents tree to move the files to.")
-
-    parser.add_argument('-n', '--dry-run', action='store_true',
-                        help=("Just print where the files would be moved; "
-                              "don't actually move them."))
-
-    parser.add_argument('--no-overwrite', dest='overwrite',
-                        action='store_false', default=True,
-                        help="Don't overwrite destination files with the same name.")
-
-
-def run(args, parser, importers_list, files_or_directories, detect_duplicates_func=None):
-    """Run the subcommand."""
+@click.command()
+@click.option('--output-dir', '--output', '--destination', '-o',
+              type=click.Path(exists=True, file_okay=False), default=None,
+              help="The root of the documents tree to move the files to.")
+@click.option('--dry-run', '-n', is_flag=True,
+              help="Just print where the files would be moved.")
+@click.option('--no-overwrite', is_flag=True,
+              help="Don't overwrite destination files with the same name.")
+@click.pass_obj
+def cli(ctx, output_dir, dry_run, no_overwrite):
+    """Move and rename downloaded files to a documents tree mirrorring the
+    chart of accounts."""
 
     # If the output directory is not specified, move the files at the root of
     # the configuration file. (Providing this default seems better than using a
     # required option.)
-    if args.output_dir is None:
-        args.output_dir = path.dirname(path.abspath(args.config))
+    if output_dir is None:
+        output_dir = os.getcwd()
 
-    # Make sure the output directory exists.
-    if not path.exists(args.output_dir):
-        parser.error('Output directory "{}" does not exist.'.format(args.output_dir))
-
-    file(importers_list, files_or_directories, args.output_dir,
-         dry_run=args.dry_run,
+    file(ctx.importers_list, ctx.files_or_directories, output_dir,
+         dry_run=dry_run,
          mkdirs=True,
-         overwrite=args.overwrite,
+         overwrite=not no_overwrite,
          idify=True,
          logfile=sys.stdout)
-    return 0
 
 
-def main():
-    return scripts_utils.trampoline_to_ingest(sys.modules[__name__])
+main = scripts_utils.generate_legacy_command_line_interface(cli)

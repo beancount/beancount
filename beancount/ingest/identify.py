@@ -9,6 +9,7 @@ __license__ = "GNU GPLv2"
 
 import logging
 import sys
+import click
 from os import path
 
 from beancount.utils import file_utils
@@ -88,17 +89,11 @@ def identify(importers_list, files_or_directories):
             logfile.write('\n')
 
 
-DESCRIPTION = "Identify files for import"
+@click.command("identify")
+@click.pass_obj
+def cli(ctx):
+    """Identify files for import."""
+    identify(ctx.importers_list, ctx.files_or_directories)
 
 
-def add_arguments(parser):
-    """Add arguments for the identify command."""
-
-
-def run(_, __, importers_list, files_or_directories, detect_duplicates_func=None):
-    """Run the subcommand."""
-    return identify(importers_list, files_or_directories)
-
-
-def main():
-    return scripts_utils.trampoline_to_ingest(sys.modules[__name__])
+main = scripts_utils.generate_legacy_command_line_interface(cli)

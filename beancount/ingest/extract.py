@@ -12,6 +12,7 @@ import logging
 import sys
 import textwrap
 import traceback
+import click
 
 from beancount.core import data
 from beancount.parser import printer
@@ -218,40 +219,27 @@ def extract(importer_config,
         print_extracted_entries(new_entries, output)
 
 
-DESCRIPTION = "Extract transactions from downloads"
-
-
-def add_arguments(parser):
-    """Add arguments for the extract command."""
-
-    parser.add_argument('-e', '-f', '--existing', '--previous', metavar='BEANCOUNT_FILE',
-                        default=None,
-                        help=('Beancount file or existing entries for de-duplication '
-                              '(optional)'))
-
-    parser.add_argument('-r', '--reverse', '--descending',
-                        action='store_const', dest='ascending',
-                        default=True, const=False,
-                        help='Write out the entries in descending order')
-
-
-def run(args, _, importers_list, files_or_directories, detect_duplicates_func=None):
-    """Run the subcommand."""
+@click.command("extract")
+@click.option('--existing', '--previous', '-e', '-f', metavar='LEDGER', default=None,
+              help='Beancount file or existing entries for de-duplication.')
+@click.option('--reverse', '-r', '--descending', is_flag=True, default=False,
+              help='Write out the entries in descending order')
+@click.pass_obj
+def cli(ctx, existing, reverse):
+    """Extract transactions from downloads."""
 
     # Load the ledger, if one is specified.
-    if args.existing:
-        entries, _, options_map = loader.load_file(args.existing)
+    if existing:
+        entries, _, options_map = loader.load_file(existing)
     else:
         entries, options_map = None, None
 
-    extract(importers_list, files_or_directories, sys.stdout,
+    extract(ctx.importers_list, ctx.files_or_directories, sys.stdout,
             entries=entries,
             options_map=options_map,
             mindate=None,
-            ascending=args.ascending,
-            detect_duplicates_func=detect_duplicates_func)
-    return 0
+            ascending=not reverse,
+            detect_duplicates_func=ctx.detect_duplicates_func)
 
 
-def main():
-    return scripts_utils.trampoline_to_ingest(sys.modules[__name__])
+main = scripts_utils.generate_legacy_command_line_interface(cli)

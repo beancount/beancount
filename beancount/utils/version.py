@@ -60,3 +60,7 @@ def compute_version_string(version, changeset, timestamp):
             version, '; '.join(map(str, filter(None, [changeset, date]))))
 
     return version
+
+VERSION = compute_version_string(beancount.__version__,
+                                 _parser.__vc_changeset__,
+                                 _parser.__vc_timestamp__)
