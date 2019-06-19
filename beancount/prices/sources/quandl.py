@@ -14,6 +14,9 @@ databases from the Quandl site, you can set QUANDL_API_KEY environment variable.
 
 Use the "<DATABASE_CODE>:<DATASET_CODE>" format to refer to Quandl symbols.
 Note that their symbols are usually identified by "<DATABASE_CODE>/<DATASET_CODE>".
+If Quandl's output for the symbol you're interested in doesn't contain
+the default "Adj. Close" or "Close" column, you may specify the column to use
+after an additional semicolon, e.g. "<DATABASE_CODE>:<DATASET_CODE>:<COLUMN_NAME>".
 
 (For now, this supports only the Time-Series API. There is also a Tables API,
 which could easily get integrated. We would just have to encode the
@@ -26,6 +29,7 @@ source. (It's unclear, not documented.)
 __copyright__ = "Copyright (C) 2018  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import collections
 import datetime
 import re
 import os
@@ -42,18 +46,25 @@ class QuandlError(ValueError):
     "An error from the Quandl API."
 
 
+TickerSpec = collections.namedtuple('TickerSpec', 'database dataset column')
+
 def parse_ticker(ticker):
     """Convert ticker to Quandl codes."""
-    if not re.match(r"[A-Z0-9]+:[A-Z0-9]+$", ticker):
-        raise ValueError('Invalid code. Use "<DATABASE>/<DATASET>" format.')
-    return tuple(ticker.split(":"))
+    if not re.match(r"[A-Z0-9]+:[A-Z0-9]+(:[^:]+)?$", ticker):
+        raise ValueError(
+            'Invalid code. Use "<DATABASE>:<DATASET>[:<COLUMN NAME>]" format.')
+    split = ticker.split(":")
+    if len(split) == 2:
+        return TickerSpec(split[0], split[1], None)
+    return TickerSpec(split[0], split[1], split[2])
 
 
 def fetch_time_series(ticker, time=None):
     """Fetch"""
     # Create request payload.
-    database, dataset = parse_ticker(ticker)
-    url = "https://www.quandl.com/api/v3/datasets/{}/{}.json".format(database, dataset)
+    ticker_spec = parse_ticker(ticker)
+    url = "https://www.quandl.com/api/v3/datasets/{}/{}.json".format(
+        ticker_spec.database, ticker_spec.dataset)
     payload = {"limit": 1}
     if time is not None:
         date = time.date()
@@ -77,8 +88,9 @@ def fetch_time_series(ticker, time=None):
     dataset = result['dataset']
     column_names = dataset['column_names']
     date_index = column_names.index('Date')
+    data_name = ticker_spec.column if ticker_spec.column is not None else 'Adj. Close'
     try:
-        data_index = column_names.index('Adj. Close')
+        data_index = column_names.index(data_name)
     except ValueError:
         data_index = column_names.index('Close')
     data = dataset['data'][0]
