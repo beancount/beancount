@@ -17,6 +17,8 @@ Note that their symbols are usually identified by "<DATABASE_CODE>/<DATASET_CODE
 If Quandl's output for the symbol you're interested in doesn't contain
 the default "Adj. Close" or "Close" column, you may specify the column to use
 after an additional semicolon, e.g. "<DATABASE_CODE>:<DATASET_CODE>:<COLUMN_NAME>".
+If the column name contains spaces, use underscores instead, in order to not
+collide with the general price source syntax, e.g. "LBMA:GOLD:USD_(PM)".
 
 (For now, this supports only the Time-Series API. There is also a Tables API,
 which could easily get integrated. We would just have to encode the
@@ -50,13 +52,13 @@ TickerSpec = collections.namedtuple('TickerSpec', 'database dataset column')
 
 def parse_ticker(ticker):
     """Convert ticker to Quandl codes."""
-    if not re.match(r"[A-Z0-9]+:[A-Z0-9]+(:[^:]+)?$", ticker):
+    if not re.match(r"[A-Z0-9]+:[A-Z0-9]+(:[^:; ]+)?$", ticker):
         raise ValueError(
             'Invalid code. Use "<DATABASE>:<DATASET>[:<COLUMN NAME>]" format.')
     split = ticker.split(":")
     if len(split) == 2:
         return TickerSpec(split[0], split[1], None)
-    return TickerSpec(split[0], split[1], split[2])
+    return TickerSpec(split[0], split[1], split[2].replace('_', ' '))
 
 
 def fetch_time_series(ticker, time=None):
@@ -88,11 +90,13 @@ def fetch_time_series(ticker, time=None):
     dataset = result['dataset']
     column_names = dataset['column_names']
     date_index = column_names.index('Date')
-    data_name = ticker_spec.column if ticker_spec.column is not None else 'Adj. Close'
-    try:
-        data_index = column_names.index(data_name)
-    except ValueError:
-        data_index = column_names.index('Close')
+    if ticker_spec.column is not None:
+        data_index = column_names.index(ticker_spec.column)
+    else:
+        try:
+            data_index = column_names.index('Adj. Close')
+        except ValueError:
+            data_index = column_names.index('Close')
     data = dataset['data'][0]
 
     # Gather time and assume it's in UTC timezone (Quandl does not provide the
