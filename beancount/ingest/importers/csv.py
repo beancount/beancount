@@ -298,7 +298,7 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
             entry = entries[-1]
             date = entry.date + datetime.timedelta(days=1)
             balance = entry.meta.get('balance', None)
-            if balance:
+            if balance is not None:
                 meta = data.new_metadata(file.name, index)
                 entries.append(
                     data.Balance(meta, date,
