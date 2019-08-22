@@ -44,6 +44,7 @@
 ;; Add movement between sections.
 (define-key* beancount-mode-map [(control c)(control n)] #'outline-next-visible-heading)
 (define-key* beancount-mode-map [(control c)(control p)] #'outline-previous-visible-heading)
+(define-key* beancount-mode-map [(control c)(control u)] #'outline-up-heading)
 
 ;; Disable auto-indent.
 
