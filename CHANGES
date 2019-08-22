@@ -4,6 +4,11 @@
 Note: This file contains a list changes in the 'default' branch.
 
 
+2019-08-21
+
+ - Fixed bug in split_expenses plugin.
+
+
 2019-06-01
 
   - Upgraded Bison to 3.4 (built from source). Silenced warnings.
