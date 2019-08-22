@@ -5,12 +5,12 @@ inserted transactions in the future based on a convention. It serves mostly as
 an example of how you can experiment by creating and installing a local filter,
 and not so much as a serious forecasting feature (though the experiment is a
 good way to get something more general kickstarted eventually, I think the
-concept would generalize nicely and should eventually be added as a comon
+concept would generalize nicely and should eventually be added as a common
 feature of Beancount).
 
-A user can create a create a transaction like this:
+A user can create a transaction like this:
 
-  2014-03-08 # "Electricity bill [MONTHLY]""
+  2014-03-08 # "Electricity bill [MONTHLY]"
     Expenses:Electricity 			50.10 USD
     Assets:Checking			       -50.10 USD
 
@@ -22,27 +22,27 @@ The number of recurrences can optionally be specified either by providing an
 end date or by specifying the number of times that the transaction will be
 repeated. For example:
 
-  2014-03-08 # "Electricity bill [MONTHLY UNTIL 2019-12-31]""
+  2014-03-08 # "Electricity bill [MONTHLY UNTIL 2019-12-31]"
     Expenses:Electricity 			50.10 USD
     Assets:Checking			       -50.10 USD
 
-  2014-03-08 # "Electricity bill [MONTHLY REPEAT 10 TIMES]""
+  2014-03-08 # "Electricity bill [MONTHLY REPEAT 10 TIMES]"
     Expenses:Electricity 			50.10 USD
     Assets:Checking			       -50.10 USD
 
-Transactions can be also be repeated at yearly intervals, e.g.:
+Transactions can also be repeated at yearly intervals, e.g.:
 
-  2014-03-08 # "Electricity bill [YEARLY REPEAT 10 TIMES]""
+  2014-03-08 # "Electricity bill [YEARLY REPEAT 10 TIMES]"
     Expenses:Electricity 			50.10 USD
     Assets:Checking			       -50.10 USD
 
 Other examples:
 
-  2014-03-08 # "Electricity bill [WEEKLY SKIP 1 TIME REPEAT 10 TIMES]""
+  2014-03-08 # "Electricity bill [WEEKLY SKIP 1 TIME REPEAT 10 TIMES]"
     Expenses:Electricity 			50.10 USD
     Assets:Checking			       -50.10 USD
 
-  2014-03-08 # "Electricity bill [DAILY SKIP 3 TIMES REPEAT 1 TIME]""
+  2014-03-08 # "Electricity bill [DAILY SKIP 3 TIMES REPEAT 1 TIME]"
     Expenses:Electricity 			50.10 USD
     Assets:Checking			       -50.10 USD
 """

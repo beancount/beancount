@@ -174,6 +174,35 @@ class TestCSVImporter(cmptest.TestCase):
         """, entries)
 
 
+    @test_utils.docfile
+    def test_zero_balance_produces_assertion(self, filename):
+        # pylint: disable=line-too-long
+        """\
+          Details,Posting Date,"Description",Amount,Type,Balance,Check or Slip #,
+          DEBIT,3/18/2016,"Payment to Chafe card ending in 1234 03/18",-2680.89,ACCT_XFER,0,,
+        """
+        file = cache.get_file(filename)
+
+        importer = csv.Importer({Col.DATE: 'Posting Date',
+                                 Col.NARRATION1: 'Description',
+                                 Col.NARRATION2: 'Check or Slip #',
+                                 Col.AMOUNT: 'Amount',
+                                 Col.BALANCE: 'Balance',
+                                 Col.DRCR: 'Details'},
+                                'Assets:Bank',
+                                'USD',
+                                ('Details,Posting Date,"Description",Amount,'
+                                 'Type,Balance,Check or Slip #,'),
+                                institution='chafe')
+        entries = importer.extract(file)
+        self.assertEqualEntries(r"""
+
+          2016-03-18 * "Payment to Chafe card ending in 1234 03/18"
+            Assets:Bank  -2680.89 USD
+            
+          2016-03-19 balance Assets:Bank                                     0 USD
+
+        """, entries)
 
 # TODO: Test things out with/without payee and with/without narration.
 # TODO: Test balance support.

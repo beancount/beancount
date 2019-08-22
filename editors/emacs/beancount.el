@@ -322,7 +322,7 @@ to align all amounts."
   (setq-local comment-start-skip ";+\\s-*")
   (setq-local comment-add 1)
 
-  (setq-local indent-line-function #'beancount-indent-line-function)
+  (setq-local indent-line-function #'beancount-indent-line)
   (setq-local indent-region-function #'beancount-indent-region)
   (setq-local indent-tabs-mode nil)
 
@@ -548,23 +548,19 @@ will allow to align all numbers."
              (account-end (match-end 1))
              (number-beginning (match-beginning 3))
              (spaces (max 2 (- target-column account-end-column number-width))))
-        (goto-char account-end)
-        (delete-region account-end number-beginning)
-        (insert (make-string spaces ? ))))))
+        (unless (eq spaces (- number-beginning account-end))
+          (goto-char account-end)
+          (delete-region account-end number-beginning)
+          (insert (make-string spaces ? )))))))
 
 (defun beancount-indent-line ()
   (let ((indent (beancount-compute-indentation))
         (savep (> (current-column) (current-indentation))))
-    (if (eq last-command 'beancount-indent-line)
-        (setq indent 0))
     (unless (eq indent (current-indentation))
       (if savep (save-excursion (indent-line-to indent))
-        (indent-line-to indent))))
-  (beancount-align-number (beancount-number-alignment-column)))
-
-(defun beancount-indent-line-function ()
-  (beancount-indent-line)
-  (setq this-command 'beancount-indent-line))
+        (indent-line-to indent)))
+    (unless (eq this-command 'beancount-tab-dwim)
+      (beancount-align-number (beancount-number-alignment-column)))))
 
 (defun beancount-indent-region (start end)
   "Indent a region automagically. START and END specify the region to indent."
