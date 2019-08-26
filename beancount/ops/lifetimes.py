@@ -139,7 +139,7 @@ def required_weekly_prices(lifetimes_map, date_last):
         for date_begin, date_end in intervals:
             # Find first Friday before the minimum date.
             diff_days = 4 - date_begin.weekday()
-            if diff_days > 1:
+            if diff_days >= 1:
                 diff_days -= 7
             date = date_begin + datetime.timedelta(days=diff_days)
 

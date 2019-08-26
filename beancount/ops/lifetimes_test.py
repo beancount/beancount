@@ -194,7 +194,7 @@ class TestCompressLifetimes(test_utils.TestCase):
 class TestLifetimeDateIterators(test_utils.TestCase):
 
     def test_iter_weeks(self):
-        lifetimes_map = {('AAPL', 'USD'): [(datetime.date(2014, 2, 3),
+        lifetimes_map = {('AAPL', 'USD'): [(datetime.date(2014, 2, 6),
                                             datetime.date(2014, 3, 10)),
                                            (datetime.date(2014, 5, 20),
                                             datetime.date(2014, 7, 1))],
