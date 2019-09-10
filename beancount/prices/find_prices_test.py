@@ -10,6 +10,7 @@ import unittest
 from beancount.prices import find_prices
 from beancount.prices.sources import yahoo
 from beancount import loader
+from beancount.utils import date_utils
 
 PS = find_prices.PriceSource
 
@@ -328,6 +329,239 @@ class TestFilters(unittest.TestCase):
         jobs = find_prices.get_price_jobs_at_date(entries, None, False, 'yahoo')
         self.assertEqual(1, len(jobs[0].sources))
         self.assertIsInstance(jobs[0].sources[0], find_prices.PriceSource)
+
+    @loader.load_doc()
+    def test_get_price_jobs_up_to_date__date_daily(self, entries, _, __):
+        """
+        2000-01-10 open Assets:US:Invest:QQQ
+        2000-01-10 open Assets:US:Invest:VEA
+        2000-01-10 open Assets:US:Invest:Margin
+
+        2014-01-01 commodity QQQ
+          price: "USD:yahoo/NASDAQ:QQQ"
+
+        2014-01-01 commodity VEA
+          price: "USD:yahoo/NASDAQ:VEA"
+
+        2014-02-06 *
+          Assets:US:Invest:QQQ             100 QQQ {86.23 USD}
+          Assets:US:Invest:VEA             200 VEA {43.22 USD}
+          Assets:US:Invest:Margin
+
+        2014-08-07 *
+          Assets:US:Invest:QQQ            -100 QQQ {86.23 USD} @ 91.23 USD
+          Assets:US:Invest:Margin
+
+        2015-01-15 *
+          Assets:US:Invest:QQQ              10 QQQ {92.32 USD}
+          Assets:US:Invest:VEA            -200 VEA {43.22 USD} @ 41.01 USD
+          Assets:US:Invest:Margin
+        """
+        jobs = find_prices.get_price_jobs_up_to_date(entries, datetime.date(2014, 2, 1),
+                                                     False, None)
+        self.assertEqual(set(), {(job.base, job.quote) for job in jobs})
+
+        jobs = find_prices.get_price_jobs_up_to_date(entries, datetime.date(2014, 2, 8),
+                                                     False, None)
+        self.assertEqual({('QQQ', 'USD', datetime.date(2014, 2, 6)),
+                          ('VEA', 'USD', datetime.date(2014, 2, 6)),
+                          ('QQQ', 'USD', datetime.date(2014, 2, 7)),
+                          ('VEA', 'USD', datetime.date(2014, 2, 7))},
+                         {(job.base, job.quote, job.date) for job in jobs})
+
+        QQQ_start_date = datetime.date(2014, 2, 6)
+        VEA_start_date = datetime.date(2014, 2, 6)
+        earliest_date = min(QQQ_start_date, VEA_start_date)
+        latest_date = datetime.date(2014, 6, 1)
+        QQQ_end_date = latest_date
+        VEA_end_date = latest_date
+        compare_jobs = set()
+        for date in date_utils.iter_dates(earliest_date, latest_date):
+            if date >= QQQ_start_date and date < latest_date:
+                compare_jobs.add(('QQQ', 'USD', date))
+            if date >= VEA_start_date and date < latest_date:
+                compare_jobs.add(('VEA', 'USD', date))
+        jobs = find_prices.get_price_jobs_up_to_date(
+            entries,
+            latest_date,
+            inactive=False,
+            undeclared_source=None,
+            update_rate='daily')
+        self.assertEqual(compare_jobs,
+                         {(job.base, job.quote, job.date) for job in jobs})
+
+        QQQ_start_date = datetime.date(2014, 2, 6)
+        VEA_start_date = datetime.date(2014, 2, 6)
+        earliest_date = min(QQQ_start_date, VEA_start_date)
+        latest_date = datetime.date(2014, 10, 1)
+        QQQ_end_date = datetime.date(2014, 8, 7)
+        VEA_end_date = latest_date
+        compare_jobs = set()
+        for date in date_utils.iter_dates(earliest_date, latest_date):
+            if date >= QQQ_start_date and date <= QQQ_end_date:
+                compare_jobs.add(('QQQ', 'USD', date))
+            if date >= VEA_start_date and date <= VEA_end_date:
+                compare_jobs.add(('VEA', 'USD', date))
+        jobs = find_prices.get_price_jobs_up_to_date(
+            entries,
+            latest_date,
+            inactive=False,
+            undeclared_source=None,
+            update_rate='daily')
+        self.assertEqual(compare_jobs,
+                         {(job.base, job.quote, job.date) for job in jobs})
+
+    @loader.load_doc()
+    def test_get_price_jobs_up_to_date__date_weekly(self, entries, _, __):
+        """
+        2000-01-10 open Assets:US:Invest:QQQ
+        2000-01-10 open Assets:US:Invest:VEA
+        2000-01-10 open Assets:US:Invest:Margin
+
+        2014-01-01 commodity QQQ
+          price: "USD:yahoo/NASDAQ:QQQ"
+
+        2014-01-01 commodity VEA
+          price: "USD:yahoo/NASDAQ:VEA"
+
+        2014-02-06 *
+          Assets:US:Invest:QQQ             100 QQQ {86.23 USD}
+          Assets:US:Invest:VEA             200 VEA {43.22 USD}
+          Assets:US:Invest:Margin
+
+        2014-02-25 *
+          Assets:US:Invest:QQQ            -100 QQQ {86.23 USD} @ 91.23 USD
+          Assets:US:Invest:Margin
+        """
+        jobs = find_prices.get_price_jobs_up_to_date(
+            entries,
+            datetime.date(2014, 3, 1),
+            inactive=False,
+            undeclared_source=None,
+            update_rate='weekly')
+        self.assertEqual({('QQQ', 'USD', datetime.date(2014, 1, 31)),
+                          ('VEA', 'USD', datetime.date(2014, 1, 31)),
+                          ('QQQ', 'USD', datetime.date(2014, 2, 7)),
+                          ('VEA', 'USD', datetime.date(2014, 2, 7)),
+                          ('QQQ', 'USD', datetime.date(2014, 2, 14)),
+                          ('VEA', 'USD', datetime.date(2014, 2, 14)),
+                          ('QQQ', 'USD', datetime.date(2014, 2, 21)),
+                          ('VEA', 'USD', datetime.date(2014, 2, 21)),
+                          ('VEA', 'USD', datetime.date(2014, 2, 28))},
+                         {(job.base, job.quote, job.date) for job in jobs})
+
+    @loader.load_doc()
+    def test_get_price_jobs_up_to_date__date_weekday(self, entries, _, __):
+        """
+        2000-01-10 open Assets:US:Invest:QQQ
+        2000-01-10 open Assets:US:Invest:VEA
+        2000-01-10 open Assets:US:Invest:Margin
+
+        2014-01-01 commodity QQQ
+          price: "USD:yahoo/NASDAQ:QQQ"
+
+        2014-01-01 commodity VEA
+          price: "USD:yahoo/NASDAQ:VEA"
+
+        2014-02-06 *
+          Assets:US:Invest:QQQ             100 QQQ {86.23 USD}
+          Assets:US:Invest:VEA             200 VEA {43.22 USD}
+          Assets:US:Invest:Margin
+
+        2014-02-25 *
+          Assets:US:Invest:QQQ            -100 QQQ {86.23 USD} @ 91.23 USD
+          Assets:US:Invest:Margin
+        """
+        jobs = find_prices.get_price_jobs_up_to_date(
+            entries,
+            datetime.date(2014, 2, 11),
+            inactive=False,
+            undeclared_source=None,
+            update_rate='weekday')
+        self.assertEqual({('QQQ', 'USD', datetime.date(2014, 2, 6)),
+                          ('VEA', 'USD', datetime.date(2014, 2, 6)),
+                          ('QQQ', 'USD', datetime.date(2014, 2, 7)),
+                          ('VEA', 'USD', datetime.date(2014, 2, 7)),
+                          ('QQQ', 'USD', datetime.date(2014, 2, 10)),
+                          ('VEA', 'USD', datetime.date(2014, 2, 10))},
+                         {(job.base, job.quote, job.date) for job in jobs})
+
+    @loader.load_doc()
+    def test_get_price_jobs_up_to_date__inactive(self, entries, _, __):
+        """
+        2000-01-10 open Assets:US:Invest:QQQ
+        2000-01-10 open Assets:US:Invest:VEA
+        2000-01-10 open Assets:US:Invest:Margin
+
+        2014-01-01 commodity QQQ
+          price: "USD:yahoo/NASDAQ:QQQ"
+
+        2014-01-01 commodity VEA
+          price: "USD:yahoo/NASDAQ:VEA"
+
+        2014-02-06 *
+          Assets:US:Invest:QQQ             100 QQQ {86.23 USD}
+          Assets:US:Invest:VEA             200 VEA {43.22 USD}
+          Assets:US:Invest:Margin
+
+        2014-02-07 *
+          Assets:US:Invest:QQQ            -100 QQQ {86.23 USD} @ 86.89 USD
+          Assets:US:Invest:Margin
+
+        2015-01-15 *
+          Assets:US:Invest:QQQ              10 QQQ {92.32 USD}
+          Assets:US:Invest:VEA            -200 VEA {43.22 USD} @ 41.01 USD
+          Assets:US:Invest:Margin
+        """
+        jobs = find_prices.get_price_jobs_up_to_date(
+            entries,
+            datetime.date(2014, 2, 11),
+            inactive=True,
+            undeclared_source=None)
+        self.assertEqual({('QQQ', 'USD', datetime.date(2014, 2, 6)),
+                          ('VEA', 'USD', datetime.date(2014, 2, 6)),
+                          ('QQQ', 'USD', datetime.date(2014, 2, 7)),
+                          ('VEA', 'USD', datetime.date(2014, 2, 7)),
+                          ('QQQ', 'USD', datetime.date(2014, 2, 10)),
+                          ('VEA', 'USD', datetime.date(2014, 2, 10))},
+                         {(job.base, job.quote, job.date) for job in jobs})
+
+    @loader.load_doc()
+    def test_get_price_jobs_up_to_date__existing_prices(self, entries, _, __):
+        """
+        2000-01-10 open Assets:US:Invest:QQQ
+        2000-01-10 open Assets:US:Invest:VEA
+        2000-01-10 open Assets:US:Invest:Margin
+
+        2014-01-01 commodity QQQ
+          price: "USD:yahoo/NASDAQ:QQQ"
+
+        2014-02-06 *
+          Assets:US:Invest:QQQ             100 QQQ {86.23 USD}
+          Assets:US:Invest:Margin
+
+        2014-02-18 *
+          Assets:US:Invest:QQQ            -100 QQQ {86.23 USD} @ 91.23 USD
+          Assets:US:Invest:Margin
+
+        2014-02-06 price QQQ      86.23 USD
+        2014-02-07 price QQQ      83.1 USD
+        2014-02-10 price QQQ      83.3 USD
+        2014-02-11 price QQQ      87.82 USD
+        2014-02-12 price QQQ      88.98 USD
+        """
+
+        jobs = find_prices.get_price_jobs_up_to_date(
+            entries,
+            datetime.date(2014, 2, 19),
+            inactive=True,
+            undeclared_source=None,
+            update_rate='weekday')
+        self.assertEqual({('QQQ', 'USD', datetime.date(2014, 2, 13)),
+                          ('QQQ', 'USD', datetime.date(2014, 2, 14)),
+                          ('QQQ', 'USD', datetime.date(2014, 2, 17)),
+                          ('QQQ', 'USD', datetime.date(2014, 2, 18))},
+                         {(job.base, job.quote, job.date) for job in jobs})
 
 
 if __name__ == '__main__':

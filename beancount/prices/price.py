@@ -268,6 +268,17 @@ def process_args():
                         type=date_utils.parse_date_liberally, help=(
         "Specify the date for which to fetch the prices."))
 
+    parser.add_argument('--update', action='store_true', help=(
+        "Fetch prices from most recent price for each source "
+        "up to present day or specified --date. See also "
+        "--update-rate, --update-compress options."))
+
+    parser.add_argument('--update-rate', choices=['daily', 'weekday', 'weekly'], default='weekday', help=(
+        "Specify how often dates are fetched. Options are daily, weekday, or weekly (fridays)"))
+
+    parser.add_argument('--update-compress', action='store', type=int, default=0, help=(
+        "Specify the number of inactive days to ignore. This option ignored if --inactive used."))
+
     parser.add_argument('-i', '--inactive', action='store_true', help=(
         "Select all commodities from input files, not just the ones active on the date"))
 
@@ -322,7 +333,9 @@ def process_args():
     setup_cache(args.cache_filename, args.clear_cache)
 
     # Get the list of DatedPrice jobs to get from the arguments.
+    dates = [args.date] or [None]
     logging.info("Processing at date: %s", args.date or datetime.date.today())
+
     jobs = []
     all_entries = []
     dcontext = None
@@ -339,8 +352,33 @@ def process_args():
                 parser.error(msg.format(source_str))
             else:
                 for currency, psources in psource_map.items():
-                    jobs.append(find_prices.DatedPrice(
-                        psources[0].symbol, currency, args.date, psources))
+                    for date in dates:
+                        jobs.append(find_prices.DatedPrice(
+                            psources[0].symbol, currency, date, psources))
+    elif args.update:
+        # Use Beancount input filename sources to create
+        # prices jobs up to present time.
+        for filename in args.sources:
+            if not path.exists(filename) or not path.isfile(filename):
+                parser.error('File does not exist: "{}"; '
+                             'did you mean to use -e?'.format(filename))
+                continue
+            logging.info('Loading "%s"', filename)
+            entries, errors, options_map = loader.load_file(filename, log_errors=sys.stderr)
+            if dcontext is None:
+                dcontext = options_map['dcontext']
+            if args.date is None:
+                latest_date = datetime.date.today()
+            else:
+                latest_date = args.date
+            jobs.extend(find_prices.get_price_jobs_up_to_date(
+                        entries,
+                        latest_date,
+                        args.inactive,
+                        args.undeclared,
+                        args.update_rate,
+                        args.update_compress))
+            all_entries.extend(entries)
     else:
         # Interpret the arguments as Beancount input filenames.
         for filename in args.sources:
@@ -352,10 +390,11 @@ def process_args():
             entries, errors, options_map = loader.load_file(filename, log_errors=sys.stderr)
             if dcontext is None:
                 dcontext = options_map['dcontext']
-            jobs.extend(
-                find_prices.get_price_jobs_at_date(
-                    entries, args.date, args.inactive, args.undeclared))
-            all_entries.extend(entries)
+            for date in dates:
+                jobs.extend(
+                    find_prices.get_price_jobs_at_date(
+                        entries, date, args.inactive, args.undeclared))
+                all_entries.extend(entries)
 
     return args, jobs, data.sorted(all_entries), dcontext
 

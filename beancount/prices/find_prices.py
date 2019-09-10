@@ -10,8 +10,14 @@ import sys
 
 from beancount.core import data
 from beancount.core import amount
+from beancount.core import prices
+from beancount.core import getters
+from beancount.core.number import ZERO
 from beancount.ops import summarize
+from beancount.ops import lifetimes
+from beancount.utils import date_utils
 
+import datetime
 
 # A dated price source description.
 #
@@ -391,4 +397,126 @@ def get_price_jobs_at_date(entries, date=None, inactive=False, undeclared_source
             psources = [PriceSource(default_source, base, False)]
 
         jobs.append(DatedPrice(base, quote, date, psources))
+    return sorted(jobs)
+
+
+def get_price_jobs_up_to_date(entries,
+                              date_last=None,
+                              inactive=False,
+                              undeclared_source=None,
+                              update_rate='weekday',
+                              compress_days=1
+                              ):
+    """Get a list of prices to fetch from a stream of entries,
+       going from their previous latest price up to the latest date.
+
+   Args:
+      entries: list of Beancount entries
+      date_last: The date up to where to find prices to
+                   as an exclusive range end.
+      inactive: Include currencies with no balance at the given date. The default
+        is to only include those currencies which have a non-zero balance.
+      undeclared_source: A string, the name of the default source module to use to
+        pull prices for commodities without a price source metadata on their
+        Commodity directive declaration.
+
+    Returns:
+      A list of DatedPrice instances.
+
+    """
+    price_map = prices.build_price_map(entries)
+
+    # Find the list of declared currencies, and from it build a mapping for
+    # tickers for each (base, quote) pair. This is the only place tickers
+    # appear.
+    declared_triples = find_currencies_declared(entries, date_last)
+    currency_map = {(base, quote): psources
+                    for base, quote, psources in declared_triples}
+
+    # Compute the initial list of currencies to consider.
+    if undeclared_source:
+        # Use the full set of possible currencies.
+        cur_at_cost = find_currencies_at_cost(entries)
+        cur_converted = find_currencies_converted(entries, date_last)
+        cur_priced = find_currencies_priced(entries, date_last)
+        currencies = cur_at_cost | cur_converted | cur_priced
+        log_currency_list("Currency held at cost", cur_at_cost)
+        log_currency_list("Currency converted", cur_converted)
+        log_currency_list("Currency priced", cur_priced)
+        default_source = import_source(undeclared_source)
+    else:
+        # Use the currencies from the Commodity directives.
+        currencies = set(currency_map.keys())
+        default_source = None
+
+    log_currency_list("Currencies in primary list", currencies)
+
+
+    # By default, restrict to only the currencies with non-zero balances
+    # up to the given date.
+    # Also, find the earliest start date to fetch prices from.
+    # Look at both latest prices and start dates.
+    lifetimes_map = lifetimes.get_commodity_lifetimes(entries)
+    commodity_map = getters.get_commodity_map(entries, create_missing=False)
+    price_start_dates = {}
+    stale_currencies = set()
+
+    if inactive:
+        for base_quote in currencies:
+            if lifetimes_map[base_quote] is None:
+                # Insert never active commodities into lifetimes
+                # Start from date of currency directive
+                commodity_entry = commodity_map.get(base, None)
+                lifetimes_map[base_quote] = [(commodity_entry.date, None)]
+            else:
+                # Use first date from lifetime
+                lifetimes_map[base_quote] = [(lifetimes_map[base_quote][0][0], None)]
+    else:
+        #Compress any lifetimes based on compress_days
+        lifetimes_map = lifetimes.compress_lifetimes_days(lifetimes_map, compress_days)
+
+    #Trim lifetimes based on latest price dates. 
+    for base_quote in lifetimes_map:
+        intervals = lifetimes_map[base_quote]
+        result = prices.get_latest_price(price_map, base_quote)
+        if (result is None or result[0] is None):
+            lifetimes_map[base_quote] = \
+                lifetimes.trim_intervals(intervals,
+                                         None,
+                                         date_last)
+        else:
+            latest_price_date = result[0]
+            lifetimes_map[base_quote] = \
+                lifetimes.trim_intervals(intervals,
+                                         latest_price_date + datetime.timedelta(days=1),
+                                         date_last)
+
+    # Create price jobs based on fetch rate
+    if update_rate == 'daily':
+        required_prices = lifetimes.required_daily_prices(
+            lifetimes_map,
+            date_last,
+            weekdays_only=False)
+    elif update_rate == 'weekday':
+        required_prices = lifetimes.required_daily_prices(
+            lifetimes_map,
+            date_last,
+            weekdays_only=True)
+    elif update_rate == 'weekly':
+        required_prices = lifetimes.required_weekly_prices(
+            lifetimes_map,
+            date_last)
+    else:
+        raise ValueError('Invalid Update Rate')
+
+    jobs = []
+    # Build up the list of jobs to fetch prices for.
+    for key in required_prices:
+        date, base, quote = key
+        psources = currency_map.get((base, quote), None)
+        if not psources:
+            psources = [PriceSource(default_source, base, False)]
+
+        jobs.append(DatedPrice(base, quote, date, psources))
+
     return sorted(jobs)
