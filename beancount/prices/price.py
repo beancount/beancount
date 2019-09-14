@@ -416,6 +416,10 @@ def main():
     # Sort them by currency, regardless of date (the dates should be close
     # anyhow, and we tend to put them in chunks in the input files anyhow).
     price_entries = sorted(price_entries, key=lambda e: e.currency)
+    if args.update:
+        # Sort additionally by date, to have an output consistent
+        # with single date bean-price output.
+        price_entries = sorted(price_entries, key=lambda e: e.date)
 
     # Avoid clobber, remove redundant entries.
     if not args.clobber:
