@@ -203,7 +203,7 @@ to align all amounts."
   "A regular expression to match currencies.")
 
 (defconst beancount-flag-regexp
-  ;; Single char taht is neither a space nor a lower-case letter.
+  ;; Single char that is neither a space nor a lower-case letter.
   "[^ a-z]")
 
 (defconst beancount-transaction-regexp
@@ -336,7 +336,9 @@ to align all amounts."
   (setq-local font-lock-syntax-table t)
 
   (setq-local outline-regexp beancount-outline-regexp)
-  (setq-local outline-level #'beancount-outline-level))
+  (setq-local outline-level #'beancount-outline-level)
+
+  (setq-local imenu-create-index-function #'beancount-imenu-create-index-function))
 
 (defun beancount-collect-pushed-tags (begin end)
   "Return list of all pushed (and not popped) tags in the region."
@@ -365,7 +367,7 @@ to align all amounts."
   (beginning-of-line)
   (if (looking-at-p beancount-transaction-regexp)
       (forward-line))
-  ;; everything that is indented with at lest one space or tab as part
+  ;; everything that is indented with at least one space or tab as part
   ;; of the transaction definition
   (while (looking-at-p "[ \t]+")
     (forward-line))
@@ -981,6 +983,33 @@ Essentially a much simplified version of `next-line'."
   (while (and (not (eobp))
               (get-char-property (1- (point)) 'invisible))
     (beginning-of-line 2)))
+
+;;; imenu support
+(defun beancount-imenu-create-index-function ()
+  "The `imenu-create-index-function' for beancount-mode that returns an
+`imenu--index-alist' that stores the headings in the buffer."
+  (let ((index-alist '()))
+  (goto-char (point-max))
+  (while (re-search-backward "^\\(\\*+\\|;;;+\\)[ \t]+\\(.*?\\)[ \t]*$" nil t)
+    (let ((level (beancount-outline-level))
+          (name (match-string-no-properties 2))
+          (pos (point)))
+      (cond ((not index-alist)
+             (push (cons level (cons name pos)) index-alist))
+            ((< level (caar index-alist))
+             (let ((sub-index-alist index-alist))
+               (while (and (cdr index-alist)
+                           (< level (caadr index-alist)))
+                 (setcar index-alist (cdar index-alist))
+                 (pop index-alist))
+               (let ((sub-index-tail index-alist))
+                 (setcar index-alist (cdar index-alist))
+                 (pop index-alist)
+                 (setcdr sub-index-tail nil))
+               (push (cons level (cons name sub-index-alist)) index-alist)
+               ))
+            (t (push (cons level (cons name pos)) index-alist)))))
+  (mapcar 'cdr index-alist)))
 
 (provide 'beancount)
 ;;; beancount.el ends here
