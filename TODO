@@ -4641,6 +4641,10 @@ http://furius.ca/beancount/doc/proposal-query
   it down. Every couple of years I clean this mess up and put it in the sections
   above.
 
+  - In beancount.plugins.auto_accounts: It would be really nice to constraint
+    which types accounts can be auto-created, for example, don't auto-create
+    Assets/Income accounts. This would be helpful in trip files.
+
   - Idea! Add original conversion rate on an augmenting leg with cost basis, in
     order to be able to partition profits due to appreciate vs. currency drift.
     See https://groups.google.com/d/msgid/beancount/939fe47e-382a-4272-94e6-dd29f660d519%40googlegroups.com?utm_medium=email&utm_source=footer
