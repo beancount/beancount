@@ -295,7 +295,7 @@ class Inventory(dict):
     def reduce(self, reducer, *args):
         """Reduce an inventory using one of the conversion functions.
 
-        See functions in beancount.core.conversions.
+        See functions in beancount.core.convert.
 
         Returns:
           An instance of Inventory.
