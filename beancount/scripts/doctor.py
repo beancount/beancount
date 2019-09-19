@@ -6,11 +6,11 @@ the name of debugging.
 __copyright__ = "Copyright (C) 2014-2016  Martin Blais"
 __license__ = "GNU GPLv2"
 
+import click
 import collections
 import os
 import re
 import sys
-import argparse
 import logging
 from os import path
 
@@ -22,39 +22,79 @@ from beancount.utils import version
 from beancount.core import display_context
 
 
-def do_lex(filename, unused_args):
-    """Dump the lexer output for a Beancount syntax file.
+class FileLocation(click.ParamType):
+    name = "location"
 
-    Args:
-      filename: A string, the Beancount input filename.
-    """
+    def convert(self, value, param, ctx):
+        match = re.match(r"(.+):(\d+)$", value)
+        if match:
+            filename = path.abspath(match.group(1))
+            lineno = int(match.group(2))
+        elif re.match(r"(\d+)$", value):
+            filename = None
+            lineno = int(value)
+        else:
+            self.fail("{!r} is not a valid location".format(value), param, ctx)
+        return filename, lineno
+
+
+class Group(click.Group):
+    def command(self, *args, alias=None, **kwargs):
+        # allow to specify an alias for the command name
+        def decorator(f):
+            cmd = click.command(*args, **kwargs)(f)
+            self.add_command(cmd)
+            if alias:
+                kwargs.update(name=alias, hidden=True)
+                cmd = click.command(*args, **kwargs)(f)
+                self.add_command(cmd)
+            return cmd
+        return decorator
+
+    def get_command(self, ctx, name):
+        # allow to use '_' or '-' in command names
+        name = name.replace('_', '-')
+        return self.commands.get(name)
+
+
+@click.command(cls=Group)
+def doctor():
+    pass
+
+
+@doctor.command(alias='dump-lexer')
+@click.argument('filename', type=click.Path())
+def lex(filename):
+    """Dump the lexer output for a Beancount syntax file."""
+
     from beancount.parser import lexer
     for token, lineno, text, obj in lexer.lex_iter(filename):
         sys.stdout.write('{:12} {:6d} {}\n'.format(
             '(None)' if token is None else token, lineno, repr(text)))
 
-do_dump_lexer = do_lex  # pylint: disable=invalid-name
 
+@doctor.command()
+@click.argument('filename', type=click.Path())
+def parse(filename):
+    """Parse the a ledger in debug mode.
 
-def do_parse(filename, unused_args):
-    """Run the parser in debug mode.
+    Run the parser on ledger FILENAME with debug mode active.
 
-    Args:
-      filename: A string, the Beancount input filename.
     """
     from beancount.parser import parser
     entries, errors, _ = parser.parse_file(filename, yydebug=1)
 
 
-def do_roundtrip(filename, unused_args):
-    """Round-trip test on arbitrary Ledger.
+@doctor.command()
+@click.argument('filename', type=click.Path())
+def roundtrip(filename):
+    """Round-trip test on arbitrary ledger.
 
-    Read a Ledger's transactions, print them out, re-read them again and compare
-    them. Both sets of parsed entries should be equal. Both printed files are
-    output to disk, so you can also run diff on them yourself afterwards.
+    Read transactions from ledger FILENAME, print them out, re-read
+    them again and compare them. Both sets of parsed entries should be
+    equal.  Both printed files are output to disk, so you can also run
+    diff on them yourself afterwards.
 
-    Args:
-      filename: A string, the Beancount input filename.
     """
     from beancount.parser import printer
     from beancount.core import compare
@@ -120,7 +160,10 @@ def do_roundtrip(filename, unused_args):
                 os.remove(rfilename)
 
 
-def do_directories(filename, args):
+@doctor.command()
+@click.argument('filename', type=click.Path())
+@click.argument('dirs', type=click.Path(file_okay=False), nargs=-1)
+def directories(filename, dirs):
     """Validate a directory hierarchy against a ledger's account names.
 
     Read a ledger's list of account names and check that all the capitalized
@@ -135,93 +178,59 @@ def do_directories(filename, args):
     from beancount import loader
     from beancount.scripts import directories
     entries, _, __ = loader.load_file(filename)
-    directories.validate_directories(entries, args)
+    directories.validate_directories(entries, dirs)
 
 
-def do_list_options(*unused_args):
-    """Print out a list of the available options.
+@doctor.command()
+def list_options():
+    """Print a list of the available options."""
 
-    Args:
-      unused_args: Ignored.
-    """
     from beancount.parser import options
     print(options.list_options())
 
 
-def do_print_options(filename, *args):
-    """Print out the actual options parsed from a file.
+@doctor.command()
+@click.argument('filename', type=click.Path())
+def print_options(filename):
+    """Print the actual options parsed from a ledger."""
 
-    Args:
-      unused_args: Ignored.
-    """
     from beancount import loader
     _, __, options_map = loader.load_file(filename)
     for key, value in sorted(options_map.items()):
         print('{}: {}'.format(key, value))
 
 
-def get_commands():
-    """Return a list of available commands in this file.
+@doctor.command(alias='checkdeps')
+def deps():
+    """Report on the runtime dependencies."""
 
-    Returns:
-      A list of pairs of (command-name string, docstring).
-    """
-    commands = []
-    for attr_name, attr_value in globals().items():
-        match = re.match('do_(.*)', attr_name)
-        if match:
-            commands.append((match.group(1),
-                             misc_utils.first_paragraph(attr_value.__doc__)))
-    return commands
-
-
-def do_deps(*unused_args):
-    """Report on the runtime dependencies.
-
-    Args:
-      unused_args: Ignored.
-    """
     from beancount.scripts import deps
     deps.list_dependencies(sys.stdout)
     print('')
     print('Use "pip3 install <package>" to install new packages.')
 
-# Alias old name.
-# pylint: disable=invalid-name
-do_checkdeps = do_deps
 
+@doctor.command()
+@click.argument('filename', type=click.Path())
+@click.argument('location', type=FileLocation())
+def context(filename, location):
+    """Describe the context that a transaction is applied to.
 
-def do_context(filename, args):
-    """Describe the context that a particular transaction is applied to.
+    The transaction is looked up in ledger FILENAME at LOCATION. The
+    LOCATION argument is either a line number or a filename:lineno
+    combination in the case the transaction is not in the is not in
+    the top-level file.
 
-    Args:
-      filename: A string, which consists in the filename.
-      args: A tuple of the rest of arguments. We're expecting the first argument
-        to be a string which contains either a lineno integer or a filename:lineno
-        combination (which can be used if the location is not in the top-level file).
     """
     from beancount.reports import context
     from beancount import loader
 
-    # Check we have the required number of arguments.
-    if len(args) != 1:
-        raise SystemExit("Missing line number argument.")
+    search_filename, lineno = location
+    if search_filename is None:
+        search_filename = filename
 
     # Load the input files.
     entries, errors, options_map = loader.load_file(filename)
-
-    # Parse the arguments, get the line number.
-    match = re.match(r"(.+):(\d+)$", args[0])
-    if match:
-        search_filename = path.abspath(match.group(1))
-        lineno = int(match.group(2))
-    elif re.match(r"(\d+)$", args[0]):
-        # Note: Make sure to use the absolute filename used by the parser to
-        # resolve the file.
-        search_filename = options_map['filename']
-        lineno = int(args[0])
-    else:
-        raise SystemExit("Invalid format for location.")
 
     str_context = context.render_file_context(entries, options_map,
                                               search_filename, lineno)
@@ -231,13 +240,17 @@ def do_context(filename, args):
 RenderError = collections.namedtuple('RenderError', 'source message entry')
 
 
-def do_linked(filename, args):
-    """Print out a list of transactions linked to the one at the given line.
+@doctor.command()
+@click.argument('filename', type=click.Path())
+@click.argument('location', type=FileLocation())
+def linked(filename, location):
+    """Print a list of linked transactions.
 
-    Args:
-      filename: A string, which consists in the filename.
-      args: A tuple of the rest of arguments. We're expecting the first argument
-        to be an integer as a string.
+    Searches for all transaction in ledger FILENAME linked to the one
+    at the given LOCATION. The LOCATION argument is either a line
+    number or a filename:lineno combination in the case the
+    transaction is not in the is not in the top-level file.
+
     """
     from beancount.parser import options
     from beancount.parser import printer
@@ -247,20 +260,19 @@ def do_linked(filename, args):
     from beancount.core import realization
     from beancount import loader
 
-    # Parse the arguments, get the line number.
-    if len(args) != 1:
-        raise SystemExit("Missing line number argument.")
-    lineno = int(args[0])
+    search_filename, lineno = location
+    if search_filename is None:
+        search_filename = filename
 
     # Load the input file.
     entries, errors, options_map = loader.load_file(filename)
 
     # Find the closest entry.
-    closest_entry = data.find_closest(entries, options_map['filename'], lineno)
+    closest_entry = data.find_closest(entries, search_filename, lineno)
 
     # Find its links.
     if closest_entry is None:
-        raise SystemExit("No entry could be found before {}:{}".format(filename, lineno))
+        raise SystemExit("No entry could be found before {}:{}".format(search_filename, lineno))
     links = (closest_entry.links
              if isinstance(closest_entry, data.Transaction)
              else data.EMPTY_SET)
@@ -319,16 +331,14 @@ def do_linked(filename, args):
     print('Net Income: {}'.format(-net_income))
 
 
-def do_missing_open(filename, args):
-    """Print out Open directives that are missing for the given input file.
+@doctor.command()
+@click.argument('filename', type=click.Path())
+def missing_open(filename):
+    """Print Open directives missing in FILENAME.
 
     This can be useful during demos in order to quickly generate all the
     required Open directives without having to type them manually.
 
-    Args:
-      filename: A string, which consists in the filename.
-      args: A tuple of the rest of arguments. We're expecting the first argument
-        to be an integer as a string.
     """
     from beancount.parser import printer
     from beancount.core import data
@@ -352,27 +362,22 @@ def do_missing_open(filename, args):
     printer.print_entries(data.sorted(new_entries), dcontext)
 
 
-def do_display_context(filename, args):
-    """Print out the precision inferred from the parsed numbers in the input file.
+@doctor.command()
+@click.argument('filename', type=click.Path())
+def display_context(filename):
+    """Print the precision inferred from the parsed numbers in the input file."""
 
-    Args:
-      filename: A string, which consists in the filename.
-      args: A tuple of the rest of arguments. We're expecting the first argument
-        to be an integer as a string.
-    """
     from beancount import loader
     entries, errors, options_map = loader.load_file(filename)
     dcontext = options_map['dcontext']
     sys.stdout.write(str(dcontext))
 
 
-def do_validate_html(directory, args):
-    """Validate all the HTML files under a directory hierachy.
+@doctor.command()
+@click.argument('directory', type=click.Path(file_okay=False))
+def validate_html(directory, args):
+    """Validate all the HTML files in DIRECTORY."""
 
-    Args:
-      directory: A string, the root directory whose contents to validte.
-      args: A tuple of the rest of arguments.
-    """
     from beancount.web import scrape
     files, missing, empty = scrape.validate_local_links_in_dir(directory)
     logging.info('%d files processed', len(files))
@@ -382,27 +387,7 @@ def do_validate_html(directory, args):
         logging.error('Empty %s', target)
 
 
-def main():
-    commands_doc = ('Available Commands:\n' +
-                    '\n'.join('  {:24}: {}'.format(*x) for x in get_commands()))
-    argparser = version.ArgumentParser(description=__doc__,
-                                       formatter_class=argparse.RawTextHelpFormatter,
-                                       epilog=commands_doc)
-    argparser.add_argument('command', action='store',
-                           help="The command to run.")
-    argparser.add_argument('filename', nargs='?', help='Beancount input filename.')
-    argparser.add_argument('rest', nargs='*', help='All remaining arguments.')
-    opts = argparser.parse_args()
-
-    # Run the command.
-    try:
-        command_name = "do_{}".format(opts.command.replace('-', '_'))
-        function = globals()[command_name]
-    except KeyError:
-        argparser.error("Invalid command name: '{}'".format(opts.command))
-    else:
-        function(opts.filename, opts.rest)
-
+main = doctor()
 
 if __name__ == '__main__':
     main()
