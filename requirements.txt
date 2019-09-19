@@ -9,3 +9,4 @@ httplib2>=0.10
 requests>=2.0
 beautifulsoup4>=4
 python-magic>=0.4.12; sys_platform != 'win32'
+click>=7.0

@@ -109,17 +109,16 @@ install_requires = [
     # programmatically and to upload lists of holdings to a Google
     # Spreadsheet for live intra-day monitoring.
     'google-api-python-client',
+
+    # This library is needed to identify the type of a file for
+    # import. It uses ctypes to wrap the libmagic library which is
+    # not generally available on Windows nor is easily installed,
+    # thus the conditional dependency.
+    'python-magic; sys_platform != "win32"',
+
+    # Command line parsing.
+    'click',
 ]
-
-if sys.platform != 'win32':
-    install_requires += [
-        # This library is needed to identify the type of a file for
-        # import. It uses ctypes to wrap the libmagic library which is
-        # not generally available on Windows nor is easily installed,
-        # thus the conditional dependency.
-        'python-magic',
-    ]
-
 
 # Create a setup.
 # Please read: http://furius.ca/beancount/doc/install about version numbers.
