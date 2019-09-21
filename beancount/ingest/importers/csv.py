@@ -108,6 +108,7 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
                  csv_dialect: Union[str, csv.Dialect] = 'excel',
                  dateutil_kwds: Optional[Dict] = None,
                  narration_sep: str = '; ',
+                 encoding: str = 'utf-8',
                  **kwds):
         """Constructor.
 
@@ -140,6 +141,7 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
         self.dateutil_kwds = dateutil_kwds
         self.csv_dialect = csv_dialect
         self.narration_sep = narration_sep
+        self.encoding = encoding
 
         self.categorizer = categorizer
 
@@ -166,7 +168,8 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
         iconfig, has_header = normalize_config(
             self.config, file.head(), self.csv_dialect, self.skip_lines)
         if Col.DATE in iconfig:
-            reader = iter(csv.reader(open(file.name), dialect=self.csv_dialect))
+            reader = iter(csv.reader(open(file.name, encoding=self.encoding),
+                                     dialect=self.csv_dialect))
             for _ in range(self.skip_lines):
                 next(reader)
             if has_header:
@@ -191,7 +194,8 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
         iconfig, has_header = normalize_config(
             self.config, file.head(), self.csv_dialect, self.skip_lines)
 
-        reader = iter(csv.reader(open(file.name), dialect=self.csv_dialect))
+        reader = iter(csv.reader(open(file.name, encoding=self.encoding),
+                                 dialect=self.csv_dialect))
 
         # Skip garbage lines
         for _ in range(self.skip_lines):
