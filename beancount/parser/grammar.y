@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include "parser.h"
+#include "grammar.h"
 #include "lexer.h"
 
 extern YY_DECL;
@@ -30,11 +31,7 @@ extern YY_DECL;
         YYERROR;                                                                \
     }
 
-
-/* First line of reported file/line string. This is used as #line. */
-int yy_firstline;
-
-#define FILE_LINE_ARGS  yy_filename, ((yyloc).first_line + yy_firstline)
+#define FILE_LINE_ARGS  yyget_filename(scanner), ((yyloc).first_line + yyget_firstline(scanner))
 
 
 /* Build a grammar error from the exception context. */
@@ -55,7 +52,8 @@ void build_grammar_error_from_exception(yyscan_t scanner)
     if (pvalue != NULL) {
         /* Build and accumulate a new error object. {27d1d459c5cd} */
         PyObject* rv = PyObject_CallMethod(builder, "build_grammar_error", "siOOO",
-                                           yy_filename, yyget_lineno(scanner) + yy_firstline,
+                                           yyget_filename(scanner),
+                                           yyget_lineno(scanner) + yyget_firstline(scanner),
                                            pvalue, ptype, ptraceback ?: Py_None);
         if (rv == NULL) {
             /* Note: Leave the internal error trickling up its detail. */
@@ -85,7 +83,8 @@ void yyerror(YYLTYPE *locp, yyscan_t scanner, char const* message)
     else {
         /* Register a syntax error with the builder. */
         PyObject* rv = PyObject_CallMethod(builder, "build_grammar_error", "sis",
-                                           yy_filename, yyget_lineno(scanner) + yy_firstline,
+                                           yyget_filename(scanner),
+                                           yyget_lineno(scanner) + yyget_firstline(scanner),
                                            message);
         if (rv == NULL) {
             PyErr_SetString(PyExc_RuntimeError,
