@@ -110,7 +110,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 125 "beancount/parser/grammar.y"
+#line 124 "beancount/parser/grammar.y"
 
     char character;
     const char* string;

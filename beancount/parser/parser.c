@@ -5,6 +5,7 @@
 #include <Python.h>
 
 #include "parser.h"
+#include "grammar.h"
 #include "lexer.h"
 
 extern YY_DECL;
@@ -13,8 +14,6 @@ extern YY_DECL;
 #define STRINGIFY(s) #s
 
 extern const char* getTokenName(int token);
-
-extern int yy_firstline;
 
 yyscan_t _scanner;
 
@@ -81,11 +80,8 @@ PyObject* parse_file(PyObject *self, PyObject *args, PyObject* kwds)
 
     /* Initialize the lexer. */
     yylex_init(&_scanner);
-    yylex_initialize(report_filename ?: "", encoding);
+    yylex_initialize(report_filename, report_firstline, encoding, _scanner);
     yyset_in((void*)file, _scanner);
-
-    /* Initialize the parser. */
-    yy_firstline = report_firstline;
 
     /* Parse! This will call back methods on the builder instance. */
     rv = yyparse(_scanner);
@@ -94,7 +90,7 @@ PyObject* parse_file(PyObject *self, PyObject *args, PyObject* kwds)
     /* Noop. */
 
     /* Finalize the lexer. */
-    yylex_finalize();
+    yylex_finalize(_scanner);
     yylex_destroy(_scanner);
 
     Py_XDECREF(name);
@@ -105,12 +101,12 @@ PyObject* parse_file(PyObject *self, PyObject *args, PyObject* kwds)
 
 PyObject* get_yyfilename(PyObject *self, PyObject *args)
 {
-    return PyUnicode_FromString(yy_filename);
+    return PyUnicode_FromString(yyget_filename(_scanner));
 }
 
 PyObject* get_yylineno(PyObject *self, PyObject *args)
 {
-    return PyLong_FromLong(yyget_lineno(_scanner) + yy_firstline);
+    return PyLong_FromLong(yyget_lineno(_scanner) + yyget_firstline(_scanner));
 }
 
 /* Inititalize the lexer to start running in debug mode. */
@@ -147,11 +143,8 @@ PyObject* lexer_initialize(PyObject *self, PyObject *args, PyObject *kwds)
 
     /* Initialize the lexer. */
     yylex_init(&_scanner);
-    yylex_initialize(report_filename ?: "", encoding);
+    yylex_initialize(report_filename, report_firstline, encoding, _scanner);
     yyset_in((void*)file, _scanner);
-
-    /* Initialize the parser. */
-    yy_firstline = report_firstline;
 
     /* We need to keep those objects alive after we live this function. */
     Py_INCREF(file);
@@ -168,7 +161,7 @@ PyObject* lexer_finalize(PyObject *self, PyObject *args)
     Py_XDECREF(builder);
 
     /* Finalize the lexer. */
-    yylex_finalize();
+    yylex_finalize(_scanner);
     yylex_destroy(_scanner);
 
     Py_RETURN_NONE;
