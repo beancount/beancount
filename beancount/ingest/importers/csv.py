@@ -65,7 +65,7 @@ class Col(enum.Enum):
     ACCOUNT = '[ACCOUNT]'
 
 
-def get_amounts(iconfig, row, allow_zero_amounts=False):
+def get_amounts(iconfig, row, allow_zero_amounts=False, D=D):
     """Get the amount columns of a row.
 
     Args:
@@ -186,6 +186,9 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
                     max_date = date
             return max_date
 
+    def parse_amount(self, amt):
+        return D(amt)
+
     def extract(self, file, existing_entries=None):
         account = self.file_account(file)
         entries = []
@@ -257,7 +260,7 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
             if txn_time is not None:
                 meta['time'] = str(dateutil.parser.parse(txn_time).time())
             if balance is not None:
-                meta['balance'] = D(balance)
+                meta['balance'] = self.parse_amount(balance)
             if last4:
                 last4_friendly = self.last4_map.get(last4.strip())
                 meta['card'] = last4_friendly if last4_friendly else last4
@@ -266,7 +269,8 @@ class Importer(identifier.IdentifyMixin, filing.FilingMixin):
                                    tags, data.EMPTY_SET, [])
 
             # Attach one posting to the transaction
-            amount_debit, amount_credit = get_amounts(iconfig, row)
+            amount_debit, amount_credit = get_amounts(iconfig, row,
+                                                      D=self.parse_amount)
 
             # Skip empty transactions
             if amount_debit is None and amount_credit is None:
