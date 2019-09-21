@@ -15,6 +15,7 @@
 #include "parser.h"
 #include "lexer.h"
 
+extern YY_DECL;
 
 /*
  * Call a builder method and detect and handle a Python exception being raised
@@ -25,7 +26,7 @@
     target = PyObject_CallMethod(builder, method_name, format, __VA_ARGS__);    \
     clean;                                                                      \
     if (target == NULL) {                                                       \
-        build_grammar_error_from_exception();                                   \
+        build_grammar_error_from_exception(scanner);                            \
         YYERROR;                                                                \
     }
 
@@ -37,7 +38,7 @@ int yy_firstline;
 
 
 /* Build a grammar error from the exception context. */
-void build_grammar_error_from_exception(void)
+void build_grammar_error_from_exception(yyscan_t scanner)
 {
     TRACE_ERROR("Grammar Builder Exception");
 
@@ -54,7 +55,7 @@ void build_grammar_error_from_exception(void)
     if (pvalue != NULL) {
         /* Build and accumulate a new error object. {27d1d459c5cd} */
         PyObject* rv = PyObject_CallMethod(builder, "build_grammar_error", "siOOO",
-                                           yy_filename, yylineno + yy_firstline,
+                                           yy_filename, yyget_lineno(scanner) + yy_firstline,
                                            pvalue, ptype, ptraceback);
         if (rv == NULL) {
             /* Note: Leave the internal error trickling up its detail. */
@@ -75,7 +76,7 @@ void build_grammar_error_from_exception(void)
 
 
 /* Error-handling function. {ca6aab8b9748} */
-void yyerror(char const* message)
+void yyerror(YYLTYPE *locp, yyscan_t scanner, char const* message)
 {
     /* Skip lex errors: they have already been registered the lexer itself. */
     if (strstr(message, "LEX_ERROR") != NULL) {
@@ -84,7 +85,7 @@ void yyerror(char const* message)
     else {
         /* Register a syntax error with the builder. */
         PyObject* rv = PyObject_CallMethod(builder, "build_grammar_error", "sis",
-                                           yy_filename, yylineno + yy_firstline,
+                                           yy_filename, yyget_lineno(scanner) + yy_firstline,
                                            message);
         if (rv == NULL) {
             PyErr_SetString(PyExc_RuntimeError,
@@ -112,15 +113,13 @@ const char* getTokenName(int token);
 /*--------------------------------------------------------------------------------*/
 /* Bison Declarations */
 
-
 /* Options. */
 %defines
 %error-verbose
 %debug
-%pure-parser
 %locations
-/* %glr-parser */
-
+%define api.pure full
+%param {yyscan_t scanner}
 
 /* Collection of value types. */
 %union {

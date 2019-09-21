@@ -6,13 +6,13 @@
 
 /* Options */
 %option noyywrap
-/* %option nodefault */
 %option yylineno
 %option never-interactive
 %option warn
 %option bison-bridge
 %option bison-locations
-/* %option reentrant */
+%option reentrant
+/* %option nodefault */
 /* %option debug */
 /* %option stack */
 /* %option 8bit */
@@ -57,17 +57,14 @@ int pyfile_read_into(PyObject *file, char *buf, size_t max_size);
         return LEX_ERROR;                                                               \
     }
 
-
 /* Initialization/finalization methods. These are separate from the yylex_init()
  * and yylex_destroy() and they call them. */
 void yylex_initialize(const char* filename, const char* encoding);
 void yylex_finalize(void);
 
-
 /* Global declarations; defined below. */
 extern int yy_eof_times;
 extern const char* yy_filename;
-extern int yycolumn;
 extern const char* yy_encoding;
 
 /* String buffer statics. */
@@ -76,8 +73,6 @@ extern char* strbuf;       /* Current buffer head. */
 extern char* strbuf_end;   /* Current buffer sentinel (points to the final nul). */
 extern char* strbuf_ptr;   /* Current insertion point in buffer. */
 void strbuf_realloc(size_t num_new_chars);
-
-
 
 /* Handle detecting the beginning of line. */
 extern int yy_line_tokens; /* Number of tokens since the bol. */
@@ -90,14 +85,25 @@ extern int yy_line_tokens; /* Number of tokens since the bol. */
     yycolumn += yyleng;                                 \
   }
 
-
-/* Skip the rest of the input line. */
-int yy_skip_line(void);
-
+/* Skip the rest of the input line.  This needs to be implemented as a
+ * macro because input() and unput() are thmeselves macros tha use
+ * variable definitions internal to the yylex() function. */
+#define yy_skip_line()                          \
+    do {                                        \
+        for (;;) {                              \
+            int c = input(yyscanner);           \
+            if (c == EOF || c == -1) {          \
+                break;                          \
+            }                                   \
+            if (c == '\n') {                    \
+                unput(c);                       \
+                break;                          \
+            }                                   \
+        }                                       \
+    } while (0)
 
 /* Utility functions. */
 int strtonl(const char* buf, size_t nchars);
-
 
 /* Append characters to the static string buffer and verify. */
 #define SAFE_COPY_CHAR(value)                    \
@@ -146,10 +152,10 @@ ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
 [ \t\r]+	{
     if (yy_line_tokens == 1) {
         /* If the next character completes the line, skip it. */
-        if (yy_hold_char == '\n' ||
-            yy_hold_char == '\r' ||
-            yy_hold_char == '\0') {
-          return SKIPPED;
+        if (yyg->yy_hold_char == '\n' ||
+	    yyg->yy_hold_char == '\r' ||
+	    yyg->yy_hold_char == '\0') {
+            return SKIPPED;
         }
         else {
             return INDENT;
@@ -428,9 +434,6 @@ const char* yy_filename = 0;
 /* Number of tokens since the beginning of the line. */
 int yy_line_tokens = 0;
 
-/* The current column we're tokenizing at. */
-int yycolumn = 1;
-
 /* The encoding to use for converting strings. */
 const char* yy_encoding = NULL;
 
@@ -447,7 +450,6 @@ void yylex_initialize(const char* filename, const char* encoding)
     yy_eof_times = 0;
     yy_filename = filename ? filename : "";
     yy_line_tokens = 0;
-    yycolumn = 1;
     if (encoding == 0) {
         yy_encoding = "utf8";
     }
@@ -460,9 +462,6 @@ void yylex_initialize(const char* filename, const char* encoding)
     strbuf = realloc(strbuf, strbuf_size + 1);
     strbuf_end = strbuf + strbuf_size - 1;
     strbuf_ptr = NULL;
-
-    /* Note: If we used a reentrant parser, this routine should eventually call
-     * yylex_init(). */
 }
 
 /* Finalize the globals before running the lexer. */
@@ -475,9 +474,6 @@ void yylex_finalize(void)
         free(strbuf);
         strbuf = NULL;
     }
-
-    /* Call the yylex finalization routine. */
-    yylex_destroy();
 }
 
 
@@ -493,29 +489,6 @@ void strbuf_realloc(size_t num_new_chars)
     strbuf = realloc(strbuf, strbuf_size + 1);
     strbuf_ptr = strbuf + cur_size;
     strbuf_end = strbuf + strbuf_size - 1;
-}
-
-
-
-
-#define LEXEOF 0
-
-int yy_skip_line()
-{
-    int num_chars = 0;
-    for (;;) {
-        int c = input();
-        num_chars++;
-        if (c == LEXEOF || c == -1) {
-            break;
-        }
-        if (c == '\n') {
-            unput(c);
-            num_chars--;
-            break;
-        }
-    }
-    return num_chars;
 }
 
 /* Convert an integer string to a number. */
