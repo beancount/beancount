@@ -4,96 +4,21 @@
 
 #line 5 "beancount/parser/lexer.h"
 
-/* Includes. */
-#include <math.h>
-#include <stdlib.h>
-
 #include "parser.h"
-#include "grammar.h"
 
-/* Build and accumulate an error on the builder object. */
-void build_lexer_error(const char* string, size_t length);
+typedef struct _yyextra_t yyextra_t;
 
-/* Build and accumulate an error on the builder object using the current
- * exception state. */
-void build_lexer_error_from_exception(void);
+/* Initialize scanner private data. */
+void yylex_initialize(const char* filename, int firstline, const char* encoding, yyscan_t yyscanner);
 
-int pyfile_read_into(PyObject *file, char *buf, size_t max_size);
+/* Free scanner private data */
+void yylex_finalize(yyscan_t yyscanner);
 
-#define YY_INPUT(buf, result, max_size)                         \
-    result = pyfile_read_into((PyObject *)yyin, buf, max_size);
+const char* yyget_filename(yyscan_t *scanner);
 
-/* Callback call site with error handling. */
-#define BUILD_LEX(method_name, format, ...)                                             \
-    yylval->pyobj = PyObject_CallMethod(builder, method_name, format, __VA_ARGS__);     \
-    /* Handle a Python exception raised by the handler {3cfb2739349a} */                \
-    if (yylval->pyobj == NULL) {                                                        \
-       build_lexer_error_from_exception();                                              \
-       return LEX_ERROR;                                                                \
-    }                                                                                   \
-    /* Lexer builder methods should never return None, check for it. */                 \
-    else if (yylval->pyobj == Py_None) {                                                \
-        Py_DECREF(Py_None);                                                             \
-        build_lexer_error("Unexpected None result from lexer", 34);                     \
-        return LEX_ERROR;                                                               \
-    }
+int yyget_firstline(yyscan_t *scanner);
 
-/* Initialization/finalization methods. These are separate from the yylex_init()
- * and yylex_destroy() and they call them. */
-void yylex_initialize(const char* filename, const char* encoding);
-void yylex_finalize(void);
-
-/* Global declarations; defined below. */
-extern int yy_eof_times;
-extern const char* yy_filename;
-extern const char* yy_encoding;
-
-/* String buffer statics. */
-extern size_t strbuf_size; /* Current buffer size (not including final nul). */
-extern char* strbuf;       /* Current buffer head. */
-extern char* strbuf_end;   /* Current buffer sentinel (points to the final nul). */
-extern char* strbuf_ptr;   /* Current insertion point in buffer. */
-void strbuf_realloc(size_t num_new_chars);
-
-/* Handle detecting the beginning of line. */
-extern int yy_line_tokens; /* Number of tokens since the bol. */
-
-#define YY_USER_ACTION  {                               \
-    yy_line_tokens++;                                   \
-    yylloc->first_line = yylloc->last_line = yylineno;  \
-    yylloc->first_column = yycolumn;                    \
-    yylloc->last_column = yycolumn+yyleng-1;            \
-    yycolumn += yyleng;                                 \
-  }
-
-/* Skip the rest of the input line.  This needs to be implemented as a
- * macro because input() and unput() are thmeselves macros tha use
- * variable definitions internal to the yylex() function. */
-#define yy_skip_line()                          \
-    do {                                        \
-        for (;;) {                              \
-            int c = input(yyscanner);           \
-            if (c == EOF || c == -1) {          \
-                break;                          \
-            }                                   \
-            if (c == '\n') {                    \
-                unput(c);                       \
-                break;                          \
-            }                                   \
-        }                                       \
-    } while (0)
-
-/* Utility functions. */
-int strtonl(const char* buf, size_t nchars);
-
-/* Append characters to the static string buffer and verify. */
-#define SAFE_COPY_CHAR(value)                    \
-	if (strbuf_ptr >= strbuf_end) {         \
-            strbuf_realloc(1);                  \
-	}                                       \
-        *strbuf_ptr++ = value;
-
-#line 96 "beancount/parser/lexer.h"
+#line 21 "beancount/parser/lexer.h"
 
 #define  YY_INT_ALIGNED short int
 
@@ -349,9 +274,7 @@ void yyfree ( void * , yyscan_t yyscanner );
 #include <unistd.h>
 #endif
 
-#ifndef YY_EXTRA_TYPE
-#define YY_EXTRA_TYPE void *
-#endif
+#define YY_EXTRA_TYPE yyextra_t*
 
 int yylex_init (yyscan_t* scanner);
 
@@ -609,9 +532,9 @@ extern int yylex \
 #undef yyTABLES_NAME
 #endif
 
-#line 421 "beancount/parser/lexer.l"
+#line 460 "beancount/parser/lexer.l"
 
 
-#line 615 "beancount/parser/lexer.h"
+#line 538 "beancount/parser/lexer.h"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */
