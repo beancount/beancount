@@ -315,48 +315,51 @@ class CashReport(base.TableReport):
         return table.create_table(holdings_list, FIELD_SPEC)
 
 
+def calculate_net_worths(entries, options_map):
+    holdings_list, price_map = get_assets_holdings(entries, options_map)
+    net_worths = []
+    for currency in options_map['operating_currency']:
+
+        # Convert holdings to a unified currency.
+        #
+        # Note: It's entirely possible that the price map does not have all
+        # the necessary rate conversions here. The resulting holdings will
+        # simply have no cost when that is the case. We must handle this
+        # gracefully below.
+        currency_holdings_list = holdings.convert_to_currency(price_map,
+                                                              currency,
+                                                              holdings_list)
+        if not currency_holdings_list:
+            continue
+
+        aggregated_holdings_list = holdings.aggregate_holdings_by(
+            currency_holdings_list, lambda holding: holding.cost_currency)
+
+        aggregated_holdings_list = [holding
+                         for holding in aggregated_holdings_list
+                         if holding.currency and holding.cost_currency]
+
+        # If after conversion there are no valid holdings, skip the currency
+        # altogether.
+        if not aggregated_holdings_list:
+            continue
+
+        net_worths.append((currency, aggregated_holdings_list[0].market_value))
+    return net_worths
+
+
 class NetWorthReport(base.TableReport):
     """Generate a table of total net worth for each operating currency."""
 
     names = ['networth', 'equity']
 
     def generate_table(self, entries, errors, options_map):
-        holdings_list, price_map = get_assets_holdings(entries, options_map)
-
-        net_worths = []
-        for currency in options_map['operating_currency']:
-
-            # Convert holdings to a unified currency.
-            #
-            # Note: It's entirely possible that the price map does not have all
-            # the necessary rate conversions here. The resulting holdings will
-            # simply have no cost when that is the case. We must handle this
-            # gracefully below.
-            currency_holdings_list = holdings.convert_to_currency(price_map,
-                                                                  currency,
-                                                                  holdings_list)
-            if not currency_holdings_list:
-                continue
-
-            holdings_list = holdings.aggregate_holdings_by(
-                currency_holdings_list, lambda holding: holding.cost_currency)
-
-            holdings_list = [holding
-                             for holding in holdings_list
-                             if holding.currency and holding.cost_currency]
-
-            # If after conversion there are no valid holdings, skip the currency
-            # altogether.
-            if not holdings_list:
-                continue
-
-            net_worths.append((currency, holdings_list[0].market_value))
-
         field_spec = [
             (0, 'Currency'),
             (1, 'Net Worth', '{:,.2f}'.format),
         ]
-        return table.create_table(net_worths, field_spec)
+        return table.create_table(calculate_net_worths(entries, options_map),
+                                  field_spec)
 
 
 __reports__ = [
