@@ -46,10 +46,10 @@ static PyObject* parser_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
 
 static int parser___init__(Parser* self, PyObject* args, PyObject* kwds)
 {
-    static char* kwlist[] = {"builder", NULL};
+    static char* kwlist[] = {"builder", "debug", NULL};
     PyObject* builder;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O", kwlist, &builder))
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|p", kwlist, &builder, &yydebug))
         return -1;
 
     Py_XDECREF(self->builder);
