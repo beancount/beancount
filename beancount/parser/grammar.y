@@ -844,6 +844,13 @@ declarations : declarations directive
 
 file : declarations
      {
+         /* If a Python exception has been raised and not handled, abort. In
+          * case of unrecoverable error, the lexer raises a Python exception and
+          * the yylex() function returns -1, whcih is translated by Bison into
+          * an EOF token, handled here. */
+         if (PyErr_Occurred()) {
+             YYABORT;
+         }
          BUILDY(DECREF1($1),
                 $$, "store_result", "O", $1);
      }

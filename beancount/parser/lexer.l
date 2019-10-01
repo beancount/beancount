@@ -177,6 +177,15 @@ ACCOUNTNAME     ([A-Z0-9]|{UTF-8-ONLY})([A-Za-z0-9\-]|{UTF-8-ONLY})*
 
 %% /* Rules */
 
+%{
+    /* If a Python exception has been raised, return immediately. This is
+     * useful to catch exceptions raised in the YY_INPUT routine or other
+     * exceptions not explicitly handled. */
+    if (PyErr_Occurred()) {
+        return -1;
+    }
+%}
+
  /* Newlines are output as explicit tokens, because lines matter in the syntax. */
 \n		{
     yy_line_tokens = 0;

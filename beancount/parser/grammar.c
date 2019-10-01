@@ -2548,14 +2548,21 @@ yyreduce:
   case 134:
 #line 846 "beancount/parser/grammar.y"
     {
+         /* If a Python exception has been raised and not handled, abort. In
+          * case of unrecoverable error, the lexer raises a Python exception and
+          * the yylex() function returns -1, whcih is translated by Bison into
+          * an EOF token, handled here. */
+         if (PyErr_Occurred()) {
+             YYABORT;
+         }
          BUILDY(DECREF1((yyvsp[0].pyobj)),
                 (yyval.pyobj), "store_result", "O", (yyvsp[0].pyobj));
      }
-#line 2555 "beancount/parser/grammar.c"
+#line 2562 "beancount/parser/grammar.c"
     break;
 
 
-#line 2559 "beancount/parser/grammar.c"
+#line 2566 "beancount/parser/grammar.c"
 
       default: break;
     }
@@ -2793,7 +2800,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 854 "beancount/parser/grammar.y"
+#line 861 "beancount/parser/grammar.y"
 
 
 /* A function that will convert a token name to a string, used in debugging. */

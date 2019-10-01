@@ -128,12 +128,10 @@ static PyObject* parser_parse(Parser* self, PyObject* args, PyObject* kwds)
     switch (ret) {
     case 0:
         Py_RETURN_NONE;
-    case 1:
-        return PyErr_Format(PyExc_RuntimeError, "Parser internal error");
     case 2:
-        return PyErr_Format(PyExc_MemoryError, "Parser ran out of memory");
+        return PyErr_NoMemory();
     default:
-        return PyErr_Format(PyExc_ValueError, "Unexpected yyparse() return value: %d", ret);
+        return PyErr_Format(PyExc_RuntimeError, "parser internal error: %d", ret);
     }
 }
 
@@ -179,7 +177,10 @@ static PyObject* parser_iternext(Parser* self)
     }
 
     token = yylex(&yylval, &yylloc, self->scanner, (PyObject*)self, self->builder);
-    if (token == 0)
+    if (!token)
+        return NULL;
+
+    if (PyErr_Occurred())
         return NULL;
 
     switch (token) {
